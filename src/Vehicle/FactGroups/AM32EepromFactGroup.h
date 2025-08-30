@@ -17,6 +17,73 @@
 
 class Vehicle;
 
+struct AM32SettingConfig {
+    AM32SettingConfig(QString name, FactMetaData::ValueType_t type, uint8_t eepromByteIndex)
+    {
+        this.name = name;
+        this.type = type;
+        this.eepromByteIndex = eepromByteIndex;
+
+    }
+
+    QString name {};
+    uint8_t eepromByteIndex {};
+    FactMetaData::ValueType_t type {};   // type is in the Fact metadata json
+
+    // TODO: lambda which converts from _fact.value to _rawValue and vice versa
+
+    // QVariant from {};                    // min is in the Fact metadata json
+    // QVariant to {};                      // max is in the Fact metadata json
+    // QVariant step {};                    // increment is in the Fact metadata json
+    // uint8_t decimals {};                 // decimalPlaces is in the Fact metadata json
+}
+
+class AM32Setting : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+
+public:
+    AM32Setting(int escIndex, const AM32SettingConfig& config)
+        : _escIndex(escIndex)
+        , _eepromByteIndex(config.eepromByteIndex)
+    {
+        int compid = 0;
+        QString name = config.name;
+        FactMetaData::ValueType_t type = config.type;
+        QObject parent = nullptr;
+
+        // TODO: shouldn't the Fact be built from the json?? Why do we have to double specify? Why do we need to create the fact
+        // with new at all? Shouldn't the FactGroup.cc create the facts?
+        _fact = new Fact(compid, name, type, parent);
+    }
+
+    QString name() { return _fact.name(); };
+
+private:
+    // NOTE: these are contained in the Fact metadata json
+    // Defines range, step, and decimals
+    // QVariant _from {};
+    // QVariant _to {};
+    // QVariant _step {};
+    // int _decimals {};
+
+    // ESC
+    uint8_t _escIndex {};
+    uint8_t _eepromByteIndex {}; // Memory location in the eeprom where this setting resides (see AM32/Inc/eeprom.h)
+
+    // Values
+    uint8_t _rawValue {};       // stores the raw eeprom value
+    Fact* _fact {};             // Current value from the eeprom
+    QVariant _pendingValue {};  // Pending value, user updated
+
+    // Converts the display value to the uint8_t format expected in the AM32_EEPROM.data structure.
+    uint8_t convertDisplayValueToRawValue();
+
+    // If the _pendingValue does not match the _fact.rawValue(), then we have pending changes...
+};
+
 /// AM32 ESC EEPROM settings fact group
 class AM32EepromFactGroup : public FactGroup
 {
@@ -28,48 +95,48 @@ class AM32EepromFactGroup : public FactGroup
     Q_PROPERTY(Fact* bootloaderVersion     READ bootloaderVersion      CONSTANT)
     Q_PROPERTY(Fact* eepromVersion         READ eepromVersion          CONSTANT)
 
-    // Boolean settings
-    Q_PROPERTY(Fact* directionReversed     READ directionReversed      CONSTANT)
-    Q_PROPERTY(Fact* bidirectionalMode     READ bidirectionalMode      CONSTANT)
-    Q_PROPERTY(Fact* sineStartup           READ sineStartup            CONSTANT)
-    Q_PROPERTY(Fact* complementaryPwm      READ complementaryPwm       CONSTANT)
-    Q_PROPERTY(Fact* variablePwmFreq       READ variablePwmFreq        CONSTANT)
-    Q_PROPERTY(Fact* stuckRotorProtection  READ stuckRotorProtection   CONSTANT)
-    Q_PROPERTY(Fact* brakeOnStop           READ brakeOnStop            CONSTANT)
-    Q_PROPERTY(Fact* antiStall             READ antiStall              CONSTANT)
-    Q_PROPERTY(Fact* telemetry30ms         READ telemetry30ms          CONSTANT)
-    Q_PROPERTY(Fact* lowVoltageCutoff      READ lowVoltageCutoff       CONSTANT)
-    Q_PROPERTY(Fact* rcCarReversing        READ rcCarReversing         CONSTANT)
-    Q_PROPERTY(Fact* hallSensors           READ hallSensors            CONSTANT)
-    Q_PROPERTY(Fact* autoTiming            READ autoTiming             CONSTANT)
-    Q_PROPERTY(Fact* disableStickCalibration READ disableStickCalibration CONSTANT)
+    // // Boolean settings
+    // Q_PROPERTY(Fact* directionReversed     READ directionReversed      CONSTANT)
+    // Q_PROPERTY(Fact* bidirectionalMode     READ bidirectionalMode      CONSTANT)
+    // Q_PROPERTY(Fact* sineStartup           READ sineStartup            CONSTANT)
+    // Q_PROPERTY(Fact* complementaryPwm      READ complementaryPwm       CONSTANT)
+    // Q_PROPERTY(Fact* variablePwmFreq       READ variablePwmFreq        CONSTANT)
+    // Q_PROPERTY(Fact* stuckRotorProtection  READ stuckRotorProtection   CONSTANT)
+    // Q_PROPERTY(Fact* brakeOnStop           READ brakeOnStop            CONSTANT)
+    // Q_PROPERTY(Fact* antiStall             READ antiStall              CONSTANT)
+    // Q_PROPERTY(Fact* telemetry30ms         READ telemetry30ms          CONSTANT)
+    // Q_PROPERTY(Fact* lowVoltageCutoff      READ lowVoltageCutoff       CONSTANT)
+    // Q_PROPERTY(Fact* rcCarReversing        READ rcCarReversing         CONSTANT)
+    // Q_PROPERTY(Fact* hallSensors           READ hallSensors            CONSTANT)
+    // Q_PROPERTY(Fact* autoTiming            READ autoTiming             CONSTANT)
+    // Q_PROPERTY(Fact* disableStickCalibration READ disableStickCalibration CONSTANT)
 
-    // Numeric settings
-    Q_PROPERTY(Fact* maxRampSpeed          READ maxRampSpeed           CONSTANT)
-    Q_PROPERTY(Fact* minDutyCycle          READ minDutyCycle           CONSTANT)
-    Q_PROPERTY(Fact* timingAdvance         READ timingAdvance          CONSTANT)
-    Q_PROPERTY(Fact* pwmFrequency          READ pwmFrequency           CONSTANT)
-    Q_PROPERTY(Fact* startupPower          READ startupPower           CONSTANT)
-    Q_PROPERTY(Fact* motorKv               READ motorKv                CONSTANT)
-    Q_PROPERTY(Fact* motorPoles            READ motorPoles             CONSTANT)
-    Q_PROPERTY(Fact* beepVolume            READ beepVolume             CONSTANT)
-    Q_PROPERTY(Fact* activeBrakePower      READ activeBrakePower       CONSTANT)
-    Q_PROPERTY(Fact* dragBrakeStrength     READ dragBrakeStrength      CONSTANT)
-    Q_PROPERTY(Fact* runningBrakeAmount    READ runningBrakeAmount     CONSTANT)
-    Q_PROPERTY(Fact* temperatureLimit      READ temperatureLimit       CONSTANT)
-    Q_PROPERTY(Fact* currentLimit          READ currentLimit           CONSTANT)
-    Q_PROPERTY(Fact* lowVoltageThreshold   READ lowVoltageThreshold    CONSTANT)
-    Q_PROPERTY(Fact* sineModeRange         READ sineModeRange          CONSTANT)
-    Q_PROPERTY(Fact* sineModeStrength      READ sineModeStrength       CONSTANT)
-    Q_PROPERTY(Fact* inputType             READ inputType              CONSTANT)
-    Q_PROPERTY(Fact* currentPidP           READ currentPidP            CONSTANT)
-    Q_PROPERTY(Fact* currentPidI           READ currentPidI            CONSTANT)
-    Q_PROPERTY(Fact* currentPidD           READ currentPidD            CONSTANT)
-    Q_PROPERTY(Fact* absoluteVoltageCutoff READ absoluteVoltageCutoff  CONSTANT)
-    Q_PROPERTY(Fact* servoLowThreshold     READ servoLowThreshold      CONSTANT)
-    Q_PROPERTY(Fact* servoHighThreshold    READ servoHighThreshold     CONSTANT)
-    Q_PROPERTY(Fact* servoNeutral          READ servoNeutral           CONSTANT)
-    Q_PROPERTY(Fact* servoDeadband         READ servoDeadband          CONSTANT)
+    // // Numeric settings
+    // Q_PROPERTY(Fact* maxRampSpeed          READ maxRampSpeed           CONSTANT)
+    // Q_PROPERTY(Fact* minDutyCycle          READ minDutyCycle           CONSTANT)
+    // Q_PROPERTY(Fact* timingAdvance         READ timingAdvance          CONSTANT)
+    // Q_PROPERTY(Fact* pwmFrequency          READ pwmFrequency           CONSTANT)
+    // Q_PROPERTY(Fact* startupPower          READ startupPower           CONSTANT)
+    // Q_PROPERTY(Fact* motorKv               READ motorKv                CONSTANT)
+    // Q_PROPERTY(Fact* motorPoles            READ motorPoles             CONSTANT)
+    // Q_PROPERTY(Fact* beepVolume            READ beepVolume             CONSTANT)
+    // Q_PROPERTY(Fact* activeBrakePower      READ activeBrakePower       CONSTANT)
+    // Q_PROPERTY(Fact* dragBrakeStrength     READ dragBrakeStrength      CONSTANT)
+    // Q_PROPERTY(Fact* runningBrakeAmount    READ runningBrakeAmount     CONSTANT)
+    // Q_PROPERTY(Fact* temperatureLimit      READ temperatureLimit       CONSTANT)
+    // Q_PROPERTY(Fact* currentLimit          READ currentLimit           CONSTANT)
+    // Q_PROPERTY(Fact* lowVoltageThreshold   READ lowVoltageThreshold    CONSTANT)
+    // Q_PROPERTY(Fact* sineModeRange         READ sineModeRange          CONSTANT)
+    // Q_PROPERTY(Fact* sineModeStrength      READ sineModeStrength       CONSTANT)
+    // Q_PROPERTY(Fact* inputType             READ inputType              CONSTANT)
+    // Q_PROPERTY(Fact* currentPidP           READ currentPidP            CONSTANT)
+    // Q_PROPERTY(Fact* currentPidI           READ currentPidI            CONSTANT)
+    // Q_PROPERTY(Fact* currentPidD           READ currentPidD            CONSTANT)
+    // Q_PROPERTY(Fact* absoluteVoltageCutoff READ absoluteVoltageCutoff  CONSTANT)
+    // Q_PROPERTY(Fact* servoLowThreshold     READ servoLowThreshold      CONSTANT)
+    // Q_PROPERTY(Fact* servoHighThreshold    READ servoHighThreshold     CONSTANT)
+    // Q_PROPERTY(Fact* servoNeutral          READ servoNeutral           CONSTANT)
+    // Q_PROPERTY(Fact* servoDeadband         READ servoDeadband          CONSTANT)
 
     Q_PROPERTY(bool  dataLoaded            READ dataLoaded             NOTIFY dataLoadedChanged)
     Q_PROPERTY(bool  hasUnsavedChanges     READ hasUnsavedChanges      NOTIFY hasUnsavedChangesChanged)
@@ -78,54 +145,56 @@ class AM32EepromFactGroup : public FactGroup
 public:
     AM32EepromFactGroup(QObject* parent = nullptr);
 
+    void instantiateEepromFacts();
+
     // Read-only info facts
     Fact* firmwareMajor()       { return &_firmwareMajorFact; }
     Fact* firmwareMinor()       { return &_firmwareMinorFact; }
     Fact* bootloaderVersion()    { return &_bootloaderVersionFact; }
     Fact* eepromVersion()        { return &_eepromVersionFact; }
 
-    // Boolean setting facts
-    Fact* directionReversed()    { return &_directionReversedFact; }
-    Fact* bidirectionalMode()    { return &_bidirectionalModeFact; }
-    Fact* sineStartup()          { return &_sineStartupFact; }
-    Fact* complementaryPwm()     { return &_complementaryPwmFact; }
-    Fact* variablePwmFreq()      { return &_variablePwmFreqFact; }
-    Fact* stuckRotorProtection() { return &_stuckRotorProtectionFact; }
-    Fact* brakeOnStop()          { return &_brakeOnStopFact; }
-    Fact* antiStall()            { return &_antiStallFact; }
-    Fact* telemetry30ms()        { return &_telemetry30msFact; }
-    Fact* lowVoltageCutoff()     { return &_lowVoltageCutoffFact; }
-    Fact* rcCarReversing()       { return &_rcCarReversingFact; }
-    Fact* hallSensors()          { return &_hallSensorsFact; }
-    Fact* autoTiming()           { return &_autoTimingFact; }
-    Fact* disableStickCalibration() { return &_disableStickCalibrationFact; }
+    // // Boolean setting facts
+    // Fact* directionReversed()    { return &_directionReversedFact; }
+    // Fact* bidirectionalMode()    { return &_bidirectionalModeFact; }
+    // Fact* sineStartup()          { return &_sineStartupFact; }
+    // Fact* complementaryPwm()     { return &_complementaryPwmFact; }
+    // Fact* variablePwmFreq()      { return &_variablePwmFreqFact; }
+    // Fact* stuckRotorProtection() { return &_stuckRotorProtectionFact; }
+    // Fact* brakeOnStop()          { return &_brakeOnStopFact; }
+    // Fact* antiStall()            { return &_antiStallFact; }
+    // Fact* telemetry30ms()        { return &_telemetry30msFact; }
+    // Fact* lowVoltageCutoff()     { return &_lowVoltageCutoffFact; }
+    // Fact* rcCarReversing()       { return &_rcCarReversingFact; }
+    // Fact* hallSensors()          { return &_hallSensorsFact; }
+    // Fact* autoTiming()           { return &_autoTimingFact; }
+    // Fact* disableStickCalibration() { return &_disableStickCalibrationFact; }
 
-    // Numeric setting facts
-    Fact* maxRampSpeed()         { return &_maxRampSpeedFact; }
-    Fact* minDutyCycle()         { return &_minDutyCycleFact; }
-    Fact* timingAdvance()        { return &_timingAdvanceFact; }
-    Fact* pwmFrequency()         { return &_pwmFrequencyFact; }
-    Fact* startupPower()         { return &_startupPowerFact; }
-    Fact* motorKv()              { return &_motorKvFact; }
-    Fact* motorPoles()           { return &_motorPolesFact; }
-    Fact* beepVolume()           { return &_beepVolumeFact; }
-    Fact* activeBrakePower()     { return &_activeBrakePowerFact; }
-    Fact* dragBrakeStrength()    { return &_dragBrakeStrengthFact; }
-    Fact* runningBrakeAmount()   { return &_runningBrakeAmountFact; }
-    Fact* temperatureLimit()     { return &_temperatureLimitFact; }
-    Fact* currentLimit()         { return &_currentLimitFact; }
-    Fact* lowVoltageThreshold()  { return &_lowVoltageThresholdFact; }
-    Fact* sineModeRange()        { return &_sineModeRangeFact; }
-    Fact* sineModeStrength()     { return &_sineModeStrengthFact; }
-    Fact* inputType()            { return &_inputTypeFact; }
-    Fact* currentPidP()          { return &_currentPidPFact; }
-    Fact* currentPidI()          { return &_currentPidIFact; }
-    Fact* currentPidD()          { return &_currentPidDFact; }
-    Fact* absoluteVoltageCutoff() { return &_absoluteVoltageCutoffFact; }
-    Fact* servoLowThreshold()    { return &_servoLowThresholdFact; }
-    Fact* servoHighThreshold()   { return &_servoHighThresholdFact; }
-    Fact* servoNeutral()         { return &_servoNeutralFact; }
-    Fact* servoDeadband()        { return &_servoDeadbandFact; }
+    // // Numeric setting facts
+    // Fact* maxRampSpeed()         { return &_maxRampSpeedFact; }
+    // Fact* minDutyCycle()         { return &_minDutyCycleFact; }
+    // Fact* timingAdvance()        { return &_timingAdvanceFact; }
+    // Fact* pwmFrequency()         { return &_pwmFrequencyFact; }
+    // Fact* startupPower()         { return &_startupPowerFact; }
+    // Fact* motorKv()              { return &_motorKvFact; }
+    // Fact* motorPoles()           { return &_motorPolesFact; }
+    // Fact* beepVolume()           { return &_beepVolumeFact; }
+    // Fact* activeBrakePower()     { return &_activeBrakePowerFact; }
+    // Fact* dragBrakeStrength()    { return &_dragBrakeStrengthFact; }
+    // Fact* runningBrakeAmount()   { return &_runningBrakeAmountFact; }
+    // Fact* temperatureLimit()     { return &_temperatureLimitFact; }
+    // Fact* currentLimit()         { return &_currentLimitFact; }
+    // Fact* lowVoltageThreshold()  { return &_lowVoltageThresholdFact; }
+    // Fact* sineModeRange()        { return &_sineModeRangeFact; }
+    // Fact* sineModeStrength()     { return &_sineModeStrengthFact; }
+    // Fact* inputType()            { return &_inputTypeFact; }
+    // Fact* currentPidP()          { return &_currentPidPFact; }
+    // Fact* currentPidI()          { return &_currentPidIFact; }
+    // Fact* currentPidD()          { return &_currentPidDFact; }
+    // Fact* absoluteVoltageCutoff() { return &_absoluteVoltageCutoffFact; }
+    // Fact* servoLowThreshold()    { return &_servoLowThresholdFact; }
+    // Fact* servoHighThreshold()   { return &_servoHighThresholdFact; }
+    // Fact* servoNeutral()         { return &_servoNeutralFact; }
+    // Fact* servoDeadband()        { return &_servoDeadbandFact; }
 
     // Status
     bool dataLoaded() const { return _dataLoaded; }
@@ -168,6 +237,12 @@ public:
 
     /// Get a fact value by name (includes pending changes)
     Q_INVOKABLE QVariant getFactValue(const QString& factName) const;
+
+    /// Get the original loaded value for a fact (before any changes)
+    Q_INVOKABLE QVariant getOriginalValue(const QString& factName) const;
+
+    /// Check if a specific fact has pending changes
+    Q_INVOKABLE bool hasPendingChange(const QString& factName) const { return _pendingChanges.contains(factName); }
 
 signals:
     void dataLoadedChanged();
@@ -286,12 +361,16 @@ private:
     Fact _servoNeutralFact          = Fact(0, QStringLiteral("servoNeutral"), FactMetaData::valueTypeDouble);
     Fact _servoDeadbandFact         = Fact(0, QStringLiteral("servoDeadband"), FactMetaData::valueTypeUint8);
 
+
+    QmlObjectListModel _am32_settings;
+
     bool _dataLoaded = false;
     int _escIndex = 0;
 
     // Change tracking
     QSet<int> _modifiedBytes;              // Set of byte indices that have been modified
     QByteArray _originalEepromData;        // Original EEPROM data from last read
+    QVariantMap _originalValues;           // Original parsed values from EEPROM (fact name -> value)
 
     // Maps for efficient lookups
     QHash<QString, Fact*> _factsByName;    // Map fact names to fact pointers

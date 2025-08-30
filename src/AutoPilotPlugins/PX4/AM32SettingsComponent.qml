@@ -243,8 +243,7 @@ Item {
         // Get the original value from the reference ESC
         var originalValue = null
         if (referenceFacts) {
-            // TODO: FIXME: referenceFacts is the first ESC not the original data!
-            originalValue = referenceFacts.getFactValue(factName)
+            originalValue = referenceFacts.getOriginalValue(factName)
         }
 
         console.info("factName: ", factName)
@@ -304,8 +303,14 @@ Item {
     }
 
     function hasUnsavedChange(factName) {
-        // Check if this specific setting has an unsaved change
-        return pendingValues.hasOwnProperty(factName)
+        // Check if this specific setting has an unsaved change on any selected ESC
+        for (var i = 0; i < selectedEscs.length; i++) {
+            var escData = escStatusModel.get(selectedEscs[i])
+            if (escData && escData.am32Eeprom && escData.am32Eeprom.hasPendingChange(factName)) {
+                return true
+            }
+        }
+        return false
     }
 
     function writeSettings() {

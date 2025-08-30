@@ -11,9 +11,71 @@
 #include "Vehicle.h"
 #include <QtCore/QDebug>
 
+void AM32EepromFactGroup::instantiateEepromFacts()
+{
+    // QmlObjectListModel _am32_settings
+    // AM32Setting(int escIndex, QString name, FactMetaData::ValueType_t type, uint8_t eepromByteIndex)
+
+    // ---------------
+    // 48 bytes total
+    // ---------------
+    // 5 read-only
+    // 4 reserved
+    // 39 settings
+    auto setting = new AM32SettingConfig("maxRampSpeed", FactMetaData::valueTypeDouble, 5); // % duty cycle per ms (value / 10) (default 160 == 16%)
+    auto setting = new AM32SettingConfig("minDutyCycle", FactMetaData::valueTypeDouble, 6); // % min duty cycle (value / 2) (default 4 == 2%)
+    auto setting = new AM32SettingConfig("disableStickCalibration", FactMetaData::valueTypeBool, 7); // disable stick based calibration (default 0)
+    auto setting = new AM32SettingConfig("absoluteVoltageCutoff", FactMetaData::valueTypeDouble, 8); // voltage level 1 to 100 in 0.5v increments (default 10)
+    auto setting = new AM32SettingConfig("currentPidP", FactMetaData::valueTypeUint32, 9); // current PID P value x 2 (default 100 = 200)
+    auto setting = new AM32SettingConfig("currentPidI", FactMetaData::valueTypeUint32, 10); // current control I value (default 0)
+    auto setting = new AM32SettingConfig("currentPidD", FactMetaData::valueTypeUint32, 11); // current control D value x 10 (default 50 = 500)
+    auto setting = new AM32SettingConfig("activeBrakePower", FactMetaData::valueTypeUint8, 12); // 1-5 percent duty cycle (default 2)
+    auto setting = new AM32SettingConfig("directionReversed", FactMetaData::valueTypeBool, 17); // direction reversed (default 0)
+    auto setting = new AM32SettingConfig("bidirectionalMode", FactMetaData::valueTypeBool, 18); // bidirectional mode (default 0)
+    auto setting = new AM32SettingConfig("sineStartup", FactMetaData::valueTypeBool, 19); // sinusoidal startup (default 0)
+    auto setting = new AM32SettingConfig("complementaryPwm", FactMetaData::valueTypeBool, 20); // complementary pwm (default 1)
+    auto setting = new AM32SettingConfig("variablePwmFreq", FactMetaData::valueTypeBool, 21); // variable pwm frequency (default 1)
+    auto setting = new AM32SettingConfig("stuckRotorProtection", FactMetaData::valueTypeBool, 22); // stuck rotor protection (default 1)
+    auto setting = new AM32SettingConfig("timingAdvance", FactMetaData::valueTypeDouble, 23); // timing advance x0.9375, ei 16 = 15 degrees (default 26 == 24.375)
+    auto setting = new AM32SettingConfig("pwmFrequency", FactMetaData::valueTypeUint8, 24); // pwm frequency mutiples of 1k (8 to 144)(default 24 == 24khz)
+    auto setting = new AM32SettingConfig("startupPower", FactMetaData::valueTypeUint8, 25); // startup power 50-150 percent (default 100)
+    auto setting = new AM32SettingConfig("motorKv", FactMetaData::valueTypeUint32, 26); // motor KV in increments of 40 (default 55 = 2200kv)
+    auto setting = new AM32SettingConfig("motorPoles", FactMetaData::valueTypeUint8, 27); // motor poles (default 14)
+    auto setting = new AM32SettingConfig("brakeOnStop", FactMetaData::valueTypeBool, 28); // brake on stop (default 0)
+    auto setting = new AM32SettingConfig("antiStall", FactMetaData::valueTypeBool, 29); // anti stall protection, throttle boost at low rpm (default 0)
+    auto setting = new AM32SettingConfig("beepVolume", FactMetaData::valueTypeUint8, 30); // beep volume, range 0 to 11 (default 5)
+    auto setting = new AM32SettingConfig("telemetry30ms", FactMetaData::valueTypeBool, 31); // 30 Millisecond telemetry output (default 0)
+    auto setting = new AM32SettingConfig("servoLowThreshold", FactMetaData::valueTypeUint32, 32); // servo low value =  (value * 2) + 750us (default 128 == 1006)
+    auto setting = new AM32SettingConfig("servoHighThreshold", FactMetaData::valueTypeUint32, 33); // servo high value = (value * 2) + 1750us (default 128 == 1006)
+    auto setting = new AM32SettingConfig("servoNeutral", FactMetaData::valueTypeUint32, 34); // servo neutral base 1374 + value Us. IE 128 = 1500 us. (default 128 == 1500)
+    auto setting = new AM32SettingConfig("servoDeadband", FactMetaData::valueTypeUint8, 35); // servo dead band 0-100, applied to either side of neutral (default 50)
+    auto setting = new AM32SettingConfig("lowVoltageCutoff", FactMetaData::valueTypeBool, 36); // low voltage cuttoff (default 0)
+    auto setting = new AM32SettingConfig("lowVoltageThreshold", FactMetaData::valueTypeDouble, 37); // low voltage threshold, ((value + 250) / 100), (default 50 == 3.0v)
+    auto setting = new AM32SettingConfig("rcCarReversing", FactMetaData::valueTypeBool, 38); // rc car type reversing, brake on first aplication return to center to reverse (default 0)
+    auto setting = new AM32SettingConfig("hallSensors", FactMetaData::valueTypeBool, 39); // Hall sensors if equipped  (default 0)
+    auto setting = new AM32SettingConfig("sineModeRange", FactMetaData::valueTypeUint8, 40); // Sine Mode Range 5-25 percent of throttle (default 15)
+    auto setting = new AM32SettingConfig("dragBrakeStrength", FactMetaData::valueTypeUint8, 41); // Drag Brake Strength 1-10 , 10 being full strength (default 10)
+    auto setting = new AM32SettingConfig("runningBrakeLevel", FactMetaData::valueTypeUint8, 42); // amount of brake to use when the motor is running (default 10)
+    auto setting = new AM32SettingConfig("temperatureLimit", FactMetaData::valueTypeUint8, 43); // temperature limit 70-140 degrees C. above 140 disables (default 141)
+    auto setting = new AM32SettingConfig("currentLimit", FactMetaData::valueTypeUint8, 44); // current protection level (value * 2) above 100 disables (default 102 == disabled, > 200A)
+    auto setting = new AM32SettingConfig("sineModePower", FactMetaData::valueTypeUint8, 45); // sine mode strength 1-10 (default 6)
+    auto setting = new AM32SettingConfig("inputType", FactMetaData::valueTypeUint8, 46); // input type selector 1:Auto 2:Dshot 3:Servo 4:PWM 5:Serial 6:BetaFlightSafeArming (default 1)
+    auto setting = new AM32SettingConfig("autoTiming", FactMetaData::valueTypeUint8, 47); // auto timing advance (0 - 32)(degrees)(default 0)
+
+
+
+
+    for (auto f : ) {
+        _am32_settings.append(setting);
+    }
+}
+
 AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/AM32EepromFact.json"), parent)
 {
+    // Iterate over structure, create facts, call _addFact(ptr)
+
+
     // Add all facts to the group
     _addFact(&_firmwareMajorFact);
     _addFact(&_firmwareMinorFact);
@@ -150,6 +212,7 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     // Clear pending changes since we're loading fresh data
     _pendingChanges.clear();
     _modifiedBytes.clear();
+    _originalValues.clear();
 
     // Parse read-only info
     _eepromVersionFact.setRawValue(data[1]);
@@ -157,73 +220,167 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     _firmwareMajorFact.setRawValue(data[3]);
     _firmwareMinorFact.setRawValue(data[4]);
 
+    // Store original values for read-only facts
+    _originalValues["eepromVersion"] = data[1];
+    _originalValues["bootloaderVersion"] = data[2];
+    _originalValues["firmwareMajor"] = data[3];
+    _originalValues["firmwareMinor"] = data[4];
+
     // Parse configurable settings with proper conversions
-    _maxRampSpeedFact.setRawValue(data[5] / 10.0);  // value/10 percent per ms
-    _minDutyCycleFact.setRawValue(data[6] / 2.0);   // value/2 percent
+    double maxRampSpeed = data[5] / 10.0;  // value/10 percent per ms
+    double minDutyCycle = data[6] / 2.0;   // value/2 percent
+    _maxRampSpeedFact.setRawValue(maxRampSpeed);
+    _minDutyCycleFact.setRawValue(minDutyCycle);
+    _originalValues["maxRampSpeed"] = maxRampSpeed;
+    _originalValues["minDutyCycle"] = minDutyCycle;
 
     // Stick calibration setting
-    _disableStickCalibrationFact.setRawValue(data[7] != 0);
+    bool disableStickCalibration = (data[7] != 0);
+    _disableStickCalibrationFact.setRawValue(disableStickCalibration);
+    _originalValues["disableStickCalibration"] = disableStickCalibration;
 
     // Voltage and PID settings
-    _absoluteVoltageCutoffFact.setRawValue(data[8] * 0.5);  // value * 0.5 volts
-    _currentPidPFact.setRawValue(data[9] * 2.0);    // P value x2
-    _currentPidIFact.setRawValue(data[10]);         // I value
-    _currentPidDFact.setRawValue(data[11] * 10.0);  // D value x10
-    _activeBrakePowerFact.setRawValue(data[12]);
+    double absoluteVoltageCutoff = data[8] * 0.5;  // value * 0.5 volts
+    double currentPidP = data[9] * 2.0;    // P value x2
+    int currentPidI = data[10];         // I value
+    double currentPidD = data[11] * 10.0;  // D value x10
+    int activeBrakePower = data[12];
+
+    _absoluteVoltageCutoffFact.setRawValue(absoluteVoltageCutoff);
+    _currentPidPFact.setRawValue(currentPidP);
+    _currentPidIFact.setRawValue(currentPidI);
+    _currentPidDFact.setRawValue(currentPidD);
+    _activeBrakePowerFact.setRawValue(activeBrakePower);
+
+    _originalValues["absoluteVoltageCutoff"] = absoluteVoltageCutoff;
+    _originalValues["currentPidP"] = currentPidP;
+    _originalValues["currentPidI"] = currentPidI;
+    _originalValues["currentPidD"] = currentPidD;
+    _originalValues["activeBrakePower"] = activeBrakePower;
 
     // Boolean flags
-    _directionReversedFact.setRawValue(data[17] != 0);
-    _bidirectionalModeFact.setRawValue(data[18] != 0);
-    _sineStartupFact.setRawValue(data[19] != 0);
-    _complementaryPwmFact.setRawValue(data[20] != 0);
-    _variablePwmFreqFact.setRawValue(data[21] != 0);
-    _stuckRotorProtectionFact.setRawValue(data[22] != 0);
+    bool directionReversed = (data[17] != 0);
+    bool bidirectionalMode = (data[18] != 0);
+    bool sineStartup = (data[19] != 0);
+    bool complementaryPwm = (data[20] != 0);
+    bool variablePwmFreq = (data[21] != 0);
+    bool stuckRotorProtection = (data[22] != 0);
+
+    _directionReversedFact.setRawValue(directionReversed);
+    _bidirectionalModeFact.setRawValue(bidirectionalMode);
+    _sineStartupFact.setRawValue(sineStartup);
+    _complementaryPwmFact.setRawValue(complementaryPwm);
+    _variablePwmFreqFact.setRawValue(variablePwmFreq);
+    _stuckRotorProtectionFact.setRawValue(stuckRotorProtection);
+
+    _originalValues["directionReversed"] = directionReversed;
+    _originalValues["bidirectionalMode"] = bidirectionalMode;
+    _originalValues["sineStartup"] = sineStartup;
+    _originalValues["complementaryPwm"] = complementaryPwm;
+    _originalValues["variablePwmFreq"] = variablePwmFreq;
+    _originalValues["stuckRotorProtection"] = stuckRotorProtection;
 
     // Timing and power
+    double timingAdvance;
     if (data[23] < 10) {
         // Old format: 0-3 mapped to 0-24 degrees
-        _timingAdvanceFact.setRawValue(data[23] * 8 * 0.9375);
+        timingAdvance = data[23] * 8 * 0.9375;
     } else if (data[23] <= 42) {
         // New format: subtract 10 and multiply by 0.9375
-        _timingAdvanceFact.setRawValue((data[23] - 10) * 0.9375);
+        timingAdvance = (data[23] - 10) * 0.9375;
     } else {
         // Default to 15 degrees
-        _timingAdvanceFact.setRawValue(15.0);
+        timingAdvance = 15.0;
     }
+    _timingAdvanceFact.setRawValue(timingAdvance);
+    _originalValues["timingAdvance"] = timingAdvance;
 
-    _pwmFrequencyFact.setRawValue(data[24]);
-    _startupPowerFact.setRawValue(data[25]);
-    _motorKvFact.setRawValue(data[26] * 40 + 20);  // KV in increments of 40
-    _motorPolesFact.setRawValue(data[27]);
-    _brakeOnStopFact.setRawValue(data[28] != 0);
-    _antiStallFact.setRawValue(data[29] != 0);
-    _beepVolumeFact.setRawValue(data[30]);
-    _telemetry30msFact.setRawValue(data[31] != 0);
+    int pwmFrequency = data[24];
+    int startupPower = data[25];
+    int motorKv = data[26] * 40 + 20;  // KV in increments of 40
+    int motorPoles = data[27];
+    bool brakeOnStop = (data[28] != 0);
+    bool antiStall = (data[29] != 0);
+    int beepVolume = data[30];
+    bool telemetry30ms = (data[31] != 0);
+
+    _pwmFrequencyFact.setRawValue(pwmFrequency);
+    _startupPowerFact.setRawValue(startupPower);
+    _motorKvFact.setRawValue(motorKv);
+    _motorPolesFact.setRawValue(motorPoles);
+    _brakeOnStopFact.setRawValue(brakeOnStop);
+    _antiStallFact.setRawValue(antiStall);
+    _beepVolumeFact.setRawValue(beepVolume);
+    _telemetry30msFact.setRawValue(telemetry30ms);
+
+    _originalValues["pwmFrequency"] = pwmFrequency;
+    _originalValues["startupPower"] = startupPower;
+    _originalValues["motorKv"] = motorKv;
+    _originalValues["motorPoles"] = motorPoles;
+    _originalValues["brakeOnStop"] = brakeOnStop;
+    _originalValues["antiStall"] = antiStall;
+    _originalValues["beepVolume"] = beepVolume;
+    _originalValues["telemetry30ms"] = telemetry30ms;
 
     // Servo settings
-    _servoLowThresholdFact.setRawValue(data[32] * 2 + 750);   // (value*2) + 750us
-    _servoHighThresholdFact.setRawValue(data[33] * 2 + 1750); // (value*2) + 1750us
-    _servoNeutralFact.setRawValue(data[34] + 1374);           // 1374 + value us
-    _servoDeadbandFact.setRawValue(data[35]);                 // direct value
+    double servoLowThreshold = data[32] * 2 + 750;   // (value*2) + 750us
+    double servoHighThreshold = data[33] * 2 + 1750; // (value*2) + 1750us
+    double servoNeutral = data[34] + 1374;           // 1374 + value us
+    int servoDeadband = data[35];                 // direct value
+
+    _servoLowThresholdFact.setRawValue(servoLowThreshold);
+    _servoHighThresholdFact.setRawValue(servoHighThreshold);
+    _servoNeutralFact.setRawValue(servoNeutral);
+    _servoDeadbandFact.setRawValue(servoDeadband);
+
+    _originalValues["servoLowThreshold"] = servoLowThreshold;
+    _originalValues["servoHighThreshold"] = servoHighThreshold;
+    _originalValues["servoNeutral"] = servoNeutral;
+    _originalValues["servoDeadband"] = servoDeadband;
 
     // Protection settings
-    _lowVoltageCutoffFact.setRawValue(data[36] != 0);
-    _lowVoltageThresholdFact.setRawValue((data[37] + 250) / 100.0);  // (value+250)/100 V/cell
-    _rcCarReversingFact.setRawValue(data[38] != 0);
-    _hallSensorsFact.setRawValue(data[39] != 0);
+    bool lowVoltageCutoff = (data[36] != 0);
+    double lowVoltageThreshold = (data[37] + 250) / 100.0;  // (value+250)/100 V/cell
+    bool rcCarReversing = (data[38] != 0);
+    bool hallSensors = (data[39] != 0);
+
+    _lowVoltageCutoffFact.setRawValue(lowVoltageCutoff);
+    _lowVoltageThresholdFact.setRawValue(lowVoltageThreshold);
+    _rcCarReversingFact.setRawValue(rcCarReversing);
+    _hallSensorsFact.setRawValue(hallSensors);
+
+    _originalValues["lowVoltageCutoff"] = lowVoltageCutoff;
+    _originalValues["lowVoltageThreshold"] = lowVoltageThreshold;
+    _originalValues["rcCarReversing"] = rcCarReversing;
+    _originalValues["hallSensors"] = hallSensors;
 
     // Sine mode and brake settings
-    _sineModeRangeFact.setRawValue(data[40]);
-    _dragBrakeStrengthFact.setRawValue(data[41]);
-    _runningBrakeAmountFact.setRawValue(data[42]);
+    int sineModeRange = data[40];
+    int dragBrakeStrength = data[41];
+    int runningBrakeAmount = data[42];
+    int temperatureLimit = data[43];  // 141 = disabled
+    double currentLimit = data[44];
+    int sineModeStrength = data[45];
+    int inputType = data[46];
+    bool autoTiming = (data[47] != 0);
 
-    // Temperature and current limits
-    _temperatureLimitFact.setRawValue(data[43]);  // 141 = disabled
-    _currentLimitFact.setRawValue(data[44]);
+    _sineModeRangeFact.setRawValue(sineModeRange);
+    _dragBrakeStrengthFact.setRawValue(dragBrakeStrength);
+    _runningBrakeAmountFact.setRawValue(runningBrakeAmount);
+    _temperatureLimitFact.setRawValue(temperatureLimit);
+    _currentLimitFact.setRawValue(currentLimit);
+    _sineModeStrengthFact.setRawValue(sineModeStrength);
+    _inputTypeFact.setRawValue(inputType);
+    _autoTimingFact.setRawValue(autoTiming);
 
-    _sineModeStrengthFact.setRawValue(data[45]);
-    _inputTypeFact.setRawValue(data[46]);
-    _autoTimingFact.setRawValue(data[47] != 0);
+    _originalValues["sineModeRange"] = sineModeRange;
+    _originalValues["dragBrakeStrength"] = dragBrakeStrength;
+    _originalValues["runningBrakeAmount"] = runningBrakeAmount;
+    _originalValues["temperatureLimit"] = temperatureLimit;
+    _originalValues["currentLimit"] = currentLimit;
+    _originalValues["sineModeStrength"] = sineModeStrength;
+    _originalValues["inputType"] = inputType;
+    _originalValues["autoTiming"] = autoTiming;
 
     clearPendingChanges();
 
@@ -244,19 +401,18 @@ void AM32EepromFactGroup::applyPendingChanges(const QVariantMap& changes)
         qDebug() << "ESC " << _escIndex << factName << value;
         _pendingChanges[factName] = value;
 
-        // Also update the fact value so packEepromData works correctly
+        // Track which byte was modified
         Fact* fact = _factsByName.value(factName, nullptr);
-        if (fact) {
-            fact->setRawValue(value);
+        if (fact && _factToByteIndex.contains(fact)) {
+            _modifiedBytes.insert(_factToByteIndex[fact]);
 
-            // Track which byte was modified
-            if (_factToByteIndex.contains(fact)) {
-                _modifiedBytes.insert(_factToByteIndex[fact]);
-
-                // qDebug() << "ESC" << _escIndex << " updating " << fact->name();
-
-                // Special case: low voltage threshold affects cutoff byte too
-                if (fact == &_lowVoltageThresholdFact && _lowVoltageCutoffFact.rawValue().toBool()) {
+            // Special case: low voltage threshold affects cutoff byte too
+            if (fact == &_lowVoltageThresholdFact) {
+                // Check if low voltage cutoff is or will be enabled
+                bool cutoffEnabled = _pendingChanges.contains("lowVoltageCutoff")
+                    ? _pendingChanges["lowVoltageCutoff"].toBool()
+                    : _lowVoltageCutoffFact.rawValue().toBool();
+                if (cutoffEnabled) {
                     _modifiedBytes.insert(BYTE_LOW_VOLTAGE_CUTOFF);
                 }
             }
@@ -294,44 +450,8 @@ void AM32EepromFactGroup::clearPendingChange(const QString& factName)
         }
 
         // Restore the fact to its original value
-        if (fact && !_originalEepromData.isEmpty()) {
-            // Re-parse just this fact from original EEPROM data
-            const uint8_t* data = reinterpret_cast<const uint8_t*>(_originalEepromData.data());
-
-            // Find the byte index and restore the original value
-            if (_factToByteIndex.contains(fact)) {
-                int byteIndex = _factToByteIndex[fact];
-
-                // Re-apply the appropriate conversion based on which fact it is
-                if (factName == "maxRampSpeed") {
-                    fact->setRawValue(data[BYTE_MAX_RAMP_SPEED] / 10.0);
-                } else if (factName == "minDutyCycle") {
-                    fact->setRawValue(data[BYTE_MIN_DUTY_CYCLE] / 2.0);
-                } else if (factName == "currentPidP") {
-                    fact->setRawValue(data[BYTE_CURRENT_PID_P] * 2.0);
-                } else if (factName == "currentPidD") {
-                    fact->setRawValue(data[BYTE_CURRENT_PID_D] * 10.0);
-                } else if (factName == "absoluteVoltageCutoff") {
-                    fact->setRawValue(data[BYTE_VOLTAGE_CUTOFF] * 0.5);
-                } else if (factName == "motorKv") {
-                    fact->setRawValue(data[BYTE_MOTOR_KV] * 40 + 20);
-                } else if (factName == "lowVoltageThreshold") {
-                    fact->setRawValue((data[BYTE_LOW_VOLTAGE_THRESHOLD] + 250) / 100.0);
-                } else if (factName == "timingAdvance") {
-                    if (data[BYTE_TIMING_ADVANCE] < 10) {
-                        fact->setRawValue(data[BYTE_TIMING_ADVANCE] * 8 * 0.9375);
-                    } else if (data[BYTE_TIMING_ADVANCE] <= 42) {
-                        fact->setRawValue((data[BYTE_TIMING_ADVANCE] - 10) * 0.9375);
-                    } else {
-                        fact->setRawValue(15.0);
-                    }
-                } else if (factName == "currentLimit") {
-                    fact->setRawValue(data[BYTE_CURRENT_LIMIT]);
-                } else {
-                    // For boolean and direct value facts
-                    fact->setRawValue(data[byteIndex]);
-                }
-            }
+        if (fact && _originalValues.contains(factName)) {
+            fact->setRawValue(_originalValues[factName]);
         }
 
         emit pendingChangesUpdated();
@@ -390,6 +510,12 @@ QVariant AM32EepromFactGroup::getFactValue(const QString& factName) const
     return QVariant();
 }
 
+QVariant AM32EepromFactGroup::getOriginalValue(const QString& factName) const
+{
+    // Return the original loaded value for the fact
+    return _originalValues.value(factName, QVariant());
+}
+
 Fact* AM32EepromFactGroup::_getFactByName(const QString& name) const
 {
     return _factsByName.value(name, nullptr);
@@ -417,6 +543,15 @@ QByteArray AM32EepromFactGroup::packEepromData() const
 {
     QByteArray packed(192, 0);  // Initialize with zeros
 
+    // Helper to get value with pending changes
+    auto getValue = [this](const QString& name) -> QVariant {
+        if (_pendingChanges.contains(name)) {
+            return _pendingChanges[name];
+        }
+        Fact* fact = _factsByName.value(name, nullptr);
+        return fact ? fact->rawValue() : QVariant();
+    };
+
     // Start byte must be 1
     packed[0] = 1;
 
@@ -427,62 +562,62 @@ QByteArray AM32EepromFactGroup::packEepromData() const
     packed[4] = _firmwareMinorFact.rawValue().toUInt();
 
     // Configurable settings with proper conversions
-    packed[5] = static_cast<uint8_t>(_maxRampSpeedFact.rawValue().toDouble() * 10);  // %/ms to value/10
-    packed[6] = static_cast<uint8_t>(_minDutyCycleFact.rawValue().toDouble() * 2);   // % to value/2
-    packed[7] = _disableStickCalibrationFact.rawValue().toBool() ? 1 : 0;
-    packed[8] = static_cast<uint8_t>(_absoluteVoltageCutoffFact.rawValue().toDouble() / 0.5);  // V to value/0.5
-    packed[9] = static_cast<uint8_t>(_currentPidPFact.rawValue().toDouble() / 2);    // P value / 2
-    packed[10] = _currentPidIFact.rawValue().toUInt();
-    packed[11] = static_cast<uint8_t>(_currentPidDFact.rawValue().toDouble() / 10);  // D value / 10
-    packed[12] = _activeBrakePowerFact.rawValue().toUInt();
+    packed[5] = static_cast<uint8_t>(getValue("maxRampSpeed").toDouble() * 10);  // %/ms to value/10
+    packed[6] = static_cast<uint8_t>(getValue("minDutyCycle").toDouble() * 2);   // % to value/2
+    packed[7] = getValue("disableStickCalibration").toBool() ? 1 : 0;
+    packed[8] = static_cast<uint8_t>(getValue("absoluteVoltageCutoff").toDouble() / 0.5);  // V to value/0.5
+    packed[9] = static_cast<uint8_t>(getValue("currentPidP").toDouble() / 2);    // P value / 2
+    packed[10] = getValue("currentPidI").toUInt();
+    packed[11] = static_cast<uint8_t>(getValue("currentPidD").toDouble() / 10);  // D value / 10
+    packed[12] = getValue("activeBrakePower").toUInt();
 
     // Reserved bytes 13-16
 
     // Boolean flags
-    packed[17] = _directionReversedFact.rawValue().toBool() ? 1 : 0;
-    packed[18] = _bidirectionalModeFact.rawValue().toBool() ? 1 : 0;
-    packed[19] = _sineStartupFact.rawValue().toBool() ? 1 : 0;
-    packed[20] = _complementaryPwmFact.rawValue().toBool() ? 1 : 0;
-    packed[21] = _variablePwmFreqFact.rawValue().toBool() ? 1 : 0;
-    packed[22] = _stuckRotorProtectionFact.rawValue().toBool() ? 1 : 0;
+    packed[17] = getValue("directionReversed").toBool() ? 1 : 0;
+    packed[18] = getValue("bidirectionalMode").toBool() ? 1 : 0;
+    packed[19] = getValue("sineStartup").toBool() ? 1 : 0;
+    packed[20] = getValue("complementaryPwm").toBool() ? 1 : 0;
+    packed[21] = getValue("variablePwmFreq").toBool() ? 1 : 0;
+    packed[22] = getValue("stuckRotorProtection").toBool() ? 1 : 0;
 
     // Timing advance - convert degrees to AM32 format
-    double timingDegrees = _timingAdvanceFact.rawValue().toDouble();
+    double timingDegrees = getValue("timingAdvance").toDouble();
     packed[23] = static_cast<uint8_t>((timingDegrees / 0.9375) + 10);  // New format
 
-    packed[24] = _pwmFrequencyFact.rawValue().toUInt();
-    packed[25] = _startupPowerFact.rawValue().toUInt();
-    packed[26] = static_cast<uint8_t>((_motorKvFact.rawValue().toUInt() - 20) / 40);  // KV to increments
-    packed[27] = _motorPolesFact.rawValue().toUInt();
-    packed[28] = _brakeOnStopFact.rawValue().toBool() ? 1 : 0;
-    packed[29] = _antiStallFact.rawValue().toBool() ? 1 : 0;
-    packed[30] = _beepVolumeFact.rawValue().toUInt();
-    packed[31] = _telemetry30msFact.rawValue().toBool() ? 1 : 0;
+    packed[24] = getValue("pwmFrequency").toUInt();
+    packed[25] = getValue("startupPower").toUInt();
+    packed[26] = static_cast<uint8_t>((getValue("motorKv").toUInt() - 20) / 40);  // KV to increments
+    packed[27] = getValue("motorPoles").toUInt();
+    packed[28] = getValue("brakeOnStop").toBool() ? 1 : 0;
+    packed[29] = getValue("antiStall").toBool() ? 1 : 0;
+    packed[30] = getValue("beepVolume").toUInt();
+    packed[31] = getValue("telemetry30ms").toBool() ? 1 : 0;
 
     // Servo settings
-    packed[32] = static_cast<uint8_t>((_servoLowThresholdFact.rawValue().toDouble() - 750) / 2);   // (us - 750) / 2
-    packed[33] = static_cast<uint8_t>((_servoHighThresholdFact.rawValue().toDouble() - 1750) / 2); // (us - 1750) / 2
-    packed[34] = static_cast<uint8_t>(_servoNeutralFact.rawValue().toDouble() - 1374);             // us - 1374
-    packed[35] = _servoDeadbandFact.rawValue().toUInt();                                           // direct value
+    packed[32] = static_cast<uint8_t>((getValue("servoLowThreshold").toDouble() - 750) / 2);   // (us - 750) / 2
+    packed[33] = static_cast<uint8_t>((getValue("servoHighThreshold").toDouble() - 1750) / 2); // (us - 1750) / 2
+    packed[34] = static_cast<uint8_t>(getValue("servoNeutral").toDouble() - 1374);             // us - 1374
+    packed[35] = getValue("servoDeadband").toUInt();                                           // direct value
 
     // Protection settings
-    packed[36] = _lowVoltageCutoffFact.rawValue().toBool() ? 1 : 0;
-    packed[37] = static_cast<uint8_t>(_lowVoltageThresholdFact.rawValue().toDouble() * 100 - 250);  // V/cell to value
-    packed[38] = _rcCarReversingFact.rawValue().toBool() ? 1 : 0;
-    packed[39] = _hallSensorsFact.rawValue().toBool() ? 1 : 0;
+    packed[36] = getValue("lowVoltageCutoff").toBool() ? 1 : 0;
+    packed[37] = static_cast<uint8_t>(getValue("lowVoltageThreshold").toDouble() * 100 - 250);  // V/cell to value
+    packed[38] = getValue("rcCarReversing").toBool() ? 1 : 0;
+    packed[39] = getValue("hallSensors").toBool() ? 1 : 0;
 
     // Sine mode and brake settings
-    packed[40] = _sineModeRangeFact.rawValue().toUInt();
-    packed[41] = _dragBrakeStrengthFact.rawValue().toUInt();
-    packed[42] = _runningBrakeAmountFact.rawValue().toUInt();
+    packed[40] = getValue("sineModeRange").toUInt();
+    packed[41] = getValue("dragBrakeStrength").toUInt();
+    packed[42] = getValue("runningBrakeAmount").toUInt();
 
     // Temperature and current limits
-    packed[43] = _temperatureLimitFact.rawValue().toUInt();
-    packed[44] = _currentLimitFact.rawValue().toUInt() / 2;
+    packed[43] = getValue("temperatureLimit").toUInt();
+    packed[44] = getValue("currentLimit").toUInt() / 2;
 
-    packed[45] = _sineModeStrengthFact.rawValue().toUInt();
-    packed[46] = _inputTypeFact.rawValue().toUInt();
-    packed[47] = _autoTimingFact.rawValue().toBool() ? 1 : 0;
+    packed[45] = getValue("sineModeStrength").toUInt();
+    packed[46] = getValue("inputType").toUInt();
+    packed[47] = getValue("autoTiming").toBool() ? 1 : 0;
 
     return packed;
 }
