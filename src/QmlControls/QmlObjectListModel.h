@@ -37,6 +37,7 @@ public:
     // Property accessors
     
     int         count               () const;
+    bool        isEmpty             () const { return (count() == 0); }
     bool        dirty               () const { return _dirty; }
 
     void        setDirty            (bool dirty);

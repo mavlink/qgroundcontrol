@@ -118,11 +118,13 @@ bool checkStoragePermissions()
             futurePermissionResult = QtAndroidPrivate::requestPermission(permission);
             permissionResult = futurePermissionResult.result();
             if (permissionResult == QtAndroidPrivate::PermissionResult::Denied) {
+                qCWarning(AndroidInterfaceLog) << "Denied:" << permission;
                 return false;
             }
         }
     }
 
+    qCDebug(AndroidInterfaceLog) << "checkStoragePermissions Accepted";
     return true;
 }
 

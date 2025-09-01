@@ -23,7 +23,7 @@ const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corrido
 
 CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
-    , _entryPoint               (0)
+    , _entryPointLocation       (EntryPointDefaultOrder)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])
 {
@@ -76,7 +76,7 @@ void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[corridorWidthName] =                             _corridorWidthFact.rawValue().toDouble();
-    saveObject[_jsonEntryPointKey] =                            _entryPoint;
+    saveObject[_jsonEntryPointKey] =                            static_cast<int>(_entryPointLocation);
 
     _corridorPolyline.saveToJson(saveObject);
 }
@@ -140,7 +140,7 @@ bool CorridorScanComplexItem::_loadWorker(const QJsonObject& complexObject, int 
 
     _corridorWidthFact.setRawValue(complexObject[corridorWidthName].toDouble());
 
-    _entryPoint = complexObject[_jsonEntryPointKey].toInt();
+    _entryPointLocation = static_cast<EntryPointLocation>(complexObject[_jsonEntryPointKey].toInt());
 
     _ignoreRecalc = false;
 
@@ -178,10 +178,20 @@ void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)
 
 void CorridorScanComplexItem::rotateEntryPoint(void)
 {
-    _entryPoint++;
-    if (_entryPoint > 3) {
-        _entryPoint = 0;
+    int modeAsInt = static_cast<int>(_entryPointLocation);
+
+    if (_calcTransectCount() < 2) {
+        // A single transect has no "opposite side of center" so we need to bump by 2 to get to the opposite end of the scan
+        modeAsInt += 2;
+    } else {
+        modeAsInt++;
     }
+
+    if (modeAsInt > EntryPointStartOppositeEndOppositeSide) {
+        modeAsInt = 0;
+    }
+
+    _entryPointLocation = static_cast<EntryPointLocation>(modeAsInt);
 
     _rebuildTransects();
 }
@@ -292,20 +302,20 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
 
         bool reverseTransects = false;
         bool reverseVertices = false;
-        switch (_entryPoint) {
-        case 0:
+        switch (_entryPointLocation) {
+        case EntryPointDefaultOrder:
             reverseTransects = false;
             reverseVertices = false;
             break;
-        case 1:
+        case EntryPointStartSameEndOppositeSide:
             reverseTransects = true;
             reverseVertices = false;
             break;
-        case 2:
+        case EntryPointStartOppositeEndSameSide:
             reverseTransects = false;
             reverseVertices = true;
             break;
-        case 3:
+        case EntryPointStartOppositeEndOppositeSide:
             reverseTransects = true;
             reverseVertices = true;
             break;

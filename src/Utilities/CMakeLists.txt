@@ -14,6 +14,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Platform.h
         QGC.cc
         QGC.h
+        QGCCommandLineParser.cc
+        QGCCommandLineParser.h
         QGCLogging.cc
         QGCLogging.h
         QGCLoggingCategory.cc
@@ -22,13 +24,15 @@ target_sources(${CMAKE_PROJECT_NAME}
         StateMachine.h
 )
 
-if(LINUX)
+if(NOT ANDROID AND NOT IOS)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             SignalHandler.cc
             SignalHandler.h
     )
-elseif(IOS)
+endif()
+
+if(IOS)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             MobileScreenMgr.mm
@@ -47,4 +51,3 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Geo)
-add_subdirectory(Shape)

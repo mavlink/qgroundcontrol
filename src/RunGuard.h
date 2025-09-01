@@ -36,4 +36,6 @@ private:
     const QString _key;
     const QString _lockFilePath;
     QLockFile _lockFile;
+
+    Q_DISABLE_COPY(RunGuard)
 };
