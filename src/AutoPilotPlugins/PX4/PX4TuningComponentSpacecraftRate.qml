@@ -117,8 +117,8 @@ ColumnLayout {
                     step:           0.005
                 }
                 ListElement {
-                    title:          qsTr("Integral Gain (SC_YAWRATE_D)")
-                    description:    qsTr("Generally does not need much adjustment, reduce this when seeing slow oscillations.")
+                    title:          qsTr("Derivative Gain (SC_YAWRATE_D)")
+                    description:    qsTr("Damping: increase to reduce overshoots and oscillations, but not higher than really needed.")
                     param:          "SC_YAWRATE_D"
                     min:            0.0
                     max:            10.0
@@ -134,7 +134,7 @@ ColumnLayout {
                 }
                 ListElement {
                     title:          qsTr("Integral Limit (SC_YR_INT_LIM)")
-                    description:    qsTr("Adjust if integral error is present (robot keeps spinning with 0 setpoint).")
+                    description:    qsTr("Increase if the robot still has a steady-state error at maximum integral gain.")
                     param:          "SC_YR_INT_LIM"
                     min:            0.0
                     max:            5.0

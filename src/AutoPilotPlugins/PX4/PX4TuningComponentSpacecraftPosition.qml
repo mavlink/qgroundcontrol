@@ -43,16 +43,16 @@ ColumnLayout {
                     step:           0.05
                 }
                 ListElement {
-                    title:          qsTr("Proportional gain (SPC_POS_I)")
-                    description:    qsTr("Increase for more responsiveness, reduce if the position overshoots.")
+                    title:          qsTr("Integral gain (SPC_POS_I)")
+                    description:    qsTr("Increase for faster convergence to zero steady-state error.")
                     param:          "SPC_POS_I"
                     min:            0
                     max:            2
                     step:           0.001
                 }
                 ListElement {
-                    title:          qsTr("Proportional gain (SPC_POS_I_LIM)")
-                    description:    qsTr("Increase to enlarge the allowed integral compensation.")
+                    title:          qsTr("Integral gain limit (SPC_POS_I_LIM)")
+                    description:    qsTr("Anti-windup limit for the position controller integral component.")
                     param:          "SPC_POS_I_LIM"
                     min:            0
                     max:            2
