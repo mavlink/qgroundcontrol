@@ -9,10 +9,13 @@
 
 #include "SignalHandler.h"
 
-#include <QtCore/QEvent>
-#include <QtQuick/QQuickWindow>
+#include <QtCore/QCoreApplication>
+#ifdef Q_OS_WIN
+#include <QtCore/QWinEventNotifier>
+#else
+#include <QtCore/QSocketNotifier>
+#endif
 
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(SignalHandlerLog, "qgc.utilities.signalhandler")
@@ -26,21 +29,12 @@ SignalHandler::SignalHandler(QObject* parent)
     qCDebug(SignalHandlerLog) << this;
 }
 
-void SignalHandler::_handleExitEvent()
-{
-    if (qgcApp() && qgcApp()->mainRootWindow()) {
-        (void) qgcApp()->mainRootWindow()->close();
-        QEvent ev(QEvent::Quit);
-        (void) qgcApp()->event(&ev);
-    }
-}
-
 #ifdef Q_OS_WIN
 
 #include <QtCore/QWinEventNotifier>
 #include <qt_windows.h>
 
-// Plain C thunk with Windows signature. Delegates to class static.
+/// Plain C thunk with Windows signature. Delegates to class static.
 static BOOL WINAPI _consoleCtrlHandler(DWORD evt)
 {
     return SignalHandler::consoleCtrlHandler(static_cast<unsigned long>(evt)) ? TRUE : FALSE;
@@ -94,9 +88,9 @@ int SignalHandler::setupSignalHandlers()
     _notifier = new QWinEventNotifier(static_cast<HANDLE>(_signalEvent), this);
     (void) connect(_notifier, &QWinEventNotifier::activated, this, [this]([[maybe_unused]] HANDLE handle) {
         // Auto-reset event already consumed. No drain needed.
-        if (_sigIntCount.fetch_add(1, std::memory_order_relaxed) == 0) {
+        if (!std::exchange(_sigIntTriggered, true)) {
             qCDebug(SignalHandlerLog) << "Console event—press Ctrl+C again to exit immediately";
-            _handleExitEvent();
+            QCoreApplication::quit();
         } else {
             qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
             _exit(0);
@@ -205,11 +199,11 @@ int SignalHandler::setupSignalHandlers()
 void SignalHandler::_onSigInt()
 {
     char b;
-    (void) ::read(_sigIntFd[0], &b, 1); // single-byte drain
+    [[maybe_unused]] const ssize_t n = ::read(_sigIntFd[0], &b, 1); // single-byte drain
 
-    if (_sigIntCount.fetch_add(1, std::memory_order_relaxed) == 0) {
-        qCDebug(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
-        _handleExitEvent();
+    if (!std::exchange(_sigIntTriggered, true)) {
+        qCInfo(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
+        QCoreApplication::quit();
     } else {
         qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
         _exit(0);
@@ -219,10 +213,10 @@ void SignalHandler::_onSigInt()
 void SignalHandler::_onSigTerm()
 {
     char b;
-    (void) ::read(_sigTermFd[0], &b, 1); // single-byte drain
+    [[maybe_unused]] const ssize_t n = ::read(_sigTermFd[0], &b, 1); // single-byte drain
 
     qCDebug(SignalHandlerLog) << "Caught SIGTERM—shutting down gracefully";
-    _handleExitEvent();
+    QCoreApplication::quit();
 }
 
 void SignalHandler::_intSignalHandler(int signum)

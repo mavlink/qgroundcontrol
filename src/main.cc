@@ -59,9 +59,9 @@ int main(int argc, char *argv[])
     }
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QStringLiteral(QGC_APP_NAME));
+    RunGuard guard(runguardString);
     if (!args.allowMultiple) {
-        const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QStringLiteral(QGC_APP_NAME));
-        RunGuard guard(runguardString);
         if (!guard.tryToRun()) {
             const QApplication errorApp(argc, argv);
             (void) QMessageBox::critical(nullptr,

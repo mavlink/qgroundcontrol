@@ -54,15 +54,8 @@ configure_file(
 # cmake_print_variables(QGC_INSTALLER_ROOT FILES_TO_INSTALL)
 
 if(WIN32)
-    file(DOWNLOAD https://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
-        ${INSTALLER_SOURCE_PACKAGES_QGC_DATA_DIR}/driver.msi
-        SHOW_PROGRESS
-        STATUS DRIVER_DOWNLOAD_STATUS
-        TIMEOUT 60
-    )
-#   file(COPY ${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi DESTINATION ${INSTALLER_SOURCE_PACKAGES_QGC_DATA_DIR}/driver.msi)
     set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer-${CMAKE_SYSTEM_PROCESSOR}.exe)
-# endif()
+endif()
 
 execute_process(
     COMMAND ${QT_INSTALLER_FRAMEWORK} --offline-only -c ${INSTALLER_OUTPUT_CONFIG_DIR}/config.xml -p ${INSTALLER_OUTPUT_PACKAGES_DIR} ${CMAKE_BINARY_DIR}/${QGC_INSTALLER_NAME}

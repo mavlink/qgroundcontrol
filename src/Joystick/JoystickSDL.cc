@@ -18,8 +18,10 @@
 
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "qgc.joystick.joysticksdl")
 
-JoystickSDL::JoystickSDL(const QString &name, int axisCount, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent)
-    : Joystick(name, axisCount, buttonCount, hatCount, parent)
+JoystickSDL::JoystickSDL(const QString &name, QList<int> gamepadAxes, QList<int> nonGamepadAxes, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent)
+    : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length(), buttonCount, hatCount, parent)
+    , _gamepadAxes(gamepadAxes)
+    , _nonGamepadAxes(nonGamepadAxes)
     , _isGamepad(isGamepad)
     , _instanceId(instanceId)
 {
@@ -75,13 +77,57 @@ QMap<QString, Joystick*> JoystickSDL::discover()
             continue;
         }
 
+        QList<int> gamepadAxes;
+        QSet<int> joyAxesMappedToGamepad;
+
+        if (SDL_IsGamepad(jid)) {
+            auto tmpGamepad = SDL_OpenGamepad(jid);
+            if (!tmpGamepad) {
+                qCWarning(JoystickSDLLog) << "Failed to open gamepad" << jid << SDL_GetError();
+                continue;
+            }
+
+            // Determine if this gamepad axis is one we should show to the user
+            for (int i = 0; i < SDL_GAMEPAD_AXIS_COUNT; i++) {
+                if (SDL_GamepadHasAxis(tmpGamepad, static_cast<SDL_GamepadAxis>(i))) {
+                    gamepadAxes.append(i);
+                }
+            }
+
+            // If a sdlJoystick axis is mapped to a sdlGamepad axis, then the axis is represented
+            // by both the sdlJoystick interface and the sdlGamepad interface. If this is the case,
+            // We'll only show the sdlGamepad interface version of the axis to the user.
+            int count = 0;
+            SDL_GamepadBinding **bindings = SDL_GetGamepadBindings(tmpGamepad, &count);
+            if (bindings) {
+                for (int i = 0; i < count; ++i) {
+                    SDL_GamepadBinding *binding = bindings[i];
+                    if (binding && binding->input_type == SDL_GAMEPAD_BINDTYPE_AXIS && binding->output_type == SDL_GAMEPAD_BINDTYPE_AXIS) {
+                        joyAxesMappedToGamepad.insert(binding->input.axis.axis);
+                    }
+                }
+                SDL_free(bindings);
+            } else {
+                qCWarning(JoystickSDLLog) << "Failed to get bindings for" << name << "error:" << SDL_GetError();
+            }
+
+            SDL_CloseGamepad(tmpGamepad);
+        }
+
         SDL_Joystick *tmpJoy = SDL_OpenJoystick(jid);
         if (!tmpJoy) {
             qCWarning(JoystickSDLLog) << "Failed to open joystick" << jid << SDL_GetError();
             continue;
         }
 
+        QList<int> nonGamepadAxes;
         const int axisCount = SDL_GetNumJoystickAxes(tmpJoy);
+        for (int i = 0; i < axisCount; i++) {
+            if (!joyAxesMappedToGamepad.contains(i)) {
+                nonGamepadAxes.append(i);
+            }
+        }
+
         const int buttonCount = SDL_GetNumJoystickButtons(tmpJoy);
         const int hatCount = SDL_GetNumJoystickHats(tmpJoy);
         SDL_CloseJoystick(tmpJoy);
@@ -95,7 +141,8 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         }
 
         current[name] = new JoystickSDL(name,
-                                        qMax(0, axisCount),
+                                        gamepadAxes,
+                                        nonGamepadAxes,
                                         qMax(0, buttonCount),
                                         qMax(0, hatCount),
                                         jid,
@@ -163,18 +210,17 @@ bool JoystickSDL::_update()
 bool JoystickSDL::_getButton(int idx) const
 {
     // First try the standardized gamepad set if idx is inside that set
-#ifdef SDL_GAMEPAD_BUTTON_COUNT
-    if (_sdlGamepad && idx >= 0 && idx < SDL_GAMEPAD_BUTTON_COUNT) {
-        if (SDL_GetGamepadButton(_sdlGamepad,
-             static_cast<SDL_GamepadButton>(idx)) == 1) {
+    if (_sdlGamepad && (idx >= 0) && (idx < SDL_GAMEPAD_BUTTON_COUNT)) {
+        if (SDL_GetGamepadButton(_sdlGamepad, static_cast<SDL_GamepadButton>(idx))) {
             return true;
         }
     }
-#endif
+
     // Fall back to raw joystick buttons (covers unmapped/extras)
-    if (_sdlJoystick && idx >= 0 && idx < SDL_GetNumJoystickButtons(_sdlJoystick)) {
-        return SDL_GetJoystickButton(_sdlJoystick, idx) == 1;
+    if (_sdlJoystick && (idx >= 0) && (idx < SDL_GetNumJoystickButtons(_sdlJoystick))) {
+        return SDL_GetJoystickButton(_sdlJoystick, idx);
     }
+
     return false;
 }
 
@@ -183,7 +229,12 @@ int JoystickSDL::_getAxis(int idx) const
     int axis = -1;
 
     if (_isGamepad) {
-        axis = SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(idx));
+        if (idx < _gamepadAxes.length()) {
+            axis = SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[idx]));
+        }
+        else {
+            axis = SDL_GetJoystickAxis(_sdlJoystick, _nonGamepadAxes[idx - _gamepadAxes.length()]);
+        }
     } else {
         axis = SDL_GetJoystickAxis(_sdlJoystick, idx);
     }
