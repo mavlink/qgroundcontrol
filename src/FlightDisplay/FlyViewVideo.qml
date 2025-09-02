@@ -162,7 +162,7 @@ Item {
             let y1 = Math.floor(Math.min(height, selectionRect.y + selectionRect.height));
 
             if (selectionRect.width < 15 || selectionRect.height < 15) {
-                onClicked(mouse);
+                handleClick(mouse);
                 return;
             }
 
@@ -189,13 +189,15 @@ Item {
             console.log(videoStreaming._camera.zoomEnabled)
             let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
             videoStreaming._camera.startTracking(rec, latestFrameTimestamp, true);
-            videoStreaming._camera._zoomLevel = Math.min(1.0/(x1-x0), 1.0/(y1-y0))
+            //videoStreaming._camera.zoomLevel = Math.min(1.0/(x1-x0), 1.0/(y1-y0))
             videoStreaming._camera.zoomEnabled = true
         }
 
         onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
 
-        onClicked: (mouse) => {
+        onClicked: (mouse) => handleClick(mouse)
+
+        function handleClick(mouse) {
             // If right button is clicked, change the selection mode
             if (mouse.button == Qt.RightButton) {
                 // If mode reached the highest value, put it back to zero
@@ -208,10 +210,10 @@ Item {
                 return;
             }
 
-            let x0 = Math.floor(Math.max(0, target_canvas.rect_center_x - target_canvas.rect_width / 2));
-            let y0 = Math.floor(Math.max(0, target_canvas.rect_center_y - target_canvas.rect_height / 2));
-            let x1 = Math.floor(Math.min(width, target_canvas.rect_center_x + target_canvas.rect_width / 2));
-            let y1 = Math.floor(Math.min(height, target_canvas.rect_center_y + target_canvas.rect_height / 2));
+            let x0 = Math.floor(Math.max(0, targetCanvas.rectCenterX - targetCanvas.rectWidth / 2));
+            let y0 = Math.floor(Math.max(0, targetCanvas.rectCenterY - targetCanvas.rectHeight / 2));
+            let x1 = Math.floor(Math.min(width, targetCanvas.rectCenterX + targetCanvas.rectWidth / 2));
+            let y1 = Math.floor(Math.min(height, targetCanvas.rectCenterY + targetCanvas.rectHeight / 2));
 
             //calculate offset between video stream rect and background (black stripes)
             let offset_x = (parent.width - videoStreaming.getWidth()) / 2
@@ -231,10 +233,12 @@ Item {
 
 
             //use point message if rectangle is very small
-            if (target_canvas.rect_width < 2 && target_canvas.rect_height < 2) {
+            if (targetCanvas.rectWidth < 2 && targetCanvas.rectHeight < 2) {
                 let pt  = Qt.point(targetCanvas.rectCenterX, targetCanvas.rectCenterY)
                 videoStreaming._camera.startTracking(pt,  targetCanvas.rectWidth / 2)
             } else {
+                let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
+                console.log("Latest timestamp in js: " + latestFrameTimestamp);;
                 let rec = Qt.rect(x0, y0, x1 - x0, y1 - y0)
                 videoStreaming._camera.startTracking(rec, latestFrameTimestamp)
             }
@@ -253,14 +257,14 @@ Item {
                 targetCanvas.rectHeight = Math.max(0, targetCanvas.rectHeight + Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER));
             }
 
-            target_canvas.requestPaint();
+            targetCanvas.requestPaint();
         }
 
 
         onPositionChanged: (mouse) => {
-            target_canvas.rect_center_x = mouse.x;
-            target_canvas.rect_center_y = mouse.y;
-            target_canvas.requestPaint();
+            targetCanvas.rectCenterX = mouse.x;
+            targetCanvas.rectCenterY = mouse.y;
+            targetCanvas.requestPaint();
             // Redraw selection rectangle as mouse moves
             if (flyViewVideoMouseArea.pressed) {
                 selectionRect.x = Math.min(mouse.x, startX);
@@ -271,15 +275,15 @@ Item {
         }
 
         Canvas {
-            property int rect_center_x
-            property int rect_center_y
+            property int rectCenterX
+            property int rectCenterY
 
-            property int rect_width: 100
-            property int rect_height: 100
+            property int rectWidth: 100
+            property int rectHeight: 100
 
             anchors.fill: parent
 
-            id: target_canvas
+            id: targetCanvas
             onPaint: {
                 const BORDER_WIDTH = 3;
                 const BORDER_COLOR = '#11BB11';
@@ -291,10 +295,10 @@ Item {
                    return;
                }
 
-                let rect_start_x = Math.floor(Math.max(0, rect_center_x - rect_width / 2));
-                let rect_start_y = Math.floor(Math.max(0, rect_center_y - rect_height / 2));
-                let rect_end_x = Math.floor(Math.min(width, rect_center_x + rect_width / 2));
-                let rect_end_y = Math.floor(Math.min(height, rect_center_y + rect_height / 2));
+                let rect_start_x = Math.floor(Math.max(0, rectCenterX - rectWidth / 2));
+                let rect_start_y = Math.floor(Math.max(0, rectCenterY - rectHeight / 2));
+                let rect_end_x = Math.floor(Math.min(width, rectCenterX + rectWidth / 2));
+                let rect_end_y = Math.floor(Math.min(height, rectCenterY + rectHeight / 2));
 
                 ctx.strokeStyle = BORDER_COLOR;
                 ctx.lineWidth = BORDER_WIDTH;

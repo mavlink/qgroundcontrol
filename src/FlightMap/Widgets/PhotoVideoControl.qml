@@ -27,7 +27,7 @@ Rectangle {
     height:     mainLayout.height + (_margins * 2)
     color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
     radius:     _margins
-    visible:    _camera.capturesVideo || _camera.capturesPhotos
+    visible:    true
 
     property real   _margins:                   ScreenTools.defaultFontPixelHeight / 2
     property real   _smallMargins:              ScreenTools.defaultFontPixelWidth / 2
@@ -64,15 +64,18 @@ Rectangle {
             }
 
             QGCSlider {
+                id: zoomSlider
                 Layout.alignment:   Qt.AlignHCenter
                 Layout.fillHeight:  true
                 orientation:        Qt.Vertical
-                to:                 100
+                to:                 32
                 from:               0
-                value:              _camera.zoomLevel
                 live:               true
+                value:              _camera.zoomLevel
                 onValueChanged:     _camera.zoomLevel = value
             }
+
+
         }
         
         ColumnLayout {
@@ -95,7 +98,7 @@ Rectangle {
                     height:             width / 2
                     color:              qgcPal.windowShadeLight
                     radius:             height * 0.5
-                    visible:            _camera.hasModes
+                    visible:            true
 
                     //-- Video Mode
                     Rectangle {
@@ -251,9 +254,10 @@ Rectangle {
             }
 
             ColumnLayout {
+                width: ScreenTools.defaultFontPixelWidth * 10
                 id:                 trackingControls
                 Layout.alignment:   Qt.AlignHCenter
-                spacing:            _margins
+                // spacing:            _margins
                 visible:            _camera && _camera.hasTracking
 
                 Rectangle {

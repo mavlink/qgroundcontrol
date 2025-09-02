@@ -3082,6 +3082,7 @@ void Vehicle::rebootVehicle()
 
 void Vehicle::rebootOnboardComputers()
 {
+    qWarning() << "Rebooting onboard computers";
     // There can be four different onboard computers on the vehicle, so sending the reboot command to all of them
     for (int i = 0; i < 4; ++i)
     {

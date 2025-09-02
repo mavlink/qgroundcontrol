@@ -525,6 +525,7 @@ VehicleCameraControl::setZoomLevel(qreal level)
 {
     qCDebug(CameraControlLog) << "setZoomLevel()" << level;
     if(hasZoom()) {
+        qWarning() << "Setting zoom level: " << level;
          _zoomLevel = level;
         //-- Limit
         level = std::min(std::max(level, 0.0), 100.0);
