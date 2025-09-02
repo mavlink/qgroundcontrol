@@ -102,6 +102,10 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _failureFlagsFact.setRawValue(0);
     _errorCountFact.setRawValue(0);
     _temperatureFact.setRawValue(0);
+
+    // Create the AM32EepromFactGroup if necessary
+    qDebug() << "Creating AM32EepromFactGroup for ESC" << escIndex;
+    _am32EepromFactGroup = new AM32EepromFactGroup(this, escIndex);
 }
 
 void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -131,12 +135,13 @@ void EscStatusFactGroup::_handleAm32Eeprom(Vehicle *vehicle, const mavlink_messa
         return;
     }
 
-    // Create the AM32EepromFactGroup if necessary
-    if (_am32EepromFactGroup == nullptr) {
-        qDebug() << "Creating AM32EepromFactGroup for ESC" << eeprom.index;
-        _am32EepromFactGroup = new AM32EepromFactGroup(this);
-        _am32EepromFactGroup->setEscIndex(eeprom.index);
-    }
+    // TODO: fix this
+
+    // // Create the AM32EepromFactGroup if necessary
+    // if (_am32EepromFactGroup == nullptr) {
+    //     qDebug() << "Creating AM32EepromFactGroup for ESC" << eeprom.index;
+    //     _am32EepromFactGroup = new AM32EepromFactGroup(this, eeprom.index);
+    // }
 
     if (eeprom.mode == 0) {
         // Read response - parse the EEPROM data

@@ -87,21 +87,26 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
 
-                // Add AM32 component if we have received AM32 EEPROM data
+                // // Add AM32 component if we have received AM32 EEPROM data
                 if (_vehicle->escs() && _vehicle->escs()->count() > 0) {
                     // Check if any ESC has AM32 support
-                    bool hasAM32Support = false;
-                    for (int i = 0; i < _vehicle->escs()->count(); i++) {
-                        auto esc = _vehicle->escs()->get(i);
-                        if (esc) {
-                            // Check if this ESC has am32Eeprom property
-                            QVariant am32EepromProp = esc->property("am32Eeprom");
-                            if (am32EepromProp.isValid() && !am32EepromProp.isNull()) {
-                                hasAM32Support = true;
-                                break;
-                            }
-                        }
-                    }
+
+                    // TODO:
+                    bool hasAM32Support = true;
+
+
+                    // bool hasAM32Support = false;
+                    // for (int i = 0; i < _vehicle->escs()->count(); i++) {
+                    //     auto esc = _vehicle->escs()->get(i);
+                    //     if (esc) {
+                    //         // Check if this ESC has am32Eeprom property
+                    //         QVariant am32EepromProp = esc->property("am32Eeprom");
+                    //         if (am32EepromProp.isValid() && !am32EepromProp.isNull()) {
+                    //             hasAM32Support = true;
+                    //             break;
+                    //         }
+                    //     }
+                    // }
                     
                     if (hasAM32Support) {
                         _am32Component = new AM32Component(_vehicle, this, this);
