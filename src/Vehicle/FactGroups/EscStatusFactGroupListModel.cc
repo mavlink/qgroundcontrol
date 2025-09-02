@@ -92,10 +92,6 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _addFact(&_errorCountFact);
     _addFact(&_temperatureFact);
 
-    qDebug() << "Creating AM32EepromFactGroup for ESC" << escIndex;
-    _am32EepromFactGroup = new AM32EepromFactGroup(this);
-    _am32EepromFactGroup->setEscIndex(escIndex);
-
     _idFact.setRawValue(escIndex);
     _rpmFact.setRawValue(0);
     _currentFact.setRawValue(0);
@@ -133,6 +129,13 @@ void EscStatusFactGroup::_handleAm32Eeprom(Vehicle *vehicle, const mavlink_messa
     if (eeprom.index != _idFact.rawValue().toUInt()) {
         // Only handle messages for our ESC index
         return;
+    }
+
+    // Create the AM32EepromFactGroup if necessary
+    if (_am32EepromFactGroup == nullptr) {
+        qDebug() << "Creating AM32EepromFactGroup for ESC" << eeprom.index;
+        _am32EepromFactGroup = new AM32EepromFactGroup(this);
+        _am32EepromFactGroup->setEscIndex(eeprom.index);
     }
 
     if (eeprom.mode == 0) {

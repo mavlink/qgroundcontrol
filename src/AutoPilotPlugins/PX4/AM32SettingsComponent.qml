@@ -18,8 +18,8 @@ Item {
     property var pendingValues:     ({})  // Map of setting names to values
 
     // The reference ESC is always the first selected ESC
-    property var referenceEsc:      selectedEscs.length > 0 && escStatusModel ? escStatusModel.get(selectedEscs[0]) : null
-    property var referenceFacts:     referenceEsc ? referenceEsc.am32Eeprom : null
+    property var firstEsc:           selectedEscs.length > 0 && escStatusModel ? escStatusModel.get(selectedEscs[0]) : null
+    property var firstEscFacts:     firstEsc ? firstEsc.am32Eeprom : null
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins:   ScreenTools.defaultFontPixelHeight / 2
@@ -140,10 +140,10 @@ Item {
 
     // Listen for EEPROM data updates after initialization
     Connections {
-        target: referenceFacts
+        target: firstEscFacts
         enabled: initializationComplete  // Only listen after initialization
         function onDataLoadedChanged() {
-            if (initializationComplete && referenceFacts.dataLoaded) {
+            if (initializationComplete && firstEscFacts.dataLoaded) {
                 console.info("Reference ESC data updated")
                 pendingValues = {}
                 updateSliderValues()
@@ -200,7 +200,7 @@ Item {
         }
 
         // Check if this ESC's settings match the reference ESC
-        if (referenceEsc && referenceEsc.am32Eeprom && escData.am32Eeprom.settingsMatch(referenceEsc.am32Eeprom)) {
+        if (firstEsc && firstEsc.am32Eeprom && escData.am32Eeprom.settingsMatch(firstEsc.am32Eeprom)) {
             return qgcPal.colorGreen  // Green if matches reference
         } else {
             return qgcPal.colorRed  // Red if doesn't match reference
@@ -242,8 +242,8 @@ Item {
     function updatePendingValue(factName, value) {
         // Get the original value from the reference ESC
         var originalValue = null
-        if (referenceFacts) {
-            originalValue = referenceFacts.getOriginalValue(factName)
+        if (firstEscFacts) {
+            originalValue = firstEscFacts.getOriginalValue(factName)
         }
 
         console.info("factName: ", factName)
@@ -295,8 +295,8 @@ Item {
         }
 
         // Otherwise use the value from the reference ESC
-        if (referenceFacts) {
-            return referenceFacts.getFactValue(factName)
+        if (firstEscFacts) {
+            return firstEscFacts.getFactValue(factName)
         }
 
         return null
@@ -478,7 +478,7 @@ Item {
             contentHeight:      settingsColumn.height
             contentWidth:       width
             clip:               true
-            visible:            initializationComplete && referenceFacts && referenceFacts.dataLoaded
+            visible:            initializationComplete && firstEscFacts && firstEscFacts.dataLoaded
 
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded

@@ -11,7 +11,19 @@
 #include "Vehicle.h"
 #include <QtCore/QDebug>
 
-void AM32EepromFactGroup::instantiateEepromFacts()
+AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/AM32EepromFact.json"), parent)
+{
+    // Add all facts to the group
+    _addFact(&_firmwareMajorFact);
+    _addFact(&_firmwareMinorFact);
+    _addFact(&_bootloaderVersionFact);
+    _addFact(&_eepromVersionFact);
+
+    initializeEepromFacts();
+}
+
+void AM32EepromFactGroup::initializeEepromFacts()
 {
     // QmlObjectListModel _am32_settings
     // AM32Setting(int escIndex, QString name, FactMetaData::ValueType_t type, uint8_t eepromByteIndex)
@@ -22,172 +34,53 @@ void AM32EepromFactGroup::instantiateEepromFacts()
     // 5 read-only
     // 4 reserved
     // 39 settings
-    auto setting = new AM32SettingConfig("maxRampSpeed", FactMetaData::valueTypeDouble, 5); // % duty cycle per ms (value / 10) (default 160 == 16%)
-    auto setting = new AM32SettingConfig("minDutyCycle", FactMetaData::valueTypeDouble, 6); // % min duty cycle (value / 2) (default 4 == 2%)
-    auto setting = new AM32SettingConfig("disableStickCalibration", FactMetaData::valueTypeBool, 7); // disable stick based calibration (default 0)
-    auto setting = new AM32SettingConfig("absoluteVoltageCutoff", FactMetaData::valueTypeDouble, 8); // voltage level 1 to 100 in 0.5v increments (default 10)
-    auto setting = new AM32SettingConfig("currentPidP", FactMetaData::valueTypeUint32, 9); // current PID P value x 2 (default 100 = 200)
-    auto setting = new AM32SettingConfig("currentPidI", FactMetaData::valueTypeUint32, 10); // current control I value (default 0)
-    auto setting = new AM32SettingConfig("currentPidD", FactMetaData::valueTypeUint32, 11); // current control D value x 10 (default 50 = 500)
-    auto setting = new AM32SettingConfig("activeBrakePower", FactMetaData::valueTypeUint8, 12); // 1-5 percent duty cycle (default 2)
-    auto setting = new AM32SettingConfig("directionReversed", FactMetaData::valueTypeBool, 17); // direction reversed (default 0)
-    auto setting = new AM32SettingConfig("bidirectionalMode", FactMetaData::valueTypeBool, 18); // bidirectional mode (default 0)
-    auto setting = new AM32SettingConfig("sineStartup", FactMetaData::valueTypeBool, 19); // sinusoidal startup (default 0)
-    auto setting = new AM32SettingConfig("complementaryPwm", FactMetaData::valueTypeBool, 20); // complementary pwm (default 1)
-    auto setting = new AM32SettingConfig("variablePwmFreq", FactMetaData::valueTypeBool, 21); // variable pwm frequency (default 1)
-    auto setting = new AM32SettingConfig("stuckRotorProtection", FactMetaData::valueTypeBool, 22); // stuck rotor protection (default 1)
-    auto setting = new AM32SettingConfig("timingAdvance", FactMetaData::valueTypeDouble, 23); // timing advance x0.9375, ei 16 = 15 degrees (default 26 == 24.375)
-    auto setting = new AM32SettingConfig("pwmFrequency", FactMetaData::valueTypeUint8, 24); // pwm frequency mutiples of 1k (8 to 144)(default 24 == 24khz)
-    auto setting = new AM32SettingConfig("startupPower", FactMetaData::valueTypeUint8, 25); // startup power 50-150 percent (default 100)
-    auto setting = new AM32SettingConfig("motorKv", FactMetaData::valueTypeUint32, 26); // motor KV in increments of 40 (default 55 = 2200kv)
-    auto setting = new AM32SettingConfig("motorPoles", FactMetaData::valueTypeUint8, 27); // motor poles (default 14)
-    auto setting = new AM32SettingConfig("brakeOnStop", FactMetaData::valueTypeBool, 28); // brake on stop (default 0)
-    auto setting = new AM32SettingConfig("antiStall", FactMetaData::valueTypeBool, 29); // anti stall protection, throttle boost at low rpm (default 0)
-    auto setting = new AM32SettingConfig("beepVolume", FactMetaData::valueTypeUint8, 30); // beep volume, range 0 to 11 (default 5)
-    auto setting = new AM32SettingConfig("telemetry30ms", FactMetaData::valueTypeBool, 31); // 30 Millisecond telemetry output (default 0)
-    auto setting = new AM32SettingConfig("servoLowThreshold", FactMetaData::valueTypeUint32, 32); // servo low value =  (value * 2) + 750us (default 128 == 1006)
-    auto setting = new AM32SettingConfig("servoHighThreshold", FactMetaData::valueTypeUint32, 33); // servo high value = (value * 2) + 1750us (default 128 == 1006)
-    auto setting = new AM32SettingConfig("servoNeutral", FactMetaData::valueTypeUint32, 34); // servo neutral base 1374 + value Us. IE 128 = 1500 us. (default 128 == 1500)
-    auto setting = new AM32SettingConfig("servoDeadband", FactMetaData::valueTypeUint8, 35); // servo dead band 0-100, applied to either side of neutral (default 50)
-    auto setting = new AM32SettingConfig("lowVoltageCutoff", FactMetaData::valueTypeBool, 36); // low voltage cuttoff (default 0)
-    auto setting = new AM32SettingConfig("lowVoltageThreshold", FactMetaData::valueTypeDouble, 37); // low voltage threshold, ((value + 250) / 100), (default 50 == 3.0v)
-    auto setting = new AM32SettingConfig("rcCarReversing", FactMetaData::valueTypeBool, 38); // rc car type reversing, brake on first aplication return to center to reverse (default 0)
-    auto setting = new AM32SettingConfig("hallSensors", FactMetaData::valueTypeBool, 39); // Hall sensors if equipped  (default 0)
-    auto setting = new AM32SettingConfig("sineModeRange", FactMetaData::valueTypeUint8, 40); // Sine Mode Range 5-25 percent of throttle (default 15)
-    auto setting = new AM32SettingConfig("dragBrakeStrength", FactMetaData::valueTypeUint8, 41); // Drag Brake Strength 1-10 , 10 being full strength (default 10)
-    auto setting = new AM32SettingConfig("runningBrakeLevel", FactMetaData::valueTypeUint8, 42); // amount of brake to use when the motor is running (default 10)
-    auto setting = new AM32SettingConfig("temperatureLimit", FactMetaData::valueTypeUint8, 43); // temperature limit 70-140 degrees C. above 140 disables (default 141)
-    auto setting = new AM32SettingConfig("currentLimit", FactMetaData::valueTypeUint8, 44); // current protection level (value * 2) above 100 disables (default 102 == disabled, > 200A)
-    auto setting = new AM32SettingConfig("sineModePower", FactMetaData::valueTypeUint8, 45); // sine mode strength 1-10 (default 6)
-    auto setting = new AM32SettingConfig("inputType", FactMetaData::valueTypeUint8, 46); // input type selector 1:Auto 2:Dshot 3:Servo 4:PWM 5:Serial 6:BetaFlightSafeArming (default 1)
-    auto setting = new AM32SettingConfig("autoTiming", FactMetaData::valueTypeUint8, 47); // auto timing advance (0 - 32)(degrees)(default 0)
-
-
-
-
-    for (auto f : ) {
-        _am32_settings.append(setting);
-    }
-}
-
-AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent)
-    : FactGroup(1000, QStringLiteral(":/json/Vehicle/AM32EepromFact.json"), parent)
-{
-    // Iterate over structure, create facts, call _addFact(ptr)
-
-
-    // Add all facts to the group
-    _addFact(&_firmwareMajorFact);
-    _addFact(&_firmwareMinorFact);
-    _addFact(&_bootloaderVersionFact);
-    _addFact(&_eepromVersionFact);
-
-    _addFact(&_directionReversedFact);
-    _addFact(&_bidirectionalModeFact);
-    _addFact(&_sineStartupFact);
-    _addFact(&_complementaryPwmFact);
-    _addFact(&_variablePwmFreqFact);
-    _addFact(&_stuckRotorProtectionFact);
-    _addFact(&_brakeOnStopFact);
-    _addFact(&_antiStallFact);
-    _addFact(&_telemetry30msFact);
-    _addFact(&_lowVoltageCutoffFact);
-    _addFact(&_rcCarReversingFact);
-    _addFact(&_hallSensorsFact);
-    _addFact(&_autoTimingFact);
-    _addFact(&_disableStickCalibrationFact);
-
-    _addFact(&_maxRampSpeedFact);
-    _addFact(&_minDutyCycleFact);
-    _addFact(&_timingAdvanceFact);
-    _addFact(&_pwmFrequencyFact);
-    _addFact(&_startupPowerFact);
-    _addFact(&_motorKvFact);
-    _addFact(&_motorPolesFact);
-    _addFact(&_beepVolumeFact);
-    _addFact(&_activeBrakePowerFact);
-    _addFact(&_dragBrakeStrengthFact);
-    _addFact(&_runningBrakeAmountFact);
-    _addFact(&_temperatureLimitFact);
-    _addFact(&_currentLimitFact);
-    _addFact(&_lowVoltageThresholdFact);
-    _addFact(&_sineModeRangeFact);
-    _addFact(&_sineModeStrengthFact);
-    _addFact(&_inputTypeFact);
-    _addFact(&_currentPidPFact);
-    _addFact(&_currentPidIFact);
-    _addFact(&_currentPidDFact);
-    _addFact(&_absoluteVoltageCutoffFact);
-    _addFact(&_servoLowThresholdFact);
-    _addFact(&_servoHighThresholdFact);
-    _addFact(&_servoNeutralFact);
-    _addFact(&_servoDeadbandFact);
-
-    // Initialize the byte mapping
-    _initializeByteMapping();
-}
-
-void AM32EepromFactGroup::_initializeByteMapping()
-{
-    // Build the name-to-fact map for all facts
-    auto addToMaps = [this](Fact* fact, int byteIndex = -1) {
-        _factsByName[fact->name()] = fact;
-        if (byteIndex >= 0) {
-            _factToByteIndex[fact] = byteIndex;
-        }
+    // AM32SettingConfig configuration_array[39] {
+    AM32SettingConfig configuration_array[] {
+        { "maxRampSpeed", FactMetaData::valueTypeDouble, 5 }, // % duty cycle per ms (value / 10) (default 160 == 16%)
+        { "minDutyCycle", FactMetaData::valueTypeDouble, 6 }, // % min duty cycle (value / 2) (default 4 == 2%)
+        { "disableStickCalibration", FactMetaData::valueTypeBool, 7 }, // disable stick based calibration (default 0)
+        { "absoluteVoltageCutoff", FactMetaData::valueTypeDouble, 8 }, // voltage level 1 to 100 in 0.5v increments (default 10)
+        { "currentPidP", FactMetaData::valueTypeUint32, 9 }, // current PID P value x 2 (default 100 = 200)
+        { "currentPidI", FactMetaData::valueTypeUint32, 10 }, // current control I value (default 0)
+        { "currentPidD", FactMetaData::valueTypeUint32, 11 }, // current control D value x 10 (default 50 = 500)
+        { "activeBrakePower", FactMetaData::valueTypeUint8, 12 }, // 1-5 percent duty cycle (default 2)
+        { "directionReversed", FactMetaData::valueTypeBool, 17 }, // direction reversed (default 0)
+        { "bidirectionalMode", FactMetaData::valueTypeBool, 18 }, // bidirectional mode (default 0)
+        { "sineStartup", FactMetaData::valueTypeBool, 19 }, // sinusoidal startup (default 0)
+        { "complementaryPwm", FactMetaData::valueTypeBool, 20 }, // complementary pwm (default 1)
+        { "variablePwmFreq", FactMetaData::valueTypeBool, 21 }, // variable pwm frequency (default 1)
+        { "stuckRotorProtection", FactMetaData::valueTypeBool, 22 }, // stuck rotor protection (default 1)
+        { "timingAdvance", FactMetaData::valueTypeDouble, 23 }, // timing advance x0.9375, ei 16 = 15 degrees (default 26 == 24.375)
+        { "pwmFrequency", FactMetaData::valueTypeUint8, 24 }, // pwm frequency mutiples of 1k (8 to 144)(default 24 == 24khz)
+        { "startupPower", FactMetaData::valueTypeUint8, 25 }, // startup power 50-150 percent (default 100)
+        { "motorKv", FactMetaData::valueTypeUint32, 26 }, // motor KV in increments of 40 (default 55 = 2200kv)
+        { "motorPoles", FactMetaData::valueTypeUint8, 27 }, // motor poles (default 14)
+        { "brakeOnStop", FactMetaData::valueTypeBool, 28 }, // brake on stop (default 0)
+        { "antiStall", FactMetaData::valueTypeBool, 29 }, // anti stall protection, throttle boost at low rpm (default 0)
+        { "beepVolume", FactMetaData::valueTypeUint8, 30 }, // beep volume, range 0 to 11 (default 5)
+        { "telemetry30ms", FactMetaData::valueTypeBool, 31 }, // 30 Millisecond telemetry output (default 0)
+        { "servoLowThreshold", FactMetaData::valueTypeUint32, 32 }, // servo low value =  (value * 2) + 750us (default 128 == 1006)
+        { "servoHighThreshold", FactMetaData::valueTypeUint32, 33 }, // servo high value = (value * 2) + 1750us (default 128 == 1006)
+        { "servoNeutral", FactMetaData::valueTypeUint32, 34 }, // servo neutral base 1374 + value Us. IE 128 = 1500 us. (default 128 == 1500)
+        { "servoDeadband", FactMetaData::valueTypeUint8, 35 }, // servo dead band 0-100, applied to either side of neutral (default 50)
+        { "lowVoltageCutoff", FactMetaData::valueTypeBool, 36 }, // low voltage cuttoff (default 0)
+        { "lowVoltageThreshold", FactMetaData::valueTypeDouble, 37 }, // low voltage threshold, ((value + 250) / 100), (default 50 == 3.0v)
+        { "rcCarReversing", FactMetaData::valueTypeBool, 38 }, // rc car type reversing, brake on first aplication return to center to reverse (default 0)
+        { "hallSensors", FactMetaData::valueTypeBool, 39 }, // Hall sensors if equipped  (default 0)
+        { "sineModeRange", FactMetaData::valueTypeUint8, 40 }, // Sine Mode Range 5-25 percent of throttle (default 15)
+        { "dragBrakeStrength", FactMetaData::valueTypeUint8, 41 }, // Drag Brake Strength 1-10 , 10 being full strength (default 10)
+        { "runningBrakeLevel", FactMetaData::valueTypeUint8, 42 }, // amount of brake to use when the motor is running (default 10)
+        { "temperatureLimit", FactMetaData::valueTypeUint8, 43 }, // temperature limit 70-140 degrees C. above 140 disables (default 141)
+        { "currentLimit", FactMetaData::valueTypeUint8, 44 }, // current protection level (value * 2) above 100 disables (default 102 == disabled, > 200A)
+        { "sineModePower", FactMetaData::valueTypeUint8, 45 }, // sine mode strength 1-10 (default 6)
+        { "inputType", FactMetaData::valueTypeUint8, 46 }, // input type selector 1:Auto 2:Dshot 3:Servo 4:PWM 5:Serial 6:BetaFlightSafeArming (default 1)
+        { "autoTiming", FactMetaData::valueTypeUint8, 47 } // auto timing advance (0 - 32)(degrees)(default 0)
     };
 
-    // Read-only facts (no byte index)
-    addToMaps(&_firmwareMajorFact);
-    addToMaps(&_firmwareMinorFact);
-    addToMaps(&_bootloaderVersionFact);
-    addToMaps(&_eepromVersionFact);
-
-    // Editable facts with their byte indices
-    const QList<ByteMapping> mappings = {
-        {&_maxRampSpeedFact, BYTE_MAX_RAMP_SPEED},
-        {&_minDutyCycleFact, BYTE_MIN_DUTY_CYCLE},
-        {&_disableStickCalibrationFact, BYTE_STICK_CALIBRATION},
-        {&_absoluteVoltageCutoffFact, BYTE_VOLTAGE_CUTOFF},
-        {&_currentPidPFact, BYTE_CURRENT_PID_P},
-        {&_currentPidIFact, BYTE_CURRENT_PID_I},
-        {&_currentPidDFact, BYTE_CURRENT_PID_D},
-        {&_activeBrakePowerFact, BYTE_ACTIVE_BRAKE_POWER},
-        {&_directionReversedFact, BYTE_DIR_REVERSED},
-        {&_bidirectionalModeFact, BYTE_BI_DIRECTION},
-        {&_sineStartupFact, BYTE_USE_SINE_START},
-        {&_complementaryPwmFact, BYTE_COMP_PWM},
-        {&_variablePwmFreqFact, BYTE_VARIABLE_PWM},
-        {&_stuckRotorProtectionFact, BYTE_STUCK_ROTOR},
-        {&_timingAdvanceFact, BYTE_TIMING_ADVANCE},
-        {&_pwmFrequencyFact, BYTE_PWM_FREQUENCY},
-        {&_startupPowerFact, BYTE_STARTUP_POWER},
-        {&_motorKvFact, BYTE_MOTOR_KV},
-        {&_motorPolesFact, BYTE_MOTOR_POLES},
-        {&_brakeOnStopFact, BYTE_BRAKE_ON_STOP},
-        {&_antiStallFact, BYTE_ANTI_STALL},
-        {&_beepVolumeFact, BYTE_BEEP_VOLUME},
-        {&_telemetry30msFact, BYTE_TELEMETRY_30MS},
-        {&_servoLowThresholdFact, BYTE_SERVO_LOW},
-        {&_servoHighThresholdFact, BYTE_SERVO_HIGH},
-        {&_servoNeutralFact, BYTE_SERVO_NEUTRAL},
-        {&_servoDeadbandFact, BYTE_SERVO_DEADBAND},
-        {&_lowVoltageCutoffFact, BYTE_LOW_VOLTAGE_CUTOFF},
-        {&_lowVoltageThresholdFact, BYTE_LOW_VOLTAGE_THRESHOLD},
-        {&_rcCarReversingFact, BYTE_RC_CAR_REVERSING},
-        {&_hallSensorsFact, BYTE_HALL_SENSORS},
-        {&_sineModeRangeFact, BYTE_SINE_MODE_RANGE},
-        {&_dragBrakeStrengthFact, BYTE_DRAG_BRAKE},
-        {&_runningBrakeAmountFact, BYTE_RUNNING_BRAKE},
-        {&_temperatureLimitFact, BYTE_TEMP_LIMIT},
-        {&_currentLimitFact, BYTE_CURRENT_LIMIT},
-        {&_sineModeStrengthFact, BYTE_SINE_MODE_STRENGTH},
-        {&_inputTypeFact, BYTE_INPUT_TYPE},
-        {&_autoTimingFact, BYTE_AUTO_TIMING}
-    };
-
-    for (const auto& mapping : mappings) {
-        addToMaps(mapping.fact, mapping.byteIndex);
+    for (auto config : configuration_array) {
+        auto setting = new AM32Setting(_escIndex, config);
+        _addFact(setting->fact()); // Add fact to the FactGroup list
+        _am32_settings.append(setting); // Add setting to the AM32Setting list
     }
 }
 
@@ -201,18 +94,18 @@ void AM32EepromFactGroup::setEscIndex(int index)
 
 void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
 {
-    if (length < 48) {
-        qWarning() << "AM32 EEPROM data too short:" << length;
+    if (length != 48) {
+        qWarning() << "AM32 EEPROM data length mismatch:" << length;
         return;
     }
 
     // Store original data for comparison
     _originalEepromData = QByteArray(reinterpret_cast<const char*>(data), length);
 
-    // Clear pending changes since we're loading fresh data
-    _pendingChanges.clear();
-    _modifiedBytes.clear();
-    _originalValues.clear();
+    // // Clear pending changes since we're loading fresh data
+    // _pendingChanges.clear();
+    // _modifiedBytes.clear();
+    // _originalValues.clear();
 
     // Parse read-only info
     _eepromVersionFact.setRawValue(data[1]);
@@ -220,11 +113,24 @@ void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
     _firmwareMajorFact.setRawValue(data[3]);
     _firmwareMinorFact.setRawValue(data[4]);
 
-    // Store original values for read-only facts
-    _originalValues["eepromVersion"] = data[1];
-    _originalValues["bootloaderVersion"] = data[2];
-    _originalValues["firmwareMajor"] = data[3];
-    _originalValues["firmwareMinor"] = data[4];
+    // Iterate over the AM32Settings list and update each settings
+    for (auto s : _am32_settings) {
+        uint8_t index = s->byteIndex();
+
+        if (index >= length) {
+            // NOTE: this should never happen
+            qDebug() << "Setting" << s->name() << "index out of range";
+            continue;
+        }
+
+        // Update the rawValue and Fact and clear pending changes
+        s->updateFromEeprom(data[index]);
+    }
+
+
+
+
+
 
     // Parse configurable settings with proper conversions
     double maxRampSpeed = data[5] / 10.0;  // value/10 percent per ms
