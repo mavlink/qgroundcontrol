@@ -1,0 +1,21 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+    [
+        {
+            "name":             "flowRate",
+            "shortDesc":        "Flow rate in liters per minute",
+            "type":             "double",
+            "decimalPlaces":    2,
+            "units":            "lpm"
+        },
+        {
+            "name":             "pulseCount",
+            "shortDesc":        "Number of pulses Count in 1second",
+            "type":             "uint32"
+
+            
+        }
+    ]
+}

@@ -18,6 +18,10 @@ qt_add_qml_module(ToolbarModule
         MultiVehicleSelector.qml
         RCRSSIIndicator.qml
         RemoteIDIndicator.qml
+        FlowIndicator.qml
+        FlowIndicatorPage.qml
+        DistanceIndicator.qml
+        DistanceIndicatorPage.qml
         RTKGPSIndicator.qml
         TelemetryRSSIIndicator.qml
         VehicleGPSIndicator.qml
