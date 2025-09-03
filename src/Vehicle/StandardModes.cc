@@ -69,7 +69,7 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
                 break;
         }
 
-        if (name == "Takeoff" || name == "VTOL Takeoff" || name == "Orbit" || name == "Land" || name == "Return") { // These are exposed in the UI as separate buttons
+        if (name == "Takeoff" || name == "VTOL Takeoff" || name == "Orbit" || name == "Land" || name == "Safe Recovery") { // These are exposed in the UI as separate buttons
             cannotBeSet = true;
         }
 
