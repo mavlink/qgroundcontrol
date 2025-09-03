@@ -21,42 +21,41 @@ Item {
     // TODO: swap order of label and settingName
     // Slider configurations matching your exact layout
     readonly property var motorSliderConfigs: [
-        {settingName: "timingAdvance", label: qsTr("Timing advance")},
-        {settingName: "startupPower", label: qsTr("Startup power")},
-        {settingName: "motorKv", label: qsTr("Motor KV")},
-        {settingName: "motorPoles", label: qsTr("Motor poles")},
-        {settingName: "beepVolume", label: qsTr("Beeper volume")},
-        {settingName: "pwmFrequency", label: qsTr("PWM Frequency")}
+        { label: qsTr("Timing advance"), settingName: "timingAdvance" },
+        { label: qsTr("Startup power"), settingName: "startupPower" },
+        { label: qsTr("Motor KV"), settingName: "motorKv" },
+        { label: qsTr("Motor poles"), settingName: "motorPoles" },
+        { label: qsTr("Beeper volume"), settingName: "beepVolume" },
+        { label: qsTr("PWM Frequency"), settingName: "pwmFrequency" },
     ]
 
     readonly property var extendedSliderConfigs: [
-        {settingName: "maxRampSpeed", label: qsTr("Ramp rate")},
-        {settingName: "minDutyCycle", label: qsTr("Minimum duty cycle")}
+        { label: qsTr("Ramp rate"), settingName: "maxRampSpeed" },
+        { label: qsTr("Minimum duty cycle"), settingName: "minDutyCycle" },
     ]
 
     readonly property var limitsSliderConfigs: [
-        {settingName: "temperatureLimit", label: qsTr("Temperature limit")},
-        {settingName: "currentLimit", label: qsTr("Current limit")},
-        {settingName: "lowVoltageThreshold", label: qsTr("Low voltage threshold")},
-        {settingName: "absoluteVoltageCutoff", label: qsTr("Absolute voltage cutoff")}
+        { label: qsTr("Temperature limit"), settingName: "temperatureLimit" },
+        { label: qsTr("Current limit"), settingName: "currentLimit" },
+        { label: qsTr("Low voltage threshold"), settingName: "lowVoltageThreshold" },
+        { label: qsTr("Absolute voltage cutoff"), settingName: "absoluteVoltageCutoff" },
     ]
 
     readonly property var currentControlSliderConfigs: [
-        {settingName: "currentPidP", label: qsTr("Current P")},
-        {settingName: "currentPidI", label: qsTr("Current I")},
-        {settingName: "currentPidD", label: qsTr("Current D")}
+        { label: qsTr("Current P"), settingName: "currentPidP" },
+        { label: qsTr("Current I"), settingName: "currentPidI" },
+        { label: qsTr("Current D"), settingName: "currentPidD" },
     ]
 
     Component.onCompleted: {
-        console.log("Component.onCompleted, eeproms.requestReadAll")
         eeproms.requestReadAll(vehicle)
-        selectedEeproms = selectAllEeproms()
+        selectAllEeproms()
     }
 
     Connections {
         target: eeproms
         onCountChanged: {
-            selectedEeproms = selectAllEeproms()
+            selectAllEeproms()
         }
     }
 
@@ -65,7 +64,7 @@ Item {
         for (var i = 0; i < eeproms.count; i++) {
             selected.push(i)
         }
-        return selected
+        selectedEeproms = selected
     }
 
     function getEscBorderColor(index) {
@@ -111,17 +110,6 @@ Item {
 
         console.log("Updated selected");
         selectedEeproms = newSelection
-    }
-
-    function hasUnsavedChange(settingName) {
-        for (var i = 0; i < selectedEeproms.length; i++) {
-            var esc = eeproms.get(selectedEeproms[i])
-            if (esc && esc.settings[settingName] &&
-                esc.settings[settingName].hasPendingChanges) {
-                return true
-            }
-        }
-        return false
     }
 
     function hasAnyUnsavedChanges() {
@@ -182,7 +170,6 @@ Item {
         QGCLabel {
             id: escSelectionLabel
             Layout.alignment: Qt.AlignHCenter
-            // anchors.horizontalCenter:
             text: qsTr("Select ESCS to configure")
             font.pointSize: ScreenTools.mediumFontPointSize
             font.italic: true
@@ -195,12 +182,10 @@ Item {
             // ESC Selection Row
             Row {
                 id: escSelectionRow
-                // Layout.alignment: Qt.AlignHCenter
                 spacing: _margins / 2
                 visible: eeproms && eeproms.count > 0
 
                 Repeater {
-                    // model: eeproms ? eeproms.count : 0
                     model: eeproms ? eeproms : null
 
                     Rectangle {
@@ -247,11 +232,14 @@ Item {
 
             // Action Buttons
             ColumnLayout {
-                // id: buttonsColumn
-                // anchors.verticalCenter: escSelectionRow.verticalCenter
                 Layout.fillWidth: true
-                layoutDirection: Qt.RightToLeft
+                // layoutDirection: Qt.RightToLeft
                 spacing: _margins / 2
+
+                QGCButton {
+                    text: qsTr("Read Settings")
+                    onClicked: eeproms.requestReadAll(vehicle);
+                }
 
                 QGCButton {
                     text: qsTr("Write Settings")
@@ -259,13 +247,8 @@ Item {
                     highlighted: hasAnyUnsavedChanges()
                     onClicked: writeSettings()
                 }
-
-                QGCButton {
-                    text: qsTr("Read Settings")
-                    onClicked: eeproms.requestReadAll(vehicle);
-                }
             }
-        }
+        } // RowLayout
 
         // Settings Panel
         Flickable {
@@ -293,7 +276,6 @@ Item {
 
                         // Left column with checkboxes
                         ColumnLayout {
-                            // id: columnLayout1
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins / 2
 
@@ -304,6 +286,7 @@ Item {
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                 onClicked: updateSetting(setting.name, checked)
                             }
+
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.antiStall : null
                                 text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
@@ -311,6 +294,7 @@ Item {
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                 onClicked: updateSetting(setting.name, checked)
                             }
+
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.hallSensors : null
                                 text: qsTr("Use hall sensors") + (setting && setting.hasPendingChanges ? " *" : "")
@@ -318,6 +302,7 @@ Item {
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                 onClicked: updateSetting(setting.name, checked)
                             }
+
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.telemetry30ms : null
                                 text: qsTr("30ms interval telemetry") + (setting && setting.hasPendingChanges ? " *" : "")
@@ -325,6 +310,7 @@ Item {
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                 onClicked: updateSetting(setting.name, checked)
                             }
+
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.variablePwmFreq : null
                                 text: qsTr("Variable PWM") + (setting && setting.hasPendingChanges ? " *" : "")
@@ -332,6 +318,7 @@ Item {
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                 onClicked: updateSetting(setting.name, checked)
                             }
+
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.complementaryPwm : null
                                 text: qsTr("Complementary PWM") + (setting && setting.hasPendingChanges ? " *" : "")
@@ -339,6 +326,7 @@ Item {
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                 onClicked: updateSetting(setting.name, checked)
                             }
+
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.autoTiming : null
                                 text: qsTr("Auto timing advance") + (setting && setting.hasPendingChanges ? " *" : "")
@@ -373,14 +361,13 @@ Item {
                                         anchors.centerIn: parent
                                         label: modelData.label
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
                             }
                         }
                     }
-                }
+                } // Motor Group
 
                 // Extended Settings Group
                 SettingsGroupLayout {
@@ -392,7 +379,6 @@ Item {
 
                         // Left column with checkbox
                         ColumnLayout {
-                            // id: columnLayout2
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins
                             QGCCheckBox {
@@ -429,14 +415,13 @@ Item {
                                         anchors.centerIn: parent
                                         label: modelData.label
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
                             }
                         }
                     }
-                }
+                } // Extended Settings Group
 
                 // Limits Group
                 SettingsGroupLayout {
@@ -448,7 +433,6 @@ Item {
 
                         // Left column with checkbox
                         ColumnLayout {
-                            // id: columnLayout3
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins
 
@@ -485,14 +469,13 @@ Item {
                                         anchors.centerIn: parent
                                         label: modelData.label
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
                             }
                         }
                     }
-                }
+                } // Limits Group
 
                 // Current Control Group
                 SettingsGroupLayout {
@@ -510,8 +493,8 @@ Item {
 
                             Rectangle {
                                 color: "transparent"
-                                // border.color: qgcPal.groupBorder
-                                // border.width: 1
+                                border.color: qgcPal.groupBorder
+                                border.width: 1
                                 radius: 4
                                 implicitWidth: sliderColumn.width + _groupMargins * 2
                                 implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -521,14 +504,13 @@ Item {
                                     anchors.centerIn: parent
                                     label: modelData.label
                                     setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-
                                     onValueChanged: updateSetting(setting.name, value)
                                 }
                             }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+                        } // Repeater
+                    } // GridLayout
+                } // Current Control Group
+            } // ColumnLayout
+        } // Flickable
+    } // ColumnLayout
+} // Item
