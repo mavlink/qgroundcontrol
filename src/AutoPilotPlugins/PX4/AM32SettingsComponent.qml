@@ -155,6 +155,15 @@ Item {
         }
     }
 
+    function updateSetting(settingName, value) {
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc && esc.settings[settingName]) {
+                esc.settings[settingName].setPendingValue(value)
+            }
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: _margins
@@ -217,6 +226,9 @@ Item {
                             font.pointSize: ScreenTools.smallFontPointSize
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
+
+                        // TODO: show bootloader version
+                        // TODO: guard this whole thing on eeprom version
                     }
                 }
             }
@@ -257,49 +269,56 @@ Item {
                                 text: qsTr("Stuck rotor protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.antiStall : null
                                 text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.hallSensors : null
                                 text: qsTr("Use hall sensors") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.telemetry30ms : null
                                 text: qsTr("30ms interval telemetry") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.variablePwmFreq : null
                                 text: qsTr("Variable PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.complementaryPwm : null
                                 text: qsTr("Complementary PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.autoTiming : null
                                 text: qsTr("Auto timing advance") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
 
                             Item { Layout.fillHeight: true } // Spacer
@@ -336,7 +355,8 @@ Item {
                                         decimalPlaces: fact ? fact.decimalPlaces : 0
                                         value: fact ? fact.rawValue : 0
 
-                                        onValueChanged: if (setting) setting.setPendingValue(value)
+                                        // onValueChanged: if (setting) setting.setPendingValue(value)
+                                        onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
                             }
@@ -362,7 +382,8 @@ Item {
                                 text: qsTr("Disable stick calibration") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
 
                             Item { Layout.fillHeight: true } // Spacer
@@ -399,7 +420,8 @@ Item {
                                         decimalPlaces: fact ? fact.decimalPlaces : 0
                                         value: fact ? fact.rawValue : 0
 
-                                        onValueChanged: if (setting) setting.setPendingValue(value)
+                                        // onValueChanged: if (setting) setting.setPendingValue(value)
+                                        onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
                             }
@@ -426,7 +448,8 @@ Item {
                                 text: qsTr("Low voltage cut off") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: if (setting) setting.setPendingValue(checked)
+                                // onClicked: if (setting) setting.setPendingValue(checked)
+                                onClicked: updateSetting(setting.name, checked)
                             }
                             Item { Layout.fillHeight: true } // Spacer
                         }
@@ -462,7 +485,8 @@ Item {
                                         decimalPlaces: fact ? fact.decimalPlaces : 0
                                         value: fact ? fact.rawValue : 0
 
-                                        onValueChanged: if (setting) setting.setPendingValue(value)
+                                        // onValueChanged: if (setting) setting.setPendingValue(value)
+                                        onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
                             }
@@ -505,7 +529,8 @@ Item {
                                     decimalPlaces: fact ? fact.decimalPlaces : 0
                                     value: fact ? fact.rawValue : 0
 
-                                    onValueChanged: if (setting) setting.setPendingValue(value)
+                                    // onValueChanged: if (setting) setting.setPendingValue(value)
+                                    onValueChanged: updateSetting(setting.name, value)
                                 }
                             }
                         }

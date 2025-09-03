@@ -59,7 +59,7 @@ uint8_t AM32Setting::getRawValueForTransmit() const
 
 void AM32Setting::discardChanges()
 {
-    qDebug() << "discardChanges";
+    // qDebug() << "discardChanges";
     // Revert fact to original value
     _fact->setRawValue(_fromRaw(_rawValue));
     // pendingChangesChanged signal will be emitted via the connection
@@ -168,7 +168,7 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
 
 FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t id)
 {
-    qDebug() << "_createFactGroupWithId: " << id;
+    // qDebug() << "_createFactGroupWithId: " << id;
     return new AM32EepromFactGroup(id, this);
 }
 
@@ -506,7 +506,7 @@ void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
 
 void AM32EepromFactGroup::discardChanges()
 {
-    qDebug() << "discardChanges";
+    // qDebug() << "discardChanges";
     for (auto* setting : _settings) {
         setting->discardChanges();
     }
