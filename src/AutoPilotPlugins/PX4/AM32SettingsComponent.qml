@@ -17,6 +17,11 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins: ScreenTools.defaultFontPixelHeight / 2
 
+    // TODO: each of these config arrays should be a: QObject AM32Setting
+
+    // This will allow us to get a direct reference to the object to use as the modelData and we can hook
+    // directly into the Q_PROPERTY for name/value
+
     // Slider configurations matching your exact layout
     readonly property var motorSliderConfigs: [
         {settingName: "timingAdvance", label: qsTr("Timing advance")},
@@ -264,7 +269,7 @@ Item {
             }
         }
 
-        // Settings Panel - Your exact layout
+        // Settings Panel
         Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -364,14 +369,18 @@ Item {
 
                                     AM32SettingSlider {
                                         id: sliderColumn
+
                                         anchors.centerIn: parent
+
                                         factName: modelData.settingName
                                         label: modelData.label + (hasUnsavedChange(modelData.settingName) ? " *" : "")
+
                                         from: settingFact ? settingFact.min : 0
                                         to: settingFact ? settingFact.max : 100
                                         stepSize: settingFact ? settingFact.increment : 1
                                         decimalPlaces: settingFact ? settingFact.decimalPlaces : 0
                                         snapToStep: true
+
                                         value: getSettingValue(modelData.settingName) || 0
                                         enabled: modelData.settingName !== "pwmFrequency" || variablePwmCheckbox.checked
 

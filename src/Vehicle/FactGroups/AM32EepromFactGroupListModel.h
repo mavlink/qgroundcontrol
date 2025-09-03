@@ -11,7 +11,7 @@
 
 #include "QGCMAVLink.h"
 #include "FactGroupListModel.h"
-#include <QtCore/QVariantMap>
+#include <QQmlPropertyMap>
 #include <functional>
 
 class Vehicle;
@@ -108,6 +108,9 @@ class AM32EepromFactGroup : public FactGroupWithId
     Q_PROPERTY(Fact* bootloaderVersion READ bootloaderVersion CONSTANT)
     Q_PROPERTY(Fact* eepromVersion READ eepromVersion CONSTANT)
 
+    // Dynamic qml binding map for AM32Settings
+    Q_PROPERTY(QQmlPropertyMap* settings READ settings CONSTANT)
+
     Q_PROPERTY(bool dataLoaded READ dataLoaded NOTIFY dataLoadedChanged)
     Q_PROPERTY(bool hasUnsavedChanges READ hasUnsavedChanges NOTIFY hasUnsavedChangesChanged)
     Q_PROPERTY(uint8_t escIndex READ escIndex CONSTANT)
@@ -117,6 +120,8 @@ public:
 
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
     void _handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
+
+    QQmlPropertyMap* settings() { return _settingsMap; }
 
     // Read-only info facts
     Fact* firmwareMajor() { return &_firmwareMajorFact; }
@@ -161,7 +166,8 @@ private:
     Fact _firmwareMinorFact = Fact(0, QStringLiteral("firmwareMinor"), FactMetaData::valueTypeUint8);
 
     // Settings list
-    QList<AM32Setting*> _am32_settings;
+    QQmlPropertyMap* _settingsMap;
+    QList<AM32Setting*> _settings;
 
     // State
     bool _dataLoaded = false;

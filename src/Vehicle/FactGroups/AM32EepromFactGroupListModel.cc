@@ -71,6 +71,7 @@ void AM32Setting::discardChanges()
 
 AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
     : FactGroupListModel("am32Eeprom", parent)
+    , _settingsMap(new QQmlPropertyMap(this))
 {
 
 }
@@ -143,7 +144,7 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
         _firmwareMinorFact.setRawValue(eeprom.data[4]);
 
         // Update all settings
-        for (AM32Setting* setting : _am32_settings) {
+        for (AM32Setting* setting : _settings) {
             uint8_t index = setting->byteIndex();
             if (index < eeprom.length) {
                 // qDebug() << "Updating " << setting->name() << "(" << index << ")" << "to" << eeprom.data[index];
@@ -350,17 +351,22 @@ void AM32EepromFactGroup::initializeEepromFacts()
         auto setting = new AM32Setting(_escIndex, config);
 
         // Monitor changes for each setting
-        connect(setting, &AM32Setting::pendingChangesChanged,
-                this, &AM32EepromFactGroup::updateHasUnsavedChanges);
+        // connect(setting, &AM32Setting::pendingChangesChanged,
+        //         this, &AM32EepromFactGroup::updateHasUnsavedChanges);
 
         _addFact(setting->fact());
-        _am32_settings.append(setting);
+        _settings.append(setting);
+        _settingsMap->insert(config.name, QVariant::fromValue(setting));
+
+        connect(setting, &AM32Setting::pendingChangesChanged, [=]() {
+            emit _settingsMap->valueChanged(config.name, QVariant::fromValue(setting));
+        });
     }
 }
 
 AM32Setting* AM32EepromFactGroup::getSetting(const QString& name)
 {
-    for (auto* setting : _am32_settings) {
+    for (auto* setting : _settings) {
         if (setting->name() == name) {
             return setting;
         }
@@ -370,7 +376,7 @@ AM32Setting* AM32EepromFactGroup::getSetting(const QString& name)
 
 bool AM32EepromFactGroup::hasUnsavedChanges() const
 {
-    for (const auto* setting : _am32_settings) {
+    for (const auto* setting : _settings) {
         if (setting->hasPendingChanges()) {
             return true;
         }
@@ -395,7 +401,7 @@ bool AM32EepromFactGroup::settingsMatch(AM32EepromFactGroup* other) const
     }
 
     // Compare all settings
-    for (const auto* mySetting : _am32_settings) {
+    for (const auto* mySetting : _settings) {
         auto* otherSetting = other->getSetting(mySetting->name());
 
         if (!otherSetting ||
@@ -417,7 +423,7 @@ QByteArray AM32EepromFactGroup::getModifiedEepromData() const
     }
 
     // Update only modified settings
-    for (const auto* setting : _am32_settings) {
+    for (const auto* setting : _settings) {
         if (setting->hasPendingChanges()) {
             uint8_t index = setting->byteIndex();
             if (index < data.size()) {
@@ -435,7 +441,7 @@ void AM32EepromFactGroup::calculateWriteMask(uint32_t writeMask[6]) const
     memset(writeMask, 0, 6 * sizeof(uint32_t));
 
     // Set bits only for modified bytes
-    for (const auto* setting : _am32_settings) {
+    for (const auto* setting : _settings) {
         if (setting->hasPendingChanges()) {
             uint8_t byteIndex = setting->byteIndex();
             if (byteIndex < 192) {
@@ -499,7 +505,7 @@ void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
 void AM32EepromFactGroup::discardChanges()
 {
     qDebug() << "discardChanges";
-    for (auto* setting : _am32_settings) {
+    for (auto* setting : _settings) {
         setting->discardChanges();
     }
     updateHasUnsavedChanges();
