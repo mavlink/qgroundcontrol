@@ -17,11 +17,8 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins: ScreenTools.defaultFontPixelHeight / 2
 
-    // TODO: each of these config arrays should be a: QObject AM32Setting
 
-    // This will allow us to get a direct reference to the object to use as the modelData and we can hook
-    // directly into the Q_PROPERTY for name/value
-
+    // TODO: swap order of label and settingName
     // Slider configurations matching your exact layout
     readonly property var motorSliderConfigs: [
         {settingName: "timingAdvance", label: qsTr("Timing advance")},
@@ -167,7 +164,7 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: _margins
-        spacing: _margins
+        spacing: _margins / 2
 
         // No ESCs available message
         Item {
@@ -183,62 +180,89 @@ Item {
         }
 
         QGCLabel {
-            // anchors.horizontalCenter: escSelectionRow.horizontalCenter
+            id: escSelectionLabel
             Layout.alignment: Qt.AlignHCenter
+            // anchors.horizontalCenter:
             text: qsTr("Select ESCS to configure")
             font.pointSize: ScreenTools.mediumFontPointSize
             font.italic: true
         }
 
-        // ESC Selection Row
-        Row {
-            id: escSelectionRow
+        RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: _margins / 2
-            visible: eeproms && eeproms.count > 0
+            spacing: _margins
 
-            Repeater {
-                // model: eeproms ? eeproms.count : 0
-                model: eeproms ? eeproms : null
+            // ESC Selection Row
+            Row {
+                id: escSelectionRow
+                // Layout.alignment: Qt.AlignHCenter
+                spacing: _margins / 2
+                visible: eeproms && eeproms.count > 0
 
-                Rectangle {
-                    width: ScreenTools.defaultFontPixelWidth * 12
-                    height: ScreenTools.defaultFontPixelHeight * 4
-                    radius: ScreenTools.defaultFontPixelHeight / 4
-                    border.width: 3
-                    border.color: getEscBorderColor(index)
-                    color: qgcPal.window
+                Repeater {
+                    // model: eeproms ? eeproms.count : 0
+                    model: eeproms ? eeproms : null
 
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: toggleEscSelection(index)
-                        cursorShape: Qt.PointingHandCursor
-                    }
+                    Rectangle {
+                        width: ScreenTools.defaultFontPixelWidth * 12
+                        height: ScreenTools.defaultFontPixelHeight * 4
+                        radius: ScreenTools.defaultFontPixelHeight / 4
+                        border.width: 3
+                        border.color: getEscBorderColor(index)
+                        color: qgcPal.window
 
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        QGCLabel {
-                            text: qsTr("ESC %1").arg(index + 1)
-                            font.bold: true
-                            anchors.horizontalCenter: parent.horizontalCenter
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: toggleEscSelection(index)
+                            cursorShape: Qt.PointingHandCursor
                         }
 
-                        QGCLabel {
-                            text: {
-                                if (object.firmwareMajor && object.firmwareMinor) {
-                                    return "v" + object.firmwareMajor.rawValue + "." + object.firmwareMinor.rawValue
-                                }
-                                return "---"
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 4
+
+                            QGCLabel {
+                                text: qsTr("ESC %1").arg(index + 1)
+                                font.bold: true
+                                anchors.horizontalCenter: parent.horizontalCenter
                             }
-                            font.pointSize: ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
 
-                        // TODO: show bootloader version
-                        // TODO: guard this whole thing on eeprom version
+                            QGCLabel {
+                                text: {
+                                    if (object.firmwareMajor && object.firmwareMinor) {
+                                        return "v" + object.firmwareMajor.rawValue + "." + object.firmwareMinor.rawValue
+                                    }
+                                    return "---"
+                                }
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+
+                            // TODO: show bootloader version
+                            // TODO: guard this whole thing on eeprom version
+                        }
                     }
+                }
+            }
+
+            // Action Buttons
+            ColumnLayout {
+                // id: buttonsColumn
+                // anchors.verticalCenter: escSelectionRow.verticalCenter
+                Layout.fillWidth: true
+                layoutDirection: Qt.RightToLeft
+                spacing: _margins / 2
+
+                QGCButton {
+                    text: qsTr("Write Settings")
+                    enabled: hasAnyUnsavedChanges() && selectedEeproms.length > 0
+                    highlighted: hasAnyUnsavedChanges()
+                    onClicked: writeSettings()
+                }
+
+                QGCButton {
+                    text: qsTr("Read Settings")
+                    onClicked: eeproms.requestReadAll(vehicle);
                 }
             }
         }
@@ -265,7 +289,6 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        // width: columnLayout1.width
                         spacing: _margins * 2
 
                         // Left column with checkboxes
@@ -279,7 +302,6 @@ Item {
                                 text: qsTr("Stuck rotor protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
@@ -287,7 +309,6 @@ Item {
                                 text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
@@ -295,7 +316,6 @@ Item {
                                 text: qsTr("Use hall sensors") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
@@ -303,7 +323,6 @@ Item {
                                 text: qsTr("30ms interval telemetry") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
@@ -311,7 +330,6 @@ Item {
                                 text: qsTr("Variable PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
@@ -319,7 +337,6 @@ Item {
                                 text: qsTr("Complementary PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             QGCCheckBox {
@@ -327,7 +344,6 @@ Item {
                                 text: qsTr("Auto timing advance") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -346,8 +362,8 @@ Item {
 
                                 Rectangle {
                                     color: "transparent"
-                                    // border.color: qgcPal.groupBorder
-                                    // border.width: 1
+                                    border.color: qgcPal.groupBorder
+                                    border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -355,18 +371,9 @@ Item {
                                     AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-
+                                        label: modelData.label
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-                                        fact: setting ? setting.fact : null
-                                        label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
-                                        labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                        from: fact ? fact.min : 0
-                                        to: fact ? fact.max : 100
-                                        stepSize: fact ? fact.increment : 1
-                                        decimalPlaces: fact ? fact.decimalPlaces : 0
-                                        value: fact ? fact.rawValue : 0
 
-                                        // onValueChanged: if (setting) setting.setPendingValue(value)
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
@@ -381,7 +388,6 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        // width: columnLayout2.width
                         spacing: _margins * 2
 
                         // Left column with checkbox
@@ -394,7 +400,6 @@ Item {
                                 text: qsTr("Disable stick calibration") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -413,8 +418,8 @@ Item {
 
                                 Rectangle {
                                     color: "transparent"
-                                    // border.color: qgcPal.groupBorder
-                                    // border.width: 1
+                                    border.color: qgcPal.groupBorder
+                                    border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -422,18 +427,9 @@ Item {
                                     AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-
+                                        label: modelData.label
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-                                        fact: setting ? setting.fact : null
-                                        label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
-                                        labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                        from: fact ? fact.min : 0
-                                        to: fact ? fact.max : 100
-                                        stepSize: fact ? fact.increment : 1
-                                        decimalPlaces: fact ? fact.decimalPlaces : 0
-                                        value: fact ? fact.rawValue : 0
 
-                                        // onValueChanged: if (setting) setting.setPendingValue(value)
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
@@ -448,7 +444,6 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        // width: columnLayout3.width
                         spacing: _margins * 2
 
                         // Left column with checkbox
@@ -462,7 +457,6 @@ Item {
                                 text: qsTr("Low voltage cut off") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                // onClicked: if (setting) setting.setPendingValue(checked)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             Item { Layout.fillHeight: true } // Spacer
@@ -480,8 +474,8 @@ Item {
 
                                 Rectangle {
                                     color: "transparent"
-                                    // border.color: qgcPal.groupBorder
-                                    // border.width: 1
+                                    border.color: qgcPal.groupBorder
+                                    border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -489,20 +483,9 @@ Item {
                                     AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-
+                                        label: modelData.label
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
 
-                                        // move these into am32settingslider
-                                        fact: setting ? setting.fact : null
-                                        label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
-                                        labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                        from: fact ? fact.min : 0
-                                        to: fact ? fact.max : 100
-                                        stepSize: fact ? fact.increment : 1
-                                        decimalPlaces: fact ? fact.decimalPlaces : 0
-                                        value: fact ? fact.rawValue : 0
-
-                                        // onValueChanged: if (setting) setting.setPendingValue(value)
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
@@ -536,47 +519,13 @@ Item {
                                 AM32SettingSlider {
                                     id: sliderColumn
                                     anchors.centerIn: parent
-
+                                    label: modelData.label
                                     setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
-                                    fact: setting ? setting.fact : null
-                                    label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
-                                    labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
-                                    from: fact ? fact.min : 0
-                                    to: fact ? fact.max : 100
-                                    stepSize: fact ? fact.increment : 1
-                                    decimalPlaces: fact ? fact.decimalPlaces : 0
-                                    value: fact ? fact.rawValue : 0
 
-                                    // onValueChanged: if (setting) setting.setPendingValue(value)
                                     onValueChanged: updateSetting(setting.name, value)
                                 }
                             }
                         }
-                    }
-                }
-
-                // Action Buttons
-                RowLayout {
-                    Layout.fillWidth: true
-                    layoutDirection: Qt.RightToLeft
-                    spacing: _margins
-
-                    QGCButton {
-                        text: qsTr("Write Settings")
-                        enabled: hasAnyUnsavedChanges() && selectedEeproms.length > 0
-                        highlighted: hasAnyUnsavedChanges()
-                        onClicked: writeSettings()
-                    }
-
-                    QGCButton {
-                        text: qsTr("Read Settings")
-                        onClicked: eeproms.requestReadAll(vehicle);
-                    }
-
-                    QGCButton {
-                        text: qsTr("Discard Changes")
-                        enabled: hasAnyUnsavedChanges()
-                        onClicked: discardChanges()
                     }
                 }
             }

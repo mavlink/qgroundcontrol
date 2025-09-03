@@ -4,24 +4,24 @@ import QGroundControl
 import QGroundControl.Controls
 
 Column {
+    property string label: ""
     property var setting: null
+
     property var fact: setting ? setting.fact : null
     property real value: fact ? fact.rawValue : 0
 
-    property string label: ""
-    property var labelColor: qgcPal.text
-    property real from: 0
-    property real to: 100
-    property real stepSize: 1
-    property int decimalPlaces: 0
+    property real from: fact ? fact.min : 0
+    property real to: fact ? fact.max : 100
+    property real stepSize: fact ? fact.increment : 1
+    property int decimalPlaces: fact ? fact.decimalPlaces : 0
     property var onValueChange: null
     property bool enabled: true
 
     spacing: ScreenTools.defaultFontPixelHeight / 4
 
     QGCLabel {
-        text: label
-        color: labelColor
+        text: label + (setting && setting.hasPendingChanges ? " *" : "")
+        color: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
@@ -36,8 +36,7 @@ Column {
         enabled: parent.enabled
 
         onValueChanged: {
-            // TODO: this shouldn't be necessary -- we need updates to reflect on the sliders (when we receive fresh eeprom data)
-            // if (!pressed) return  // Only update when user is dragging
+            if (!slider.pressed) return
             if (setting) setting.setPendingValue(value)
         }
 
