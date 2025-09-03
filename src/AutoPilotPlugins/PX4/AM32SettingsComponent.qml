@@ -110,56 +110,18 @@ Item {
         } else {
             newSelection.push(index)
             newSelection.sort(function(a, b) { return a - b })
-
-            // Request data if needed
-            var esc = eeproms.get(index)
-            if (esc && !esc.dataLoaded) {
-                esc.requestReadAll(vehicle)
-            }
         }
 
         console.log("Updated selected");
         selectedEeproms = newSelection
     }
 
-    function updateSetting(settingName, value) {
-        // Apply to all selected ESCs
-        for (var i = 0; i < selectedEeproms.length; i++) {
-            var esc = eeproms.get(selectedEeproms[i])
-            if (esc) {
-                var setting = esc.getSetting(settingName)
-                if (setting) {
-                    setting.setPendingValue(value)
-                }
-            }
-        }
-    }
-
-    function getSettingValue(settingName) {
-        if (firstEeprom) {
-            var setting = firstEeprom.getSetting(settingName)
-            return setting ? setting.fact.rawValue : null
-        }
-        return null
-    }
-
-    function getSettingFact(settingName) {
-        if (firstEeprom) {
-            var setting = firstEeprom.getSetting(settingName)
-            return setting ? setting.fact : null
-        }
-        return null
-    }
-
     function hasUnsavedChange(settingName) {
-        // Check if any selected ESC has pending changes for this setting
         for (var i = 0; i < selectedEeproms.length; i++) {
             var esc = eeproms.get(selectedEeproms[i])
-            if (esc) {
-                var setting = esc.getSetting(settingName)
-                if (setting && setting.hasPendingChanges) {
-                    return true
-                }
+            if (esc && esc.settings[settingName] &&
+                esc.settings[settingName].hasPendingChanges) {
+                return true
             }
         }
         return false
@@ -180,15 +142,6 @@ Item {
             var esc = eeproms.get(selectedEeproms[i])
             if (esc && esc.hasUnsavedChanges) {
                 esc.requestWrite(vehicle)
-            }
-        }
-    }
-
-    function readSettings() {
-        for (var i = 0; i < selectedEeproms.length; i++) {
-            var esc = eeproms.get(selectedEeproms[i])
-            if (esc) {
-                esc.requestReadAll(vehicle)
             }
         }
     }
@@ -300,48 +253,53 @@ Item {
                             spacing: _groupMargins / 2
 
                             QGCCheckBox {
-                                text: qsTr("Stuck rotor protection") + (hasUnsavedChange("stuckRotorProtection") ? " *" : "")
-                                checked: getSettingValue("stuckRotorProtection") === true
-                                textColor: hasUnsavedChange("stuckRotorProtection") ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: updateSetting("stuckRotorProtection", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.stuckRotorProtection : null
+                                text: qsTr("Stuck rotor protection") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
                             QGCCheckBox {
-                                text: qsTr("Stall protection") + (hasUnsavedChange("antiStall") ? " *" : "")
-                                checked: getSettingValue("antiStall") === true
-                                textColor: hasUnsavedChange("antiStall") ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: updateSetting("antiStall", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.antiStall : null
+                                text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
                             QGCCheckBox {
-                                text: qsTr("Use hall sensors") + (hasUnsavedChange("hallSensors") ? " *" : "")
-                                checked: getSettingValue("hallSensors") === true
-                                textColor: hasUnsavedChange("hallSensors") ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: updateSetting("hallSensors", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.hallSensors : null
+                                text: qsTr("Use hall sensors") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
                             QGCCheckBox {
-                                text: qsTr("30ms interval telemetry") + (hasUnsavedChange("telemetry30ms") ? " *" : "")
-                                checked: getSettingValue("telemetry30ms") === true
-                                textColor: hasUnsavedChange("telemetry30ms") ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: updateSetting("telemetry30ms", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.telemetry30ms : null
+                                text: qsTr("30ms interval telemetry") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
                             QGCCheckBox {
-                                id: variablePwmCheckbox
-                                text: qsTr("Variable PWM") + (hasUnsavedChange("variablePwmFreq") ? " *" : "")
-                                checked: getSettingValue("variablePwmFreq") === true
-                                textColor: hasUnsavedChange("variablePwmFreq") ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: updateSetting("variablePwmFreq", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.variablePwmFreq : null
+                                text: qsTr("Variable PWM") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
                             QGCCheckBox {
-                                text: qsTr("Complementary PWM") + (hasUnsavedChange("complementaryPwm") ? " *" : "")
-                                checked: getSettingValue("complementaryPwm") === true
-                                textColor: hasUnsavedChange("complementaryPwm") ? qgcPal.colorOrange : qgcPal.text
-                                onClicked: updateSetting("complementaryPwm", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.complementaryPwm : null
+                                text: qsTr("Complementary PWM") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
                             QGCCheckBox {
-                                id: autoTimingCheckbox
-                                text: qsTr("Auto timing advance") + (hasUnsavedChange("autoTiming") ? " *" : "")
-                                textColor: hasUnsavedChange("autoTiming") ? qgcPal.colorOrange : qgcPal.text
-                                checked: getSettingValue("autoTiming") === true
-                                onClicked: updateSetting("autoTiming", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.autoTiming : null
+                                text: qsTr("Auto timing advance") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
 
                             Item { Layout.fillHeight: true } // Spacer
@@ -365,36 +323,20 @@ Item {
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                    property var settingFact: getSettingFact(modelData.settingName)
-
                                     AM32SettingSlider {
                                         id: sliderColumn
-
                                         anchors.centerIn: parent
 
-                                        factName: modelData.settingName
-                                        label: modelData.label + (hasUnsavedChange(modelData.settingName) ? " *" : "")
+                                        setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                        fact: setting ? setting.fact : null
+                                        label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                        from: fact ? fact.min : 0
+                                        to: fact ? fact.max : 100
+                                        stepSize: fact ? fact.increment : 1
+                                        decimalPlaces: fact ? fact.decimalPlaces : 0
+                                        value: fact ? fact.rawValue : 0
 
-                                        from: settingFact ? settingFact.min : 0
-                                        to: settingFact ? settingFact.max : 100
-                                        stepSize: settingFact ? settingFact.increment : 1
-                                        decimalPlaces: settingFact ? settingFact.decimalPlaces : 0
-                                        snapToStep: true
-
-                                        value: getSettingValue(modelData.settingName) || 0
-                                        enabled: modelData.settingName !== "pwmFrequency" || variablePwmCheckbox.checked
-
-                                        onValueChange: function(name, value) {
-                                            updateSetting(name, value)
-                                        }
-
-                                        Connections {
-                                            target: firstEeprom
-                                            enabled: firstEeprom !== null
-                                            function onDataLoadedChanged() {
-                                                sliderColumn.value = getSettingValue(modelData.settingName) || 0
-                                            }
-                                        }
+                                        onValueChanged: if (setting) setting.setPendingValue(value)
                                     }
                                 }
                             }
@@ -415,12 +357,12 @@ Item {
                         ColumnLayout {
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins
-
                             QGCCheckBox {
-                                text: qsTr("Disable stick calibration") + (hasUnsavedChange("disableStickCalibration") ? " *" : "")
-                                textColor: hasUnsavedChange("disableStickCalibration") ? qgcPal.colorOrange : qgcPal.text
-                                checked: getSettingValue("disableStickCalibration") === true
-                                onClicked: updateSetting("disableStickCalibration", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.disableStickCalibration : null
+                                text: qsTr("Disable stick calibration") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
 
                             Item { Layout.fillHeight: true } // Spacer
@@ -444,32 +386,20 @@ Item {
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                    property var settingFact: getSettingFact(modelData.settingName)
-
                                     AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-                                        factName: modelData.settingName
-                                        label: modelData.label + (hasUnsavedChange(modelData.settingName) ? " *" : "")
-                                        from: settingFact ? settingFact.min : 0
-                                        to: settingFact ? settingFact.max : 100
-                                        stepSize: settingFact ? settingFact.increment : 1
-                                        decimalPlaces: settingFact ? settingFact.decimalPlaces : 0
-                                        snapToStep: true
-                                        value: getSettingValue(modelData.settingName) || 0
-                                        enabled: true
 
-                                        onValueChange: function(name, value) {
-                                            updateSetting(name, value)
-                                        }
+                                        setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                        fact: setting ? setting.fact : null
+                                        label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                        from: fact ? fact.min : 0
+                                        to: fact ? fact.max : 100
+                                        stepSize: fact ? fact.increment : 1
+                                        decimalPlaces: fact ? fact.decimalPlaces : 0
+                                        value: fact ? fact.rawValue : 0
 
-                                        Connections {
-                                            target: firstEeprom
-                                            enabled: firstEeprom !== null
-                                            function onDataLoadedChanged() {
-                                                sliderColumn.value = getSettingValue(modelData.settingName) || 0
-                                            }
-                                        }
+                                        onValueChanged: if (setting) setting.setPendingValue(value)
                                     }
                                 }
                             }
@@ -492,13 +422,12 @@ Item {
                             spacing: _groupMargins
 
                             QGCCheckBox {
-                                id: lowVoltageCutoffCheckbox
-                                text: qsTr("Low voltage cut off") + (hasUnsavedChange("lowVoltageCutoff") ? " *" : "")
-                                textColor: hasUnsavedChange("lowVoltageCutoff") ? qgcPal.colorOrange : qgcPal.text
-                                checked: getSettingValue("lowVoltageCutoff") === true
-                                onClicked: updateSetting("lowVoltageCutoff", checked)
+                                property var setting: firstEeprom ? firstEeprom.settings.lowVoltageCutoff : null
+                                text: qsTr("Low voltage cut off") + (setting && setting.hasPendingChanges ? " *" : "")
+                                checked: setting ? setting.fact.rawValue === true : false
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                onClicked: if (setting) setting.setPendingValue(checked)
                             }
-
                             Item { Layout.fillHeight: true } // Spacer
                         }
 
@@ -520,32 +449,20 @@ Item {
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                    property var settingFact: getSettingFact(modelData.settingName)
-
                                     AM32SettingSlider {
                                         id: sliderColumn
                                         anchors.centerIn: parent
-                                        factName: modelData.settingName
-                                        label: modelData.label + (hasUnsavedChange(modelData.settingName) ? " *" : "")
-                                        from: settingFact ? settingFact.min : 0
-                                        to: settingFact ? settingFact.max : 100
-                                        stepSize: settingFact ? settingFact.increment : 1
-                                        decimalPlaces: settingFact ? settingFact.decimalPlaces : 0
-                                        snapToStep: true
-                                        value: getSettingValue(modelData.settingName) || 0
-                                        enabled: modelData.settingName !== "lowVoltageThreshold" || lowVoltageCutoffCheckbox.checked
 
-                                        onValueChange: function(name, value) {
-                                            updateSetting(name, value)
-                                        }
+                                        setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                        fact: setting ? setting.fact : null
+                                        label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                        from: fact ? fact.min : 0
+                                        to: fact ? fact.max : 100
+                                        stepSize: fact ? fact.increment : 1
+                                        decimalPlaces: fact ? fact.decimalPlaces : 0
+                                        value: fact ? fact.rawValue : 0
 
-                                        Connections {
-                                            target: firstEeprom
-                                            enabled: firstEeprom !== null
-                                            function onDataLoadedChanged() {
-                                                sliderColumn.value = getSettingValue(modelData.settingName) || 0
-                                            }
-                                        }
+                                        onValueChanged: if (setting) setting.setPendingValue(value)
                                     }
                                 }
                             }
@@ -557,10 +474,6 @@ Item {
                 SettingsGroupLayout {
                     heading: qsTr("Current Control")
                     Layout.fillWidth: true
-                    opacity: {
-                        var currentLimit = getSettingValue("currentLimit")
-                        return (currentLimit && currentLimit > 100) ? 0.3 : 1.0
-                    }
 
                     GridLayout {
                         width: parent.width
@@ -579,32 +492,20 @@ Item {
                                 implicitWidth: sliderColumn.width + _groupMargins * 2
                                 implicitHeight: sliderColumn.height + _groupMargins * 2
 
-                                property var settingFact: getSettingFact(modelData.settingName)
-
                                 AM32SettingSlider {
                                     id: sliderColumn
                                     anchors.centerIn: parent
-                                    factName: modelData.settingName
-                                    label: modelData.label + (hasUnsavedChange(modelData.settingName) ? " *" : "")
-                                    from: settingFact ? settingFact.min : 0
-                                    to: settingFact ? settingFact.max : 100
-                                    stepSize: settingFact ? settingFact.increment : 1
-                                    decimalPlaces: settingFact ? settingFact.decimalPlaces : 0
-                                    snapToStep: true
-                                    value: getSettingValue(modelData.settingName) || 0
-                                    enabled: true
 
-                                    onValueChange: function(name, value) {
-                                        updateSetting(name, value)
-                                    }
+                                    setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                    fact: setting ? setting.fact : null
+                                    label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                    from: fact ? fact.min : 0
+                                    to: fact ? fact.max : 100
+                                    stepSize: fact ? fact.increment : 1
+                                    decimalPlaces: fact ? fact.decimalPlaces : 0
+                                    value: fact ? fact.rawValue : 0
 
-                                    Connections {
-                                        target: firstEeprom
-                                        enabled: firstEeprom !== null
-                                        function onDataLoadedChanged() {
-                                            sliderColumn.value = getSettingValue(modelData.settingName) || 0
-                                        }
-                                    }
+                                    onValueChanged: if (setting) setting.setPendingValue(value)
                                 }
                             }
                         }
@@ -626,8 +527,7 @@ Item {
 
                     QGCButton {
                         text: qsTr("Read Settings")
-                        enabled: selectedEeproms.length > 0
-                        onClicked: readSettings()
+                        onClicked: eeproms.requestReadAll(vehicle);
                     }
 
                     QGCButton {

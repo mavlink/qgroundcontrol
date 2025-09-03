@@ -71,7 +71,6 @@ void AM32Setting::discardChanges()
 
 AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
     : FactGroupListModel("am32Eeprom", parent)
-    , _settingsMap(new QQmlPropertyMap(this))
 {
 
 }
@@ -175,6 +174,7 @@ FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t i
 
 AM32EepromFactGroup::AM32EepromFactGroup(uint8_t escIndex, QObject* parent)
     : FactGroupWithId(1000, QStringLiteral(":/json/Vehicle/AM32EepromFact.json"), parent)
+    , _settingsMap(new QQmlPropertyMap(this))
     , _escIndex(escIndex)
 {
     _idFact.setRawValue(escIndex);
@@ -358,9 +358,11 @@ void AM32EepromFactGroup::initializeEepromFacts()
         _settings.append(setting);
         _settingsMap->insert(config.name, QVariant::fromValue(setting));
 
-        connect(setting, &AM32Setting::pendingChangesChanged, [=]() {
-            emit _settingsMap->valueChanged(config.name, QVariant::fromValue(setting));
-        });
+        // connect(setting, &AM32Setting::pendingChangesChanged, [=]() {
+        //     emit _settingsMap->valueChanged(config.name, QVariant::fromValue(setting));
+        // });
+
+        connect(setting, &AM32Setting::pendingChangesChanged, this, &AM32EepromFactGroup::updateHasUnsavedChanges);
     }
 }
 

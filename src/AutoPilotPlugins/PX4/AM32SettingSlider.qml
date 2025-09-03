@@ -4,17 +4,17 @@ import QGroundControl
 import QGroundControl.Controls
 
 Column {
-    property string factName: ""
+    property var setting: null
+    property var fact: setting ? setting.fact : null
+    property real value: fact ? fact.rawValue : 0
+
     property string label: ""
     property real from: 0
     property real to: 100
     property real stepSize: 1
     property int decimalPlaces: 0
-    property bool snapToStep: false
     property var onValueChange: null
     property bool enabled: true
-
-    property real value: 0
 
     spacing: ScreenTools.defaultFontPixelHeight / 4
 
@@ -29,15 +29,14 @@ Column {
         from: parent.from
         to: parent.to
         value: parent.value
-        stepSize: snapToStep ? parent.stepSize : 0
-        snapMode: snapToStep ? Slider.SnapAlways : Slider.NoSnap
+        stepSize: parent.stepSize
+        snapMode: Slider.SnapAlways
         enabled: parent.enabled
 
         onValueChanged: {
-            parent.value = value
-            if (onValueChange) {
-                onValueChange(factName, value)
-            }
+            // TODO: this shouldn't be necessary -- we need updates to reflect on the sliders (when we receive fresh eeprom data)
+            // if (!pressed) return  // Only update when user is dragging
+            if (setting) setting.setPendingValue(value)
         }
 
         // Visual handle
@@ -64,9 +63,5 @@ Column {
         text: value.toFixed(decimalPlaces)
         anchors.horizontalCenter: parent.horizontalCenter
         font.pointSize: ScreenTools.smallFontPointSize
-    }
-
-    function setValue(newValue) {
-        value = newValue
     }
 }
