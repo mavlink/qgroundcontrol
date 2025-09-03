@@ -87,39 +87,16 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
 
-                // TODO: find a better way to do this -- is dynamically possible?
-                // Add AM32 component
-                _am32Component = new AM32Component(_vehicle, this, this);
-                _am32Component->setupTriggerSignals();
-                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_am32Component)));
-
-                // // // Add AM32 component if we have received AM32 EEPROM data
-                // if (_vehicle->escs() && _vehicle->escs()->count() > 0) {
-                //     // Check if any ESC has AM32 support
-
-                //     // TODO:
-                //     bool hasAM32Support = true;
-
-
-                //     // bool hasAM32Support = false;
-                //     // for (int i = 0; i < _vehicle->escs()->count(); i++) {
-                //     //     auto esc = _vehicle->escs()->get(i);
-                //     //     if (esc) {
-                //     //         // Check if this ESC has am32Eeprom property
-                //     //         QVariant am32EepromProp = esc->property("am32Eeprom");
-                //     //         if (am32EepromProp.isValid() && !am32EepromProp.isNull()) {
-                //     //             hasAM32Support = true;
-                //     //             break;
-                //     //         }
-                //     //     }
-                //     // }
-                    
-                //     if (hasAM32Support) {
-                //         _am32Component = new AM32Component(_vehicle, this, this);
-                //         _am32Component->setupTriggerSignals();
-                //         _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_am32Component)));
-                //     }
-                // }
+                // Add AM32 component if parameter DSHOT_ESC_TYPE exists and is set to AM32
+                bool dshotEscTypeExists = _vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "DSHOT_ESC_TYPE");
+                if (dshotEscTypeExists) {
+                    uint32_t escType = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "DSHOT_ESC_TYPE")->rawValue().toUInt();
+                    if (escType == 1) {
+                        _am32Component = new AM32Component(_vehicle, this, this);
+                        _am32Component->setupTriggerSignals();
+                        _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_am32Component)));
+                    }
+                }
 
                 if (_vehicle->actuators()) {
                     _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators

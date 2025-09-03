@@ -18,32 +18,28 @@ Item {
     anchors.fill:   parent
 
     property var vehicle: globals.activeVehicle
-    property string _naString: qsTr("N/A")
 
     Column {
         anchors.fill:       parent
 
         VehicleSummaryRow {
             labelText: qsTr("ESCs Detected")
-            valueText: vehicle && vehicle.escs ? vehicle.escs.count : _naString
+            valueText: vehicle && vehicle.am32eeproms ? vehicle.am32eeproms.count : qsTr("None")
         }
 
         VehicleSummaryRow {
             labelText: qsTr("AM32 Support")
             valueText: {
-                if (vehicle && vehicle.escs && vehicle.escs.count > 0) {
-                    var firstEsc = vehicle.escs.get(0)
-                    if (firstEsc && firstEsc.am32Eeprom) {
-                        return qsTr("Available")
-                    }
+                if (vehicle && vehicle.am32eeproms && vehicle.am32eeproms.count > 0) {
+                    return qsTr("Available")
                 }
-                return _naString
+                return qsTr("Unavailable")
             }
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Status")
-            valueText: vehicle && vehicle.escs && vehicle.escs.count > 0 ? qsTr("Ready") : qsTr("Not Connected")
+            valueText: vehicle && vehicle.am32eeproms && vehicle.am32eeproms.count > 0 ? qsTr("Ready") : qsTr("Not Connected")
         }
     }
 }
