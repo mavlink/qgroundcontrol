@@ -11,14 +11,11 @@ Item {
 
     property var vehicle: globals.activeVehicle
     property var eeproms: vehicle ? vehicle.am32eeproms : null
-    property var selectedEeproms: []  // Array of selected EEPROM indices
-
-    // Reference ESC is always the first selected
+    property var selectedEeproms: []
     property var firstEeprom: selectedEeproms.length > 0 && eeproms ? eeproms.get(selectedEeproms[0]) : null
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins: ScreenTools.defaultFontPixelHeight / 2
-
 
     // Slider configurations matching your exact layout
     readonly property var motorSliderConfigs: [
@@ -51,18 +48,22 @@ Item {
     Component.onCompleted: {
         console.log("Component.onCompleted, eeproms.requestReadAll")
         eeproms.requestReadAll(vehicle)
+        selectedEeproms = selectAllEeproms()
+    }
 
-        eeproms.countChanged.connect(function() {
-            if (eeproms && eeproms.count > 0) {
-                // Default: select all ESCs
-                var all = []
-                for (var i = 0; i < eeproms.count; i++) {
-                    all.push(i)
-                }
-                console.log("selecting all eeproms")
-                selectedEeproms = all
-            }
-        })
+    Connections {
+        target: eeproms
+        onCountChanged: {
+            selectedEeproms = selectAllEeproms()
+        }
+    }
+
+    function selectAllEeproms() {
+        var selected = []
+        for (var i = 0; i < eeproms.count; i++) {
+            selected.push(i)
+        }
+        return selected
     }
 
     function getEscBorderColor(index) {
