@@ -182,8 +182,17 @@ Item {
             }
         }
 
+        QGCLabel {
+            // anchors.horizontalCenter: escSelectionRow.horizontalCenter
+            Layout.alignment: Qt.AlignHCenter
+            text: qsTr("Select ESCS to configure")
+            font.pointSize: ScreenTools.mediumFontPointSize
+            font.italic: true
+        }
+
         // ESC Selection Row
         Row {
+            id: escSelectionRow
             Layout.alignment: Qt.AlignHCenter
             spacing: _margins / 2
             visible: eeproms && eeproms.count > 0
@@ -256,11 +265,12 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        width: parent.width
+                        // width: columnLayout1.width
                         spacing: _margins * 2
 
                         // Left column with checkboxes
                         ColumnLayout {
+                            // id: columnLayout1
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins / 2
 
@@ -336,8 +346,8 @@ Item {
 
                                 Rectangle {
                                     color: "transparent"
-                                    border.color: qgcPal.text
-                                    border.width: 1
+                                    // border.color: qgcPal.groupBorder
+                                    // border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -349,6 +359,7 @@ Item {
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
                                         fact: setting ? setting.fact : null
                                         label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                        labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                         from: fact ? fact.min : 0
                                         to: fact ? fact.max : 100
                                         stepSize: fact ? fact.increment : 1
@@ -370,11 +381,12 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        width: parent.width
+                        // width: columnLayout2.width
                         spacing: _margins * 2
 
                         // Left column with checkbox
                         ColumnLayout {
+                            // id: columnLayout2
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins
                             QGCCheckBox {
@@ -401,8 +413,8 @@ Item {
 
                                 Rectangle {
                                     color: "transparent"
-                                    border.color: qgcPal.text
-                                    border.width: 1
+                                    // border.color: qgcPal.groupBorder
+                                    // border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -414,6 +426,7 @@ Item {
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
                                         fact: setting ? setting.fact : null
                                         label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                        labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                         from: fact ? fact.min : 0
                                         to: fact ? fact.max : 100
                                         stepSize: fact ? fact.increment : 1
@@ -435,11 +448,12 @@ Item {
                     Layout.fillWidth: true
 
                     RowLayout {
-                        width: parent.width
+                        // width: columnLayout3.width
                         spacing: _margins * 2
 
                         // Left column with checkbox
                         ColumnLayout {
+                            // id: columnLayout3
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins
 
@@ -466,8 +480,8 @@ Item {
 
                                 Rectangle {
                                     color: "transparent"
-                                    border.color: qgcPal.text
-                                    border.width: 1
+                                    // border.color: qgcPal.groupBorder
+                                    // border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -477,8 +491,11 @@ Item {
                                         anchors.centerIn: parent
 
                                         setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+
+                                        // move these into am32settingslider
                                         fact: setting ? setting.fact : null
                                         label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                        labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                         from: fact ? fact.min : 0
                                         to: fact ? fact.max : 100
                                         stepSize: fact ? fact.increment : 1
@@ -510,8 +527,8 @@ Item {
 
                             Rectangle {
                                 color: "transparent"
-                                border.color: qgcPal.text
-                                border.width: 1
+                                // border.color: qgcPal.groupBorder
+                                // border.width: 1
                                 radius: 4
                                 implicitWidth: sliderColumn.width + _groupMargins * 2
                                 implicitHeight: sliderColumn.height + _groupMargins * 2
@@ -523,6 +540,7 @@ Item {
                                     setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
                                     fact: setting ? setting.fact : null
                                     label: modelData.label + (setting && setting.hasPendingChanges ? " *" : "")
+                                    labelColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
                                     from: fact ? fact.min : 0
                                     to: fact ? fact.max : 100
                                     stepSize: fact ? fact.increment : 1

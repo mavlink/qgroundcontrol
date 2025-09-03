@@ -9,6 +9,7 @@ Column {
     property real value: fact ? fact.rawValue : 0
 
     property string label: ""
+    property var labelColor: qgcPal.text
     property real from: 0
     property real to: 100
     property real stepSize: 1
@@ -20,6 +21,7 @@ Column {
 
     QGCLabel {
         text: label
+        color: labelColor
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
@@ -55,6 +57,28 @@ Column {
             parent: slider.handle
             visible: slider.pressed
             text: slider.value.toFixed(decimalPlaces)
+        }
+
+        // Slider fill direction (left to right)
+        background: Rectangle {
+            x: slider.leftPadding
+            y: slider.topPadding + slider.availableHeight / 2 - height / 2
+            implicitWidth: 200
+            implicitHeight: 4
+            width: slider.availableWidth
+            height: implicitHeight
+            radius: 2
+            color: qgcPal.window
+            border.color: qgcPal.text
+            border.width: 1
+
+            // Progress fill from left to right
+            Rectangle {
+                width: slider.visualPosition * parent.width
+                height: parent.height
+                color: qgcPal.text
+                radius: parent.radius
+            }
         }
     }
 
