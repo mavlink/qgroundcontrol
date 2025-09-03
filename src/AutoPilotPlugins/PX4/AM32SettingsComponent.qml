@@ -10,19 +10,15 @@ Item {
     id: root
 
     property var vehicle: globals.activeVehicle
-    property var escModel: vehicle ? vehicle.escs : null
-    property var selectedEscs: []  // Array of selected ESC indices
+    property var eeproms: vehicle ? vehicle.am32eeproms : null
+    property var selectedEeproms: []  // Array of selected EEPROM indices
 
     // Reference ESC is always the first selected
-    property var firstEsc: selectedEscs.length > 0 && escModel ?
-                               escModel.get(selectedEscs[0]) : null
-    property var firstEscEeprom: firstEsc ? firstEsc.am32Eeprom : null
+    property var firstEeprom: selectedEeproms.length > 0 && eeproms ? eeproms.get(selectedEeproms[0]) : null
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins: ScreenTools.defaultFontPixelHeight / 2
 
-    property bool initComplete: false
-    // property var loadedEscs: []
 
     // Slider configurations matching your exact layout
     readonly property var motorSliderConfigs: [
@@ -53,68 +49,41 @@ Item {
     ]
 
     Component.onCompleted: {
-        if (escModel && escModel.count > 0) {
-            // Default: select all ESCs
-            var allEscs = []
-            for (var i = 0; i < escModel.count; i++) {
-                allEscs.push(i)
-                requestEscData(i)
+        console.log("Component.onCompleted, eeproms.requestReadAll")
+        eeproms.requestReadAll(vehicle)
+
+        eeproms.countChanged.connect(function() {
+            if (eeproms && eeproms.count > 0) {
+                // Default: select all ESCs
+                var all = []
+                for (var i = 0; i < eeproms.count; i++) {
+                    all.push(i)
+                }
+                console.log("selecting all eeproms")
+                selectedEeproms = all
             }
-            selectedEscs = allEscs
-            loadTimer.start()
-        } else {
-            console.log("ESCs missing")
-            initComplete = true
-        }
-    }
-
-    Timer {
-        id: loadTimer
-        interval: 1000
-        onTriggered: {
-            // console.log("Init complete with " + loadedEscs.length + " ESCs")
-            initComplete = true
-        }
-    }
-
-    function requestEscData(index) {
-        console.log("requestEscData")
-        var esc = escModel.get(index)
-        if (esc && esc.am32Eeprom) {
-            esc.am32Eeprom.requestReadAll(vehicle)
-
-            // Monitor when data loads
-            // esc.am32Eeprom.dataLoadedChanged.connect(function() {
-            //     if (esc.am32Eeprom.dataLoaded && loadedEscs.indexOf(index) === -1) {
-            //         loadedEscs.push(index)
-            //         if (loadedEscs.length === escModel.count) {
-            //             loadTimer.stop()
-            //             initComplete = true
-            //         }
-            //     }
-            // })
-        }
+        })
     }
 
     function getEscBorderColor(index) {
-        if (!escModel || index >= escModel.count) return "transparent"
+        if (!eeproms || index >= eeproms.count) return "transparent"
 
-        var esc = escModel.get(index)
-        if (!esc || !esc.am32Eeprom) return qgcPal.colorGrey
+        var esc = eeproms.get(index)
+        if (!esc) return qgcPal.colorGrey
 
-        var isSelected = selectedEscs.indexOf(index) >= 0
+        var isSelected = selectedEeproms.indexOf(index) >= 0
         if (!isSelected) return qgcPal.colorGrey
 
         // Yellow for pending changes
-        if (esc.am32Eeprom.hasUnsavedChanges) return qgcPal.colorYellow
+        if (esc.hasUnsavedChanges) return qgcPal.colorYellow
 
         // Orange if data not loaded
-        if (!esc.am32Eeprom.dataLoaded) return qgcPal.colorOrange
+        if (!esc.dataLoaded) return qgcPal.colorOrange
 
         // Green for reference or matching reference
-        if (index === selectedEscs[0]) return qgcPal.colorGreen
+        if (index === selectedEeproms[0]) return qgcPal.colorGreen
 
-        if (firstEscEeprom && esc.am32Eeprom.settingsMatch(firstEscEeprom)) {
+        if (firstEeprom && esc.settingsMatch(firstEeprom)) {
             return qgcPal.colorGreen
         }
 
@@ -122,36 +91,37 @@ Item {
     }
 
     function toggleEscSelection(index) {
-        var idx = selectedEscs.indexOf(index)
-        var newSelection = selectedEscs.slice()
+        var idx = selectedEeproms.indexOf(index)
+        var newSelection = selectedEeproms.slice()
 
         if (idx >= 0) {
             newSelection.splice(idx, 1)
             // Clear pending changes when deselecting
-            var esc = escModel.get(index)
-            if (esc && esc.am32Eeprom && esc.am32Eeprom.hasUnsavedChanges) {
-                esc.am32Eeprom.discardChanges()
+            var esc = eeproms.get(index)
+            if (esc && esc.hasUnsavedChanges) {
+                esc.discardChanges()
             }
         } else {
             newSelection.push(index)
             newSelection.sort(function(a, b) { return a - b })
 
             // Request data if needed
-            var esc = escModel.get(index)
-            if (esc && esc.am32Eeprom && !esc.am32Eeprom.dataLoaded) {
-                esc.am32Eeprom.requestReadAll(vehicle)
+            var esc = eeproms.get(index)
+            if (esc && !esc.dataLoaded) {
+                esc.requestReadAll(vehicle)
             }
         }
 
-        selectedEscs = newSelection
+        console.log("Updated selected");
+        selectedEeproms = newSelection
     }
 
     function updateSetting(settingName, value) {
         // Apply to all selected ESCs
-        for (var i = 0; i < selectedEscs.length; i++) {
-            var esc = escModel.get(selectedEscs[i])
-            if (esc && esc.am32Eeprom) {
-                var setting = esc.am32Eeprom.getSetting(settingName)
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc) {
+                var setting = esc.getSetting(settingName)
                 if (setting) {
                     setting.setPendingValue(value)
                 }
@@ -160,16 +130,16 @@ Item {
     }
 
     function getSettingValue(settingName) {
-        if (firstEscEeprom) {
-            var setting = firstEscEeprom.getSetting(settingName)
+        if (firstEeprom) {
+            var setting = firstEeprom.getSetting(settingName)
             return setting ? setting.fact.rawValue : null
         }
         return null
     }
 
     function getSettingFact(settingName) {
-        if (firstEscEeprom) {
-            var setting = firstEscEeprom.getSetting(settingName)
+        if (firstEeprom) {
+            var setting = firstEeprom.getSetting(settingName)
             return setting ? setting.fact : null
         }
         return null
@@ -177,10 +147,10 @@ Item {
 
     function hasUnsavedChange(settingName) {
         // Check if any selected ESC has pending changes for this setting
-        for (var i = 0; i < selectedEscs.length; i++) {
-            var esc = escModel.get(selectedEscs[i])
-            if (esc && esc.am32Eeprom) {
-                var setting = esc.am32Eeprom.getSetting(settingName)
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc) {
+                var setting = esc.getSetting(settingName)
                 if (setting && setting.hasPendingChanges) {
                     return true
                 }
@@ -190,9 +160,9 @@ Item {
     }
 
     function hasAnyUnsavedChanges() {
-        for (var i = 0; i < selectedEscs.length; i++) {
-            var esc = escModel.get(selectedEscs[i])
-            if (esc && esc.am32Eeprom && esc.am32Eeprom.hasUnsavedChanges) {
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc && esc.hasUnsavedChanges) {
                 return true
             }
         }
@@ -200,28 +170,28 @@ Item {
     }
 
     function writeSettings() {
-        for (var i = 0; i < selectedEscs.length; i++) {
-            var esc = escModel.get(selectedEscs[i])
-            if (esc && esc.am32Eeprom && esc.am32Eeprom.hasUnsavedChanges) {
-                esc.am32Eeprom.requestWrite(vehicle)
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc && esc.hasUnsavedChanges) {
+                esc.requestWrite(vehicle)
             }
         }
     }
 
     function readSettings() {
-        for (var i = 0; i < selectedEscs.length; i++) {
-            var esc = escModel.get(selectedEscs[i])
-            if (esc && esc.am32Eeprom) {
-                esc.am32Eeprom.requestReadAll(vehicle)
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc) {
+                esc.requestReadAll(vehicle)
             }
         }
     }
 
     function discardChanges() {
-        for (var i = 0; i < selectedEscs.length; i++) {
-            var esc = escModel.get(selectedEscs[i])
-            if (esc && esc.am32Eeprom) {
-                esc.am32Eeprom.discardChanges()
+        for (var i = 0; i < selectedEeproms.length; i++) {
+            var esc = eeproms.get(selectedEeproms[i])
+            if (esc) {
+                esc.discardChanges()
             }
         }
     }
@@ -235,7 +205,7 @@ Item {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: !escModel || escModel.count === 0
+            visible: !eeproms || eeproms.count === 0
 
             QGCLabel {
                 anchors.centerIn: parent
@@ -248,10 +218,11 @@ Item {
         Row {
             Layout.alignment: Qt.AlignHCenter
             spacing: _margins / 2
-            visible: escModel && escModel.count > 0
+            visible: eeproms && eeproms.count > 0
 
             Repeater {
-                model: escModel ? escModel.count : 0
+                // model: eeproms ? eeproms.count : 0
+                model: eeproms ? eeproms : null
 
                 Rectangle {
                     width: ScreenTools.defaultFontPixelWidth * 12
@@ -260,8 +231,6 @@ Item {
                     border.width: 3
                     border.color: getEscBorderColor(index)
                     color: qgcPal.window
-
-                    property var escData: escModel ? escModel.get(index) : null
 
                     MouseArea {
                         anchors.fill: parent
@@ -281,10 +250,8 @@ Item {
 
                         QGCLabel {
                             text: {
-                                if (!escData || !escData.am32Eeprom) return "---"
-                                var eeprom = escData.am32Eeprom
-                                if (eeprom.firmwareMajor && eeprom.firmwareMinor) {
-                                    return "v" + eeprom.firmwareMajor.rawValue + "." + eeprom.firmwareMinor.rawValue
+                                if (object.firmwareMajor && object.firmwareMinor) {
+                                    return "v" + object.firmwareMajor.rawValue + "." + object.firmwareMinor.rawValue
                                 }
                                 return "---"
                             }
@@ -296,29 +263,6 @@ Item {
             }
         }
 
-        // Loading indicator
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 10
-            visible: !initComplete && escModel && escModel.count > 0
-
-            Column {
-                anchors.centerIn: parent
-                spacing: _margins
-
-                QGCLabel {
-                    text: qsTr("Loading ESC data...")
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                BusyIndicator {
-                    running: true
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-            }
-        }
-
         // Settings Panel - Your exact layout
         Flickable {
             Layout.fillWidth: true
@@ -326,7 +270,7 @@ Item {
             contentHeight: settingsColumn.height
             contentWidth: width
             clip: true
-            visible: initComplete && firstEscEeprom && firstEscEeprom.dataLoaded
+            visible: firstEeprom && firstEeprom.dataLoaded
 
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
@@ -435,8 +379,8 @@ Item {
                                         }
 
                                         Connections {
-                                            target: firstEscEeprom
-                                            enabled: firstEscEeprom !== null
+                                            target: firstEeprom
+                                            enabled: firstEeprom !== null
                                             function onDataLoadedChanged() {
                                                 sliderColumn.value = getSettingValue(modelData.settingName) || 0
                                             }
@@ -510,8 +454,8 @@ Item {
                                         }
 
                                         Connections {
-                                            target: firstEscEeprom
-                                            enabled: firstEscEeprom !== null
+                                            target: firstEeprom
+                                            enabled: firstEeprom !== null
                                             function onDataLoadedChanged() {
                                                 sliderColumn.value = getSettingValue(modelData.settingName) || 0
                                             }
@@ -586,8 +530,8 @@ Item {
                                         }
 
                                         Connections {
-                                            target: firstEscEeprom
-                                            enabled: firstEscEeprom !== null
+                                            target: firstEeprom
+                                            enabled: firstEeprom !== null
                                             function onDataLoadedChanged() {
                                                 sliderColumn.value = getSettingValue(modelData.settingName) || 0
                                             }
@@ -645,8 +589,8 @@ Item {
                                     }
 
                                     Connections {
-                                        target: firstEscEeprom
-                                        enabled: firstEscEeprom !== null
+                                        target: firstEeprom
+                                        enabled: firstEeprom !== null
                                         function onDataLoadedChanged() {
                                             sliderColumn.value = getSettingValue(modelData.settingName) || 0
                                         }
@@ -665,14 +609,14 @@ Item {
 
                     QGCButton {
                         text: qsTr("Write Settings")
-                        enabled: hasAnyUnsavedChanges() && selectedEscs.length > 0
+                        enabled: hasAnyUnsavedChanges() && selectedEeproms.length > 0
                         highlighted: hasAnyUnsavedChanges()
                         onClicked: writeSettings()
                     }
 
                     QGCButton {
                         text: qsTr("Read Settings")
-                        enabled: selectedEscs.length > 0
+                        enabled: selectedEeproms.length > 0
                         onClicked: readSettings()
                     }
 

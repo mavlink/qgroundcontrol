@@ -44,30 +44,15 @@ bool EscStatusFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &
     }
         break;
 
-    case MAVLINK_MSG_ID_AM32_EEPROM:
-    {
-        mavlink_am32_eeprom_t eeprom{};
-        mavlink_msg_am32_eeprom_decode(&message, &eeprom);
-        // AM32_EEPROM uses individual ESC index, not first-of-4
-        firstIndex = eeprom.index;
-        shouldHandle = true;
-    }
-        break;
-
     default:
         shouldHandle = false; // Not a message we care about
         break;
     }
 
     if (shouldHandle) {
-        if (message.msgid == MAVLINK_MSG_ID_AM32_EEPROM) {
-            // AM32 messages refer to individual ESCs
-            ids.append(firstIndex);
-        } else {
-            // ESC_STATUS and ESC_INFO cover 4 consecutive ESCs
-            for (uint32_t index = firstIndex; index <= firstIndex + 3; index++) {
-                ids.append(index);
-            }
+        // ESC_STATUS and ESC_INFO cover 4 consecutive ESCs
+        for (uint32_t index = firstIndex; index <= firstIndex + 3; index++) {
+            ids.append(index);
         }
     }
 
@@ -102,10 +87,6 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _failureFlagsFact.setRawValue(0);
     _errorCountFact.setRawValue(0);
     _temperatureFact.setRawValue(0);
-
-    // Create the AM32EepromFactGroup if necessary
-    qDebug() << "Creating AM32EepromFactGroup for ESC" << escIndex;
-    _am32EepromFactGroup = new AM32EepromFactGroup(this, escIndex);
 }
 
 void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -117,44 +98,8 @@ void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t
     case MAVLINK_MSG_ID_ESC_STATUS:
         _handleEscStatus(vehicle, message);
         break;
-    case MAVLINK_MSG_ID_AM32_EEPROM:
-        _handleAm32Eeprom(vehicle, message);
-        break;
     default:
         break;
-    }
-}
-
-void EscStatusFactGroup::_handleAm32Eeprom(Vehicle *vehicle, const mavlink_message_t &message)
-{
-    mavlink_am32_eeprom_t eeprom{};
-    mavlink_msg_am32_eeprom_decode(&message, &eeprom);
-
-    if (eeprom.index != _idFact.rawValue().toUInt()) {
-        // Only handle messages for our ESC index
-        return;
-    }
-
-    // TODO: fix this
-
-    // // Create the AM32EepromFactGroup if necessary
-    // if (_am32EepromFactGroup == nullptr) {
-    //     qDebug() << "Creating AM32EepromFactGroup for ESC" << eeprom.index;
-    //     _am32EepromFactGroup = new AM32EepromFactGroup(this, eeprom.index);
-    // }
-
-    if (eeprom.mode == 0) {
-        // Read response - parse the EEPROM data
-        _am32EepromFactGroup->handleEepromData(eeprom.data, eeprom.length);
-
-        // qDebug() << "AM32 EEPROM data received for ESC" << eeprom.index;
-        // qDebug() << "Firmware:" << _am32EepromFactGroup->firmwareMajor()->rawValue().toUInt()
-        //          << "." << _am32EepromFactGroup->firmwareMinor()->rawValue().toUInt();
-    }
-    else if (eeprom.mode == 1) {
-        // Write acknowledgment
-        emit _am32EepromFactGroup->writeComplete(true);
-        qDebug() << "AM32 EEPROM write acknowledged for ESC" << eeprom.index;
     }
 }
 

@@ -1,6 +1,6 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        AM32EepromFactGroup.cc
+        AM32EepromFactGroupListModel.cc
         BatteryFactGroupListModel.cc
         BatteryFactGroupListModel.h
         EscStatusFactGroupListModel.cc

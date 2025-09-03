@@ -9,9 +9,8 @@
 
 #pragma once
 
-#include "FactGroup.h"
 #include "QGCMAVLink.h"
-#include "QmlObjectListModel.h"
+#include "FactGroupListModel.h"
 #include <QtCore/QVariantMap>
 #include <functional>
 
@@ -53,7 +52,7 @@ class AM32Setting : public QObject
     Q_PROPERTY(bool hasPendingChanges READ hasPendingChanges NOTIFY pendingChangesChanged)
 
 public:
-    AM32Setting(int escIndex, const AM32SettingConfig& config);
+    AM32Setting(uint8_t escIndex, const AM32SettingConfig& config);
 
     QString name() const { return _fact->name(); }
     Fact* fact() { return _fact; }
@@ -70,7 +69,7 @@ signals:
     void pendingChangesChanged();
 
 private:
-    int _escIndex;
+    uint8_t _escIndex;
     uint8_t _eepromByteIndex;
     uint8_t _rawValue = 0;
     Fact* _fact;
@@ -79,8 +78,27 @@ private:
     std::function<uint8_t(QVariant)> _toRaw;
 };
 
+class AM32EepromFactGroupListModel : public FactGroupListModel
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+
+public:
+    explicit AM32EepromFactGroupListModel(QObject* parent = nullptr);
+
+    /// Request EEPROM read from ESC
+    Q_INVOKABLE void requestReadAll(Vehicle* vehicle);
+
+protected:
+    // Overrides from FactGroupListModel
+    bool _shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const final;
+    FactGroupWithId *_createFactGroupWithId(uint32_t id) final;
+};
+
+
 /// AM32 ESC EEPROM settings fact group
-class AM32EepromFactGroup : public FactGroup
+class AM32EepromFactGroup : public FactGroupWithId
 {
     Q_OBJECT
 
@@ -92,10 +110,13 @@ class AM32EepromFactGroup : public FactGroup
 
     Q_PROPERTY(bool dataLoaded READ dataLoaded NOTIFY dataLoadedChanged)
     Q_PROPERTY(bool hasUnsavedChanges READ hasUnsavedChanges NOTIFY hasUnsavedChangesChanged)
-    Q_PROPERTY(int escIndex READ escIndex CONSTANT)
+    Q_PROPERTY(uint8_t escIndex READ escIndex CONSTANT)
 
 public:
-    AM32EepromFactGroup(QObject* parent = nullptr, int escIndex = 0);
+    AM32EepromFactGroup(uint8_t escIndex, QObject* parent = nullptr);
+
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
+    void _handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
 
     // Read-only info facts
     Fact* firmwareMajor() { return &_firmwareMajorFact; }
@@ -106,7 +127,7 @@ public:
     // Status
     bool dataLoaded() const { return _dataLoaded; }
     bool hasUnsavedChanges() const;
-    int escIndex() const { return _escIndex; }
+    uint8_t escIndex() const { return _escIndex; }
 
     /// Get a setting by name
     Q_INVOKABLE AM32Setting* getSetting(const QString& name);
@@ -114,17 +135,11 @@ public:
     /// Check if settings match another ESC
     Q_INVOKABLE bool settingsMatch(AM32EepromFactGroup* other) const;
 
-    /// Request EEPROM read from ESC
-    Q_INVOKABLE void requestReadAll(Vehicle* vehicle);
-
     /// Write EEPROM data to ESC (only modified bytes)
     Q_INVOKABLE void requestWrite(Vehicle* vehicle);
 
     /// Discard all pending changes
     Q_INVOKABLE void discardChanges();
-
-    /// Parse EEPROM data from AM32_EEPROM message
-    void handleEepromData(const uint8_t* data, int length);
 
     /// Get modified EEPROM data for transmission
     QByteArray getModifiedEepromData() const;
@@ -151,6 +166,6 @@ private:
     // State
     bool _dataLoaded = false;
     bool _hasUnsavedChanges = false;
-    int _escIndex = 0;
+    uint8_t _escIndex = 0;
     QByteArray _originalEepromData;
 };

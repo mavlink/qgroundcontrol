@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "AM32EepromFactGroup.h"
+#include "AM32EepromFactGroupListModel.h"
 #include "Vehicle.h"
 #include <QtCore/QDebug>
 
@@ -15,13 +15,13 @@
 // AM32Setting Implementation
 //-----------------------------------------------------------------------------
 
-AM32Setting::AM32Setting(int escIndex, const AM32SettingConfig& config)
+AM32Setting::AM32Setting(uint8_t escIndex, const AM32SettingConfig& config)
     : _escIndex(escIndex)
     , _eepromByteIndex(config.eepromByteIndex)
     , _fromRaw(config.fromRaw)
     , _toRaw(config.toRaw)
 {
-    qDebug() << "new Fact: " << config.name;
+    // qDebug() << "new Fact: " << config.name;
     _fact = new Fact(0, config.name, config.type, this);
 
     // Monitor fact changes
@@ -30,7 +30,7 @@ AM32Setting::AM32Setting(int escIndex, const AM32SettingConfig& config)
 
 bool AM32Setting::hasPendingChanges() const
 {
-    qDebug() << "hasPendingChanges";
+    // qDebug() << "hasPendingChanges";
     // Compare the raw value that would be transmitted with the original raw value
     return getRawValueForTransmit() != _rawValue;
 }
@@ -43,7 +43,7 @@ void AM32Setting::setPendingValue(const QVariant& value)
 
 void AM32Setting::updateFromEeprom(uint8_t value)
 {
-    qDebug() << "updateFromEeprom";
+    // qDebug() << "updateFromEeprom";
     _rawValue = value;
     _fact->setRawValue(_fromRaw(value));
 
@@ -66,13 +66,118 @@ void AM32Setting::discardChanges()
 }
 
 //-----------------------------------------------------------------------------
+// AM32EepromFactGroupListModel Implementation
+//-----------------------------------------------------------------------------
+
+AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
+    : FactGroupListModel("am32Eeprom", parent)
+{
+
+}
+
+bool AM32EepromFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const
+{
+    if (message.msgid == MAVLINK_MSG_ID_AM32_EEPROM) {
+        mavlink_am32_eeprom_t eeprom{};
+        mavlink_msg_am32_eeprom_decode(&message, &eeprom);
+        ids.append(eeprom.index);
+        return true;
+    }
+
+    return false;
+}
+
+void AM32EepromFactGroupListModel::requestReadAll(Vehicle* vehicle)
+{
+    if (!vehicle) {
+        return;
+    }
+
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_AM32_REQUEST_EEPROM,
+        false,  // showError
+        255,  // param1: ESC index -- 255 == all
+        0, 0, 0, 0, 0, 0  // unused params
+    );
+}
+
+//-----------------------------------------------------------------------------
 // AM32EepromFactGroup Implementation
 //-----------------------------------------------------------------------------
 
-AM32EepromFactGroup::AM32EepromFactGroup(QObject* parent, int escIndex)
-    : FactGroup(1000, QStringLiteral(":/json/Vehicle/AM32EepromFact.json"), parent)
+void AM32EepromFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
+{
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_AM32_EEPROM:
+        _handleAM32Eeprom(vehicle, message);
+        break;
+    default:
+        break;
+    }
+}
+
+void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message)
+{
+    mavlink_am32_eeprom_t eeprom{};
+    mavlink_msg_am32_eeprom_decode(&message, &eeprom);
+
+    if (eeprom.index != _idFact.rawValue().toUInt()) {
+        // Only handle messages for our ESC index
+        return;
+    }
+
+    if (eeprom.length != 48) {
+        qWarning() << "AM32 EEPROM data length mismatch:" << eeprom.length;
+        return;
+    }
+
+    if (eeprom.mode == 0) {
+        // Store original data
+        _originalEepromData = QByteArray(reinterpret_cast<const char*>(eeprom.data), eeprom.length);
+
+        // Parse read-only info
+        _eepromVersionFact.setRawValue(eeprom.data[1]);
+        _bootloaderVersionFact.setRawValue(eeprom.data[2]);
+        _firmwareMajorFact.setRawValue(eeprom.data[3]);
+        _firmwareMinorFact.setRawValue(eeprom.data[4]);
+
+        // Update all settings
+        for (AM32Setting* setting : _am32_settings) {
+            uint8_t index = setting->byteIndex();
+            if (index < eeprom.length) {
+                // qDebug() << "Updating " << setting->name() << "(" << index << ")" << "to" << eeprom.data[index];
+                setting->updateFromEeprom(eeprom.data[index]);
+            }
+        }
+
+        _dataLoaded = true;
+        emit dataLoadedChanged();
+
+        // Clear any unsaved changes flag since we just loaded fresh data
+        updateHasUnsavedChanges();
+
+        qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data";
+    }
+    else if (eeprom.mode == 1) {
+        // Write acknowledgment
+        emit writeComplete(true);
+        qDebug() << "AM32 EEPROM write acknowledged for ESC" << eeprom.index;
+    }
+}
+
+FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t id)
+{
+    qDebug() << "_createFactGroupWithId: " << id;
+    return new AM32EepromFactGroup(id, this);
+}
+
+AM32EepromFactGroup::AM32EepromFactGroup(uint8_t escIndex, QObject* parent)
+    : FactGroupWithId(1000, QStringLiteral(":/json/Vehicle/AM32EepromFact.json"), parent)
     , _escIndex(escIndex)
 {
+    _idFact.setRawValue(escIndex);
+
     // Add read-only facts to the group
     _addFact(&_eepromVersionFact);
     _addFact(&_bootloaderVersionFact);
@@ -275,7 +380,7 @@ bool AM32EepromFactGroup::hasUnsavedChanges() const
 
 void AM32EepromFactGroup::updateHasUnsavedChanges()
 {
-    qDebug() << "updateHasUnsavedChanges";
+    // qDebug() << "updateHasUnsavedChanges";
     bool hasChanges = hasUnsavedChanges();
     if (_hasUnsavedChanges != hasChanges) {
         _hasUnsavedChanges = hasChanges;
@@ -302,40 +407,6 @@ bool AM32EepromFactGroup::settingsMatch(AM32EepromFactGroup* other) const
     return true;
 }
 
-void AM32EepromFactGroup::handleEepromData(const uint8_t* data, int length)
-{
-    if (length != 48) {
-        qWarning() << "AM32 EEPROM data length mismatch:" << length;
-        return;
-    }
-
-    // Store original data
-    _originalEepromData = QByteArray(reinterpret_cast<const char*>(data), length);
-
-    // Parse read-only info
-    _eepromVersionFact.setRawValue(data[1]);
-    _bootloaderVersionFact.setRawValue(data[2]);
-    _firmwareMajorFact.setRawValue(data[3]);
-    _firmwareMinorFact.setRawValue(data[4]);
-
-    // Update all settings
-    for (AM32Setting* setting : _am32_settings) {
-        uint8_t index = setting->byteIndex();
-        if (index < length) {
-            qDebug() << "Updating " << setting->name() << "(" << index << ")" << "to" << data[index];
-            setting->updateFromEeprom(data[index]);
-        }
-    }
-
-    _dataLoaded = true;
-    emit dataLoadedChanged();
-
-    // Clear any unsaved changes flag since we just loaded fresh data
-    updateHasUnsavedChanges();
-
-    qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data";
-}
-
 QByteArray AM32EepromFactGroup::getModifiedEepromData() const
 {
     QByteArray data = _originalEepromData;
@@ -348,7 +419,7 @@ QByteArray AM32EepromFactGroup::getModifiedEepromData() const
     // Update only modified settings
     for (const auto* setting : _am32_settings) {
         if (setting->hasPendingChanges()) {
-            int index = setting->byteIndex();
+            uint8_t index = setting->byteIndex();
             if (index < data.size()) {
                 data[index] = setting->getRawValueForTransmit();
             }
@@ -366,7 +437,7 @@ void AM32EepromFactGroup::calculateWriteMask(uint32_t writeMask[6]) const
     // Set bits only for modified bytes
     for (const auto* setting : _am32_settings) {
         if (setting->hasPendingChanges()) {
-            int byteIndex = setting->byteIndex();
+            uint8_t byteIndex = setting->byteIndex();
             if (byteIndex < 192) {
                 int maskIndex = byteIndex / 32;
                 int bitIndex = byteIndex % 32;
@@ -377,24 +448,6 @@ void AM32EepromFactGroup::calculateWriteMask(uint32_t writeMask[6]) const
 
     // Never write to read-only bytes 0-4
     writeMask[0] &= 0xFFFFFFE0;  // Clear bits 0-4
-}
-
-void AM32EepromFactGroup::requestReadAll(Vehicle* vehicle)
-{
-    if (!vehicle) {
-        return;
-    }
-
-    // Send MAV_CMD_AM32_REQUEST_EEPROM
-    vehicle->sendMavCommand(
-        vehicle->defaultComponentId(),
-        MAV_CMD_AM32_REQUEST_EEPROM,
-        false,  // showError
-        // TODO: fix this
-        // _escIndex,  // param1: ESC index
-        255,  // param1: ESC index -- 255 == all
-        0, 0, 0, 0, 0, 0  // unused params
-    );
 }
 
 void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
