@@ -36,9 +36,9 @@
 QGC_LOGGING_CATEGORY(VideoManagerLog, "qgc.videomanager.videomanager")
 
 static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] = {
-    "mkv",
-    "mov",
-    "mp4"
+    ".mkv",
+    ".mov",
+    ".mp4"
 };
 
 Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);

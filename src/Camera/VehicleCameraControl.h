@@ -12,6 +12,9 @@
 #include "MavlinkCameraControl.h"
 #include "QmlObjectListModel.h"
 
+#include <QtCore/QTimer>
+#include <QtCore/QElapsedTimer>
+
 class QGCVideoStreamInfo;
 class QNetworkAccessManager;
 class QDomNode;
@@ -149,7 +152,7 @@ public:
     virtual bool trackingImageStatus() { return _trackingImageStatus.tracking_status == 1; }
     virtual QRectF trackingImageRect() { return _trackingImageRect; }
 
-    virtual bool        zoomEnabled     () { return _zoomLevel != 1.0; }
+    virtual bool        zoomEnabled     () { return _zoomEnabled; }
     virtual ZoomStatus  zoomStatus   () { return _zoomStatus; }
 
     virtual Fact*   exposureMode        ();
@@ -269,6 +272,7 @@ protected:
     bool                                _cached             = false;
     bool                                _paramComplete      = false;
     qreal                               _zoomLevel          = 0.0;
+    bool                                _zoomEnabled        = false;
     qreal                               _focusLevel         = 0.0;
     uint32_t                            _storageFree        = 0;
     uint32_t                            _storageTotal       = 0;
@@ -277,7 +281,7 @@ protected:
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
-    CameraMode                          _cameraMode         = CAM_MODE_UNDEFINED;
+    CameraMode                          _cameraMode         = CAM_MODE_VIDEO;;
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     PhotoCaptureMode                    _photoMode          = PHOTO_CAPTURE_SINGLE;
     qreal                               _photoLapse         = 1.0;
@@ -322,4 +326,7 @@ protected:
     double                              _trackingRadius     = 0.0;
     mavlink_camera_tracking_image_status_t  _trackingImageStatus;
     QRectF                                  _trackingImageRect;
+
+    QTimer              _videoRecordTimeUpdateTimer;
+    QElapsedTimer       _videoRecordTimeElapsedTimer;
 };

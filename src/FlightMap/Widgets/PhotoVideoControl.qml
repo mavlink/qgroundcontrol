@@ -72,7 +72,39 @@ Rectangle {
                 from:               0
                 live:               true
                 value:              _camera.zoomLevel
-                onValueChanged:     _camera.zoomLevel = value
+                onValueChanged:     () => {_camera.zoomLevel = value; _camera.zoomEnabled = value > 1}
+            }
+
+
+            // Zoom button
+            Rectangle {
+                Layout.alignment:   Qt.AlignHCenter
+                color:              _camera && _camera.zoomEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+                width:              ScreenTools.defaultFontPixelWidth * 6
+                height:             width
+                radius:             width * 0.5
+                border.color:       qgcPal.buttonText
+                border.width:       3
+                visible:            _camera && _camera.hasZoom
+                QGCColoredImage {
+                    height:             parent.height * 0.5
+                    width:              height
+                    anchors.centerIn:   parent
+                    source:             "/qmlimages/ZoomIcon.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    sourceSize.height:  height
+                    color:              qgcPal.text
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            console.log(_camera.photoCaptureStatus);
+                            console.log("camera mode: ", _camera.cameraMode);
+                            _camera.zoomLevel = 1
+                            _camera.zoomEnabled = false;
+                            zoomSlider.value = 0;
+                        }
+                    }
+                }
             }
 
 
@@ -122,8 +154,8 @@ Rectangle {
 
                             MouseArea {
                                 anchors.fill:   parent
-                                enabled:        _cameraInPhotoMode ? _photoCaptureIdle : true
-                                onClicked:      _camera.setCameraModeVideo()
+                                enabled:        true
+                                onClicked:      () => {console.log("SETTING VIDEO MODE"); _camera.setCameraModeVideo()}
                             }
                         }
                     }
@@ -195,7 +227,10 @@ Rectangle {
                                     _camera.takePhoto()
                                 }
                             } else {
+                                console.log( _camera.videoCaptureStatus)
+;
                                 _camera.toggleVideoRecording()
+                                console.log( _camera.videoCaptureStatus)
                             }
                         }
                     }
@@ -297,6 +332,10 @@ Rectangle {
                     visible:            _camera && _camera.hasTracking
                 }
             }
+
+
+
+
 
             QGCColoredImage {
                 Layout.alignment:       Qt.AlignHCenter

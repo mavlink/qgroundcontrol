@@ -403,8 +403,22 @@ VehicleCameraControl::startVideoRecording()
     if(!_resetting) {
         qCDebug(CameraControlLog) << "startVideoRecording()";
         //-- Check if camera can capture videos or if it can capture it while in Photo Mode
-        if(!capturesVideo() || (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
+        if((cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
             return false;
+        } else if (!capturesVideo()){
+            // If camera can't record video, just do the normal ground station recording here
+            VideoManager::instance()->startRecording();
+
+            if(videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+                qCWarning(CameraControlLog) << "startVideoRecording: Camera already recording";
+                return false;
+            }
+
+            _videoRecordTimeUpdateTimer.start();
+            _videoRecordTimeElapsedTimer.start();
+            VideoManager::instance()->startRecording();
+            _setVideoStatus(VIDEO_CAPTURE_STATUS_RUNNING);
+            return true;
         }
         if(videoCaptureStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
             _vehicle->sendMavCommand(
@@ -413,6 +427,8 @@ VehicleCameraControl::startVideoRecording()
                 false,                                      // Don't Show Error (handle locally)
                 0,                                          // All streams
                 0);                                         // CAMERA_CAPTURE_STATUS streaming frequency
+
+
             return true;
         }
     }
@@ -424,6 +440,21 @@ bool
 VehicleCameraControl::stopVideoRecording()
 {
     if(!_resetting) {
+        if (!capturesVideo()) {
+            // Again, if camera doesn't have the recording, do one on the ground station
+            if(videoCaptureStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
+                qCWarning(CameraControlLog) << "stopVideoRecording: Camera not recording";
+                return false;
+            }
+
+            _videoRecordTimeUpdateTimer.stop();
+            VideoManager::instance()->stopRecording();
+            _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
+            return true;
+        }
+
+
+        // Firstly, stop video recording on the UAV
         qCDebug(CameraControlLog) << "stopVideoRecording()";
         if(videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
             _vehicle->sendMavCommand(
@@ -431,6 +462,9 @@ VehicleCameraControl::stopVideoRecording()
                 MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
                 false,                                      // Don't Show Error (handle locally)
                 0);                                         // Reserved (Set to 0)
+
+            VideoManager::instance()->stopRecording();
+
             return true;
         }
     }
@@ -1483,8 +1517,11 @@ VehicleCameraControl::_requestStorageInfo()
 void
 VehicleCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
-    qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
-    _setCameraMode(static_cast<CameraMode>(settings.mode_id));
+    // FIXME: for now just hardcoding to support older VGM firmware with mode_id hardcoded to photo in mavsdk
+    //auto mode_id = settings.mode_id;
+    int mode_id = 1;
+    qCDebug(CameraControlLog) << "handleSettings() Mode:" << mode_id;
+    _setCameraMode(static_cast<CameraMode>(mode_id));
     // qreal z = static_cast<qreal>(settings.zoomLevel);
     qreal f = static_cast<qreal>(settings.focusLevel);
     // if(std::isfinite(z) && z != _zoomLevel) {
@@ -2301,8 +2338,11 @@ void
 VehicleCameraControl::setZoomEnabled(bool set)
 {
     if(!set) {
-        _zoomLevel = 1.0;
+        _zoomEnabled = false;
+    } else {
+        _zoomEnabled = true;
     }
+
     emit zoomEnabledChanged();
 }
 
