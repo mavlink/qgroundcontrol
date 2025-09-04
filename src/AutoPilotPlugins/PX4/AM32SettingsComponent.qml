@@ -17,34 +17,32 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
     readonly property real _groupMargins: ScreenTools.defaultFontPixelHeight / 2
 
-
-    // TODO: swap order of label and settingName
     // Slider configurations matching your exact layout
     readonly property var motorSliderConfigs: [
-        { label: qsTr("Timing advance"), settingName: "timingAdvance" },
-        { label: qsTr("Startup power"), settingName: "startupPower" },
-        { label: qsTr("Motor KV"), settingName: "motorKv" },
-        { label: qsTr("Motor poles"), settingName: "motorPoles" },
-        { label: qsTr("Beeper volume"), settingName: "beepVolume" },
-        { label: qsTr("PWM Frequency"), settingName: "pwmFrequency" },
+        { label: qsTr("Timing advance"), name: "timingAdvance" },
+        { label: qsTr("Startup power"), name: "startupPower" },
+        { label: qsTr("Motor KV"), name: "motorKv" },
+        { label: qsTr("Motor poles"), name: "motorPoles" },
+        { label: qsTr("Beeper volume"), name: "beepVolume" },
+        { label: qsTr("PWM Frequency"), name: "pwmFrequency" },
     ]
 
     readonly property var extendedSliderConfigs: [
-        { label: qsTr("Ramp rate"), settingName: "maxRampSpeed" },
-        { label: qsTr("Minimum duty cycle"), settingName: "minDutyCycle" },
+        { label: qsTr("Ramp rate"), name: "maxRampSpeed" },
+        { label: qsTr("Minimum duty cycle"), name: "minDutyCycle" },
     ]
 
     readonly property var limitsSliderConfigs: [
-        { label: qsTr("Temperature limit"), settingName: "temperatureLimit" },
-        { label: qsTr("Current limit"), settingName: "currentLimit" },
-        { label: qsTr("Low voltage threshold"), settingName: "lowVoltageThreshold" },
-        { label: qsTr("Absolute voltage cutoff"), settingName: "absoluteVoltageCutoff" },
+        { label: qsTr("Temperature limit"), name: "temperatureLimit" },
+        { label: qsTr("Current limit"), name: "currentLimit" },
+        { label: qsTr("Low voltage threshold"), name: "lowVoltageThreshold" },
+        { label: qsTr("Absolute voltage cutoff"), name: "absoluteVoltageCutoff" },
     ]
 
     readonly property var currentControlSliderConfigs: [
-        { label: qsTr("Current P"), settingName: "currentPidP" },
-        { label: qsTr("Current I"), settingName: "currentPidI" },
-        { label: qsTr("Current D"), settingName: "currentPidD" },
+        { label: qsTr("Current P"), name: "currentPidP" },
+        { label: qsTr("Current I"), name: "currentPidI" },
+        { label: qsTr("Current D"), name: "currentPidD" },
     ]
 
     Component.onCompleted: {
@@ -140,11 +138,11 @@ Item {
         }
     }
 
-    function updateSetting(settingName, value) {
+    function updateSetting(name, value) {
         for (var i = 0; i < selectedEeproms.length; i++) {
             var esc = eeproms.get(selectedEeproms[i])
-            if (esc && esc.settings[settingName]) {
-                esc.settings[settingName].setPendingValue(value)
+            if (esc && esc.settings[name]) {
+                esc.settings[name].setPendingValue(value)
             }
         }
     }
@@ -360,7 +358,7 @@ Item {
                                         id: sliderColumn
                                         anchors.centerIn: parent
                                         label: modelData.label
-                                        setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                        setting: firstEeprom ? firstEeprom.settings[modelData.name] : null
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
@@ -414,7 +412,7 @@ Item {
                                         id: sliderColumn
                                         anchors.centerIn: parent
                                         label: modelData.label
-                                        setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                        setting: firstEeprom ? firstEeprom.settings[modelData.name] : null
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
@@ -468,7 +466,7 @@ Item {
                                         id: sliderColumn
                                         anchors.centerIn: parent
                                         label: modelData.label
-                                        setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                        setting: firstEeprom ? firstEeprom.settings[modelData.name] : null
                                         onValueChanged: updateSetting(setting.name, value)
                                     }
                                 }
@@ -503,7 +501,7 @@ Item {
                                     id: sliderColumn
                                     anchors.centerIn: parent
                                     label: modelData.label
-                                    setting: firstEeprom ? firstEeprom.settings[modelData.settingName] : null
+                                    setting: firstEeprom ? firstEeprom.settings[modelData.name] : null
                                     onValueChanged: updateSetting(setting.name, value)
                                 }
                             }
