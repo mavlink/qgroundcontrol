@@ -7996,7 +7996,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="497"/>
       <source>Smart RTL</source>
-      <translation>スマートRTL</translation>
+      <translation type="unfinished">Smart RTL</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="736"/>
