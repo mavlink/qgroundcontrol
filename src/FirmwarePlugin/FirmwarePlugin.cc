@@ -266,8 +266,6 @@ bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle *vehicle, const QString &
         return true;
     }
 
-    qDebug() << "Setting flight mode to" << vehicle->flightMode() << flightMode;
-
     bool flightModeChanged = false;
 
     // We try 3 times
