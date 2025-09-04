@@ -92,6 +92,14 @@ SettingsPage {
             visible:            !_videoAutoStreamConfig && _isStreamSource && _videoSettings.aspectRatio.visible
         }
 
+        LabelledFactComboBox {
+            Layout.fillWidth:   true
+            label:              qsTr("Video Fit")
+            fact:               _videoSettings.videoFit
+            visible:            fact.visible
+            indexModel:         false
+        }
+
         FactCheckBoxSlider {
             Layout.fillWidth:   true
             text:               qsTr("Stop recording when disarmed")

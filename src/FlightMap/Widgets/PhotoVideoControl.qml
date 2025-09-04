@@ -318,7 +318,7 @@ Rectangle {
                                 _camera.trackingEnabled = !_camera.trackingEnabled;
                                 if (!_camera.trackingEnabled) {
                                     let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
-                                    !camera.stopTracking(latestFrameTimestamp)
+                                    !_camera.stopTracking(latestFrameTimestamp)
                                 }
                             }
                         }
