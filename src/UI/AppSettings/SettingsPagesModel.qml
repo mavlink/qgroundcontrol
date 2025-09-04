@@ -56,6 +56,16 @@ ListModel {
     }
 
     ListElement {
+        name: qsTr("NTRIP/RTK")
+        url: "qrc:/qml/QGroundControl/AppSettings/NTRIPSettings.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/globe.svg"
+        pageVisible: function() {
+            return QGroundControl.settingsManager &&
+                   QGroundControl.settingsManager.ntripSettings !== undefined
+        }
+    }
+
+    ListElement {
         name: qsTr("Comm Links")
         url: "qrc:/qml/QGroundControl/AppSettings/LinkSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/usb.svg"

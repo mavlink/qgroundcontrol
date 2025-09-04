@@ -14,6 +14,7 @@
 #include "QGCCommandLineParser.h"
 #include "QGCLogging.h"
 #include "Platform.h"
+#include "NTRIP.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
@@ -85,6 +86,7 @@ int main(int argc, char *argv[])
 
     app.init();
 
+    // NTRIPManager is registered for QML access and initializes on first use.
     int exitCode = 0;
     if (args.runningUnitTests) {
 #ifdef QGC_UNITTEST_BUILD
