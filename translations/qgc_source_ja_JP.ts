@@ -6375,7 +6375,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/QmlControls/FlightModeIndicator.qml" line="222"/>
       <source>Flight Modes</source>
-      <translation type="unfinished">Flight Modes</translation>
+      <translation>飛行モード</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/FlightModeIndicator.qml" line="223"/>
@@ -7811,7 +7811,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="63"/>
       <source>Set Flight Mode</source>
-      <translation>フライトモード設定</translation>
+      <translation>飛行モード設定</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="64"/>
