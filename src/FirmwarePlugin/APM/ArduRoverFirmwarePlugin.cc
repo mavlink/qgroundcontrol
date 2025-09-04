@@ -81,6 +81,16 @@ QString ArduRoverFirmwarePlugin::stabilizedFlightMode() const
     return _modeEnumToString.value(APMRoverMode::MANUAL, _manualFlightMode);
 }
 
+QString ArduRoverFirmwarePlugin::pauseFlightMode() const
+{
+    return _modeEnumToString.value(APMRoverMode::HOLD, _holdFlightMode);
+}
+
+QString ArduRoverFirmwarePlugin::followFlightMode() const
+{
+    return _modeEnumToString.value(APMRoverMode::FOLLOW, _followFlightMode);
+}
+
 void ArduRoverFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
     for (FirmwareFlightMode &mode: modeList) {
