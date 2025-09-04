@@ -108,6 +108,11 @@ QString ArduPlaneFirmwarePlugin::stabilizedFlightMode() const
     return _modeEnumToString.value(APMPlaneMode::STABILIZE, _stabilizeFlightMode);
 }
 
+QString ArduPlaneFirmwarePlugin::pauseFlightMode() const
+{
+    return _modeEnumToString.value(APMPlaneMode::LOITER, _loiterFlightMode);
+}
+
 void ArduPlaneFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
     for (FirmwareFlightMode &mode: modeList) {
