@@ -3,12 +3,6 @@ if(NOT WIN32)
     return()
 endif()
 
-# CPMAddPackage(
-#     NAME windows_drivers
-#     URL https://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
-# )
-# ${windows_drivers_SOURCE_DIR}/driver.msi
-
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         WIN32_EXECUTABLE TRUE
