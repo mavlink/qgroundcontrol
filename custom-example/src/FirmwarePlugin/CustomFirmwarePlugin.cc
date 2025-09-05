@@ -21,7 +21,7 @@ CustomFirmwarePlugin::CustomFirmwarePlugin()
 {
     for (auto &mode: _flightModeList){
         //-- Narrow the flight mode options to only these
-        if(mode.mode_name != _holdFlightMode && mode.mode_name != _rtlFlightMode && mode.mode_name != _missionFlightMode){
+        if ((mode.mode_name != pauseFlightMode()) && (mode.mode_name != rtlFlightMode()) && (mode.mode_name != missionFlightMode())) {
             // No other flight modes can be set
             mode.canBeSet = false;
         }
