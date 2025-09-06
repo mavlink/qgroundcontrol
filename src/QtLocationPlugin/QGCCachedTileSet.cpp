@@ -7,17 +7,14 @@
  *
  ****************************************************************************/
 
-/**
- * @file
- *   @brief Map Tile Set
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include "QGCCachedTileSet.h"
 
+#include <QtNetwork/QNetworkProxy>
+
 #include "ElevationMapProvider.h"
+#include <QGCApplication.h>
+#include <QGCFileDownload.h>
+#include <QGCLoggingCategory.h>
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapTasks.h"
@@ -25,11 +22,6 @@
 #include "QGeoFileTileCacheQGC.h"
 #include "QGeoTileFetcherQGC.h"
 
-#include <QGCApplication.h>
-#include <QGCFileDownload.h>
-#include <QGCLoggingCategory.h>
-
-#include <QtNetwork/QNetworkProxy>
 
 QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "qgc.qtlocation.qgccachedtileset")
 
@@ -37,12 +29,12 @@ QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
     : QObject(parent)
     , _name(name)
 {
-    // qCDebug(QGCCachedTileSetLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCachedTileSetLog) << this;
 }
 
 QGCCachedTileSet::~QGCCachedTileSet()
 {
-    // qCDebug(QGCCachedTileSetLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCachedTileSetLog) << this;
 }
 
 QString QGCCachedTileSet::downloadStatus() const
@@ -118,7 +110,7 @@ void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
 #endif
     }
 
-    (void) _tilesToDownload.append(tiles);
+    _tilesToDownload.append(tiles);
     _prepareDownload();
 }
 
@@ -132,7 +124,7 @@ void QGCCachedTileSet::_doneWithDownload()
         if (_savedTileSize != 0) {
             avg = _savedTileSize / _savedTileCount;
         } else {
-            qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "_savedTileSize=0";
+            qCWarning(QGCCachedTileSetLog) << "_savedTileSize=0";
         }
 
         setUniqueTileSize(_uniqueTileCount * avg);
@@ -160,17 +152,17 @@ void QGCCachedTileSet::_prepareDownload()
         }
 
         QGCTile* const tile = _tilesToDownload.dequeue();
-        const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type());
-        QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x(), tile->y(), tile->z());
+        const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type);
+        QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x, tile->y, tile->z);
         request.setOriginatingObject(this);
-        request.setAttribute(QNetworkRequest::User, tile->hash());
+        request.setAttribute(QNetworkRequest::User, tile->hash);
 
         QNetworkReply* const reply = _networkManager->get(request);
         reply->setParent(this);
         QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*reply);
         (void) connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
         (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
-        (void) _replies.insert(tile->hash(), reply);
+        (void) _replies.insert(tile->hash, reply);
 
         delete tile;
         if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (QGeoTileFetcherQGC::concurrentDownloads(_type) * 10))) {
@@ -183,7 +175,7 @@ void QGCCachedTileSet::_networkReplyFinished()
 {
     QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
     if (!reply) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "NULL Reply";
+        qCWarning(QGCCachedTileSetLog) << "NULL Reply";
         return;
     }
     reply->deleteLater();
@@ -193,26 +185,26 @@ void QGCCachedTileSet::_networkReplyFinished()
     }
 
     if (!reply->isOpen()) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Empty Reply";
+        qCWarning(QGCCachedTileSetLog) << "Empty Reply";
         return;
     }
 
     const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
     if (hash.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Empty Hash";
+        qCWarning(QGCCachedTileSetLog) << "Empty Hash";
         return;
     }
 
     if (_replies.contains(hash)) {
         (void) _replies.remove(hash);
     } else {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Reply not in list: " << hash;
+        qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
     }
     qCDebug(QGCCachedTileSetLog) << "Tile fetched:" << hash;
 
     QByteArray image = reply->readAll();
     if (image.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Empty Image";
+        qCWarning(QGCCachedTileSetLog) << "Empty Image";
         return;
     }
 
@@ -224,14 +216,14 @@ void QGCCachedTileSet::_networkReplyFinished()
         const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
         image = elevationProvider->serialize(image);
         if (image.isEmpty()) {
-            qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Failed to Serialize Terrain Tile";
+            qCWarning(QGCCachedTileSetLog) << "Failed to Serialize Terrain Tile";
             return;
         }
     }
 
     const QString format = mapProvider->getImageFormat(image);
     if (format.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Empty Format";
+        qCWarning(QGCCachedTileSetLog) << "Empty Format";
         return;
     }
 
@@ -258,24 +250,24 @@ void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
     if (!reply) {
         return;
     }
-    qCDebug(QGCCachedTileSetLog) << Q_FUNC_INFO << "Error fetching tile" << reply->errorString();
+    qCDebug(QGCCachedTileSetLog) << "Error fetching tile" << reply->errorString();
 
     setErrorCount(_errorCount + 1);
 
     const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
     if (hash.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Empty Hash";
+        qCWarning(QGCCachedTileSetLog) << "Empty Hash";
         return;
     }
 
     if (_replies.contains(hash)) {
         (void) _replies.remove(hash);
     } else {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Reply not in list:" << hash;
+        qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
     }
 
     if (error != QNetworkReply::OperationCanceledError) {
-        qCWarning(QGCCachedTileSetLog) << Q_FUNC_INFO << "Error:" << reply->errorString();
+        qCWarning(QGCCachedTileSetLog) << "Error:" << reply->errorString();
     }
 
     QGCUpdateTileDownloadStateTask* const task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);

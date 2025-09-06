@@ -27,6 +27,8 @@ qt_add_plugin(QGCLocation
     QGCMapUrlEngine.cpp
     QGCMapUrlEngine.h
     QGCTile.h
+    QGCTileCacheDatabase.cpp
+    QGCTileCacheDatabase.h
     QGCTileCacheWorker.cpp
     QGCTileCacheWorker.h
     QGCTileSet.h

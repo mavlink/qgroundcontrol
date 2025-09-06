@@ -26,7 +26,7 @@ class QGeoTiledMapReplyQGC : public QGeoTiledMapReply
     Q_OBJECT
 
 public:
-    QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent = nullptr);
+    explicit QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent = nullptr);
     ~QGeoTiledMapReplyQGC();
 
     void abort() final;

@@ -8,15 +8,17 @@
  ****************************************************************************/
 
 #include "QGeoTileFetcherQGC.h"
-#include "QGeoTiledMappingManagerEngineQGC.h"
-#include "QGeoMapReplyQGC.h"
-#include "QGCMapUrlEngine.h"
-#include "MapProvider.h"
-#include <QGCLoggingCategory.h>
 
-#include <QtNetwork/QNetworkRequest>
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 #include <QtLocation/private/qgeotilespec_p.h>
+#include <QtNetwork/QNetworkRequest>
+
+#include "MapProvider.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMapUrlEngine.h"
+#include "QGeoMapReplyQGC.h"
+#include "QGeoTiledMappingManagerEngineQGC.h"
+
 
 QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "qgc.qtlocationplugin.qgeotilefetcherqgc")
 
@@ -26,7 +28,7 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, co
 {
     Q_CHECK_PTR(networkManager);
 
-    // qCDebug(QGeoTileFetcherQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTileFetcherQGCLog) << this;
 
     // TODO: Allow useragent override again
     /*if (parameters.contains(QStringLiteral("useragent"))) {
@@ -36,7 +38,7 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, co
 
 QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
 {
-    // qCDebug(QGeoTileFetcherQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTileFetcherQGCLog) << this;
 }
 
 QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)

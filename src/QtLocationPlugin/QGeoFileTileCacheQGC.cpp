@@ -8,6 +8,11 @@
  ****************************************************************************/
 
 #include "QGeoFileTileCacheQGC.h"
+
+#include <QtCore/QStandardPaths>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QDir>
+
 #include "QGCMapEngine.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
@@ -16,10 +21,6 @@
 #include "QGCMapUrlEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtCore/QStandardPaths>
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QDir>
 
 QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "qgc.qtlocationplugin.qgeofiletilecacheqgc")
 
@@ -30,7 +31,7 @@ bool QGeoFileTileCacheQGC::_cacheWasReset = false;
 QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObject *parent)
     : QGeoFileTileCache(baseCacheDirectory(), parent)
 {
-    // qCDebug(QGeoFileTileCacheQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoFileTileCacheQGCLog) << this;
 
     setCostStrategyDisk(QGeoFileTileCache::ByteSize);
     setMaxDiskUsage(_getDefaultMaxDiskCache());
@@ -50,11 +51,11 @@ QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObjec
 
 QGeoFileTileCacheQGC::~QGeoFileTileCacheQGC()
 {
-#ifdef QT_DEBUG
-    // printStats();
-#endif
+    if (QGeoFileTileCacheQGCLog().isDebugEnabled()) {
+        printStats();
+    }
 
-    // qCDebug(QGeoFileTileCacheQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoFileTileCacheQGCLog) << this;
 }
 
 uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap &parameters)

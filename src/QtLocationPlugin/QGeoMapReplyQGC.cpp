@@ -9,20 +9,19 @@
 
 #include "QGeoMapReplyQGC.h"
 
-#include "ElevationMapProvider.h"
-#include "MapProvider.h"
-#include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
-#include "QGeoFileTileCacheQGC.h"
-
-#include <DeviceInfo.h>
-#include <QGCFileDownload.h>
-#include <QGCLoggingCategory.h>
-
 #include <QtCore/QFile>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QSslError>
+
+#include "DeviceInfo.h"
+#include "ElevationMapProvider.h"
+#include "MapProvider.h"
+#include "QGCFileDownload.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMapEngine.h"
+#include "QGCMapUrlEngine.h"
+#include "QGeoFileTileCacheQGC.h"
 
 QGC_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog, "qgc.qtlocationplugin.qgeomapreplyqgc")
 
@@ -34,7 +33,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
     , _networkManager(networkManager)
     , _request(request)
 {
-    // qCDebug(QGeoTiledMapReplyQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTiledMapReplyQGCLog) << this;
 
     _initDataFromResources();
 
@@ -53,7 +52,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
 
 QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
 {
-    // qCDebug(QGeoTiledMapReplyQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTiledMapReplyQGCLog) << this;
 }
 
 void QGeoTiledMapReplyQGC::_initDataFromResources()
@@ -167,8 +166,8 @@ void QGeoTiledMapReplyQGC::_networkReplySslErrors(const QList<QSslError> &errors
 void QGeoTiledMapReplyQGC::_cacheReply(QGCCacheTile *tile)
 {
     if (tile) {
-        setMapImageData(tile->img());
-        setMapImageFormat(tile->format());
+        setMapImageData(tile->img);
+        setMapImageFormat(tile->format);
         setCached(true);
         setFinished(true);
         delete tile;
@@ -181,7 +180,7 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
 {
     Q_UNUSED(errorString);
 
-    Q_ASSERT(type == QGCMapTask::taskFetchTile);
+    Q_ASSERT(type == QGCMapTask::TaskType::taskFetchTile);
 
     if (!QGCDeviceInfo::isInternetAvailable()) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Network Not Available"));
