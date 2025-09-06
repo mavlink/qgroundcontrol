@@ -65,6 +65,8 @@ public:
 public slots:
     void setCoordinate1     (const QGeoCoordinate& coordinate);
     void setCoordinate2     (const QGeoCoordinate& coordinate);
+    void setCoord1LoiterRadius(double loiterRadius);
+    void setCoord2LoiterRadius(double loiterRadius);
     void setCoord1AMSLAlt   (double alt);
     void setCoord2AMSLAlt   (double alt);
 
@@ -87,10 +89,16 @@ private slots:
     void _updateTerrainCollision    (void);
 
 private:
+
+    void adjustCoordinatesForLoiterRadius();
     QGeoCoordinate      _coord1;
     QGeoCoordinate      _coord2;
+    QGeoCoordinate      _realCoord1;
+    QGeoCoordinate      _realCoord2;
     double              _coord1AMSLAlt =                qQNaN();
     double              _coord2AMSLAlt =                qQNaN();
+    double              _coord1LoiterRadius =           qQNaN();
+    double              _coord2LoiterRadius =           qQNaN();
     bool                _queryTerrainData;
     bool                _terrainCollision =             false;
     bool                _specialVisual =                false;
