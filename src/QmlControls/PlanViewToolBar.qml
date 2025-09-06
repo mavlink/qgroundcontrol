@@ -62,7 +62,11 @@ Rectangle {
 
     QGCMouseArea {
         anchors.fill:   viewButtonRow
-        onClicked:      mainWindow.showFlyView()
+        onClicked:      {
+            if (mainWindow.allowViewSwitch()) {
+                mainWindow.showFlyView()
+            }
+        }
     }
 
     QGCFlickable {
