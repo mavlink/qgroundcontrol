@@ -1000,6 +1000,10 @@ private:
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
+    // The following two methods should only be called by unit tests
+    void _deleteGimbalController();
+    void _deleteCameraManager();
+
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
