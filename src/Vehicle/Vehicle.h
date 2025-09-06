@@ -499,6 +499,7 @@ public:
     bool vtol() const;
     bool rover() const;
     bool sub() const;
+    bool spacecraft() const;
 
     bool supportsThrottleModeCenterZero () const;
     bool supportsNegativeThrust         ();
