@@ -381,9 +381,7 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
-#if 0
-    // I believe this should no longer be needed with new PhtoVideoControl implmenentation.
-    // Leaving in for now, just in case it need to come back.
+    // Clean up camera manager to stop all timers and prevent crashes during destruction
     if(_cameraManager) {
         // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
         // the dangling pointer access will cause a runtime fault
@@ -391,9 +389,8 @@ void Vehicle::prepareDelete()
         _cameraManager = nullptr;
         delete tmpCameras;
         emit cameraManagerChanged();
-        qApp->processEvents();
+        // Note: Removed qApp->processEvents() to prevent MAVLink crashes during destruction
     }
-#endif
 }
 
 void Vehicle::deleteCameraManager()
