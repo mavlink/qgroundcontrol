@@ -84,7 +84,12 @@ MAVLinkInspectorController::~MAVLinkInspectorController()
 {
     qDeleteAll(_timeScaleSt);
     qDeleteAll(_rangeSt);
-    _charts->clearAndDeleteContents();
+
+    for (int i = _charts->count() - 1; i >= 0; i--) {
+        auto chartObject = _charts->get(i);
+        MAVLinkChartController* chart = dynamic_cast<MAVLinkChartController*>(chartObject);
+        deleteChart(chart);
+    }
     _systems->clearAndDeleteContents();
 
     // qCDebug(MAVLinkInspectorControllerLog) << Q_FUNC_INFO << this;
@@ -227,9 +232,9 @@ void MAVLinkInspectorController::_receiveMessage(LinkInterface *link, const mavl
     }
 }
 
-MAVLinkChartController *MAVLinkInspectorController::createChart()
+MAVLinkChartController *MAVLinkInspectorController::createChart(int chartIndex)
 {
-    MAVLinkChartController *const pChart = new MAVLinkChartController(this, _charts->count());
+    MAVLinkChartController *const pChart = new MAVLinkChartController(this, chartIndex);
     QQmlEngine::setObjectOwnership(pChart, QQmlEngine::CppOwnership);
 
     _charts->append(pChart);
