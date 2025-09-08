@@ -62,7 +62,7 @@ public:
 
     Q_INVOKABLE void setPendingValue(const QVariant& value);
     void updateFromEeprom(uint8_t value);
-    uint8_t getRawValueForTransmit() const;
+    uint8_t getRawValue() const;
     void discardChanges();
 
 signals:
@@ -71,7 +71,7 @@ signals:
 private:
     uint8_t _escIndex;
     uint8_t _eepromByteIndex;
-    uint8_t _rawValue = 0;
+    uint8_t _rawOriginalValue = 0;
     Fact* _fact;
 
     std::function<QVariant(uint8_t)> _fromRaw;

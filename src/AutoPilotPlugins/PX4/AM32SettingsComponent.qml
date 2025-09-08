@@ -129,15 +129,6 @@ Item {
         }
     }
 
-    function discardChanges() {
-        for (var i = 0; i < selectedEeproms.length; i++) {
-            var esc = eeproms.get(selectedEeproms[i])
-            if (esc) {
-                esc.discardChanges()
-            }
-        }
-    }
-
     function updateSetting(name, value) {
         for (var i = 0; i < selectedEeproms.length; i++) {
             var esc = eeproms.get(selectedEeproms[i])

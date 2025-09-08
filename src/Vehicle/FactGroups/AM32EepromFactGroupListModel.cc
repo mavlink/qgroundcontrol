@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2025 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -21,48 +21,36 @@ AM32Setting::AM32Setting(uint8_t escIndex, const AM32SettingConfig& config)
     , _fromRaw(config.fromRaw)
     , _toRaw(config.toRaw)
 {
-    // qDebug() << "new Fact: " << config.name;
     _fact = new Fact(0, config.name, config.type, this);
-
-    // Monitor fact changes
-    connect(_fact, &Fact::rawValueChanged, this, &AM32Setting::pendingChangesChanged);
 }
 
-bool AM32Setting::hasPendingChanges() const
+void AM32Setting::updateFromEeprom(uint8_t value)
 {
-    // qDebug() << "hasPendingChanges";
-    // Compare the raw value that would be transmitted with the original raw value
-    return getRawValueForTransmit() != _rawValue;
+    _rawOriginalValue = value;
+    _fact->setRawValue(_fromRaw(value));
+    emit pendingChangesChanged();
+}
+
+uint8_t AM32Setting::getRawValue() const
+{
+    return _toRaw(_fact->rawValue());
 }
 
 void AM32Setting::setPendingValue(const QVariant& value)
 {
     _fact->setRawValue(value);
-    // pendingChangesChanged signal will be emitted via the connection
+    emit pendingChangesChanged();
 }
 
-void AM32Setting::updateFromEeprom(uint8_t value)
+bool AM32Setting::hasPendingChanges() const
 {
-    // qDebug() << "updateFromEeprom";
-    _rawValue = value;
-    _fact->setRawValue(_fromRaw(value));
-
-    // QVariant displayValue = _fromRaw(value);
-    // _fact->setRawValue(displayValue);
-    // pendingChangesChanged signal will be emitted via the connection
-}
-
-uint8_t AM32Setting::getRawValueForTransmit() const
-{
-    return _toRaw(_fact->rawValue());
+    return getRawValue() != _rawOriginalValue;
 }
 
 void AM32Setting::discardChanges()
 {
-    // qDebug() << "discardChanges";
-    // Revert fact to original value
-    _fact->setRawValue(_fromRaw(_rawValue));
-    // pendingChangesChanged signal will be emitted via the connection
+    _fact->setRawValue(_fromRaw(_rawOriginalValue));
+    emit pendingChangesChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -71,9 +59,7 @@ void AM32Setting::discardChanges()
 
 AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
     : FactGroupListModel("am32Eeprom", parent)
-{
-
-}
+{}
 
 bool AM32EepromFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const
 {
@@ -350,17 +336,9 @@ void AM32EepromFactGroup::initializeEepromFacts()
     for (const auto& config : configuration_array) {
         auto setting = new AM32Setting(_escIndex, config);
 
-        // Monitor changes for each setting
-        // connect(setting, &AM32Setting::pendingChangesChanged,
-        //         this, &AM32EepromFactGroup::updateHasUnsavedChanges);
-
         _addFact(setting->fact());
         _settings.append(setting);
         _settingsMap->insert(config.name, QVariant::fromValue(setting));
-
-        // connect(setting, &AM32Setting::pendingChangesChanged, [=]() {
-        //     emit _settingsMap->valueChanged(config.name, QVariant::fromValue(setting));
-        // });
 
         connect(setting, &AM32Setting::pendingChangesChanged, this, &AM32EepromFactGroup::updateHasUnsavedChanges);
     }
@@ -407,7 +385,7 @@ bool AM32EepromFactGroup::settingsMatch(AM32EepromFactGroup* other) const
         auto* otherSetting = other->getSetting(mySetting->name());
 
         if (!otherSetting ||
-            mySetting->getRawValueForTransmit() != otherSetting->getRawValueForTransmit()) {
+            mySetting->getRawValue() != otherSetting->getRawValue()) {
             return false;
         }
     }
@@ -429,7 +407,7 @@ QByteArray AM32EepromFactGroup::getModifiedEepromData() const
         if (setting->hasPendingChanges()) {
             uint8_t index = setting->byteIndex();
             if (index < data.size()) {
-                data[index] = setting->getRawValueForTransmit();
+                data[index] = setting->getRawValue();
             }
         }
     }
