@@ -69,7 +69,9 @@ public:
                  const QString& whitelist,
                  bool useSpartn,
                  QObject* parent = nullptr);
-                 Q_INVOKABLE void debugFetchSourceTable();
+
+    Q_INVOKABLE void debugFetchSourceTable();
+
     ~NTRIPTCPLink();
     
 public slots:

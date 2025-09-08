@@ -62,11 +62,9 @@ NTRIPSettings::NTRIPSettings(QObject* parent)
     
     // Force ntripServerConnectEnabled to false at every startup, ignoring saved settings
     // This ensures NTRIP never auto-starts regardless of previous user state
-    QTimer::singleShot(0, this, [this]() {
-        if (ntripServerConnectEnabled()) {
-            ntripServerConnectEnabled()->setRawValue(false);
-        }
-    });    
+    if (ntripServerConnectEnabled()) {
+        ntripServerConnectEnabled()->setRawValue(false);
+    }
 }
 
 DECLARE_SETTINGSFACT(NTRIPSettings, ntripServerConnectEnabled)
