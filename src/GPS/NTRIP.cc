@@ -453,6 +453,9 @@ void NTRIPTCPLink::_parse(const QByteArray& buffer)
         logged_empty_once = true;
     }
 
+    // Define named constant for header and CRC byte count
+    static constexpr int RTCM_HEADER_AND_CRC_BYTES = 6;
+
     for (const uint8_t& byte : buffer) {
         if (_state == NTRIPState::waiting_for_rtcm_header) {
             if (byte != RTCM3_PREAMBLE)
@@ -461,7 +464,10 @@ void NTRIPTCPLink::_parse(const QByteArray& buffer)
         }
         if (_rtcmParser->addByte(byte)) {
             _state = NTRIPState::waiting_for_rtcm_header;
-            QByteArray message((char*)_rtcmParser->message(), static_cast<int>(_rtcmParser->messageLength() + 6)); // +6 for header and CRC
+            QByteArray message(
+                reinterpret_cast<char*>(_rtcmParser->message()),
+                static_cast<int>(_rtcmParser->messageLength() + RTCM_HEADER_AND_CRC_BYTES)
+            );
             const uint16_t id = _rtcmParser->messageId();
 
             if (_whitelist.empty() || _whitelist.contains(id)) {
@@ -728,32 +734,50 @@ void NTRIPTCPLink::sendNMEA(const QByteArray& sentence)
 
     QByteArray line = sentence;
 
-    // Validate checksum in the form $CORE*XX (no CRLF included)
-    // If it is wrong or missing, fix it here.
+    // Validate or repair checksum in the form $CORE*XX
     if (line.size() >= 5 && line.at(0) == '$') {
         int star = line.lastIndexOf('*');
         if (star > 1) {
-            // compute checksum over bytes between '$' and '*'
+            // Calculate checksum over bytes between '$' and '*'
             quint8 calc = 0;
             for (int i = 1; i < star; ++i) {
                 calc ^= static_cast<quint8>(line.at(i));
             }
-            QByteArray txCks = line.mid(star + 1, 2).toUpper();
-            QByteArray calcCks = QByteArray::number(calc, 16).rightJustified(2, '0').toUpper();
 
-            const bool match = (txCks == calcCks);
-            qCDebug(NTRIPLog) << "NTRIP NMEA checksum tx=" << QString::fromUtf8(txCks)
-                              << "calc=" << QString::fromUtf8(calcCks)
-                              << "match=" << match;
+            // Format calculated checksum as two uppercase hex digits
+            QByteArray calcCks = QByteArray::number(calc, 16)
+                                     .rightJustified(2, '0')
+                                     .toUpper();
 
-            if (!match) {
-                // repair the checksum in-place
+            bool needsRepair = false;
+            if (star + 3 > line.size()) {
+                // Not enough chars after '*', definitely needs repair
+                needsRepair = true;
+            } else {
+                QByteArray txCks = line.mid(star + 1, 2).toUpper();
+                if (txCks != calcCks) {
+                    needsRepair = true;
+                }
+            }
+
+            if (needsRepair) {
+                // Remove any existing checksum and replace with correct one
                 line = line.left(star + 1) + calcCks;
             }
+        } else {
+            // No '*' found, append one and correct checksum
+            quint8 calc = 0;
+            for (int i = 1; i < line.size(); ++i) {
+                calc ^= static_cast<quint8>(line.at(i));
+            }
+            QByteArray calcCks = QByteArray::number(calc, 16)
+                                     .rightJustified(2, '0')
+                                     .toUpper();
+            line.append('*').append(calcCks);
         }
     }
 
-    // Append CRLF once and write once
+    // Ensure CRLF termination
     if (!line.endsWith("\r\n")) {
         line.append("\r\n");
     }
@@ -766,6 +790,7 @@ void NTRIPTCPLink::sendNMEA(const QByteArray& sentence)
     qCDebug(NTRIPLog) << "NTRIP Socket state:" << (_socket ? _socket->state() : -1);
     qCDebug(NTRIPLog) << "NTRIP Bytes written:" << written;
 }
+
 
 void NTRIPTCPLink::requestStop()
 {
@@ -1164,7 +1189,11 @@ void NTRIPManager::_sendGGA()
             qCDebug(NTRIPLog) << "NTRIP: Using last known position for GGA" << coord;
         } else {
             // PRIORITY 5: Hardcoded test coordinates (only if nothing else available)
-            coord = QGeoCoordinate(34.112490, -118.339063, 166.421);
+            static constexpr double HARD_CODED_LAT  = 34.112490;   // Los Angeles test latitude
+            static constexpr double HARD_CODED_LON  = -118.339063; // Los Angeles test longitude
+            static constexpr double HARD_CODED_ALT  = 166.421;     // Altitude in meters
+
+            coord = QGeoCoordinate(HARD_CODED_LAT, HARD_CODED_LON, HARD_CODED_ALT);
             validCoord = true;
             srcUsed = QStringLiteral("Hardcoded Test");
             static int hardcoded_count = 0;
