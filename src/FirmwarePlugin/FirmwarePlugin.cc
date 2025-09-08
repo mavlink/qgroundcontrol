@@ -14,6 +14,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
+#include "OnboardComputersManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 #include "RadioComponentController.h"
@@ -311,6 +312,11 @@ bool FirmwarePlugin::hasGimbal(Vehicle *vehicle, bool &rollSupported, bool &pitc
 QGCCameraManager *FirmwarePlugin::createCameraManager(Vehicle *vehicle) const
 {
     return new QGCCameraManager(vehicle);
+}
+
+OnboardComputersManager *FirmwarePlugin::createOnboardComputersManager(Vehicle *vehicle) const
+{
+    return new OnboardComputersManager(vehicle);
 }
 
 MavlinkCameraControl *FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent) const

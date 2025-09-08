@@ -63,6 +63,7 @@ class MAVLinkLogManager;
 class MissionManager;
 class ParameterManager;
 class QGCCameraManager;
+class OnboardComputersManager;
 class RallyPointManager;
 class RemoteIDManager;
 class RequestMessageTest;
@@ -97,6 +98,7 @@ class Vehicle : public VehicleFactGroup
     Q_MOC_INCLUDE("Autotune.h")
     Q_MOC_INCLUDE("RemoteIDManager.h")
     Q_MOC_INCLUDE("QGCCameraManager.h")
+    Q_MOC_INCLUDE("OnboardComputersManager.h")
     Q_MOC_INCLUDE("Actuators.h")
 
     friend class InitialConnectStateMachine;
@@ -205,6 +207,7 @@ public:
     Q_PROPERTY(bool              initialPlanRequestComplete     READ initialPlanRequestComplete                                     NOTIFY initialPlanRequestCompleteChanged)
     Q_PROPERTY(QVariantList         staticCameraList            READ staticCameraList                                               CONSTANT)
     Q_PROPERTY(QGCCameraManager*    cameraManager               READ cameraManager                                                  NOTIFY cameraManagerChanged)
+    Q_PROPERTY(OnboardComputersManager* onboardComputersManager READ getOnboardComputersManager                                     NOTIFY onboardComputersManagerChanged)
     Q_PROPERTY(QString              hobbsMeter                  READ hobbsMeter                                                     NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 inFwdFlight                 READ inFwdFlight                                                    NOTIFY inFwdFlightChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight             READ vtolInFwdFlight            WRITE setVtolInFwdFlight            NOTIFY vtolInFwdFlightChanged)
@@ -780,6 +783,7 @@ public:
     uint64_t capabilityBits     () const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
     QGCCameraManager*           cameraManager       () { return _cameraManager; }
+    OnboardComputersManager*    getOnboardComputersManager() {return _onboardComputersManager;}
     QString                     hobbsMeter          ();
 
     /// The vehicle is responsible for making the initial request for the Plan.
@@ -847,6 +851,7 @@ signals:
     void firmwareTypeChanged            ();
     void vehicleTypeChanged             ();
     void cameraManagerChanged           ();
+    void onboardComputersManagerChanged ();
     void hobbsMeterChanged              ();
     void capabilitiesKnownChanged       (bool capabilitiesKnown);
     void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
@@ -1063,6 +1068,7 @@ private:
     SysStatusSensorInfo _sysStatusSensorInfo;
 
     QGCCameraManager* _cameraManager = nullptr;
+    OnboardComputersManager *_onboardComputersManager = nullptr;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;

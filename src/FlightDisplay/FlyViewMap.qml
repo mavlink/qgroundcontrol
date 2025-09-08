@@ -737,6 +737,16 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        text:               qsTr("Set estimated UAV position to VIO")
+                        visible:            true // TODO: make visible only on onboard_computer present
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatedUAVPosition, mapClickCoord)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
                         text:               qsTr("Set Heading")
                         visible:            globals.guidedControllerFlyView.showChangeHeading
                         onClicked: {

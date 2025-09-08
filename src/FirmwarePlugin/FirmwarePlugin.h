@@ -23,6 +23,7 @@ class AutoPilotPlugin;
 class Vehicle;
 class MavlinkCameraControl;
 class QGCCameraManager;
+class OnboardComputersManager;
 class Autotune;
 class LinkInterface;
 class FactGroup;
@@ -355,6 +356,9 @@ public:
 
     /// Creates vehicle camera manager.
     virtual QGCCameraManager *createCameraManager(Vehicle *vehicle) const;
+
+    /// Creates vehicle onboard computers manager.
+    virtual OnboardComputersManager *createOnboardComputersManager(Vehicle *vehicle) const;
 
     /// Camera control.
     virtual MavlinkCameraControl *createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent = nullptr) const;

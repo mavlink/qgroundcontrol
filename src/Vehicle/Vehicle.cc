@@ -34,6 +34,7 @@
 #include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
+#include "OnboardComputersManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
@@ -366,6 +367,7 @@ void Vehicle::_commonInit()
 
     // Create camera manager instance
     _cameraManager = _firmwarePlugin->createCameraManager(this);
+    _onboardComputersManager = _firmwarePlugin->createOnboardComputersManager(this);
 }
 
 Vehicle::~Vehicle()
@@ -3082,17 +3084,12 @@ void Vehicle::rebootVehicle()
 
 void Vehicle::rebootOnboardComputers()
 {
-    qWarning() << "Rebooting onboard computers";
-    // There can be four different onboard computers on the vehicle, so sending the reboot command to all of them
-    for (int i = 0; i < 4; ++i)
-    {
-        sendMavCommand(MAV_COMP_ID_ONBOARD_COMPUTER + i,
-                       MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
-                       false,                                                   // do not show errors
-                       0,                                                       // do nothing to autopilot
-                       3,                                                       // reboot onboard computer
-                       0, 0, 0, 0, 0);                                          // param 3-7 unused
+    if (!_onboardComputersManager) {
+        qCWarning(VehicleLog) << "Cannot reboot onboard computers: no manager is present";
+        return;
     }
+    qWarning() << "Rebooting onboard computers";
+    _onboardComputersManager->rebootAllOnboardComputers();
 }
 
 void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)

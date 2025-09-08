@@ -60,6 +60,7 @@ Item {
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
+    readonly property string setEstimatedUAVPositionTitle:  qsTr("Set estimated UAV position")
     readonly property string setFlightMode:                 qsTr("Set Flight Mode")
     readonly property string changeHeadingTitle:            qsTr("Change Heading")
 
@@ -92,6 +93,7 @@ Item {
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
+    readonly property string setEstimatedUAVPositionMessage:    qsTr("Send position to VIO")
     readonly property string setFlightModeMessage:              qsTr("Set the vehicle flight mode to %1").arg(_actionData)
     readonly property string changeHeadingMessage:              qsTr("Set the vehicle heading towards the specified location.")
 
@@ -127,6 +129,8 @@ Item {
     readonly property int actionMVArm:                      31
     readonly property int actionMVDisarm:                   32
     readonly property int actionChangeLoiterRadius:         33
+    readonly property int actionSetEstimatedUAVPosition:    34
+
 
 
 
@@ -579,6 +583,10 @@ Item {
             confirmDialog.title = setEstimatorOriginTitle
             confirmDialog.message = setEstimatorOriginMessage
             break
+        case actionSetEstimatedUAVPosition:
+            confirmDialog.title = setEstimatedUAVPositionTitle
+            confirmDialog.message = setEstimatedUAVPositionMessage
+            break
         case actionSetFlightMode:
             confirmDialog.title = setFlightMode
             confirmDialog.message = setFlightModeMessage
@@ -724,6 +732,12 @@ Item {
             break
         case actionSetEstimatorOrigin:
             _activeVehicle.setEstimatorOrigin(actionData)
+            break
+        case actionSetEstimatedUAVPosition:
+            let currentCompManager = _activeVehicle.onboardComputersManager;
+            let currentComp = currentCompManager.currentComputer;
+            console.warn("Current COMP", currentComp);
+            currentCompManager.sendExternalPositionEstimate(actionData)
             break
         case actionSetFlightMode:
             _activeVehicle.flightMode = actionData
