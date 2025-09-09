@@ -16,6 +16,7 @@ on:
       - 'src/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+      - 'tools/setup/install-dependencies-osx.sh'
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
