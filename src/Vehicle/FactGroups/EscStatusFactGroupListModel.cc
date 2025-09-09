@@ -87,6 +87,8 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _failureFlagsFact.setRawValue(0);
     _errorCountFact.setRawValue(0);
     _temperatureFact.setRawValue(0);
+
+    setLiveUpdates(true);
 }
 
 void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)

@@ -16,6 +16,7 @@ SetupPage {
     showAdvanced:   true
 
     property var actuators:       globals.activeVehicle.actuators
+    property var escs:            globals.activeVehicle.escs
 
     property var _showAdvanced:              advanced
     readonly property real _margins:         ScreenTools.defaultFontPixelHeight
@@ -272,6 +273,8 @@ SetupPage {
 
                                 ActuatorSlider {
                                     channel: object
+                                    // TODO: for some reason this doesn't work to correctly map ESC RPM to Actuator function
+                                    rpm: escs.get(object.function-101).rpm
                                     onActuatorValueChanged: (value) =>{
                                         if (isNaN(value)) {
                                             actuators.actuatorTest.stopControl(index);
@@ -279,6 +282,10 @@ SetupPage {
                                         } else {
                                             actuators.actuatorTest.setChannelTo(index, value);
                                         }
+                                    }
+
+                                    Component.onCompleted: {
+                                        console.log("Channel function:", object.function, "ESC count:", escs.count)
                                     }
                                 }
                             } // Repeater
