@@ -8,7 +8,7 @@ then
 fi
 
 brew update
-brew install cmake ninja ccache git pkgconf create-dmg
+brew install ninja ccache git pkgconf create-dmg
 
 # Install GStreamer
 GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx
