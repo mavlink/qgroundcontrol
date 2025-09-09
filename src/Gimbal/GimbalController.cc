@@ -17,6 +17,8 @@
 #include "Vehicle.h"
 #include <cmath> // for NAN
 
+#define M_DEG_TO_RAD_F 0.0174532925f
+
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "qgc.gimbal.gimbalcontroller")
 
 GimbalController::GimbalController(Vehicle *vehicle)
@@ -597,12 +599,7 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
         return;
     }
 
-    uint32_t flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK | GIMBAL_MANAGER_FLAGS_PITCH_LOCK;
-    if (_activeGimbal && _activeGimbal->yawLock()) {
-        flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
-    }
-
-    _sendGimbalRateCommandLong(pitch_rate_deg_s, yaw_rate_deg_s, flags);
+    _sendGimbalRateCommandLong(pitch_rate_deg_s, yaw_rate_deg_s);
 
     if (pitch_rate_deg_s == 0.f && yaw_rate_deg_s == 0.f) {
         _rateSenderTimer.stop();
@@ -611,11 +608,8 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
     }
 }
 
-/// Build and send MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW with rate fields,
-/// using Vehicle::sendMessageOnLinkThreadSafe
 void GimbalController::_sendGimbalRateCommandLong(float pitch_rate_deg_s,
-                                                  float yaw_rate_deg_s,
-                                                  uint32_t flags)
+                                                  float yaw_rate_deg_s)
 {
     auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -623,23 +617,25 @@ void GimbalController::_sendGimbalRateCommandLong(float pitch_rate_deg_s,
         return;
     }
 
+    uint32_t flags = 0;
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(
+
+    // q is ignored when sending rates
+    const float qnan[4] = { NAN, NAN, NAN, NAN };
+
+    mavlink_msg_gimbal_manager_set_attitude_pack_chan(
         MAVLinkProtocol::instance()->getSystemId(),
         MAVLinkProtocol::getComponentId(),
         sharedLink->mavlinkChannel(),
         &msg,
-        _vehicle->id(),
-        _activeGimbal->managerCompid()->rawValue().toUInt(),
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        0,
+        _vehicle->id(),                                                               // target_system
+        static_cast<uint8_t>(_activeGimbal->managerCompid()->rawValue().toUInt()),    // target_component
+        flags,                                                                        
+        static_cast<uint8_t>(_activeGimbal->deviceId()->rawValue().toUInt()),         // gimbal_device_id
+        qnan,                                                                         // quaternion (ignored)
         NAN,
-        NAN,
-        pitch_rate_deg_s,
-        yaw_rate_deg_s,
-        flags,
-        0,
-        _activeGimbal->deviceId()->rawValue().toUInt()
+        qDegreesToRadians(pitch_rate_deg_s),
+        qDegreesToRadians(yaw_rate_deg_s)
     );
 
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);

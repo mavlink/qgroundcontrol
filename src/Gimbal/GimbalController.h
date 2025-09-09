@@ -106,7 +106,7 @@ private:
     bool _tryGetGimbalControl();
     bool _yawInVehicleFrame(uint32_t flags);
 
-    void _sendGimbalRateCommandLong(float pitch_rate_deg_s, float yaw_rate_deg_s, uint32_t flags);
+    void _sendGimbalRateCommandLong(float pitch_rate_deg_s, float yaw_rate_deg_s);
 
     QTimer _rateSenderTimer;
     Vehicle *_vehicle = nullptr;
