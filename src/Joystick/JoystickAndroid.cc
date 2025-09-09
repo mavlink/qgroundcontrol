@@ -24,8 +24,8 @@ int JoystickAndroid::AXIS_HAT_X = 0;
 int JoystickAndroid::AXIS_HAT_Y = 0;
 QMutex JoystickAndroid::_mutex;
 
-JoystickAndroid::JoystickAndroid(const QString &name, int axisCount, int buttonCount, int id, QObject *parent)
-    : Joystick(name, axisCount, buttonCount, 0, parent)
+JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int hatCount, int id, QObject* parent)
+    : Joystick(name, axisCount, buttonCount, hatCount, parent)
     , deviceId(id)
 {
     btnCode.resize(_buttonCount);

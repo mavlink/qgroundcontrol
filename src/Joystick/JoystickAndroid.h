@@ -10,17 +10,27 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
 #include <QtCore/private/qandroidextras_p.h>
 
 #include "Joystick.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickAndroidLog)
 
-class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionEventListener, public QtAndroidPrivate::KeyEventListener
+class JoystickAndroid
+    : public Joystick
+    , public QtAndroidPrivate::GenericMotionEventListener
+    , public QtAndroidPrivate::KeyEventListener
 {
 public:
-    JoystickAndroid(const QString &name, int axisCount, int buttonCount, int id, QObject *parent = nullptr);
-    ~JoystickAndroid();
+    // Note: hatCount added to match .cc and Joystick(base) ctor
+    JoystickAndroid(const QString &name,
+                    int axisCount,
+                    int buttonCount,
+                    int hatCount,
+                    int id,
+                    QObject *parent = nullptr);
+    ~JoystickAndroid() override;
 
     static bool init();
     static void setNativeMethods();
@@ -32,20 +42,21 @@ private:
     bool _update() final { return true; }
 
     bool _getButton(int i) const final { return btnValue[i]; }
-    int _getAxis(int i) const final { return axisValue[i]; }
+    int  _getAxis(int i) const final { return axisValue[i]; }
     bool _getHat(int hat, int i) const final;
 
-    int _getAndroidHatAxis(int axisHatCode) const;
+    int  _getAndroidHatAxis(int axisHatCode) const;
 
-    bool handleKeyEvent(jobject event);
-    bool handleGenericMotionEvent(jobject event);
+    // Explicitly mark as overrides of the QtAndroidPrivate listener interfaces
+    bool handleKeyEvent(jobject event) override;
+    bool handleGenericMotionEvent(jobject event) override;
 
     int deviceId = 0;
 
-    QList<int> btnCode;
-    QList<int> axisCode;
+    QList<int>  btnCode;
+    QList<int>  axisCode;
     QList<bool> btnValue;
-    QList<int> axisValue;
+    QList<int>  axisValue;
 
     static constexpr int _androidBtnListCount = 31;
     static QList<int> _androidBtnList;
