@@ -118,3 +118,11 @@ jobs:
         if: matrix.BuildType == 'Release'
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
+
+      - name: Upload Build File
+        if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}
+

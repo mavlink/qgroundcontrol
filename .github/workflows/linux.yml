@@ -115,3 +115,11 @@ jobs:
         if: matrix.BuildType == 'Debug'
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
+
+
+      - name: Upload Build File
+        if: matrix.BuildType == 'Release'
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ env.ARTIFACT }}
+          package_name: ${{ env.PACKAGE }}

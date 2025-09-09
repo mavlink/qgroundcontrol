@@ -1,0 +1,18 @@
+name: Upload Release
+description: Uploads a built release file
+inputs:
+  artifact_name:
+    description: Artifact name
+    required: true
+  package_name:
+    description: Package name
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Save artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.package_name }}
+        path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.artifact_name }}
