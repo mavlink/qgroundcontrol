@@ -37,6 +37,8 @@ public:
     uint8_t* message() { return _buffer; }
     uint16_t messageLength() { return _messageLength; }
     uint16_t messageId();
+    const uint8_t* crcBytes() const { return _crcBytes; }
+    int crcSize() const { return 3; }    
 
 private:
     enum State {
