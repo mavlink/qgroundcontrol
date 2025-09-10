@@ -453,21 +453,31 @@ void NTRIPTCPLink::_parse(const QByteArray& buffer)
         logged_empty_once = true;
     }
 
-    // Define named constant for header and CRC byte count
-    static constexpr int RTCM_HEADER_AND_CRC_BYTES = 6;
+    // RTCM v3 transport sizes
+    constexpr int kRtcmHeaderSize = 3;  // preamble (1) + length (2)
 
-    for (const uint8_t& byte : buffer) {
+    for (char ch : buffer) {
+        const uint8_t byte = static_cast<uint8_t>(static_cast<unsigned char>(ch));
+
         if (_state == NTRIPState::waiting_for_rtcm_header) {
-            if (byte != RTCM3_PREAMBLE)
+            if (byte != RTCM3_PREAMBLE) {
                 continue;
+            }
             _state = NTRIPState::accumulating_rtcm_packet;
         }
+
         if (_rtcmParser->addByte(byte)) {
             _state = NTRIPState::waiting_for_rtcm_header;
-            QByteArray message(
-                reinterpret_cast<char*>(_rtcmParser->message()),
-                static_cast<int>(_rtcmParser->messageLength() + RTCM_HEADER_AND_CRC_BYTES)
-            );
+
+            // Build exact on-wire frame: [D3 | len(2) | payload | CRC(3)]
+            const int payload_len = static_cast<int>(_rtcmParser->messageLength());
+            QByteArray message(reinterpret_cast<const char*>(_rtcmParser->message()),
+                               kRtcmHeaderSize + payload_len);
+
+            const uint8_t* crc_ptr = _rtcmParser->crcBytes();
+            const int crc_len = _rtcmParser->crcSize();
+            message.append(reinterpret_cast<const char*>(crc_ptr), crc_len);
+
             const uint16_t id = _rtcmParser->messageId();
 
             if (_whitelist.empty() || _whitelist.contains(id)) {
