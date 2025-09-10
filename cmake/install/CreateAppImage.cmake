@@ -45,6 +45,39 @@ execute_process(
 )
 
 #===========================================================================#
+# Bundle libstdc++ and libgcc_s explicitly to improve compatibility
+
+# Try to locate libstdc++.so.6 and libgcc_s.so.1 from the active toolchain
+set(_stdcxx "")
+set(_libgcc "")
+execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++.so.6
+    OUTPUT_VARIABLE _stdcxx
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -print-file-name=libgcc_s.so.1
+    OUTPUT_VARIABLE _libgcc
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+file(MAKE_DIRECTORY "${APPDIR_PATH}/usr/lib")
+
+if(EXISTS "${_stdcxx}" AND IS_ABSOLUTE "${_stdcxx}")
+    message(STATUS "QGC: Bundling libstdc++ from ${_stdcxx}")
+    file(COPY "${_stdcxx}" DESTINATION "${APPDIR_PATH}/usr/lib")
+else()
+    message(WARNING "QGC: Could not find libstdc++.so.6 to bundle (looked at '${_stdcxx}')")
+endif()
+
+if(EXISTS "${_libgcc}" AND IS_ABSOLUTE "${_libgcc}")
+    message(STATUS "QGC: Bundling libgcc_s from ${_libgcc}")
+    file(COPY "${_libgcc}" DESTINATION "${APPDIR_PATH}/usr/lib")
+else()
+    message(WARNING "QGC: Could not find libgcc_s.so.1 to bundle (looked at '${_libgcc}')")
+endif()
+
+#===========================================================================#
 # Build the final AppImage
 
 set(ENV{ARCH} ${CMAKE_SYSTEM_PROCESSOR})

@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "fileType": "FactMetaData",
+  "QGC.MetaData.Facts": [
+    {
+      "name": "ntripServerConnectEnabled",
+      "shortDescription": "Connect to NTRIP server",
+      "longDescription": "Connect to NTRIP server using specified address/port",
+      "type": "bool",
+      "defaultValue": false,
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripServerHostAddress",
+      "shortDescription": "Host address",
+      "type": "string",
+      "defaultValue": "127.0.0.1",
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripServerPort",
+      "shortDescription": "Server port",
+      "type": "int32",
+      "defaultValue": 2101,
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripUsername",
+      "shortDescription": "Username",
+      "type": "string",
+      "defaultValue": "",
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripPassword",
+      "shortDescription": "Password",
+      "type": "string",
+      "defaultValue": "",
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripMountpoint",
+      "shortDescription": "Mount Point",
+      "longDescription": "NTRIP Mount Point. Leave blank for RTCM over TCP",
+      "type": "string",
+      "defaultValue": "",
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripWhitelist",
+      "shortDescription": "RTCM Message Whitelist",
+      "longDescription": "RTCM Messages to send over mavlink. Leave blank for all messages",
+      "type": "string",
+      "defaultValue": "",
+      "qgcRebootRequired": true
+    },
+    {
+      "name": "ntripUseSpartn",
+      "shortDescription": "Use SPARTN pipeline",
+      "longDescription": "If enabled, connect with TLS (2102) and treat payload as SPARTN instead of RTCM. Requires SPARTN keys handled by the receiver.",
+      "type": "bool",
+      "defaultValue": false,
+      "qgcRebootRequired": true
+    }
+  ]
+}

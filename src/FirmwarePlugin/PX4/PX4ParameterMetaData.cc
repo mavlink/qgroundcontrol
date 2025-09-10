@@ -350,15 +350,38 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                                 qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
                                                                  << "index:" << bit << "description:" << bitDescription;
 
-                                if (bit < 31) {
-                                    QVariant bitmaskRawValue = 1 << bit;
+                                // Determine valid bit range and compute mask using a safe unsigned width
+                                int maxBit = 30; // default for 32-bit signed
+                                bool use64 = false;
+                                switch (metaData->type()) {
+                                case FactMetaData::valueTypeUint64:
+                                    maxBit = 63; use64 = true; break;
+                                case FactMetaData::valueTypeInt64:
+                                    maxBit = 62; use64 = true; break;
+                                case FactMetaData::valueTypeUint32:
+                                    maxBit = 31; break;
+                                case FactMetaData::valueTypeInt32:
+                                default:
+                                    maxBit = 30; break;
+                                }
+
+                                if (bit <= maxBit) {
+                                    QVariant bitmaskRawValue;
+                                    if (use64) {
+                                        quint64 mask = (quint64(1) << bit);
+                                        bitmaskRawValue = QVariant::fromValue(mask);
+                                    } else {
+                                        quint32 mask = (quint32(1) << bit);
+                                        bitmaskRawValue = QVariant::fromValue(mask);
+                                    }
+
                                     QVariant bitmaskValue;
                                     QString errorString;
                                     if (metaData->convertAndValidateRaw(bitmaskRawValue, true, bitmaskValue, errorString)) {
                                         metaData->addBitmaskInfo(bitDescription, bitmaskValue);
                                     } else {
                                         qCDebug(PX4ParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
-                                                                         << " type:" << metaData->type() << " value:" << bitmaskValue
+                                                                         << " type:" << metaData->type() << " value:" << bitmaskRawValue
                                                                          << " error:" << errorString;
                                     }
                                 } else {
