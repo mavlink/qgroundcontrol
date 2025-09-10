@@ -15,9 +15,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include <cmath> // for NAN
-
-#define M_DEG_TO_RAD_F 0.0174532925f
+#include <cmath>
 
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "qgc.gimbal.gimbalcontroller")
 
@@ -599,7 +597,7 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
         return;
     }
 
-    _sendGimbalRateCommandLong(pitch_rate_deg_s, yaw_rate_deg_s);
+    _sendGimbalAttitudeRates(pitch_rate_deg_s, yaw_rate_deg_s);
 
     if (pitch_rate_deg_s == 0.f && yaw_rate_deg_s == 0.f) {
         _rateSenderTimer.stop();
@@ -608,31 +606,30 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
     }
 }
 
-void GimbalController::_sendGimbalRateCommandLong(float pitch_rate_deg_s,
-                                                  float yaw_rate_deg_s)
+void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
+                                                float yaw_rate_deg_s)
 {
     auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCDebug(GimbalControllerLog) << "_sendGimbalRateCommandLong: primary link gone!";
+        qCDebug(GimbalControllerLog) << "_sendGimbalAttitudeRates: primary link gone!";
         return;
     }
 
-    uint32_t flags = 0;
-    mavlink_message_t msg;
+    uint32_t flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK | GIMBAL_MANAGER_FLAGS_PITCH_LOCK;
 
-    // q is ignored when sending rates
-    const float qnan[4] = { NAN, NAN, NAN, NAN };
+    const float qnan[4] = {NAN, NAN, NAN, NAN};
+    mavlink_message_t msg;
 
     mavlink_msg_gimbal_manager_set_attitude_pack_chan(
         MAVLinkProtocol::instance()->getSystemId(),
         MAVLinkProtocol::getComponentId(),
         sharedLink->mavlinkChannel(),
         &msg,
-        _vehicle->id(),                                                               // target_system
-        static_cast<uint8_t>(_activeGimbal->managerCompid()->rawValue().toUInt()),    // target_component
-        flags,                                                                        
-        static_cast<uint8_t>(_activeGimbal->deviceId()->rawValue().toUInt()),         // gimbal_device_id
-        qnan,                                                                         // quaternion (ignored)
+        _vehicle->id(),
+        static_cast<uint8_t>(_activeGimbal->managerCompid()->rawValue().toUInt()),
+        flags,
+        static_cast<uint8_t>(_activeGimbal->deviceId()->rawValue().toUInt()),
+        qnan,
         NAN,
         qDegreesToRadians(pitch_rate_deg_s),
         qDegreesToRadians(yaw_rate_deg_s)
