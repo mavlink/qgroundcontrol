@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.3
+qt_version: 6.9.2
 ---
 
 # Getting Started with Source and Builds
@@ -47,9 +47,9 @@ We support Linux builds using a container found on the source tree of the reposi
 ### Native Builds
 
 _QGroundControl_ builds are supported for macOS, Linux, Windows, and Android. Creating a version of QGC for iOS is theoretically possible but is no longer supported as a standard build.
-_QGroundControl_ uses [Qt](http://www.qt.io) as its cross-platform support library. 
+_QGroundControl_ uses [Qt](http://www.qt.io) as its cross-platform support library.
 
-The required version of Qt is {{ $frontmatter.qt_version }} **(only)**. 
+The required version of Qt is {{ $frontmatter.qt_version }} **(only)**.
 
   ::: warning
   **Do not use any other version of Qt!**
@@ -70,7 +70,7 @@ To install Qt:
      - Set the downloaded file to executable using: `chmod +x`.
      - You may also need to install libxcb-cursor0
 
-1. On the _Installation Folder_ page select "Custom Installation"    
+1. On the _Installation Folder_ page select "Custom Installation"
 
 1. On the _Select Components_ page:
 
@@ -137,7 +137,7 @@ Example commands to build a default QGC and run it afterwards:
 1. Configure:
 
    ```sh
-   ~/Qt/6.8.3/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ~/Qt/6.9.2/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
    ```
 
    Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.

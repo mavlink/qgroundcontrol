@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.3
+qt_version: 6.9.2
 ---
 
 # 从源码开始并构建
@@ -138,7 +138,7 @@ Visual Studio 仅用于获取编译器。 构建 _QGroundControl_ 可直接按�
 2. 配置：
 
   ```sh
-  ~/Qt/6.8.3/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+  ~/Qt/6.9.2/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
   ```
 
   修改 qt-cmake 的目录，使其与你安装 Qt 的位置以及你想要使用的工具包相匹配。
