@@ -375,6 +375,10 @@ SettingsPage {
                         }
                         
                         onTextChanged: {
+                            if (!activeFocus) {
+                                return;
+                            }
+
                             operatorIDFact.value = text
                             if (_activeVehicle) {
                                 _remoteIDManager.checkOperatorID(text)
