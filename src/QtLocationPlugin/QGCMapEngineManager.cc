@@ -7,27 +7,26 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Gus Grubba <gus@auterion.com>
-
 #include "QGCMapEngineManager.h"
-#include "QGCCachedTileSet.h"
-#include "QGCMapUrlEngine.h"
-#include "QGCMapEngine.h"
-#include "QGeoFileTileCacheQGC.h"
-#include "ElevationMapProvider.h"
-#include "QmlObjectListModel.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
-#include "FlightMapSettings.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtCore/QStorageInfo>
 #include <QtQml/QQmlEngine>
+
+#include "ElevationMapProvider.h"
+#include "FlightMapSettings.h"
+#include "QGCApplication.h"
+#include "QGCCachedTileSet.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMapEngine.h"
+#include "QGCMapUrlEngine.h"
+#include "QGeoFileTileCacheQGC.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+
+using namespace Qt::StringLiterals;
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "qgc.qtlocation.qmlcontrol.qgcmapenginemanagerlog")
 
@@ -46,7 +45,7 @@ QGCMapEngineManager::QGCMapEngineManager(QObject *parent)
 
     (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
 
-    (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals);
+    (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals, Qt::UniqueConnection);
 }
 
 QGCMapEngineManager::~QGCMapEngineManager()
@@ -82,7 +81,7 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
     emit tileCountChanged();
     emit tileSizeChanged();
 
-    qCDebug(QGCMapEngineManagerLog) << Q_FUNC_INFO << lat0 << lon0 << lat1 << lon1 << minZoom << maxZoom;
+    qCDebug(QGCMapEngineManagerLog) << lat0 << lon0 << lat1 << lon1 << minZoom << maxZoom;
 }
 
 QString QGCMapEngineManager::tileCountStr() const
@@ -102,10 +101,12 @@ void QGCMapEngineManager::loadTileSets()
         emit tileSetsChanged();
     }
 
-    QGCFetchTileSetTask* const task = new QGCFetchTileSetTask(nullptr);
+    QGCFetchTileSetTask *task = new QGCFetchTileSetTask();
     (void) connect(task, &QGCFetchTileSetTask::tileSetFetched, this, &QGCMapEngineManager::_tileSetFetched);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    (void) getQGCMapEngine()->addTask(task);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+    }
 }
 
 void QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet *tileSet)
@@ -134,12 +135,14 @@ void QGCMapEngineManager::startDownload(const QString &name, const QString &mapT
         set->setTotalTileCount(static_cast<quint32>(_imageSet.tileCount));
         set->setType(mapType);
 
-        QGCCreateTileSetTask* const task = new QGCCreateTileSetTask(set);
+        QGCCreateTileSetTask *task = new QGCCreateTileSetTask(set);
         (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
         (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        (void) getQGCMapEngine()->addTask(task);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
     } else {
-        qCWarning(QGCMapEngineManagerLog) << Q_FUNC_INFO << "No Tiles to save";
+        qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
     }
 
     const int mapid = UrlFactory::getQtMapIdFromProviderType(mapType);
@@ -157,12 +160,14 @@ void QGCMapEngineManager::startDownload(const QString &name, const QString &mapT
         set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
         set->setType(elevationProviderName);
 
-        QGCCreateTileSetTask* const task = new QGCCreateTileSetTask(set);
+        QGCCreateTileSetTask *task = new QGCCreateTileSetTask(set);
         (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
         (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        (void) getQGCMapEngine()->addTask(task);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
     } else {
-        qCWarning(QGCMapEngineManagerLog) << Q_FUNC_INFO << "No Tiles to save";
+        qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
     }
 }
 
@@ -194,8 +199,8 @@ QStringList QGCMapEngineManager::mapTypeList(const QString &provider)
     QStringList mapStringList = mapList();
     mapStringList = mapStringList.filter(QRegularExpression(provider));
 
-    static const QRegularExpression providerType = QRegularExpression(QStringLiteral("^([^\\ ]*) (.*)$"));
-    (void) mapStringList.replaceInStrings(providerType,"\\2");
+    static const QRegularExpression providerType = QRegularExpression(uR"(^([^\ ]*) (.*)$)"_s);
+    (void) mapStringList.replaceInStrings(providerType, "\\2");
     (void) mapStringList.removeDuplicates();
 
     return mapStringList;
@@ -213,17 +218,21 @@ void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet *tileSet)
             }
         }
 
-        QGCResetTask* const task = new QGCResetTask(nullptr);
+        QGCResetTask *task = new QGCResetTask();
         (void) connect(task, &QGCResetTask::resetCompleted, this, &QGCMapEngineManager::_resetCompleted);
         (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        (void) getQGCMapEngine()->addTask(task);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
     } else {
         tileSet->setDeleting(true);
 
-        QGCDeleteTileSetTask* const task = new QGCDeleteTileSetTask(tileSet->id());
+        QGCDeleteTileSetTask *task = new QGCDeleteTileSetTask(tileSet->id());
         (void) connect(task, &QGCDeleteTileSetTask::tileSetDeleted, this, &QGCMapEngineManager::_tileSetDeleted);
         (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        (void) getQGCMapEngine()->addTask(task);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
     }
 }
 
@@ -239,20 +248,22 @@ void QGCMapEngineManager::renameTileSet(QGCCachedTileSet *tileSet, const QString
     tileSet->setName(name);
     emit tileSet->nameChanged();
 
-    QGCRenameTileSetTask* const task = new QGCRenameTileSetTask(tileSet->id(), name);
+    QGCRenameTileSetTask *task = new QGCRenameTileSetTask(tileSet->id(), name);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    (void) getQGCMapEngine()->addTask(task);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+    }
 }
 
 void QGCMapEngineManager::_tileSetDeleted(quint64 setID)
 {
     for (qsizetype i = 0; i < _tileSets->count(); i++ ) {
-        QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
+        QGCCachedTileSet *set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
         if (set && (set->id() == setID)) {
-            _tileSets->removeAt(i);
+            (void) _tileSets->removeAt(i);
             delete set;
             emit tileSetsChanged();
-            return;
+            break;
         }
     }
 }
@@ -261,25 +272,25 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
 {
     QString task;
     switch (type) {
-    case QGCMapTask::taskFetchTileSets:
+    case QGCMapTask::TaskType::taskFetchTileSets:
         task = QStringLiteral("Fetch Tile Set");
         break;
-    case QGCMapTask::taskCreateTileSet:
+    case QGCMapTask::TaskType::taskCreateTileSet:
         task = QStringLiteral("Create Tile Set");
         break;
-    case QGCMapTask::taskGetTileDownloadList:
+    case QGCMapTask::TaskType::taskGetTileDownloadList:
         task = QStringLiteral("Get Tile Download List");
         break;
-    case QGCMapTask::taskUpdateTileDownloadState:
+    case QGCMapTask::TaskType::taskUpdateTileDownloadState:
         task = QStringLiteral("Update Tile Download Status");
         break;
-    case QGCMapTask::taskDeleteTileSet:
+    case QGCMapTask::TaskType::taskDeleteTileSet:
         task = QStringLiteral("Delete Tile Set");
         break;
-    case QGCMapTask::taskReset:
+    case QGCMapTask::TaskType::taskReset:
         task = QStringLiteral("Reset Tile Sets");
         break;
-    case QGCMapTask::taskExport:
+    case QGCMapTask::TaskType::taskExport:
         task = QStringLiteral("Export Tile Sets");
         break;
     default:
@@ -287,8 +298,8 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
         break;
     }
 
-    QString serror = "Error in task: " + task;
-    serror += "\nError description:\n";
+    QString serror = QStringLiteral("Error in task: ") + task;
+    serror += QStringLiteral("\nError description:\n");
     serror += error;
 
     setErrorMessage(serror);
@@ -358,26 +369,29 @@ int QGCMapEngineManager::selectedCount() const
 
 bool QGCMapEngineManager::importSets(const QString &path)
 {
-    setImportAction(ActionNone);
+    setImportAction(ImportAction::ActionNone);
 
     if (path.isEmpty()) {
         return false;
     }
 
-    setImportAction(ActionImporting);
+    setImportAction(ImportAction::ActionImporting);
 
-    QGCImportTileTask* const task = new QGCImportTileTask(path, _importReplace);
+    QGCImportTileTask *task = new QGCImportTileTask(path, _importReplace);
     (void) connect(task, &QGCImportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
     (void) connect(task, &QGCImportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    (void) getQGCMapEngine()->addTask(task);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+        return false;
+    }
 
     return true;
 }
 
 bool QGCMapEngineManager::exportSets(const QString &path)
 {
-    setImportAction(ActionNone);
+    setImportAction(ImportAction::ActionNone);
 
     if (path.isEmpty()) {
         return false;
@@ -396,13 +410,16 @@ bool QGCMapEngineManager::exportSets(const QString &path)
         return false;
     }
 
-    setImportAction(ActionExporting);
+    setImportAction(ImportAction::ActionExporting);
 
-    QGCExportTileTask* const task = new QGCExportTileTask(sets, path);
+    QGCExportTileTask *task = new QGCExportTileTask(sets, path);
     (void) connect(task, &QGCExportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
     (void) connect(task, &QGCExportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    (void) getQGCMapEngine()->addTask(task);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+        return false;
+    }
 
     return true;
 }
@@ -410,9 +427,9 @@ bool QGCMapEngineManager::exportSets(const QString &path)
 void QGCMapEngineManager::_actionCompleted()
 {
     const ImportAction oldState = _importAction;
-    setImportAction(ActionDone);
+    setImportAction(ImportAction::ActionDone);
 
-    if (oldState == ActionImporting) {
+    if (oldState == ImportAction::ActionImporting) {
         loadTileSets();
     }
 }
@@ -427,7 +444,7 @@ QString QGCMapEngineManager::getUniqueName() const
         }
     }
 
-    return QStringLiteral("");
+    return QString("");
 }
 
 QStringList QGCMapEngineManager::mapList()
@@ -443,8 +460,8 @@ QStringList QGCMapEngineManager::mapProviderList()
         (void) mapStringList.removeAll(elevationProviderName);
     }
 
-    static const QRegularExpression providerType = QRegularExpression(QStringLiteral("^([^\\ ]*) (.*)$"));
-    (void) mapStringList.replaceInStrings(providerType,"\\1");
+    static const QRegularExpression providerType = QRegularExpression(uR"(^([^\ ]*) (.*)$)"_s);
+    (void) mapStringList.replaceInStrings(providerType, "\\1");
     (void) mapStringList.removeDuplicates();
 
     return mapStringList;

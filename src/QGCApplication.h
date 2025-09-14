@@ -102,7 +102,7 @@ public:
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
 
 signals:
-    void languageChanged(const QLocale locale);
+    void languageChanged(const QLocale &locale);
 
 public slots:
     void showVehicleConfig();

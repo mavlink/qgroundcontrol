@@ -7,17 +7,13 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Gus Grubba <gus@auterion.com>
-
 #pragma once
+
+#include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCTileSet.h"
 #include "QGCMapTasks.h"
-
-// #include <QtQmlIntegration/QtQmlIntegration>
-#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineManagerLog)
 
@@ -47,11 +43,11 @@ class QGCMapEngineManager : public QObject
     Q_PROPERTY(quint64              tileSize        READ tileSize                                   NOTIFY tileSizeChanged)
 
 public:
-    QGCMapEngineManager(QObject *parent = nullptr);
+    explicit QGCMapEngineManager(QObject *parent = nullptr);
     ~QGCMapEngineManager();
     static QGCMapEngineManager *instance();
 
-    enum ImportAction {
+    enum class ImportAction {
         ActionNone,
         ActionImporting,
         ActionExporting,
@@ -66,7 +62,7 @@ public:
     Q_INVOKABLE void deleteTileSet(QGCCachedTileSet *tileSet);
     Q_INVOKABLE void loadTileSets();
     Q_INVOKABLE void renameTileSet(QGCCachedTileSet *tileSet, const QString &newName);
-    Q_INVOKABLE void resetAction() { setImportAction(ActionNone); }
+    Q_INVOKABLE void resetAction() { setImportAction(ImportAction::ActionNone); }
     Q_INVOKABLE void selectAll();
     Q_INVOKABLE void selectNone();
     Q_INVOKABLE void startDownload(const QString &name, const QString &mapType);
@@ -122,7 +118,7 @@ private:
     QmlObjectListModel *_tileSets = nullptr;
     QGCTileSet _imageSet;
     QGCTileSet _elevationSet;
-    ImportAction _importAction = ActionNone;
+    ImportAction _importAction = ImportAction::ActionNone;
     double _topleftLat = 0.;
     double _topleftLon = 0.;
     double _bottomRightLat = 0.;
