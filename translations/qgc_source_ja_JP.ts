@@ -2272,7 +2272,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="69"/>
       <source>Failsafe Actions</source>
-      <translation>フェイルセーフ 動作</translation>
+      <translation>フェイルセーフ アクション</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="95"/>
@@ -16560,7 +16560,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/FlightDisplay/SubChecklist.qml" line="54"/>
       <source>Move all control surfaces. Did they work properly?</source>
-      <translation>すべてのコントロールサーフェスを移動します。うまく動作しましたか？</translation>
+      <translation>すべてのコントロールサーフェスを稼働させます。うまく動作しましたか？</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/SubChecklist.qml" line="58"/>
@@ -17656,7 +17656,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="54"/>
       <source>Move all control surfaces. Did they work properly?</source>
-      <translation>すべてのコントロールサーフェスを移動します。うまく動作しましたか？</translation>
+      <translation>すべてのコントロールサーフェスを稼働させます。うまく動作しましたか？</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="58"/>
