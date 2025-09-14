@@ -4607,7 +4607,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="615"/>
       <source>Unable to set read start address: 0x%2</source>
-      <translation>読み取り開始アドレスを設定できません: 0x%2</translation>
+      <translation>読み込み開始アドレスを設定できません: 0x%2</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="691"/>
@@ -14539,7 +14539,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/RCToParamDialog.qml" line="41"/>
       <source>Bind an RC Channel to a parameter value. Tuning IDs can be mapped to an RC Channel from Radio Setup page.</source>
-      <translation>送信機チャンネルをパラメータ値にバインドします。チューニングIDは送信機設定ページから送信機チャンネルにマッピングすることができます。</translation>
+      <translation>送信機チャンネルをパラメータ値に割り当てします。チューニングIDは送信機設定ページから送信機チャンネルにマッピングすることができます。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/RCToParamDialog.qml" line="47"/>
@@ -14739,7 +14739,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="387"/>
       <source>Spektrum Bind</source>
-      <translation>Spektrumバインド</translation>
+      <translation>Spektrum バインド</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="400"/>
