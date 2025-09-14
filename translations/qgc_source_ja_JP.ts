@@ -100,7 +100,7 @@
     <message>
       <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="30"/>
       <source>- disabled</source>
-      <translation type="unfinished">- disabled</translation>
+      <translation>- 無効</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="34"/>
@@ -111,7 +111,7 @@
       <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="38"/>
       <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="68"/>
       <source>Vehicle Action</source>
-      <translation type="unfinished">Vehicle Action</translation>
+      <translation>機体アクション</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/APMBatteryIndicator.qml" line="45"/>
@@ -419,132 +419,132 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="79"/>
       <source>Stabilize</source>
-      <translation type="unfinished">Stabilize</translation>
+      <translation>スタビライズ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="80"/>
       <source>Acro</source>
-      <translation type="unfinished">Acro</translation>
+      <translation>アクロ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="81"/>
       <source>Altitude Hold</source>
-      <translation type="unfinished">Altitude Hold</translation>
+      <translation>高度ホールド</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="82"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>自動</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="83"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>ガイド補助</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="84"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>ロイター</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="85"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="86"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>サークル</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="87"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>着陸</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="88"/>
       <source>Drift</source>
-      <translation type="unfinished">Drift</translation>
+      <translation>ドリフト</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="89"/>
       <source>Sport</source>
-      <translation type="unfinished">Sport</translation>
+      <translation>スポーツ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="90"/>
       <source>Flip</source>
-      <translation type="unfinished">Flip</translation>
+      <translation>フリップ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="91"/>
       <source>Autotune</source>
-      <translation type="unfinished">Autotune</translation>
+      <translation>自動調整</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="92"/>
       <source>Position Hold</source>
-      <translation type="unfinished">Position Hold</translation>
+      <translation>ポジションホールド</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="93"/>
       <source>Brake</source>
-      <translation type="unfinished">Brake</translation>
+      <translation>ブレーキ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="94"/>
       <source>Throw</source>
-      <translation type="unfinished">Throw</translation>
+      <translation>スロー</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="95"/>
       <source>Avoid ADSB</source>
-      <translation type="unfinished">Avoid ADSB</translation>
+      <translation>ADSBを回避</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="96"/>
       <source>Guided No GPS</source>
-      <translation type="unfinished">Guided No GPS</translation>
+      <translation>ガイド補助なし GPS</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="97"/>
       <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
+      <translation>Smart RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="98"/>
       <source>Flow Hold</source>
-      <translation type="unfinished">Flow Hold</translation>
+      <translation>光学フローホールド</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="99"/>
       <source>Follow</source>
-      <translation type="unfinished">Follow</translation>
+      <translation>追跡</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="100"/>
       <source>ZigZag</source>
-      <translation type="unfinished">ZigZag</translation>
+      <translation>ジグザグ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="101"/>
       <source>SystemID</source>
-      <translation type="unfinished">SystemID</translation>
+      <translation>システムID</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="102"/>
       <source>AutoRotate</source>
-      <translation type="unfinished">AutoRotate</translation>
+      <translation>自動回転</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="103"/>
       <source>AutoRTL</source>
-      <translation type="unfinished">AutoRTL</translation>
+      <translation>自動RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="104"/>
       <source>Turtle</source>
-      <translation type="unfinished">Turtle</translation>
+      <translation>タートル</translation>
     </message>
   </context>
   <context>
@@ -552,22 +552,22 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="102"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>ガイド補助</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="103"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="104"/>
       <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
+      <translation/>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="105"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>自動</translation>
     </message>
   </context>
   <context>
@@ -590,7 +590,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="933"/>
       <source>Vehicle does not support guided rotate</source>
-      <translation type="unfinished">Vehicle does not support guided rotate</translation>
+      <translation>機体はガイド補助回転をサポートしていません</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="987"/>
@@ -615,12 +615,12 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1026"/>
       <source>Unable to start takeoff: Vehicle is already in the air.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle is already in the air.</translation>
+      <translation>離陸を開始できません: 機体はすでに空中にいます。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1032"/>
       <source>Unable to start takeoff: Vehicle failed to change to Takeoff mode.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle failed to change to Takeoff mode.</translation>
+      <translation>離陸を開始できません: 離陸モードに変更できませんでした。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1037"/>
@@ -1786,27 +1786,27 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="68"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>自動</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="69"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="70"/>
       <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
+      <translation>スマートRTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="71"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>ガイド補助</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="72"/>
       <source>Initializing</source>
-      <translation type="unfinished">Initializing</translation>
+      <translation>初期化中</translation>
     </message>
   </context>
   <context>
@@ -3352,57 +3352,57 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="125"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手動</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="126"/>
       <source>Stabilize</source>
-      <translation type="unfinished">Stabilize</translation>
+      <translation>スタビライズ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="127"/>
       <source>Acro</source>
-      <translation type="unfinished">Acro</translation>
+      <translation>アクロ</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="128"/>
       <source>Depth Hold</source>
-      <translation type="unfinished">Depth Hold</translation>
+      <translation>深度ホールド</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="129"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>自動</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="130"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>ガイド補助</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="131"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>サークル</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="132"/>
       <source>Surface</source>
-      <translation type="unfinished">Surface</translation>
+      <translation>サーフェス</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="133"/>
       <source>Position Hold</source>
-      <translation type="unfinished">Position Hold</translation>
+      <translation>ポジションホールド</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="134"/>
       <source>Motor Detection</source>
-      <translation type="unfinished">Motor Detection</translation>
+      <translation>モーター検出</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="135"/>
       <source>Surftrak</source>
-      <translation type="unfinished">Surftrak</translation>
+      <translation>サーフトラック</translation>
     </message>
   </context>
   <context>
@@ -3836,7 +3836,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Comms/AirLink/AirLinkLink.h" line="37"/>
       <source>AirLink Link Settings</source>
-      <translation type="unfinished">AirLink Link Settings</translation>
+      <translation>エアリンクの設定</translation>
     </message>
   </context>
   <context>
@@ -4150,7 +4150,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.h" line="114"/>
       <source>MavlinkActions</source>
-      <translation type="unfinished">MavlinkActions</translation>
+      <translation>MavLink アクション</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="117"/>
@@ -4201,7 +4201,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Utilities/Audio/AudioOutput.cc" line="159"/>
       <source>%1</source>
-      <translation type="unfinished">%1</translation>
+      <translation>%1</translation>
     </message>
   </context>
   <context>
@@ -4388,22 +4388,22 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/QmlControls/BatteryIndicator.qml" line="296"/>
       <source>Value</source>
-      <translation type="unfinished">Value</translation>
+      <translation>値</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/BatteryIndicator.qml" line="304"/>
       <source>Coloring</source>
-      <translation type="unfinished">Coloring</translation>
+      <translation>カラーリング</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/BatteryIndicator.qml" line="377"/>
       <source>Low</source>
-      <translation type="unfinished">Low</translation>
+      <translation>低</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/BatteryIndicator.qml" line="390"/>
       <source>Critical</source>
-      <translation type="unfinished">Critical</translation>
+      <translation>限界 [Critical]</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/BatteryIndicator.qml" line="406"/>
@@ -4447,7 +4447,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Comms/BluetoothLink.cc" line="431"/>
       <source>Link %1: (Device: %2) %3</source>
-      <translation type="unfinished">Link %1: (Device: %2) %3</translation>
+      <translation>リンク %1: (デバイス: %2) %3</translation>
     </message>
   </context>
   <context>
@@ -4483,27 +4483,27 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Comms/BluetoothLink.cc" line="265"/>
       <source>Data to Send is Empty</source>
-      <translation type="unfinished">Data to Send is Empty</translation>
+      <translation>送信するデータが空です</translation>
     </message>
     <message>
       <location filename="../src/Comms/BluetoothLink.cc" line="270"/>
       <source>Socket is not connected</source>
-      <translation type="unfinished">Socket is not connected</translation>
+      <translation>ソケットが接続されていません</translation>
     </message>
     <message>
       <location filename="../src/Comms/BluetoothLink.cc" line="275"/>
       <source>Socket is not Writable</source>
-      <translation type="unfinished">Socket is not Writable</translation>
+      <translation>ソケットは書き込みできません</translation>
     </message>
     <message>
       <location filename="../src/Comms/BluetoothLink.cc" line="283"/>
       <source>Could Not Send Data - Write Failed: %1</source>
-      <translation type="unfinished">Could Not Send Data - Write Failed: %1</translation>
+      <translation>データを送信できませんでした - 書き込みに失敗しました: %1</translation>
     </message>
     <message>
       <location filename="../src/Comms/BluetoothLink.cc" line="286"/>
       <source>Could Not Send Data - Write Returned 0 Bytes</source>
-      <translation type="unfinished">Could Not Send Data - Write Returned 0 Bytes</translation>
+      <translation>データを送信できません - 書き込み結果は 0 Byteでした</translation>
     </message>
   </context>
   <context>
@@ -4951,42 +4951,42 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="37"/>
       <source>Qt Platform:</source>
-      <translation type="unfinished">Qt Platform:</translation>
+      <translation>Qt  プラットフォーム:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="47"/>
       <source>Font Point Size 10</source>
-      <translation type="unfinished">Font Point Size 10</translation>
+      <translation>フォントサイズ 10</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="53"/>
       <source>Default font width:</source>
-      <translation type="unfinished">Default font width:</translation>
+      <translation>既定のフォント幅:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="63"/>
       <source>Font Point Size 10.5</source>
-      <translation type="unfinished">Font Point Size 10.5</translation>
+      <translation>フォントサイズ 10.5</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="69"/>
       <source>Default font height:</source>
-      <translation type="unfinished">Default font height:</translation>
+      <translation>既定のフォント高さ:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="79"/>
       <source>Font Point Size 11</source>
-      <translation type="unfinished">Font Point Size 11</translation>
+      <translation>フォントサイズ 11</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="85"/>
       <source>Default font pixel size:</source>
-      <translation type="unfinished">Default font pixel size:</translation>
+      <translation>既定フォントサイズ:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="95"/>
       <source>Font Point Size 11.5</source>
-      <translation type="unfinished">Font Point Size 11.5</translation>
+      <translation>フォントサイズ 11.5</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="101"/>
@@ -14425,7 +14425,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="195"/>
       <source>Timeout while waiting for bytes written</source>
-      <translation type="unfinished">Timeout while waiting for bytes written</translation>
+      <translation>データ書き込み待機中にタイムアウトしました</translation>
     </message>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="248"/>
@@ -14480,27 +14480,27 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="395"/>
       <source>Failed to set data bits</source>
-      <translation type="unfinished">Failed to set data bits</translation>
+      <translation>データビットの設定に失敗しました</translation>
     </message>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="425"/>
       <source>Failed to set parity</source>
-      <translation type="unfinished">Failed to set parity</translation>
+      <translation>パリティ設定に失敗しました</translation>
     </message>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="451"/>
       <source>Failed to set StopBits</source>
-      <translation type="unfinished">Failed to set StopBits</translation>
+      <translation>ストップビットの設定に失敗しました</translation>
     </message>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="477"/>
       <source>Failed to set Flow Control</source>
-      <translation type="unfinished">Failed to set Flow Control</translation>
+      <translation>フロー制御の設定に失敗しました</translation>
     </message>
     <message>
       <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="487"/>
       <source>Failed to set Break Enabled</source>
-      <translation type="unfinished">Failed to set Break Enabled</translation>
+      <translation>ブレーク有効の設定に失敗しました</translation>
     </message>
   </context>
   <context>
@@ -14996,7 +14996,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/QmlControls/RemoteIDIndicatorPage.qml" line="343"/>
       <source>If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</source>
-      <translation type="unfinished">If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</translation>
+      <translation>緊急事態が宣言されると、ブロードキャスト設定が無効でも緊急通報テキストが配信されます。</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/RemoteIDIndicatorPage.qml" line="349"/>
@@ -15064,7 +15064,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="290"/>
       <source>If Basic ID is already set on the RID device, this will be registered as Basic ID 2</source>
-      <translation type="unfinished">If Basic ID is already set on the RID device, this will be registered as Basic ID 2</translation>
+      <translation>RIDデバイスにすでにベーシックIDが設定されている場合、これはベーシックID 2として登録されます。</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="298"/>
@@ -15075,7 +15075,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="416"/>
       <source>If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</source>
-      <translation type="unfinished">If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</translation>
+      <translation>緊急事態が宣言されると、ブロードキャスト設定が無効でも緊急通報テキストが配信されます。</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="432"/>
@@ -15231,7 +15231,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="78"/>
       <source>Only WGS84 or UTM projections are supported.</source>
-      <translation type="unfinished">Only WGS84 or UTM projections are supported.</translation>
+      <translation>WGS84またはUTM投影のみ対応しています</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="101"/>
@@ -15241,7 +15241,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="125"/>
       <source>More than one entity found.</source>
-      <translation type="unfinished">More than one entity found.</translation>
+      <translation>複数の対象が見つかりました</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Shape/SHPFileHelper.cc" line="131"/>
@@ -15987,17 +15987,17 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/Comms/SerialLink.cc" line="285"/>
       <source>Port is not Connected</source>
-      <translation type="unfinished">Port is not Connected</translation>
+      <translation>ポートが接続されていません</translation>
     </message>
     <message>
       <location filename="../src/Comms/SerialLink.cc" line="290"/>
       <source>Port is not Writable</source>
-      <translation type="unfinished">Port is not Writable</translation>
+      <translation>ポートは書き込みできません</translation>
     </message>
     <message>
       <location filename="../src/Comms/SerialLink.cc" line="298"/>
       <source>Could Not Send Data - Write Failed: %1</source>
-      <translation type="unfinished">Could Not Send Data - Write Failed: %1</translation>
+      <translation>データを送信できませんでした - 書き込みに失敗しました: %1</translation>
     </message>
     <message>
       <location filename="../src/Comms/SerialLink.cc" line="301"/>
@@ -16189,7 +16189,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/Utilities/Shape/ShapeFileHelper.cc" line="33"/>
       <source>Unsupported file type. Only .%1 and .%2 are supported.</source>
-      <translation type="unfinished">Unsupported file type. Only .%1 and .%2 are supported.</translation>
+      <translation>サポートされないファイルタイプです。サポートされているのは .%1 と .%2 だけです。</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Shape/ShapeFileHelper.cc" line="88"/>
