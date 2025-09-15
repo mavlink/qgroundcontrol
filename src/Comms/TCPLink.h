@@ -9,17 +9,19 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtNetwork/QAbstractSocket>
-#include <QtNetwork/QHostAddress>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 
 class QTcpSocket;
 class QThread;
+class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(TCPLinkLog)
 
@@ -35,7 +37,7 @@ class TCPConfiguration : public LinkConfiguration
 public:
     explicit TCPConfiguration(const QString &name, QObject *parent = nullptr);
     explicit TCPConfiguration(const TCPConfiguration *copy, QObject *parent = nullptr);
-    virtual ~TCPConfiguration();
+    ~TCPConfiguration() override;
 
     LinkType type() const override { return LinkConfiguration::TypeTcp; }
     void copyFrom(const LinkConfiguration *source) override;
@@ -44,17 +46,17 @@ public:
     QString settingsURL() const override { return QStringLiteral("TcpSettings.qml"); }
     QString settingsTitle() const override { return tr("TCP Link Settings"); }
 
-    QString host() const { return _host.toString(); }
-    void setHost(const QString &host) { if (host != _host.toString()) { _host.setAddress(host); emit hostChanged(); } }
+    QString host() const { return _host; }
+    void setHost(const QString &host);
     quint16 port() const { return _port; }
-    void setPort(quint16 port) { if (port != _port) { _port = port; emit portChanged(); } }
+    void setPort(quint16 port);
 
 signals:
     void hostChanged();
     void portChanged();
 
 private:
-    QHostAddress _host;
+    QString _host;
     quint16 _port = 5760;
 };
 
@@ -66,7 +68,7 @@ class TCPWorker : public QObject
 
 public:
     explicit TCPWorker(const TCPConfiguration *config, QObject *parent = nullptr);
-    ~TCPWorker();
+    ~TCPWorker() override;
 
     bool isConnected() const;
 
@@ -89,11 +91,13 @@ private slots:
     void _onSocketReadyRead();
     void _onSocketBytesWritten(qint64 bytes);
     void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
+    void _onConnectionTimeout();
 
 private:
     const TCPConfiguration *_config = nullptr;
     QTcpSocket *_socket = nullptr;
-    bool _errorEmitted = false;
+    QTimer *_connectionTimer = nullptr;
+    std::atomic<bool> _errorEmitted{false};
 };
 
 /*===========================================================================*/
@@ -104,7 +108,7 @@ class TCPLink : public LinkInterface
 
 public:
     explicit TCPLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
-    virtual ~TCPLink();
+    ~TCPLink() override;
 
     bool isConnected() const override;
     void disconnect() override;
