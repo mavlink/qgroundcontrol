@@ -16,7 +16,7 @@ For the best experience and compatibility, we recommend you the newest version o
 
 ## Windows {#windows}
 
-_QGroundControl_ can be installed on 64 bit versions of Windows 10 (1809 or later) or Windows 11:
+Supported versions: Windows 10 (1809 or later), Windows 11:
 
 1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
 1. Double click the executable to launch the installer.
@@ -27,9 +27,9 @@ Use the first shortcut unless you experience startup or video rendering issues.
 For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
 :::
 
-## Mac OS X {#macOS}
+## Mac OS {#macOS}
 
-_QGroundControl_ can be installed on macOS 12 (Monterey) or later:
+Supported versions: macOS 12 (Monterey) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 <!-- usually based on Qt macOS dependency -->
@@ -43,7 +43,7 @@ QGroundControl continues to not be signed. You will not to allow permission for 
 
 ## Ubuntu Linux {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later):
+Supported versions: Ubuntu 22.04, 24.04:
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
 Before installing _QGroundControl_ you should remove the modem manager and grant yourself permissions to access the serial port.
@@ -97,7 +97,7 @@ Either double-click the AppImage in your file manager or launch it from a termin
 
 ## Android {#android}
 
-_QGroundControl_ can be installed/run on Android 9 or later:
+Supported versions: Android 9 to 15 (arm 32/64):
 
 - [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
 
