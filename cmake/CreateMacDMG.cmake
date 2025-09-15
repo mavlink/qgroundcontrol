@@ -13,6 +13,6 @@ file(COPY ${STAGING_BUNDLE_PATH} DESTINATION ${CMAKE_BINARY_DIR}/package)
 
 message(STATUS "Creating DMG: ${TARGET_APP_NAME}.dmg")
 execute_process(
-    COMMAND create-dmg --volname "${TARGET_APP_NAME}" --filesystem "APFS" "${TARGET_APP_NAME}.dmg" "${CMAKE_BINARY_DIR}/package/"
+    COMMAND ${CREATE_DMG_PROGRAM} --volname "${TARGET_APP_NAME}" --filesystem "APFS" "${TARGET_APP_NAME}.dmg" "${CMAKE_BINARY_DIR}/package/"
     COMMAND_ERROR_IS_FATAL ANY
 )
