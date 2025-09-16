@@ -46,6 +46,8 @@ public:
     Q_INVOKABLE void releaseGimbalControl();
     Q_INVOKABLE void sendRate();
 
+    Q_INVOKABLE void sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s); // dev
+
 signals:
     void activeGimbalChanged();
     void showAcquireGimbalControlPopup(); // This triggers a popup in QML asking the user for aproval to take control
@@ -100,6 +102,8 @@ private:
     void _checkComplete(Gimbal &gimbal, GimbalPairId pairId);
     bool _tryGetGimbalControl();
     bool _yawInVehicleFrame(uint32_t flags);
+
+    void _sendGimbalAttitudeRates(float pitch_rate_deg_s, float yaw_rate_deg_s);
 
     QTimer _rateSenderTimer;
     Vehicle *_vehicle = nullptr;

@@ -21,14 +21,14 @@
     "name":              "CameraVFov",
     "shortDesc":         "Vertical camera field of view",
     "type":              "uint32",
-    "default":           70,
+    "default":           80,
     "units":             "deg"
 },
 {
     "name":              "CameraHFov",
     "shortDesc":         "Horizontal camera field of view",
     "type":              "uint32",
-    "default":           70,
+    "default":           80,
     "units":             "deg"
 },
 {
@@ -63,6 +63,13 @@
     "type":              "uint32",
     "default":           20,
     "units":             "deg/s"
+},
+{
+    "name":              "gimbalSpeed",
+    "shortDesc":         "gimbal max speed",
+    "type":              "uint32",
+    "default":           80,
+    "units":             "deg"
 }
 ]
 }

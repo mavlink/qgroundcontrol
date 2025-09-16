@@ -110,53 +110,117 @@ Item {
                         }
                     }
                 }
+
                 Repeater {
-                    id:             axisMonitorRepeater
-                    model:          _activeJoystick ? _activeJoystick.axisCount : 0
-                    width:          parent.width
-                    Row {
-                        spacing:    5
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        // Need this to get to loader from Connections above
-                        property Item axis: theAxis
-                        QGCLabel {
-                            id:     axisLabel
-                            text:   modelData
-                        }
-                        AxisMonitor {
-                            id:                     theAxis
-                            anchors.verticalCenter: axisLabel.verticalCenter
-                            height:                 ScreenTools.defaultFontPixelHeight
-                            width:                  200
-                            narrowIndicator:        true
-                            mapped:                 true
-                            reversed:               false
-                            MouseArea {
-                                id:                 deadbandMouseArea
-                                anchors.fill:       parent.item
-                                enabled:            controller.deadbandToggle
-                                preventStealing:    true
-                                property real startX
-                                property real direction
-                                onPressed: (mouse) => {
-                                    startX = mouseX
-                                    direction = startX > width/2 ? 1 : -1
-                                    parent.item.deadbandColor = "#3C6315"
-                                }
-                                onPositionChanged: {
-                                    var mouseToDeadband = 32768/(width/2) // Factor to have deadband follow the mouse movement
-                                    var newValue = parent.item.deadbandValue + direction*(mouseX - startX)*mouseToDeadband
-                                    if ((newValue > 0) && (newValue <32768)){parent.item.deadbandValue=newValue;}
-                                    startX = mouseX
-                                }
-                                onReleased: {
-                                    controller.setDeadbandValue(modelData,parent.item.deadbandValue)
-                                    parent.item.deadbandColor = "#8c161a"
-                                }
-                            }
-                        }
-                    }
+    id:     axisMonitorRepeater
+    model:  _activeJoystick ? _activeJoystick.axisCount : 0
+    width:  parent.width
+
+    Row {
+        spacing: 5
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        // 👇 restore this so Connections can find ".axis"
+        property Item axis: theAxis
+        property int  axisIndex: modelData
+
+        QGCLabel {
+            id:   axisLabel
+            text: modelData
+        }
+
+        AxisMonitor {
+            id:                     theAxis
+            anchors.verticalCenter: axisLabel.verticalCenter
+            height:                 ScreenTools.defaultFontPixelHeight
+            width:                  200
+            narrowIndicator:        true
+            mapped:                 true
+            reversed:               false
+
+            // (optional) raw range accessors
+            property int rawMin:    _activeJoystick ? _activeJoystick.axisRawMin(axisIndex)    : 0
+            property int rawMax:    _activeJoystick ? _activeJoystick.axisRawMax(axisIndex)    : 32767
+            property int rawCenter: _activeJoystick ? _activeJoystick.axisRawCenter(axisIndex) : Math.round((rawMin + rawMax)/2)
+            property int halfRange: Math.max(rawCenter - rawMin, rawMax - rawCenter)
+
+            MouseArea {
+                id:                 deadbandMouseArea
+                anchors.fill:       parent.item
+                enabled:            controller.deadbandToggle
+                preventStealing:    true
+                property real startX
+                property real direction
+
+                onPressed: (mouse) => {
+                    startX    = mouse.x
+                    direction = startX > width/2 ? 1 : -1
+                    parent.item.deadbandColor = "#3C6315"
                 }
+                onPositionChanged: (mouse) => {
+                    var unitsPerPixel = theAxis.halfRange / (theAxis.width / 2)
+                    var deltaUnits    = direction * (mouse.x - startX) * unitsPerPixel
+                    var newValue      = parent.item.deadbandValue + deltaUnits
+                    newValue = Math.max(0, Math.min(theAxis.halfRange, newValue))
+                    parent.item.deadbandValue = newValue
+                    startX = mouse.x
+                }
+                onReleased: {
+                    controller.setDeadbandValue(axisIndex, parent.item.deadbandValue)
+                    parent.item.deadbandColor = "#8c161a"
+                }
+            }
+        }
+    }
+}
+
+                // Repeater {
+                //     id:             axisMonitorRepeater
+                //     model:          _activeJoystick ? _activeJoystick.axisCount : 0
+                //     width:          parent.width
+                //     Row {
+                //         spacing:    5
+                //         anchors.horizontalCenter: parent.horizontalCenter
+                //         // Need this to get to loader from Connections above
+                //         property Item axis: theAxis
+                //         QGCLabel {
+                //             id:     axisLabel
+                //             text:   modelData
+                //         }
+                //         AxisMonitor {
+                //             id:                     theAxis
+                //             anchors.verticalCenter: axisLabel.verticalCenter
+                //             height:                 ScreenTools.defaultFontPixelHeight
+                //             width:                  200
+                //             narrowIndicator:        true
+                //             mapped:                 true
+                //             reversed:               false
+                //             MouseArea {
+                //                 id:                 deadbandMouseArea
+                //                 anchors.fill:       parent.item
+                //                 enabled:            controller.deadbandToggle
+                //                 preventStealing:    true
+                //                 property real startX
+                //                 property real direction
+                //                 onPressed: (mouse) => {
+                //                     startX = mouseX
+                //                     direction = startX > width/2 ? 1 : -1
+                //                     parent.item.deadbandColor = "#3C6315"
+                //                 }
+                //                 onPositionChanged: {
+                //                     var mouseToDeadband = 32768/(width/2) // Factor to have deadband follow the mouse movement
+                //                     var newValue = parent.item.deadbandValue + direction*(mouseX - startX)*mouseToDeadband
+                //                     if ((newValue > 0) && (newValue <32768)){parent.item.deadbandValue=newValue;}
+                //                     startX = mouseX
+                //                 }
+                //                 onReleased: {
+                //                     controller.setDeadbandValue(modelData,parent.item.deadbandValue)
+                //                     parent.item.deadbandColor = "#8c161a"
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
             }
         }
         // Command Buttons
@@ -197,6 +261,117 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             anchors.horizontalCenter: parent.horizontalCenter
         }
+
+        Rectangle {
+            width: parent.width * 0.9
+            height: 100
+            color: "transparent"
+            radius: 8
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: ScreenTools.defaultFontPixelHeight
+
+            Column {
+                anchors.margins: ScreenTools.defaultFontPixelHeight
+                spacing: ScreenTools.defaultFontPixelHeight * 0.5
+
+                QGCLabel {
+                    text: qsTr("Gimbal Control Info")
+                    font.bold: true
+                }
+                QGCLabel {
+                    text: qsTr("Axis 5 = Gimbal Pitch   |   Axis 4 = Gimbal Yaw")
+                    color: qgcPal.text
+                }
+
+                // Gimbal Deadzone Axis 4 (Yaw)
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Yaw Deadzone (Axis 4):")
+                        width: 220
+                    }
+                    Slider {
+                        id: yawDeadzoneSlider
+                        width: 150
+                        from: 0
+                        to: 100
+                        stepSize: 1
+                        value: _activeJoystick ? _activeJoystick.gimbalYawDeadzone : 0
+                        onValueChanged: if (_activeJoystick) _activeJoystick.gimbalYawDeadzone = value
+                    }
+                    QGCLabel { text: yawDeadzoneSlider.value.toFixed(0) }
+                }
+
+                // Gimbal Deadzone Axis 5 Pitch
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Pitch Deadzone (Axis 5):")
+                        width: 220
+                    }
+                    Slider {
+                        id: pitchDeadzoneSlider
+                        width: 150
+                        from: 0
+                        to: 100
+                        stepSize: 1
+                        value: _activeJoystick ? _activeJoystick.gimbalPitchDeadzone : 0
+                        onValueChanged: if (_activeJoystick) _activeJoystick.gimbalPitchDeadzone = value
+                    }
+                    QGCLabel { text: pitchDeadzoneSlider.value.toFixed(0) }
+                }
+
+                // Gimbal Speed
+               Row {
+    spacing: ScreenTools.defaultFontPixelWidth * 2
+
+    QGCLabel {
+        text: qsTr("Gimbal Max Speed:")
+        width: 220
+    }
+
+    QGCTextField {
+        id: speedField
+        width: 150
+        enabled: _activeJoystick !== null
+        placeholderText: qsTr("0–100")
+        text: _activeJoystick ? String(_activeJoystick.gimbalMaxSpeed) : "0"
+        inputMethodHints: Qt.ImhDigitsOnly
+        validator: IntValidator { bottom: 0; top: 100 }
+
+        // Commit on Enter or when the field loses focus
+        onAccepted: {
+            if (_activeJoystick) _activeJoystick.gimbalMaxSpeed = parseInt(text)
+        }
+        onEditingFinished: {
+            if (_activeJoystick) _activeJoystick.gimbalMaxSpeed = parseInt(text)
+        }
+    }
+
+    QGCLabel {
+        text: qsTr("deg/s")
+    }
+}
+
+
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth * 2
+                    QGCLabel {
+                        text: qsTr("Gimbal Axis Control:")
+                        width: 220
+                    }
+                    Switch {
+                        id: gimbalAxisSwitch
+                        checked: _activeJoystick ? _activeJoystick.gimbalAxisEnabled : true
+                        onToggled: if (_activeJoystick) _activeJoystick.gimbalAxisEnabled = checked
+                    }
+                    QGCLabel {
+                        text: gimbalAxisSwitch.checked ? qsTr("Enabled") : qsTr("Disabled")
+                    }
+                }
+
+            }
+        } 
     }
 }
 

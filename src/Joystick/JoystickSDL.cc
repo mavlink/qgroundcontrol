@@ -161,18 +161,31 @@ bool JoystickSDL::_update()
     return true;
 }
 
-bool JoystickSDL::_getButton(int i) const
+// dev
+bool JoystickSDL::_getButton(int idx) const
 {
-    int button = -1;
-
-    if (_isGameController) {
-        button = SDL_GameControllerGetButton(_sdlController, SDL_GameControllerButton(i));
-    } else {
-        button = SDL_JoystickGetButton(_sdlJoystick, i);
+    if (!_sdlJoystick || idx < 0) {
+        return false;
     }
 
-    return (button == 1);
+    bool pressed = false;
+
+    // 1) Standardized controller buttons (only up to SDL_CONTROLLER_BUTTON_MAX-1)
+    if (_isGameController && _sdlController && idx < SDL_CONTROLLER_BUTTON_MAX) {
+        pressed |= (SDL_GameControllerGetButton(
+                        _sdlController,
+                        static_cast<SDL_GameControllerButton>(idx)) == 1);
+    }
+
+    // 2) Always fall back to raw joystick buttons (covers unmapped/extras)
+    const int rawCount = SDL_JoystickNumButtons(_sdlJoystick);
+    if (idx < rawCount) {
+        pressed |= (SDL_JoystickGetButton(_sdlJoystick, idx) == 1);
+    }
+
+    return pressed;
 }
+// dev end
 
 int JoystickSDL::_getAxis(int i) const
 {
