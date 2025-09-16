@@ -45,7 +45,7 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
     # set(CMAKE_OSX_SYSROOT "iphoneos")
     if(QGC_MACOS_UNIVERSAL_BUILD)
-        set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+        set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64") # CMAKE_APPLE_SILICON_PROCESSOR
     endif()
 endif()
 
