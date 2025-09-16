@@ -26403,7 +26403,7 @@
       <short_desc>Module IDs [0, 31] that you would like to request telemetry from</short_desc>
       <long_desc>The module IDs [0, 31] that should be asked for telemetry. The data received from these IDs will be published via the esc_status topic.</long_desc>
       <min>0</min>
-      <max>4294967295</max>
+      <max>2147483647</max>
       <reboot_required>True</reboot_required>
       <bitmask>
         <bit index="0">Module ID 0</bit>

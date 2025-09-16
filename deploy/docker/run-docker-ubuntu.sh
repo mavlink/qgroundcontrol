@@ -3,6 +3,9 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Track start time
+START_TIME=$(date +%s)
+
 # Define variables for better maintainability
 DOCKERFILE_PATH="./deploy/docker/Dockerfile-build-ubuntu"
 IMAGE_NAME="qgc-ubuntu-docker"
@@ -21,3 +24,8 @@ docker run \
   -v "${SOURCE_DIR}:/project/source" \
   -v "${BUILD_DIR}:/project/build" \
   "${IMAGE_NAME}"
+
+# Track end time and calculate elapsed time
+END_TIME=$(date +%s)
+ELAPSED_TIME=$((END_TIME - START_TIME))
+echo "Elapsed time: ${ELAPSED_TIME} seconds"

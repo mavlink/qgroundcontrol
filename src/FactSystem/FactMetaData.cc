@@ -1204,7 +1204,35 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
     if (errorString.isEmpty() && !rgDescriptions.isEmpty()) {
         for (qsizetype i = 0; i < rgDescriptions.count(); i++) {
             if (foundBitmask) {
-                metaData->addBitmaskInfo(rgDescriptions[i], 1 << rgIntValues[i]);
+                const int bit = rgIntValues[i];
+                // Determine valid bit range and compute mask using a safe unsigned width
+                int maxBit = 30; // default for 32-bit signed
+                bool use64 = false;
+                switch (metaData->type()) {
+                case FactMetaData::valueTypeUint64:
+                    maxBit = 63; use64 = true; break;
+                case FactMetaData::valueTypeInt64:
+                    maxBit = 62; use64 = true; break;
+                case FactMetaData::valueTypeUint32:
+                    maxBit = 31; break;
+                case FactMetaData::valueTypeInt32:
+                default:
+                    maxBit = 30; break;
+                }
+
+                if (bit <= maxBit && bit >= 0) {
+                    QVariant bitmaskRawValue;
+                    if (use64) {
+                        const quint64 mask = (quint64(1) << bit);
+                        bitmaskRawValue = QVariant::fromValue(mask);
+                    } else {
+                        const quint32 mask = (quint32(1) << bit);
+                        bitmaskRawValue = QVariant::fromValue(mask);
+                    }
+                    metaData->addBitmaskInfo(rgDescriptions[i], bitmaskRawValue);
+                } else {
+                    qCWarning(FactMetaDataLog) << "Invalid bit index for bitmask" << bit << "for fact" << metaData->name();
+                }
             } else {
                 const QVariant rawValueVariant = !rgDoubleValues.isEmpty() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
                 QVariant convertedValueVariant;
