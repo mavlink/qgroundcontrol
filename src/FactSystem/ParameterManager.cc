@@ -878,7 +878,8 @@ void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
 QDir ParameterManager::parameterCacheDir()
 {
     const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
-    return (spath + QDir::separator() + QStringLiteral("ParamCache"));
+    const QDir cacheDir(spath + QDir::separator() + QStringLiteral("ParamCache"));
+    return cacheDir;
 }
 
 QString ParameterManager::parameterCacheFile(int vehicleId, int componentId)

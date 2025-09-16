@@ -9,11 +9,24 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QString>
+#include <QtCore/QtSystemDetection>
+
+Q_DECLARE_LOGGING_CATEGORY(PlatformLog)
+
 namespace QGCCommandLineParser {
     struct CommandLineParseResult;
 }
 
 namespace Platform {
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+bool isUserRoot();
+#if !defined(QGC_NO_SERIAL_LINK)
+void checkSerialPortPermissions(QString &errorMessage);
+#endif
+#endif
 
 // Call before constructing Q(Core)Application.
 void setupPreApp(const QGCCommandLineParser::CommandLineParseResult &cli);
