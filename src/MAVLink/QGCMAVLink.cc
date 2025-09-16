@@ -161,6 +161,11 @@ bool QGCMAVLink::isRoverBoat(MAV_TYPE mavType)
     return vehicleClass(mavType) == VehicleClassRoverBoat;
 }
 
+bool QGCMAVLink::isSpacecraft(MAV_TYPE mavType)
+{
+    return vehicleClass(mavType) == VehicleClassSpacecraft;
+}
+
 bool QGCMAVLink::isSub(MAV_TYPE mavType)
 {
     return vehicleClass(mavType) == VehicleClassSub;
@@ -184,6 +189,8 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
         return VehicleClassRoverBoat;
     case MAV_TYPE_SUBMARINE:
         return VehicleClassSub;
+    case MAV_TYPE_SPACECRAFT_ORBITER:
+        return VehicleClassSpacecraft;
     case MAV_TYPE_QUADROTOR:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
@@ -219,6 +226,8 @@ QString QGCMAVLink::vehicleClassToUserVisibleString(VehicleClass_t vehicleClass)
         return QT_TRANSLATE_NOOP("Vehicle Class", "Rover-Boat");
     case VehicleClassSub:
         return QT_TRANSLATE_NOOP("Vehicle Class", "Sub");
+    case VehicleClassSpacecraft:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Spacecraft");
     case VehicleClassMultiRotor:
         return QT_TRANSLATE_NOOP("Vehicle Class", "Multi-Rotor");
     case VehicleClassVTOL:
@@ -259,6 +268,8 @@ QString QGCMAVLink::vehicleClassToInternalString(VehicleClass_t vehicleClass)
         return QStringLiteral("RoverBoat");
     case VehicleClassSub:
         return QStringLiteral("Sub");
+    case VehicleClassSpacecraft:
+        return QStringLiteral("Spacecraft");
     case VehicleClassMultiRotor:
         return QStringLiteral("MultiRotor");
     case VehicleClassVTOL:
@@ -358,6 +369,7 @@ QString QGCMAVLink::mavTypeToString(MAV_TYPE mavType) {
         { MAV_TYPE_GROUND_ROVER,    tr("Ground rover")},
         { MAV_TYPE_SURFACE_BOAT,    tr("Surface vessel, boat, ship")},
         { MAV_TYPE_SUBMARINE,       tr("Submarine")},
+        { MAV_TYPE_SPACECRAFT_ORBITER, tr("Spacecraft, orbiter")},
         { MAV_TYPE_HEXAROTOR,       tr("Hexarotor")},
         { MAV_TYPE_OCTOROTOR,       tr("Octorotor")},
         { MAV_TYPE_TRICOPTER,       tr("trirotor")},
@@ -467,6 +479,8 @@ int QGCMAVLink::motorCount(MAV_TYPE mavType, uint8_t frameType)
             return -1;
         }
     }
+    case MAV_TYPE_SPACECRAFT_ORBITER:
+        return 8;
 
     default:
         return -1;
