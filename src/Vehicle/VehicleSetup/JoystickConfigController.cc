@@ -61,10 +61,8 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static constexpr const char* msgPitchDown =           "Move the Pitch stick all the way down and hold it there...";
     static constexpr const char* msgPitchUp =             "Move the Pitch stick all the way up and hold it there...";
     static constexpr const char* msgPitchCenter =         "Allow the Pitch stick to move back to center...";
-    static constexpr const char* msgGimbalPitchUp =       "Move the Gimbal Pitch control all the way up and hold it there...";
-    static constexpr const char* msgGimbalPitchDown =     "Move the Gimbal Pitch control all the way down and hold it there...";
-    static constexpr const char* msgGimbalYawUp =         "Move the Gimbal Yaw control all the way up and hold it there...";
-    static constexpr const char* msgGimbalYawDown =       "Move the Gimbal Yaw control all the way down and hold it there...";
+    static constexpr const char* msgGimbalPitch =         "Move the gimbal pitch axis/knob...";
+    static constexpr const char* msgGimbalYaw =           "Move the gimbal yaw axis/knob...";
     static constexpr const char* msgComplete =            "All settings have been captured.\nClick Next to enable the joystick.";
 
     static const stateMachineEntry rgStateMachine[] = {
@@ -79,11 +77,9 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::pitchFunction,          msgPitchUp,         _sticksPitchUp,         &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchDown,       _sticksPitchDown,       &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
-        { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,   _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _sticksCentered,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalYawFunction,      msgGimbalYawUp,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
-        { Joystick::gimbalYawFunction,      msgGimbalYawDown,   _sticksCentered,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
-        { Joystick::maxAxisFunction,        msgComplete,        _sticksCentered,        nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitch,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
+        { Joystick::gimbalYawFunction,      msgGimbalYaw,       _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
+        { Joystick::maxFunction, msgComplete, _sticksCentered, nullptr, &JoystickConfigController::_writeCalibration, nullptr, -1 },
     };
 
     Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));

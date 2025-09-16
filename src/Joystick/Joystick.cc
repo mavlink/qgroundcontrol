@@ -587,6 +587,62 @@ void Joystick::_handleButtons()
     }
 }
 
+// dev
+float applyDeadzone(float value, float deadzone) {
+        if (std::abs(value) < deadzone) {
+            return 0.0f;
+        }else if(value<0){
+            value=value+deadzone;
+        }else if(value>0){
+            value=value-deadzone;
+        }
+        return value;
+    };
+
+void Joystick::setGimbalYawDeadzone(int deadzone) {
+    if (_rgCalibration[4].deadband != deadzone) {
+        _rgCalibration[4].deadband = deadzone;
+        _saveSettings();
+        emit gimbalYawDeadzoneChanged();
+    }
+}
+void Joystick::setGimbalPitchDeadzone(int deadzone) {
+    if (_rgCalibration[5].deadband != deadzone) {
+        _rgCalibration[5].deadband = deadzone;
+        _saveSettings();
+        emit gimbalPitchDeadzoneChanged();
+    }
+}
+void Joystick::setGimbalMaxSpeed(int speed)
+{
+    if (_gimbalMaxSpeed != speed) {
+        _gimbalMaxSpeed = speed;
+        emit gimbalMaxSpeedChanged();
+        _saveSettings();
+    }
+}
+
+void Joystick::setGimbalAxisEnabled(bool enabled)
+{
+    if (_gimbalAxisEnabled != enabled) {
+        _gimbalAxisEnabled = enabled;
+        emit gimbalAxisEnabledChanged(enabled);
+        _saveSettings();
+        // Send a zero-rate command once when the state flips
+        if (_activeVehicle) {
+            if (auto* gc = _activeVehicle->gimbalController()) {
+                QMetaObject::invokeMethod(
+                    gc,
+                    "sendGimbalRate",
+                    Qt::QueuedConnection,
+                    Q_ARG(float, 0.0f),
+                    Q_ARG(float, 0.0f)
+                );
+            }
+        }
+    }
+}
+// dev end
 void Joystick::_handleAxis()
 {
     const int axisDelay = static_cast<int>(1000.0f / _axisFrequencyHz);
@@ -609,6 +665,7 @@ void Joystick::_handleAxis()
 
     int axis = _rgFunctionAxis[rollFunction];
     float roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
+    qDebug()<<"-------------AXIS: "<<_rgAxisValues[axis]; // dev
 
     axis = _rgFunctionAxis[pitchFunction];
     float pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
@@ -619,17 +676,79 @@ void Joystick::_handleAxis()
     axis = _rgFunctionAxis[throttleFunction];
     float throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], (_throttleMode == ThrottleModeDownZero) ? false :_deadband);
 
-    float gimbalPitch = NAN;
-    if (_enableManualControlExtensions && _axisCount > 4) {
+
+    float gimbalPitch = 0.0f;
+    float gimbalYaw = 0.0f;
+    if (_axisCount > 4) {
         axis = _rgFunctionAxis[gimbalPitchFunction];
         gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
     }
 
-    float gimbalYaw = NAN;
-    if (_enableManualControlExtensions && _axisCount > 5) {
+    if (_axisCount > 5) {
         axis = _rgFunctionAxis[gimbalYawFunction];
         gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
     }
+
+// dev
+if (_axisCount > 5 && _gimbalAxisEnabled) {
+    // 1) use mapped indices, not hard-coded 4/5
+    const int pitchAxisIndex = _rgFunctionAxis[gimbalYawFunction];
+    const int yawAxisIndex   = _rgFunctionAxis[gimbalPitchFunction];
+
+    // 2) normalize to 0..1 WITHOUT deadband here (we'll handle deadzone ourselves)
+    //    NOTE: _adjustRange's 3rd param must be "useDeadband" (bool). If it's not, adapt accordingly.
+    const float pitchNorm01 = _adjustRange(_rgAxisValues[pitchAxisIndex],
+                                           _rgCalibration[pitchAxisIndex],
+                                           /*useDeadband=*/false);
+    const float yawNorm01   = _adjustRange(_rgAxisValues[yawAxisIndex],
+                                           _rgCalibration[yawAxisIndex],
+                                           /*useDeadband=*/false);
+
+                                           qDebug()<<"-------------AXIS: "<<_rgAxisValues[pitchAxisIndex];
+
+    // 3) recenter to −1..+1 symmetrically
+    float pitchNorm = (pitchNorm01 - 0.5f) * 2.0f;
+    float yawNorm   = (yawNorm01   - 0.5f) * 2.0f;
+
+    // 4) apply UI deadzone (percent 0..100) in normalized space
+    auto applyDeadzonePercentNorm = [](float n, float dzPercent){
+        float dz = std::clamp(dzPercent * 0.01f, 0.0f, 0.95f);
+        float a  = std::fabs(n);
+        if (a <= dz) return 0.0f;
+        float out = (a - dz) / (1.0f - dz); // preserve full-scale reach
+        return (n < 0.f) ? -out : out;
+    };
+
+    pitchNorm = applyDeadzonePercentNorm(pitchNorm, float(_rgCalibration[pitchAxisIndex].deadband));
+    yawNorm   = applyDeadzonePercentNorm(yawNorm,   float(_rgCalibration[yawAxisIndex].deadband));
+
+    // 5) scale to deg/s (no magic offsets)
+    const float pitchDegPerSec = pitchNorm * float(_gimbalMaxSpeed);
+    const float yawDegPerSec   = yawNorm   * float(_gimbalMaxSpeed);
+
+    // Optional: simple debounce like you had before
+    if (std::abs(pitchDegPerSec) == 0.f) ++zeroPitchCount; else zeroPitchCount = 0;
+    if (std::abs(yawDegPerSec)   == 0.f) ++zeroYawCount;   else zeroYawCount   = 0;
+
+    if (!(zeroPitchCount >= 3 && zeroYawCount >= 3)) {
+        if (_activeVehicle) {
+            if (auto* gc = _activeVehicle->gimbalController()) {
+                qDebug()<<"Pitch"<<pitchDegPerSec;
+                qDebug()<<"YAW"<<yawDegPerSec;
+                // const float maxSpeed = SettingsManager::instance()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
+                // qDebug()<<"---------------------"<<maxSpeed;
+                QMetaObject::invokeMethod(
+                    gc,
+                    "sendGimbalRate",
+                    Qt::QueuedConnection,
+                    Q_ARG(float, pitchDegPerSec),
+                    Q_ARG(float, yawDegPerSec)
+                );
+            }
+        }
+    }
+}
+//dev end
 
     if (_accumulator) {
         static float throttle_accu = 0.f;
@@ -997,6 +1116,11 @@ void Joystick::setCalibrationMode(bool calibrating)
         _pollingStartedForCalibration = true;
         startPolling(MultiVehicleManager::instance()->activeVehicle());
     } else if (_pollingStartedForCalibration) {
+        if (_axisCount > 5) {
+            _rgFunctionAxis[gimbalYawFunction] = 4;
+            _rgFunctionAxis[gimbalPitchFunction] = 5;
+        }
+        _saveSettings();
         stopPolling();
     }
 }

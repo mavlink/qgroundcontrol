@@ -73,6 +73,7 @@ void Gimbal::_initFacts()
     _absoluteYawFact.setRawValue(0.0f);
     _deviceIdFact.setRawValue(0);
     _managerCompidFact.setRawValue(0);
+    _gimbalMaxSpeedFact.rawValue(); // dev
 }
 
 void Gimbal::setCapabilityFlags(uint32_t flags)
