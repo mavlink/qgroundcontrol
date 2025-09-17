@@ -14,14 +14,7 @@ set(deploy_tool_options_arg "")
 if(MACOS OR WIN32)
     list(APPEND deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
     if(MACOS)
-        # if(DEFINED ENV{QGC_MACOS_SIGNING_IDENTITY})
-        #     message(STATUS "QGC: Deploy Sign For Notarization")
-        #     list(APPEND deploy_tool_options_arg "-sign-for-notarization=\"$ENV{QGC_MACOS_SIGNING_IDENTITY}\"")
-        # else()
-        #     message(STATUS "QGC: Deploy AD-HOC Codesign")
-        #     list(APPEND deploy_tool_options_arg "-codesign=-")
-        # endif()
-        # list(APPEND deploy_tool_options_arg "-dmg" "-fs=APFS")
+        list(APPEND deploy_tool_options_arg "-appstore-compliant")
     endif()
 endif()
 
@@ -95,25 +88,20 @@ elseif(WIN32)
     ")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateWinInstaller.cmake")
 elseif(MACOS)
-    install(CODE "
-        set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")
-
-        message(STATUS \"QGC: Signing Bundle - \${QGC_STAGING_BUNDLE_PATH}\")
-        execute_process(
-            COMMAND codesign --force --deep -s - \"\${QGC_STAGING_BUNDLE_PATH}\"
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    ")
-
-    # include(BundleUtilities)
-    # fixup_bundle(\"${QGC_STAGING_BUNDLE_PATH}\" \"\" \"${CMAKE_BINARY_DIR}\")
-    # verify_app(\"${QGC_STAGING_BUNDLE_PATH}\")
-    # verify_bundle_prerequisites(\"${QGC_STAGING_BUNDLE_PATH}\" _bundle_prereqs_result _bundle_prereqs_info)
-    # verify_bundle_symlinks(\"${QGC_STAGING_BUNDLE_PATH}\" _bundle_symlinks_result _bundle_symlinks_info)
-
-    # include(CreateCPackDMG)
-
-    # - or
+    install(CODE "set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")")
+    if(QGC_MACOS_SIGN_WITH_IDENTITY)
+        message(STATUS "QGC: Signing Bundle using signing identity")
+        install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/SignMacBundle.cmake")
+    else()
+        message(STATUS "QGC: Signing Bundle using Ad-Hoc signing")
+        install(CODE "
+            message(STATUS \"QGC: Signing Bundle using Ad-Hoc signing\")
+            execute_process(
+                COMMAND codesign --force --deep -s - \"\${QGC_STAGING_BUNDLE_PATH}\"
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+        ")
+    endif()
 
     find_program(CREATE_DMG_PROGRAM create-dmg)
     if(NOT CREATE_DMG_PROGRAM)
