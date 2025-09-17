@@ -77,6 +77,9 @@ jobs:
           build-type: ${{ matrix.BuildType }}
           cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
 
+      - name: Install NSIS
+        run: choco install nsis -y
+
       - name: Install Qt for Windows (x64)
         uses: jurplel/install-qt-action@v4
         with:
