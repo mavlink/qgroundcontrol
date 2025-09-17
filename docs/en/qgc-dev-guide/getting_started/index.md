@@ -141,6 +141,13 @@ Example commands to build a default QGC and run it afterwards:
    ```
 
    Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.
+   
+   **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
+   
+   * `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
+   * `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
+   * `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
+   * `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
 
 1. Build
 
