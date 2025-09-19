@@ -17,6 +17,7 @@ apt-get install -y -qq --no-install-recommends \
 
 # Enable the “universe” component (needed for several dev packages)
 add-apt-repository -y universe
+add-apt-repository -y ppa:ubuntu-toolchain-r/test
 apt-get update -y -qq
 
 # --------------------------------------------------------------------
@@ -35,6 +36,7 @@ apt-get install -y -qq --no-install-recommends \
     libfuse2 \
     fuse3 \
     libtool \
+    libstdc++6 \
     locales \
     mold \
     ninja-build \
