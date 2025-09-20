@@ -11,9 +11,8 @@ install(
 set(deploy_tool_options_arg "")
 if(MACOS OR WIN32)
     set(deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
-    if(MACOS_SIGNING_IDENTITY)
-        message(STATUS "Signing MacOS Bundle")
-        set(deploy_tool_options_arg "${deplay_tool_options_arg} -sign-for-notarization=${MACOS_SIGNING_IDENTITY}")
+    if(MACOS)
+        list(APPEND deploy_tool_options_arg "-appstore-compliant")
     endif()
 endif()
 
@@ -75,6 +74,21 @@ elseif(WIN32)
     install(CODE "set(QGC_WINDOWS_INSTALLER_SCRIPT ${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi)")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateWinInstaller.cmake")
 elseif(MACOS)
+    install(CODE "set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")")
+    if(QGC_MACOS_SIGN_WITH_IDENTITY)
+        message(STATUS "QGC: Signing Bundle using signing identity")
+        install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/SignMacBundle.cmake")
+    else()
+        message(STATUS "QGC: Signing Bundle using Ad-Hoc signing")
+        install(CODE "
+            message(STATUS \"QGC: Signing Bundle using Ad-Hoc signing\")
+            execute_process(
+                COMMAND codesign --force --deep -s - \"\${QGC_STAGING_BUNDLE_PATH}\"
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+        ")
+    endif()
+
     install(CODE "set(TARGET_APP_NAME ${QGC_APP_NAME})")
     find_program(CREATE_DMG_PROGRAM create-dmg)
     if(NOT CREATE_DMG_PROGRAM)
