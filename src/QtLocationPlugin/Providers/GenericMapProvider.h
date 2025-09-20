@@ -144,7 +144,7 @@ private:
     QString _getURL(int x, int y, int zoom) const final;
 
     const QString _mapTypeId;
-    const QString _mapUrl = QStringLiteral("https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/%1/%2/%3");
+    const QString _mapUrl = QStringLiteral("https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/%1/%2/%3.png");
 };
 
 class StatkartTopoMapProvider : public StatkartMapProvider
