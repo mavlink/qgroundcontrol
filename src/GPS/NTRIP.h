@@ -183,8 +183,6 @@ private:
     bool _startupSuppress = true;
     int  _startupStableTicks = 0;    
     
-    QGeoCoordinate _lastKnownCoord;
-    bool _haveLastKnownCoord = false;
     CasterStatus _casterStatus = CasterStatus::OtherError;
 
     static NTRIPManager* _instance;

@@ -1028,21 +1028,31 @@ static QByteArray _makeGGA(const QGeoCoordinate& coord, double altitude_msl)
         .arg(utc.minute(), 2, 10, QChar('0'))
         .arg(utc.second(), 2, 10, QChar('0'));
 
-    // Convert decimal degrees to NMEA ddmm.mmmm or dddmm.mmmm format
+    // Convert decimal degrees to NMEA DMM with zero-padded minutes:
+    // lat:  ddmm.mmmm, lon: dddmm.mmmm
     auto dmm = [](double deg, bool lat) -> QString {
         double a = qFabs(deg);
         int d = int(a);
         double m = (a - d) * 60.0;
+
+        // Round to 4 decimals and handle 59.99995 -> 60.0000 carry into degrees
+        int m10000 = int(m * 10000.0 + 0.5);
+        double m_rounded = m10000 / 10000.0;
+        if (m_rounded >= 60.0) {
+            m_rounded -= 60.0;
+            d += 1;
+        }
+
+        // Ensure minutes have two digits before the decimal (e.g. 08.1234)
+        QString mm = QString::number(m_rounded, 'f', 4);
+        if (m_rounded < 10.0) {
+            mm.prepend("0");
+        }
+
         if (lat) {
-            // Latitude: 2 digits for degrees, minutes always have 2 integer digits
-            return QString("%1%2")
-                .arg(d, 2, 10, QChar('0'))
-                .arg(QString::number(m, 'f', 4).rightJustified(7, '0'));
+            return QString("%1%2").arg(d, 2, 10, QChar('0')).arg(mm);
         } else {
-            // Longitude: 3 digits for degrees
-            return QString("%1%2")
-                .arg(d, 3, 10, QChar('0'))
-                .arg(QString::number(m, 'f', 4).rightJustified(7, '0'));
+            return QString("%1%2").arg(d, 3, 10, QChar('0')).arg(mm);
         }
     };
 
@@ -1087,7 +1097,8 @@ void NTRIPManager::_sendGGA()
 
     if (qgcApp()) {
         // PRIORITY 1: Raw GPS data from vehicle GPS facts (most important for RTK)
-        if (MultiVehicleManager* mvm = qgcApp()->findChild<MultiVehicleManager*>()) {
+        MultiVehicleManager* mvm = MultiVehicleManager::instance();
+        if (mvm) {
             if (Vehicle* veh = mvm->activeVehicle()) {
                 FactGroup* gps = veh->gpsFactGroup();
                 if (gps) {
@@ -1098,6 +1109,10 @@ void NTRIPManager::_sendGGA()
                     // If "lat"/"lon" don't work, try alternative names
                     if (!latF) latF = gps->getFact(QStringLiteral("latitude"));
                     if (!lonF) lonF = gps->getFact(QStringLiteral("longitude"));
+                    if (!latF) latF = gps->getFact(QStringLiteral("lat_deg"));
+                    if (!lonF) lonF = gps->getFact(QStringLiteral("lon_deg"));
+                    if (!latF) latF = gps->getFact(QStringLiteral("latitude_deg"));
+                    if (!lonF) lonF = gps->getFact(QStringLiteral("longitude_deg"));
                     
                     if (latF && lonF) {
                         const double glat = latF->rawValue().toDouble();
@@ -1162,7 +1177,8 @@ void NTRIPManager::_sendGGA()
 
         // PRIORITY 2: Vehicle global position estimate (EKF output)
         if (!validCoord) {
-            if (MultiVehicleManager* mvm2 = qgcApp()->findChild<MultiVehicleManager*>()) {
+            MultiVehicleManager* mvm2 = MultiVehicleManager::instance();
+            if (mvm2) {
                 if (Vehicle* veh2 = mvm2->activeVehicle()) {
                     coord = veh2->coordinate();
                     if (coord.isValid() && !(coord.latitude() == 0.0 && coord.longitude() == 0.0)) {
@@ -1176,41 +1192,6 @@ void NTRIPManager::_sendGGA()
             }
         }
 
-        // PRIORITY 3: GCS device position
-        if (!validCoord) {
-            const QGeoCoordinate gcs = QGCPositionManager::instance()->gcsPosition();
-            if (gcs.isValid() && !(gcs.latitude() == 0.0 && gcs.longitude() == 0.0)) {
-                coord = gcs;
-                validCoord = true;
-                double a = gcs.altitude();
-                alt_msl = qIsFinite(a) ? a : 0.0;
-                srcUsed = QStringLiteral("GCS");
-                qCDebug(NTRIPLog) << "NTRIP: Using GCS position for GGA fallback" << coord;
-            }
-        }
-    }
-
-    // PRIORITY 4: Last known coordinate
-    if (!validCoord) {
-        if (_haveLastKnownCoord) {
-            coord = _lastKnownCoord;
-            validCoord = true;
-            srcUsed = QStringLiteral("LastKnown");
-            qCDebug(NTRIPLog) << "NTRIP: Using last known position for GGA" << coord;
-        } else {
-            // PRIORITY 5: Hardcoded test coordinates (only if nothing else available)
-            static constexpr double HARD_CODED_LAT  = 34.112490;   // Los Angeles test latitude
-            static constexpr double HARD_CODED_LON  = -118.339063; // Los Angeles test longitude
-            static constexpr double HARD_CODED_ALT  = 166.421;     // Altitude in meters
-
-            coord = QGeoCoordinate(HARD_CODED_LAT, HARD_CODED_LON, HARD_CODED_ALT);
-            validCoord = true;
-            srcUsed = QStringLiteral("Hardcoded Test");
-            static int hardcoded_count = 0;
-            if ((hardcoded_count++ % 10) == 0) { // Log every 10th time to reduce spam
-                qCDebug(NTRIPLog) << "NTRIP: Using hardcoded coordinates (no other position source available)";
-            }
-        }
     }
 
     if (!validCoord) {
@@ -1218,16 +1199,10 @@ void NTRIPManager::_sendGGA()
         return;
     }
 
-    // Store valid coordinate for future use (except hardcoded test coords)
-    if (validCoord && srcUsed != QStringLiteral("LastKnown") && srcUsed != QStringLiteral("Hardcoded Test")) {
-        _lastKnownCoord = coord;
-        _haveLastKnownCoord = true;
-
-        // Once we have a real valid coord, slow down GGA to 5 seconds
-        if (_ggaTimer && _ggaTimer->interval() != 5000) {
-            _ggaTimer->setInterval(5000);
-            qCDebug(NTRIPLog) << "NTRIP: Real position acquired, reducing GGA frequency to 5s";
-        }
+    // Once we have a real valid coord, slow down GGA to 5 seconds
+    if (_ggaTimer && _ggaTimer->interval() != 5000) {
+        _ggaTimer->setInterval(5000);
+        qCDebug(NTRIPLog) << "NTRIP: Real position acquired, reducing GGA frequency to 5s";
     }
 
     const QByteArray gga = _makeGGA(coord, alt_msl);
