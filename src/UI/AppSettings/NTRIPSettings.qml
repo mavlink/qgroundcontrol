@@ -121,6 +121,7 @@ SettingsPage {
             text:               _ntrip.ntripUseSpartn.shortDescription
             fact:               _ntrip.ntripUseSpartn
             visible:            _ntrip.ntripUseSpartn.visible
+            enabled:            false
         }
     }
 }
