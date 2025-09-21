@@ -69,6 +69,10 @@ jobs:
         with:
           version: ${{ env.GST_VERSION }}
 
+      - name: Install NSIS
+        run: choco install nsis -y
+        shell: powershell
+
       - name: Setup Caching
         uses: ./.github/actions/cache
         with:
