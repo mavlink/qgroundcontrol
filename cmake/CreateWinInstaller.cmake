@@ -5,6 +5,7 @@ set(_PF86 "PROGRAMFILES(x86)")
 find_program(QGC_NSIS_INSTALLER_CMD makensis
     PATHS "$ENV{PROGRAMFILES}/NSIS" "$ENV{${_PF86}}/NSIS" "$ENV{PROGRAMW6432}/NSIS"
     DOC "Path to the makensis utility."
+    REQUIRED
 )
 
 file(TO_NATIVE_PATH "${QGC_WINDOWS_ICON_PATH}" QGC_INSTALLER_ICON)
