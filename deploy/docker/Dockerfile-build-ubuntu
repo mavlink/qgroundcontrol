@@ -18,7 +18,8 @@ RUN apt-get update && \
         ca-certificates \
         build-essential \
         curl \
-        unzip && \
+        unzip \
+        xz-utils && \
     rm -rf /var/lib/apt/lists/*
 
 # ---------- UTF-8 locale ----------
