@@ -252,7 +252,7 @@ void VehicleLinkManager::_linkDisconnected()
 
     _removeLink(link);
     _updatePrimaryLink();
-    if (_rgLinkInfo.isEmpty()) {
+    if (_rgLinkInfo.isEmpty() && !_allLinksRemovedSignalledByCloseVehicle) {
         qCDebug(VehicleLog) << "All links removed. Closing down Vehicle.";
         emit allLinksRemoved(_vehicle);
     }
@@ -364,6 +364,7 @@ void VehicleLinkManager::closeVehicle()
 
     _rgLinkInfo.clear();
 
+    _allLinksRemovedSignalledByCloseVehicle = true; // Prevent double signal of allLinksRemoved
     emit allLinksRemoved(_vehicle);
 }
 
