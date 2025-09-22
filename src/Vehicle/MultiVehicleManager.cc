@@ -193,6 +193,7 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
 
     if (!found) {
         qCWarning(MultiVehicleManagerLog) << "Vehicle not found in map!";
+        return;
     }
 
     deselectVehicle(vehicle->id());
