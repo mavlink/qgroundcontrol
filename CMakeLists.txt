@@ -239,8 +239,20 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE Qt6::QSvgPlugin
     EXCLUDE_BY_TYPE geoservices
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
+    # INCLUDE_BY_TYPE platforms
+    #     $<$<TARGET_EXISTS:Qt6::QXcbIntegrationPlugin>:Qt6::QXcbIntegrationPlugin>
+    #     $<$<TARGET_EXISTS:Qt6::QEglFSIntegrationPlugin>:Qt6::QEglFSIntegrationPlugin>
+    #     $<$<TARGET_EXISTS:Qt6::QWaylandIntegrationPlugin>:Qt6::QWaylandIntegrationPlugin>
+    #     $<$<TARGET_EXISTS:Qt6::QWaylandEglPlatformIntegrationPlugin>:Qt6::QWaylandEglPlatformIntegrationPlugin>
     # INCLUDE_BY_TYPE styles Qt6::qtquickcontrols2basicstyleplugin Qt6::qtquickcontrols2basicstyleimplplugin
 )
+
+if(LINUX AND TARGET Qt6::WaylandClient)
+    qt_import_plugins(${CMAKE_PROJECT_NAME}
+        INCLUDE
+            $<$<TARGET_EXISTS:Qt6::QWaylandIntegrationPlugin>:Qt6::QWaylandIntegrationPlugin>
+    )
+endif()
 
 include(Install)
 
