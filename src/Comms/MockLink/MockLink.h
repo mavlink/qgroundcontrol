@@ -155,13 +155,19 @@ private:
     void _handleFTP(const mavlink_message_t &msg);
     void _handleCommandLong(const mavlink_message_t &msg);
     void _handleInProgressCommandLong(const mavlink_command_long_t &request);
+    void _handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &acccepted);
     void _handleManualControl(const mavlink_message_t &msg);
     void _handlePreFlightCalibration(const mavlink_command_long_t &request);
     void _handleTakeoff(const mavlink_command_long_t &request);
     void _handleLogRequestList(const mavlink_message_t &msg);
     void _handleLogRequestData(const mavlink_message_t &msg);
     void _handleParamMapRC(const mavlink_message_t &msg);
-    bool _handleRequestMessage(const mavlink_command_long_t &request, bool &noAck);
+    void _handleRequestMessage(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
+    void _handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted);
+    void _handleRequestMessageProtocolVersion(const mavlink_command_long_t &request, bool &accepted);
+    void _handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
+    void _handleRequestMessageAvailableModes(const mavlink_command_long_t &request, bool &accepted);
+    void _handleRequestMessageGimbalManagerInformation(const mavlink_command_long_t &request, bool &accepted);
 
     void _sendHeartBeat();
     void _sendHighLatency2();
@@ -172,6 +178,8 @@ private:
     void _sendVibration();
     void _sendSysStatus();
     void _sendBatteryStatus();
+    void _sendGimbalManagerStatus();
+    void _sendGimbalDeviceAttitudeStatus();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
@@ -251,6 +259,9 @@ private:
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
+
+    bool _sendGimbalManagerStatusNow = false;
+    bool _sendGimbalDeviceAttitudeStatusNow = false;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
 
