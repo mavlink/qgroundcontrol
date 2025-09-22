@@ -168,38 +168,58 @@ Item {
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               activeGimbal.yawLock ? qsTr("Yaw Follow") : qsTr("Yaw Lock")
-                    onClicked:          gimbalController.toggleGimbalYawLock(!activeGimbal.yawLock)
+                    visible:            activeGimbal.supportsYawLock
+                    onClicked: {
+                        gimbalController.setGimbalYawLock(!activeGimbal.yawLock)
+                        mainWindow.closeIndicatorDrawer()
+                    }
                 }
 
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Center")
-                    onClicked:          gimbalController.centerGimbal()
+                    onClicked: {
+                        gimbalController.centerGimbal()
+                        mainWindow.closeIndicatorDrawer()
+                    }
                 }
 
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Tilt 90")
-                    onClicked:          gimbalController.sendPitchBodyYaw(-90, 0)
+                    onClicked: {
+                        gimbalController.sendPitchBodyYaw(-90, 0)
+                        mainWindow.closeIndicatorDrawer()
+                    }
                 }
 
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Point Home")
-                    onClicked:          activeVehicle.guidedModeROI(activeVehicle.homePosition)
+                    onClicked: {
+                        activeVehicle.guidedModeROI(activeVehicle.homePosition)
+                        mainWindow.closeIndicatorDrawer()
+                    }
                 }
 
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Retract")
-                    onClicked:          gimbalController.toggleGimbalRetracted(true)
+                    visible:            activeGimbal.supportsRetract
+                    onClicked: {
+                        gimbalController.setGimbalRetract(true)
+                        mainWindow.closeIndicatorDrawer()
+                    }
                 }
 
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               activeGimbal.gimbalHaveControl ? qsTr("Release Control") : qsTr("Acquire Control")
                     visible:            _gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl.rawValue
-                    onClicked:          activeGimbal.gimbalHaveControl ? gimbalController.releaseGimbalControl() : gimbalController.acquireGimbalControl()
+                    onClicked: {
+                        activeGimbal.gimbalHaveControl ? gimbalController.releaseGimbalControl() : gimbalController.acquireGimbalControl()
+                        mainWindow.closeIndicatorDrawer()
+                    }
                 }
             }
         }
