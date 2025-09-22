@@ -11,12 +11,12 @@
 #include "GimbalController.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GimbalLog, "qgc.gimbal.gimbal")
+QGC_LOGGING_CATEGORY(GimbalLog, "GimbalLog")
 
 Gimbal::Gimbal(GimbalController *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GimbalFact.json"), parent)
 {
-    // qCDebug(GimbalLog) << Q_FUNC_INFO << this;
+    qCDebug(GimbalLog) << this;
 
     _initFacts();
 }
