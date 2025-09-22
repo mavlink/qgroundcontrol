@@ -16,7 +16,7 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(GimbalControllerLog, "qgc.gimbal.gimbalcontroller")
+QGC_LOGGING_CATEGORY(GimbalControllerLog, "GimbalControllerLog")
 
 GimbalController::GimbalController(Vehicle *vehicle)
     : QObject(vehicle)
