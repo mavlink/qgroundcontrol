@@ -92,7 +92,7 @@ ColumnLayout {
             x:                  showBorder ? _margins : 0
             y:                  showBorder ? _margins : 0
             width:              parent.width - (showBorder ? _margins * 2 : 0)
-            spacing:            _margins * 2
+            spacing:            _margins * (showDividers ? 2 : 1)
         }
     }
 }
