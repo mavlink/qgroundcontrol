@@ -612,6 +612,10 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
                                                 float yaw_rate_deg_s)
 {
 
+    // int _gimbalMaxSpeed = SettingsManager::instance()->gimbalControllerSettings()->gimbalSpeed()->rawValue().toInt();
+    // qDebug()<<_gimbalMaxSpeed;
+
+
     auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCDebug(GimbalControllerLog) << "_sendGimbalAttitudeRates: primary link gone!";
@@ -641,7 +645,7 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
         flags,
         static_cast<uint8_t>(_activeGimbal->deviceId()->rawValue().toUInt()),
         qnan,
-        NAN,
+        0,
         qDegreesToRadians(pitch_rate_deg_s),
         qDegreesToRadians(yaw_rate_deg_s)
     );

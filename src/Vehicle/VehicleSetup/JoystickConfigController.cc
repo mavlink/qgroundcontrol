@@ -77,13 +77,66 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::pitchFunction,          msgPitchUp,         _sticksPitchUp,         &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchDown,       _sticksPitchDown,       &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
-        { Joystick::gimbalPitchFunction,    msgGimbalPitch,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalYawFunction,      msgGimbalYaw,       _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
+        // { Joystick::gimbalPitchFunction,    msgGimbalPitch,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
+        // { Joystick::gimbalYawFunction,      msgGimbalYaw,       _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalPitchFunction, msgGimbalPitch, _sticksCentered,
+  &JoystickConfigController::_inputStickDetect,
+  &JoystickConfigController::_skipGimbalStep,      // Next = skip
+  &JoystickConfigController::_skipGimbalStep,      // Skip = skip
+  4 },
+
+{ Joystick::gimbalYawFunction,   msgGimbalYaw,   _sticksCentered,
+  &JoystickConfigController::_inputStickDetect,
+  &JoystickConfigController::_skipGimbalStep,      // Next = skip
+  &JoystickConfigController::_skipGimbalStep,      // Skip = skip
+  5 },
         { Joystick::maxFunction, msgComplete, _sticksCentered, nullptr, &JoystickConfigController::_writeCalibration, nullptr, -1 },
     };
 
     Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
     return &rgStateMachine[step];
+}
+
+void JoystickConfigController::_mapAxisWithDefaults(Joystick::AxisFunction_t function, int axisIndex)
+{
+    if (!_validAxis(axisIndex)) {
+        qCWarning(JoystickConfigControllerLog) << "Skip gimbal: axis" << axisIndex << "not present";
+        return;
+    }
+    if (_rgAxisInfo[axisIndex].function != Joystick::maxFunction) {
+        qCWarning(JoystickConfigControllerLog) << "Skip gimbal: axis" << axisIndex << "already mapped to"
+                                               << _rgAxisInfo[axisIndex].function << "- skipping default map";
+        return;
+    }
+
+    AxisInfo* info = &_rgAxisInfo[axisIndex];
+    _rgFunctionAxisMapping[function] = axisIndex;
+    info->function = function;
+    info->reversed  = false;
+    info->axisMin   = _calDefaultMinValue;
+    info->axisMax   = _calDefaultMaxValue;
+    info->axisTrim  = _calCenterPoint;
+
+    emit axisDeadbandChanged(axisIndex, info->deadband);
+    // Optional: keep UI in sync
+    _signalAllAttitudeValueChanges();
+}
+
+
+void JoystickConfigController::_skipGimbalStep()
+{
+    setDeadbandValue(4,20);
+    setDeadbandValue(5,20);
+    const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+    if (!state) return;
+
+    if (state->function == Joystick::gimbalPitchFunction) {
+        _mapAxisWithDefaults(Joystick::gimbalPitchFunction, 4);   // axis 4
+    } else if (state->function == Joystick::gimbalYawFunction) {
+        _mapAxisWithDefaults(Joystick::gimbalYawFunction, 5);     // axis 5
+    }
+
+    _advanceState();
 }
 
 void JoystickConfigController::_advanceState()

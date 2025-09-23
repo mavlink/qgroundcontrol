@@ -29,6 +29,8 @@ ApplicationWindow {
     id:             mainWindow
     visible:        true
 
+    flags: Qt.FramelessWindowHint | Qt.Window
+
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
 

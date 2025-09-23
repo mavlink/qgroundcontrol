@@ -280,5 +280,9 @@ private:
         0.25, 0.5, 0.8423, 0.5
     };
 
+    void _skipGimbalStep();
+    void _mapAxisWithDefaults(Joystick::AxisFunction_t function, int axisIndex);
+
+
 };
 

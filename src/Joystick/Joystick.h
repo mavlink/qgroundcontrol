@@ -203,6 +203,11 @@ public:
     Q_INVOKABLE int axisRawMin(int index)   const { return _rgCalibration[index].min; }
     Q_INVOKABLE int axisRawMax(int index)   const { return _rgCalibration[index].max; }
     Q_INVOKABLE int axisRawCenter(int index)const { return _rgCalibration[index].center; }
+
+    bool _gimbalPitchPrimed { false };
+    bool _gimbalYawPrimed   { false };
+    bool _gimbalZeroLatch   { true };
+
 // dev end
 
 signals:
@@ -398,8 +403,12 @@ private:
 
 // dev
     bool _gimbalAxisEnabled = true;
-    int _gimbalMaxSpeed = 0;  // Default max speed
+    int _gimbalMaxSpeed = 0;
     int  zeroPitchCount = 0;
     int  zeroYawCount   = 0;
+
+    int first = 1;
+    int firstMovePitch = 1;
+    int firstMoveYaw = 1;
 // dev end
 };

@@ -335,7 +335,7 @@ Item {
         width: 150
         enabled: _activeJoystick !== null
         placeholderText: qsTr("0–100")
-        text: _activeJoystick ? String(_activeJoystick.gimbalMaxSpeed) : "0"
+        text: _activeJoystick ? String( _activeJoystick.gimbalMaxSpeed) : "0"  // _activeJoystick.gimbalMaxSpeed
         inputMethodHints: Qt.ImhDigitsOnly
         validator: IntValidator { bottom: 0; top: 100 }
 
@@ -344,7 +344,10 @@ Item {
             if (_activeJoystick) _activeJoystick.gimbalMaxSpeed = parseInt(text)
         }
         onEditingFinished: {
-            if (_activeJoystick) _activeJoystick.gimbalMaxSpeed = parseInt(text)
+            if (_activeJoystick){
+                _activeJoystick.gimbalMaxSpeed = parseInt(text)
+                QGroundControl.settingsManager.gimbalControllerSettings.gimbalSpeed.rawValue=parseInt(text)
+            }
         }
     }
 

@@ -20,6 +20,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "GimbalControllerSettings.h"  // Settings/GimbalControllerSettings.h
 
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
@@ -577,16 +578,6 @@ void Joystick::_handleButtons()
 }
 
 // dev
-float applyDeadzone(float value, float deadzone) {
-        if (std::abs(value) < deadzone) {
-            return 0.0f;
-        }else if(value<0){
-            value=value+deadzone;
-        }else if(value>0){
-            value=value-deadzone;
-        }
-        return value;
-    };
 
 void Joystick::setGimbalYawDeadzone(int deadzone) {
     if (_rgCalibration[4].deadband != deadzone) {
@@ -604,6 +595,13 @@ void Joystick::setGimbalPitchDeadzone(int deadzone) {
 }
 void Joystick::setGimbalMaxSpeed(int speed)
 {
+    QMetaObject::invokeMethod(
+        SettingsManager::instance()->gimbalControllerSettings()->gimbalSpeed(),
+        "setRawValue",
+        Qt::QueuedConnection,
+        Q_ARG(QVariant, QVariant::fromValue(speed))
+    );
+
     if (_gimbalMaxSpeed != speed) {
         _gimbalMaxSpeed = speed;
         emit gimbalMaxSpeedChanged();
@@ -643,7 +641,6 @@ void Joystick::_handleAxis()
 
     for (int axisIndex = 0; axisIndex < _axisCount; axisIndex++) {
         int newAxisValue = _getAxis(axisIndex);
-        // Calibration code requires signal to be emitted even if value hasn't changed
         _rgAxisValues[axisIndex] = newAxisValue;
         emit rawAxisValueChanged(axisIndex, newAxisValue);
     }
@@ -654,7 +651,6 @@ void Joystick::_handleAxis()
 
     int axis = _rgFunctionAxis[rollFunction];
     float roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
-    qDebug()<<"-------------AXIS: "<<_rgAxisValues[axis]; // dev
 
     axis = _rgFunctionAxis[pitchFunction];
     float pitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
@@ -677,66 +673,90 @@ void Joystick::_handleAxis()
         gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
     }
 
-// dev
-if (_axisCount > 5 && _gimbalAxisEnabled) {
-    // 1) use mapped indices, not hard-coded 4/5
-    const int pitchAxisIndex = _rgFunctionAxis[gimbalYawFunction];
-    const int yawAxisIndex   = _rgFunctionAxis[gimbalPitchFunction];
+    if (_axisCount > 5 && _gimbalAxisEnabled) { // 5
+        const int pitchAxisIndex = _rgFunctionAxis[gimbalYawFunction]; //gimbalYawFunction
+        const int yawAxisIndex   = _rgFunctionAxis[gimbalPitchFunction];  //gimbalPitchFunction
 
-    // 2) normalize to 0..1 WITHOUT deadband here (we'll handle deadzone ourselves)
-    //    NOTE: _adjustRange's 3rd param must be "useDeadband" (bool). If it's not, adapt accordingly.
-    const float pitchNorm01 = _adjustRange(_rgAxisValues[pitchAxisIndex],
-                                           _rgCalibration[pitchAxisIndex],
-                                           /*useDeadband=*/false);
-    const float yawNorm01   = _adjustRange(_rgAxisValues[yawAxisIndex],
-                                           _rgCalibration[yawAxisIndex],
-                                           /*useDeadband=*/false);
+        // normalize to 0..1 WITHOUT deadband
+        const float pitchNorm01 = _adjustRange(_rgAxisValues[pitchAxisIndex],
+                                            _rgCalibration[pitchAxisIndex],
+                                            /*useDeadband=*/false);
+        const float yawNorm01   = _adjustRange(_rgAxisValues[yawAxisIndex],
+                                            _rgCalibration[yawAxisIndex],
+                                            /*useDeadband=*/false);
 
-                                           qDebug()<<"-------------AXIS: "<<_rgAxisValues[pitchAxisIndex];
+        // recenter to −1..+1 symmetrically
+        float pitchNorm = (pitchNorm01 - 0.5f) * 2.0f;
+        float yawNorm   = (yawNorm01   - 0.5f) * 2.0f;
 
-    // 3) recenter to −1..+1 symmetrically
-    float pitchNorm = (pitchNorm01 - 0.5f) * 2.0f;
-    float yawNorm   = (yawNorm01   - 0.5f) * 2.0f;
+        // 4) apply UI deadzone
+        auto applyDeadzonePercentNorm = [](float n, float dzPercent){
+            float dz = std::clamp(dzPercent * 0.01f, 0.0f, 0.95f);
+            float a  = std::fabs(n);
+            if (a <= dz) return 0.0f;
+            float out = (a - dz) / (1.0f - dz); // preserve full-scale reach
+            return (n < 0.f) ? -out : out;
+        };
 
-    // 4) apply UI deadzone (percent 0..100) in normalized space
-    auto applyDeadzonePercentNorm = [](float n, float dzPercent){
-        float dz = std::clamp(dzPercent * 0.01f, 0.0f, 0.95f);
-        float a  = std::fabs(n);
-        if (a <= dz) return 0.0f;
-        float out = (a - dz) / (1.0f - dz); // preserve full-scale reach
-        return (n < 0.f) ? -out : out;
-    };
+        pitchNorm = applyDeadzonePercentNorm(pitchNorm, float(_rgCalibration[pitchAxisIndex].deadband));
+        yawNorm   = applyDeadzonePercentNorm(yawNorm,   float(_rgCalibration[yawAxisIndex].deadband));
 
-    pitchNorm = applyDeadzonePercentNorm(pitchNorm, float(_rgCalibration[pitchAxisIndex].deadband));
-    yawNorm   = applyDeadzonePercentNorm(yawNorm,   float(_rgCalibration[yawAxisIndex].deadband));
+        // 5) scale to deg/s
+        if(pitchNorm==-1 && firstMovePitch){
+            pitchNorm = 0;
+        }
+        if(yawNorm==-1 && firstMoveYaw){
+            yawNorm = 0;
+        }
+        if(pitchNorm!=-1 && pitchNorm!=0){
+            firstMovePitch = 0;
+        }
+        if(yawNorm!=-1 && yawNorm!=0){
+            firstMoveYaw = 0;
+        }
+        
+        if (first == 1) {
+            QVariant v;
+            QMetaObject::invokeMethod(
+                SettingsManager::instance(),
+                [&]{
+                    v = SettingsManager::instance()
+                            ->gimbalControllerSettings()
+                            ->gimbalSpeed()
+                            ->rawValue();
+                },
+                Qt::BlockingQueuedConnection
+            );
+            _gimbalMaxSpeed = v.toInt();
+            first = 0;
+        }
 
-    // 5) scale to deg/s (no magic offsets)
-    const float pitchDegPerSec = pitchNorm * float(_gimbalMaxSpeed);
-    const float yawDegPerSec   = yawNorm   * float(_gimbalMaxSpeed);
+        // if(first == 1){
+        //     _gimbalMaxSpeed = SettingsManager::instance()->gimbalControllerSettings()->gimbalSpeed()->rawValue().toInt();
+        //     first = 0;
+        // }
+        const float pitchDegPerSec = pitchNorm * float(_gimbalMaxSpeed);
+        const float yawDegPerSec   = yawNorm   * float(_gimbalMaxSpeed);
 
-    // Optional: simple debounce like you had before
-    if (std::abs(pitchDegPerSec) == 0.f) ++zeroPitchCount; else zeroPitchCount = 0;
-    if (std::abs(yawDegPerSec)   == 0.f) ++zeroYawCount;   else zeroYawCount   = 0;
+        if (std::abs(pitchDegPerSec) == 0.f) ++zeroPitchCount; else zeroPitchCount = 0;
+        if (std::abs(yawDegPerSec)   == 0.f) ++zeroYawCount;   else zeroYawCount   = 0;
 
-    if (!(zeroPitchCount >= 3 && zeroYawCount >= 3)) {
-        if (_activeVehicle) {
-            if (auto* gc = _activeVehicle->gimbalController()) {
-                qDebug()<<"Pitch"<<pitchDegPerSec;
-                qDebug()<<"YAW"<<yawDegPerSec;
-                // const float maxSpeed = SettingsManager::instance()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
-                // qDebug()<<"---------------------"<<maxSpeed;
-                QMetaObject::invokeMethod(
-                    gc,
-                    "sendGimbalRate",
-                    Qt::QueuedConnection,
-                    Q_ARG(float, pitchDegPerSec),
-                    Q_ARG(float, yawDegPerSec)
-                );
+        if (!(zeroPitchCount >= 3 && zeroYawCount >= 3)) {
+            if (_activeVehicle) {
+                if (auto* gc = _activeVehicle->gimbalController()) {
+                    // qDebug()<<"Pitch"<<pitchDegPerSec;
+                    // qDebug()<<"YAW"<<yawDegPerSec;
+                    QMetaObject::invokeMethod(
+                        gc,
+                        "sendGimbalRate",
+                        Qt::QueuedConnection,
+                        Q_ARG(float, pitchDegPerSec),
+                        Q_ARG(float, yawDegPerSec)
+                    );
+                }
             }
         }
     }
-}
-//dev end
 
     if (_accumulator) {
         static float throttle_accu = 0.f;
