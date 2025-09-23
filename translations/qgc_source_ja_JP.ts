@@ -14961,7 +14961,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/QmlControls/RemoteIDIndicatorPage.qml" line="206"/>
       <source>OPERATOR ID</source>
-      <translation>オペレータ ID</translation>
+      <translation>オペレータID</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/RemoteIDIndicatorPage.qml" line="232"/>
@@ -15049,7 +15049,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="235"/>
       <source>OPERATOR ID</source>
-      <translation>オペレータ ID</translation>
+      <translation>オペレータID</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="281"/>
@@ -15115,7 +15115,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="343"/>
       <source>Operator ID</source>
-      <translation>オペレータ ID</translation>
+      <translation>オペレータID</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/RemoteIDSettings.qml" line="347"/>
@@ -17914,12 +17914,12 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="4060"/>
       <source>Waiting for previous operator control request</source>
-      <translation>前回のオペレーター制御リクエスト処理中のため待機しています</translation>
+      <translation>前回のオペレータ制御リクエスト処理中のため待機しています</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="4063"/>
       <source>No response to operator control request</source>
-      <translation>オペレーター制御リクエストに応答がありません</translation>
+      <translation>オペレータ制御リクエストに応答がありません</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2008"/>
