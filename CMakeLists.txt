@@ -239,8 +239,13 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE Qt6::QSvgPlugin
     EXCLUDE_BY_TYPE geoservices
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
-    # INCLUDE_BY_TYPE styles Qt6::qtquickcontrols2basicstyleplugin Qt6::qtquickcontrols2basicstyleimplplugin
 )
+
+if(LINUX)
+    qt_import_plugins(${CMAKE_PROJECT_NAME} 
+        INCLUDE_BY_TYPE platforms Qt6::QWaylandIntegrationPlugin Qt6::QXcbIntegrationPlugin
+    )
+endif()
 
 include(Install)
 
