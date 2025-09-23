@@ -242,6 +242,16 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
     # INCLUDE_BY_TYPE styles Qt6::qtquickcontrols2basicstyleplugin Qt6::qtquickcontrols2basicstyleimplplugin
 )
 
+if(LINUX)
+    qt_import_plugins(${CMAKE_PROJECT_NAME} 
+        INCLUDE
+            Qt6::QWaylandIntegrationPlugin
+            Qt6::QXcbIntegrationPlugin
+            Qt6::QEglFSIntegrationPlugin
+            Qt6::QWaylandEglPlatformIntegrationPlugin
+    )
+endif()
+
 include(Install)
 
 include(PrintSummary)
