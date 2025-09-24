@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>

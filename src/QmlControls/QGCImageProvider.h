@@ -21,7 +21,7 @@ public:
     ~QGCImageProvider();
 
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) final;
-    void setImage(const QImage &image, uint8_t vehicleId = 0) { _images[vehicleId] = image.mirrored(); }
+    void setImage(const QImage &image, uint8_t vehicleId = 0) { _images[vehicleId] = image.flipped(Qt::Vertical); }
 
 private:
     QMap<uint8_t, QImage> _images;

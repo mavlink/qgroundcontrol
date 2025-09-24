@@ -39,5 +39,5 @@ There is also a [Change Log](https://github.com/mavlink/qgroundcontrol/blob/mast
 * Developer changes
   * Build system fully converted to cmake
     * qmake no longer supported
-  * Source updated to use Qt 6.8.3
+  * Source updated to use Qt 6.10.0
   * GStreamer support updated to 1.22
