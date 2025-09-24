@@ -17,6 +17,7 @@
 #include "GenericMapProvider.h"
 #include "GoogleMapProvider.h"
 #include "MapboxMapProvider.h"
+#include "TianDiMapProvider.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "qgc.qtlocationplugin.qgcmapurlengine")
@@ -33,6 +34,8 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
     std::make_shared<BingSatelliteMapProvider>(),
     std::make_shared<BingHybridMapProvider>(),
 
+    std::make_shared<TianDiRoadMapProvider>(),
+    std::make_shared<TianDiSatelliteMapProvider>(),
     std::make_shared<StatkartTopoMapProvider>(),
     std::make_shared<StatkartBaseMapProvider>(),
     std::make_shared<SvalbardMapProvider>(),
