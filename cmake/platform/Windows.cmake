@@ -50,4 +50,8 @@ else()
     message(WARNING "QGC: No Windows resource file found")
 endif()
 
+if(MSVC)
+    # qt_add_win_app_sdk(${CMAKE_PROJECT_NAME} PRIVATE)
+endif()
+
 message(STATUS "QGC: Windows platform configuration applied")

@@ -94,7 +94,8 @@ option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 plugin factory" OFF)
 # ----------------------------------------------------------------------------
 # Android Platform
 # ----------------------------------------------------------------------------
-set(QGC_QT_ANDROID_TARGET_SDK_VERSION "36" CACHE STRING "Android target SDK version")
+set(QGC_QT_ANDROID_COMPILE_SDK_VERSION "35" CACHE STRING "Android compile SDK version")
+set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android target SDK version")
 set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android minimum SDK version")
 set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android package identifier")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android package source directory")
@@ -134,7 +135,7 @@ set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundCo
 # Qt Configuration
 # ============================================================================
 
-set(QGC_QT_MINIMUM_VERSION "6.8.3" CACHE STRING "Minimum supported Qt version")
+set(QGC_QT_MINIMUM_VERSION "6.10.0" CACHE STRING "Minimum supported Qt version")
 set(QGC_QT_MAXIMUM_VERSION "6.10.0" CACHE STRING "Maximum supported Qt version")
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "QML output directory")

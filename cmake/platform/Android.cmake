@@ -9,9 +9,9 @@ endif()
 # ----------------------------------------------------------------------------
 # Android NDK Version Validation
 # ----------------------------------------------------------------------------
-if(Qt6_VERSION VERSION_EQUAL "6.8.3")
-    if(NOT CMAKE_ANDROID_NDK_VERSION VERSION_EQUAL "26.1" AND NOT CMAKE_ANDROID_NDK_VERSION VERSION_EQUAL "27.2")
-        message(FATAL_ERROR "QGC: Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}. Qt 6.8.3 requires NDK 26.1 or 27.2")
+if(Qt6_VERSION VERSION_EQUAL "6.10.0")
+    if(NOT CMAKE_ANDROID_NDK_VERSION VERSION_EQUAL "27.2")
+        message(FATAL_ERROR "QGC: Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}. Qt 6.10.0 requires NDK 27.2")
     endif()
 endif()
 
@@ -64,13 +64,13 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
         QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
         QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
-        # QT_ANDROID_COMPILE_SDK_VERSION
+        QT_ANDROID_COMPILE_SDK_VERSION ${QGC_QT_ANDROID_COMPILE_SDK_VERSION}
         QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
         QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
         QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-        # QT_ANDROID_APP_NAME
-        # QT_ANDROID_APP_ICON
+        QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
+        QT_ANDROID_APP_ICON "@drawable/icon"
         # QT_QML_IMPORT_PATH
         QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
         # QT_ANDROID_SYSTEM_LIBS_PREFIX
@@ -97,5 +97,53 @@ if(android_openssl_ADDED)
 else()
     message(WARNING "QGC: Failed to add Android OpenSSL libraries")
 endif()
+
+# ----------------------------------------------------------------------------
+# Android Permissions
+# ----------------------------------------------------------------------------
+
+if(QGC_ENABLE_BLUETOOTH)
+    qt_add_android_permission(${CMAKE_PROJECT_NAME}
+        NAME android.permission.BLUETOOTH_SCAN
+        ATTRIBUTES
+            minSdkVersion 31
+            usesPermissionFlags neverForLocation
+    )
+    qt_add_android_permission(${CMAKE_PROJECT_NAME}
+        NAME android.permission.BLUETOOTH_CONNECT
+        ATTRIBUTES
+            minSdkVersion 31
+            usesPermissionFlags neverForLocation
+    )
+endif()
+
+if(NOT QGC_NO_SERIAL_LINK)
+    qt_add_android_permission(${CMAKE_PROJECT_NAME}
+        NAME android.permission.USB_PERMISSION
+    )
+endif()
+
+# Need MulticastLock to receive broadcast UDP packets
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.CHANGE_WIFI_MULTICAST_STATE
+)
+
+# Needed to keep working while 'asleep'
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.WAKE_LOCK
+)
+
+# Needed for read/write to SD Card Path in AppSettings
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.WRITE_EXTERNAL_STORAGE
+)
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.READ_EXTERNAL_STORAGE
+    ATTRIBUTES
+        maxSdkVersion 33
+)
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.MANAGE_EXTERNAL_STORAGE
+)
 
 message(STATUS "QGC: Android platform configuration applied")
