@@ -19,3 +19,7 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
 )
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES NOMINMAX WIN32_LEAN_AND_MEAN)
+
+# if(MSVC)
+#     qt_add_win_app_sdk(${CMAKE_PROJECT_NAME})
+# endif()

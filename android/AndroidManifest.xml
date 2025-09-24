@@ -6,17 +6,6 @@
 
     <!-- %%INSERT_PERMISSIONS -->
 
-    <uses-permission android:name="android.permission.USB_PERMISSION" />
-    <!-- Need MulticastLock to receive broadcast UDP packets -->
-    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-    <!-- Needed to keep working while 'asleep' -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Needed for read/write to SD Card Path in AppSettings -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <!-- For Android 11+ (API 30+), MANAGE_EXTERNAL_STORAGE is needed for full SD card access -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-
     <!-- %%INSERT_FEATURES -->
 
     <uses-feature android:name="android.hardware.audio.output" android:required="false" />
@@ -41,7 +30,7 @@
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:fullBackupOnly="false"
-        android:icon="@drawable/icon"
+        android:icon="-- %%INSERT_APP_ICON%% --"
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
         <!-- android:theme="@style/AppTheme" -->

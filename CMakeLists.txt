@@ -103,6 +103,8 @@ endif()
 #               Qt6 Configuration
 #######################################################
 
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
+
 find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
     REQUIRED
@@ -114,6 +116,7 @@ find_package(Qt6
         Gui
         LinguistTools
         Location
+        LocationPrivate
         Multimedia
         Network
         Positioning
@@ -222,6 +225,10 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
     LUPDATE_OPTIONS -no-obsolete
     TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations"
     TS_FILE_BASE ${CMAKE_PROJECT_NAME}
+    # TS_FILES_OUTPUT_VARIABLE _ts_files_generated
+    # TS_OUTPUT_DIRECTORY "{CMAKE_SOURCE_DIR}/translations"
+    # QM_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/i18n"
+    # MERGE_QT_TRANSLATIONS
 )
 
 qgc_set_qt_resource_alias(${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf)
