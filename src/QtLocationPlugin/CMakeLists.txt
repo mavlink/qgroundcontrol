@@ -16,6 +16,8 @@ qt_add_plugin(QGCLocation
     Providers/MapboxMapProvider.h
     Providers/MapProvider.cpp
     Providers/MapProvider.h
+    Providers/TianDiMapProvider.cpp
+    Providers/TianDiMapProvider.h
     QGCCachedTileSet.cpp
     QGCCachedTileSet.h
     QGCCacheTile.h
