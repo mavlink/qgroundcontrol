@@ -85,7 +85,6 @@ set(QGC_WINDOWS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/WindowsQGC.ico" CA
 set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc" CACHE FILEPATH "Windows Resource File Path")
 
 # CPM
-set(QGC_CPM_SOURCE_CACHE "" CACHE PATH "Directory to Download CPM Dependencies, Overrides CPM_SOURCE_CACHE Env Variable")
 # set(CPM_USE_NAMED_CACHE_DIRECTORIES ON CACHE BOOL "Use additional directory of package name in cache on the most nested level.")
 
 # Qt
