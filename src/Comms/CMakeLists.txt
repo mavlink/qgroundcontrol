@@ -57,6 +57,7 @@ if(QGC_ENABLE_BLUETOOTH)
             BluetoothLink.cc
             BluetoothLink.h
     )
+
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BLUETOOTH)
 endif()
 
