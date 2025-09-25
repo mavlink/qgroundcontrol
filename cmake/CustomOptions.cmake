@@ -52,6 +52,7 @@ option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 Plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 Plugin Factory" OFF)
 
 # Android
+set(QGC_QT_ANDROID_COMPILE_SDK_VERSION "36" CACHE STRING "Android Compile SDK Version")
 set(QGC_QT_ANDROID_TARGET_SDK_VERSION "36" CACHE STRING "Android Target SDK Version")
 set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android Package Name")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android Package Path")
@@ -59,8 +60,8 @@ set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Forces Signing if Set to Release
 option(QT_ANDROID_SIGN_APK "Enable Signing APK" OFF)
 option(QT_ANDROID_SIGN_AAB "Enable Signing AAB" OFF)
 option(QT_USE_TARGET_ANDROID_BUILD_DIR "Use Target Android Build Dir" OFF)
-set(QGC_QT_MINIMUM_VERSION "6.8.3" CACHE STRING "Minimum Supported Qt Version")
-set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
+set(QGC_QT_MINIMUM_VERSION "6.10.0" CACHE STRING "Minimum Supported Qt Version")
+set(QGC_QT_MAXIMUM_VERSION "6.10.0" CACHE STRING "Maximum Supported Qt Version")
 set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
 
 # MacOS

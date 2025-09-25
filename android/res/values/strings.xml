@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 	<string name="devices">USB Devices</string>
     <string name="CdcAcm">CDC ACM USB Device</string>
     <string name="ChromeCcd">Chrome CCD USB Device</string>
