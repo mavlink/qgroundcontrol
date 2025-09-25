@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-#
-# QGroundControl build‑time dependencies for Ubuntu/Debian‑based images
-# --------------------------------------------------------------------
-# * Designed for non‑interactive CI/containers
-# * Uses --no-install-recommends to keep the image lean
-# * Cleans APT cache at the end to minimise final size
-
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
