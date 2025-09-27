@@ -391,7 +391,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</source>
-      <translation>変更なし,写真を撮る,写真を撮る(時間),写真を撮る(距離),写真撮影を停止,ビデオ録画を開始,ビデオ録画を停止</translation>
+      <translation>変更なし,写真を撮る,写真を撮る(時間),写真を撮る(距離),写真撮影を停止,録画を開始,録画を停止</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalDistance].shortDesc, </extracomment>
@@ -428,7 +428,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Photo,Video,Survey</source>
-      <translation>写真,ビデオ,調査</translation>
+      <translation>写真,動画,調査</translation>
     </message>
   </context>
   <context>
@@ -1522,7 +1522,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CONTROL_VIDEO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control video</source>
-      <translation>ビデオ制御</translation>
+      <translation>動画制御</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].friendlyName, </extracomment>
@@ -2049,14 +2049,14 @@
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera photo, video modes.</source>
-      <translation>カメラの写真、ビデオ録画モードを設定します。</translation>
+      <translation>カメラの写真、録画モードを設定します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Take photos,Record video,Survey photo mode</source>
-      <translation>写真を撮る,ビデオを録画する,写真モード調査</translation>
+      <translation>写真を撮る,録画する,写真モード調査</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].friendlyName, </extracomment>
@@ -4291,7 +4291,7 @@
       <extracomment>.QGC.MetaData.Facts[videoSource].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video source</source>
-      <translation type="unfinished">Video source</translation>
+      <translation>動画 参照元</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoSource].longDesc, </extracomment>
