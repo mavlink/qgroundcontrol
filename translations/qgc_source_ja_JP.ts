@@ -575,7 +575,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="695"/>
       <source>Error during Solo video link setup: %1</source>
-      <translation>Soloビデオリンク設定エラー: %1</translation>
+      <translation>Solo動画リンク設定エラー: %1</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="852"/>
@@ -4135,7 +4135,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.h" line="111"/>
       <source>Video</source>
-      <translation>ビデオ</translation>
+      <translation>動画</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.h" line="112"/>
@@ -4961,7 +4961,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="53"/>
       <source>Default font width:</source>
-      <translation>既定のフォント幅:</translation>
+      <translation>既定フォント幅:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="63"/>
@@ -4971,7 +4971,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="69"/>
       <source>Default font height:</source>
-      <translation>既定のフォント高さ:</translation>
+      <translation>既定フォント高さ:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="79"/>
@@ -5041,7 +5041,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="181"/>
       <source>Default Point:</source>
-      <translation>デフォルトサイズ:</translation>
+      <translation>既定サイズ:</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/DebugWindow.qml" line="191"/>
@@ -7610,7 +7610,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="330"/>
       <source>Use Azimuth instead of local yaw on top toolbar indicator</source>
-      <translation>上部のツールバーインジケータで、ローカル・ヨーの代わりに方位を使用する</translation>
+      <translation>トップツールバーのインジケータにローカル・ヨーの代わりに方位角を使用する</translation>
     </message>
     <message>
       <location filename="../src/UI/toolbar/GimbalIndicator.qml" line="339"/>
@@ -8238,17 +8238,17 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Joystick/Joystick.h" line="352"/>
       <source>Start Recording Video</source>
-      <translation>ビデオ録画を開始</translation>
+      <translation>録画を開始</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="353"/>
       <source>Stop Recording Video</source>
-      <translation>ビデオ録画を停止</translation>
+      <translation>録画を停止</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="354"/>
       <source>Toggle Recording Video</source>
-      <translation>ビデオ録画 切替</translation>
+      <translation>録画を切り替え</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="355"/>
@@ -8323,12 +8323,12 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Joystick/Joystick.h" line="347"/>
       <source>Next Video Stream</source>
-      <translation>次のビデオ ストリーム</translation>
+      <translation>次のビデオストリーム</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="348"/>
       <source>Previous Video Stream</source>
-      <translation>前のビデオ ストリーム</translation>
+      <translation>前のビデオストリーム</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.h" line="349"/>
@@ -10057,7 +10057,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Settings/MavlinkActionsSettings.cc" line="35"/>
       <source>Support for Joystick custom actions has changed. The format and location of the files has changed. New setting is available from Fly View Settings. File format is documented in user guide. Delete the %1 file to disable this warning</source>
-      <translation>ジョイスティックのカスタムアクションのサポートが変更されました。ファイルの形式と場所が変更されました。新しい設定は【飛行ビュー設定】から利用できます。ファイルの形式はユーザーガイドに記載されています。この警告を無効にするには %1 ファイルを削除してください。</translation>
+      <translation>ジョイスティックのカスタムアクションのサポートが変更されました。ファイルの形式と場所が変更されました。新しい設定は【飛行ビュー設定】から利用できます。ファイルの形式はユーザガイドに記載されています。この警告を無効にするには %1 ファイルを削除してください。</translation>
     </message>
   </context>
   <context>
@@ -12395,12 +12395,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="382"/>
       <source>Video Grid Lines</source>
-      <translation>ビデオグリッド線</translation>
+      <translation>動画グリッド線</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="388"/>
       <source>Video Screen Fit</source>
-      <translation>ビデオ画面に合わせる</translation>
+      <translation>動画画面に合わせる</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="394"/>
@@ -13091,7 +13091,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/UI/AppSettings/PlanViewSettings.qml" line="29"/>
       <source>Default Mission Altitude</source>
-      <translation>既定のミッション高度</translation>
+      <translation>既定ミッション高度</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/PlanViewSettings.qml" line="36"/>
@@ -13106,7 +13106,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/UI/AppSettings/PlanViewSettings.qml" line="50"/>
       <source>Missions do not require takeoff item</source>
-      <translation>ミッションに離陸アイテムを含める必要はありません</translation>
+      <translation>ミッションで離陸項目は不要</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/PlanViewSettings.qml" line="57"/>
@@ -13615,7 +13615,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QGCApplication.cc" line="377"/>
       <source>The current user does not have the correct permissions to access serial devices. You should also remove modemmanager since it also interferes.&lt;br/&gt;&lt;br/&gt;If you are using Ubuntu, execute the following commands to fix these issues:&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</source>
-      <translation>現在のユーザはシリアルデバイスにアクセスするための適切な権限を持っていません。また、modemmanagerも干渉するため削除する必要があります。&lt;br/&gt;&lt;br/&gt;Ubuntuを使用している場合は、以下のコマンドを実行してこれらの問題を解決してください。&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</translation>
+      <translation>現在のユーザはシリアルデバイスにアクセスするための適切な権限を持っていません。また、モデムマネージャーも干渉するため削除する必要があります。&lt;br/&gt;&lt;br/&gt;Ubuntuを使用している場合は、以下のコマンドを実行してこれらの問題を解決してください。&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</translation>
     </message>
     <message>
       <location filename="../src/QGCApplication.cc" line="403"/>
@@ -16025,7 +16025,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="38"/>
       <source>Video</source>
-      <translation>ビデオ</translation>
+      <translation>動画</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/SettingsPagesModel.qml" line="45"/>
@@ -18213,7 +18213,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/VideoManager/VideoManager.cc" line="178"/>
       <source>Unabled to record video. Video save path must be specified in Settings.</source>
-      <translation>ビデオ録画できませんでした。ビデオ保存パスは設定で指定する必要があります。</translation>
+      <translation>録画できませんでした。動画の保存パスは設定で指定する必要があります。</translation>
     </message>
   </context>
   <context>
@@ -18221,7 +18221,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/Settings/VideoSettings.h" line="55"/>
       <source>No Video Available</source>
-      <translation>利用可能なビデオはありません</translation>
+      <translation>利用可能な動画はありません</translation>
     </message>
     <message>
       <location filename="../src/Settings/VideoSettings.h" line="56"/>
@@ -18336,7 +18336,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/UI/AppSettings/VideoSettings.qml" line="111"/>
       <source>Video decode priority</source>
-      <translation>ビデオデコード優先度</translation>
+      <translation>動画デコード優先度</translation>
     </message>
     <message>
       <location filename="../src/UI/AppSettings/VideoSettings.qml" line="120"/>
