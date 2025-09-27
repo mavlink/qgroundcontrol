@@ -7,31 +7,31 @@
       <extracomment>.QGC.MetaData.Facts[gimbalRoll].shortDesc, </extracomment>
       <location filename="../src/Gimbal/GimbalFact.json"/>
       <source>Gimbal Roll</source>
-      <translation type="unfinished">Gimbal Roll</translation>
+      <translation>ジンバル ロール</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gimbalPitch].shortDesc, </extracomment>
       <location filename="../src/Gimbal/GimbalFact.json"/>
       <source>Gimbal Pitch</source>
-      <translation type="unfinished">Gimbal Pitch</translation>
+      <translation>ジンバル ピッチ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gimbalYaw].shortDesc, </extracomment>
       <location filename="../src/Gimbal/GimbalFact.json"/>
       <source>Gimbal Yaw</source>
-      <translation type="unfinished">Gimbal Yaw</translation>
+      <translation>ジンバル ヨー</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gimbalAzimuth].shortDesc, </extracomment>
       <location filename="../src/Gimbal/GimbalFact.json"/>
       <source>Azimuth</source>
-      <translation type="unfinished">Azimuth</translation>
+      <translation>方位角</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[deviceId].shortDesc, </extracomment>
       <location filename="../src/Gimbal/GimbalFact.json"/>
       <source>gimbal device Id</source>
-      <translation type="unfinished">gimbal device Id</translation>
+      <translation>ジンバル デバイスID</translation>
     </message>
   </context>
   <context>
@@ -111,25 +111,25 @@
       <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Distance between approach and land points.</source>
-      <translation type="unfinished">Distance between approach and land points.</translation>
+      <translation>アプローチポイントと着陸ポイントの距離を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Heading from approach to land point.</source>
-      <translation type="unfinished">Heading from approach to land point.</translation>
+      <translation>アプローチポイントから着陸ポイントまでの進入方向を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FinalApproachAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Altitude to begin landing approach from.</source>
-      <translation type="unfinished">Altitude to begin landing approach from.</translation>
+      <translation>着陸アプローチを開始する高度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[UseDoChangeSpeed].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Command a specific speed for the approach, useful for reducing energy before the glide slope.</source>
-      <translation type="unfinished">Command a specific speed for the approach, useful for reducing energy before the glide slope.</translation>
+      <translation>進入時に特定の速度を指示します。グライドスロープに入る前にエネルギーを減らすのに有効です。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FinalApproachSpeed].shortDesc, </extracomment>
@@ -345,7 +345,7 @@
       <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
       <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
       <source>Gimbal pitch rotation.</source>
-      <translation type="unfinished">Gimbal pitch rotation.</translation>
+      <translation>ジンバルのピッチ回転を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[EntranceAltitude].shortDesc, </extracomment>
@@ -391,7 +391,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video</source>
-      <translation>変更なし,写真を撮る,写真を撮る(時間),写真を撮る(距離),写真撮影を停止,ビデオ録画を開始,ビデオ録画を停止</translation>
+      <translation>変更なし,写真を撮る,写真を撮る(時間),写真を撮る(距離),写真撮影を停止,録画を開始,録画を停止</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalDistance].shortDesc, </extracomment>
@@ -409,13 +409,13 @@
       <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Gimbal pitch rotation.</source>
-      <translation type="unfinished">Gimbal pitch rotation.</translation>
+      <translation>ジンバルのピッチ回転を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[GimbalYaw].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Gimbal yaw rotation.</source>
-      <translation type="unfinished">Gimbal yaw rotation.</translation>
+      <translation>ジンバルのヨー回転を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraMode].shortDesc, </extracomment>
@@ -428,7 +428,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Photo,Video,Survey</source>
-      <translation>写真,ビデオ,調査</translation>
+      <translation>写真,動画,調査</translation>
     </message>
   </context>
   <context>
@@ -1024,7 +1024,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable/Disabled guided mode.</source>
-      <translation>ガイドモードの有効 / 無効</translation>
+      <translation>ガイド補助モードの有効 / 無効</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_GUIDED_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, .mavCmdInfo[MAV_CMD_DO_AUTOTUNE_ENABLE].param1.label, </extracomment>
@@ -1177,13 +1177,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode</source>
-      <translation>フライトモード設定</translation>
+      <translation>飛行モード設定　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode.</source>
-      <translation>フライトモードを設定します。</translation>
+      <translation>飛行モードを設定します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label, </extracomment>
@@ -1195,7 +1195,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param3.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Sub Mode</source>
-      <translation>サブモード</translation>
+      <translation>サブマリンモード</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_JUMP].friendlyName, </extracomment>
@@ -1522,7 +1522,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_CONTROL_VIDEO].friendlyName, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Control video</source>
-      <translation>ビデオ制御</translation>
+      <translation>動画制御</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_ROI].friendlyName, </extracomment>
@@ -2049,14 +2049,14 @@
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set camera photo, video modes.</source>
-      <translation>カメラの写真、ビデオ録画モードを設定します。</translation>
+      <translation>カメラの写真、録画モードを設定します。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_SET_CAMERA_MODE].param2.enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Take photos,Record video,Survey photo mode</source>
-      <translation>写真を撮る,ビデオを録画する,写真モード調査</translation>
+      <translation>写真を撮る,録画する,写真モード調査</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_IMAGE_START_CAPTURE].friendlyName, </extracomment>
@@ -2152,7 +2152,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Perform flight mode transition.</source>
-      <translation>フライトモードの切り替えを行います。</translation>
+      <translation>飛行モードの切り替えを行います。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_VTOL_TRANSITION].category, </extracomment>
@@ -4249,7 +4249,7 @@
       <extracomment>.QGC.MetaData.Facts[showGimbalOnlyWhenSet].shortDesc, </extracomment>
       <location filename="../src/Settings/PlanView.SettingsGroup.json"/>
       <source>Show gimbal yaw visual only when set explicitly for the waypoint</source>
-      <translation type="unfinished">Show gimbal yaw visual only when set explicitly for the waypoint</translation>
+      <translation>ウェイポイントで明示的に設定された場合のみ、ジンバルのヨービジュアルを表示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].shortDesc, </extracomment>
@@ -4291,7 +4291,7 @@
       <extracomment>.QGC.MetaData.Facts[videoSource].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video source</source>
-      <translation type="unfinished">Video source</translation>
+      <translation>動画 参照元</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoSource].longDesc, </extracomment>
@@ -4577,25 +4577,25 @@
       <extracomment>.QGC.MetaData.Facts[CameraSlideSpeed].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Maximum gimbal speed on click and drag (deg/sec)</source>
-      <translation type="unfinished">Maximum gimbal speed on click and drag (deg/sec)</translation>
+      <translation>クリック＆ドラッグ時のジンバル最大速度 (度/秒)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showAzimuthIndicatorOnMap].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Show gimbal Azimuth indicator over vehicle icon in map</source>
-      <translation type="unfinished">Show gimbal Azimuth indicator over vehicle icon in map</translation>
+      <translation>地図上の機体アイコンにジンバル方位角インジケータを表示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[toolbarIndicatorShowAzimuth].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Show Azimuth instead of local yaw on top toolbar gimbal indicator</source>
-      <translation type="unfinished">Show Azimuth instead of local yaw on top toolbar gimbal indicator</translation>
+      <translation>トップツールバーのジンバルインジケータにローカル・ヨーの代わりに方位角を表示する</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[toolbarIndicatorShowAcquireReleaseControl].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Show Azimuth Acquire/release buttons in the gimbal buttons panel</source>
-      <translation type="unfinished">Show Azimuth Acquire/release buttons in the gimbal buttons panel</translation>
+      <translation>ジンバルボタンパネルに方位角取得 / 解放ボタンを表示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].shortDesc, </extracomment>
@@ -4607,7 +4607,7 @@
       <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].longDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released</source>
-      <translation type="unfinished">When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released</translation>
+      <translation>ジョイスティックボタンをジンバルの 左 / 右 / 上 / 下 に設定すると、押している間はこのレートでジンバルが動作し、ボタンを離すと停止します。</translation>
     </message>
   </context>
   <context>
