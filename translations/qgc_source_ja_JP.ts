@@ -18226,7 +18226,7 @@ ROTATION_NONEは、コンポーネントが飛行方向を向いていること�
     <message>
       <location filename="../src/Settings/VideoSettings.h" line="56"/>
       <source>Video Stream Disabled</source>
-      <translation>ビデオストリームは無効です</translation>
+      <translation>ビデオストリーム 無効</translation>
     </message>
     <message>
       <location filename="../src/Settings/VideoSettings.h" line="57"/>
