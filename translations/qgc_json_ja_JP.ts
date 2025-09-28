@@ -153,13 +153,13 @@
       <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Altitude for landing point.</source>
-      <translation type="unfinished">Altitude for landing point.</translation>
+      <translation>着陸ポイントの高度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[GlideSlope].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>The glide slope between the loiter and landing point.</source>
-      <translation type="unfinished">The glide slope between the loiter and landing point.</translation>
+      <translation>ロイターポイントと着陸ポイントの間のグライドスロープを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
@@ -171,19 +171,19 @@
       <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</source>
-      <translation type="unfinished">Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</translation>
+      <translation>最終進入には高度指定付きロイターを使用します。それ以外の場合は通常のウェイポイントを使用します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Stop taking photos</source>
-      <translation type="unfinished">Stop taking photos</translation>
+      <translation>写真撮影を停止</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Stop taking video</source>
-      <translation type="unfinished">Stop taking video</translation>
+      <translation>動画撮影を停止</translation>
     </message>
   </context>
   <context>
@@ -222,7 +222,7 @@
       <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Loiter radius.</source>
-      <translation type="unfinished">Loiter radius.</translation>
+      <translation>ロイター (旋回) 半径を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
@@ -234,25 +234,25 @@
       <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Altitude for landing point on ground.</source>
-      <translation type="unfinished">Altitude for landing point on ground.</translation>
+      <translation>地上の着陸ポイントの高度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</source>
-      <translation type="unfinished">Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.</translation>
+      <translation>最終アプローチには高度指定付きロイターを使用します。それ以外の場合は通常のウェイポイントを使用します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Stop taking photos</source>
-      <translation type="unfinished">Stop taking photos</translation>
+      <translation>写真撮影を停止</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Stop taking video</source>
-      <translation type="unfinished">Stop taking video</translation>
+      <translation>動画撮影を停止</translation>
     </message>
   </context>
   <context>
@@ -270,7 +270,7 @@
       <extracomment>.QGC.MetaData.Facts[PlannedHomePositionAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/MissionSettings.FactMetaData.json"/>
       <source>Launch position altitude</source>
-      <translation type="unfinished">Launch position altitude</translation>
+      <translation>離陸位置の高度</translation>
     </message>
   </context>
   <context>
@@ -279,7 +279,7 @@
       <extracomment>.QGC.MetaData.Facts[FlightSpeed].shortDesc, </extracomment>
       <location filename="../src/MissionManager/SpeedSection.FactMetaData.json"/>
       <source>Set the current flight speed</source>
-      <translation type="unfinished">Set the current flight speed</translation>
+      <translation>現在の飛行速度を設定</translation>
     </message>
   </context>
   <context>
@@ -288,55 +288,55 @@
       <extracomment>.QGC.MetaData.Facts[Name].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera name.</source>
-      <translation type="unfinished">Camera name.</translation>
+      <translation>カメラの名称を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[SensorWidth].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Width of camera image sensor.</source>
-      <translation type="unfinished">Width of camera image sensor.</translation>
+      <translation>カメラのイメージセンサーの幅を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[SensorHeight].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Height of camera image sensor.</source>
-      <translation type="unfinished">Height of camera image sensor.</translation>
+      <translation>カメラのイメージセンサーの高さを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ImageWidth].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera image resolution width.</source>
-      <translation type="unfinished">Camera image resolution width.</translation>
+      <translation>カメラ画像の解像度の幅を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ImageHeight].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera image resolution height.</source>
-      <translation type="unfinished">Camera image resolution height.</translation>
+      <translation>カメラ画像の解像度の高さを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FocalLength].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Focal length of camera lens.</source>
-      <translation type="unfinished">Focal length of camera lens.</translation>
+      <translation>カメラレンズの焦点距離を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Landscape].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera on vehicle is in landscape orientation.</source>
-      <translation type="unfinished">Camera on vehicle is in landscape orientation.</translation>
+      <translation>機体搭載カメラが横向き (ランドスケープ) であることを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FixedOrientation].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera orientation ix fixed and cannot be changed.</source>
-      <translation type="unfinished">Camera orientation ix fixed and cannot be changed.</translation>
+      <translation>カメラの向きは固定されており変更できません。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[MinTriggerInterval].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Minimum amount of time between each camera trigger.</source>
-      <translation type="unfinished">Minimum amount of time between each camera trigger.</translation>
+      <translation>各カメラトリガーの間隔の最小時間を示します。</translation>
     </message>
   </context>
   <context>
@@ -351,31 +351,31 @@
       <extracomment>.QGC.MetaData.Facts[EntranceAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
       <source>Vehicle will fly to/from the structure at this altitude.</source>
-      <translation type="unfinished">Vehicle will fly to/from the structure at this altitude.</translation>
+      <translation>機体は構造物に対して、この高度で接近および離脱します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ScanBottomAlt].shortDesc, </extracomment>
       <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
       <source>Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.</source>
-      <translation type="unfinished">Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.</translation>
+      <translation>スキャンでカバーされる最も低い領域の高度を示します。この値を調整することで、下層高度が地上の障害物の上を飛行するように設定できます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Layers].shortDesc, </extracomment>
       <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
       <source>Number of scan layers.</source>
-      <translation type="unfinished">Number of scan layers.</translation>
+      <translation>スキャンに使用する層の数を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StructureHeight].shortDesc, </extracomment>
       <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
       <source>Height of structure being scanned.</source>
-      <translation type="unfinished">Height of structure being scanned.</translation>
+      <translation>スキャン対象の構造物の高さを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StartFromTop].shortDesc, </extracomment>
       <location filename="../src/MissionManager/StructureScan.SettingsGroup.json"/>
       <source>Start scanning from top of structure.</source>
-      <translation type="unfinished">Start scanning from top of structure.</translation>
+      <translation>構造物の上端からスキャンを開始します。</translation>
     </message>
   </context>
   <context>
@@ -384,7 +384,7 @@
       <extracomment>.QGC.MetaData.Facts[CameraAction].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Specify whether the camera should take photos or video</source>
-      <translation type="unfinished">Specify whether the camera should take photos or video</translation>
+      <translation>カメラで写真を撮影するか動画を撮影するかを指定します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraAction].enumStrings, </extracomment>
@@ -397,13 +397,13 @@
       <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalDistance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Specify the distance between each photo</source>
-      <translation type="unfinished">Specify the distance between each photo</translation>
+      <translation>写真撮影する間隔を距離で指定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalTime].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Specify the time between each photo</source>
-      <translation type="unfinished">Specify the time between each photo</translation>
+      <translation>写真撮影する間隔を時間で指定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[GimbalPitch].shortDesc, </extracomment>
@@ -421,7 +421,7 @@
       <extracomment>.QGC.MetaData.Facts[CameraMode].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Specify whether the camera should switch to Photo, Video or Survey mode</source>
-      <translation type="unfinished">Specify whether the camera should switch to Photo, Video or Survey mode</translation>
+      <translation>カメラを写真モード、動画モード、または測量モードに切り替えるかを指定します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraMode].enumStrings, </extracomment>
@@ -437,19 +437,19 @@
       <extracomment>.QGC.MetaData.Facts[GridAngle].shortDesc, </extracomment>
       <location filename="../src/MissionManager/Survey.SettingsGroup.json"/>
       <source>Angle for parallel lines of grid.</source>
-      <translation type="unfinished">Angle for parallel lines of grid.</translation>
+      <translation>グリッドの平行線の角度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FlyAlternateTransects].shortDesc, </extracomment>
       <location filename="../src/MissionManager/Survey.SettingsGroup.json"/>
       <source>Fly every other transect in each pass.</source>
-      <translation type="unfinished">Fly every other transect in each pass.</translation>
+      <translation>各パスでトランセクトを1本おきに飛行します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[SplitConcavePolygons].shortDesc, </extracomment>
       <location filename="../src/MissionManager/Survey.SettingsGroup.json"/>
       <source>Split mission concave polygons into separate regular, convex polygons.</source>
-      <translation type="unfinished">Split mission concave polygons into separate regular, convex polygons.</translation>
+      <translation>ミッションで使用する凹形ポリゴンを分割して、個別の凸形ポリゴンにします。</translation>
     </message>
   </context>
   <context>
@@ -458,19 +458,19 @@
       <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/BreachReturn.FactMetaData.json"/>
       <source>Latitude of breach return point position</source>
-      <translation type="unfinished">Latitude of breach return point position</translation>
+      <translation>離脱リターンポイントの位置緯度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/BreachReturn.FactMetaData.json"/>
       <source>Longitude of breach return point position</source>
-      <translation type="unfinished">Longitude of breach return point position</translation>
+      <translation>離脱リターンポイントの位置経度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/BreachReturn.FactMetaData.json"/>
       <source>Altitude of breach return point position (Rel)</source>
-      <translation type="unfinished">Altitude of breach return point position (Rel)</translation>
+      <translation>離脱リターンポイントの高度 (Rel)</translation>
     </message>
   </context>
   <context>
@@ -488,31 +488,31 @@
       <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Altitude for the bottom layer of the structure scan.</source>
-      <translation type="unfinished">Altitude for the bottom layer of the structure scan.</translation>
+      <translation>構造物をスキャンする際の最下層の高度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CorridorWidth].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Corridor width. Specify 0 width for a single pass scan.</source>
-      <translation type="unfinished">Corridor width. Specify 0 width for a single pass scan.</translation>
+      <translation>スキャン回廊の幅を示します。幅を0に指定すると単一パスでスキャンします。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Trigger distance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Distance between each triggering of the camera. 0 specifies not camera trigger.</source>
-      <translation type="unfinished">Distance between each triggering of the camera. 0 specifies not camera trigger.</translation>
+      <translation>カメラのトリガー間隔距離を示します。0 を指定するとトリガーしません。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[GridSpacing].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Amount of spacing in between parallel grid lines.</source>
-      <translation type="unfinished">Amount of spacing in between parallel grid lines.</translation>
+      <translation>グリッドの平行線間の間隔を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[TurnaroundDistance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Amount of additional distance to add outside the survey area for vehicle turnaround.</source>
-      <translation type="unfinished">Amount of additional distance to add outside the survey area for vehicle turnaround.</translation>
+      <translation>機体が旋回できるように、調査エリアの外側に追加する余裕距離を示します。</translation>
     </message>
   </context>
   <context>
@@ -521,43 +521,43 @@
       <extracomment>.QGC.MetaData.Facts[TurnAroundDistance].shortDesc, .QGC.MetaData.Facts[TurnAroundDistanceMultiRotor].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>Amount of additional distance to add outside the survey area for vehicle turn around.</source>
-      <translation type="unfinished">Amount of additional distance to add outside the survey area for vehicle turn around.</translation>
+      <translation>機体が旋回できるように、調査エリアの外側に追加する余裕距離を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraTriggerInTurnAround].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>Camera continues taking images in turn arounds.</source>
-      <translation type="unfinished">Camera continues taking images in turn arounds.</translation>
+      <translation>機体が旋回中もカメラが画像を撮影し続けます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[HoverAndCapture].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>Stop and Hover at each image point before taking image</source>
-      <translation type="unfinished">Stop and Hover at each image point before taking image</translation>
+      <translation>各撮影ポイントで停止してホバリングした後に画像を撮影</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Refly90Degrees].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>Refly the pattern at a 90 degree angle</source>
-      <translation type="unfinished">Refly the pattern at a 90 degree angle</translation>
+      <translation>飛行パターンを90度回転させて再飛行</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[TerrainAdjustTolerance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.</source>
-      <translation type="unfinished">Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.</translation>
+      <translation>地形の高度差がこの許容値を超えた場合、トランセクト内に追加のウェイポイントが挿入されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[TerrainAdjustMaxClimbRate].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</source>
-      <translation type="unfinished">The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</translation>
+      <translation>地形補正を行う際に、ウェイポイント間で上昇できる最大速度を示します。0 を指定すると最大値の制限はありません。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[TerrainAdjustMaxDescentRate].shortDesc, </extracomment>
       <location filename="../src/MissionManager/TransectStyle.SettingsGroup.json"/>
       <source>The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</source>
-      <translation type="unfinished">The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.</translation>
+      <translation>地形補正を行う際に、ウェイポイント間で下降できる最大速度を示します。0 を指定すると最大値の制限はありません。</translation>
     </message>
   </context>
   <context>
@@ -566,19 +566,19 @@
       <extracomment>.QGC.MetaData.Facts[Latitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/RallyPoint.FactMetaData.json"/>
       <source>Latitude of rally point position</source>
-      <translation type="unfinished">Latitude of rally point position</translation>
+      <translation>ラリーポイントの位置緯度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Longitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/RallyPoint.FactMetaData.json"/>
       <source>Longitude of rally point position</source>
-      <translation type="unfinished">Longitude of rally point position</translation>
+      <translation>ラリーポイントの位置経度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[RelativeAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/RallyPoint.FactMetaData.json"/>
       <source>Altitude of rally point position (home relative)</source>
-      <translation type="unfinished">Altitude of rally point position (home relative)</translation>
+      <translation>ラリーポイントの高度 (ホーム基準)</translation>
     </message>
   </context>
   <context>
@@ -587,37 +587,37 @@
       <extracomment>.QGC.MetaData.Facts[CameraName].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
       <source>Camera name.</source>
-      <translation type="unfinished">Camera name.</translation>
+      <translation>カメラの名称を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
       <source>Value specified is distance to surface.</source>
-      <translation type="unfinished">Value specified is distance to surface.</translation>
+      <translation>指定した値は地表までの距離を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[DistanceToSurface].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
       <source>Distance vehicle is away from surface.</source>
-      <translation type="unfinished">Distance vehicle is away from surface.</translation>
+      <translation>機体が地表から離れている距離を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ImageDensity].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
       <source>Image desity at surface.</source>
-      <translation type="unfinished">Image desity at surface.</translation>
+      <translation>地表における画像密度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FrontalOverlap].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
       <source>Amount of overlap between images in the forward facing direction.</source>
-      <translation type="unfinished">Amount of overlap between images in the forward facing direction.</translation>
+      <translation>前方方向における画像の重なり量を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[SideOverlap].shortDesc, </extracomment>
       <location filename="../src/MissionManager/CameraCalc.FactMetaData.json"/>
       <source>Amount of overlap between images in the side facing direction.</source>
-      <translation type="unfinished">Amount of overlap between images in the side facing direction.</translation>
+      <translation>側方方向における画像の重なり量を示します。</translation>
     </message>
   </context>
   <context>
@@ -1835,7 +1835,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].description, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Enable/Disable auto-release or Release a parachute</source>
-      <translation type="unfinished">Enable/Disable auto-release or Release a parachute</translation>
+      <translation>パラシュートの自動リリースを有効 / 無効にするか、手動でリリースします。</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_PARACHUTE].param1.enumStrings, </extracomment>
@@ -2211,7 +2211,7 @@
       <extracomment>.QGC.MetaData.Facts[connected].shortDesc, </extracomment>
       <location filename="../src/GPS/GPSRTKFact.json"/>
       <source>Connected</source>
-      <translation type="unfinished">Connected</translation>
+      <translation>接続されました</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDesc, </extracomment>
@@ -2534,85 +2534,85 @@
       <extracomment>.QGC.MetaData.Facts[fuelConsumed].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Fuel Consumed</source>
-      <translation type="unfinished">Fuel Consumed</translation>
+      <translation>消費燃料</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fuelFlow].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Fuel Flow</source>
-      <translation type="unfinished">Fuel Flow</translation>
+      <translation>燃料消費率</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[engineLoad].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Engine Load</source>
-      <translation type="unfinished">Engine Load</translation>
+      <translation>エンジン負荷</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttlePos].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Throttle Position</source>
-      <translation type="unfinished">Throttle Position</translation>
+      <translation>スロットルポジション</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sparkTime].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Spark dwell time</source>
-      <translation type="unfinished">Spark dwell time</translation>
+      <translation>点火ドエル時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[baroPress].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>BarometricPressure</source>
-      <translation type="unfinished">BarometricPressure</translation>
+      <translation>大気圧</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[intakePress].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Intake mainfold pressure</source>
-      <translation type="unfinished">Intake mainfold pressure</translation>
+      <translation>吸気マニホールド圧</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[intakeTemp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Intake mainfold temperature</source>
-      <translation type="unfinished">Intake mainfold temperature</translation>
+      <translation>吸気マニホールド温度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[cylinderTemp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Cylinder head temperature</source>
-      <translation type="unfinished">Cylinder head temperature</translation>
+      <translation>シリンダーヘッド温度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ignTime].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Ignition Timing</source>
-      <translation type="unfinished">Ignition Timing</translation>
+      <translation>点火タイミング</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[injTime].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Injection Time</source>
-      <translation type="unfinished">Injection Time</translation>
+      <translation>燃料噴射時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[exGasTemp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Exhaust gas Temperature</source>
-      <translation type="unfinished">Exhaust gas Temperature</translation>
+      <translation>排気温度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttleOut].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Throttle Out</source>
-      <translation type="unfinished">Throttle Out</translation>
+      <translation>スロットル出力</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ptComp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EFIFact.json"/>
       <source>Pt Compensation</source>
-      <translation type="unfinished">Pt Compensation</translation>
+      <translation>Pt補正</translation>
     </message>
   </context>
   <context>
@@ -2621,37 +2621,37 @@
       <extracomment>.QGC.MetaData.Facts[xAxis].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Vibe xAxis</source>
-      <translation type="unfinished">Vibe xAxis</translation>
+      <translation>X軸 振動</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yAxis].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Vibe yAxis</source>
-      <translation type="unfinished">Vibe yAxis</translation>
+      <translation>Y軸 振動</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[zAxis].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Vibe zAxis</source>
-      <translation type="unfinished">Vibe zAxis</translation>
+      <translation>Z軸 振動</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clipCount1].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Clip Count (1)</source>
-      <translation type="unfinished">Clip Count (1)</translation>
+      <translation>クリップ数 (1)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clipCount2].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Clip Count (2)</source>
-      <translation type="unfinished">Clip Count (2)</translation>
+      <translation>クリップ数 (2)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clipCount3].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VibrationFact.json"/>
       <source>Clip Count (3)</source>
-      <translation type="unfinished">Clip Count (3)</translation>
+      <translation>クリップ数 (3)</translation>
     </message>
   </context>
   <context>
@@ -2660,67 +2660,67 @@
       <extracomment>.QGC.MetaData.Facts[status].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Status</source>
-      <translation type="unfinished">Status</translation>
+      <translation>状態</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[genSpeed].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Generator Speed</source>
-      <translation type="unfinished">Generator Speed</translation>
+      <translation>ジェネレータ速度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryCurrent].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Battery Current</source>
-      <translation type="unfinished">Battery Current</translation>
+      <translation>バッテリー電流</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[loadCurrent].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Load Current</source>
-      <translation type="unfinished">Load Current</translation>
+      <translation>負荷電流</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[powerGenerated].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Power Generated</source>
-      <translation type="unfinished">Power Generated</translation>
+      <translation>発電量</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[busVoltage].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Bus Voltage</source>
-      <translation type="unfinished">Bus Voltage</translation>
+      <translation>バス電圧</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rectifierTemp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Rectifier Temperature</source>
-      <translation type="unfinished">Rectifier Temperature</translation>
+      <translation>レクチファイア温度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batCurrentSetpoint].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Battery Current Setpoint</source>
-      <translation type="unfinished">Battery Current Setpoint</translation>
+      <translation>バッテリー電流設定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[genTemp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Generator Temperature</source>
-      <translation type="unfinished">Generator Temperature</translation>
+      <translation>ジェネレータ温度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[runtime].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>runtime</source>
-      <translation type="unfinished">runtime</translation>
+      <translation>ランタイム</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[timeMaintenance].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GeneratorFact.json"/>
       <source>Time until Maintenance</source>
-      <translation type="unfinished">Time until Maintenance</translation>
+      <translation>メンテナンス残時間</translation>
     </message>
   </context>
   <context>
@@ -2729,37 +2729,37 @@
       <extracomment>.QGC.MetaData.Facts[cameraTilt].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Camera Tilt</source>
-      <translation type="unfinished">Camera Tilt</translation>
+      <translation>カメラ チルト</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tetherTurns].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Tether Turns</source>
-      <translation type="unfinished">Tether Turns</translation>
+      <translation>係留ケーブル巻き数</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lights1].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Lights 1 level</source>
-      <translation type="unfinished">Lights 1 level</translation>
+      <translation>ライト レベル1</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lights2].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Lights 2 level</source>
-      <translation type="unfinished">Lights 2 level</translation>
+      <translation>ライト レベル2</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pilotGain].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Pilot Gain</source>
-      <translation type="unfinished">Pilot Gain</translation>
+      <translation>パイロットゲイン</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[inputHold].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Input Hold</source>
-      <translation type="unfinished">Input Hold</translation>
+      <translation>入力ホールド</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
@@ -2772,19 +2772,19 @@
       <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Rangefinder</source>
-      <translation type="unfinished">Rangefinder</translation>
+      <translation>レンジファインダー</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rangefinderTarget].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>RFTarget</source>
-      <translation type="unfinished">RFTarget</translation>
+      <translation>RFターゲット</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Roll/Pitch Toggle</source>
-      <translation type="unfinished">Roll/Pitch Toggle</translation>
+      <translation>ロール / ピッチ トグル</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
@@ -2800,145 +2800,145 @@
       <extracomment>.QGC.MetaData.Facts[roll].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>ロール</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pitch].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>ピッチ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[heading].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Heading</source>
-      <translation type="unfinished">Heading</translation>
+      <translation>ヘッディング</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollRate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Roll Rate</source>
-      <translation type="unfinished">Roll Rate</translation>
+      <translation>ロール レート</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pitchRate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Pitch Rate</source>
-      <translation type="unfinished">Pitch Rate</translation>
+      <translation>ピッチ レート</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yawRate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Yaw Rate</source>
-      <translation type="unfinished">Yaw Rate</translation>
+      <translation>ヨー レート</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[groundSpeed].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Ground Speed</source>
-      <translation type="unfinished">Ground Speed</translation>
+      <translation>地上速度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[airSpeed].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Air Speed</source>
-      <translation type="unfinished">Air Speed</translation>
+      <translation>飛行速度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[climbRate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Climb Rate</source>
-      <translation type="unfinished">Climb Rate</translation>
+      <translation>上昇 レート</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Alt (Rel)</source>
-      <translation type="unfinished">Alt (Rel)</translation>
+      <translation>高度 (Rel)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeAMSL].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Alt (AMSL)</source>
-      <translation type="unfinished">Alt (AMSL)</translation>
+      <translation>高度 (AMSL)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeAboveTerr].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Alt (Above Terrain)</source>
-      <translation type="unfinished">Alt (Above Terrain)</translation>
+      <translation>高度 (地表から)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[flightDistance].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Flight Distance</source>
-      <translation type="unfinished">Flight Distance</translation>
+      <translation>飛行距離</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToHome].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Distance to Home</source>
-      <translation type="unfinished">Distance to Home</translation>
+      <translation>ホームまでの距離</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[timeToHome].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Time to Home</source>
-      <translation type="unfinished">Time to Home</translation>
+      <translation>ホームまでの時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingToHome].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Heading to Home</source>
-      <translation type="unfinished">Heading to Home</translation>
+      <translation>ホームへの方位</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToGCS].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Distance to GCS</source>
-      <translation type="unfinished">Distance to GCS</translation>
+      <translation>GCSまでの距離</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Mission Item Index</source>
-      <translation type="unfinished">Mission Item Index</translation>
+      <translation>ミッションアイテム インデックス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingToNextWP].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Next WP Heading</source>
-      <translation type="unfinished">Next WP Heading</translation>
+      <translation>次のWP方位</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToNextWP].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Next WP distance</source>
-      <translation type="unfinished">Next WP distance</translation>
+      <translation>次のWP距離</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[flightTime].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Flight Time</source>
-      <translation type="unfinished">Flight Time</translation>
+      <translation>飛行時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[hobbs].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Hobbs Meter</source>
-      <translation type="unfinished">Hobbs Meter</translation>
+      <translation>機体の稼働時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttlePct].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Throttle %</source>
-      <translation type="unfinished">Throttle %</translation>
+      <translation>スロットル %</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[imuTemp].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/VehicleFact.json"/>
       <source>Imu temperature</source>
-      <translation type="unfinished">Imu temperature</translation>
+      <translation>IMU温度</translation>
     </message>
   </context>
   <context>
@@ -2947,121 +2947,121 @@
       <extracomment>.QGC.MetaData.Facts[goodAttitudeEsimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Attitude Esimate</source>
-      <translation type="unfinished">Good Attitude Esimate</translation>
+      <translation>姿勢推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizVelEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Vel Estimate</source>
-      <translation type="unfinished">Good Horiz Vel Estimate</translation>
+      <translation>水平速度推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertVelEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Vel Estimate</source>
-      <translation type="unfinished">Good Vert Vel Estimate</translation>
+      <translation>垂直速度推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizPosRelEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Pos Rel Estimate</source>
-      <translation type="unfinished">Good Horiz Pos Rel Estimate</translation>
+      <translation>水平相対位置推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizPosAbsEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Pos Abs Estimate</source>
-      <translation type="unfinished">Good Horiz Pos Abs Estimate</translation>
+      <translation>水平絶対位置推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertPosAbsEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Pos Abs Estimate</source>
-      <translation type="unfinished">Good Vert Pos Abs Estimate</translation>
+      <translation>垂直絶対位置推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertPosAGLEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Pos AGL Estimate</source>
-      <translation type="unfinished">Good Vert Pos AGL Estimate</translation>
+      <translation>垂直地表高度推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodConstPosModeEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Const Pos Mode Estimate</source>
-      <translation type="unfinished">Good Const Pos Mode Estimate</translation>
+      <translation>定位置モード推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodPredHorizPosRelEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Pred Horiz Pos Rel Estimate</source>
-      <translation type="unfinished">Good Pred Horiz Pos Rel Estimate</translation>
+      <translation>水平予測相対位置推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodPredHorizPosAbsEstimate].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Good Pred Horiz Pos Abs Estimate</source>
-      <translation type="unfinished">Good Pred Horiz Pos Abs Estimate</translation>
+      <translation>水平予測絶対位置推定 良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gpsGlitch].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Gps Glitch</source>
-      <translation type="unfinished">Gps Glitch</translation>
+      <translation>GPS 異常</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[accelError].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Accel Error</source>
-      <translation type="unfinished">Accel Error</translation>
+      <translation>加速度エラー</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[velRatio].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Vel Ratio</source>
-      <translation type="unfinished">Vel Ratio</translation>
+      <translation>速度比</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[horizPosRatio].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Horiz Pos Ratio</source>
-      <translation type="unfinished">Horiz Pos Ratio</translation>
+      <translation>水平位置比</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vertPosRatio].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Vert Pos Ratio</source>
-      <translation type="unfinished">Vert Pos Ratio</translation>
+      <translation>垂直位置比</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[magRatio].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Mag Ratio</source>
-      <translation type="unfinished">Mag Ratio</translation>
+      <translation>磁力計の比率</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[haglRatio].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>HAGL Ratio</source>
-      <translation type="unfinished">HAGL Ratio</translation>
+      <translation>地上高の比率</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tasRatio].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>TAS Ratio</source>
-      <translation type="unfinished">TAS Ratio</translation>
+      <translation>真対気速度 (TAS) の比率</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[horizPosAccuracy].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Horiz Pos Accuracy</source>
-      <translation type="unfinished">Horiz Pos Accuracy</translation>
+      <translation>水平位置精度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vertPosAccuracy].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/EstimatorStatusFactGroup.json"/>
       <source>Vert Pos Accuracy</source>
-      <translation type="unfinished">Vert Pos Accuracy</translation>
+      <translation>垂直位置精度</translation>
     </message>
   </context>
   <context>
@@ -3070,13 +3070,13 @@
       <extracomment>.QGC.MetaData.Facts[id].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
       <source>Battery Id</source>
-      <translation type="unfinished">Battery Id</translation>
+      <translation>バッテリー ID</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryFunction].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
       <source>Battery Function</source>
-      <translation type="unfinished">Battery Function</translation>
+      <translation>バッテリー機能</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryFunction].enumStrings, </extracomment>
@@ -3089,7 +3089,7 @@
       <extracomment>.QGC.MetaData.Facts[batteryType].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
       <source>Battery Type</source>
-      <translation type="unfinished">Battery Type</translation>
+      <translation>バッテリータイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryType].enumStrings, </extracomment>
@@ -3102,13 +3102,13 @@
       <extracomment>.QGC.MetaData.Facts[voltage].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
       <source>Voltage</source>
-      <translation type="unfinished">Voltage</translation>
+      <translation>電圧</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[percentRemaining].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/BatteryFact.json"/>
       <source>Percent</source>
-      <translation type="unfinished">Percent</translation>
+      <translation>パーセント</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mahConsumed].shortDesc, </extracomment>
@@ -3461,75 +3461,75 @@
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Emergency Text</source>
-      <translation type="unfinished">Emergency Text</translation>
+      <translation>緊急時のテキスト</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</translation>
+      <translation>オペレータが任意に運用データを指定できる緊急用の自由記述テキストを示します。(最大23文字)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Extended Status</source>
-      <translation type="unfinished">Extended Status</translation>
+      <translation>詳細状態</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</translation>
+      <translation>オペレータが任意に運用データを指定できる拡張用の自由記述テキストを示します。(最大23文字)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Self ID type</source>
-      <translation type="unfinished">Self ID type</translation>
+      <translation>セルフID タイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight Purpose,Emergency,Extended Status</source>
-      <translation type="unfinished">Flight Purpose,Emergency,Extended Status</translation>
+      <translation>飛行目的,緊急性,拡張ステータス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendSelfID].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Send Self ID</source>
-      <translation type="unfinished">Send Self ID</translation>
+      <translation>セルフIDを送信</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendSelfID].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends self ID message</source>
-      <translation type="unfinished">When enabled, sends self ID message</translation>
+      <translation>有効な場合、セルフIDメッセージを送信</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Basic ID</source>
-      <translation type="unfinished">Basic ID</translation>
+      <translation>ベーシックID</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Basic ID Type</source>
-      <translation type="unfinished">Basic ID Type</translation>
+      <translation>ベーシックID タイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
-      <translation type="unfinished">None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</translation>
+      <translation>なし,シリアルナンバー (ANSI/CTA-2063),CAA,UTM (RFC4122),特定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>UA type</source>
-      <translation type="unfinished">UA type</translation>
+      <translation>UAタイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings, </extracomment>
@@ -3542,25 +3542,25 @@
       <extracomment>.QGC.MetaData.Facts[sendBasicID].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Send Basic ID</source>
-      <translation type="unfinished">Send Basic ID</translation>
+      <translation>ベーシックIDを送信</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends basic ID message</source>
-      <translation type="unfinished">When enabled, sends basic ID message</translation>
+      <translation>有効な場合、ベーシックIDメッセージを送信</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Region of operation</source>
-      <translation type="unfinished">Region of operation</translation>
+      <translation>運用地域</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>The region of operation the mission will take place in</source>
-      <translation type="unfinished">The region of operation the mission will take place in</translation>
+      <translation>ミッションが行われる運用地域を示します</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].enumStrings, </extracomment>
@@ -3573,13 +3573,13 @@
       <extracomment>.QGC.MetaData.Facts[locationType].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Location Type</source>
-      <translation type="unfinished">Location Type</translation>
+      <translation>ロケーションタイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator location Type</source>
-      <translation type="unfinished">Operator location Type</translation>
+      <translation>オペレータ位置のタイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].enumStrings, </extracomment>
@@ -3592,68 +3592,68 @@
       <extracomment>.QGC.MetaData.Facts[latitudeFixed].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Latitude Fixed</source>
-      <translation type="unfinished">Latitude Fixed</translation>
+      <translation>緯度修正</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[latitudeFixed].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Fixed latitude to send on SYSTEM message</source>
-      <translation type="unfinished">Fixed latitude to send on SYSTEM message</translation>
+      <translation>SYSTEMメッセージで送信する緯度を修正</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[longitudeFixed].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Longitude Fixed</source>
-      <translation type="unfinished">Longitude Fixed</translation>
+      <translation>経度修正</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[longitudeFixed].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Fixed Longitude to send on SYSTEM message</source>
-      <translation type="unfinished">Fixed Longitude to send on SYSTEM message</translation>
+      <translation>SYSTEMメッセージで送信する経度を修正</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeFixed].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Altitude Fixed</source>
-      <translation type="unfinished">Altitude Fixed</translation>
+      <translation>高度修正</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeFixed].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Fixed Altitude to send on SYSTEM message</source>
-      <translation type="unfinished">Fixed Altitude to send on SYSTEM message</translation>
+      <translation>SYSTEMメッセージで送信する高度を修正</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Classification Type</source>
-      <translation type="unfinished">Classification Type</translation>
+      <translation>分類タイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Classification Type of UAS</source>
-      <translation type="unfinished">Classification Type of UAS</translation>
+      <translation>UASの分類タイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classificationType].enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undeclared,EU</source>
-      <translation type="unfinished">Undeclared,EU</translation>
+      <translation>未申告,EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[categoryEU].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Category</source>
-      <translation type="unfinished">Category</translation>
+      <translation>カテゴリ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[categoryEU].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Category of the UAS in the EU region</source>
-      <translation type="unfinished">Category of the UAS in the EU region</translation>
+      <translation>EU地域におけるUASカテゴリ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[categoryEU].enumStrings, </extracomment>
@@ -3666,13 +3666,13 @@
       <extracomment>.QGC.MetaData.Facts[classEU].shortDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Class</source>
-      <translation type="unfinished">Class</translation>
+      <translation>クラス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classEU].longDesc, </extracomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Class of the UAS in the EU region</source>
-      <translation type="unfinished">Class of the UAS in the EU region</translation>
+      <translation>EU地域におけるUASクラス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[classEU].enumStrings, </extracomment>
@@ -3688,19 +3688,19 @@
       <extracomment>.QGC.MetaData.Facts[mapProvider].shortDesc, </extracomment>
       <location filename="../src/Settings/FlightMap.SettingsGroup.json"/>
       <source>Currently selected map provider for flight maps</source>
-      <translation type="unfinished">Currently selected map provider for flight maps</translation>
+      <translation>飛行マップで現在選択されている地図プロバイダ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapType].shortDesc, </extracomment>
       <location filename="../src/Settings/FlightMap.SettingsGroup.json"/>
       <source>Currently selected map type for flight maps</source>
-      <translation type="unfinished">Currently selected map type for flight maps</translation>
+      <translation>飛行マップで現在選択されている地図タイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[elevationMapProvider].shortDesc, </extracomment>
       <location filename="../src/Settings/FlightMap.SettingsGroup.json"/>
       <source>Currently selected elevation map provider</source>
-      <translation type="unfinished">Currently selected elevation map provider</translation>
+      <translation>現在選択されている標高マッププロバイダ</translation>
     </message>
   </context>
   <context>
@@ -3709,85 +3709,85 @@
       <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Survey in accuracy (U-blox only)</source>
-      <translation type="unfinished">Survey in accuracy (U-blox only)</translation>
+      <translation>サーベイイン精度 (U-blox専用)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[surveyInAccuracyLimit].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>The minimum accuracy value that Survey-In must achieve before it can complete.</source>
-      <translation type="unfinished">The minimum accuracy value that Survey-In must achieve before it can complete.</translation>
+      <translation>サーベイインが完了する前に達成する必要がある最小精度値を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[surveyInMinObservationDuration].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Min observation time</source>
-      <translation type="unfinished">Min observation time</translation>
+      <translation>最小観測時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[surveyInMinObservationDuration].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Defines the minimum amount of observation time for the position calculation.</source>
-      <translation type="unfinished">Defines the minimum amount of observation time for the position calculation.</translation>
+      <translation>位置計算に必要な最小観測時間を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useFixedBasePosition].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Use specified base position</source>
-      <translation type="unfinished">Use specified base position</translation>
+      <translation>指定された基地局位置を使用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useFixedBasePosition].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Specify the values for the RTK base position without having to do a survey in.</source>
-      <translation type="unfinished">Specify the values for the RTK base position without having to do a survey in.</translation>
+      <translation>サーベイインを行わずにRTK基地局位置の値を指定します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionLatitude].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Base Position Latitude</source>
-      <translation type="unfinished">Base Position Latitude</translation>
+      <translation>基地局位置の緯度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionLatitude].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Defines the latitude of the fixed RTK base position.</source>
-      <translation type="unfinished">Defines the latitude of the fixed RTK base position.</translation>
+      <translation>固定RTK基地局位置の緯度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionLongitude].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Base Position Longitude</source>
-      <translation type="unfinished">Base Position Longitude</translation>
+      <translation>基地局位置の経度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionLongitude].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Defines the longitude of the fixed RTK base position.</source>
-      <translation type="unfinished">Defines the longitude of the fixed RTK base position.</translation>
+      <translation>固定RTK基地局位置の経度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionAltitude].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Base Position Alt (WGS84)</source>
-      <translation type="unfinished">Base Position Alt (WGS84)</translation>
+      <translation>基地局位置の高度 (WGS84)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionAltitude].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Defines the altitude of the fixed RTK base position.</source>
-      <translation type="unfinished">Defines the altitude of the fixed RTK base position.</translation>
+      <translation>固定RTK基地局位置の高度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionAccuracy].shortDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Base Position Accuracy</source>
-      <translation type="unfinished">Base Position Accuracy</translation>
+      <translation>基地局位置の精度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[fixedBasePositionAccuracy].longDesc, </extracomment>
       <location filename="../src/Settings/RTK.SettingsGroup.json"/>
       <source>Defines the accuracy of the fixed RTK base position.</source>
-      <translation type="unfinished">Defines the accuracy of the fixed RTK base position.</translation>
+      <translation>固定RTK基地局位置の精度を示します。</translation>
     </message>
   </context>
   <context>
@@ -3796,19 +3796,19 @@
       <extracomment>.QGC.MetaData.Facts[minZoomLevelDownload].shortDesc, </extracomment>
       <location filename="../src/Settings/OfflineMaps.SettingsGroup.json"/>
       <source>Minimum zoom level for downloads.</source>
-      <translation type="unfinished">Minimum zoom level for downloads.</translation>
+      <translation>ダウンロードにおける最小ズームレベルを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxZoomLevelDownload].shortDesc, </extracomment>
       <location filename="../src/Settings/OfflineMaps.SettingsGroup.json"/>
       <source>Maximum zoom level for downloads.</source>
-      <translation type="unfinished">Maximum zoom level for downloads.</translation>
+      <translation>ダウンロードにおける最大ズームレベルを示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxTilesForDownload].shortDesc, </extracomment>
       <location filename="../src/Settings/OfflineMaps.SettingsGroup.json"/>
       <source>Maximum number of tiles for download.</source>
-      <translation type="unfinished">Maximum number of tiles for download.</translation>
+      <translation>ダウンロード可能なタイルの最大数を示します。</translation>
     </message>
   </context>
   <context>
@@ -3817,91 +3817,91 @@
       <extracomment>.QGC.MetaData.Facts[telemetrySave].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Save telemetry Log after each flight</source>
-      <translation type="unfinished">Save telemetry Log after each flight</translation>
+      <translation>飛行毎にテレメトリーログを保存します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[telemetrySave].longDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>If this option is enabled a telemetry will be saved after each flight completes.</source>
-      <translation type="unfinished">If this option is enabled a telemetry will be saved after each flight completes.</translation>
+      <translation>このオプションを有効にすると、飛行終了毎にテレメトリーが保存されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[telemetrySaveNotArmed].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Save telemetry log even if vehicle was not armed</source>
-      <translation type="unfinished">Save telemetry log even if vehicle was not armed</translation>
+      <translation>機体がアームしていない場合でもテレメトリーログを保存</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[telemetrySaveNotArmed].longDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>If this option is enabled a telemtry log will be saved even if vehicle was never armed.</source>
-      <translation type="unfinished">If this option is enabled a telemtry log will be saved even if vehicle was never armed.</translation>
+      <translation>このオプションを有効にすると、機体がアームされていない場合でも、テレメトリーログが保存されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmStartMavlinkStreams].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Request start of MAVLink telemetry streams (ArduPilot only)</source>
-      <translation type="unfinished">Request start of MAVLink telemetry streams (ArduPilot only)</translation>
+      <translation>MAVLinkテレメトリーストリームの開始をリクエスト (ArduPilot専用)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Save CSV Telementry Logs</source>
-      <translation type="unfinished">Save CSV Telementry Logs</translation>
+      <translation>CSVテレメトリーログを保存</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[saveCsvTelemetry].longDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.</source>
-      <translation type="unfinished">If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.</translation>
+      <translation>このオプションを有効にすると、すべてのFactデータが1秒毎 (1Hz) にCSVファイルへ記録されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardMavlink].shortDesc, .QGC.MetaData.Facts[forwardMavlink].longDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Enable mavlink forwarding</source>
-      <translation type="unfinished">Enable mavlink forwarding</translation>
+      <translation>MAVLink転送を有効にする</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardMavlinkHostName].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Host name</source>
-      <translation type="unfinished">Host name</translation>
+      <translation>ホスト名</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardMavlinkHostName].longDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Host name to forward mavlink to. i.e: localhost:14445</source>
-      <translation type="unfinished">Host name to forward mavlink to. i.e: localhost:14445</translation>
+      <translation>MAVLinkを転送するホスト名 (例: localhost:14445)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardMavlinkAPMSupportHostName].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Ardupilot Support Host name</source>
-      <translation type="unfinished">Ardupilot Support Host name</translation>
+      <translation>Ardupilot サポートホスト名</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardMavlinkAPMSupportHostName].longDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx</source>
-      <translation type="unfinished">Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx</translation>
+      <translation>MAVLinkを転送するArduPilotサポートサーバ (例: support.ardupilot.org:xxxx)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mavlink2SigningKey].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>MAVLink 2.0 signing key</source>
-      <translation type="unfinished">MAVLink 2.0 signing key</translation>
+      <translation>MAVLink 2.0の署名キー</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendGCSHeartbeat].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>Send GCS Heartbeat</source>
-      <translation type="unfinished">Send GCS Heartbeat</translation>
+      <translation>GCSハートビート信号を送信</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gcsMavlinkSystemID].shortDesc, </extracomment>
       <location filename="../src/Settings/Mavlink.SettingsGroup.json"/>
       <source>GCS MAVLink System ID</source>
-      <translation type="unfinished">GCS MAVLink System ID</translation>
+      <translation>GCS MAVLink システムID</translation>
     </message>
   </context>
   <context>
@@ -3910,13 +3910,13 @@
       <extracomment>.QGC.MetaData.Facts[flyViewActionsFile].shortDesc, </extracomment>
       <location filename="../src/Settings/MavlinkActions.SettingsGroup.json"/>
       <source>Name of JSON custom actions file for Fly View</source>
-      <translation type="unfinished">Name of JSON custom actions file for Fly View</translation>
+      <translation>Fly View用のJSONカスタムアクションファイル名</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[joystickActionsFile].shortDesc, </extracomment>
       <location filename="../src/Settings/MavlinkActions.SettingsGroup.json"/>
       <source>Name of JSON custom actions file for Joysticks</source>
-      <translation type="unfinished">Name of JSON custom actions file for Joysticks</translation>
+      <translation>Joysticks用のJSONカスタムアクションファイル名</translation>
     </message>
   </context>
   <context>
@@ -3925,13 +3925,13 @@
       <extracomment>.QGC.MetaData.Facts[maxCacheDiskSize].shortDesc, </extracomment>
       <location filename="../src/Settings/Maps.SettingsGroup.json"/>
       <source>Max disk cache</source>
-      <translation type="unfinished">Max disk cache</translation>
+      <translation>最大ディスクキャッシュ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxCacheMemorySize].shortDesc, </extracomment>
       <location filename="../src/Settings/Maps.SettingsGroup.json"/>
       <source>Max memory cache</source>
-      <translation type="unfinished">Max memory cache</translation>
+      <translation>最大メモリキャッシュ</translation>
     </message>
   </context>
   <context>
@@ -3940,7 +3940,7 @@
       <extracomment>.QGC.MetaData.Facts[defaultFirmwareType].shortDesc, </extracomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>Default firmware type for flashing</source>
-      <translation type="unfinished">Default firmware type for flashing</translation>
+      <translation>書き込み時の既定ファームウェアタイプ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmChibiOS].enumStrings, </extracomment>
@@ -3963,49 +3963,51 @@
       <extracomment>.QGC.MetaData.Facts[guidedMinimumAltitude].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Minimum altitude for guided actions altitude slider.</source>
-      <translation type="unfinished">Minimum altitude for guided actions altitude slider.</translation>
+      <translation>ガイド操作用高度スライダーの最小高度
+</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[guidedMaximumAltitude].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Maximum altitude for guided actions altitude slider.</source>
-      <translation type="unfinished">Maximum altitude for guided actions altitude slider.</translation>
+      <translation>ガイド操作用高度スライダーの最大高度
+</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showLogReplayStatusBar].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Show/Hide Log Replay status bar</source>
-      <translation type="unfinished">Show/Hide Log Replay status bar</translation>
+      <translation>ログリプレイのステータスバーを表示 / 非表示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showAdditionalIndicatorsCompass].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Show additional heading indicators on Compass</source>
-      <translation type="unfinished">Show additional heading indicators on Compass</translation>
+      <translation>コンパスに追加のヘッディングインジケータを表示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lockNoseUpCompass].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Lock Compass Nose-Up</source>
-      <translation type="unfinished">Lock Compass Nose-Up</translation>
+      <translation>コンパスを機体のノーズアップ方向に固定</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[keepMapCenteredOnVehicle].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Keep map centered on vehicle</source>
-      <translation type="unfinished">Keep map centered on vehicle</translation>
+      <translation>マップ中央に機体を配置</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showSimpleCameraControl].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.</source>
-      <translation type="unfinished">Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.</translation>
+      <translation>【MAV_CMD_DO_DIGICAM_CONTROL】を使用してカメラトリガー制御を表示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showObstacleDistanceOverlay].shortDesc, </extracomment>
       <location filename="../src/Settings/FlyView.SettingsGroup.json"/>
       <source>Show obstacle distance overlay on map and video.</source>
-      <translation type="unfinished">Show obstacle distance overlay on map and video.</translation>
+      <translation>地図および映像上に障害物までの距離をオーバーレイ表示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxGoToLocationDistance].shortDesc, </extracomment>
@@ -4339,80 +4341,80 @@
       <extracomment>.QGC.MetaData.Facts[videoSavePath].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video save directory</source>
-      <translation type="unfinished">Video save directory</translation>
+      <translation>動画保存ディレクトリ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoSavePath].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Directory to save videos to.</source>
-      <translation type="unfinished">Directory to save videos to.</translation>
+      <translation>動画を保存するディレクトリです。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[aspectRatio].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Aspect Ratio</source>
-      <translation type="unfinished">Video Aspect Ratio</translation>
+      <translation>動画アスペクト比</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[aspectRatio].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Aspect Ratio (width / height). Use 0.0 to ignore it.</source>
-      <translation type="unfinished">Video Aspect Ratio (width / height). Use 0.0 to ignore it.</translation>
+      <translation>動画のアスペクト比 (幅 / 高さ) です。無視する場合は 0.0 を使用してください。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gridLines].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Grid Lines</source>
-      <translation type="unfinished">Video Grid Lines</translation>
+      <translation>動画グリッド線</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gridLines].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Displays a grid overlaid over the video view.</source>
-      <translation type="unfinished">Displays a grid overlaid over the video view.</translation>
+      <translation>動画ビュー上にグリッドをオーバーレイ表示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Display Fit</source>
-      <translation type="unfinished">Video Display Fit</translation>
+      <translation>動画表示にフィット</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Handle Video Aspect Ratio.</source>
-      <translation type="unfinished">Handle Video Aspect Ratio.</translation>
+      <translation>動画アスペクト比を処理します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[videoFit].enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Fit Width,Fit Height,Fill,No Crop</source>
-      <translation type="unfinished">Fit Width,Fit Height,Fill,No Crop</translation>
+      <translation>フィット幅,フィット高,塗りつぶし,クロップなし</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showRecControl].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Show Video Record Control</source>
-      <translation type="unfinished">Show Video Record Control</translation>
+      <translation>録画の制御を表示</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showRecControl].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Show recording control in the UI.</source>
-      <translation type="unfinished">Show recording control in the UI.</translation>
+      <translation>UIで録画コントロールを表示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[recordingFormat].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Recording Format</source>
-      <translation type="unfinished">Video Recording Format</translation>
+      <translation>録画形式</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[recordingFormat].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video recording file format.</source>
-      <translation type="unfinished">Video recording file format.</translation>
+      <translation>録画ファイル形式を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[recordingFormat].enumStrings, </extracomment>
@@ -4425,92 +4427,92 @@
       <extracomment>.QGC.MetaData.Facts[maxVideoSize].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Max Video Storage Usage</source>
-      <translation type="unfinished">Max Video Storage Usage</translation>
+      <translation>録画ストレージの最大使用量</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxVideoSize].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Maximum amount of disk space used by video recording.</source>
-      <translation type="unfinished">Maximum amount of disk space used by video recording.</translation>
+      <translation>録画で使用するディスク容量の最大値です。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableStorageLimit].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Enable/Disable Limits on Storage Usage</source>
-      <translation type="unfinished">Enable/Disable Limits on Storage Usage</translation>
+      <translation>ストレージ使用量上限の有効 / 無効</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableStorageLimit].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.</source>
-      <translation type="unfinished">When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.</translation>
+      <translation>有効にするとQGCで記録された動画の合計サイズが最大保存容量を超えた場合、古い動画ファイルが自動的に削除されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rtspTimeout].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>RTSP Video Timeout</source>
-      <translation type="unfinished">RTSP Video Timeout</translation>
+      <translation>RTSP動画のタイムアウト</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rtspTimeout].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>How long to wait before assuming RTSP link is gone.</source>
-      <translation type="unfinished">How long to wait before assuming RTSP link is gone.</translation>
+      <translation>RTSPリンクが切断されたとみなすまでに待機する時間です。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[streamEnabled].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Stream Enabled</source>
-      <translation type="unfinished">Video Stream Enabled</translation>
+      <translation>ビデオストリーム 有効</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[streamEnabled].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Start/Stop Video Stream.</source>
-      <translation type="unfinished">Start/Stop Video Stream.</translation>
+      <translation>ビデオストリーム 開始 / 停止</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Video Stream Disnabled When Armed</source>
-      <translation type="unfinished">Video Stream Disnabled When Armed</translation>
+      <translation>アーム時 ビデオストリーム 無効</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[disableWhenDisarmed].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Disable Video Stream when disarmed.</source>
-      <translation type="unfinished">Disable Video Stream when disarmed.</translation>
+      <translation>ディスアーム時にビデオストリームを無効化します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lowLatencyMode].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Tweaks video for lower latency</source>
-      <translation type="unfinished">Tweaks video for lower latency</translation>
+      <translation>低遅延向けに動画を調整</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lowLatencyMode].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.</source>
-      <translation type="unfinished">If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.</translation>
+      <translation>このオプションを有効にすると、rtpjitterbufferが削除され、映像出力処理が非同期モードに設定されます。これによりおよそ200msの遅延が削減されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].shortDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Force specific category of video decode</source>
-      <translation type="unfinished">Force specific category of video decode</translation>
+      <translation>特定カテゴリのビデオデコードを強制</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].longDesc, </extracomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.</source>
-      <translation type="unfinished">Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.</translation>
+      <translation>ビデオデコード方式の優先順位を強制的に変更します。必要に応じて、ユーザが特定のハードウェアデコードプラグインを強制的に使用できるようにします。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forceVideoDecoder].enumStrings, </extracomment>
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder</source>
-      <translation type="unfinished">Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder</translation>
+      <translation>デフォルト,ソフトウェア デコーダー,NVIDIA デコーダー,VA-API デコーダー,DirectX 3D 11 デコーダー,VideoToolbox デコーダー, Intel デコーダー,Vulkan デコーダー</translation>
     </message>
   </context>
   <context>
@@ -4519,25 +4521,25 @@
       <extracomment>.QGC.MetaData.Facts[enabled].shortDesc, </extracomment>
       <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>Enable the 3D viewer</source>
-      <translation type="unfinished">Enable the 3D viewer</translation>
+      <translation>3Dビューアを有効</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[osmFilePath].shortDesc, </extracomment>
       <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>Path to the OSM file for the 3D viewer.</source>
-      <translation type="unfinished">Path to the OSM file for the 3D viewer.</translation>
+      <translation>3DビューアのOSMファイルへのパスです。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[buildingLevelHeight].shortDesc, </extracomment>
       <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>Average Height for each level of the buildings</source>
-      <translation type="unfinished">Average Height for each level of the buildings</translation>
+      <translation>各建物階層の平均高さ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeBias].shortDesc, </extracomment>
       <location filename="../src/Settings/Viewer3D.SettingsGroup.json"/>
       <source>Altitude bias for vehicles in the 3D View</source>
-      <translation type="unfinished">Altitude bias for vehicles in the 3D View</translation>
+      <translation>3Dビュー内の機体の高度バイアス</translation>
     </message>
   </context>
   <context>
@@ -4546,13 +4548,13 @@
       <extracomment>.QGC.MetaData.Facts[EnableOnScreenControl].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Enable on Screen Camera Control</source>
-      <translation type="unfinished">Enable on Screen Camera Control</translation>
+      <translation>画面上のカメラ制御 有効</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ControlType].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Type of on-screen control</source>
-      <translation type="unfinished">Type of on-screen control</translation>
+      <translation>画面上の制御の種類</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ControlType].enumStrings, </extracomment>
@@ -4565,13 +4567,13 @@
       <extracomment>.QGC.MetaData.Facts[CameraVFov].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Vertical camera field of view</source>
-      <translation type="unfinished">Vertical camera field of view</translation>
+      <translation>カメラ垂直視野角</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraHFov].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Horizontal camera field of view</source>
-      <translation type="unfinished">Horizontal camera field of view</translation>
+      <translation>カメラ水平視野角</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraSlideSpeed].shortDesc, </extracomment>
@@ -4601,7 +4603,7 @@
       <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].shortDesc, </extracomment>
       <location filename="../src/Settings/GimbalController.SettingsGroup.json"/>
       <source>Rate used for joystick button control (deg/sec)</source>
-      <translation type="unfinished">Rate used for joystick button control (deg/sec)</translation>
+      <translation>ジョイスティックボタン制御で使用する速度 (度/秒)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[joystickButtonsSpeed].longDesc, </extracomment>
@@ -4616,7 +4618,7 @@
       <extracomment>.QGC.MetaData.Facts[valueDisplay].shortDesc, </extracomment>
       <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Select values to display in indicator</source>
-      <translation type="unfinished">Select values to display in indicator</translation>
+      <translation>インジケータに表示する値を選択</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings, </extracomment>
@@ -4629,13 +4631,13 @@
       <extracomment>.QGC.MetaData.Facts[threshold1].shortDesc, </extracomment>
       <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Battery level threshold 1</source>
-      <translation type="unfinished">Battery level threshold 1</translation>
+      <translation>バッテリーレベル しきい値 1</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[threshold2].shortDesc, </extracomment>
       <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Battery level threshold 2</source>
-      <translation type="unfinished">Battery level threshold 2</translation>
+      <translation>バッテリーレベル しきい値 2</translation>
     </message>
   </context>
   <context>
@@ -4644,19 +4646,19 @@
       <extracomment>.QGC.MetaData.Facts[userBrandImageIndoor].shortDesc, .QGC.MetaData.Facts[userBrandImageOutdoor].shortDesc, </extracomment>
       <location filename="../src/Settings/BrandImage.SettingsGroup.json"/>
       <source>User-selected brand image</source>
-      <translation type="unfinished">User-selected brand image</translation>
+      <translation>ユーザ選択ブランド画像</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[userBrandImageIndoor].longDesc, </extracomment>
       <location filename="../src/Settings/BrandImage.SettingsGroup.json"/>
       <source>Location in file system of user-selected brand image (indoor)</source>
-      <translation type="unfinished">Location in file system of user-selected brand image (indoor)</translation>
+      <translation>ユーザ選択ブランド画像 (屋内) のファイルシステム上の場所</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[userBrandImageOutdoor].longDesc, </extracomment>
       <location filename="../src/Settings/BrandImage.SettingsGroup.json"/>
       <source>Location in file system of user-selected brand image (outdoor)</source>
-      <translation type="unfinished">Location in file system of user-selected brand image (outdoor)</translation>
+      <translation>ユーザ選択ブランド画像 (屋外) のファイルシステム上の場所</translation>
     </message>
   </context>
   <context>
@@ -4665,7 +4667,7 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing firmware class</source>
-      <translation type="unfinished">Offline editing firmware class</translation>
+      <translation>オフライン編集 ファームウェアクラス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings, </extracomment>
@@ -4678,7 +4680,7 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing vehicle class</source>
-      <translation type="unfinished">Offline editing vehicle class</translation>
+      <translation>オフライン編集 機体クラス</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings, </extracomment>
@@ -4691,37 +4693,37 @@
       <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing cruise speed</source>
-      <translation type="unfinished">Offline editing cruise speed</translation>
+      <translation>オフライン編集 クルーズ速度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].longDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</source>
-      <translation type="unfinished">This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</translation>
+      <translation>ミッション統計計算用のデフォルト速度です。(ホバリング非対応機 / 固定翼VTOL用) 飛行プラン速度は変更されません。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing hover speed</source>
-      <translation type="unfinished">Offline editing hover speed</translation>
+      <translation>オフライン編集 ホバー速度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].longDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</source>
-      <translation type="unfinished">This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</translation>
+      <translation>ホバリング非対応機やVTOL機 (固定翼モード) のミッション統計計算用のデフォルト速度です。飛行プラン速度は変更されません。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].shortDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing ascent speed</source>
-      <translation type="unfinished">Offline editing ascent speed</translation>
+      <translation>オフライン編集 上昇速度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].longDesc, </extracomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</source>
-      <translation type="unfinished">This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</translation>
+      <translation>この値はマルチローターの上昇速度を定義し、ミッション時間の計算に使用されます。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].shortDesc, </extracomment>
