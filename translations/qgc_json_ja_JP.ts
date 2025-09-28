@@ -129,25 +129,25 @@
       <extracomment>.QGC.MetaData.Facts[UseDoChangeSpeed].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Command a specific speed for the approach, useful for reducing energy before the glide slope.</source>
-      <translation>進入時に特定の速度を指示します。グライドスロープに入る前にエネルギーを減らすのに有効です。</translation>
+      <translation>アプローチ時に特定の速度を指示します。グライドスロープに入る前にエネルギーを減らすのに有効です。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FinalApproachSpeed].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Speed to perform the approach at.</source>
-      <translation type="unfinished">Speed to perform the approach at.</translation>
+      <translation>アプローチを行う速度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Loiter radius.</source>
-      <translation type="unfinished">Loiter radius.</translation>
+      <translation>ロイター半径</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Loiter clockwise around the final approach point.</source>
-      <translation type="unfinished">Loiter clockwise around the final approach point.</translation>
+      <translation>最終アプローチポイントの周囲を時計回りに旋回します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
@@ -165,7 +165,7 @@
       <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Value controller approach point is distance</source>
-      <translation type="unfinished">Value controller approach point is distance</translation>
+      <translation>アプローチポイントまでの距離を指定します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[UseLoiterToAlt].shortDesc, </extracomment>
@@ -192,31 +192,31 @@
       <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Distance between approach and land points.</source>
-      <translation type="unfinished">Distance between approach and land points.</translation>
+      <translation>アプローチポイントと着陸ポイントの距離を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Heading from approach to land point.</source>
-      <translation type="unfinished">Heading from approach to land point.</translation>
+      <translation>アプローチポイントから着陸ポイントまでの進入方向を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FinalApproachAltitude].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Altitude to begin landing approach from.</source>
-      <translation type="unfinished">Altitude to begin landing approach from.</translation>
+      <translation>着陸アプローチを開始する高度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[UseDoChangeSpeed].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Command a specific speed for the approach, useful for reducing energy before the glide slope.</source>
-      <translation type="unfinished">Command a specific speed for the approach, useful for reducing energy before the glide slope.</translation>
+      <translation>アプローチ時に特定の速度を指示します。グライドスロープに入る前にエネルギーを減らすのに有効です。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FinalApproachSpeed].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Speed to perform the approach at.</source>
-      <translation type="unfinished">Speed to perform the approach at.</translation>
+      <translation>アプローチを行う速度を示します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDesc, </extracomment>
@@ -228,7 +228,7 @@
       <extracomment>.QGC.MetaData.Facts[LoiterClockwise].shortDesc, </extracomment>
       <location filename="../src/MissionManager/VTOLLandingPattern.FactMetaData.json"/>
       <source>Loiter clockwise around the final approach point.</source>
-      <translation type="unfinished">Loiter clockwise around the final approach point.</translation>
+      <translation>最終アプローチポイントの周囲を時計回りに旋回します。</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDesc, </extracomment>
