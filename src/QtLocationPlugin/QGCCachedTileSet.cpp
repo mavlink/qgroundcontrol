@@ -22,7 +22,7 @@
 #include "QGeoFileTileCacheQGC.h"
 #include "QGeoTileFetcherQGC.h"
 
-QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "qgc.qtlocation.qgccachedtileset")
+QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QtLocationPlugin.QGCCachedTileSet")
 
 QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
     : QObject(parent)

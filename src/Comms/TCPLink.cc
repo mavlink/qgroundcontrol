@@ -16,7 +16,7 @@
 #include <QtNetwork/QHostInfo>
 #include <QtNetwork/QTcpSocket>
 
-QGC_LOGGING_CATEGORY(TCPLinkLog, "test.comms.tcplink")
+QGC_LOGGING_CATEGORY(TCPLinkLog, "Comms.TCPLink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 5000;

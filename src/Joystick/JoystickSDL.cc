@@ -16,7 +16,7 @@
 
 #include <SDL3/SDL.h>
 
-QGC_LOGGING_CATEGORY(JoystickSDLLog, "qgc.joystick.joysticksdl")
+QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.joysticksdl")
 
 JoystickSDL::JoystickSDL(const QString &name, QList<int> gamepadAxes, QList<int> nonGamepadAxes, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent)
     : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length(), buttonCount, hatCount, parent)

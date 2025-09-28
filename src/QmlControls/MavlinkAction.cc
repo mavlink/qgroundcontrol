@@ -11,7 +11,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MavlinkActionLog, "qgc.qmlcontrols.mavlinkaction")
+QGC_LOGGING_CATEGORY(MavlinkActionLog, "QMLControls.MavlinkAction")
 
 MavlinkAction::MavlinkAction(QObject *parent)
     : QObject(parent)

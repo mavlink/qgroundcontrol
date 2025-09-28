@@ -16,7 +16,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QUrl>
 
-QGC_LOGGING_CATEGORY(GeoTagControllerLog, "qgc.analyzeview.geotagcontroller")
+QGC_LOGGING_CATEGORY(GeoTagControllerLog, "AnalyzeView.GeoTagController")
 
 GeoTagController::GeoTagController(QObject *parent)
     : QObject(parent)

@@ -22,7 +22,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")
+QGC_LOGGING_CATEGORY(LandingComplexItemLog, "Plan.LandingComplexItem")
 
 LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
     : ComplexMissionItem        (masterController, flyView)

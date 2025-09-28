@@ -18,7 +18,7 @@
 
 Q_DECLARE_METATYPE(QAbstractSeries*)
 
-QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "MAVLinkChartControllerLog")
+QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "AnalyzeView.MAVLinkChartController")
 
 MAVLinkChartController::MAVLinkChartController(QObject *parent)
     : QObject(parent)

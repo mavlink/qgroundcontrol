@@ -20,7 +20,7 @@
 #include "QGCTileSet.h"
 #include "QGeoFileTileCacheQGC.h"
 
-QGC_LOGGING_CATEGORY(QGCMapEngineLog, "qgc.qtlocationplugin.qgcmapengine")
+QGC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
 
 Q_APPLICATION_STATIC(QGCMapEngine, _mapEngine);
 

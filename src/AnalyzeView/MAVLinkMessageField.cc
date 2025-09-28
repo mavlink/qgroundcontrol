@@ -16,7 +16,7 @@
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QAbstractSeries>
 
-QGC_LOGGING_CATEGORY(MAVLinkMessageFieldLog, "qgc.analyzeview.mavlinkmessagefield")
+QGC_LOGGING_CATEGORY(MAVLinkMessageFieldLog, "AnalyzeView.MAVLinkMessageField")
 
 QGCMAVLinkMessageField::QGCMAVLinkMessageField(const QString &name, const QString &type, QGCMAVLinkMessage *parent)
     : QObject(parent)

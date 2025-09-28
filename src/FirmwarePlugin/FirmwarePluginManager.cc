@@ -14,7 +14,7 @@
 
 #include <QtCore/QGlobalStatic>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginManagerLog, "qgc.firmwareplugin.firmwarepluginmanager");
+QGC_LOGGING_CATEGORY(FirmwarePluginManagerLog, "FirmwarePlugin.FirmwarePluginManager");
 
 Q_GLOBAL_STATIC(FirmwarePluginManager, _firmwarePluginManagerInstance);
 

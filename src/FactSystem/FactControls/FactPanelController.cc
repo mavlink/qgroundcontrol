@@ -17,7 +17,7 @@
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(FactPanelControllerLog, "qgc.factsystem.factcontrols.factpanelcontroller")
+QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactSystem.FactPanelController")
 
 FactPanelController::FactPanelController(QObject *parent)
     : QObject(parent)

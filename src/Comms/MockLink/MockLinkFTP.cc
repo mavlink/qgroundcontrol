@@ -12,7 +12,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCTemporaryFile.h"
 
-QGC_LOGGING_CATEGORY(MockLinkFTPLog, "MockLinkMissionItemHandlerLog")
+QGC_LOGGING_CATEGORY(MockLinkFTPLog, "Comms.MockLink.MockLinkFTP")
 
 MockLinkFTP::MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink *mockLink)
     : QObject(mockLink)

@@ -26,7 +26,7 @@
 #include <sys/utsname.h>
 #endif
 
-QGC_LOGGING_CATEGORY(ScreenToolsControllerLog, "qgc.qmlcontrols.screentoolscontroller")
+QGC_LOGGING_CATEGORY(ScreenToolsControllerLog, "QMLControls.ScreenToolsController")
 
 ScreenToolsController::ScreenToolsController(QObject *parent)
     : QObject(parent)

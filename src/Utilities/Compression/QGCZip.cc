@@ -5,7 +5,7 @@
 #include <QtCore/private/qzipreader_p.h>
 #include <QtCore/private/qzipwriter_p.h>
 
-QGC_LOGGING_CATEGORY(QGCZipLog, "qgc.utilities.compression.qgczip")
+QGC_LOGGING_CATEGORY(QGCZipLog, "Utilities.QGCZip")
 
 namespace QGCZip {
 

@@ -10,7 +10,7 @@
 #include "ImageProtocolManager.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(ImageProtocolManagerLog, "qgc.mavlink.imageprotocolmanager")
+QGC_LOGGING_CATEGORY(ImageProtocolManagerLog, "MAVLink.ImageProtocolManager")
 
 ImageProtocolManager::ImageProtocolManager(QObject *parent)
     : QObject(parent)
