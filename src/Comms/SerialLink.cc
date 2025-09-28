@@ -14,7 +14,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(SerialLinkLog, "qgc.comms.seriallink")
+QGC_LOGGING_CATEGORY(SerialLinkLog, "Comms.SerialLink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 1000;

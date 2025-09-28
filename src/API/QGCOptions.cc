@@ -10,7 +10,7 @@
 #include "QGCOptions.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "qgc.api.qgcflyviewoptions");
+QGC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "API.QGCFlyViewOptions");
 
 QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions *options, QObject *parent)
     : QObject(parent)
@@ -26,7 +26,7 @@ QGCFlyViewOptions::~QGCFlyViewOptions()
 
 /*===========================================================================*/
 
-QGC_LOGGING_CATEGORY(QGCOptionsLog, "qgc.api.qgcoptions");
+QGC_LOGGING_CATEGORY(QGCOptionsLog, "API.QGCOptions");
 
 QGCOptions::QGCOptions(QObject *parent)
     : QObject(parent)

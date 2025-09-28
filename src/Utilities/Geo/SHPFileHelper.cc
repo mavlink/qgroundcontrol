@@ -16,7 +16,7 @@
 
 #include "shapefil.h"
 
-QGC_LOGGING_CATEGORY(SHPFileHelperLog, "qgc.utilities.geo.shpfilehelper")
+QGC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")
 
 namespace SHPFileHelper
 {

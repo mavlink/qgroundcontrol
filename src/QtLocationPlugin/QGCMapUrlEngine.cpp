@@ -19,7 +19,7 @@
 #include "MapboxMapProvider.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "qgc.qtlocationplugin.qgcmapurlengine")
+QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QtLocationPlugin.QGCMapUrlEngine")
 
 const QList<SharedMapProvider> UrlFactory::_providers = {
 #ifndef QGC_NO_GOOGLE_MAPS

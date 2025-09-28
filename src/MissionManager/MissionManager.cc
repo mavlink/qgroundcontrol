@@ -16,7 +16,7 @@
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
+QGC_LOGGING_CATEGORY(MissionManagerLog, "PlanManager.MissionManager")
 
 MissionManager::MissionManager(Vehicle* vehicle)
     : PlanManager               (vehicle, MAV_MISSION_TYPE_MISSION)

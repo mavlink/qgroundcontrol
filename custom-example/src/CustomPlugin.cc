@@ -19,7 +19,7 @@
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlFile>
 
-QGC_LOGGING_CATEGORY(CustomLog, "gcs.custom.customplugin")
+QGC_LOGGING_CATEGORY(CustomLog, "Custom.CustomPlugin")
 
 Q_APPLICATION_STATIC(CustomPlugin, _customPluginInstance);
 

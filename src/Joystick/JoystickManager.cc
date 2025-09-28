@@ -20,7 +20,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(JoystickManagerLog, "qgc.joystick.joystickmanager")
+QGC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.joystickmanager")
 
 Q_APPLICATION_STATIC(JoystickManager, _joystickManager);
 

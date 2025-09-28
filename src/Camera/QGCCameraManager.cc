@@ -18,7 +18,7 @@
 #include "QGCVideoStreamInfo.h"
 #include "SimulatedCameraControl.h"
 
-QGC_LOGGING_CATEGORY(CameraManagerLog, "qgc.camera.qgccameramanager")
+QGC_LOGGING_CATEGORY(CameraManagerLog, "Camera.QGCCameraManager")
 
 namespace {
     constexpr int kHeartbeatTickMs = 500;

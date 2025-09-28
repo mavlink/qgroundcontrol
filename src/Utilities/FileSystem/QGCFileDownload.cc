@@ -14,7 +14,7 @@
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkProxy>
 
-QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "qgc.utilities.qgcfiledownload");
+QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload");
 
 QGCFileDownload::QGCFileDownload(QObject *parent)
     : QObject(parent)

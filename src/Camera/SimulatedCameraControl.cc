@@ -15,7 +15,7 @@
 #include "Vehicle.h"
 #include "VideoManager.h"
 
-QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "qgc.camera.simulatedcameracontrol")
+QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
 
 SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent)
     : MavlinkCameraControl(vehicle, parent)

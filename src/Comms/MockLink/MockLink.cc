@@ -22,8 +22,8 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(MockLinkLog, "qgc.comms.mocklink.mocklink")
-QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "qgc.comms.mocklink.mocklink:verbose")
+QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
+QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
 
 int MockLink::_nextVehicleSystemId = 128;
 

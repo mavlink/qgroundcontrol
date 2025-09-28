@@ -12,7 +12,7 @@
 #include "QmlObjectListModel.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GeoFenceManagerLog, "GeoFenceManagerLog")
+QGC_LOGGING_CATEGORY(GeoFenceManagerLog, "PlanManager.GeoFenceManager")
 
 GeoFenceManager::GeoFenceManager(Vehicle* vehicle)
     : PlanManager       (vehicle, MAV_MISSION_TYPE_FENCE)

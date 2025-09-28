@@ -38,7 +38,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtQml/qqml.h>
 
-QGC_LOGGING_CATEGORY(SettingsManagerLog, "qgc.settings.settingsmanager")
+QGC_LOGGING_CATEGORY(SettingsManagerLog, "Utilties.SettingsManager")
 
 Q_APPLICATION_STATIC(SettingsManager, _settingsManagerInstance);
 

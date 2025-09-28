@@ -16,7 +16,7 @@
 #include <QtCore/QPermissions>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(BluetoothLinkLog, "qgc.comms.bluetoothlink")
+QGC_LOGGING_CATEGORY(BluetoothLinkLog, "Comms.BluetoothLink")
 
 /*===========================================================================*/
 

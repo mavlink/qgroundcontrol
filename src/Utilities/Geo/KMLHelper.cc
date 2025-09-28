@@ -13,7 +13,7 @@
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
 
-QGC_LOGGING_CATEGORY(KMLHelperLog, "qgc.utilities.geo.kmlhelper")
+QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
 namespace KMLHelper
 {

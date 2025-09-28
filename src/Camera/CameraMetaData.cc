@@ -16,7 +16,7 @@
 #include "JsonHelper.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CameraMetaDataLog, "qgc.camera.camerametadata")
+QGC_LOGGING_CATEGORY(CameraMetaDataLog, "Camera.CameraMetaData")
 
 CameraMetaData::CameraMetaData(const QString &canonicalName,
                                const QString &brand,

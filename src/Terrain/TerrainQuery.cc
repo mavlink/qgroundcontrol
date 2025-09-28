@@ -14,8 +14,8 @@
 
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(TerrainQueryLog, "qgc.terrain.terrainquery")
-QGC_LOGGING_CATEGORY(TerrainQueryVerboseLog, "qgc.terrain.terrainquery.verbose")
+QGC_LOGGING_CATEGORY(TerrainQueryLog, "Terrain.TerrainQuery")
+QGC_LOGGING_CATEGORY(TerrainQueryVerboseLog, "Terrain.TerrainQuery:verbose")
 
 Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _terrainAtCoordinateBatchManager)
 

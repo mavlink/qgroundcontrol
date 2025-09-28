@@ -10,7 +10,7 @@
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "qgc.mavlink.qgcmavlink")
+QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
 
 const QHash<int, QString> QGCMAVLink::mavlinkCompIdHash {
     { MAV_COMP_ID_CAMERA,   "Camera1" },

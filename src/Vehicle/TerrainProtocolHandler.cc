@@ -15,7 +15,7 @@
 
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "qgc.vehicle.terrainprotocolhandler")
+QGC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "Vehicle.TerrainProtocolHandler")
 
 TerrainProtocolHandler::TerrainProtocolHandler(Vehicle *vehicle, TerrainFactGroup *terrainFactGroup, QObject *parent)
     : QObject(parent)

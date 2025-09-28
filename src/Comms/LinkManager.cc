@@ -52,8 +52,8 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LinkManagerLog, "qgc.comms.linkmanager")
-QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "qgc.comms.linkmanager:verbose")
+QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
+QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
 
 Q_APPLICATION_STATIC(LinkManager, _linkManagerInstance);
 

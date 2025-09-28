@@ -23,7 +23,7 @@
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(UVCReceiverLog, "qgc.videomanager.videoreceiver.qtmultimedia.uvcreceiver")
+QGC_LOGGING_CATEGORY(UVCReceiverLog, "VideoReceiver.UVCReceiver")
 
 UVCReceiver::UVCReceiver(QObject *parent)
     : QtMultimediaReceiver(parent)

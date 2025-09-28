@@ -31,7 +31,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "qgc.vehicle.multivehiclemanager")
+QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "Vehicle.MultiVehicleManager")
 
 Q_APPLICATION_STATIC(MultiVehicleManager, _multiVehicleManagerInstance);
 

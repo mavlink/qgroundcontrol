@@ -22,7 +22,7 @@
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 
-QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "qgc.qtlocationplugin.qgctilecacheworker")
+QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker")
 
 QGCCacheWorker::QGCCacheWorker(QObject *parent)
     : QThread(parent)

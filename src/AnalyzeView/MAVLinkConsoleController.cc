@@ -17,7 +17,7 @@
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 
-QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "qgc.analyzeview.mavlinkconsolecontroller")
+QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "AnalyzeView.MAVLinkConsoleController")
 
 MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
     : QStringListModel(parent)

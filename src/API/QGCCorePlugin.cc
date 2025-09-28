@@ -40,7 +40,7 @@
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin");
+QGC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
 
 #ifndef QGC_CUSTOM_BUILD
 Q_APPLICATION_STATIC(QGCCorePlugin, _qgcCorePluginInstance);
