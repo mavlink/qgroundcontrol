@@ -16,12 +16,14 @@ DelayButton {
     focusPolicy:    Qt.ClickFocus
     font.family:    ScreenTools.normalFontFamily
     text:           ""
+    delay:          defaultDelay
 
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
     property real   backRadius:     ScreenTools.buttonBorderRadius
     property real   heightFactor:   0.5
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
+    property int    defaultDelay:   500
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
