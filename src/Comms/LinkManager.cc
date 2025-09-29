@@ -410,80 +410,6 @@ void LinkManager::_addMAVLinkForwardingLink()
     _createDynamicForwardLink(_mavlinkForwardingLinkName, hostName);
 }
 
-#ifdef QGC_ZEROCONF_ENABLED
-void LinkManager::_addZeroConfAutoConnectLink()
-{
-    if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
-        return;
-    }
-
-    static QSharedPointer<QMdnsEngine::Server> server;
-    static QSharedPointer<QMdnsEngine::Browser> browser;
-    server.reset(new QMdnsEngine::Server());
-    browser.reset(new QMdnsEngine::Browser(server.get(), QMdnsEngine::MdnsBrowseType));
-
-    const auto checkIfConnectionLinkExist = [this](LinkConfiguration::LinkType linkType, const QString &linkName) {
-        for (const SharedLinkInterfacePtr &link : std::as_const(_rgLinks)) {
-            const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
-            if ((linkConfig->type() == linkType) && (linkConfig->name() == linkName)) {
-                return true;
-            }
-        }
-
-        return false;
-    };
-
-    (void) connect(browser.get(), &QMdnsEngine::Browser::serviceAdded, this, [checkIfConnectionLinkExist, this](const QMdnsEngine::Service &service) {
-        qCDebug(LinkManagerLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
-
-        if (!service.type().startsWith("_mavlink")) {
-            qCWarning(LinkManagerLog) << "Invalid ZeroConf SericeType" << service.type();
-            return;
-        }
-
-        // Windows doesnt accept trailling dots in mdns
-        // http://www.dns-sd.org/trailingdotsindomainnames.html
-        QString hostname = service.hostname();
-        if (hostname.endsWith('.')) {
-            hostname.chop(1);
-        }
-
-        if (service.type().startsWith("_mavlink._udp")) {
-            static const QString udpName = QStringLiteral("ZeroConf UDP");
-            if (checkIfConnectionLinkExist(LinkConfiguration::TypeUdp, udpName)) {
-                qCDebug(LinkManagerLog) << "Connection already exist";
-                return;
-            }
-
-            UDPConfiguration *const link = new UDPConfiguration(udpName);
-            link->addHost(hostname, service.port());
-            link->setAutoConnect(true);
-            link->setDynamic(true);
-            SharedLinkConfigurationPtr config = addConfiguration(link);
-            if (!createConnectedLink(config)) {
-                qCWarning(LinkManagerLog) << "Failed to create" << udpName;
-            }
-        } else if (service.type().startsWith("_mavlink._tcp")) {
-            static QString tcpName = QStringLiteral("ZeroConf TCP");
-            if (checkIfConnectionLinkExist(LinkConfiguration::TypeTcp, tcpName)) {
-                qCDebug(LinkManagerLog) << "Connection already exist";
-                return;
-            }
-
-            TCPConfiguration *const link = new TCPConfiguration(tcpName);
-            link->setHost(hostname);
-            link->setPort(service.port());
-            link->setAutoConnect(true);
-            link->setDynamic(true);
-            SharedLinkConfigurationPtr config = addConfiguration(link);
-            if (!createConnectedLink(config)) {
-                qCWarning(LinkManagerLog) << "Failed to create" << tcpName;
-            }
-        }
-    });
-}
-#endif
-
 void LinkManager::_updateAutoConnectLinks()
 {
     if (_connectionsSuspended) {
@@ -744,6 +670,89 @@ void LinkManager::_createDynamicForwardLink(const char *linkName, const QString 
     qCDebug(LinkManagerLog) << "New dynamic MAVLink forwarding port added:" << linkName << " hostname:" << hostName;
 }
 
+void LinkManager::resetMavlinkSigning()
+{
+    for (const SharedLinkInterfacePtr &sharedLink: _rgLinks) {
+        sharedLink->initMavlinkSigning();
+    }
+}
+
+#ifdef QGC_ZEROCONF_ENABLED
+
+void LinkManager::_addZeroConfAutoConnectLink()
+{
+    if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
+        return;
+    }
+
+    static QSharedPointer<QMdnsEngine::Server> server;
+    static QSharedPointer<QMdnsEngine::Browser> browser;
+    server.reset(new QMdnsEngine::Server());
+    browser.reset(new QMdnsEngine::Browser(server.get(), QMdnsEngine::MdnsBrowseType));
+
+    const auto checkIfConnectionLinkExist = [this](LinkConfiguration::LinkType linkType, const QString &linkName) {
+        for (const SharedLinkInterfacePtr &link : std::as_const(_rgLinks)) {
+            const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
+            if ((linkConfig->type() == linkType) && (linkConfig->name() == linkName)) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    (void) connect(browser.get(), &QMdnsEngine::Browser::serviceAdded, this, [checkIfConnectionLinkExist, this](const QMdnsEngine::Service &service) {
+        qCDebug(LinkManagerLog) << "Found Zero-Conf:" << service.type() << service.name() << service.hostname() << service.port() << service.attributes();
+
+        if (!service.type().startsWith("_mavlink")) {
+            qCWarning(LinkManagerLog) << "Invalid ZeroConf SericeType" << service.type();
+            return;
+        }
+
+        // Windows doesnt accept trailling dots in mdns
+        // http://www.dns-sd.org/trailingdotsindomainnames.html
+        QString hostname = service.hostname();
+        if (hostname.endsWith('.')) {
+            hostname.chop(1);
+        }
+
+        if (service.type().startsWith("_mavlink._udp")) {
+            static const QString udpName = QStringLiteral("ZeroConf UDP");
+            if (checkIfConnectionLinkExist(LinkConfiguration::TypeUdp, udpName)) {
+                qCDebug(LinkManagerLog) << "Connection already exist";
+                return;
+            }
+
+            UDPConfiguration *const link = new UDPConfiguration(udpName);
+            link->addHost(hostname, service.port());
+            link->setAutoConnect(true);
+            link->setDynamic(true);
+            SharedLinkConfigurationPtr config = addConfiguration(link);
+            if (!createConnectedLink(config)) {
+                qCWarning(LinkManagerLog) << "Failed to create" << udpName;
+            }
+        } else if (service.type().startsWith("_mavlink._tcp")) {
+            static QString tcpName = QStringLiteral("ZeroConf TCP");
+            if (checkIfConnectionLinkExist(LinkConfiguration::TypeTcp, tcpName)) {
+                qCDebug(LinkManagerLog) << "Connection already exist";
+                return;
+            }
+
+            TCPConfiguration *const link = new TCPConfiguration(tcpName);
+            link->setHost(hostname);
+            link->setPort(service.port());
+            link->setAutoConnect(true);
+            link->setDynamic(true);
+            SharedLinkConfigurationPtr config = addConfiguration(link);
+            if (!createConnectedLink(config)) {
+                qCWarning(LinkManagerLog) << "Failed to create" << tcpName;
+            }
+        }
+    });
+}
+
+#endif // QGC_ZEROCONF_ENABLED
+
 bool LinkManager::isLinkUSBDirect(const LinkInterface *link)
 {
 #ifndef QGC_NO_SERIAL_LINK
@@ -766,14 +775,18 @@ bool LinkManager::isLinkUSBDirect(const LinkInterface *link)
     return false;
 }
 
-void LinkManager::resetMavlinkSigning()
-{
-    for (const SharedLinkInterfacePtr &sharedLink: _rgLinks) {
-        sharedLink->initMavlinkSigning();
-    }
-}
-
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
+
+bool LinkManager::_isSerialPortConnected() const
+{
+    for (const SharedLinkInterfacePtr &link: _rgLinks) {
+        if (qobject_cast<const SerialLink*>(link.get())) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)
 {
@@ -995,17 +1008,6 @@ QStringList LinkManager::serialPorts()
 QStringList LinkManager::serialBaudRates()
 {
     return SerialConfiguration::supportedBaudRates();
-}
-
-bool LinkManager::_isSerialPortConnected() const
-{
-    for (const SharedLinkInterfacePtr &link: _rgLinks) {
-        if (qobject_cast<const SerialLink*>(link.get())) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 #endif // QGC_NO_SERIAL_LINK
