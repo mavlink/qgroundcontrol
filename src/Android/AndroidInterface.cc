@@ -107,13 +107,11 @@ void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
 bool checkStoragePermissions()
 {
     // Call the Java method to check and request storage permissions
-    const QJniObject result = QJniObject::callStaticMethod<jboolean>(
+    const bool hasPermission = QJniObject::callStaticMethod<jboolean>(
         kJniQGCActivityClassName, 
         "checkStoragePermissions", 
         "()Z"
     );
-    
-    const bool hasPermission = result.object<jboolean>();
     
     if (hasPermission) {
         qCDebug(AndroidInterfaceLog) << "Storage permissions granted";
