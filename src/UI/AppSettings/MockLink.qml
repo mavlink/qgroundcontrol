@@ -36,7 +36,7 @@ Rectangle {
             anchors.margins:    _margins
             anchors.left:       parent.left
             anchors.top:        parent.top
-            spacing:            ScreenTools.defaultFontPixelHeight
+            spacing:            ScreenTools.defaultFontPixelHeight / 4
 
             QGCCheckBox {
                 id:             sendStatusText
