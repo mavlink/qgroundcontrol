@@ -156,7 +156,7 @@ Item {
                     Component.onCompleted:  _updateComboModel()
                     Connections {
                         target: gimbals
-                        onCountChanged: _updateComboModel()
+                        function onCountChanged(count) { _updateComboModel() }
                     }
                 }
             }
