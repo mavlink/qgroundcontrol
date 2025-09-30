@@ -433,13 +433,6 @@ void RadioComponentController::_inputStickMin(rcCalFunctions function, int chann
 
             qCDebug(RadioComponentControllerLog) << "_inputStickMin Settle complete";
 
-            // Check if this is throttle and set trim accordingly
-            if (function == rcCalFunctionThrottle) {
-                _rgChannelInfo[channel].rcTrim = value;
-            }
-            // XXX to support configs which can reverse they need to check a reverse
-            // flag here and not do this.
-
             _advanceState();
         }
     }
