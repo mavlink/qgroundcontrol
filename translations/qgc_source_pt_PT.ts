@@ -4056,59 +4056,59 @@ Por favor coloque seu veículo na água, clique no botão, e espere. Note que os
     </message>
   </context>
   <context>
-    <name>AppMessages</name>
+    <name>AppLogging</name>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="115"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="115"/>
       <source>GStreamer Debug Level</source>
       <translation>Nível Debug GStreamer</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="159"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="159"/>
       <source>Logging categories</source>
       <translation>Categorias de registros</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="197"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="197"/>
       <source>Search:</source>
       <translation>Buscar:</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="208"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="208"/>
       <source>Clear</source>
       <translation>Limpar</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="231"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="231"/>
       <source>Clear All</source>
       <translation>Limpar Tudo</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="88"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>Log files (*.txt)</source>
       <translation>Arquivos de registros (*. txt)</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="88"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>All Files (*)</source>
       <translation>Todos os Arquivos (*)</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="89"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="89"/>
       <source>Select log save file</source>
       <translation>Selecione arquivo para salvar registro</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="107"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="107"/>
       <source>Save App Log</source>
       <translation>Salvar registros do aplicativo</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="134"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="134"/>
       <source>Show Latest</source>
       <translation>Mostrar mais recentes</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="149"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="149"/>
       <source>Set Logging</source>
       <translation>Definir registros</translation>
     </message>
