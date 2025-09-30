@@ -324,140 +324,133 @@ ApplicationWindow {
 
             contentComponent: Component {
                 ColumnLayout {
-                    width:  innerLayout.width + (toolSelectDialog._margins * 2)
-                    height: innerLayout.height + (toolSelectDialog._margins * 2)
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    SubMenuButton {
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Plan Flight")
+                        imageResource:      "/qmlimages/Plan.svg"
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                mainWindow.closeIndicatorDrawer()
+                                mainWindow.showPlanView()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 analyzeButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Analyze Tools")
+                        imageResource:      "/qmlimages/Analyze.svg"
+                        visible:            QGroundControl.corePlugin.showAdvancedUI
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                mainWindow.closeIndicatorDrawer()
+                                mainWindow.showAnalyzeTool()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 setupButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Vehicle Configuration")
+                        imageResource:      "/qmlimages/Gears.svg"
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                mainWindow.closeIndicatorDrawer()
+                                mainWindow.showVehicleConfig()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 settingsButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Application Settings")
+                        imageResource:      "/res/QGCLogoFull.svg"
+                        imageColor:         "transparent"
+                        visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                drawer.close()
+                                mainWindow.showSettingsTool()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 closeButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Close %1").arg(QGroundControl.appName)
+                        imageResource:      "/res/cancel.svg"
+                        visible:            mainWindow.visibility === Window.FullScreen
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                mainWindow.finishCloseProcess()
+                            }
+                        }
+                    }
 
                     ColumnLayout {
-                        id:             innerLayout
-                        Layout.margins: toolSelectDialog._margins
-                        spacing:        ScreenTools.defaultFontPixelWidth
+                        id:                     versionColumnLayout
+                        Layout.preferredWidth:  parent.width
+                        spacing:                0
+                        Layout.alignment:       Qt.AlignHCenter
 
-                        SubMenuButton {
-                            height:             toolSelectDialog._toolButtonHeight
-                            Layout.fillWidth:   true
-                            text:               qsTr("Plan Flight")
-                            imageResource:      "/qmlimages/Plan.svg"
-                            onClicked: {
-                                if (mainWindow.allowViewSwitch()) {
-                                    mainWindow.closeIndicatorDrawer()
-                                    mainWindow.showPlanView()
-                                }
-                            }
-                        }
-
-                        SubMenuButton {
-                            id:                 analyzeButton
-                            height:             toolSelectDialog._toolButtonHeight
-                            Layout.fillWidth:   true
-                            text:               qsTr("Analyze Tools")
-                            imageResource:      "/qmlimages/Analyze.svg"
-                            visible:            QGroundControl.corePlugin.showAdvancedUI
-                            onClicked: {
-                                if (mainWindow.allowViewSwitch()) {
-                                    mainWindow.closeIndicatorDrawer()
-                                    mainWindow.showAnalyzeTool()
-                                }
-                            }
-                        }
-
-                        SubMenuButton {
-                            id:                 setupButton
-                            height:             toolSelectDialog._toolButtonHeight
-                            Layout.fillWidth:   true
-                            text:               qsTr("Vehicle Configuration")
-                            imageResource:      "/qmlimages/Gears.svg"
-                            onClicked: {
-                                if (mainWindow.allowViewSwitch()) {
-                                    mainWindow.closeIndicatorDrawer()
-                                    mainWindow.showVehicleConfig()
-                                }
-                            }
-                        }
-
-                        SubMenuButton {
-                            id:                 settingsButton
-                            height:             toolSelectDialog._toolButtonHeight
-                            Layout.fillWidth:   true
-                            text:               qsTr("Application Settings")
-                            imageResource:      "/res/QGCLogoFull.svg"
-                            imageColor:         "transparent"
-                            visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                            onClicked: {
-                                if (mainWindow.allowViewSwitch()) {
-                                    drawer.close()
-                                    mainWindow.showSettingsTool()
-                                }
-                            }
-                        }
-
-                        SubMenuButton {
-                            id:                 closeButton
-                            height:             toolSelectDialog._toolButtonHeight
-                            Layout.fillWidth:   true
-                            text:               qsTr("Close %1").arg(QGroundControl.appName)
-                            imageResource:      "/res/cancel.svg"
-                            visible:            mainWindow.visibility === Window.FullScreen
-                            onClicked: {
-                                if (mainWindow.allowViewSwitch()) {
-                                    mainWindow.finishCloseProcess()
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            id:                     versionColumnLayout
-                            width:                  innerLayout.width
-                            spacing:                0
+                        QGCLabel {
+                            id:                     versionLabel
+                            text:                   qsTr("%1 Version").arg(QGroundControl.appName)
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               QGCLabel.WordWrap
+                            Layout.maximumWidth:    parent.width
                             Layout.alignment:       Qt.AlignHCenter
+                        }
 
-                            QGCLabel {
-                                id:                     versionLabel
-                                text:                   qsTr("%1 Version").arg(QGroundControl.appName)
-                                font.pointSize:         ScreenTools.smallFontPointSize
-                                wrapMode:               QGCLabel.WordWrap
-                                Layout.maximumWidth:    parent.width
-                                Layout.alignment:       Qt.AlignHCenter
-                            }
+                        QGCLabel {
+                            text:                   QGroundControl.qgcVersion
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               QGCLabel.WrapAnywhere
+                            Layout.maximumWidth:    parent.width
+                            Layout.alignment:       Qt.AlignHCenter
+                        }
 
-                            QGCLabel {
-                                text:                   QGroundControl.qgcVersion
-                                font.pointSize:         ScreenTools.smallFontPointSize
-                                wrapMode:               QGCLabel.WrapAnywhere
-                                Layout.maximumWidth:    parent.width
-                                Layout.alignment:       Qt.AlignHCenter
-                            }
+                        QGCLabel {
+                            text:                   QGroundControl.qgcAppDate
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               QGCLabel.WrapAnywhere
+                            Layout.maximumWidth:    parent.width
+                            Layout.alignment:       Qt.AlignHCenter
+                            visible:                QGroundControl.qgcDailyBuild
 
-                            QGCLabel {
-                                text:                   QGroundControl.qgcAppDate
-                                font.pointSize:         ScreenTools.smallFontPointSize
-                                wrapMode:               QGCLabel.WrapAnywhere
-                                Layout.maximumWidth:    parent.width
-                                Layout.alignment:       Qt.AlignHCenter
-                                visible:                QGroundControl.qgcDailyBuild
+                            QGCMouseArea {
+                                anchors.topMargin:  -(parent.y - versionLabel.y)
+                                anchors.fill:       parent
 
-                                QGCMouseArea {
-                                    anchors.topMargin:  -(parent.y - versionLabel.y)
-                                    anchors.fill:       parent
-
-                                    onClicked: (mouse) => {
-                                        if (mouse.modifiers & Qt.ControlModifier) {
-                                            QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                                            showTouchAreasNotification.open()
-                                        } else if (ScreenTools.isMobile || mouse.modifiers & Qt.ShiftModifier) {
-                                            mainWindow.closeIndicatorDrawer()
-                                            if(!QGroundControl.corePlugin.showAdvancedUI) {
-                                                advancedModeOnConfirmation.open()
-                                            } else {
-                                                advancedModeOffConfirmation.open()
-                                            }
-                                        }
-                                    }
-
-                                    // This allows you to change this on mobile
-                                    onPressAndHold: {
+                                onClicked: (mouse) => {
+                                    if (mouse.modifiers & Qt.ControlModifier) {
                                         QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
                                         showTouchAreasNotification.open()
+                                    } else if (ScreenTools.isMobile || mouse.modifiers & Qt.ShiftModifier) {
+                                        mainWindow.closeIndicatorDrawer()
+                                        if(!QGroundControl.corePlugin.showAdvancedUI) {
+                                            advancedModeOnConfirmation.open()
+                                        } else {
+                                            advancedModeOffConfirmation.open()
+                                        }
                                     }
+                                }
+
+                                // This allows you to change this on mobile
+                                onPressAndHold: {
+                                    QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                                    showTouchAreasNotification.open()
                                 }
                             }
                         }
