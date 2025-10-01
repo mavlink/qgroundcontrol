@@ -4065,57 +4065,57 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="115"/>
       <source>GStreamer Debug Level</source>
-      <translation>GStreamer 디버그 레벨</translation>
+      <translation type="unfinished">GStreamer Debug Level</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="159"/>
       <source>Logging categories</source>
-      <translation>로깅 카테고리</translation>
+      <translation type="unfinished">Logging categories</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="197"/>
       <source>Search:</source>
-      <translation>검색:</translation>
+      <translation type="unfinished">Search:</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="208"/>
       <source>Clear</source>
-      <translation>지우기</translation>
+      <translation type="unfinished">Clear</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="231"/>
       <source>Clear All</source>
-      <translation>모두 지우기</translation>
+      <translation type="unfinished">Clear All</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>Log files (*.txt)</source>
-      <translation>로그 파일 (*.txt)</translation>
+      <translation type="unfinished">Log files (*.txt)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>All Files (*)</source>
-      <translation>모든 파일 (*)</translation>
+      <translation type="unfinished">All Files (*)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="89"/>
       <source>Select log save file</source>
-      <translation>로그 저장파일 선택</translation>
+      <translation type="unfinished">Select log save file</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="107"/>
       <source>Save App Log</source>
-      <translation>응용프로그램 로그 저장</translation>
+      <translation type="unfinished">Save App Log</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="134"/>
       <source>Show Latest</source>
-      <translation>최신 보기</translation>
+      <translation type="unfinished">Show Latest</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="149"/>
       <source>Set Logging</source>
-      <translation>로그 설정</translation>
+      <translation type="unfinished">Set Logging</translation>
     </message>
   </context>
   <context>
