@@ -67,9 +67,6 @@ public:
         Q_DISABLE_COPY_MOVE(CameraStruct)
     };
 
-    void start();
-    void stop();
-    bool requestingEnabled() const { return _requestingEnabled; }
     QmlObjectListModel* cameras() { return &_cameras; }
     const QmlObjectListModel* cameras() const { return &_cameras; }
     QStringList cameraLabels() const { return _cameraLabels; }
@@ -126,7 +123,6 @@ private:
     QPointer<SimulatedCameraControl> _simulatedCameraControl;
     QPointer<Joystick> _activeJoystick;
     bool _vehicleReadyState = false;
-    bool _requestingEnabled = false;
     int _currentTask = 0;
     QmlObjectListModel _cameras;
     QStringList _cameraLabels;

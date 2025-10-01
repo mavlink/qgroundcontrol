@@ -69,40 +69,18 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
 QGCCameraManager::~QGCCameraManager()
 {
-    _camerasLostHeartbeatTimer.stop();
-
+    // Stop all camera info request timers and clean up
+    for (auto* cameraInfo : _cameraInfoRequest) {
+        cameraInfo->backoffTimer.stop();
+        QObject::disconnect(&cameraInfo->backoffTimer, nullptr, nullptr, nullptr);
+    }
     qDeleteAll(_cameraInfoRequest);
     _cameraInfoRequest.clear();
 
-    qCDebug(CameraManagerLog) << this;
-}
-
-void QGCCameraManager::start()
-{
-    if (_requestingEnabled) {
-        return;
-    }
-    _requestingEnabled = true;
-
-    if (!_camerasLostHeartbeatTimer.isActive()) {
-        _camerasLostHeartbeatTimer.start(kHeartbeatTickMs);
-    }
-}
-
-void QGCCameraManager::stop()
-{
-    if (!_requestingEnabled) {
-        return;
-    }
-    _requestingEnabled = false;
-
+    // Stop the main heartbeat timer
     _camerasLostHeartbeatTimer.stop();
 
-    for (auto *info : std::as_const(_cameraInfoRequest)) {
-        if (info) {
-            info->backoffTimer.stop();
-        }
-    }
+    qCDebug(CameraManagerLog) << this;
 }
 
 void QGCCameraManager::setCurrentCamera(int sel)
@@ -185,9 +163,7 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
         CameraStruct *pInfo = new CameraStruct(this, message.compid, _vehicle);
         pInfo->lastHeartbeat.start();
         _cameraInfoRequest[sCompID] = pInfo;
-        if (_requestingEnabled) {
-            _requestCameraInfo(pInfo);
-        }
+        _requestCameraInfo(pInfo);
         return;
     }
 
@@ -207,9 +183,7 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
         pInfo->retryCount = 0;
         pInfo->backoffTimer.stop();
         pInfo->lastHeartbeat.start();
-        if (_requestingEnabled) {
-            _requestCameraInfo(pInfo);
-        }
+        _requestCameraInfo(pInfo);
         return;
     }
 
@@ -503,7 +477,7 @@ static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo)
     }
 
     QGCCameraManager *manager = cameraInfo->manager;
-    if (!manager || !manager->requestingEnabled()) {
+    if (!manager) {
         qCDebug(CameraManagerLog) << "manager is unavailable for compId" << cameraInfo->compID;
         return;
     }
@@ -535,7 +509,7 @@ static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo)
             if (info) {
                 _requestCameraInfoHelper(mgrGuard.data(), info);
             }
-        }, Qt::UniqueConnection);
+        });
 
         cameraInfo->backoffTimer.start(delayMs);
     } else {
@@ -545,7 +519,7 @@ static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo)
 
 void QGCCameraManager::_requestCameraInfo(CameraStruct *pInfo)
 {
-    if (!_requestingEnabled || !pInfo) {
+    if (!pInfo) {
         return;
     }
     _requestCameraInfoHelper(this, pInfo);
