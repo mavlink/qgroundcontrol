@@ -4072,47 +4072,47 @@ Zəhmət olmasa aparatınızı suya qoyun, düyməni vurun və gözləyin. Diqq�
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="197"/>
       <source>Search:</source>
-      <translation>Axtarış:</translation>
+      <translation type="unfinished">Search:</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="208"/>
       <source>Clear</source>
-      <translation>Aydındır</translation>
+      <translation type="unfinished">Clear</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="231"/>
       <source>Clear All</source>
-      <translation>Hamısını sil</translation>
+      <translation type="unfinished">Clear All</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>Log files (*.txt)</source>
-      <translation>Giriş sənədləri (* .txt)</translation>
+      <translation type="unfinished">Log files (*.txt)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>All Files (*)</source>
-      <translation>Bütün Fayllar (*)</translation>
+      <translation type="unfinished">All Files (*)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="89"/>
       <source>Select log save file</source>
-      <translation>Fayl qeydini seçin</translation>
+      <translation type="unfinished">Select log save file</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="107"/>
       <source>Save App Log</source>
-      <translation>Proqram Girişini qeyd edin</translation>
+      <translation type="unfinished">Save App Log</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="134"/>
       <source>Show Latest</source>
-      <translation>Ən sonuncunu göstər</translation>
+      <translation type="unfinished">Show Latest</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppLogging.qml" line="149"/>
       <source>Set Logging</source>
-      <translation>Giriş qurun</translation>
+      <translation type="unfinished">Set Logging</translation>
     </message>
   </context>
   <context>
