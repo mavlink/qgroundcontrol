@@ -58,6 +58,7 @@ ToolIndicatorPage {
 
     function goToSettings() {
         if (mainWindow.allowViewSwitch()) {
+            mainWindow.closeIndicatorDrawer()
             globals.commingFromRIDIndicator = true
             mainWindow.showSettingsTool()
         }
