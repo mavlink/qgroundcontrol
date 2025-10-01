@@ -1,5 +1,6 @@
 package org.mavlink.qgroundcontrol;
 
+import java.io.File;
 import java.util.List;
 import java.lang.reflect.Method;
 
@@ -127,29 +128,38 @@ public class QGCActivity extends QtActivity {
     public static String getSDCardPath() {
         StorageManager storageManager = (StorageManager)m_instance.getSystemService(Activity.STORAGE_SERVICE);
         List<StorageVolume> volumes = storageManager.getStorageVolumes();
-        Method mMethodGetPath;
-        String path = "";
+        
         for (StorageVolume vol : volumes) {
-            try {
-                mMethodGetPath = vol.getClass().getMethod("getPath");
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+            if (!vol.isRemovable()) {
                 continue;
             }
-            try {
-                path = (String) mMethodGetPath.invoke(vol);
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
-
-            if (vol.isRemovable() == true) {
-                Log.i(TAG, "removable sd card mounted " + path);
-                return path;
+            
+            String path = null;
+            
+            // For Android 11+ (API 30+), use the proper getDirectory() method
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                File directory = vol.getDirectory();
+                if (directory != null) {
+                    path = directory.getAbsolutePath();
+                }
             } else {
-                Log.i(TAG, "storage mounted " + path);
+                // For older versions, use reflection to get the path
+                try {
+                    Method mMethodGetPath = vol.getClass().getMethod("getPath");
+                    path = (String) mMethodGetPath.invoke(vol);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to get path via reflection", e);
+                    continue;
+                }
+            }
+            
+            if (path != null && !path.isEmpty()) {
+                Log.i(TAG, "removable sd card mounted at " + path);
+                return path;
             }
         }
+        
+        Log.w(TAG, "No removable SD card found");
         return "";
     }
 
