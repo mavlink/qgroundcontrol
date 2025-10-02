@@ -101,6 +101,9 @@ public:
     /// Although public, these methods are internal and should only be called by UnitTest code
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
 
+    /// Get current language
+    QLocale getCurrentLanguage() const { return _locale; }
+
 signals:
     void languageChanged(const QLocale &locale);
 
@@ -108,9 +111,6 @@ public slots:
     void showVehicleConfig();
 
     void qmlAttemptWindowClose();
-
-    /// Get current language
-    QLocale getCurrentLanguage() const { return _locale; }
 
     /// Show non-modal vehicle message to the user
     void showCriticalVehicleMessage(const QString &message);
