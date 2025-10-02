@@ -178,8 +178,16 @@ bool Bootloader::initFlashSequence(void)
 
 bool Bootloader::erase(void)
 {
+    uint32_t timeout = _eraseTimeout;
+
+    // If flash size is bigger then 2MB we need to increase timeout
+    if(_boardFlashSize > 2000 * 1024) {
+        // Increase timeout for each 1MB by 4 seconds
+        timeout += (_boardFlashSize / 1e6) * 4000;
+    }
+
     // Erase is slow, need larger timeout
-    if (!_sendCommand(PROTO_CHIP_ERASE, _eraseTimeout)) {
+    if (!_sendCommand(PROTO_CHIP_ERASE, timeout)) {
         _errorString = tr("Erase failed: %1").arg(_errorString);
         return false;
     }
