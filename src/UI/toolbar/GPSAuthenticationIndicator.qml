@@ -30,36 +30,20 @@ Item {
     function authenticationIconColor() {
         if(!_activeVehicle){
             return qgcPal.colorGrey   // Not connected
-        } else if (_activeVehicle.gps.authenticationState.value === 0) {
-            return qgcPal.colorGrey   // Unknow
-        } else if (_activeVehicle.gps.authenticationState.value === 1) {
-            return qgcPal.colorYellow // Initializing 
-        } else if (_activeVehicle.gps.authenticationState.value === 2) {
-            return qgcPal.colorRed    // Error
-        } else if (_activeVehicle.gps.authenticationState.value === 3) {
-            return qgcPal.colorGreen  // OK
-        } else if (_activeVehicle.gps.authenticationState.value === 4) {
-            return qgcPal.colorGrey   // Disable
         }
-        
-        return qgcPal.colorGrey
-    }
 
-    function getAuthenticationText(){
-        if(!_activeVehicle){
-            return qsTr("Disconnected")
-        } else if (_activeVehicle.gps.authenticationState.value === 0) {
-            return qsTr("Unknown")
-        } else if (_activeVehicle.gps.authenticationState.value === 1) {
-            return qsTr("Initializing...")
-        } else if (_activeVehicle.gps.authenticationState.value === 2) {
-            return qsTr("Failed")
-        } else if (_activeVehicle.gps.authenticationState.value === 3) {
-            return qsTr("OK")
-        } else if (_activeVehicle.gps.authenticationState.value === 4) {
-            return qsTr("Disabled")
+        switch (_activeVehicle.gps.authenticationState.value) {
+        case 1: // Initializing
+            return qgcPal.colorYellow;
+        case 2: // Error
+            return qgcPal.colorRed;
+        case 3: // OK
+            return qgcPal.colorGreen;
+        case 0: // Unknown
+        case 4: // Disabled
+        default:
+            return qgcPal.colorGrey;
         }
-        return qsTr("n/a")
     }
 
     QGCColoredImage {
@@ -92,7 +76,7 @@ Item {
 
                 LabelledLabel {
                     label: qsTr("Status")
-                    labelText: getAuthenticationText()
+                    labelText:  _activeVehicle ? (_activeVehicle.gps.authenticationState.valueString || qsTr("n/a")) : qsTr("n/a")
                 }
             }
         }

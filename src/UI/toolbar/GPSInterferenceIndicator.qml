@@ -26,33 +26,6 @@ Item {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     property bool   showIndicator: _activeVehicle && (_activeVehicle.gps.spoofingState.value > 0 || _activeVehicle.gps.jammingState.value > 0)
-    
-
-    function spoofingText() {
-        if(!_activeVehicle){
-            return qsTr("Disconnected")
-        } else if (_activeVehicle.gps.spoofingState.value === 1) {
-            return qsTr("OK")
-        } else if (_activeVehicle.gps.spoofingState.value === 2) {
-            return qsTr("Mitigated")
-        } else if (_activeVehicle.gps.spoofingState.value === 3) {
-            return qsTr("Ongoing")
-        }
-        return qsTr("n/a")
-    }
-
-    function jammingText() {
-        if(!_activeVehicle){
-            return qsTr("Disconnected")
-        } else if (_activeVehicle.gps.jammingState.value === 1) {
-            return qsTr("OK")
-        } else if (_activeVehicle.gps.jammingState.value === 2) {
-            return qsTr("Mitigated")
-        } else if (_activeVehicle.gps.jammingState.value === 3) {
-            return qsTr("Ongoing")
-        }
-        return qsTr("n/a")
-    }
 
     QGCColoredImage {
         id:                 gpsSpoofingIcon
@@ -68,17 +41,18 @@ Item {
                 return qgcPal.colorGrey
             }
 
-            let spoofing = _activeVehicle.gps.spoofingState.value
-            let jamming = _activeVehicle.gps.jammingState.value
+            let maxState = Math.max(_activeVehicle.gps.spoofingState.value, _activeVehicle.gps.jammingState.value);
 
-            if (spoofing === 3 || jamming === 3) {
-                return qgcPal.colorRed
-            } else if (spoofing === 2 || jamming === 2) {
-                return qgcPal.colorOrange
-            } else if (spoofing === 1 || jamming === 1) {
-                return qgcPal.colorWhite
+            switch (maxState) {
+            case 3:
+                return qgcPal.colorRed;
+            case 2:
+                return qgcPal.colorOrange;
+            case 1:
+                return qgcPal.colorWhite;
+            default:
+                return qgcPal.colorGrey;
             }
-            return qgcPal.colorGrey
         }
     }
 
@@ -108,12 +82,12 @@ Item {
 
                 LabelledLabel {
                     label: qsTr("GPS Jamming")
-                    labelText: jammingText()
+                    labelText: _activeVehicle ? (_activeVehicle.gps.jammingState.valueString || qsTr("n/a")) : qsTr("n/a")
                 }
 
                 LabelledLabel {
                     label: qsTr("GPS Spoofing")
-                    labelText: spoofingText()
+                    labelText: _activeVehicle ? (_activeVehicle.gps.spoofingState.valueString || qsTr("n/a")) : qsTr("n/a")
                 }
             }
         }

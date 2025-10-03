@@ -35,6 +35,21 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _addFact(&_gnssSignalQualityFact);
     _addFact(&_postProcessingQualityFact);
 
+    _spoofingStateFact.metaData()->setEnumInfo(
+        QStringList() << "Disconnected" << "OK" << "Mitigated" << "Ongoing",
+        QVariantList() << 0 << 1 << 2 << 3
+    );
+
+    _jammingStateFact.metaData()->setEnumInfo(
+        QStringList() << "Disconnected" << "OK" << "Mitigated" << "Ongoing",
+        QVariantList() << 0 << 1 << 2 << 3
+    );
+
+    _authenticationStateFact.metaData()->setEnumInfo(
+        QStringList() << "Unknown" << "Initializing..." << "Failed" << "OK" << "Disabled",
+        QVariantList() << 0 << 1 << 2 << 3 << 4
+    );
+
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _mgrsFact.setRawValue("");
