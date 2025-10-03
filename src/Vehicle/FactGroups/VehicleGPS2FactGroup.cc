@@ -41,7 +41,5 @@ void VehicleGPS2FactGroup::_handleGps2Raw(const mavlink_message_t &message)
     yaw()->setRawValue((gps2Raw.yaw == UINT16_MAX) ? qQNaN() : (gps2Raw.yaw / 100.0));
     lock()->setRawValue(gps2Raw.fix_type);
 
-    
-
     _setTelemetryAvailable(true);
 }

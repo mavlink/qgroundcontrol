@@ -49,7 +49,7 @@ Item {
         if(!_activeVehicle){
             return qsTr("Disconnected")
         } else if (_activeVehicle.gps.authenticationState.value === 0) {
-            return qsTr("Unkown")
+            return qsTr("Unknown")
         } else if (_activeVehicle.gps.authenticationState.value === 1) {
             return qsTr("Initializing...")
         } else if (_activeVehicle.gps.authenticationState.value === 2) {

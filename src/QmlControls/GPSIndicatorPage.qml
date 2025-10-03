@@ -47,7 +47,7 @@ ToolIndicatorPage {
         } else if (_activeVehicle.gps.systemErrors.value === 64) {
             return qsTr("Output congestion")
         }
-        return "Multiple errors"
+        return qsTr("Multiple errors")
     }
 
     contentComponent: Component {
