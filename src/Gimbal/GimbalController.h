@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Gimbal.h"
 #include "MAVLinkLib.h"
@@ -23,9 +24,12 @@ class Vehicle;
 class GimbalController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
-    Q_PROPERTY(Gimbal *activeGimbal READ activeGimbal WRITE setActiveGimbal NOTIFY activeGimbalChanged)
-    Q_PROPERTY(QmlObjectListModel *gimbals READ gimbals CONSTANT)
+
+    Q_PROPERTY(Gimbal*              activeGimbal    READ activeGimbal WRITE setActiveGimbal NOTIFY activeGimbalChanged)
+    Q_PROPERTY(QmlObjectListModel*  gimbals         READ gimbals                            CONSTANT)
 
 public:
     GimbalController(Vehicle *vehicle);
@@ -40,8 +44,8 @@ public:
     Q_INVOKABLE void gimbalOnScreenControl(float panpct, float tiltpct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract = false, bool neutral = false, bool yawlock = false);
     Q_INVOKABLE void sendPitchBodyYaw(float pitch, float yaw, bool showError = true);
     Q_INVOKABLE void sendPitchAbsoluteYaw(float pitch, float yaw, bool showError = true);
-    Q_INVOKABLE void toggleGimbalRetracted(bool set = false);
-    Q_INVOKABLE void toggleGimbalYawLock(bool set = false);
+    Q_INVOKABLE void setGimbalRetract(bool set);
+    Q_INVOKABLE void setGimbalYawLock(bool set);
     Q_INVOKABLE void acquireGimbalControl();
     Q_INVOKABLE void releaseGimbalControl();
     Q_INVOKABLE void sendRate();
@@ -52,7 +56,7 @@ signals:
 
 public slots:
     // These slots are conected with joysticks for button control
-    void gimbalYawLock(bool yawLock) { toggleGimbalYawLock(yawLock); }
+    void gimbalYawLock(bool yawLock) { setGimbalYawLock(yawLock); }
     Q_INVOKABLE void centerGimbal();
     void gimbalPitchStart(int direction);
     void gimbalYawStart(int direction);
@@ -107,7 +111,7 @@ private:
 
     struct PotentialGimbalManager {
         unsigned requestGimbalManagerInformationRetries = 6;
-        bool receivedInformation = false;
+        bool receivedGimbalManagerInformation = false;
     };
     QMap<uint8_t, PotentialGimbalManager> _potentialGimbalManagers; // key is compid
 

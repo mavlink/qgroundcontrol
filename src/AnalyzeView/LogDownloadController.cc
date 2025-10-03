@@ -19,19 +19,17 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "qgc.analyzeview.logdownloadcontroller")
-
-Q_APPLICATION_STATIC(LogDownloadController, _logDownloadControllerInstance);
+QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
 
 LogDownloadController::LogDownloadController(QObject *parent)
     : QObject(parent)
     , _timer(new QTimer(this))
     , _logEntriesModel(new QmlObjectListModel(this))
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogDownloadControllerLog) << this;
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
     (void) connect(_timer, &QTimer::timeout, this, &LogDownloadController::_processDownload);
@@ -43,12 +41,7 @@ LogDownloadController::LogDownloadController(QObject *parent)
 
 LogDownloadController::~LogDownloadController()
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
-}
-
-LogDownloadController *LogDownloadController::instance()
-{
-    return _logDownloadControllerInstance();
+    qCDebug(LogDownloadControllerLog) << this;
 }
 
 void LogDownloadController::download(const QString &path)

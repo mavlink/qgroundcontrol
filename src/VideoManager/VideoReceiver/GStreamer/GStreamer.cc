@@ -20,8 +20,8 @@
 
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GStreamerLog, "qgc.videomanager.videoreceiver.gstreamer")
-QGC_LOGGING_CATEGORY(GStreamerAPILog, "qgc.videomanager.videoreceiver.gstreamer.api")
+QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
+QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
 
 // TODO: Clean These up with Macros or CMake
 G_BEGIN_DECLS

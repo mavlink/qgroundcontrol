@@ -19,7 +19,7 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QString>
 
-QGC_LOGGING_CATEGORY(SubtitleWriterLog, "qgc.videomanager.subtitlewriter")
+QGC_LOGGING_CATEGORY(SubtitleWriterLog, "Video.SubtitleWriter")
 
 SubtitleWriter::SubtitleWriter(QObject *parent)
     : QObject(parent)

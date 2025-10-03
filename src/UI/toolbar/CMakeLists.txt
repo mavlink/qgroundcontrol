@@ -10,6 +10,8 @@ qt_add_qml_module(ToolbarModule
         APMMainStatusIndicatorContentItem.qml
         APMSupportForwardingIndicator.qml
         ArmedIndicator.qml
+        EscIndicator.qml
+        EscIndicatorPage.qml
         GCSControlIndicator.qml
         GimbalIndicator.qml
         GPSAuthenticationIndicator.qml
@@ -23,5 +25,5 @@ qt_add_qml_module(ToolbarModule
         RTKGPSIndicator.qml
         TelemetryRSSIIndicator.qml
         VehicleGPSIndicator.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
 )

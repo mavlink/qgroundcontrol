@@ -24,21 +24,20 @@ class QGCCompass;
 class QGCPositionManager : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
     Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy  NOTIFY gcsPositionHorizontalAccuracyChanged)
 
 public:
-    QGCPositionManager(QObject *parent = nullptr);
+    explicit QGCPositionManager(QObject *parent = nullptr);
     ~QGCPositionManager();
 
     /// Gets the singleton instance of AudioOutput.
     ///     @return The singleton instance.
     static QGCPositionManager *instance();
-    static void registerQmlTypes();
 
     void init();
     QGeoCoordinate gcsPosition() const { return _gcsPosition; }

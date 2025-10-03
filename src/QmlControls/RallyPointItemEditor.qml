@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+import QGroundControl
+
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 
 Rectangle {
     id:     root

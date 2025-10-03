@@ -12,8 +12,6 @@
 #include "CompInfoParam.h"
 #include "ComponentInformationManager.h"
 #include "FactGroup.h"
-#include "FactPanelController.h"
-#include "FactValueSliderListModel.h"
 #include "FirmwarePlugin.h"
 #include "FTPManager.h"
 #include "MAVLinkProtocol.h"
@@ -26,12 +24,11 @@
 #include <QtCore/QFile>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QVariantAnimation>
-#include <QtQml/qqml.h>
 
-QGC_LOGGING_CATEGORY(ParameterManagerLog, "qgc.factsystem.parametermanager")
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "qgc.factsystem.parametermanager1:verbose")
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "qgc.factsystem.parametermanager2:verbose")
-QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog, "qgc.factsystem.parametermanager.debugcachefailure") // Turn on to debug parameter cache crc misses
+QGC_LOGGING_CATEGORY(ParameterManagerLog, "FactSystem.ParameterManager")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "FactSystem.ParameterManager:verbose1")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "FactSystem.ParameterManager:verbose2")
+QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog, "FactSystem.ParameterManager:debugCacheFailure") // Turn on to debug parameter cache crc misses
 
 ParameterManager::ParameterManager(Vehicle *vehicle)
     : QObject(vehicle)
@@ -39,7 +36,7 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     , _logReplay(!vehicle->vehicleLinkManager()->primaryLink().expired() && vehicle->vehicleLinkManager()->primaryLink().lock()->isLogReplay())
     , _tryftp(vehicle->apmFirmware())
 {
-    // qCDebug(ParameterManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(ParameterManagerLog) << this;
 
     if (_vehicle->isOfflineEditingVehicle()) {
         _loadOfflineEditingParams();
@@ -60,18 +57,7 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
 
 ParameterManager::~ParameterManager()
 {
-    // qCDebug(ParameterManagerLog) << Q_FUNC_INFO << this;
-}
-
-void ParameterManager::registerQmlTypes()
-{
-    (void) qmlRegisterType<Fact>("QGroundControl.FactSystem", 1, 0, "Fact");
-    (void) qmlRegisterType<FactMetaData>("QGroundControl.FactSystem", 1, 0, "FactMetaData");
-    (void) qmlRegisterType<FactPanelController>("QGroundControl.FactSystem", 1, 0, "FactPanelController");
-
-    (void) qmlRegisterUncreatableType<FactGroup>("QGroundControl.FactSystem", 1, 0, "FactGroup", "Reference only");
-    (void) qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls", 1, 0, "FactValueSliderListModel", "Reference only");
-    (void) qmlRegisterUncreatableType<ParameterManager>("QGroundControl.Vehicle", 1, 0, "ParameterManager", "Reference only");
+    qCDebug(ParameterManagerLog) << this;
 }
 
 void ParameterManager::_updateProgressBar()

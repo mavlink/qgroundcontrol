@@ -11,6 +11,7 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QString>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class LinkInterface;
 
@@ -18,6 +19,8 @@ class LinkInterface;
 class LinkConfiguration : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("LinkInterface.h")
 
     Q_PROPERTY(QString          name            READ name           WRITE setName           NOTIFY nameChanged)

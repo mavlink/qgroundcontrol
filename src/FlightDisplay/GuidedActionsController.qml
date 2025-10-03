@@ -15,10 +15,10 @@ import QtPositioning
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Vehicle
+
+
 import QGroundControl.FlightMap
 
 /// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
@@ -664,7 +664,8 @@ Item {
         case actionChangeLoiterRadius:
             _activeVehicle.guidedModeGotoLocation(
                 fwdFlightGotoMapCircle.coordinate,
-                fwdFlightGotoMapCircle.radius.rawValue
+                (fwdFlightGotoMapCircle.clockwiseRotation ? 1 : -1) *
+                        Math.abs(fwdFlightGotoMapCircle.radius.rawValue)
             )
             break
         case actionGoto:

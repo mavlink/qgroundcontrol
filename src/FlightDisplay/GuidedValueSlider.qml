@@ -13,10 +13,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Vehicle
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
+
+
+
 
 Item {
     id:     control
@@ -248,6 +248,14 @@ Item {
             ctx.closePath()
             ctx.fill()
             ctx.stroke()
+        }
+
+        // Repaint when palette changes
+        Connections {
+            target: _qgcPal
+            function onPaletteChanged() {
+                indicatorCanvas.requestPaint()
+            }
         }
 
         QGCLabel {

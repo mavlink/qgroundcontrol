@@ -11,10 +11,12 @@
 
 #include <QtCore/QObject>
 #include <QtQml/QQmlComponent>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class ToolStripAction : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     
 public:
     ToolStripAction(QObject* parent = nullptr);

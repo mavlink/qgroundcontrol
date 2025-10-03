@@ -18,26 +18,7 @@
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
 
-#ifdef Q_OS_WIN
-
-#include <crtdbg.h>
-#include <windows.h>
-#include <iostream>
-
-/// CRT Report Hook installed using _CrtSetReportHook. We install this hook when
-/// we don't want asserts to pop a dialog on windows.
-static int WindowsCrtReportHook(int reportType, char *message, int *returnValue)
-{
-    Q_UNUSED(reportType);
-
-    std::cerr << message << std::endl;  // Output message to stderr
-    *returnValue = 0;                   // Don't break into debugger
-    return true;                        // We handled this fully ourselves
-}
-
-#endif
-
-QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
+QGC_LOGGING_CATEGORY(QGCLoggingLog, "Utilities.QGCLogging")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
@@ -45,16 +26,11 @@ static QtMessageHandler defaultHandler = nullptr;
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    // Filter via QLoggingCategory rules early
-    if (!QLoggingCategory(context.category).isDebugEnabled()) {
-        return;
-    }
-
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);
 
     // Filter out Qt Quick internals
-    if (!QString(context.category).startsWith("qt.quick")) {
+    if (QGCLogging::instance() && !QString(context.category).startsWith("qt.quick")) {
         QGCLogging::instance()->log(message);
     }
 
@@ -72,7 +48,7 @@ QGCLogging *QGCLogging::instance()
 QGCLogging::QGCLogging(QObject *parent)
     : QStringListModel(parent)
 {
-    // qCDebug(QGCLoggingLog) << this;
+    qCDebug(QGCLoggingLog) << this;
 
     _flushTimer.setInterval(kFlushIntervalMSecs);
     _flushTimer.setSingleShot(false);
@@ -88,18 +64,15 @@ QGCLogging::QGCLogging(QObject *parent)
     (void) connect(this, &QGCLogging::emitLog, this, &QGCLogging::_threadsafeLog, conntype);
 }
 
-void QGCLogging::installHandler(bool quietWindowsAsserts)
+QGCLogging::~QGCLogging()
 {
-#ifdef Q_OS_WIN
-    if (quietWindowsAsserts) {
-        _CrtSetReportHook(WindowsCrtReportHook);
-    }
-#else
-    Q_UNUSED(quietWindowsAsserts)
-#endif
+    qCDebug(QGCLoggingLog) << this;
+}
 
+void QGCLogging::installHandler()
+{
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{category}:: %{time process} - %{type}: %{message} (%{function}:%{line})"));
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);

@@ -9,11 +9,8 @@
 
 #include "RemoteIDSettings.h"
 
-#include <QtQml/QQmlEngine>
-
 DECLARE_SETTINGGROUP(RemoteID, "RemoteID")
 {
-    qmlRegisterUncreatableType<RemoteIDSettings>("QGroundControl.SettingsManager", 1, 0, "RemoteIDSettings", "Reference only"); \
 }
 
 DECLARE_SETTINGSFACT(RemoteIDSettings,  operatorID)

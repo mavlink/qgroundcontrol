@@ -20,9 +20,8 @@
 #include <QtCore/QSettings>
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkReply>
-#include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "qgc.vehicle.mavlinklogmanager")
+QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "Vehicle.MAVLinkLogManager")
 
 static constexpr const char *kSidecarExtension = ".uploaded";
 
@@ -293,9 +292,7 @@ MAVLinkLogManager::MAVLinkLogManager(Vehicle *vehicle, QObject *parent)
     , _ulogExtension(QStringLiteral(".") + SettingsManager::instance()->appSettings()->logFileExtension)
     , _logPath(SettingsManager::instance()->appSettings()->logSavePath())
 {
-    // qCDebug(MAVLinkLogManagerLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterUncreatableType<MAVLinkLogManager>("QGroundControl.MAVLinkLogManager", 1, 0, "MAVLinkLogManager", "Reference only");
+    qCDebug(MAVLinkLogManagerLog) << this;
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
     QNetworkProxy tProxy = _networkManager->proxy();
@@ -346,9 +343,9 @@ MAVLinkLogManager::MAVLinkLogManager(Vehicle *vehicle, QObject *parent)
 
 MAVLinkLogManager::~MAVLinkLogManager()
 {
-    // qCDebug(MAVLinkLogManagerLog) << Q_FUNC_INFO << this;
-
     _logFiles->clearAndDeleteContents();
+
+    qCDebug(MAVLinkLogManagerLog) << this;
 }
 
 void MAVLinkLogManager::setEmailAddress(const QString &email)

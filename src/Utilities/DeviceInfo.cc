@@ -10,13 +10,13 @@
 #include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtNetwork/QNetworkInformation>
 #ifdef QGC_ENABLE_BLUETOOTH
 #    include <QtBluetooth/QBluetoothLocalDevice>
 #endif
 
-QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "qgc.utilities.deviceinfo")
+QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "Utilities.QGCDeviceInfo")
 
 namespace QGCDeviceInfo
 {

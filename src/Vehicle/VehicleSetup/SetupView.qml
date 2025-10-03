@@ -12,16 +12,20 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.AutoPilotPlugin
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
+
+
 
 Rectangle {
     id:     setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
+
+    // This need to block click event leakage to underlying map.
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -222,7 +226,7 @@ Rectangle {
                 visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.flowImageIndex > 0 : false
                 text:               qsTr("Optical Flow")
                 Layout.fillWidth:   true
-                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/OpticalFlowSensor.qml")
+                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/OpticalFlowSensor.qml");
             }
 
             ConfigButton {
@@ -234,7 +238,7 @@ Rectangle {
                 Layout.fillWidth:   true
                 onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfig.qml")
 
-                property var    _activeJoystick:        joystickManager.activeJoystick
+                property Joystick _activeJoystick: joystickManager.activeJoystick
                 property bool   _buttonsOnly:           _activeJoystick ? _activeJoystick.axisCount == 0 : false
                 property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }

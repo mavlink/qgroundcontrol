@@ -15,7 +15,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "RemoteIDManagerLog")
+QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "Vehicle.RemoteIDManager")
 
 #define AREA_COUNT 1
 #define AREA_RADIUS 0

@@ -9,16 +9,18 @@
 
 #pragma once
 
-#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class Vehicle;
 
 class TrajectoryPoints : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     TrajectoryPoints(Vehicle* vehicle, QObject* parent = nullptr);
 

@@ -7,30 +7,20 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Cache
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include "QGCMapEngine.h"
+
+#include <QtCore/QApplicationStatic>
+
 #include "QGCCachedTileSet.h"
-#include "QGCTileCacheWorker.h"
-#include "QGeoFileTileCacheQGC.h"
-#include "QGCMapTasks.h"
-#include "QGCTileSet.h"
-#include "QGCTile.h"
 #include "QGCCacheTile.h"
-#include <QGCLoggingCategory.h>
+#include "QGCLoggingCategory.h"
+#include "QGCMapTasks.h"
+#include "QGCTile.h"
+#include "QGCTileCacheWorker.h"
+#include "QGCTileSet.h"
+#include "QGeoFileTileCacheQGC.h"
 
-#include <QtCore/qapplicationstatic.h>
-
-QGC_LOGGING_CATEGORY(QGCMapEngineLog, "qgc.qtlocationplugin.qgcmapengine")
-
-Q_DECLARE_METATYPE(QList<QGCTile*>)
+QGC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
 
 Q_APPLICATION_STATIC(QGCMapEngine, _mapEngine);
 
@@ -41,26 +31,28 @@ QGCMapEngine *getQGCMapEngine()
 
 QGCMapEngine::QGCMapEngine(QObject *parent)
     : QObject(parent)
-    , m_worker(new QGCCacheWorker(this))
 {
-    // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCMapEngineLog) << this;
 
-    (void) qRegisterMetaType<QGCMapTask::TaskType>("TaskType");
+    (void) qRegisterMetaType<QGCMapTask::TaskType>("QGCMapTask::TaskType");
     (void) qRegisterMetaType<QGCTile>("QGCTile");
+    (void) qRegisterMetaType<QGCTile*>("QGCTile*");
     (void) qRegisterMetaType<QList<QGCTile*>>("QList<QGCTile*>");
     (void) qRegisterMetaType<QGCTileSet>("QGCTileSet");
+    (void) qRegisterMetaType<QGCTileSet*>("QGCTileSet*");
     (void) qRegisterMetaType<QGCCacheTile>("QGCCacheTile");
-
-    (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+    (void) qRegisterMetaType<QGCCacheTile*>("QGCCacheTile*");
 }
 
 QGCMapEngine::~QGCMapEngine()
 {
-    (void) disconnect(m_worker);
-    m_worker->stop();
-    m_worker->wait();
+    if (m_initialized && m_worker) {
+        (void) disconnect(m_worker);
+        m_worker->stop();
+        (void) m_worker->wait();
+    }
 
-    // qCDebug(QGCMapEngineLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCMapEngineLog) << this;
 }
 
 QGCMapEngine *QGCMapEngine::instance()
@@ -70,28 +62,44 @@ QGCMapEngine *QGCMapEngine::instance()
 
 void QGCMapEngine::init(const QString &databasePath)
 {
-    m_worker->setDatabaseFile(databasePath);
+    if (m_initialized) {
+        return;
+    }
 
-    QGCMapTask* const task = new QGCMapTask(QGCMapTask::taskInit);
-    (void) addTask(task);
+    m_initialized = true;
+
+    m_worker = new QGCCacheWorker(this);
+    m_worker->setDatabaseFile(databasePath);
+    (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+
+    QGCMapTask *task = new QGCMapTask(QGCMapTask::TaskType::taskInit);
+    if (!addTask(task)) {
+        task->deleteLater();
+        m_initialized = false;
+    }
 }
 
 bool QGCMapEngine::addTask(QGCMapTask *task)
 {
-    return m_worker->enqueueTask(task);
+    bool result = false;
+    (void) QMetaObject::invokeMethod(m_worker, &QGCCacheWorker::enqueueTask, Qt::DirectConnection, qReturnArg(result), task);
+    return result;
 }
 
 void QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
 
-    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * pow(1024, 2);
-    if (!m_prunning && (defaultsize > maxSize)) {
-        m_prunning = true;
+    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * qPow(1024, 2);
+    if (!m_pruning && (defaultsize > maxSize)) {
+        m_pruning = true;
 
         const quint64 amountToPrune = defaultsize - maxSize;
-        QGCPruneCacheTask* const task = new QGCPruneCacheTask(amountToPrune);
+        QGCPruneCacheTask *task = new QGCPruneCacheTask(amountToPrune);
         (void) connect(task, &QGCPruneCacheTask::pruned, this, &QGCMapEngine::_pruned);
-        (void) addTask(task);
+        if (!addTask(task)) {
+            task->deleteLater();
+            m_pruning = false;
+        }
     }
 }

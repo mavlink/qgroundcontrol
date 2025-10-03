@@ -24,8 +24,8 @@
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(JoystickLog, "qgc.joystick.joystick")
-QGC_LOGGING_CATEGORY(JoystickValuesLog, "qgc.joystick.joystickvalues")
+QGC_LOGGING_CATEGORY(JoystickLog, "Joystick.joystick")
+QGC_LOGGING_CATEGORY(JoystickValuesLog, "Joystick.joystickvalues")
 
 /*===========================================================================*/
 
@@ -672,8 +672,9 @@ void Joystick::_handleAxis()
 
     emit axisValues(roll, pitch, yaw, throttle);
 
-    const uint16_t shortButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
-    _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, shortButtons);
+    const uint16_t lowButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
+    const uint16_t highButtons = static_cast<uint16_t>((buttonPressedBits >> 16) & 0xFFFF);
+    _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons);
 }
 
 void Joystick::startPolling(Vehicle* vehicle)

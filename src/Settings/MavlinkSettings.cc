@@ -11,12 +11,8 @@
 #include "MavlinkSettings.h"
 #include "LinkManager.h"
 
-#include <QQmlEngine>
-
 DECLARE_SETTINGGROUP(Mavlink, "")
 {
-    qmlRegisterUncreatableType<MavlinkSettings>("QGroundControl.SettingsManager", 1, 0, "MavlinkSettings", "Reference only");
-
     // Move deprecated settings to new location/names
 
     QSettings deprecatedSettings;

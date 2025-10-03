@@ -11,13 +11,14 @@
 
 #include <QtCore/QObject>
 #include <QtQml/QQmlListProperty>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class ToolStripActionList : public QObject
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
-    ToolStripActionList(QObject* parent = nullptr);
+    explicit ToolStripActionList(QObject* parent = nullptr);
     
     Q_PROPERTY(QQmlListProperty<QObject> model READ model NOTIFY modelChanged)
 

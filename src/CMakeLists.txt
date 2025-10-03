@@ -1,3 +1,18 @@
+qt_add_library(QGroundControlModule STATIC)
+
+set_source_files_properties(UI/MainWindow.qml PROPERTIES QT_RESOURCE_ALIAS MainWindow.qml)
+
+qt_add_qml_module(QGroundControlModule
+    URI QGroundControl
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        UI/MainWindow.qml
+    IMPORTS
+        QGC
+    NO_PLUGIN
+)
+
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
 add_subdirectory(Android)
@@ -31,8 +46,6 @@ add_subdirectory(QtLocationPlugin)
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
-        CmdLineOptParser.cc
-        CmdLineOptParser.h
         pch.h
         QGCApplication.cc
         QGCApplication.h
@@ -72,29 +85,24 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
-        # Explicitly link QML modules, needed by Qt 6.6.3
-        # TODO: Remove when support for this version is dropped
         AnalyzeViewModule
         AppSettingsModule
         AutoPilotPluginsCommonModule
         FactControlsModule
-        FactSystemModule
         FirstRunPromptDialogsModule
         FlightDisplayModule
         FlightMapModule
-        MainWindowModule
         QGroundControlControlsModule
-        ScreenToolsModule
+        QGroundControlModule
         ToolbarModule
         UTMSPModule
-        VehicleModule
         VehicleSetupModule
 )
 
-if(NOT QGC_DISABLE_APM_PLUGIN AND NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
+if(NOT QGC_DISABLE_APM_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
 endif()
-if(NOT QGC_DISABLE_PX4_PLUGIN AND NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
+if(NOT QGC_DISABLE_PX4_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 endif()
 if(QGC_VIEWER3D)
@@ -110,6 +118,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         QGC_ORG_NAME="${QGC_ORG_NAME}"
         QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
         QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
+        QGC_APP_DATE="${QGC_APP_DATE}"
+        QGC_APP_DESCRIPTION="${QGC_APP_DESCRIPTION}"
         QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
         $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
         $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>

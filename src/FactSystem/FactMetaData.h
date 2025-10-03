@@ -15,6 +15,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
 
@@ -24,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
 class FactMetaData : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
 public:
     enum ValueType_t {
         valueTypeUint8,
@@ -264,6 +265,8 @@ private:
     static QVariant _radiansToDegrees(const QVariant &radians);
     static QVariant _centiDegreesToDegrees(const QVariant &centiDegrees);
     static QVariant _degreesToCentiDegrees(const QVariant &degrees);
+    static QVariant _centiCelsiusToCelsius(const QVariant &centiCelsius);
+    static QVariant _celsiusToCentiCelsius(const QVariant &celsius);
     static QVariant _userGimbalDegreesToMavlinkGimbalDegrees(const QVariant &userGimbalDegrees);
     static QVariant _mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant &mavlinkGimbalDegrees);
     static QVariant _metersToFeet(const QVariant &meters);

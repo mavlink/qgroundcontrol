@@ -13,8 +13,8 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 
 ColumnLayout {
     property var    instrumentValueData:        null

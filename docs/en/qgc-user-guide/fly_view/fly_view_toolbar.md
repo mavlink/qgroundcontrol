@@ -73,6 +73,6 @@ There are other indicators which only show in certain situations:
 
 * Telemetry RSSI
 * RC RSSI
-* Gimbal
+* Gimbal - Only displayed if the vehicle supports the [Mavlink Gimbal Protocol](https://mavlink.io/en/services/gimbal_v2.html)
 * VTOL transitions
 * Select from multiple connected vehicles

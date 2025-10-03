@@ -23,7 +23,7 @@
 #include <QtGui/QCursor>
 #include <QtGui/QGuiApplication>
 
-QGC_LOGGING_CATEGORY(APMAirframeComponentControllerLog, "qgc.autopilotplugins.apm.apmairframecomponentcontroller")
+QGC_LOGGING_CATEGORY(APMAirframeComponentControllerLog, "AutoPilotPlugins.APMAirframeComponentController")
 
 /*===========================================================================*/
 

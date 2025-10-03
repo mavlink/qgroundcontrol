@@ -10,7 +10,7 @@
 import QtQml.Models
 
 import QGroundControl
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 ListModel {
     ListElement {
@@ -89,8 +89,8 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("Console")
-        url: "qrc:/qml/QGroundControl/Controls/AppMessages.qml"
+        name: qsTr("Logging")
+        url: "qrc:/qml/QGroundControl/Controls/AppLogging.qml"
         iconUrl: "qrc:/InstrumentValueIcons/conversation.svg"
         pageVisible: function() { return true }
     }

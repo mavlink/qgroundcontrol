@@ -13,12 +13,12 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Palette
+
+
+
 
 SettingsPage {
 
@@ -59,22 +59,6 @@ SettingsPage {
     property bool isFAARegion:          regionFact.rawValue === RemoteIDSettings.RegionOperation.FAA
     property real textFieldWidth:       ScreenTools.defaultFontPixelWidth * 24
     property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
-
-    enum RegionOperation {
-        FAA,
-        EU
-    }
-
-    enum LocationType {
-        TAKEOFF,
-        LIVE,
-        FIXED
-    }
-
-    enum ClassificationType {
-        UNDEFINED,
-        EU
-    }
 
     // GPS properties
     property var    gcsPosition:        QGroundControl.qgcPositionManger.gcsPosition
@@ -250,9 +234,9 @@ SettingsPage {
         Connections {
             target: regionFact
             function onRawValueChanged(value) {
-                if (value === RemoteIDSettings.EU) {
+                if (value === RemoteIDSettings.RegionOperation.EU) {
                     sendOperatorIdFact.rawValue = true
-                } else if (value === RemoteIDSettings.FAA) {
+                } else if (value === RemoteIDSettings.RegionOperation.FAA) {
                     locationTypeFact.value = RemoteIDSettings.LocationType.LIVE
                 }
             }
@@ -527,7 +511,7 @@ SettingsPage {
                     visible:                    !ScreenTools.isMobile
                                                 && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
                                                 && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
-                                                && _locationType !== RemoteIDIndicatorPage.LocationType.TAKEOFF
+                                                && _locationType !== RemoteIDSettings.LocationType.TAKEOFF
                     anchors.margins:            _margins
                     rowSpacing:                 _margins * 3
                     columns:                    2

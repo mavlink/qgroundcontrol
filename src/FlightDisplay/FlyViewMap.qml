@@ -15,13 +15,13 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Controllers
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
+
 
 FlightMap {
     id:                         _root
@@ -380,6 +380,7 @@ FlightMap {
 
         property alias coordinate: _fwdFlightGotoMapCircle.center
         property alias radius: _fwdFlightGotoMapCircle.radius
+        property alias clockwiseRotation: _fwdFlightGotoMapCircle.clockwiseRotation
 
         Component.onCompleted: {
             // Only allow editing the radius, not the position

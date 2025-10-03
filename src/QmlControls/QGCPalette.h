@@ -78,7 +78,7 @@
 
  Usage:
 
-        import QGroundControl.Palette 1.0
+         1.0
 
         Rectangle {
             anchors.fill:   parent
@@ -91,7 +91,7 @@
 class QGCPalette : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
 
 public:
     enum ColorGroup {

@@ -12,7 +12,6 @@
 #include "PX4FirmwarePlugin.h"
 
 class AutoPilotPlugin;
-class CustomCameraManager;
 class Vehicle;
 
 class CustomFirmwarePlugin : public PX4FirmwarePlugin

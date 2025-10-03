@@ -20,7 +20,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "VTOLLandingComplexItemLog")
+QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "Plan.VTOLLandingComplexItem")
 
 const QString VTOLLandingComplexItem::name(VTOLLandingComplexItem::tr("VTOL Landing"));
 

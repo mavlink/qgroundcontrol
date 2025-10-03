@@ -13,6 +13,7 @@
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlUnitsConversion.h"
 
@@ -31,6 +32,7 @@ class SettingsManager;
 class VideoManager;
 class UTMSPManager;
 class AirLinkManager;
+class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("FactGroup.h")
@@ -53,12 +55,12 @@ Q_MOC_INCLUDE("AirLinkManager.h")
 class QGroundControlQmlGlobal : public QObject
 {
     Q_OBJECT
+    QML_NAMED_ELEMENT(QGroundControl)
+    QML_SINGLETON
 
 public:
-    QGroundControlQmlGlobal(QObject *parent = nullptr);
+    explicit QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
-
-    static void registerQmlTypes();
 
     enum AltMode {
         AltitudeModeMixed,              // Used by global altitude mode for mission planning
@@ -102,6 +104,8 @@ public:
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
+    Q_PROPERTY(QString qgcAppDate       READ qgcAppDate         CONSTANT)
+    Q_PROPERTY(bool    qgcDailyBuild    READ qgcDailyBuild      CONSTANT)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -141,8 +145,11 @@ public:
     Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
-    /// Returns the list of available logging category names.
-    Q_INVOKABLE static QStringList loggingCategories();
+    /// Returns the hierarchical list of available logging category names.
+    Q_INVOKABLE static QmlObjectListModel *treeLoggingCategoriesModel();
+
+    /// Returns the flat list of available logging category names.
+    Q_INVOKABLE static QmlObjectListModel *flatLoggingCategoriesModel();
 
     /// Turns on/off logging for the specified category. State is saved in app settings.
     Q_INVOKABLE static void setCategoryLoggingOn(const QString &category, bool enable);
@@ -150,8 +157,7 @@ public:
     /// Returns true if logging is turned on for the specified category.
     Q_INVOKABLE static bool categoryLoggingOn(const QString &category);
 
-    /// Updates the logging filter rules after settings have changed
-    Q_INVOKABLE static void updateLoggingFilterRules();
+    Q_INVOKABLE static void disableAllLoggingCategories();
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
@@ -220,6 +226,12 @@ public:
     QString telemetryFileExtension  (void) const;
 
     static QString qgcVersion();
+    static QString qgcAppDate() { return QGC_APP_DATE; }
+#ifdef QGC_DAILY_BUILD
+    static bool qgcDailyBuild() { return true; }
+#else
+    static bool qgcDailyBuild() { return false; }
+#endif
 
 #ifdef QGC_UTM_ADAPTER
     UTMSPManager* utmspManager() {return _utmspManager;}

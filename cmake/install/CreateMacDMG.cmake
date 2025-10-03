@@ -1,24 +1,8 @@
 # -- Variables ----------------------------------------
 # QGC_STAGING_BUNDLE_PATH => full path to MyApp.app
+# CREATE_DMG_PROGRAM => full path to create-dmg program
+# ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# 1. Grab or locate create-dmg
-# ---------------------------------------------------------------------------
-find_program(CREATE_DMG_PROGRAM create-dmg)
-if(NOT CREATE_DMG_PROGRAM)
-    message(STATUS "QGC: Downloading create-dmg")
-    CPMAddPackage(
-        NAME create-dmg
-        GITHUB_REPOSITORY create-dmg/create-dmg
-        GIT_TAG master
-        DOWNLOAD_ONLY
-    )
-    set(CREATE_DMG_PROGRAM "${create-dmg_SOURCE_DIR}/create-dmg")
-endif()
-
-# ---------------------------------------------------------------------------
-# 2. Build the DMG with a nice drag-and-drop layout
-# ---------------------------------------------------------------------------
 set(QGC_DMG_PATH "${CMAKE_BINARY_DIR}/package")
 file(REMOVE_RECURSE "${QGC_DMG_PATH}")
 file(MAKE_DIRECTORY "${QGC_DMG_PATH}")

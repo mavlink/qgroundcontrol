@@ -24,8 +24,8 @@
 #include <QtSerialPort/QSerialPort>
 #endif
 
-QGC_LOGGING_CATEGORY(GPSProviderLog, "qgc.gps.gpsprovider")
-QGC_LOGGING_CATEGORY(GPSDriversLog, "qgc.gps.drivers")
+QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
+QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers")
 
 GPSProvider::GPSProvider(const QString &device, GPSType type, const rtk_data_s &rtkData, const std::atomic_bool &requestStop, QObject *parent)
     : QThread(parent)
@@ -233,10 +233,15 @@ GPSBaseStationSupport *GPSProvider::_connectGPS()
         return nullptr;
     }
 
-    gpsDriver->setSurveyInSpecs(_rtkData.surveyInAccMeters * 10000.f, _rtkData.surveyInDurationSecs);
+    switch(_rtkData.useFixedBaseLocation){
+        case BaseModeDefinition::Mode::BaseFixed:
+            gpsDriver->setBasePosition(_rtkData.fixedBaseLatitude, _rtkData.fixedBaseLongitude, _rtkData.fixedBaseAltitudeMeters, _rtkData.fixedBaseAccuracyMeters * 1000.0f);
+            break;
 
-    if (_rtkData.useFixedBaseLoction) {
-        gpsDriver->setBasePosition(_rtkData.fixedBaseLatitude, _rtkData.fixedBaseLongitude, _rtkData.fixedBaseAltitudeMeters, _rtkData.fixedBaseAccuracyMeters * 1000.0f);
+        case BaseModeDefinition::Mode::BaseSurveyIn:
+        default:
+            gpsDriver->setSurveyInSpecs(_rtkData.surveyInAccMeters * 10000.f, _rtkData.surveyInDurationSecs);
+            break;
     }
 
     _gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;

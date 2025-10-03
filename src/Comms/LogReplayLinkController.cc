@@ -10,7 +10,7 @@
 #include "LogReplayLinkController.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "qgc.comms.logreplaylink")
+QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "Comms.LogReplayLinkController")
 
 LogReplayLinkController::LogReplayLinkController(QObject *parent)
     : QObject(parent)

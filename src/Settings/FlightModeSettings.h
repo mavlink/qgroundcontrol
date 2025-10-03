@@ -9,12 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class FlightModeSettings : public SettingsGroup
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     FlightModeSettings(QObject* parent = nullptr);
 
@@ -31,4 +34,5 @@ public:
     DEFINE_SETTINGFACT(apmHiddenFlightModesRoverBoat)
     DEFINE_SETTINGFACT(apmHiddenFlightModesSub)
     DEFINE_SETTINGFACT(apmHiddenFlightModesAirship)
+    DEFINE_SETTINGFACT(requireModeChangeConfirmation)
 };

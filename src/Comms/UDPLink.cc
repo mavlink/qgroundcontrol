@@ -21,7 +21,7 @@
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QUdpSocket>
 
-QGC_LOGGING_CATEGORY(UDPLinkLog, "qgc.comms.udplink")
+QGC_LOGGING_CATEGORY(UDPLinkLog, "Comms.UDPLink")
 
 namespace {
     constexpr int BUFFER_TRIGGER_SIZE = 10 * 1024;

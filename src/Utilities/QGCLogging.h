@@ -22,12 +22,13 @@ class QGCLogging : public QStringListModel
 
 public:
     explicit QGCLogging(QObject *parent = nullptr);
+    ~QGCLogging();
 
     /// Get the singleton instance
     static QGCLogging *instance();
 
     /// Install Qt message handler to route logs through this class
-    static void installHandler(bool quietWindowsAsserts);
+    static void installHandler();
 
     /// Write current log messages to a file asynchronously
     Q_INVOKABLE void writeMessages(const QString &destFile);

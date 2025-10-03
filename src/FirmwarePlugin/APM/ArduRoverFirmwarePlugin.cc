@@ -56,11 +56,6 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
-
-        remapV3_5["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
-        remapV3_5["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
-
         _remapParamNameIntialized = true;
     }
 }
@@ -72,8 +67,8 @@ ArduRoverFirmwarePlugin::~ArduRoverFirmwarePlugin()
 
 int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.5
-    return ((majorVersionNumber == 3) ? 5 : Vehicle::versionNotSetValue);
+    // Remapping not supported
+    return Vehicle::versionNotSetValue;
 }
 
 void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* /*vehicle*/, double /*altitudeChange*/, bool /*pauseVehicle*/)
@@ -84,6 +79,16 @@ void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* /*vehicle*/, dou
 QString ArduRoverFirmwarePlugin::stabilizedFlightMode() const
 {
     return _modeEnumToString.value(APMRoverMode::MANUAL, _manualFlightMode);
+}
+
+QString ArduRoverFirmwarePlugin::pauseFlightMode() const
+{
+    return _modeEnumToString.value(APMRoverMode::HOLD, _holdFlightMode);
+}
+
+QString ArduRoverFirmwarePlugin::followFlightMode() const
+{
+    return _modeEnumToString.value(APMRoverMode::FOLLOW, _followFlightMode);
 }
 
 void ArduRoverFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)

@@ -10,7 +10,7 @@
 #include "StateMachine.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(StateMachineLog, "qgc.utilities.statemachine");
+QGC_LOGGING_CATEGORY(StateMachineLog, "Utilities.StateMachine");
 
 StateMachine::StateMachine(QObject *parent)
     : QObject(parent)

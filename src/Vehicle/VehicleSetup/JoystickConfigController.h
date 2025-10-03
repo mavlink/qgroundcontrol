@@ -15,6 +15,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "Joystick.h"
@@ -24,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
 class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
-
+    QML_ELEMENT
     //friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
 
 public:

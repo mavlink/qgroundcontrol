@@ -24,7 +24,6 @@ if(ANDROID)
     endif()
 endif()
 
-# Our own, custom resources
 list(APPEND CUSTOM_RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom.qrc
 )
@@ -74,7 +73,7 @@ set(CUSTOM_SOURCES
 )
 
 set(CUSTOM_LIBRARIES
-    CustomModule # Explicitly link QML module, needed by Qt 6.6.3, TODO: Remove when support for this version is dropped
+    CustomModule
     CACHE INTERNAL "" FORCE
 )
 

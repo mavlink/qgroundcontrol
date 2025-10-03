@@ -14,7 +14,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "qgc.qmlcontrols.parametereditorcontroller")
+QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "QMLControls.ParameterEditorController")
 
 ParameterTableModel::ParameterTableModel(QObject* parent)
     : QAbstractTableModel(parent)
@@ -129,7 +129,7 @@ Fact* ParameterTableModel::factAt(int row) const
         return nullptr;
     }
 
-    return _tableData[row][0].value<Fact*>();
+    return _tableData[row][ValueColumn].value<Fact*>();
 }
 
 

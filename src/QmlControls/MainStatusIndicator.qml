@@ -12,10 +12,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
+
+
 
 RowLayout {
     id:         control
@@ -125,7 +125,7 @@ RowLayout {
             color:                  getIconColor()
             sourceSize.width:       width
             fillMode:               Image.PreserveAspectFit
-            //visible:                _activeVehicle && _activeVehicle.messageCount > 0// FIXME: Is messageCount check needed?
+            visible:                _activeVehicle && _activeVehicle.messageCount > 0
 
             function getIconColor() {
                 let iconColor = qgcPal.text

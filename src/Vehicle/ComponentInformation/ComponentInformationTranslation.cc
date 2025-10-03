@@ -20,7 +20,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QXmlStreamReader>
 
-QGC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformationTranslationLog")
+QGC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformation.ComponentInformationTranslation")
 
 ComponentInformationTranslation::ComponentInformationTranslation(QObject* parent,
                                                                  QGCCachedFileDownload* cachedFileDownload)

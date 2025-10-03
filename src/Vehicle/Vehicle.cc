@@ -47,7 +47,6 @@
 #include "TerrainProtocolHandler.h"
 #include "TerrainQuery.h"
 #include "TrajectoryPoints.h"
-#include "VehicleBatteryFactGroup.h"
 #include "VehicleLinkManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
@@ -69,7 +68,7 @@
 
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
+QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f
@@ -110,7 +109,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _distanceSensorFactGroup      (this)
     , _localPositionFactGroup       (this)
     , _localPositionSetpointFactGroup(this)
-    , _escStatusFactGroup           (this)
     , _estimatorStatusFactGroup     (this)
     , _hygrometerFactGroup          (this)
     , _generatorFactGroup           (this)
@@ -331,7 +329,6 @@ void Vehicle::_commonInit()
     _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
     _addFactGroup(&_localPositionFactGroup,     _localPositionFactGroupName);
     _addFactGroup(&_localPositionSetpointFactGroup,_localPositionSetpointFactGroupName);
-    _addFactGroup(&_escStatusFactGroup,         _escStatusFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_hygrometerFactGroup,        _hygrometerFactGroupName);
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
@@ -364,8 +361,7 @@ void Vehicle::_commonInit()
 
     _gimbalController = new GimbalController(this);
 
-    // Create camera manager instance
-    _cameraManager = _firmwarePlugin->createCameraManager(this);
+    _createCameraManager();
 }
 
 Vehicle::~Vehicle()
@@ -379,24 +375,7 @@ Vehicle::~Vehicle()
     _autopilotPlugin = nullptr;
 }
 
-void Vehicle::prepareDelete()
-{
-#if 0
-    // I believe this should no longer be needed with new PhtoVideoControl implmenentation.
-    // Leaving in for now, just in case it need to come back.
-    if(_cameraManager) {
-        // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
-        // the dangling pointer access will cause a runtime fault
-        auto tmpCameras = _cameraManager;
-        _cameraManager = nullptr;
-        delete tmpCameras;
-        emit cameraManagerChanged();
-        qApp->processEvents();
-    }
-#endif
-}
-
-void Vehicle::deleteCameraManager()
+void Vehicle::_deleteCameraManager()
 {
     if(_cameraManager) {
         delete _cameraManager;
@@ -404,7 +383,7 @@ void Vehicle::deleteCameraManager()
     }
 }
 
-void Vehicle::deleteGimbalController()
+void Vehicle::_deleteGimbalController()
 {
     if (_gimbalController) {
         delete _gimbalController;
@@ -522,8 +501,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     _waitForMavlinkMessageMessageReceivedHandler(message);
 
-    // Battery fact groups are created dynamically as new batteries are discovered
-    VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+    // Handle creation of dynamic fact group lists
+    _batteryFactGroupListModel.handleMessageForFactGroupCreation(this, message);
+    _escStatusFactGroupListModel.handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {
@@ -1922,7 +1902,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0);
+                    0, 0);
     }
 }
 
@@ -1949,6 +1929,11 @@ bool Vehicle::rover() const
 bool Vehicle::sub() const
 {
     return QGCMAVLink::isSub(vehicleType());
+}
+
+bool Vehicle::spacecraft() const
+{
+    return QGCMAVLink::isSpacecraft(vehicleType());
 }
 
 bool Vehicle::multiRotor() const
@@ -3405,15 +3390,6 @@ const QVariantList& Vehicle::modeIndicators()
     return emptyList;
 }
 
-const QVariantList& Vehicle::staticCameraList() const
-{
-    if (_cameraManager) {
-        return _cameraManager->cameraList();
-    }
-    static QVariantList emptyList;
-    return emptyList;
-}
-
 void Vehicle::_setupAutoDisarmSignalling()
 {
     QString param = _firmwarePlugin->autoDisarmParameter(this);
@@ -3554,7 +3530,7 @@ void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t tota
     }
 }
 
-int Vehicle::versionCompare(QString& compare) const
+int Vehicle::versionCompare(const QString& compare) const
 {
     return _firmwarePlugin->versionCompare(this, compare);
 }
@@ -3886,7 +3862,7 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -3917,7 +3893,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         static_cast<int16_t>(newRollCommand),
         static_cast<int16_t>(newThrustCommand),
         static_cast<int16_t>(newYawCommand),
-        buttons, 0,
+        buttons, buttons2,
         0,
         0, 0,
         0, 0, 0, 0, 0, 0
@@ -4405,6 +4381,29 @@ void Vehicle::_createMAVLinkLogManager()
 MAVLinkLogManager *Vehicle::mavlinkLogManager() const
 {
     return _mavlinkLogManager;
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                             Camera Manager                                */
+/*===========================================================================*/
+
+void Vehicle::_createCameraManager()
+{
+    if (!_cameraManager && _firmwarePlugin) {
+        _cameraManager = _firmwarePlugin->createCameraManager(this);
+        emit cameraManagerChanged();
+    }
+}
+
+const QVariantList &Vehicle::staticCameraList() const
+{
+    if (_cameraManager) {
+        return _cameraManager->cameraList();
+    }
+
+    static QVariantList emptyCameraList;
+    return emptyCameraList;
 }
 
 /*---------------------------------------------------------------------------*/

@@ -58,8 +58,8 @@ private:
 class Joystick : public QThread
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(bool                     accumulator             READ    accumulator             WRITE setAccumulator        NOTIFY accumulatorChanged)

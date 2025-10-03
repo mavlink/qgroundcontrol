@@ -70,12 +70,10 @@ include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
 
-if(EXISTS "${QGC_CPM_SOURCE_CACHE}")
-    set(ENV{CPM_SOURCE_CACHE} "${QGC_CPM_SOURCE_CACHE}")
-else()
-    set(ENV{CPM_SOURCE_CACHE} "${CMAKE_BINARY_DIR}/cpm_modules")
-endif()
 include(CPM)
+if(NOT CPM_SOURCE_CACHE)
+    set(CPM_SOURCE_CACHE "${CMAKE_BINARY_DIR}/cpm_modules")
+endif()
 
 include(Toolchain)
 
@@ -89,6 +87,12 @@ if(POLICY CMP0168)
     set(CMAKE_POLICY_DEFAULT_CMP0168 NEW)
 endif()
 
+# https://cmake.org/cmake/help/latest/policy/CMP0141.html#policy:CMP0141
+if(POLICY CMP0141)
+    cmake_policy(SET CMP0141 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
+endif()
+
 # https://cmake.org/cmake/help/latest/policy/CMP0075.html#policy:CMP0075
 if(POLICY CMP0075)
     cmake_policy(SET CMP0075 NEW)
@@ -98,20 +102,6 @@ endif()
 #######################################################
 #               Qt6 Configuration
 #######################################################
-
-# The values specified below are the ONLY supported configurations for this version of QGC.
-# Change these to something else at your own risk. Anything other than what is specified
-# here is unsupported so don't expect any help with problems.
-
-if(QGC_ENABLE_HERELINK AND ANDROID)
-    set(QGC_QT_MINIMUM_VERSION "6.6.3" CACHE STRING "Minimum Supported Qt Version")
-    set(QGC_QT_MAXIMUM_VERSION "6.6.3" CACHE STRING "Maximum Supported Qt Version")
-    set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
-else()
-    set(QGC_QT_MINIMUM_VERSION "6.8.3" CACHE STRING "Minimum Supported Qt Version")
-    set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
-    set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
-endif()
 
 find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
@@ -126,7 +116,6 @@ find_package(Qt6
         Location
         Multimedia
         Network
-        OpenGL
         Positioning
         Qml
         QmlIntegration
@@ -142,6 +131,7 @@ find_package(Qt6
     OPTIONAL_COMPONENTS
         Bluetooth
         MultimediaQuickPrivate
+        OpenGL
         Quick3D
         SerialPort
         Test
@@ -151,16 +141,10 @@ if(LINUX)
     find_package(Qt6 COMPONENTS WaylandClient)
 endif()
 
-# Set extra standard project setup options for Qt 6.7.0 and above
-set(EXTRA_STANDARD_PROJECT_SETUP_OPTIONS)
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
-    list(APPEND EXTRA_STANDARD_PROJECT_SETUP_OPTIONS I18N_SOURCE_LANGUAGE en)
-endif()
-
 qt_standard_project_setup(
     REQUIRES ${QGC_QT_MINIMUM_VERSION}
     SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
-    ${EXTRA_STANDARD_PROJECT_SETUP_OPTIONS}
+    I18N_SOURCE_LANGUAGE en
 )
 
 qt_policy(
@@ -188,18 +172,11 @@ endif()
 list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/qgcimages.qrc
     ${CMAKE_SOURCE_DIR}/qgcresources.qrc
-    ${CMAKE_SOURCE_DIR}/qgroundcontrol.qrc
 )
 
 list(APPEND QGC_RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
-    ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/APM/APMResources.qrc
-    ${CMAKE_SOURCE_DIR}/src/FirmwarePlugin/PX4/PX4Resources.qrc
 )
-
-if(QGC_BUILD_TESTING)
-    list(APPEND QGC_RESOURCES ${CMAKE_SOURCE_DIR}/test/UnitTest.qrc)
-endif()
 
 #######################################################
 #               QGroundControl Target
@@ -219,46 +196,40 @@ elseif(ANDROID)
     include(Android)
 endif()
 
+qt_add_qml_module(${CMAKE_PROJECT_NAME}
+    URI QGC
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    IMPORTS
+        QtQuick
+        QtQuick.Controls
+        QtQuick.Dialogs
+        QtQuick.Layouts
+)
+
 add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 endif()
 
-qt_add_qml_module(${CMAKE_PROJECT_NAME}
-    URI QGroundControl
-    VERSION 1.0
-    RESOURCE_PREFIX /qml
-)
-
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
 
-set(translations_options_arg)
-if(Qt6_VERSION VERSION_GREATER_EQUAL 6.7.0)
-    list(APPEND translations_options_arg TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations")
-    list(APPEND translations_options_arg TS_FILE_BASE ${CMAKE_PROJECT_NAME})
-endif()
 qt_add_translations(${CMAKE_PROJECT_NAME}
     TS_FILES ${TS_SOURCES}
     RESOURCE_PREFIX "/"
     LUPDATE_OPTIONS -no-obsolete
-    ${translations_options_arg}
+    TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations"
+    TS_FILE_BASE ${CMAKE_PROJECT_NAME}
 )
 
-qgc_set_qt_resource_alias(
-    ${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf
-    ${SDL_GAMECONTROLLERDB_PATH}
-)
+qgc_set_qt_resource_alias(${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf)
 
 qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     PREFIX "/"
     FILES
-        ${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf
-        ${SDL_GAMECONTROLLERDB_PATH}
-        ${QGC_GSTREAMER_SHADER_RESOURCES}
-        ${QGC_ARDUPILOT_PARAMS_RESOURCES}
-        # ${QGC_TEST_RESOURCES}
+        "${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf"
 )
 
 # cmake_print_variables(QT_ALL_PLUGIN_TYPES_FOUND_VIA_FIND_PACKAGE)
@@ -268,6 +239,16 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
     # INCLUDE_BY_TYPE styles Qt6::qtquickcontrols2basicstyleplugin Qt6::qtquickcontrols2basicstyleimplplugin
 )
+
+if(LINUX)
+    qt_import_plugins(${CMAKE_PROJECT_NAME} 
+        INCLUDE
+            Qt6::QWaylandIntegrationPlugin
+            Qt6::QXcbIntegrationPlugin
+            Qt6::QEglFSIntegrationPlugin
+            Qt6::QWaylandEglPlatformIntegrationPlugin
+    )
+endif()
 
 include(Install)
 

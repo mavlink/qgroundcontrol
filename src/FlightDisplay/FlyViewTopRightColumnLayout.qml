@@ -14,8 +14,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+
+
 
 ColumnLayout {
     width: _rightPanelWidth
@@ -25,13 +25,13 @@ ColumnLayout {
         Layout.preferredWidth:  _rightPanelWidth
     }
 
-    // We use a Loader to load the photoVideoControlComponent only when the active vehicle is not null
+    // We use a Loader to load the photoVideoControlComponent only when we have an active vehicle and a camera manager.
     // This make it easier to implement PhotoVideoControl without having to check for the mavlink camera
     // to be null all over the place
     Loader {
         id:                 photoVideoControlLoader
         Layout.alignment:   Qt.AlignTop | Qt.AlignRight
-        sourceComponent:    globals.activeVehicle ? photoVideoControlComponent : undefined
+        sourceComponent:    globals.activeVehicle && globals.activeVehicle.cameraManager ? photoVideoControlComponent : undefined
 
         property real rightEdgeCenterInset: visible ? parent.width - x : 0
 

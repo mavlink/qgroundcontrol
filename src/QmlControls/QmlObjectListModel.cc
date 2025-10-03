@@ -13,14 +13,14 @@
 #include <QtCore/QDebug>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "QmlObjectListModelLog")
+QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel        (parent)
     , _dirty                    (false)
     , _skipDirtyFirstItem       (false)
 {
-
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 QmlObjectListModel::~QmlObjectListModel()
@@ -95,8 +95,8 @@ bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& p
     
     beginInsertRows(QModelIndex(), position, position + rows - 1);
     endInsertRows();
-    
-    emit countChanged(count());
+
+    _signalCountChangedIfNotNested();
     
     return true;
 }
@@ -117,7 +117,7 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     }
     endRemoveRows();
     
-    emit countChanged(count());
+    _signalCountChangedIfNotNested();
     
     return true;
 }
@@ -307,6 +307,13 @@ void QmlObjectListModel::endResetModel()
     if (_resetModelNestingCount == 0) {
         qCDebug(QmlObjectListModelLog) << "Last call to endResetModel - calling QAbstractListModel::endResetModel" << this;
         QAbstractListModel::endResetModel();
+        emit countChanged(count());
+    }
+}
+
+void QmlObjectListModel::_signalCountChangedIfNotNested()
+{
+    if (_resetModelNestingCount == 0) {
         emit countChanged(count());
     }
 }

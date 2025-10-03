@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QString>
+#include <QtQmlIntegration/QtQmlIntegration>
 #include <string>
 
 #include "UTMSPRestInterface.h"
@@ -17,6 +18,8 @@
 class UTMSPAuthorization: public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     UTMSPAuthorization(QObject *parent = nullptr);
     virtual ~UTMSPAuthorization() = default;

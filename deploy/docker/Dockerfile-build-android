@@ -68,8 +68,8 @@ RUN git config --global --add safe.directory /project/source
 WORKDIR /project/build
 
 # Build the project
-CMD mkdir -p /workspace/build/shadow_build_dir && \
-    cd /workspace/build/shadow_build_dir && \
+CMD mkdir -p /workspace/build/build && \
+    cd /workspace/build/build && \
     qt-cmake -S /project/source -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DQT_HOST_PATH=$QT_HOST_PATH \

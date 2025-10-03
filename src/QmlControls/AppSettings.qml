@@ -13,9 +13,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 import QGroundControl.AppSettings
 
 Rectangle {
@@ -41,6 +41,11 @@ Rectangle {
                 break
             }
         }
+    }
+
+    // This need to block click event leakage to underlying map.
+    DeadMouseArea {
+        anchors.fill: parent
     }
 
     QGCPalette { id: qgcPal }

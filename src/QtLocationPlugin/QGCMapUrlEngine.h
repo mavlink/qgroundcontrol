@@ -7,12 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- *  @file
- *  @author Gus Grubba <gus@auterion.com>
- */
-
 #pragma once
 
 #include "QGCTileSet.h"

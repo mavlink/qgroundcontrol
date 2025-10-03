@@ -1,8 +1,13 @@
-import QtQuick3D
-import QtQuick
-import QtQuick.Controls
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
+import QGroundControl.Viewer3D
 
 Node {
     property alias cameraOneRotation: cameraPerspectiveOne.eulerRotation

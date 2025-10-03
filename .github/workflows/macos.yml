@@ -34,23 +34,15 @@ jobs:
         shell: bash
 
     env:
-      ARTIFACT: QGroundControl.dmg
-      PACKAGE: QGroundControl
       QT_VERSION: 6.8.3
-      QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
-
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
+          fetch-tags: true
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -58,7 +50,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '<=16.x'
 
       - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
@@ -70,7 +62,7 @@ jobs:
           host: mac
           target: clang_64
           build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -81,41 +73,45 @@ jobs:
           arch: clang_64
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          setup-python: false
           cache: true
+
+      - name: CMake configure
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
+
+      - name: Sanity check dev build executable
+        working-directory: ${{ runner.temp }}/build/Release/QGroundControl.app/Contents/MacOS
+        run: ./QGroundControl --simple-boot-test
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
         uses: apple-actions/import-codesign-certs@v5
         with:
-          p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
-          p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
+          p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
 
-      - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-
-      - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
-
-      - name: Sanity check dev build executable
-        if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir/Release/QGroundControl.app/Contents/MacOS
-        run: ./QGroundControl --simple-boot-test
-
-      - name: Create DMG
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+      - name: Create signed/notarized/stapled app bundle
+        working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config ${{ matrix.BuildType }}
+        env:
+          QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          QGC_MACOS_NOTARIZATION_USERNAME: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
+          QGC_MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
 
       - name: Mount DMG
-        if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: hdiutil attach QGroundControl.dmg
 
       - name: Sanity check DMG executable
-        if: matrix.BuildType == 'Release'
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 
@@ -123,8 +119,9 @@ jobs:
         if: matrix.BuildType == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
-          package_name: ${{ env.PACKAGE }}
+          artifact_name: QGroundControl.dmg
+          package_name: QGroundControl
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

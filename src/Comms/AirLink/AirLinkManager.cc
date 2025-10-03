@@ -12,13 +12,13 @@
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
-QGC_LOGGING_CATEGORY(AirLinkManagerLog, "qgc.airlink.airlinkmanager");
+QGC_LOGGING_CATEGORY(AirLinkManagerLog, "AirLink.AirLinkManager");
 
 Q_APPLICATION_STATIC(AirLinkManager, _airLinkManager);
 

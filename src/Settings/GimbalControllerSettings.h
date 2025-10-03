@@ -8,12 +8,15 @@
  ****************************************************************************/
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class GimbalControllerSettings : public SettingsGroup
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     GimbalControllerSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()

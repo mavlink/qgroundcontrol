@@ -14,11 +14,10 @@ import QtPositioning
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 
 /// QGCMapPolyline map visuals
 Item {

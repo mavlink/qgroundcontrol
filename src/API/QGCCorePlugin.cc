@@ -18,7 +18,6 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
-#include "LogDownloadController.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
@@ -34,14 +33,14 @@
 #include CUSTOMHEADER
 #endif
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QFile>
 #include <QtQml/qqml.h>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin");
+QGC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
 
 #ifndef QGC_CUSTOM_BUILD
 Q_APPLICATION_STATIC(QGCCorePlugin, _qgcCorePluginInstance);
@@ -52,12 +51,12 @@ QGCCorePlugin::QGCCorePlugin(QObject *parent)
     , _defaultOptions(new QGCOptions(this))
     , _emptyCustomMapItems(new QmlObjectListModel(this))
 {
-    // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCorePluginLog) << this;
 }
 
 QGCCorePlugin::~QGCCorePlugin()
 {
-    // qCDebug(QGCCorePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCCorePluginLog) << this;
 }
 
 QGCCorePlugin *QGCCorePlugin::instance()
@@ -67,13 +66,6 @@ QGCCorePlugin *QGCCorePlugin::instance()
 #else
     return CUSTOMCLASS::instance();
 #endif
-}
-
-void QGCCorePlugin::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<QGCCorePlugin>("QGroundControl", 1, 0, "QGCCorePlugin", QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCOptions>("QGroundControl", 1, 0, "QGCOptions", QStringLiteral("Reference only"));
-    (void) qmlRegisterUncreatableType<QGCFlyViewOptions>("QGroundControl", 1, 0, "QGCFlyViewOptions", QStringLiteral("Reference only"));
 }
 
 const QVariantList &QGCCorePlugin::analyzePages()
@@ -157,10 +149,16 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueGrid)
 {
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    FactValueGrid::FontSize defaultFontSize = FactValueGrid::DefaultFontSize;
+#else
+    FactValueGrid::FontSize defaultFontSize = FactValueGrid::MediumFontSize;
+#endif    
+
     if (factValueGrid->specificVehicleForCard()) {
         bool includeFWValues = factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
-        factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
+        factValueGrid->setFontSize(defaultFontSize);
         factValueGrid->appendColumn();
         factValueGrid->appendColumn();
 
@@ -191,7 +189,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
     } else {
         const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));
 
-        factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
+        factValueGrid->setFontSize(defaultFontSize);
 
         (void) factValueGrid->appendColumn();
         (void) factValueGrid->appendColumn();
@@ -269,13 +267,12 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), QGCLogging::instance());
-    qmlEngine->rootContext()->setContextProperty(QStringLiteral("logDownloadController"), LogDownloadController::instance());
     return qmlEngine;
 }
 
 void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 {
-    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow/MainWindow.qml")));
+    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
 }
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)

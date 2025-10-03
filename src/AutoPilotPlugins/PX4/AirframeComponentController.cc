@@ -18,7 +18,6 @@
 
 #include <QtCore/QThread>
 #include <QtCore/QVariant>
-#include <QtQml/qqml.h>
 #include <QtGui/QCursor>
 
 bool AirframeComponentController::_typesRegistered = false;
@@ -30,8 +29,6 @@ AirframeComponentController::AirframeComponentController(void) :
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
-        qmlRegisterUncreatableType<AirframeType>("QGroundControl.Controllers", 1, 0, "AiframeType", "Can only reference AirframeType");
-        qmlRegisterUncreatableType<Airframe>("QGroundControl.Controllers", 1, 0, "Aiframe", "Can only reference Airframe");
     }
     
     QStringList usedParams;
@@ -44,7 +41,7 @@ AirframeComponentController::AirframeComponentController(void) :
     
     bool autostartFound = false;
     _autostartId = getParameterFact(ParameterManager::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
-
+    _currentVehicleName = QString::number(_autostartId); // Temp val. Replaced with actual vehicle name if found
     
     for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
 

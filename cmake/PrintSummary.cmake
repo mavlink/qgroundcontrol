@@ -86,7 +86,7 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "-- External Dependencies -------------------------------------------")
 message(STATUS "MAVLink repo URL:     ${QGC_MAVLINK_GIT_REPO}")
 message(STATUS "MAVLink repo tag:     ${QGC_MAVLINK_GIT_TAG}")
-message(STATUS "CPM cache directory:  ${QGC_CPM_SOURCE_CACHE}")
+message(STATUS "CPM cache directory:  ${CPM_SOURCE_CACHE}")
 message(STATUS "QML output directory: ${QT_QML_OUTPUT_DIRECTORY}")
 message(STATUS "------------------------------------------------------------------")
 

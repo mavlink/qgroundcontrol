@@ -13,6 +13,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
@@ -25,6 +26,8 @@ class VehicleLinkManagerTest;
 class VehicleLinkManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(QString      primaryLinkName             READ primaryLinkName            WRITE setPrimaryLinkByName          NOTIFY primaryLinkChanged)
     Q_PROPERTY(QStringList  linkNames                   READ linkNames                                                      NOTIFY linkNamesChanged)
@@ -86,6 +89,7 @@ private:
     bool _communicationLost = false;
     bool _communicationLostEnabled = true;
     bool _autoDisconnect = false;                           ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
+    bool _allLinksRemovedSignalledByCloseVehicle = false;
 
     static constexpr int _commLostCheckTimeoutMSecs = 1000; ///< Check for comm lost once a second
     static constexpr int _heartbeatMaxElpasedMSecs = 3500;  ///< No heartbeat for longer than this indicates comm loss

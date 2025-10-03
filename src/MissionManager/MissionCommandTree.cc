@@ -15,19 +15,16 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-#include <QtCore/qapplicationstatic.h>
-#include <QtQml/qqml.h>
+#include <QtCore/QApplicationStatic>
 
-QGC_LOGGING_CATEGORY(MissionCommandTreeLog, "qgc.missionmanager.missioncommandtree");
+QGC_LOGGING_CATEGORY(MissionCommandTreeLog, "Plan.MissionCommandTree");
 
 Q_APPLICATION_STATIC(MissionCommandTree, _missionCommandTreeInstance);
 
 MissionCommandTree::MissionCommandTree(bool unitTest, QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(MissionCommandTreeLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterUncreatableType<MissionCommandTree>("QGroundControl", 1, 0, "MissionCommandTree", "Reference only");
+    qCDebug(MissionCommandTreeLog) << this;
 
     if (unitTest) {
         // Load unit testing tree
@@ -54,7 +51,7 @@ MissionCommandTree::MissionCommandTree(bool unitTest, QObject *parent)
 
 MissionCommandTree::~MissionCommandTree()
 {
-    // qCDebug(MissionCommandTreeLog) << Q_FUNC_INFO << this;
+    qCDebug(MissionCommandTreeLog) << this;
 }
 
 MissionCommandTree *MissionCommandTree::instance()

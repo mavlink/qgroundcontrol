@@ -16,7 +16,7 @@
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactMetaDataLog, "qgc.factsystem.factmetadata")
+QGC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -25,6 +25,7 @@ const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] 
     { "rad",            "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
     { "gimbal-degrees", "deg",  FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees, FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees },
     { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
+    { "centi-celsius",  "C",    FactMetaData::_centiCelsiusToCelsius,                   FactMetaData::_celsiusToCentiCelsius },
 };
 
 // Translations driven by app settings
@@ -622,6 +623,16 @@ QVariant FactMetaData::_centiDegreesToDegrees(const QVariant &centiDegrees)
 QVariant FactMetaData::_degreesToCentiDegrees(const QVariant &degrees)
 {
     return QVariant(qRound(degrees.toReal() * 100.0));
+}
+
+QVariant FactMetaData::_centiCelsiusToCelsius(const QVariant &centiCelsius)
+{
+    return QVariant(centiCelsius.toReal() / 100.0);
+}
+
+QVariant FactMetaData::_celsiusToCentiCelsius(const QVariant &celsius)
+{
+    return QVariant(qRound(celsius.toReal() * 100.0));
 }
 
 QVariant FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees(const QVariant &userGimbalDegrees)

@@ -8,7 +8,7 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - 'docs/**'
   pull_request:
     paths:
       - '.github/workflows/docker-linux.yml'
@@ -32,16 +32,15 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
+          fetch-tags: true
 
       - name: Get all tags for correct version determination
         working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
+        run: git fetch --all --tags --force --depth 1
 
       - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
 

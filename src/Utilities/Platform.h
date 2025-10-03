@@ -1,11 +1,24 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
-#include <QtCore/QtSystemDetection>
+namespace QGCCommandLineParser {
+    struct CommandLineParseResult;
+}
 
 namespace Platform {
-#ifdef Q_OS_MAC
-    /// Prevent Apple's app nap from screwing us over
-    /// tip: the domain can be cross-checked on the command line with <defaults domains>
-    void disableAppNapViaInfoDict();
-#endif
-}
+
+// Call before constructing Q(Core)Application.
+void setupPreApp(const QGCCommandLineParser::CommandLineParseResult &cli);
+
+// Call after Q(Core)Application exists and logging is installed.
+void setupPostApp();
+
+} // namespace Platform

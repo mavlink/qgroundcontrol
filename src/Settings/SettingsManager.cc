@@ -35,32 +35,27 @@
 #include "Viewer3DSettings.h"
 #endif
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtQml/qqml.h>
 
-QGC_LOGGING_CATEGORY(SettingsManagerLog, "qgc.settings.settingsmanager")
+QGC_LOGGING_CATEGORY(SettingsManagerLog, "Utilities.SettingsManager")
 
 Q_APPLICATION_STATIC(SettingsManager, _settingsManagerInstance);
 
 SettingsManager::SettingsManager(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(SettingsManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(SettingsManagerLog) << this;
 }
 
 SettingsManager::~SettingsManager()
 {
-    // qCDebug(SettingsManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(SettingsManagerLog) << this;
 }
 
 SettingsManager *SettingsManager::instance()
 {
     return _settingsManagerInstance();
-}
-
-void SettingsManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager", "Reference only");
 }
 
 void SettingsManager::init()

@@ -14,7 +14,7 @@
 
 #include <QtCore/QTimeZone>
 
-QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "qgc.analyzeview.mavlinkmessage")
+QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "AnalyzeView.MAVLinkMessage")
 
 QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *parent)
     : QObject(parent)
@@ -22,7 +22,7 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *
     , _fields(new QmlObjectListModel(this))
 
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkMessageLog) << this;
 
     const mavlink_message_info_t *const msgInfo = mavlink_get_message_info(&message);
     if (!msgInfo) {
@@ -57,6 +57,8 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *
 QGCMAVLinkMessage::~QGCMAVLinkMessage()
 {
     _fields->clearAndDeleteContents();
+
+    qCDebug(MAVLinkMessageLog) << this;
 }
 
 void QGCMAVLinkMessage::updateFieldSelection()
@@ -110,7 +112,7 @@ void QGCMAVLinkMessage::update(const mavlink_message_t &message)
     _count++;
     _message = message;
 
-    if (_fieldSelected) {
+    if (_selected || _fieldSelected) {
         // Don't update field info unless selected to reduce perf hit of message processing
         _updateFields();
     }

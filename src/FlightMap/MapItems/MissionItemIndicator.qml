@@ -11,9 +11,10 @@
 import QtQuick
 import QtLocation
 
-import QGroundControl.ScreenTools
+import QGroundControl
+
 import QGroundControl.Controls
-import QGroundControl.Vehicle
+
 
 /// Marker for displaying a mission item on the map
 MapQuickItem {

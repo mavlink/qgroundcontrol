@@ -11,14 +11,16 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
-#include "Viewer3DUtils.h"
+#include "QGCGeo.h"
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 class GeoCoordinateType: public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(QGeoCoordinate gpsRef READ gpsRef WRITE setGpsRef NOTIFY gpsRefChanged)
     Q_PROPERTY(QGeoCoordinate coordinate READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
     Q_PROPERTY(QVector3D localCoordinate READ localCoordinate NOTIFY localCoordinateChanged)
@@ -34,7 +36,7 @@ public:
         QGeoCoordinate gps_tmp = _coordinate;
         QGeoCoordinate gps_ref_tmp = _gpsRef;
 
-        QVector3D local_pose_tmp = mapGpsToLocalPoint(gps_tmp, gps_ref_tmp);
+        QVector3D local_pose_tmp = QGCGeo::convertGpsToEnu(gps_tmp, gps_ref_tmp);
 
         if(_localCoordinate != local_pose_tmp) {
             _localCoordinate = local_pose_tmp;
