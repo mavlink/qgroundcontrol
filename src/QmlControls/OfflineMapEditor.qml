@@ -37,6 +37,7 @@ FlightMap {
     property var    _settings:          _settingsManager ? _settingsManager.offlineMapsSettings : null
     property var    _fmSettings:        _settingsManager ? _settingsManager.flightMapSettings : null
     property var    _appSettings:       _settingsManager.appSettings
+    property Fact   _tiandituFact:      _settingsManager ? _settingsManager.appSettings.tiandituToken : null
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
