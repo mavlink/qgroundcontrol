@@ -74,7 +74,6 @@ Item {
     property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
     property bool   _sensorsHaveFixedOrientation:       QGroundControl.corePlugin.options.sensorsHaveFixedOrientation
-    property bool   _wifiReliableForCalibration:        QGroundControl.corePlugin.options.wifiReliableForCalibration
     property int    _buttonWidth:                       ScreenTools.defaultFontPixelWidth * 15
     property string _calMagIdParamFormat:               "CAL_MAG#_ID"
     property string _calMagRotParamFormat:              "CAL_MAG#_ROT"
@@ -170,13 +169,6 @@ Item {
             if (controller.waitingForCancel) {
                 waitForCancelDialogComponent.createObject(mainWindow).open()
             }
-        }
-    }
-
-    Component.onCompleted: {
-        var usingUDP = controller.usingUDPLink()
-        if (usingUDP && !_wifiReliableForCalibration) {
-            mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead."))
         }
     }
 
