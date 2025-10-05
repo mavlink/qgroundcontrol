@@ -47,7 +47,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 qt_add_library(AutoPilotPluginsAPMModule STATIC)
 
 qt_add_qml_module(AutoPilotPluginsAPMModule
-    URI QGroundControl.AutoPilotPlugin.APM
+    URI QGroundControl.AutoPilotPlugins.APM
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
