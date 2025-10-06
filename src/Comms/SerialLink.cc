@@ -75,6 +75,7 @@ void SerialConfiguration::copyFrom(const LinkConfiguration *source)
     setPortName(serialSource->portName());
     setPortDisplayName(serialSource->portDisplayName());
     setUsbDirect(serialSource->usbDirect());
+    setdtrForceLow(serialSource->dtrForceLow());
 }
 
 void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
@@ -88,6 +89,7 @@ void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
     setParity(static_cast<QSerialPort::Parity>(settings.value("parity", _parity).toInt()));
     setPortName(settings.value("portName", _portName).toString());
     setPortDisplayName(settings.value("portDisplayName", _portDisplayName).toString());
+    setdtrForceLow(settings.value("dtrForceLow", _dtrForceLow).toBool());
 
     settings.endGroup();
 }
@@ -103,6 +105,7 @@ void SerialConfiguration::saveSettings(QSettings &settings, const QString &root)
     settings.setValue("parity", _parity);
     settings.setValue("portName", _portName);
     settings.setValue("portDisplayName", _portDisplayName);
+    settings.setValue("dtrForceLow", _dtrForceLow);
 
     settings.endGroup();
 }
@@ -312,7 +315,7 @@ void SerialWorker::_onPortConnected()
 {
     qCDebug(SerialLinkLog) << "Port connected:" << _port->portName();
 
-    _port->setDataTerminalReady(true);
+    _port->setDataTerminalReady(_serialConfig->dtrForceLow() ? false : true);
     _port->setBaudRate(_serialConfig->baud());
     _port->setDataBits(static_cast<QSerialPort::DataBits>(_serialConfig->dataBits()));
     _port->setFlowControl(static_cast<QSerialPort::FlowControl>(_serialConfig->flowControl()));
