@@ -72,7 +72,7 @@ QGCLogging::~QGCLogging()
 void QGCLogging::installHandler()
 {
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{category}:: %{time process} - %{type}: %{message} (%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{time process} %{if-warning}Warning:%{endif} %{message} - %{category} - (%{function}:%{line})"));
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);
