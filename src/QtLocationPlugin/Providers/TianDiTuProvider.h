@@ -11,13 +11,13 @@
 
 #include "MapProvider.h"
 
-static constexpr const quint32 AVERAGE_TIANDI_STREET_MAP = 1297;
-static constexpr const quint32 AVERAGE_TIANDI_SAT_MAP    = 19597;
+static constexpr const quint32 AVERAGE_TIANDITU_STREET_MAP = 1297;
+static constexpr const quint32 AVERAGE_TIANDITU_SAT_MAP    = 19597;
 
-class TianDiMapProvider : public MapProvider
+class TianDiTuProvider : public MapProvider
 {
 protected:
-    TianDiMapProvider(const QString &mapName, const QString &mapTypeCode, const QString &imageFormat, quint32 averageSize,
+    TianDiTuProvider(const QString &mapName, const QString &mapTypeCode, const QString &imageFormat, quint32 averageSize,
                     QGeoMapType::MapStyle mapType)
         : MapProvider(mapName, QStringLiteral("https://map.tianditu.gov.cn/"), imageFormat, averageSize, mapType)
         , _mapType(mapTypeCode) {}
@@ -29,27 +29,27 @@ private:
     const QString _mapUrl = QStringLiteral("https://t%1.tianditu.gov.cn/DataServer?tk=%2&T=%3&x=%4&y=%5&l=%6");
 };
 
-class TianDiRoadMapProvider : public TianDiMapProvider
+class TianDiTuRoadProvider : public TianDiTuProvider
 {
 public:
-    TianDiRoadMapProvider()
-        : TianDiMapProvider(
-            QObject::tr("TianDi Road"),
+    TianDiTuRoadProvider()
+        : TianDiTuProvider(
+            QObject::tr("TianDiTu Road"),
             QStringLiteral("cia_w"),
             QStringLiteral("png"),
-            AVERAGE_TIANDI_STREET_MAP,
+            AVERAGE_TIANDITU_STREET_MAP,
             QGeoMapType::StreetMap) {}
 };
 
-class TianDiSatelliteMapProvider : public TianDiMapProvider
+class TianDiTuSatelliteProvider : public TianDiTuProvider
 {
 public:
-    TianDiSatelliteMapProvider()
-        : TianDiMapProvider(
-            QObject::tr("TianDi Satellite"),
+    TianDiTuSatelliteProvider()
+        : TianDiTuProvider(
+            QObject::tr("TianDiTu Satellite"),
             QStringLiteral("img_w"),
             QStringLiteral("jpg"),
-            AVERAGE_TIANDI_SAT_MAP,
+            AVERAGE_TIANDITU_SAT_MAP,
             QGeoMapType::SatelliteMapDay) {}
 };
 
