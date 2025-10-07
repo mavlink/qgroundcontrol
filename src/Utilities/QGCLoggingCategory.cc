@@ -52,7 +52,7 @@ void QGCLoggingCategoryManager::registerCategory(const QString &fullCategory)
         for (int j=0; j<currentParentModel->count(); j++) {
             auto item = qobject_cast<QGCLoggingCategoryItem*>(currentParentModel->get(j));
             if (item->fullCategory == fullParentCategory && item->children) {
-                qDebug() << "  Found existing parent full category" << item->fullCategory;
+                //qDebug() << "  Found existing parent full category" << item->fullCategory;
                 currentParentModel = item->children;
                 found = true;
                 break;
