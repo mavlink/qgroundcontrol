@@ -174,8 +174,8 @@
 },
 {
     "name":             "tiandituToken",
-    "shortDesc": "Access token to Tianditu maps",
-    "longDesc":  "Your personal access token for Tianditu maps",
+    "shortDesc": "Access token to TianDiTu maps",
+    "longDesc":  "Your personal access token for TianDiTu maps",
     "type":             "string",
     "default":     ""
 },
