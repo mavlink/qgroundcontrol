@@ -13,11 +13,9 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 
 Item {
@@ -159,10 +157,11 @@ Item {
                     return v * 32768.0
                 }
 
-                function joyToThrottleAxis(t) {
-                    t = Math.max(0, Math.min(1, t))
-                    const display = (2 * t - 1)
-                    return display * 32768.0
+                function joyToThrottleAxis(v, reversed) {
+                    v = Math.max(-1, Math.min(1, v))
+                    v = (2 * v - 1)
+                    if (reversed) v = -v
+                    return v * 32768.0
                 }
 
                 GridLayout {
@@ -225,10 +224,10 @@ Item {
                     Connections {
                         target: _activeJoystick
                         onAxisValues: (roll, pitch, yaw, throttle) => {
-                            rollAxis.axisValue     = axisRect.joyToAxis(roll,     controller.rollAxisReversed)
-                            pitchAxis.axisValue    = axisRect.joyToAxis(pitch,    controller.pitchAxisReversed)
-                            yawAxis.axisValue      = axisRect.joyToAxis(yaw,      controller.yawAxisReversed)
-                            throttleAxis.axisValue = axisRect.joyToThrottleAxis(throttle, controller.throttleAxisReversed, _activeJoystick.negativeThrust)
+                            rollAxis.axisValue     = axisRect.joyToAxis(roll,  controller.rollAxisReversed)
+                            pitchAxis.axisValue    = axisRect.joyToAxis(pitch, controller.pitchAxisReversed)
+                            yawAxis.axisValue      = axisRect.joyToAxis(yaw,   controller.yawAxisReversed)
+                            throttleAxis.axisValue = axisRect.joyToThrottleAxis(throttle, controller.throttleAxisReversed)
                         }
                     }
                 }
@@ -276,5 +275,3 @@ Item {
         }
     }
 }
-
-
