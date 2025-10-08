@@ -38,7 +38,7 @@ Supported versions: macOS 12 (Monterey) or later:
 1. Double-click the .dmg file to mount it, then drag the _QGroundControl_ application to your _Application_ folder.
 
 ::: info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
 :::
 
 ## Ubuntu Linux {#ubuntu}
