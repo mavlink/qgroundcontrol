@@ -27,7 +27,7 @@ Rectangle {
     height:     mainLayout.height + (_margins * 2)
     color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
     radius:     _margins
-    visible:    _camera.capturesVideo || _camera.capturesPhotos
+    visible:    _camera.capturesVideo || _camera.capturesPhotos || _camera.hasTracking || _camera.hasVideoStream
 
     property real   _margins:                   ScreenTools.defaultFontPixelHeight / 2
     property real   _smallMargins:              ScreenTools.defaultFontPixelWidth / 2
@@ -163,6 +163,7 @@ Rectangle {
                     radius:             width * 0.5
                     border.color:       qgcPal.buttonText
                     border.width:       3
+                    visible:            _camera.capturesVideo || _camera.capturesPhotos
 
                     Rectangle {
                         // anchors.centerIn snaps to integer coordinates, which
@@ -211,6 +212,7 @@ Rectangle {
                     Layout.preferredWidth:  (_cameraInVideoMode ? videoRecordTime.width : photoCaptureCount.width) + (_smallMargins * 2)
                     Layout.preferredHeight: (_cameraInVideoMode ? videoRecordTime.height : photoCaptureCount.height)
                     radius:                 _margins / 2
+                    visible:                _camera.capturesVideo || _camera.capturesPhotos
 
                     // Video record time
                     QGCLabel {

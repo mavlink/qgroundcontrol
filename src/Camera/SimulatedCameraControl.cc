@@ -22,10 +22,12 @@ SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent
 {
     qCDebug(SimulatedCameraControlLog) << this;
 
-    (void) connect(VideoManager::instance(), &VideoManager::recordingChanged, this, [this](bool recording) {
+    auto videoManager = VideoManager::instance();
+    (void) connect(videoManager, &VideoManager::recordingChanged, this, [this](bool recording) {
         _videoCaptureStatus = recording ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
         emit videoCaptureStatusChanged();
     });
+    connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
 
     (void) connect(SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
 
@@ -191,6 +193,7 @@ bool SimulatedCameraControl::capturesPhotos() const
 
 bool SimulatedCameraControl::hasVideoStream() const
 {
+    qDebug() << "hasVideoStream" << VideoManager::instance()->hasVideo();
     return VideoManager::instance()->hasVideo();
 }
 
