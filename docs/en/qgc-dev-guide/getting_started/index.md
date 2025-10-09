@@ -89,6 +89,7 @@ To install Qt:
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
+   - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
    - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html). JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
        You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
 	Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
