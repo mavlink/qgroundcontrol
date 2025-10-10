@@ -28,5 +28,6 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         # QT_TARGET_ORIGINAL_FILENAME: RC Original FileName
         # QT_TARGET_TRADEMARKS: RC LegalTrademarks
         # QT_TARGET_INTERNALNAME: RC InternalName
+        QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
 )
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES NOMINMAX WIN32_LEAN_AND_MEAN)
