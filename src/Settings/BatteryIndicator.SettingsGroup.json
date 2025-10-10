@@ -23,6 +23,12 @@
             "type": "uint32",
             "default": 60,
             "units": "%"
+        },
+        {
+            "name": "consolidateMultipleBatteries",
+            "shortDesc": "Consolidate multiple battery readings",
+            "type": "bool",
+            "default": true
         }
     ]
 }

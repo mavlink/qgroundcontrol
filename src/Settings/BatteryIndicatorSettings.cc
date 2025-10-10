@@ -16,6 +16,7 @@ DECLARE_SETTINGGROUP(BatteryIndicator, "BatteryIndicator")
 }
 
 DECLARE_SETTINGSFACT(BatteryIndicatorSettings, valueDisplay)
+DECLARE_SETTINGSFACT(BatteryIndicatorSettings, consolidateMultipleBatteries)
 
 DECLARE_SETTINGSFACT_NO_FUNC(BatteryIndicatorSettings, threshold1)
 {
