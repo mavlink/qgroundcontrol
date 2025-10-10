@@ -3,6 +3,11 @@ if(NOT WIN32)
     return()
 endif()
 
+# Ensure TWEAK version component is set (defaults to 0 if not specified)
+if(NOT CMAKE_PROJECT_VERSION_TWEAK)
+    set(CMAKE_PROJECT_VERSION_TWEAK 0)
+endif()
+
 # Configure the Windows resource file from template
 configure_file(
     "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc.in"
