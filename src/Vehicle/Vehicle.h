@@ -383,6 +383,16 @@ public:
     ///     @param timeoutSec Disabled motor after this amount of time
     Q_INVOKABLE void motorTest(int motor, int percent, int timeoutSecs, bool showError);
 
+    // dev
+    Q_INVOKABLE int factVehicleLight();
+    Q_INVOKABLE void setfactVehicleLight(int index);
+
+    Q_INVOKABLE void vehicleLight_one(int typeCamera);
+    Q_INVOKABLE void lightSettings();
+
+    Q_INVOKABLE void gnssDenied();
+    //dev end
+
     enum PIDTuningTelemetryMode {
         ModeDisabled,
         ModeRateAndAttitude,
@@ -1294,6 +1304,9 @@ private:
     // We use this to limit above terrain altitude queries based on distance and altitude change
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
+
+    int _factVehicleLight = 1; //dev
+    int _gnssDeniedState = 0; //dev
 
 public:
     int32_t getMessageRate(uint8_t compId, uint16_t msgId);

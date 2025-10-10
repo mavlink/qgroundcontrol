@@ -2001,6 +2001,62 @@ QString Vehicle::vehicleClassInternalName() const
     return QGCMAVLink::vehicleClassToInternalString(vehicleClass());
 }
 
+//dev
+void Vehicle::setfactVehicleLight(int index)
+{
+    _factVehicleLight = index;
+}
+
+int Vehicle::factVehicleLight()
+{
+    return _factVehicleLight;
+}
+
+void Vehicle::vehicleLight_one(int switchLight){
+    // qDebug()<<"Light on "<<switchLight;
+
+    sendMavCommand( 36, 
+                    MAV_CMD_ILLUMINATOR_ON_OFF,
+                    false, 
+                    switchLight,
+                    0, 
+                    0, 
+                    0, 
+                    0, 
+                    0, 
+                    0);
+}
+
+void Vehicle::lightSettings()
+{
+    sendMavCommand( 36, 
+                    MAV_CMD_REQUEST_MESSAGE, // MAV_CMD_REQUEST_CAMERA_SETTINGS 
+                    false, 
+                    440,
+                    0, 
+                    0, 
+                    0, 
+                    0, 
+                    0, 
+                    1);
+}
+
+void Vehicle::gnssDenied()
+{
+    _gnssDeniedState ^= 1;  // toggle 0 <-> 1
+    sendMavCommand(
+        defaultComponentId(),
+        MAV_CMD_USER_1,
+        false,
+        static_cast<float>(_gnssDeniedState),  // param1
+        0, 0, 0, 0, 0, 0
+    );
+
+    qDebug()<<_gnssDeniedState;
+    qDebug()<<"comp id: "<<defaultComponentId();
+}
+// dev end
+
 /// Returns the string to speak to identify the vehicle
 QString Vehicle::_vehicleIdSpeech()
 {

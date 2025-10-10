@@ -82,6 +82,21 @@ Rectangle {
             onClicked:          _activeVehicle.closeVehicle()
             visible:            _activeVehicle && _communicationLost
         }
+
+        QGCButton {
+            id: gnssButton
+            // 0 = Auto, 1 = ON
+            property int gnssMode: 0
+
+            text: gnssMode ? qsTr("GNSS ON") : qsTr("GNSS Auto")
+            visible: true
+
+            onClicked: {
+                gnssMode = gnssMode ? 0 : 1
+                _activeVehicle.gnssDenied()
+            }
+        }
+
     }
 
     QGCFlickable {

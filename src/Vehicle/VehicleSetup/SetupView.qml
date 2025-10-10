@@ -98,6 +98,12 @@ Rectangle {
         }
     }
 
+    //dev
+    function sendRequest() {
+        QGroundControl.multiVehicleManager.activeVehicle.lightSettings()
+    }
+    //dev end
+
     Component.onCompleted: _showSummaryPanel()
 
     Connections {
@@ -280,6 +286,20 @@ Rectangle {
 
                 onClicked: showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/FirmwareUpgrade.qml")
             }
+
+            ConfigButton {
+                id:                 lightsDrone
+                icon.source:      "/qmlimages/LightsComponentIcon.png"
+                visible:            true
+                text:               qsTr("Lights")
+                Layout.fillWidth:   true
+                onClicked:          {
+                    showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/VehicleLights.qml");
+                    sendRequest(this)
+
+                }
+            }
+
         }
     }
 
