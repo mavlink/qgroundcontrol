@@ -1,3 +1,8 @@
+# ============================================================================
+# Actuators Subsystem
+# Motor, servo, and actuator configuration and testing
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ActuatorActions.cc

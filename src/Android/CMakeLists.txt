@@ -1,3 +1,9 @@
+# ============================================================================
+# Android Module
+# Android platform-specific initialization and interfaces
+# ============================================================================
+
+# Only build on Android platforms
 if(NOT ANDROID)
     return()
 endif()
@@ -13,4 +19,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# Android Serial Port Support
+# ----------------------------------------------------------------------------
 add_subdirectory(qtandroidserialport)

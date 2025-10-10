@@ -1,3 +1,8 @@
+# ============================================================================
+# APM AutoPilot Plugin
+# ArduPilot-specific vehicle configuration and setup
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         APMAirframeComponent.cc
@@ -44,6 +49,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# APM QML Module
+# ----------------------------------------------------------------------------
 qt_add_library(AutoPilotPluginsAPMModule STATIC)
 
 qt_add_qml_module(AutoPilotPluginsAPMModule
@@ -91,7 +99,9 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
     NO_PLUGIN
 )
 
-# Add json file
+# ----------------------------------------------------------------------------
+# APM Component Metadata
+# ----------------------------------------------------------------------------
 qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
     PREFIX "/json"
     FILES APMFollowComponent.FactMetaData.json

@@ -1,3 +1,8 @@
+# ============================================================================
+# Flight Map Module
+# Map widgets, vehicle indicators, and mission visualization
+# ============================================================================
+
 qt_add_library(FlightMapModule STATIC)
 
 qt_add_qml_module(FlightMapModule
