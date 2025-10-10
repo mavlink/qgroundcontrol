@@ -158,8 +158,8 @@ Item {
                 }
 
                 function joyToThrottleAxis(v, reversed) {
-                    v = Math.max(-1, Math.min(1, v))
                     v = (2 * v - 1)
+                    v = Math.max(-1, Math.min(1, v))
                     if (reversed) v = -v
                     return v * 32768.0
                 }
