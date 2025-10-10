@@ -1,6 +1,9 @@
+# ----------------------------------------------------------------------------
+# QGroundControl Apple Platform Configuration (macOS and iOS)
+# ----------------------------------------------------------------------------
+
 if(NOT APPLE)
-    message(FATAL_ERROR "QGC: Invalid Platform")
-    return()
+    message(FATAL_ERROR "QGC: Invalid Platform: Apple.cmake included but platform is not Apple")
 endif()
 
 if(CMAKE_GENERATOR STREQUAL "Xcode")
@@ -16,6 +19,9 @@ if(CMAKE_GENERATOR STREQUAL "Xcode")
     set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${QGC_MACOS_ENTITLEMENTS_PATH}")
 endif()
 
+# ----------------------------------------------------------------------------
+# macOS/iOS Bundle Configuration
+# ----------------------------------------------------------------------------
 cmake_path(GET QGC_MACOS_ICON_PATH FILENAME MACOSX_BUNDLE_ICON_FILE)
 
 set_target_properties(${CMAKE_PROJECT_NAME}
@@ -32,7 +38,11 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}"
 )
 
+# ----------------------------------------------------------------------------
+# Platform-Specific Configuration
+# ----------------------------------------------------------------------------
 if(MACOS)
+    # macOS-specific configuration
     set(app_icon_macos "${QGC_MACOS_ICON_PATH}")
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
@@ -44,7 +54,10 @@ if(MACOS)
             "${app_entitlements_macos}"
             "${app_icon_macos}"
     )
+
+    message(STATUS "QGC: macOS platform configuration applied")
 elseif(IOS)
+    # iOS-specific configuration
     enable_language(OBJC)
 
     set(QT_IOS_LAUNCH_SCREEN "${CMAKE_SOURCE_DIR}/deploy/ios/QGCLaunchScreen.xib")
@@ -70,6 +83,9 @@ elseif(IOS)
             XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
     )
 
+    # Add FFmpeg libraries for iOS if needed
     # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
     qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
+
+    message(STATUS "QGC: iOS platform configuration applied")
 endif()

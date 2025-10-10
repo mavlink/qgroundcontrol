@@ -1,18 +1,31 @@
+# ============================================================================
+# CreateCPackIFW.cmake
+# Qt Installer Framework (IFW) package generator for cross-platform installers
+# ============================================================================
+
 include(CreateCPackCommon)
 
-# Hints for Finding QtIFW
+# ----------------------------------------------------------------------------
+# Qt Installer Framework Detection
+# ----------------------------------------------------------------------------
+# Hints for finding QtIFW
 set(CPACK_IFW_ROOT "${Qt6_ROOT_DIR}/../../Tools/QtInstallerFramework/*")
 set(QTIFWDIR "${Qt6_ROOT_DIR}/../../Tools/QtInstallerFramework/*")
 
 include(CPackIFW)
 
+# ----------------------------------------------------------------------------
+# IFW Generator Configuration
+# ----------------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR "IFW")
 set(CPACK_BINARY_IFW ON)
 
-# Debug
+# Debug output
 set(CPACK_IFW_VERBOSE ON)
 
-# Package
+# ----------------------------------------------------------------------------
+# Package Appearance
+# ----------------------------------------------------------------------------
 set(CPACK_IFW_PACKAGE_TITLE "${QGC_INSTALLER_NAME}")
 set(CPACK_IFW_PACKAGE_PUBLISHER "${QGC_ORG_NAME}")
 set(CPACK_IFW_PRODUCT_URL "${CMAKE_PROJECT_HOMEPAGE_URL}")
@@ -28,6 +41,10 @@ set(CPACK_IFW_PACKAGE_WIZARD_STYLE "Modern")
 # set(CPACK_IFW_PACKAGE_WIZARD_SHOW_PAGE_LIST OFF)
 # set(CPACK_IFW_PACKAGE_TITLE_COLOR "#007A5C")
 # set(CPACK_IFW_PACKAGE_STYLE_SHEET "${INSTALLER_ROOT}/config/dev/style.qss")
+
+# ----------------------------------------------------------------------------
+# Platform-Specific Install Directories
+# ----------------------------------------------------------------------------
 if(${CMAKE_SYSTEM_NAME} MATCHES Linux)
     set(CPACK_IFW_TARGET_DIRECTORY "@HomeDir@/${CMAKE_PROJECT_NAME}")
     set(CPACK_IFW_ADMIN_TARGET_DIRECTORY "@HomeDir@/${CMAKE_PROJECT_NAME}")

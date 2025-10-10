@@ -1,5 +1,13 @@
+# ============================================================================
+# CreateCPackArchive.cmake
+# ZIP archive package generator for cross-platform distribution
+# ============================================================================
+
 include(CreateCPackCommon)
 
+# ----------------------------------------------------------------------------
+# Archive Generator Configuration
+# ----------------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR "ZIP")
 set(CPACK_BINARY_ZIP ON)
 

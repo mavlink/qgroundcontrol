@@ -1,5 +1,13 @@
+# ============================================================================
+# UTMSP Module
+# Unmanned Traffic Management Service Provider integration
+# ============================================================================
+
 qt_add_library(UTMSPModule STATIC)
 
+# ----------------------------------------------------------------------------
+# Dummy UTMSP Module (when adapter is disabled)
+# ----------------------------------------------------------------------------
 if(NOT QGC_UTM_ADAPTER)
     set_source_files_properties(dummy/UTMSPStateStorage.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
@@ -20,6 +28,10 @@ if(NOT QGC_UTM_ADAPTER)
 
     return()
 endif()
+
+# ----------------------------------------------------------------------------
+# Full UTMSP Adapter Implementation
+# ----------------------------------------------------------------------------
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -49,6 +61,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         UTMSPVehicle.h
 )
 
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
+# TODO: Enable nlohmann_json when needed
 # CPMFindPackage(
 #     NAME nlohmann_json
 #     VERSION 3.11.3
@@ -70,6 +86,9 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UTM_ADAPTER)
 
+# ----------------------------------------------------------------------------
+# UTMSP QML Module
+# ----------------------------------------------------------------------------
 set_source_files_properties(UTMSPStateStorage.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(UTMSPModule

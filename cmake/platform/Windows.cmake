@@ -1,10 +1,24 @@
+# ----------------------------------------------------------------------------
+# QGroundControl Windows Platform Configuration
+# ----------------------------------------------------------------------------
+
 if(NOT WIN32)
-    message(FATAL_ERROR "Invalid Platform")
-    return()
+    message(FATAL_ERROR "QGC: Invalid Platform: Windows.cmake included but platform is not Windows")
 endif()
 
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES NOMINMAX WIN32_LEAN_AND_MEAN)
+# ----------------------------------------------------------------------------
+# Windows-Specific Definitions
+# ----------------------------------------------------------------------------
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        _USE_MATH_DEFINES    # Enable M_PI and other math constants
+        NOMINMAX             # Prevent min/max macro conflicts
+        WIN32_LEAN_AND_MEAN  # Reduce Windows.h bloat
+)
 
+# ----------------------------------------------------------------------------
+# Windows Executable Configuration
+# ----------------------------------------------------------------------------
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 
 if(COMMAND _qt_internal_generate_win32_rc_file)
@@ -33,5 +47,7 @@ elseif(EXISTS "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc.in")
     )
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_BINARY_DIR}/QGroundControl.rc")
 else()
-    message(WARNING "No Windows resource file found")
+    message(WARNING "QGC: No Windows resource file found")
 endif()
+
+message(STATUS "QGC: Windows platform configuration applied")

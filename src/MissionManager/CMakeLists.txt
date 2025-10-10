@@ -1,3 +1,8 @@
+# ============================================================================
+# Mission Manager Module
+# Handles mission planning, geofences, rally points, and survey patterns
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         BlankPlanCreator.cc
@@ -75,7 +80,9 @@ target_sources(${CMAKE_PROJECT_NAME}
         VTOLLandingComplexItem.h
 )
 
-# Add JSON files
+# ----------------------------------------------------------------------------
+# Mission Definition JSON Resources
+# ----------------------------------------------------------------------------
 file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
 qt_add_resources(${CMAKE_PROJECT_NAME} json_mission_manager
     PREFIX "/json"

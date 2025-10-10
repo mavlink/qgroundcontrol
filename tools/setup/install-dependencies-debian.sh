@@ -114,7 +114,8 @@ apt-get install -y -qq --no-install-recommends \
 # Miscellaneous
 # --------------------------------------------------------------------
 apt-get install -y -qq --no-install-recommends \
-    libvulkan-dev
+    libvulkan-dev \
+    libpipewire-0.3-dev
 
 # --------------------------------------------------------------------
 # Clean‑up

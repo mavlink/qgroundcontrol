@@ -1,3 +1,8 @@
+# ============================================================================
+# Compression Subsystem
+# Compression and decompression utilities (ZIP, LZMA, ZLIB)
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCLZMA.cc
@@ -10,8 +15,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-#===========================================================================#
+# ============================================================================
+# zlib Integration
+# ============================================================================
 
+# Platform-specific zlib options
 set(ZLIB_EXTRA_OPTIONS)
 if(WIN32)
     set(ZLIB_EXTRA_OPTIONS
@@ -35,7 +43,9 @@ CPMAddPackage(
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ZLIB::ZLIBSTATIC)
 
-#===========================================================================#
+# ============================================================================
+# XZ (LZMA) Integration
+# ============================================================================
 
 CPMAddPackage(
     NAME xz-embedded
@@ -47,6 +57,7 @@ CPMAddPackage(
         "BUILD_TESTING OFF"
 )
 
+# Build XZ library from source
 qt_add_library(xz STATIC
     ${xz-embedded_SOURCE_DIR}/linux/include/linux/xz.h
     ${xz-embedded_SOURCE_DIR}/linux/lib/xz/xz_crc32.c

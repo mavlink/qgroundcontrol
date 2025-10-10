@@ -1,3 +1,8 @@
+# ============================================================================
+# AutoPilot Plugins Unit Tests
+# Tests for autopilot configuration and radio calibration
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         RadioConfigTest.cc
