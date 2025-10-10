@@ -173,6 +173,13 @@
     "qgcRebootRequired":    true
 },
 {
+    "name":             "tiandituToken",
+    "shortDesc": "Access token to TianDiTu maps",
+    "longDesc":  "Your personal access token for TianDiTu maps",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "mapboxToken",
     "shortDesc": "Access token to Mapbox maps",
     "longDesc":  "Your personal access token for Mapbox maps",

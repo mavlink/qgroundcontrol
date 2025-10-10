@@ -34,6 +34,7 @@ Item {
     property Fact   _mapProviderFact:   _settingsManager.flightMapSettings.mapProvider
     property Fact   _mapTypeFact:       _settingsManager.flightMapSettings.mapType
     property Fact   _elevationProviderFact: _settingsManager.flightMapSettings.elevationMapProvider
+    property Fact   _tiandituFac:       _settingsManager ? _settingsManager.appSettings.tiandituToken : null
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
@@ -163,6 +164,12 @@ Item {
             Layout.fillWidth:   true
             heading:            qsTr("Tokens")
             headingDescription: qsTr("Allows access to additional providers")
+
+            LabelledFactTextField {
+                textFieldPreferredWidth:    _largeTextFieldWidth
+                label:                      qsTr("TianDiTu")
+                fact:                       _appSettings.tiandituToken
+            }
 
             LabelledFactTextField {
                 textFieldPreferredWidth:    _largeTextFieldWidth
