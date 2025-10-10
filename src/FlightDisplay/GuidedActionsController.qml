@@ -56,7 +56,6 @@ Item {
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
     readonly property string gotoTitle:                     qsTr("Go To Location")
-    readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
@@ -87,8 +86,6 @@ Item {
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position, adjusting altitude up or down as needed.")
     readonly property string mvPauseMessage:                    qsTr("Pause selected vehicles at their current position.")
-    readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
-    readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
@@ -114,21 +111,17 @@ Item {
     readonly property int actionPause:                      17
     readonly property int actionMVPause:                    18
     readonly property int actionMVStartMission:             19
-    readonly property int actionVtolTransitionToFwdFlight:  20
-    readonly property int actionVtolTransitionToMRFlight:   21
-    readonly property int actionROI:                        22
-    readonly property int actionForceArm:                   24
-    readonly property int actionChangeSpeed:                25
-    readonly property int actionGripper:                    26
-    readonly property int actionSetHome:                    27
-    readonly property int actionSetEstimatorOrigin:         28
-    readonly property int actionSetFlightMode:              29
-    readonly property int actionChangeHeading:              30
-    readonly property int actionMVArm:                      31
-    readonly property int actionMVDisarm:                   32
-    readonly property int actionChangeLoiterRadius:         33
-
-
+    readonly property int actionROI:                        20
+    readonly property int actionForceArm:                   21
+    readonly property int actionChangeSpeed:                22
+    readonly property int actionGripper:                    23
+    readonly property int actionSetHome:                    24
+    readonly property int actionSetEstimatorOrigin:         25
+    readonly property int actionSetFlightMode:              26
+    readonly property int actionChangeHeading:              27
+    readonly property int actionMVArm:                      28
+    readonly property int actionMVDisarm:                   29
+    readonly property int actionChangeLoiterRadius:         30
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -370,8 +363,6 @@ Item {
         function onArmVehicleRequest() { armVehicleRequest() }
         function onForceArmVehicleRequest() { forceArmVehicleRequest() }
         function onDisarmVehicleRequest() { disarmVehicleRequest() }
-        function onVtolTransitionToFwdFlightRequest() { vtolTransitionToFwdFlightRequest() }
-        function onVtolTransitionToMRFlightRequest() { vtolTransitionToMRFlightRequest() }
     }
 
     function armVehicleRequest() {
@@ -389,14 +380,6 @@ Item {
             confirmAction(actionDisarm)
         }
 
-    }
-
-    function vtolTransitionToFwdFlightRequest() {
-        confirmAction(actionVtolTransitionToFwdFlight)
-    }
-
-    function vtolTransitionToMRFlightRequest() {
-        confirmAction(actionVtolTransitionToMRFlight)
     }
 
     function closeAll() {
@@ -543,16 +526,6 @@ Item {
             confirmDialog.message = mvPauseMessage
             confirmDialog.hideTrigger = true
             break;
-        case actionVtolTransitionToFwdFlight:
-            confirmDialog.title = vtolTransitionTitle
-            confirmDialog.message = vtolTransitionFwdMessage
-            confirmDialog.hideTrigger = true
-            break
-        case actionVtolTransitionToMRFlight:
-            confirmDialog.title = vtolTransitionTitle
-            confirmDialog.message = vtolTransitionMRMessage
-            confirmDialog.hideTrigger = true
-            break
         case actionROI:
             confirmDialog.title = roiTitle
             confirmDialog.message = roiMessage
@@ -696,12 +669,6 @@ Item {
             for (i = 0; i < selectedVehicles.count; i++) {
                 selectedVehicles.get(i).pauseVehicle()
             }
-            break
-        case actionVtolTransitionToFwdFlight:
-            _activeVehicle.vtolInFwdFlight = true
-            break
-        case actionVtolTransitionToMRFlight:
-            _activeVehicle.vtolInFwdFlight = false
             break
         case actionROI:
             _activeVehicle.guidedModeROI(actionData)

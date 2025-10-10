@@ -13,15 +13,12 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
-
-
-
 import QGroundControl.FactControls
 
-RowLayout {
-    id:         control
-    spacing:    0
+Item {
+    id:     control
+    width:  mainLayout.width
+    height: mainLayout.height
 
     property bool   showIndicator:          true
     property var    expandedPageComponent
@@ -32,29 +29,46 @@ RowLayout {
     property bool allowEditMode:    true
     property bool editMode:         false
 
+    property bool _isVTOL:          activeVehicle ? activeVehicle.vtol : false
+    property bool _vtolInFWDFlight: activeVehicle ? activeVehicle.vtolInFwdFlight : false
+    property var  _vehicleInAir:    activeVehicle ? activeVehicle.flying || activeVehicle.landing : false
+
     RowLayout {
-        Layout.fillWidth: true
+        id:         mainLayout
+        spacing:    ScreenTools.defaultFontPixelWidth / 2
 
         QGCColoredImage {
-            id:         flightModeIcon
-            width:      ScreenTools.defaultFontPixelWidth * 3
-            height:     ScreenTools.defaultFontPixelHeight
-            fillMode:   Image.PreserveAspectFit
-            mipmap:     true
-            color:      qgcPal.text
-            source:     "/qmlimages/FlightModesComponentIcon.png"
+            id:                     flightModeIcon
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 3
+            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight
+            fillMode:               Image.PreserveAspectFit
+            mipmap:                 true
+            color:                  qgcPal.text
+            source:                 "/qmlimages/FlightModesComponentIcon.png"
         }
 
         QGCLabel {
+            id:                 flightModeLabel
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
             font.pointSize:     fontPointSize
             Layout.alignment:   Qt.AlignCenter
 
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
-            }
         }
+
+        QGCLabel {
+            id:                     vtolModeLabel
+            Layout.fillHeight:      true
+            horizontalAlignment:    Text.AlignHCenter
+            text:                   _vtolInFWDFlight ? qsTr("FW\nVTOL") : qsTr("MR\nVTOL")
+            font.pointSize:         ScreenTools.smallFontPointSize
+            wrapMode:               Text.WordWrap
+            visible:                _isVTOL
+        }
+    }
+
+    MouseArea {
+        anchors.fill:   mainLayout
+        onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
     }
 
     Component {
@@ -132,6 +146,18 @@ RowLayout {
                 Layout.fillWidth:   true
                 horizontalAlignment:Text.AlignHCenter
                 visible:            flightModeSettings.requireModeChangeConfirmation.rawValue
+            }
+
+            QGCDelayButton {
+                id:                 vtolTransitionButton
+                Layout.fillWidth:   true
+                text:               _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
+                visible:            _isVTOL && _vehicleInAir
+
+                onActivated: {
+                    _activeVehicle.vtolInFwdFlight = !_vtolInFWDFlight
+                    mainWindow.closeIndicatorDrawer()
+                }
             }
 
             Repeater {
