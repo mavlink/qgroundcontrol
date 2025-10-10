@@ -18,8 +18,6 @@ RowLayout {
     spacing:    ScreenTools.defaultFontPixelWidth
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.flying || _activeVehicle.landing : false
-    property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
     property bool   _armed:             _activeVehicle ? _activeVehicle.armed : false
     property real   _margins:           ScreenTools.defaultFontPixelWidth
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
@@ -141,24 +139,6 @@ RowLayout {
         QGCMouseArea {
             anchors.fill:   parent
             onClicked:      dropMainStatusIndicator()
-        }
-    }
-
-    QGCLabel {
-        id:                 vtolModeLabel
-        Layout.fillHeight:  true
-        verticalAlignment:  Text.AlignVCenter
-        text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
-        visible:            _activeVehicle && _activeVehicle.vtol
-
-        QGCMouseArea {
-            anchors.fill: parent
-            onClicked: {
-                if (_vehicleInAir) {
-                    mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
-                }
-            }
         }
     }
 
@@ -416,27 +396,6 @@ RowLayout {
                             mainWindow.showVehicleConfig()
                             mainWindow.closeIndicatorDrawer()
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: vtolTransitionIndicatorPage
-
-        ToolIndicatorPage {
-            contentComponent: Component {
-                QGCButton {
-                    text: _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
-
-                    onClicked: {
-                        if (_vtolInFWDFlight) {
-                            mainWindow.vtolTransitionToMRFlightRequest()
-                        } else {
-                            mainWindow.vtolTransitionToFwdFlightRequest()
-                        }
-                        mainWindow.closeIndicatorDrawer()
                     }
                 }
             }
