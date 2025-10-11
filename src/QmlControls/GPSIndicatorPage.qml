@@ -65,24 +65,28 @@ ToolIndicatorPage {
 
 
     function errorText() {
-        if(!_activeVehicle){
-            return qsTr("Disconnected")
-        } else if (_activeVehicle.gps.systemErrors.value === 1) {
-            return qsTr("Incoming correction")
-        } else if (_activeVehicle.gps.systemErrors.value === 2) {
-            return qsTr("Configuration")
-        } else if (_activeVehicle.gps.systemErrors.value === 4) {
-            return qsTr("Software")
-        } else if (_activeVehicle.gps.systemErrors.value === 8) {
-            return qsTr("Antenna")
-        } else if (_activeVehicle.gps.systemErrors.value === 16) {
-            return qsTr("Event congestion")
-        } else if (_activeVehicle.gps.systemErrors.value === 32) {
-            return qsTr("CPU overload")
-        } else if (_activeVehicle.gps.systemErrors.value === 64) {
-            return qsTr("Output congestion")
+        if (!_activeVehicle) {
+            return qsTr("Disconnected");
         }
-        return qsTr("Multiple errors")
+
+        switch (_activeVehicle.gps.systemErrors.value) {
+            case 1:
+                return qsTr("Incoming correction");
+            case 2:
+                return qsTr("Configuration");
+            case 4:
+                return qsTr("Software");
+            case 8:
+                return qsTr("Antenna");
+            case 16:
+                return qsTr("Event congestion");
+            case 32:
+                return qsTr("CPU overload");
+            case 64:
+                return qsTr("Output congestion");
+            default:
+                return qsTr("Multiple errors");
+        }
     }
 
     contentComponent: Component {
