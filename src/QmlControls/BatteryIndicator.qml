@@ -12,10 +12,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
-
-
-
 import QGroundControl.FactControls
 
 //-------------------------------------------------------------------------
@@ -36,33 +32,163 @@ Item {
     property bool   _showPercentage:    _indicatorDisplay.rawValue === 0
     property bool   _showVoltage:       _indicatorDisplay.rawValue === 1
     property bool   _showBoth:          _indicatorDisplay.rawValue === 2
+    property int    _lowestBatteryId:   -1      // -1: show all batteries, otherwise show only battery with this id
 
     // Properties to hold the thresholds
     property int threshold1: _batterySettings.threshold1.rawValue
-    property int threshold2: _batterySettings.threshold2.rawValue   
+    property int threshold2: _batterySettings.threshold2.rawValue
 
-    Row {
+    function _recalcLowestBatteryIdFromVoltage() {
+        if (_activeVehicle) {
+            // If there is only one battery then it is the lowest
+            if (_activeVehicle.batteries.count === 1) {
+                _lowestBatteryId = _activeVehicle.batteries.get(0).id.rawValue
+                return
+            }
+
+            // If we have valid voltage for all batteries we use that to determine lowest battery
+            let allHaveVoltage = true
+            for (var i = 0; i < _activeVehicle.batteries.count; i++) {
+                let battery = _activeVehicle.batteries.get(i)
+                if (isNaN(battery.voltage.rawValue)) {
+                    allHaveVoltage = false
+                    break
+                }
+            }
+            if (allHaveVoltage) {
+                let lowestBattery = _activeVehicle.batteries.get(0)
+                let lowestBatteryId = lowestBattery.id.rawValue
+                for (var i = 1; i < _activeVehicle.batteries.count; i++) {
+                    let battery = _activeVehicle.batteries.get(i)
+                    if (battery.voltage.rawValue < lowestBattery.voltage.rawValue) {
+                        lowestBattery = battery
+                        lowestBatteryId = battery.id.rawValue
+                    }
+                }
+                _lowestBatteryId = lowestBatteryId
+                return
+            }
+        }
+
+        // Couldn't determine lowest battery, show all
+        _lowestBatteryId = -1
+    }
+
+    function _recalcLowestBatteryIdFromPercentage() {
+        if (_activeVehicle) {
+            // If there is only one battery then it is the lowest
+            if (_activeVehicle.batteries.count === 1) {
+                _lowestBatteryId = _activeVehicle.batteries.get(0).id.rawValue
+                return
+            }
+
+            // If we have valid percentage for all batteries we use that to determine lowest battery
+            let allHavePercentage = true
+            for (var i = 0; i < _activeVehicle.batteries.count; i++) {
+                let battery = _activeVehicle.batteries.get(i)
+                if (isNaN(battery.percentRemaining.rawValue)) {
+                    allHavePercentage = false
+                    break
+                }
+            }
+            if (allHavePercentage) {
+                let lowestBattery = _activeVehicle.batteries.get(0)
+                let lowestBatteryId = lowestBattery.id.rawValue
+                for (var i = 1; i < _activeVehicle.batteries.count; i++) {
+                    let battery = _activeVehicle.batteries.get(i)
+                    if (battery.percentRemaining.rawValue < lowestBattery.percentRemaining.rawValue) {
+                        lowestBattery = battery
+                        lowestBatteryId = battery.id.rawValue
+                    }
+                }
+                _lowestBatteryId = lowestBatteryId
+                return
+            }
+        }
+
+        // Couldn't determine lowest battery, show all
+        _lowestBatteryId = -1
+    }
+
+    function _recalcLowestBatteryIdFromChargeState() {
+        if (_activeVehicle) {
+            // If there is only one battery then it is the lowest
+            if (_activeVehicle.batteries.count === 1) {
+                _lowestBatteryId = _activeVehicle.batteries.get(0).id.rawValue
+                return
+            }
+
+            // If we have valid chargeState for all batteries we use that to determine lowest battery
+            let allHaveChargeState = true
+            for (var i = 0; i < _activeVehicle.batteries.count; i++) {
+                let battery = _activeVehicle.batteries.get(i)
+                if (battery.chargeState.rawValue === MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
+                    allHaveChargeState = false
+                    break
+                }
+            }
+            if (allHaveChargeState) {
+                let lowestBattery = _activeVehicle.batteries.get(0)
+                let lowestBatteryId = lowestBattery.id.rawValue
+                for (var i = 1; i < _activeVehicle.batteries.count; i++) {
+                    let battery = _activeVehicle.batteries.get(i)
+                    if (battery.chargeState.rawValue > lowestBattery.chargeState.rawValue) {
+                        lowestBattery = battery
+                        lowestBatteryId = battery.id.rawValue
+                    }
+                }
+                _lowestBatteryId = lowestBatteryId
+                return
+            }
+        }
+
+        // Couldn't determine lowest battery, show all
+        _lowestBatteryId = -1
+    }
+
+    function _recalcLowestBatteryId() {
+        if (_batterySettings.valueDisplay.rawValue === 0) {
+            // User wants percentage display so use that if available
+            _recalcLowestBatteryIdFromPercentage()
+        } else if (_batterySettings.valueDisplay.rawValue === 1) {
+            // User wants voltage display so use that if available
+            _recalcLowestBatteryIdFromVoltage()
+        }
+        // If we still dont have a lowest battery id then try charge state
+        if (_lowestBatteryId === -1) {
+            _recalcLowestBatteryIdFromChargeState()
+        }
+    }
+
+    Component.onCompleted: _recalcLowestBatteryId()
+
+    Connections {
+        target: _activeVehicle ? _activeVehicle.batteries : null
+        function onCountChanged() {_recalcLowestBatteryId() }
+    }
+
+    RowLayout {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
+        spacing:        ScreenTools.defaultFontPixelWidth / 2
 
         Repeater {
             model: _activeVehicle ? _activeVehicle.batteries : 0
 
             Loader {
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
+                Layout.fillHeight:  true
                 sourceComponent:    batteryVisual
+                visible:            control._lowestBatteryId === -1 || object.id.rawValue === control._lowestBatteryId || !control._batterySettings.consolidateMultipleBatteries.rawValue
 
                 property var battery: object
             }
         }
     }
+
     MouseArea {
         anchors.fill:   parent
-        onClicked: {
-            mainWindow.showIndicatorDrawer(batteryPopup, control)
-        }
+        onClicked:      mainWindow.showIndicatorDrawer(batteryPopup, control)
     }
 
     Component {
@@ -80,8 +206,8 @@ Item {
         id: batteryVisual
 
         Row {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
+            Layout.fillHeight:  true
+            spacing:            ScreenTools.defaultFontPixelWidth / 4
 
             function getBatteryColor() {
                 switch (battery.chargeState.rawValue) {
@@ -156,6 +282,25 @@ Item {
                     return battery.chargeState.enumStringValue
                 }
                 return qsTr("n/a")
+            }
+
+            Connections {
+                target: battery.percentRemaining
+                function onRawValueChanged() {
+                    control._recalcLowestBatteryId()
+                }
+            }
+            Connections {
+                target: battery.voltage
+                function onRawValueChanged() {
+                    control._recalcLowestBatteryId()
+                }
+            }
+            Connections {
+                target: battery.chargeState
+                function onRawValueChanged() {
+                    control._recalcLowestBatteryId()
+                }
             }
 
             QGCColoredImage {
@@ -291,13 +436,35 @@ Item {
                 heading:            qsTr("Battery Display")
                 Layout.fillWidth:   true
 
+                ColumnLayout {
+                    Layout.fillWidth:   true
+                    spacing:            0
+                    visible:            _fact.visible
+
+                    property var _fact: _batterySettings.consolidateMultipleBatteries
+
+                    FactCheckBoxSlider {
+                        id:                 consolidateSlider
+                        Layout.fillWidth:   true
+                        fact:               parent._fact
+                        text:               parent._fact.shortDescription
+                    }
+
+                    QGCLabel {
+                        Layout.preferredWidth:  consolidateSlider.width
+                        wrapMode:               Text.WordWrap
+                        text:                   qsTr("Displays the battery with lowest state.")
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        visible:                parent._fact.rawValue
+                    }
+                }
+
                 LabelledFactComboBox {
-                    id:             editModeCheckBox
                     label:          qsTr("Value")
                     fact:           _fact
-                    visible:        _fact,visible
+                    visible:        _fact.visible
 
-                    property Fact _fact: QGroundControl.settingsManager.batteryIndicatorSettings.valueDisplay
+                    property Fact _fact: _batterySettings.valueDisplay
                 }
 
                 ColumnLayout {
