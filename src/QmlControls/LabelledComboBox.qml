@@ -19,10 +19,11 @@ RowLayout {
     property alias model:                   _comboBox.model
     property alias currentIndex:            _comboBox.currentIndex
     property alias currentText:             _comboBox.currentText
+    property alias alternateText:           _comboBox.alternateText
     property var   comboBox:                _comboBox
     property real  comboBoxPreferredWidth:  -1
 
-    spacing: ScreenTools.defaultFontPixelWidth * 2
+    spacing: ScreenTools.defaultFontPixelWidth
 
     signal activated(int index)
 
