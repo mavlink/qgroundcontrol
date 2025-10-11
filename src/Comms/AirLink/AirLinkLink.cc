@@ -17,7 +17,7 @@
 #include <QtCore/QTimer>
 #include <QtNetwork/QUdpSocket>
 
-QGC_LOGGING_CATEGORY(AirLinkLinkLog, "qgc.AirLink.AirLinklink");
+QGC_LOGGING_CATEGORY(AirLinkLinkLog, "AirLink.AirLinkLink");
 
 /*===========================================================================*/
 

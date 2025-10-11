@@ -18,8 +18,8 @@
 
 #include <QtCore/QVariant>
 
-QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "qgc.autopilotplugins.apm.apmsensorscomponentcontroller")
-QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "qgc.autopilotplugins.apm.apmsensorscomponentcontroller:verbose")
+QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "AutoPilotPlugins.APMSensorsComponentController")
+QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "AutoPilotPlugins.APMSensorsComponentController:verbose")
 
 APMSensorsComponentController::APMSensorsComponentController(QObject *parent)
     : FactPanelController(parent)

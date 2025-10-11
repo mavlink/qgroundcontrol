@@ -1,3 +1,8 @@
+# ============================================================================
+# Qt Location Plugin Module
+# Custom map tile providers and caching engine
+# ============================================================================
+
 qt_add_plugin(QGCLocation
     STATIC
     CLASS_NAME QGeoServiceProviderFactoryQGC
@@ -16,6 +21,8 @@ qt_add_plugin(QGCLocation
     Providers/MapboxMapProvider.h
     Providers/MapProvider.cpp
     Providers/MapProvider.h
+    Providers/TianDiTuProvider.cpp
+    Providers/TianDiTuProvider.h
     QGCCachedTileSet.cpp
     QGCCachedTileSet.h
     QGCCacheTile.h
@@ -44,10 +51,17 @@ qt_add_plugin(QGCLocation
     QGeoTileFetcherQGC.h
 )
 
+# ----------------------------------------------------------------------------
+# Platform-Specific Configuration
+# ----------------------------------------------------------------------------
+# Google Maps not available on iOS
 if(IOS)
     target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
 endif()
 
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
 target_link_libraries(QGCLocation
     PRIVATE
         Qt6::Positioning

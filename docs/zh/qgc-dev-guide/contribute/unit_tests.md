@@ -2,7 +2,7 @@
 
 _QGroundControl_ (QGC) contains a set of unit tests that must pass before a pull request will be accepted. 向QGC添加新的复杂子系统应该有相应的新单元测试来测试它。
 
-单元测试的完整列表可以在UnitTestList.cc中找到。
+The full list of unit tests can be found in [UnitTestList.cc](https://github.com/mavlink/qgroundcontrol/blob/master/test/UnitTestList.cc).
 
 要运行单元测试：
 

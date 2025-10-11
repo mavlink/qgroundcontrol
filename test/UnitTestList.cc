@@ -112,8 +112,6 @@
 // #include "SendMavCommandTest.h"
 // #include "TCPLinkTest.h"
 
-QGC_LOGGING_CATEGORY(UnitTestsLog, "qgc.test.unittestlist")
-
 int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
 {
     // ADSB

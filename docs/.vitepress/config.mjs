@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "QGC Guide (master)",
+  title: "QGC Guide",
   description:
     "How to use and develop QGroundControl for PX4 or ArduPilot powered vehicles.",
   ignoreDeadLinks: true, // Do this for stable, where we don't yet have all translations

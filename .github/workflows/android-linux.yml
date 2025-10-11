@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        qt_version: [6.8.3]
+        qt_version: [6.10.0]
 
     defaults:
       run:
@@ -57,6 +57,14 @@ jobs:
 
       - name: Initial Setup
         uses: ./.github/actions/common
+
+      - name: Free Disk Space
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: false
+          large-packages: false
 
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android

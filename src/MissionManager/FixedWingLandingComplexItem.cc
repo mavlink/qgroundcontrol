@@ -17,7 +17,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexItemLog")
+QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "Plan.FixedWingLandingComplexItem")
 
 const QString FixedWingLandingComplexItem::name(FixedWingLandingComplexItem::tr("Fixed Wing Landing"));
 

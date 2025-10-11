@@ -1,32 +1,36 @@
-# -- Variables ----------------------------------------
-# QGC_STAGING_BUNDLE_PATH => full path to MyApp.app
+# ============================================================================
+# CreateMacDMG.cmake
+# Creates macOS DMG disk image for distribution
+# ============================================================================
+#
+# Required Variables (passed from Install.cmake):
+#   QGC_STAGING_BUNDLE_PATH => Full path to MyApp.app bundle
+#   CREATE_DMG_PROGRAM      => Full path to create-dmg program
+#
 
-# ---------------------------------------------------------------------------
-# 1. Grab or locate create-dmg
-# ---------------------------------------------------------------------------
-find_program(CREATE_DMG_PROGRAM create-dmg)
-if(NOT CREATE_DMG_PROGRAM)
-    message(STATUS "QGC: Downloading create-dmg")
-    CPMAddPackage(
-        NAME create-dmg
-        GITHUB_REPOSITORY create-dmg/create-dmg
-        GIT_TAG master
-        DOWNLOAD_ONLY
-    )
-    set(CREATE_DMG_PROGRAM "${create-dmg_SOURCE_DIR}/create-dmg")
-endif()
+message(STATUS "QGC: Creating macOS DMG disk image...")
 
-# ---------------------------------------------------------------------------
-# 2. Build the DMG with a nice drag-and-drop layout
-# ---------------------------------------------------------------------------
+# ============================================================================
+# Prepare Package Directory
+# ============================================================================
+
 set(QGC_DMG_PATH "${CMAKE_BINARY_DIR}/package")
+
+# Clean and create package directory
 file(REMOVE_RECURSE "${QGC_DMG_PATH}")
 file(MAKE_DIRECTORY "${QGC_DMG_PATH}")
+
+# Copy the application bundle to package directory
 file(COPY "${QGC_STAGING_BUNDLE_PATH}" DESTINATION "${QGC_DMG_PATH}")
 
-cmake_path(GET QGC_STAGING_BUNDLE_PATH STEM QGC_TARGET_APP_NAME)
+# ============================================================================
+# Create DMG
+# ============================================================================
 
+cmake_path(GET QGC_STAGING_BUNDLE_PATH STEM QGC_TARGET_APP_NAME)
 set(QGC_DMG_NAME "${QGC_TARGET_APP_NAME}.dmg")
+
+message(STATUS "QGC: Building ${QGC_DMG_NAME}...")
 
 execute_process(
     COMMAND "${CREATE_DMG_PROGRAM}"
@@ -39,4 +43,4 @@ execute_process(
     COMMAND_ERROR_IS_FATAL ANY
 )
 
-message(STATUS "QGC: Created ${QGC_DMG_NAME}")
+message(STATUS "QGC: DMG created successfully: ${CMAKE_BINARY_DIR}/${QGC_DMG_NAME}")

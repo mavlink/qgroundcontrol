@@ -13,7 +13,7 @@
     "name":              "ControlType",
     "shortDesc":         "Type of on-screen control",
     "type":              "uint32",
-    "enumStrings":       "Click to point, click and drag",
+    "enumStrings":       "Click to point, Click and drag",
     "enumValues":        "0, 1",
     "default":           0
 },

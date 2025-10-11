@@ -23,7 +23,7 @@
 
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "qgc.vehicle.components.componentinformationmanager")
+QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "Vehicle.ComponentInformationManager")
 
 ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObject *parent)
     : StateMachine(parent)

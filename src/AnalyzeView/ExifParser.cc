@@ -14,7 +14,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QtEndian>
 
-QGC_LOGGING_CATEGORY(ExifParserLog, "qgc.analyzeview.exifparser")
+QGC_LOGGING_CATEGORY(ExifParserLog, "AnalyzeView.ExifParser")
 
 namespace ExifParser
 {

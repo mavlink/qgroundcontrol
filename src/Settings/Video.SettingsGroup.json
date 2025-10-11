@@ -74,9 +74,9 @@
     "shortDesc": "Video Recording Format",
     "longDesc":  "Video recording file format.",
     "type":             "uint32",
-    "enumStrings":      "mkv,mov,mp4",
-    "enumValues":       "0,1,2",
-    "default":     0
+    "enumStrings":      "mp4,mov,mkv",
+    "enumValues":       "2,1,0",
+    "default":     2
 },
 {
     "name":             "maxVideoSize",

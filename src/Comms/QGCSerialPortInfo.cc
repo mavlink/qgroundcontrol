@@ -17,7 +17,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
-QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "qgc.comms.qgcserialportinfo")
+QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "Comms.QGCSerialPortInfo")
 
 bool QGCSerialPortInfo::_jsonLoaded = false;
 bool QGCSerialPortInfo::_jsonDataValid = false;

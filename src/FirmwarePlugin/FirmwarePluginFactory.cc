@@ -13,7 +13,7 @@
 
 #include <QtCore/QGlobalStatic>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "qgc.firmwareplugin.firmwarepluginfactory");
+QGC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "FirmwarePlugin.FirmwarePluginFactory");
 
 /*===========================================================================*/
 

@@ -8,20 +8,21 @@
  ****************************************************************************/
 
 #include "QGeoTiledMapQGC.h"
-#include "QGeoTiledMappingManagerEngineQGC.h"
-#include <QGCLoggingCategory.h>
 
-QGC_LOGGING_CATEGORY(QGeoTiledMapQGCLog, "qgc.qtlocationplugin.qgeotiledmapqgc")
+#include "QGCLoggingCategory.h"
+#include "QGeoTiledMappingManagerEngineQGC.h"
+
+QGC_LOGGING_CATEGORY(QGeoTiledMapQGCLog, "QtLocationPlugin.QGeoTiledMapQGC")
 
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngineQGC *engine, QObject *parent)
     : QGeoTiledMap(engine, parent)
 {
-	// qCDebug(QGeoTiledMapQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTiledMapQGCLog) << this;
 }
 
 QGeoTiledMapQGC::~QGeoTiledMapQGC()
 {
-    // qCDebug(QGeoTiledMapQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTiledMapQGCLog) << this;
 }
 
 QGeoMap::Capabilities QGeoTiledMapQGC::capabilities() const

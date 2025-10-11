@@ -27,7 +27,7 @@
 
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "qgc.videomanager.videoreceiver.gstreamer.gstvideoreceiver")
+QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GstVideoReceiver")
 
 GstVideoReceiver::GstVideoReceiver(QObject *parent)
     : VideoReceiver(parent)

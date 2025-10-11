@@ -18,7 +18,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogReplayLinkLog, "qgc.comms.logreplaylink")
+QGC_LOGGING_CATEGORY(LogReplayLinkLog, "Comms.LogReplayLink")
 
 /*===========================================================================*/
 

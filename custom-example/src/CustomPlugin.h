@@ -49,10 +49,6 @@ public:
 
     // Overrides from QGCOptions
 
-    /// Normal QGC needs to work with an ESP8266 WiFi thing which is remarkably crappy. This in turns causes PX4 Pro calibration to fail
-    /// quite often. There is a warning in regular QGC about this. Overriding the and returning true means that your custom vehicle has
-    /// a reliable WiFi connection so don't show that warning.
-    bool wifiReliableForCalibration() const final { return true; }
     /// Firmware upgrade page is only shown in Advanced Mode.
     bool showFirmwareUpgrade() const final { return _plugin->showAdvancedUI(); }
     QGCFlyViewOptions *flyViewOptions() const final { return _flyViewOptions; }

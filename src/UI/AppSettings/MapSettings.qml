@@ -28,12 +28,13 @@ Item {
     property var    _appSettings:                   _settingsManager.appSettings
     property var    _mapsSettings:                  _settingsManager.mapsSettings
     property var    _mapEngineManager:              QGroundControl.mapEngineManager
-    property bool   _currentlyImportOrExporting:    _mapEngineManager.importAction === QGCMapEngineManager.ActionExporting || _mapEngineManager.importAction === QGCMapEngineManager.ActionImporting
+    property bool   _currentlyImportOrExporting:    _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionExporting || _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionImporting
     property real   _largeTextFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
 
     property Fact   _mapProviderFact:   _settingsManager.flightMapSettings.mapProvider
     property Fact   _mapTypeFact:       _settingsManager.flightMapSettings.mapType
     property Fact   _elevationProviderFact: _settingsManager.flightMapSettings.elevationMapProvider
+    property Fact   _tiandituFac:       _settingsManager ? _settingsManager.appSettings.tiandituToken : null
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
@@ -128,7 +129,7 @@ Item {
                 visible:    QGroundControl.corePlugin.options.showOfflineMapImport
                 enabled:    !_currentlyImportOrExporting
                 onClicked: {
-                    _mapEngineManager.importAction = QGCMapEngineManager.ActionNone
+                    _mapEngineManager.importAction = QGCMapEngineManager.ImportAction.ActionNone
                     importDialogComponent.createObject(mainWindow).open()
                 }
             }
@@ -147,7 +148,7 @@ Item {
 
                 QGCLabel {
                     Layout.fillWidth:   true
-                    text:               _mapEngineManager.importAction === QGCMapEngineManager.ActionExporting ? qsTr("Exporting") : qsTr("Importing")
+                    text:               _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionExporting ? qsTr("Exporting") : qsTr("Importing")
                     font.bold:          true
                 }
                 ProgressBar {
@@ -163,6 +164,12 @@ Item {
             Layout.fillWidth:   true
             heading:            qsTr("Tokens")
             headingDescription: qsTr("Allows access to additional providers")
+
+            LabelledFactTextField {
+                textFieldPreferredWidth:    _largeTextFieldWidth
+                label:                      qsTr("TianDiTu")
+                fact:                       _appSettings.tiandituToken
+            }
 
             LabelledFactTextField {
                 textFieldPreferredWidth:    _largeTextFieldWidth
@@ -222,7 +229,7 @@ Item {
 
             LabelledFactTextField {
                 fact: _mapsSettings.maxCacheMemorySize
-            }    
+            }
         }
 
         QGCFileDialog {

@@ -14,7 +14,7 @@
 #include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
 
-QGC_LOGGING_CATEGORY(ADSBTCPLinkLog, "qgc.adsb.adsbtcplink")
+QGC_LOGGING_CATEGORY(ADSBTCPLinkLog, "ADSB.ADSBTCPLink")
 
 ADSBTCPLink::ADSBTCPLink(const QHostAddress &hostAddress, quint16 port, QObject *parent)
     : QObject(parent)

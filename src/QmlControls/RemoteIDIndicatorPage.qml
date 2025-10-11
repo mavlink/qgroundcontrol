@@ -58,6 +58,7 @@ ToolIndicatorPage {
 
     function goToSettings() {
         if (mainWindow.allowViewSwitch()) {
+            mainWindow.closeIndicatorDrawer()
             globals.commingFromRIDIndicator = true
             mainWindow.showSettingsTool()
         }
@@ -339,19 +340,30 @@ ToolIndicatorPage {
                 }
 
                 SettingsGroupLayout {
-                    heading:                qsTr("Self ID")
-                    headingDescription:     qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
+                    heading:            qsTr("Self ID")
                     Layout.fillWidth:       true
-                    Layout.preferredWidth:  textLabelWidth + textFieldWidth
 
-                    FactCheckBoxSlider {
-                        id:                 sendSelfIDSlider
-                        text:               qsTr("Broadcast")
-                        fact:               _fact
-                        visible:            _fact.visible
+                    ColumnLayout {
                         Layout.fillWidth:   true
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-                        property Fact _fact: remoteIDSettings.sendSelfID
+                        FactCheckBoxSlider {
+                            id:                 sendSelfIDSlider
+                            text:               qsTr("Broadcast")
+                            fact:               _fact
+                            visible:            _fact.visible
+                            Layout.fillWidth:   true
+
+                            property Fact _fact: remoteIDSettings.sendSelfID
+                        }
+
+                        QGCLabel {
+                            text:                   qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               Text.WordWrap
+                            Layout.preferredWidth:  sendSelfIDSlider.width
+                            visible:                !sendSelfIDSlider._fact.rawValue
+                        }
                     }
 
                     LabelledFactComboBox {

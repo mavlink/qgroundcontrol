@@ -126,6 +126,14 @@ RowLayout {
                 }
             }
 
+            QGCLabel {
+                text:               qsTr("Hold to confirm")
+                font.pointSize:     ScreenTools.smallFontPointSize
+                Layout.fillWidth:   true
+                horizontalAlignment:Text.AlignHCenter
+                visible:            flightModeSettings.requireModeChangeConfirmation.rawValue
+            }
+
             Repeater {
                 id:     modeRepeater
                 model:  activeVehicle ? activeVehicle.flightModes : []
@@ -134,12 +142,13 @@ RowLayout {
                     spacing: ScreenTools.defaultFontPixelWidth
                     visible: editMode || !hiddenFlightModesList.find(item => { return item === modelData } )
 
-                    QGCButton {
+                    QGCDelayButton {
                         id:                 modeButton
                         text:               modelData
+                        delay:              flightModeSettings.requireModeChangeConfirmation.rawValue ? defaultDelay : 0
                         Layout.fillWidth:   true
 
-                        onClicked: {
+                        onActivated: {
                             if (editMode) {
                                 parent.children[1].toggle()
                                 parent.children[1].clicked()
@@ -192,8 +201,9 @@ RowLayout {
             Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 60
             spacing:                margins / 2
 
-            property var  qgcPal:   QGroundControl.globalPalette
-            property real margins:  ScreenTools.defaultFontPixelHeight
+            property var  qgcPal:               QGroundControl.globalPalette
+            property real margins:              ScreenTools.defaultFontPixelHeight
+            property var  flightModeSettings:   QGroundControl.settingsManager.flightModeSettings
 
             Loader {
                 sourceComponent: expandedPageComponent
@@ -201,6 +211,12 @@ RowLayout {
 
             SettingsGroupLayout {
                 Layout.fillWidth:  true
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Click and Hold to Confirm Mode Change")
+                    fact:               flightModeSettings.requireModeChangeConfirmation
+                }
 
                 RowLayout {
                     Layout.fillWidth:   true

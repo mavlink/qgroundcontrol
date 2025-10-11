@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-/// @file
-/// @brief MAVLink message inspector and charting controller
-/// @author Gus Grubba <gus@auterion.com>
-
 #pragma once
 
 #include <QtCore/QDateTime>
@@ -30,27 +26,30 @@ class MAVLinkChartController : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("MAVLinkInspectorController.h")
     Q_MOC_INCLUDE("MAVLinkMessageField.h")
     Q_MOC_INCLUDE("QtCharts/qabstractseries.h")
+
+    Q_PROPERTY(MAVLinkInspectorController*  inspectorController READ inspectorController WRITE setInspectorController REQUIRED)
+    Q_PROPERTY(int          chartIndex  MEMBER _chartIndex                          REQUIRED)
     Q_PROPERTY(QVariantList chartFields READ chartFields                            NOTIFY chartFieldsChanged)
     Q_PROPERTY(QDateTime    rangeXMin   READ rangeXMin                              NOTIFY rangeXMinChanged)
     Q_PROPERTY(QDateTime    rangeXMax   READ rangeXMax                              NOTIFY rangeXMaxChanged)
     Q_PROPERTY(qreal        rangeYMin   READ rangeYMin                              NOTIFY rangeYMinChanged)
     Q_PROPERTY(qreal        rangeYMax   READ rangeYMax                              NOTIFY rangeYMaxChanged)
-    Q_PROPERTY(int          chartIndex  READ chartIndex                             CONSTANT)
     Q_PROPERTY(quint32      rangeYIndex READ rangeYIndex    WRITE setRangeYIndex    NOTIFY rangeYIndexChanged)
     Q_PROPERTY(quint32      rangeXIndex READ rangeXIndex    WRITE setRangeXIndex    NOTIFY rangeXIndexChanged)
 
+
 public:
-    explicit MAVLinkChartController(MAVLinkInspectorController *controller, int index, QObject *parent = nullptr);
+    explicit MAVLinkChartController(QObject *parent = nullptr);
     ~MAVLinkChartController();
 
     Q_INVOKABLE void addSeries(QGCMAVLinkMessageField *field, QAbstractSeries *series);
     Q_INVOKABLE void delSeries(QGCMAVLinkMessageField *field);
-    Q_INVOKABLE MAVLinkInspectorController *controller() const { return _controller; }
 
+    void setInspectorController(MAVLinkInspectorController *inspectorController);
+    MAVLinkInspectorController *inspectorController() const { return _inspectorController; }
     QVariantList chartFields() const { return _chartFields; }
     QDateTime rangeXMin() const { return _rangeXMin; }
     QDateTime rangeXMax() const { return _rangeXMax; }
@@ -58,7 +57,7 @@ public:
     qreal rangeYMax() const { return _rangeYMax; }
     quint32 rangeXIndex() const { return _rangeXIndex; }
     quint32 rangeYIndex() const { return _rangeYIndex; }
-    int chartIndex() const { return _index; }
+    int chartIndex() const { return _chartIndex; }
 
     void setRangeXIndex(quint32 index);
     void setRangeYIndex(quint32 index);
@@ -78,8 +77,8 @@ private slots:
     void _refreshSeries();
 
 private:
-    int _index = 0;
-    MAVLinkInspectorController *_controller = nullptr;
+    int _chartIndex = 0;
+    MAVLinkInspectorController *_inspectorController = nullptr;
     QTimer *_updateSeriesTimer = nullptr;
 
     QDateTime _rangeXMin;

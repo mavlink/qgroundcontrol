@@ -7,17 +7,9 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Map Tile Cache Worker Thread
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>

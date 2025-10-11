@@ -13,7 +13,7 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "qgc.comms.mocklink.mocklinkmissionitemhandler")
+QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "Comms.MockLink.MockLinkMissionItemHandler")
 
 MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink *mockLink)
     : QObject(mockLink)

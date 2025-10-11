@@ -1,5 +1,13 @@
+# ============================================================================
+# CreateWinInstaller.cmake
+# Windows NSIS installer creation using makensis
+# ============================================================================
+
 message(STATUS "QGC: Creating Windows NSIS Installer")
 
+# ----------------------------------------------------------------------------
+# Validate Required Variables
+# ----------------------------------------------------------------------------
 foreach(p IN ITEMS
     QGC_WINDOWS_ICON_PATH
     QGC_WINDOWS_INSTALL_HEADER_PATH
@@ -11,12 +19,18 @@ foreach(p IN ITEMS
     endif()
 endforeach()
 
+# ----------------------------------------------------------------------------
+# Convert Paths to Native Windows Format
+# ----------------------------------------------------------------------------
 file(TO_NATIVE_PATH "${QGC_WINDOWS_ICON_PATH}" QGC_INSTALLER_ICON)
 file(TO_NATIVE_PATH "${QGC_WINDOWS_INSTALL_HEADER_PATH}" QGC_INSTALLER_HEADER_BITMAP)
 file(TO_NATIVE_PATH "${QGC_WINDOWS_INSTALLER_SCRIPT}" QGC_NSIS_INSTALLER_SCRIPT)
 file(TO_NATIVE_PATH "${QGC_WINDOWS_OUT}" QGC_INSTALLER_OUT)
 file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}" QGC_PAYLOAD_DIR)
 
+# ----------------------------------------------------------------------------
+# Locate NSIS makensis Utility
+# ----------------------------------------------------------------------------
 set(_pf86 "ProgramFiles(x86)")
 set(_PF86 "PROGRAMFILES(x86)")
 find_program(QGC_NSIS_INSTALLER_CMD makensis
@@ -25,6 +39,10 @@ find_program(QGC_NSIS_INSTALLER_CMD makensis
     DOC "Path to the makensis utility."
     REQUIRED
 )
+
+# ----------------------------------------------------------------------------
+# Build NSIS Command Arguments
+# ----------------------------------------------------------------------------
 
 set(_nsis_args
     /NOCD
@@ -51,6 +69,9 @@ endif()
 
 list(APPEND _nsis_args "/XOutFile ${QGC_INSTALLER_OUT}")
 
+# ----------------------------------------------------------------------------
+# Execute NSIS Installer Creation
+# ----------------------------------------------------------------------------
 execute_process(
     COMMAND "${QGC_NSIS_INSTALLER_CMD}" ${_nsis_args} "${QGC_NSIS_INSTALLER_SCRIPT}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"

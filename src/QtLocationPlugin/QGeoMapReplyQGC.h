@@ -26,9 +26,10 @@ class QGeoTiledMapReplyQGC : public QGeoTiledMapReply
     Q_OBJECT
 
 public:
-    QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent = nullptr);
+    explicit QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent = nullptr);
     ~QGeoTiledMapReplyQGC();
 
+    bool init();
     void abort() final;
 
 private slots:
@@ -43,6 +44,7 @@ private:
 
     QNetworkAccessManager *_networkManager = nullptr;
     QNetworkRequest _request;
+    bool m_initialized = false;
 
     static QByteArray _bingNoTileImage;
     static QByteArray _badTile;

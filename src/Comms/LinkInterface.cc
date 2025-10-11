@@ -17,7 +17,7 @@
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(LinkInterfaceLog, "qgc.comms.linkinterface")
+QGC_LOGGING_CATEGORY(LinkInterfaceLog, "Comms.LinkInterface")
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
     : QObject(parent)
