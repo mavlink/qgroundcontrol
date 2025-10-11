@@ -227,7 +227,6 @@ const QVariantList &FirmwarePlugin::modeIndicators(const Vehicle*)
     if (_modeIndicatorList.isEmpty()) {
         _modeIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/LinkIndicator.qml")),
         });
     }
 

@@ -11,7 +11,6 @@ qt_add_qml_module(ToolbarModule
         GCSControlIndicator.qml
         GimbalIndicator.qml
         JoystickIndicator.qml
-        LinkIndicator.qml
         ModeIndicator.qml
         MultiVehicleSelector.qml
         RCRSSIIndicator.qml
