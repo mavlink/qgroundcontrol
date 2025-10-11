@@ -52,7 +52,7 @@
 #include "SerialLink.h"
 #endif
 
-QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
+QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
 
 QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QApplication(argc, argv)
@@ -143,7 +143,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     }
 
     // Set up our logging filters
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
+    QGCLoggingCategoryManager::instance()->setFilterRulesFromSettings(loggingOptions);
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();

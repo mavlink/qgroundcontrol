@@ -29,7 +29,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QFileInfo>
 
-QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanMasterControllerLog")
+QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanManager.PlanMasterController")
 
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject               (parent)

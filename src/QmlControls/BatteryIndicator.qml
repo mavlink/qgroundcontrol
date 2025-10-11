@@ -283,6 +283,8 @@ Item {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
+            property real batteryIconHeight: ScreenTools.defaultFontPixelWidth * 3
+
             FactPanelController { id: controller }
 
             SettingsGroupLayout {
@@ -302,15 +304,15 @@ Item {
                     QGCLabel { text: qsTr("Coloring") }
 
                     RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Reduced spacing between elements
+                        spacing: ScreenTools.defaultFontPixelWidth
 
                         // Battery 100%
                         RowLayout {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and label
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryGreen.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: width
+                                width: height
+                                height: batteryIconHeight
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorGreen
                             }
@@ -322,8 +324,8 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and field
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryYellowGreen.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: width
+                                width: height
+                                height: batteryIconHeight
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorYellowGreen
                             }
@@ -345,8 +347,8 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and field
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryYellow.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: width
+                                width: height
+                                height: batteryIconHeight
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorYellow
                             }
@@ -367,8 +369,8 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and label
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryOrange.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: width
+                                width: height
+                                height: batteryIconHeight
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorOrange
                             }
@@ -380,8 +382,8 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and label
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryCritical.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
-                                height: width
+                                width: height
+                                height: batteryIconHeight
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorRed
                             }

@@ -53,7 +53,7 @@ public:
     void setSelectable(bool sel);
     void updateValue(const QString &newValue, qreal v);
 
-    void addSeries(MAVLinkChartController *chart, QAbstractSeries *series);
+    void addSeries(MAVLinkChartController *chartController, QAbstractSeries *series);
     void delSeries();
     void updateSeries();
 
@@ -75,5 +75,5 @@ private:
     QList<QPointF> _values;
 
     QAbstractSeries *_pSeries = nullptr;
-    MAVLinkChartController *_chart = nullptr;
+    MAVLinkChartController *_chartController = nullptr;
 };

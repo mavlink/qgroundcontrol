@@ -1,3 +1,8 @@
+# ============================================================================
+# Joystick Module
+# Game controller and joystick input support
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Joystick.cc
@@ -8,6 +13,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# Android Joystick Implementation
+# ----------------------------------------------------------------------------
 if(ANDROID)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -17,6 +25,9 @@ if(ANDROID)
     return()
 endif()
 
+# ----------------------------------------------------------------------------
+# SDL Joystick Implementation (Desktop)
+# ----------------------------------------------------------------------------
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickSDL.cc
@@ -29,7 +40,9 @@ if(SDL_GAMECONTROLLERCONFIG)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE SDL_GAMECONTROLLERCONFIG=\"${SDL_GAMECONTROLLERCONFIG}\")
 endif()
 
-#===========================================================================#
+# ============================================================================
+# SDL Game Controller Database
+# ============================================================================
 
 CPMAddPackage(
     NAME sdl_gamecontrollerdb
@@ -48,8 +61,11 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_sdl"
         "${SDL_GAMECONTROLLERDB_PATH}"
 )
 
-#===========================================================================#
+# ============================================================================
+# SDL3 Library Integration
+# ============================================================================
 
+# Platform-specific SDL options
 set(SDL_EXTRA_OPTIONS "")
 if(WIN32)
     set(SDL_EXTRA_OPTIONS
@@ -64,6 +80,8 @@ if(UNIX)
         "SDL_UNIX_CONSOLE_BUILD ON"
     )
 endif()
+
+# Video only needed on macOS
 if(MACOS)
     set(SDL_VIDEO_FLAG "ON")
 else()

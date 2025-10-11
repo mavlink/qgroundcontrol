@@ -32,6 +32,7 @@ class SettingsManager;
 class VideoManager;
 class UTMSPManager;
 class AirLinkManager;
+class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("FactGroup.h")
@@ -144,8 +145,11 @@ public:
     Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
-    /// Returns the list of available logging category names.
-    Q_INVOKABLE static QStringList loggingCategories();
+    /// Returns the hierarchical list of available logging category names.
+    Q_INVOKABLE static QmlObjectListModel *treeLoggingCategoriesModel();
+
+    /// Returns the flat list of available logging category names.
+    Q_INVOKABLE static QmlObjectListModel *flatLoggingCategoriesModel();
 
     /// Turns on/off logging for the specified category. State is saved in app settings.
     Q_INVOKABLE static void setCategoryLoggingOn(const QString &category, bool enable);
@@ -153,8 +157,7 @@ public:
     /// Returns true if logging is turned on for the specified category.
     Q_INVOKABLE static bool categoryLoggingOn(const QString &category);
 
-    /// Updates the logging filter rules after settings have changed
-    Q_INVOKABLE static void updateLoggingFilterRules();
+    Q_INVOKABLE static void disableAllLoggingCategories();
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 

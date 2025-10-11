@@ -24,6 +24,7 @@
         { "vendorID": 9900, "productID": 1,         "boardClass": "Pixhawk",    "name": "Omnibus F4 SD" },
         { "vendorID": 8137, "productID": 28,        "boardClass": "Pixhawk",    "name": "PX4 FMUK66 v3.x" },
         { "vendorID": 8137, "productID": 36,        "boardClass": "Pixhawk",    "name": "Tropic-Community VMU" },
+        { "vendorID": 8137, "productID": 37,        "boardClass": "Pixhawk",    "name": "MR-TROPIC" },
         { "vendorID": 1155, "productID": 41775,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv1" },
         { "vendorID": 1155, "productID": 41776,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv2" },
         { "vendorID":12642, "productID": 75,        "boardClass": "Pixhawk",    "name": "PX4 DurandalV1" },
@@ -113,6 +114,8 @@
         { "regExp": "^ARK Pi6X.x$",         "boardClass": "Pixhawk" },
         { "regExp": "^ARK BL Pi6X.x$",      "boardClass": "Pixhawk" },
         { "regExp": "^PX4 TROPIC Community","boardClass": "Pixhawk" },
+        { "regExp": "^PX4 MR-TROPIC",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL MR-TROPIC",    "boardClass": "Pixhawk" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
     ],

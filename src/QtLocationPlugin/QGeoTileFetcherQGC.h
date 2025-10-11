@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QtLocation/private/qgeotilefetcher_p.h>
 #include <QtCore/QLoggingCategory>
+#include <QtLocation/private/qgeotilefetcher_p.h>
 #include <QtNetwork/QNetworkRequest>
 
 Q_DECLARE_LOGGING_CATEGORY(QGeoTileFetcherQGCLog)
@@ -25,7 +25,7 @@ class QGeoTileFetcherQGC : public QGeoTileFetcher
     Q_OBJECT
 
 public:
-    QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
+    explicit QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
     ~QGeoTileFetcherQGC();
 
     static QNetworkRequest getNetworkRequest(int mapId, int x, int y, int zoom);

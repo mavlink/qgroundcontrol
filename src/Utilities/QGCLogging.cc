@@ -18,7 +18,7 @@
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
 
-QGC_LOGGING_CATEGORY(QGCLoggingLog, "qgc.utilities.qgclogging")
+QGC_LOGGING_CATEGORY(QGCLoggingLog, "Utilities.QGCLogging")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
@@ -72,7 +72,7 @@ QGCLogging::~QGCLogging()
 void QGCLogging::installHandler()
 {
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{category}:: %{time process} - %{type}: %{message} (%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{time process}%{if-warning} Warning:%{endif}%{if-critical} Critical:%{endif} %{message} - %{category} - (%{function}:%{line})"));
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);

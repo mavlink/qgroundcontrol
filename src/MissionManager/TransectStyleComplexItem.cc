@@ -23,7 +23,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "TransectStyleComplexItemLog")
+QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "Plan.TransectStyleComplexItem")
 
 TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup)
     : ComplexMissionItem                (masterController, flyView)

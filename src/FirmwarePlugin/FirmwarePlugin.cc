@@ -22,7 +22,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginLog, "qgc.firmwareplugin.firmwareplugin")
+QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
 
 static const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 

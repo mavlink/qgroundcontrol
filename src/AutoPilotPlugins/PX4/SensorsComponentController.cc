@@ -13,7 +13,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
+QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "AutoPilotPlugins.SensorsComponentController")
 
 SensorsComponentController::SensorsComponentController(void)
     : _statusLog                                (nullptr)

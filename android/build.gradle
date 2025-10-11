@@ -49,7 +49,7 @@ android {
     ndkVersion = androidNdkVersion
 
     // Extract native libraries from the APK
-    packagingOptions.jniLibs.useLegacyPackaging = true
+    // packagingOptions.jniLibs.useLegacyPackaging = true
 
     sourceSets {
         main {
@@ -66,7 +66,7 @@ android {
 
     tasks.withType(JavaCompile) {
         options.incremental = true
-        // options.compilerArgs += ['-Xlint:deprecation']
+        options.compilerArgs += ['-Xlint:all'] // deprecation
     }
 
     buildFeatures {

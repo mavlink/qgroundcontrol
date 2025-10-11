@@ -13,14 +13,14 @@
 #include <QtCore/QDebug>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "QmlObjectListModelLog")
+QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel        (parent)
     , _dirty                    (false)
     , _skipDirtyFirstItem       (false)
 {
-
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 QmlObjectListModel::~QmlObjectListModel()

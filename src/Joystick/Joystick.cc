@@ -24,8 +24,8 @@
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(JoystickLog, "qgc.joystick.joystick")
-QGC_LOGGING_CATEGORY(JoystickValuesLog, "qgc.joystick.joystickvalues")
+QGC_LOGGING_CATEGORY(JoystickLog, "Joystick.joystick")
+QGC_LOGGING_CATEGORY(JoystickValuesLog, "Joystick.joystickvalues")
 
 /*===========================================================================*/
 

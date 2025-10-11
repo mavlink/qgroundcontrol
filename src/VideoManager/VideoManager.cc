@@ -35,7 +35,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(VideoManagerLog, "qgc.videomanager.videomanager")
+QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] = {
     "mkv",
@@ -540,14 +540,17 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
 
 void VideoManager::_setActiveVehicle(Vehicle *vehicle)
 {
+    qCDebug(VideoManagerLog) << Q_FUNC_INFO << "new vehicle" << vehicle << "old active vehicle" << _activeVehicle;
+
     if (_activeVehicle) {
         (void) disconnect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
-        if (_activeVehicle->cameraManager()) {
-            MavlinkCameraControl *pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
+        auto cameraManager = _activeVehicle->cameraManager();
+        if (cameraManager) {
+            MavlinkCameraControl *pCamera = cameraManager->currentCameraInstance();
             if (pCamera) {
                 pCamera->stopStream();
             }
-            (void) disconnect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
+            (void) disconnect(cameraManager, &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
         }
 
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {

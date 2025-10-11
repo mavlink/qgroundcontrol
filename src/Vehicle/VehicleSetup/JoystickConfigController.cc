@@ -15,7 +15,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
+QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "VehicleSetup.JoystickConfigController")
 
 JoystickConfigController::JoystickConfigController(void)
 {

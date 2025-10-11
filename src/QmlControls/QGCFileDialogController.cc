@@ -15,7 +15,7 @@
 
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "qgc.qmlcontrols.qgcfiledialogcontroller")
+QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QMLControls.QGCFileDialogController")
 
 QGCFileDialogController::QGCFileDialogController(QObject *parent)
     : QObject(parent)

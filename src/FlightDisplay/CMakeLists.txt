@@ -1,3 +1,8 @@
+# ============================================================================
+# Flight Display Module
+# In-flight view, telemetry displays, and vehicle control UI
+# ============================================================================
+
 qt_add_library(FlightDisplayModule STATIC)
 
 qt_add_qml_module(FlightDisplayModule

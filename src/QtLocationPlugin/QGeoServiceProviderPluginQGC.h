@@ -9,9 +9,9 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QtPlugin>
-#include <QtCore/QLoggingCategory>
 #include <QtLocation/QGeoServiceProviderFactory>
 
 Q_DECLARE_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog)

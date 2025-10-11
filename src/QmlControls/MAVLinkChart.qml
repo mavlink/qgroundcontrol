@@ -7,8 +7,6 @@ import QGroundControl
 
 import QGroundControl.Controls
 
-
-
 ChartView {
     id:                 chartView
     theme:              ChartView.ChartThemeDark
@@ -19,15 +17,15 @@ ChartView {
     backgroundRoundness: 0
     margins.bottom:     ScreenTools.defaultFontPixelHeight * 1.5
     margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
+    visible:            chartController.chartFields.length > 0
 
-    property var chartController:   null
-    property var seriesColors:      ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
+    required property var inspectorController
+    required property int chartIndex
+
+    property var _seriesColors: ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
 
     function addDimension(field) {
-        if(!chartController) {
-            chartController = controller.createChart()
-        }
-        var color   = chartView.seriesColors[chartView.count]
+        var color   = _seriesColors[chartView.count]
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
         serie.axisX = axisX
         serie.axisY = axisY
@@ -41,21 +39,17 @@ ChartView {
         if(chartController) {
             chartView.removeSeries(field.series)
             chartController.delSeries(field)
-            if(chartView.count === 0) {
-                controller.deleteChart(chartController)
-                chartController = null
-            }
         }
     }
 
-    Connections {
-        target: QGroundControl.multiVehicleManager
+    function roomForNewDimension() {
+        return chartController.chartFields.length < _seriesColors.length
+    }
 
-        function onVehicleRemoved(vehicle) {
-            // Hack to prevent references to deleted QGCMavlinkSystem fields. https://github.com/mavlink/qgroundcontrol/issues/13077
-            controller.deleteChart(chartController);
-            chartController = null;
-        }
+    MAVLinkChartController {
+        id:                     chartController
+        inspectorController:    chartView.inspectorController
+        chartIndex:             chartView.chartIndex
     }
 
     DateTimeAxis {

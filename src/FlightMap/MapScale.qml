@@ -17,7 +17,7 @@ import QGroundControl.Controls
 
 /// Map scale control
 Item {
-    id:     scale
+    id:     control
     width:  buttonsOnLeft || !_zoomButtonsVisible ? rightEnd.x + rightEnd.width : zoomDownButton.x + zoomDownButton.width
     height: rightEnd.y + rightEnd.height
 
@@ -26,6 +26,7 @@ Item {
     property alias  terrainButtonChecked:   terrainButton.checked
     property bool   zoomButtonsVisible:     true
     property bool   buttonsOnLeft:          true    ///< Buttons to left/right of scale bar
+    property bool   autoHide:               false   ///< true: disappears after a timeout on scale change
 
     signal terrainButtonClicked
 
@@ -118,8 +119,8 @@ Item {
     function calculateScale() {
         if(mapControl) {
             var scaleLinePixelLength = 100
-            var leftCoord  = mapControl.toCoordinate(Qt.point(0, scale.y), false /* clipToViewPort */)
-            var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, scale.y), false /* clipToViewPort */)
+            var leftCoord  = mapControl.toCoordinate(Qt.point(0, control.y), false /* clipToViewPort */)
+            var rightCoord = mapControl.toCoordinate(Qt.point(scaleLinePixelLength, control.y), false /* clipToViewPort */)
             var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
             if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsFeet) {
                 calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
@@ -129,19 +130,38 @@ Item {
         }
     }
 
+    function triggerRecalc() {
+        calculateScale()
+        if (control.autoHide) {
+            autoHideTimer.restart()
+            autoHideAnimation.stop()
+            control.opacity = 1
+        }
+    }
+
+
+    Component.onCompleted: calculateScale()
+
     Connections {
-        target:             mapControl
-        function onWidthChanged() {     scaleTimer.restart() }
-        function onHeightChanged() {    scaleTimer.restart() }
-        function onZoomLevelChanged() { scaleTimer.restart() }
+        target: mapControl
+        function onWidthChanged() { triggerRecalc() }
+        function onHeightChanged() { triggerRecalc() }
+        function onZoomLevelChanged() { triggerRecalc() }
+    }
+
+    PropertyAnimation { 
+        id:         autoHideAnimation
+        target:     control
+        property:   "opacity"
+        from:       1
+        to:         0
+        duration:   500 
     }
 
     Timer {
-        id:                 scaleTimer
-        interval:           100
-        running:            false
-        repeat:             false
-        onTriggered:        calculateScale()
+        id:             autoHideTimer
+        interval:       3000
+        onTriggered:    autoHideAnimation.start()
     }
 
     QGCMapLabel {
@@ -222,11 +242,5 @@ Item {
         opacity:            0.75
         visible:            _zoomButtonsVisible
         onClicked:          mapControl.zoomLevel -= 0.5
-    }
-
-    Component.onCompleted: {
-        if (scale.visible) {
-            calculateScale();
-        }
     }
 }

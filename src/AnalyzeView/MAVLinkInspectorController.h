@@ -36,7 +36,6 @@ class MAVLinkInspectorController : public QObject
     Q_MOC_INCLUDE("MAVLinkChartController.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QmlObjectListModel   *systems        READ systems        NOTIFY systemsChanged)
-    Q_PROPERTY(QmlObjectListModel   *charts         READ charts         NOTIFY chartsChanged)
     Q_PROPERTY(QGCMAVLinkSystem     *activeSystem   READ activeSystem   NOTIFY activeSystemChanged)
     Q_PROPERTY(QStringList          timeScales      READ timeScales     NOTIFY timeScalesChanged)
     Q_PROPERTY(QStringList          rangeList       READ rangeList      NOTIFY rangeListChanged)
@@ -62,13 +61,10 @@ public:
     explicit MAVLinkInspectorController(QObject *parent = nullptr);
     ~MAVLinkInspectorController();
 
-    Q_INVOKABLE MAVLinkChartController *createChart();
-    Q_INVOKABLE void deleteChart(MAVLinkChartController *chart);
     Q_INVOKABLE void setActiveSystem(int systemId);
     Q_INVOKABLE void setMessageInterval(int32_t rate) const;
 
     QmlObjectListModel *systems() const { return _systems; }
-    QmlObjectListModel *charts() const { return _charts; }
     QGCMAVLinkSystem *activeSystem() const { return _activeSystem; }
     QStringList systemNames() const { return _systemNames; }
     QStringList timeScales();
@@ -79,7 +75,6 @@ public:
 
 signals:
     void activeSystemChanged();
-    void chartsChanged();
     void rangeListChanged();
     void systemsChanged();
     void timeScalesChanged();
@@ -104,5 +99,4 @@ private:
     QGCMAVLinkSystem *_activeSystem = nullptr;
     QTimer *_updateFrequencyTimer = nullptr;
     QmlObjectListModel *_systems = nullptr;     ///< List of QGCMAVLinkSystem
-    QmlObjectListModel *_charts = nullptr;      ///< List of MAVLinkCharts
 };

@@ -11,12 +11,12 @@
 #include "GimbalController.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GimbalLog, "qgc.gimbal.gimbal")
+QGC_LOGGING_CATEGORY(GimbalLog, "Gimbal.Gimbal")
 
 Gimbal::Gimbal(GimbalController *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GimbalFact.json"), parent)
 {
-    // qCDebug(GimbalLog) << Q_FUNC_INFO << this;
+    qCDebug(GimbalLog) << this;
 
     _initFacts();
 }
@@ -38,9 +38,9 @@ const Gimbal &Gimbal::operator=(const Gimbal &other)
     _requestInformationRetries = other._requestInformationRetries;
     _requestStatusRetries = other._requestStatusRetries;
     _requestAttitudeRetries = other._requestAttitudeRetries;
-    _receivedInformation = other._receivedInformation;
-    _receivedStatus = other._receivedStatus;
-    _receivedAttitude = other._receivedAttitude;
+    _receivedGimbalManagerInformation = other._receivedGimbalManagerInformation;
+    _receivedGimbalManagerStatus = other._receivedGimbalManagerStatus;
+    _receivedGimbalDeviceAttitudeStatus = other._receivedGimbalDeviceAttitudeStatus;
     _isComplete = other._isComplete;
     _retracted = other._retracted;
     _neutral = other._neutral;
@@ -73,4 +73,12 @@ void Gimbal::_initFacts()
     _absoluteYawFact.setRawValue(0.0f);
     _deviceIdFact.setRawValue(0);
     _managerCompidFact.setRawValue(0);
+}
+
+void Gimbal::setCapabilityFlags(uint32_t flags)
+{
+    if (_capabilityFlags != flags) {
+        _capabilityFlags = flags;
+        emit capabilityFlagsChanged();
+    }
 }

@@ -94,3 +94,6 @@ docs/.vitepress/dist/
 
 CMakeUserPresets.json
 cpm_modules
+
+.qtcreator/
+.claude/

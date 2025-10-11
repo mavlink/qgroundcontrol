@@ -12,7 +12,7 @@
 
 #include <QtCore/QtEndian>
 
-QGC_LOGGING_CATEGORY(PX4LogParserLog, "qgc.analyzeview.px4logparser")
+QGC_LOGGING_CATEGORY(PX4LogParserLog, "AnalyzeView.PX4LogParser")
 
 // general message header
 static constexpr const char header[3] = {static_cast<char>(0xA3), static_cast<char>(0x95), static_cast<char>(0x00)};

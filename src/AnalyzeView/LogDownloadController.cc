@@ -22,7 +22,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "qgc.analyzeview.logdownloadcontroller")
+QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
 
 LogDownloadController::LogDownloadController(QObject *parent)
     : QObject(parent)

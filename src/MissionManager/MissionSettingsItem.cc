@@ -16,7 +16,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "MissionSettingsItemLog")
+QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "Plan.MissionSettingsItem")
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 

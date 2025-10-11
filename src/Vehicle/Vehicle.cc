@@ -68,7 +68,7 @@
 
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
+QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f
@@ -1929,6 +1929,11 @@ bool Vehicle::rover() const
 bool Vehicle::sub() const
 {
     return QGCMAVLink::isSub(vehicleType());
+}
+
+bool Vehicle::spacecraft() const
+{
+    return QGCMAVLink::isSpacecraft(vehicleType());
 }
 
 bool Vehicle::multiRotor() const
@@ -4388,13 +4393,6 @@ void Vehicle::_createCameraManager()
     if (!_cameraManager && _firmwarePlugin) {
         _cameraManager = _firmwarePlugin->createCameraManager(this);
         emit cameraManagerChanged();
-    }
-}
-
-void Vehicle::stopCameraManager()
-{
-    if (_cameraManager) {
-        _cameraManager->stop();
     }
 }
 

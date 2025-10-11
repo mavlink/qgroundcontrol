@@ -14,7 +14,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "qgc.qmlcontrols.parametereditorcontroller")
+QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "QMLControls.ParameterEditorController")
 
 ParameterTableModel::ParameterTableModel(QObject* parent)
     : QAbstractTableModel(parent)

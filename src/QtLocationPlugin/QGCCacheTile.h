@@ -9,37 +9,29 @@
 
 #pragma once
 
-#include <QtCore/QString>
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
+#include <QtCore/QString>
 
-class QGCCacheTile
+struct QGCCacheTile
 {
-public:
-    QGCCacheTile(const QString &hash, const QByteArray &img, const QString &format, const QString &type, quint64 tileSet = UINT64_MAX)
-        : m_tileSet(tileSet)
-        , m_hash(hash)
-        , m_img(img)
-        , m_format(format)
-        , m_type(type)
+    QGCCacheTile(const QString &hash_, const QByteArray &img_, const QString &format_, const QString &type_, quint64 tileSet_ = UINT64_MAX)
+        : tileSet(tileSet_)
+        , hash(hash_)
+        , img(img_)
+        , format(format_)
+        , type(type_)
     {}
-    QGCCacheTile(const QString &hash, quint64 tileSet)
-        : m_tileSet(tileSet)
-        , m_hash(hash)
+    QGCCacheTile(const QString &hash_, quint64 tileSet_)
+        : tileSet(tileSet_)
+        , hash(hash_)
     {}
-    ~QGCCacheTile() = default;
 
-    quint64 tileSet() const { return m_tileSet; }
-    const QString &hash() const { return m_hash; }
-    const QByteArray &img() const { return m_img; }
-    const QString &format() const { return m_format; }
-    const QString &type() const { return m_type; }
-
-private:
-    const quint64 m_tileSet = 0;
-    const QString m_hash;
-    const QByteArray m_img;
-    const QString m_format;
-    const QString m_type;
+    const quint64 tileSet = 0;
+    const QString hash;
+    const QByteArray img;
+    const QString format;
+    const QString type;
 };
 Q_DECLARE_METATYPE(QGCCacheTile)
+Q_DECLARE_METATYPE(QGCCacheTile*)

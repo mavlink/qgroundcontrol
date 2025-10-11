@@ -8,20 +8,21 @@
  ****************************************************************************/
 
 #include "QGeoFileTileCacheQGC.h"
-#include "QGCMapEngine.h"
-#include "QGCApplication.h"
-#include "SettingsManager.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QStandardPaths>
+
 #include "AppSettings.h"
 #include "MapsSettings.h"
-#include "QGCMapUrlEngine.h"
-#include "QGCMapTasks.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMapEngine.h"
+#include "QGCMapTasks.h"
+#include "QGCMapUrlEngine.h"
+#include "SettingsManager.h"
 
-#include <QtCore/QStandardPaths>
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QDir>
-
-QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "qgc.qtlocationplugin.qgeofiletilecacheqgc")
+QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "QtLocationPlugin.QGeoFileTileCacheQGC")
 
 QString QGeoFileTileCacheQGC::_databaseFilePath;
 QString QGeoFileTileCacheQGC::_cachePath;
@@ -30,7 +31,7 @@ bool QGeoFileTileCacheQGC::_cacheWasReset = false;
 QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObject *parent)
     : QGeoFileTileCache(baseCacheDirectory(), parent)
 {
-    // qCDebug(QGeoFileTileCacheQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoFileTileCacheQGCLog) << this;
 
     setCostStrategyDisk(QGeoFileTileCache::ByteSize);
     setMaxDiskUsage(_getDefaultMaxDiskCache());
@@ -50,11 +51,11 @@ QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObjec
 
 QGeoFileTileCacheQGC::~QGeoFileTileCacheQGC()
 {
-#ifdef QT_DEBUG
-    // printStats();
-#endif
+    if (QGeoFileTileCacheQGCLog().isDebugEnabled()) {
+        printStats();
+    }
 
-    // qCDebug(QGeoFileTileCacheQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoFileTileCacheQGCLog) << this;
 }
 
 uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap &parameters)
@@ -70,20 +71,15 @@ uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap &parameters)
 
     if (memLimit == 0) {
         // Value saved in MB
-        memLimit = _getMaxMemCacheSetting() * pow(1024, 2);
+        memLimit = _getMaxMemCacheSetting() * qPow(1024, 2);
     }
     if (memLimit == 0) {
         memLimit = _getDefaultMaxMemLimit();
     }
-    // 1MB Minimum Memory Cache Required
-    if (memLimit < pow(1024, 2)) {
-        memLimit = pow(1024, 2);
-    }
-    // MaxMemoryUsage is 32bit Integer, Round down to 1GB
-    if (memLimit > pow(1024, 3)) {
-        memLimit = pow(1024, 3);
-    }
 
+    // 1MB Minimum Memory Cache Required
+    // MaxMemoryUsage is 32bit Integer, Round down to 1GB
+    memLimit = qBound(static_cast<uint32_t>(qPow(1024, 2)), memLimit, static_cast<uint32_t>(qPow(1024, 3)));
     return memLimit;
 }
 
@@ -105,18 +101,20 @@ void QGeoFileTileCacheQGC::cacheTile(const QString &type, int x, int y, int z, c
 
 void QGeoFileTileCacheQGC::cacheTile(const QString &type, const QString &hash, const QByteArray &image, const QString &format, qulonglong set)
 {
-    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    AppSettings *appSettings = SettingsManager::instance()->appSettings();
     if (!appSettings->disableAllPersistence()->rawValue().toBool()) {
-        QGCCacheTile* const tile = new QGCCacheTile(hash, image, format, type, set);
-        QGCSaveTileTask* const task = new QGCSaveTileTask(tile);
-        (void) getQGCMapEngine()->addTask(task);
+        QGCCacheTile *tile = new QGCCacheTile(hash, image, format, type, set);
+        QGCSaveTileTask *task = new QGCSaveTileTask(tile);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
     }
 }
 
 QGCFetchTileTask* QGeoFileTileCacheQGC::createFetchTileTask(const QString &type, int x, int y, int z)
 {
     const QString hash = UrlFactory::getTileHash(type, x, y, z);
-    QGCFetchTileTask* const task = new QGCFetchTileTask(hash);
+    QGCFetchTileTask *task = new QGCFetchTileTask(hash);
     return task;
 }
 

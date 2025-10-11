@@ -34,7 +34,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
+QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "FirmwarePlugin.APMFirmwarePlugin")
 
 APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
     : FirmwarePlugin(parent)

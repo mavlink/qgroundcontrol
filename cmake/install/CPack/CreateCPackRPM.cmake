@@ -1,10 +1,21 @@
+# ============================================================================
+# CreateCPackRPM.cmake
+# Red Hat/Fedora/CentOS .rpm package generator
+# ============================================================================
+
 include(CreateCPackCommon)
 
+# ----------------------------------------------------------------------------
+# RPM Generator Configuration
+# ----------------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR "RPM")
 set(CPACK_BINARY_RPM ON)
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/linux")
 
+# ----------------------------------------------------------------------------
+# Package Metadata
+# ----------------------------------------------------------------------------
 set(CPACK_RPM_COMPONENT_INSTALL ON)
 # CPACK_RPM_PACKAGE_SUMMARY
 # CPACK_RPM_PACKAGE_NAME
@@ -21,6 +32,10 @@ set(CPACK_RPM_PACKAGE_ARCHITECTURE "amd64")
 # CPACK_RPM_PACKAGE_URL
 set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
 set(CPACK_RPM_COMPRESSION_TYPE xz)
+
+# ----------------------------------------------------------------------------
+# RPM Dependencies and Requirements
+# ----------------------------------------------------------------------------
 # CPACK_RPM_PACKAGE_AUTOREQ
 # CPACK_RPM_PACKAGE_AUTOPROV
 # CPACK_RPM_PACKAGE_AUTOREQPROV

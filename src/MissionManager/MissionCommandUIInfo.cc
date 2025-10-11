@@ -12,7 +12,7 @@
 #include "FactMetaData.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
+QGC_LOGGING_CATEGORY(MissionCommandsLog, "Plan.MissionCommands")
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)

@@ -1,3 +1,8 @@
+# ============================================================================
+# MAVLink Module
+# MAVLink protocol implementation and communication handling
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ImageProtocolManager.cc
@@ -19,11 +24,13 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-#===========================================================================#
+# ============================================================================
+# MAVLink Protocol Library Integration
+# ============================================================================
 
-message(STATUS "Building MAVLink")
+message(STATUS "QGC: Building MAVLink")
 
-# TODO:
+# TODO: Enable dialect and version options
 # CPMAddPackage(
 #     NAME mavlink
 #     GITHUB_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
@@ -39,7 +46,11 @@ CPMAddPackage(
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
 )
 
-# For QGC all dialects means common and development. Though use of development mavlink code should be restricted to debug builds only.
+# ----------------------------------------------------------------------------
+# MAVLink Dialect Includes
+# ----------------------------------------------------------------------------
+# For QGC, "all" dialects includes common and development
+# Development dialect should be restricted to debug builds only
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${mavlink_SOURCE_DIR}
@@ -48,8 +59,12 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${mavlink_SOURCE_DIR}/development
 )
 
+# TODO: Enable warning suppression if needed
 # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 #   target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
 # endif()
 
+# ----------------------------------------------------------------------------
+# LibEvents - MAVLink event handling
+# ----------------------------------------------------------------------------
 add_subdirectory(LibEvents)

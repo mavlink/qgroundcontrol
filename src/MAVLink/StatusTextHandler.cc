@@ -13,7 +13,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "qgc.mavlink.statustexthandler")
+QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "MAVLink.StatusTextHandler")
 
 StatusText::StatusText(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text)
     : m_compId(componentid)

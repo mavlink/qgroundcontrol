@@ -125,7 +125,7 @@ RowLayout {
             color:                  getIconColor()
             sourceSize.width:       width
             fillMode:               Image.PreserveAspectFit
-            //visible:                _activeVehicle && _activeVehicle.messageCount > 0// FIXME: Is messageCount check needed?
+            visible:                _activeVehicle && _activeVehicle.messageCount > 0
 
             function getIconColor() {
                 let iconColor = qgcPal.text

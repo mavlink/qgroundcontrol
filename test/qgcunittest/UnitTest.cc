@@ -22,7 +22,7 @@
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
 
-QGC_LOGGING_CATEGORY(UnitTestLog, "qgc.test.qgcunittest.unittest")
+QGC_LOGGING_CATEGORY(UnitTestLog, "API.UnitTest")
 
 UnitTest::UnitTest(QObject *parent)
     : QObject(parent)

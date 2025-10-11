@@ -499,6 +499,7 @@ public:
     bool vtol() const;
     bool rover() const;
     bool sub() const;
+    bool spacecraft() const;
 
     bool supportsThrottleModeCenterZero () const;
     bool supportsNegativeThrust         ();
@@ -1468,9 +1469,6 @@ private:
 public:
     QGCCameraManager *cameraManager() { return _cameraManager; }
     const QVariantList &staticCameraList() const;
-
-    /// Stop CameraManager requests, just for testing
-    void stopCameraManager();
 
 signals:
     void cameraManagerChanged();
