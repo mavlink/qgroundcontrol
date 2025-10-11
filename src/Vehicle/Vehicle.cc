@@ -1902,7 +1902,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0, 0);
+                    0, 0, NAN, NAN);
     }
 }
 
@@ -3862,7 +3862,7 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2)
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -3882,6 +3882,17 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
     float newYawCommand    =    yaw * axesScaling;
     float newThrustCommand =    thrust * axesScaling;
+    float newGimbalPitch   =    gimbalPitch * axesScaling;
+    float newGimbalYaw     =    gimbalYaw * axesScaling;
+    uint8_t extensions     =    0;
+
+    if (std::isfinite(gimbalPitch)) {
+        extensions |= 1;
+    }
+
+    if (std::isfinite(gimbalYaw)) {
+        extensions |= 2;
+    }
 
     mavlink_msg_manual_control_pack_chan(
         static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
@@ -3894,8 +3905,9 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         static_cast<int16_t>(newThrustCommand),
         static_cast<int16_t>(newYawCommand),
         buttons, buttons2,
-        0,
-        0, 0,
+        extensions,
+        static_cast<int16_t>(newGimbalPitch),
+        static_cast<int16_t>(newGimbalYaw),
         0, 0, 0, 0, 0, 0
     );
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
