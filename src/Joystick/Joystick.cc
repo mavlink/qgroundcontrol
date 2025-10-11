@@ -608,13 +608,13 @@ void Joystick::_handleAxis()
     axis = _rgFunctionAxis[throttleFunction];
     float throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], (_throttleMode == ThrottleModeDownZero) ? false :_deadband);
 
-    float gimbalPitch = 0.0f;
+    float gimbalPitch = NAN;
     if (_axisCount > 4) {
         axis = _rgFunctionAxis[gimbalPitchFunction];
         gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
     }
 
-    float gimbalYaw = 0.0f;
+    float gimbalYaw = NAN;
     if (_axisCount > 5) {
         axis = _rgFunctionAxis[gimbalYawFunction];
         gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
@@ -674,7 +674,7 @@ void Joystick::_handleAxis()
 
     const uint16_t lowButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
     const uint16_t highButtons = static_cast<uint16_t>((buttonPressedBits >> 16) & 0xFFFF);
-    _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons);
+    _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons, gimbalPitch, gimbalYaw);
 }
 
 void Joystick::startPolling(Vehicle* vehicle)
