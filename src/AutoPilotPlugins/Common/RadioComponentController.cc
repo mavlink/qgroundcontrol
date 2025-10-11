@@ -433,12 +433,13 @@ void RadioComponentController::_inputStickMin(rcCalFunctions function, int chann
 
             qCDebug(RadioComponentControllerLog) << "_inputStickMin Settle complete";
 
-            // Check if this is throttle and set trim accordingly
-            if (function == rcCalFunctionThrottle) {
-                _rgChannelInfo[channel].rcTrim = value;
+            // https://github.com/PX4/PX4-Autopilot/pull/15949
+            if (_px4Vehicle() && (_vehicle->versionCompare(1, 14, 0) < 0)) {
+                // Check if this is throttle and set trim accordingly
+                if (function == rcCalFunctionThrottle) {
+                    _rgChannelInfo[channel].rcTrim = value;
+                }
             }
-            // XXX to support configs which can reverse they need to check a reverse
-            // flag here and not do this.
 
             _advanceState();
         }
