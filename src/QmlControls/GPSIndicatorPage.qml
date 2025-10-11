@@ -64,6 +64,31 @@ ToolIndicatorPage {
     }
 
 
+    function errorText() {
+        if (!_activeVehicle) {
+            return qsTr("Disconnected");
+        }
+
+        switch (_activeVehicle.gps.systemErrors.value) {
+            case 1:
+                return qsTr("Incoming correction");
+            case 2:
+                return qsTr("Configuration");
+            case 4:
+                return qsTr("Software");
+            case 8:
+                return qsTr("Antenna");
+            case 16:
+                return qsTr("Event congestion");
+            case 32:
+                return qsTr("CPU overload");
+            case 64:
+                return qsTr("Output congestion");
+            default:
+                return qsTr("Multiple errors");
+        }
+    }
+
     contentComponent: Component {
         ColumnLayout {
             spacing: ScreenTools.defaultFontPixelHeight / 2
@@ -95,6 +120,12 @@ ToolIndicatorPage {
                 LabelledLabel {
                     label:      qsTr("Course Over Ground")
                     labelText:  activeVehicle ? activeVehicle.gps.courseOverGround.valueString : valueNA
+                }
+
+                LabelledLabel {
+                    label: qsTr("GPS Error")
+                    labelText: errorText()
+                    visible: _activeVehicle && _activeVehicle.gps.systemErrors.value > 0
                 }
             }
 
