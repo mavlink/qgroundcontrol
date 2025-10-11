@@ -12,9 +12,6 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtNetwork/QNetworkInformation>
-#ifdef QGC_ENABLE_BLUETOOTH
-#    include <QtBluetooth/QBluetoothLocalDevice>
-#endif
 
 QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "Utilities.QGCDeviceInfo")
 
@@ -45,16 +42,6 @@ bool isNetworkEthernet()
     if (!QNetworkInformation::loadDefaultBackend()) return false;
 
     return (QNetworkInformation::instance()->transportMedium() == QNetworkInformation::TransportMedium::Ethernet);
-}
-
-bool isBluetoothAvailable()
-{
-    #ifdef QGC_ENABLE_BLUETOOTH
-        const QList<QBluetoothHostInfo> devices = QBluetoothLocalDevice::allDevices();
-        return !devices.isEmpty();
-    #else
-        return false;
-    #endif
 }
 
 ////////////////////////////////////////////////////////////////////

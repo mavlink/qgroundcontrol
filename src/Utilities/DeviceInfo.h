@@ -21,7 +21,6 @@ namespace QGCDeviceInfo
 {
 
 bool isInternetAvailable();
-bool isBluetoothAvailable();
 bool isNetworkEthernet();
 
 ////////////////////////////////////////////////////////////////////
