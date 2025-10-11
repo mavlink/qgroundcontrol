@@ -234,6 +234,7 @@ qt_add_qml_module(QGroundControlControlsModule
         GPSIndicatorPage.qml
         MainStatusIndicator.qml
         MainStatusIndicatorOfflinePage.qml
+        ParameterDownloadProgress.qml
         PlanViewToolBar.qml
         RemoteIDIndicatorPage.qml
         SignalStrength.qml
