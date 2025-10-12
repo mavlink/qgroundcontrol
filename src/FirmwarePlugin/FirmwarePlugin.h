@@ -340,8 +340,7 @@ public:
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
     virtual QString vehicleImageOutline(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOutline.svg"); }
 
-    // This is the content item for the expanded portion of the main status indicator
-    virtual QVariant mainStatusIndicatorContentItem(const Vehicle* /*vehicle*/) const { return QVariant(); }
+    virtual QVariant expandedToolbarIndicatorSource(const Vehicle* /*vehicle*/, const QString& /*indicatorName*/) const { return QVariant(); }
 
     /// Returns the list of toolbar tool indicators associated with a vehicle
     ///     signals toolIndicatorsChanged

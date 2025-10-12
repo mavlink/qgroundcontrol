@@ -27,8 +27,7 @@ Item {
     width:          batteryIndicatorRow.width
 
     property bool       showIndicator:      true
-    property bool       waitForParameters:  false   // UI won't show until parameters are ready
-    property Component  expandedPageComponent
+    property bool       waitForParameters:  true   // UI won't show until parameters are ready
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property var    _batterySettings:   QGroundControl.settingsManager.batteryIndicatorSettings
@@ -394,8 +393,8 @@ Item {
             }
 
             Loader {
-                Layout.fillWidth: true
-                sourceComponent: expandedPageComponent
+                Layout.fillWidth:   true
+                source:             _activeVehicle.expandedToolbarIndicatorSource("Battery")
             }
 
             SettingsGroupLayout {
