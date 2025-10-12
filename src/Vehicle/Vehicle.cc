@@ -3364,14 +3364,6 @@ QString Vehicle::vehicleImageOutline() const
         return QString();
 }
 
-QVariant Vehicle::mainStatusIndicatorContentItem()
-{
-    if(_firmwarePlugin) {
-        return _firmwarePlugin->mainStatusIndicatorContentItem(this);
-    }
-    return QVariant();
-}
-
 const QVariantList& Vehicle::toolIndicators()
 {
     if(_firmwarePlugin) {
@@ -4221,6 +4213,11 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
         msgId,
         interval
     );
+}
+
+QVariant Vehicle::expandedToolbarIndicatorSource(const QString& indicatorName)
+{
+    return _firmwarePlugin->expandedToolbarIndicatorSource(this, indicatorName);
 }
 
 /*===========================================================================*/

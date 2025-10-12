@@ -761,37 +761,6 @@ bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
     return false;
 }
 
-QVariant PX4FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
-{
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4MainStatusIndicatorContentItem.qml"));
-}
-
-const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
-{
-    if (_toolIndicatorList.size() == 0) {
-        // First call the base class to get the standard QGC list
-        _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
-
-        // Find the generic flight mode indicator and replace with the custom one
-        for (int i=0; i<_toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4FlightModeIndicator.qml"));
-                break;
-            }
-        }
-
-        // Find the generic battery indicator and replace with the custom one
-        for (int i=0; i<_toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4BatteryIndicator.qml"));
-                break;
-            }
-        }
-    }
-
-    return _toolIndicatorList;
-}
-
 void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
     for(auto &mode: modeList){
@@ -850,4 +819,17 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
         }
     }
     _updateFlightModeList(modeList);
+}
+
+QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* vehicle, const QString& indicatorName) const
+{
+    if (indicatorName == "Battery") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4BatteryIndicator.qml"));
+    } else if (indicatorName == "FlightMode") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4FlightModeIndicator.qml"));
+    } else if (indicatorName == "MainStatus") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml"));
+    }
+
+    return QVariant();
 }

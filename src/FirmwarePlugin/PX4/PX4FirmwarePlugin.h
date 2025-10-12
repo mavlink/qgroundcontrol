@@ -75,8 +75,7 @@ public:
     bool                supportsNegativeThrust          (Vehicle* vehicle) const override;
     QString             getHobbsMeter                   (Vehicle* vehicle) const override;
     bool                hasGripper                      (const Vehicle* vehicle) const override;
-    QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
-    const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
+    QVariant            expandedToolbarIndicatorSource  (const Vehicle* vehicle, const QString& indicatorName) const override;
 
     void                updateAvailableFlightModes      (FlightModeList &modeList) override;
 

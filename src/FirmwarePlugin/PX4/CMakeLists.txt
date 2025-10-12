@@ -47,7 +47,7 @@ qt_add_qml_module(PX4FirmwareModule
     QML_FILES
         PX4BatteryIndicator.qml
         PX4FlightModeIndicator.qml
-        PX4MainStatusIndicatorContentItem.qml
+        PX4MainStatusIndicator.qml
     NO_PLUGIN
 )
 

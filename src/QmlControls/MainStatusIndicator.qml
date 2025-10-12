@@ -13,10 +13,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
-
 RowLayout {
     id:         control
     spacing:    ScreenTools.defaultFontPixelWidth
@@ -174,8 +170,8 @@ RowLayout {
         id: overallStatusIndicatorPage
 
         ToolIndicatorPage {
-            showExpand:         _activeVehicle.mainStatusIndicatorContentItem ? true : false
-            waitForParameters:  _activeVehicle.mainStatusIndicatorContentItem ? true : false
+            showExpand:         true
+            waitForParameters:  true
             contentComponent:   mainStatusContentComponent
             expandedComponent:  mainStatusExpandedComponent
         }
@@ -344,7 +340,8 @@ RowLayout {
             property real margins: ScreenTools.defaultFontPixelHeight
 
             Loader {
-                source: _activeVehicle.mainStatusIndicatorContentItem
+                Layout.fillWidth:   true
+                source:             _activeVehicle.expandedToolbarIndicatorSource("MainStatus")
             }
 
             SettingsGroupLayout {
