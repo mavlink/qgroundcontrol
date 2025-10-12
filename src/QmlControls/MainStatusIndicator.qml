@@ -35,7 +35,7 @@ RowLayout {
     QGCLabel {
         id:                 mainStatusLabel
         Layout.fillHeight:  true
-        Layout.preferredWidth: contentWidth + vehicleMessagesIcon.width + control.spacing
+        Layout.preferredWidth: contentWidth + (vehicleMessagesIcon.visible ? vehicleMessagesIcon.width + control.spacing : 0)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
         font.pointSize:     ScreenTools.largeFontPointSize

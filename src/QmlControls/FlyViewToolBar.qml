@@ -42,70 +42,93 @@ Rectangle {
     }
 
     Rectangle {
-        anchors.fill: viewButtonRow
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        anchors.left:   parent.left
+        width:          leftStatusLayout.width
         
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0;                                     color: _mainStatusBGColor }
-            GradientStop { position: currentButton.x + currentButton.width; color: _mainStatusBGColor }
+            GradientStop { position: qgcButton.x + qgcButton.width; color: _mainStatusBGColor }
             GradientStop { position: 1;                                     color: _root.color }
         }
     }
 
     RowLayout {
-        id:                     viewButtonRow
+        id:                     mainLayout
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        spacing:                ScreenTools.defaultFontPixelWidth / 2
+        anchors.left:           parent.left
+        anchors.right:          brandingLogo.visible ? brandingLogo.left : parent.right
+        anchors.rightMargin:    brandingLogo.anchors.margins
+        spacing:                ScreenTools.defaultFontPixelWidth
 
-        QGCToolBarButton {
-            id:                     currentButton
-            Layout.preferredHeight: viewButtonRow.height
-            icon.source:            "/res/QGCLogoFull.svg"
-            logo:                   true
-            onClicked:              mainWindow.showToolSelectDialog()
+        RowLayout {
+            id:                 leftStatusLayout
+            Layout.fillHeight:  true
+            Layout.alignment:   Qt.AlignLeft
+            spacing:            ScreenTools.defaultFontPixelWidth * 2
+
+            RowLayout {
+                id:                 mainStatusLayout
+                Layout.fillHeight:  true
+                spacing:            ScreenTools.defaultFontPixelWidth / 2
+
+                QGCToolBarButton {
+                    id:                 qgcButton
+                    Layout.fillHeight:  true
+                    icon.source:        "/res/QGCLogoFull.svg"
+                    logo:               true
+                    onClicked:          mainWindow.showToolSelectDialog()
+                }
+
+                MainStatusIndicator {
+                    id:                 mainStatusIndicator
+                    Layout.fillHeight:  true
+                }
+
+                QGCButton {
+                    id:                 disconnectButton
+                    text:               qsTr("Disconnect")
+                    onClicked:          _activeVehicle.closeVehicle()
+                    visible:            _activeVehicle && _communicationLost
+                }
+            }
+
+            FlightModeIndicator {
+                Layout.fillHeight:  true
+                visible:            _activeVehicle
+            }
         }
 
-        MainStatusIndicator {
-            id: mainStatusIndicator
-            Layout.preferredHeight: viewButtonRow.height
-        }
+        QGCFlickable {
+            id:                     indicatorsFlickable
+            Layout.alignment:       Qt.AlignRight
+            Layout.fillHeight:      true
+            Layout.preferredWidth:  Math.min(contentWidth, availableWidth)
+            contentWidth:           toolIndicators.width
+            flickableDirection:     Flickable.HorizontalFlick
 
-        QGCButton {
-            id:                 disconnectButton
-            text:               qsTr("Disconnect")
-            onClicked:          _activeVehicle.closeVehicle()
-            visible:            _activeVehicle && _communicationLost
+            property real availableWidth: mainLayout.width - leftStatusLayout.width
+
+            FlyViewToolBarIndicators { id: toolIndicators }
         }
     }
 
-    QGCFlickable {
-        id:                     toolsFlickable
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
-        anchors.left:           viewButtonRow.right
-        anchors.bottomMargin:   1
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        anchors.right:          parent.right
-        contentWidth:           toolIndicators.width
-        flickableDirection:     Flickable.HorizontalFlick
-
-        FlyViewToolBarIndicators { id: toolIndicators }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Branding Logo
     Image {
-        anchors.right:          parent.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
-        visible:                _activeVehicle && !_communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
-        fillMode:               Image.PreserveAspectFit
-        source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
-        mipmap:                 true
+        id:                 brandingLogo
+        anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        anchors.right:      parent.right
+        fillMode:           Image.PreserveAspectFit
+        source:             _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
+        mipmap:             true
+        visible:            _showBranding
+
+        property bool _showBranding: leftStatusLayout.width + indicatorsFlickable.contentWidth + width + (anchors.margins * 3) < _root.width
 
         property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
         property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0
