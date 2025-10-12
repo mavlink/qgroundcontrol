@@ -39,7 +39,7 @@ Supported versions: macOS 12 (Monterey) or later:
 2. 다운로드한 dmg 파일을 더블 클릭하여 마운트하여, _QGroundControl_ 애플리케이션을 _Application_ 폴더로 드래그합니다.
 
 :::info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
 :::
 
 ## 우분투 리눅스 {#ubuntu}

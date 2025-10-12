@@ -39,7 +39,7 @@ Supported versions: macOS 12 (Monterey) or later:
 2. 双击 .dmg 文件以挂载它，然后将 _QGroundControl_ 应用程序拖动到您的 _Application_ 文件夹。
 
 :::info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
 :::
 
 ## Ubuntu Linux 系统 {#ubuntu}

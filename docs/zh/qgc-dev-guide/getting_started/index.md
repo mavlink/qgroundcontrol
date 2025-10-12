@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.3
+qt_version: 6.10.0
 ---
 
 # 从源码开始并构建
@@ -90,6 +90,7 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
+   - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
    - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html)。 最新版本需要 JDK17 。 NDK 版本：25.1.8937393
      您可以通过审查项目设置确认它正在使用：**Projects > Managing Kits >  Devices > Android (tab) > Android Settings > _JDK location_**。
      注意：访问此处查看更详细的配置 [android.yml](.github/workflows/android.yml)
@@ -138,7 +139,7 @@ Visual Studio 仅用于获取编译器。 构建 _QGroundControl_ 可直接按�
 2. 配置：
 
    ```sh
-   ~/Qt/6.8.3/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ~/Qt/{{ $frontmatter.qt_version }}/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
    ```
 
    修改 qt-cmake 的目录，使其与你安装 Qt 的位置以及你想要使用的工具包相匹配。
