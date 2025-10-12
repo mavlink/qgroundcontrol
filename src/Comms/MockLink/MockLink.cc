@@ -149,7 +149,9 @@ void MockLink::run1HzTasks()
     _sendBatteryStatus();
     _sendSysStatus();
     _sendADSBVehicles();
-    _sendRemoteIDArmStatus();
+    if (_vehicleType != MAV_TYPE_SUBMARINE) {
+        _sendRemoteIDArmStatus();
+    }
     _sendAvailableModesMonitor();
 
     if (_sendGimbalManagerStatusNow) {
@@ -191,8 +193,10 @@ void MockLink::run10HzTasks()
             // We delay gps position for better testing
             _sendGPSPositionDelayCount--;
         } else {
-            _sendGpsRawInt();
-            _sendGlobalPositionInt();
+            if (_vehicleType != MAV_TYPE_SUBMARINE) {
+                _sendGpsRawInt();
+                _sendGlobalPositionInt();
+            }
             _sendExtendedSysState();
         }
     }
