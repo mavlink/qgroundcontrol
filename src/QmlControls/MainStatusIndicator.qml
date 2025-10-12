@@ -25,6 +25,7 @@ RowLayout {
     property real   _spacing:           ScreenTools.defaultFontPixelWidth / 2
     property bool   _allowForceArm:      false
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
+    property bool   _vehicleFlies:      _activeVehicle ? _activeVehicle.airShip || _activeVehicle.fixedWing || _activeVehicle.vtol || _activeVehicle.multiRotor : false
 
     function dropMainStatusIndicator() {
         let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
@@ -40,7 +41,7 @@ RowLayout {
         font.pointSize:     ScreenTools.largeFontPointSize
 
         property string _commLostText:      qsTr("Comms Lost")
-        property string _readyToFlyText:    qsTr("Ready To Fly")
+        property string _readyToFlyText:    control._vehicleFlies ? qsTr("Ready To Fly") : qsTr("Ready")
         property string _notReadyToFlyText: qsTr("Not Ready")
         property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
         property string _armedText:         qsTr("Armed")

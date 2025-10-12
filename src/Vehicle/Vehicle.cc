@@ -252,7 +252,6 @@ void Vehicle::_commonInit()
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
     connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
-    connect(_firmwarePlugin, &FirmwarePlugin::modeIndicatorsChanged, this, &Vehicle::modeIndicatorsChanged);
 
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingHome);
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingGCS);
@@ -3368,15 +3367,6 @@ const QVariantList& Vehicle::toolIndicators()
 {
     if(_firmwarePlugin) {
         return _firmwarePlugin->toolIndicators(this);
-    }
-    static QVariantList emptyList;
-    return emptyList;
-}
-
-const QVariantList& Vehicle::modeIndicators()
-{
-    if(_firmwarePlugin) {
-        return _firmwarePlugin->modeIndicators(this);
     }
     static QVariantList emptyList;
     return emptyList;

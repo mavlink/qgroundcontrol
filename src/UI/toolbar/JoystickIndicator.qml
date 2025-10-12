@@ -13,17 +13,18 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
 // Joystick Indicator
 Item {
     id:             control
     width:          joystickRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    visible:        globals.activeVehicle ? globals.activeVehicle.sub : false
 
+    property bool showIndicator: _vehicleIsSub || _showJoystickIndicator
+
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property bool _vehicleIsSub: _activeVehicle && _activeVehicle.sub
+    property bool _showJoystickIndicator: QGroundControl.settingsManager.flyViewSettings.showJoystickIndicatorInToolbar.rawValue
 
     Component {
         id: joystickInfoPage

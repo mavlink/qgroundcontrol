@@ -347,11 +347,6 @@ public:
     /// @return A list of QUrl with the indicators
     virtual const QVariantList &toolIndicators(const Vehicle *vehicle);
 
-    /// Returns the list of toolbar mode indicators associated with a vehicle
-    ///     signals modeIndicatorsChanged
-    /// @return A list of QUrl with the indicators
-    virtual const QVariantList &modeIndicators(const Vehicle *vehicle);
-
     /// Creates vehicle camera manager.
     virtual QGCCameraManager *createCameraManager(Vehicle *vehicle) const;
 
@@ -407,7 +402,6 @@ public:
 
 signals:
     void toolIndicatorsChanged();
-    void modeIndicatorsChanged();
 
 protected:
     /// Arms the vehicle with validation and retries

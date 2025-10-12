@@ -102,6 +102,12 @@
     "min":          3,
     "max":          60,
     "default":      10
+},
+{
+    "name":         "showJoystickIndicatorInToolbar",
+    "shortDesc":    "Show joystick indicator in toolbar",
+    "type":         "bool",
+    "default":      false
 }
 ]
 }
