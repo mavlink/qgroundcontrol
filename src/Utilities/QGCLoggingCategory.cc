@@ -140,7 +140,7 @@ void QGCLoggingCategoryManager::setFilterRulesFromSettings(const QString &comman
         }
     }
 
-    //filterRules += QStringLiteral("qt.qml.connections=false");
+    filterRules += QStringLiteral("qt.qml.connections=false");
 
     qCDebug(QGCLoggingCategoryRegisterLog) << "Filter rules" << filterRules;
     QLoggingCategory::setFilterRules(filterRules);
