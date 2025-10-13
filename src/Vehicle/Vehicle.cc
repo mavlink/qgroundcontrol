@@ -117,7 +117,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
-    connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
     qCDebug(VehicleLog) << "Link started with Mavlink " << (MAVLinkProtocol::instance()->getCurrentVersion() >= 200 ? "V2" : "V1");
@@ -363,8 +362,7 @@ void Vehicle::_commonInit(LinkInterface* link)
         SettingsManager::instance()->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
 
-    // enable Joystick if appropriate
-    _loadJoystickSettings();
+    _initJoystickHandling();
 
     _gimbalController = new GimbalController(this);
 
@@ -1511,90 +1509,16 @@ bool Vehicle::xConfigMotors()
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-// this function called in three cases:
-// 1. On constructor of vehicle, to see if we should enable a joystick
-// 2. When there is a new active joystick
-// 3. When the active joystick is disconnected (even if there isnt a new one)
-void Vehicle::_loadJoystickSettings()
-{
-    QSettings settings;
-    settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    if (JoystickManager::instance()->activeJoystick()) {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
-        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
-    } else {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified that there is no active joystick";
-        setJoystickEnabled(false);
-    }
-}
-
-// This is called from the UI when a deliberate action is taken to enable or disable the joystick
-// This save allows the joystick enable state to persist restarts, disconnections of the joystick etc
-void Vehicle::saveJoystickSettings()
-{
-    QSettings settings;
-    settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    // The joystick enabled setting should only be changed if a joystick is present
-    // since the checkbox can only be clicked if one is present
-    if (JoystickManager::instance()->joysticks().count()) {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Saving setting joystickenabled: " << _joystickEnabled;
-        settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
-    }
-}
-
-bool Vehicle::joystickEnabled() const
-{
-    return _joystickEnabled;
-}
-
-void Vehicle::setJoystickEnabled(bool enabled)
-{
-    if (enabled){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Enabled";
-    }
-    else {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Disabled";
-    }
-
-    // _joystickEnabled is the runtime state - it determines whether a vehicle is using joystick data when it is active
-    _joystickEnabled = enabled;
-
-    // if we are the active vehicle, call start polling on the active joystick
-    // This routes the joystick signals to this vehicle
-    if (enabled && MultiVehicleManager::instance()->activeVehicle() == this){
-        _captureJoystick();
-    }
-
-    emit joystickEnabledChanged(_joystickEnabled);
-}
-
 void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
 {
-    // the new active vehicle should always capture the joystick
-    // even if the new active vehicle has joystick disabled
-    // capturing the joystick will stop the joystick data going to the inactive vehicle
-    if (newActiveVehicle == this){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " is the new active vehicle";
+    if (newActiveVehicle == this) {
+        qCDebug(VehicleLog) << "Vehicle" << this->id() << "is the new active vehicle";
         _captureJoystick();
         _isActiveVehicle = true;
     } else {
         _isActiveVehicle = false;
     }
 }
-
-// tells the active joystick where to send data
-void Vehicle::_captureJoystick()
-{
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
-
-    if(joystick){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();
-        joystick->startPolling(this);
-    }
-}
-
 
 QGeoCoordinate Vehicle::homePosition()
 {
@@ -1897,19 +1821,6 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
     if(_rcRSSI != filteredRSSI) {
         _rcRSSI = filteredRSSI;
         emit rcRSSIChanged(_rcRSSI);
-    }
-}
-
-void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
-{
-    // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
-    if (!_joystickEnabled) {
-        sendJoystickDataThreadSafe(
-                    static_cast<float>(roll),
-                    static_cast<float>(pitch),
-                    static_cast<float>(yaw),
-                    static_cast<float>(thrust),
-                    0, 0, NAN, NAN);
     }
 }
 
@@ -3853,57 +3764,6 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw)
-{
-    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
-        return;
-    }
-
-    if (sharedLink->linkConfiguration()->isHighLatency()) {
-        return;
-    }
-
-    mavlink_message_t message;
-
-    // Incoming values are in the range -1:1
-    float axesScaling =         1.0 * 1000.0;
-    float newRollCommand =      roll * axesScaling;
-    float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
-    float newYawCommand    =    yaw * axesScaling;
-    float newThrustCommand =    thrust * axesScaling;
-    float newGimbalPitch   =    gimbalPitch * axesScaling;
-    float newGimbalYaw     =    gimbalYaw * axesScaling;
-    uint8_t extensions     =    0;
-
-    if (std::isfinite(gimbalPitch)) {
-        extensions |= 1;
-    }
-
-    if (std::isfinite(gimbalYaw)) {
-        extensions |= 2;
-    }
-
-    mavlink_msg_manual_control_pack_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-        sharedLink->mavlinkChannel(),
-        &message,
-        static_cast<uint8_t>(_id),
-        static_cast<int16_t>(newPitchCommand),
-        static_cast<int16_t>(newRollCommand),
-        static_cast<int16_t>(newThrustCommand),
-        static_cast<int16_t>(newYawCommand),
-        buttons, buttons2,
-        extensions,
-        static_cast<int16_t>(newGimbalPitch),
-        static_cast<int16_t>(newGimbalYaw),
-        0, 0, 0, 0, 0, 0
-    );
-    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
-}
-
 void Vehicle::triggerSimpleCamera()
 {
     sendMavCommand(_defaultComponentId,
@@ -4428,6 +4288,205 @@ const QVariantList &Vehicle::staticCameraList() const
 
     static QVariantList emptyCameraList;
     return emptyCameraList;
+}
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                               Joystick                                    */
+/*===========================================================================*/
+
+void Vehicle::_initJoystickHandling()
+{
+    (void) connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
+    _loadJoystickSettings();
+}
+
+void Vehicle::setJoystickEnabled(bool enabled)
+{
+    if (enabled && (MultiVehicleManager::instance()->activeVehicle() == this)) {
+        _captureJoystick();
+    }
+
+    if (enabled != _joystickEnabled) {
+        _joystickEnabled = enabled;
+        emit joystickEnabledChanged(_joystickEnabled);
+    }
+}
+
+void Vehicle::setManualControlButtonsEnabled(bool enabled)
+{
+    if (enabled != _manualControlButtonsEnabled) {
+        _manualControlButtonsEnabled = enabled;
+        emit manualControlButtonsEnabledChanged(_manualControlButtonsEnabled);
+    }
+}
+
+void Vehicle::saveJoystickSettings()
+{
+    if (JoystickManager::instance()->joysticks().isEmpty()) {
+        return;
+    }
+
+    QSettings settings;
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    settings.setValue(kSettingsKeyJoystickEnabled, _joystickEnabled);
+    settings.setValue(kSettingsKeyManualControlButtonsEnabled, _manualControlButtonsEnabled);
+}
+
+void Vehicle::_loadJoystickSettings()
+{
+    if (!JoystickManager::instance()->activeJoystick()) {
+        setJoystickEnabled(false);
+        return;
+    }
+
+    QSettings settings;
+    settings.beginGroup(QString(_settingsGroup).arg(_id));
+    setJoystickEnabled(settings.value(kSettingsKeyJoystickEnabled, false).toBool());
+    setManualControlButtonsEnabled(settings.value(kSettingsKeyManualControlButtonsEnabled, false).toBool());
+}
+
+void Vehicle::_captureJoystick()
+{
+    Joystick *joystick = JoystickManager::instance()->activeJoystick();
+    if (joystick) {
+        joystick->startPolling(this);
+    }
+}
+
+void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double throttle, double gimbalPitch, double gimbalYaw)
+{
+    if (!joystickEnabled()) {
+        const QList<float> axisValues = {
+            static_cast<float>(roll),
+            static_cast<float>(pitch),
+            static_cast<float>(yaw),
+            static_cast<float>(throttle),
+            static_cast<float>(gimbalPitch),
+            static_cast<float>(gimbalYaw)
+        };
+        const QBitArray buttonsPressed(32);
+        sendJoystickData(axisValues, buttonsPressed);
+    }
+}
+
+
+
+void Vehicle::sendManualControlMsg(int16_t x, int16_t y, int16_t z, int16_t r,
+                                   int16_t s, int16_t t,
+                                   int16_t aux1, int16_t aux2, int16_t aux3, int16_t aux4, int16_t aux5, int16_t aux6,
+                                   QBitArray buttons)
+{
+    mavlink_manual_control_t manual_control{};
+    manual_control.x = x;
+    manual_control.y = y;
+    manual_control.z = z;
+    manual_control.r = r;
+
+    manual_control.s = s;
+    manual_control.t = t;
+    manual_control.aux1 = aux1;
+    manual_control.aux2 = aux2;
+    manual_control.aux3 = aux3;
+    manual_control.aux4 = aux4;
+    manual_control.aux5 = aux5;
+    manual_control.aux6 = aux6;
+
+    bool ok;
+    const quint32 buttonPressed = buttons.toUInt32(QSysInfo::Endian::LittleEndian, &ok);
+    if (ok) {
+        manual_control.buttons = static_cast<uint16_t>(buttonPressed);
+        manual_control.buttons2 = static_cast<uint16_t>((buttonPressed >> 16) & 0xFFFF);
+    }
+
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCWarning(VehicleLog) << "primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+}
+
+// void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, float gimbalPitch, float gimbalYaw)
+
+void Vehicle::sendJoystickData(QList<float> axisValues, QBitArray buttons)
+{
+    if (axisValues.size() > 12) {
+        qCWarning(VehicleLog) << "Too many axis values";
+    }
+
+    if (buttons.size() > 32) {
+        qCWarning(VehicleLog) << "Too many buttons";
+    }
+
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCWarning(VehicleLog) << "primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    mavlink_manual_control_t manual_control{};
+
+    // Incoming values are in the range -1:1
+    static constexpr float kAxisScaling = 1000.0;
+
+    manual_control.x = (axisValues.size() > 1) ? (axisValues[1] * -kAxisScaling) : INT16_MAX; // Joystick data is reverse of mavlink values
+    manual_control.y = (axisValues.size() > 0) ? (axisValues[0] * kAxisScaling) : INT16_MAX;
+    manual_control.z = (axisValues.size() > 3) ? (axisValues[3] * kAxisScaling) : INT16_MAX;
+    manual_control.r = (axisValues.size() > 2) ? (axisValues[2] * kAxisScaling) : INT16_MAX;
+
+    if (axisValues.size() > 4) {
+        manual_control.enabled_extensions |= (1u << 2);
+    }
+
+    manual_control.s = (axisValues.size() > 4) ? (axisValues[4] * kAxisScaling) : 0;
+    manual_control.t = (axisValues.size() > 5) ? (axisValues[5] * kAxisScaling) : 0;
+
+    if (!qIsNan(gimbalPitch)) {
+        newGimbalPitch = gimbalPitch * axisScaling;
+
+    }
+
+    if (!qIsNan(gimbalYaw)) {
+        newGimbalYaw = gimbalYaw * axisScaling;
+        manual_control.enabled_extensions |= (1u << 3);
+    }
+
+    bool ok;
+    const quint32 buttonPressed = buttons.toUInt32(QSysInfo::Endian::LittleEndian, &ok);
+    if (ok) {
+        manual_control.buttons = static_cast<uint16_t>(buttonPressed);
+        manual_control.buttons2 = static_cast<uint16_t>((buttonPressed >> 16) & 0xFFFF);
+    }
+
+    mavlink_message_t message{};
+    mavlink_msg_manual_control_pack_chan(
+        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        static_cast<uint8_t>(_id),
+        static_cast<int16_t>(newPitchCommand),
+        static_cast<int16_t>(newRollCommand),
+        static_cast<int16_t>(newThrustCommand),
+        static_cast<int16_t>(newYawCommand),
+        lowButtons, highButtons,
+        extensions,
+        0, 0,
+        static_cast<int16_t>(newGimbalPitch),
+        static_cast<int16_t>(newGimbalYaw),
+        0, 0, 0, 0
+    );
+    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
 /*---------------------------------------------------------------------------*/

@@ -13,11 +13,7 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
-
-
 import QGroundControl.FactControls
 
 Item {
@@ -26,8 +22,9 @@ Item {
 
     readonly property real axisMonitorWidth: ScreenTools.defaultFontPixelWidth * 32
 
-    property bool _buttonsOnly:         _activeJoystick.axisCount == 0
+    property bool _buttonsOnly: _activeJoystick.axisCount == 0
     property bool _requiresCalibration: !_activeJoystick.calibrated && !_buttonsOnly
+    property var _activeVehicle: globals.activeVehicle
 
     Column {
         id:                 mainCol
@@ -48,23 +45,23 @@ Item {
                 id:             enabledSwitch
                 enabled:        !_requiresCalibration
                 onClicked:      {
-                    globals.activeVehicle.joystickEnabled = checked
-                    globals.activeVehicle.saveJoystickSettings()
+                    _activeVehicle.joystickEnabled = checked
+                    _activeVehicle.saveJoystickSettings()
                 }
                 Component.onCompleted: {
-                    checked = globals.activeVehicle.joystickEnabled
+                    checked = _activeVehicle.joystickEnabled
                 }
                 Connections {
-                    target: globals.activeVehicle
+                    target: _activeVehicle
                     onJoystickEnabledChanged: {
-                        enabledSwitch.checked = globals.activeVehicle.joystickEnabled
+                        enabledSwitch.checked = _activeVehicle.joystickEnabled
                     }
                 }
                 Connections {
                     target: joystickManager
                     onActiveJoystickChanged: {
                         if(_activeJoystick) {
-                            enabledSwitch.checked = Qt.binding(function() { return _activeJoystick.calibrated && globals.activeVehicle.joystickEnabled })
+                            enabledSwitch.checked = Qt.binding(function() { return _activeJoystick.calibrated && _activeVehicle.joystickEnabled })
                         }
                     }
                 }
@@ -158,8 +155,9 @@ Item {
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     rowSpacing:         ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
+
                     QGCLabel {
-                        text:               globals.activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
+                        text:               _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 12
                     }
                     AxisMonitor {
@@ -173,7 +171,7 @@ Item {
                     QGCLabel {
                         id:                 pitchLabel
                         width:              _attitudeLabelWidth
-                        text:               globals.activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
+                        text:               _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                     }
                     AxisMonitor {
                         id:                 pitchAxis
@@ -209,17 +207,50 @@ Item {
                         reversed:           controller.throttleAxisReversed
                     }
 
+                    QGCLabel {
+                        id:                 gimbalPitchLabel
+                        enabled:            gimbalPitchAxis.enabled
+                        width:              _attitudeLabelWidth
+                        text:               qsTr("Gimbal Pitch")
+                    }
+                    AxisMonitor {
+                        id:                 gimbalPitchAxis
+                        enabled:            _activeJoystick.axisCount >= 5
+                        height:             ScreenTools.defaultFontPixelHeight
+                        width:              axisMonitorWidth
+                        mapped:             controller.gimbalPitchAxisMapped
+                        reversed:           controller.gimbalPitchAxisReversed
+                    }
+
+                    QGCLabel {
+                        id:                 gimbalYawLabel
+                        enabled:            gimbalYawAxis.enabled
+                        width:              _attitudeLabelWidth
+                        text:               qsTr("Gimbal Yaw")
+                    }
+                    AxisMonitor {
+                        id:                 gimbalYawAxis
+                        enabled:            _activeJoystick.axisCount >= 6
+                        height:             ScreenTools.defaultFontPixelHeight
+                        width:              axisMonitorWidth
+                        mapped:             controller.gimbalYawAxisMapped
+                        reversed:           controller.gimbalYawAxisReversed
+                    }
+
                     Connections {
-                        target:             _activeJoystick
-                        onAxisValues: (roll, pitch, yaw, throttle) => {
-                            rollAxis.axisValue      = roll  * 32768.0
-                            pitchAxis.axisValue     = pitch * 32768.0
-                            yawAxis.axisValue       = yaw   * 32768.0
-                            throttleAxis.axisValue  = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
+                        target: _activeJoystick
+                        onAxisValuesUpdated: (roll, pitch, yaw, throttle, gimbalPitch, gimbalYaw) => {
+                            rollAxis.axisValue = roll * 32768.0
+                            pitchAxis.axisValue = pitch * 32768.0
+                            yawAxis.axisValue = yaw * 32768.0
+                            throttleAxis.axisValue  = _activeJoystick.negativeThrust ? (throttle * -32768.0) : ((-2 * throttle + 1) * 32768.0)
+                            gimbalPitchAxis.axisValue = gimbalPitch * 32768.0
+                            gimbalYawAxis.axisValue = gimbalYaw * 32768.0
                         }
                     }
                 }
             }
+
             Rectangle {
                 color:              Qt.rgba(0,0,0,0)
                 border.color:       qgcPal.text

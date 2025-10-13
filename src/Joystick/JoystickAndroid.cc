@@ -15,7 +15,7 @@
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 
-QGC_LOGGING_CATEGORY(JoystickAndroidLog, "Joystick.joystickandroid")
+QGC_LOGGING_CATEGORY(JoystickAndroidLog, "Joystick.JoystickAndroid")
 
 QList<int> JoystickAndroid::_androidBtnList(_androidBtnListCount);
 int JoystickAndroid::ACTION_DOWN = 0;
