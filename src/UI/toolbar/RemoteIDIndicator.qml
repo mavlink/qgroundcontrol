@@ -96,6 +96,8 @@ Item {
         }
     }
 
+    QGCPalette { id: qgcPal }
+
     QGCColoredImage {
         id:                 remoteIDIcon
         width:              height

@@ -154,6 +154,8 @@ public:
     DEFINE_QGC_COLOR(surveyPolygonInterior,         setSurveyPolygonInterior)
     DEFINE_QGC_COLOR(surveyPolygonTerrainCollision, setSurveyPolygonTerrainCollision)
     DEFINE_QGC_COLOR(toolbarBackground,             setToolbarBackground)
+    DEFINE_QGC_COLOR(toolbarDivider,                setToolbarDivider)
+    DEFINE_QGC_COLOR(toolbarText,                   setToolbarText)
     DEFINE_QGC_COLOR(toolStripFGColor,              setToolStripFGColor)
     DEFINE_QGC_COLOR(toolStripHoverColor,           setToolStripHoverColor)
     DEFINE_QGC_COLOR(groupBorder,                   setGroupBorder)
