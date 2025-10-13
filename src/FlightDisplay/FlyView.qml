@@ -59,6 +59,7 @@ Item {
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapControl
+    property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -74,21 +75,16 @@ Item {
 
     QGCToolInsets {
         id:                     _toolInsets
+        topEdgeLeftInset:       toolbar.height
+        topEdgeCenterInset:     topEdgeLeftInset
+        topEdgeRightInset:      topEdgeLeftInset
         leftEdgeBottomInset:    _pipView.leftEdgeBottomInset
         bottomEdgeLeftInset:    _pipView.bottomEdgeLeftInset
     }
 
-    FlyViewToolBar {
-        id:         toolbar
-        visible:    !QGroundControl.videoManager.fullScreen
-    }
-
     Item {
         id:                 mapHolder
-        anchors.top:        toolbar.bottom
-        anchors.bottom:     parent.bottom
-        anchors.left:       parent.left
-        anchors.right:      parent.right
+        anchors.fill:       parent
 
         FlyViewMap {
             id:                     mapControl
@@ -128,6 +124,8 @@ Item {
             anchors.bottom:         parent.bottom
             anchors.left:           parent.left
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
+            anchors.margins:        _widgetMargin
+            anchors.topMargin:      toolbar.height + _widgetMargin
             z:                      _fullItemZorder + 2 // we need to add one extra layer for map 3d viewer (normally was 1)
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
@@ -188,5 +186,10 @@ Item {
         function onActivationTriggered(value) {
             _root.utmspSendActTrigger = value
         }
+    }
+
+    FlyViewToolBar {
+        id:         toolbar
+        visible:    !QGroundControl.videoManager.fullScreen
     }
 }
