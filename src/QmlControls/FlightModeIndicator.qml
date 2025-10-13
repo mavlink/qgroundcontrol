@@ -32,23 +32,26 @@ Item {
     property bool _vtolInFWDFlight: activeVehicle ? activeVehicle.vtolInFwdFlight : false
     property var  _vehicleInAir:    activeVehicle ? activeVehicle.flying || activeVehicle.landing : false
 
+    QGCPalette { id: qgcPal }
+
     RowLayout {
         id:         mainLayout
         spacing:    ScreenTools.defaultFontPixelWidth / 2
 
         QGCColoredImage {
-            id:                     flightModeIcon
-            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 3
-            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight
-            fillMode:               Image.PreserveAspectFit
-            mipmap:                 true
-            color:                  qgcPal.text
-            source:                 "/qmlimages/FlightModesComponentIcon.png"
+            id:         flightModeIcon
+            width:      ScreenTools.defaultFontPixelWidth * 3
+            height:     ScreenTools.defaultFontPixelHeight
+            fillMode:   Image.PreserveAspectFit
+            mipmap:     true
+            color:      qgcPal.toolbarText
+            source:     "/qmlimages/FlightModesComponentIcon.png"
         }
 
         QGCLabel {
             id:                 flightModeLabel
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
+            color:          qgcPal.toolbarText
             font.pointSize:     fontPointSize
             Layout.alignment:   Qt.AlignCenter
 

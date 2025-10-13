@@ -30,12 +30,15 @@ RowLayout {
         mainWindow.showIndicatorDrawer(overallStatusComponent, control)
     }
 
+    QGCPalette { id: qgcPal }
+
     QGCLabel {
         id:                 mainStatusLabel
         Layout.fillHeight:  true
         Layout.preferredWidth: contentWidth + (vehicleMessagesIcon.visible ? vehicleMessagesIcon.width + control.spacing : 0)
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
+        color:              qgcPal.toolbarText
         font.pointSize:     ScreenTools.largeFontPointSize
 
         property string _commLostText:      qsTr("Comms Lost")
@@ -139,6 +142,25 @@ RowLayout {
         QGCMouseArea {
             anchors.fill:   parent
             onClicked:      dropMainStatusIndicator()
+        }
+    }
+
+    QGCLabel {
+        id:                 vtolModeLabel
+        Layout.fillHeight:  true
+        verticalAlignment:  Text.AlignVCenter
+        text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
+        color:              qgcPal.toolbarText
+        font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        visible:            _activeVehicle && _activeVehicle.vtol
+
+        QGCMouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (_vehicleInAir) {
+                    mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
+                }
+            }
         }
     }
 

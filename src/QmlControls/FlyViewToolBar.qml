@@ -19,7 +19,7 @@ Rectangle {
     id:     _root
     width:  parent.width
     height: ScreenTools.toolbarHeight
-    color:  "transparent"
+    color:  qgcPal.toolbarBackground
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
@@ -37,8 +37,7 @@ Rectangle {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         height:         1
-        color:          "black"
-        visible:        qgcPal.globalTheme === QGCPalette.Light
+        color:          qgcPal.toolbarDivider
     }
 
     Rectangle {
@@ -92,14 +91,14 @@ Rectangle {
                 QGCButton {
                     id:                 disconnectButton
                     text:               qsTr("Disconnect")
+                    textColor:          qgcPal.toolbarText
                     onClicked:          _activeVehicle.closeVehicle()
                     visible:            _activeVehicle && _communicationLost
                 }
             }
 
             FlightModeIndicator {
-                Layout.fillHeight:  true
-                visible:            _activeVehicle
+                visible: _activeVehicle
             }
         }
 

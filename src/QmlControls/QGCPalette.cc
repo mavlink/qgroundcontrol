@@ -82,7 +82,9 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(statusFailedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
-    DECLARE_QGC_COLOR(toolbarBackground,    "#ffffff", "#ffffff", "#222222", "#222222")
+    DECLARE_QGC_COLOR(toolbarBackground,    "#00ffffff", "#00ffffff", "#00222222", "#00222222")
+    DECLARE_QGC_COLOR(toolbarDivider,       "#00000000", "#00000000", "#00000000", "#00000000")
+    DECLARE_QGC_COLOR(toolbarText,          "#707070", "#ffffff", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(groupBorder,          "#bbbbbb", "#bbbbbb", "#707070", "#707070")
 
     // Colors not affecting by theming
