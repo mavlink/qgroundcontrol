@@ -276,7 +276,7 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
 QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
     _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
-    _qmlEngine->addImportPath("qrc:/Custom/Widgets");
+    _qmlEngine->addImportPath("qrc:/qml/Custom/Widgets");
     // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
 
     _selector = new CustomOverrideInterceptor();

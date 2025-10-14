@@ -60,15 +60,15 @@ set(QML_IMPORT_PATH ${QML_IMPORT_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE S
 qt_add_library(CustomModule STATIC)
 
 # Set resource aliases for custom widgets
-set_source_files_properties(res/Custom/Widgets/CustomArtificialHorizon.qml PROPERTIES QT_RESOURCE_ALIAS CustomArtificialHorizon.qml)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomArtificialHorizon.qml PROPERTIES QT_RESOURCE_ALIAS CustomArtificialHorizon.qml)
 qgc_set_qt_resource_alias(
-    res/Custom/Widgets/CustomAttitudeWidget.qml
-    res/Custom/Widgets/CustomIconButton.qml
-    res/Custom/Widgets/CustomOnOffSwitch.qml
-    res/Custom/Widgets/CustomQuickButton.qml
-    res/Custom/Widgets/CustomSignalStrength.qml
-    res/Custom/Widgets/CustomToolBarButton.qml
-    res/Custom/Widgets/CustomVehicleButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomAttitudeWidget.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomIconButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomOnOffSwitch.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomQuickButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomSignalStrength.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomToolBarButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomVehicleButton.qml
 )
 
 qt_add_qml_module(CustomModule
@@ -76,14 +76,14 @@ qt_add_qml_module(CustomModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        res/Custom/Widgets/CustomArtificialHorizon.qml
-        res/Custom/Widgets/CustomAttitudeWidget.qml
-        res/Custom/Widgets/CustomIconButton.qml
-        res/Custom/Widgets/CustomOnOffSwitch.qml
-        res/Custom/Widgets/CustomQuickButton.qml
-        res/Custom/Widgets/CustomSignalStrength.qml
-        res/Custom/Widgets/CustomToolBarButton.qml
-        res/Custom/Widgets/CustomVehicleButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomArtificialHorizon.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomAttitudeWidget.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomIconButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomOnOffSwitch.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomQuickButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomSignalStrength.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomToolBarButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomVehicleButton.qml
     NO_PLUGIN
 )
 
