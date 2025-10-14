@@ -72,7 +72,7 @@ Item {
                 if(globals.activeVehicle && joystickManager.activeJoystick) {
                     if(globals.activeVehicle.joystickEnabled) {
                         // Everything ready to use joystick
-                        return qgcPal.toolbarText
+                        return qgcPal.windowTransparentText
                     }
                     // Joystick is not enabled in the joystick configuration page
                     return "yellow"

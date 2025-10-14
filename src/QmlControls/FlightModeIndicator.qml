@@ -16,9 +16,8 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 Item {
-    id:     control
-    width:  mainLayout.width
-    height: mainLayout.height
+    id:                     control
+    Layout.preferredWidth:  mainLayout.width
 
     property bool   showIndicator:          true
     property bool   waitForParameters:      true   // UI won't show until parameters are ready
@@ -35,31 +34,31 @@ Item {
     QGCPalette { id: qgcPal }
 
     RowLayout {
-        id:         mainLayout
-        spacing:    ScreenTools.defaultFontPixelWidth / 2
+        id:                     mainLayout
+        anchors.verticalCenter: parent.verticalCenter
+        spacing:                ScreenTools.defaultFontPixelWidth / 2
 
         QGCColoredImage {
-            id:         flightModeIcon
-            width:      ScreenTools.defaultFontPixelWidth * 3
-            height:     ScreenTools.defaultFontPixelHeight
-            fillMode:   Image.PreserveAspectFit
-            mipmap:     true
-            color:      qgcPal.toolbarText
-            source:     "/qmlimages/FlightModesComponentIcon.png"
+            id:                     flightModeIcon
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 3
+            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight
+            fillMode:               Image.PreserveAspectFit
+            mipmap:                 true
+            color:                  qgcPal.windowTransparentText
+            source:                 "/qmlimages/FlightModesComponentIcon.png"
         }
 
         QGCLabel {
             id:                 flightModeLabel
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
-            color:          qgcPal.toolbarText
+            color:              qgcPal.windowTransparentText
             font.pointSize:     fontPointSize
-            Layout.alignment:   Qt.AlignCenter
 
         }
 
         QGCLabel {
             id:                     vtolModeLabel
-            Layout.fillHeight:      true
+            Layout.alignment:       Qt.AlignVCenter
             horizontalAlignment:    Text.AlignHCenter
             text:                   _vtolInFWDFlight ? qsTr("FW\nVTOL") : qsTr("MR\nVTOL")
             font.pointSize:         ScreenTools.smallFontPointSize
