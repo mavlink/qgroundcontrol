@@ -13,13 +13,10 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.Toolbar
 
-Rectangle {
+Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          mainLayout.width + _widthMargin
-    color:          QGroundControl.globalPalette.widgetTransparentColor
-    radius:         ScreenTools.defaultFontPixelHeight / 2
-    visible:        width > _widthMargin
 
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66
