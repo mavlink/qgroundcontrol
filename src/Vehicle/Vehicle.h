@@ -666,6 +666,8 @@ public:
         MavCmdResultFailureDuplicateCommand,    ///< Unable to send command since duplicate is already being waited on for response
     } MavCmdResultFailureCode_t;
 
+    static QString mavCmdResultFailureCodeToString(MavCmdResultFailureCode_t failureCode);
+
     /// Callback for sendMavCommandWithHandler which handles MAV_RESULT_IN_PROGRESS acks
     ///     @param progressHandlerData  Opaque data passed in to sendMavCommand call
     ///     @param ack                  Received COMMAND_ACK
@@ -715,6 +717,8 @@ public:
         RequestMessageFailureMessageNotReceived,
         RequestMessageFailureDuplicateCommand,    ///< Unabled to send command since another request message isduplicate is already being waited on for response
     } RequestMessageResultHandlerFailureCode_t;
+
+    static QString requestMessageResultHandlerFailureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode);
 
     /// Callback for requestMessage
     ///     @param resultHandlerData    Opaque data which was passed in to requestMessage call
@@ -982,7 +986,7 @@ private:
     void _handleMavlinkLoggingData      (mavlink_message_t& message);
     void _handleMavlinkLoggingDataAcked (mavlink_message_t& message);
     void _ackMavlinkLogData             (uint16_t sequence);
-    void _commonInit                    ();
+    void _commonInit                    (LinkInterface* link);
     void _setupAutoDisarmSignalling     ();
     void _setCapabilities               (uint64_t capabilityBits);
     void _updateArmed                   (bool armed);
