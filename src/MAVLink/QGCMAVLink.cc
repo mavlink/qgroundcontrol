@@ -281,7 +281,7 @@ QString QGCMAVLink::vehicleClassToInternalString(VehicleClass_t vehicleClass)
     }
 }
 
-QString QGCMAVLink::mavResultToString(MAV_RESULT result)
+QString QGCMAVLink::mavResultToString(uint8_t result)
 {
     switch (result) {
     case MAV_RESULT_ACCEPTED:
@@ -514,4 +514,17 @@ uint32_t QGCMAVLink::highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& 
     }
 
     return onboardControlSensorsEnabled;
+}
+
+QString QGCMAVLink::compIdToString(uint8_t compId)
+{
+    QString compIdStr;
+
+    if (mavlinkCompIdHash.contains(compId)) {
+        compIdStr = mavlinkCompIdHash.value(compId);
+    } else {
+        compIdStr = QStringLiteral("Unknown");
+    }
+
+    return QStringLiteral("%1 (%2)").arg(compIdStr).arg(compId);
 }
