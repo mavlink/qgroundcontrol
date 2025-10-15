@@ -159,7 +159,7 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
     const QString sCompID = QString::number(message.compid);
 
     if (!_cameraInfoRequest.contains(sCompID)) {
-        qCDebug(CameraManagerLog) << "Heartbeat from" << message.compid;
+        qCDebug(CameraManagerLog) << "Heartbeat from" << QGCMAVLink::compIdToString(message.compid);
         CameraStruct *pInfo = new CameraStruct(this, message.compid, _vehicle);
         pInfo->lastHeartbeat.start();
         _cameraInfoRequest[sCompID] = pInfo;
@@ -179,7 +179,7 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
     }
 
     if (pInfo->lastHeartbeat.elapsed() > kSilentTimeoutMs) {
-        qCDebug(CameraManagerLog) << "Camera" << message.compid << "reappeared after being silent. Resetting retry count and requesting info.";
+        qCDebug(CameraManagerLog) << "Camera" << QGCMAVLink::compIdToString(message.compid) << "reappeared after being silent. Resetting retry count and requesting info.";
         pInfo->retryCount = 0;
         pInfo->backoffTimer.stop();
         pInfo->lastHeartbeat.start();
@@ -259,15 +259,22 @@ void QGCCameraManager::_addCameraControlToLists(MavlinkCameraControl *cameraCont
 void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 {
     const QString sCompID = QString::number(message.compid);
-    if (!_cameraInfoRequest.contains(sCompID) || _cameraInfoRequest[sCompID]->infoReceived) {
+    if (!_cameraInfoRequest.contains(sCompID)) {
+        qDebug() << "Ignoring - Camera info not requested for component" << QGCMAVLink::compIdToString(message.compid);
+        return;
+    }
+    if (_cameraInfoRequest[sCompID]->infoReceived) {
+        qDebug() << "Ignoring - Already received camera info for component" << QGCMAVLink::compIdToString(message.compid);
         return;
     }
 
     mavlink_camera_information_t info{};
     mavlink_msg_camera_information_decode(&message, &info);
-    qCDebug(CameraManagerLog) << reinterpret_cast<const char*>(info.model_name)
-                              << reinterpret_cast<const char*>(info.vendor_name)
-                              << "Comp ID:" << message.compid;
+    qCDebug(CameraManagerLog) << "Camera information received from" << QGCMAVLink::compIdToString(message.compid)
+                          << "Model:" << reinterpret_cast<const char*>(info.model_name)
+                          << "Vendor:" << reinterpret_cast<const char*>(info.vendor_name)
+                          << "Firmware:" << reinterpret_cast<const char*>(info.firmware_version);
+    qCDebug(CameraManagerLog) << "Creating MavlinkCameraControl for camera";
 
     MavlinkCameraControl *pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
     if (pCamera) {
@@ -276,7 +283,7 @@ void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
         _cameraInfoRequest[sCompID]->infoReceived = true;
         _cameraInfoRequest[sCompID]->retryCount = 0;
         _cameraInfoRequest[sCompID]->backoffTimer.stop();
-        qCDebug(CameraManagerLog) << "Success for compId" << message.compid << "- reset retry counter";
+        qCDebug(CameraManagerLog) << "Success for compId" << QGCMAVLink::compIdToString(message.compid) << "- reset retry counter";
     }
 }
 
@@ -430,7 +437,10 @@ static void _requestCameraInfoCommandResultHandler(void *resultHandlerData, int 
     auto *cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
 
     if (ack.result != MAV_RESULT_ACCEPTED) {
-        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << ack.result << "FailureCode:" << failureCode << "retryCount:" << cameraInfo->retryCount;
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID) 
+                                    << "Result:" << QGCMAVLink::mavResultToString(ack.result) 
+                                    << "FailureCode:" << Vehicle::mavCmdResultFailureCodeToString(failureCode)
+                                    << "retryCount:" << cameraInfo->retryCount;
         _handleCameraInfoRetry(cameraInfo);
     }
 }
@@ -440,7 +450,10 @@ static void _requestCameraInfoMessageResultHandler(void *resultHandlerData, MAV_
     auto *cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
 
     if (result != MAV_RESULT_ACCEPTED) {
-        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << cameraInfo->compID << "Result:" << result << "FailureCode:" << failureCode << "retryCount:" << cameraInfo->retryCount;
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID) 
+                                    << "Result:" << QGCMAVLink::mavResultToString(result) 
+                                    << "FailureCode:" << Vehicle::requestMessageResultHandlerFailureCodeToString(failureCode) 
+                                    << "retryCount:" << cameraInfo->retryCount;
         _handleCameraInfoRetry(cameraInfo);
     }
 }
@@ -449,16 +462,16 @@ static void _requestCameraInfoHelper(QGCCameraManager *manager, QGCCameraManager
 {
     // Give up after max attempts
     if (pInfo->retryCount >= kMaxRetryCount) {
-        qCWarning(CameraManagerLog) << "Giving up requesting camera info after" << pInfo->retryCount << "attempts for compId" << pInfo->compID;
+        qCWarning(CameraManagerLog) << "Giving up requesting camera info after" << pInfo->retryCount << "attempts for compId" << QGCMAVLink::compIdToString(pInfo->compID);
         return;
     }
 
     // Alternate between REQUEST_MESSAGE and REQUEST_CAMERA_INFORMATION
     if ((pInfo->retryCount % 2) == 0) {
-        qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_MESSAGE for compId" << pInfo->compID;
+        qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_MESSAGE:CAMERA_INFORMATION for compId" << QGCMAVLink::compIdToString(pInfo->compID);
         manager->vehicle()->requestMessage(_requestCameraInfoMessageResultHandler, pInfo, pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
     } else {
-        qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_CAMERA_INFORMATION for compId" << pInfo->compID;
+        qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_CAMERA_INFORMATION for compId" << QGCMAVLink::compIdToString(pInfo->compID);
 
         Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo{};
         ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
@@ -478,7 +491,7 @@ static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo)
 
     QGCCameraManager *manager = cameraInfo->manager;
     if (!manager) {
-        qCDebug(CameraManagerLog) << "manager is unavailable for compId" << cameraInfo->compID;
+        qCDebug(CameraManagerLog) << "manager is unavailable for compId" << QGCMAVLink::compIdToString(cameraInfo->compID);
         return;
     }
 
@@ -489,7 +502,7 @@ static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo)
         const int delaySeconds = 1 << (cameraInfo->retryCount / 2);
         const int delayMs = delaySeconds * 1000;
 
-        qCDebug(CameraManagerLog) << "Waiting" << delaySeconds << "seconds before retry for compId" << cameraInfo->compID;
+        qCDebug(CameraManagerLog) << "Waiting" << delaySeconds << "seconds before retry for compId" << QGCMAVLink::compIdToString(cameraInfo->compID);
 
         cameraInfo->backoffTimer.stop();
         (void) QObject::disconnect(&cameraInfo->backoffTimer, nullptr, nullptr, nullptr);
