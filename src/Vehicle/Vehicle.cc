@@ -138,9 +138,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
-    _commonInit();
-
-    _vehicleLinkManager->_addLink(link);
+    _commonInit(link);
 
     // Set video stream to udp if running ArduSub and Video is disabled
     if (sub() && SettingsManager::instance()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
@@ -223,7 +221,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
         trackFirmwareVehicleTypeChanges();
     }
 
-    _commonInit();
+    _commonInit(nullptr /* link */);
 
     connect(SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
@@ -247,7 +245,7 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
     disconnect(SettingsManager::instance()->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
-void Vehicle::_commonInit()
+void Vehicle::_commonInit(LinkInterface* link)
 {
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
@@ -283,7 +281,7 @@ void Vehicle::_commonInit()
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this, this);
     _ftpManager                     = new FTPManager                    (this);
 
-    _vehicleLinkManager             = new VehicleLinkManager            (this);
+    _vehicleLinkManager             = new VehicleLinkManager            (this, link);
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
 
@@ -4208,6 +4206,36 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
 QVariant Vehicle::expandedToolbarIndicatorSource(const QString& indicatorName)
 {
     return _firmwarePlugin->expandedToolbarIndicatorSource(this, indicatorName);
+}
+
+QString Vehicle::requestMessageResultHandlerFailureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode)
+{
+    switch(failureCode)
+    {
+    case RequestMessageNoFailure:
+        return QStringLiteral("No Failure");
+    case RequestMessageFailureCommandError:
+        return QStringLiteral("Command Error");
+    case RequestMessageFailureCommandNotAcked:
+        return QStringLiteral("Command Not Acked");
+    case RequestMessageFailureMessageNotReceived:
+        return QStringLiteral("Message Not Received");
+    case RequestMessageFailureDuplicateCommand:
+        return QStringLiteral("Duplicate Command");
+    }
+}
+
+QString Vehicle::mavCmdResultFailureCodeToString(MavCmdResultFailureCode_t failureCode)
+{
+    switch(failureCode)
+    {
+    case MavCmdResultCommandResultOnly:
+        return QStringLiteral("Command Result Only");
+    case MavCmdResultFailureNoResponseToCommand:
+        return QStringLiteral("No Response To Command");    
+    case MavCmdResultFailureDuplicateCommand:
+        return QStringLiteral("Duplicate Command"); 
+    }
 }
 
 /*===========================================================================*/
