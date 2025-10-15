@@ -177,7 +177,7 @@ private:
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
     static constexpr int _maxInitialLoadRetrySingleParam = 5;   ///< Maximum retries for initial index based load of a single param
     static constexpr int _maxReadWriteRetry = 5;                ///< Maximum retries read/write
-    bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing)
+    bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)
 
     bool _indexBatchQueueActive = false;    ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
     QList<int> _indexBatchQueue;            ///< The current queue of index re-requests

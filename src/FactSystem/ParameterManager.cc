@@ -35,6 +35,7 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     , _vehicle(vehicle)
     , _logReplay(!vehicle->vehicleLinkManager()->primaryLink().expired() && vehicle->vehicleLinkManager()->primaryLink().lock()->isLogReplay())
     , _tryftp(vehicle->apmFirmware())
+    , _disableAllRetries(_logReplay)
 {
     qCDebug(ParameterManagerLog) << this;
 
@@ -43,13 +44,19 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
         return;
     }
 
+    if (_logReplay) {
+        qCDebug(ParameterManagerLog) << this << "In log replay mode";
+    }
+
     _initialRequestTimeoutTimer.setSingleShot(true);
     _initialRequestTimeoutTimer.setInterval(5000);
     (void) connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
     _waitingParamTimeoutTimer.setInterval(3000);
-    (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
+    if (!_logReplay) {
+        (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
+    }
 
     // Ensure the cache directory exists
     (void) QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
@@ -184,7 +191,7 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
     // ArduPilot has this strange behavior of streaming parameters that we didn't ask for. This even happens before it responds to the
     // PARAM_REQUEST_LIST. We disregard any of this until the initial request is responded to.
     if ((parameterIndex == 65535) && (parameterName != QStringLiteral("_HASH_CHECK")) && _initialRequestTimeoutTimer.isActive()) {
-        qCDebug(ParameterManagerVerbose1Log) << "Disregarding unrequested param prior to initial list response" << parameterName;
+        qCDebug(ParameterManagerLog) << "Disregarding unrequested param prior to initial list response" << parameterName;
         return;
     }
 
@@ -1136,6 +1143,18 @@ void ParameterManager::_checkInitialLoadComplete()
 
 void ParameterManager::_initialRequestTimeout()
 {
+    if (_logReplay) {
+        // Signal load complete
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "_initialRequestTimeout (log replay): Signalling load complete";
+        _initialLoadComplete = true;
+        _missingParameters = false;
+        _parametersReady = true;
+        _vehicle->autopilotPlugin()->parametersReadyPreChecks();
+        emit parametersReadyChanged(true);
+        emit missingParametersChanged(_missingParameters);
+        return;
+    }
+
     if (!_disableAllRetries && (++_initialRequestRetryCount <= _maxInitialRequestListRetry)) {
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Retrying initial parameter request list";
         refreshAllParameters();
