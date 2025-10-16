@@ -13,6 +13,8 @@
 QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
 
 const QHash<int, QString> QGCMAVLink::mavlinkCompIdHash {
+    { MAV_COMP_ID_AUTOPILOT1, "Autopilot" },
+    { MAV_COMP_ID_ONBOARD_COMPUTER, "Onboard Computer" },
     { MAV_COMP_ID_CAMERA,   "Camera1" },
     { MAV_COMP_ID_CAMERA2,  "Camera2" },
     { MAV_COMP_ID_CAMERA3,  "Camera3" },
@@ -526,5 +528,5 @@ QString QGCMAVLink::compIdToString(uint8_t compId)
         compIdStr = QStringLiteral("Unknown");
     }
 
-    return QStringLiteral("%1 (%2)").arg(compIdStr).arg(compId);
+    return QStringLiteral("%1 (%2)").arg(compIdStr).arg(static_cast<int>(compId));
 }
