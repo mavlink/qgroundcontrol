@@ -90,9 +90,7 @@ To install Qt:
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
    - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
-   - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html). JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
-       You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
-	Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
+   - **Android** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Search for "Qt 6.10 android" on the internet to find the correct "Gettting Started with Qt for Android" page. Read it full and carefully! An example of what you are looking for is [here](https://doc.qt.io/qt-6/android-getting-started.html).
 
 1. Install Optional/OS-Specific Functionality
 
