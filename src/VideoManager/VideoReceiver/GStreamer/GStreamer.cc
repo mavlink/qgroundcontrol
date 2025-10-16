@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "GStreamer.h"
+#include "GStreamerHelpers.h"
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
 #include "QGCLoggingCategory.h"
@@ -16,11 +17,13 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
+#include <QtCore/QStringList>
 #include <QtQuick/QQuickItem>
 
 #include <gst/gst.h>
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
+QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamerDecoderRanks")
 QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
 
 // TODO: Clean These up with Macros or CMake
@@ -279,6 +282,131 @@ bool _verifyPlugins()
     return result;
 }
 
+void _logDecoderRanks() 
+{
+    GList *decoderFactories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        GST_RANK_NONE);
+
+    if (!decoderFactories) {
+        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found.";
+        return;
+    }
+
+    decoderFactories = g_list_sort(decoderFactories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
+        GstElementFactory *lhsFactory = GST_ELEMENT_FACTORY(lhs);
+        GstElementFactory *rhsFactory = GST_ELEMENT_FACTORY(rhs);
+
+        if (!lhsFactory && !rhsFactory) {
+            return 0;
+        }
+        if (!lhsFactory) {
+            return 1;
+        }
+        if (!rhsFactory) {
+            return -1;
+        }
+
+        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhsFactory));
+        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhsFactory));
+        if (lhsRank == rhsRank) {
+            const gchar *lhsName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhsFactory));
+            const gchar *rhsName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhsFactory));
+            return g_strcmp0(lhsName, rhsName);
+        }
+
+        return lhsRank > rhsRank ? -1 : 1;
+    });
+
+    qCDebug(GStreamerDecoderRanksLog) << "Video decoder plugin ranks:";
+    for (GList *node = decoderFactories; node != nullptr; node = node->next) {
+        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
+        if (!factory) {
+            continue;
+        }
+
+        const gchar *decoderKlass = gst_element_factory_get_klass(factory);
+        GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
+        const gchar *featureName = gst_plugin_feature_get_name(feature);
+        const guint rank = gst_plugin_feature_get_rank(feature);
+
+        GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
+        if (plugin) {
+            qCDebug(GStreamerDecoderRanksLog) << "  " << gst_plugin_get_name(plugin) << "/" << featureName << "-" << decoderKlass << ":" << rank;
+            gst_object_unref(plugin);
+        } else {
+            qCDebug(GStreamerDecoderRanksLog) << "  " << featureName << "-" << decoderKlass << ":" << rank;
+        }
+    }
+
+    gst_plugin_feature_list_free(decoderFactories);
+}
+
+// Hardware decoder detection is centralized in GStreamer::is_hardware_decoder_factory
+
+void _changeFeatureRank(GstRegistry *registry, const char *featureName, uint16_t rank)
+{
+    if (!registry || !featureName) {
+        return;
+    }
+
+    GstPluginFeature *feature = gst_registry_lookup_feature(registry, featureName);
+    if (!feature) {
+        qCDebug(GStreamerLog) << "Failed to change ranking of feature. Feature does not exist:" << featureName;
+        return;
+    }
+
+    qCDebug(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
+    gst_plugin_feature_set_rank(feature, rank);
+    (void) gst_registry_add_feature(registry, feature);
+    gst_clear_object(&feature);
+}
+
+void _prioritizeByHardwareClass(GstRegistry *registry, uint16_t prioritizedRank, bool requireHardware)
+{
+    if (!registry) {
+        qCCritical(GStreamerLog) << "Failed to get gstreamer registry.";
+        return;
+    }
+
+    GList *decoderFactories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        GST_RANK_NONE);
+
+    if (!decoderFactories) {
+        qCDebug(GStreamerLog) << "No decoder factories available while prioritizing"
+                              << (requireHardware ? "hardware" : "software") << "decoders";
+        return;
+    }
+
+    int matchedFactories = 0;
+    for (GList *node = decoderFactories; node != nullptr; node = node->next) {
+        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
+        if (!factory) {
+            continue;
+        }
+
+        if (GStreamer::is_hardware_decoder_factory(factory) != requireHardware) {
+            continue;
+        }
+
+        const gchar *featureName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+        if (!featureName) {
+            continue;
+        }
+
+        _changeFeatureRank(registry, featureName, prioritizedRank);
+        ++matchedFactories;
+    }
+
+    if (matchedFactories == 0) {
+        qCWarning(GStreamerLog) << "No" << (requireHardware ? "hardware" : "software")
+                               << "video decoder factories found to reprioritize.";
+    }
+
+    gst_plugin_feature_list_free(decoderFactories);
+}
+
 void _setCodecPriorities(GStreamer::VideoDecoderOptions option)
 {
     GstRegistry *registry = gst_registry_get();
@@ -288,62 +416,49 @@ void _setCodecPriorities(GStreamer::VideoDecoderOptions option)
         return;
     }
 
-    const auto changeRank = [registry](const char *featureName, uint16_t rank) {
-        GstPluginFeature *feature = gst_registry_lookup_feature(registry, featureName);
-        if (!feature) {
-            qCDebug(GStreamerLog) << "Failed to change ranking of feature. Feature does not exist:" << featureName;
-            return;
-        }
-
-        qCDebug(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
-        gst_plugin_feature_set_rank(feature, rank);
-        (void) gst_registry_add_feature(registry, feature);
-        gst_clear_object(&feature);
-    };
+    static constexpr uint16_t PrioritizedRank = GST_RANK_PRIMARY + 1;
 
     // TODO: ForceVideoDecoderCustom in VideoSettings with textbox in QML
-
-    static constexpr uint16_t PrioritizedRank = GST_RANK_PRIMARY + 1;
 
     switch (option) {
     case GStreamer::ForceVideoDecoderDefault:
         break;
     case GStreamer::ForceVideoDecoderSoftware:
-        for (const char *name : {"avdec_h264", "avdec_h265", "avdec_mjpeg", "avdec_mpeg2video", "avdec_mpeg4", "avdec_vp8", "avdec_vp9",
-                                 "dav1ddec", "vp8dec", "vp9dec"}) {
-            changeRank(name, PrioritizedRank);
-        }
+        _prioritizeByHardwareClass(registry, PrioritizedRank, false);
+        break;
+    case GStreamer::ForceVideoDecoderHardware:
+        _prioritizeByHardwareClass(registry, PrioritizedRank, true);
         break;
     case GStreamer::ForceVideoDecoderVAAPI:
         for (const char *name : {"vaav1dec", "vah264dec", "vah265dec", "vajpegdec", "vampeg2dec", "vavp8dec", "vavp9dec"}) {
-            changeRank(name, PrioritizedRank);
+            _changeFeatureRank(registry, name, PrioritizedRank);
         }
         break;
     case GStreamer::ForceVideoDecoderNVIDIA:
         for (const char *name : {"nvav1dec", "nvh264dec", "nvh265dec", "nvjpegdec", "nvmpeg2videodec", "nvmpeg4videodec", "nvmpegvideodec", "nvvp8dec", "nvvp9dec"}) {
-            changeRank(name, PrioritizedRank);
+            _changeFeatureRank(registry, name, PrioritizedRank);
         }
         break;
     case GStreamer::ForceVideoDecoderDirectX3D:
         for (const char *name : {"d3d11av1dec", "d3d11h264dec", "d3d11h265dec", "d3d11mpeg2dec", "d3d11vp8dec", "d3d11vp9dec",
                                  "d3d12av1dec", "d3d12h264dec", "d3d12h265dec", "d3d12mpeg2dec", "d3d12vp8dec", "d3d12vp9dec",
                                  "dxvaav1decoder", "dxvah264decoder", "dxvah265decoder", "dxvampeg2decoder", "dxvavp8decoder", "dxvavp9decoder" }) {
-            changeRank(name, PrioritizedRank);
+            _changeFeatureRank(registry, name, PrioritizedRank);
         }
         break;
     case GStreamer::ForceVideoDecoderVideoToolbox:
         for (const char *name : {"vtdec_hw", "vtdec"}) {
-            changeRank(name, PrioritizedRank);
+            _changeFeatureRank(registry, name, PrioritizedRank);
         }
         break;
     case GStreamer::ForceVideoDecoderIntel:
         for (const char *name : {"qsvh264dec", "qsvh265dec", "qsvjpegdec", "qsvvp9dec", "msdkav1dec", "msdkh264dec", "msdkh265dec", "msdkmjpegdec", "msdkmpeg2dec", "msdkvc1dec", "msdkvp8dec", "msdkvp9dec"}) {
-            changeRank(name, PrioritizedRank);
+            _changeFeatureRank(registry, name, PrioritizedRank);
         }
         break;
     case GStreamer::ForceVideoDecoderVulkan:
         for (const char *name : {"vulkanh264dec", "vulkanh265dec"}) {
-            changeRank(name, PrioritizedRank);
+            _changeFeatureRank(registry, name, PrioritizedRank);
         }
         break;
     default:
@@ -405,6 +520,7 @@ bool initialize()
         return false;
     }
 
+    _logDecoderRanks();
     _setCodecPriorities(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
 
     GstElement *sink = gst_element_factory_make("qml6glsink", nullptr);
