@@ -37,6 +37,10 @@ jobs:
       QT_VERSION: 6.10.0
 
     steps:
+      - name: Versions
+        uses: ./.github/actions/versions
+        id: versions
+
       - name: Checkout repo
         uses: actions/checkout@v5
         with:
@@ -67,7 +71,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.versions.outputs.qt-version }}
           host: mac
           target: desktop
           arch: clang_64

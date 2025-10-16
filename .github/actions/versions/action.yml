@@ -1,0 +1,4 @@
+name: Version Numbers
+description: All the versions of software used by QGC
+outputs:
+  qt-version: 6.10.0
