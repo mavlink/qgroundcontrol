@@ -193,7 +193,6 @@ bool SimulatedCameraControl::capturesPhotos() const
 
 bool SimulatedCameraControl::hasVideoStream() const
 {
-    qDebug() << "hasVideoStream" << VideoManager::instance()->hasVideo();
     return VideoManager::instance()->hasVideo();
 }
 

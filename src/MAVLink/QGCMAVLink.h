@@ -75,6 +75,7 @@ public:
     static QList<VehicleClass_t>    allVehicleClasses           (void);
 
     static QString                  mavResultToString           (uint8_t result);
+    static QString                  mavResultToString           (MAV_RESULT result) { return mavResultToString(static_cast<uint8_t>(result)); }
     static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
     static QString                  mavTypeToString             (MAV_TYPE mavType);
     static QString                  firmwareVersionTypeToString (FIRMWARE_VERSION_TYPE firmwareVersionType);

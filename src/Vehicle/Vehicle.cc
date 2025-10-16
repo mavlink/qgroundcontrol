@@ -4222,6 +4222,8 @@ QString Vehicle::requestMessageResultHandlerFailureCodeToString(RequestMessageRe
         return QStringLiteral("Message Not Received");
     case RequestMessageFailureDuplicateCommand:
         return QStringLiteral("Duplicate Command");
+    default:
+        return QStringLiteral("Unknown (%1)").arg(failureCode);
     }
 }
 
@@ -4235,6 +4237,8 @@ QString Vehicle::mavCmdResultFailureCodeToString(MavCmdResultFailureCode_t failu
         return QStringLiteral("No Response To Command");    
     case MavCmdResultFailureDuplicateCommand:
         return QStringLiteral("Duplicate Command"); 
+    default:
+        return QStringLiteral("Unknown (%1)").arg(failureCode);
     }
 }
 
