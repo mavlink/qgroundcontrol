@@ -281,7 +281,10 @@ void Vehicle::_commonInit(LinkInterface* link)
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this, this);
     _ftpManager                     = new FTPManager                    (this);
 
-    _vehicleLinkManager             = new VehicleLinkManager            (this, link);
+    _vehicleLinkManager = new VehicleLinkManager(this);
+    if (link) {
+        _vehicleLinkManager->_addLink(link);
+    }
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
 
