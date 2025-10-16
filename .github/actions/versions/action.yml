@@ -3,4 +3,11 @@ description: All the versions of software used by QGC
 outputs:
   qt-version: 
     description: The version of Qt used by QGC
-    value: 6.10.0
+    value: ${{ steps.qt-version.outputs.qt-version }}
+runs:
+  using: "composite"
+  steps:
+    - name: Set Qt version
+      id: qt-version
+      run: echo "qt-version=6.10.0" >> $GITHUB_OUTPUT
+      shell: bash
