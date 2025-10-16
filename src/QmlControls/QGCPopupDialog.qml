@@ -55,8 +55,11 @@ Popup {
     property var    dialogProperties
     property bool   destroyOnClose:         true
     property bool   preventClose:           false
-    
-    readonly property real headerMinWidth: titleLable.implicitWidth + rejectButton.width + acceptButton.width + titleRowLayout.spacing * 2
+
+    property real maxContentAvailableWidth:    mainWindow.width - _contentMargin * 6
+    property real maxContentAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 7
+
+    readonly property real headerMinWidth: titleLabel.implicitWidth + rejectButton.width + acceptButton.width + titleRowLayout.spacing * 2
 
     signal accepted
     signal rejected
@@ -207,9 +210,9 @@ Popup {
     ColumnLayout {
         id:                 mainLayout
         anchors.centerIn:   parent
-        x:          _contentMargin
-        y:          _contentMargin
-        spacing:    _contentMargin
+        x:                  _contentMargin
+        y:                  _contentMargin
+        spacing:            _contentMargin
 
         RowLayout {
             id:                     titleRowLayout
@@ -217,7 +220,7 @@ Popup {
             spacing:                _contentMargin
 
             QGCLabel {
-                id: titleLable
+                id:                 titleLabel
                 Layout.fillWidth:   true
                 text:               root.title
                 font.pointSize:     ScreenTools.mediumFontPointSize
@@ -244,10 +247,10 @@ Popup {
             Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
             color:                  _qgcPal.window
 
-            property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
-            property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5
             property real totalContentWidth:    dialogContentParent.childrenRect.width + _contentMargin * 2
             property real totalContentHeight:   dialogContentParent.childrenRect.height + _contentMargin * 2
+            property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
+            property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5
 
             QGCFlickable {
                 anchors.margins:    _contentMargin
