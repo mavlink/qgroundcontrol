@@ -37,16 +37,16 @@ jobs:
       QT_VERSION: 6.10.0
 
     steps:
-      - name: Versions
-        uses: ./.github/actions/versions
-        id: versions
-
       - name: Checkout repo
         uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
+
+      - name: Versions
+        uses: ./.github/actions/versions
+        id: versions
 
       - name: Initial Setup
         uses: ./.github/actions/common
