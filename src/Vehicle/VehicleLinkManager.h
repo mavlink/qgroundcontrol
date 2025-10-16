@@ -36,10 +36,11 @@ class VehicleLinkManager : public QObject
     Q_PROPERTY(bool         communicationLostEnabled    READ communicationLostEnabled   WRITE setCommunicationLostEnabled   NOTIFY communicationLostEnabledChanged)
     Q_PROPERTY(bool         autoDisconnect              MEMBER _autoDisconnect                                              NOTIFY autoDisconnectChanged)
 
+    friend class Vehicle;
     friend class VehicleLinkManagerTest;
 
 public:
-    VehicleLinkManager(Vehicle *vehicle, LinkInterface* link);
+    VehicleLinkManager(Vehicle *vehicle);
     ~VehicleLinkManager();
 
     void mavlinkMessageReceived(LinkInterface *link, const mavlink_message_t &message);

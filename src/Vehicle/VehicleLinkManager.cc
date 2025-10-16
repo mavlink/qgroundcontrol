@@ -19,7 +19,7 @@
 
 QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "Vehicle.VehicleLinkManager")
 
-VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle, LinkInterface* link)
+VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
     , _commLostCheckTimer(new QTimer(this))
@@ -31,10 +31,6 @@ VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle, LinkInterface* link)
 
     _commLostCheckTimer->setSingleShot(false);
     _commLostCheckTimer->setInterval(_commLostCheckTimeoutMSecs);
-
-    if (link) {
-        _addLink(link);
-    }
 }
 
 VehicleLinkManager::~VehicleLinkManager()
