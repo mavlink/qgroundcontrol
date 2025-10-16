@@ -13,15 +13,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
 
-
-
 Item {
-    id:         _root
+    id: root
 
     property bool listViewLoadCompleted: false
 
@@ -160,6 +156,8 @@ Item {
             buttons:    Dialog.Close
 
             ColumnLayout {
+                width: maxContentAvailableWidth
+
                 SettingsGroupLayout {
                     heading:            qsTr("Search")
                     Layout.fillWidth:   true
@@ -186,8 +184,9 @@ Item {
                     heading:            qsTr("Enabled Categories")
                     Layout.fillWidth:   true
 
-                    ColumnLayout {
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
+                    Flow {
+                        Layout.fillWidth:   true
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
 
                         Repeater {
                             model: QGroundControl.flatLoggingCategoriesModel()
@@ -209,79 +208,71 @@ Item {
                     }
                 }
 
-                // Hierarchical view of categories, only shown when there is no search filter
-                SettingsGroupLayout {
-                    heading:            qsTr("Categories")
+                // Shown when not filtered
+                Flow {
                     Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
                     visible:            searchText.text === ""
 
-                    ColumnLayout {
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
+                    Repeater {
+                        model: QGroundControl.treeLoggingCategoriesModel()
 
-                        Repeater {
-                            model: QGroundControl.treeLoggingCategoriesModel()
+                        ColumnLayout {
+                            spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                            ColumnLayout {
-                                spacing: ScreenTools.defaultFontPixelHeight / 2
+                            RowLayout {
+                                spacing:                ScreenTools.defaultFontPixelWidth
 
-                                RowLayout {
-                                    spacing:                ScreenTools.defaultFontPixelWidth
+                                QGCLabel {
+                                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth
+                                    text:                   object.expanded ? qsTr("-") : qsTr("+")
+                                    horizontalAlignment:    Text.AlignLeft
+                                    visible:                object.children
 
-                                    QGCLabel {
-                                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth
-                                        text:                   object.expanded ? qsTr("-") : qsTr("+")
-                                        horizontalAlignment:    Text.AlignLeft
-                                        visible:                object.children
-
-                                        QGCMouseArea {
-                                            anchors.fill:   parent
-                                            onClicked:      object.expanded = !object.expanded
-                                        }
-                                    }
-
-                                    QGCCheckBoxSlider {
-                                        Layout.fillWidth:   true
-                                        text:               object.shortCategory
-                                        checked:            object.enabled
-                                        onClicked:          object.enabled = checked
+                                    QGCMouseArea {
+                                        anchors.fill:   parent
+                                        onClicked:      object.expanded = !object.expanded
                                     }
                                 }
 
-                                Repeater {
-                                    model: object.expanded ? object.children : undefined
+                                QGCCheckBoxSlider {
+                                    Layout.fillWidth:   true
+                                    text:               object.shortCategory
+                                    checked:            object.enabled
+                                    onClicked:          object.enabled = checked
+                                }
+                            }
 
-                                    QGCCheckBoxSlider {
-                                        Layout.fillWidth:   true
-                                        text:               "   " + object.shortCategory
-                                        checked:            object.enabled
-                                        onClicked:          object.enabled = checked
-                                    }
+                            Repeater {
+                                model: object.expanded ? object.children : undefined
+
+                                QGCCheckBoxSlider {
+                                    Layout.fillWidth:   true
+                                    text:               "   " + object.shortCategory
+                                    checked:            object.enabled
+                                    onClicked:          object.enabled = checked
                                 }
                             }
                         }
                     }
                 }
 
-                // Float view of categories, for search results
-                SettingsGroupLayout {
-                    heading:            qsTr("Categories")
+                // Shown when filtered
+                Flow {
                     Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
                     visible:            searchText.text !== ""
 
-                    ColumnLayout {
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
+                    Repeater {
+                        model: QGroundControl.flatLoggingCategoriesModel()
 
-                        Repeater {
-                            model: QGroundControl.flatLoggingCategoriesModel()
-
-                            QGCCheckBoxSlider {
-                                Layout.fillWidth:       true
-                                Layout.maximumHeight:   visible ? implicitHeight : 0
-                                text:                   object.fullCategory
-                                visible:                text.match(`(${searchText.text})`, "i")
-                                checked:                object.enabled
-                                onClicked:              object.enabled = checked
-                            }
+                        QGCCheckBoxSlider {
+                            Layout.fillWidth:       true
+                            Layout.maximumHeight:   visible ? implicitHeight : 0
+                            text:                   object.fullCategory
+                            visible:                text.match(`(${searchText.text})`, "i")
+                            checked:                object.enabled
+                            onClicked:              object.enabled = checked
                         }
                     }
                 }
