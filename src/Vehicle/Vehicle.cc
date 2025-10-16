@@ -287,6 +287,11 @@ void Vehicle::_commonInit(LinkInterface* link)
     }
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
+    // Re-emit flightModeChanged after available modes mapping updates so UI refreshes
+    // the human-readable mode name even if HEARTBEAT arrived earlier.
+    connect(_standardModes, &StandardModes::modesUpdated, this, [this]() {
+        emit flightModeChanged(flightMode());
+    });
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
