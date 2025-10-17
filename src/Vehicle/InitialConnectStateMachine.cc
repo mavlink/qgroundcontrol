@@ -173,17 +173,9 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
     }
 
     if (failureCode != Vehicle::RequestMessageNoFailure) {
-        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION failed. Setting no capabilities";
-        uint64_t assumedCapabilities = 0;
-        if (vehicle->_mavlinkProtocolRequestMaxProtoVersion >= 200) {
-            // Link already running mavlink 2
-            assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MAVLINK2;
-        }
-        if (vehicle->px4Firmware() || vehicle->apmFirmware()) {
-            // We make some assumptions for known firmware
-            assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MISSION_INT | MAV_PROTOCOL_CAPABILITY_COMMAND_INT | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
-        }
-        vehicle->_setCapabilities(assumedCapabilities);
+        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION failed. Retrying";
+        _stateRequestAutopilotVersion(connectMachine);
+        return;
     }
 
     connectMachine->advance();
