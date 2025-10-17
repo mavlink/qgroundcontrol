@@ -65,28 +65,6 @@ DECLARE_SETTINGGROUP(App, "")
 {
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
-    QSettings settings;
-
-    // These two "type" keys were changed to "class" values
-    static const char* deprecatedFirmwareTypeKey    = "offlineEditingFirmwareType";
-    static const char* deprecatedVehicleTypeKey     = "offlineEditingVehicleType";
-    if (settings.contains(deprecatedFirmwareTypeKey)) {
-        settings.setValue(deprecatedFirmwareTypeKey, QGCMAVLink::firmwareClass(static_cast<MAV_AUTOPILOT>(settings.value(deprecatedFirmwareTypeKey).toInt())));
-    }
-    if (settings.contains(deprecatedVehicleTypeKey)) {
-        settings.setValue(deprecatedVehicleTypeKey, QGCMAVLink::vehicleClass(static_cast<MAV_TYPE>(settings.value(deprecatedVehicleTypeKey).toInt())));
-    }
-
-    QStringList deprecatedKeyNames  = { "virtualJoystickCentralized",           "offlineEditingFirmwareType",   "offlineEditingVehicleType" };
-    QStringList newKeyNames         = { "virtualJoystickAutoCenterThrottle",    "offlineEditingFirmwareClass",  "offlineEditingVehicleClass" };
-    settings.beginGroup(_settingsGroup);
-    for (int i=0; i<deprecatedKeyNames.count(); i++) {
-        if (settings.contains(deprecatedKeyNames[i])) {
-            settings.setValue(newKeyNames[i], settings.value(deprecatedKeyNames[i]));
-            settings.remove(deprecatedKeyNames[i]);
-        }
-    }
-
     // Instantiate savePath so we can check for override and setup default path if needed
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
@@ -242,7 +220,23 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(photoDirectory);
         savePathDir.mkdir(crashDirectory);
         savePathDir.mkdir(mavlinkActionsDirectory);
+        savePathDir.mkdir(settingsDirectory);
     }
+}
+
+QString AppSettings::_childSavePath(const char* directory)
+{
+    const QString rootPath = savePath()->rawValue().toString();
+    if (rootPath.isEmpty()) {
+        return QString();
+    }
+
+    const QDir rootDir(rootPath);
+    if (!rootDir.exists()) {
+        return QString();
+    }
+
+    return rootDir.filePath(directory);
 }
 
 void AppSettings::_indoorPaletteChanged(void)
@@ -252,82 +246,47 @@ void AppSettings::_indoorPaletteChanged(void)
 
 QString AppSettings::missionSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(missionDirectory);
-    }
-    return QString();
+    return _childSavePath(missionDirectory);
 }
 
 QString AppSettings::parameterSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(parameterDirectory);
-    }
-    return QString();
+    return _childSavePath(parameterDirectory);
 }
 
 QString AppSettings::telemetrySavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(telemetryDirectory);
-    }
-    return QString();
+    return _childSavePath(telemetryDirectory);
 }
 
 QString AppSettings::logSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(logDirectory);
-    }
-    return QString();
+    return _childSavePath(logDirectory);
 }
 
 QString AppSettings::videoSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(videoDirectory);
-    }
-    return QString();
+    return _childSavePath(videoDirectory);
 }
 
 QString AppSettings::photoSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(photoDirectory);
-    }
-    return QString();
+    return _childSavePath(photoDirectory);
 }
 
 QString AppSettings::crashSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(crashDirectory);
-    }
-    return QString();
+    return _childSavePath(crashDirectory);
 }
 
 QString AppSettings::mavlinkActionsSavePath(void)
 {
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(mavlinkActionsDirectory);
-    }
-    return QString();
+    return _childSavePath(mavlinkActionsDirectory);
+}
+
+QString AppSettings::settingsSavePath(void)
+{
+    return _childSavePath(settingsDirectory);
 }
 
 QList<int> AppSettings::firstRunPromptsIdsVariantToList(const QVariant& firstRunPromptIds)

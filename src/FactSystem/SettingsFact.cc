@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
 #include <QtCore/QSettings>
 
@@ -34,7 +35,7 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
     }
 
     // Allow core plugin a chance to override the default value
-    _visible = QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, *metaData);
+    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, _visible);
     setMetaData(metaData);
 
     if (metaData->defaultValueAvailable()) {
@@ -49,7 +50,7 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
             _rawValue = typedValue;
         } else {
             // Setting is not visible, force to default value always
-            settings.setValue(_name, rawDefaultValue);
+            // Note that we specifically do not save this back to QSettings such that a Settings Override file change is not a permanent change
             _rawValue = rawDefaultValue;
         }
     }
