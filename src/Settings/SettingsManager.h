@@ -12,6 +12,8 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QJsonObject>
+#include <QtCore/QMap>
 
 class ADSBVehicleManagerSettings;
 class APMMavlinkStreamRateSettings;
@@ -34,6 +36,7 @@ class UnitsSettings;
 class VideoSettings;
 class Viewer3DSettings;
 class MavlinkSettings;
+class FactMetaData;
 
 Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog)
 
@@ -102,6 +105,12 @@ public:
 
     void init();
 
+    /// Allows for overriding the meta data before the fact is created.
+    ///     @param settingsGroup - QSettings group which contains this item
+    ///     @param metaData - MetaData for setting fact
+    ///     @param visible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
+    static void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible);
+
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *apmMavlinkStreamRateSettings() const;
@@ -129,6 +138,8 @@ public:
 #endif
 
 private:
+    void _loadSettingsFiles();
+
     ADSBVehicleManagerSettings *_adsbVehicleManagerSettings = nullptr;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *_apmMavlinkStreamRateSettings = nullptr;
@@ -154,4 +165,12 @@ private:
 #ifdef QGC_VIEWER3D
     Viewer3DSettings *_viewer3DSettings = nullptr;
 #endif
+
+    QMap<QString, QMap<QString, QJsonObject>> _settingsFileOverrides;   // groupName:settingName:metaDataObject
+
+    static constexpr int kSettingsFileVersion = 1;
+    static constexpr const char* kSettingsFileType = "Settings";
+    static constexpr const char* kJsonGroupsObjectKey = "groups";
+    static constexpr const char* kJsonVisibleKey = "visible";
+    static constexpr const char* kJsonForceRawValueKey = "forceRawValue";
 };

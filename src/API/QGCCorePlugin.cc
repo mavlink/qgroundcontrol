@@ -110,7 +110,7 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
     return _emptyCustomMapItems;
 }
 
-bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData)
+void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
 {
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::indoorPaletteName) {
@@ -121,22 +121,21 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
             outdoorPalette = 1;
 #endif
             metaData.setRawDefaultValue(outdoorPalette);
-            return true;
+            return;
         }
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
         else if (metaData.name() == MavlinkSettings::telemetrySaveName) {
             metaData.setRawDefaultValue(false);
-            return true;
+            return;
         }
 #endif
 #ifndef Q_OS_ANDROID
         else if (metaData.name() == AppSettings::androidDontSaveToSDCardName) {
-            return false;
+            visible = false;
+            return;
         }
 #endif
     }
-
-    return true;
 }
 
 QString QGCCorePlugin::showAdvancedUIMessage() const

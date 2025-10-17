@@ -71,7 +71,7 @@ public:
     explicit Fact(int componentId, const QString &name, FactMetaData::ValueType_t type, QObject *parent = nullptr);
     explicit Fact(const Fact &other, QObject *parent = nullptr);
 
-    /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
+    /// Creates a Fact using the name and type from metaData. Also calls SettingsManager::adjustSettingMetaData allowing
     /// custom builds to override the metadata.
     explicit Fact(const QString &settingsGroup, FactMetaData *metaData, QObject *parent = nullptr);
     virtual ~Fact();
