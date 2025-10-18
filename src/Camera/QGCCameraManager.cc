@@ -241,6 +241,12 @@ MavlinkCameraControl *QGCCameraManager::_findCamera(int id)
 
 void QGCCameraManager::_addCameraControlToLists(MavlinkCameraControl *cameraControl)
 {
+    if (qobject_cast<SimulatedCameraControl*>(cameraControl)) {
+        qCDebug(CameraManagerLog) << "Adding simulated camera to list";
+    } else {
+        qCDebug(CameraManagerLog) << "Adding real camera to list - simulated camera will be removed if present";
+    }
+
     _cameras.append(cameraControl);
     _cameraLabels.append(cameraControl->modelName());
     emit camerasChanged();
@@ -309,6 +315,7 @@ void QGCCameraManager::_checkForLostCameras()
         if (pCamera) {
             const int idx = _cameras.indexOf(pCamera);
             if (idx >= 0) {
+                qCDebug(CameraManagerLog) << "Removing lost camera" << QGCMAVLink::compIdToString(pInfo->compID);
                 removedAny = true;
                 (void) _cameraLabels.removeAt(idx);
                 (void) _cameras.removeAt(idx);
