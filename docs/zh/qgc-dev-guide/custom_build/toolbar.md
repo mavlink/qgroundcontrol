@@ -30,10 +30,6 @@ These provide information to the user which is not associated with a vehicle. Fo
 
 These are indicators which are associated with information about the vehicle. They are only available when a vehicle is connected. To manipulate the list of vehicle indicators you override `FirmwarePlugin::toolIndicators`.
 
-#### Vehicle Mode Indicators
-
-These are indicators which are associated with information about the vehicle. They require additional UI provided by the Fly View to complete their actions. 一个例子是“解锁与上锁” 。 They are only available when a vehicle is connected. To manipulate the list of vehicle mode indicators you override `FirmwarePlugin::modeIndicators`.
-
 ### Modifying the toolbar UI itself
 
 This is accomplished by using resource overrides on the qml files associated with the toolbar. This provides a high level of customization but also a higher level of complexity. The primary ui for the toolbar is in `MainToolBar.qml`. The main window code in `MainRootWindow.qml` interacts with the toolbar to show different indicator sections based on current view as well as whether the mode indicators show or not also based on current view.

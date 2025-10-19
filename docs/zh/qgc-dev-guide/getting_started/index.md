@@ -91,9 +91,7 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
    - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
    - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
-   - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html)。 最新版本需要 JDK17 。 NDK 版本：25.1.8937393
-     您可以通过审查项目设置确认它正在使用：**Projects > Managing Kits >  Devices > Android (tab) > Android Settings > _JDK location_**。
-     注意：访问此处查看更详细的配置 [android.yml](.github/workflows/android.yml)
+   - **Android** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Search for "Qt 6.10 android" on the internet to find the correct "Gettting Started with Qt for Android" page. Read it full and carefully! An example of what you are looking for is [here](https://doc.qt.io/qt-6/android-getting-started.html).
 
 2. 安装可选/特定操作功能
 
