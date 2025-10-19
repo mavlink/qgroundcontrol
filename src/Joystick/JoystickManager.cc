@@ -29,7 +29,7 @@ JoystickManager::JoystickManager(QObject *parent)
 {
     qCDebug(JoystickManagerLog) << this;
 
-    _joystickCheckTimer.setInterval(kTimerInterval);
+    _joystickCheckTimer.setInterval(1000);
     _joystickCheckTimer.setSingleShot(false);
     (void) connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
 }

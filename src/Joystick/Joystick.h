@@ -110,6 +110,7 @@ public:
         gimbalYawFunction,
         maxFunction
     };
+    static QString axisFunctionToString(AxisFunction_t function);
 
     enum ThrottleMode_t {
         ThrottleModeCenterZero,
@@ -254,6 +255,7 @@ private:
 
     /// Adjust the raw axis value to the -1:1 range given calibration information
     float _adjustRange(int value, const Calibration_t &calibration, bool withDeadbands);
+
     void _executeButtonAction(const QString &action, bool buttonDown);
     int  _findAssignableButtonAction(const QString &action);
     bool _validAxis(int axis) const;

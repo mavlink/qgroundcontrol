@@ -61,7 +61,7 @@ Joystick::Joystick(const QString &name, int axisCount, int buttonCount, int hatC
     , _mavlinkActionManager(new MavlinkActionManager(SettingsManager::instance()->mavlinkActionsSettings()->joystickActionsFile(), this))
     , _assignableButtonActions(new QmlObjectListModel(this))
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << Q_FUNC_INFO << this << name << "axisCount:buttonCount:hatCount" << axisCount << buttonCount << hatCount;
 
     for (int i = 0; i < _axisCount; i++) {
         _rgAxisValues[i] = 0;
@@ -1229,4 +1229,24 @@ void Joystick::_buildActionList(Vehicle *activeVehicle)
     }
 
     emit assignableActionsChanged();
+}
+
+QString Joystick::axisFunctionToString(AxisFunction_t function)
+{
+    switch (function) {
+    case rollFunction:
+        return QStringLiteral("Roll");
+    case pitchFunction:
+        return QStringLiteral("Pitch");
+    case yawFunction:
+        return QStringLiteral("Yaw");
+    case throttleFunction:
+        return QStringLiteral("Throttle");
+    case gimbalPitchFunction:
+        return QStringLiteral("Gimbal Pitch");
+    case gimbalYawFunction:
+        return QStringLiteral("Gimbal Yaw");
+    default:
+        return QStringLiteral("Unknown");
+    }
 }
