@@ -15,7 +15,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "VehicleSetup.JoystickConfigController")
+QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "Joystick.JoystickConfigController")
 
 JoystickConfigController::JoystickConfigController(void)
 {
@@ -128,7 +128,8 @@ void JoystickConfigController::_setupCurrentState()
     _setStatusText(state->instructions);
     _stickDetectAxis = _axisNoAxis;
     _stickDetectSettleStarted = false;
-    _calSaveCurrentValues();
+    _loggingLastValuesMap.clear();
+    _saveCurrentAxisValues();
     _currentStickPositions.clear();
     _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY;
     emit stickPositionsChanged();
@@ -206,7 +207,7 @@ void JoystickConfigController::_saveAllTrims()
     // axis they are yet. As we continue through the process the other axes will get their
     // trims reset to correct values.
     for (int i = 0; i < _axisCount; i++) {
-        qCDebug(JoystickConfigControllerLog) << "_saveAllTrims trim" << _axisRawValue[i];
+        qCDebug(JoystickConfigControllerLog) << "_saveAllTrims axis:trim" << i << _axisRawValue[i];
         _rgAxisInfo[i].axisTrim = _axisRawValue[i];
     }
     _advanceState();
@@ -265,10 +266,17 @@ bool JoystickConfigController::_stickSettleComplete(int axis, int value)
     return false;
 }
 
-void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t function, int axis, int value)
+void JoystickConfigController::_logJoystickInfo(const QString &methodName, Joystick::AxisFunction_t function, int axis, int value)
 {
-    qCDebug(JoystickConfigControllerLog) << "_inputStickDetect function:axis:value" << function << axis << value;
-    
+    int lastAxisValue = _loggingLastValuesMap.value(axis, value + 1); // Force first time we see an axis to be different than existing value
+    if (lastAxisValue != value) {
+        _loggingLastValuesMap[axis] = value;
+        qCDebug(JoystickConfigControllerLog) << methodName << "function:axis:value" << Joystick::axisFunctionToString(function) << axis << value;
+    }
+}
+
+void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t function, int axis, int value)
+{    
     if (!_validAxis(axis)) {
         qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
         return;
@@ -278,7 +286,9 @@ void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t functi
     if (_rgAxisInfo[axis].function != Joystick::maxFunction) {
         return;
     }
-    
+
+    _logJoystickInfo(QStringLiteral("_inputStickDetect"), function, axis, value);
+
     if (_stickDetectAxis == _axisNoAxis) {
         // We have not detected enough movement on a axis yet
         if (abs(_axisValueSave[axis] - value) > _calMoveDelta) {
@@ -312,7 +322,6 @@ void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t functi
 
 void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function, int axis, int value)
 {
-    qCDebug(JoystickConfigControllerLog) << "_inputStickMin function:axis:value" << function << axis << value;
     if (!_validAxis(axis)) {
         qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
         return;
@@ -321,6 +330,9 @@ void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function,
     if (_rgFunctionAxisMapping[function] != axis) {
         return;
     }
+
+    _logJoystickInfo(QStringLiteral("_inputStickMin"), function, axis, value);
+
     if (_stickDetectAxis == _axisNoAxis) {
         // Setup up to detect stick being pegged to extreme position
         if (_rgAxisInfo[axis].reversed) {
@@ -356,7 +368,6 @@ void JoystickConfigController::_inputStickMin(Joystick::AxisFunction_t function,
 
 void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t function, int axis, int value)
 {
-    qCDebug(JoystickConfigControllerLog) << "_inputCenterWait function:axis:value" << function << axis << value;
     if (!_validAxis(axis)) {
         qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
         return;
@@ -366,7 +377,9 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
     if (_rgFunctionAxisMapping[function] != axis) {
         return;
     }
-    
+
+    _logJoystickInfo(QStringLiteral("_inputCenterWait"), function, axis, value);
+
     if (_stickDetectAxis == _axisNoAxis) {
         // Sticks have not yet moved close enough to center
         int roughCenter = getDeadbandToggle() ? std::max(_rgAxisInfo[axis].deadband,_calRoughCenterDelta) : _calRoughCenterDelta;
@@ -534,10 +547,10 @@ void JoystickConfigController::_stopCalibration()
     emit stickPositionsChanged();
 }
 
-/// @brief Saves the current axis values, so that we can detect when the use moves an input.
-void JoystickConfigController::_calSaveCurrentValues()
+/// @brief Saves the current axis values, so that we can detect when the user moves an input.
+void JoystickConfigController::_saveCurrentAxisValues()
 {
-	qCDebug(JoystickConfigControllerLog) << "_calSaveCurrentValues";
+	qCDebug(JoystickConfigControllerLog) << "_saveCurrentAxisValues";
     for (int i = 0; i < _axisCount; i++) {
         _axisValueSave[i] = _axisRawValue[i];
     }

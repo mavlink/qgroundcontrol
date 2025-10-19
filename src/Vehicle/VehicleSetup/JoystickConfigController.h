@@ -187,13 +187,15 @@ private:
     void _startCalibration      ();
     void _stopCalibration       ();
 
-    void _calSaveCurrentValues  ();
+    void _saveCurrentAxisValues  ();
 
     void _setStickPositions     ();
 
     void _signalAllAttitudeValueChanges();
 
     void _setStatusText         (const QString& text);
+
+    void _logJoystickInfo(const QString &methodName, Joystick::AxisFunction_t function, int axis, int value);
 
     stateStickPositions _sticksCentered;
     stateStickPositions _sticksThrottleUp;
@@ -230,6 +232,7 @@ private:
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
     QElapsedTimer   _stickDetectSettleElapsed;
+    QMap<int, int> _loggingLastValuesMap;
 
     QString             _statusText;
 
