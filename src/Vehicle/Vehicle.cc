@@ -295,6 +295,7 @@ void Vehicle::_commonInit(LinkInterface* link)
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
+    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::hasGripperChanged);
 
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
@@ -2693,7 +2694,8 @@ void Vehicle::_sendMavCommandFromList(int index)
 {
     MavCommandListEntry_t commandEntry = _mavCommandList[index];
 
-    QString rawCommandName  = MissionCommandTree::instance()->rawName(commandEntry.command);
+    QString rawCommandName = MissionCommandTree::instance()->rawName(commandEntry.command);
+    QString friendlyName = MissionCommandTree::instance()->friendlyName(commandEntry.command);
 
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
         qCDebug(VehicleLog) << Q_FUNC_INFO << "giving up after max retries" << rawCommandName;
@@ -2706,7 +2708,7 @@ void Vehicle::_sendMavCommandFromList(int index)
             emit mavCommandResult(_id, commandEntry.targetCompId, commandEntry.command, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         }
         if (commandEntry.showError) {
-            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(rawCommandName));
+            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(friendlyName));
         }
         return;
     }
@@ -3910,32 +3912,14 @@ void Vehicle::triggerSimpleCamera()
                    1.0);                        // trigger camera
 }
 
-void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
+void Vehicle::sendGripperAction(QGCMAVLink::GripperActions gripperAction)
 {
     sendMavCommand(
             _defaultComponentId,
             MAV_CMD_DO_GRIPPER,
-            false,                               // Don't show errors
-            0,                                   // Param1: Gripper ID (Always set to 0)
-            gripperAction,                       // Param2: Gripper Action
-            0, 0, 0, 0, 0);                      // Param 3 ~ 7 : unused
-}
-
-void Vehicle::sendGripperAction(QGCMAVLink::GRIPPER_OPTIONS gripperOption)
-{
-    switch(gripperOption) {
-        case QGCMAVLink::Gripper_release:
-            setGripperAction(GRIPPER_ACTION_RELEASE);
-            break;
-        case QGCMAVLink::Gripper_grab:
-            setGripperAction(GRIPPER_ACTION_GRAB);
-            break;
-        case QGCMAVLink::Invalid_option:
-            qDebug("unknown function");
-            break;
-        default: 
-            break;
-    }
+            true,                   // Show errors
+            0,                      // Param1: Gripper ID (Always set to 0)
+            gripperAction);         // Param2: Gripper Action
 }
 
 void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
