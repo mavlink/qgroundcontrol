@@ -215,7 +215,9 @@ void Joystick::_loadSettings()
 
     badSettings |= !convertOk;
 
-    qCDebug(JoystickLog) << Q_FUNC_INFO << "calibrated:txmode:throttlemode:exponential:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
+    qCDebug(JoystickLog) << _name;
+    qCDebug(JoystickLog) << "  calibrated:txmode:throttlemode:exponential:deadband:badsettings";
+    qCDebug(JoystickLog) << " " << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
 
     const QString minTpl("Axis%1Min");
     const QString maxTpl("Axis%1Max");
@@ -223,6 +225,7 @@ void Joystick::_loadSettings()
     const QString revTpl("Axis%1Rev");
     const QString deadbndTpl("Axis%1Deadbnd");
 
+    qCDebug(JoystickLog) << "  axis:min:max:trim:reversed:deadband:badsettings";
     for (int axis = 0; axis < _axisCount; axis++) {
         Calibration_t *const calibration = &_rgCalibration[axis];
 
@@ -240,11 +243,13 @@ void Joystick::_loadSettings()
 
         calibration->reversed = settings.value(revTpl.arg(axis), false).toBool();
 
-        qCDebug(JoystickLog) << Q_FUNC_INFO << "axis:min:max:trim:reversed:deadband:badsettings" << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
+        qCDebug(JoystickLog) << " " << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
     }
 
     int workingAxis = 0;
-    for (int function = 0; function < maxFunction; function++) {
+    qCDebug(JoystickLog) << "Function Axis mappings";
+    qCDebug(JoystickLog) << "  function:axis:badsettings";
+    for (int function = 0; function < maxAxisFunction; function++) {
         int functionAxis = settings.value(_rgFunctionSettingsKey[function], -1).toInt(&convertOk);
         badSettings |= (!convertOk || (functionAxis >= _axisCount));
 
@@ -256,7 +261,7 @@ void Joystick::_loadSettings()
             _rgFunctionAxis[function] = functionAxis;
         }
 
-        qCDebug(JoystickLog) << Q_FUNC_INFO << "function:axis:badsettings" << function << functionAxis << badSettings;
+        qCDebug(JoystickLog) << " " << axisFunctionToString(static_cast<AxisFunction_t>(function)) << functionAxis << badSettings;
     }
 
     badSettings |= (workingAxis < 4);
@@ -325,7 +330,12 @@ void Joystick::_saveSettings()
     settings.setValue(_negativeThrustSettingsKey, _negativeThrust);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
 
-    qCDebug(JoystickLog) << Q_FUNC_INFO << "calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _circleCorrection << _transmitterMode;
+    qCDebug(JoystickLog) << _name;
+    qCDebug(JoystickLog) << "  calibrated:exponential:accumulator:circlecorrection:negativeThrust:throttlemode:deadband:axisfrequency:buttonfrequency:txmode";
+    qCDebug(JoystickLog) << " " << _calibrated << _exponential << _accumulator
+                            << _circleCorrection << _negativeThrust << _throttleMode
+                            << _deadband << _axisFrequencyHz << _buttonFrequencyHz
+                            << _transmitterMode;
 
     const QString minTpl("Axis%1Min");
     const QString maxTpl("Axis%1Max");
@@ -333,6 +343,7 @@ void Joystick::_saveSettings()
     const QString revTpl("Axis%1Rev");
     const QString deadbndTpl("Axis%1Deadbnd");
 
+    qCDebug(JoystickLog) << "  axis:min:max:trim:reversed:deadband";
     for (int axis = 0; axis < _axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
         settings.setValue(trimTpl.arg(axis), calibration->center);
@@ -340,24 +351,22 @@ void Joystick::_saveSettings()
         settings.setValue(maxTpl.arg(axis), calibration->max);
         settings.setValue(revTpl.arg(axis), calibration->reversed);
         settings.setValue(deadbndTpl.arg(axis), calibration->deadband);
-        qCDebug(JoystickLog) << Q_FUNC_INFO
-                             << "name:axis:min:max:trim:reversed:deadband"
-                             << _name
-                             << axis
-                             << calibration->min
-                             << calibration->max
-                             << calibration->center
-                             << calibration->reversed
-                             << calibration->deadband;
+        qCDebug(JoystickLog) << " " << axis
+                                << calibration->min
+                                << calibration->max
+                                << calibration->center
+                                << calibration->reversed
+                                << calibration->deadband;
     }
 
     // Write mode 2 mappings without changing mapping currently in use
-    int temp[maxFunction];
+    int temp[maxAxisFunction];
     _remapAxes(_transmitterMode, 2, temp);
 
-    for (int function = 0; function < maxFunction; function++) {
+    qCDebug(JoystickLog) << "TX Mode mappings";
+    for (int function = 0; function < maxAxisFunction; function++) {
         settings.setValue(_rgFunctionSettingsKey[function], temp[function]);
-        qCDebug(JoystickLog) << Q_FUNC_INFO << "name:function:axis" << _name << function << _rgFunctionSettingsKey[function];
+        qCDebug(JoystickLog) << " " << axisFunctionToString(static_cast<AxisFunction_t>(function)) << _rgFunctionSettingsKey[function];
     }
 
     _saveButtonSettings();
@@ -379,15 +388,15 @@ int Joystick::_mapFunctionMode(int mode, int function)
     return -1;
 }
 
-void Joystick::_remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction])
+void Joystick::_remapAxes(int currentMode, int newMode, int (&newMapping)[maxAxisFunction])
 {
-    int temp[maxFunction];
+    int temp[maxAxisFunction];
 
-    for (int function = 0; function < maxFunction; function++) {
+    for (int function = 0; function < maxAxisFunction; function++) {
         temp[_mapFunctionMode(newMode, function)] = _rgFunctionAxis[_mapFunctionMode(currentMode, function)];
     }
 
-    for (int function = 0; function < maxFunction; function++) {
+    for (int function = 0; function < maxAxisFunction; function++) {
         newMapping[function] = temp[function];
     }
 }
@@ -799,7 +808,7 @@ void Joystick::setFunctionAxis(AxisFunction_t function, int axis)
 
 int Joystick::getFunctionAxis(AxisFunction_t function) const
 {
-    if ((static_cast<int>(function) < 0) || (function >= maxFunction)) {
+    if ((static_cast<int>(function) < 0) || (function >= maxAxisFunction)) {
         qCWarning(JoystickLog) << "Invalid function" << function;
     }
 
