@@ -69,7 +69,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
 
     static const stateMachineEntry rgStateMachine[] = {
         //Function
-        { Joystick::maxFunction,            msgBegin,           _sticksCentered,        &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,        nullptr, 0 },
+        { Joystick::maxAxisFunction,        msgBegin,           _sticksCentered,        &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,        nullptr, 0 },
         { Joystick::throttleFunction,       msgThrottleUp,      _sticksThrottleUp,      &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 0 },
         { Joystick::throttleFunction,       msgThrottleDown,    _sticksThrottleDown,    &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 0 },
         { Joystick::yawFunction,            msgYawRight,        _sticksYawRight,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 1 },
@@ -83,7 +83,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _sticksCentered,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
         { Joystick::gimbalYawFunction,      msgGimbalYawUp,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
         { Joystick::gimbalYawFunction,      msgGimbalYawDown,   _sticksCentered,        &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
-        { Joystick::maxFunction,            msgComplete,        _sticksCentered,        nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
+        { Joystick::maxAxisFunction,        msgComplete,        _sticksCentered,        nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
     };
 
     Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
@@ -96,7 +96,7 @@ void JoystickConfigController::_advanceState()
 
     // The state machine includes additional states for optional axes. If those
     // axes aren't detected, those states should be skipped.
-    while (state->function >= _axisCount && state->function < Joystick::maxFunction) {
+    while (state->function >= _axisCount && state->function < Joystick::maxAxisFunction) {
         state = _getStateMachineEntry(++_currentStep);
     }
 
@@ -283,7 +283,7 @@ void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t functi
     }
 
     // If this axis is already used in a mapping we can't use it again
-    if (_rgAxisInfo[axis].function != Joystick::maxFunction) {
+    if (_rgAxisInfo[axis].function != Joystick::maxAxisFunction) {
         return;
     }
 
@@ -403,7 +403,7 @@ void JoystickConfigController::_resetInternalCalibrationValues()
     // Set all raw axis to not reversed and center point values
     for (int i = 0; i < _axisCount; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
-        info->function = Joystick::maxFunction;
+        info->function = Joystick::maxAxisFunction;
         info->reversed = false;
         info->deadband = 0;
         emit axisDeadbandChanged(i,info->deadband);
@@ -412,7 +412,7 @@ void JoystickConfigController::_resetInternalCalibrationValues()
         info->axisTrim = JoystickConfigController::_calCenterPoint;
     }
     // Initialize attitude function mapping to function axis not set
-    for (size_t i = 0; i < Joystick::maxFunction; i++) {
+    for (size_t i = 0; i < Joystick::maxAxisFunction; i++) {
         _rgFunctionAxisMapping[i] = _axisNoAxis;
     }
     _signalAllAttitudeValueChanges();
@@ -425,13 +425,15 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings()
     // Initialize all function mappings to not set
     for (int i = 0; i < _axisCount; i++) {
         struct AxisInfo* info = &_rgAxisInfo[i];
-        info->function = Joystick::maxFunction;
+        info->function = Joystick::maxAxisFunction;
     }
     
-    for (size_t i = 0; i < Joystick::maxFunction; i++) {
+    for (size_t i = 0; i < Joystick::maxAxisFunction; i++) {
         _rgFunctionAxisMapping[i] = _axisNoAxis;
     }
     
+    qCDebug(JoystickConfigControllerLog) << "Calibration values" <<joystick->name();
+    qCDebug(JoystickConfigControllerLog) << "  axis:min:max:trim:reversed";
     for (int axis = 0; axis < _axisCount; axis++) {
         struct AxisInfo* info = &_rgAxisInfo[axis];
         Joystick::Calibration_t calibration = joystick->getCalibration(axis);
@@ -441,10 +443,10 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings()
         info->reversed  = calibration.reversed;
         info->deadband  = calibration.deadband;
         emit axisDeadbandChanged(axis,info->deadband);
-        qCDebug(JoystickConfigControllerLog) << "Read settings name:axis:min:max:trim:reversed" << joystick->name() << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
+        qCDebug(JoystickConfigControllerLog) << "  " << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
     
-    for (int function = 0; function < Joystick::maxFunction; function++) {
+    for (int function = 0; function < Joystick::maxAxisFunction; function++) {
         int paramAxis;
         paramAxis = joystick->getFunctionAxis(static_cast<Joystick::AxisFunction_t>(function));
         if(paramAxis >= 0 && paramAxis < _axisCount) {
@@ -510,7 +512,7 @@ void JoystickConfigController::_writeCalibration()
     }
     
     // Write function mapping parameters
-    for (int function = 0; function < Joystick::maxFunction; function++) {
+    for (int function = 0; function < Joystick::maxAxisFunction; function++) {
         joystick->setFunctionAxis(static_cast<Joystick::AxisFunction_t>(function), _rgFunctionAxisMapping[function]);
     }
     
