@@ -90,10 +90,8 @@ void QGCLogging::_threadsafeLog(const QString &message)
 {
     // Notify view of new row
     const int line = rowCount();
-    beginInsertRows(QModelIndex(), line, line);
     (void) QStringListModel::insertRows(line, 1);
     (void) setData(index(line, 0), message, Qt::DisplayRole);
-    endInsertRows();
 
     // Trim old entries to cap memory usage
     static constexpr const int kMaxLogRows = kMaxLogFileSize / 100;
