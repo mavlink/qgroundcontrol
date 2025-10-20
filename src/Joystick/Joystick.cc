@@ -212,6 +212,7 @@ void Joystick::_loadSettings()
     _circleCorrection  = settings.value(_circleCorrectionSettingsKey, false).toBool();
     _negativeThrust = settings.value(_negativeThrustSettingsKey, false).toBool();
     _throttleMode = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
+    _enableManualControlExtensions = settings.value(_manualControlExtensionsEnabledKey, false).toBool();
 
     badSettings |= !convertOk;
 
@@ -329,6 +330,7 @@ void Joystick::_saveSettings()
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
     settings.setValue(_negativeThrustSettingsKey, _negativeThrust);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
+    settings.setValue(_manualControlExtensionsEnabledKey, _enableManualControlExtensions);
 
     qCDebug(JoystickLog) << _name;
     qCDebug(JoystickLog) << "  calibrated:exponential:accumulator:circlecorrection:negativeThrust:throttlemode:deadband:axisfrequency:buttonfrequency:txmode";
@@ -618,13 +620,13 @@ void Joystick::_handleAxis()
     float throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], (_throttleMode == ThrottleModeDownZero) ? false :_deadband);
 
     float gimbalPitch = NAN;
-    if (_axisCount > 4) {
+    if (_enableManualControlExtensions && _axisCount > 4) {
         axis = _rgFunctionAxis[gimbalPitchFunction];
         gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
     }
 
     float gimbalYaw = NAN;
-    if (_axisCount > 5) {
+    if (_enableManualControlExtensions && _axisCount > 5) {
         axis = _rgFunctionAxis[gimbalYawFunction];
         gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
     }
@@ -1262,5 +1264,14 @@ QString Joystick::axisFunctionToString(AxisFunction_t function)
         return QStringLiteral("Gimbal Yaw");
     default:
         return QStringLiteral("Unknown");
+    }
+}
+
+void Joystick::setEnableManualControlExtensions(bool enable)
+{
+    if (_enableManualControlExtensions != enable) {
+        _enableManualControlExtensions = enable;
+        _saveSettings();
+        emit enableManualControlExtensionsChanged();
     }
 }

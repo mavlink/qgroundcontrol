@@ -94,9 +94,12 @@ void JoystickConfigController::_advanceState()
 {
     const stateMachineEntry* state = _getStateMachineEntry(++_currentStep);
 
+    Joystick* joystick = JoystickManager::instance()->activeJoystick();
+    int axisCount = joystick->enableManualControlExtensions() ? _axisCount : 4;
+
     // The state machine includes additional states for optional axes. If those
     // axes aren't detected, those states should be skipped.
-    while (state->function >= _axisCount && state->function < Joystick::maxAxisFunction) {
+    while (state->function >= axisCount && state->function < Joystick::maxAxisFunction) {
         state = _getStateMachineEntry(++_currentStep);
     }
 

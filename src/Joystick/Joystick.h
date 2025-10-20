@@ -82,6 +82,7 @@ class Joystick : public QThread
     Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)
     Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
     Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
+    Q_PROPERTY(bool                     enableManualControlExtensions READ enableManualControlExtensions WRITE setEnableManualControlExtensions NOTIFY enableManualControlExtensionsChanged)
 
     enum ButtonEvent_t {
         BUTTON_UP,
@@ -184,6 +185,9 @@ public:
     /// Set joystick button repeat rate (in Hz)
     void setButtonFrequency(float val);
 
+    bool enableManualControlExtensions() const { return _enableManualControlExtensions; }
+    void setEnableManualControlExtensions(bool enable);
+
 signals:
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
@@ -197,6 +201,7 @@ signals:
     void accumulatorChanged(bool accumulator);
     void enabledChanged(bool enabled);
     void circleCorrectionChanged(bool circleCorrection);
+    void enableManualControlExtensionsChanged();
     void axisValues(float roll, float pitch, float yaw, float throttle);
     void axisFrequencyHzChanged();
     void buttonFrequencyHzChanged();
@@ -287,6 +292,7 @@ private:
     bool _deadband = false;
     bool _negativeThrust = false;
     bool _pollingStartedForCalibration = false;
+    bool _enableManualControlExtensions = false;
     float _axisFrequencyHz = _defaultAxisFrequencyHz;
     float _buttonFrequencyHz = _defaultButtonFrequencyHz;
     float _exponential = 0;
@@ -335,6 +341,7 @@ private:
     static constexpr const char *_roverTXModeSettingsKey =         "TXMode_Rover";
     static constexpr const char *_vtolTXModeSettingsKey =          "TXMode_VTOL";
     static constexpr const char *_submarineTXModeSettingsKey =     "TXMode_Submarine";
+    static constexpr const char *_manualControlExtensionsEnabledKey = "ManualControlExtensionsEnabled";
 
     static constexpr const char *_buttonActionNone =               QT_TR_NOOP("No Action");
     static constexpr const char *_buttonActionArm =                QT_TR_NOOP("Arm");
