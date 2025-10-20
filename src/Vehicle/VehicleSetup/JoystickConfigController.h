@@ -241,7 +241,7 @@ private:
     static constexpr int _calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
     static constexpr int _calDefaultMinValue =   -32768;     ///< Default value for Min if not set
     static constexpr int _calDefaultMaxValue =   32767;      ///< Default value for Max if not set
-    static constexpr int _calRoughCenterDelta =  500;        ///< Delta around center point which is considered to be roughly centered
+    static constexpr int _calRoughCenterDelta =  700;        ///< Delta around center point which is considered to be roughly centered (Note: PS5 controller has very noisy center, hence 700)
     static constexpr int _calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
     static constexpr int _calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
     static constexpr int _calMinDelta =          1000;       ///< Amount of delta allowed around min value to consider channel at min
