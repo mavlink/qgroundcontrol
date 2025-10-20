@@ -190,3 +190,4 @@ public:
 
     static const QHash<int, QString> mavlinkCompIdHash;
 };
+Q_DECLARE_METATYPE(QGCMAVLink::GripperActions)
