@@ -18,7 +18,7 @@ ColumnLayout {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var _buttonTitles: [qsTr("Open"), qsTr("Close"), qsTr("Stop")]
-    property var _buttonActions: [Vehicle.GripperActionOpen, Vehicle.GripperActionClose, Vehicle.GripperActionStop]
+    property var _buttonActions: [QGCMAVLink.GripperActionOpen, QGCMAVLink.GripperActionClose, QGCMAVLink.GripperActionStop]
 
     QGCLabel {
         Layout.fillWidth:   true
