@@ -78,7 +78,7 @@ QGCMAVLink::QGCMAVLink(QObject *parent)
    (void) qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
    (void) qRegisterMetaType<MAV_TYPE>("MAV_TYPE");
    (void) qRegisterMetaType<MAV_AUTOPILOT>("MAV_AUTOPILOT");
-   (void) qRegisterMetaType<GRIPPER_ACTIONS>("GRIPPER_ACTIONS");
+   (void) qRegisterMetaType<QGCMAVLink::GripperActions>("QGCMAVLink::GripperActions");
 }
 
 QGCMAVLink::~QGCMAVLink()

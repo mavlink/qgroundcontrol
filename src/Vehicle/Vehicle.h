@@ -213,7 +213,7 @@ public:
     Q_PROPERTY(quint64              mavlinkLossCount            READ mavlinkLossCount                                               NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent          READ mavlinkLossPercent                                             NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(GimbalController*    gimbalController            READ gimbalController                                               CONSTANT)
-    Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     CONSTANT)
+    Q_PROPERTY(bool                 hasGripper                  READ hasGripper                                                     NOTIFY hasGripperChanged)
     Q_PROPERTY(bool                 isROIEnabled                READ isROIEnabled                                                   NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState              READ checkListState             WRITE setCheckListState             NOTIFY checkListStateChanged)
     Q_PROPERTY(bool                 readyToFlyAvailable         READ readyToFlyAvailable                                            NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
@@ -482,15 +482,6 @@ public:
     void setFlightMode                      (const QString& flightMode);
 
     bool airship() const;
-
-    /**
-     * @brief Send MAV_CMD_DO_GRIPPER command to trigger specified action in the vehicle
-     *
-     * @param gripperAction Gripper action to trigger
-    */
-
-    void setGripperAction(GRIPPER_ACTIONS gripperAction);
-    Q_INVOKABLE void sendGripperAction(QGCMAVLink::GRIPPER_OPTIONS gripperOption);
 
     void pairRX(int rxType, int rxSubType);
 
@@ -825,6 +816,7 @@ public slots:
     void setVtolInFwdFlight                 (bool vtolInFwdFlight);
     void _offlineFirmwareTypeSettingChanged (QVariant varFirmwareType); // Should only be used by MissionControler to set firmware from Plan file
     void _offlineVehicleTypeSettingChanged  (QVariant varVehicleType);  // Should only be used by MissionController to set vehicle type from Plan file
+    Q_INVOKABLE void sendGripperAction(QGCMAVLink::GripperActions gripperOption);
 
 signals:
     void coordinateChanged              (QGeoCoordinate coordinate);
@@ -875,6 +867,7 @@ signals:
     void requiresGpsFixChanged          ();
     void haveMRSpeedLimChanged          ();
     void haveFWSpeedLimChanged          ();
+    void hasGripperChanged              ();
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();

@@ -1066,7 +1066,7 @@
         {
             "id":                   211,
             "rawName":              "MAV_CMD_DO_GRIPPER",
-            "friendlyName":         "Gripper Mechanism",
+            "friendlyName":         "Gripper Action",
             "description":          "Control a gripper mechanism.",
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,

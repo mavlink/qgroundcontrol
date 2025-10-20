@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "MAVLinkLib.h"
+#include "QGCMAVLink.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -219,7 +219,7 @@ signals:
     void setVtolInFwdFlight(bool set);
     void setFlightMode(const QString &flightMode);
     void emergencyStop();
-    void gripperAction(GRIPPER_ACTIONS gripperAction);
+    void gripperAction(QGCMAVLink::GripperActions gripperAction);
     void landingGearDeploy();
     void landingGearRetract();
     void motorInterlock(bool enable);
@@ -362,8 +362,9 @@ private:
     static constexpr const char *_buttonActionGimbalYawLock =      QT_TR_NOOP("Gimbal Yaw Lock");
     static constexpr const char *_buttonActionGimbalYawFollow =    QT_TR_NOOP("Gimbal Yaw Follow");
     static constexpr const char *_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
-    static constexpr const char *_buttonActionGripperGrab =        QT_TR_NOOP("Gripper Close");
-    static constexpr const char *_buttonActionGripperRelease =     QT_TR_NOOP("Gripper Open");
+    static constexpr const char *_buttonActionGripperClose =       QT_TR_NOOP("Gripper Close");
+    static constexpr const char *_buttonActionGripperOpen =        QT_TR_NOOP("Gripper Open");
+    static constexpr const char *_buttonActionGripperStop =        QT_TR_NOOP("Gripper Stop");
     static constexpr const char *_buttonActionLandingGearDeploy=   QT_TR_NOOP("Landing gear deploy");
     static constexpr const char *_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
     static constexpr const char *_buttonActionMotorInterlockEnable=   QT_TR_NOOP("Motor Interlock enable");

@@ -139,12 +139,13 @@ public:
     };
     Q_ENUM(MavlinkSysStatus)
 
-    enum GRIPPER_OPTIONS {
-        Gripper_release = GRIPPER_ACTION_RELEASE,
-        Gripper_grab    = GRIPPER_ACTION_GRAB,
-        Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
+    enum GripperActions {
+        GripperActionOpen     = GRIPPER_ACTION_OPEN,
+        GripperActionClose    = GRIPPER_ACTION_CLOSE,
+        GripperActionStop     = GRIPPER_ACTION_STOP,
+        GripperOptionInvalid  = GRIPPER_ACTIONS_ENUM_END,
     };
-    Q_ENUM(GRIPPER_OPTIONS)
+    Q_ENUM(GripperActions)
 
     enum CalibrationType {
         CalibrationNone,
@@ -189,4 +190,4 @@ public:
 
     static const QHash<int, QString> mavlinkCompIdHash;
 };
-Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
+Q_DECLARE_METATYPE(QGCMAVLink::GripperActions)
