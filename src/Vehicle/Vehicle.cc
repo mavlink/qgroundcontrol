@@ -295,8 +295,9 @@ void Vehicle::_commonInit(LinkInterface* link)
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
-    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::hasGripperChanged);
-
+    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, [this](bool) {
+        emit hasGripperChanged();
+    });
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
     connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
