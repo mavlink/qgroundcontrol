@@ -1471,7 +1471,7 @@ VehicleCameraControl::_requestStorageInfo()
                 MAVLINK_MSG_ID_STORAGE_INFORMATION,     // msgid
                 0);                                     // storage ID
         } else {
-            qCDebug(CameraControlLog) << "  SendingMAV_CMD_REQUEST_STORAGE_INFORMATION (legacy)";
+            qCDebug(CameraControlLog) << "  Sending MAV_CMD_REQUEST_STORAGE_INFORMATION (legacy)";
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
