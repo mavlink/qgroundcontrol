@@ -93,6 +93,7 @@ static QMap<int, QString> px4_board_name_map {
     {1123, "siyi_n7_default"},    
     {1124, "3dr_ctrl-zero-h7-oem-revg_default"},
     {5600, "zeroone_x6_default"},
+    {6110, "svehicle_e2_default"},
     {7000, "cuav_7-nano_default"},
     {7001, "cuav_fmu-v6x_default"}
 };
