@@ -20,12 +20,6 @@ ColumnLayout {
     property var _buttonTitles: [qsTr("Open"), qsTr("Close"), qsTr("Stop")]
     property var _buttonActions: [QGCMAVLink.GripperActionOpen, QGCMAVLink.GripperActionClose, QGCMAVLink.GripperActionStop]
 
-    QGCLabel {
-        Layout.fillWidth:   true
-        text:               qsTr("Hold to Confirm")
-        font.pointSize:     ScreenTools.smallFontPointSize
-    }
-
     Repeater {
         model: _buttonTitles
 
