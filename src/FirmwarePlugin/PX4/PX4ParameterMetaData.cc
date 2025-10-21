@@ -276,7 +276,10 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             if (metaData->convertAndValidateRaw(text, false /* convertOnly */, varMax, errorString)) {
                                 metaData->setRawMax(varMax);
                             } else {
-                                qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
+                                // PX4 firmware has a metadata generation bug for VTQ_TELEM_IDS_* parameters
+                                if (!metaData->name().startsWith("VTQ_TELEM_IDS_")) {
+                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
+                                }
                             }
 
                         } else if (elementName == "unit") {
