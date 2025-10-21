@@ -30,6 +30,7 @@ class VideoManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
+
     Q_PROPERTY(bool     gstreamerEnabled        READ gstreamerEnabled                           CONSTANT)
     Q_PROPERTY(bool     qtmultimediaEnabled     READ qtmultimediaEnabled                        CONSTANT)
     Q_PROPERTY(bool     uvcEnabled              READ uvcEnabled                                 CONSTANT)
@@ -54,6 +55,8 @@ public:
     explicit VideoManager(QObject *parent = nullptr);
     ~VideoManager();
 
+    friend class FinishVideoInitialization;
+
     static VideoManager *instance();
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
@@ -62,7 +65,7 @@ public:
     Q_INVOKABLE void stopRecording();
     Q_INVOKABLE void stopVideo();
 
-    void init(QQuickWindow *rootWindow);
+    void init(QQuickWindow *mainWindow);
     void cleanup();
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
@@ -107,6 +110,7 @@ private slots:
     void _videoSourceChanged();
 
 private:
+    void _initAfterQmlIsReady();
     void _initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window);
     bool _updateAutoStream(VideoReceiver *receiver);
     bool _updateUVC(VideoReceiver *receiver);
@@ -124,6 +128,7 @@ private:
     VideoSettings *_videoSettings = nullptr;
 
     bool _initialized = false;
+    bool _initAfterQmlIsReadyDone = false;
     bool _fullScreen = false;
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
@@ -132,6 +137,7 @@ private:
     QString _imageFile;
     QString _uvcVideoSourceID;
     Vehicle *_activeVehicle = nullptr;
+    QQuickWindow *_mainWindow = nullptr;
 };
 
 /*===========================================================================*/
