@@ -185,7 +185,7 @@ find_package(Qt6
         Gui
         LinguistTools
         Location
-        LocationPrivate
+        # LocationPrivate # Uncomment this to get build to work on Qt 6.10+
         Multimedia
         Network
         OpenGL
