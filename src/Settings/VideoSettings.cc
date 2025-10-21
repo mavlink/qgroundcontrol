@@ -40,7 +40,10 @@ DECLARE_SETTINGGROUP(Video, "Video")
     #endif
 #endif
 #ifndef QGC_DISABLE_UVC
-    videoSourceList.append(UVCReceiver::getDeviceNameList());
+    QStringList uvcDevices = UVCReceiver::getDeviceNameList();
+    for (const QString& device : uvcDevices) {
+        videoSourceList.append(device);
+    }
 #endif
     if (videoSourceList.count() == 0) {
         _noVideo = true;
