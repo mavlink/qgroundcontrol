@@ -185,6 +185,7 @@ find_package(Qt6
         Gui
         LinguistTools
         Location
+        LocationPrivate
         Multimedia
         Network
         OpenGL
