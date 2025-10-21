@@ -91,7 +91,7 @@ Rectangle {
             Layout.fillWidth:       true
             Layout.leftMargin:      closeButton.width + closeButton.anchors.rightMargin
             Layout.rightMargin:     Layout.leftMargin
-            text:                   control.title
+            text:                   control.message
             horizontalAlignment:    Text.AlignHCenter
         }
 
@@ -104,7 +104,7 @@ Rectangle {
 
         QGCDelayButton {
             Layout.fillWidth:   true
-            text:               qsTr("Hold To Confirm")
+            text:               control.title
             enabled:            _utmspEnabled === true? utmspSliderTrigger : true
             opacity:            if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}
 
