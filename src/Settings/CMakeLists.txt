@@ -39,10 +39,16 @@ target_sources(${CMAKE_PROJECT_NAME}
         RTKSettings.h
         SettingsGroup.cc
         SettingsGroup.h
+        SettingsGroupArray.cc
+        SettingsGroupArray.h
         SettingsManager.cc
         SettingsManager.h
         UnitsSettings.cc
         UnitsSettings.h
+        VehicleProfileSettings.cc
+        VehicleProfileSettings.h
+    VehicleProfileSettingsArray.cc
+    VehicleProfileSettingsArray.h
         VideoSettings.cc
         VideoSettings.h
         MapsSettings.cc

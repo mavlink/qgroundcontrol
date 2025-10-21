@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "vehicleName",
+            "shortDesc": "Profile name",
+            "longDesc": "Human readable name for this vehicle profile.",
+            "type": "string",
+            "default": ""
+        },
+        {
+            "name": "mavlinkId",
+            "shortDesc": "MAVLink system id",
+            "longDesc": "System id to use when communicating with this vehicle.",
+            "type": "uint32",
+            "default": 1,
+            "min": 1,
+            "max": 255
+        }
+    ]
+}

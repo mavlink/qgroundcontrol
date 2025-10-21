@@ -25,11 +25,23 @@ SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, 
 
 SettingsFact* SettingsGroup::_createSettingsFact(const QString& factName)
 {
-    FactMetaData* m = _nameToMetaDataMap[factName];
-    if(!m) {
-        qCritical() << "Fact name " << factName << "not found in" << QString(kJsonFile).arg(_name);
+    if (_factCache.contains(factName)) {
+        return _factCache[factName];
+    }
+
+    FactMetaData* const metaData = _nameToMetaDataMap.value(factName, nullptr);
+    if (!metaData) {
+        qCritical() << "Fact name" << factName << "not found in" << QString(kJsonFile).arg(_name);
         exit(-1);
     }
-    return new SettingsFact(_settingsGroup, m, this);
+
+    SettingsFact* const fact = new SettingsFact(_settingsGroup, metaData, this);
+    _factCache.insert(factName, fact);
+    return fact;
+}
+
+SettingsFact* SettingsGroup::fact(const QString& factName)
+{
+    return _createSettingsFact(factName);
 }
 

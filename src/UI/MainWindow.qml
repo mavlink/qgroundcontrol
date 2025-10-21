@@ -20,6 +20,7 @@ import QGroundControl.FactControls
 
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
+import QGroundControl.VehicleProfilesView
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -112,18 +113,37 @@ ApplicationWindow {
         return globals.validationErrorCount <= previousValidationErrorCount
     }
 
+    function _currentViewBackIcon() {
+        if (flyView.visible) {
+            return "/qmlimages/PaperPlane.svg"
+        } else if (planView.visible) {
+            return "/qmlimages/Plan.svg"
+        } else if (vehicleProfilesView.visible) {
+            return "/qmlimages/Quad.svg"
+        }
+        return "/qmlimages/PaperPlane.svg"
+    }
+
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
+        vehicleProfilesView.visible = false
     }
 
     function showFlyView() {
         flyView.visible = true
         planView.visible = false
+        vehicleProfilesView.visible = false
+    }
+
+    function showVehicleProfilesView() {
+        flyView.visible = false
+        planView.visible = false
+        vehicleProfilesView.visible = true
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
-        toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
+    toolDrawer.backIcon     = _currentViewBackIcon()
         toolDrawer.toolTitle    = toolTitle
         toolDrawer.toolSource   = toolSource
         toolDrawer.toolIcon     = toolIcon
@@ -271,6 +291,12 @@ ApplicationWindow {
         visible:        false
     }
 
+    VehicleProfilesView {
+        id:             vehicleProfilesView
+        anchors.fill:   parent
+        visible:        false
+    }
+
     footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
@@ -335,6 +361,19 @@ ApplicationWindow {
                             if (mainWindow.allowViewSwitch()) {
                                 mainWindow.closeIndicatorDrawer()
                                 mainWindow.showPlanView()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Vehicle Profiles")
+                        imageResource:      "/qmlimages/Quad.svg"
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                mainWindow.closeIndicatorDrawer()
+                                mainWindow.showVehicleProfilesView()
                             }
                         }
                     }

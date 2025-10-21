@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtCore/QHash>
+#include <QtCore/QStringList>
 
 #include "SettingsFact.h"
 
@@ -56,9 +58,14 @@ public:
     SettingsGroup(const QString &name, const QString &settingsGroup, QObject* parent = nullptr);
 
     Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY visibleChanged)
+    Q_PROPERTY(QStringList factNames READ factNames CONSTANT)
 
     virtual bool    visible             () { return _visible; }
     virtual void    setVisible          (bool vis) { _visible = vis; emit visibleChanged(); }
+
+    Q_INVOKABLE SettingsFact* fact(const QString& factName);
+
+    QStringList factNames() const { return _nameToMetaDataMap.keys(); }
 
 signals:
     void            visibleChanged      ();
@@ -70,7 +77,10 @@ protected:
     QString         _settingsGroup;
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
+    QHash<QString, SettingsFact*> _factCache;
 
 private:
     static constexpr const char* kJsonFile = ":/json/%1.SettingsGroup.json";
+
+    friend class SettingsGroupArray;
 };
