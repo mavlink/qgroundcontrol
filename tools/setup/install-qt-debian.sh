@@ -22,7 +22,9 @@ echo "QT_MODULES $QT_MODULES"
 
 apt-get update -y --quiet
 apt-get install python3 python3-pip pipx -y
-pipx install aqtinstall cmake ninja
+pipx install aqtinstall
+pipx install cmake
+pipx install ninja
 pipx ensurepath
 export PATH="$(python3 -m site --user-base)/bin:$PATH"
 aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_ARCH} -O ${QT_PATH} -m ${QT_MODULES}
