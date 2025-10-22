@@ -353,7 +353,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                                 qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
                                                                  << "index:" << bit << "description:" << bitDescription;
 
-                                if (bit < 31) {
+                                if (bit < 32) {
                                     QVariant bitmaskRawValue = 1 << bit;
                                     QVariant bitmaskValue;
                                     QString errorString;
@@ -365,7 +365,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                                                                          << " error:" << errorString;
                                     }
                                 } else {
-                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask, bit:" << bit;
+                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask bit, name:" << metaData->name() << " bit:" << bit;
                                 }
                             }
                         } else {
