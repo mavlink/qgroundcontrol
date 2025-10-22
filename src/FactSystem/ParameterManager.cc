@@ -173,6 +173,8 @@ void ParameterManager::mavlinkMessageReceived(const mavlink_message_t &message)
         }
 
         _handleParamValue(message.compid, parameterName, param_value.param_count, param_value.param_index, static_cast<MAV_PARAM_TYPE>(param_value.param_type), parameterValue);
+    } else if (message.msgid == MAVLINK_MSG_ID_PARAM_ERROR) {
+        _handleParamError(message);
     }
 }
 
@@ -350,6 +352,153 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
     _checkInitialLoadComplete();
 
     qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "_parameterUpdate complete";
+}
+
+void ParameterManager::_handleParamError(const mavlink_message_t &message)
+{
+    mavlink_param_error_t paramError{};
+    mavlink_msg_param_error_decode(&message, &paramError);
+
+    char parameterNameWithNull[MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(parameterNameWithNull, paramError.param_id, MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN);
+    const QString parameterName(parameterNameWithNull);
+
+    const int componentId = message.compid;
+    const int paramIndex = paramError.param_index;
+    const MAV_PARAM_ERROR errorCode = static_cast<MAV_PARAM_ERROR>(paramError.error);
+
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId)
+                                 << "Received PARAM_ERROR for"
+                                 << (parameterName.isEmpty() ? QStringLiteral("index %1").arg(paramIndex) : parameterName)
+                                 << "error" << errorCode;
+
+    _initialRequestTimeoutTimer.stop();
+    _waitingParamTimeoutTimer.stop();
+
+    bool removedFromIndex = false;
+    bool removedFromNameRead = false;
+    bool removedFromWrite = false;
+
+    if (_waitingReadParamIndexMap.contains(componentId) && _waitingReadParamIndexMap[componentId].contains(paramIndex)) {
+        _waitingReadParamIndexMap[componentId].remove(paramIndex);
+        (void) _indexBatchQueue.removeOne(paramIndex);
+        if (!_failedReadParamIndexMap[componentId].contains(paramIndex)) {
+            _failedReadParamIndexMap[componentId].append(paramIndex);
+        }
+        removedFromIndex = true;
+    }
+
+    if (!parameterName.isEmpty() && _waitingReadParamNameMap.contains(componentId)) {
+        removedFromNameRead = _waitingReadParamNameMap[componentId].remove(parameterName) > 0;
+    }
+
+    if (!parameterName.isEmpty() && _waitingWriteParamNameMap.contains(componentId)) {
+        removedFromWrite = _waitingWriteParamNameMap[componentId].remove(parameterName) > 0;
+    }
+
+    if (_waitingReadParamIndexMap.contains(componentId) && !_waitingReadParamIndexMap[componentId].isEmpty()) {
+        qCDebug(ParameterManagerVerbose2Log) << _logVehiclePrefix(componentId) << "_waitingReadParamIndexMap:" << _waitingReadParamIndexMap[componentId];
+    }
+    if (_waitingReadParamNameMap.contains(componentId) && !_waitingReadParamNameMap[componentId].isEmpty()) {
+        qCDebug(ParameterManagerVerbose2Log) << _logVehiclePrefix(componentId) << "_waitingReadParamNameMap" << _waitingReadParamNameMap[componentId];
+    }
+    if (_waitingWriteParamNameMap.contains(componentId) && !_waitingWriteParamNameMap[componentId].isEmpty()) {
+        qCDebug(ParameterManagerVerbose2Log) << _logVehiclePrefix(componentId) << "_waitingWriteParamNameMap" << _waitingWriteParamNameMap[componentId];
+    }
+
+    const bool shouldReRead = removedFromWrite && !parameterName.isEmpty() &&
+                              (errorCode != MAV_PARAM_ERROR_DOES_NOT_EXIST) &&
+                              (errorCode != MAV_PARAM_ERROR_COMPONENT_NOT_FOUND);
+
+    if (shouldReRead) {
+        refreshParameter(componentId, parameterName);
+    }
+
+    int waitingReadParamIndexCount = 0;
+    for (const int waitingComponentId: _waitingReadParamIndexMap.keys()) {
+        waitingReadParamIndexCount += _waitingReadParamIndexMap[waitingComponentId].count();
+    }
+    if (waitingReadParamIndexCount) {
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "waitingReadParamIndexCount:" << waitingReadParamIndexCount;
+    }
+
+    int waitingReadParamNameCount = 0;
+    for (const int waitingComponentId: _waitingReadParamNameMap.keys()) {
+        waitingReadParamNameCount += _waitingReadParamNameMap[waitingComponentId].count();
+    }
+    if (waitingReadParamNameCount) {
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "waitingReadParamNameCount:" << waitingReadParamNameCount;
+    }
+
+    int waitingWriteParamNameCount = 0;
+    for (const int waitingComponentId: _waitingWriteParamNameMap.keys()) {
+        waitingWriteParamNameCount += _waitingWriteParamNameMap[waitingComponentId].count();
+    }
+    if (waitingWriteParamNameCount) {
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "waitingWriteParamNameCount:" << waitingWriteParamNameCount;
+    }
+
+    const int readWaitingParamCount = waitingReadParamIndexCount + waitingReadParamNameCount;
+    const int totalWaitingParamCount = readWaitingParamCount + waitingWriteParamNameCount;
+    if (totalWaitingParamCount) {
+        _waitingParamTimeoutTimer.start();
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer: totalWaitingParamCount:" << totalWaitingParamCount;
+    } else if (!_mapCompId2FactMap.contains(_vehicle->defaultComponentId())) {
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer (still waiting for default component params)";
+        _waitingParamTimeoutTimer.start();
+    } else {
+        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
+    }
+
+    _updateProgressBar();
+
+    _prevWaitingReadParamIndexCount = waitingReadParamIndexCount;
+    _prevWaitingReadParamNameCount = waitingReadParamNameCount;
+    _prevWaitingWriteParamNameCount = waitingWriteParamNameCount;
+
+    _checkInitialLoadComplete();
+
+    if (errorCode == MAV_PARAM_ERROR_DOES_NOT_EXIST && !parameterName.isEmpty()) {
+        qgcApp()->reportMissingParameter(componentId, parameterName);
+    }
+
+    const QString contextString = !parameterName.isEmpty()
+                                  ? parameterName
+                                  : tr("index %1").arg(paramIndex);
+    const QString errorDescription = _paramErrorToString(errorCode);
+    const QString messageText = tr("Parameter error (%1): %2").arg(contextString, errorDescription);
+
+    if (removedFromWrite || removedFromNameRead) {
+        qgcApp()->showAppMessage(messageText);
+    } else {
+        qCWarning(ParameterManagerLog) << _logVehiclePrefix(componentId) << messageText;
+    }
+}
+
+QString ParameterManager::_paramErrorToString(MAV_PARAM_ERROR error) const
+{
+    switch (error) {
+    case MAV_PARAM_ERROR_NO_ERROR:
+        return tr("No error");
+    case MAV_PARAM_ERROR_DOES_NOT_EXIST:
+        return tr("Parameter does not exist");
+    case MAV_PARAM_ERROR_VALUE_OUT_OF_RANGE:
+        return tr("Value out of range");
+    case MAV_PARAM_ERROR_PERMISSION_DENIED:
+        return tr("Permission denied");
+    case MAV_PARAM_ERROR_COMPONENT_NOT_FOUND:
+        return tr("Component not found");
+    case MAV_PARAM_ERROR_READ_ONLY:
+        return tr("Parameter is read-only");
+    case MAV_PARAM_ERROR_TYPE_UNSUPPORTED:
+        return tr("Parameter type unsupported");
+    case MAV_PARAM_ERROR_TYPE_MISMATCH:
+        return tr("Parameter type mismatch");
+    case MAV_PARAM_ERROR_READ_FAIL:
+        return tr("Failed to read parameter");
+    default:
+        return tr("Unknown error (%1)").arg(static_cast<int>(error));
+    }
 }
 
 void ParameterManager::_factRawValueUpdateWorker(int componentId, const QString &name, FactMetaData::ValueType_t valueType, const QVariant &rawValue)

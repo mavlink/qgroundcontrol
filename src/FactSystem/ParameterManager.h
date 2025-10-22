@@ -124,6 +124,7 @@ private:
     void _tryCacheHashLoad(int vehicleId, int componentId, const QVariant &hashValue);
     void _loadMetaData();
     void _clearMetaData();
+    void _handleParamError(const mavlink_message_t &message);
     /// Remap a parameter from one firmware version to another
     QString _remapParamNameToVersion(const QString &paramName) const;
     /// The offline editing vehicle can have custom loaded params bolted into it.
@@ -141,6 +142,7 @@ private:
     /// Parse the binary parameter file and inject the parameters in the qgc fact system.
     /// See: https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Filesystem
     bool _parseParamFile(const QString &filename);
+    QString _paramErrorToString(MAV_PARAM_ERROR error) const;
 
     static QVariant _stringToTypedVariant(const QString &string, FactMetaData::ValueType_t type, bool failOk = false);
 
