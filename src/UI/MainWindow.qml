@@ -20,77 +20,93 @@ import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-
 import QGroundControl.UTMSP
 
-import Qt.labs.settings 1.0
+import QGroundControl.MainWindow 1.0
+
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
-    id:             mainWindow
-    visible:        true
-
-    // flags: Qt.FramelessWindowHint | Qt.Window
+    id: mainWindow
+    visible: true
 
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
-
-    //dev
     property string minMAXBUTTON: "F11"
 
     readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    Settings {
-        id: winPrefs
-        category: "MainWindow"
-        property bool startFullScreen: false
-        property int normalX: 0
-        property int normalY: 0
-        property int normalW: 1280
-        property int normalH: 800
-    }
-
-    // True if currently fullscreen
     property bool isFullScreen: visibility === Window.FullScreen
 
     function toggleFullScreen() {
         if (visibility === Window.FullScreen) {
-            // Leaving fullscreen
             visibility = Window.Windowed
-            x = winPrefs.normalX
-            y = winPrefs.normalY
-            width  = winPrefs.normalW
-            height = winPrefs.normalH
-            winPrefs.startFullScreen = false
+            x = MainWindowPrefs.normalX
+            y = MainWindowPrefs.normalY
+            width  = MainWindowPrefs.normalW
+            height = MainWindowPrefs.normalH
+            MainWindowPrefs.startFullScreen = false
         } else {
-            // Entering fullscreen and remember
-            winPrefs.normalX = x
-            winPrefs.normalY = y
-            winPrefs.normalW = width
-            winPrefs.normalH = height
+            MainWindowPrefs.normalX = x
+            MainWindowPrefs.normalY = y
+            MainWindowPrefs.normalW = width
+            MainWindowPrefs.normalH = height
             visibility = Window.FullScreen
-            winPrefs.startFullScreen = true
+            MainWindowPrefs.startFullScreen = true
         }
     }
 
-    // Keep the setting
-    onVisibilityChanged: {
-        winPrefs.startFullScreen = (visibility === Window.FullScreen)
-    }
+    onVisibilityChanged: MainWindowPrefs.startFullScreen = (visibility === Window.FullScreen)
 
     Component.onCompleted: {
-        // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
-        if (winPrefs.startFullScreen) {
+
+        if (MainWindowPrefs.startFullScreen) {
             visibility = Window.FullScreen
+        } else {
+            x = MainWindowPrefs.normalX
+            y = MainWindowPrefs.normalY
+            width  = MainWindowPrefs.normalW
+            height = MainWindowPrefs.normalH
         }
     }
 
-    Shortcut {
-        sequence: minMAXBUTTON
-        context: Qt.ApplicationShortcut
-        onActivated: mainWindow.toggleFullScreen()
+    Item {
+        id: keyCatcher
+        anchors.fill: parent
+        focus: true
+
+        // Long-press window
+        property int minHoldMs: 70
+        property int maxHoldMs: 700
+
+        // Debounce between toggles
+        property int debounceMs: 350
+        property double _pressTs: 0
+        property double _lastToggleTs: 0
+
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_F11 && !event.isAutoRepeat) {
+                _pressTs = Date.now()
+                event.accepted = true
+            }
+        }
+
+        Keys.onReleased: (event) => {
+            if (event.key === Qt.Key_F11 && !event.isAutoRepeat) {
+                const now = Date.now()
+                const held = now - _pressTs
+                const sinceLast = now - _lastToggleTs
+
+                if (held >= minHoldMs && held <= maxHoldMs && sinceLast >= debounceMs) {
+                    _lastToggleTs = now
+                    mainWindow.toggleFullScreen()
+                }
+                event.accepted = true
+            }
+        }
     }
+
     //dev end
 
     // Component.onCompleted: {

@@ -70,6 +70,9 @@
 #include "VehicleComponent.h"
 #include "VideoManager.h"
 
+#include "src/UI/mainwindow_prefs.h"
+#include <QtQml>
+
 #ifndef QGC_DISABLE_MAVLINK_INSPECTOR
 #include "MAVLinkInspectorController.h"
 #endif
@@ -97,12 +100,24 @@ static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
     return new QGCMAVLink();
 }
 
+static void registerMainWindowPrefsSingleton()
+{
+    static MainWindowPrefs s_prefs; // lives for whole app
+    qmlRegisterSingletonInstance(
+        "QGroundControl.MainWindow",   // URI must match your QML import
+        1, 0,
+        "MainWindowPrefs",             // QML name
+        &s_prefs);
+}
+
 QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
     , _simpleBootTest(simpleBootTest)
 {
     _msecsElapsedTime.start();
+
+    registerMainWindowPrefsSingleton();
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
