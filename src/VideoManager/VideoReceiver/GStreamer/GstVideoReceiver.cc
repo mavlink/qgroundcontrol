@@ -918,10 +918,10 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
     qCDebug(GstVideoReceiverLog) << "Decoding started" << _uri;
 }
 
-void GstVideoReceiver::_logDecodeBin3SelectedCodec(GstElement *decodeBin3) 
+void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3) 
 {
     GValue value = G_VALUE_INIT;
-    GstIterator *iter = gst_bin_iterate_elements(GST_BIN(decodeBin3));
+    GstIterator *iter = gst_bin_iterate_elements(GST_BIN(decodebin3));
     GstElement *child;
 
     while (gst_iterator_next(iter, &value) == GST_ITERATOR_OK) {
