@@ -227,7 +227,7 @@ void _setGstEnvVars()
 #endif
 }
 
-void _checkPlugin(gpointer data, gpointer user_data)
+void _logPlugin(gpointer data, gpointer user_data)
 {
     GstPlugin *plugin = static_cast<GstPlugin*>(data);
     if (!plugin) {
@@ -236,7 +236,7 @@ void _checkPlugin(gpointer data, gpointer user_data)
 
     const gchar *name = gst_plugin_get_name(plugin);
     const gchar *version = gst_plugin_get_version(plugin);
-    qCDebug(GStreamerLog) << QString("Plugin %1: (Version %2)").arg(name, version);
+    qCDebug(GStreamerLog) << "name" << name << "- version" << version;
 }
 
 bool _verifyPlugins()
@@ -245,8 +245,9 @@ bool _verifyPlugins()
 
     GstRegistry *registry = gst_registry_get();
 
+    qCDebug(GStreamerLog) << "Installed GStreamer Plugins:";
     GList *plugins = gst_registry_get_plugin_list(registry);
-    g_list_foreach(plugins, _checkPlugin, NULL);
+    g_list_foreach(plugins, _logPlugin, NULL);
     g_list_free(plugins);
 
     static constexpr const char *pluginNames[2] = {"qml6", "qgc"};
@@ -342,8 +343,6 @@ void _logDecoderRanks()
     gst_plugin_feature_list_free(decoderFactories);
 }
 
-// Hardware decoder detection is centralized in GStreamer::is_hardware_decoder_factory
-
 void _changeFeatureRank(GstRegistry *registry, const char *featureName, uint16_t rank)
 {
     if (!registry || !featureName) {
@@ -356,9 +355,8 @@ void _changeFeatureRank(GstRegistry *registry, const char *featureName, uint16_t
         return;
     }
 
-    qCDebug(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
+    qCDebug(GStreamerLog) << "  Changing feature (" << featureName << ") to use rank:" << rank;
     gst_plugin_feature_set_rank(feature, rank);
-    (void) gst_registry_add_feature(registry, feature);
     gst_clear_object(&feature);
 }
 
@@ -378,6 +376,9 @@ void _prioritizeByHardwareClass(GstRegistry *registry, uint16_t prioritizedRank,
                               << (requireHardware ? "hardware" : "software") << "decoders";
         return;
     }
+
+    qCDebug(GStreamerLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
+                           << "video decoders with rank:" << prioritizedRank;
 
     int matchedFactories = 0;
     for (GList *node = decoderFactories; node != nullptr; node = node->next) {

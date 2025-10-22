@@ -916,67 +916,50 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
                  nullptr);
 
     qCDebug(GstVideoReceiverLog) << "Decoding started" << _uri;
-
-    // Log decoder info
-    if (_decoderValve) {
-        GstPad *valveSrcPad = gst_element_get_static_pad(_decoderValve, "src");
-        if (!valveSrcPad) {
-            qCCritical(GstVideoReceiverLog) << "Unable to log codec info - valve src pad is NULL" << _uri;
-        } else {
-            GstCaps *valveSrcPadCaps = gst_pad_query_caps(valveSrcPad, nullptr);
-            const GstStructure *structure = gst_caps_get_structure(valveSrcPadCaps, 0);
-            if (structure) {
-                const gchar *capsName = gst_structure_get_name(structure);
-                const gchar *encodingName = gst_structure_has_field(structure, "encoding-name")
-                    ? gst_structure_get_string(structure, "encoding-name")
-                    : nullptr;
-
-                bool hardwareDecoder = false;
-                if (_decoder) {
-                    GstElementFactory *factory = gst_element_get_factory(_decoder);
-                    if (factory) {
-                        hardwareDecoder = GStreamer::is_hardware_decoder_factory(factory);
-                    }
-                }
-                const QString decoderClass = hardwareDecoder ? QStringLiteral("hardware") : QStringLiteral("software");
-
-                if (capsName || encodingName) {
-                    QString codecDescription;
-                    if (capsName) {
-                        codecDescription = QString::fromUtf8(capsName);
-                    }
-                    if (encodingName && *encodingName) {
-                        if (!codecDescription.isEmpty()) {
-                            codecDescription += QStringLiteral(" (");
-                            codecDescription += QString::fromUtf8(encodingName);
-                            codecDescription += QStringLiteral(")");
-                        } else {
-                            codecDescription = QString::fromUtf8(encodingName);
-                        }
-                    }
-
-                    if (!codecDescription.isEmpty()) {
-                        qCDebug(GstVideoReceiverLog) << "Using" << decoderClass << "video codec" << codecDescription << _uri;
-                    }
-                } else {
-                    qCCritical(GstVideoReceiverLog) << "Unable to log codec info - couldn't get capsName or encodingName" << _uri;
-                }
-            } else {
-                qCCritical(GstVideoReceiverLog) << "Unable to log codec info - structure is NULL" << _uri;
-            }
-            gst_clear_caps(&valveSrcPadCaps);
-            gst_clear_object(&valveSrcPad);
-        }
-    } else {
-        qCCritical(GstVideoReceiverLog) << "Unable to log codec info _decoderValve is NULL" << _uri;
-    }
 }
+
+void GstVideoReceiver::_logDecodeBin3SelectedCodec(GstElement *decodeBin3) 
+{
+    GValue value = G_VALUE_INIT;
+    GstIterator *iter = gst_bin_iterate_elements(GST_BIN(decodeBin3));
+    GstElement *child;
+
+    while (gst_iterator_next(iter, &value) == GST_ITERATOR_OK) {
+        child = GST_ELEMENT(g_value_get_object(&value));
+        GstElementFactory *factory = gst_element_get_factory(child);
+
+        if (factory) {
+            gboolean is_decoder = gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER);
+            if (is_decoder) {
+                const gchar *decoderKlass = gst_element_factory_get_klass(factory);
+                GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
+                const gchar *featureName = gst_plugin_feature_get_name(feature);
+                const guint rank = gst_plugin_feature_get_rank(feature);
+                bool isHardwareDecoder = GStreamer::is_hardware_decoder_factory(factory);
+
+                QString pluginName = featureName;
+                GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
+                if (plugin) {
+                    pluginName = gst_plugin_get_name(plugin);
+                    gst_object_unref(plugin);
+                }
+                qCDebug(GstVideoReceiverLog) << "Decodebin3 selected codec:rank -" << pluginName << "/" << featureName << "-" << decoderKlass << (isHardwareDecoder ? "(HW)" : "(SW)") << ":" << rank;
+            }
+        }
+        g_value_reset(&value);
+    }
+    gst_iterator_free(iter);
+}
+
 
 void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 {
     qCDebug(GstVideoReceiverLog) << "_onNewDecoderPad" << _uri;
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-decoder-pad");
+
+    // We should now know what codec decodebin3
+    _logDecodeBin3SelectedCodec(_decoder);
 
     if (!_addVideoSink(pad)) {
         qCCritical(GstVideoReceiverLog) << "_addVideoSink() failed";

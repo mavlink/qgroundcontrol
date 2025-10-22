@@ -90,6 +90,7 @@ private:
     bool _unlinkBranch(GstElement *from);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
+    void _logDecodeBin3SelectedCodec(GstElement *decodeBin3);
 
     bool _needDispatch();
     void _dispatchSignal(Task emitter);
