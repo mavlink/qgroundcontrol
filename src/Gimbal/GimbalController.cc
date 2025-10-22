@@ -29,6 +29,10 @@ GimbalController::GimbalController(Vehicle *vehicle)
 
     _rateSenderTimer.setInterval(500);
     (void) connect(&_rateSenderTimer, &QTimer::timeout, this, &GimbalController::_rateSenderTimeout);
+
+    _stopDebounceTimer.setSingleShot(true);
+    _stopDebounceTimer.setInterval(50);  // 50ms debounce delay
+    (void) connect(&_stopDebounceTimer, &QTimer::timeout, this, &GimbalController::_stopDebounceTimeout);
 }
 
 GimbalController::~GimbalController()
@@ -407,7 +411,9 @@ void GimbalController::gimbalPitchStop()
     }
 
     activeGimbal()->setPitchRate(0.0f);
-    sendRate();
+    
+    // Use debounce timer to allow both axes to be cleared if released simultaneously
+    _stopDebounceTimer.start();
 }
 
 void GimbalController::gimbalYawStop()
@@ -418,7 +424,9 @@ void GimbalController::gimbalYawStop()
     }
 
     activeGimbal()->setYawRate(0.0f);
-    sendRate();
+    
+    // Use debounce timer to allow both axes to be cleared if released simultaneously
+    _stopDebounceTimer.start();
 }
 
 void GimbalController::centerGimbal()
@@ -594,6 +602,13 @@ void GimbalController::sendRate()
 void GimbalController::_rateSenderTimeout()
 {
     // Send rate again to avoid timeout on autopilot side.
+    sendRate();
+}
+
+void GimbalController::_stopDebounceTimeout()
+{
+    // Debounce timer expired, now send the rate command
+    // This ensures both axes have been cleared if buttons were released simultaneously
     sendRate();
 }
 
