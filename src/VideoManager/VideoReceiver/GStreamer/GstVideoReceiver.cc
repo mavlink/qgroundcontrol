@@ -948,6 +948,7 @@ void GstVideoReceiver::_logDecodeBin3SelectedCodec(GstElement *decodeBin3)
         }
         g_value_reset(&value);
     }
+    g_value_unset(&value);
     gst_iterator_free(iter);
 }
 
@@ -958,7 +959,7 @@ void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-decoder-pad");
 
-    // We should now know what codec decodebin3
+    // We should now know what codec decodebin3 selected.
     _logDecodeBin3SelectedCodec(_decoder);
 
     if (!_addVideoSink(pad)) {
