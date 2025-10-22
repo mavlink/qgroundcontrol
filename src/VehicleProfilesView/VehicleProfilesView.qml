@@ -24,16 +24,46 @@ Item {
 
     anchors.fill: parent
 
+    Row {
+        id: backButtonRow
+        anchors.left: parent.left
+        anchors.leftMargin: _horizontalMargin
+        anchors.top: parent.top
+        anchors.topMargin: _verticalMargin
+        spacing: _spacing
+        visible: typeof mainWindow !== "undefined"
+
+        QGCLabel {
+            text: "<"
+            font.pixelSize: ScreenTools.defaultFontPixelHeight * 1.2
+        }
+
+        QGCLabel {
+            text: qsTr("Back to Fly View")
+            font.pixelSize: ScreenTools.defaultFontPixelHeight * 1.2
+        }
+    }
+
+    QGCMouseArea {
+        anchors.fill: backButtonRow
+        enabled: backButtonRow.visible
+        onClicked: {
+            if (typeof mainWindow !== "undefined" && mainWindow.allowViewSwitch()) {
+                mainWindow.showFlyView()
+            }
+        }
+    }
+
     QGCLabel {
         id: titleLabel
         text: qsTr("Vehicle Profiles")
         font.pixelSize: ScreenTools.defaultFontPixelHeight * 1.4
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: parent.top
+        anchors.top: backButtonRow.bottom
         anchors.leftMargin: _horizontalMargin
         anchors.rightMargin: _horizontalMargin
-        anchors.topMargin: _verticalMargin
+        anchors.topMargin: _spacing
         wrapMode: Text.WordWrap
     }
 
