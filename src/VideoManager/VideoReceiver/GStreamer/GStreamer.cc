@@ -62,7 +62,7 @@ GST_PLUGIN_STATIC_DECLARE(vulkan);
 GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
-namespace
+namespace GStreamer
 {
 
 void _registerPlugins()
@@ -236,7 +236,7 @@ void _logPlugin(gpointer data, gpointer user_data)
 
     const gchar *name = gst_plugin_get_name(plugin);
     const gchar *version = gst_plugin_get_version(plugin);
-    qCDebug(GStreamerLog) << "name" << name << "- version" << version;
+    qCDebug(GStreamerLog) << "  " << name << "-" << version;
 }
 
 bool _verifyPlugins()
@@ -467,11 +467,6 @@ void _setCodecPriorities(GStreamer::VideoDecoderOptions option)
         break;
     }
 }
-
-} // namespace
-
-namespace GStreamer
-{
 
 bool initialize()
 {
