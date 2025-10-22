@@ -948,6 +948,7 @@ void GstVideoReceiver::_logDecodeBin3SelectedCodec(GstElement *decodeBin3)
         }
         g_value_reset(&value);
     }
+    g_value_unset(&value);
     gst_iterator_free(iter);
 }
 
