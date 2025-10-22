@@ -960,7 +960,7 @@ void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-decoder-pad");
 
     // We should now know what codec decodebin3 selected.
-    _logDecodeBin3SelectedCodec(_decoder);
+    _logDecodebin3SelectedCodec(_decoder);
 
     if (!_addVideoSink(pad)) {
         qCCritical(GstVideoReceiverLog) << "_addVideoSink() failed";
