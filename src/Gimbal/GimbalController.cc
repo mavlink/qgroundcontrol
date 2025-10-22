@@ -388,6 +388,8 @@ void GimbalController::gimbalPitchStart(int direction)
     const float speed = SettingsManager::instance()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
     activeGimbal()->setPitchRate(direction * speed);
 
+    // Cancel any pending stop debounce
+    _stopDebounceTimer.stop();
     sendRate();
 }
 
@@ -400,6 +402,9 @@ void GimbalController::gimbalYawStart(int direction)
 
     const float speed = SettingsManager::instance()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
     activeGimbal()->setYawRate(direction * speed);
+    
+    // Cancel any pending stop debounce
+    _stopDebounceTimer.stop();
     sendRate();
 }
 
@@ -489,6 +494,7 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError)
     }
 
     _rateSenderTimer.stop();
+    _stopDebounceTimer.stop();
     _activeGimbal->setAbsolutePitch(0.0f);
     _activeGimbal->setYawRate(0.0f);
 
@@ -518,6 +524,7 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
     }
 
     _rateSenderTimer.stop();
+    _stopDebounceTimer.stop();
     _activeGimbal->setAbsolutePitch(0.0f);
     _activeGimbal->setYawRate(0.0f);
 
