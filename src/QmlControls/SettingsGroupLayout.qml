@@ -60,7 +60,7 @@ ColumnLayout {
         radius:             ScreenTools.defaultFontPixelHeight / 2
 
         Repeater {
-            model: showDividers ? _contentLayout.visibleChildren.length - 1 : 0
+            model: showDividers ? Math.max(0, _contentLayout.visibleChildren.length - 1) : 0
 
             Rectangle {
                 x:                  showBorder ? _margins : 0
