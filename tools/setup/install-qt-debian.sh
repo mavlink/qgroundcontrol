@@ -9,7 +9,7 @@ QT_TARGET="${QT_TARGET:-desktop}"
 QT_ARCH="${QT_ARCH:-linux_gcc_64}"
 QT_ARCH_DIR="${QT_ARCH_DIR:-gcc_64}"
 QT_ROOT_DIR="${QT_ROOT_DIR:-${QT_PATH}/${QT_VERSION}/${QT_ARCH_DIR}}"
-QT_MODULES="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors}"
+QT_MODULES="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml}"
 
 echo "QT_VERSION $QT_VERSION"
 echo "QT_PATH $QT_PATH"

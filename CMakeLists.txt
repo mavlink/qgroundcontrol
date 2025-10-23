@@ -178,6 +178,7 @@ find_package(Qt6
         TextToSpeech
         Widgets
         Xml
+        StateMachine
     OPTIONAL_COMPONENTS
         Bluetooth
         MultimediaQuickPrivate

@@ -92,6 +92,16 @@ public:
     };
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
 
+    enum ParamSetFailureMode_t {
+        FailParamSetNone,               ///< Normal behavior
+        FailParamSetNoAck,              ///< Do not send PARAM_VALUE ack
+        FailParamSetFirstAttemptNoAck,  ///< Skip ack on first attempt, respond to retry
+    };
+    void setParamSetFailureMode(ParamSetFailureMode_t mode) {
+        _paramSetFailureMode = mode;
+        _paramSetFailureFirstAttemptPending = (mode == FailParamSetFirstAttemptNoAck);
+    }
+
     static MockLink *startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startNoInitialConnectMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -264,6 +274,8 @@ private:
     bool _sendGimbalDeviceAttitudeStatusNow = false;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
+    ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
+    bool _paramSetFailureFirstAttemptPending = false;
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<int, QMap<QString, QVariant>> _mapParamName2Value;

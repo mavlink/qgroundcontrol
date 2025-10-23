@@ -98,6 +98,10 @@ public:
 
     static constexpr int defaultComponentId = -1;
 
+    // These are public for creating unit tests
+    static constexpr int kParamSetRetryCount = 2;                   ///< Number of retries for PARAM_SET
+    static constexpr int kParamSetWaitForParamValueAckMs = 1000;    ///< Time to wait for param value ack after set param
+
 signals:
     void parametersReadyChanged(bool parametersReady);
     void missingParametersChanged(bool missingParameters);
@@ -119,13 +123,14 @@ private:
     /// Translates ParameterManager::defaultComponentId to real component id if needed
     int _actualComponentId(int componentId) const;
     void _readParameterRaw(int componentId, const QString &paramName, int paramIndex) const;
-    void _sendParamSetToVehicle(int componentId, const QString &paramName, FactMetaData::ValueType_t valueType, const QVariant &value) const;
     void _writeLocalParamCache(int vehicleId, int componentId);
     void _tryCacheHashLoad(int vehicleId, int componentId, const QVariant &hashValue);
     void _loadMetaData();
     void _clearMetaData();
     /// Remap a parameter from one firmware version to another
     QString _remapParamNameToVersion(const QString &paramName) const;
+    bool _fillMavlinkParamUnion(FactMetaData::ValueType_t valueType, const QVariant &rawValue, mavlink_param_union_t &paramUnion) const;
+    bool _mavlinkParamUnionToVariant(const mavlink_param_union_t &paramUnion, QVariant &outValue) const;
     /// The offline editing vehicle can have custom loaded params bolted into it.
     void _loadOfflineEditingParams();
     QString _logVehiclePrefix(int componentId) const;
@@ -141,6 +146,9 @@ private:
     /// Parse the binary parameter file and inject the parameters in the qgc fact system.
     /// See: https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Filesystem
     bool _parseParamFile(const QString &filename);
+    void _incrementPendingWriteCount();
+    void _decrementPendingWriteCount();
+    QString _vehicleAndComponentString(int componentId) const;
 
     static QVariant _stringToTypedVariant(const QString &string, FactMetaData::ValueType_t type, bool failOk = false);
 
@@ -153,7 +161,6 @@ private:
     bool _missingParameters = false;            ///< true: parameter missing from initial load
     bool _initialLoadComplete = false;          ///< true: Initial load of all parameters complete, whether successful or not
     bool _waitingForDefaultComponent = false;   ///< true: last chance wait for default component params
-    bool _saveRequired = false;                 ///< true: _saveToEEPROM should be called
     bool _metaDataAddedToFacts = false;         ///< true: FactMetaData has been adde to the default component facts
     bool _logReplay = false;                    ///< true: running with log replay link
 
@@ -171,7 +178,6 @@ private:
 
     bool _readParamIndexProgressActive = false;
     bool _readParamNameProgressActive = false;
-    bool _writeParamProgressActive = false;
 
     static constexpr int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
@@ -185,12 +191,11 @@ private:
     QMap<int, int> _paramCountMap;                              ///< Key: Component id, Value: count of parameters in this component
     QMap<int, QMap<int, int>> _waitingReadParamIndexMap;        ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
     QMap<int, QMap<QString, int>> _waitingReadParamNameMap;     ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
-    QMap<int, QMap<QString, int>> _waitingWriteParamNameMap;    ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
     QMap<int, QList<int>> _failedReadParamIndexMap;             ///< Key: Component id, Value: failed parameter index
 
     int _totalParamCount = 0;                   ///< Number of parameters across all components
-    int _waitingWriteParamBatchCount = 0;       ///< Number of parameters which are batched up waiting on write responses
     int _waitingReadParamNameBatchCount = 0;    ///< Number of parameters which are batched up waiting on read responses
+    int _pendingWritesCount = 0;                ///< Number of parameters with pending writes
 
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
