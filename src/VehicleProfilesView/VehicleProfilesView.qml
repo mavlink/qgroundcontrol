@@ -54,17 +54,39 @@ Item {
         }
     }
 
-    QGCLabel {
-        id: titleLabel
-        text: qsTr("Vehicle Profiles")
-        font.pixelSize: ScreenTools.defaultFontPixelHeight * 1.4
+    RowLayout {
+        id: headerRow
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: backButtonRow.bottom
         anchors.leftMargin: _horizontalMargin
         anchors.rightMargin: _horizontalMargin
         anchors.topMargin: _spacing
-        wrapMode: Text.WordWrap
+        spacing: _spacing
+
+        QGCLabel {
+            id: titleLabel
+            text: qsTr("Vehicle Profiles")
+            font.pixelSize: ScreenTools.defaultFontPixelHeight * 1.4
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+
+        QGCButton {
+            id: addProfileButton
+            text: qsTr("Add Vehicle Profile")
+            visible: typeof mainWindow !== "undefined"
+            onClicked: {
+                if (typeof QGroundControl !== "undefined" && QGroundControl.settingsManager && QGroundControl.settingsManager.vehicleProfilesSettings) {
+                    const newProfile = QGroundControl.settingsManager.vehicleProfilesSettings.append()
+                    if (newProfile) {
+                        const profileIndex = QGroundControl.settingsManager.vehicleProfilesSettings.count
+                        newProfile.vehicleName.value = qsTr("Vehicle %1").arg(profileIndex)
+                        newProfile.mavlinkId.value = profileIndex
+                    }
+                }
+            }
+        }
     }
 
     QGCLabel {
@@ -75,7 +97,7 @@ Item {
         height: visible ? implicitHeight : 0
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: titleLabel.bottom
+        anchors.top: headerRow.bottom
         anchors.leftMargin: _horizontalMargin
         anchors.rightMargin: _horizontalMargin
         anchors.topMargin: _spacing

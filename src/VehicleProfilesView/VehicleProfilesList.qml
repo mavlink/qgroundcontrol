@@ -7,55 +7,62 @@
  *
  ****************************************************************************/
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 
 import QGroundControl
 import QGroundControl.Controls
 
-ListView {
+Flow {
     id: profilesList
 
-    property var profilesArray: QGroundControl.settingsManager.vehicleProfilesSettings
-    readonly property var profilesModel: profilesArray ? profilesArray.groups : null
+    property var _profileSettings: QGroundControl.settingsManager.vehicleProfilesSettings
 
-    model: profilesModel ? profilesModel : 0
+    readonly property int count: _profileSettings.groups.count
+
     clip: true
+    flow: Flow.LeftToRight
     spacing: ScreenTools.defaultFontPixelHeight / 2
-    boundsBehavior: Flickable.StopAtBounds
-    interactive: true
 
-    delegate: Rectangle {
-        width: profilesList.width
-        radius: ScreenTools.defaultFontPixelHeight / 3
-        color: QGroundControl.globalPalette.windowShadeDark
-        border.width: 1
-        border.color: QGroundControl.globalPalette.windowShade
+    Repeater {
+        id: profileRepeater
+        model: _profileSettings.groups
 
-        readonly property real _contentMargin: ScreenTools.defaultFontPixelHeight
-        property var profile: object
+        Rectangle {
+            id: profileItem
 
-        implicitHeight: contentColumn.implicitHeight + (_contentMargin * 2)
-        height: implicitHeight
+            width: profilesList.width
+            radius: ScreenTools.defaultFontPixelHeight / 3
+            color: QGroundControl.globalPalette.windowShadeDark
+            border.width: 1
+            border.color: QGroundControl.globalPalette.windowShade
 
-        Column {
-            id: contentColumn
-            x: _contentMargin
-            y: _contentMargin
-            width: parent.width - (_contentMargin * 2)
-            spacing: ScreenTools.defaultFontPixelHeight / 3
+            readonly property real _contentMargin: ScreenTools.defaultFontPixelHeight
 
-            QGCLabel {
-                text: profile ? profile.vehicleName.valueString : ""
-                font.bold: true
-                elide: Text.ElideRight
-                width: parent.width
-            }
+            implicitHeight: contentColumn.implicitHeight + (_contentMargin * 2)
+            height: implicitHeight
 
-            QGCLabel {
-                text: profile ? qsTr("MAVLink System ID: %1").arg(profile.mavlinkId.valueString) : ""
-                color: QGroundControl.globalPalette.text
-                width: parent.width
-                wrapMode: Text.WordWrap
+            Column {
+                id: contentColumn
+                x: profileItem._contentMargin
+                y: profileItem._contentMargin
+                width: profileItem.width - (profileItem._contentMargin * 2)
+                spacing: ScreenTools.defaultFontPixelHeight / 3
+
+                QGCLabel {
+                    text: object.vehicleName.valueString
+                    font.bold: true
+                    elide: Text.ElideRight
+                    width: parent.width
+                }
+
+                QGCLabel {
+                    text: qsTr("MAVLink System ID: %1").arg(object.mavlinkId.valueString)
+                    color: QGroundControl.globalPalette.text
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                }
             }
         }
     }
