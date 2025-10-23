@@ -17,7 +17,7 @@ $QT_HOST    = $env:QT_HOST         -or 'windows'
 $QT_TARGET  = $env:QT_TARGET       -or 'desktop'
 # Windows arch must be one of: win64_msvc2017_64, win64_msvc2019_64, win64_mingw81, etc. :contentReference[oaicite:0]{index=0}
 $QT_ARCH    = $env:QT_ARCH         -or 'win64_msvc2022_64'
-$QT_MODULES = $env:QT_MODULES      -or 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors'
+$QT_MODULES = $env:QT_MODULES      -or 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml'
 
 Write-Host "Using:"
 Write-Host "  QT_VERSION    = $QT_VERSION"
