@@ -75,6 +75,8 @@ private slots:
 
 private:
     GstElement *_makeSource(const QString &input);
+    GstElement *_makeHttpSource(const QString &url);
+    GstElement *_makeWebSocketSource(const QString &url);
     GstElement *_makeDecoder(GstCaps *caps = nullptr, GstElement *videoSink = nullptr);
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 

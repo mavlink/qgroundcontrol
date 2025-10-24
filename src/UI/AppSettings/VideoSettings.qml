@@ -30,6 +30,8 @@ SettingsPage {
     property bool   _isRTSP:                    _isStreamSource && (_videoSource === _videoSettings.rtspVideoSource)
     property bool   _isTCP:                     _isStreamSource && (_videoSource === _videoSettings.tcpVideoSource)
     property bool   _isMPEGTS:                  _isStreamSource && (_videoSource === _videoSettings.mpegtsVideoSource)
+    property bool   _isHTTP:                    _isStreamSource && (_videoSource === _videoSettings.httpVideoSource)
+    property bool   _isWebSocket:               _isStreamSource && (_videoSource === _videoSettings.websocketVideoSource)
     property bool   _videoAutoStreamConfig:     _videoManager.autoStreamConfigured
     property bool   _videoSourceDisabled:       _videoSource === _videoSettings.disabledVideoSource
     property real   _urlFieldWidth:             ScreenTools.defaultFontPixelWidth * 40
@@ -53,7 +55,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Connection")
-        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPUrl)
+        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP || _requiresUDPUrl || _isHTTP || _isWebSocket)
 
         LabelledFactTextField {
             Layout.fillWidth:           true
@@ -78,12 +80,36 @@ SettingsPage {
             fact:                       _videoSettings.udpUrl
             visible:                    _requiresUDPUrl && _videoSettings.udpUrl.visible
         }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("HTTP URL")
+            fact:                       _videoSettings.httpUrl
+            visible:                    _isHTTP && _videoSettings.httpUrl.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("WebSocket URL")
+            fact:                       _videoSettings.websocketUrl
+            visible:                    _isWebSocket && _videoSettings.websocketUrl.visible
+        }
     }
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Settings")
         visible:            !_videoSourceDisabled
+
+        LabelledFactComboBox {
+            Layout.fillWidth:   true
+            label:              qsTr("Video Display Fit")
+            fact:               _videoSettings.videoFit
+            visible:            !_videoAutoStreamConfig && _isStreamSource && fact.visible
+            indexModel:         false
+        }
 
         LabelledFactTextField {
             Layout.fillWidth:   true
@@ -112,6 +138,104 @@ SettingsPage {
             fact:               _videoSettings.forceVideoDecoder
             visible:            fact.visible
             indexModel:         false
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
+        heading:            qsTr("HTTP Network Optimization")
+        visible:            _isHTTP && _isGST
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Connection Timeout")
+            fact:               _videoSettings.httpTimeout
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Retry Attempts")
+            fact:               _videoSettings.httpRetryAttempts
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Buffer Size")
+            fact:               _videoSettings.httpBufferSize
+            visible:            fact.visible
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("HTTP Keep-Alive")
+            fact:               _videoSettings.httpKeepAlive
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("User Agent")
+            fact:               _videoSettings.httpUserAgent
+            visible:            fact.visible
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
+        heading:            qsTr("WebSocket Advanced Settings")
+        visible:            _isWebSocket && _isGST
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Connection Timeout")
+            fact:               _videoSettings.websocketTimeout
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Reconnect Delay")
+            fact:               _videoSettings.websocketReconnectDelay
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Heartbeat Interval")
+            fact:               _videoSettings.websocketHeartbeat
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Buffer Frames")
+            fact:               _videoSettings.websocketBufferFrames
+            visible:            fact.visible
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Enable Adaptive Quality")
+            fact:               _videoSettings.adaptiveQuality
+            visible:            fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Minimum Quality %")
+            fact:               _videoSettings.minQuality
+            visible:            _videoSettings.adaptiveQuality.rawValue && fact.visible
+            enabled:            _videoSettings.adaptiveQuality.rawValue
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Maximum Quality %")
+            fact:               _videoSettings.maxQuality
+            visible:            _videoSettings.adaptiveQuality.rawValue && fact.visible
+            enabled:            _videoSettings.adaptiveQuality.rawValue
         }
     }
 

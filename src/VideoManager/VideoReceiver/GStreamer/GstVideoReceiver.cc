@@ -20,6 +20,8 @@
 #include "GstVideoReceiver.h"
 #include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QUrl>
@@ -638,6 +640,8 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     const bool isUdp265 = input.contains("udp265://", Qt::CaseInsensitive);
     const bool isUdpMPEGTS = input.contains("mpegts://", Qt::CaseInsensitive);
     const bool isTcpMPEGTS = input.contains("tcp://", Qt::CaseInsensitive);
+    const bool isHttp = sourceUrl.scheme().startsWith("http", Qt::CaseInsensitive);
+    const bool isWebSocket = sourceUrl.scheme().startsWith("ws", Qt::CaseInsensitive);
 
     GstElement *source = nullptr;
     GstElement *buffer = nullptr;
@@ -647,6 +651,16 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     GstElement *srcbin = nullptr;
 
     do {
+        // Handle HTTP MJPEG streams
+        if (isHttp) {
+            return _makeHttpSource(input);
+        }
+
+        // Handle WebSocket streams
+        if (isWebSocket) {
+            return _makeWebSocketSource(input);
+        }
+
         if (isRtsp) {
             if (!GStreamer::is_valid_rtsp_uri(input.toUtf8().constData())) {
                 qCCritical(GstVideoReceiverLog) << "Invalid RTSP URI:" << input;
@@ -796,6 +810,197 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     gst_clear_object(&source);
 
     return srcbin;
+}
+
+GstElement *GstVideoReceiver::_makeHttpSource(const QString &url)
+{
+    qCDebug(GstVideoReceiverLog) << "Creating HTTP MJPEG source for:" << url;
+
+    GstElement *bin = nullptr;
+    GstElement *source = nullptr;
+    GstElement *queue = nullptr;
+    GstElement *multipartdemux = nullptr;
+    GstElement *jpegdec = nullptr;
+    GstPad *srcpad = nullptr;
+    GstPad *ghostpad = nullptr;
+    bool releaseElements = true;
+
+    do {
+        // Create bin to hold HTTP source pipeline
+        bin = gst_bin_new("http_sourcebin");
+        if (!bin) {
+            qCCritical(GstVideoReceiverLog) << "gst_bin_new('http_sourcebin') failed";
+            break;
+        }
+
+        // Create souphttpsrc element for HTTP/HTTPS support
+        source = gst_element_factory_make("souphttpsrc", "http_source");
+        if (!source) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('souphttpsrc') failed - check GStreamer soup plugin installation";
+            break;
+        }
+
+        // Use safe defaults (can't access Settings from worker thread)
+        // These match the defaults from Video.SettingsGroup.json
+        uint32_t timeout = _timeout > 0 ? _timeout : 10;  // 10 seconds default
+        uint32_t retries = 3;  // 3 retry attempts default
+        uint32_t bufferSize = 32768;  // 32KB default
+        bool keepAlive = true;  // Keep-alive enabled by default
+        QString userAgent = QStringLiteral("QGroundControl/4.x");
+
+        // Configure souphttpsrc
+        g_object_set(source,
+                     "location", url.toUtf8().constData(),
+                     "is-live", TRUE,
+                     "timeout", timeout,
+                     "retries", retries,
+                     "blocksize", bufferSize,
+                     "keep-alive", keepAlive ? TRUE : FALSE,
+                     "user-agent", userAgent.toUtf8().constData(),
+                     nullptr);
+
+        qCDebug(GstVideoReceiverLog) << "HTTP source configured - timeout:" << timeout
+                                      << "retries:" << retries << "buffer:" << bufferSize;
+
+        // Create queue for buffering
+        queue = gst_element_factory_make("queue", "http_queue");
+        if (!queue) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+            break;
+        }
+
+        // Configure queue based on low-latency mode
+        if (lowLatency()) {
+            // Low-latency mode: minimal buffering
+            g_object_set(queue,
+                         "max-size-buffers", 2,
+                         "max-size-time", (guint64)100000000,  // 100ms
+                         "leaky", 2,  // downstream leaky
+                         nullptr);
+            qCDebug(GstVideoReceiverLog) << "HTTP queue configured for low-latency mode";
+        } else {
+            // Stable mode: more buffering
+            g_object_set(queue,
+                         "max-size-buffers", 5,
+                         "max-size-time", (guint64)500000000,  // 500ms
+                         "leaky", 2,  // downstream leaky
+                         nullptr);
+            qCDebug(GstVideoReceiverLog) << "HTTP queue configured for stable mode";
+        }
+
+        // Create multipartdemux for MJPEG boundary parsing
+        multipartdemux = gst_element_factory_make("multipartdemux", "multipart_demux");
+        if (!multipartdemux) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('multipartdemux') failed - check GStreamer multipart plugin";
+            break;
+        }
+
+        // Set boundary to match PixEagle/standard MJPEG format
+        g_object_set(multipartdemux,
+                     "boundary", "frame",
+                     nullptr);
+
+        // Create JPEG decoder
+        jpegdec = gst_element_factory_make("jpegdec", "jpeg_decoder");
+        if (!jpegdec) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('jpegdec') failed";
+            break;
+        }
+
+        // Add all elements to bin
+        gst_bin_add_many(GST_BIN(bin), source, queue, multipartdemux, jpegdec, nullptr);
+
+        // Link source → queue → multipartdemux
+        if (!gst_element_link_many(source, queue, multipartdemux, nullptr)) {
+            qCCritical(GstVideoReceiverLog) << "Failed to link HTTP source pipeline elements";
+            break;
+        }
+
+        // multipartdemux has dynamic pads, so we need to connect to pad-added signal
+        // We'll link multipartdemux → jpegdec when pad becomes available
+        struct PadLinkData {
+            GstElement *jpegdec;
+            GstElement *bin;
+        };
+
+        PadLinkData *linkData = new PadLinkData{jpegdec, bin};
+
+        g_signal_connect_data(multipartdemux, "pad-added",
+            G_CALLBACK(+[](GstElement *element, GstPad *pad, gpointer user_data) {
+                PadLinkData *data = static_cast<PadLinkData*>(user_data);
+                GstPad *sinkpad = gst_element_get_static_pad(data->jpegdec, "sink");
+
+                if (sinkpad && !gst_pad_is_linked(sinkpad)) {
+                    GstPadLinkReturn ret = gst_pad_link(pad, sinkpad);
+                    if (ret != GST_PAD_LINK_OK) {
+                        qCCritical(GstVideoReceiverLog) << "Failed to link multipartdemux to jpegdec:" << ret;
+                    } else {
+                        qCDebug(GstVideoReceiverLog) << "Successfully linked multipartdemux → jpegdec";
+                    }
+                }
+
+                if (sinkpad) {
+                    gst_object_unref(sinkpad);
+                }
+            }),
+            linkData,
+            +[](gpointer data, GClosure *) {
+                delete static_cast<PadLinkData*>(data);
+            },
+            static_cast<GConnectFlags>(0));
+
+        // Create ghost pad from jpegdec's src pad
+        srcpad = gst_element_get_static_pad(jpegdec, "src");
+        if (!srcpad) {
+            qCCritical(GstVideoReceiverLog) << "Failed to get jpegdec src pad";
+            break;
+        }
+
+        ghostpad = gst_ghost_pad_new("src", srcpad);
+        if (!ghostpad) {
+            qCCritical(GstVideoReceiverLog) << "gst_ghost_pad_new() failed";
+            break;
+        }
+
+        if (!gst_element_add_pad(bin, ghostpad)) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_add_pad() failed";
+            gst_clear_object(&ghostpad);
+            break;
+        }
+
+        qCDebug(GstVideoReceiverLog) << "HTTP MJPEG source pipeline created successfully";
+
+        releaseElements = false;
+        ghostpad = nullptr;  // Bin owns it now
+
+    } while(0);
+
+    // Cleanup on failure
+    if (releaseElements) {
+        gst_clear_object(&bin);
+        gst_clear_object(&jpegdec);
+        gst_clear_object(&multipartdemux);
+        gst_clear_object(&queue);
+        gst_clear_object(&source);
+    }
+
+    if (srcpad) {
+        gst_object_unref(srcpad);
+    }
+    if (ghostpad) {
+        gst_object_unref(ghostpad);
+    }
+
+    return bin;
+}
+
+GstElement *GstVideoReceiver::_makeWebSocketSource(const QString &url)
+{
+    // WebSocket implementation - Phase 2
+    // For now, return nullptr and log warning
+    qCWarning(GstVideoReceiverLog) << "WebSocket video source is not yet implemented. URL:" << url;
+    qCWarning(GstVideoReceiverLog) << "WebSocket support will be added in Phase 2 of the implementation";
+    return nullptr;
 }
 
 GstElement *GstVideoReceiver::_makeDecoder(GstCaps *caps, GstElement *videoSink)
