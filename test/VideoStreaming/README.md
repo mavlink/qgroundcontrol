@@ -224,12 +224,40 @@ Content-Type: image/jpeg
 ...
 ```
 
-### WebSocket Frame Format
+### WebSocket Protocol (QGC/PixEagle Format)
 
-The WebSocket server sends raw JPEG binary data per frame:
-- Each WebSocket message contains one complete JPEG image
-- Binary WebSocket messages (not text)
-- No additional framing protocol (raw JPEG bytes)
+The WebSocket server implements the QGC/PixEagle protocol with a two-message sequence per frame:
+
+**1. Frame Metadata (Text JSON message):**
+```json
+{
+  "type": "frame",
+  "size": 12345,
+  "quality": 85
+}
+```
+
+**2. Frame Data (Binary message):**
+- Raw JPEG image bytes
+
+**Additional Protocol Messages:**
+
+**Heartbeat (QGC → Server):**
+```json
+{"type": "ping"}
+```
+
+**Heartbeat Response (Server → QGC):**
+```json
+{"type": "pong"}
+```
+
+**Quality Change Request (QGC → Server):**
+```json
+{"type": "setQuality", "quality": 60}
+```
+
+This protocol ensures proper frame synchronization and allows QGC to adapt video quality dynamically.
 
 ### GStreamer Pipeline (QGC Side)
 

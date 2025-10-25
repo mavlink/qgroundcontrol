@@ -17,6 +17,7 @@ Default URL: ws://127.0.0.1:5077/ws/video_feed
 
 import argparse
 import asyncio
+import json
 import time
 from datetime import datetime
 
@@ -102,12 +103,42 @@ class WebSocketStreamer:
         self.quality = quality
         self.clients = 0
 
-    async def stream_to_client(self, websocket: WebSocket):
-        """Stream video frames to a WebSocket client."""
-        self.clients += 1
-        client_id = self.clients
-        print(f"[Client {client_id}] Connected to WebSocket stream")
+    async def handle_client_messages(self, websocket: WebSocket, client_id: int):
+        """Handle incoming messages from QGC client."""
+        try:
+            while True:
+                message = await websocket.receive_text()
+                try:
+                    data = json.loads(message)
+                    msg_type = data.get("type")
 
+                    if msg_type == "ping":
+                        # Respond to heartbeat
+                        await websocket.send_text(json.dumps({"type": "pong"}))
+                        print(f"[Client {client_id}] Heartbeat")
+
+                    elif msg_type == "setQuality":
+                        # Handle quality change request
+                        new_quality = data.get("quality", self.quality)
+                        if 1 <= new_quality <= 100:
+                            self.quality = new_quality
+                            print(f"[Client {client_id}] Quality changed to {new_quality}")
+                        else:
+                            print(f"[Client {client_id}] Invalid quality: {new_quality}")
+
+                    else:
+                        print(f"[Client {client_id}] Unknown message type: {msg_type}")
+
+                except json.JSONDecodeError:
+                    print(f"[Client {client_id}] Invalid JSON: {message}")
+
+        except WebSocketDisconnect:
+            pass
+        except Exception as e:
+            print(f"[Client {client_id}] Message handler error: {e}")
+
+    async def stream_frames(self, websocket: WebSocket, client_id: int):
+        """Stream video frames to client."""
         try:
             frame_duration = 1.0 / self.pattern.fps
 
@@ -124,13 +155,41 @@ class WebSocketStreamer:
                     [cv2.IMWRITE_JPEG_QUALITY, self.quality]
                 )
 
-                # Send JPEG frame as binary data
-                await websocket.send_bytes(buffer.tobytes())
+                frame_bytes = buffer.tobytes()
+
+                # Send frame metadata first (QGC/PixEagle protocol)
+                metadata = {
+                    "type": "frame",
+                    "size": len(frame_bytes),
+                    "quality": self.quality
+                }
+                await websocket.send_text(json.dumps(metadata))
+
+                # Then send the actual JPEG frame as binary data
+                await websocket.send_bytes(frame_bytes)
 
                 # Maintain frame rate
                 elapsed = time.time() - start_time
                 sleep_time = max(0, frame_duration - elapsed)
                 await asyncio.sleep(sleep_time)
+
+        except WebSocketDisconnect:
+            pass
+        except Exception as e:
+            print(f"[Client {client_id}] Frame sender error: {e}")
+
+    async def stream_to_client(self, websocket: WebSocket):
+        """Stream video frames to a WebSocket client with bidirectional communication."""
+        self.clients += 1
+        client_id = self.clients
+        print(f"[Client {client_id}] Connected to WebSocket stream")
+
+        try:
+            # Run frame streaming and message handling concurrently
+            await asyncio.gather(
+                self.stream_frames(websocket, client_id),
+                self.handle_client_messages(websocket, client_id)
+            )
 
         except WebSocketDisconnect:
             print(f"[Client {client_id}] Disconnected normally")
