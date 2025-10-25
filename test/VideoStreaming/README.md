@@ -29,7 +29,7 @@ python http_mjpeg_server.py
 **WebSocket Server:**
 ```bash
 python websocket_video_server.py
-# Default: ws://127.0.0.1:5078/video
+# Default: ws://127.0.0.1:5077/ws/video_feed
 ```
 
 ### 3. Configure QGroundControl
@@ -44,7 +44,7 @@ python websocket_video_server.py
 **For WebSocket:**
 1. Open QGroundControl Settings → Video
 2. Set **Video Source** to `WebSocket Video Stream`
-3. Set **URL** to `ws://127.0.0.1:5078/video`
+3. Set **URL** to `ws://127.0.0.1:5077/ws/video_feed`
 4. Click **Apply**
 5. View video in the main display
 
@@ -59,7 +59,7 @@ python websocket_video_server.py --help
 
 Common options:
 - `--host HOST` - Bind address (default: 127.0.0.1)
-- `--port PORT` - Server port (default: 5077 for HTTP, 5078 for WebSocket)
+- `--port PORT` - Server port (default: 5077 for both servers)
 - `--width WIDTH` - Video width in pixels (default: 640)
 - `--height HEIGHT` - Video height in pixels (default: 480)
 - `--fps FPS` - Frames per second (default: 30)
@@ -88,7 +88,7 @@ python websocket_video_server.py --quality 50 --fps 15
 The WebSocket server includes a built-in test page:
 
 1. Start the WebSocket server
-2. Open in browser: http://127.0.0.1:5078/test
+2. Open in browser: http://127.0.0.1:5077/test
 3. You should see the live video stream
 
 This helps verify the server is working before testing in QGC.
@@ -202,7 +202,7 @@ Another service is using the port. Either:
 ### WebSocket disconnects immediately
 - Check QGC logs for errors
 - Verify WebSocket URL starts with `ws://` not `http://`
-- Test with the browser test page first: http://127.0.0.1:5078/test
+- Test with the browser test page first: http://127.0.0.1:5077/test
 
 ## Technical Details
 

@@ -10,9 +10,9 @@ Usage:
     python websocket_video_server.py [--host HOST] [--port PORT] [--fps FPS]
 
 Example:
-    python websocket_video_server.py --host 127.0.0.1 --port 5078 --fps 30
+    python websocket_video_server.py --host 127.0.0.1 --port 5077 --fps 30
 
-Default URL: ws://127.0.0.1:5078/video
+Default URL: ws://127.0.0.1:5077/ws/video_feed
 """
 
 import argparse
@@ -154,11 +154,11 @@ def create_app(pattern: VideoTestPattern, quality: int = 85) -> FastAPI:
         """Information endpoint."""
         return {
             "service": "QGroundControl WebSocket Video Test Server",
-            "websocket_endpoint": "/video",
+            "websocket_endpoint": "/ws/video_feed",
             "resolution": f"{pattern.width}x{pattern.height}",
             "fps": pattern.fps,
             "quality": quality,
-            "usage": f"ws://{app.state.host}:{app.state.port}/video"
+            "usage": f"ws://{app.state.host}:{app.state.port}/ws/video_feed"
         }
 
     @app.get("/test", response_class=HTMLResponse)
@@ -201,7 +201,7 @@ def create_app(pattern: VideoTestPattern, quality: int = 85) -> FastAPI:
                 const ctx = canvas.getContext('2d');
                 const status = document.getElementById('status');
 
-                const ws = new WebSocket('ws://{app.state.host}:{app.state.port}/video');
+                const ws = new WebSocket('ws://{app.state.host}:{app.state.port}/ws/video_feed');
                 ws.binaryType = 'arraybuffer';
 
                 ws.onopen = () => {{
@@ -236,7 +236,7 @@ def create_app(pattern: VideoTestPattern, quality: int = 85) -> FastAPI:
         </html>
         """
 
-    @app.websocket("/video")
+    @app.websocket("/ws/video_feed")
     async def websocket_endpoint(websocket: WebSocket):
         """WebSocket video stream endpoint."""
         await websocket.accept()
@@ -257,8 +257,8 @@ def main():
     parser.add_argument(
         "--port",
         type=int,
-        default=5078,
-        help="Port to bind to (default: 5078)"
+        default=5077,
+        help="Port to bind to (default: 5077)"
     )
     parser.add_argument(
         "--width",
@@ -298,7 +298,7 @@ def main():
     print("=" * 70)
     print("QGroundControl WebSocket Video Test Server")
     print("=" * 70)
-    print(f"WebSocket URL: ws://{args.host}:{args.port}/video")
+    print(f"WebSocket URL: ws://{args.host}:{args.port}/ws/video_feed")
     print(f"Info URL:      http://{args.host}:{args.port}/")
     print(f"Test Page:     http://{args.host}:{args.port}/test")
     print(f"Resolution:    {args.width}x{args.height}")
@@ -308,7 +308,7 @@ def main():
     print("\nConfiguring QGroundControl:")
     print("  1. Open Settings → Video")
     print("  2. Set 'Video Source' to 'WebSocket Video Stream'")
-    print(f"  3. Set 'URL' to: ws://{args.host}:{args.port}/video")
+    print(f"  3. Set 'URL' to: ws://{args.host}:{args.port}/ws/video_feed")
     print("  4. Click 'Apply' and view video in the main display")
     print("\nYou can also test in browser:")
     print(f"  Open: http://{args.host}:{args.port}/test")
