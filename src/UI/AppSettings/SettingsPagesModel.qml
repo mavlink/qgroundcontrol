@@ -95,12 +95,12 @@ ListModel {
         pageVisible: function() { return true }
     }
 
-    ListElement {
-        name: qsTr("Help")
-        url: "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/question.svg"
-        pageVisible: function() { return true }
-    }
+    // ListElement {
+    //     name: qsTr("Help")
+    //     url: "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml"
+    //     iconUrl: "qrc:/InstrumentValueIcons/question.svg"
+    //     pageVisible: function() { return true }
+    // }
 
     ListElement {
         name: qsTr("Mock Link")
