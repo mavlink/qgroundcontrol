@@ -179,6 +179,7 @@ find_package(Qt6
         WebSockets
         Widgets
         Xml
+        StateMachine
     OPTIONAL_COMPONENTS
         Bluetooth
         MultimediaQuickPrivate

@@ -13,9 +13,14 @@
 #include "Vehicle.h"
 #include "ParameterManager.h"
 #include "MockLinkFTP.h"
+#include "QGC.h"
 
+#include <QtCore/QElapsedTimer>
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
+
+#include <cmath>
+#include <limits>
 
 /// Test failure modes which should still lead to param load success
 void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
@@ -129,6 +134,132 @@ void ParameterManagerTest::_requestListMissingParamFail(void)
     // We should get a parameters ready signal, but Vehicle should indicate missing params
     QCOMPARE(spyParamsReady.wait(40000), true);
     QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
+}
+
+void ParameterManagerTest::_paramWriteNoAckRetry(void)
+{
+    _setParamWithFailureMode(MockLink::FailParamSetFirstAttemptNoAck, true /* expectSuccess */);
+}
+
+void ParameterManagerTest::_paramWriteNoAckPermanent(void)
+{
+    _setParamWithFailureMode(MockLink::FailParamSetNoAck, false /* expectSuccess */);
+}
+
+void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess)
+{
+    Q_ASSERT(!_mockLink);
+
+    // Bring up a clean mock vehicle for each run
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+
+    _mockLink->setParamSetFailureMode(failureMode);
+
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QVERIFY(vehicleMgr);
+    ParameterManager *const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+    QVERIFY(!_vehicle->parameterManager()->pendingWrites());
+
+    // Use a parameter that exists in the mock PX4 set and has floating point range
+    Fact *const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
+    QVERIFY(fact);
+    QSignalSpy rawValueChangedSpy(fact, &Fact::rawValueChanged);
+
+    const QVariant originalValue = fact->rawValue();
+    const double originalDouble = originalValue.toDouble();
+
+    const FactMetaData *const metaData = fact->metaData();
+    const double minValue = (metaData && metaData->rawMin().isValid()) ? metaData->rawMin().toDouble() : -std::numeric_limits<double>::infinity();
+    const double maxValue = (metaData && metaData->rawMax().isValid()) ? metaData->rawMax().toDouble() : std::numeric_limits<double>::infinity();
+    const double step = 0.1;
+
+    auto adjustedValue = [&](double candidate) -> double {
+        if (candidate > maxValue) {
+            candidate = originalDouble - step;
+        }
+        if (candidate < minValue) {
+            candidate = originalDouble + step;
+        }
+        if (qFuzzyCompare(candidate + 1.0, originalDouble + 1.0)) {
+            candidate = originalDouble + (step * 2.0);
+        }
+        if (candidate > maxValue) {
+            candidate = originalDouble - (step * 2.0);
+        }
+        if (candidate < minValue) {
+            candidate = originalDouble;
+        }
+        return candidate;
+    };
+
+    const double newValueDouble = adjustedValue(originalDouble + step);
+    QVERIFY(!qFuzzyCompare(newValueDouble + 1.0, originalDouble + 1.0));
+    const QVariant newValue(newValueDouble);
+
+    QSignalSpy pendingSpy(paramManager, &ParameterManager::pendingWritesChanged);
+    QVERIFY(pendingSpy.isValid());
+
+    fact->setRawValue(newValue);
+
+    // We should see pendingWrites go to true and then back to false
+
+    bool sawPendingTrue = false;
+    bool sawPendingFalse = false;
+    int processedCount = 0;
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    while ((!sawPendingTrue || !sawPendingFalse) && waitTimer.elapsed() < 20000) {
+        (void) pendingSpy.wait(500);
+        while (processedCount < pendingSpy.count()) {
+            const QList<QVariant> arguments = pendingSpy.at(processedCount++);
+            QCOMPARE(arguments.count(), 1);
+            const bool isPending = arguments.at(0).toBool();
+            if (isPending) {
+                sawPendingTrue = true;
+            } else {
+                sawPendingFalse = true;
+            }
+        }
+    }
+
+    QVERIFY2(sawPendingTrue, "Expected pendingWritesChanged(true) signal");
+    QVERIFY2(sawPendingFalse, "Expected pendingWritesChanged(false) signal");
+
+    // We should get two rawValueChanged signals if unsuccessful (one for the set, one for the refresh)
+    // We should get one rawValueChanged signal if successful (just the set)
+
+    bool rawValueChangedCountMatches = false;
+    rawValueChangedSpy.wait(ParameterManager::kParamSetWaitForParamValueAckMs * ParameterManager::kParamSetRetryCount + 500);
+    if (expectSuccess) {
+        QCOMPARE(rawValueChangedSpy.count(), 1);
+    } else {
+        QVERIFY(rawValueChangedSpy.count() == 1 || rawValueChangedSpy.count() == 2);
+    }
+
+    // The first signal is the change we made, so we start checking from there
+    QVERIFY(QGC::fuzzyCompare(rawValueChangedSpy[0][0].toDouble(), newValueDouble, 0.00001));
+
+    if (!expectSuccess) {
+        // If the write failed the second signal should be the value reverting to original
+        if (rawValueChangedSpy.count() == 1) {
+            // Wait a bit longer for the refresh to come in
+            rawValueChangedSpy.wait(1000);
+        }
+        QCOMPARE(rawValueChangedSpy.count(), 2);
+        QVERIFY(QGC::fuzzyCompare(rawValueChangedSpy[1][0].toDouble(), originalDouble, 0.00001));
+
+        // We should have also alerted the user of the failure
+        // Note that we can't easily check for the ShowAppMessageState usage here due to the
+        // complexity of the state machine and timing of the signals.
+    }
+
+    _mockLink->setParamSetFailureMode(MockLink::FailParamSetNone);
+
+    _disconnectMockLink();
 }
 
 #if 0
