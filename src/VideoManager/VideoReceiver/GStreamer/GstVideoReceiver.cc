@@ -22,7 +22,10 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
+
+#ifdef QGC_GST_APP_AVAILABLE
 #include "QGCWebSocketVideoSource.h"
+#endif
 
 #include <QtCore/QDateTime>
 #include <QtCore/QUrl>
@@ -644,7 +647,9 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     const bool isUdpMPEGTS = input.contains("mpegts://", Qt::CaseInsensitive);
     const bool isTcpMPEGTS = input.contains("tcp://", Qt::CaseInsensitive);
     const bool isHttp = sourceUrl.scheme().startsWith("http", Qt::CaseInsensitive);
+#ifdef QGC_GST_APP_AVAILABLE
     const bool isWebSocket = sourceUrl.scheme().startsWith("ws", Qt::CaseInsensitive);
+#endif
 
     GstElement *source = nullptr;
     GstElement *buffer = nullptr;
@@ -659,10 +664,12 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
             return _makeHttpSource(input);
         }
 
+#ifdef QGC_GST_APP_AVAILABLE
         // Handle WebSocket streams
         if (isWebSocket) {
             return _makeWebSocketSource(input);
         }
+#endif
 
         if (isRtsp) {
             if (!GStreamer::is_valid_rtsp_uri(input.toUtf8().constData())) {
@@ -997,6 +1004,7 @@ GstElement *GstVideoReceiver::_makeHttpSource(const QString &url)
     return bin;
 }
 
+#ifdef QGC_GST_APP_AVAILABLE
 GstElement *GstVideoReceiver::_makeWebSocketSource(const QString &url)
 {
     qCDebug(GstVideoReceiverLog) << "Creating WebSocket video source for:" << url;
@@ -1104,6 +1112,7 @@ GstElement *GstVideoReceiver::_makeWebSocketSource(const QString &url)
     qCDebug(GstVideoReceiverLog) << "WebSocket source pipeline created successfully";
     return bin;
 }
+#endif // QGC_GST_APP_AVAILABLE
 
 GstElement *GstVideoReceiver::_makeDecoder(GstCaps *caps, GstElement *videoSink)
 {
