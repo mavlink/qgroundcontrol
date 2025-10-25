@@ -31,11 +31,14 @@ Item {
         contentWidth:   mainLayout.width
         contentHeight:  mainLayout.height
 
-        ColumnLayout {
+        GridLayout {
             id:         mainLayout
-            x:          Math.max(0, root.width / 2 - width / 2)
-            width:      Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 50)
-            spacing:    ScreenTools.defaultFontPixelHeight
+            columns:    2
+            x:          Math.max(0, root.width / 2 - width / 2)                             // left aligned
+            // Ensure enough width for two panels — adjust multiplier as needed
+            width:      Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 100)
+            rowSpacing: ScreenTools.defaultFontPixelHeight
+            columnSpacing: ScreenTools.defaultFontPixelWidth * 6
         }
     }
 }
