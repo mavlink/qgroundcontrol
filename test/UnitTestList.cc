@@ -73,6 +73,9 @@
 // qgcunittest
 #include "ComponentInformationCacheTest.h"
 #include "ComponentInformationTranslationTest.h"
+// #include "FileDialogTest.h"
+// #include "MainWindowTest.h"
+// #include "MessageBoxTest.h"
 
 // QmlControls
 
@@ -174,6 +177,9 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     // UT_REGISTER_TEST(VisualMissionItemTest)
 
     // qgcunittest
+    // UT_REGISTER_TEST(FileDialogTest)
+    // UT_REGISTER_TEST(MainWindowTest)
+    // UT_REGISTER_TEST(MessageBoxTest)
 
     // QmlControls
 

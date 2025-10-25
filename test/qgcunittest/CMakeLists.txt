@@ -5,6 +5,12 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        FileDialogTest.cc
+        FileDialogTest.h
+        MainWindowTest.cc
+        MainWindowTest.h
+        MessageBoxTest.cc
+        MessageBoxTest.h
         MultiSignalSpy.cc
         MultiSignalSpy.h
         MultiSignalSpyV2.cc
