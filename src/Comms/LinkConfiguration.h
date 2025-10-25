@@ -9,11 +9,14 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QSettings>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class LinkInterface;
+
+Q_DECLARE_LOGGING_CATEGORY(LinkConfigurationLog)
 
 /// Interface holding link specific settings.
 class LinkConfiguration : public QObject
