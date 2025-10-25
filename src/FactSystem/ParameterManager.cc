@@ -286,26 +286,26 @@ QString ParameterManager::_vehicleAndComponentString(int componentId) const
 void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramName, FactMetaData::ValueType_t valueType, const QVariant &rawValue)
 {
     auto paramSetEncoder = [this, componentId, paramName, valueType, rawValue](uint8_t systemId, uint8_t channel, mavlink_message_t *message) -> void {
-        mavlink_param_set_t param_set{};
-        param_set.param_type = factTypeToMavType(valueType);
+        const MAV_PARAM_TYPE paramType = factTypeToMavType(valueType);
 
         mavlink_param_union_t union_value{};
         if (!_fillMavlinkParamUnion(valueType, rawValue, union_value)) {
             return;
         }
 
-        param_set.param_value = union_value.param_float;
-        param_set.target_system = static_cast<uint8_t>(_vehicle->id());
-        param_set.target_component = static_cast<uint8_t>(componentId);
+        char paramId[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN);
 
-        (void) strncpy(param_set.param_id, paramName.toStdString().c_str(), sizeof(param_set.param_id));
-
-        (void) mavlink_msg_param_set_encode_chan(
+        (void) mavlink_msg_param_set_pack_chan(
                     MAVLinkProtocol::instance()->getSystemId(),
                     MAVLinkProtocol::getComponentId(),
                     channel,
                     message,
-                    &param_set);
+                    static_cast<uint8_t>(_vehicle->id()),
+                    static_cast<uint8_t>(componentId),
+                    paramId,
+                    union_value.param_float,
+                    static_cast<uint8_t>(paramType));
     };
 
     auto checkForCorrectParamValue = [this, componentId, paramName, rawValue](const mavlink_message_t &message) -> bool {
@@ -766,19 +766,17 @@ Out:
 void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &paramName, int paramIndex, bool notifyFailure)
 {
     auto paramRequestReadEncoder = [this, componentId, paramName, paramIndex](uint8_t systemId, uint8_t channel, mavlink_message_t *message) -> void {
-        mavlink_param_request_read_t param_request_read{};
+        char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN);
 
-        param_request_read.target_system = static_cast<uint8_t>(_vehicle->id());
-        param_request_read.target_component = static_cast<uint8_t>(componentId);
-        param_request_read.param_index = paramIndex;
-
-        (void) strncpy(param_request_read.param_id, paramName.toStdString().c_str(), sizeof(param_request_read.param_id));
-
-        (void) mavlink_msg_param_request_read_encode_chan(MAVLinkProtocol::instance()->getSystemId(),   // QGC system id
-                                                        MAVLinkProtocol::getComponentId(),              // QGC component id
+        (void) mavlink_msg_param_request_read_pack_chan(MAVLinkProtocol::instance()->getSystemId(),   // QGC system id
+                                                        MAVLinkProtocol::getComponentId(),            // QGC component id
                                                         channel,
-                                                        message,                                        // Pack into this mavlink_message_t
-                                                        &param_request_read);
+                                                        message,
+                                                        static_cast<uint8_t>(_vehicle->id()),
+                                                        static_cast<uint8_t>(componentId),
+                                                        paramId,
+                                                        static_cast<int16_t>(paramIndex));
     };
 
     auto checkForCorrectParamValue = [this, componentId, paramName, paramIndex](const mavlink_message_t &message) -> bool {
