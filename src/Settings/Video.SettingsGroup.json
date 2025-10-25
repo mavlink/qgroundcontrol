@@ -34,7 +34,7 @@
 {
     "name":             "httpUrl",
     "shortDesc": "HTTP Video URL",
-    "longDesc":  "HTTP/HTTPS URL for MJPEG video stream. Default is configured for PixEagle drone simulator. For local PixEagle: http://127.0.0.1:5077/video_feed (simulator) or http://127.0.0.1:8000/video_feed (hardware). For remote drones: http://[drone-ip]:8000/video_feed.",
+    "longDesc":  "HTTP/HTTPS URL for MJPEG video stream. Supports any HTTP MJPEG source (e.g., PixEagle drone, IP cameras, test servers). Format: http://[host]:[port]/[path]. Example: http://127.0.0.1:5077/video_feed for local testing, or http://[camera-ip]/video_feed for network cameras. See test/VideoStreaming/ for test servers.",
     "type":             "string",
     "default":     "http://127.0.0.1:5077/video_feed"
 },
@@ -84,7 +84,7 @@
 {
     "name":             "websocketUrl",
     "shortDesc": "WebSocket Video URL",
-    "longDesc":  "WebSocket URL for video stream. Default is configured for PixEagle drone. For local PixEagle: ws://127.0.0.1:5077/ws/video_feed (simulator) or ws://127.0.0.1:8000/ws/video_feed (hardware). For remote drones: ws://[drone-ip]:8000/ws/video_feed. Note: WebSocket support is currently under development.",
+    "longDesc":  "WebSocket URL for video stream. Supports any WebSocket video source that sends JPEG frames with metadata (e.g., PixEagle drone simulator/hardware, test servers). Format: ws://[host]:[port]/[path]. Example: ws://127.0.0.1:5077/ws/video_feed for local testing, or ws://[drone-ip]:8000/ws/video_feed for remote drones. See test/VideoStreaming/ for test servers.",
     "type":             "string",
     "default":     "ws://127.0.0.1:5077/ws/video_feed"
 },
