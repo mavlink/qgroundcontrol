@@ -176,6 +176,7 @@ find_package(Qt6
         Sql
         Svg
         TextToSpeech
+        WebSockets
         Widgets
         Xml
     OPTIONAL_COMPONENTS

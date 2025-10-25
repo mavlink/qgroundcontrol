@@ -22,9 +22,12 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
+#include "QGCWebSocketVideoSource.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QUrl>
+#include <QtCore/QThread>
+#include <QtCore/QCoreApplication>
 #include <QtQuick/QQuickItem>
 
 #include <gst/gst.h>
@@ -996,11 +999,110 @@ GstElement *GstVideoReceiver::_makeHttpSource(const QString &url)
 
 GstElement *GstVideoReceiver::_makeWebSocketSource(const QString &url)
 {
-    // WebSocket implementation - Phase 2
-    // For now, return nullptr and log warning
-    qCWarning(GstVideoReceiverLog) << "WebSocket video source is not yet implemented. URL:" << url;
-    qCWarning(GstVideoReceiverLog) << "WebSocket support will be added in Phase 2 of the implementation";
-    return nullptr;
+    qCDebug(GstVideoReceiverLog) << "Creating WebSocket video source for:" << url;
+
+    // Use safe defaults (can't access Settings from worker thread)
+    // These match the defaults from Video.SettingsGroup.json
+    uint32_t timeout = _timeout > 0 ? _timeout : 10;  // 10 seconds default
+    uint32_t reconnectDelay = 2000;   // 2000ms default
+    uint32_t heartbeatInterval = 5000;  // 5000ms default
+    uint32_t minQuality = 60;  // 60% default
+    uint32_t maxQuality = 95;  // 95% default
+    bool adaptiveQuality = true;  // Enabled by default
+
+    // Create WebSocket video source
+    // NOTE: Parent is nullptr because this runs in GstVideoWorker thread,
+    // but QGCWebSocketVideoSource needs to live on main Qt thread for WebSocket event loop
+    QGCWebSocketVideoSource *wsSource = new QGCWebSocketVideoSource(
+        url,
+        timeout,
+        reconnectDelay,
+        heartbeatInterval,
+        minQuality,
+        maxQuality,
+        adaptiveQuality,
+        nullptr  // No parent - cleaned up via g_object_set_data_full
+    );
+
+    // CRITICAL: Move to main thread so Qt event loop can process WebSocket network events
+    wsSource->moveToThread(QCoreApplication::instance()->thread());
+
+    // Get the appsrc element from WebSocket source
+    GstElement *appsrc = wsSource->appsrcElement();
+    if (!appsrc) {
+        qCCritical(GstVideoReceiverLog) << "Failed to create appsrc from WebSocket source";
+        delete wsSource;
+        return nullptr;
+    }
+
+    // Create JPEG decoder
+    GstElement *jpegdec = gst_element_factory_make("jpegdec", "ws_jpegdec");
+    if (!jpegdec) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('jpegdec') failed";
+        delete wsSource;
+        return nullptr;
+    }
+
+    // Create bin to hold the pipeline
+    GstElement *bin = gst_bin_new("websocket_sourcebin");
+    if (!bin) {
+        qCCritical(GstVideoReceiverLog) << "gst_bin_new('websocket_sourcebin') failed";
+        gst_object_unref(jpegdec);
+        delete wsSource;
+        return nullptr;
+    }
+
+    // Add elements to bin
+    gst_bin_add_many(GST_BIN(bin), appsrc, jpegdec, nullptr);
+
+    // Link appsrc → jpegdec
+    if (!gst_element_link(appsrc, jpegdec)) {
+        qCCritical(GstVideoReceiverLog) << "Failed to link appsrc → jpegdec";
+        gst_object_unref(bin);
+        delete wsSource;
+        return nullptr;
+    }
+
+    // Create ghost pad from jpegdec's src pad
+    GstPad *srcpad = gst_element_get_static_pad(jpegdec, "src");
+    if (!srcpad) {
+        qCCritical(GstVideoReceiverLog) << "Failed to get jpegdec src pad";
+        gst_object_unref(bin);
+        delete wsSource;
+        return nullptr;
+    }
+
+    GstPad *ghostpad = gst_ghost_pad_new("src", srcpad);
+    gst_object_unref(srcpad);
+
+    if (!ghostpad) {
+        qCCritical(GstVideoReceiverLog) << "gst_ghost_pad_new() failed";
+        gst_object_unref(bin);
+        delete wsSource;
+        return nullptr;
+    }
+
+    if (!gst_element_add_pad(bin, ghostpad)) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_add_pad() failed";
+        gst_object_unref(ghostpad);
+        gst_object_unref(bin);
+        delete wsSource;
+        return nullptr;
+    }
+
+    // Store wsSource in bin for cleanup
+    // IMPORTANT: Use deleteLater() instead of delete because the object lives on main thread
+    g_object_set_data_full(G_OBJECT(bin), "websocket-source",
+                          wsSource, +[](gpointer data) {
+                              QGCWebSocketVideoSource* ws = static_cast<QGCWebSocketVideoSource*>(data);
+                              ws->deleteLater();  // Schedule deletion on correct thread
+                          });
+
+    // Start WebSocket connection on main thread (where event loop exists)
+    QMetaObject::invokeMethod(wsSource, "start", Qt::QueuedConnection);
+
+    qCDebug(GstVideoReceiverLog) << "WebSocket source pipeline created successfully";
+    return bin;
 }
 
 GstElement *GstVideoReceiver::_makeDecoder(GstCaps *caps, GstElement *videoSink)

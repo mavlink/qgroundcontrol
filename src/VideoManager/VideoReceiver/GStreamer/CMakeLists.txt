@@ -16,7 +16,7 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         # Using hardwired framework path as a workaround until FindGStreamer works on macOS
         find_package(GStreamer
             REQUIRED
-            COMPONENTS Core Base Video Gl GlPrototypes Rtsp
+            COMPONENTS Core Base Video Gl GlPrototypes Rtsp App
             OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
         )
     endif()
@@ -33,7 +33,14 @@ endif()
 # ============================================================================
 
 if(TARGET gstqml6gl)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl Qt6::WebSockets)
+
+    # Link GStreamer App library for WebSocket video source (appsrc support)
+    if(WIN32)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${GSTREAMER_LIB_PATH}/gstapp-1.0.lib")
+    else()
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstapp-1.0)
+    endif()
 
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -43,6 +50,8 @@ if(TARGET gstqml6gl)
             GStreamerHelpers.h
             GstVideoReceiver.cc
             GstVideoReceiver.h
+            QGCWebSocketVideoSource.cc
+            QGCWebSocketVideoSource.h
     )
 
     # Build custom GStreamer QGC plugin
