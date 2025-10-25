@@ -30,9 +30,9 @@ public:
     template <typename PointerToMemberFunction> QSignalTransition *addThisTransition(PointerToMemberFunction signal, QAbstractState *target)
         { return QState::addTransition(this, signal, target); };
 
-    QGCStateMachine* machine();
+    QGCStateMachine* machine() const;
     Vehicle *vehicle();
-    QString stateName() const { return objectName(); }
+    QString stateName() const;
 
 signals:
     void advance();     ///< Signal to indicate state is complete and machine should advance to next state

@@ -24,6 +24,8 @@ private slots:
     void _requestListMissingParamFail(void);
     void _paramWriteNoAckRetry(void);
     void _paramWriteNoAckPermanent(void);
+    void _paramReadFirstAttemptNoResponseRetry(void);
+    void _paramReadNoResponse(void);
     // void _FTPnoFailure(void);
     // void _FTPChangeParam(void);
 
