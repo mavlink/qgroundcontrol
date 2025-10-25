@@ -40,11 +40,9 @@ apt-get install -y -qq --no-install-recommends \
     wget \
     zsync
 
-# Upgrade pipx to support multi-package installs (Ubuntu 22.04 ships with 1.0.0)
-python3 -m pip install --upgrade pipx
-
 pipx ensurepath
-pipx install cmake ninja
+pipx install cmake
+pipx install ninja
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
