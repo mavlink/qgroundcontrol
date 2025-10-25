@@ -77,6 +77,12 @@ ui_*
 android/local.properties
 *.class
 
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
 # doxygen
 src/html/
 src/latex/
