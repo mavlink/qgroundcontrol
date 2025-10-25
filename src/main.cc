@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
                                      QCoreApplication::translate("main", "Error"),
                                      QCoreApplication::translate("main", "You are running %1 as root. "
                                                                          "You should not do this since it will cause other issues with %1. "
-                                                                         "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME));
+                                                                         "%1 will now exit.<br/><br/>").arg("BluGC"));
         return -1;
     }
 #endif
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     }
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QStringLiteral(QGC_APP_NAME));
+    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QStringLiteral("BluGC"));
     RunGuard guard(runguardString);
     if (!args.allowMultiple) {
         if (!guard.tryToRun()) {
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
             (void) QMessageBox::critical(nullptr,
                 QCoreApplication::translate("main", "Error"),
                 QCoreApplication::translate("main", "A second instance of %1 is already running. "
-                                                    "Please close the other instance and try again.").arg(QStringLiteral(QGC_APP_NAME)));
+                                                    "Please close the other instance and try again.").arg(QStringLiteral("BluGC")));
             return -1;
         }
     }
