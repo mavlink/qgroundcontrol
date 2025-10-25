@@ -8338,7 +8338,7 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/Vehicle/VehicleSetup/JoystickConfig.qml" line="83"/>
-        <source>Button Assigment</source>
+        <source>Button Assignment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
