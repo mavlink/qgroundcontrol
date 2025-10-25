@@ -14,11 +14,23 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
     if(NOT MACOS)
         # NOTE: Using FindGStreamer.cmake is currently bypassed on macOS
         # Using hardwired framework path as a workaround until FindGStreamer works on macOS
-        find_package(GStreamer
-            REQUIRED
-            COMPONENTS Core Base Video Gl GlPrototypes Rtsp
-            OPTIONAL_COMPONENTS App GlEgl GlWayland GlX11
-        )
+
+        # App component is required for desktop platforms (WebSocket support)
+        # but optional for Android (which doesn't include gstreamer-app-1.0)
+        if(ANDROID)
+            find_package(GStreamer
+                REQUIRED
+                COMPONENTS Core Base Video Gl GlPrototypes Rtsp
+                OPTIONAL_COMPONENTS App GlEgl GlWayland GlX11
+            )
+        else()
+            # Desktop platforms: App is required for WebSocket video streaming
+            find_package(GStreamer
+                REQUIRED
+                COMPONENTS Core Base Video Gl GlPrototypes Rtsp App
+                OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
+            )
+        endif()
     endif()
 
     # Build GStreamer Qt6 QML GL plugin
@@ -46,9 +58,23 @@ if(TARGET gstqml6gl)
     )
 
     # WebSocket video streaming support (requires GStreamer App component)
-    if(GStreamer_App_FOUND)
-        message(STATUS "QGC: GStreamer App component found - enabling WebSocket video streaming")
+    # App is required on desktop platforms, optional on Android
+    if(ANDROID)
+        # Android: Check if App component is available
+        if(GStreamer_App_FOUND)
+            message(STATUS "QGC: GStreamer App component found - enabling WebSocket video streaming on Android")
+            set(QGC_WEBSOCKET_ENABLED TRUE)
+        else()
+            message(STATUS "QGC: GStreamer App component not found - WebSocket video streaming disabled (Android limitation)")
+            set(QGC_WEBSOCKET_ENABLED FALSE)
+        endif()
+    else()
+        # Desktop platforms: App is required, so WebSocket is always enabled
+        message(STATUS "QGC: WebSocket video streaming enabled (desktop platform)")
+        set(QGC_WEBSOCKET_ENABLED TRUE)
+    endif()
 
+    if(QGC_WEBSOCKET_ENABLED)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::WebSockets)
 
         # Link GStreamer App library for WebSocket video source (appsrc support)
@@ -65,8 +91,6 @@ if(TARGET gstqml6gl)
         )
 
         target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_APP_AVAILABLE)
-    else()
-        message(STATUS "QGC: GStreamer App component not found - WebSocket video streaming disabled (Android/limited platforms)")
     endif()
 
     # Build custom GStreamer QGC plugin
