@@ -113,12 +113,13 @@ class WebSocketStreamer:
                     msg_type = data.get("type")
 
                     if msg_type == "ping":
-                        # Respond to heartbeat
+                        # Respond to heartbeat (QGC expects "pong")
                         await websocket.send_text(json.dumps({"type": "pong"}))
-                        print(f"[Client {client_id}] Heartbeat")
+                        timestamp = data.get("timestamp", "")
+                        print(f"[Client {client_id}] Heartbeat (ping timestamp: {timestamp})")
 
-                    elif msg_type == "setQuality":
-                        # Handle quality change request
+                    elif msg_type == "quality":
+                        # Handle quality change request (QGC sends "quality", not "setQuality")
                         new_quality = data.get("quality", self.quality)
                         if 1 <= new_quality <= 100:
                             self.quality = new_quality

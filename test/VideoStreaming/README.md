@@ -244,7 +244,7 @@ The WebSocket server implements the QGC/PixEagle protocol with a two-message seq
 
 **Heartbeat (QGC → Server):**
 ```json
-{"type": "ping"}
+{"type": "ping", "timestamp": 1234567890}
 ```
 
 **Heartbeat Response (Server → QGC):**
@@ -254,7 +254,12 @@ The WebSocket server implements the QGC/PixEagle protocol with a two-message seq
 
 **Quality Change Request (QGC → Server):**
 ```json
-{"type": "setQuality", "quality": 60}
+{"type": "quality", "quality": 60}
+```
+
+**Error Message (Server → QGC):**
+```json
+{"type": "error", "message": "Error description"}
 ```
 
 This protocol ensures proper frame synchronization and allows QGC to adapt video quality dynamically.
