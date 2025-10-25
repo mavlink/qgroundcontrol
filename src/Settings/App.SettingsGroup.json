@@ -222,6 +222,13 @@
     "default":     ""
 },
 {
+    "name":             "openaipToken",
+    "shortDesc": "OpenAIP API Key",
+    "longDesc":  "Your personal API key for OpenAIP aviation maps. Get one at https://www.openaip.net",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "followTarget",
     "shortDesc": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",
