@@ -83,7 +83,6 @@ class Joystick : public QThread
     Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
     Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
     Q_PROPERTY(bool                     enableManualControlExtensions READ enableManualControlExtensions WRITE setEnableManualControlExtensions NOTIFY enableManualControlExtensionsChanged)
-
     enum ButtonEvent_t {
         BUTTON_UP,
         BUTTON_DOWN,
@@ -188,6 +187,9 @@ public:
     bool enableManualControlExtensions() const { return _enableManualControlExtensions; }
     void setEnableManualControlExtensions(bool enable);
 
+    QBitArray getButtonStates() const;
+    QList<float> getAxisValues() const;
+
 signals:
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
@@ -203,6 +205,8 @@ signals:
     void circleCorrectionChanged(bool circleCorrection);
     void enableManualControlExtensionsChanged();
     void axisValues(float roll, float pitch, float yaw, float throttle);
+    void axisValuesUpdated(QList<float> axisValues);
+    void dataUpdated(QList<float> axisValues, QBitArray buttons);
     void axisFrequencyHzChanged();
     void buttonFrequencyHzChanged();
     void startContinuousZoom(int direction);
@@ -286,6 +290,7 @@ private:
     QmlObjectListModel *_assignableButtonActions = nullptr;
 
     bool _accumulator = false;
+    float _throttleAccumulator = 0.f;
     bool _calibrated = false;
     bool _calibrationMode = false;
     bool _circleCorrection = true;
@@ -307,13 +312,20 @@ private:
 
     static int _transmitterMode;
 
-    static constexpr float _defaultAxisFrequencyHz = 25.0f;
-    static constexpr float _defaultButtonFrequencyHz = 5.0f;
+    static constexpr float kMinAxisValue = -1.0f;
+    static constexpr float kMaxAxisValue = 1.0f;
+
+    static constexpr float kDefaultAxisFrequencyHz = 25.0f;
+    static constexpr float kDefaultButtonFrequencyHz = 5.0f;
+
     // Arbitrary Limits
-    static constexpr float _minAxisFrequencyHz = 0.25f;
-    static constexpr float _maxAxisFrequencyHz = 200.0f;
-    static constexpr float _minButtonFrequencyHz = 0.25f;
-    static constexpr float _maxButtonFrequencyHz = 50.0f;
+    static constexpr float kMinAxisFrequencyHz = 0.25f;
+    static constexpr float kMaxAxisFrequencyHz = 200.0f;
+    static constexpr float kMinButtonFrequencyHz = 0.25f;
+    static constexpr float kMaxButtonFrequencyHz = 50.0f;
+
+    // for throttle to change from min to max it will take 1000ms
+    static constexpr float kAccumulatorMaxSlewRate = 1000.0f;
 
     static constexpr const char *_rgFunctionSettingsKey[maxAxisFunction] = {
         "RollAxis",
