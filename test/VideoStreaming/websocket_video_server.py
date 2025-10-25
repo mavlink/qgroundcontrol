@@ -299,7 +299,15 @@ def create_app(pattern: VideoTestPattern, quality: int = 85) -> FastAPI:
     @app.websocket("/ws/video_feed")
     async def websocket_endpoint(websocket: WebSocket):
         """WebSocket video stream endpoint."""
+        client_info = f"{websocket.client.host}:{websocket.client.port}" if websocket.client else "unknown"
+        print(f"\n{'='*70}")
+        print(f"WebSocket connection attempt from: {client_info}")
+        print(f"Endpoint: /ws/video_feed")
+        print(f"{'='*70}\n")
+
         await websocket.accept()
+        print(f"✓ WebSocket connection accepted from {client_info}\n")
+
         await streamer.stream_to_client(websocket)
 
     return app
