@@ -33,6 +33,7 @@ public:
     QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent = nullptr);
 
     Vehicle *vehicle() const { return _vehicle; }
+    QString machineName() const { return objectName(); }
 
 signals:
     void error();
