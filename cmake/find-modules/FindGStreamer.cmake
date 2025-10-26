@@ -415,6 +415,10 @@ find_gstreamer_component(Rtsp gstreamer-rtsp-1.0)
 # ----------------------------------------------------------------------------
 # Find Optional Components (Based on FIND_COMPONENTS)
 # ----------------------------------------------------------------------------
+if(App IN_LIST GStreamer_FIND_COMPONENTS)
+    find_gstreamer_component(App gstreamer-app-1.0)
+endif()
+
 if(GlEgl IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(GlEgl gstreamer-gl-egl-1.0)
 endif()

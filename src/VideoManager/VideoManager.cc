@@ -91,6 +91,8 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->httpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->websocketUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
@@ -343,6 +345,8 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceRTSP,
         VideoSettings::videoSourceTCP,
         VideoSettings::videoSourceMPEGTS,
+        VideoSettings::videoSourceHTTP,
+        VideoSettings::videoSourceWebSocket,
         VideoSettings::videoSource3DRSolo,
         VideoSettings::videoSourceParrotDiscovery,
         VideoSettings::videoSourceYuneecMantisG,
@@ -533,6 +537,10 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
         settingsChanged |= _updateVideoUri(receiver, _videoSettings->rtspUrl()->rawValue().toString());
     } else if (source == VideoSettings::videoSourceTCP) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+    } else if (source == VideoSettings::videoSourceHTTP) {
+        settingsChanged |= _updateVideoUri(receiver, _videoSettings->httpUrl()->rawValue().toString());
+    } else if (source == VideoSettings::videoSourceWebSocket) {
+        settingsChanged |= _updateVideoUri(receiver, _videoSettings->websocketUrl()->rawValue().toString());
     } else if (source == VideoSettings::videoSource3DRSolo) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("udp://0.0.0.0:5600"));
     } else if (source == VideoSettings::videoSourceParrotDiscovery) {
