@@ -16,8 +16,8 @@
 
 #include <QString>
 #include <utility>
-WaitForMavlinkMessageState::WaitForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, Predicate predicate)
-    : QGCState(QStringLiteral("WaitForMavlinkMessageState"), parent)
+WaitForMavlinkMessageState::WaitForMavlinkMessageState(uint32_t messageId, int timeoutMsecs, Predicate predicate, QState *parentState)
+    : QGCState(QStringLiteral("WaitForMavlinkMessageState"), parentState)
     , _messageId(messageId)
     , _predicate(std::move(predicate))
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
@@ -49,7 +49,7 @@ void WaitForMavlinkMessageState::_messageReceived(const mavlink_message_t &messa
     if (message.msgid != _messageId) {
         return;
     }
-    if (_predicate && !_predicate(message)) {
+    if (_predicate && !_predicate(this, message)) {
         return;
     }
 

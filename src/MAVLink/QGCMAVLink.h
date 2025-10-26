@@ -13,6 +13,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
@@ -83,6 +84,7 @@ public:
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
     static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
     static QString                  compIdToString              (uint8_t compId);
+    static bool                     mavlinkParamUnionToVariant  (const mavlink_param_union_t &paramUnion, QVariant &outValue);
 
     // Expose mavlink enums to Qml. I've tried various way to make this work without duping, but haven't found anything that works.
 

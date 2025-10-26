@@ -19,7 +19,7 @@ class DelayState : public QGCState
     Q_OBJECT
 
 public:
-    DelayState(QState* parentState, int delayMsecs);
+    DelayState(int delayMsecs, QState* parentState);
 
 signals:
     void delayComplete();

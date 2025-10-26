@@ -20,7 +20,7 @@ class ShowAppMessageState : public QGCState
     Q_OBJECT
 
 public:
-    ShowAppMessageState(QState* parentState, const QString& appMessage);
+    ShowAppMessageState(const QString& appMessage, QState* parentState);
 
 private:
     QString _appMessage;

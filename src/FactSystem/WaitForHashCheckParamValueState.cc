@@ -7,43 +7,38 @@
  *
  ****************************************************************************/
 
-#include "WaitForHashCheckParamValue.h"
-
-#include "MultiVehicleManager.h"
+#include "WaitForHashCheckParamValueState.h"
 #include "Vehicle.h"
+#include "ParamHashCheckStateMachine.h"
 
-#include "QGCLoggingCategory.h"
-
-#include <QString>
-#include <utility>
-WaitForHashCheckParamValue::WaitForHashCheckParamValue(QState *parent, int timeoutMsecs)
-    : QGCState(QStringLiteral("WaitForHashCheckParamValue"), parent)
+WaitForHashCheckParamValueState::WaitForHashCheckParamValueState(int timeoutMsecs, QState *parentState)
+    : QGCState(QStringLiteral("WaitForHashCheckParamValueState"), parentState)
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
 {
-    connect(this, &QState::entered, this, &WaitForHashCheckParamValue::_onEntered);
-    connect(this, &QState::exited, this, &WaitForHashCheckParamValue::_onExited);
-    connect(&_timeoutTimer, &QTimer::timeout, this, &WaitForHashCheckParamValue::_onTimeout);
+    connect(this, &QState::entered, this, &WaitForHashCheckParamValueState::_onEntered);
+    connect(this, &QState::exited, this, &WaitForHashCheckParamValueState::_onExited);
+    connect(&_timeoutTimer, &QTimer::timeout, this, &WaitForHashCheckParamValueState::_onTimeout);
 
     _timeoutTimer.setSingleShot(true);
 }
 
-void WaitForHashCheckParamValue::_onEntered()
+void WaitForHashCheckParamValueState::_onEntered()
 {
-    connect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForHashCheckParamValue::_messageReceived);
+    connect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForHashCheckParamValueState::_messageReceived);
 
     if (_timeoutMsecs > 0) {
         _timeoutTimer.start(_timeoutMsecs);
     }
 }
 
-void WaitForHashCheckParamValue::_onExited()
+void WaitForHashCheckParamValueState::_onExited()
 {
-    disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForHashCheckParamValue::_messageReceived);
+    disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForHashCheckParamValueState::_messageReceived);
 
     _timeoutTimer.stop();
 }
 
-void WaitForHashCheckParamValue::_messageReceived(const mavlink_message_t &message)
+void WaitForHashCheckParamValueState::_messageReceived(const mavlink_message_t &message)
 {
     if (message.msgid != MAVLINK_MSG_ID_PARAM_VALUE) {
         return;
@@ -58,16 +53,29 @@ void WaitForHashCheckParamValue::_messageReceived(const mavlink_message_t &messa
     const QString parameterName(parameterNameWithNull);
 
     if (parameterName == QStringLiteral("_HASH_CHECK")) {
-        qCDebug(QGCStateMachineLog) << "Received _HASH_CHECK PARAM_VALUE message" << stateName();
+        mavlink_param_union_t paramUnion{};
+        paramUnion.param_float = param_value.param_value;
+        paramUnion.type = param_value.param_type;
+
+        QVariant parameterValue;
+        if (!QGCMAVLink::mavlinkParamUnionToVariant(paramUnion, parameterValue)) {
+            emit notFound();
+            return;
+        }
+        uint32_t hashCRC = parameterValue.toUInt();
+
+        qCDebug(ParamHashCheckStateMachineLog) << "Received _HASH_CHECK PARAM_VALUE message. Hash:" << hashCRC << stateName();
+
+        emit found(hashCRC);
         emit advance();
     } else {
-        qCDebug(QGCStateMachineLog) << "First PARAM_VALUE was not _HASH_CHECK" << parameterName << stateName();
+        qCDebug(ParamHashCheckStateMachineLog) << "First PARAM_VALUE was not _HASH_CHECK" << parameterName << stateName();
         emit notFound();
     }
 }
 
-void WaitForHashCheckParamValue::_onTimeout()
+void WaitForHashCheckParamValueState::_onTimeout()
 {
-    qCDebug(QGCStateMachineLog) << "Timeout waiting for _HASH_CHECK" << stateName();
+    qCDebug(ParamHashCheckStateMachineLog) << "Timeout waiting for _HASH_CHECK" << stateName();
     emit notFound();
 }

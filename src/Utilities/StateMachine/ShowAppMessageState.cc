@@ -10,7 +10,7 @@
 #include "ShowAppMessageState.h"
 #include "QGCApplication.h"
 
-ShowAppMessageState::ShowAppMessageState(QState* parentState, const QString& appMessage)
+ShowAppMessageState::ShowAppMessageState(const QString& appMessage, QState* parentState)
     : QGCState("ShowAppMessageState", parentState)
     , _appMessage(appMessage)
 {

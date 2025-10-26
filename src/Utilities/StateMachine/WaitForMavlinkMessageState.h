@@ -26,12 +26,13 @@ class WaitForMavlinkMessageState : public QGCState
     Q_OBJECT
 
 public:
-    using Predicate = std::function<bool(const mavlink_message_t &message)>;
+    /// @return true: Predicate matched, false: no match
+    using Predicate = std::function<bool(WaitForMavlinkMessageState * state, const mavlink_message_t &message)>;
 
     /// @param messageId MAVLink message ID to wait for
     /// @param timeoutMsecs Timeout in milliseconds to wait for message, 0 to wait forever
-    /// @param predicate Optional predicate which further filters received messages
-    WaitForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, Predicate predicate = Predicate());
+    /// @param predicate Predicate which further filters received messages
+    WaitForMavlinkMessageState(uint32_t messageId, int timeoutMsecs, Predicate predicate, QState *parentState);
 
 signals:
     void timeout();

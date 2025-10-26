@@ -28,17 +28,21 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
 class ParameterEditorController;
 class Vehicle;
+class ParamHashCheckStateMachine;
 
 class ParameterManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+
     Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
     Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
     Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
     Q_PROPERTY(bool     pendingWrites       READ pendingWrites      NOTIFY pendingWritesChanged)        ///< true: There are still pending write updates against the vehicle
+    
     friend class ParameterEditorController;
+    friend class ParamHashCheckStateMachine;
 
 public:
     ParameterManager(Vehicle *vehicle);
@@ -60,6 +64,7 @@ public:
 
     /// Re-request the full set of parameters from the autopilot
     void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
+    void refreshAllParametersOld(uint8_t componentID = MAV_COMP_ID_ALL);
 
     /// Request a refresh on the specific parameter
     void refreshParameter(int componentId, const QString &paramName);
@@ -122,6 +127,7 @@ private slots:
 private:
     /// Called whenever a parameter is updated or first seen.
     void _handleParamValue(int componentId, const QString &parameterName, int parameterCount, int parameterIndex, MAV_PARAM_TYPE mavParamType, const QVariant &parameterValue);
+    void _handleParamValueOld(int componentId, const QString &parameterName, int parameterCount, int parameterIndex, MAV_PARAM_TYPE mavParamType, const QVariant &parameterValue);
      /// Writes the parameter update to mavlink, sets up for write wait
     void _mavlinkParamSet(int componentId, const QString &name, FactMetaData::ValueType_t valueType, const QVariant &rawValue);
     void _waitingParamTimeout();
@@ -137,7 +143,6 @@ private:
     /// Remap a parameter from one firmware version to another
     QString _remapParamNameToVersion(const QString &paramName) const;
     bool _fillMavlinkParamUnion(FactMetaData::ValueType_t valueType, const QVariant &rawValue, mavlink_param_union_t &paramUnion) const;
-    bool _mavlinkParamUnionToVariant(const mavlink_param_union_t &paramUnion, QVariant &outValue) const;
     /// The offline editing vehicle can have custom loaded params bolted into it.
     void _loadOfflineEditingParams();
     QString _logVehiclePrefix(int componentId) const;

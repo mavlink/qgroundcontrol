@@ -530,3 +530,33 @@ QString QGCMAVLink::compIdToString(uint8_t compId)
 
     return QStringLiteral("%1 (%2)").arg(compIdStr).arg(static_cast<int>(compId));
 }
+
+bool QGCMAVLink::mavlinkParamUnionToVariant(const mavlink_param_union_t &paramUnion, QVariant &outValue)
+{
+    switch (paramUnion.type) {
+    case MAV_PARAM_TYPE_REAL32:
+        outValue = QVariant(paramUnion.param_float);
+        return true;
+    case MAV_PARAM_TYPE_UINT8:
+        outValue = QVariant(paramUnion.param_uint8);
+        return true;
+    case MAV_PARAM_TYPE_INT8:
+        outValue = QVariant(paramUnion.param_int8);
+        return true;
+    case MAV_PARAM_TYPE_UINT16:
+        outValue = QVariant(paramUnion.param_uint16);
+        return true;
+    case MAV_PARAM_TYPE_INT16:
+        outValue = QVariant(paramUnion.param_int16);
+        return true;
+    case MAV_PARAM_TYPE_UINT32:
+        outValue = QVariant(paramUnion.param_uint32);
+        return true;
+    case MAV_PARAM_TYPE_INT32:
+        outValue = QVariant(paramUnion.param_int32);
+        return true;
+    default:
+        qCCritical(QGCMAVLinkLog) << "Unsupported MAV_PARAM_TYPE in mavlinkParamUnionToVariant" << paramUnion.type;
+        return false;
+    }
+}

@@ -16,17 +16,20 @@
 
 #include <QFinalState>
 
-QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QObject* parent)
-    : QStateMachine (parent)
-    , _vehicle      (vehicle)
+QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QState *parentState)
+    : QStateMachine(parentState)
+    , _vehicle(vehicle)
 {
     setObjectName(machineName);
 
     connect(this, &QGCStateMachine::started, this, [this] () {
         qCDebug(QGCStateMachineLog) << "State machine started:" << objectName();
     });
-    connect(this, &QGCStateMachine::stopped, this, [this] () {
+    connect(this, &QGCStateMachine::finished, this, [this] () {
         qCDebug(QGCStateMachineLog) << "State machine finished:" << objectName();
+        if (!this->parent()) {
+            deleteLater();
+        }
     });
 
     connect(this, &QGCStateMachine::stopped, this, [this] () { this->deleteLater(); });

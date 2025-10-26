@@ -12,7 +12,7 @@
 
 QGC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
 
-QGCState::QGCState(const QString& stateName, QState* parentState) 
+QGCState::QGCState(const QString& stateName, QState* parentState)
     : QState(QState::ExclusiveStates, parentState)
 {
     setObjectName(stateName);

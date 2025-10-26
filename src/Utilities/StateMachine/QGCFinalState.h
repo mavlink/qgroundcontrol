@@ -18,5 +18,5 @@ class QGCFinalState : public QFinalState
     Q_OBJECT
 
 public:
-    QGCFinalState(QState* parent = nullptr);
+    QGCFinalState(QState* parentState);
 };

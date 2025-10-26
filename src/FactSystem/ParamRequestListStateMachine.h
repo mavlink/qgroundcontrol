@@ -11,17 +11,31 @@
 
 #include "QGCStateMachine.h"
 
+#include <QMap>
+#include <QList>
+
 class ParamRequestListStateMachine : public QGCStateMachine
 {
     Q_OBJECT
 
 public:
-    ParamRequestListStateMachine(Vehicle* vehicle, uint8_t componentId, QObject* parent);
+    using MissingParamIndicesMap = QMap<int, QList<int>>;   ///< Key: Component id, Value: List of missing parameter indices
+
+    ParamRequestListStateMachine(Vehicle* vehicle, uint8_t componentId);
+
+signals:
+    void allParamsReceived();
+    void parametersMissing(MissingParamIndicesMap missingParams);
 
 private:
     void _setupStateGraph();
+    QGCState* _createParallelState();
+    QGCState* _createWatchForAllParamsState(QState* parentState);
 
-    uint8_t _componentID;                                   ///< Component id for which we are requesting parameters
-    QMap<int, int> _paramCountMap;                          ///< Key: Component id, Value: Total number ofparameters in this component
-    QMap<int, QMap<int, int>> _waitingReadParamIndexMap;    ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
+    uint8_t _componentID;                           ///< Component id for which we are requesting parameters
+    QMap<int, int> _paramCountMap;                  ///< Key: Component id, Value: Total number ofparameters in this component
+    MissingParamIndicesMap _missingParamIndicesMap;
+
+    static constexpr int kMaxParamRequestListRetries = 2;
+    static constexpr int kWaitForParamValueMs = 1000;
 };

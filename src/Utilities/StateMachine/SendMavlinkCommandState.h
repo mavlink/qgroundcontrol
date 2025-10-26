@@ -20,8 +20,8 @@ class SendMavlinkCommandState : public QGCState
     Q_OBJECT
 
 public:
-    SendMavlinkCommandState(QState* parent, MAV_CMD command, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
-    SendMavlinkCommandState(QState* parent);
+    SendMavlinkCommandState(QState* parentState, MAV_CMD command, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
+    SendMavlinkCommandState(QState* parentState);
 
     void setup(MAV_CMD command, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
     

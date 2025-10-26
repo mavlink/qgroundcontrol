@@ -14,8 +14,8 @@
 #include "VehicleLinkManager.h"
 #include "QGCLoggingCategory.h"
 
-SendMavlinkMessageState::SendMavlinkMessageState(QState *parent, MessageEncoder encoder, int retryCount)
-    : QGCState(QStringLiteral("SendMavlinkMessageState"), parent)
+SendMavlinkMessageState::SendMavlinkMessageState(MessageEncoder encoder, int retryCount, QState *parentState)
+    : QGCState(QStringLiteral("SendMavlinkMessageState"), parentState)
     , _encoder(std::move(encoder))
     , _retryCount(retryCount)
 {
@@ -49,7 +49,7 @@ void SendMavlinkMessageState::_sendMessage()
     const uint8_t componentId = MAVLinkProtocol::getComponentId();
     const uint8_t channel = sharedLink->mavlinkChannel();
 
-    _encoder(systemId, channel, &message);
+    _encoder(this, systemId, channel, &message);
     if (!vehicle()->sendMessageOnLinkThreadSafe(sharedLink.get(), message)) {
         qCWarning(QGCStateMachineLog) << "Failed to send MAVLink message" << stateName();
         emit error();

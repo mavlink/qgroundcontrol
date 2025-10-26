@@ -1,48 +1,38 @@
-#include "ParamHashCheckStateMachine.h"
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
+ #include "ParamHashCheckStateMachine.h"
+#include "WaitForHashCheckParamValueState.h"
 #include "ParameterManager.h"
-
+#include "Vehicle.h"
+#include "QGCApplication.h"
 #include "ComponentInformationManager.h"
-#include "FactMetaData.h"
 #include "MAVLinkProtocol.h"
 #include "QGC.h"
-#include "QGCApplication.h"
+#include "CompInfoParam.h"
 #include "QGCLoggingCategory.h"
-#include "Vehicle.h"
 
-#include <QtCore/QDataStream>
-#include <QtCore/QDir>
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
-#include <QtCore/QAbstractAnimation>
-#include <QtCore/QVariantAnimation>
-#include <QtCore/QEasingCurve>
+QGC_LOGGING_CATEGORY(ParamHashCheckStateMachineLog, "ParameterManager.ParamHashCheckStateMachine")
 
-#include <cstring>
-
-ParamHashCheckStateMachine::ParamHashCheckStateMachine(ParameterManager* parameterManager, int vehicleId, int componentId, const QVariant& hashValue)
-    : QGCStateMachine(QStringLiteral("ParameterManager HASH_CHECK"), parameterManager->vehicle(), parameterManager)
-    , _parameterManager(parameterManager)
-    , _vehicleId(vehicleId)
-    , _componentId(componentId)
-    , _hashValue(hashValue)
+ParamHashCheckStateMachine::ParamHashCheckStateMachine(Vehicle* vehicle, QState *parentState)
+    : QGCStateMachine(QStringLiteral("ParameterManager HASH_CHECK"), vehicle, parentState)
 {
-    Q_ASSERT(parameterManager);
+    Q_ASSERT(vehicle);
 
     _setupStateGraph();
 }
 
 void ParamHashCheckStateMachine::_setupStateGraph()
 {
-    auto waitForHashCheckState = new WaitForHashCheckParamValue(this, 1000);
-    auto loadCacheState = new FunctionState(QStringLiteral("Parameter hash load cache"), this, [this]() {
-        _loadCache();
-    });
-    auto computeHashState = new FunctionState(QStringLiteral("Parameter hash compute"), this, [this]() {
-        _computeCacheHash();
-    });
+    auto waitForHashCheckState = new WaitForHashCheckParamValueState(1000, this);   // FIXME: Magic mumber for timeout?
+    auto loadCacheState = new FunctionState(QStringLiteral("Parameter hash load cache"), [this](FunctionState */*state*/) { _loadCache(); },  this);
+    auto computeHashState = new FunctionState(QStringLiteral("Parameter hash compute"), [this](FunctionState */*state*/) { _computeCacheHash(); }, this);
 
     auto evaluateState = new QGCState(QStringLiteral("Parameter hash evaluate"), this);
     connect(evaluateState, &QState::entered, evaluateState, [this, evaluateState]() {
@@ -59,60 +49,61 @@ void ParamHashCheckStateMachine::_setupStateGraph()
         evaluateState->advance();
     });
 
-    auto injectState = new FunctionState(QStringLiteral("Parameter hash inject"), this, [this]() {
-        _injectCachedParameters();
-    });
-    auto sendAckState = new FunctionState(QStringLiteral("Parameter hash send ack"), this, [this]() {
-        _sendHashAckToVehicle();
-    });
-    auto animateState = new FunctionState(QStringLiteral("Parameter hash animate"), this, [this]() {
-        _startLoadProgressAnimation();
-    });
-    auto mismatchState = new FunctionState(QStringLiteral("Parameter hash mismatch"), this, [this]() {
-        _handleCacheMismatchDebug();
-    });
+    auto injectState = new FunctionState(QStringLiteral("Parameter hash inject"), [this](FunctionState */*state*/) { _injectCachedParameters(); }, this);
+    auto sendAckState = new FunctionState(QStringLiteral("Parameter hash send ack"), [this](FunctionState */*state*/) { _sendHashAckToVehicle(); }, this);
+//    auto animateState = new FunctionState(QStringLiteral("Parameter hash animate"), [this](FunctionState */*state*/) {  _startLoadProgressAnimation(); }, this);
+    auto mismatchState = new FunctionState(QStringLiteral("Parameter hash mismatch"), [this](FunctionState */*state*/) { _handleCacheMismatchDebug(); }, this);
     auto finalState = new QGCFinalState(this);
 
     setInitialState(waitForHashCheckState);
 
+    // Normal state transitions
     waitForHashCheckState->addThisTransition(&QGCState::advance, loadCacheState);
     loadCacheState->addThisTransition(&QGCState::advance, computeHashState);
     computeHashState->addThisTransition(&QGCState::advance, evaluateState);
+    evaluateState->addThisTransition(&QGCState::advance, injectState);
+    injectState->addThisTransition(&QGCState::advance, sendAckState);
+    sendAckState->addThisTransition(&QGCState::advance, finalState);
 
     evaluateState->addTransition(this, &ParamHashCheckStateMachine::cacheLoadFailed, finalState);
-    evaluateState->addTransition(this, &ParamHashCheckStateMachine::cacheHashMismatch, mismatchState);
-    evaluateState->addThisTransition(&QGCState::advance, injectState);
 
+    evaluateState->addTransition(this, &ParamHashCheckStateMachine::cacheHashMismatch, mismatchState);
     mismatchState->addThisTransition(&QGCState::advance, finalState);
 
-    injectState->addThisTransition(&QGCState::advance, sendAckState);
-    sendAckState->addThisTransition(&QGCState::advance, animateState);
-    animateState->addThisTransition(&QGCState::advance, finalState);
+    waitForHashCheckState->addTransition(waitForHashCheckState, &WaitForHashCheckParamValueState::notFound, finalState);
+
+//     animateState->addThisTransition(&QGCState::advance, finalState);
+
+    connect(waitForHashCheckState, &WaitForHashCheckParamValueState::found, this, [this](int hashCRC) {
+        _hashFromVehicle = hashCRC;
+    });
 }
 
 void ParamHashCheckStateMachine::_loadCache()
 {
-    qCInfo(ParameterManagerLog) << "Attemping load from cache";
+    qCDebug(ParamHashCheckStateMachineLog) << "Attemping load from cache";
 
     _cacheMap.clear();
     _computedHash = 0;
     _loadSucceeded = false;
     _hashMatches = false;
 
-    _cacheFilePath = ParameterManager::parameterCacheFile(_vehicleId, _componentId);
+    _cacheFilePath = ParameterManager::parameterCacheFile(vehicle()->id(), MAV_COMP_ID_AUTOPILOT1);
     QFile cacheFile(_cacheFilePath);
     if (!cacheFile.exists()) {
+        qCDebug(ParamHashCheckStateMachineLog) << "No cache file exists at" << cacheFile.fileName();
         return;
     }
 
     if (!cacheFile.open(QIODevice::ReadOnly)) {
-        qCWarning(ParameterManagerLog) << "Failed to open cache file for reading" << cacheFile.fileName();
+        qCWarning(ParamHashCheckStateMachineLog) << "Failed to open cache file for reading" << cacheFile.fileName();
         return;
     }
 
     QDataStream ds(&cacheFile);
     ds >> _cacheMap;
 
+    qCDebug(ParamHashCheckStateMachineLog) << "Loaded" << _cacheMap.count() << "parameters from cache file" << cacheFile.fileName();
     _loadSucceeded = true;
 }
 
@@ -130,7 +121,7 @@ void ParamHashCheckStateMachine::_computeCacheHash()
         const ParamTypeVal& paramTypeVal = it.value();
         const FactMetaData::ValueType_t factType = static_cast<FactMetaData::ValueType_t>(paramTypeVal.first);
 
-        FactMetaData* factMeta = _parameterManager->_vehicle->compInfoManager()->compInfoParam(_componentId)->factMetaDataForName(name, factType);
+        FactMetaData* factMeta = vehicle()->compInfoManager()->compInfoParam(MAV_COMP_ID_AUTOPILOT1)->factMetaDataForName(name, factType);
         if (factMeta && factMeta->volatileValue()) {
             qCDebug(ParameterManagerLog) << "Volatile parameter" << name;
             continue;
@@ -141,7 +132,7 @@ void ParamHashCheckStateMachine::_computeCacheHash()
         _computedHash = QGC::crc32(static_cast<const uint8_t *>(valueData), FactMetaData::typeToSize(factType), _computedHash);
     }
 
-    _hashMatches = (_computedHash == _hashValue.toUInt());
+    _hashMatches = (_computedHash == _hashFromVehicle);
 }
 
 void ParamHashCheckStateMachine::_injectCachedParameters()
@@ -163,7 +154,7 @@ void ParamHashCheckStateMachine::_injectCachedParameters()
         const ParamTypeVal& paramTypeVal = it.value();
         const FactMetaData::ValueType_t factType = static_cast<FactMetaData::ValueType_t>(paramTypeVal.first);
         const MAV_PARAM_TYPE mavParamType = ParameterManager::factTypeToMavType(factType);
-        _parameterManager->_handleParamValue(_componentId, name, count, index++, mavParamType, paramTypeVal.second);
+        vehicle()->parameterManager()->_handleParamValue(MAV_COMP_ID_AUTOPILOT1, name, count, index++, mavParamType, paramTypeVal.second);
     }
 }
 
@@ -173,7 +164,7 @@ void ParamHashCheckStateMachine::_sendHashAckToVehicle()
         return;
     }
 
-    const SharedLinkInterfacePtr sharedLink = _parameterManager->_vehicle->vehicleLinkManager()->primaryLink().lock();
+    const SharedLinkInterfacePtr sharedLink = vehicle()->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         return;
     }
@@ -185,8 +176,8 @@ void ParamHashCheckStateMachine::_sendHashAckToVehicle()
     (void) strncpy(paramSet.param_id, "_HASH_CHECK", sizeof(paramSet.param_id));
     unionValue.param_uint32 = _computedHash;
     paramSet.param_value = unionValue.param_float;
-    paramSet.target_system = static_cast<uint8_t>(_parameterManager->_vehicle->id());
-    paramSet.target_component = static_cast<uint8_t>(_componentId);
+    paramSet.target_system = static_cast<uint8_t>(vehicle()->id());
+    paramSet.target_component = static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1);
 
     mavlink_message_t message{};
     (void) mavlink_msg_param_set_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
@@ -195,10 +186,12 @@ void ParamHashCheckStateMachine::_sendHashAckToVehicle()
                                              &message,
                                              &paramSet);
 
-    (void) _parameterManager->_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    (void) vehicle()->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
-void ParamHashCheckStateMachine::_startLoadProgressAnimation()
+#if 0
+// FIXME: NYI
+void ParamHashCheckStateMachine::_startLoadProgressAnimation(QGCState* state)
 {
     if (!_hashMatches) {
         return;
@@ -210,18 +203,21 @@ void ParamHashCheckStateMachine::_startLoadProgressAnimation()
     animation->setEndValue(1.0);
     animation->setDuration(750);
 
+    auto parameterManager = _parameterMan
+
     (void) QObject::connect(animation, &QVariantAnimation::valueChanged, _parameterManager, [this](const QVariant &value) {
-        _parameterManager->_setLoadProgress(value.toDouble());
+        parameterManager->_setLoadProgress(value.toDouble());
     });
 
     QObject::connect(animation, &QVariantAnimation::finished, _parameterManager, [this]() {
         QTimer::singleShot(500, _parameterManager, [this]() {
-            _parameterManager->_setLoadProgress(0);
+            parameterManager->_setLoadProgress(0);
         });
     });
 
     animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
+#endif
 
 void ParamHashCheckStateMachine::_handleCacheMismatchDebug()
 {
@@ -235,11 +231,11 @@ void ParamHashCheckStateMachine::_handleCacheMismatchDebug()
         return;
     }
 
-    _parameterManager->_debugCacheCRC[_componentId] = true;
-    _parameterManager->_debugCacheMap[_componentId] = _cacheMap;
+    _debugCacheCRC[_componentId] = true;
+    _debugCacheMap[_componentId] = _cacheMap;
     for (auto it = _cacheMap.cbegin(); it != _cacheMap.cend(); ++it) {
-        _parameterManager->_debugCacheParamSeen[_componentId][it.key()] = false;
+        _debugCacheParamSeen[_componentId][it.key()] = false;
     }
 
-    qgcApp()->showAppMessage(_parameterManager->tr("Parameter cache CRC match failed"));
+    qgcApp()->showAppMessage(QStringLiteral("Parameter cache CRC match failed"));
 }

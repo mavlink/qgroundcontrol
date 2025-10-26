@@ -21,10 +21,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         ParamHashCheckStateMachine.h
         ParamRequestListStateMachine.cc
         ParamRequestListStateMachine.h
-        ParamRequestListPhase1StateMachine.cc
-        ParamRequestListPhase1StateMachine.h
-        ParamRequestListPhase2StateMachine.cc
-        ParamRequestListPhase2StateMachine.h
         ParameterManager.cc
         ParameterManager.h
         SettingsFact.cc

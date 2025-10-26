@@ -11,8 +11,8 @@
 #include "QGCState.h"
 #include "QGCStateMachine.h"
 
-QGCFinalState::QGCFinalState(QState* parent)
-    : QFinalState(parent)
+QGCFinalState::QGCFinalState(QState* parentState)
+    : QFinalState(parentState)
 {
     connect(this, &QFinalState::entered, this, [this] () {
         qCDebug(QGCStateMachineLog) << "Entered Final State" << qobject_cast<QGCStateMachine*>(this->machine())->machineName();

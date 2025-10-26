@@ -20,19 +20,23 @@
 class Vehicle;
 
 /// Waits for the _HASH_CHECK to come through as a PARAM_VALUE message
+///     signals advance() - if _HASH_CHECK is received as the first PARAM_VALUE message
+///     signals found(paramValue) - if _HASH_CHECK is received as the first PARAM_VALUE message
 ///     signals notFound() - parameter hashing is not in effect
-class WaitForHashCheckParamValue : public QGCState
+class WaitForHashCheckParamValueState : public QGCState
 {
     Q_OBJECT
 
 public:
     /// @param timeoutMsecs Timeout in milliseconds to wait for _HASH_CHECK, 0 to wait forever
-    WaitForHashCheckParamValue(QState *parent, int timeoutMsecs);
+    WaitForHashCheckParamValueState(int timeoutMsecs, QState *parentState);
 
 signals:
     /// Signal emitted if either _HASH_CHECK is not received as the first PARAM_VALUE or no PARAM_VALUE
     /// messages are received within the specified timeout period
-    void notFound();    
+    void notFound();
+
+    void found(uint32_t hashCRC);   ///< Signal emitted if _HASH_CHECK is received as the first PARAM_VALUE message
 
 private slots:
     void _onEntered();

@@ -27,11 +27,11 @@ class WatchForMavlinkMessageState : public QGCState
 
 public:
     /// @return true: continue processing, false: stop processing further messages
-    using MessageProcessor = std::function<bool(const mavlink_message_t &message)>;
+    using MessageProcessor = std::function<bool(WatchForMavlinkMessageState *state, const mavlink_message_t &message)>;
 
     /// @param messageId MAVLink message ID to wait for
     /// @param timeoutMsecs Timeout in milliseconds to wait for message, 0 to watch forever
-    WatchForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, MessageProcessor processor);
+    WatchForMavlinkMessageState(uint32_t messageId, int timeoutMsecs, MessageProcessor processor, QState *parentState);
 
 signals:
     void timeout();

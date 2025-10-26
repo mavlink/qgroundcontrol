@@ -9,7 +9,7 @@
 
 #include "DelayState.h"
 
-DelayState::DelayState(QState* parentState, int delayMsecs)
+DelayState::DelayState(int delayMsecs, QState* parentState)
     : QGCState("DelayState", parentState)
 {
     _delayTimer.setSingleShot(true);

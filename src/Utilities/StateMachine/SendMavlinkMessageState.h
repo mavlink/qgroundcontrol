@@ -23,11 +23,11 @@ class SendMavlinkMessageState : public QGCState
     Q_OBJECT
 
 public:
-    using MessageEncoder = std::function<void (uint8_t systemId, uint8_t channel, mavlink_message_t *message)>;
+    using MessageEncoder = std::function<void (SendMavlinkMessageState *state, uint8_t systemId, uint8_t channel, mavlink_message_t *message)>;
 
     /// @param encoder Function which encodes the MAVLink message to send
     /// @param retryCount Number of times to retry sending the message on failure
-    SendMavlinkMessageState(QState *parent, MessageEncoder encoder, int retryCount);
+    SendMavlinkMessageState(MessageEncoder encoder, int retryCount, QState *parentState);
 
 private slots:
     void _sendMessage();

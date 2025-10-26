@@ -18,8 +18,10 @@ class FunctionState : public QGCState
     Q_OBJECT
 
 public:
-    FunctionState(const QString& stateName, QState* parentState, std::function<void()>);
+    using Function = std::function<void(FunctionState *state)>;
+
+    FunctionState(const QString& stateName, Function function, QState* parentState);
 
 private:
-    std::function<void()> _function;
+    Function _function;
 };

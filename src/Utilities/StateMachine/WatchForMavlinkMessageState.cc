@@ -8,10 +8,12 @@
  ****************************************************************************/
 
 #include "WatchForMavlinkMessageState.h"
+#include "Vehicle.h"
 
-WatchForMavlinkMessageState::WatchForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs)
-    : QGCState(QStringLiteral("WatchForMavlinkMessageState"), parent)
+WatchForMavlinkMessageState::WatchForMavlinkMessageState(uint32_t messageId, int timeoutMsecs, MessageProcessor processor, QState *parentState)
+    : QGCState(QStringLiteral("WatchForMavlinkMessageState"), parentState)
     , _messageId(messageId)
+    , _processor(processor)
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
 {
     connect(this, &QState::entered, this, &WatchForMavlinkMessageState::_onEntered);
@@ -47,7 +49,7 @@ void WatchForMavlinkMessageState::_messageReceived(const mavlink_message_t &mess
     qCDebug(QGCStateMachineLog) << "Received expected message id" << _messageId << stateName();
     _timeoutTimer.start();
     
-    if (!_processor(message)) {
+    if (!_processor(this, message)) {
         qCDebug(QGCStateMachineLog) << "Stopping further processing of message id" << _messageId << stateName();
         emit advance();
     }

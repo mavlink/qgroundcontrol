@@ -30,7 +30,10 @@ class QGCStateMachine : public QStateMachine
 {
     Q_OBJECT
 public:
-    QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent = nullptr);
+    /// @param machineName Name of the state machine, for logging
+    /// @param vehicle Vehicle associated with this state machine, can be nullptr
+    /// @param parentState Parent state for the state machine, if nullptr the object will be automatically deleted when finished
+    QGCStateMachine(const QString& machineName, Vehicle* vehicle, QState* parentState);
 
     Vehicle *vehicle() const { return _vehicle; }
     QString machineName() const { return objectName(); }
