@@ -74,6 +74,8 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     if (shouldFail) {
         // This should be a failed run
 
+        setExpectedMessageBox(QMessageBox::Ok);
+
         // Wait for write sequence to complete. We should get:
         //      inProgressChanged(false) signal
         //      error(errorCode, QString) signal
@@ -88,6 +90,8 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         QList<QVariant> signalArgs = spy->takeFirst();
         QCOMPARE(signalArgs.count(), 2);
         qCDebug(UnitTestLog) << signalArgs[1].toString();
+
+        checkExpectedMessageBox();
     } else {
         // This should be clean run
 
@@ -133,6 +137,8 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     if (shouldFail) {
         // This should be a failed run
 
+        setExpectedMessageBox(QMessageBox::Ok);
+
         // Wait for read sequence to complete. We should get:
         //      inProgressChanged(false) signal to signal completion
         //      error(errorCode, QString) signal
@@ -148,6 +154,8 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         QList<QVariant> signalArgs = spy->takeFirst();
         QCOMPARE(signalArgs.count(), 2);
         qCDebug(UnitTestLog) << signalArgs[1].toString();
+
+        checkExpectedMessageBox();
     } else {
         // This should be clean run
 

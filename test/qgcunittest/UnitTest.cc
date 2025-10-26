@@ -24,10 +24,15 @@
 
 QGC_LOGGING_CATEGORY(UnitTestLog, "API.UnitTest")
 
+bool UnitTest::_messageBoxRespondedTo = false;
+bool UnitTest::_badResponseButton = false;
+QMessageBox::StandardButton UnitTest::_messageBoxResponseButton = QMessageBox::NoButton;
+int UnitTest::_missedMessageBoxCount = 0;
+
 UnitTest::UnitTest(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(UnitTestLog) << Q_FUNC_INFO << this;
+    qCDebug(UnitTestLog) << this;
 }
 
 UnitTest::~UnitTest()
@@ -38,7 +43,7 @@ UnitTest::~UnitTest()
         Q_ASSERT(_cleanupCalled);
     }
 
-    // qCDebug(UnitTestLog) << Q_FUNC_INFO << this;
+    qCDebug(UnitTestLog) << this;
 }
 
 void UnitTest::_addTest(UnitTest *test)
@@ -86,6 +91,13 @@ void UnitTest::init()
     appSettings->offlineEditingFirmwareClass()->setRawValue(appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
     appSettings->offlineEditingVehicleClass()->setRawValue(appSettings->offlineEditingVehicleClass()->rawDefaultValue());
 
+    _messageBoxRespondedTo = false;
+    _missedMessageBoxCount = 0;
+    _badResponseButton = false;
+    _messageBoxResponseButton = QMessageBox::NoButton;
+
+    _expectMissedMessageBox = false;
+
     MAVLinkProtocol::deleteTempLogFiles();
 }
 
@@ -94,6 +106,12 @@ void UnitTest::cleanup()
     _cleanupCalled = true;
 
     _disconnectMockLink();
+
+    // Keep in mind that any code below these QCOMPARE may be skipped if the compare fails
+    if (_expectMissedMessageBox) {
+        QEXPECT_FAIL("", "Expecting failure due internal testing", Continue);
+    }
+    QCOMPARE(_missedMessageBoxCount, 0);
 
     // Don't let any lingering signals or events cross to the next unit test.
     // If you have a failure whose stack trace points to this then
@@ -242,4 +260,79 @@ bool UnitTest::fuzzyCompareLatLon(const QGeoCoordinate &coord1, const QGeoCoordi
 QGeoCoordinate UnitTest::changeCoordinateValue(const QGeoCoordinate &coordinate)
 {
     return coordinate.atDistanceAndAzimuth(1, 0);
+}
+
+void UnitTest::setExpectedMessageBox(QMessageBox::StandardButton response)
+{
+    // This means that there was an expected message box but no call to checkExpectedMessageBox
+    Q_ASSERT(!_messageBoxRespondedTo);
+
+    Q_ASSERT(response != QMessageBox::NoButton);
+    Q_ASSERT(_messageBoxResponseButton == QMessageBox::NoButton);
+
+    // Make sure we haven't missed any previous message boxes
+    int missedMessageBoxCount = _missedMessageBoxCount;
+    _missedMessageBoxCount = 0;
+    QCOMPARE(missedMessageBoxCount, 0);
+
+    _messageBoxResponseButton = response;
+}
+
+void UnitTest::checkExpectedMessageBox(int expectFailFlags)
+{
+    // Previous call to setExpectedMessageBox should have already checked this
+    Q_ASSERT(_missedMessageBoxCount == 0);
+
+    // Check for a valid response
+
+    if (expectFailFlags & expectFailBadResponseButton) {
+        QEXPECT_FAIL("", "Expecting failure due to bad button response", Continue);
+    }
+    QCOMPARE(_badResponseButton, false);
+
+    if (expectFailFlags & expectFailNoDialog) {
+        QEXPECT_FAIL("", "Expecting failure due to no message box", Continue);
+    }
+
+    // Clear this flag before QCOMPARE since anything after QCOMPARE will be skipped on failure
+
+    bool messageBoxRespondedTo = _messageBoxRespondedTo;
+    _messageBoxRespondedTo = false;
+
+    QCOMPARE(messageBoxRespondedTo, true);
+}
+
+void UnitTest::checkMultipleExpectedMessageBox(int messageCount)
+{
+    int missedMessageBoxCount = _missedMessageBoxCount;
+    _missedMessageBoxCount = 0;
+    QCOMPARE(missedMessageBoxCount, messageCount);
+}
+
+QMessageBox::StandardButton UnitTest::_messageBox(QMessageBox::Icon icon, const QString& title, const QString& text, QMessageBox::StandardButtons buttons, QMessageBox::StandardButton defaultButton)
+{
+    QMessageBox::StandardButton retButton;
+
+    Q_UNUSED(icon);
+    Q_UNUSED(title);
+    Q_UNUSED(text);
+
+    if (_messageBoxResponseButton == QMessageBox::NoButton) {
+        // If no response button is set it means we were not expecting this message box. Response with default
+        _missedMessageBoxCount++;
+        retButton = defaultButton;
+    } else {
+        if (_messageBoxResponseButton & buttons) {
+            // Everything is correct, use the specified response
+            retButton = _messageBoxResponseButton;
+        } else {
+            // Trying to respond with a button not in the dialog. This is an error. Respond with default
+            _badResponseButton = true;
+            retButton = defaultButton;
+        }
+        _messageBoxRespondedTo = true;
+        _messageBoxResponseButton = QMessageBox::NoButton;
+    }
+
+    return retButton;
 }

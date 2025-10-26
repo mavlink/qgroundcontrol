@@ -218,11 +218,17 @@ void QGCMapPolygonTest::_testKMLLoad(void)
 {
     QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonGood.kml")));
 
+    setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
+    checkExpectedMessageBox();
 
+    setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
+    checkExpectedMessageBox();
 
+    setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
+    checkExpectedMessageBox();
 }
 
 void QGCMapPolygonTest::_testSelectVertex(void)

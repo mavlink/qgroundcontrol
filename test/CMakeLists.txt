@@ -23,8 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # Test Dependencies
 # ----------------------------------------------------------------------------
-find_package(Qt6 REQUIRED COMPONENTS Test)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
+find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test Qt6::Widgets)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

@@ -14,6 +14,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtWidgets/QMessageBox>
 #include <QtPositioning/QGeoCoordinate>
 
 #define UT_REGISTER_TEST(className) static UnitTestWrapper<className> className(#className, false);
@@ -21,6 +22,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(UnitTestLog)
 
+class QGCMessageBox;
 class Vehicle;
 class Fact;
 class LinkInterface;
@@ -37,6 +39,23 @@ public:
     /// @brief Called to run all the registered unit tests
     ///     @param singleTest Name of test to just run a single test
     static int run(QStringView singleTest);
+
+    /// @brief Sets up for an expected QGCMessageBox
+    ///     @param response Response to take on message box
+    void setExpectedMessageBox(QMessageBox::StandardButton response);
+
+    enum {
+        expectFailNoFailure =           1 << 0, ///< not expecting any failures
+        expectFailNoDialog =            1 << 1, ///< expecting a failure due to no dialog displayed
+        expectFailBadResponseButton =   1 << 2, ///< expecting a failure due to bad button response (QGCMessageBox only)
+    };
+
+    /// @brief Check whether a message box was displayed and correctly responded to
+    //          @param Expected failure response flags
+    void checkExpectedMessageBox(int expectFailFlags = expectFailNoFailure);
+
+    /// Checks that the specified number of message boxes where shown. Do not call setExpectedMessageBox when using this method.
+    void checkMultipleExpectedMessageBox(int messageCount);
 
     bool standalone() const { return _standalone; }
     void setStandalone(bool standalone) { _standalone = standalone; }
@@ -79,14 +98,34 @@ protected:
     MockLink *_mockLink = nullptr;
     Vehicle *_vehicle = nullptr;
 
+    bool _expectMissedMessageBox = false;   // true: expect a missed message box, used for internal testing
+
 private slots:
     void _linkDeleted(const LinkInterface *link);
 
 private:
+    // When the app is running in unit test mode the QGCMessageBox methods are re-routed here.
+
+    static QMessageBox::StandardButton _messageBox(QMessageBox::Icon icon,
+                                                   const QString& title,
+                                                   const QString& text,
+                                                   QMessageBox::StandardButtons buttons,
+                                                   QMessageBox::StandardButton defaultButton);
+
+    // This allows the private call to _messageBox
+    friend class QGCMessageBox;
+    friend class QGCApplication;
+
     void _unitTestCalled() { _unitTestRun = true; }
 
     /// @brief Returns the list of unit tests.
     static QList<UnitTest*> &_testList();
+
+    // Catch QGCMessageBox calls
+    static bool                         _messageBoxRespondedTo;     ///< Message box was responded to
+    static bool                         _badResponseButton;         ///< Attempt to repond to expected message box with button not being displayed
+    static QMessageBox::StandardButton  _messageBoxResponseButton;  ///< Response to next message box
+    static int                          _missedMessageBoxCount;     ///< Count of message box not checked with call to messageBoxWasDisplayed
 
     bool _unitTestRun = false;      ///< true: Unit Test was run
     bool _initCalled = false;       ///< true: UnitTest::_init was called

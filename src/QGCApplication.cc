@@ -48,6 +48,10 @@
 #include "VehicleComponent.h"
 #include "VideoManager.h"
 
+#ifdef QGC_UNITTEST_BUILD
+    #include "UnitTest.h"
+#endif
+
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
@@ -407,6 +411,10 @@ void QGCApplication::showAppMessage(const QString &message, const QString &title
         // Unit tests can run without UI
         // We don't use a logging category to make it easier to debug unit tests
         qDebug() << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
+#ifdef QGC_UNITTEST_BUILD
+        // Trigger the unit test message box infrastructure
+        UnitTest::_messageBox(QMessageBox::Information, dialogTitle, message, QMessageBox::Ok, QMessageBox::Ok);
+#endif
     } else {
         // UI isn't ready yet
         _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));
