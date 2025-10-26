@@ -19,19 +19,19 @@
 
 class Vehicle;
 
-/// Waits for the specified MAVLink message from the vehicle
+/// Allows for processing on all mavlink messages with the specified message id
 ///     signals timeout() - if the message is not received within the specified timeout period
-class WaitForMavlinkMessageState : public QGCState
+class WatchForMavlinkMessageState : public QGCState
 {
     Q_OBJECT
 
 public:
-    using Predicate = std::function<bool(const mavlink_message_t &message)>;
+    /// @return true: continue processing, false: stop processing further messages
+    using MessageProcessor = std::function<bool(const mavlink_message_t &message)>;
 
     /// @param messageId MAVLink message ID to wait for
-    /// @param timeoutMsecs Timeout in milliseconds to wait for message, 0 to wait forever
-    /// @param predicate Optional predicate which further filters received messages
-    WaitForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, Predicate predicate = Predicate());
+    /// @param timeoutMsecs Timeout in milliseconds to wait for message, 0 to watch forever
+    WatchForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, MessageProcessor processor);
 
 signals:
     void timeout();
@@ -44,7 +44,7 @@ private slots:
 
 private:
     uint32_t _messageId = 0U;
-    Predicate _predicate;
+    MessageProcessor _processor;
     int _timeoutMsecs = 0;
     QTimer _timeoutTimer;
 };

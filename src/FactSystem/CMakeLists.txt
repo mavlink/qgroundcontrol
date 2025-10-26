@@ -17,10 +17,20 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactMetaData.h
         FactValueSliderListModel.cc
         FactValueSliderListModel.h
+        ParamHashCheckStateMachine.cc
+        ParamHashCheckStateMachine.h
+        ParamRequestListStateMachine.cc
+        ParamRequestListStateMachine.h
+        ParamRequestListPhase1StateMachine.cc
+        ParamRequestListPhase1StateMachine.h
+        ParamRequestListPhase2StateMachine.cc
+        ParamRequestListPhase2StateMachine.h
         ParameterManager.cc
         ParameterManager.h
         SettingsFact.cc
         SettingsFact.h
+        WaitForHashCheckParamValueState.cc
+        WaitForHashCheckParamValueState.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

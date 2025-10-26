@@ -19,22 +19,20 @@
 
 class Vehicle;
 
-/// Waits for the specified MAVLink message from the vehicle
-///     signals timeout() - if the message is not received within the specified timeout period
-class WaitForMavlinkMessageState : public QGCState
+/// Waits for the _HASH_CHECK to come through as a PARAM_VALUE message
+///     signals notFound() - parameter hashing is not in effect
+class WaitForHashCheckParamValue : public QGCState
 {
     Q_OBJECT
 
 public:
-    using Predicate = std::function<bool(const mavlink_message_t &message)>;
-
-    /// @param messageId MAVLink message ID to wait for
-    /// @param timeoutMsecs Timeout in milliseconds to wait for message, 0 to wait forever
-    /// @param predicate Optional predicate which further filters received messages
-    WaitForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, Predicate predicate = Predicate());
+    /// @param timeoutMsecs Timeout in milliseconds to wait for _HASH_CHECK, 0 to wait forever
+    WaitForHashCheckParamValue(QState *parent, int timeoutMsecs);
 
 signals:
-    void timeout();
+    /// Signal emitted if either _HASH_CHECK is not received as the first PARAM_VALUE or no PARAM_VALUE
+    /// messages are received within the specified timeout period
+    void notFound();    
 
 private slots:
     void _onEntered();
@@ -44,7 +42,6 @@ private slots:
 
 private:
     uint32_t _messageId = 0U;
-    Predicate _predicate;
     int _timeoutMsecs = 0;
     QTimer _timeoutTimer;
 };
