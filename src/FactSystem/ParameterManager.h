@@ -97,6 +97,7 @@ public:
     bool pendingWrites() const;
 
     Vehicle *vehicle();
+    QString vehicleIdAndComponentString(int componentId) const;
 
     static MAV_PARAM_TYPE factTypeToMavType(FactMetaData::ValueType_t factType);
     static FactMetaData::ValueType_t mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -160,7 +161,6 @@ private:
     bool _parseParamFile(const QString &filename);
     void _incrementPendingWriteCount();
     void _decrementPendingWriteCount();
-    QString _vehicleAndComponentString(int componentId) const;
 
     static QVariant _stringToTypedVariant(const QString &string, FactMetaData::ValueType_t type, bool failOk = false);
 

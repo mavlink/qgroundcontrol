@@ -24,6 +24,7 @@ public:
     ParamRequestListStateMachine(Vehicle* vehicle, uint8_t componentId);
 
 signals:
+    void receivingParameters();
     void allParamsReceived();
     void parametersMissing(MissingParamIndicesMap missingParams);
 
@@ -31,6 +32,7 @@ private:
     void _setupStateGraph();
     QGCState* _createParallelState();
     QGCState* _createWatchForAllParamsState(QState* parentState);
+    QGCState* _createRequestMissingParamsState(QState* parentState);
 
     uint8_t _componentID;                           ///< Component id for which we are requesting parameters
     QMap<int, int> _paramCountMap;                  ///< Key: Component id, Value: Total number ofparameters in this component

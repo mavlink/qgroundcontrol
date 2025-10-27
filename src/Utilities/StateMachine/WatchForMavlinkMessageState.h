@@ -20,7 +20,7 @@
 class Vehicle;
 
 /// Allows for processing on all mavlink messages with the specified message id
-///     signals timeout() - if the message is not received within the specified timeout period
+///     signals timeout() - Message was not received within timeout period. Does not finish state.
 class WatchForMavlinkMessageState : public QGCState
 {
     Q_OBJECT

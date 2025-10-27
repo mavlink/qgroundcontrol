@@ -21,6 +21,23 @@ ParamRequestListStateMachine::ParamRequestListStateMachine(Vehicle* vehicle, uin
 
 void ParamRequestListStateMachine::_setupStateGraph()
 {
+    // Send PARAM_REQUEST_LIST - 2 retries after initial attempt
+    // Parallel states
+    //      1: Watch PARAM_VALUE, marking seen param indices
+    //          Signal: allParamsReceived - all parameters received from all components
+    //          Signal: receivedParamValue - each time a PARAM_VALUE is received
+    //      2: Main request list handling:
+    //          Wait for one PARAM_VALUE - If _HASH_CHECK is the first PARAM_VALUE try cache loading
+    //              Signals: timeout - no PARAM_VALUE received within timeout period
+    //          Wait for initial stream of PARAM_VALUEs to finish
+    //              Transition on 1.timeout: Continue
+    //          Request missing parameter indices
+    //              Signals: allMissingParamsRequested - all missing params have been requested
+    //      Transition on 1.allParamsReceived: Param request list complete
+    //      Transition on 2.allMissingParamsRequested: Param request list complete
+    // Param request list complete
+    // Final state
+
     _paramCountMap.clear();
     _missingParamIndicesMap.clear();
 

@@ -19,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactValueSliderListModel.h
         ParamHashCheckStateMachine.cc
         ParamHashCheckStateMachine.h
+        ParamRequestReadStateMachine.cc
+        ParamRequestReadStateMachine.h
         ParamRequestListStateMachine.cc
         ParamRequestListStateMachine.h
         ParameterManager.cc
