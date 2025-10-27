@@ -39,7 +39,7 @@ jobs:
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: qgc_docs_build
           path: docs/.vitepress/dist/
