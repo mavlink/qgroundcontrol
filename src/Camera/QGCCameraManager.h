@@ -67,6 +67,9 @@ public:
         Vehicle*    vehicle         = nullptr;
     };
 
+    int zoomValueCurrent = 0;
+    int currentZoomLevel() const;
+
 signals:
     void    camerasChanged          ();
     void    cameraLabelsChanged     ();

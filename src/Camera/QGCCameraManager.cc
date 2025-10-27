@@ -329,6 +329,9 @@ QGCCameraManager::_handleCameraSettings(const mavlink_message_t& message)
         mavlink_camera_settings_t settings;
         mavlink_msg_camera_settings_decode(&message, &settings);
         pCamera->handleSettings(settings);
+
+        double newZoom = static_cast<double>(settings.zoomLevel);
+        zoomValueCurrent = newZoom;
     }
 }
 
@@ -525,6 +528,9 @@ QGCCameraManager::_stepZoom(int direction)
     }
 }
 
+int QGCCameraManager::currentZoomLevel() const {
+    return zoomValueCurrent;
+}
 //-----------------------------------------------------------------------------
 void
 QGCCameraManager::_startZoom(int direction)

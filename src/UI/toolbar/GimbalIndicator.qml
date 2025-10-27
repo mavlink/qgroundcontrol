@@ -297,6 +297,35 @@ Item {
                     }
 
                     QGCLabel {
+                        text:               qsTr("Max speed (min zoom):")
+                        visible:            true
+                    }
+
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMaxSpeed
+                        visible:            true //enableOnScreenControlCheckbox.checked && QGroundControl.settingsManager.gimbalControllerSettings.ControlType.rawValue === 0
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Min speed (max zoom):")
+                        visible:            true
+                    }
+
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMinSpeed
+                        visible:            true //enableOnScreenControlCheckbox.checked && QGroundControl.settingsManager.gimbalControllerSettings.ControlType.rawValue === 
+                    }
+
+                    // Separator
+                    Rectangle {
+                        Layout.columnSpan:       2
+                        Layout.preferredHeight:  2
+                        Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
+                        Layout.margins:          margins
+                        color:                   qgcPal.windowShade
+                    }
+
+                    QGCLabel {
                         text:               qsTr("Joystick buttons speed:")
                         visible:            joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
                     }
