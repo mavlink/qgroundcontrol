@@ -19,7 +19,7 @@ DelayState::DelayState(QState* parentState, int delayMsecs)
 
     connect(this, &QState::entered, this, [this, delayMsecs] () 
         { 
-            qCDebug(QGCStateMachineLog) << QStringLiteral("Starting delay for %1 secs").arg(delayMsecs / 1000.0) << " - " << Q_FUNC_INFO;
+            qCDebug(QGCStateMachineLog) << stateName() << QStringLiteral("Starting delay for %1 secs").arg(delayMsecs / 1000.0) << " - " << Q_FUNC_INFO;
             _delayTimer.start();
         });
 

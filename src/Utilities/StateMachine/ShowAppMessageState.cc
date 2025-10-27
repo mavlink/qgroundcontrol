@@ -15,7 +15,7 @@ ShowAppMessageState::ShowAppMessageState(QState* parentState, const QString& app
     , _appMessage(appMessage)
 {
     connect(this, &QState::entered, this, [this] () {
-        qCDebug(QGCStateMachineLog) << _appMessage;
+        qCDebug(QGCStateMachineLog) << _appMessage << stateName();
         qgcApp()->showAppMessage(_appMessage);
         emit advance();
     });

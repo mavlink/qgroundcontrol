@@ -53,7 +53,7 @@ void WaitForMavlinkMessageState::_messageReceived(const mavlink_message_t &messa
         return;
     }
 
-    qCDebug(QGCStateMachineLog) << stateName() << "received expected message id" << _messageId;
+    qCDebug(QGCStateMachineLog) << "Received expected message id" << _messageId << stateName();
 
     disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForMavlinkMessageState::_messageReceived);
     _timeoutTimer.stop();
@@ -63,7 +63,7 @@ void WaitForMavlinkMessageState::_messageReceived(const mavlink_message_t &messa
 
 void WaitForMavlinkMessageState::_onTimeout()
 {
-    qCDebug(QGCStateMachineLog) << stateName() << "timeout waiting for message id" << _messageId;
+    qCDebug(QGCStateMachineLog) << "Timeout waiting for message id" << _messageId << stateName();
     disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForMavlinkMessageState::_messageReceived);
 
     emit timeout();

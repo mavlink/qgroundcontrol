@@ -1022,6 +1022,17 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         return;
     }
 
+    if (_paramRequestReadFailureMode == FailParamRequestReadFirstAttemptNoResponse && _paramRequestReadFailureFirstAttemptPending) {
+        qCDebug(MockLinkLog) << "Param request read failure: first attempt no response" << paramId;
+        _paramRequestReadFailureFirstAttemptPending = false;
+        return;
+    }
+
+    if (_paramRequestReadFailureMode == FailParamRequestReadNoResponse) {
+        qCDebug(MockLinkLog) << "Param request read failure: no response" << paramId;
+        return;
+    }
+
     (void) mavlink_msg_param_value_pack_chan(
         _vehicleSystemId,
         componentId,                                               // component id

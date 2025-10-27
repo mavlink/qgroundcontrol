@@ -102,6 +102,16 @@ public:
         _paramSetFailureFirstAttemptPending = (mode == FailParamSetFirstAttemptNoAck);
     }
 
+    enum ParamRequestReadFailureMode_t {
+        FailParamRequestReadNone,               ///< Normal behavior
+        FailParamRequestReadNoResponse,         ///< Do not respond to PARAM_REQUEST_READ
+        FailParamRequestReadFirstAttemptNoResponse, ///< Skip response on first attempt, respond to retry
+    };
+    void setParamRequestReadFailureMode(ParamRequestReadFailureMode_t mode) {
+        _paramRequestReadFailureMode = mode;
+        _paramRequestReadFailureFirstAttemptPending = (mode == FailParamRequestReadFirstAttemptNoResponse);
+    }
+
     static MockLink *startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startNoInitialConnectMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -276,6 +286,8 @@ private:
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
     ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
     bool _paramSetFailureFirstAttemptPending = false;
+    ParamRequestReadFailureMode_t _paramRequestReadFailureMode = FailParamRequestReadNone;
+    bool _paramRequestReadFailureFirstAttemptPending = false;
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<int, QMap<QString, QVariant>> _mapParamName2Value;

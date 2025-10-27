@@ -146,6 +146,74 @@ void ParameterManagerTest::_paramWriteNoAckPermanent(void)
     _setParamWithFailureMode(MockLink::FailParamSetNoAck, false /* expectSuccess */);
 }
 
+void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry(void)
+{
+    Q_ASSERT(!_mockLink);
+
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+
+    ParameterManager *const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadFirstAttemptNoResponse);
+
+    Fact *const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
+    QVERIFY(fact);
+
+    QSignalSpy vehicleUpdatedSpy(fact, &Fact::vehicleUpdated);
+    QSignalSpy paramReadSuccessSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+
+    QVERIFY(vehicleUpdatedSpy.isValid());
+    QVERIFY(paramReadSuccessSpy.isValid());
+
+    paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name());
+
+    const int maxWaitTimeMs = ParameterManager::kWaitForParamValueAckMs * (ParameterManager::kParamRequestReadRetryCount + 1) + 500;
+
+    QVERIFY(paramReadSuccessSpy.wait(maxWaitTimeMs));
+    QCOMPARE(paramReadSuccessSpy.count(), 1);
+
+    QCOMPARE(vehicleUpdatedSpy.count(), 1);
+
+    _disconnectMockLink();
+}
+
+void ParameterManagerTest::_paramReadNoResponse(void)
+{
+    Q_ASSERT(!_mockLink);
+
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+
+    ParameterManager *const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    Fact *const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
+    QVERIFY(fact);
+
+    QSignalSpy vehicleUpdatedSpy(fact, &Fact::vehicleUpdated);
+    QSignalSpy paramReadFailureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+
+    QVERIFY(vehicleUpdatedSpy.isValid());
+    QVERIFY(paramReadFailureSpy.isValid());
+
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNoResponse);
+
+    paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name());
+
+    const int maxWaitTimeMs = ParameterManager::kWaitForParamValueAckMs * (ParameterManager::kParamRequestReadRetryCount + 1) + 500;
+
+    QVERIFY(paramReadFailureSpy.wait(maxWaitTimeMs));
+    QCOMPARE(paramReadFailureSpy.count(), 1);
+
+    QCOMPARE(vehicleUpdatedSpy.count(), 0);
+
+    _disconnectMockLink();
+}
+
 void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess)
 {
     Q_ASSERT(!_mockLink);
@@ -201,6 +269,10 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
 
     QSignalSpy pendingSpy(paramManager, &ParameterManager::pendingWritesChanged);
     QVERIFY(pendingSpy.isValid());
+    QSignalSpy paramSetSuccessSpy(paramManager, &ParameterManager::_paramSetSuccess);
+    QVERIFY(paramSetSuccessSpy.isValid());
+    QSignalSpy paramSetFailureSpy(paramManager, &ParameterManager::_paramSetFailure);
+    QVERIFY(paramSetFailureSpy.isValid());
 
     fact->setRawValue(newValue);
 
@@ -233,11 +305,15 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
     // We should get one rawValueChanged signal if successful (just the set)
 
     bool rawValueChangedCountMatches = false;
-    rawValueChangedSpy.wait(ParameterManager::kParamSetWaitForParamValueAckMs * ParameterManager::kParamSetRetryCount + 500);
+    rawValueChangedSpy.wait(ParameterManager::kWaitForParamValueAckMs * ParameterManager::kParamSetRetryCount + 500);
     if (expectSuccess) {
         QCOMPARE(rawValueChangedSpy.count(), 1);
+        QCOMPARE(paramSetSuccessSpy.count(), 1);
+        QCOMPARE(paramSetFailureSpy.count(), 0);
     } else {
         QVERIFY(rawValueChangedSpy.count() == 1 || rawValueChangedSpy.count() == 2);
+        QCOMPARE(paramSetSuccessSpy.count(), 0);
+        QCOMPARE(paramSetFailureSpy.count(), 1);
     }
 
     // The first signal is the change we made, so we start checking from there
