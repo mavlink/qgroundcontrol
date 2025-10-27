@@ -479,9 +479,10 @@ bool initialize()
             gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
         }
         gst_debug_set_default_threshold(static_cast<GstDebugLevel>(gstDebugLevel));
-        gst_debug_remove_log_function(gst_debug_log_default);
-        gst_debug_add_log_function(_qtGstLog, nullptr, nullptr);
     }
+
+    gst_debug_remove_log_function(gst_debug_log_default);
+    gst_debug_add_log_function(_qtGstLog, nullptr, nullptr);
 
     const QStringList args = QCoreApplication::arguments();
     int gstArgc = args.size();
