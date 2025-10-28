@@ -47,6 +47,7 @@ void WatchForMavlinkMessageState::_messageReceived(const mavlink_message_t &mess
     }
 
     qCDebug(QGCStateMachineLog) << "Received expected message id" << _messageId << stateName();
+    _firstMessageReceived = true;
     _timeoutTimer.start();
     
     if (!_processor(this, message)) {
@@ -58,5 +59,9 @@ void WatchForMavlinkMessageState::_messageReceived(const mavlink_message_t &mess
 void WatchForMavlinkMessageState::_onTimeout()
 {
     qCDebug(QGCStateMachineLog) << "Timeout waiting for message id" << _messageId << stateName();
-    emit timeout();
+    if (_firstMessageReceived) {
+        emit timeoutAfterFirstMessageReceived();
+    } else {
+        emit timeoutBeforeFirstMessageReceived();
+    }
 }

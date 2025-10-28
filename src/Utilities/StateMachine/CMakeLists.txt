@@ -6,6 +6,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCFinalState.cc
         QGCFinalState.h
+        QGCParallelState.cc
+        QGCParallelState.h
         QGCState.cc
         QGCState.h
         QGCStateMachine.cc

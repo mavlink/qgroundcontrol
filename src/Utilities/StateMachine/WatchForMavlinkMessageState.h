@@ -20,7 +20,8 @@
 class Vehicle;
 
 /// Allows for processing on all mavlink messages with the specified message id
-///     signals timeout() - Message was not received within timeout period. Does not finish state.
+///     signals timeoutBeforeFirstMessageReceived() - Message was not received within timeout period. Does not finish state.
+///     signals timeoutAfterFirstMessageReceived() - No messages received within timeout period after at least one message has been received. Does not finish state.
 class WatchForMavlinkMessageState : public QGCState
 {
     Q_OBJECT
@@ -34,7 +35,8 @@ public:
     WatchForMavlinkMessageState(uint32_t messageId, int timeoutMsecs, MessageProcessor processor, QState *parentState);
 
 signals:
-    void timeout();
+    void timeoutBeforeFirstMessageReceived();
+    void timeoutAfterFirstMessageReceived();
 
 private slots:
     void _onEntered();
@@ -47,4 +49,5 @@ private:
     MessageProcessor _processor;
     int _timeoutMsecs = 0;
     QTimer _timeoutTimer;
+    bool _firstMessageReceived = false;
 };
