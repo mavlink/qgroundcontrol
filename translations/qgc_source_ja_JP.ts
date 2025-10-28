@@ -8356,7 +8356,7 @@ OKをクリックして、自動調整プロセスを開始します。</transla
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickConfig.qml" line="83"/>
       <source>Button Assignment</source>
-      <translation>ボタンの割り当て</translation>
+      <translation type="unfinished">Button Assignment</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickConfig.qml" line="86"/>
