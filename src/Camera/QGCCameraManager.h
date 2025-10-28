@@ -70,6 +70,13 @@ public:
     int zoomValueCurrent = 0;
     int currentZoomLevel() const;
 
+    double aspectForComp(int compId) const;
+    double currentCameraAspect() const;
+    Q_INVOKABLE void requestCameraFovForComp(int compId);
+
+private:
+    QHash<int, double> _aspectByCompId;
+
 signals:
     void    camerasChanged          ();
     void    cameraLabelsChanged     ();
@@ -96,6 +103,7 @@ protected:
     virtual void    _requestCameraInfo      (CameraStruct* cameraInfo);
     virtual void    _handleHeartbeat        (const mavlink_message_t& message);
     virtual void    _handleCameraInfo       (const mavlink_message_t& message);
+    virtual void    _handleCameraFovStatus       (const mavlink_message_t& message);
     virtual void    _handleStorageInfo      (const mavlink_message_t& message);
     virtual void    _handleCameraSettings   (const mavlink_message_t& message);
     virtual void    _handleParamAck         (const mavlink_message_t& message);

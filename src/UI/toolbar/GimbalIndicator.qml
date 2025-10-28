@@ -303,7 +303,7 @@ Item {
 
                     FactTextField {
                         fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMaxSpeed
-                        visible:            true //enableOnScreenControlCheckbox.checked && QGroundControl.settingsManager.gimbalControllerSettings.ControlType.rawValue === 0
+                        visible:            true
                     }
 
                     QGCLabel {
@@ -313,7 +313,7 @@ Item {
 
                     FactTextField {
                         fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMinSpeed
-                        visible:            true //enableOnScreenControlCheckbox.checked && QGroundControl.settingsManager.gimbalControllerSettings.ControlType.rawValue === 
+                        visible:            true
                     }
 
                     // Separator
