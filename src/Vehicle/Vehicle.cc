@@ -2001,7 +2001,6 @@ QString Vehicle::vehicleClassInternalName() const
     return QGCMAVLink::vehicleClassToInternalString(vehicleClass());
 }
 
-//dev
 void Vehicle::setfactVehicleLight(int index)
 {
     _factVehicleLight = index;
@@ -2055,7 +2054,6 @@ void Vehicle::gnssDenied()
     qDebug()<<_gnssDeniedState;
     qDebug()<<"comp id: "<<defaultComponentId();
 }
-// dev end
 
 /// Returns the string to speak to identify the vehicle
 QString Vehicle::_vehicleIdSpeech()

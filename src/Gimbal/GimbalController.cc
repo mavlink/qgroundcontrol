@@ -15,9 +15,9 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include <cmath> // dev
-#include "Gimbal.h" // dev
-#include "QGCCameraManager.h" // dev
+#include <cmath> 
+#include "Gimbal.h" 
+#include "QGCCameraManager.h" 
 
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "qgc.gimbal.gimbalcontroller")
 
@@ -624,8 +624,8 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
     const float lo = std::min(minSpeed, maxSpeed);
     const float hi = std::max(minSpeed, maxSpeed);
 
-    const float t = static_cast<float>(zoomPct) / 100.f;   // 0..1
-    const float allowed = lo + (1.f - t) * (hi - lo);      // <-- inverted
+    const float t = static_cast<float>(zoomPct) / 100.f;
+    const float allowed = lo + (1.f - t) * (hi - lo);
 
     auto clampRate = [allowed](float r) -> float {
         const float mag = std::min(std::fabs(r), allowed);
@@ -634,12 +634,6 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
 
     const float pitch_cmd_deg_s = clampRate(pitch_rate_deg_s);
     const float yaw_cmd_deg_s   = clampRate(yaw_rate_deg_s);
-
-    qDebug() << "Zoom:" << zoomPct
-             << "min:" << lo << "max:" << hi
-             << "allowed:" << allowed
-             << "req(p,y):" << pitch_rate_deg_s << yaw_rate_deg_s
-             << "cmd(p,y):" << pitch_cmd_deg_s   << yaw_cmd_deg_s;
 
     auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -676,52 +670,6 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
 
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
-
-// void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
-//                                                 float yaw_rate_deg_s)
-// {
-
-//     // int _gimbalMaxSpeed = SettingsManager::instance()->gimbalControllerSettings()->gimbalSpeed()->rawValue().toInt();
-//     // qDebug()<<_gimbalMaxSpeed;
-
-
-//     auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-//     if (!sharedLink) {
-//         qCDebug(GimbalControllerLog) << "_sendGimbalAttitudeRates: primary link gone!";
-//         return;
-//     }
-
-//     uint32_t flags =
-//         GIMBAL_MANAGER_FLAGS_ROLL_LOCK |
-//         GIMBAL_MANAGER_FLAGS_PITCH_LOCK |
-//         GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;   // use vehicle/body frame
-
-//     // Preserve current yaw-lock state instead of changing it:
-//     if (_activeGimbal->yawLock()) {
-//         flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
-//     }
-
-//     const float qnan[4] = {NAN, NAN, NAN, NAN};
-//     mavlink_message_t msg;
-
-//     mavlink_msg_gimbal_manager_set_attitude_pack_chan(
-//         MAVLinkProtocol::instance()->getSystemId(),
-//         MAVLinkProtocol::getComponentId(),
-//         sharedLink->mavlinkChannel(),
-//         &msg,
-//         _vehicle->id(),
-//         static_cast<uint8_t>(_activeGimbal->managerCompid()->rawValue().toUInt()),
-//         flags,
-//         static_cast<uint8_t>(_activeGimbal->deviceId()->rawValue().toUInt()),
-//         qnan,
-//         0,
-//         qDegreesToRadians(pitch_rate_deg_s),
-//         qDegreesToRadians(yaw_rate_deg_s)
-//     );
-
-//     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
-// }
-// dev end
 
 void GimbalController::_rateSenderTimeout()
 {

@@ -98,11 +98,9 @@ Rectangle {
         }
     }
 
-    //dev
     function sendRequest() {
         QGroundControl.multiVehicleManager.activeVehicle.lightSettings()
     }
-    //dev end
 
     Component.onCompleted: _showSummaryPanel()
 

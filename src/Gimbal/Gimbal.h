@@ -96,7 +96,7 @@ private:
     Fact _absoluteYawFact = Fact(0, QStringLiteral("gimbalAzimuth"), FactMetaData::valueTypeFloat);
     Fact _deviceIdFact = Fact(0, QStringLiteral("deviceId"), FactMetaData::valueTypeUint8); ///< Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
     Fact _managerCompidFact = Fact(0, QStringLiteral("managerCompid"), FactMetaData::valueTypeUint8);
-    Fact _gimbalMaxSpeedFact = Fact(0, QStringLiteral("gimbalMaxSpeed"), FactMetaData::valueTypeUint8); // dev
+    Fact _gimbalMaxSpeedFact = Fact(0, QStringLiteral("gimbalMaxSpeed"), FactMetaData::valueTypeUint8);
 
     float _pitchRate = 0.f;
     float _yawRate = 0.f;

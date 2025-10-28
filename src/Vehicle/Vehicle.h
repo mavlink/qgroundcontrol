@@ -383,7 +383,6 @@ public:
     ///     @param timeoutSec Disabled motor after this amount of time
     Q_INVOKABLE void motorTest(int motor, int percent, int timeoutSecs, bool showError);
 
-    // dev
     Q_INVOKABLE int factVehicleLight();
     Q_INVOKABLE void setfactVehicleLight(int index);
 
@@ -391,7 +390,6 @@ public:
     Q_INVOKABLE void lightSettings();
 
     Q_INVOKABLE void gnssDenied();
-    //dev end
 
     enum PIDTuningTelemetryMode {
         ModeDisabled,
@@ -1305,8 +1303,8 @@ private:
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
 
-    int _factVehicleLight = 1; //dev
-    int _gnssDeniedState = 0; //dev
+    int _factVehicleLight = 1;
+    int _gnssDeniedState = 0;
 
 public:
     int32_t getMessageRate(uint8_t compId, uint16_t msgId);

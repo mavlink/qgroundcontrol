@@ -36,7 +36,7 @@ QGC_LOGGING_CATEGORY(CameraManagerLog, "qgc.camera.qgccameramanager")
 
 QVariantList QGCCameraManager::_cameraList;
 
-//dev
+
 static void _requestFovOnZoom_Handler(
     void* user,
     MAV_RESULT result,
@@ -62,7 +62,6 @@ static void _requestFovOnZoom_Handler(
     if (auto* cam = mgr->currentCameraInstance()) {
     }
 }
-//dev end
 
 //-----------------------------------------------------------------------------
 QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_, Vehicle* vehicle_)
@@ -266,13 +265,11 @@ void QGCCameraManager::_addCameraControlToLists(MavlinkCameraControl* cameraCont
     }
 }
 
-//dev
 void QGCCameraManager::requestCameraFovForComp(int compId) {
     
     _vehicle->requestMessage(_requestFovOnZoom_Handler, /*user*/this,
                              compId, MAVLINK_MSG_ID_CAMERA_FOV_STATUS);
 }
-//dev end
 
 /// Called to check for cameras which are no longer sending a heartbeat
 void QGCCameraManager::_checkForLostCameras()
@@ -334,7 +331,6 @@ QGCCameraManager::_handleCaptureStatus(const mavlink_message_t &message)
     }
 }
 
-//dev
 //-----------------------------------------------------------------------------
 double QGCCameraManager::aspectForComp(int compId) const {
     auto it = _aspectByCompId.constFind(compId);
@@ -404,7 +400,6 @@ void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
         }
     }
 }
-//dev end
 
 void
 QGCCameraManager::_handleStorageInfo(const mavlink_message_t& message)
@@ -418,7 +413,6 @@ QGCCameraManager::_handleStorageInfo(const mavlink_message_t& message)
 }
 
 //-----------------------------------------------------------------------------
-//dev
 void QGCCameraManager::_handleCameraSettings(const mavlink_message_t& message)
 {
     auto pCamera = _findCamera(message.compid);
@@ -431,7 +425,6 @@ void QGCCameraManager::_handleCameraSettings(const mavlink_message_t& message)
         requestCameraFovForComp(message.compid);
     }
 }
-//dev end
 //-----------------------------------------------------------------------------
 void
 QGCCameraManager::_handleParamAck(const mavlink_message_t& message)

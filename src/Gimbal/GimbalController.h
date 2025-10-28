@@ -46,7 +46,7 @@ public:
     Q_INVOKABLE void releaseGimbalControl();
     Q_INVOKABLE void sendRate();
 
-    Q_INVOKABLE void sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s); // dev
+    Q_INVOKABLE void sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s);
 
 signals:
     void activeGimbalChanged();
