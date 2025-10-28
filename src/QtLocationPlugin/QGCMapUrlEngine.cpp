@@ -72,6 +72,8 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
 
     std::make_shared<OpenStreetMapProvider>(),
 
+    std::make_shared<OpenAIPMapProvider>(),
+
     std::make_shared<CustomURLMapProvider>(),
 
     std::make_shared<CopernicusElevationProvider>()
