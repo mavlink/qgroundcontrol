@@ -35,12 +35,6 @@
     "name":             "deviceId",
     "shortDesc":        "gimbal device Id",
     "type":             "uint8"
-},
-{
-    "name":             "gimbalMaxSpeed",
-    "shortDesc":        "gimbal max speed",
-    "default":            80,
-    "type":             "uint8"
 }
 ]
 }

@@ -17,6 +17,7 @@
 #include "Vehicle.h"
 #include <cmath> // dev
 #include "Gimbal.h" // dev
+#include "QGCCameraManager.h" // dev
 
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "Gimbal.GimbalController")
 

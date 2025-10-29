@@ -82,6 +82,15 @@ public:
 
     CameraStruct* findCameraStruct(uint8_t compId) const { return _cameraInfoRequest.value(QString::number(compId), nullptr); }
 
+    int zoomValueCurrent = 0;
+    int currentZoomLevel() const;
+    double aspectForComp(int compId) const;
+    double currentCameraAspect() const;
+    Q_INVOKABLE void requestCameraFovForComp(int compId);
+
+private:
+    QHash<int, double> _aspectByCompId;
+
 signals:
     void camerasChanged();
     void cameraLabelsChanged();
@@ -118,6 +127,7 @@ private:
     void _handleBatteryStatus(const mavlink_message_t& message);
     void _handleTrackingImageStatus(const mavlink_message_t& message);
     void _addCameraControlToLists(MavlinkCameraControl* cameraControl);
+    void _handleCameraFovStatus(const mavlink_message_t& message);
 
     QPointer<Vehicle> _vehicle;
     QPointer<SimulatedCameraControl> _simulatedCameraControl;
