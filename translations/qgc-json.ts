@@ -1979,6 +1979,9 @@
         <source>UAVCAN configure</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>VibrationFact.json</name>
     <message>
         <extracomment>.mavCmdInfo[MAV_CMD_PREFLIGHT_STORAGE].friendlyName, </extracomment>
         <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
@@ -2471,6 +2474,30 @@
         <extracomment>.QGC.MetaData.Facts[count].shortDesc, </extracomment>
         <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
         <source>Sat Count</source>
+        <translation type="unfinished"></translation>
+    </message>
+      <message>
+        <extracomment>.QGC.MetaData.Facts[correctionsQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>Corrections Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[systemQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>System Status Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[gnssSignalQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>Gnss Signal Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[postProcessingQuality].shortDesc, </extracomment>
+        <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
+        <source>Post Processing Quality</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
