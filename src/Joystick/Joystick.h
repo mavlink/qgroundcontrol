@@ -82,6 +82,7 @@ class Joystick : public QThread
     Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)
     Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
     Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
+    Q_PROPERTY(bool                     enableManualControlExtensions READ enableManualControlExtensions WRITE setEnableManualControlExtensions NOTIFY enableManualControlExtensionsChanged)
     Q_PROPERTY(int gimbalPitchDeadzone READ gimbalPitchDeadzone WRITE setGimbalPitchDeadzone NOTIFY gimbalPitchDeadzoneChanged)  // dev
     Q_PROPERTY(int gimbalYawDeadzone READ gimbalYawDeadzone WRITE setGimbalYawDeadzone NOTIFY gimbalYawDeadzoneChanged) // dev
     Q_PROPERTY(bool gimbalAxisEnabled READ gimbalAxisEnabled WRITE setGimbalAxisEnabled NOTIFY gimbalAxisEnabledChanged) // dev
@@ -187,6 +188,9 @@ public:
     float buttonFrequencyHz() const { return _buttonFrequencyHz; }
     /// Set joystick button repeat rate (in Hz)
     void setButtonFrequency(float val);
+
+    bool enableManualControlExtensions() const { return _enableManualControlExtensions; }
+    void setEnableManualControlExtensions(bool enable);
 
 // dev
     int gimbalPitchDeadzone() const { return _rgCalibration[5].deadband; }

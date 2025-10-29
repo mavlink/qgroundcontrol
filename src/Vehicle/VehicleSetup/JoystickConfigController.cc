@@ -79,7 +79,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
         { Joystick::gimbalPitchFunction,    msgGimbalPitch,     _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
         { Joystick::gimbalYawFunction,      msgGimbalYaw,       _sticksCentered,        &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
-        { Joystick::maxFunction, msgComplete, _sticksCentered, nullptr, &JoystickConfigController::_writeCalibration, nullptr, -1 },
+        { Joystick::maxAxisFunction, msgComplete, _sticksCentered, nullptr, &JoystickConfigController::_writeCalibration, nullptr, -1 },
     };
 
     Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
