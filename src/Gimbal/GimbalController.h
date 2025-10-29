@@ -66,6 +66,7 @@ public slots:
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _rateSenderTimeout();
+    void _stopDebounceTimeout();
 
 private:
     struct GimbalPairId {
@@ -106,6 +107,7 @@ private:
     bool _yawInVehicleFrame(uint32_t flags);
 
     QTimer _rateSenderTimer;
+    QTimer _stopDebounceTimer;
     Vehicle *_vehicle = nullptr;
     Gimbal *_activeGimbal = nullptr;
 
