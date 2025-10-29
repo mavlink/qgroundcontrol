@@ -25,6 +25,13 @@ To get the source files:
    git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
    ```
 
+:::tip
+If you have not initialized submodules before, the update command below may fail. Initialize them first with:
+```sh
+git submodule init
+```
+:::
+
 2. Update submodules (required each time you pull new source code):
 
    ```sh
