@@ -430,7 +430,11 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr &config, QObject *parent
 LogReplayLink::~LogReplayLink()
 {
     LogReplayLink::disconnect();
-
+    emit _onDisconnected();
+    if (_worker) {
+        delete _worker;
+        _worker = nullptr;
+    }
     _workerThread->quit();
     if (!_workerThread->wait()) {
         qCWarning(LogReplayLinkLog) << "Failed to wait for LogReplay Thread to close";
