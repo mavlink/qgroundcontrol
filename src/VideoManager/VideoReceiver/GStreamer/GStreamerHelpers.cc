@@ -41,6 +41,17 @@ bool is_hardware_decoder_factory(GstElementFactory *factory)
         return false;
     }
 
+    const gchar *factoryName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+    if (!factoryName) {
+        return false;
+    }
+
+    // Exclude Android software decoders (OMXGoogle / C2Android)
+    QString name = QString::fromUtf8(factoryName).toLower();
+    if (name.startsWith("amcviddec-omxgoogle") || name.startsWith("amcviddec-c2android")) {
+        return false;
+    }
+
     const auto containsHardware = [](const gchar *value) {
         return value && (g_strrstr(value, "Hardware") != nullptr || g_strrstr(value, "hardware") != nullptr);
     };
@@ -51,11 +62,6 @@ bool is_hardware_decoder_factory(GstElementFactory *factory)
 
     if (containsHardware(gst_element_factory_get_klass(factory))) {
         return true;
-    }
-
-    const gchar *factoryName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-    if (!factoryName) {
-        return false;
     }
 
     const QString nameLower = QString::fromUtf8(factoryName).toLower();
