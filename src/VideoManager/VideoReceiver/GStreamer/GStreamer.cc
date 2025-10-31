@@ -343,6 +343,29 @@ void _logDecoderRanks()
     gst_plugin_feature_list_free(decoderFactories);
 }
 
+void _lowerSoftwareDecoderRanks(GstRegistry *registry)
+{
+    static constexpr uint16_t NewRank  = GST_RANK_NONE;
+    if (!registry) {
+        qCCritical(GStreamerLog) << "Invalid registry!";
+        return;
+    }
+
+    const char* softDecoders[] = {"avdec_h264", "avdec_h265", "avdec_mjpeg", "avdec_mpeg2video", "avdec_mpeg4",
+                                  "avdec_vp8", "avdec_vp9", "dav1ddec", "vp8dec", "vp9dec"};
+
+    for (const char *name : softDecoders) {
+        GstPluginFeature *feature = gst_registry_lookup_feature(registry, name);
+        if (feature) {
+            qCDebug(GStreamerLog) << "Setting software decoder rank low:" << name << " rank:" << NewRank;
+            gst_plugin_feature_set_rank(feature, NewRank);
+            gst_object_unref(feature);
+        } else {
+            qCDebug(GStreamerLog) << "Software decoder not found:" << name;
+        }
+    }
+}
+
 void _changeFeatureRank(GstRegistry *registry, const char *featureName, uint16_t rank)
 {
     if (!registry || !featureName) {
@@ -379,7 +402,6 @@ void _prioritizeByHardwareClass(GstRegistry *registry, uint16_t prioritizedRank,
 
     qCDebug(GStreamerLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
                            << "video decoders with rank:" << prioritizedRank;
-
     int matchedFactories = 0;
     for (GList *node = decoderFactories; node != nullptr; node = node->next) {
         GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
@@ -403,6 +425,12 @@ void _prioritizeByHardwareClass(GstRegistry *registry, uint16_t prioritizedRank,
     if (matchedFactories == 0) {
         qCWarning(GStreamerLog) << "No" << (requireHardware ? "hardware" : "software")
                                << "video decoder factories found to reprioritize.";
+    }
+
+   // Lower software decoder rank when using hardware decoders
+    if(requireHardware) {
+        qCCritical(GstVideoReceiverLog) << "Set the software decoder rank low.";
+        _lowerSoftwareDecoderRanks(registry);
     }
 
     gst_plugin_feature_list_free(decoderFactories);
