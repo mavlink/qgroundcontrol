@@ -21,14 +21,14 @@
     "name":              "CameraVFov",
     "shortDesc":         "Vertical camera field of view",
     "type":              "uint32",
-    "default":           70,
+    "default":           80,
     "units":             "deg"
 },
 {
     "name":              "CameraHFov",
     "shortDesc":         "Horizontal camera field of view",
     "type":              "uint32",
-    "default":           70,
+    "default":           80,
     "units":             "deg"
 },
 {
@@ -62,6 +62,20 @@
     "longDesc":          "When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released",
     "type":              "uint32",
     "default":           20,
+    "units":             "deg/s"
+},
+{
+    "name":              "zoomMinSpeed",
+    "shortDesc":         "Maximum gimbal speed for min zoom (deg/sec)",
+    "type":              "uint32",
+    "default":           5,
+    "units":             "deg/s"
+},
+{
+    "name":              "zoomMaxSpeed",
+    "shortDesc":         "Minimum gimbal speed for max zoom (deg/sec)",
+    "type":              "uint32",
+    "default":           60,
     "units":             "deg/s"
 }
 ]
