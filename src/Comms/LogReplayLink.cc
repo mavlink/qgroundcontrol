@@ -403,7 +403,7 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr &config, QObject *parent
     , _worker(new LogReplayWorker(_logReplayConfig))
     , _workerThread(new QThread(this))
 {
-    // qCDebug(LogReplayLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(LogReplayLinkLog) << this;
 
     _workerThread->setObjectName(QStringLiteral("LogReplay_%1").arg(_logReplayConfig->name()));
 
@@ -429,14 +429,16 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr &config, QObject *parent
 
 LogReplayLink::~LogReplayLink()
 {
-    LogReplayLink::disconnect();
+    if (_worker && _worker->isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::BlockingQueuedConnection);
+    }
 
     _workerThread->quit();
     if (!_workerThread->wait()) {
         qCWarning(LogReplayLinkLog) << "Failed to wait for LogReplay Thread to close";
     }
 
-    // qCDebug(LogReplayLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(LogReplayLinkLog) << this;
 }
 
 bool LogReplayLink::_connect()
@@ -446,7 +448,9 @@ bool LogReplayLink::_connect()
 
 void LogReplayLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::QueuedConnection);
+    }
 }
 
 void LogReplayLink::_onErrorOccurred(const QString &errorString)

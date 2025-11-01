@@ -24,7 +24,7 @@ BluetoothConfiguration::BluetoothConfiguration(const QString &name, QObject *par
     : LinkConfiguration(name, parent)
     , _deviceDiscoveryAgent(new QBluetoothDeviceDiscoveryAgent(this))
 {
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 
     _initDeviceDiscoveryAgent();
 }
@@ -34,7 +34,7 @@ BluetoothConfiguration::BluetoothConfiguration(const BluetoothConfiguration *cop
     , _device(copy->device())
     , _deviceDiscoveryAgent(new QBluetoothDeviceDiscoveryAgent(this))
 {
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 
     BluetoothConfiguration::copyFrom(copy);
 
@@ -45,7 +45,7 @@ BluetoothConfiguration::~BluetoothConfiguration()
 {
     stopScan();
 
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 }
 
 void BluetoothConfiguration::_initDeviceDiscoveryAgent()
@@ -177,14 +177,14 @@ BluetoothWorker::BluetoothWorker(const BluetoothConfiguration *config, QObject *
     : QObject(parent)
     , _config(config)
 {
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 }
 
 BluetoothWorker::~BluetoothWorker()
 {
     disconnectLink();
 
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 }
 
 bool BluetoothWorker::isConnected() const
@@ -366,7 +366,7 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent
     , _worker(new BluetoothWorker(_bluetoothConfig))
     , _workerThread(new QThread(this))
 {
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 
     _checkPermission();
 
@@ -390,14 +390,16 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent
 
 BluetoothLink::~BluetoothLink()
 {
-    BluetoothLink::disconnect();
+    if (_worker && _worker->isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::BlockingQueuedConnection);
+    }
 
     _workerThread->quit();
     if (!_workerThread->wait()) {
         qCWarning(BluetoothLinkLog) << "Failed to wait for Bluetooth Thread to close";
     }
 
-    // qCDebug(BluetoothLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(BluetoothLinkLog) << this;
 }
 
 bool BluetoothLink::isConnected() const
@@ -412,7 +414,9 @@ bool BluetoothLink::_connect()
 
 void BluetoothLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::QueuedConnection);
+    }
 }
 
 void BluetoothLink::_onConnected()
