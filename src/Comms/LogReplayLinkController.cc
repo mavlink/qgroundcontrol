@@ -15,12 +15,12 @@ QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "Comms.LogReplayLinkController"
 LogReplayLinkController::LogReplayLinkController(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(LogReplayLinkControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogReplayLinkControllerLog) << this;
 }
 
 LogReplayLinkController::~LogReplayLinkController()
 {
-    // qCDebug(LogReplayLinkControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogReplayLinkControllerLog) << this;
 }
 
 void LogReplayLinkController::setLink(LogReplayLink *link)

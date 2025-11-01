@@ -277,7 +277,9 @@ TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
 TCPLink::~TCPLink()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::BlockingQueuedConnection);
+    if (_worker && _worker->isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::BlockingQueuedConnection);
+    }
 
     _workerThread->quit();
     if (!_workerThread->wait(DISCONNECT_TIMEOUT_MS)) {
@@ -299,7 +301,9 @@ bool TCPLink::_connect()
 
 void TCPLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::QueuedConnection);
+    }
 }
 
 void TCPLink::_onConnected()

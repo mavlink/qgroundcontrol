@@ -28,18 +28,18 @@ QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardManufac
 QGCSerialPortInfo::QGCSerialPortInfo()
     : QSerialPortInfo()
 {
-    // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
 QGCSerialPortInfo::QGCSerialPortInfo(const QSerialPort &port)
     : QSerialPortInfo(port)
 {
-    // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
 QGCSerialPortInfo::~QGCSerialPortInfo()
 {
-    // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
 bool QGCSerialPortInfo::_loadJsonData()
