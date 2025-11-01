@@ -446,7 +446,9 @@ bool LogReplayLink::_connect()
 
 void LogReplayLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::QueuedConnection);
+    }
 }
 
 void LogReplayLink::_onErrorOccurred(const QString &errorString)

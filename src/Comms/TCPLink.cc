@@ -299,7 +299,9 @@ bool TCPLink::_connect()
 
 void TCPLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::QueuedConnection);
+    }
 }
 
 void TCPLink::_onConnected()
