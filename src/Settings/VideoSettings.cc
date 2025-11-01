@@ -29,6 +29,8 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+    videoSourceList.append(videoSourceHTTP);
+    videoSourceList.append(videoSourceWebSocket);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
@@ -184,6 +186,98 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
     return _tcpUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpUrl)
+{
+    if (!_httpUrlFact) {
+        _httpUrlFact = _createSettingsFact(httpUrlName);
+        connect(_httpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpUrlFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpTimeout)
+{
+    if (!_httpTimeoutFact) {
+        _httpTimeoutFact = _createSettingsFact(httpTimeoutName);
+        _httpTimeoutFact->setVisible(
+#ifdef QGC_GST_STREAMING
+            true
+#else
+            false
+#endif
+        );
+        connect(_httpTimeoutFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpTimeoutFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpRetryAttempts)
+{
+    if (!_httpRetryAttemptsFact) {
+        _httpRetryAttemptsFact = _createSettingsFact(httpRetryAttemptsName);
+        _httpRetryAttemptsFact->setVisible(
+#ifdef QGC_GST_STREAMING
+            true
+#else
+            false
+#endif
+        );
+        connect(_httpRetryAttemptsFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpRetryAttemptsFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpBufferSize)
+{
+    if (!_httpBufferSizeFact) {
+        _httpBufferSizeFact = _createSettingsFact(httpBufferSizeName);
+        _httpBufferSizeFact->setVisible(
+#ifdef QGC_GST_STREAMING
+            true
+#else
+            false
+#endif
+        );
+        connect(_httpBufferSizeFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpBufferSizeFact;
+}
+
+DECLARE_SETTINGSFACT(VideoSettings, httpKeepAlive)
+DECLARE_SETTINGSFACT(VideoSettings, httpUserAgent)
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, websocketUrl)
+{
+    if (!_websocketUrlFact) {
+        _websocketUrlFact = _createSettingsFact(websocketUrlName);
+        connect(_websocketUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _websocketUrlFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, websocketTimeout)
+{
+    if (!_websocketTimeoutFact) {
+        _websocketTimeoutFact = _createSettingsFact(websocketTimeoutName);
+        _websocketTimeoutFact->setVisible(
+#ifdef QGC_GST_STREAMING
+            true
+#else
+            false
+#endif
+        );
+        connect(_websocketTimeoutFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _websocketTimeoutFact;
+}
+
+DECLARE_SETTINGSFACT(VideoSettings, websocketReconnectDelay)
+DECLARE_SETTINGSFACT(VideoSettings, websocketHeartbeat)
+DECLARE_SETTINGSFACT(VideoSettings, adaptiveQuality)
+DECLARE_SETTINGSFACT(VideoSettings, minQuality)
+DECLARE_SETTINGSFACT(VideoSettings, maxQuality)
+DECLARE_SETTINGSFACT(VideoSettings, websocketBufferFrames)
+
 bool VideoSettings::streamConfigured(void)
 {
     //-- First, check if it's autoconfigured
@@ -215,6 +309,16 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpUrl()->rawValue().toString();
         return !udpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If HTTP, check for URL
+    if(vSource == videoSourceHTTP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for HTTP Stream:" << httpUrl()->rawValue().toString();
+        return !httpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If WebSocket, check for URL
+    if(vSource == videoSourceWebSocket) {
+        qCDebug(VideoManagerLog) << "Testing configuration for WebSocket Stream:" << websocketUrl()->rawValue().toString();
+        return !websocketUrl()->rawValue().toString().isEmpty();
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {
