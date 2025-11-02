@@ -64,11 +64,9 @@ void BluetoothConfiguration::_initDeviceDiscoveryAgent()
 
 void BluetoothConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const BluetoothConfiguration *const bluetoothSource = qobject_cast<const BluetoothConfiguration*>(source);
-    Q_ASSERT(bluetoothSource);
+    const BluetoothConfiguration *bluetoothSource = qobject_cast<const BluetoothConfiguration*>(source);
 
     _device = bluetoothSource->device();
     emit deviceChanged();
@@ -194,12 +192,14 @@ bool BluetoothWorker::isConnected() const
 
 void BluetoothWorker::setupSocket()
 {
-    Q_ASSERT(!_socket);
-    _socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
+    if (!_socket) {
+        _socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
+    }
 
 #ifdef Q_OS_IOS
-    Q_ASSERT(!_serviceDiscoveryAgent);
-    _serviceDiscoveryAgent = new QBluetoothServiceDiscoveryAgent(this);
+    if (!_serviceDiscoveryAgent) {
+        _serviceDiscoveryAgent = new QBluetoothServiceDiscoveryAgent(this);
+    }
 #endif
 
     (void) connect(_socket, &QBluetoothSocket::connected, this, &BluetoothWorker::_onSocketConnected);
@@ -256,6 +256,7 @@ void BluetoothWorker::disconnectLink()
         _serviceDiscoveryAgent->stop();
     }
 #endif
+
     _socket->disconnectFromService();
 }
 
@@ -390,8 +391,9 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent
 
 BluetoothLink::~BluetoothLink()
 {
-    if (_worker && _worker->isConnected()) {
+    if (isConnected()) {
         (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::BlockingQueuedConnection);
+        _onDisconnected();
     }
 
     _workerThread->quit();
@@ -404,7 +406,7 @@ BluetoothLink::~BluetoothLink()
 
 bool BluetoothLink::isConnected() const
 {
-    return _worker->isConnected();
+    return _worker && _worker->isConnected();
 }
 
 bool BluetoothLink::_connect()
@@ -421,12 +423,15 @@ void BluetoothLink::disconnect()
 
 void BluetoothLink::_onConnected()
 {
+    _disconnectedEmitted = false;
     emit connected();
 }
 
 void BluetoothLink::_onDisconnected()
 {
-    emit disconnected();
+    if (!_disconnectedEmitted.exchange(true)) {
+        emit disconnected();
+    }
 }
 
 void BluetoothLink::_onErrorOccurred(const QString &errorString)

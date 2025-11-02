@@ -62,7 +62,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _missionItemHandler(new MockLinkMissionItemHandler(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
 {
-    // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(MockLinkLog) << this;
 
     // Initialize 5 ADS-B vehicles with different starting conditions _numberOfVehicles
     _adsbVehicles.resize(_numberOfVehicles);
@@ -87,6 +87,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     _runningTime.start();
 
     _workerThread = new QThread(this);
+    _workerThread->setObjectName(QStringLiteral("Mock_%1").arg(_mockConfig->name()));
     _worker = new MockLinkWorker(this);
     _worker->moveToThread(_workerThread);
     (void) connect(_workerThread, &QThread::started, _worker, &MockLinkWorker::startWork);
@@ -107,13 +108,14 @@ MockLink::~MockLink()
         _workerThread->wait();
     }
 
-    // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(MockLinkLog) << this;
 }
 
 bool MockLink::_connect()
 {
     if (!_connected) {
         _connected = true;
+        _disconnectedEmitted = false;
         mavlink_status_t *const mavlinkStatus = mavlink_get_channel_status(mavlinkChannel());
         mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         mavlink_status_t *const auxStatus = mavlink_get_channel_status(_getMavlinkAuxChannel());
@@ -130,7 +132,9 @@ void MockLink::disconnect()
 
     if (_connected) {
         _connected = false;
-        emit disconnected();
+        if (!_disconnectedEmitted.exchange(true)) {
+            emit disconnected();
+        }
     }
 }
 

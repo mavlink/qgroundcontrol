@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
+
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
@@ -16,15 +19,14 @@
 #include <QtCore/QString>
 #include <QtNetwork/QHostAddress>
 
+#include <atomic>
+
 #ifdef QGC_ZEROCONF_ENABLED
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <dns_sd.h>
 #endif
-
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
 
 class QUdpSocket;
 class QThread;
@@ -189,4 +191,5 @@ private:
     const UDPConfiguration *_udpConfig = nullptr;
     UDPWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "LinkConfiguration.h"
+#include "QGCLoggingCategory.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
@@ -24,11 +25,13 @@
 #include "AirLinkLink.h"
 #endif
 
+QGC_LOGGING_CATEGORY(LinkConfigurationLog, "Comms.LinkConfiguration")
+
 LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
     : QObject(parent)
     , _name(name)
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    qCDebug(LinkConfigurationLog) << this;
 }
 
 LinkConfiguration::LinkConfiguration(const LinkConfiguration *copy, QObject *parent)
@@ -39,14 +42,14 @@ LinkConfiguration::LinkConfiguration(const LinkConfiguration *copy, QObject *par
     , _autoConnect(copy->isAutoConnect())
     , _highLatency(copy->isHighLatency())
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    qCDebug(LinkConfigurationLog) << this;
 
     Q_ASSERT(!_name.isEmpty());
 }
 
 LinkConfiguration::~LinkConfiguration()
 {
-    // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+    qCDebug(LinkConfigurationLog) << this;
 }
 
 void LinkConfiguration::copyFrom(const LinkConfiguration *source)
@@ -158,7 +161,9 @@ void LinkConfiguration::setLink(const SharedLinkInterfacePtr link)
         _link = link;
         emit linkChanged();
 
-        (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkConfiguration::linkChanged, Qt::QueuedConnection);
+        if (link.get()) {
+            (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkConfiguration::linkChanged, Qt::QueuedConnection);
+        }
     }
 }
 

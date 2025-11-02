@@ -84,11 +84,9 @@ void UDPConfiguration::setAutoConnect(bool autoc)
 
 void UDPConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const UDPConfiguration *const udpSource = qobject_cast<const UDPConfiguration*>(source);
-    Q_ASSERT(udpSource);
+    const UDPConfiguration *udpSource = qobject_cast<const UDPConfiguration*>(source);
 
     setLocalPort(udpSource->localPort());
     _targetHosts.clear();
@@ -285,8 +283,9 @@ bool UDPWorker::isConnected() const
 
 void UDPWorker::setupSocket()
 {
-    Q_ASSERT(!_socket);
-    _socket = new QUdpSocket(this);
+    if (!_socket) {
+        _socket = new QUdpSocket(this);
+    }
 
     const QList<QHostAddress> localAddresses = QNetworkInterface::allAddresses();
     _localAddresses = QSet(localAddresses.constBegin(), localAddresses.constEnd());
@@ -365,10 +364,15 @@ void UDPWorker::disconnectLink()
     _deregisterZeroconf();
 #endif
 
-    if (isConnected()) {
-        (void) _socket->leaveMulticastGroup(_multicastGroup);
-        _socket->close();
+    if (!isConnected()) {
+        qCDebug(UDPLinkLog) << "Already disconnected";
+        return;
     }
+
+    qCDebug(UDPLinkLog) << "Disconnecting UDP link";
+
+    (void) _socket->leaveMulticastGroup(_multicastGroup);
+    _socket->close();
 
     _sessionTargets.clear();
 }
@@ -581,8 +585,9 @@ UDPLink::UDPLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
 UDPLink::~UDPLink()
 {
-    if (_worker && _worker->isConnected()) {
+    if (isConnected()) {
         (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::BlockingQueuedConnection);
+        _onDisconnected();
     }
 
     _workerThread->quit();
@@ -595,7 +600,7 @@ UDPLink::~UDPLink()
 
 bool UDPLink::isConnected() const
 {
-    return _worker->isConnected();
+    return _worker && _worker->isConnected();
 }
 
 bool UDPLink::_connect()
@@ -612,12 +617,15 @@ void UDPLink::disconnect()
 
 void UDPLink::_onConnected()
 {
+    _disconnectedEmitted = false;
     emit connected();
 }
 
 void UDPLink::_onDisconnected()
 {
-    emit disconnected();
+    if (!_disconnectedEmitted.exchange(true)) {
+        emit disconnected();
+    }
 }
 
 void UDPLink::_onErrorOccurred(const QString &errorString)

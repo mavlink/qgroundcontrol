@@ -61,11 +61,9 @@ void SerialConfiguration::setPortName(const QString &name)
 
 void SerialConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const SerialConfiguration* const serialSource = qobject_cast<const SerialConfiguration*>(source);
-    Q_ASSERT(serialSource);
+    const SerialConfiguration* serialSource = qobject_cast<const SerialConfiguration*>(source);
 
     setBaud(serialSource->baud());
     setDataBits(serialSource->dataBits());
@@ -192,7 +190,7 @@ SerialWorker::SerialWorker(const SerialConfiguration *config, QObject *parent)
     : QObject(parent)
     , _serialConfig(config)
 {
-    // qCDebug(SerialLinkLog) << this;
+    qCDebug(SerialLinkLog) << this;
 
     (void) qRegisterMetaType<QSerialPort::SerialPortError>("QSerialPort::SerialPortError");
 }
@@ -201,7 +199,7 @@ SerialWorker::~SerialWorker()
 {
     disconnectFromPort();
 
-    // qCDebug(SerialLinkLog) << this;
+    qCDebug(SerialLinkLog) << this;
 }
 
 bool SerialWorker::isConnected() const
@@ -211,11 +209,13 @@ bool SerialWorker::isConnected() const
 
 void SerialWorker::setupPort()
 {
-    Q_ASSERT(!_port);
-    _port = new QSerialPort(this);
+    if (!_port) {
+        _port = new QSerialPort(this);
+    }
 
-    Q_ASSERT(!_timer);
-    _timer = new QTimer(this);
+    if (!_timer) {
+        _timer = new QTimer(this);
+    }
 
     (void) connect(_port, &QSerialPort::aboutToClose, this, &SerialWorker::_onPortDisconnected);
     (void) connect(_port, &QSerialPort::readyRead, this, &SerialWorker::_onPortReadyRead);
@@ -226,7 +226,6 @@ void SerialWorker::setupPort()
     } */
 
     (void) connect(_timer, &QTimer::timeout, this, &SerialWorker::_checkPortAvailability);
-    _timer->start(CONNECT_TIMEOUT_MS);
 }
 
 void SerialWorker::connectToPort()
@@ -274,6 +273,7 @@ void SerialWorker::disconnectFromPort()
     }
 
     qCDebug(SerialLinkLog) << "Attempting to close port:" << _port->portName();
+
     _port->close();
 }
 
@@ -322,6 +322,10 @@ void SerialWorker::_onPortConnected()
     _port->setStopBits(static_cast<QSerialPort::StopBits>(_serialConfig->stopBits()));
     _port->setParity(static_cast<QSerialPort::Parity>(_serialConfig->parity()));
 
+    if (_timer) {
+        _timer->start(CONNECT_TIMEOUT_MS);
+    }
+
     _errorEmitted = false;
     emit connected();
 }
@@ -329,6 +333,11 @@ void SerialWorker::_onPortConnected()
 void SerialWorker::_onPortDisconnected()
 {
     qCDebug(SerialLinkLog) << "Port disconnected:" << _port->portName();
+
+    if (_timer) {
+        _timer->stop();
+    }
+
     _errorEmitted = false;
     emit disconnected();
 }
@@ -422,8 +431,9 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
 SerialLink::~SerialLink()
 {
-    if (_worker && _worker->isConnected()) {
+    if (isConnected()) {
         (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::BlockingQueuedConnection);
+        _onDisconnected();
     }
 
     _workerThread->quit();
@@ -436,7 +446,7 @@ SerialLink::~SerialLink()
 
 bool SerialLink::isConnected() const
 {
-    return _worker->isConnected();
+    return _worker && _worker->isConnected();
 }
 
 bool SerialLink::_connect()
@@ -453,12 +463,15 @@ void SerialLink::disconnect()
 
 void SerialLink::_onConnected()
 {
+    _disconnectedEmitted = false;
     emit connected();
 }
 
 void SerialLink::_onDisconnected()
 {
-    emit disconnected();
+    if (!_disconnectedEmitted.exchange(true)) {
+        emit disconnected();
+    }
 }
 
 void SerialLink::_onErrorOccurred(const QString &errorString)

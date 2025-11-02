@@ -9,15 +9,15 @@
 
 #pragma once
 
-#include <atomic>
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtNetwork/QAbstractSocket>
 
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
+#include <atomic>
 
 class QTcpSocket;
 class QThread;
@@ -125,4 +125,5 @@ private:
     const TCPConfiguration *_tcpConfig = nullptr;
     TCPWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

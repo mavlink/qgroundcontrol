@@ -64,11 +64,9 @@ void TCPConfiguration::setPort(quint16 port)
 
 void TCPConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const TCPConfiguration* const tcpSource = qobject_cast<const TCPConfiguration*>(source);
-    Q_ASSERT(tcpSource);
+    const TCPConfiguration* tcpSource = qobject_cast<const TCPConfiguration*>(source);
 
     setHost(tcpSource->host());
     setPort(tcpSource->port());
@@ -117,8 +115,9 @@ bool TCPWorker::isConnected() const
 
 void TCPWorker::setupSocket()
 {
-    Q_ASSERT(!_socket);
-    _socket = new QTcpSocket(this);
+    if (!_socket) {
+        _socket = new QTcpSocket(this);
+    }
 
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
@@ -182,6 +181,10 @@ void TCPWorker::disconnectFromHost()
     qCDebug(TCPLinkLog) << "Attempting to disconnect from host:" << _config->host() << "port:" << _config->port();
 
     _socket->disconnectFromHost();
+
+    if (_socket->state() != QAbstractSocket::UnconnectedState) {
+        _socket->waitForDisconnected(1000);
+    }
 }
 
 void TCPWorker::writeData(const QByteArray &data)
@@ -277,8 +280,9 @@ TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
 TCPLink::~TCPLink()
 {
-    if (_worker && _worker->isConnected()) {
+    if (isConnected()) {
         (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::BlockingQueuedConnection);
+        _onDisconnected();
     }
 
     _workerThread->quit();
@@ -291,7 +295,7 @@ TCPLink::~TCPLink()
 
 bool TCPLink::isConnected() const
 {
-    return _worker->isConnected();
+    return _worker && _worker->isConnected();
 }
 
 bool TCPLink::_connect()
@@ -308,12 +312,15 @@ void TCPLink::disconnect()
 
 void TCPLink::_onConnected()
 {
+    _disconnectedEmitted = false;
     emit connected();
 }
 
 void TCPLink::_onDisconnected()
 {
-    emit disconnected();
+    if (!_disconnectedEmitted.exchange(true)) {
+        emit disconnected();
+    }
 }
 
 void TCPLink::_onErrorOccurred(const QString &errorString)
