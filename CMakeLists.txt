@@ -71,6 +71,19 @@ if(APPLE)
 endif()
 
 # ----------------------------------------------------------------------------
+# Android-Specific Pre-Project Settings
+# ----------------------------------------------------------------------------
+if(ANDROID)
+    # Configure C++ standard library for Android NDK
+    # c++_shared is the recommended option for Qt applications
+    # This must be set before project() to ensure proper linker configuration
+    if(NOT DEFINED ANDROID_STL)
+        set(ANDROID_STL "c++_shared" CACHE STRING "Android C++ standard library")
+    endif()
+    message(STATUS "QGC: Android STL configured: ${ANDROID_STL}")
+endif()
+
+# ----------------------------------------------------------------------------
 # Git Integration & Version Extraction
 # ----------------------------------------------------------------------------
 include(Git)
