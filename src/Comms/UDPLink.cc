@@ -606,7 +606,9 @@ bool UDPLink::_connect()
 
 void UDPLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::QueuedConnection);
+    }
 }
 
 void UDPLink::_onConnected()
