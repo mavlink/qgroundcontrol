@@ -21,6 +21,8 @@
 #include <QtCore/QMutex>
 #include <QtPositioning/QGeoCoordinate>
 
+#include <atomic>
+
 class MockLinkFTP;
 class MockLinkWorker;
 class QThread;
@@ -321,4 +323,6 @@ private:
     static constexpr bool _mavlinkStarted = true;
 
     static QList<FlightMode_t> _availableFlightModes;
+
+    std::atomic<bool> _disconnectedEmitted{false};
 };

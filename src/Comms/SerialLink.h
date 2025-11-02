@@ -9,17 +9,18 @@
 
 #pragma once
 
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
+
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
-
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
 #else
 #include <QtSerialPort/QSerialPort>
 #endif
 
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
+#include <atomic>
 
 class QThread;
 class QTimer;
@@ -179,4 +180,5 @@ private:
     const SerialConfiguration *_serialConfig = nullptr;
     SerialWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

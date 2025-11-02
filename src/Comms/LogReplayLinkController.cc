@@ -63,6 +63,10 @@ void LogReplayLinkController::setLink(LogReplayLink *link)
 
 void LogReplayLinkController::setIsPlaying(bool isPlaying) const
 {
+    if (!_link) {
+        return;
+    }
+
     if (isPlaying) {
         _link->play();
     } else {
@@ -72,6 +76,10 @@ void LogReplayLinkController::setIsPlaying(bool isPlaying) const
 
 void LogReplayLinkController::setPercentComplete(qreal percentComplete) const
 {
+    if (!_link) {
+        return;
+    }
+
     _link->movePlayhead(percentComplete);
 }
 

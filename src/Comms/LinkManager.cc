@@ -246,15 +246,16 @@ void LinkManager::_linkDisconnected()
     }
 
     SharedLinkInterfacePtr linkToCleanup;
+    SharedLinkConfigurationPtr config;
     {
         QMutexLocker locker(&_linksMutex);
 
         for (auto it = _rgLinks.begin(); it != _rgLinks.end(); ++it) {
             if (it->get() == link) {
-                const SharedLinkConfigurationPtr config = it->get()->linkConfiguration();
+                config = it->get()->linkConfiguration();
                 const QString linkName = config ? config->name() : QStringLiteral("<null config>");
                 qCDebug(LinkManagerLog) << linkName << "use_count:" << it->use_count();
-                linkToCleanup = *it;  // Keep shared_ptr alive during cleanup
+                linkToCleanup = *it;
                 (void) _rgLinks.erase(it);
                 break;
             }
@@ -266,15 +267,16 @@ void LinkManager::_linkDisconnected()
         return;
     }
 
-    // Disconnect all signals - no new events can be queued after this
+    if (config) {
+        config->setLink(nullptr);
+    }
+
     (void) disconnect(link, &LinkInterface::communicationError, this, &LinkManager::_communicationError);
     (void) disconnect(link, &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
     (void) disconnect(link, &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
     (void) disconnect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 
     link->_freeMavlinkChannel();
-
-    // linkToCleanup shared_ptr will be destroyed here, potentially deleting the link object
 }
 
 SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(const LinkInterface *link)
