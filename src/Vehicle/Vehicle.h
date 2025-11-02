@@ -59,7 +59,6 @@ class GeoFenceManager;
 class ImageProtocolManager;
 class StatusTextHandler;
 class InitialConnectStateMachine;
-class Joystick;
 class LinkInterface;
 class MAVLinkLogManager;
 class MissionManager;
@@ -150,7 +149,6 @@ public:
     Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints         READ cameraTriggerPoints                                            CONSTANT)
     Q_PROPERTY(float                latitude                    READ latitude                                                       NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude                   READ longitude                                                      NOTIFY coordinateChanged)
-    Q_PROPERTY(bool                 joystickEnabled             READ joystickEnabled            WRITE setJoystickEnabled            NOTIFY joystickEnabledChanged)
     Q_PROPERTY(int                  rcRSSI                      READ rcRSSI                                                         NOTIFY rcRSSIChanged)
     Q_PROPERTY(bool                 px4Firmware                 READ px4Firmware                                                    NOTIFY firmwareTypeChanged)
     Q_PROPERTY(bool                 apmFirmware                 READ apmFirmware                                                    NOTIFY firmwareTypeChanged)
@@ -291,8 +289,6 @@ public:
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
-    Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
-
     /// Command vehicle to return to launch
     Q_INVOKABLE void guidedModeRTL(bool smartRTL);
 
@@ -411,9 +407,6 @@ public:
     /// Set home from flight map coordinate
     Q_INVOKABLE void doSetHome(const QGeoCoordinate& coord);
 
-    /// Save the joystick enable setting to the settings group
-    Q_INVOKABLE void saveJoystickSettings(void);
-
     Q_INVOKABLE void sendSetupSigning();
 
     Q_INVOKABLE QVariant expandedToolbarIndicatorSource(const QString& indicatorName);
@@ -442,10 +435,6 @@ public:
     void setInitialGCSTemperature(qreal temperature) { _initialGCSTemperature = temperature; }
 
     void updateFlightDistance(double distance);
-
-    bool joystickEnabled            () const;
-    void setJoystickEnabled         (bool enabled);
-    void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw);
 
     // Property accesors
     int id() const{ return _id; }
@@ -820,7 +809,6 @@ public slots:
 
 signals:
     void coordinateChanged              (QGeoCoordinate coordinate);
-    void joystickEnabledChanged         (bool enabled);
     void mavlinkMessageReceived         (const mavlink_message_t& message);
     void homePositionChanged            (const QGeoCoordinate& homePosition);
     void armedPositionChanged();
@@ -943,9 +931,7 @@ private slots:
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
 
 private:
-    void _loadJoystickSettings          ();
     void _activeVehicleChanged          (Vehicle* newActiveVehicle);
-    void _captureJoystick               ();
     void _handlePing                    (LinkInterface* link, mavlink_message_t& message);
     void _handleHomePosition            (mavlink_message_t& message);
     void _handleHeartbeat               (mavlink_message_t& message);
@@ -1012,7 +998,6 @@ private:
     QTimer              _csvLogTimer;
     QFile               _csvLogFile;
 
-    bool            _joystickEnabled = false;
     bool _isActiveVehicle = false;
 
     QGeoCoordinate  _coordinate;
@@ -1109,7 +1094,6 @@ private:
     bool                _heardFrom = false;
 
     bool                _isROIEnabled   = false;
-    Joystick*           _activeJoystick = nullptr;
 
     bool _checkLatestStableFWDone = false;
     int _firmwareMajorVersion = versionNotSetValue;
@@ -1227,7 +1211,6 @@ private:
     // FactGroup facts
 
     const QString _settingsGroup =               QStringLiteral("Vehicle%1");        // %1 replaced with mavlink system id
-    const QString _joystickEnabledSettingsKey =  QStringLiteral("JoystickEnabled");
 
     const QString _vehicleFactGroupName =            QStringLiteral("vehicle");
     const QString _gpsFactGroupName =                QStringLiteral("gps");
@@ -1471,6 +1454,44 @@ private:
     void _createCameraManager();
 
     QGCCameraManager *_cameraManager = nullptr;
+
+/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*                               Joystick                                    */
+/*===========================================================================*/
+private:
+    Q_PROPERTY(bool joystickEnabled READ joystickEnabled WRITE setJoystickEnabled NOTIFY joystickEnabledChanged)
+    Q_PROPERTY(bool manualControlButtonsEnabled READ manualControlButtonsEnabled WRITE setManualControlButtonsEnabled NOTIFY manualControlButtonsEnabledChanged)
+
+public:
+    Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double throttle, double gimbalPitch = NAN, double gimbalYaw = NAN);
+
+    /// Save the joystick enable setting to the settings group
+    Q_INVOKABLE void saveJoystickSettings();
+
+    bool joystickEnabled() const { return _joystickEnabled; };
+    void setJoystickEnabled(bool enabled);
+
+    bool manualControlButtonsEnabled() const { return _manualControlButtonsEnabled; }
+    void setManualControlButtonsEnabled(bool enabled);
+
+signals:
+    void joystickEnabledChanged(bool enabled);
+    void manualControlButtonsEnabledChanged(bool enabled);
+
+public slots:
+    void sendJoystickData(QList<float> axisValues, QBitArray buttons);
+
+private:
+    void _initJoystickHandling();
+    void _captureJoystick();
+    void _loadJoystickSettings();
+
+    bool _joystickEnabled = false;
+    bool _manualControlButtonsEnabled = false;
+
+    static constexpr const char *kSettingsKeyJoystickEnabled = "JoystickEnabled";
+    static constexpr const char *kSettingsKeyManualControlButtonsEnabled = "ManualControlButtonsEnabled";
 
 /*---------------------------------------------------------------------------*/
 };
