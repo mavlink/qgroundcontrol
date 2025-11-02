@@ -1,6 +1,7 @@
 name: Feature request
 description: Tell us about your new idea
 labels: ["Feature Request"]
+type: feature
 
 body:
   - type: markdown
