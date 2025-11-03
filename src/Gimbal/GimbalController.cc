@@ -15,9 +15,9 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include <cmath> // dev
-#include "Gimbal.h" // dev
-#include "QGCCameraManager.h" // dev
+#include <cmath>
+#include "Gimbal.h"
+#include "QGCCameraManager.h"
 
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "Gimbal.GimbalController")
 
@@ -594,7 +594,6 @@ void GimbalController::sendRate()
     }
 }
 
-// dev
 void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s)
 {
     if (!_tryGetGimbalControl()) {
@@ -650,7 +649,6 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
 
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
-// dev end
 
 void GimbalController::_rateSenderTimeout()
 {

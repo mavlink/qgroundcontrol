@@ -35,7 +35,6 @@ namespace {
 
 QVariantList QGCCameraManager::_cameraList;
 
-//dev
 static void _requestFovOnZoom_Handler(
     void* user,
     MAV_RESULT result,
@@ -63,7 +62,6 @@ static void _requestFovOnZoom_Handler(
     if (auto* cam = mgr->currentCameraInstance()) {
     }
 }
-//dev end
 
 /*===========================================================================*/
 
