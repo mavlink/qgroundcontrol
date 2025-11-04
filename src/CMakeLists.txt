@@ -122,6 +122,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::LocationPrivate
         Qt6::Positioning
         Qt6::PositioningPrivate
+        Qt6::Sql
 
         # Qt6 Multimedia
         Qt6::Multimedia
