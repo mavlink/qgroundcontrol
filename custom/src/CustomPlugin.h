@@ -77,6 +77,7 @@ public:
 
     void cleanup() final;
     QGCOptions *options() final { return _options; }
+    const QVariantList &analyzePages() final;
     QString brandImageIndoor() const final { return QStringLiteral("/custom/img/bay_logo_dark.png"); }
     QString brandImageOutdoor() const final { return QStringLiteral("/custom/img/bay_logo_light.png"); }
     bool overrideSettingsGroupVisibility(const QString &name) final;

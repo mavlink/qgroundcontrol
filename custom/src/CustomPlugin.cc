@@ -45,7 +45,7 @@ CustomPlugin::CustomPlugin(QObject *parent)
 {
     qCDebug(CustomLog) << this;
 
-    _showAdvancedUI = false;
+    _showAdvancedUI = true;
     (void) connect(this, &QGCCorePlugin::showAdvancedUIChanged, this, &CustomPlugin::_advancedChanged);
 }
 
@@ -67,6 +67,29 @@ void CustomPlugin::_advancedChanged(bool changed)
 {
     // Firmware Upgrade page is only show in Advanced mode
     emit _options->showFirmwareUpgradeChanged(changed);
+}
+
+const QVariantList &CustomPlugin::analyzePages()
+{
+    // Get the default analyze pages from the base class
+    static QVariantList customAnalyzeList;
+    
+    if (customAnalyzeList.isEmpty()) {
+        // Add the default analyze pages from base class first
+        const QVariantList &basePages = QGCCorePlugin::analyzePages();
+        for (const QVariant &page : basePages) {
+            customAnalyzeList.append(page);
+        }
+        
+        // Add our custom Object Tracking Dashboard after the default pages
+        customAnalyzeList.append(QVariant::fromValue(new QmlComponentInfo(
+            tr("Object Tracking"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/Custom/ObjectTrackingDashboard.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/custom/img/bay_logo_dark.png")),
+            this)));
+    }
+    
+    return customAnalyzeList;
 }
 
 void CustomPlugin::_addSettingsEntry(const QString &title, const char *qmlFile, const char *iconFile)
