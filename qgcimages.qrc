@@ -215,5 +215,6 @@
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="Viewer3D/City3DMapIcon.svg">src/Viewer3D/Images/city_3d_map_icon.svg</file>
+        <file alias="F4/FoxFourTextLogo.svg">src/FirmwarePlugin/F4/FoxFourTextLogo.svg</file>
     </qresource>
 </RCC>

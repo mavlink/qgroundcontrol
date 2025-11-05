@@ -88,6 +88,11 @@ Rectangle {
         }
     }
 
+    function showParametersPanelComponent(comp = "")
+    {
+        showParametersPanel()
+        panelLoader.item.selectComponent(comp)
+    }
     function showParametersPanel() {
         if (mainWindow.allowViewSwitch()) {
             parametersButton.checked = true

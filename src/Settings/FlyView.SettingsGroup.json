@@ -36,6 +36,12 @@
     "default":     false
 },
 {
+    "name":             "showGPSrawTrajectory",
+    "shortDesc": "Show GPS_RAW_INT trajectory on map",
+    "type":             "bool",
+    "default":     true
+},
+{
     "name":             "keepMapCenteredOnVehicle",
     "shortDesc": "Keep map centered on vehicle",
     "type":             "bool",

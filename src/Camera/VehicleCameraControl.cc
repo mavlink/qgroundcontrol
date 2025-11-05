@@ -129,6 +129,7 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
     connect(this, &VehicleCameraControl::dataReady, this, &VehicleCameraControl::_dataReady);
+    connect(VideoManager::instance(), &VideoManager::recordingChanged, this, &VehicleCameraControl::_processRecordingChanged);
     _vendor = QString(reinterpret_cast<const char*>(info->vendor_name));
     _modelName = QString(reinterpret_cast<const char*>(info->model_name));
     int ver = static_cast<int>(_info.cam_definition_version);
@@ -2256,6 +2257,22 @@ VehicleCameraControl::_checkForVideoStreams()
     }
 }
 
+//-----------------------------------------------------------------------------
+void
+VehicleCameraControl::_processRecordingChanged()
+{
+  bool isRecording = VideoManager::instance()->recording();
+  //if stream ends while we still capturing onground (camera do not support capturing)
+  //then stop the capture
+  if(!isRecording &&
+     !capturesVideo() &&
+     videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING
+     )
+  {
+    _videoRecordTimeUpdateTimer.stop();
+    _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
+  }
+}
 //-----------------------------------------------------------------------------
 bool
 VehicleCameraControl::incomingParameter(Fact* pFact, QVariant& newValue)

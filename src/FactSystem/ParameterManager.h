@@ -103,9 +103,11 @@ signals:
     void loadProgressChanged(float value);
     void pendingWritesChanged(bool pendingWrites);
     void factAdded(int componentId, Fact *fact);
+    void removeCategory(QString categoryName);
 
 private slots:
     void _factRawValueUpdated(const QVariant &rawValue);
+    void _handleOnboardComputerTimeout(uint8_t compId);
 
 private:
     /// Called whenever a parameter is updated or first seen.

@@ -11,6 +11,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QTimer>
 
 #include "MAVLinkLib.h"
 #include "QmlObjectListModel.h"
@@ -49,10 +50,12 @@ class OnboardComputersManager : public QObject {
     void onboardComputersChanged();
     void currentComputerChanged(uint8_t compID);
     void streamChanged();
+    void onboardComputerTimeout(uint8_t compID);
 
    protected slots:
     virtual void _vehicleReady(bool ready);
     virtual void _mavlinkMessageReceived(const mavlink_message_t& message);
+    void _checkTimeouts();
 
    public:
     virtual void rebootAllOnboardComputers();
@@ -66,9 +69,10 @@ class OnboardComputersManager : public QObject {
    protected:
     virtual void _handleHeartbeat(const mavlink_message_t& message);
     // TODO: we could extend this with handling of ONBOARD_COMPUTER_STATUS mavlink message, but it is still WIP
-
     Vehicle* _vehicle = nullptr;
     bool _vehicleReadyState = false;
     int _currentComputerIndex = 0;
+    const int _timeoutCheckInterval=2000;
+    QTimer    _timeoutCheckTimer;
     QMap<uint8_t, OnboardComputerStruct> _onboardComputers;
 };

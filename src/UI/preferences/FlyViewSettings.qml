@@ -107,6 +107,14 @@ SettingsPage {
 
         FactCheckBoxSlider {
             Layout.fillWidth:   true
+            text:               qsTr("Show GPS_RAW_INT trajectory on map")
+            fact:               _showGPSrawTrajectory
+            visible:            _showGPSrawTrajectory.visible
+            property Fact   _showGPSrawTrajectory:                  _flyViewSettings.showGPSrawTrajectory
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
             text:               qsTr("Update return to home position based on device location.")
             fact:               _updateHomePosition
             visible:            _updateHomePosition.visible

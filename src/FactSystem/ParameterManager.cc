@@ -21,6 +21,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "OnboardComputersManager.h"
 
 #include <QtCore/QEasingCurve>
 #include <QtCore/QFile>
@@ -56,6 +57,10 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
 
     // Ensure the cache directory exists
     (void) QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
+
+    auto mngr = _vehicle->getOnboardComputersManager();
+
+    connect(mngr, &OnboardComputersManager::onboardComputerTimeout, this, &ParameterManager::_handleOnboardComputerTimeout);
 }
 
 ParameterManager::~ParameterManager()
@@ -393,6 +398,26 @@ void ParameterManager::_factRawValueUpdated(const QVariant &rawValue)
     }
 
     _factRawValueUpdateWorker(fact->componentId(), fact->name(), fact->type(), rawValue);
+}
+
+void ParameterManager::_handleOnboardComputerTimeout(uint8_t compId)
+{
+    if (!_waitingReadParamIndexMap.contains(compId)){
+        return;
+    }
+    //removing category from all lists, and sending signal to update UI
+    _paramCountMap.remove(compId);
+    _waitingReadParamIndexMap.remove(compId);
+    _waitingReadParamNameMap.remove(compId);
+    _waitingWriteParamNameMap.remove(compId);
+    _totalParamCount -= _paramCountMap[compId];
+    QString category = _mapCompId2FactMap[compId].first()->category();
+    for (auto &fact:_mapCompId2FactMap[compId].values()){
+        delete fact;
+    }
+    _mapCompId2FactMap.remove(compId);
+
+    emit removeCategory(category);
 }
 
 void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QString &errorMsg)

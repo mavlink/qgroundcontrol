@@ -37,6 +37,27 @@ Item {
         id: controller
     }
 
+
+    function selectComponent(comp = "")
+    {
+        if (comp === "")
+        {
+            controller.currentCategory=controller.categories.get(0)
+        }
+        else
+        {
+            for (let i = 0; i < controller.categories.count; i++)
+            {
+                let cat = controller.categories.get(i)
+                if (cat.name === comp)
+                {
+                     controller.currentCategory = cat;
+                    break;
+                }
+            }
+        }
+
+    }
     Timer {
         id:         clearTimer
         interval:   100;

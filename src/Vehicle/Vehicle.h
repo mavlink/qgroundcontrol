@@ -73,6 +73,7 @@ class StandardModes;
 class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
+enum class  PositionSrc;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
 class GimbalController;
@@ -832,6 +833,7 @@ public slots:
     void _offlineVehicleTypeSettingChanged  (QVariant varVehicleType);  // Should only be used by MissionController to set vehicle type from Plan file
 
 signals:
+    void updateTrajectory               (QGeoCoordinate coordinate,PositionSrc src);
     void coordinateChanged              (QGeoCoordinate coordinate);
     void joystickEnabledChanged         (bool enabled);
     void mavlinkMessageReceived         (const mavlink_message_t& message);

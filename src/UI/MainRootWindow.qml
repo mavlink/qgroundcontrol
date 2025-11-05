@@ -147,6 +147,11 @@ ApplicationWindow {
         showTool(qsTr("Vehicle Configuration"), "SetupView.qml", "/qmlimages/Gears.svg")
     }
 
+    function showVehicleConfigParametersPageComponent(comp = ""){
+        showVehicleConfigParametersPage();
+        toolDrawerLoader.item.showParametersPanelComponent(comp)
+    }
+
     function showVehicleConfigParametersPage() {
         showVehicleConfig()
         toolDrawerLoader.item.showParametersPanel()

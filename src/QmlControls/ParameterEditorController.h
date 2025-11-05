@@ -49,12 +49,14 @@ public:
     void beginReset  ();
     void endReset    ();
     Fact*            factAt(int row) const;
+    void             setShowComponent(bool show);
 
     // Overrides from QAbstractTableModel
     int         rowCount    (const QModelIndex & parent = QModelIndex()) const override;
     int         columnCount (const QModelIndex &parent = QModelIndex()) const override;
     QVariant    data        (const QModelIndex & index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames(void) const override;
+
 
     signals:
     void rowCountChanged(int count);
@@ -63,6 +65,7 @@ private:
     int                 _tableViewColCount = 3;
     QList<ColumnData>   _tableData;
     bool                _externalBeginResetModel = false;
+    bool                _showComponent = false;
 };
 
 class ParameterEditorGroup : public QObject
@@ -179,6 +182,7 @@ private slots:
     void _buildLists            (void);
     void _buildListsForComponent(int compId);
     void _factAdded             (int compId, Fact* fact);
+    void _removeCategory        (QString categoryName);
 
 private:
     bool _shouldShow(Fact *fact) const;

@@ -34,6 +34,9 @@ OnboardComputersManager::OnboardComputersManager(Vehicle* vehicle) : _vehicle(ve
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this,
             &OnboardComputersManager::_vehicleReady);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &OnboardComputersManager::_mavlinkMessageReceived);
+
+    connect(&_timeoutCheckTimer, &QTimer::timeout, this, &OnboardComputersManager::_checkTimeouts);
+    _timeoutCheckTimer.start(_timeoutCheckInterval);
 }
 
 void OnboardComputersManager::_vehicleReady(bool ready) { _vehicleReadyState = ready; }
@@ -52,6 +55,34 @@ void OnboardComputersManager::_mavlinkMessageReceived(const mavlink_message_t& m
             default:
                 break;
         }
+    }
+}
+
+void OnboardComputersManager::_checkTimeouts()
+{
+    if (_onboardComputers.isEmpty())
+        return;
+
+    auto iter = _onboardComputers.begin();
+    while (iter != _onboardComputers.end())
+    {
+        auto &compIter = iter.value();
+        // Check all computers for timeout. If has some, emitting timeout on his ID, and removing it form list.
+        if (compIter.lastHeartbeat.elapsed() > _timeoutCheckInterval*2){
+            uint8_t compID = iter.key();
+            iter = _onboardComputers.erase(iter);
+            qCDebug(OnboardComputersManagerLog) << "Deleting onboard computer: " << compID << ", due to timeout.";
+            if (_currentComputerIndex == compID){
+                if (_onboardComputers.isEmpty()){
+                    _currentComputerIndex = 0;
+                    emit currentComputerChanged(0);
+                }else
+                    setCurrentComputer(_onboardComputers.first().compID);
+            }
+            emit onboardComputerTimeout(MAV_COMP_ID_ONBOARD_COMPUTER + compID - 1);
+            continue;
+        }
+        ++iter;
     }
 }
 

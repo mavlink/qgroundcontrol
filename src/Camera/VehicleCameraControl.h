@@ -242,6 +242,7 @@ protected slots:
     virtual void    _streamStatusTimeout    ();
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
+    virtual void    _processRecordingChanged();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);

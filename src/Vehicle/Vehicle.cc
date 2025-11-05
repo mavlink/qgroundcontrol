@@ -291,6 +291,8 @@ void Vehicle::_commonInit()
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
 
+    _onboardComputersManager = _firmwarePlugin->createOnboardComputersManager(this);
+
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
 
@@ -367,7 +369,7 @@ void Vehicle::_commonInit()
 
     // Create camera manager instance
     _cameraManager = _firmwarePlugin->createCameraManager(this);
-    _onboardComputersManager = _firmwarePlugin->createOnboardComputersManager(this);
+
 }
 
 Vehicle::~Vehicle()
@@ -740,8 +742,9 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
     _gpsRawIntMessageAvailable = true;
 
     if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
+        QGeoCoordinate newPosition(gpsRawInt.lat  / (double)1E7, gpsRawInt.lon / (double)1E7, gpsRawInt.alt  / 1000.0);
+        emit updateTrajectory(newPosition, PositionSrc::eSrc_GPSRaw);
         if (!_globalPositionIntMessageAvailable) {
-            QGeoCoordinate newPosition(gpsRawInt.lat  / (double)1E7, gpsRawInt.lon / (double)1E7, gpsRawInt.alt  / 1000.0);
             if (newPosition != _coordinate) {
                 _coordinate = newPosition;
                 emit coordinateChanged(_coordinate);
@@ -759,6 +762,8 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
+
+
     if (!_altitudeMessageAvailable) {
         _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
         _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
@@ -775,6 +780,7 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     if (newPosition != _coordinate) {
         _coordinate = newPosition;
         emit coordinateChanged(_coordinate);
+        emit updateTrajectory(newPosition, PositionSrc::eSrc_GlobalPosition);
     }
 }
 

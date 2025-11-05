@@ -47,6 +47,7 @@ FlightMap {
     property real   _toolsMargin:               ScreenTools.defaultFontPixelWidth * 0.75
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
+    property bool   _showGPSrawTrajectory:      _flyViewSettings.showGPSrawTrajectory.rawValue
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       pipMode ? true : false
@@ -248,11 +249,34 @@ FlightMap {
         showText: !pipMode
     }
 
+    // Add GPS trajectory lines to the map
+    MapPolyline{
+        id:         gpsTrajectoryPolyline
+        line.width: 3
+        line.color: "#8000FF00"
+        z:          QGroundControl.zOrderTrajectoryLines
+        visible:    !pipMode && _showGPSrawTrajectory
+
+        Connections {
+            target:                 QGroundControl.multiVehicleManager
+            function onActiveVehicleChanged(activeVehicle) {
+                gpsTrajectoryPolyline.path = _activeVehicle ? _activeVehicle.trajectoryPoints.gpsList() : []
+            }
+        }
+
+        Connections {
+            target:                                 _activeVehicle ? _activeVehicle.trajectoryPoints : null
+            onGpsPointAdded: (coordinate) =>        gpsTrajectoryPolyline.addCoordinate(coordinate)
+            onGpsUpdateLastPoint: (coordinate) =>   gpsTrajectoryPolyline.replaceCoordinate(gpsTrajectoryPolyline.pathLength() - 1, coordinate)
+            onPointsCleared:                        gpsTrajectoryPolyline.path = []
+        }
+    }
+
     // Add trajectory lines to the map
     MapPolyline {
         id:         trajectoryPolyline
         line.width: 3
-        line.color: "red"
+        line.color: "#80FF0000"
         z:          QGroundControl.zOrderTrajectoryLines
         visible:    !pipMode
 
