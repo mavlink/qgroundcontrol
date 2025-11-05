@@ -4056,61 +4056,61 @@ Por favor coloque seu veículo na água, clique no botão, e espere. Note que os
     </message>
   </context>
   <context>
-    <name>AppMessages</name>
+    <name>AppLogging</name>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="115"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="115"/>
       <source>GStreamer Debug Level</source>
-      <translation>Nível Debug GStreamer</translation>
+      <translation type="unfinished">GStreamer Debug Level</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="159"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="159"/>
       <source>Logging categories</source>
-      <translation>Categorias de registros</translation>
+      <translation type="unfinished">Logging categories</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="197"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="197"/>
       <source>Search:</source>
-      <translation>Buscar:</translation>
+      <translation type="unfinished">Search:</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="208"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="208"/>
       <source>Clear</source>
-      <translation>Limpar</translation>
+      <translation type="unfinished">Clear</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="231"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="231"/>
       <source>Clear All</source>
-      <translation>Limpar Tudo</translation>
+      <translation type="unfinished">Clear All</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="88"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>Log files (*.txt)</source>
-      <translation>Arquivos de registros (*. txt)</translation>
+      <translation type="unfinished">Log files (*.txt)</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="88"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="88"/>
       <source>All Files (*)</source>
-      <translation>Todos os Arquivos (*)</translation>
+      <translation type="unfinished">All Files (*)</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="89"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="89"/>
       <source>Select log save file</source>
-      <translation>Selecione arquivo para salvar registro</translation>
+      <translation type="unfinished">Select log save file</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="107"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="107"/>
       <source>Save App Log</source>
-      <translation>Salvar registros do aplicativo</translation>
+      <translation type="unfinished">Save App Log</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="134"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="134"/>
       <source>Show Latest</source>
-      <translation>Mostrar mais recentes</translation>
+      <translation type="unfinished">Show Latest</translation>
     </message>
     <message>
-      <location filename="../src/QmlControls/AppMessages.qml" line="149"/>
+      <location filename="../src/QmlControls/AppLogging.qml" line="149"/>
       <source>Set Logging</source>
-      <translation>Definir registros</translation>
+      <translation type="unfinished">Set Logging</translation>
     </message>
   </context>
   <context>
@@ -8360,8 +8360,8 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickConfig.qml" line="83"/>
-      <source>Button Assigment</source>
-      <translation>Atribuição de botão</translation>
+      <source>Button Assignment</source>
+      <translation type="unfinished">Button Assignment</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickConfig.qml" line="86"/>

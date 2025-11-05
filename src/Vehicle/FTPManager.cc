@@ -16,7 +16,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(FTPManagerLog, "FTPManagerLog")
+QGC_LOGGING_CATEGORY(FTPManagerLog, "Vehicle.FTPManager")
 
 FTPManager::FTPManager(Vehicle* vehicle)
     : QObject   (vehicle)

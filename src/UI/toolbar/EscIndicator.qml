@@ -66,6 +66,8 @@ Item {
         return _escHealthy ? qgcPal.colorGreen : qgcPal.colorRed
     }
 
+    QGCPalette { id: qgcPal }
+
     Row {
         id:             escIndicatorRow
         anchors.top:    parent.top
@@ -80,7 +82,7 @@ Item {
             source:             "/qmlimages/EscIndicator.svg"
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
-            color:              qgcPal.buttonText
+            color:              qgcPal.windowTransparentText
         }
 
         Column {
@@ -90,7 +92,7 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter:   parent.horizontalCenter
-                color:                      qgcPal.buttonText
+                color:                      qgcPal.windowTransparentText
                 text:                       _onlineMotorCount.toString()
                 font.pointSize:             ScreenTools.smallFontPointSize
             }

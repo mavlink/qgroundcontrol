@@ -13,7 +13,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "qgc.mavlink.statustexthandler")
+QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "MAVLink.StatusTextHandler")
 
 StatusText::StatusText(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text)
     : m_compId(componentid)
@@ -57,17 +57,17 @@ StatusTextHandler::~StatusTextHandler()
 
 QString StatusTextHandler::getMessageText(const mavlink_message_t &message)
 {
-    QByteArray b;
+    // Warning: There is a bug in mavlink which causes mavlink_msg_statustext_get_text to work incorrect.
+    // It ends up copying crap off the end of the buffer, so don't use it for now.
 
-    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN + 1);
-    (void) mavlink_msg_statustext_get_text(&message, b.data());
+    mavlink_statustext_t statusText;
+    mavlink_msg_statustext_decode(&message, &statusText);
 
-    // Ensure NUL-termination
-    b[b.length()-1] = '\0';
+    char buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN + 1];
+    memcpy(buffer, statusText.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
+    buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] = '\0';
 
-    const QString text = QString::fromLocal8Bit(b.constData(), std::strlen(b.constData()));
-
-    return text;
+    return QString(buffer);
 }
 
 QString StatusTextHandler::formattedMessages() const

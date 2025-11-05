@@ -16,8 +16,6 @@ import QGroundControl
 
 import QGroundControl.Controls
 
-
-
 import QGroundControl.FactControls
 
 Item {
@@ -152,6 +150,20 @@ Item {
                 width:              axisGrid.width  + (ScreenTools.defaultFontPixelWidth  * 2)
                 height:             axisGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
                 visible:            !_buttonsOnly
+
+                function joyToAxis(v, reversed) {
+                    v = Math.max(-1, Math.min(1, v))
+                    if (reversed) v = -v
+                    return v * 32768.0
+                }
+
+                function joyToThrottleAxis(v, reversed) {
+                    v = (2 * v - 1)
+                    v = Math.max(-1, Math.min(1, v))
+                    if (reversed) v = -v
+                    return v * 32768.0
+                }
+
                 GridLayout {
                     id:                 axisGrid
                     columns:            2
@@ -210,12 +222,12 @@ Item {
                     }
 
                     Connections {
-                        target:             _activeJoystick
+                        target: _activeJoystick
                         onAxisValues: (roll, pitch, yaw, throttle) => {
-                            rollAxis.axisValue      = roll  * 32768.0
-                            pitchAxis.axisValue     = pitch * 32768.0
-                            yawAxis.axisValue       = yaw   * 32768.0
-                            throttleAxis.axisValue  = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
+                            rollAxis.axisValue     = axisRect.joyToAxis(roll,  controller.rollAxisReversed)
+                            pitchAxis.axisValue    = axisRect.joyToAxis(pitch, controller.pitchAxisReversed)
+                            yawAxis.axisValue      = axisRect.joyToAxis(yaw,   controller.yawAxisReversed)
+                            throttleAxis.axisValue = axisRect.joyToThrottleAxis(throttle, controller.throttleAxisReversed)
                         }
                     }
                 }
@@ -263,5 +275,3 @@ Item {
         }
     }
 }
-
-

@@ -10,7 +10,7 @@ inputs:
   version:
     description: Qt Version
     required: false
-    default: 6.8.3
+    default: 6.10.0
   abis:
     description: ABIs to Build
     required: false
@@ -33,9 +33,10 @@ runs:
 
     - name: Setup Android Environment
       uses: android-actions/setup-android@v3
+      id: setup-android
       with:
-        cmdline-tools-version: 12266719
-        packages: 'platform-tools platforms;android-36 build-tools;36.0.0' # ndk;26.1.10909125,27.2.12479018'
+        cmdline-tools-version: 13114758
+        packages: 'platform-tools platforms;android-35 build-tools;35.0.0' # ndk;27.2.12479018'
         log-accepted-android-sdk-licenses: false
 
     - name: Install Android NDK
@@ -44,17 +45,21 @@ runs:
       with:
         ndk-version: r27c
         add-to-path: false
+        local-cache: true
 
-    - run: |
+    - name: Update Android SDK / NDK / Tools
+      shell: bash
+      run: |
         echo "ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
         echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
         echo "ANDROID_NDK=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
-      shell: bash
-
-    - name: Update Android SDK / NDK / Tools
-      if: runner.os != 'Windows'
-      run: sdkmanager --update
-      shell: bash
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          "${ANDROID_SDK_ROOT}"/cmdline-tools/latest/bin/sdkmanager.bat --update
+          "${GITHUB_WORKSPACE}"/android/gradlew.bat --version
+        else
+          sdkmanager --update
+          "${GITHUB_WORKSPACE}"/android/gradlew --version
+        fi
 
     - name: Setup Caching
       uses: ./.github/actions/cache
@@ -72,7 +77,7 @@ runs:
         target: desktop
         arch: ${{ inputs.arch }}
         dir: ${{ runner.temp }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
         setup-python: false
         cache: true
 
@@ -85,7 +90,7 @@ runs:
         target: android
         arch: android_arm64_v8a
         dir: ${{ runner.temp }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
         setup-python: false
         cache: true
 
@@ -98,7 +103,7 @@ runs:
         target: android
         arch: android_armv7
         dir: ${{ runner.temp }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
         setup-python: false
         cache: true
 
@@ -111,7 +116,7 @@ runs:
         target: android
         arch: android_x86_64
         dir: ${{ runner.temp }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
         setup-python: false
         cache: true
 
@@ -124,15 +129,6 @@ runs:
         target: android
         arch: android_x86
         dir: ${{ runner.temp }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
         setup-python: false
         cache: true
-
-    - name: Build Info
-      shell: bash
-      run: |
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          "${GITHUB_WORKSPACE}"/android/gradlew.bat --version
-        else
-          "${GITHUB_WORKSPACE}"/android/gradlew --version
-        fi

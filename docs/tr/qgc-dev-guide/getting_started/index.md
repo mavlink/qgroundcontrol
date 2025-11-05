@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.3
+qt_version: 6.10.0
 ---
 
 # Getting Started with Source and Builds
@@ -21,15 +21,15 @@ To get the source files:
 
 1. Clone the repo (or your fork) including submodules:
 
-  ```sh
-  git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
-  ```
+   ```sh
+   git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
+   ```
 
 2. Update submodules (required each time you pull new source code):
 
-  ```sh
-  git submodule update --recursive
-  ```
+   ```sh
+   git submodule update --recursive
+   ```
 
 :::tip
 Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
@@ -66,15 +66,15 @@ You **must install Qt as described below** instead of using pre-built packages f
 To install Qt:
 
 1. Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
-  - **Ubuntu:**
-    - Set the downloaded file to executable using: `chmod +x`.
-    - You may also need to install libxcb-cursor0
+   - **Ubuntu:**
+     - Set the downloaded file to executable using: `chmod +x`.
+     - You may also need to install libxcb-cursor0
 
 2. On the _Installation Folder_ page select "Custom Installation"
 
 3. On the _Select Components_ page:
 
-  - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
+   - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
 
 - Under Qt -> _Qt {{ $frontmatter.qt_version }}_ select:
   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
@@ -86,22 +86,21 @@ To install Qt:
 
 1. Install Additional Packages (Platform Specific)
 
-  - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
-  - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
-  - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-  - **Mac** `sh qgroundcontrol/tools/setup/macos-dependencies.sh`
-  - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html). JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
-    You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
-    Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
+   - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
+   - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
+   - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
+   - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
+   - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
+   - **Android** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Search for "Qt 6.10 android" on the internet to find the correct "Gettting Started with Qt for Android" page. Read it full and carefully! An example of what you are looking for is [here](https://doc.qt.io/qt-6/android-getting-started.html).
 
 2. Install Optional/OS-Specific Functionality
 
-  ::: info
-  Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
-  These features can be forcibly enabled/disabled by specifying additional values to qmake.
-  :::
+   ::: info
+   Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
+   These features can be forcibly enabled/disabled by specifying additional values to qmake.
+   :::
 
-  - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
+   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
 
 #### Install Visual Studio (Windows Only) {#vs}
 
@@ -123,7 +122,7 @@ Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is don
 
 3. Build using the "hammer" (or "play") icons or the menus:
 
-  ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
+   ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
 
 #### Build using CMake on CLI {#cmake}
 
@@ -131,29 +130,36 @@ Example commands to build a default QGC and run it afterwards:
 
 1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder:
 
-  ```sh
-  cd qgroundcontrol
-  ```
+   ```sh
+   cd qgroundcontrol
+   ```
 
 2. Configure:
 
-  ```sh
-  ~/Qt/6.8.3/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-  ```
+   ```sh
+   ~/Qt/{{ $frontmatter.qt_version }}/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ```
 
-  Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.
+   Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.
+
+   **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
+
+   - `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
+   - `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
+   - `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
+   - `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
 
 3. Build
 
-  ```sh
-  cmake --build build --config Debug
-  ```
+   ```sh
+   cmake --build build --config Debug
+   ```
 
 4. Run the QGroundcontrol binary that was just built:
 
-  ```sh
-  ./build/Debug/QGroundControl
-  ```
+   ```sh
+   ./build/Debug/QGroundControl
+   ```
 
 ### Vagrant
 

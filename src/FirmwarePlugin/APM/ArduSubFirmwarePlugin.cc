@@ -11,7 +11,7 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(APMSubmarineFactGroupLog, "qgc.firmwareplugin.apm.ardusubfirmwareplugin")
+QGC_LOGGING_CATEGORY(APMSubmarineFactGroupLog, "FirmwarePlugin.ArduSubFirmwarePlugin")
 
 APMSubmarineFactGroup::APMSubmarineFactGroup(QObject *parent)
     : FactGroup(300, QStringLiteral(":/json/Vehicle/SubmarineFact.json"), parent)
@@ -173,33 +173,6 @@ bool ArduSubFirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabiliti
     Q_UNUSED(vehicle);
     constexpr uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     return ((capabilities & available) == capabilities);
-}
-
-const QVariantList &ArduSubFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
-{
-    Q_UNUSED(vehicle);
-    //-- Sub specific list of indicators (Enter your modified list here)
-    if (_toolIndicators.isEmpty()) {
-        _toolIndicators = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/JoystickIndicator.qml")),
-        });
-    }
-    return _toolIndicators;
-}
-
-const QVariantList& ArduSubFirmwarePlugin::modeIndicators(const Vehicle *vehicle)
-{
-    Q_UNUSED(vehicle);
-    //-- Sub specific list of indicators (Enter your modified list here)
-    if (_modeIndicators.isEmpty()) {
-        _modeIndicators = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/ModeIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/ArmedIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
-        });
-    }
-    return _modeIndicators;
 }
 
 void ArduSubFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t *message)

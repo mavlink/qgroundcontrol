@@ -14,7 +14,7 @@
 #include <QtCore/QDirIterator>
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(ComponentInformationCacheLog, "ComponentInformationCacheLog")
+QGC_LOGGING_CATEGORY(ComponentInformationCacheLog, "ComponentInformation.ComponentInformationCache")
 
 ComponentInformationCache::ComponentInformationCache(const QDir& path, int maxNumFiles)
     : _path(path), _maxNumFiles(maxNumFiles)

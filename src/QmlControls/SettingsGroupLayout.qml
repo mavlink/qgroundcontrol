@@ -27,17 +27,6 @@ ColumnLayout {
     property bool   showBorder:         true
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 2
-    property int _visibleItemCount: _countVisibleItems()
-
-    function _countVisibleItems() {
-        var count = 0
-        for (var i = 0; i < _contentLayout.children.length; i++) {
-            if (_contentLayout.children[i].visible) {
-                count++
-            }
-        }
-        return count
-    }
 
     ColumnLayout {
         Layout.leftMargin:  _margins
@@ -71,7 +60,7 @@ ColumnLayout {
         radius:             ScreenTools.defaultFontPixelHeight / 2
 
         Repeater {
-            model: showDividers ? _contentLayout.children.length : 0
+            model: showDividers ? Math.max(0, _contentLayout.visibleChildren.length - 1) : 0
 
             Rectangle {
                 x:                  showBorder ? _margins : 0
@@ -79,11 +68,8 @@ ColumnLayout {
                 width:              parent.width - (showBorder ? _margins * 2 : 0)
                 height:             1
                 color:              QGroundControl.globalPalette.groupBorder
-                visible:            _contentItem.visible && _contentItem.width > 0 && _contentItem.height > 0 &&
-                                    _visibleItemCount > 1 && (index < _contentLayout.children.length - 1) &&
-                                    _contentLayout.children[index + 1].visible
 
-                property var _contentItem: _contentLayout.children[index]
+                property var _contentItem: _contentLayout.visibleChildren[index]
             }
         }
  
@@ -92,7 +78,7 @@ ColumnLayout {
             x:                  showBorder ? _margins : 0
             y:                  showBorder ? _margins : 0
             width:              parent.width - (showBorder ? _margins * 2 : 0)
-            spacing:            _margins * 2
+            spacing:            _margins * (showDividers ? 2 : 1)
         }
     }
 }

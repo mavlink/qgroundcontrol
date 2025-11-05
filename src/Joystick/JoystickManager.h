@@ -67,7 +67,6 @@ private:
     int _joystickCheckTimerCounter = 0;
     QTimer _joystickCheckTimer;
 
-    static constexpr int kTimerInterval = 1000;
     static constexpr int kTimeout = 1000;
     static constexpr const char *_settingsGroup = "JoystickManager";
     static constexpr const char *_settingsKeyActiveJoystick = "ActiveJoystick";

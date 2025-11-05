@@ -16,7 +16,7 @@ QGC可以在任何当下流行的计算机或移动设备上正常运行。 性�
 
 ## Windows 系统 {#windows}
 
-_QGroundControl_ 可以安装在 Windows 10 (1809 或更高) 或 Windows 11的64 位版本上：
+Supported versions: Windows 10 (1809 or later), Windows 11:
 
 1. 下载 [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe)。
 2. 双击可执行文件来启动安装程序。
@@ -27,9 +27,9 @@ Windows 安装程序创建 3 个快捷方式：**QGroundControl**，**GPU 兼容
 更多信息请见[QGC 设置故障排查 > Windows：用户界面渲染 / 视频驱动问题](../troubleshooting/qgc_setup.md#opengl_troubleshooting)。
 :::
 
-## Mac OS X 系统 {#macOS}
+## Mac OS {#macOS}
 
-_QGroundControl_ 可以安装在 macOS 12 (Montreey) 上或以后：
+Supported versions: macOS 12 (Monterey) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
@@ -39,12 +39,12 @@ _QGroundControl_ 可以安装在 macOS 12 (Montreey) 上或以后：
 2. 双击 .dmg 文件以挂载它，然后将 _QGroundControl_ 应用程序拖动到您的 _Application_ 文件夹。
 
 :::info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
 :::
 
 ## Ubuntu Linux 系统 {#ubuntu}
 
-_QGroundControl_ 可以在 Ubuntu LTS 22.04 (及以后) 安装/运行：
+Supported versions: Ubuntu 22.04, 24.04:
 
 Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB 转串口）在任何与机器人相关方面的使用。
 在安装 _QGroundControl_ 之前，您应该删除调制解调器管理器并授予自己访问串行端口的权限。
@@ -53,7 +53,7 @@ Ubuntu 自带一个串口调制解调器管理器，它会干扰串口（或 USB
 **Before installing _QGroundControl_ for the first time:**
 
 1. Enable serial-port access
-  Add your user to the dialout group so you can talk to USB devices without root:
+   Add your user to the dialout group so you can talk to USB devices without root:
 
 ```
 sudo usermod -aG dialout "$(id -un)"
@@ -64,7 +64,7 @@ At login, your shell takes a snapshot of your user and group memberships. Becaus
 :::
 
 1. (Optional) Disable ModemManager
-  On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
+   On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
 
 ```
 # preferred: stop and mask the service
@@ -93,7 +93,7 @@ chmod +x QGroundControl-<arch>.AppImage
 ```
 
 1. Run QGroundControl
-  Either double-click the AppImage in your file manager or launch it from a terminal:
+   Either double-click the AppImage in your file manager or launch it from a terminal:
 
 ```
 ./QGroundControl-<arch>.AppImage
@@ -101,7 +101,7 @@ chmod +x QGroundControl-<arch>.AppImage
 
 ## Android {#android}
 
-_QGroundControl_ 可以在 Android 9 上安装/运行：
+Supported versions: Android 9 to 15 (arm 32/64):
 
 - [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
 

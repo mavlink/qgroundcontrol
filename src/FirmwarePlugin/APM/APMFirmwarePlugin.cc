@@ -34,7 +34,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
+QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "FirmwarePlugin.APMFirmwarePlugin")
 
 APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
     : FirmwarePlugin(parent)
@@ -661,24 +661,8 @@ const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
         // First call the base class to get the standard QGC list
         _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
 
-        // Find the generic flight mode indicator and replace with the custom one
-        for (int i = 0; i < _toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMFlightModeIndicator.qml"));
-                break;
-            }
-        }
-
-        // Find the generic battery indicator and replace with the custom one
-        for (int i = 0; i < _toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMBatteryIndicator.qml"));
-                break;
-            }
-        }
-
-        // Then add the forwarding support indicator
-        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMSupportForwardingIndicator.qml")));
+        // Add the forwarding support indicator
+        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMSupportForwardingIndicator.qml")));
     }
 
     return _toolIndicatorList;
@@ -1293,11 +1277,6 @@ void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle *
     );                                        // param 5-7 unused
 }
 
-QVariant APMFirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
-{
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/APMMainStatusIndicatorContentItem.qml"));
-}
-
 void APMFirmwarePlugin::_setBaroGndTemp(Vehicle* vehicle, qreal temp)
 {
     if (!vehicle) {
@@ -1411,4 +1390,17 @@ bool APMFirmwarePlugin::stopCompensatingBaro(const Vehicle *vehicle, QPair<QMeta
     }
 
     return result;
+}
+
+QVariant APMFirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* vehicle, const QString& indicatorName) const
+{
+    if (indicatorName == "Battery") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMBatteryIndicator.qml"));
+    } else if (indicatorName == "FlightMode" && vehicle->multiRotor()) {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMFlightModeIndicator.qml"));
+    } else if (indicatorName == "MainStatus") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMMainStatusIndicator.qml"));
+    }
+
+    return QVariant();
 }

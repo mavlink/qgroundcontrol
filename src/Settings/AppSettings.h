@@ -42,16 +42,18 @@ public:
     DEFINE_SETTINGFACT(appFontPointSize)
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(savePath)
-    DEFINE_SETTINGFACT(androidSaveToSDCard)
+    DEFINE_SETTINGFACT(androidDontSaveToSDCard)
     DEFINE_SETTINGFACT(useChecklist)
     DEFINE_SETTINGFACT(enforceChecklist)
     DEFINE_SETTINGFACT(enableMultiVehiclePanel)
+    DEFINE_SETTINGFACT(tiandituToken)
     DEFINE_SETTINGFACT(mapboxToken)
     DEFINE_SETTINGFACT(mapboxAccount)
     DEFINE_SETTINGFACT(mapboxStyle)
     DEFINE_SETTINGFACT(esriToken)
     DEFINE_SETTINGFACT(customURL)
     DEFINE_SETTINGFACT(vworldToken)
+    DEFINE_SETTINGFACT(openaipToken)
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(qLocaleLanguage)
@@ -67,7 +69,8 @@ public:
     Q_PROPERTY(QString videoSavePath            READ videoSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString photoSavePath            READ photoSavePath              NOTIFY savePathsChanged)
     Q_PROPERTY(QString crashSavePath            READ crashSavePath              NOTIFY savePathsChanged)
-    Q_PROPERTY(QString mavlinkActionsSavePath    READ mavlinkActionsSavePath      NOTIFY savePathsChanged)
+    Q_PROPERTY(QString mavlinkActionsSavePath   READ mavlinkActionsSavePath     NOTIFY savePathsChanged)
+    Q_PROPERTY(QString settingsSavePath         READ settingsSavePath           NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
@@ -78,6 +81,8 @@ public:
     Q_PROPERTY(QString shpFileExtension         MEMBER shpFileExtension         CONSTANT)
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
     Q_PROPERTY(QString tilesetFileExtension     MEMBER tilesetFileExtension     CONSTANT)
+    Q_PROPERTY(QString settingsFileExtension    MEMBER settingsFileExtension    CONSTANT)
+
 
     QString missionSavePath       ();
     QString parameterSavePath     ();
@@ -86,7 +91,8 @@ public:
     QString videoSavePath         ();
     QString photoSavePath         ();
     QString crashSavePath         ();
-    QString mavlinkActionsSavePath ();
+    QString mavlinkActionsSavePath();
+    QString settingsSavePath      ();
 
     // Helper methods for working with firstRunPromptIds QVariant settings string list
     static QList<int> firstRunPromptsIdsVariantToList   (const QVariant& firstRunPromptIds);
@@ -105,6 +111,7 @@ public:
     static constexpr const char* shpFileExtension =         "shp";
     static constexpr const char* logFileExtension =         "ulg";
     static constexpr const char* tilesetFileExtension =     "qgctiledb";
+    static constexpr const char* settingsFileExtension =    "settings";
 
     // Child directories of savePath for specific file types
     static constexpr const char* parameterDirectory =       QT_TRANSLATE_NOOP("AppSettings", "Parameters");
@@ -115,6 +122,7 @@ public:
     static constexpr const char* photoDirectory =           QT_TRANSLATE_NOOP("AppSettings", "Photo");
     static constexpr const char* crashDirectory =           QT_TRANSLATE_NOOP("AppSettings", "CrashLogs");
     static constexpr const char* mavlinkActionsDirectory =  QT_TRANSLATE_NOOP("AppSettings", "MavlinkActions");
+    static constexpr const char* settingsDirectory =        QT_TRANSLATE_NOOP("AppSettings", "Settings");
 
 signals:
     void savePathsChanged();
@@ -129,6 +137,8 @@ private:
 
     static QList<QLocale::Language> _rgReleaseLanguages;
     static QList<QLocale::Language> _rgPartialLanguages;
+
+    QString _childSavePath(const char* directory);
 
     typedef struct {
         QLocale::Language   languageId;

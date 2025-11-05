@@ -11,7 +11,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(StandardModesLog, "StandardModesLog")
+QGC_LOGGING_CATEGORY(StandardModesLog, "Vehicle.StandardModes")
 
 static void requestMessageResultHandler(void *resultHandlerData, MAV_RESULT result,
                                         [[maybe_unused]] Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
@@ -58,18 +58,15 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
                 break;
             case MAV_STANDARD_MODE_SAFE_RECOVERY:
                 name = "Safe Recovery";
-                cannotBeSet = true; // These are exposed in the UI as separate buttons
                 break;
             case MAV_STANDARD_MODE_MISSION:
                 name = "Mission";
                 break;
             case MAV_STANDARD_MODE_LAND:
                 name = "Land";
-                cannotBeSet = true; // These are exposed in the UI as separate buttons
                 break;
             case MAV_STANDARD_MODE_TAKEOFF:
                 name = "Takeoff";
-                cannotBeSet = true; // These are exposed in the UI as separate buttons
                 break;
         }
 

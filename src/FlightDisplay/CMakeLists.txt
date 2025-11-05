@@ -1,3 +1,8 @@
+# ============================================================================
+# Flight Display Module
+# In-flight view, telemetry displays, and vehicle control UI
+# ============================================================================
+
 qt_add_library(FlightDisplayModule STATIC)
 
 qt_add_qml_module(FlightDisplayModule
@@ -22,6 +27,8 @@ qt_add_qml_module(FlightDisplayModule
         FlyViewCustomLayer.qml
         FlyViewInsetViewer.qml
         FlyViewInstrumentPanel.qml
+        FlyViewGripperButton.qml
+        FlyViewGripperDropPanel.qml
         FlyViewMap.qml
         FlyViewMissionCompleteDialog.qml
         FlyViewPreFlightChecklistPopup.qml
@@ -31,9 +38,7 @@ qt_add_qml_module(FlightDisplayModule
         FlyViewTopRightPanel.qml
         FlyViewVideo.qml
         FlyViewWidgetLayer.qml
-        GripperMenu.qml
         GuidedActionConfirm.qml
-        GuidedActionGripper.qml
         GuidedActionLand.qml
         GuidedActionPause.qml
         GuidedActionRTL.qml

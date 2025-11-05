@@ -10,7 +10,7 @@
 #include "QmlComponentInfo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QmlComponentInfoLog, "qgc.api.qmlcomponentinfo");
+QGC_LOGGING_CATEGORY(QmlComponentInfoLog, "API.QmlComponentInfo");
 
 QmlComponentInfo::QmlComponentInfo(const QString &title, QUrl url, QUrl icon, QObject *parent)
     : QObject(parent)

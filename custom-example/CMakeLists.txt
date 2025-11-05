@@ -1,4 +1,13 @@
+# ============================================================================
+# QGroundControl Custom Plugin Example
+# Template for building custom QGroundControl plugins
+# ============================================================================
+
 message(STATUS "QGC: Adding Custom Plugin")
+
+# ============================================================================
+# Custom Android Package Template
+# ============================================================================
 
 if(ANDROID)
     set(CUSTOM_ANDROID_DIR "${CMAKE_SOURCE_DIR}/custom/android")
@@ -8,12 +17,19 @@ if(ANDROID)
             message(STATUS "QGC: Custom Android package template found. Overlaying custom files...")
             set(DEFAULT_ANDROID_DIR "${CMAKE_SOURCE_DIR}/android")
             set(FINAL_ANDROID_DIR "${CMAKE_BINARY_DIR}/custom/android")
+
+            # Copy default Android template
             file(COPY "${DEFAULT_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
+
+            # Overlay custom Android files
             file(COPY "${CUSTOM_ANDROID_DIR}/." DESTINATION "${FINAL_ANDROID_DIR}")
+
+            # Track changes to Android directories
             set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-                            "${DEFAULT_ANDROID_DIR}/"
-                            "${CUSTOM_ANDROID_DIR}/"
-                        )
+                "${DEFAULT_ANDROID_DIR}/"
+                "${CUSTOM_ANDROID_DIR}/"
+            )
+
             set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${FINAL_ANDROID_DIR}" CACHE PATH "Path to a custom Android package template" FORCE)
             message(STATUS "QGC: Android package template path will be set to: ${QGC_ANDROID_PACKAGE_SOURCE_DIR}")
         else()
@@ -24,24 +40,35 @@ if(ANDROID)
     endif()
 endif()
 
+# ============================================================================
+# Custom Resources and Import Paths
+# ============================================================================
+
+# Add custom Qt resources
 list(APPEND CUSTOM_RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom.qrc
 )
 set(QGC_RESOURCES ${QGC_RESOURCES} ${CUSTOM_RESOURCES} CACHE STRING "Paths to .qrc Resources" FORCE)
 
+# Add custom QML import path
 set(QML_IMPORT_PATH ${QML_IMPORT_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/res" CACHE STRING "Extra qml import paths" FORCE)
+
+# ============================================================================
+# Custom QML Module
+# ============================================================================
 
 qt_add_library(CustomModule STATIC)
 
-set_source_files_properties(res/Custom/Widgets/CustomArtificialHorizon.qml PROPERTIES QT_RESOURCE_ALIAS CustomArtificialHorizon.qml)
+# Set resource aliases for custom widgets
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomArtificialHorizon.qml PROPERTIES QT_RESOURCE_ALIAS CustomArtificialHorizon.qml)
 qgc_set_qt_resource_alias(
-    res/Custom/Widgets/CustomAttitudeWidget.qml
-    res/Custom/Widgets/CustomIconButton.qml
-    res/Custom/Widgets/CustomOnOffSwitch.qml
-    res/Custom/Widgets/CustomQuickButton.qml
-    res/Custom/Widgets/CustomSignalStrength.qml
-    res/Custom/Widgets/CustomToolBarButton.qml
-    res/Custom/Widgets/CustomVehicleButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomAttitudeWidget.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomIconButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomOnOffSwitch.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomQuickButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomSignalStrength.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomToolBarButton.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomVehicleButton.qml
 )
 
 qt_add_qml_module(CustomModule
@@ -49,16 +76,20 @@ qt_add_qml_module(CustomModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        res/Custom/Widgets/CustomArtificialHorizon.qml
-        res/Custom/Widgets/CustomAttitudeWidget.qml
-        res/Custom/Widgets/CustomIconButton.qml
-        res/Custom/Widgets/CustomOnOffSwitch.qml
-        res/Custom/Widgets/CustomQuickButton.qml
-        res/Custom/Widgets/CustomSignalStrength.qml
-        res/Custom/Widgets/CustomToolBarButton.qml
-        res/Custom/Widgets/CustomVehicleButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomArtificialHorizon.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomAttitudeWidget.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomIconButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomOnOffSwitch.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomQuickButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomSignalStrength.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomToolBarButton.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/res/Custom/Widgets/CustomVehicleButton.qml
     NO_PLUGIN
 )
+
+# ============================================================================
+# Custom Plugin Sources
+# ============================================================================
 
 set(CUSTOM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CustomPlugin.cc
@@ -72,11 +103,17 @@ set(CUSTOM_SOURCES
     CACHE INTERNAL "" FORCE
 )
 
+# ============================================================================
+# Custom Build Configuration
+# ============================================================================
+
+# Custom libraries to link
 set(CUSTOM_LIBRARIES
     CustomModule
     CACHE INTERNAL "" FORCE
 )
 
+# Custom include directories
 set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
@@ -84,6 +121,7 @@ set(CUSTOM_INCLUDE_DIRECTORIES
     CACHE INTERNAL "" FORCE
 )
 
+# Custom compiler definitions
 set(CUSTOM_DEFINITIONS
     QGC_CUSTOM_BUILD
     CUSTOMHEADER="CustomPlugin.h"
@@ -91,6 +129,7 @@ set(CUSTOM_DEFINITIONS
     CACHE INTERNAL "" FORCE
 )
 
+# Custom Qt components required
 set(CUSTOM_QT_COMPONENTS
     Core
     CACHE INTERNAL "" FORCE

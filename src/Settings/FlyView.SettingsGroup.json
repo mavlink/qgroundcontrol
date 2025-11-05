@@ -45,7 +45,7 @@
     "name":         "showSimpleCameraControl",
     "shortDesc":    "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
     "type":         "bool",
-    "default":      true
+    "default":      false
 },
 {
     "name":         "showObstacleDistanceOverlay",
@@ -102,6 +102,12 @@
     "min":          3,
     "max":          60,
     "default":      10
+},
+{
+    "name":         "showJoystickIndicatorInToolbar",
+    "shortDesc":    "Show joystick indicator in toolbar",
+    "type":         "bool",
+    "default":      false
 }
 ]
 }

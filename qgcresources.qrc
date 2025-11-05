@@ -108,7 +108,7 @@
         <file>resources/opengl/buglist.json</file>
     </qresource>
     <qresource prefix="/gimbal">
-        <file alias="payload.svg">resources/gimbal/payload.svg</file>
+        <file alias="payload.png">resources/gimbal/payload.png</file>
     </qresource>
     <qresource prefix="/gcscontrolIndicator">
         <file alias="gcscontrol_device.svg">resources/gcscontrolIndicator/gcscontrol_device.svg</file>

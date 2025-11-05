@@ -15,8 +15,8 @@
 #include <QtCore/QRegularExpressionMatch>
 #include <QtCore/QStack>
 
-QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "qgc.firmwareplugin.apm.apmparametermetadata")
-QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog, "qgc.firmwareplugin.apm.apmparametermetadata:verbose")
+QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "FirmwarePlugin.APMParameterMetaData")
+QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog, "FirmwarePlugin.APMParameterMetaData:verbose")
 
 APMParameterMetaData::APMParameterMetaData(QObject *parent)
     : QObject(parent)

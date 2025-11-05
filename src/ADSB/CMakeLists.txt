@@ -1,3 +1,8 @@
+# ============================================================================
+# ADS-B Module
+# Automatic Dependent Surveillance-Broadcast for air traffic awareness
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ADSBTCPLink.cc

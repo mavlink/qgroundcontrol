@@ -1,3 +1,8 @@
+# ============================================================================
+# Analyze View Module
+# Flight log analysis, MAVLink inspection, and telemetry visualization
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ExifParser.cc
@@ -30,6 +35,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# QML Module for Analyze View UI
+# ----------------------------------------------------------------------------
 qt_add_library(AnalyzeViewModule STATIC)
 
 qt_add_qml_module(AnalyzeViewModule
@@ -46,7 +54,9 @@ qt_add_qml_module(AnalyzeViewModule
     NO_PLUGIN
 )
 
-#===========================================================================#
+# ============================================================================
+# ULog Parser Integration
+# ============================================================================
 
 CPMAddPackage(
     NAME ulog_cpp
@@ -54,6 +64,7 @@ CPMAddPackage(
     GIT_TAG main
 )
 
+# Suppress Clang warnings for ulog_cpp
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(ulog_cpp PRIVATE -Wno-unknown-warning-option)
 endif()

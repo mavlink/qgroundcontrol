@@ -16,7 +16,7 @@
 
 #include <QtCore/QCoreApplication>
 
-QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "qgc.autopilotplugin.autopilotplugin");
+QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "AutoPilotPlugins.AutoPilotPlugin");
 
 AutoPilotPlugin::AutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     : QObject(parent)

@@ -14,7 +14,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(SerialLinkLog, "qgc.comms.seriallink")
+QGC_LOGGING_CATEGORY(SerialLinkLog, "Comms.SerialLink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 1000;
@@ -61,11 +61,9 @@ void SerialConfiguration::setPortName(const QString &name)
 
 void SerialConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const SerialConfiguration* const serialSource = qobject_cast<const SerialConfiguration*>(source);
-    Q_ASSERT(serialSource);
+    const SerialConfiguration* serialSource = qobject_cast<const SerialConfiguration*>(source);
 
     setBaud(serialSource->baud());
     setDataBits(serialSource->dataBits());
@@ -75,6 +73,7 @@ void SerialConfiguration::copyFrom(const LinkConfiguration *source)
     setPortName(serialSource->portName());
     setPortDisplayName(serialSource->portDisplayName());
     setUsbDirect(serialSource->usbDirect());
+    setdtrForceLow(serialSource->dtrForceLow());
 }
 
 void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
@@ -88,6 +87,7 @@ void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
     setParity(static_cast<QSerialPort::Parity>(settings.value("parity", _parity).toInt()));
     setPortName(settings.value("portName", _portName).toString());
     setPortDisplayName(settings.value("portDisplayName", _portDisplayName).toString());
+    setdtrForceLow(settings.value("dtrForceLow", _dtrForceLow).toBool());
 
     settings.endGroup();
 }
@@ -103,6 +103,7 @@ void SerialConfiguration::saveSettings(QSettings &settings, const QString &root)
     settings.setValue("parity", _parity);
     settings.setValue("portName", _portName);
     settings.setValue("portDisplayName", _portDisplayName);
+    settings.setValue("dtrForceLow", _dtrForceLow);
 
     settings.endGroup();
 }
@@ -189,7 +190,7 @@ SerialWorker::SerialWorker(const SerialConfiguration *config, QObject *parent)
     : QObject(parent)
     , _serialConfig(config)
 {
-    // qCDebug(SerialLinkLog) << this;
+    qCDebug(SerialLinkLog) << this;
 
     (void) qRegisterMetaType<QSerialPort::SerialPortError>("QSerialPort::SerialPortError");
 }
@@ -198,7 +199,7 @@ SerialWorker::~SerialWorker()
 {
     disconnectFromPort();
 
-    // qCDebug(SerialLinkLog) << this;
+    qCDebug(SerialLinkLog) << this;
 }
 
 bool SerialWorker::isConnected() const
@@ -208,11 +209,13 @@ bool SerialWorker::isConnected() const
 
 void SerialWorker::setupPort()
 {
-    Q_ASSERT(!_port);
-    _port = new QSerialPort(this);
+    if (!_port) {
+        _port = new QSerialPort(this);
+    }
 
-    Q_ASSERT(!_timer);
-    _timer = new QTimer(this);
+    if (!_timer) {
+        _timer = new QTimer(this);
+    }
 
     (void) connect(_port, &QSerialPort::aboutToClose, this, &SerialWorker::_onPortDisconnected);
     (void) connect(_port, &QSerialPort::readyRead, this, &SerialWorker::_onPortReadyRead);
@@ -223,7 +226,6 @@ void SerialWorker::setupPort()
     } */
 
     (void) connect(_timer, &QTimer::timeout, this, &SerialWorker::_checkPortAvailability);
-    _timer->start(CONNECT_TIMEOUT_MS);
 }
 
 void SerialWorker::connectToPort()
@@ -271,6 +273,7 @@ void SerialWorker::disconnectFromPort()
     }
 
     qCDebug(SerialLinkLog) << "Attempting to close port:" << _port->portName();
+
     _port->close();
 }
 
@@ -312,12 +315,16 @@ void SerialWorker::_onPortConnected()
 {
     qCDebug(SerialLinkLog) << "Port connected:" << _port->portName();
 
-    _port->setDataTerminalReady(true);
+    _port->setDataTerminalReady(_serialConfig->dtrForceLow() ? false : true);
     _port->setBaudRate(_serialConfig->baud());
     _port->setDataBits(static_cast<QSerialPort::DataBits>(_serialConfig->dataBits()));
     _port->setFlowControl(static_cast<QSerialPort::FlowControl>(_serialConfig->flowControl()));
     _port->setStopBits(static_cast<QSerialPort::StopBits>(_serialConfig->stopBits()));
     _port->setParity(static_cast<QSerialPort::Parity>(_serialConfig->parity()));
+
+    if (_timer) {
+        _timer->start(CONNECT_TIMEOUT_MS);
+    }
 
     _errorEmitted = false;
     emit connected();
@@ -326,6 +333,11 @@ void SerialWorker::_onPortConnected()
 void SerialWorker::_onPortDisconnected()
 {
     qCDebug(SerialLinkLog) << "Port disconnected:" << _port->portName();
+
+    if (_timer) {
+        _timer->stop();
+    }
+
     _errorEmitted = false;
     emit disconnected();
 }
@@ -399,7 +411,7 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _worker(new SerialWorker(_serialConfig))
     , _workerThread(new QThread(this))
 {
-    // qCDebug(SerialLinkLog) << this;
+    qCDebug(SerialLinkLog) << this;
 
     _workerThread->setObjectName(QStringLiteral("Serial_%1").arg(_serialConfig->name()));
 
@@ -419,19 +431,22 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
 SerialLink::~SerialLink()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::BlockingQueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::BlockingQueuedConnection);
+        _onDisconnected();
+    }
 
     _workerThread->quit();
     if (!_workerThread->wait(DISCONNECT_TIMEOUT_MS)) {
         qCWarning(SerialLinkLog) << "Failed to wait for Serial Thread to close";
     }
 
-    // qCDebug(SerialLinkLog) << this;
+    qCDebug(SerialLinkLog) << this;
 }
 
 bool SerialLink::isConnected() const
 {
-    return _worker->isConnected();
+    return _worker && _worker->isConnected();
 }
 
 bool SerialLink::_connect()
@@ -441,17 +456,22 @@ bool SerialLink::_connect()
 
 void SerialLink::disconnect()
 {
-    (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::QueuedConnection);
+    if (isConnected()) {
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::QueuedConnection);
+    }
 }
 
 void SerialLink::_onConnected()
 {
+    _disconnectedEmitted = false;
     emit connected();
 }
 
 void SerialLink::_onDisconnected()
 {
-    emit disconnected();
+    if (!_disconnectedEmitted.exchange(true)) {
+        emit disconnected();
+    }
 }
 
 void SerialLink::_onErrorOccurred(const QString &errorString)

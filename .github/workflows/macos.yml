@@ -34,8 +34,7 @@ jobs:
         shell: bash
 
     env:
-      QT_VERSION: 6.8.3
-      QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+      QT_VERSION: 6.10.0
 
     steps:
       - name: Checkout repo
@@ -73,43 +72,46 @@ jobs:
           target: desktop
           arch: clang_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
           setup-python: false
           cache: true
 
-      - name: Import Code Signing Certificate
-        if: github.event_name != 'pull_request'
-        uses: apple-actions/import-codesign-certs@v5
-        with:
-          p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTS_P12 }}
-          p12-password: ${{ secrets.MACOS_SIGNING_CERTS_PASS }}
-
-      - name: Configure
+      - name: CMake configure
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Sanity check dev build executable
-        if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/build/Release/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 
-      - name: Create DMG
+      - name: Import Code Signing Certificate
+        if: github.event_name != 'pull_request'
+        uses: apple-actions/import-codesign-certs@v5
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
+
+      - name: Create signed/notarized/stapled app bundle
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config ${{ matrix.BuildType }}
+        env:
+          QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          QGC_MACOS_NOTARIZATION_USERNAME: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
+          QGC_MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
 
       - name: Mount DMG
-        if: matrix.BuildType == 'Release'
         working-directory: ${{ runner.temp }}/build
         run: hdiutil attach QGroundControl.dmg
 
       - name: Sanity check DMG executable
-        if: matrix.BuildType == 'Release'
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 

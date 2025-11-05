@@ -22,7 +22,7 @@
 #include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "qgc.qtlocationplugin.qgeofiletilecacheqgc")
+QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "QtLocationPlugin.QGeoFileTileCacheQGC")
 
 QString QGeoFileTileCacheQGC::_databaseFilePath;
 QString QGeoFileTileCacheQGC::_cachePath;

@@ -13,7 +13,7 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "qgc.gps.rtcmmavlink")
+QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
 
 RTCMMavlink::RTCMMavlink(QObject *parent)
     : QObject(parent)

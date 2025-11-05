@@ -1,3 +1,8 @@
+# ============================================================================
+# QML Controls Module
+# Reusable QML UI controls and controllers
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         EditPositionDialogController.cc
@@ -59,6 +64,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# QML Controls Module
+# ----------------------------------------------------------------------------
 qt_add_library(QGroundControlControlsModule STATIC)
 
 set_source_files_properties(ScreenTools.qml PROPERTIES
@@ -73,7 +81,7 @@ qt_add_qml_module(QGroundControlControlsModule
         AltModeDialog.qml
         AppSettings.qml
         APMSubMotorDisplay.qml
-        AppMessages.qml
+        AppLogging.qml
         AutotuneUI.qml
         AxisMonitor.qml
         ClickableColor.qml
@@ -120,6 +128,7 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCColoredImage.qml
         QGCColumnButton.qml
         QGCComboBox.qml
+        QGCDelayButton.qml
         QGCDynamicObjectManager.qml
         QGCFileDialog.qml
         QGCFlickable.qml
@@ -166,8 +175,9 @@ qt_add_qml_module(QGroundControlControlsModule
         VehicleRotationCal.qml
         VehicleSummaryRow.qml
 
-# Due to the fact t hatset_source_files_properties with QT_RESOURCE_ALIAS doesn't work in cmombination with qt_qdd_add_qml_module on Windows.
-# We had to move various qml files to this directory to get things to work. We will revisit this in the 5.1 release.
+# NOTE: Due to Windows limitations with set_source_files_properties and qt_add_qml_module,
+# various QML files from other modules are temporarily included here.
+# This will be revisited in a future release.
 
         # src/AnalyzeView/
         AnalyzePage.qml
@@ -224,6 +234,7 @@ qt_add_qml_module(QGroundControlControlsModule
         GPSIndicatorPage.qml
         MainStatusIndicator.qml
         MainStatusIndicatorOfflinePage.qml
+        ParameterDownloadProgress.qml
         PlanViewToolBar.qml
         RemoteIDIndicatorPage.qml
         SignalStrength.qml
@@ -236,7 +247,9 @@ qt_add_qml_module(QGroundControlControlsModule
     NO_PLUGIN
 )
 
-# Add JSON files
+# ----------------------------------------------------------------------------
+# Control Configuration Resources
+# ----------------------------------------------------------------------------
 file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
 qt_add_resources(${CMAKE_PROJECT_NAME} json_controls
     PREFIX "/json"

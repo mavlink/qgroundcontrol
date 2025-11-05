@@ -24,7 +24,7 @@
 #include <QtNetwork/QSslConfiguration>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(TerrainQueryCopernicusLog, "qgc.terrain.terrainquerycopernicus")
+QGC_LOGGING_CATEGORY(TerrainQueryCopernicusLog, "Terrain.TerrainQueryCopernicus")
 
 TerrainQueryCopernicus::TerrainQueryCopernicus(QObject *parent)
     : TerrainOnlineQuery(parent)

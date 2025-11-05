@@ -15,7 +15,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "RemoteIDManagerLog")
+QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "Vehicle.RemoteIDManager")
 
 #define AREA_COUNT 1
 #define AREA_RADIUS 0
@@ -66,11 +66,11 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     _targetSystem = _vehicle->id();
     _targetComponent = _vehicle->compId();
 
-    if (_settings->operatorIDValid()->rawValue() == true) {
+    if (_settings->operatorIDValid()->rawValue() == true || (_settings->region()->rawValue().toInt() != Region::EU && _settings->operatorID()->rawValue().toString().length() > 0)) {
         // If it was already checked, we can flag this as good to go.
         // We don't do a fresh verification because we don't store the private part of the ID.
         _operatorIDGood = true;
-        operatorIDGoodChanged();
+        emit operatorIDGoodChanged();
     }
 }
 

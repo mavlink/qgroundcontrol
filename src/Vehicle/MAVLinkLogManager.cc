@@ -21,7 +21,7 @@
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkReply>
 
-QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "qgc.vehicle.mavlinklogmanager")
+QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "Vehicle.MAVLinkLogManager")
 
 static constexpr const char *kSidecarExtension = ".uploaded";
 

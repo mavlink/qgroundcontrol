@@ -18,7 +18,7 @@
 #include <QtPositioning/QGeoPath>
 #include <QtPositioning/QGeoPolygon>
 
-QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "qgc.utilities.shape.geojsonhelper")
+QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
 namespace GeoJsonHelper
 {

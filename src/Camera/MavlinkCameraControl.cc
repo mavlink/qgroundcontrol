@@ -10,8 +10,8 @@
 #include "MavlinkCameraControl.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CameraControlLog, "qgc.camera.mavlinkcameracontrol")
-QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "qgc.camera.mavlinkcameracontrol")
+QGC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControl")
+QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "Camera.MavlinkCameraControl:verbose")
 
 MavlinkCameraControl::MavlinkCameraControl(Vehicle *vehicle, QObject *parent)
     : FactGroup(0, parent, true /* ignore camel case */)

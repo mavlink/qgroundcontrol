@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-#
-# QGroundControl build‑time dependencies for Ubuntu/Debian‑based images
-# --------------------------------------------------------------------
-# * Designed for non‑interactive CI/containers
-# * Uses --no-install-recommends to keep the image lean
-# * Cleans APT cache at the end to minimise final size
-
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
@@ -48,7 +41,8 @@ apt-get install -y -qq --no-install-recommends \
     zsync
 
 pipx ensurepath
-pipx install cmake ninja
+pipx install cmake
+pipx install ninja
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
@@ -121,7 +115,8 @@ apt-get install -y -qq --no-install-recommends \
 # Miscellaneous
 # --------------------------------------------------------------------
 apt-get install -y -qq --no-install-recommends \
-    libvulkan-dev
+    libvulkan-dev \
+    libpipewire-0.3-dev
 
 # --------------------------------------------------------------------
 # Clean‑up

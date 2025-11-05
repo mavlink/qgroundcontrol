@@ -18,8 +18,6 @@ import QGroundControl
 
 import QGroundControl.Controls
 
-
-
 AnalyzePage {
     id: root
     headerComponent:    headerComponent
@@ -45,27 +43,22 @@ AnalyzePage {
             if(!checkBox) {
                 continue
             }
-            const object = message.fields.get(i)
-            checkBox.enabled = isCheckboxEnabled(checkBox, object, chart)
+            const messageField = message.fields.get(i)
+            checkBox.enabled = isCheckboxEnabled(checkBox, messageField, chart)
         }
     }
 
-    function isCheckboxEnabled(checkBox, object, chart) {
+    function isCheckboxEnabled(checkBox, messageField, chart) {
         if(checkBox.checkState === Qt.Checked) {
             return true
         }
-        if(!object.selectable) {
+        if(!messageField.selectable) {
             return false
         }
-        if(object.series !== null) {
+        if(messageField.series !== null) {
             return false
         }
-        if(chart.chartController !== null) {
-            if (chart.chartController.chartFields.length >= chart.seriesColors.length) {
-                return false
-            }
-        }
-        return true
+        return chart.roomForNewDimension()
     }
 
     Component {
@@ -338,14 +331,18 @@ AnalyzePage {
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
                     MAVLinkChart {
-                        id:         chart1
-                        height:     ScreenTools.defaultFontPixelHeight * 20
-                        width:      parent.width
+                        id:                     chart1
+                        height:                 ScreenTools.defaultFontPixelHeight * 20
+                        width:                  parent.width
+                        inspectorController:    controller
+                        chartIndex:             0
                     }
                     MAVLinkChart {
-                        id:         chart2
-                        height:     ScreenTools.defaultFontPixelHeight * 20
-                        width:      parent.width
+                        id:                     chart2
+                        height:                 ScreenTools.defaultFontPixelHeight * 20
+                        width:                  parent.width
+                        inspectorController:    controller
+                        chartIndex:             1
                     }
                 }
             }

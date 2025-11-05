@@ -107,3 +107,20 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
         "${ArduPilotParams_SOURCE_DIR}/Sub-4.1/apm.pdef.xml"
         "${ArduPilotParams_SOURCE_DIR}/Sub-4.5/apm.pdef.xml"
 )
+
+# Add qml module
+qt_add_library(APMFirmwareModule STATIC)
+
+qt_add_qml_module(APMFirmwareModule
+    URI QGroundControl.FirmwarePlugin.APM
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        APMBatteryIndicator.qml
+        APMFlightModeIndicator.qml
+        APMMainStatusIndicator.qml
+        APMSupportForwardingIndicator.qml
+    NO_PLUGIN
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE APMFirmwareModule)

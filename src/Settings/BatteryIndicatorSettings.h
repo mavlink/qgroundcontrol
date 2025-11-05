@@ -26,6 +26,7 @@ public:
     DEFINE_SETTINGFACT(valueDisplay)            // Battery value display mode
     DEFINE_SETTINGFACT(threshold1)              // First threshold for battery level
     DEFINE_SETTINGFACT(threshold2)              // Second threshold for battery level
+    DEFINE_SETTINGFACT(consolidateMultipleBatteries)
 
     Q_INVOKABLE void setThreshold1(int value);  // Set threshold1 with validation
     Q_INVOKABLE void setThreshold2(int value);  // Set threshold2 with validation

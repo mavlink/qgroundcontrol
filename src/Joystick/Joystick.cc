@@ -24,8 +24,8 @@
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(JoystickLog, "qgc.joystick.joystick")
-QGC_LOGGING_CATEGORY(JoystickValuesLog, "qgc.joystick.joystickvalues")
+QGC_LOGGING_CATEGORY(JoystickLog, "Joystick.joystick")
+QGC_LOGGING_CATEGORY(JoystickValuesLog, "Joystick.joystickvalues")
 
 /*===========================================================================*/
 
@@ -61,7 +61,7 @@ Joystick::Joystick(const QString &name, int axisCount, int buttonCount, int hatC
     , _mavlinkActionManager(new MavlinkActionManager(SettingsManager::instance()->mavlinkActionsSettings()->joystickActionsFile(), this))
     , _assignableButtonActions(new QmlObjectListModel(this))
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << Q_FUNC_INFO << this << name << "axisCount:buttonCount:hatCount" << axisCount << buttonCount << hatCount;
 
     for (int i = 0; i < _axisCount; i++) {
         _rgAxisValues[i] = 0;
@@ -212,10 +212,13 @@ void Joystick::_loadSettings()
     _circleCorrection  = settings.value(_circleCorrectionSettingsKey, false).toBool();
     _negativeThrust = settings.value(_negativeThrustSettingsKey, false).toBool();
     _throttleMode = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
+    _enableManualControlExtensions = settings.value(_manualControlExtensionsEnabledKey, false).toBool();
 
     badSettings |= !convertOk;
 
-    qCDebug(JoystickLog) << Q_FUNC_INFO << "calibrated:txmode:throttlemode:exponential:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
+    qCDebug(JoystickLog) << _name;
+    qCDebug(JoystickLog) << "  calibrated:txmode:throttlemode:exponential:deadband:badsettings";
+    qCDebug(JoystickLog) << " " << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
 
     const QString minTpl("Axis%1Min");
     const QString maxTpl("Axis%1Max");
@@ -223,6 +226,7 @@ void Joystick::_loadSettings()
     const QString revTpl("Axis%1Rev");
     const QString deadbndTpl("Axis%1Deadbnd");
 
+    qCDebug(JoystickLog) << "  axis:min:max:trim:reversed:deadband:badsettings";
     for (int axis = 0; axis < _axisCount; axis++) {
         Calibration_t *const calibration = &_rgCalibration[axis];
 
@@ -240,11 +244,13 @@ void Joystick::_loadSettings()
 
         calibration->reversed = settings.value(revTpl.arg(axis), false).toBool();
 
-        qCDebug(JoystickLog) << Q_FUNC_INFO << "axis:min:max:trim:reversed:deadband:badsettings" << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
+        qCDebug(JoystickLog) << " " << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
     }
 
     int workingAxis = 0;
-    for (int function = 0; function < maxFunction; function++) {
+    qCDebug(JoystickLog) << "Function Axis mappings";
+    qCDebug(JoystickLog) << "  function:axis:badsettings";
+    for (int function = 0; function < maxAxisFunction; function++) {
         int functionAxis = settings.value(_rgFunctionSettingsKey[function], -1).toInt(&convertOk);
         badSettings |= (!convertOk || (functionAxis >= _axisCount));
 
@@ -256,7 +262,7 @@ void Joystick::_loadSettings()
             _rgFunctionAxis[function] = functionAxis;
         }
 
-        qCDebug(JoystickLog) << Q_FUNC_INFO << "function:axis:badsettings" << function << functionAxis << badSettings;
+        qCDebug(JoystickLog) << " " << axisFunctionToString(static_cast<AxisFunction_t>(function)) << functionAxis << badSettings;
     }
 
     badSettings |= (workingAxis < 4);
@@ -324,8 +330,14 @@ void Joystick::_saveSettings()
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
     settings.setValue(_negativeThrustSettingsKey, _negativeThrust);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
+    settings.setValue(_manualControlExtensionsEnabledKey, _enableManualControlExtensions);
 
-    qCDebug(JoystickLog) << Q_FUNC_INFO << "calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _circleCorrection << _transmitterMode;
+    qCDebug(JoystickLog) << _name;
+    qCDebug(JoystickLog) << "  calibrated:exponential:accumulator:circlecorrection:negativeThrust:throttlemode:deadband:axisfrequency:buttonfrequency:txmode";
+    qCDebug(JoystickLog) << " " << _calibrated << _exponential << _accumulator
+                            << _circleCorrection << _negativeThrust << _throttleMode
+                            << _deadband << _axisFrequencyHz << _buttonFrequencyHz
+                            << _transmitterMode;
 
     const QString minTpl("Axis%1Min");
     const QString maxTpl("Axis%1Max");
@@ -333,6 +345,7 @@ void Joystick::_saveSettings()
     const QString revTpl("Axis%1Rev");
     const QString deadbndTpl("Axis%1Deadbnd");
 
+    qCDebug(JoystickLog) << "  axis:min:max:trim:reversed:deadband";
     for (int axis = 0; axis < _axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
         settings.setValue(trimTpl.arg(axis), calibration->center);
@@ -340,24 +353,22 @@ void Joystick::_saveSettings()
         settings.setValue(maxTpl.arg(axis), calibration->max);
         settings.setValue(revTpl.arg(axis), calibration->reversed);
         settings.setValue(deadbndTpl.arg(axis), calibration->deadband);
-        qCDebug(JoystickLog) << Q_FUNC_INFO
-                             << "name:axis:min:max:trim:reversed:deadband"
-                             << _name
-                             << axis
-                             << calibration->min
-                             << calibration->max
-                             << calibration->center
-                             << calibration->reversed
-                             << calibration->deadband;
+        qCDebug(JoystickLog) << " " << axis
+                                << calibration->min
+                                << calibration->max
+                                << calibration->center
+                                << calibration->reversed
+                                << calibration->deadband;
     }
 
     // Write mode 2 mappings without changing mapping currently in use
-    int temp[maxFunction];
+    int temp[maxAxisFunction];
     _remapAxes(_transmitterMode, 2, temp);
 
-    for (int function = 0; function < maxFunction; function++) {
+    qCDebug(JoystickLog) << "TX Mode mappings";
+    for (int function = 0; function < maxAxisFunction; function++) {
         settings.setValue(_rgFunctionSettingsKey[function], temp[function]);
-        qCDebug(JoystickLog) << Q_FUNC_INFO << "name:function:axis" << _name << function << _rgFunctionSettingsKey[function];
+        qCDebug(JoystickLog) << " " << axisFunctionToString(static_cast<AxisFunction_t>(function)) << _rgFunctionSettingsKey[function];
     }
 
     _saveButtonSettings();
@@ -379,15 +390,15 @@ int Joystick::_mapFunctionMode(int mode, int function)
     return -1;
 }
 
-void Joystick::_remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction])
+void Joystick::_remapAxes(int currentMode, int newMode, int (&newMapping)[maxAxisFunction])
 {
-    int temp[maxFunction];
+    int temp[maxAxisFunction];
 
-    for (int function = 0; function < maxFunction; function++) {
+    for (int function = 0; function < maxAxisFunction; function++) {
         temp[_mapFunctionMode(newMode, function)] = _rgFunctionAxis[_mapFunctionMode(currentMode, function)];
     }
 
-    for (int function = 0; function < maxFunction; function++) {
+    for (int function = 0; function < maxAxisFunction; function++) {
         newMapping[function] = temp[function];
     }
 }
@@ -608,14 +619,14 @@ void Joystick::_handleAxis()
     axis = _rgFunctionAxis[throttleFunction];
     float throttle = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], (_throttleMode == ThrottleModeDownZero) ? false :_deadband);
 
-    float gimbalPitch = 0.0f;
-    if (_axisCount > 4) {
+    float gimbalPitch = NAN;
+    if (_enableManualControlExtensions && _axisCount > 4) {
         axis = _rgFunctionAxis[gimbalPitchFunction];
         gimbalPitch = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis],_deadband);
     }
 
-    float gimbalYaw = 0.0f;
-    if (_axisCount > 5) {
+    float gimbalYaw = NAN;
+    if (_enableManualControlExtensions && _axisCount > 5) {
         axis = _rgFunctionAxis[gimbalYawFunction];
         gimbalYaw = _adjustRange(_rgAxisValues[axis],   _rgCalibration[axis],_deadband);
     }
@@ -674,7 +685,7 @@ void Joystick::_handleAxis()
 
     const uint16_t lowButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
     const uint16_t highButtons = static_cast<uint16_t>((buttonPressedBits >> 16) & 0xFFFF);
-    _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons);
+    _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons, gimbalPitch, gimbalYaw);
 }
 
 void Joystick::startPolling(Vehicle* vehicle)
@@ -691,7 +702,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             (void) disconnect(this, &Joystick::gimbalPitchStop, _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStop);
             (void) disconnect(this, &Joystick::gimbalYawStop, _activeVehicle->gimbalController(), &GimbalController::gimbalYawStop);
             (void) disconnect(this, &Joystick::emergencyStop, _activeVehicle, &Vehicle::emergencyStop);
-            (void) disconnect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::setGripperAction);
+            (void) disconnect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::sendGripperAction);
             (void) disconnect(this, &Joystick::landingGearDeploy, _activeVehicle, &Vehicle::landingGearDeploy);
             (void) disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             (void) disconnect(this, &Joystick::motorInterlock, _activeVehicle, &Vehicle::motorInterlock);
@@ -722,7 +733,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             (void) connect(this, &Joystick::gimbalPitchStop,    _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStop);
             (void) connect(this, &Joystick::gimbalYawStop,      _activeVehicle->gimbalController(), &GimbalController::gimbalYawStop);
             (void) connect(this, &Joystick::emergencyStop, _activeVehicle, &Vehicle::emergencyStop);
-            (void) connect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::setGripperAction);
+            (void) connect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::sendGripperAction);
             (void) connect(this, &Joystick::landingGearDeploy, _activeVehicle, &Vehicle::landingGearDeploy);
             (void) connect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
             (void) connect(this, &Joystick::motorInterlock, _activeVehicle, &Vehicle::motorInterlock);
@@ -753,7 +764,7 @@ void Joystick::stopPolling()
         (void) disconnect(this, &Joystick::gimbalYawStart, _activeVehicle->gimbalController(), &GimbalController::gimbalYawStart);
         (void) disconnect(this, &Joystick::gimbalPitchStop, _activeVehicle->gimbalController(), &GimbalController::gimbalPitchStop);
         (void) disconnect(this, &Joystick::gimbalYawStop, _activeVehicle->gimbalController(), &GimbalController::gimbalYawStop);
-        (void) disconnect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::setGripperAction);
+        (void) disconnect(this, &Joystick::gripperAction, _activeVehicle, &Vehicle::sendGripperAction);
         (void) disconnect(this, &Joystick::landingGearDeploy, _activeVehicle, &Vehicle::landingGearDeploy);
         (void) disconnect(this, &Joystick::landingGearRetract, _activeVehicle, &Vehicle::landingGearRetract);
         (void) disconnect(this, &Joystick::motorInterlock, _activeVehicle, &Vehicle::motorInterlock);
@@ -799,7 +810,7 @@ void Joystick::setFunctionAxis(AxisFunction_t function, int axis)
 
 int Joystick::getFunctionAxis(AxisFunction_t function) const
 {
-    if ((static_cast<int>(function) < 0) || (function >= maxFunction)) {
+    if ((static_cast<int>(function) < 0) || (function >= maxAxisFunction)) {
         qCWarning(JoystickLog) << "Invalid function" << function;
     }
 
@@ -836,7 +847,7 @@ void Joystick::setButtonAction(int button, const QString& action)
         return;
     }
 
-    qCWarning(JoystickLog) << Q_FUNC_INFO << button << action;
+    qCDebug(JoystickLog) << "button:action" << button << action;
 
     QSettings settings;
     settings.beginGroup(_settingsGroup);
@@ -1094,13 +1105,17 @@ void Joystick::_executeButtonAction(const QString &action, bool buttonDown)
         if (buttonDown) {
             emit emergencyStop();
         }
-    } else if (action == _buttonActionGripperGrab) {
+    } else if (action == _buttonActionGripperClose) {
         if (buttonDown) {
-            emit gripperAction(GRIPPER_ACTION_GRAB);
+            emit gripperAction(QGCMAVLink::GripperActionClose);
         }
-    } else if (action == _buttonActionGripperRelease) {
+    } else if (action == _buttonActionGripperOpen) {
         if (buttonDown) {
-            emit gripperAction(GRIPPER_ACTION_RELEASE);
+            emit gripperAction(QGCMAVLink::GripperActionOpen);
+        }
+    } else if (action == _buttonActionGripperStop) {
+        if (buttonDown) {
+            emit gripperAction(QGCMAVLink::GripperActionStop);
         }
     } else if (action == _buttonActionLandingGearDeploy) {
         if (buttonDown) {
@@ -1204,8 +1219,9 @@ void Joystick::_buildActionList(Vehicle *activeVehicle)
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGimbalYawLock));
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGimbalYawFollow));
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionEmergencyStop));
-    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGripperGrab));
-    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGripperRelease));
+    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGripperClose));
+    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGripperOpen));
+    _assignableButtonActions->append(new AssignableButtonAction(_buttonActionGripperStop));
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionLandingGearDeploy));
     _assignableButtonActions->append(new AssignableButtonAction(_buttonActionLandingGearRetract));
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -1229,4 +1245,33 @@ void Joystick::_buildActionList(Vehicle *activeVehicle)
     }
 
     emit assignableActionsChanged();
+}
+
+QString Joystick::axisFunctionToString(AxisFunction_t function)
+{
+    switch (function) {
+    case rollFunction:
+        return QStringLiteral("Roll");
+    case pitchFunction:
+        return QStringLiteral("Pitch");
+    case yawFunction:
+        return QStringLiteral("Yaw");
+    case throttleFunction:
+        return QStringLiteral("Throttle");
+    case gimbalPitchFunction:
+        return QStringLiteral("Gimbal Pitch");
+    case gimbalYawFunction:
+        return QStringLiteral("Gimbal Yaw");
+    default:
+        return QStringLiteral("Unknown");
+    }
+}
+
+void Joystick::setEnableManualControlExtensions(bool enable)
+{
+    if (_enableManualControlExtensions != enable) {
+        _enableManualControlExtensions = enable;
+        _saveSettings();
+        emit enableManualControlExtensionsChanged();
+    }
 }

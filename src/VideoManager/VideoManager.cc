@@ -35,7 +35,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(VideoManagerLog, "qgc.videomanager.videomanager")
+QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] = {
     "mkv",
@@ -73,16 +73,18 @@ VideoManager *VideoManager::instance()
     return _videoManagerInstance();
 }
 
-void VideoManager::init(QQuickWindow *window)
+void VideoManager::init(QQuickWindow *mainWindow)
 {
     if (_initialized) {
+        qCDebug(VideoManagerLog) << "Video Manager already initialized";
         return;
     }
 
-    if (!window) {
-        qCCritical(VideoManagerLog) << "Failed To Init Video Manager - window is NULL";
+    if (!mainWindow) {
+        qCCritical(VideoManagerLog) << "Failed To Init Video Manager - mainWindow is NULL";
         return;
     }
+    _mainWindow = mainWindow;
 
     // TODO: VideoSettings _configChanged/streamConfiguredChanged
     (void) connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
@@ -95,6 +97,25 @@ void VideoManager::init(QQuickWindow *window)
 
     (void) connect(this, &VideoManager::autoStreamConfiguredChanged, this, &VideoManager::_videoSourceChanged);
 
+    _mainWindow->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::BeforeSynchronizingStage);
+
+    _initialized = true;
+}
+
+void VideoManager::_initAfterQmlIsReady()
+{
+    if (_initAfterQmlIsReadyDone) {
+        qCWarning(VideoManagerLog) << "_initAfterQmlIsReady called multiple times";
+        return;
+    }
+    if (!_mainWindow) {
+        qCCritical(VideoManagerLog) << "_initAfterQmlIsReady called with NULL mainWindow";
+        return;
+    }
+    _initAfterQmlIsReadyDone = true;
+
+    qCDebug(VideoManagerLog) << "_initAfterQmlIsReady";
+
     static const QStringList videoStreamList = {
         "videoContent",
         "thermalVideo"
@@ -106,12 +127,8 @@ void VideoManager::init(QQuickWindow *window)
         }
         receiver->setName(streamName);
 
-        _initVideoReceiver(receiver, window);
+        _initVideoReceiver(receiver, _mainWindow);
     }
-
-    window->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::BeforeSynchronizingStage);
-
-    _initialized = true;
 }
 
 void VideoManager::cleanup()
@@ -540,14 +557,17 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
 
 void VideoManager::_setActiveVehicle(Vehicle *vehicle)
 {
+    qCDebug(VideoManagerLog) << Q_FUNC_INFO << "new vehicle" << vehicle << "old active vehicle" << _activeVehicle;
+
     if (_activeVehicle) {
         (void) disconnect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
-        if (_activeVehicle->cameraManager()) {
-            MavlinkCameraControl *pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
+        auto cameraManager = _activeVehicle->cameraManager();
+        if (cameraManager) {
+            MavlinkCameraControl *pCamera = cameraManager->currentCameraInstance();
             if (pCamera) {
                 pCamera->stopStream();
             }
-            (void) disconnect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
+            (void) disconnect(cameraManager, &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
         }
 
         for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
@@ -781,6 +801,8 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
 void VideoManager::startVideo()
 {
+    qCDebug(VideoManagerLog) << "startVideo";
+
     if (!hasVideo()) {
         qCDebug(VideoManagerLog) << "Stream not enabled/configured";
         return;
@@ -804,5 +826,6 @@ FinishVideoInitialization::~FinishVideoInitialization()
 
 void FinishVideoInitialization::run()
 {
-    VideoManager::instance()->startVideo();
+    qCDebug(VideoManagerLog) << "FinishVideoInitialization::run";
+    VideoManager::instance()->_initAfterQmlIsReady();
 }

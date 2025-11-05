@@ -27,7 +27,7 @@
 
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "qgc.videomanager.videoreceiver.gstreamer.gstvideoreceiver")
+QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GstVideoReceiver")
 
 GstVideoReceiver::GstVideoReceiver(QObject *parent)
     : VideoReceiver(parent)
@@ -239,10 +239,12 @@ void GstVideoReceiver::stop()
     qCDebug(GstVideoReceiverLog) << "Stopping" << _uri;
 
     if (_teeProbeId != 0) {
-        GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
-        if (sinkpad) {
-            gst_pad_remove_probe(sinkpad, _teeProbeId);
-            gst_clear_object(&sinkpad);
+        if (_tee) {
+            GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
+            if (sinkpad) {
+                gst_pad_remove_probe(sinkpad, _teeProbeId);
+                gst_clear_object(&sinkpad);
+            }
         }
         _teeProbeId = 0;
     }
@@ -918,11 +920,49 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
     qCDebug(GstVideoReceiverLog) << "Decoding started" << _uri;
 }
 
+void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3) 
+{
+    GValue value = G_VALUE_INIT;
+    GstIterator *iter = gst_bin_iterate_elements(GST_BIN(decodebin3));
+    GstElement *child;
+
+    while (gst_iterator_next(iter, &value) == GST_ITERATOR_OK) {
+        child = GST_ELEMENT(g_value_get_object(&value));
+        GstElementFactory *factory = gst_element_get_factory(child);
+
+        if (factory) {
+            gboolean is_decoder = gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER);
+            if (is_decoder) {
+                const gchar *decoderKlass = gst_element_factory_get_klass(factory);
+                GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
+                const gchar *featureName = gst_plugin_feature_get_name(feature);
+                const guint rank = gst_plugin_feature_get_rank(feature);
+                bool isHardwareDecoder = GStreamer::is_hardware_decoder_factory(factory);
+
+                QString pluginName = featureName;
+                GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
+                if (plugin) {
+                    pluginName = gst_plugin_get_name(plugin);
+                    gst_object_unref(plugin);
+                }
+                qCDebug(GstVideoReceiverLog) << "Decodebin3 selected codec:rank -" << pluginName << "/" << featureName << "-" << decoderKlass << (isHardwareDecoder ? "(HW)" : "(SW)") << ":" << rank;
+            }
+        }
+        g_value_reset(&value);
+    }
+    g_value_unset(&value);
+    gst_iterator_free(iter);
+}
+
+
 void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 {
     qCDebug(GstVideoReceiverLog) << "_onNewDecoderPad" << _uri;
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-decoder-pad");
+
+    // We should now know what codec decodebin3 selected.
+    _logDecodebin3SelectedCodec(_decoder);
 
     if (!_addVideoSink(pad)) {
         qCCritical(GstVideoReceiverLog) << "_addVideoSink() failed";
@@ -1018,20 +1058,45 @@ bool GstVideoReceiver::_addVideoSink(GstPad *pad)
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 
-    if (_decoderValve) {
-        // Extracting video size from source is more guaranteed
-        GstPad *valveSrcPad = gst_element_get_static_pad(_decoderValve, "src");
-        const GstCaps *valveSrcPadCaps = gst_pad_query_caps(valveSrcPad, nullptr);
-        const GstStructure *structure = gst_caps_get_structure(valveSrcPadCaps, 0);
-        if (structure) {
-            gint width, height;
-            (void) gst_structure_get_int(structure, "width", &width);
-            (void) gst_structure_get_int(structure, "height", &height);
-            _dispatchSignal([this, width, height]() { emit videoSizeChanged(QSize(width, height)); });
+    // Determine video size. Errors here are non-fatal.
+    QSize videoSize;
+    do {
+        if (!_decoderValve) {
+            qCCritical(GstVideoReceiverLog) << "Unable to determine video size - _decoderValve is NULL" << _uri;
+            break;
         }
-    } else {
-        _dispatchSignal([this]() { emit videoSizeChanged(QSize()); });
-    }
+
+        GstPad *valveSrcPad = gst_element_get_static_pad(_decoderValve, "src");
+        if (!valveSrcPad) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad() failed";
+            break;
+        }
+
+        GstCaps *valveSrcPadCaps = gst_pad_query_caps(valveSrcPad, nullptr);
+        if (!valveSrcPadCaps) {
+            qCCritical(GstVideoReceiverLog) << "gst_pad_query_caps() failed";
+            gst_clear_object(&valveSrcPad);
+            break;
+        }
+
+        const GstStructure *structure = gst_caps_get_structure(valveSrcPadCaps, 0);
+        if (!structure) {
+            qCCritical(GstVideoReceiverLog) << "Unable to determine video size - structure is NULL" << _uri;
+            gst_clear_object(&valveSrcPad);
+            break;
+        }
+
+        gint width = 0;
+        gint height = 0;
+        (void) gst_structure_get_int(structure, "width", &width);
+        (void) gst_structure_get_int(structure, "height", &height);
+        videoSize.setWidth(width);
+        videoSize.setHeight(height);
+
+        gst_clear_caps(&valveSrcPadCaps);
+        gst_clear_object(&valveSrcPad);
+    } while (false);
+    _dispatchSignal([this, videoSize]() { emit videoSizeChanged(videoSize); });
 
     gst_clear_caps(&caps);
     return true;

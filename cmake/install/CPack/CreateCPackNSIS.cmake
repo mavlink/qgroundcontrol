@@ -1,16 +1,31 @@
+# ============================================================================
+# CreateCPackNSIS.cmake
+# Windows NSIS installer package generator
+# ============================================================================
+
 include(CreateCPackCommon)
 
+# ----------------------------------------------------------------------------
+# NSIS Generator Configuration
+# ----------------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR "NSIS")
 set(CPACK_BINARY_NSIS ON)
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_BINARY_DIR}/deploy/windows")
 
+# ----------------------------------------------------------------------------
+# Installer Appearance
+# ----------------------------------------------------------------------------
 set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
 set(CPACK_NSIS_MUI_ICON "${QGC_INSTALLER_SOURCE}/WindowsQGC.ico")
 set(CPACK_NSIS_MUI_UNIICON "${QGC_INSTALLER_SOURCE}/WindowsQGC.ico")
 # set(CPACK_NSIS_INSTALLER_MUI_ICON_CODE "")
 # set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "")
 # set(CPACK_NSIS_MUI_UNWELCOMEFINISHPAGE_BITMAP "")
+
+# ----------------------------------------------------------------------------
+# Install/Uninstall Commands
+# ----------------------------------------------------------------------------
 # set(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS "")
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
     CreateDirectory \"\$SMPROGRAMS\\${CMAKE_PROJECT_NAME}\"
@@ -24,6 +39,9 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
     Delete \"\$SMPROGRAMS\\${CMAKE_PROJECT_NAME}\\${CMAKE_PROJECT_NAME} (GPU Safe Mode).lnk\"
     RMDir /r /REBOOTOK \"\$SMPROGRAMS\\${CMAKE_PROJECT_NAME}\"
 ")
+# ----------------------------------------------------------------------------
+# Installer Options
+# ----------------------------------------------------------------------------
 set(CPACK_NSIS_COMPRESSOR "/SOLID /FINAL lzma")
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_MODIFY_PATH ON)
@@ -40,6 +58,10 @@ set(CPACK_NSIS_URL_INFO_ABOUT ${CPACK_PACKAGE_HOMEPAGE_URL})
 # set(CPACK_NSIS_MUI_FINISHPAGE_RUN "")
 # set(CPACK_NSIS_MENU_LINKS "")
 set(CPACK_NSIS_UNINSTALL_NAME "${CMAKE_PROJECT_NAME}-Uninstall")
+
+# ----------------------------------------------------------------------------
+# Installer UI Customization
+# ----------------------------------------------------------------------------
 # set(CPACK_NSIS_WELCOME_TITLE "")
 # set(CPACK_NSIS_WELCOME_TITLE_3LINES "")
 # set(CPACK_NSIS_FINISH_TITLE "")

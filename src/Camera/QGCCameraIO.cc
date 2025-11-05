@@ -14,8 +14,8 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(QGCCameraParamIOLog, "qgc.camera.qgccameraparamio")
-QGC_LOGGING_CATEGORY(QGCCameraParamIOVerbose, "qgc.camera.qgccameraparamio:verbose")
+QGC_LOGGING_CATEGORY(QGCCameraParamIOLog, "Camera.QGCCameraParamIO")
+QGC_LOGGING_CATEGORY(QGCCameraParamIOVerbose, "Camera.QGCCameraParamIO:verbose")
 
 namespace {
     constexpr int kMaxRetries = 3;

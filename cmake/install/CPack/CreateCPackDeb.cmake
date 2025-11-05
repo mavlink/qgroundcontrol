@@ -1,10 +1,21 @@
+# ============================================================================
+# CreateCPackDeb.cmake
+# Debian/Ubuntu .deb package generator
+# ============================================================================
+
 include(CreateCPackCommon)
 
+# ----------------------------------------------------------------------------
+# DEB Generator Configuration
+# ----------------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR "DEB")
 set(CPACK_BINARY_DEB ON)
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/linux")
 
+# ----------------------------------------------------------------------------
+# Package Metadata
+# ----------------------------------------------------------------------------
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_DEBIAN_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
@@ -21,6 +32,10 @@ set(CPACK_DEBIAN_ARCHIVE_TYPE xz)
 # set(CPACK_DEBIAN_COMPRESSION_TYPE
 # set(CPACK_DEBIAN_PACKAGE_PRIORITY
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${PROJECT_HOMEPAGE_URL})
+
+# ----------------------------------------------------------------------------
+# Advanced DEB Options
+# ----------------------------------------------------------------------------
 # set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS 1)
 # set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS
 # set(CPACK_DEBIAN_PACKAGE_DEBUG

@@ -68,7 +68,7 @@
 
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
+QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f
@@ -138,9 +138,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     connect(this, &Vehicle::remoteControlRSSIChanged,   this, &Vehicle::_remoteControlRSSIChanged);
 
-    _commonInit();
-
-    _vehicleLinkManager->_addLink(link);
+    _commonInit(link);
 
     // Set video stream to udp if running ArduSub and Video is disabled
     if (sub() && SettingsManager::instance()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
@@ -223,7 +221,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
         trackFirmwareVehicleTypeChanges();
     }
 
-    _commonInit();
+    _commonInit(nullptr /* link */);
 
     connect(SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
@@ -247,12 +245,11 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
     disconnect(SettingsManager::instance()->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
-void Vehicle::_commonInit()
+void Vehicle::_commonInit(LinkInterface* link)
 {
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
     connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
-    connect(_firmwarePlugin, &FirmwarePlugin::modeIndicatorsChanged, this, &Vehicle::modeIndicatorsChanged);
 
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingHome);
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingGCS);
@@ -284,13 +281,23 @@ void Vehicle::_commonInit()
     _initialConnectStateMachine     = new InitialConnectStateMachine    (this, this);
     _ftpManager                     = new FTPManager                    (this);
 
-    _vehicleLinkManager             = new VehicleLinkManager            (this);
+    _vehicleLinkManager = new VehicleLinkManager(this);
+    if (link) {
+        _vehicleLinkManager->_addLink(link);
+    }
 
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
+    // Re-emit flightModeChanged after available modes mapping updates so UI refreshes
+    // the human-readable mode name even if HEARTBEAT arrived earlier.
+    connect(_standardModes, &StandardModes::modesUpdated, this, [this]() {
+        emit flightModeChanged(flightMode());
+    });
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
-
+    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, [this](bool) {
+        emit hasGripperChanged();
+    });
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
     connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
@@ -1902,7 +1909,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0, 0);
+                    0, 0, NAN, NAN);
     }
 }
 
@@ -2688,7 +2695,8 @@ void Vehicle::_sendMavCommandFromList(int index)
 {
     MavCommandListEntry_t commandEntry = _mavCommandList[index];
 
-    QString rawCommandName  = MissionCommandTree::instance()->rawName(commandEntry.command);
+    QString rawCommandName = MissionCommandTree::instance()->rawName(commandEntry.command);
+    QString friendlyName = MissionCommandTree::instance()->friendlyName(commandEntry.command);
 
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
         qCDebug(VehicleLog) << Q_FUNC_INFO << "giving up after max retries" << rawCommandName;
@@ -2701,7 +2709,7 @@ void Vehicle::_sendMavCommandFromList(int index)
             emit mavCommandResult(_id, commandEntry.targetCompId, commandEntry.command, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         }
         if (commandEntry.showError) {
-            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(rawCommandName));
+            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(friendlyName));
         }
         return;
     }
@@ -3364,27 +3372,10 @@ QString Vehicle::vehicleImageOutline() const
         return QString();
 }
 
-QVariant Vehicle::mainStatusIndicatorContentItem()
-{
-    if(_firmwarePlugin) {
-        return _firmwarePlugin->mainStatusIndicatorContentItem(this);
-    }
-    return QVariant();
-}
-
 const QVariantList& Vehicle::toolIndicators()
 {
     if(_firmwarePlugin) {
         return _firmwarePlugin->toolIndicators(this);
-    }
-    static QVariantList emptyList;
-    return emptyList;
-}
-
-const QVariantList& Vehicle::modeIndicators()
-{
-    if(_firmwarePlugin) {
-        return _firmwarePlugin->modeIndicators(this);
     }
     static QVariantList emptyList;
     return emptyList;
@@ -3862,7 +3853,7 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2)
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -3882,6 +3873,17 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
     float newYawCommand    =    yaw * axesScaling;
     float newThrustCommand =    thrust * axesScaling;
+    float newGimbalPitch   =    gimbalPitch * axesScaling;
+    float newGimbalYaw     =    gimbalYaw * axesScaling;
+    uint8_t extensions     =    0;
+
+    if (std::isfinite(gimbalPitch)) {
+        extensions |= 1;
+    }
+
+    if (std::isfinite(gimbalYaw)) {
+        extensions |= 2;
+    }
 
     mavlink_msg_manual_control_pack_chan(
         static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
@@ -3894,8 +3896,9 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         static_cast<int16_t>(newThrustCommand),
         static_cast<int16_t>(newYawCommand),
         buttons, buttons2,
-        0,
-        0, 0,
+        extensions,
+        static_cast<int16_t>(newGimbalPitch),
+        static_cast<int16_t>(newGimbalYaw),
         0, 0, 0, 0, 0, 0
     );
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
@@ -3910,32 +3913,14 @@ void Vehicle::triggerSimpleCamera()
                    1.0);                        // trigger camera
 }
 
-void Vehicle::setGripperAction(GRIPPER_ACTIONS gripperAction)
+void Vehicle::sendGripperAction(QGCMAVLink::GripperActions gripperAction)
 {
     sendMavCommand(
             _defaultComponentId,
             MAV_CMD_DO_GRIPPER,
-            false,                               // Don't show errors
-            0,                                   // Param1: Gripper ID (Always set to 0)
-            gripperAction,                       // Param2: Gripper Action
-            0, 0, 0, 0, 0);                      // Param 3 ~ 7 : unused
-}
-
-void Vehicle::sendGripperAction(QGCMAVLink::GRIPPER_OPTIONS gripperOption)
-{
-    switch(gripperOption) {
-        case QGCMAVLink::Gripper_release:
-            setGripperAction(GRIPPER_ACTION_RELEASE);
-            break;
-        case QGCMAVLink::Gripper_grab:
-            setGripperAction(GRIPPER_ACTION_GRAB);
-            break;
-        case QGCMAVLink::Invalid_option:
-            qDebug("unknown function");
-            break;
-        default: 
-            break;
-    }
+            true,                   // Show errors
+            0,                      // Param1: Gripper ID (Always set to 0)
+            gripperAction);         // Param2: Gripper Action
 }
 
 void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
@@ -4211,6 +4196,45 @@ void Vehicle::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
     );
 }
 
+QVariant Vehicle::expandedToolbarIndicatorSource(const QString& indicatorName)
+{
+    return _firmwarePlugin->expandedToolbarIndicatorSource(this, indicatorName);
+}
+
+QString Vehicle::requestMessageResultHandlerFailureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode)
+{
+    switch(failureCode)
+    {
+    case RequestMessageNoFailure:
+        return QStringLiteral("No Failure");
+    case RequestMessageFailureCommandError:
+        return QStringLiteral("Command Error");
+    case RequestMessageFailureCommandNotAcked:
+        return QStringLiteral("Command Not Acked");
+    case RequestMessageFailureMessageNotReceived:
+        return QStringLiteral("Message Not Received");
+    case RequestMessageFailureDuplicateCommand:
+        return QStringLiteral("Duplicate Command");
+    default:
+        return QStringLiteral("Unknown (%1)").arg(failureCode);
+    }
+}
+
+QString Vehicle::mavCmdResultFailureCodeToString(MavCmdResultFailureCode_t failureCode)
+{
+    switch(failureCode)
+    {
+    case MavCmdResultCommandResultOnly:
+        return QStringLiteral("Command Result Only");
+    case MavCmdResultFailureNoResponseToCommand:
+        return QStringLiteral("No Response To Command");    
+    case MavCmdResultFailureDuplicateCommand:
+        return QStringLiteral("Duplicate Command"); 
+    default:
+        return QStringLiteral("Unknown (%1)").arg(failureCode);
+    }
+}
+
 /*===========================================================================*/
 /*                         ardupilotmega Dialect                             */
 /*===========================================================================*/
@@ -4393,13 +4417,6 @@ void Vehicle::_createCameraManager()
     if (!_cameraManager && _firmwarePlugin) {
         _cameraManager = _firmwarePlugin->createCameraManager(this);
         emit cameraManagerChanged();
-    }
-}
-
-void Vehicle::stopCameraManager()
-{
-    if (_cameraManager) {
-        _cameraManager->stop();
     }
 }
 

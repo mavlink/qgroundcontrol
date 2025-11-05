@@ -17,7 +17,7 @@
 
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(GeoTagWorkerLog, "qgc.analyzeview.geotagworker")
+QGC_LOGGING_CATEGORY(GeoTagWorkerLog, "AnalyzeView.GeoTagWorker")
 
 GeoTagWorker::GeoTagWorker(QObject *parent)
     : QObject(parent)

@@ -22,7 +22,7 @@
 #include <QtCore/QRegularExpressionMatch>
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
+QGC_LOGGING_CATEGORY(CompInfoParamLog, "ComponentInformation.CompInfoParam")
 
 CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId, vehicle, parent)

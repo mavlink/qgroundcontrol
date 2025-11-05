@@ -49,10 +49,6 @@ public:
 
     // Overrides from QGCOptions
 
-    /// Normal QGC needs to work with an ESP8266 WiFi thing which is remarkably crappy. This in turns causes PX4 Pro calibration to fail
-    /// quite often. There is a warning in regular QGC about this. Overriding the and returning true means that your custom vehicle has
-    /// a reliable WiFi connection so don't show that warning.
-    bool wifiReliableForCalibration() const final { return true; }
     /// Firmware upgrade page is only shown in Advanced Mode.
     bool showFirmwareUpgrade() const final { return _plugin->showAdvancedUI(); }
     QGCFlyViewOptions *flyViewOptions() const final { return _flyViewOptions; }
@@ -81,7 +77,7 @@ public:
     QString brandImageOutdoor() const final { return QStringLiteral("/custom/img/dronecode-black.svg"); }
     bool overrideSettingsGroupVisibility(const QString &name) final;
     /// This allows you to override/hide QGC Application settings
-    bool adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData) final;
+    void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible) final;
     /// This modifies QGC colors palette to match possible custom corporate branding
     void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) final;
     /// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module

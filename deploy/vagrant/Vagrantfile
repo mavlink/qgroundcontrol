@@ -91,10 +91,10 @@ Vagrant.configure(2) do |config|
      apt-get install -y patchelf
 
      dir="%{qt_deps_unpack_dir}"
-     version="6.8.3"
+     version="6.10.0"
      host="linux"
      target="desktop"
-     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors"
+     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml"
      su - vagrant -c "rm -rf ${dir}"
      su - vagrant -c "mkdir -p ${dir}"
      su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"

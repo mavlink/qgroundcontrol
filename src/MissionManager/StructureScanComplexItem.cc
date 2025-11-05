@@ -20,7 +20,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
+QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
 const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
 
@@ -29,7 +29,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
     , _entryVertex              (0)
-    , _ignoreRecalc             (false)
+, _ignoreRecalc             (false)
     , _scanDistance             (0.0)
     , _cameraShots              (0)
     , _cameraCalc               (masterController, settingsGroup)

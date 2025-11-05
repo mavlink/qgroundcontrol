@@ -1,3 +1,8 @@
+# ============================================================================
+# Gimbal Module
+# Camera gimbal control and stabilization
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Gimbal.cc
@@ -6,7 +11,9 @@ target_sources(${CMAKE_PROJECT_NAME}
         GimbalController.h
 )
 
-# Add JSON files
+# ----------------------------------------------------------------------------
+# Gimbal Configuration Resources
+# ----------------------------------------------------------------------------
 qt_add_resources(${CMAKE_PROJECT_NAME} json_gimbal
     PREFIX "/json/Vehicle"
     FILES GimbalFact.json

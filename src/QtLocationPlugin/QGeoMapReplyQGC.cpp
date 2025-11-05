@@ -23,7 +23,7 @@
 #include "QGCMapUrlEngine.h"
 #include "QGeoFileTileCacheQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog, "qgc.qtlocationplugin.qgeomapreplyqgc")
+QGC_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog, "QtLocationPlugin.QGeoTiledMapReplyQGC")
 
 QByteArray QGeoTiledMapReplyQGC::_bingNoTileImage;
 QByteArray QGeoTiledMapReplyQGC::_badTile;

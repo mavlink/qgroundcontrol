@@ -13,15 +13,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
 
-
-
 Item {
-    id:         _root
+    id: root
 
     property bool listViewLoadCompleted: false
 
@@ -156,96 +152,127 @@ Item {
         id: filtersDialogComponent
 
         QGCPopupDialog {
-            title:      qsTr("Logging categories")
+            title:      qsTr("Logging")
             buttons:    Dialog.Close
 
-            property int enabledCategoryCount: 0
-
-            function clearAllLogging() {
-                var logCategories = QGroundControl.loggingCategories()
-                for (var category of logCategories) {
-                    QGroundControl.setCategoryLoggingOn(category, false)
-                }
-                QGroundControl.updateLoggingFilterRules()
-                categoryRepeater.model = undefined
-                categoryRepeater.model = QGroundControl.loggingCategories()
-                enabledCategoryCount = 0
-                enabledCategoryRepeater.model = undefined
-                enabledCategoryRepeater.model = QGroundControl.loggingCategories()
-            }
-
-            function updateLoggingCategory(logCategory, checked, rebuildCategoryList) {
-                QGroundControl.setCategoryLoggingOn(logCategory, checked)
-                QGroundControl.updateLoggingFilterRules()
-                enabledCategoryCount = 0
-                enabledCategoryRepeater.model = undefined
-                enabledCategoryRepeater.model = QGroundControl.loggingCategories()
-                if (rebuildCategoryList) {
-                    categoryRepeater.model = undefined
-                    categoryRepeater.model = QGroundControl.loggingCategories()
-                }
-            }
-
             ColumnLayout {
-                RowLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
+                width: maxContentAvailableWidth
 
-                    QGCLabel {
-                        text: qsTr("Search:")
-                    }
+                SettingsGroupLayout {
+                    heading:            qsTr("Search")
+                    Layout.fillWidth:   true
 
-                    QGCTextField {
-                        id: searchText
-                        text: ""
-                        Layout.fillWidth: true
-                        enabled: true
-                    }
+                    RowLayout {
+                        Layout.fillWidth:   true
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-                    QGCButton {
-                        text:       qsTr("Clear")
-                        onClicked:  searchText.text = ""
-                    }
-                }
+                        QGCTextField {
+                            Layout.fillWidth:   true
+                            id:                 searchText
+                            text:               ""
+                            enabled:            true
+                        }
 
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                    Repeater {
-                        id:     enabledCategoryRepeater
-                        model:  QGroundControl.loggingCategories()
-
-                        QGCCheckBox {
-                            text:       modelData
-                            visible:    QGroundControl.categoryLoggingOn(modelData)
-                            checked:    QGroundControl.categoryLoggingOn(modelData)
-                            onClicked:  updateLoggingCategory(modelData, checked, true /* rebuildCategoryList */)
-
-                            Component.onCompleted: enabledCategoryCount += checked ? 1 : 0
+                        QGCButton {
+                            text:       qsTr("Clear")
+                            onClicked:  searchText.text = ""
                         }
                     }
+                }
 
-                    QGCButton {
-                        text:       qsTr("Clear All")
-                        visible:    enabledCategoryCount > 0
-                        onClicked:  clearAllLogging()
+                SettingsGroupLayout {
+                    heading:            qsTr("Enabled Categories")
+                    Layout.fillWidth:   true
+
+                    Flow {
+                        Layout.fillWidth:   true
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
+
+                        Repeater {
+                            model: QGroundControl.flatLoggingCategoriesModel()
+
+                            QGCCheckBoxSlider {
+                                Layout.fillWidth:       true
+                                Layout.maximumHeight:   visible ? implicitHeight : 0
+                                text:                   object.fullCategory
+                                visible:                object.enabled
+                                checked:                object.enabled
+                                onClicked:              object.enabled = checked
+                            }
+                        }
+
+                        QGCButton {
+                            text:       qsTr("Disable All")
+                            onClicked:  QGroundControl.disableAllLoggingCategories()
+                        }
                     }
                 }
 
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
+                // Shown when not filtered
+                Flow {
+                    Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    visible:            searchText.text === ""
 
                     Repeater {
-                        id:     categoryRepeater
-                        model:  QGroundControl.loggingCategories()
+                        model: QGroundControl.treeLoggingCategoriesModel()
 
-                        QGCCheckBox {
-                            text:       modelData
-                            visible:    searchText.text ? text.match(`(${searchText.text})`, "i") : true
-                            checked:    QGroundControl.categoryLoggingOn(modelData)
-                            onClicked:  updateLoggingCategory(modelData, checked, false /* rebuildCategoryList */)
+                        ColumnLayout {
+                            spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                            RowLayout {
+                                spacing:                ScreenTools.defaultFontPixelWidth
+
+                                QGCLabel {
+                                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth
+                                    text:                   object.expanded ? qsTr("-") : qsTr("+")
+                                    horizontalAlignment:    Text.AlignLeft
+                                    visible:                object.children
+
+                                    QGCMouseArea {
+                                        anchors.fill:   parent
+                                        onClicked:      object.expanded = !object.expanded
+                                    }
+                                }
+
+                                QGCCheckBoxSlider {
+                                    Layout.fillWidth:   true
+                                    text:               object.shortCategory
+                                    checked:            object.enabled
+                                    onClicked:          object.enabled = checked
+                                }
+                            }
+
+                            Repeater {
+                                model: object.expanded ? object.children : undefined
+
+                                QGCCheckBoxSlider {
+                                    Layout.fillWidth:   true
+                                    text:               "   " + object.shortCategory
+                                    checked:            object.enabled
+                                    onClicked:          object.enabled = checked
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Shown when filtered
+                Flow {
+                    Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    visible:            searchText.text !== ""
+
+                    Repeater {
+                        model: QGroundControl.flatLoggingCategoriesModel()
+
+                        QGCCheckBoxSlider {
+                            Layout.fillWidth:       true
+                            Layout.maximumHeight:   visible ? implicitHeight : 0
+                            text:                   object.fullCategory
+                            visible:                text.match(`(${searchText.text})`, "i")
+                            checked:                object.enabled
+                            onClicked:              object.enabled = checked
                         }
                     }
                 }

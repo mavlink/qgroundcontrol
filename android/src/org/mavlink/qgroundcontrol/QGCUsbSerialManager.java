@@ -60,6 +60,10 @@ public class QGCUsbSerialManager {
         }
 
         usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+        if (usbManager == null) {
+            QGCLogger.e(TAG, "Failed to get UsbManager");
+            return;
+        }
         setupUsbPermissionIntent(context);
         registerUsbReceiver(context);
         usbSerialProber = UsbSerialProber.getDefaultProber();
@@ -412,6 +416,10 @@ public class QGCUsbSerialManager {
      */
     public static String[] availableDevicesInfo() {
         // updateCurrentDrivers();
+
+        if (usbManager == null) {
+            return null;
+        }
 
         if (usbManager.getDeviceList().size() < 1) {
             return null;

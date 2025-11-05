@@ -13,7 +13,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "qgc.qmlcontrols.editpositiondialogcontroller")
+QGC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "QMLControls.EditPositionDialogController")
 
 QMap<QString, FactMetaData*> EditPositionDialogController::_metaDataMap;
 

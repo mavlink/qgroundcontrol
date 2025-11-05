@@ -1,6 +1,16 @@
+# ============================================================================
+# QGroundControl Module Library
+# ============================================================================
+
 qt_add_library(QGroundControlModule STATIC)
 
-set_source_files_properties(UI/MainWindow.qml PROPERTIES QT_RESOURCE_ALIAS MainWindow.qml)
+# ----------------------------------------------------------------------------
+# QML Resources
+# ----------------------------------------------------------------------------
+set_source_files_properties(UI/MainWindow.qml
+    PROPERTIES
+        QT_RESOURCE_ALIAS MainWindow.qml
+)
 
 qt_add_qml_module(QGroundControlModule
     URI QGroundControl
@@ -13,9 +23,13 @@ qt_add_qml_module(QGroundControlModule
     NO_PLUGIN
 )
 
+# ============================================================================
+# Subdirectories
+# ============================================================================
+
+# Core subsystems
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)
-add_subdirectory(Android)
 add_subdirectory(API)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(Camera)
@@ -41,7 +55,15 @@ add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
 
+# Platform-specific
+add_subdirectory(Android)
+
+# Qt plugins
 add_subdirectory(QtLocationPlugin)
+
+# ============================================================================
+# Main Application Sources
+# ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -51,6 +73,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         QGCApplication.h
 )
 
+# Platform-specific sources
 if(NOT ANDROID AND NOT IOS)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -59,32 +82,53 @@ if(NOT ANDROID AND NOT IOS)
     )
 endif()
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# ----------------------------------------------------------------------------
+# Include Directories
+# ----------------------------------------------------------------------------
+target_include_directories(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# ============================================================================
+# Link Libraries
+# ============================================================================
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
+        # Qt6 Core
         Qt6::Charts
         Qt6::Concurrent
         Qt6::Core
         Qt6::Core5Compat
         Qt6::CorePrivate
         Qt6::Gui
-        Qt6::Location
-        Qt6::LocationPrivate
-        Qt6::Multimedia
-        Qt6::MultimediaQuickPrivate
         Qt6::Network
-        Qt6::Positioning
-        Qt6::PositioningPrivate
-        Qt6::Qml
-        Qt6::QmlIntegration
-        Qt6::Quick
-        Qt6::QuickControls2
         Qt6::Sensors
         Qt6::Svg
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
+        Qt6::StateMachine
+
+        # Qt6 QML/Quick
+        Qt6::Qml
+        Qt6::QmlIntegration
+        Qt6::Quick
+        Qt6::QuickControls2
+
+        # Qt6 Location
+        Qt6::Location
+        Qt6::LocationPrivate
+        Qt6::Positioning
+        Qt6::PositioningPrivate
+        Qt6::Sql
+
+        # Qt6 Multimedia
+        Qt6::Multimedia
+        Qt6::MultimediaQuickPrivate
+
+        # QGC Modules
         AnalyzeViewModule
         AppSettingsModule
         AutoPilotPluginsCommonModule
@@ -99,19 +143,30 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         VehicleSetupModule
 )
 
+# ----------------------------------------------------------------------------
+# Optional/Conditional Modules
+# ----------------------------------------------------------------------------
 if(NOT QGC_DISABLE_APM_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
 endif()
+
 if(NOT QGC_DISABLE_PX4_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 endif()
+
 if(QGC_VIEWER3D)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 endif()
+
 if(NOT QGC_AIRLINK_DISABLED)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
 endif()
 
+# ============================================================================
+# Compile Definitions
+# ============================================================================
+
+# Application metadata
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGC_APP_NAME="${QGC_APP_NAME}"
@@ -125,6 +180,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
 )
 
+# Build configuration-specific definitions
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -141,18 +197,45 @@ else()
     )
 endif()
 
+# ============================================================================
+# Target Properties
+# ============================================================================
+
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         QT_RESOURCE_PREFIX "/qml"
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
 )
 
+# ----------------------------------------------------------------------------
+# Precompiled Headers
+# ----------------------------------------------------------------------------
 target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
 
+# ============================================================================
+# Custom Build Configuration
+# ============================================================================
+
 if(QGC_CUSTOM_BUILD)
-    find_package(Qt6 REQUIRED COMPONENTS ${CUSTOM_QT_COMPONENTS})
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_INCLUDE_DIRECTORIES})
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DEFINITIONS})
+    if(CUSTOM_QT_COMPONENTS)
+        find_package(Qt6 REQUIRED COMPONENTS ${CUSTOM_QT_COMPONENTS})
+    endif()
+
+    if(CUSTOM_SOURCES)
+        target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
+    endif()
+
+    if(CUSTOM_LIBRARIES)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
+    endif()
+
+    if(CUSTOM_INCLUDE_DIRECTORIES)
+        target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_INCLUDE_DIRECTORIES})
+    endif()
+
+    if(CUSTOM_DEFINITIONS)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DEFINITIONS})
+    endif()
+
+    message(STATUS "QGC: Custom build configuration applied")
 endif()

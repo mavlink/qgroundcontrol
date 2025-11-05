@@ -9,12 +9,14 @@
 
 #pragma once
 
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
+
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
+#include <atomic>
 
 class QTimer;
 
@@ -131,11 +133,11 @@ public:
     explicit LogReplayLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
     virtual ~LogReplayLink();
 
-    bool isConnected() const override { return _worker->isConnected(); }
+    bool isConnected() const override;
     void disconnect() override;
     bool isLogReplay() const final { return true; }
 
-    bool isPlaying() const { return _worker->isPlaying(); }
+    bool isPlaying() const;
     void play();
     void pause();
     void setPlaybackSpeed(qreal playbackSpeed);
@@ -151,8 +153,8 @@ signals:
 
 private slots:
     void _writeBytes(const QByteArray &bytes) override { Q_UNUSED(bytes); }
-    void _onConnected() { emit connected(); }
-    void _onDisconnected() { emit disconnected(); }
+    void _onConnected();
+    void _onDisconnected();
     void _onErrorOccurred(const QString &errorString);
     void _onDataReceived(const QByteArray &data);
 
@@ -162,4 +164,5 @@ private:
     const LogReplayConfiguration *_logReplayConfig = nullptr;
     LogReplayWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

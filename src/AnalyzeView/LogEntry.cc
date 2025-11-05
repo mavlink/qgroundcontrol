@@ -13,7 +13,7 @@
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(LogEntryLog, "test.analyzeview.logentry")
+QGC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.QGCLogEntry")
 
 LogDownloadData::LogDownloadData(QGCLogEntry * const entry)
     : ID(entry->id())

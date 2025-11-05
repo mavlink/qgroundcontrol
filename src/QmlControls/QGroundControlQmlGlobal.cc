@@ -41,7 +41,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
 
-QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "GuidedActionsControllerLog")
+QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
 
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
@@ -350,22 +350,27 @@ void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
     QGCApplication::clearDeleteAllSettingsNextBoot();
 }
 
-QStringList QGroundControlQmlGlobal::loggingCategories()
+QmlObjectListModel *QGroundControlQmlGlobal::treeLoggingCategoriesModel()
 {
-    return QGCLoggingCategoryRegister::instance()->registeredCategories();
+    return QGCLoggingCategoryManager::instance()->treeCategoryModel();
+}
+
+QmlObjectListModel *QGroundControlQmlGlobal::flatLoggingCategoriesModel()
+{
+    return QGCLoggingCategoryManager::instance()->flatCategoryModel();
 }
 
 void QGroundControlQmlGlobal::setCategoryLoggingOn(const QString &category, bool enable)
 {
-    QGCLoggingCategoryRegister::setCategoryLoggingOn(category, enable);
+    QGCLoggingCategoryManager::instance()->setCategoryLoggingOn(category, enable);
 }
 
 bool QGroundControlQmlGlobal::categoryLoggingOn(const QString &category)
 {
-    return QGCLoggingCategoryRegister::categoryLoggingOn(category);
+    return QGCLoggingCategoryManager::categoryLoggingOn(category);
 }
 
-void QGroundControlQmlGlobal::updateLoggingFilterRules()
+void QGroundControlQmlGlobal::disableAllLoggingCategories()
 {
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString());
+    QGCLoggingCategoryManager::instance()->disableAllCategories();
 }

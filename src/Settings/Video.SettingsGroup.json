@@ -74,9 +74,9 @@
     "shortDesc": "Video Recording Format",
     "longDesc":  "Video recording file format.",
     "type":             "uint32",
-    "enumStrings":      "mkv,mov,mp4",
-    "enumValues":       "0,1,2",
-    "default":     0
+    "enumStrings":      "mp4,mov,mkv",
+    "enumValues":       "2,1,0",
+    "default":     2
 },
 {
     "name":             "maxVideoSize",
@@ -128,12 +128,13 @@
 },
 {
     "name":             "forceVideoDecoder",
-    "shortDesc":        "Force specific category of video decode",
+    "shortDesc":        "Force video decoder priority",
     "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
     "type":             "uint32",
-    "enumStrings":      "Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
-    "enumValues":       "0,1,2,3,4,5,6,7",
-    "default":           0
+    "enumStrings":      "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
+    "enumValues":       "0,1,8,2,3,4,5,6,7",
+    "default":           0,
+    "qgcRebootRequired": true
 }
 ]
 }

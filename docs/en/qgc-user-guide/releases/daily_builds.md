@@ -9,7 +9,9 @@ Use at your own risk.
 
 These can be downloaded from the links below (install as described in [Download and Install](../getting_started/download_and_install.md)):
 
-- [Windows](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer.exe)
+- Windows
+	- [x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-AMD64.exe)
+	- [Arm_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-ARM64.exe)
 - [OS X](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg)
 - Linux - (See installation instructions below)
   - [Linux x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)

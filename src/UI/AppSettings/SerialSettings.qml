@@ -116,6 +116,13 @@ ColumnLayout {
             onCheckedChanged:   subEditConfig.flowControl = checked ? 1 : 0
         }
 
+        QGCCheckBox {
+            Layout.columnSpan:  2
+            text:               qsTr("Force DTR Low")
+            checked:            subEditConfig ? subEditConfig.dtrForceLow : false
+            onCheckedChanged:   { if (subEditConfig) subEditConfig.dtrForceLow = checked }
+        }
+
         QGCLabel { text: qsTr("Parity") }
         QGCComboBox {
             Layout.preferredWidth:  _secondColumnWidth

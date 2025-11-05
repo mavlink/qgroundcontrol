@@ -14,7 +14,7 @@
 
 #include <QtCore/QTimeZone>
 
-QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "qgc.analyzeview.mavlinkmessage")
+QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "AnalyzeView.MAVLinkMessage")
 
 QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *parent)
     : QObject(parent)

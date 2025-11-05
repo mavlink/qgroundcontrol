@@ -11,7 +11,7 @@
 #include "MAVLinkMessage.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "qgc.analyzeview.mavlinksystem")
+QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "AnalyzeView.MAVLinkSystem")
 
 QGCMAVLinkSystem::QGCMAVLinkSystem(quint8 id, QObject *parent)
     : QObject(parent)

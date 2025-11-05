@@ -40,7 +40,7 @@
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(QGCCorePluginLog, "qgc.api.qgccoreplugin");
+QGC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
 
 #ifndef QGC_CUSTOM_BUILD
 Q_APPLICATION_STATIC(QGCCorePlugin, _qgcCorePluginInstance);
@@ -110,7 +110,7 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
     return _emptyCustomMapItems;
 }
 
-bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData)
+void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
 {
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::indoorPaletteName) {
@@ -121,22 +121,21 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
             outdoorPalette = 1;
 #endif
             metaData.setRawDefaultValue(outdoorPalette);
-            return true;
+            return;
         }
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
         else if (metaData.name() == MavlinkSettings::telemetrySaveName) {
             metaData.setRawDefaultValue(false);
-            return true;
+            return;
         }
 #endif
 #ifndef Q_OS_ANDROID
-        else if (metaData.name() == AppSettings::androidSaveToSDCardName) {
-            return false;
+        else if (metaData.name() == AppSettings::androidDontSaveToSDCardName) {
+            visible = false;
+            return;
         }
 #endif
     }
-
-    return true;
 }
 
 QString QGCCorePlugin::showAdvancedUIMessage() const
@@ -149,10 +148,16 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueGrid)
 {
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    FactValueGrid::FontSize defaultFontSize = FactValueGrid::DefaultFontSize;
+#else
+    FactValueGrid::FontSize defaultFontSize = FactValueGrid::MediumFontSize;
+#endif    
+
     if (factValueGrid->specificVehicleForCard()) {
         bool includeFWValues = factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
-        factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
+        factValueGrid->setFontSize(defaultFontSize);
         factValueGrid->appendColumn();
         factValueGrid->appendColumn();
 
@@ -183,7 +188,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
     } else {
         const bool includeFWValues = ((factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL) || (factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship));
 
-        factValueGrid->setFontSize(FactValueGrid::LargeFontSize);
+        factValueGrid->setFontSize(defaultFontSize);
 
         (void) factValueGrid->appendColumn();
         (void) factValueGrid->appendColumn();

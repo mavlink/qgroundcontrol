@@ -16,7 +16,7 @@
 
 #include <xz.h>
 
-QGC_LOGGING_CATEGORY(QGCLZMALog, "qgc.compression.qgclzma")
+QGC_LOGGING_CATEGORY(QGCLZMALog, "Utilities.Compression.QGCLZMA")
 
 namespace QGCLZMA {
 

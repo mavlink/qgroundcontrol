@@ -34,6 +34,7 @@ Item {
     property Fact   _mapProviderFact:   _settingsManager.flightMapSettings.mapProvider
     property Fact   _mapTypeFact:       _settingsManager.flightMapSettings.mapType
     property Fact   _elevationProviderFact: _settingsManager.flightMapSettings.elevationMapProvider
+    property Fact   _tiandituFac:       _settingsManager ? _settingsManager.appSettings.tiandituToken : null
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
@@ -166,6 +167,12 @@ Item {
 
             LabelledFactTextField {
                 textFieldPreferredWidth:    _largeTextFieldWidth
+                label:                      qsTr("TianDiTu")
+                fact:                       _appSettings.tiandituToken
+            }
+
+            LabelledFactTextField {
+                textFieldPreferredWidth:    _largeTextFieldWidth
                 label:                      qsTr("Mapbox")
                 fact:                       _appSettings.mapboxToken
             }
@@ -180,6 +187,12 @@ Item {
                 textFieldPreferredWidth:    _largeTextFieldWidth
                 label:                      qsTr("VWorld")
                 fact:                       _appSettings.vworldToken
+            }
+
+            LabelledFactTextField {
+                textFieldPreferredWidth:    _largeTextFieldWidth
+                label:                      qsTr("OpenAIP")
+                fact:                       _appSettings.openaipToken
             }
         }
 

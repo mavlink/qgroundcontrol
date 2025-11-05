@@ -23,9 +23,6 @@ import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
-
-
-
 // This is the ui overlay layer for the widgets/tools for Fly View
 Item {
     id: _root
@@ -45,7 +42,6 @@ Item {
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
-    property alias  _gripperMenu:           gripperOptions
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
@@ -72,9 +68,7 @@ Item {
         id:                     topRightPanel
         anchors.top:            parent.top
         anchors.right:          parent.right
-        anchors.topMargin:      _layoutMargin
-        anchors.rightMargin:    _layoutMargin
-        maximumHeight:          parent.height - (bottomRightRowLayout.height + _margins * 5)
+        maximumHeight:          parent.height - (bottomRightRowLayout.height + _margins * 4)
 
         property real topEdgeRightInset:    height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
@@ -83,7 +77,6 @@ Item {
 
     FlyViewTopRightColumnLayout {
         id:                 topRightColumnLayout
-        anchors.margins:    _layoutMargin
         anchors.top:        parent.top
         anchors.bottom:     bottomRightRowLayout.top
         anchors.right:      parent.right
@@ -97,7 +90,6 @@ Item {
 
     FlyViewBottomRightRowLayout {
         id:                 bottomRightRowLayout
-        anchors.margins:    _layoutMargin
         anchors.bottom:     parent.bottom
         anchors.right:      parent.right
         spacing:            _layoutSpacing
@@ -114,7 +106,6 @@ Item {
     }
 
     GuidedActionConfirm {
-        anchors.margins:            _toolsMargin
         anchors.top:                parent.top
         anchors.horizontalCenter:   parent.horizontalCenter
         z:                          QGroundControl.zOrderTopMost
@@ -171,8 +162,6 @@ Item {
 
     FlyViewToolStrip {
         id:                     toolStrip
-        anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
-        anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
@@ -191,10 +180,6 @@ Item {
         property real leftEdgeCenterInset:  leftEdgeTopInset
     }
 
-    GripperMenu {
-        id: gripperOptions
-    }
-
     VehicleWarnings {
         anchors.centerIn:   parent
         z:                  QGroundControl.zOrderTopMost
@@ -202,11 +187,12 @@ Item {
 
     MapScale {
         id:                 mapScale
-        anchors.margins:    _toolsMargin
         anchors.left:       toolStrip.right
         anchors.top:        parent.top
         mapControl:         _mapControl
         buttonsOnLeft:      true
+        zoomButtonsVisible: false
+        autoHide:           true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && !isViewer3DOpen && mapControl.pipState.state === mapControl.pipState.fullState
 
         property real topEdgeCenterInset: visible ? y + height : 0

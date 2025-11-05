@@ -15,7 +15,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "qgc.terrain.terraintilecopernicus");
+QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
 
 TerrainTileCopernicus::TerrainTileCopernicus(const QByteArray &byteArray)
     : TerrainTile(byteArray)

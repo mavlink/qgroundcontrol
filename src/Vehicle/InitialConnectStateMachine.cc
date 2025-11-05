@@ -20,7 +20,7 @@
 #include "RallyPointManager.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "qgc.vehicle.initialconnectstatemachine")
+QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "Vehicle.InitialConnectStateMachine")
 
 InitialConnectStateMachine::InitialConnectStateMachine(Vehicle *vehicle, QObject *parent)
     : StateMachine(parent)

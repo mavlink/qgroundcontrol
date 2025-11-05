@@ -1,5 +1,10 @@
+# ============================================================================
+# Viewer3D Module
+# 3D visualization with terrain and city geometry
 # @author Omid Esrafilian <esrafilian.omid@gmail.com>
+# ============================================================================
 
+# Only build when 3D viewer is enabled
 if(NOT QGC_VIEWER3D)
     return()
 endif()
@@ -28,6 +33,9 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DTileReply.h
 )
 
+# ----------------------------------------------------------------------------
+# Qt Quick3D Dependency
+# ----------------------------------------------------------------------------
 find_package(Qt6 REQUIRED COMPONENTS Quick3D)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Quick3D)
@@ -36,6 +44,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_VIEWER3D)
 
+# ----------------------------------------------------------------------------
+# 3D QML Module
+# ----------------------------------------------------------------------------
 qt_add_library(Viewer3DModule STATIC)
 
 set_source_files_properties(Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS City3DMapIcon.svg)

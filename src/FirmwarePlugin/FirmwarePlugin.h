@@ -340,18 +340,12 @@ public:
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
     virtual QString vehicleImageOutline(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOutline.svg"); }
 
-    // This is the content item for the expanded portion of the main status indicator
-    virtual QVariant mainStatusIndicatorContentItem(const Vehicle* /*vehicle*/) const { return QVariant(); }
+    virtual QVariant expandedToolbarIndicatorSource(const Vehicle* /*vehicle*/, const QString& /*indicatorName*/) const { return QVariant(); }
 
     /// Returns the list of toolbar tool indicators associated with a vehicle
     ///     signals toolIndicatorsChanged
     /// @return A list of QUrl with the indicators
     virtual const QVariantList &toolIndicators(const Vehicle *vehicle);
-
-    /// Returns the list of toolbar mode indicators associated with a vehicle
-    ///     signals modeIndicatorsChanged
-    /// @return A list of QUrl with the indicators
-    virtual const QVariantList &modeIndicators(const Vehicle *vehicle);
 
     /// Creates vehicle camera manager.
     virtual QGCCameraManager *createCameraManager(Vehicle *vehicle) const;
@@ -408,7 +402,6 @@ public:
 
 signals:
     void toolIndicatorsChanged();
-    void modeIndicatorsChanged();
 
 protected:
     /// Arms the vehicle with validation and retries

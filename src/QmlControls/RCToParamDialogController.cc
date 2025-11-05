@@ -14,7 +14,7 @@
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
 
-QGC_LOGGING_CATEGORY(RCToParamDialogControllerLog, "qgc.qmlcontrols.rctoparamdialogcontroller")
+QGC_LOGGING_CATEGORY(RCToParamDialogControllerLog, "QMLControls.RCToParamDialogController")
 
 QMap<QString, FactMetaData*> RCToParamDialogController::_metaDataMap;
 

@@ -19,7 +19,7 @@
 #include "QGeoMapReplyQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "qgc.qtlocationplugin.qgeotilefetcherqgc")
+QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "QtLocationPlugin.QGeoTileFetcherQGC")
 
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent)
     : QGeoTileFetcher(parent)

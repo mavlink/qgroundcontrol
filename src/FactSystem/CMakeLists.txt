@@ -1,3 +1,8 @@
+# ============================================================================
+# Fact System Module
+# Parameter management and data binding infrastructure
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Fact.cc
@@ -20,4 +25,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# Fact Controls UI
+# ----------------------------------------------------------------------------
 add_subdirectory(FactControls)

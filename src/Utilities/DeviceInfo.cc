@@ -16,7 +16,7 @@
 #    include <QtBluetooth/QBluetoothLocalDevice>
 #endif
 
-QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "qgc.utilities.deviceinfo")
+QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "Utilities.QGCDeviceInfo")
 
 namespace QGCDeviceInfo
 {

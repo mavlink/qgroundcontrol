@@ -14,7 +14,7 @@
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(QGCTemporaryFileLog, "qgc.utilities.qgctemporaryfile");
+QGC_LOGGING_CATEGORY(QGCTemporaryFileLog, "Utilities.QGCTemporaryFile");
 
 QGCTemporaryFile::QGCTemporaryFile(const QString &fileTemplate, QObject *parent)
     : QFile(parent)

@@ -18,8 +18,8 @@ import QGroundControl.Controls
 import QGroundControl.UTMSP
 
 Rectangle {
-    id:         _root
-    width:      ScreenTools.defaultFontPixelWidth * 35
+    id:         control
+    width:      mainLayout.width + (_margins * 2)
     height:     mainLayout.height + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
     color:      qgcPal.window
@@ -27,8 +27,8 @@ Rectangle {
 
     property var    guidedController
     property var    guidedValueSlider
-    property string title                                       // Currently unused
-    property alias  message:            messageText.text
+    property string title
+    property string message
     property int    action
     property var    actionData
     property bool   hideTrigger:        false
@@ -36,7 +36,7 @@ Rectangle {
     property alias  optionText:         optionCheckBox.text
     property alias  optionChecked:      optionCheckBox.checked
 
-    property real _margins:         ScreenTools.defaultFontPixelWidth / 2
+    property real _margins:         ScreenTools.defaultFontPixelHeight / 2
     property bool _emergencyAction: action === guidedController.actionEmergencyStop
 
     // Properties of UTM adapter
@@ -44,12 +44,6 @@ Rectangle {
     property bool   _utmspEnabled:                       QGroundControl.utmspSupported
 
     Component.onCompleted: guidedController.confirmDialog = this
-
-    onVisibleChanged: {
-        if (visible) {
-            slider.focus = true
-        }
-    }
 
     onHideTriggerChanged: {
         if (hideTrigger) {
@@ -88,18 +82,17 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     ColumnLayout {
-        id:                 mainLayout
-        anchors.centerIn:   parent
-        width:              parent.width - (_margins * 2)
-        spacing:            _margins
+        id:         mainLayout
+        x:          control._margins
+        y:          control._margins
+        spacing:    control._margins
 
         QGCLabel {
-            id:                     messageText
             Layout.fillWidth:       true
+            Layout.leftMargin:      closeButton.width + closeButton.anchors.rightMargin
+            Layout.rightMargin:     Layout.leftMargin
+            text:                   control.message
             horizontalAlignment:    Text.AlignHCenter
-            wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.defaultFontPointSize
-            font.bold:              true
         }
 
         QGCCheckBox {
@@ -109,57 +102,48 @@ Rectangle {
             visible:            text !== ""
         }
 
-        RowLayout {
+        QGCDelayButton {
             Layout.fillWidth:   true
-            spacing:            ScreenTools.defaultFontPixelWidth
+            text:               control.title
+            enabled:            _utmspEnabled === true? utmspSliderTrigger : true
+            opacity:            if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}
 
-            SliderSwitch {
-                id:                 slider
-                confirmText:        ScreenTools.isMobile ? qsTr("Slide to confirm") : qsTr("Slide or hold spacebar")
-                Layout.fillWidth:   true
-                enabled: _utmspEnabled === true? utmspSliderTrigger : true
-                opacity: if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}
-
-                onAccept: {
-                    _root.visible = false
-                    var sliderOutputValue = 0
-                    if (guidedValueSlider.visible) {
-                        sliderOutputValue = guidedValueSlider.getOutputValue()
-                        guidedValueSlider.visible = false
-                    }
-                    hideTrigger = false
-                    guidedController.executeAction(_root.action, _root.actionData, sliderOutputValue, _root.optionChecked)
-                    if (mapIndicator) {
-                        mapIndicator.actionConfirmed()
-                        mapIndicator = undefined
-                    }
-
-                    UTMSPStateStorage.indicatorOnMissionStatus = true
-                    UTMSPStateStorage.currentNotificationIndex = 7
-                    UTMSPStateStorage.currentStateIndex = 3
+            onActivated: {
+                control.visible = false
+                var sliderOutputValue = 0
+                if (guidedValueSlider.visible) {
+                    sliderOutputValue = guidedValueSlider.getOutputValue()
+                    guidedValueSlider.visible = false
                 }
-            }
-
-            Rectangle {
-                height: slider.height * 0.75
-                width:  height
-                radius: height / 2
-                color:  qgcPal.primaryButton
-
-                QGCColoredImage {
-                    anchors.margins:    parent.height / 4
-                    anchors.fill:       parent
-                    source:             "/res/XDelete.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    color:              qgcPal.text
+                hideTrigger = false
+                guidedController.executeAction(control.action, control.actionData, sliderOutputValue, control.optionChecked)
+                if (mapIndicator) {
+                    mapIndicator.actionConfirmed()
+                    mapIndicator = undefined
                 }
 
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  confirmCancelled()
-                }
+                UTMSPStateStorage.indicatorOnMissionStatus = true
+                UTMSPStateStorage.currentNotificationIndex = 7
+                UTMSPStateStorage.currentStateIndex = 3
             }
         }
     }
-}
 
+    QGCColoredImage {
+        id:                     closeButton
+        anchors.topMargin:      _margins / 2
+        anchors.rightMargin:    _margins / 2
+        anchors.top:            parent.top
+        anchors.right:          parent.right
+        height:                 ScreenTools.defaultFontPixelHeight * 0.5
+        width:                  height
+        source:                 "/res/XDelete.svg"
+        fillMode:               Image.PreserveAspectFit
+        color:                  qgcPal.text
+
+        QGCMouseArea {
+            fillItem:   parent
+            onClicked:  confirmCancelled()
+        }
+    }
+}

@@ -16,8 +16,8 @@
 
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "qgc.autopilotplugins.common.radiocomponentcontroller")
-QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "qgc.autopilotplugins.common.radiocomponentcontroller:verbose")
+QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "AutoPilotPlugins.RadioComponentController")
+QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "AutoPilotPlugins.RadioComponentController:verbose")
 
 #ifdef QGC_UNITTEST_BUILD
 RadioComponentController* RadioComponentController::_unitTestController = nullptr;

@@ -1,4 +1,11 @@
-# Variables common to all CPack Generators
+# ============================================================================
+# CreateCPackCommon.cmake
+# Common CPack configuration shared across all package generators
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Basic Package Information
+# ----------------------------------------------------------------------------
 set(CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 set(CPACK_PACKAGE_VENDOR ${QGC_ORG_NAME})
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -9,14 +16,26 @@ set(CPACK_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 # set(CPACK_PACKAGE_DESCRIPTION_FILE "")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
 set(CPACK_PACKAGE_HOMEPAGE_URL ${PROJECT_HOMEPAGE_URL})
+
+# ----------------------------------------------------------------------------
+# Package Files and Directories
+# ----------------------------------------------------------------------------
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CMAKE_PROJECT_NAME})
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png")
 # set(CPACK_PACKAGE_CHECKSUM "")
 # set(CPACK_PROJECT_CONFIG_FILE "")
+
+# ----------------------------------------------------------------------------
+# Resource Files
+# ----------------------------------------------------------------------------
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/.github/COPYING.md")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 # set(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_CURRENT_SOURCE_DIR}/desc/welcome.txt")
+
+# ----------------------------------------------------------------------------
+# Package Options
+# ----------------------------------------------------------------------------
 # set(CPACK_MONOLITHIC_INSTALL
 # set(CPACK_GENERATOR
 # set(CPACK_OUTPUT_CONFIG_FILE
@@ -25,14 +44,18 @@ set(CPACK_PACKAGE_EXECUTABLES ${CMAKE_PROJECT_NAME})
 set(CPACK_VERBATIM_VARIABLES ON)
 set(CPACK_THREADS -4)
 
-# Variables for Source Package Generators
+# ----------------------------------------------------------------------------
+# Source Package Configuration
+# ----------------------------------------------------------------------------
 # set(CPACK_SOURCE_PACKAGE_FILE_NAME
 # set(CPACK_SOURCE_STRIP_FILES
 # set(CPACK_SOURCE_GENERATOR
 # set(CPACK_SOURCE_OUTPUT_CONFIG_FILE
 # set(CPACK_SOURCE_IGNORE_FILES
 
-# Variables for Advanced Use
+# ----------------------------------------------------------------------------
+# Advanced Configuration Options
+# ----------------------------------------------------------------------------
 # set(CPACK_CMAKE_GENERATOR
 # set(CPACK_INSTALL_CMAKE_PROJECTS
 # set(CPACK_SYSTEM_NAME

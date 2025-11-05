@@ -10,9 +10,11 @@
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "qgc.mavlink.qgcmavlink")
+QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
 
 const QHash<int, QString> QGCMAVLink::mavlinkCompIdHash {
+    { MAV_COMP_ID_AUTOPILOT1, "Autopilot" },
+    { MAV_COMP_ID_ONBOARD_COMPUTER, "Onboard Computer" },
     { MAV_COMP_ID_CAMERA,   "Camera1" },
     { MAV_COMP_ID_CAMERA2,  "Camera2" },
     { MAV_COMP_ID_CAMERA3,  "Camera3" },
@@ -76,7 +78,7 @@ QGCMAVLink::QGCMAVLink(QObject *parent)
    (void) qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
    (void) qRegisterMetaType<MAV_TYPE>("MAV_TYPE");
    (void) qRegisterMetaType<MAV_AUTOPILOT>("MAV_AUTOPILOT");
-   (void) qRegisterMetaType<GRIPPER_ACTIONS>("GRIPPER_ACTIONS");
+   (void) qRegisterMetaType<QGCMAVLink::GripperActions>("QGCMAVLink::GripperActions");
 }
 
 QGCMAVLink::~QGCMAVLink()
@@ -281,7 +283,7 @@ QString QGCMAVLink::vehicleClassToInternalString(VehicleClass_t vehicleClass)
     }
 }
 
-QString QGCMAVLink::mavResultToString(MAV_RESULT result)
+QString QGCMAVLink::mavResultToString(uint8_t result)
 {
     switch (result) {
     case MAV_RESULT_ACCEPTED:
@@ -514,4 +516,17 @@ uint32_t QGCMAVLink::highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& 
     }
 
     return onboardControlSensorsEnabled;
+}
+
+QString QGCMAVLink::compIdToString(uint8_t compId)
+{
+    QString compIdStr;
+
+    if (mavlinkCompIdHash.contains(compId)) {
+        compIdStr = mavlinkCompIdHash.value(compId);
+    } else {
+        compIdStr = QStringLiteral("Unknown");
+    }
+
+    return QStringLiteral("%1 (%2)").arg(compIdStr).arg(static_cast<int>(compId));
 }

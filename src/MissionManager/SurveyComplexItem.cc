@@ -24,7 +24,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QLineF>
 
-QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
+QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
 const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
 
@@ -674,11 +674,11 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
 
     double gridAngle = _gridAngleFact.rawValue().toDouble();
     double gridSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
-    if (gridSpacing < 0.5) {
-        // We can't let gridSpacing get too small otherwise we will end up with too many transects.
-        // So we limit to 0.5 meter spacing as min and set to huge value which will cause a single
-        // transect to be added.
-        gridSpacing = 100000;
+    if (gridSpacing < _minimumTransectSpacingMeters) {
+        // We can't let spacing get too small otherwise we will end up with too many transects.
+        // So we limit the spacing to be above a small increment and below that value we set to huge spacing
+        // which will cause a single transect to be added instead of having things blow up.
+        gridSpacing = _forceLargeTransectSpacingMeters;
     }
 
     gridAngle = _clampGridAngle90(gridAngle);

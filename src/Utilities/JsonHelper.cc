@@ -22,7 +22,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QTranslator>
 
-QGC_LOGGING_CATEGORY(JsonHelperLog, "qgc.utilities.jsonhelper")
+QGC_LOGGING_CATEGORY(JsonHelperLog, "Utilities.JsonHelper")
 
 Q_APPLICATION_STATIC(QTranslator, s_jsonTranslator);
 

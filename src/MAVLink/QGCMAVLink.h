@@ -74,13 +74,15 @@ public:
     static MAV_TYPE                 vehicleTypeFromString(const QString &vehicleStr);
     static QList<VehicleClass_t>    allVehicleClasses           (void);
 
-    static QString                  mavResultToString           (MAV_RESULT result);
+    static QString                  mavResultToString           (uint8_t result);
+    static QString                  mavResultToString           (MAV_RESULT result) { return mavResultToString(static_cast<uint8_t>(result)); }
     static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
     static QString                  mavTypeToString             (MAV_TYPE mavType);
     static QString                  firmwareVersionTypeToString (FIRMWARE_VERSION_TYPE firmwareVersionType);
     static FIRMWARE_VERSION_TYPE    firmwareVersionTypeFromString(const QString &typeStr);
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
     static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
+    static QString                  compIdToString              (uint8_t compId);
 
     // Expose mavlink enums to Qml. I've tried various way to make this work without duping, but haven't found anything that works.
 
@@ -137,12 +139,13 @@ public:
     };
     Q_ENUM(MavlinkSysStatus)
 
-    enum GRIPPER_OPTIONS {
-        Gripper_release = GRIPPER_ACTION_RELEASE,
-        Gripper_grab    = GRIPPER_ACTION_GRAB,
-        Invalid_option  = GRIPPER_ACTIONS_ENUM_END,
+    enum GripperActions {
+        GripperActionOpen     = GRIPPER_ACTION_OPEN,
+        GripperActionClose    = GRIPPER_ACTION_CLOSE,
+        GripperActionStop     = GRIPPER_ACTION_STOP,
+        GripperOptionInvalid  = GRIPPER_ACTIONS_ENUM_END,
     };
-    Q_ENUM(GRIPPER_OPTIONS)
+    Q_ENUM(GripperActions)
 
     enum CalibrationType {
         CalibrationNone,
@@ -187,4 +190,4 @@ public:
 
     static const QHash<int, QString> mavlinkCompIdHash;
 };
-Q_DECLARE_METATYPE(GRIPPER_ACTIONS)
+Q_DECLARE_METATYPE(QGCMAVLink::GripperActions)

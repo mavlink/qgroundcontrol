@@ -13,7 +13,7 @@
 
 #include <QtCore/QApplicationStatic>
 
-QGC_LOGGING_CATEGORY(GPSManagerLog, "qgc.gps.gpsmanager")
+QGC_LOGGING_CATEGORY(GPSManagerLog, "GPS.GPSManager")
 
 Q_APPLICATION_STATIC(GPSManager, _gpsManager);
 

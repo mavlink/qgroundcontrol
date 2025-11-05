@@ -65,10 +65,9 @@ SettingsPage {
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
-            text:       qsTr("Save application data to SD Card")
-            fact:       _androidSaveToSDCard
-            visible:    _androidSaveToSDCard.visible
-            property Fact _androidSaveToSDCard: _appSettings.androidSaveToSDCard
+            text:       fact.shortDescription
+            fact:       _appSettings.androidDontSaveToSDCard
+            visible:    fact.visible
         }
 
         QGCCheckBoxSlider {

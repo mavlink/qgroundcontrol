@@ -15,17 +15,19 @@
 #include "Vehicle.h"
 #include "VideoManager.h"
 
-QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "qgc.camera.simulatedcameracontrol")
+QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
 
 SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent)
     : MavlinkCameraControl(vehicle, parent)
 {
     qCDebug(SimulatedCameraControlLog) << this;
 
-    (void) connect(VideoManager::instance(), &VideoManager::recordingChanged, this, [this](bool recording) {
+    auto videoManager = VideoManager::instance();
+    (void) connect(videoManager, &VideoManager::recordingChanged, this, [this](bool recording) {
         _videoCaptureStatus = recording ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
         emit videoCaptureStatusChanged();
     });
+    connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
 
     (void) connect(SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
 

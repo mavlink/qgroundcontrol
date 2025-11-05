@@ -22,8 +22,8 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(MockLinkLog, "qgc.comms.mocklink.mocklink")
-QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "qgc.comms.mocklink.mocklink:verbose")
+QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
+QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
 
 int MockLink::_nextVehicleSystemId = 128;
 
@@ -62,7 +62,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _missionItemHandler(new MockLinkMissionItemHandler(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
 {
-    // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(MockLinkLog) << this;
 
     // Initialize 5 ADS-B vehicles with different starting conditions _numberOfVehicles
     _adsbVehicles.resize(_numberOfVehicles);
@@ -87,6 +87,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     _runningTime.start();
 
     _workerThread = new QThread(this);
+    _workerThread->setObjectName(QStringLiteral("Mock_%1").arg(_mockConfig->name()));
     _worker = new MockLinkWorker(this);
     _worker->moveToThread(_workerThread);
     (void) connect(_workerThread, &QThread::started, _worker, &MockLinkWorker::startWork);
@@ -107,13 +108,14 @@ MockLink::~MockLink()
         _workerThread->wait();
     }
 
-    // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(MockLinkLog) << this;
 }
 
 bool MockLink::_connect()
 {
     if (!_connected) {
         _connected = true;
+        _disconnectedEmitted = false;
         mavlink_status_t *const mavlinkStatus = mavlink_get_channel_status(mavlinkChannel());
         mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         mavlink_status_t *const auxStatus = mavlink_get_channel_status(_getMavlinkAuxChannel());
@@ -130,7 +132,9 @@ void MockLink::disconnect()
 
     if (_connected) {
         _connected = false;
-        emit disconnected();
+        if (!_disconnectedEmitted.exchange(true)) {
+            emit disconnected();
+        }
     }
 }
 
@@ -149,9 +153,20 @@ void MockLink::run1HzTasks()
     _sendBatteryStatus();
     _sendSysStatus();
     _sendADSBVehicles();
-    _sendRemoteIDArmStatus();
+    if (_vehicleType != MAV_TYPE_SUBMARINE) {
+        _sendRemoteIDArmStatus();
+    }
     _sendAvailableModesMonitor();
+
+    if (_sendGimbalManagerStatusNow) {
+        _sendGimbalManagerStatus();
+    }
+    if (_sendGimbalDeviceAttitudeStatusNow) {
+        _sendGimbalDeviceAttitudeStatus();
+    }
+
     // _sendVideoInfo();
+
     if (!qgcApp()->runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
         _sendRCChannels();
@@ -182,8 +197,10 @@ void MockLink::run10HzTasks()
             // We delay gps position for better testing
             _sendGPSPositionDelayCount--;
         } else {
-            _sendGpsRawInt();
-            _sendGlobalPositionInt();
+            if (_vehicleType != MAV_TYPE_SUBMARINE) {
+                _sendGpsRawInt();
+                _sendGlobalPositionInt();
+            }
             _sendExtendedSysState();
         }
     }
@@ -200,6 +217,68 @@ void MockLink::run500HzTasks()
         _logDownloadWorker();
         _availableModesWorker();
     }
+}
+
+void MockLink::_sendGimbalManagerStatus()
+{
+    mavlink_message_t msg{};
+
+    (void) mavlink_msg_gimbal_manager_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &msg,
+        0, // time_boot_ms
+        0, // flags
+        MAV_COMP_ID_GIMBAL, // gimbal_device_id
+        0, 0, 0, 0);
+    respondWithMavlinkMessage(msg);
+    (void) mavlink_msg_gimbal_manager_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &msg,
+        0, // time_boot_ms
+        0, // flags
+        MAV_COMP_ID_GIMBAL2, // gimbal_device_id
+        0, 0, 0, 0);
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendGimbalDeviceAttitudeStatus()
+{
+    mavlink_message_t msg{};
+
+    float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+
+    (void) mavlink_msg_gimbal_device_attitude_status_pack_chan(
+        _vehicleSystemId,
+        MAV_COMP_ID_GIMBAL,
+        mavlinkChannel(),
+        &msg,
+        0, 0, // target system, component
+        0, // time_boot_ms
+        0, // flags
+        (float*)&q,
+        0.0f, 0.0f, 0.0f, // angular_velocity_x, y, z
+        0, // failure flags
+        NAN, NAN,
+        0); // gimbal_device_id
+    respondWithMavlinkMessage(msg);
+    (void) mavlink_msg_gimbal_device_attitude_status_pack_chan(
+        _vehicleSystemId,
+        MAV_COMP_ID_GIMBAL2,
+        mavlinkChannel(),
+        &msg,
+        0, 0, // target system, component
+        0, // time_boot_ms
+        0, // flags
+        (float*)&q,
+        0.0f, 0.0f, 0.0f, // angular_velocity_x, y, z
+        0, // failure flags
+        NAN, NAN,
+        0); // gimbal_device_id
+    respondWithMavlinkMessage(msg);
 }
 
 void MockLink::sendStatusTextMessages()
@@ -859,10 +938,21 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
     Q_ASSERT(request.param_type == _mapParamName2MavParamType[componentId][paramId]);
 
-    // Save the new value
+    // Apply failure behaviors before committing change.
+    if (_paramSetFailureMode == FailParamSetFirstAttemptNoAck && _paramSetFailureFirstAttemptPending) {
+        qCDebug(MockLinkLog) << "Param set failure: first attempt no ack" << paramId;
+        _paramSetFailureFirstAttemptPending = false;
+        return;
+    }
+
+    if (_paramSetFailureMode == FailParamSetNoAck) {
+        qCDebug(MockLinkLog) << "Param set failure: no ack" << paramId;
+        return;
+    }
+
+    // Normal success path
     _setParamFloatUnionIntoMap(componentId, paramId, request.param_value);
 
-    // Respond with a param_value to ack
     mavlink_message_t responseMsg;
     mavlink_msg_param_value_pack_chan(
         _vehicleSystemId,
@@ -933,6 +1023,17 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
     if ((_failureMode == MockConfiguration::FailMissingParamOnAllRequests) && (strcmp(paramId, _failParam) == 0)) {
         qCDebug(MockLinkLog) << "Ignoring request read for " << _failParam;
         // Fail to send this param no matter what
+        return;
+    }
+
+    if (_paramRequestReadFailureMode == FailParamRequestReadFirstAttemptNoResponse && _paramRequestReadFailureFirstAttemptPending) {
+        qCDebug(MockLinkLog) << "Param request read failure: first attempt no response" << paramId;
+        _paramRequestReadFailureFirstAttemptPending = false;
+        return;
+    }
+
+    if (_paramRequestReadFailureMode == FailParamRequestReadNoResponse) {
+        qCDebug(MockLinkLog) << "Param request read failure: no response" << paramId;
         return;
     }
 
@@ -1045,6 +1146,19 @@ void MockLink::_handleInProgressCommandLong(const mavlink_command_long_t &reques
     }
 }
 
+void MockLink::_handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &accepted)
+{
+    accepted = false;
+
+    if (request.param1 == MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS) {
+        _sendGimbalManagerStatusNow = true;
+        accepted = true;
+    } else if (request.param1 == MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) {
+        _sendGimbalDeviceAttitudeStatusNow = true;
+        accepted = true;
+    }
+}
+
 void MockLink::_handleCommandLong(const mavlink_message_t &msg)
 {
     static bool firstCmdUser3 = true;
@@ -1091,8 +1205,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         break;
     case MAV_CMD_REQUEST_MESSAGE:
     {
+        bool accepted = false;
         bool noAck = false;
-        if (_handleRequestMessage(request, noAck)) {
+        _handleRequestMessage(request, accepted, noAck);
+        if (accepted) {
             if (noAck) {
                 return;
             }
@@ -1141,6 +1257,16 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     case MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK:
         _handleInProgressCommandLong(request);
         return;
+    case MAV_CMD_SET_MESSAGE_INTERVAL:
+    {
+        bool accepted = false;
+
+        _handleCommandLongSetMessageInterval(request, accepted);
+        if (accepted) {
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
+        break;
+    }
     }
 
     mavlink_message_t commandAck{};
@@ -1672,112 +1798,173 @@ void MockLink::_moveADSBVehicle(int vehicleIndex)
     coord.setAltitude(100); // Keeping altitude constant for simplicity
 }
 
-bool MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool &noAck)
+void MockLink::_handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted)
 {
+    accepted = true;
+
+    switch (_failureMode) {
+    case MockConfiguration::FailNone:
+        break;
+    case MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionFailure:
+        accepted = false;
+        return;
+    case MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionLost:
+        accepted = true;
+        return;
+    default:
+        break;
+    }
+
+    _respondWithAutopilotVersion();
+}
+
+void MockLink::_handleRequestMessageProtocolVersion(const mavlink_command_long_t &request, bool &accepted)
+{
+    accepted = true;
+
+    switch (_failureMode) {
+    case MockConfiguration::FailNone:
+        break;
+    case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionFailure:
+        accepted = false;
+        return;
+    case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionLost:
+        accepted = true;
+        return;
+    default:
+        break;
+    }
+
+    const uint8_t nullHash[8]{};
+    mavlink_message_t responseMsg{};
+    (void) mavlink_msg_protocol_version_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &responseMsg,
+        200,
+        100,
+        200,
+        nullHash,
+        nullHash
+    );
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck)
+{
+    accepted = true;
+    noAck = false;
+
+    switch (_requestMessageFailureMode) {
+    case FailRequestMessageNone:
+        break;
+    case FailRequestMessageCommandAcceptedMsgNotSent:
+        return;
+    case FailRequestMessageCommandUnsupported:
+        accepted = false;
+        return;
+    case FailRequestMessageCommandNoResponse:
+        accepted = false;
+        noAck = true;
+        return;
+    }
+
+    mavlink_message_t responseMsg{};
+    (void) mavlink_msg_debug_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &responseMsg,
+        0, 0, 0
+    );
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_handleRequestMessageAvailableModes(const mavlink_command_long_t &request, bool &accepted)
+{
+    accepted = true;
+
+    if (request.param2 == 0) {
+        // Request for available modes to be streamed out
+        if (_availableModesWorkerNextModeIndex != 0) {
+            qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: _availableModesWorker already running - _availableModesWorkerNextModeIndex:" << _availableModesWorkerNextModeIndex;
+            accepted = false;
+            return;
+        }
+        qCDebug(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: starting available modes sequence worker";
+        _availableModesWorkerNextModeIndex = 1; // Start with the first mode in sequence (1-based index)
+    } else {
+        // Request for specific mode
+        if (request.param2 > _availableFlightModes.count()) {
+            qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: requested mode index out of range" << request.param2 << _availableFlightModes.count();
+            accepted = false;
+            return;
+        }
+        qCDebug(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: received specific mode request for index" << request.param2;
+        _availableModesWorkerNextModeIndex = -request.param2; // Negative index indicates a specific single mode request
+    }
+}
+
+void MockLink::_handleRequestMessageGimbalManagerInformation(const mavlink_command_long_t &request, bool &accepted)
+{
+    accepted = true;
+
+    mavlink_message_t responseMsg{};
+    (void) mavlink_msg_gimbal_manager_information_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &responseMsg,
+        0, // time_boot_ms
+        GIMBAL_MANAGER_CAP_FLAGS_HAS_ROLL_AXIS | GIMBAL_MANAGER_CAP_FLAGS_HAS_PITCH_AXIS | GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_AXIS,
+        MAV_COMP_ID_GIMBAL,
+        -45, 45,
+        -45, 45,
+        -180, 180);
+    respondWithMavlinkMessage(responseMsg);
+    (void) mavlink_msg_gimbal_manager_information_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        mavlinkChannel(),
+        &responseMsg,
+        0, // time_boot_ms
+        GIMBAL_MANAGER_CAP_FLAGS_HAS_ROLL_AXIS | GIMBAL_MANAGER_CAP_FLAGS_HAS_PITCH_AXIS | GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_AXIS,
+        MAV_COMP_ID_GIMBAL2,
+        -45, 45,
+        -45, 45,
+        -180, 180);
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool &accepted, bool &noAck)
+{
+    accepted = false;
     noAck = false;
 
     switch (static_cast<int>(request.param1)) {
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
-    {
-        switch (_failureMode) {
-        case MockConfiguration::FailNone:
-            break;
-        case MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionFailure:
-            return false;
-        case MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionLost:
-            return true;
-        default:
-            break;
-        }
-
-        _respondWithAutopilotVersion();
-        return true;
-    }
+        _handleRequestMessageAutopilotVersion(request, accepted);
+        break;
     case MAVLINK_MSG_ID_PROTOCOL_VERSION:
-    {
-        switch (_failureMode) {
-        case MockConfiguration::FailNone:
-            break;
-        case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionFailure:
-            return false;
-        case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionLost:
-            return true;
-        default:
-            break;
-        }
-
-        const uint8_t nullHash[8]{};
-        mavlink_message_t responseMsg{};
-        (void) mavlink_msg_protocol_version_pack_chan(
-            _vehicleSystemId,
-            _vehicleComponentId,
-            mavlinkChannel(),
-            &responseMsg,
-            200,
-            100,
-            200,
-            nullHash,
-            nullHash
-        );
-        respondWithMavlinkMessage(responseMsg);
-        return true;
-    }
+        _handleRequestMessageProtocolVersion(request, accepted);
+        break;
     case MAVLINK_MSG_ID_COMPONENT_METADATA:
         if (_firmwareType == MAV_AUTOPILOT_PX4) {
             _sendGeneralMetaData();
-            return true;
+            accepted = true;
         }
         break;
     case MAVLINK_MSG_ID_DEBUG:
-    {
-        switch (_requestMessageFailureMode) {
-        case FailRequestMessageNone:
-            break;
-        case FailRequestMessageCommandAcceptedMsgNotSent:
-            return true;
-        case FailRequestMessageCommandUnsupported:
-            return false;
-        case FailRequestMessageCommandNoResponse:
-            noAck = true;
-            return true;
-        }
-
-        mavlink_message_t responseMsg{};
-        (void) mavlink_msg_debug_pack_chan(
-            _vehicleSystemId,
-            _vehicleComponentId,
-            mavlinkChannel(),
-            &responseMsg,
-            0, 0, 0
-        );
-        respondWithMavlinkMessage(responseMsg);
-
-        return true;
-    }
+        _handleRequestMessageDebug(request, accepted, noAck);
+        break;
     case MAVLINK_MSG_ID_AVAILABLE_MODES:
-    {
-        if (request.param2 == 0) {
-            // Request for available modes to be streamed out
-            if (_availableModesWorkerNextModeIndex != 0) {
-                qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: _availableModesWorker already running - _availableModesWorkerNextModeIndex:" << _availableModesWorkerNextModeIndex;
-                return false;
-            }
-            qCDebug(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: starting available modes sequence worker";
-            _availableModesWorkerNextModeIndex = 1; // Start with the first mode in sequence (1-based index)
-        } else {
-            // Request for specific mode
-            if (request.param2 > _availableFlightModes.count()) {
-                qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: requested mode index out of range" << request.param2 << _availableFlightModes.count();
-                return false;
-            }
-            qCDebug(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: received specific mode request for index" << request.param2;
-            _availableModesWorkerNextModeIndex = -request.param2; // Negative index indicates a specific single mode request
-        }
-        return true;
+        _handleRequestMessageAvailableModes(request, accepted);
+        break;
+    case MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION:
+        _handleRequestMessageGimbalManagerInformation(request, accepted);
+        break;
     }
-    }
-
-    return false;
 }
 
 void MockLink::_sendGeneralMetaData()

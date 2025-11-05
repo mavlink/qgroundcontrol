@@ -37,7 +37,7 @@ jobs:
 
     env:
       ARTIFACT: QGroundControl.apk
-      QT_VERSION: 6.8.3
+      QT_VERSION: 6.10.0
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -80,7 +80,7 @@ jobs:
         run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
 
       - name: Save APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/build/android-build/*.apk

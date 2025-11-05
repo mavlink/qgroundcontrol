@@ -18,7 +18,7 @@
 
 using namespace ulog_cpp;
 
-QGC_LOGGING_CATEGORY(ULogParserLog, "qgc.analyzeview.ulogparser")
+QGC_LOGGING_CATEGORY(ULogParserLog, "AnalyzeView.ULogParser")
 
 namespace ULogParser {
 

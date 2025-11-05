@@ -17,7 +17,7 @@
 #endif
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "qgc.vehicle.vehiclelinkmanager")
+QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "Vehicle.VehicleLinkManager")
 
 VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
     : QObject(vehicle)
@@ -252,8 +252,8 @@ void VehicleLinkManager::_linkDisconnected()
 
     _removeLink(link);
     _updatePrimaryLink();
-    if (_rgLinkInfo.isEmpty()) {
-        qCDebug(VehicleLog) << "All links removed. Closing down Vehicle.";
+    if (_rgLinkInfo.isEmpty() && !_allLinksRemovedSignalledByCloseVehicle) {
+        qCDebug(VehicleLog) << "signalling allLinksRemoved";
         emit allLinksRemoved(_vehicle);
     }
 }
@@ -364,6 +364,7 @@ void VehicleLinkManager::closeVehicle()
 
     _rgLinkInfo.clear();
 
+    _allLinksRemovedSignalledByCloseVehicle = true; // Prevent double signal of allLinksRemoved
     emit allLinksRemoved(_vehicle);
 }
 

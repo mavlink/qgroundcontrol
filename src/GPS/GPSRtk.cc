@@ -15,7 +15,7 @@
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(GPSRtkLog, "qgc.gps.gpsrtk")
+QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
 
 GPSRtk::GPSRtk(QObject *parent)
     : QObject(parent)

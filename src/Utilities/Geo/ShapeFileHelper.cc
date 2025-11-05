@@ -12,7 +12,7 @@
 #include "SHPFileHelper.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(ShapeFileHelperLog, "qgc.utilities.geo.shapefilehelper")
+QGC_LOGGING_CATEGORY(ShapeFileHelperLog, "Utilities.ShapeFileHelper")
 
 bool ShapeFileHelper::_fileIsKML(const QString &file, QString &errorString)
 {

@@ -21,7 +21,7 @@
 #include <QtCore/QJsonArray>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(MavlinkActionManagerLog, "qgc.qmlcontrols.mavlinkactionmanager")
+QGC_LOGGING_CATEGORY(MavlinkActionManagerLog, "QMLControls.MavlinkActionManager")
 
 MavlinkActionManager::MavlinkActionManager(QObject *parent)
     : QObject(parent)

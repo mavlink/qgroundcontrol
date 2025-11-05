@@ -16,7 +16,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
 
-QGC_LOGGING_CATEGORY(AudioOutputLog, "qgc.audio.audiooutput");
+QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
 // qt.speech.tts.android
 

@@ -11,7 +11,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(SyslinkComponentControllerLog, "qgc.autopilotplugins.common.syslinkcomponentcontroller")
+QGC_LOGGING_CATEGORY(SyslinkComponentControllerLog, "AutoPilotPlugins.SyslinkComponentController")
 
 SyslinkComponentController::SyslinkComponentController(QObject *parent)
     : FactPanelController(parent)

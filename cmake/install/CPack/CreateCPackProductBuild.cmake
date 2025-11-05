@@ -1,10 +1,21 @@
+# ============================================================================
+# CreateCPackProductBuild.cmake
+# macOS .pkg installer package generator using productbuild
+# ============================================================================
+
 include(CreateCPackCommon)
 
+# ----------------------------------------------------------------------------
+# ProductBuild Generator Configuration
+# ----------------------------------------------------------------------------
 list(APPEND CPACK_GENERATOR "PRODUCTBUILD")
 set(CPACK_BINARY_PRODUCTBUILD ON)
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/macos")
 
+# ----------------------------------------------------------------------------
+# Package Building Tools and Signing
+# ----------------------------------------------------------------------------
 # set(CPACK_COMMAND_PRODUCTBUILD)
 # set(CPACK_PRODUCTBUILD_IDENTIFIER)
 # set(CPACK_PRODUCTBUILD_IDENTITY_NAME)
@@ -20,6 +31,9 @@ set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/macos")
 # set(CPACK_PRODUCTBUILD_DOMAINS_USER)
 # set(CPACK_PRODUCTBUILD_DOMAINS_ROOT)
 
+# ----------------------------------------------------------------------------
+# Installer Background Images (Light and Dark Mode)
+# ----------------------------------------------------------------------------
 # set(CPACK_PRODUCTBUILD_BACKGROUND)
 # set(CPACK_PRODUCTBUILD_BACKGROUND_ALIGNMENT)
 # set(CPACK_PRODUCTBUILD_BACKGROUND_SCALING)

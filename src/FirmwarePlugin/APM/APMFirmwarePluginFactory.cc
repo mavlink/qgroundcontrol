@@ -14,7 +14,7 @@
 #include "ArduSubFirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "qgc.firmwareplugin.apmfirmwarepluginfactory");
+QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "FirmwarePlugin.APMFirmwarePluginFactory");
 
 APMFirmwarePluginFactory APMFirmwarePluginFactory(nullptr);
 

@@ -15,7 +15,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "qgc.qtlocationplugin.qgeoserviceproviderfactoryqgc")
+QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "QtLocationPlugin.QGeoServiceProviderFactoryQGC")
 
 QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject *parent)
     : QObject(parent)

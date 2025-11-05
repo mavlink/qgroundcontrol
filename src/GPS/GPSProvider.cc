@@ -24,8 +24,8 @@
 #include <QtSerialPort/QSerialPort>
 #endif
 
-QGC_LOGGING_CATEGORY(GPSProviderLog, "qgc.gps.gpsprovider")
-QGC_LOGGING_CATEGORY(GPSDriversLog, "qgc.gps.drivers")
+QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
+QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers")
 
 GPSProvider::GPSProvider(const QString &device, GPSType type, const rtk_data_s &rtkData, const std::atomic_bool &requestStop, QObject *parent)
     : QThread(parent)

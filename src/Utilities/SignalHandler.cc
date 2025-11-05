@@ -18,7 +18,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(SignalHandlerLog, "qgc.utilities.signalhandler")
+QGC_LOGGING_CATEGORY(SignalHandlerLog, "Utilities.SignalHandler")
 
 std::atomic<SignalHandler*> SignalHandler::s_current{nullptr};
 

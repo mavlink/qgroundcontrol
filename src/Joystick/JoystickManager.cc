@@ -20,7 +20,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(JoystickManagerLog, "qgc.joystick.joystickmanager")
+QGC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.joystickmanager")
 
 Q_APPLICATION_STATIC(JoystickManager, _joystickManager);
 
@@ -29,7 +29,7 @@ JoystickManager::JoystickManager(QObject *parent)
 {
     qCDebug(JoystickManagerLog) << this;
 
-    _joystickCheckTimer.setInterval(kTimerInterval);
+    _joystickCheckTimer.setInterval(1000);
     _joystickCheckTimer.setSingleShot(false);
     (void) connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
 }

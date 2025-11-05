@@ -12,8 +12,6 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QStringList>
 
-Q_DECLARE_LOGGING_CATEGORY(UnitTestsLog)
-
 namespace QGCUnitTest {
 
 int runTests(bool stress, const QStringList& unitTests);

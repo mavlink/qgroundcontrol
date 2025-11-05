@@ -18,7 +18,7 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
-QGC_LOGGING_CATEGORY(AirLinkManagerLog, "qgc.airlink.airlinkmanager");
+QGC_LOGGING_CATEGORY(AirLinkManagerLog, "AirLink.AirLinkManager");
 
 Q_APPLICATION_STATIC(AirLinkManager, _airLinkManager);
 

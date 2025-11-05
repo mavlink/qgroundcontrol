@@ -23,7 +23,7 @@
 
 #include <limits>
 
-QGC_LOGGING_CATEGORY(QGCGeoLog, "qgc.utilities.geo.qgcgeo")
+QGC_LOGGING_CATEGORY(QGCGeoLog, "Utilities.QGCGeo")
 
 namespace
 {

@@ -17,7 +17,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
+QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "Plan.CorridorScanComplexItemL")
 
 const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
 
@@ -394,11 +394,11 @@ double CorridorScanComplexItem::timeBetweenShots(void)
 double CorridorScanComplexItem::_calcTransectSpacing(void) const
 {
     double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
-    if (transectSpacing < 0.5) {
+    if (transectSpacing < _minimumTransectSpacingMeters) {
         // We can't let spacing get too small otherwise we will end up with too many transects.
-        // So we limit to 0.5 meter spacing as min and set to huge value which will cause a single
-        // transect to be added.
-        transectSpacing = 100000;
+        // So we limit the spacing to be above a small increment and below that value we set to huge spacing
+        // which will cause a single transect to be added instead of having things blow up.
+        transectSpacing = _forceLargeTransectSpacingMeters;
     }
 
     return transectSpacing;

@@ -9,19 +9,18 @@
 
 #pragma once
 
-#include <atomic>
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtNetwork/QAbstractSocket>
 
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
+#include <atomic>
 
 class QTcpSocket;
 class QThread;
-class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(TCPLinkLog)
 
@@ -91,12 +90,10 @@ private slots:
     void _onSocketReadyRead();
     void _onSocketBytesWritten(qint64 bytes);
     void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
-    void _onConnectionTimeout();
 
 private:
     const TCPConfiguration *_config = nullptr;
     QTcpSocket *_socket = nullptr;
-    QTimer *_connectionTimer = nullptr;
     std::atomic<bool> _errorEmitted{false};
 };
 
@@ -128,4 +125,5 @@ private:
     const TCPConfiguration *_tcpConfig = nullptr;
     TCPWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

@@ -16,7 +16,7 @@ More capable hardware will provide a better experience.
 
 ## 윈도우 {#windows}
 
-_QGroundControl_ can be installed on 64 bit versions of Windows 10 (1809 or later) or Windows 11:
+Supported versions: Windows 10 (1809 or later), Windows 11:
 
 1. [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe)을 다운로드합니다.
 2. 다운로드한 설치 파일을 더블 클릭하여 프로그램을 실행합니다.
@@ -27,9 +27,9 @@ _QGroundControl_ can be installed on 64 bit versions of Windows 10 (1809 or late
 자세한 내용은 [QGroundControl 설정 문제 해결 > 윈도우: UI 렌더링/비디오 드라이버 문제](../troubleshooting/qgc_setup.md#opengl_troubleshooting)를 참고하십시오.
 :::
 
-## Mac OS X {#macOS}
+## Mac OS {#macOS}
 
-_QGroundControl_ can be installed on macOS 12 (Monterey) or later:
+Supported versions: macOS 12 (Monterey) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
@@ -39,12 +39,12 @@ _QGroundControl_ can be installed on macOS 12 (Monterey) or later:
 2. 다운로드한 dmg 파일을 더블 클릭하여 마운트하여, _QGroundControl_ 애플리케이션을 _Application_ 폴더로 드래그합니다.
 
 :::info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
+QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
 :::
 
 ## 우분투 리눅스 {#ubuntu}
 
-_QGroundControl_ can be installed/run on Ubuntu LTS 22.04 (and later):
+Supported versions: Ubuntu 22.04, 24.04:
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
 _QGroundControl_을 설치 전에 모뎀 관리자를 제거하고, 직렬 포트 접근 권한을 부여합니다.
@@ -53,7 +53,7 @@ _QGroundControl_을 설치 전에 모뎀 관리자를 제거하고, 직렬 포�
 **Before installing _QGroundControl_ for the first time:**
 
 1. Enable serial-port access
-  Add your user to the dialout group so you can talk to USB devices without root:
+   Add your user to the dialout group so you can talk to USB devices without root:
 
 ```
 sudo usermod -aG dialout "$(id -un)"
@@ -64,7 +64,7 @@ At login, your shell takes a snapshot of your user and group memberships. Becaus
 :::
 
 1. (Optional) Disable ModemManager
-  On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
+   On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
 
 ```
 # preferred: stop and mask the service
@@ -93,7 +93,7 @@ chmod +x QGroundControl-<arch>.AppImage
 ```
 
 1. Run QGroundControl
-  Either double-click the AppImage in your file manager or launch it from a terminal:
+   Either double-click the AppImage in your file manager or launch it from a terminal:
 
 ```
 ./QGroundControl-<arch>.AppImage
@@ -101,7 +101,7 @@ chmod +x QGroundControl-<arch>.AppImage
 
 ## 안드로이드 {#android}
 
-_QGroundControl_ can be installed/run on Android 9 or later:
+Supported versions: Android 9 to 15 (arm 32/64):
 
 - [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
 

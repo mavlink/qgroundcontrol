@@ -54,7 +54,7 @@ jobs:
         shell: cmd
 
     env:
-      QT_VERSION: 6.8.3
+      QT_VERSION: 6.10.0
 
     steps:
       - name: Checkout repo
@@ -93,7 +93,7 @@ jobs:
           target: desktop
           arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
           setup-python: false
           cache: true
 
