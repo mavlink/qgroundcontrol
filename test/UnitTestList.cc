@@ -76,6 +76,13 @@
 
 // QmlControls
 
+// QtLocationPlugin
+#include "QGCCachedTileSetTest.h"
+#include "QGCMapEngineManagerTest.h"
+#include "QGCTileCacheWorkerTest.h"
+#include "TileDownloadIntegrationTest.h"
+#include "UrlFactoryTest.h"
+
 // Terrain
 #include "TerrainQueryTest.h"
 #include "TerrainTileTest.h"
@@ -176,6 +183,13 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     // qgcunittest
 
     // QmlControls
+
+    // QtLocationPlugin
+    UT_REGISTER_TEST(QGCCachedTileSetTest)
+    UT_REGISTER_TEST(QGCMapEngineManagerTest)
+    UT_REGISTER_TEST(QGCTileCacheWorkerTest)
+    UT_REGISTER_TEST(TileDownloadIntegrationTest)
+    UT_REGISTER_TEST(UrlFactoryTest)
 
     // Terrain
     UT_REGISTER_TEST(TerrainQueryTest)

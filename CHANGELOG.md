@@ -11,6 +11,7 @@
   - Support for setting individual MAVLink message rates in the Inspector.
   - Enabled MAVLink 2 signing.
 - **Battery Display**: Dynamic bars with configurable thresholds (100%, Config 1, Config 2, Low, Critical).
+- **Offline Maps**: Added pause/resume/retry controls, live download metrics, a Default Cache toggle, and documented cache schema version 2 (existing caches upgrade automatically).
 
 ---
 
