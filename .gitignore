@@ -26,6 +26,7 @@ build/
 cmake-build-*/
 out/
 CMakeFiles
+CMakeLists.txt.user*
 CMakeUserPresets.json
 compile_commands.json
 cpm_modules
@@ -53,14 +54,37 @@ ui_*
 *.exe
 *.idb
 *.pdb
-tmp
-obj
-debug
-release
+tmp/
+obj/
+debug/
+release/
 /qgroundcontrol
 bin/*.exe
 bin/*.txt
 bin/mac
+
+# Libraries & dynamic/static objects
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# Build tool artifacts
+Makefile
+*.ninja
+.ninja_log
+build.ninja
+
+# Packaging & distribution
+*.dmg
+*.deb
+*.rpm
+*.AppImage
+*.apk
+*.aab
+*.ipa
 
 # ------------------------------------------------------------------------------
 # Platform-Specific
@@ -95,8 +119,6 @@ android/local.properties
 # ------------------------------------------------------------------------------
 # Dependencies & Third Party
 # ------------------------------------------------------------------------------
-gstreamer-1.0-android*
-
 # Node.js (vitepress for user guide)
 node_modules/
 docs/.vitepress/cache/
@@ -110,6 +132,12 @@ __pycache__/
 # Runtime & Logs
 # ------------------------------------------------------------------------------
 *.log
+
+# Code coverage
+*.gcov
+*.gcda
+*.gcno
+*.coverage
 
 # ------------------------------------------------------------------------------
 # Vagrant
