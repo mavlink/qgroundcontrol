@@ -115,4 +115,11 @@
         <file alias="gcscontrol_gcs.svg">resources/gcscontrolIndicator/gcscontrol_gcs.svg</file>
         <file alias="gcscontrol_line.svg">resources/gcscontrolIndicator/gcscontrol_line.svg</file>
     </qresource>
+        <qresource prefix="/qml">
+        <file alias="QGroundControl/AppSettings/NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
+        <file alias="NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
+    </qresource>  
+    <qresource prefix="/json">
+        <file alias="NTRIP.SettingsGroup.json">src/Settings/NTRIP.SettingsGroup.json</file>
+    </qresource>
 </RCC>
