@@ -27,9 +27,9 @@ ApplicationWindow {
     id:             mainWindow
     visible:        true
 
-    visibility:     Qt.platform.os === "android"
-                        ? Window.FullScreen
-                        : Window.Automatic
+    flags: Qt.platform.os === "android"
+        ? Qt.Window | Qt.ExpandedClientAreaHint
+        : Qt.Window
     property bool   _utmspSendActTrigger
 
     Component.onCompleted: {
