@@ -12,6 +12,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QHash>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -58,6 +59,10 @@ class QGCCachedTileSet : public QObject
     Q_PROPERTY(quint32      errorCount          READ    errorCount          NOTIFY errorCountChanged)
     Q_PROPERTY(QString      errorCountStr       READ    errorCountStr       NOTIFY errorCountChanged)
     Q_PROPERTY(bool         selected            READ    selected            WRITE  setSelected  NOTIFY selectedChanged)
+    Q_PROPERTY(quint32      pendingTiles        READ    pendingTiles        NOTIFY downloadStatsChanged)
+    Q_PROPERTY(quint32      downloadingTiles    READ    downloadingTiles    NOTIFY downloadStatsChanged)
+    Q_PROPERTY(quint32      errorTiles          READ    errorTiles          NOTIFY downloadStatsChanged)
+    Q_PROPERTY(qreal        downloadProgress    READ    downloadProgress    NOTIFY downloadStatsChanged)
 
 public:
     explicit QGCCachedTileSet(const QString &name, QObject *parent = nullptr);
@@ -65,7 +70,9 @@ public:
 
     Q_INVOKABLE void createDownloadTask();
     Q_INVOKABLE void resumeDownloadTask();
+    Q_INVOKABLE void pauseDownloadTask();
     Q_INVOKABLE void cancelDownloadTask();
+    void copyFrom(const QGCCachedTileSet *other);
 
     const QString &name() const { return _name; }
     const QString &mapTypeStr() const { return _mapTypeStr; }
@@ -87,6 +94,10 @@ public:
     QString savedTileCountStr() const;
     quint64 savedTileSize() const { return _savedTileSize; }
     QString savedTileSizeStr() const;
+    quint32 pendingTiles() const { return _pendingTiles; }
+    quint32 downloadingTiles() const { return _downloadingTiles; }
+    quint32 errorTiles() const { return _errorTiles; }
+    qreal downloadProgress() const;
 
     QString downloadStatus() const;
     int minZoom() const { return _minZoom; }
@@ -113,8 +124,8 @@ public:
     void setBottomRightLon(double lon) { _bottomRightLon = lon; }
 
     void setUniqueTileCount(quint32 num) { if (num != _uniqueTileCount) { _uniqueTileCount = num; emit uniqueTileCountChanged(); } }
-    void setTotalTileCount(quint32 num) { if (num != _totalTileCount) { _totalTileCount = num; emit totalTileCountChanged(); } }
-    void setSavedTileCount(quint32 num) { if (num != _savedTileCount) { _savedTileCount = num; emit savedTileCountChanged(); } }
+    void setTotalTileCount(quint32 num);
+    void setSavedTileCount(quint32 num);
     void setUniqueTileSize(quint64 size) { if (size != _uniqueTileSize) { _uniqueTileSize = size; emit uniqueTileSizeChanged(); } }
     void setTotalTileSize(quint64 size) { if (size != _totalTileSize) { _totalTileSize = size; emit totalTilesSizeChanged(); } }
     void setSavedTileSize(quint64 size) { if (size != _savedTileSize) { _savedTileSize = size; emit savedTileSizeChanged(); }  }
@@ -124,10 +135,11 @@ public:
     void setCreationDate(const QDateTime &date) { _creationDate = date; }
     void setId(quint64 id) { _id = id; }
     void setType(const QString &type) { _type = type; }
-    void setDefaultSet(bool def) { _defaultSet = def; }
+    void setDefaultSet(bool def);
     void setDeleting(bool del) { if (del != _deleting) { _deleting = del; emit deletingChanged(); } }
     void setDownloading(bool down) { if (down != _downloading) { _downloading = down; emit downloadingChanged(); } }
     void setErrorCount(quint32 count) { if (count != _errorCount) { _errorCount = count; emit errorCountChanged(); } }
+    void setDownloadStats(quint32 pending, quint32 downloading, quint32 errors);
 
 signals:
     void deletingChanged();
@@ -142,6 +154,7 @@ signals:
     void errorCountChanged();
     void selectedChanged();
     void nameChanged();
+    void downloadStatsChanged();
 
 private slots:
     void _tileListFetched(const QQueue<QGCTile*> &tiles);
@@ -182,6 +195,11 @@ private:
     QQueue<QGCTile*> _tilesToDownload;
     QGCMapEngineManager *_manager = nullptr;
     QNetworkAccessManager *_networkManager = nullptr;
+    quint32 _pendingTiles = 0;
+    quint32 _downloadingTiles = 0;
+    quint32 _errorTiles = 0;
+    QMutex _repliesMutex;
 
     static constexpr uint32_t kTileBatchSize = 256;
+    static constexpr uint32_t kSizeEstimateInterval = 10;
 };

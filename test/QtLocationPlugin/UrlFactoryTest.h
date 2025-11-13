@@ -9,21 +9,13 @@
 
 #pragma once
 
-#include <QtQmlIntegration/QtQmlIntegration>
+#include "UnitTest.h"
 
-#include "SettingsGroup.h"
-
-class MapsSettings : public SettingsGroup
+class UrlFactoryTest : public UnitTest
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
-public:
-    MapsSettings(QObject* parent = nullptr);
 
-    DEFINE_SETTING_NAME_GROUP()
-
-    DEFINE_SETTINGFACT(maxCacheDiskSize)
-    DEFINE_SETTINGFACT(maxCacheMemorySize)
-    DEFINE_SETTINGFACT(disableDefaultCache)
+private slots:
+    void _testUnknownMapIdFallback();
+    void _testNumericProviderLookup();
 };

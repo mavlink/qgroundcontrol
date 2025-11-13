@@ -25,14 +25,11 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, co
     : QGeoTileFetcher(parent)
     , m_networkManager(networkManager)
 {
-    Q_ASSERT(networkManager);
+    if (!networkManager) {
+        qCCritical(QGeoTileFetcherQGCLog) << "Network manager is null";
+    }
 
     qCDebug(QGeoTileFetcherQGCLog) << this;
-
-    // TODO: Allow useragent override again
-    /*if (parameters.contains(QStringLiteral("useragent"))) {
-        setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
-    }*/
 }
 
 QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
@@ -44,21 +41,34 @@ QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
 {
     const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(spec.mapId());
     if (!provider) {
+        const QString error = tr("Unknown map provider (%1)").arg(spec.mapId());
+        qCWarning(QGeoTileFetcherQGCLog) << error;
+        emit tileError(spec, error);
         return nullptr;
     }
 
+    // TODO: Re-enable zoom level check once all providers have correct min/max zoom levels set
     /*if (spec.zoom() > provider->maximumZoomLevel() || spec.zoom() < provider->minimumZoomLevel()) {
         return nullptr;
     }*/
 
     const QNetworkRequest request = getNetworkRequest(spec.mapId(), spec.x(), spec.y(), spec.zoom());
-    if (request.url().isEmpty()) {
+    if (!request.url().isValid() || request.url().isEmpty()) {
+        const QString error = tr("Map provider returned an invalid URL");
+        qCWarning(QGeoTileFetcherQGCLog) << error << "mapId:" << spec.mapId()
+                                         << "url:" << request.url();
+        emit tileError(spec, error);
         return nullptr;
     }
 
     QGeoTiledMapReplyQGC *tileImage = new QGeoTiledMapReplyQGC(m_networkManager, request, spec);
     if (!tileImage->init()) {
         tileImage->deleteLater();
+        const QString error = tr("Failed to start tile request");
+        qCWarning(QGeoTileFetcherQGCLog) << error << "mapId:" << spec.mapId()
+                                         << "x:" << spec.x() << "y:" << spec.y()
+                                         << "zoom:" << spec.zoom();
+        emit tileError(spec, error);
         return nullptr;
     }
 
@@ -83,45 +93,60 @@ void QGeoTileFetcherQGC::timerEvent(QTimerEvent *event)
 void QGeoTileFetcherQGC::handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec)
 {
     if (!reply) {
+        const QString error = tr("Invalid tile reply");
+        qCWarning(QGeoTileFetcherQGCLog) << error << "mapId:" << spec.mapId()
+                                         << "x:" << spec.x() << "y:" << spec.y()
+                                         << "zoom:" << spec.zoom();
+        emit tileError(spec, error);
         return;
     }
 
     reply->deleteLater();
 
     if (!initialized()) {
+        const QString error = tr("Tile fetcher is not initialized");
+        qCWarning(QGeoTileFetcherQGCLog) << error;
+        emit tileError(spec, error);
         return;
     }
 
     if (reply->error() == QGeoTiledMapReply::NoError) {
-        emit tileFinished(spec, reply->mapImageData(), reply->mapImageFormat());
+        const QByteArray bytes = reply->mapImageData();
+        const QString format = reply->mapImageFormat();
+        emit tileFinished(spec, bytes, format);
     } else {
-        emit tileError(spec, reply->errorString());
+        const QString error = reply->errorString().isEmpty()
+            ? tr("Unknown tile fetch error")
+            : reply->errorString();
+        emit tileError(spec, error);
     }
 }
 
 QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, int zoom)
 {
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(mapId);
+    if (!mapProvider) {
+        return QNetworkRequest();
+    }
 
     QNetworkRequest request;
     request.setUrl(mapProvider->getTileURL(x, y, zoom));
     request.setPriority(QNetworkRequest::NormalPriority);
-    request.setTransferTimeout(10000);
-    // request.setOriginatingObject(this);
+    request.setTransferTimeout(kNetworkRequestTimeoutMs);
 
     // Headers
     request.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("*/*"));
     request.setHeader(QNetworkRequest::UserAgentHeader, s_userAgent);
     const QByteArray referrer = mapProvider->getReferrer().toUtf8();
     if (!referrer.isEmpty()) {
-        request.setRawHeader(QByteArrayLiteral("Referrer"), referrer);
+        request.setRawHeader(QByteArrayLiteral("Referer"), referrer);
     }
     const QByteArray token = mapProvider->getToken();
     if (!token.isEmpty()) {
         request.setRawHeader(QByteArrayLiteral("User-Token"), token);
     }
     request.setRawHeader(QByteArrayLiteral("Connection"), QByteArrayLiteral("keep-alive"));
-    // request.setRawHeader(QByteArrayLiteral("Accept-Encoding"), QByteArrayLiteral("gzip, deflate, br"));
+    request.setRawHeader(QByteArrayLiteral("Accept-Encoding"), QByteArrayLiteral("gzip, deflate, br"));
 
     // Attributes
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
@@ -130,7 +155,7 @@ QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, i
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     request.setAttribute(QNetworkRequest::Http2AllowedAttribute, true);
     request.setAttribute(QNetworkRequest::DoNotBufferUploadDataAttribute, false);
-    // request.setAttribute(QNetworkRequest::AutoDeleteReplyOnFinishAttribute, true);
+    request.setAttribute(QNetworkRequest::AutoDeleteReplyOnFinishAttribute, true);
 
     return request;
 }

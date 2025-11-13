@@ -54,7 +54,9 @@ qt_add_plugin(QGCLocation
 # ----------------------------------------------------------------------------
 # Platform-Specific Configuration
 # ----------------------------------------------------------------------------
-# Google Maps not available on iOS
+# iOS: Disable Google Maps due to App Store licensing restrictions
+# Google Maps requires additional licensing agreements for iOS distribution
+# through the App Store that differ from other platforms
 if(IOS)
     target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
 endif()
@@ -64,18 +66,19 @@ endif()
 # ----------------------------------------------------------------------------
 target_link_libraries(QGCLocation
     PRIVATE
-        Qt6::Positioning
-        Qt6::Sql
-    PUBLIC
         Qt6::Core
         Qt6::Location
         Qt6::LocationPrivate
         Qt6::Network
+        Qt6::Positioning
+        Qt6::Sql
 )
 
 target_include_directories(QGCLocation
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Providers>
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
         ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls

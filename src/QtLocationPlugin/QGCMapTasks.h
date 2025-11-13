@@ -35,7 +35,9 @@ public:
         taskPruneCache,
         taskReset,
         taskExport,
-        taskImport
+        taskImport,
+        taskSetCacheEnabled,
+        taskSetDefaultCacheEnabled
     };
     Q_ENUM(TaskType);
 
@@ -370,6 +372,8 @@ public:
     QString path() const { return m_path; }
     bool replace() const { return m_replace; }
     int progress() const { return m_progress; }
+    void markErrorHandled() { m_errorHandled = true; }
+    bool errorHandled() const { return m_errorHandled; }
 
     void setImportCompleted()
     {
@@ -390,6 +394,45 @@ private:
     const QString m_path;
     const bool m_replace = false;
     int m_progress = 0;
+    bool m_errorHandled = false;
+};
+
+//-----------------------------------------------------------------------------
+
+class QGCSetCacheEnabledTask : public QGCMapTask
+{
+    Q_OBJECT
+
+public:
+    explicit QGCSetCacheEnabledTask(bool enabled, QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskSetCacheEnabled, parent)
+        , m_enabled(enabled)
+    {}
+    ~QGCSetCacheEnabledTask() = default;
+
+    bool enabled() const { return m_enabled; }
+
+private:
+    const bool m_enabled = true;
+};
+
+//-----------------------------------------------------------------------------
+
+class QGCSetDefaultCacheEnabledTask : public QGCMapTask
+{
+    Q_OBJECT
+
+public:
+    explicit QGCSetDefaultCacheEnabledTask(bool enabled, QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskSetDefaultCacheEnabled, parent)
+        , m_enabled(enabled)
+    {}
+    ~QGCSetDefaultCacheEnabledTask() = default;
+
+    bool enabled() const { return m_enabled; }
+
+private:
+    const bool m_enabled = true;
 };
 
 //-----------------------------------------------------------------------------
