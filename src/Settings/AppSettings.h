@@ -42,6 +42,7 @@ public:
     DEFINE_SETTINGFACT(customURL)
     DEFINE_SETTINGFACT(vworldToken)
     DEFINE_SETTINGFACT(openaipToken)
+    DEFINE_SETTINGFACT(linzToken)
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(qLocaleLanguage)

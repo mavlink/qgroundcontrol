@@ -13,15 +13,17 @@ void GoogleMapProvider::_getSecGoogleWords(int x, int y, QString& sec1, QString&
 
 QString GoogleMapProvider::_getURL(int x, int y, int zoom) const
 {
+    const int serverNum = _getServerNum(x, y, kServerCount);
     QString sec1;
     QString sec2;
     _getSecGoogleWords(x, y, sec1, sec2);
-    return _mapUrl
-        .arg(_getServerNum(x, y, 4))
+    const QString url = _mapUrl
+        .arg(serverNum)
         .arg(_versionRequest, _version, _language)
         .arg(x)
         .arg(sec1)
         .arg(y)
         .arg(zoom)
         .arg(sec2, _scale);
+    return url;
 }

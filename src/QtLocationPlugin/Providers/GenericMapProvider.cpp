@@ -4,7 +4,8 @@
 
 QString CustomURLMapProvider::_getURL(int x, int y, int zoom) const
 {
-    QString url = SettingsManager::instance()->appSettings()->customURL()->rawValue().toString();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
+    QString url = appSettings->customURL()->rawValue().toString();
     (void) url.replace("{x}", QString::number(x));
     (void) url.replace("{y}", QString::number(y));
     static const QRegularExpression zoomRegExp("\\{(z|zoom)\\}");
@@ -14,72 +15,84 @@ QString CustomURLMapProvider::_getURL(int x, int y, int zoom) const
 
 QString CyberJapanMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(_mapName).arg(zoom).arg(x).arg(y).arg(_imageFormat);
+    const QString url = _mapUrl.arg(_mapTypeId).arg(zoom).arg(x).arg(y).arg(_imageFormat);
+    return url;
 }
 
 QString LINZBasemapMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(zoom).arg(x).arg(y).arg(_imageFormat);
+    const QString linzToken = getSettingsToken("linz", "LINZ Basemap");
+    if (linzToken.isEmpty()) {
+        return QString();
+    }
+    const QString url = _mapUrl.arg(zoom).arg(x).arg(y).arg(_imageFormat).arg(linzToken);
+    return url;
 }
 
 QString OpenAIPMapProvider::_getURL(int x, int y, int zoom) const
 {
-    const QString apiKey = SettingsManager::instance()->appSettings()->openaipToken()->rawValue().toString();
+    const QString apiKey = getSettingsToken("openaip", "OpenAIP");
 
-    QString url = _mapUrl.arg(zoom).arg(x).arg(y);
-
-    if (!apiKey.isEmpty()) {
-        url += QStringLiteral("?apiKey=%1").arg(apiKey);
-    }
+    const QString url = apiKey.isEmpty()
+        ? _mapUrl.arg(zoom).arg(x).arg(y)
+        : _mapUrl.arg(zoom).arg(x).arg(y) + QStringLiteral("?apiKey=%1").arg(apiKey);
 
     return url;
 }
 
 QString OpenStreetMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(zoom).arg(x).arg(y);
+    const QString url = _mapUrl.arg(zoom).arg(x).arg(y);
+    return url;
 }
 
 QString StatkartMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(zoom).arg(y).arg(x);
+    const QString url = _mapUrl.arg(_mapTypeId).arg(zoom).arg(y).arg(x);
+    return url;
 }
 
 QString EniroMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(zoom).arg(x).arg((1 << zoom) - 1 - y).arg(_imageFormat);
+    const QString url = _mapUrl.arg(zoom).arg(x).arg(((1 << zoom) - 1) - y).arg(_imageFormat);
+    return url;
 }
 
 QString SvalbardMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(zoom).arg(y).arg(x);
+    const QString url = _mapUrl.arg(zoom).arg(y).arg(x);
+    return url;
 }
 
 QString MapQuestMapProvider::_getURL(int x, int y, int zoom) const
 {
-    return _mapUrl.arg(_getServerNum(x, y, 4)).arg(_mapName).arg(zoom).arg(x).arg(y).arg(_imageFormat);
+    const int serverNum = _getServerNum(x, y, kServerCount);
+    const QString url = _mapUrl.arg(serverNum).arg(_mapTypeId).arg(zoom).arg(x).arg(y).arg(_imageFormat);
+    return url;
 }
 
 QString VWorldMapProvider::_getURL(int x, int y, int zoom) const
 {
-    if ((zoom < 5) || (zoom > 19)) {
+    if ((zoom < kMinZoom) || (zoom > kMaxZoom)) {
         return QString();
     }
 
-    const int gap = zoom - 6;
+    const int gap = zoom - kZoomOffset;
+    const int zoom_factor = 1 << gap;
 
-    const int x_min = 53 * pow(2, gap);
-    const int x_max = (55 * pow(2, gap)) + (2 * gap - 1);
+    const int x_min = kXMinBase * zoom_factor;
+    const int x_max = (kXMaxBase * zoom_factor) + ((2 * gap) - 1);
     if ((x < x_min) || (x > x_max)) {
         return QString();
     }
 
-    const int y_min = 22 * pow(2, gap);
-    const int y_max = (26 * pow(2, gap)) + (2 * gap - 1);
+    const int y_min = kYMinBase * zoom_factor;
+    const int y_max = (kYMaxBase * zoom_factor) + ((2 * gap) - 1);
     if ((y < y_min) || (y > y_max)) {
         return QString();
     }
 
-    const QString VWorldMapToken = SettingsManager::instance()->appSettings()->vworldToken()->rawValue().toString();
-    return _mapUrl.arg(VWorldMapToken, _mapName).arg(zoom).arg(y).arg(x).arg(_imageFormat);
+    const QString VWorldMapToken = getSettingsToken("vworld", "VWorld");
+    const QString url = _mapUrl.arg(VWorldMapToken, _mapTypeId).arg(zoom).arg(y).arg(x).arg(_imageFormat);
+    return url;
 }

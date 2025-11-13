@@ -26,7 +26,9 @@ public:
         taskPruneCache,
         taskReset,
         taskExport,
-        taskImport
+        taskImport,
+        taskSetCacheEnabled,
+        taskSetDefaultCacheEnabled
     };
     Q_ENUM(TaskType);
 
@@ -198,17 +200,32 @@ public:
         , m_setID(setID)
         , m_state(state)
         , m_hash(hash)
+        , m_hasFromStateFilter(false)
     {}
+
+    QGCUpdateTileDownloadStateTask(quint64 setID, QGCTile::TileState state, const QString &hash, QGCTile::TileState fromState, QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskUpdateTileDownloadState, parent)
+        , m_setID(setID)
+        , m_state(state)
+        , m_hash(hash)
+        , m_fromState(fromState)
+        , m_hasFromStateFilter(true)
+    {}
+
     ~QGCUpdateTileDownloadStateTask() = default;
 
     QString hash() const { return m_hash; }
     quint64 setID() const { return m_setID; }
     QGCTile::TileState state() const { return m_state; }
+    QGCTile::TileState fromState() const { return m_fromState; }
+    bool hasFromStateFilter() const { return m_hasFromStateFilter; }
 
 private:
     const quint64 m_setID = 0;
     const QGCTile::TileState m_state = QGCTile::StatePending;
     const QString m_hash;
+    const QGCTile::TileState m_fromState = QGCTile::StatePending;
+    const bool m_hasFromStateFilter = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -361,6 +378,8 @@ public:
     QString path() const { return m_path; }
     bool replace() const { return m_replace; }
     int progress() const { return m_progress; }
+    void markErrorHandled() { m_errorHandled = true; }
+    bool errorHandled() const { return m_errorHandled; }
 
     void setImportCompleted()
     {
@@ -381,6 +400,45 @@ private:
     const QString m_path;
     const bool m_replace = false;
     int m_progress = 0;
+    bool m_errorHandled = false;
+};
+
+//-----------------------------------------------------------------------------
+
+class QGCSetCacheEnabledTask : public QGCMapTask
+{
+    Q_OBJECT
+
+public:
+    explicit QGCSetCacheEnabledTask(bool enabled, QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskSetCacheEnabled, parent)
+        , m_enabled(enabled)
+    {}
+    ~QGCSetCacheEnabledTask() = default;
+
+    bool enabled() const { return m_enabled; }
+
+private:
+    const bool m_enabled = true;
+};
+
+//-----------------------------------------------------------------------------
+
+class QGCSetDefaultCacheEnabledTask : public QGCMapTask
+{
+    Q_OBJECT
+
+public:
+    explicit QGCSetDefaultCacheEnabledTask(bool enabled, QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskSetDefaultCacheEnabled, parent)
+        , m_enabled(enabled)
+    {}
+    ~QGCSetDefaultCacheEnabledTask() = default;
+
+    bool enabled() const { return m_enabled; }
+
+private:
+    const bool m_enabled = true;
 };
 
 //-----------------------------------------------------------------------------

@@ -7,13 +7,16 @@
 #include <QtCore/QString>
 #include <QtCore/QThread>
 #include <QtCore/QWaitCondition>
-#include <QtCore/QElapsedTimer>
+#include <QtSql/QSqlError>
+#include <functional>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCTileCacheWorkerLog)
 
 class QGCMapTask;
 class QGCCachedTileSet;
+class QGCImportTileTask;
 class QSqlDatabase;
+class QSqlQuery;
 
 class QGCCacheWorker : public QThread
 {
@@ -31,6 +34,7 @@ public slots:
 
 signals:
     void updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
+    void downloadStatusUpdated(quint64 setID, quint32 pending, quint32 downloading, quint32 errors);
 
 protected:
     void run() final;
@@ -50,21 +54,42 @@ private:
     void _resetCacheDatabase(QGCMapTask *task);
     void _importSets(QGCMapTask *task);
     void _exportSets(QGCMapTask *task);
+    void _setCacheEnabled(QGCMapTask *task);
+    void _setDefaultCacheEnabled(QGCMapTask *task);
     bool _testTask(QGCMapTask *task);
+    void _notifyImportFailure(QGCImportTileTask *task, const QString &message);
+    bool _importReplace(QGCImportTileTask *task);
+    bool _importAppend(QGCImportTileTask *task);
 
     bool _connectDB();
     void _disconnectDB();
     bool _createDB(QSqlDatabase &db, bool createDefault = true);
     bool _findTileSetID(const QString &name, quint64 &setID);
     bool _init();
+    bool _verifyDatabaseVersion() const;
     quint64 _findTile(const QString &hash);
     quint64 _getDefaultTileSet();
     void _deleteBingNoTileTiles();
     void _deleteTileSet(quint64 id);
     void _updateSetTotals(QGCCachedTileSet *set);
     void _updateTotals();
+    void _emitDownloadStatus(quint64 setID);
+    void _setTaskError(QGCMapTask *task, const QString &baseMessage, const QSqlError &error = QSqlError()) const;
 
-    std::shared_ptr<QSqlDatabase> _db = nullptr;
+    bool _batchDeleteTiles(QSqlQuery& query, const QList<quint64>& tileIds, const QString& errorContext);
+    bool _generateUniqueTileSetName(QString& name);
+    QSqlDatabase _getDB() const;
+    bool _canAccessDatabase() const;
+    enum class VersionReadStatus {
+        Success,
+        NoAccess,
+        OpenFailed,
+        QueryFailed,
+        VersionMismatch
+    };
+    VersionReadStatus _checkDatabaseVersion(const QString &path, QString *errorMessage = nullptr) const;
+    VersionReadStatus _readDatabaseVersion(const QString &path, const QString &connectionName, int &version) const;
+
     QMutex _taskQueueMutex;
     QQueue<QGCMapTask*> _taskQueue;
     QWaitCondition _waitc;
@@ -78,9 +103,19 @@ private:
     int _updateTimeout = kShortTimeout;
     std::atomic_bool _failed = false;
     std::atomic_bool _valid = false;
+    std::atomic_bool _stopping = false;
+    std::atomic_bool _cacheEnabled = true;
+    std::atomic_bool _defaultCachingEnabled = true;
 
     static constexpr const char *kSession = "QGeoTileWorkerSession";
     static constexpr const char *kExportSession = "QGeoTileExportSession";
-    static constexpr int kShortTimeout = 2;
-    static constexpr int kLongTimeout = 5;
+    static constexpr int kShortTimeout = 400;
+    static constexpr int kLongTimeout = 1000;
+    static constexpr int kCurrentSchemaVersion = 2;
+    static constexpr int kSqlTrue = 1;
+    static constexpr int kPruneBatchSize = 128;
+    static constexpr int kTaskQueueThreshold = 100;
+    static constexpr int kWorkerWaitTimeoutMs = 5000;
+    static constexpr int kMaxNameGenerationAttempts = 999;
+    static constexpr int kSqliteDefaultVariableLimit = 999;
 };

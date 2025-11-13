@@ -11,20 +11,47 @@
 
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
+#include "Fact.h"
+#include "MapsSettings.h"
 #include "QGCApplication.h"
 #include "QGCCachedTileSet.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
+#include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoFileTileCacheQGC.h"
-#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "QmlObjectListModel.h"
 
 using namespace Qt::StringLiterals;
 
 QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QtLocationPlugin.QGCMapEngineManager")
+
+template<typename Func>
+void QGCMapEngineManager::_forEachTileSet(Func&& func) {
+    if (!_tileSets) {
+        return;
+    }
+    for (qsizetype i = 0; i < _tileSets->count(); i++) {
+        if (auto set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i))) {
+            func(set);
+        }
+    }
+}
+
+template<typename Func>
+void QGCMapEngineManager::_forEachTileSet(Func&& func) const {
+    if (!_tileSets) {
+        return;
+    }
+    for (qsizetype i = 0; i < _tileSets->count(); i++) {
+        if (const auto set = qobject_cast<const QGCCachedTileSet*>(_tileSets->get(i))) {
+            func(set);
+        }
+    }
+}
 
 Q_APPLICATION_STATIC(QGCMapEngineManager, _mapEngineManager);
 
@@ -42,6 +69,23 @@ QGCMapEngineManager::QGCMapEngineManager(QObject *parent)
     (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0, "QGCMapEngineManager", "Reference only");
 
     (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals, Qt::UniqueConnection);
+    (void) connect(getQGCMapEngine(), &QGCMapEngine::downloadStatusUpdated, this, &QGCMapEngineManager::_downloadStatusUpdated, Qt::UniqueConnection);
+
+    if (auto mapsSettings = SettingsManager::instance()->mapsSettings()) {
+        if (auto disableFact = mapsSettings->disableDefaultCache()) {
+            const bool enabled = !disableFact->rawValue().toBool();
+            _defaultCacheEnabled = enabled;
+            QObject::connect(disableFact, &Fact::rawValueChanged, this, [this](const QVariant &value) {
+                const bool enabled = !value.toBool();
+                if (enabled != _defaultCacheEnabled) {
+                    _defaultCacheEnabled = enabled;
+                    _updateCacheEnabledState();
+                }
+            });
+        }
+    }
+
+    _updateCacheEnabledState();
 }
 
 QGCMapEngineManager::~QGCMapEngineManager()
@@ -49,6 +93,38 @@ QGCMapEngineManager::~QGCMapEngineManager()
     _tileSets->clear();
 
     qCDebug(QGCMapEngineManagerLog) << this;
+}
+
+void QGCMapEngineManager::setCachingPaused(bool paused)
+{
+    const int oldCount = _cacheDisableRefCount;
+    if (paused) {
+        _cacheDisableRefCount++;
+    } else if (_cacheDisableRefCount > 0) {
+        _cacheDisableRefCount--;
+    }
+
+    if ((oldCount == 0) != (_cacheDisableRefCount == 0)) {
+        _updateCacheEnabledState();
+    }
+}
+
+void QGCMapEngineManager::setCachingDefaultSetEnabled(bool enabled)
+{
+    if (_defaultCacheEnabled == enabled) {
+        return;
+    }
+    _defaultCacheEnabled = enabled;
+    _updateCacheEnabledState();
+}
+
+void QGCMapEngineManager::_resetCompleted()
+{
+    if (_cachePausedForReset) {
+        setCachingPaused(false);
+        _cachePausedForReset = false;
+    }
+    loadTileSets(true);
 }
 
 void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString &mapName)
@@ -90,9 +166,9 @@ QString QGCMapEngineManager::tileSizeStr() const
     return qgcApp()->bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
 }
 
-void QGCMapEngineManager::loadTileSets()
+void QGCMapEngineManager::loadTileSets(bool forceReload)
 {
-    if (_tileSets->count() > 0) {
+    if (forceReload && (_tileSets->count() > 0)) {
         _tileSets->clear();
         emit tileSetsChanged();
     }
@@ -111,8 +187,21 @@ void QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet *tileSet)
         tileSet->setMapTypeStr(QStringLiteral("Various"));
     }
 
+    // If we already know about this set, update the existing instance instead of replacing it
+    for (qsizetype i = 0; i < _tileSets->count(); i++) {
+        if (auto existing = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i))) {
+            if (existing->id() == tileSet->id()) {
+                existing->copyFrom(tileSet);
+                _applyPendingStats(existing);
+                tileSet->deleteLater();
+                return;
+            }
+        }
+    }
+
     tileSet->setManager(this);
     _tileSets->append(tileSet);
+    _applyPendingStats(tileSet);
     emit tileSetsChanged();
 }
 
@@ -171,9 +260,83 @@ void QGCMapEngineManager::_tileSetSaved(QGCCachedTileSet *set)
 {
     qCDebug(QGCMapEngineManagerLog) << "New tile set saved (" << set->name() << "). Starting download...";
 
+    set->setManager(this);
     _tileSets->append(set);
+    _applyPendingStats(set);
     emit tileSetsChanged();
     set->createDownloadTask();
+}
+
+void QGCMapEngineManager::_applyPendingStats(QGCCachedTileSet *set)
+{
+    if (!set) {
+        return;
+    }
+
+    const auto it = _pendingDownloadStats.find(set->id());
+    if (it != _pendingDownloadStats.end()) {
+        set->setDownloadStats(it->pending, it->downloading, it->errors);
+        _pendingDownloadStats.erase(it);
+        _recomputeDownloadTotals();
+    }
+}
+
+void QGCMapEngineManager::_recomputeDownloadTotals()
+{
+    quint32 pendingTotal = 0;
+    quint32 downloadingTotal = 0;
+    quint32 errorTotal = 0;
+
+    _forEachTileSet([&](const QGCCachedTileSet* set) {
+        pendingTotal += set->pendingTiles();
+        downloadingTotal += set->downloadingTiles();
+        errorTotal += set->errorTiles();
+    });
+
+    for (auto it = _pendingDownloadStats.cbegin(); it != _pendingDownloadStats.cend(); ++it) {
+        pendingTotal += it->pending;
+        downloadingTotal += it->downloading;
+        errorTotal += it->errors;
+    }
+
+    if ((pendingTotal != _pendingDownloads) || (downloadingTotal != _activeDownloads) || (errorTotal != _errorDownloads)) {
+        _pendingDownloads = pendingTotal;
+        _activeDownloads = downloadingTotal;
+        _errorDownloads = errorTotal;
+        emit downloadMetricsChanged();
+    }
+}
+
+void QGCMapEngineManager::_updateCacheEnabledState()
+{
+    const bool shouldEnable = (_cacheDisableRefCount == 0);
+    if (shouldEnable != _cacheEnabledState) {
+        _cacheEnabledState = shouldEnable;
+        QGCSetCacheEnabledTask *task = new QGCSetCacheEnabledTask(shouldEnable);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
+
+        if (shouldEnable) {
+            _forEachTileSet([](QGCCachedTileSet *set) {
+                set->resumeDownloadTask(true);
+            });
+        } else {
+            _forEachTileSet([](QGCCachedTileSet *set) {
+                if (set->downloading()) {
+                    set->pauseDownloadTask(true);
+                }
+            });
+        }
+    }
+
+    if (_defaultCacheEnabled != _defaultCacheEnabledState) {
+        _defaultCacheEnabledState = _defaultCacheEnabled;
+        QGCSetDefaultCacheEnabledTask *task = new QGCSetDefaultCacheEnabledTask(_defaultCacheEnabledState);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
+    }
 }
 
 void QGCMapEngineManager::saveSetting(const QString &key, const QString &value)
@@ -206,12 +369,19 @@ void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet *tileSet)
 {
     qCDebug(QGCMapEngineManagerLog) << "Deleting tile set" << tileSet->name();
 
+    _pendingDownloadStats.remove(tileSet->id());
+
     if (tileSet->defaultSet()) {
         for (qsizetype i = 0; i < _tileSets->count(); i++ ) {
             QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
             if (set) {
                 set->setDeleting(true);
             }
+        }
+
+        if (!_cachePausedForReset) {
+            setCachingPaused(true);
+            _cachePausedForReset = true;
         }
 
         QGCResetTask *task = new QGCResetTask();
@@ -253,19 +423,36 @@ void QGCMapEngineManager::renameTileSet(QGCCachedTileSet *tileSet, const QString
 
 void QGCMapEngineManager::_tileSetDeleted(quint64 setID)
 {
-    for (qsizetype i = 0; i < _tileSets->count(); i++ ) {
-        QGCCachedTileSet *set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
-        if (set && (set->id() == setID)) {
-            (void) _tileSets->removeAt(i);
-            delete set;
-            emit tileSetsChanged();
+    bool removed = false;
+    for (qsizetype i = _tileSets->count() - 1; i >= 0; --i) {
+        if (auto set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i))) {
+            if (set->id() == setID) {
+                (void) _tileSets->removeAt(i);
+                delete set;
+                removed = true;
+            }
+        }
+        if (i == 0) {
             break;
         }
     }
+    _pendingDownloadStats.remove(setID);
+    if (removed) {
+        emit tileSetsChanged();
+    }
+    _recomputeDownloadTotals();
 }
 
 void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &error)
 {
+    if (type == QGCMapTask::TaskType::taskImport) {
+        if (auto importTask = qobject_cast<QGCImportTileTask*>(sender())) {
+            if (importTask->errorHandled()) {
+                return;
+            }
+        }
+    }
+
     QString task;
     switch (type) {
     case QGCMapTask::TaskType::taskFetchTileSets:
@@ -285,9 +472,29 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
         break;
     case QGCMapTask::TaskType::taskReset:
         task = QStringLiteral("Reset Tile Sets");
+        if (_cachePausedForReset) {
+            setCachingPaused(false);
+            _cachePausedForReset = false;
+        }
+        {
+            bool cleared = false;
+            _forEachTileSet([&cleared](QGCCachedTileSet *set) {
+                if (set->deleting()) {
+                    qCDebug(QGCMapEngineManagerLog) << "Reset error: clearing deleting flag for tile set" << set->id() << set->name();
+                    set->setDeleting(false);
+                    cleared = true;
+                }
+            });
+            if (cleared) {
+                emit tileSetsChanged();
+            }
+        }
         break;
     case QGCMapTask::TaskType::taskExport:
         task = QStringLiteral("Export Tile Sets");
+        break;
+    case QGCMapTask::TaskType::taskImport:
+        task = QStringLiteral("Import Tile Set");
         break;
     default:
         task = QStringLiteral("Database Error");
@@ -305,61 +512,80 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
 
 void QGCMapEngineManager::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
+    bool updated = false;
     for (qsizetype i = 0; i < _tileSets->count(); i++) {
         QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
         if (set && set->defaultSet()) {
             set->setSavedTileSize(totalsize);
             set->setSavedTileCount(totaltiles);
-            set->setTotalTileCount(defaulttiles);
-            set->setTotalTileSize(defaultsize);
-            return;
+            set->setTotalTileCount(totaltiles);
+            set->setTotalTileSize(totalsize);
+            set->setUniqueTileCount(defaulttiles);
+            set->setUniqueTileSize(defaultsize);
+            updated = true;
+            break;
         }
     }
+
+    if (updated) {
+        emit tileSetsChanged();
+    }
+}
+
+void QGCMapEngineManager::_downloadStatusUpdated(quint64 setID, quint32 pending, quint32 downloading, quint32 errors)
+{
+    bool applied = false;
+    for (qsizetype i = 0; i < _tileSets->count(); i++) {
+        if (auto set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i))) {
+            if (set->id() == setID) {
+                set->setDownloadStats(pending, downloading, errors);
+                applied = true;
+                _pendingDownloadStats.remove(setID);
+                break;
+            }
+        }
+    }
+
+    if (!applied) {
+        _pendingDownloadStats.insert(setID, DownloadStatsCache{pending, downloading, errors});
+    }
+
+    _recomputeDownloadTotals();
 }
 
 bool QGCMapEngineManager::findName(const QString &name) const
 {
-    for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        const QGCCachedTileSet* const set = qobject_cast<const QGCCachedTileSet*>(_tileSets->get(i));
-        if (set && (set->name() == name)) {
-            return true;
+    bool found = false;
+    _forEachTileSet([&found, &name](const QGCCachedTileSet* set) {
+        if (set->name() == name) {
+            found = true;
         }
-    }
-
-    return false;
+    });
+    return found;
 }
 
 void QGCMapEngineManager::selectAll()
 {
-    for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
-        if (set) {
-            set->setSelected(true);
-        }
-    }
+    _forEachTileSet([](QGCCachedTileSet* set) {
+        set->setSelected(true);
+    });
 }
 
 void QGCMapEngineManager::selectNone()
 {
-    for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
-        if (set) {
-            set->setSelected(false);
-        }
-    }
+    _forEachTileSet([](QGCCachedTileSet* set) {
+        set->setSelected(false);
+    });
 }
 
 int QGCMapEngineManager::selectedCount() const
 {
     int count = 0;
-
-    for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        const QGCCachedTileSet* const set = qobject_cast<const QGCCachedTileSet*>(_tileSets->get(i));
-        if (set && set->selected()) {
+    _forEachTileSet([&count](const QGCCachedTileSet* set) {
+        if (set->selected()) {
             count++;
         }
-    }
-
+    });
     return count;
 }
 
@@ -394,13 +620,11 @@ bool QGCMapEngineManager::exportSets(const QString &path)
     }
 
     QList<QGCCachedTileSet*> sets;
-
-    for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
+    _forEachTileSet([&sets](QGCCachedTileSet* set) {
         if (set->selected()) {
             sets.append(set);
         }
-    }
+    });
 
     if (sets.isEmpty()) {
         return false;
@@ -426,7 +650,7 @@ void QGCMapEngineManager::_actionCompleted()
     setImportAction(ImportAction::ActionDone);
 
     if (oldState == ImportAction::ActionImporting) {
-        loadTileSets();
+        loadTileSets(true);
     }
 }
 
@@ -439,8 +663,6 @@ QString QGCMapEngineManager::getUniqueName() const
             return name;
         }
     }
-
-    return QString("");
 }
 
 QStringList QGCMapEngineManager::mapList()

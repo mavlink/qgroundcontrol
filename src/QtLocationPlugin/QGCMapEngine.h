@@ -24,10 +24,12 @@ public:
 
 signals:
     void updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
+    void downloadStatusUpdated(quint64 setID, quint32 pending, quint32 downloading, quint32 errors);
 
 private slots:
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
     void _pruned() { m_pruning = false; }
+    void _downloadStatus(quint64 setID, quint32 pending, quint32 downloading, quint32 errors);
 
 private:
     QGCCacheWorker *m_worker = nullptr;

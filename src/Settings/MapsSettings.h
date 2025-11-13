@@ -16,4 +16,5 @@ public:
 
     DEFINE_SETTINGFACT(maxCacheDiskSize)
     DEFINE_SETTINGFACT(maxCacheMemorySize)
+    DEFINE_SETTINGFACT(disableDefaultCache)
 };

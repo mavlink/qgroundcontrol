@@ -231,6 +231,13 @@
     "default":     ""
 },
 {
+    "name":             "linzToken",
+    "shortDesc": "LINZ Basemap API Key",
+    "longDesc":  "Your personal API key for LINZ Basemap maps. Get one at https://basemaps.linz.govt.nz/",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "followTarget",
     "shortDesc": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",

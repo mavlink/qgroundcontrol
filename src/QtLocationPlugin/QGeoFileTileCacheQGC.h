@@ -22,9 +22,16 @@ public:
     static QString getDatabaseFilePath() { return _databaseFilePath; }
     static QString getCachePath() { return _cachePath; }
 
+protected:
+    void init() override;
+    void printStats() override;
+    void handleError(const QGeoTileSpec &spec, const QString &errorString) override;
+    bool isTileBogus(const QByteArray &bytes) const override;
+    void insert(const QGeoTileSpec &spec, const QByteArray &bytes, const QString &format, QAbstractGeoTileCache::CacheAreas areas = QAbstractGeoTileCache::AllCaches) override;
+    QSharedPointer<QGeoTileTexture> get(const QGeoTileSpec &spec) override;
+    void clearAll() override;
+
 private:
-    // QString tileSpecToFilename(const QGeoTileSpec &spec, const QString &format, const QString &directory) const final;
-    // QGeoTileSpec filenameToTileSpec(const QString &filename) const final;
 
     static void _initCache();
     static bool _wipeDirectory(const QString &dirPath);
@@ -43,6 +50,4 @@ private:
     static QString _databaseFilePath;
     static QString _cachePath;
     static bool _cacheWasReset;
-
-    static constexpr const char *kCachePathVersion = "300";
 };

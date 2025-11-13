@@ -38,9 +38,11 @@ private:
     void _getSecGoogleWords(int x, int y, QString& sec1, QString& sec2) const;
     QString _getURL(int x, int y, int zoom) const final;
 
+    static constexpr int kServerCount = 4;
+
     const QString _versionRequest;
     const QString _version;
-    const QString _mapUrl = QStringLiteral("http://mt%1.google.com/vt/%2=%3&hl=%4&x=%5%6&y=%7&z=%8&s=%9&scale=%10");
+    const QString _mapUrl = QStringLiteral("https://mt%1.google.com/vt/%2=%3&hl=%4&x=%5%6&y=%7&z=%8&s=%9&scale=%10");
     const QString _secGoogleWord = QStringLiteral("Galileo");
     const QString _scale = QStringLiteral("1");
 };

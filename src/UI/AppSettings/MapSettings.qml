@@ -13,7 +13,7 @@ Item {
 
     property var    _settingsManager:               QGroundControl.settingsManager
     property var    _appSettings:                   _settingsManager.appSettings
-    property var    _mapsSettings:                  _settingsManager.mapsSettings
+    property var    _mapsSettings:                  _settingsManager ? _settingsManager.mapsSettings : null
     property var    _mapEngineManager:              QGroundControl.mapEngineManager
     property bool   _currentlyImportOrExporting:    _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionExporting || _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionImporting
     property real   _largeTextFieldWidth:           ScreenTools.defaultFontPixelWidth * 30
@@ -88,10 +88,68 @@ Item {
             }
         }
 
-        SettingsGroupLayout {
-            Layout.fillWidth:   true
-            heading:            qsTr("Offline Maps")
-            headingDescription: qsTr("Download map tiles for use when offline")
+    SettingsGroupLayout {
+        id: settingsGroup
+        Layout.fillWidth:   true
+        heading:            qsTr("Offline Maps")
+        headingDescription: qsTr("Download map tiles for use when offline")
+
+        Component.onCompleted: {
+            // Initialize default cache state and apply to map engine
+            _defaultCacheEnabled = _currentDefaultCacheEnabled()
+            defaultCacheSwitch.checked = _defaultCacheEnabled
+            QGroundControl.mapEngineManager.setCachingDefaultSetEnabled(_defaultCacheEnabled)
+        }
+
+        Connections {
+            target: (_mapsSettings && _mapsSettings.disableDefaultCache) ? _mapsSettings.disableDefaultCache : null
+            function onValueChanged() {
+                settingsGroup._defaultCacheEnabled = settingsGroup._currentDefaultCacheEnabled()
+                if (defaultCacheSwitch.checked !== settingsGroup._defaultCacheEnabled) {
+                    defaultCacheSwitch.checked = settingsGroup._defaultCacheEnabled
+                }
+            }
+        }
+
+        function _currentDefaultCacheEnabled() {
+            if (_mapsSettings && _mapsSettings.disableDefaultCache) {
+                return !_mapsSettings.disableDefaultCache.rawValue
+            }
+            return true
+        }
+
+        property bool _defaultCacheEnabled: _currentDefaultCacheEnabled()
+
+        Row {
+            spacing: ScreenTools.defaultFontPixelWidth
+            QGCLabel { text: qsTr("Default Cache:") }
+            QGCSwitch {
+                id: defaultCacheSwitch
+                checked: settingsGroup._defaultCacheEnabled
+                onToggled: {
+                    if (_mapsSettings && _mapsSettings.disableDefaultCache) {
+                        _mapsSettings.disableDefaultCache.rawValue = !checked
+                    }
+                    settingsGroup._defaultCacheEnabled = checked
+                    QGroundControl.mapEngineManager.setCachingDefaultSetEnabled(checked)
+                }
+            }
+            QGCLabel {
+                text: defaultCacheSwitch.checked ? qsTr("Enabled") : qsTr("Disabled")
+            }
+        }
+
+        Row {
+            spacing: ScreenTools.defaultFontPixelWidth
+            visible: (_mapEngineManager.pendingDownloadCount + _mapEngineManager.activeDownloadCount + _mapEngineManager.errorDownloadCount) > 0
+            QGCLabel { text: qsTr("Downloads:") }
+            QGCLabel {
+                    text: qsTr("%1 pending / %2 active / %3 error")
+                        .arg(_mapEngineManager.pendingDownloadCount)
+                        .arg(_mapEngineManager.activeDownloadCount)
+                        .arg(_mapEngineManager.errorDownloadCount)
+                }
+            }
 
             Repeater {
                 model: QGroundControl.mapEngineManager.tileSets

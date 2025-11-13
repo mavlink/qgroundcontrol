@@ -122,6 +122,13 @@ add_subdirectory(qgcunittest)
 # add_qgc_test(MainWindowTest)
 # add_qgc_test(MessageBoxTest)
 
+add_subdirectory(QtLocationPlugin)
+add_qgc_test(QGCCachedTileSetTest)
+add_qgc_test(QGCMapEngineManagerTest)
+add_qgc_test(QGCTileCacheWorkerTest)
+add_qgc_test(UrlFactoryTest)
+add_qgc_test(TileDownloadIntegrationTest)
+
 add_subdirectory(Terrain)
 add_qgc_test(TerrainQueryTest)
 add_qgc_test(TerrainTileTest)

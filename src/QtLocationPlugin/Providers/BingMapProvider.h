@@ -19,15 +19,11 @@ public:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapTypeId;
-    const QString _mapUrl = QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/%2%3.%4?g=%5&mkt=%6");
-    const QString _versionBingMaps = QStringLiteral("2981");
+    static constexpr int kServerCount = 4;
 
-    /*QUrl m_url;
-    const QString m_scheme = QStringLiteral("http");
-    const QString m_host = QStringLiteral("ecn.t%1.tiles.virtualearth.net");
-    const QString m_path = QStringLiteral("tiles/%1%2.%3");
-    const QUrlQuery m_query = QStringLiteral("g=%1&mkt=%2");*/
+    const QString _mapTypeId;
+    const QString _mapUrl = QStringLiteral("https://ecn.t%1.tiles.virtualearth.net/tiles/%2%3.%4?g=%5&mkt=%6");
+    const QString _versionBingMaps = QStringLiteral("2981");
 };
 
 class BingRoadMapProvider : public BingMapProvider

@@ -36,15 +36,34 @@ QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEn
 QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
+    if (!m_engine) {
+        qCCritical(QGeoServiceProviderFactoryQGCLog) << "QML engine is null";
+        if (error) {
+            *error = QGeoServiceProvider::LoaderError;
+        }
+        if (errorString) {
+            *errorString = QStringLiteral("QML engine is null");
+        }
+        return nullptr;
+    }
+
+    if (m_engine->thread() != QThread::currentThread()) {
+        qCCritical(QGeoServiceProviderFactoryQGCLog) << "Called from wrong thread";
+        if (error) {
+            *error = QGeoServiceProvider::LoaderError;
+        }
+        if (errorString) {
+            *errorString = QStringLiteral("Called from wrong thread");
+        }
+        return nullptr;
+    }
+
     if (error) {
         *error = QGeoServiceProvider::NoError;
     }
     if (errorString) {
         *errorString = "";
     }
-
-    Q_ASSERT(m_engine);
-    Q_ASSERT(m_engine->thread() == QThread::currentThread());
 
     QNetworkAccessManager *networkManager = m_engine->networkAccessManager();
 

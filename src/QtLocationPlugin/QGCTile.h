@@ -10,7 +10,8 @@ struct QGCTile
         StatePending = 0,
         StateDownloading,
         StateError,
-        StateComplete
+        StateComplete,
+        StatePaused
     };
 
     int x = 0;

@@ -5,6 +5,12 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        ApiKeyPool.cpp
+        ApiKeyPool.h
+        BandwidthThrottler.cpp
+        BandwidthThrottler.h
+        CircuitBreaker.cpp
+        CircuitBreaker.h
         QGCNetworkHelper.cc
         QGCNetworkHelper.h
 )

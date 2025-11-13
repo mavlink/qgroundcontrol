@@ -27,7 +27,7 @@ protected:
             imageFormat,
             QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::StreetMap)
-        , _mapTypeId(mapName) {}
+        , _mapTypeId(mapTypeId) {}
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
@@ -100,7 +100,7 @@ public:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapUrl = QStringLiteral("https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/%1/%2/%3.%4?api=d01ev80nqcjxddfvc6amyvkk1ka");
+    const QString _mapUrl = QStringLiteral("https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/%1/%2/%3.%4?api=%5");
 };
 
 class OpenAIPMapProvider : public MapProvider
@@ -134,7 +134,7 @@ public:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapUrl = QStringLiteral("http://tile.openstreetmap.org/%1/%2/%3.png");
+    const QString _mapUrl = QStringLiteral("https://tile.openstreetmap.org/%1/%2/%3.png");
 };
 
 class StatkartMapProvider : public MapProvider
@@ -147,13 +147,13 @@ protected:
             QStringLiteral("png"),
             QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::StreetMap)
-        , _mapTypeId(mapName) {}
+        , _mapTypeId(mapTypeId) {}
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
     const QString _mapTypeId;
-    const QString _mapUrl = QStringLiteral("https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/%1/%2/%3.png");
+    const QString _mapUrl = QStringLiteral("https://cache.kartverket.no/v1/wmts/1.0.0/%1/default/webmercator/%2/%3/%4.png");
 };
 
 class StatkartTopoMapProvider : public StatkartMapProvider
@@ -206,7 +206,7 @@ public:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapUrl = QStringLiteral("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.%4");
+    const QString _mapUrl = QStringLiteral("https://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.%4");
 };
 
 class MapQuestMapProvider : public MapProvider
@@ -219,13 +219,15 @@ protected:
             QStringLiteral("jpg"),
             QGC_AVERAGE_TILE_SIZE,
             mapType)
-        , _mapTypeId(mapName) {}
+        , _mapTypeId(mapTypeId) {}
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
+    static constexpr int kServerCount = 4;
+
     const QString _mapTypeId;
-    const QString _mapUrl = QStringLiteral("http://otile%1.mqcdn.com/tiles/1.0.0/%2/%3/%4/%5.%6");
+    const QString _mapUrl = QStringLiteral("https://otile%1.mqcdn.com/tiles/1.0.0/%2/%3/%4/%5.%6");
 };
 
 class MapQuestMapMapProvider : public MapQuestMapProvider
@@ -258,13 +260,21 @@ protected:
             imageFormat,
             averageSize,
             mapStyle)
-        , _mapTypeId(mapName) {}
+        , _mapTypeId(mapTypeId) {}
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
+    static constexpr int kMinZoom = 5;
+    static constexpr int kMaxZoom = 19;
+    static constexpr int kZoomOffset = 6;
+    static constexpr int kXMinBase = 53;
+    static constexpr int kXMaxBase = 55;
+    static constexpr int kYMinBase = 22;
+    static constexpr int kYMaxBase = 26;
+
     const QString _mapTypeId;
-    const QString _mapUrl = QStringLiteral("http://api.vworld.kr/req/wmts/1.0.0/%1/%2/%3/%4/%5.%6");
+    const QString _mapUrl = QStringLiteral("https://api.vworld.kr/req/wmts/1.0.0/%1/%2/%3/%4/%5.%6");
 };
 
 class VWorldStreetMapProvider : public VWorldMapProvider

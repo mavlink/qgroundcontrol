@@ -1,5 +1,6 @@
 #include "QGCMapUrlEngine.h"
 
+#include <QtCore/QSet>
 #include <QtCore/QtMinMax>
 
 #include "BingMapProvider.h"
@@ -69,6 +70,22 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
 
     std::make_shared<CopernicusElevationProvider>()
 };
+
+// Initialize static lookup tables
+std::once_flag UrlFactory::_initFlag;
+QHash<int, SharedMapProvider> UrlFactory::_providersByMapId;
+QHash<QString, SharedMapProvider> UrlFactory::_providersByName;
+
+void UrlFactory::_initializeLookupTables()
+{
+    _providersByMapId.reserve(_providers.size());
+    _providersByName.reserve(_providers.size());
+
+    for (const SharedMapProvider& provider : _providers) {
+        _providersByMapId.insert(provider->getMapId(), provider);
+        _providersByName.insert(provider->getMapName(), provider);
+    }
+}
 
 QString UrlFactory::getImageFormat(int qtMapId, QByteArrayView image)
 {
@@ -164,56 +181,84 @@ QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftL
 
 QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
 {
-    // Default Set
-    if (qtMapId == -1) {
-        return nullptr;
+    if (qtMapId == defaultSetMapId()) {
+        return QString();
     }
 
-    for (const SharedMapProvider &provider : _providers) {
-        if (provider->getMapId() == qtMapId) {
-            return provider->getMapName();
-        }
+    std::call_once(_initFlag, &UrlFactory::_initializeLookupTables);
+
+    const SharedMapProvider provider = _providersByMapId.value(qtMapId, nullptr);
+    if (provider) {
+        return provider->getMapName();
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "map id not found:" << qtMapId;
-    return QString("");
+    static QSet<int> warnedIds;
+    if (!warnedIds.contains(qtMapId)) {
+        warnedIds.insert(qtMapId);
+        qCWarning(QGCMapUrlEngineLog) << "map id not found:" << qtMapId;
+    }
+    return QString::number(qtMapId);
 }
 
 SharedMapProvider UrlFactory::getMapProviderFromQtMapId(int qtMapId)
 {
-    // Default Set
-    if (qtMapId == -1) {
+    if (qtMapId == defaultSetMapId()) {
         return nullptr;
     }
 
-    for (const SharedMapProvider &provider : _providers) {
-        if (provider->getMapId() == qtMapId) {
-            return provider;
+    std::call_once(_initFlag, &UrlFactory::_initializeLookupTables);
+
+    const SharedMapProvider provider = _providersByMapId.value(qtMapId, nullptr);
+    if (!provider) {
+        static QSet<int> warnedIds;
+        if (!warnedIds.contains(qtMapId)) {
+            warnedIds.insert(qtMapId);
+            qCWarning(QGCMapUrlEngineLog) << "provider not found from id:" << qtMapId;
         }
     }
-
-    qCWarning(QGCMapUrlEngineLog) << "provider not found from id:" << qtMapId;
-    return nullptr;
+    return provider;
 }
 
 SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
 {
-    for (const SharedMapProvider &provider : _providers) {
-        if (provider->getMapName() == type) {
-            return provider;
-        }
+    if (type.isEmpty()) {
+        return nullptr;
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
-    return nullptr;
+    bool ok = false;
+    const int numericId = type.toInt(&ok);
+    if (ok) {
+        return getMapProviderFromQtMapId(numericId);
+    }
+
+    std::call_once(_initFlag, &UrlFactory::_initializeLookupTables);
+
+    const QString typeStr = type.toString();
+    const SharedMapProvider provider = _providersByName.value(typeStr, nullptr);
+    if (!provider) {
+        qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
+    }
+    return provider;
 }
 
 int UrlFactory::getQtMapIdFromProviderType(QStringView type)
 {
-    for (const SharedMapProvider &provider : _providers) {
-        if (provider->getMapName() == type) {
-            return provider->getMapId();
-        }
+    if (type.isEmpty()) {
+        return defaultSetMapId();
+    }
+
+    bool ok = false;
+    const int numericId = type.toInt(&ok);
+    if (ok) {
+        return numericId;
+    }
+
+    std::call_once(_initFlag, &UrlFactory::_initializeLookupTables);
+
+    const QString typeStr = type.toString();
+    const SharedMapProvider provider = _providersByName.value(typeStr, nullptr);
+    if (provider) {
+        return provider->getMapId();
     }
 
     qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
@@ -258,14 +303,33 @@ QString UrlFactory::providerTypeFromHash(int hash)
 // This seems to limit provider name length to less than ~25 chars due to downcasting to int
 int UrlFactory::hashFromProviderType(QStringView type)
 {
-    const auto hash = qHash(type) >> 1;
-    return static_cast<int>(hash);
+    const quint32 hash = qHash(type);
+    return static_cast<int>(hash & 0x7fffffff);
 }
 
 QString UrlFactory::tileHashToType(QStringView tileHash)
 {
-    const int providerHash = tileHash.mid(0,10).toInt();
-    return providerTypeFromHash(providerHash);
+    if (tileHash.isEmpty()) {
+        return QString();
+    }
+
+    bool ok = false;
+    const int providerHash = tileHash.mid(0, 10).toInt(&ok);
+    if (!ok) {
+        qCWarning(QGCMapUrlEngineLog) << "Invalid tile hash" << tileHash;
+        return QString();
+    }
+
+    if (providerHash <= 0) {
+        return getProviderTypeFromQtMapId(providerHash);
+    }
+
+    const QString type = providerTypeFromHash(providerHash);
+    if (!type.isEmpty()) {
+        return type;
+    }
+
+    return getProviderTypeFromQtMapId(providerHash);
 }
 
 QString UrlFactory::getTileHash(QStringView type, int x, int y, int z)

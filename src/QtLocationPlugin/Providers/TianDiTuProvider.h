@@ -16,6 +16,8 @@ protected:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
+    static constexpr int kServerCount = 8;
+
     const QString _mapType;
     const QString _mapUrl = QStringLiteral("https://t%1.tianditu.gov.cn/DataServer?tk=%2&T=%3&x=%4&y=%5&l=%6");
 };

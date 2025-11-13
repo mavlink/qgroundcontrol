@@ -49,8 +49,20 @@ bool QGeoTiledMapReplyQGC::init()
     }, Qt::AutoConnection);
 
     QGCFetchTileTask *task = QGeoFileTileCacheQGC::createFetchTileTask(UrlFactory::getProviderTypeFromQtMapId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom());
+    if (!task) {
+        qCWarning(QGeoTiledMapReplyQGCLog) << "Failed to create fetch tile task";
+        m_initialized = false;
+        return false;
+    }
+
     (void) connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::_cacheReply);
     (void) connect(task, &QGCMapTask::error, this, &QGeoTiledMapReplyQGC::_cacheError);
+    if (!getQGCMapEngine()) {
+        qCWarning(QGeoTiledMapReplyQGCLog) << "Map engine is null";
+        task->deleteLater();
+        m_initialized = false;
+        return false;
+    }
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
         m_initialized = false;
@@ -110,7 +122,10 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     }
 
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(tileSpec().mapId());
-    Q_CHECK_PTR(mapProvider);
+    if (!mapProvider) {
+        setError(QGeoTiledMapReply::UnknownError, tr("Invalid Map Provider"));
+        return;
+    }
 
     if (mapProvider->isBingProvider() && (image == _bingNoTileImage)) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Bing Tile Above Zoom Level"));
@@ -119,6 +134,10 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
 
     if (mapProvider->isElevationProvider()) {
         const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
+        if (!elevationProvider) {
+            setError(QGeoTiledMapReply::ParseError, tr("Failed to cast to ElevationProvider"));
+            return;
+        }
         image = elevationProvider->serialize(image);
         if (image.isEmpty()) {
             setError(QGeoTiledMapReply::ParseError, tr("Failed to Serialize Terrain Tile"));
@@ -183,12 +202,20 @@ void QGeoTiledMapReplyQGC::_cacheReply(QGCCacheTile *tile)
 
 void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView errorString)
 {
-    Q_UNUSED(errorString);
-
-    Q_ASSERT(type == QGCMapTask::TaskType::taskFetchTile);
+    if (type != QGCMapTask::TaskType::taskFetchTile) {
+        qCWarning(QGeoTiledMapReplyQGCLog) << "Unexpected task type:" << static_cast<int>(type) << "Error:" << errorString;
+        setError(QGeoTiledMapReply::UnknownError, tr("Unexpected Cache Error"));
+        return;
+    }
 
     if (!QGCNetworkHelper::isInternetAvailable()) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Network Not Available"));
+        return;
+    }
+
+    if (!_networkManager) {
+        qCCritical(QGeoTiledMapReplyQGCLog) << "Network manager is null";
+        setError(QGeoTiledMapReply::UnknownError, tr("Network Manager Not Available"));
         return;
     }
 

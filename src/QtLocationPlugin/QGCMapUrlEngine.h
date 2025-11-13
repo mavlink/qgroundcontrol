@@ -2,12 +2,19 @@
 
 #include "QGCTileSet.h"
 
+#include <memory>
+#include <mutex>
+
 #include <QtCore/QObject>
 #include <QtCore/QByteArrayView>
 #include <QtCore/QStringView>
 
 class MapProvider;
 class ElevationProvider;
+
+// Forward declare shared pointer types before use
+typedef std::shared_ptr<const MapProvider> SharedMapProvider;
+typedef std::shared_ptr<const ElevationProvider> SharedElevationProvider;
 
 class UrlFactory
 {
@@ -42,9 +49,15 @@ public:
     static QString tileHashToType(QStringView tileHash);
     static QString getTileHash(QStringView type, int x, int y, int z);
 
+    static constexpr int defaultSetMapId() { return -1; }
+    static constexpr quint64 defaultTileSetId() { return 1; }
+
 private:
     static const QList<std::shared_ptr<const MapProvider>> _providers;
-};
 
-typedef std::shared_ptr<const MapProvider> SharedMapProvider;
-typedef std::shared_ptr<const ElevationProvider> SharedElevationProvider;
+    static std::once_flag _initFlag;
+    static QHash<int, SharedMapProvider> _providersByMapId;
+    static QHash<QString, SharedMapProvider> _providersByName;
+
+    static void _initializeLookupTables();
+};

@@ -4,12 +4,20 @@
 #include <QtLocation/private/qgeotilefetcher_p.h>
 #include <QtNetwork/QNetworkRequest>
 
+#include "MapProvider.h"
+#include "BandwidthThrottler.h"
+#include "GeoRouter.h"
+
 Q_DECLARE_LOGGING_CATEGORY(QGeoTileFetcherQGCLog)
 
 class QGeoTiledMappingManagerEngineQGC;
 class QGeoTiledMapReplyQGC;
 class QGeoTileSpec;
 class QNetworkAccessManager;
+class TileMetricsManager;
+class QGCTileLogger;
+class TileQualitySettings;
+class CircuitBreaker;
 
 class QGeoTileFetcherQGC : public QGeoTileFetcher
 {
@@ -19,10 +27,17 @@ public:
     explicit QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent = nullptr);
     ~QGeoTileFetcherQGC();
 
-    static QNetworkRequest getNetworkRequest(int mapId, int x, int y, int zoom);
+    static QNetworkRequest getNetworkRequest(int mapId, int x, int y, int zoom, MapProvider* provider = nullptr);
     /* Note: QNetworkAccessManager queues the requests it receives. The number of requests executed in parallel is dependent on the protocol.
      * Currently, for the HTTP protocol on desktop platforms, 6 requests are executed in parallel for one host/port combination. */
     static uint32_t concurrentDownloads(const QString &type) { Q_UNUSED(type); return 6; }
+
+    // LoadBalancer access for monitoring
+    LoadBalancer* loadBalancer() { return &_loadBalancer; }
+
+    // Configuration persistence
+    void saveProviderConfiguration();
+    void loadProviderConfiguration();
 
 private:
     QGeoTiledMapReply* getTileImage(const QGeoTileSpec &spec) final;
@@ -31,7 +46,22 @@ private:
     void timerEvent(QTimerEvent *event) final;
     void handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec) final;
 
+    void initializeLoadBalancer();
+    void retryTileFetch(MapProvider* provider, const QGeoTileSpec &spec);
+
     QNetworkAccessManager *m_networkManager = nullptr;
+    LoadBalancer _loadBalancer;
+    QMap<int, MapProvider*> _providersByMapId;  // mapId -> provider mapping
+    QMap<int, CircuitBreaker*> _circuitBreakers;  // mapId -> circuit breaker
+    mutable QMutex _providersMutex;  // Thread-safe access to _providersByMapId
+
+    BandwidthThrottler* _bandwidthThrottler = nullptr;
+    GeoRouter* _geoRouter = nullptr;
+    TileMetricsManager* _metricsManager = nullptr;
+    QGCTileLogger* _logger = nullptr;
+    TileQualitySettings* _qualitySettings = nullptr;
+
+    static constexpr int kNetworkRequestTimeoutMs = 10000;
 
 #if defined Q_OS_MACOS
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";

@@ -62,6 +62,7 @@ void QGCMapEngine::init(const QString &databasePath)
     m_worker = new QGCCacheWorker(this);
     m_worker->setDatabaseFile(databasePath);
     (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
+    (void) connect(m_worker, &QGCCacheWorker::downloadStatusUpdated, this, &QGCMapEngine::_downloadStatus, Qt::QueuedConnection);
 
     QGCMapTask *task = new QGCMapTask(QGCMapTask::TaskType::taskInit);
     if (!addTask(task)) {
@@ -93,4 +94,9 @@ void QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 
             m_pruning = false;
         }
     }
+}
+
+void QGCMapEngine::_downloadStatus(quint64 setID, quint32 pending, quint32 downloading, quint32 errors)
+{
+    emit downloadStatusUpdated(setID, pending, downloading, errors);
 }

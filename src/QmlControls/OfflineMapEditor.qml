@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
-import QtQuick.Controls
 import QtLocation
 import QtPositioning
 
@@ -24,7 +23,7 @@ FlightMap {
     property var    _settingsManager:   QGroundControl.settingsManager
     property var    _settings:          _settingsManager ? _settingsManager.offlineMapsSettings : null
     property var    _fmSettings:        _settingsManager ? _settingsManager.flightMapSettings : null
-    property var    _appSettings:       _settingsManager.appSettings
+    property var    _appSettings:       _settingsManager ? _settingsManager.appSettings : null
     property Fact   _tiandituFact:      _settingsManager ? _settingsManager.appSettings.tiandituToken : null
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
@@ -60,18 +59,26 @@ FlightMap {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        QGroundControl.mapEngineManager.loadTileSets()
+        if (QGroundControl.mapEngineManager.tileSets.count === 0) {
+            QGroundControl.mapEngineManager.loadTileSets()
+        }
         resetMapToDefaults()
         updateMap()
         savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
         settingsPage.enabled = false // Prevent mouse events from bleeding through to the settings page which is below this in hierarchy
     }
 
-    Component.onDestruction: settingsPage.enabled = true
+    Component.onDestruction: {
+        settingsPage.enabled = true
+    }
 
     Connections {
         target:                 QGroundControl.mapEngineManager
-        onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
+        function onErrorMessageChanged() {
+            var dialog = errorDialogComponent.createObject(mainWindow)
+            dialog.closed.connect(function() { dialog.destroy() })
+            dialog.open()
+        }
     }
 
     function handleChanges() {
@@ -199,12 +206,7 @@ FlightMap {
             color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
             radius:             ScreenTools.defaultFontPixelWidth * 0.5
 
-            property bool       _extraButton: {
-                if(!tileSet)
-                    return false;
-                var curSel = tileSet;
-                return !_defaultSet && ((!curSel.complete && !curSel.downloading) || (!curSel.complete && curSel.downloading));
-            }
+            property bool       _extraButton: tileSet && !_defaultSet && !tileSet.complete
 
             property real       _labelWidth:    ScreenTools.defaultFontPixelWidth * 10
             property real       _valueWidth:    ScreenTools.defaultFontPixelWidth * 14
@@ -299,33 +301,58 @@ FlightMap {
                 Row {
                     spacing:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
+                    visible:    tileSet && !_defaultSet
+                    QGCLabel { text: qsTr("Queue:"); width: infoView._labelWidth; }
+                    QGCLabel {
+                        width: ScreenTools.defaultFontPixelWidth * 24
+                        horizontalAlignment: Text.AlignRight
+                        wrapMode: Text.NoWrap
+                        elide: Text.ElideNone
+                        text: tileSet ? qsTr("%1 pending / %2 active / %3 error")
+                            .arg(tileSet.pendingTiles)
+                            .arg(tileSet.downloadingTiles)
+                            .arg(tileSet.errorTiles) : ""
+                    }
+                }
+                Row {
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
                     QGCButton {
                         text:       qsTr("Resume Download")
-                        visible:    tileSet && tileSet && !_defaultSet && (!tileSet.complete && !tileSet.downloading)
-                        width:      ScreenTools.defaultFontPixelWidth * 16
+                        visible:    tileSet && !_defaultSet && (!tileSet.complete && !tileSet.downloading)
+                        width:      ScreenTools.defaultFontPixelWidth * 18
                         onClicked: {
                             if(tileSet)
                                 tileSet.resumeDownloadTask()
                         }
                     }
                     QGCButton {
-                        text:       qsTr("Cancel Download")
-                        visible:    tileSet && tileSet && !_defaultSet && (!tileSet.complete && tileSet.downloading)
-                        width:      ScreenTools.defaultFontPixelWidth * 16
+                        text:       qsTr("Pause Download")
+                        visible:    tileSet && !_defaultSet && (!tileSet.complete && tileSet.downloading)
+                        width:      ScreenTools.defaultFontPixelWidth * 18
                         onClicked: {
                             if(tileSet)
-                                tileSet.cancelDownloadTask()
+                                tileSet.pauseDownloadTask()
+                        }
+                    }
+                    QGCButton {
+                        text:       qsTr("Retry Failed (%1)").arg(tileSet ? tileSet.errorTiles : 0)
+                        visible:    tileSet && !_defaultSet && (tileSet.errorTiles > 0)
+                        width:      ScreenTools.defaultFontPixelWidth * 18
+                        onClicked: {
+                            if(tileSet)
+                                tileSet.retryFailedTiles()
                         }
                     }
                     QGCButton {
                         text:       qsTr("Delete")
-                        width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
+                        width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 8 : 10)
                         onClicked:  deleteConfirmationDialogComponent.createObject(mainWindow).open()
-                        enabled:    tileSet ? (tileSet.savedTileSize > 0) : false
+                        enabled:    tileSet ? (!tileSet.deleting && (_defaultSet ? tileSet.savedTileSize > 0 : true)) : false
                     }
                     QGCButton {
                         text:       qsTr("Ok")
-                        width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
+                        width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 8 : 10)
                         visible:    !_defaultSet
                         enabled:    editSetName.text !== ""
                         onClicked: {
@@ -337,7 +364,7 @@ FlightMap {
                     }
                     QGCButton {
                         text:       _defaultSet ? qsTr("Close") : qsTr("Cancel")
-                        width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
+                        width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 8 : 10)
                         onClicked:  _map.destroy()
                     }
                 }
@@ -676,10 +703,13 @@ FlightMap {
                         } // Rectangle - Zoom info
 
                         QGCLabel {
-                            text:       qsTr("Too many tiles")
+                            text:       qsTr("Too many tiles: %1 exceeds limit of %2").arg(QGroundControl.mapEngineManager.tileCountStr).arg(_settings ? _settings.maxTilesForDownload.valueString : "")
                             visible:    _tooManyTiles
                             color:      qgcPal.warningText
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            wrapMode:   Text.WordWrap
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            horizontalAlignment: Text.AlignHCenter
                         }
 
                         Row {

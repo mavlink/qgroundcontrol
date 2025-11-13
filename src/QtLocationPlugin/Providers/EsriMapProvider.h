@@ -21,7 +21,7 @@ private:
     QString _getURL(int x, int y, int zoom) const final;
 
     const QString _mapTypeId;
-    const QString _mapUrl = QStringLiteral("http://services.arcgisonline.com/ArcGIS/rest/services/%1/MapServer/tile/%2/%3/%4");
+    const QString _mapUrl = QStringLiteral("https://services.arcgisonline.com/ArcGIS/rest/services/%1/MapServer/tile/%2/%3/%4");
 };
 
 class EsriWorldStreetMapProvider : public EsriMapProvider

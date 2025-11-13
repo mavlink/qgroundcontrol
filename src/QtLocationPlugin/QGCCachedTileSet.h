@@ -3,6 +3,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QHash>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -49,14 +50,31 @@ class QGCCachedTileSet : public QObject
     Q_PROPERTY(quint32      errorCount          READ    errorCount          NOTIFY errorCountChanged)
     Q_PROPERTY(QString      errorCountStr       READ    errorCountStr       NOTIFY errorCountChanged)
     Q_PROPERTY(bool         selected            READ    selected            WRITE  setSelected  NOTIFY selectedChanged)
+    Q_PROPERTY(quint32      pendingTiles        READ    pendingTiles        NOTIFY downloadStatsChanged)
+    Q_PROPERTY(quint32      downloadingTiles    READ    downloadingTiles    NOTIFY downloadStatsChanged)
+    Q_PROPERTY(quint32      errorTiles          READ    errorTiles          NOTIFY downloadStatsChanged)
+    Q_PROPERTY(qreal        downloadProgress    READ    downloadProgress    NOTIFY downloadStatsChanged)
 
 public:
     explicit QGCCachedTileSet(const QString &name, QObject *parent = nullptr);
     ~QGCCachedTileSet();
 
-    Q_INVOKABLE void createDownloadTask();
-    Q_INVOKABLE void resumeDownloadTask();
-    Q_INVOKABLE void cancelDownloadTask();
+    Q_INVOKABLE virtual void createDownloadTask();
+    Q_INVOKABLE virtual void resumeDownloadTask(bool systemResume = false);
+
+    /// @brief Pauses tile download, preserving queue state for later resume
+    /// @details Aborts in-flight network requests and marks all tiles as pending.
+    ///          Download can be resumed later with resumeDownloadTask().
+    Q_INVOKABLE virtual void pauseDownloadTask(bool systemPause = false);
+
+    /// @brief Retries downloading tiles that previously failed
+    /// @details Marks all tiles in StateError as StatePending and resumes download.
+    ///          Useful for recovering from temporary network issues.
+    Q_INVOKABLE virtual void retryFailedTiles();
+
+    /// @brief Copies all properties from another tile set
+    /// @param other Source tile set to copy from (must not be null or this)
+    void copyFrom(const QGCCachedTileSet *other);
 
     const QString &name() const { return _name; }
     const QString &mapTypeStr() const { return _mapTypeStr; }
@@ -79,13 +97,26 @@ public:
     quint64 savedTileSize() const { return _savedTileSize; }
     QString savedTileSizeStr() const;
 
+    /// @brief Number of tiles waiting to be downloaded
+    quint32 pendingTiles() const { return _pendingTiles; }
+
+    /// @brief Number of tiles currently being downloaded
+    quint32 downloadingTiles() const { return _downloadingTiles; }
+
+    /// @brief Number of tiles that failed to download
+    quint32 errorTiles() const { return _errorTiles; }
+
+    /// @brief Download progress as percentage (0.0 - 1.0)
+    /// @return Progress ratio (savedTileCount / totalTileCount), or 0.0 for default sets
+    qreal downloadProgress() const;
+
     QString downloadStatus() const;
     int minZoom() const { return _minZoom; }
     int maxZoom() const { return _maxZoom; }
     const QDateTime &creationDate() const { return _creationDate; }
     quint64 id() const { return _id; }
     const QString &type() const { return _type; }
-    bool complete() const { return (_defaultSet || (_totalTileCount <= _savedTileCount)); }
+    bool complete() const { return (!_defaultSet && (_totalTileCount <= _savedTileCount)); }
     bool defaultSet() const { return _defaultSet; }
     bool deleting() const { return _deleting; }
     bool downloading() const { return _downloading; }
@@ -104,8 +135,8 @@ public:
     void setBottomRightLon(double lon) { _bottomRightLon = lon; }
 
     void setUniqueTileCount(quint32 num) { if (num != _uniqueTileCount) { _uniqueTileCount = num; emit uniqueTileCountChanged(); } }
-    void setTotalTileCount(quint32 num) { if (num != _totalTileCount) { _totalTileCount = num; emit totalTileCountChanged(); } }
-    void setSavedTileCount(quint32 num) { if (num != _savedTileCount) { _savedTileCount = num; emit savedTileCountChanged(); } }
+    void setTotalTileCount(quint32 num);
+    void setSavedTileCount(quint32 num);
     void setUniqueTileSize(quint64 size) { if (size != _uniqueTileSize) { _uniqueTileSize = size; emit uniqueTileSizeChanged(); } }
     void setTotalTileSize(quint64 size) { if (size != _totalTileSize) { _totalTileSize = size; emit totalTilesSizeChanged(); } }
     void setSavedTileSize(quint64 size) { if (size != _savedTileSize) { _savedTileSize = size; emit savedTileSizeChanged(); }  }
@@ -115,10 +146,11 @@ public:
     void setCreationDate(const QDateTime &date) { _creationDate = date; }
     void setId(quint64 id) { _id = id; }
     void setType(const QString &type) { _type = type; }
-    void setDefaultSet(bool def) { _defaultSet = def; }
+    void setDefaultSet(bool def);
     void setDeleting(bool del) { if (del != _deleting) { _deleting = del; emit deletingChanged(); } }
     void setDownloading(bool down) { if (down != _downloading) { _downloading = down; emit downloadingChanged(); } }
     void setErrorCount(quint32 count) { if (count != _errorCount) { _errorCount = count; emit errorCountChanged(); } }
+    void setDownloadStats(quint32 pending, quint32 downloading, quint32 errors);
 
 signals:
     void deletingChanged();
@@ -133,6 +165,7 @@ signals:
     void errorCountChanged();
     void selectedChanged();
     void nameChanged();
+    void downloadStatsChanged();
 
 private slots:
     void _tileListFetched(const QQueue<QGCTile*> &tiles);
@@ -166,13 +199,21 @@ private:
     bool _noMoreTiles = false;
     bool _batchRequested = false;
     bool _selected = false;
-    bool _cancelPending = false;
+    bool _stopDownload = false;  // Flag to stop download (used for both pause and cancel)
+    bool _pausedBySystem = false;
     QDateTime _creationDate;
 
     QHash<QString, QNetworkReply*> _replies;
     QQueue<QGCTile*> _tilesToDownload;
     QGCMapEngineManager *_manager = nullptr;
     QNetworkAccessManager *_networkManager = nullptr;
+    quint32 _pendingTiles = 0;
+    quint32 _downloadingTiles = 0;
+    quint32 _errorTiles = 0;
+    QMutex _repliesMutex;
+    QMutex _queueMutex;  // Protects _tilesToDownload queue
+    QMutex _prepareDownloadMutex;  // Serializes _prepareDownload() execution to prevent concurrent access
 
     static constexpr uint32_t kTileBatchSize = 256;
+    static constexpr uint32_t kSizeEstimateInterval = 10;
 };

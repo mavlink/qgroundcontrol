@@ -7,13 +7,17 @@
 int CopernicusElevationProvider::long2tileX(double lon, int z) const
 {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lon + 180.0) / TerrainTileCopernicus::kTileSizeDegrees));
+    (void) isValidLongitude(lon);
+    const int tileX = static_cast<int>(floor((lon + 180.0) / TerrainTileCopernicus::kTileSizeDegrees));
+    return tileX;
 }
 
 int CopernicusElevationProvider::lat2tileY(double lat, int z) const
 {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lat + 90.0) / TerrainTileCopernicus::kTileSizeDegrees));
+    (void) isValidLatitude(lat);
+    const int tileY = static_cast<int>(floor((lat + 90.0) / TerrainTileCopernicus::kTileSizeDegrees));
+    return tileY;
 }
 
 QString CopernicusElevationProvider::_getURL(int x, int y, int zoom) const
@@ -49,5 +53,6 @@ QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon
 
 QByteArray CopernicusElevationProvider::serialize(const QByteArray &image) const
 {
-    return TerrainTileCopernicus::serializeFromData(image);
+    const QByteArray serialized = TerrainTileCopernicus::serializeFromData(image);
+    return serialized;
 }

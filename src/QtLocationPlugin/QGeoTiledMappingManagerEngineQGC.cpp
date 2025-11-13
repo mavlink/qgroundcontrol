@@ -37,7 +37,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     });
 
     QGeoCameraCapabilities cameraCaps{};
-    cameraCaps.setTileSize(256);
+    cameraCaps.setTileSize(kTileSize);
     cameraCaps.setMinimumZoomLevel(2.0);
     cameraCaps.setMaximumZoomLevel(QGC_MAX_MAP_ZOOM);
     cameraCaps.setSupportsBearing(true);
@@ -51,7 +51,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setCameraCapabilities(cameraCaps);
 
     setTileVersion(kTileVersion);
-    setTileSize(QSize(256, 256));
+    setTileSize(QSize(kTileSize, kTileSize));
 
     QList<QGeoMapType> mapList;
     const QList<SharedMapProvider> providers = UrlFactory::getProviders();
@@ -81,19 +81,46 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     });
 
     m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers : QGeoTiledMap::NoPrefetching;
-    (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this, [this](QNetworkInformation::Reachability newReachability) {
-        if (newReachability == QNetworkInformation::Reachability::Online) {
-            m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
-        } else {
-            m_prefetchStyle = QGeoTiledMap::NoPrefetching;
-        }
-    });
 
-    Q_ASSERT(m_networkManager);
+    QNetworkInformation *networkInfo = QNetworkInformation::instance();
+    if (!networkInfo) {
+        (void) QNetworkInformation::loadDefaultBackend();
+        networkInfo = QNetworkInformation::instance();
+    }
+    if (networkInfo) {
+        (void) connect(networkInfo, &QNetworkInformation::reachabilityChanged, this, [this](QNetworkInformation::Reachability newReachability) {
+            const QGeoTiledMap::PrefetchStyle newStyle = (newReachability == QNetworkInformation::Reachability::Online)
+                ? QGeoTiledMap::PrefetchTwoNeighbourLayers
+                : QGeoTiledMap::NoPrefetching;
+            if (newStyle == m_prefetchStyle) {
+                return;
+            }
+            m_prefetchStyle = newStyle;
+            _updatePrefetchStyles();
+        });
+    } else {
+        qCWarning(QGeoTiledMappingManagerEngineQGCLog) << "QNetworkInformation backend not available";
+    }
+
+    if (!m_networkManager) {
+        qCCritical(QGeoTiledMappingManagerEngineQGCLog) << "Network manager is null";
+        if (error) {
+            *error = QGeoServiceProvider::LoaderError;
+        }
+        if (errorString) {
+            *errorString = QStringLiteral("Network manager is null");
+        }
+        return;
+    }
+
     QGeoTileFetcherQGC *tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
 
-    *error = QGeoServiceProvider::NoError;
-    errorString->clear();
+    if (error) {
+        *error = QGeoServiceProvider::NoError;
+    }
+    if (errorString) {
+        errorString->clear();
+    }
     setTileFetcher(tileFetcher); // Calls engineInitialized()
 }
 
@@ -106,5 +133,25 @@ QGeoMap *QGeoTiledMappingManagerEngineQGC::createMap()
 {
     QGeoTiledMapQGC *map = new QGeoTiledMapQGC(this, this);
     map->setPrefetchStyle(m_prefetchStyle);
+    m_activeMaps.append(QPointer<QGeoTiledMapQGC>(map));
+    (void) connect(map, &QObject::destroyed, this, [this, map]() {
+        for (int i = m_activeMaps.count() - 1; i >= 0; --i) {
+            if (!m_activeMaps[i] || m_activeMaps[i].data() == map) {
+                m_activeMaps.removeAt(i);
+            }
+        }
+    });
     return map;
+}
+
+void QGeoTiledMappingManagerEngineQGC::_updatePrefetchStyles()
+{
+    for (int i = m_activeMaps.count() - 1; i >= 0; --i) {
+        QPointer<QGeoTiledMapQGC> &map = m_activeMaps[i];
+        if (!map) {
+            m_activeMaps.removeAt(i);
+            continue;
+        }
+        map->setPrefetchStyle(m_prefetchStyle);
+    }
 }
