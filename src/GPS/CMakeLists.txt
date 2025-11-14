@@ -18,6 +18,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         GPSRtk.h
         GPSRTKFactGroup.cc
         GPSRTKFactGroup.h
+        NTRIP.cc
+        NTRIP.h
         RTCMMavlink.cc
         RTCMMavlink.h
         satellite_info.h
