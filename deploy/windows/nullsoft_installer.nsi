@@ -63,7 +63,24 @@ Section "Install" SecMain
     DetailPrint "Checking for 64 bit uninstaller"
     SetRegView 64
     ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
-    StrCmp $R0 "" doInstall doUninstall
+    StrCmp $R0 "" doInstall checkUninstaller
+
+checkUninstaller:
+    ; Remove quotes from uninstaller path to check if file exists
+    StrCpy $R1 $R0 "" 1  ; Skip first quote
+    StrLen $R2 $R1
+    IntOp $R2 $R2 - 1    ; Remove last quote
+    StrCpy $R1 $R1 $R2
+
+    DetailPrint "Checking if uninstaller exists: $R1"
+    IfFileExists "$R1" doUninstall cleanupOrphanedRegistry
+
+cleanupOrphanedRegistry:
+    DetailPrint "Previous uninstaller not found, cleaning up orphaned registry keys..."
+    SetRegView 64
+    DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+    DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe"
+    Goto doInstall
 
 doUninstall:
     DetailPrint "Uninstalling previous version..."
