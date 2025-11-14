@@ -33,7 +33,11 @@ endif()
 # ============================================================================
 
 if(TARGET gstqml6gl)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+    if(MSVC)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:gstqml6gl>)
+    else()
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+    endif()
 
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
