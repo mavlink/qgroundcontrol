@@ -69,7 +69,7 @@ if(TARGET gstqml6gl)
             PATTERN "*/include" EXCLUDE
         )
         install(
-            DIRECTORY "${GSTREAMER_LIB_PATH}/gstreamer1.0"
+            DIRECTORY "${GSTREAMER_PLUGIN_PATH}"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             FILE_PERMISSIONS
                 OWNER_READ OWNER_WRITE OWNER_EXECUTE
