@@ -326,6 +326,22 @@ if(LINUX)
     )
 endif()
 
+# ----------------------------------------------------------------------------
+# MinGW-specific linking adjustments
+# ----------------------------------------------------------------------------
+if(MINGW)
+    # Ensure MinGW runtime helpers and stack protector symbols resolve correctly.
+    target_link_options(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            -Wl,--start-group
+            -lmingw32
+            -lmingwex
+            -lmsvcrt
+            -lssp
+            -Wl,--end-group
+    )
+endif()
+
 # ============================================================================
 # Installation & Packaging
 # ============================================================================

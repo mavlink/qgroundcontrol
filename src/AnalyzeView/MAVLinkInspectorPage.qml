@@ -229,7 +229,7 @@ AnalyzePage {
                     //---------------------------------------------------------
                     GridLayout {
                         id:                 msgInfoGrid
-                        columns:            5
+                        columns:            9
                         columnSpacing:      ScreenTools.defaultFontPixelWidth  * 0.25
                         rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
                         width:              parent.width
@@ -248,10 +248,22 @@ AnalyzePage {
                         QGCLabel {
                             text:       qsTr("Plot 2")
                         }
+                        QGCLabel {
+                            text:       qsTr("GPS X")
+                        }
+                        QGCLabel {
+                            text:       qsTr("GPS Y")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Odom X")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Odom Y")
+                        }
 
                         //---------------------------------------------------------
                         Rectangle {
-                            Layout.columnSpan:  5
+                            Layout.columnSpan:  9
                             Layout.fillWidth:   true
                             height:             1
                             color:              qgcPal.text
@@ -328,6 +340,54 @@ AnalyzePage {
                                 Component.onCompleted: updateEnabledStatus(chart2Repeater, curMessage, chart2)
                             }
                         }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index + 2
+                                Layout.column:      5
+                                Layout.alignment:   Qt.AlignHCenter
+                                visible:            curMessage && curMessage.name === "GPS_RAW_INT" && object.name === "lat"
+                                enabled:            visible
+                                checked:            controller.gpsXEnabled
+                                onToggled:          controller.gpsXEnabled = checked
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index + 2
+                                Layout.column:      6
+                                Layout.alignment:   Qt.AlignHCenter
+                                visible:            curMessage && curMessage.name === "GPS_RAW_INT" && object.name === "lon"
+                                enabled:            visible
+                                checked:            controller.gpsYEnabled
+                                onToggled:          controller.gpsYEnabled = checked
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index + 2
+                                Layout.column:      7
+                                Layout.alignment:   Qt.AlignHCenter
+                                visible:            curMessage && curMessage.name === "ODOMETRY" && object.name === "x"
+                                enabled:            visible
+                                checked:            controller.odomXEnabled
+                                onToggled:          controller.odomXEnabled = checked
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index + 2
+                                Layout.column:      8
+                                Layout.alignment:   Qt.AlignHCenter
+                                visible:            curMessage && curMessage.name === "ODOMETRY" && object.name === "y"
+                                enabled:            visible
+                                checked:            controller.odomYEnabled
+                                onToggled:          controller.odomYEnabled = checked
+                            }
+                        }
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
                     MAVLinkChart {
@@ -343,6 +403,111 @@ AnalyzePage {
                         width:                  parent.width
                         inspectorController:    controller
                         chartIndex:             1
+                    }
+                    Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
+                    Column {
+                        width:              parent.width
+                        visible:            controller.xyPlotVisible
+                        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                        QGCLabel {
+                            text:           qsTr("XY Position Plot")
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                        }
+                        ChartView {
+                            id:                 xyChart
+                            height:             ScreenTools.defaultFontPixelHeight * 20
+                            width:              parent.width
+                            antialiasing:       true
+                            theme:              ChartView.ChartThemeDark
+                            backgroundColor:    qgcPal.window
+                            backgroundRoundness: 0
+                            legend.visible:     true
+                            visible:            controller.xyPlotVisible
+                            margins.top:        ScreenTools.defaultFontPixelHeight * 1.5
+                            margins.bottom:     ScreenTools.defaultFontPixelHeight * 1.5
+                            margins.left:       ScreenTools.defaultFontPixelWidth  * 4
+                            margins.right:      ScreenTools.defaultFontPixelWidth  * 4
+
+                            ValueAxis {
+                                id:                 xyAxisX
+                                min:                controller.xyMinX
+                                max:                controller.xyMaxX
+                                titleText:          qsTr("X (m)")
+                                titleVisible:       true
+                                labelsFont.family:  ScreenTools.fixedFontFamily
+                                labelsFont.pointSize: ScreenTools.smallFontPointSize
+                                labelsColor:        qgcPal.text
+                                gridVisible:        true
+                            }
+
+                            ValueAxis {
+                                id:                 xyAxisY
+                                min:                controller.xyMinY
+                                max:                controller.xyMaxY
+                                titleText:          qsTr("Y (m)")
+                                titleVisible:       true
+                                labelsFont.family:  ScreenTools.fixedFontFamily
+                                labelsFont.pointSize: ScreenTools.smallFontPointSize
+                                labelsColor:        qgcPal.text
+                                gridVisible:        true
+                            }
+
+                            LineSeries {
+                                id:                 gpsXYSeries
+                                name:               qsTr("GPS_RAW_INT")
+                                color:              "#00E04B"
+                                width:              1.5
+                                visible:            controller.gpsXYEnabled
+                                useOpenGL:          QGroundControl.videoManager.gstreamerEnabled
+                                axisX:              xyAxisX
+                                axisY:              xyAxisY
+                            }
+
+                            LineSeries {
+                                id:                 odomXYSeries
+                                name:               qsTr("ODOMETRY")
+                                color:              "#536DFF"
+                                width:              1.5
+                                visible:            controller.odomXYEnabled
+                                useOpenGL:          QGroundControl.videoManager.gstreamerEnabled
+                                axisX:              xyAxisX
+                                axisY:              xyAxisY
+                            }
+
+                            Component.onCompleted: {
+                                updateGpsSeries()
+                                updateOdomSeries()
+                            }
+
+                            function updateGpsSeries() {
+                                gpsXYSeries.clear()
+                                const points = controller.gpsXYPoints
+                                for (let i = 0; i < points.length; i++) {
+                                    gpsXYSeries.append(points[i].x, points[i].y)
+                                }
+                            }
+
+                            function updateOdomSeries() {
+                                odomXYSeries.clear()
+                                const points = controller.odomXYPoints
+                                for (let i = 0; i < points.length; i++) {
+                                    odomXYSeries.append(points[i].x, points[i].y)
+                                }
+                            }
+
+                            Connections {
+                                target: controller
+                                function onGpsXYPointsChanged() {
+                                    xyChart.updateGpsSeries()
+                                }
+                            }
+                            Connections {
+                                target: controller
+                                function onOdomXYPointsChanged() {
+                                    xyChart.updateOdomSeries()
+                                }
+                            }
+                        }
                     }
                 }
             }
