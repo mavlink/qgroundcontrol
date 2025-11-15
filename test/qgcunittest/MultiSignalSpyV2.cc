@@ -37,7 +37,7 @@ bool MultiSignalSpyV2::init(QObject* signalEmitter)
         qWarning() << "No signalEmitter specified";
         return false;
     }
-    
+
     _signalEmitter = signalEmitter;
 
     const QMetaObject* metaObject = signalEmitter->metaObject();
@@ -85,7 +85,7 @@ bool MultiSignalSpyV2::_checkSignalByMaskWorker(quint64 mask, bool multipleSigna
         if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
-            
+
             if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
                 qWarning() << "Failed index:" << i;
                 _printSignalState(mask);
@@ -93,7 +93,7 @@ bool MultiSignalSpyV2::_checkSignalByMaskWorker(quint64 mask, bool multipleSigna
             }
         }
     }
-    
+
     return true;
 }
 
@@ -115,7 +115,7 @@ bool MultiSignalSpyV2::_checkOnlySignalByMaskWorker(quint64 mask, bool multipleS
             }
         }
     }
-    
+
     return true;
 }
 
@@ -153,7 +153,7 @@ bool MultiSignalSpyV2::checkNoSignalByMask(quint64 mask)
             }
         }
     }
-    
+
     return true;
 }
 
@@ -216,7 +216,7 @@ bool MultiSignalSpyV2::waitForSignal(const char* signalName, int msecs)
     // Check input parameters
     if (msecs < -1 || msecs == 0)
         return false;
-    
+
     // activate the timeout
     _timeout = false;
     int timerId;
@@ -226,15 +226,15 @@ bool MultiSignalSpyV2::waitForSignal(const char* signalName, int msecs)
     } else {
         timerId = 0;
     }
-    
+
     // Begin waiting
     QSignalSpy* spy = getSpy(signalName);
     Q_ASSERT(spy);
-    
+
     while (spy->count() == 0 && !_timeout) {
         QTest::qWait(100);
     }
-    
+
     // Clean up and return status
     if (timerId) {
         killTimer(timerId);

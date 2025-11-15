@@ -42,7 +42,7 @@ void SendMavCommandWithSignallingTest::_testCaseWorker(TestCase_t& testCase)
     QList<QVariant> arguments = spyResult.takeFirst();
 
     // Gimbal controler requests MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION on vehicle connection,
-    // and that messes with this test, as it receives response to that command instead. So if we 
+    // and that messes with this test, as it receives response to that command instead. So if we
     // are taking the response to that MAV_CMD_REQUEST_MESSAGE, we discard it and take the next
     // Also, the camera manager requests MAVLINK_MSG_ID_CAMERA_INFORMATION on vehicle connection,
     // so we need to ignore that as well.
@@ -51,7 +51,7 @@ void SendMavCommandWithSignallingTest::_testCaseWorker(TestCase_t& testCase)
         QCOMPARE(spyResult.wait(10000), true);
         arguments = spyResult.takeFirst();
     }
-    
+
     QCOMPARE(arguments.count(),                                             5);
     QCOMPARE(arguments.at(0).toInt(),                                       vehicle->id());
     QCOMPARE(arguments.at(1).toInt(),                                       MAV_COMP_ID_AUTOPILOT1);

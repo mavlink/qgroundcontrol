@@ -442,8 +442,8 @@ static void _requestCameraInfoCommandResultHandler(void *resultHandlerData, int 
     auto *cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
 
     if (ack.result != MAV_RESULT_ACCEPTED) {
-        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID) 
-                                    << "Result:" << QGCMAVLink::mavResultToString(ack.result) 
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID)
+                                    << "Result:" << QGCMAVLink::mavResultToString(ack.result)
                                     << "FailureCode:" << Vehicle::mavCmdResultFailureCodeToString(failureCode)
                                     << "retryCount:" << cameraInfo->retryCount;
         _handleCameraInfoRetry(cameraInfo);
@@ -455,9 +455,9 @@ static void _requestCameraInfoMessageResultHandler(void *resultHandlerData, MAV_
     auto *cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
 
     if (result != MAV_RESULT_ACCEPTED) {
-        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID) 
-                                    << "Result:" << QGCMAVLink::mavResultToString(result) 
-                                    << "FailureCode:" << Vehicle::requestMessageResultHandlerFailureCodeToString(failureCode) 
+        qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID)
+                                    << "Result:" << QGCMAVLink::mavResultToString(result)
+                                    << "FailureCode:" << Vehicle::requestMessageResultHandlerFailureCodeToString(failureCode)
                                     << "retryCount:" << cameraInfo->retryCount;
         _handleCameraInfoRetry(cameraInfo);
     }

@@ -15,7 +15,7 @@
 MissionSettingsTest::MissionSettingsTest(void)
     : _settingsItem(nullptr)
 {
-    
+
 }
 
 void MissionSettingsTest::init(void)

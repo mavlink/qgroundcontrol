@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/android-linux.yml'
+      - '.github/workflows/android-reusable.yml'
       - 'deploy/android/**'
       - 'src/**'
       - 'android/**'
@@ -19,94 +20,28 @@ on:
       - 'cmake/**'
       - 'translations/*'
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' }}
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
 
 jobs:
   build:
-    name: Build Android-Linux ${{ matrix.qt_version }} ${{ matrix.build_type }}
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [Release]
-        qt_version: [6.10.0]
-
-    defaults:
-      run:
-        shell: bash
-
-    env:
-      PACKAGE: QGroundControl
-      QT_VERSION: ${{ matrix.qt_version }}
-      QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
-      QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
-      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: ${{ matrix.build_type == 'Release' && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
-
-      - name: Free Disk Space
-        if: runner.os == 'Linux'
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: false
-          large-packages: false
-
-      - name: Install Qt for Android
-        uses: ./.github/actions/qt-android
-        with:
-          host: linux
-          arch: linux_gcc_64
-          version: ${{ matrix.qt_version }}
-          abis: ${{ env.QT_ANDROID_ABIS }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-
-      - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DCMAKE_WARN_DEPRECATED=FALSE
-              -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
-              -DQT_ANDROID_BUILD_ALL_ABIS=OFF
-              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
-              -DQT_ANDROID_SIGN_APK=${{ env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-
-      - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
-
-      - run: cp ${{ runner.temp }}/build/android-build/*.apk ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-
-      - name: Upload Build File
-        if: matrix.build_type == 'Release'
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ env.PACKAGE }}.apk
-          package_name: ${{ env.PACKAGE }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          upload_aws: true
-
-      # - name: Deploy to Play Store
-      #   if: matrix.build_type == 'Release'
-      #   uses: ./.github/actions/playstore
-      #   with:
-      #     artifact_name: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-      #     service_account_json: ${{ secrets.SERVICE_ACCOUNT }}
+    name: Android Build on Linux
+    uses: ./.github/workflows/android-reusable.yml
+    with:
+      runner-os: ubuntu-latest
+      build-type: Release
+      qt-version: '6.10.0'
+      upload-aws: true
+      sign-apk: true
+      free-disk-space: true
+    secrets:
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DISTRIBUTION_ID: ${{ secrets.AWS_DISTRIBUTION_ID }}

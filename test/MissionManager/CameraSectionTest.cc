@@ -29,7 +29,7 @@ CameraSectionTest::CameraSectionTest(void)
     , _validCameraPhotoModeItem         (nullptr)
     , _validCameraVideoModeItem         (nullptr)
     , _validCameraSurveyPhotoModeItem   (nullptr)
-{    
+{
     rgCameraSignals[specifyGimbalChangedIndex] =        SIGNAL(specifyGimbalChanged(bool));
     rgCameraSignals[specifiedGimbalYawChangedIndex] =   SIGNAL(specifiedGimbalYawChanged(double));
     rgCameraSignals[specifiedGimbalPitchChangedIndex] = SIGNAL(specifiedGimbalPitchChanged(double));

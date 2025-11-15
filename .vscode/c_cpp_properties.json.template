@@ -1,0 +1,42 @@
+{
+  // QGroundControl C/C++ Properties Template
+  // Copy this file to c_cpp_properties.json and adjust paths
+  // Note: If using clangd, this file is not needed
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Linux (Qt 6.10.0)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${env:HOME}/Qt/6.10.0/gcc_64/include/**"
+      ],
+      "defines": [
+        "QT_QML_DEBUG",
+        "QT_MESSAGELOGCONTEXT"
+      ],
+      "compilerPath": "${env:HOME}/Qt/6.10.0/gcc_64/bin/g++",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "linux-gcc-x64",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+      "configurationProvider": "ms-vscode.cmake-tools"
+    },
+    {
+      "name": "macOS (Qt 6.10.0)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${env:HOME}/Qt/6.10.0/macos/include/**"
+      ],
+      "defines": [
+        "QT_QML_DEBUG",
+        "QT_MESSAGELOGCONTEXT"
+      ],
+      "compilerPath": "${env:HOME}/Qt/6.10.0/macos/bin/clang++",
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "macos-clang-x64",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+      "configurationProvider": "ms-vscode.cmake-tools"
+    }
+  ]
+}

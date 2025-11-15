@@ -28,4 +28,3 @@ private slots:
 private:
     void readJson(const QByteArray& bytes, QJsonDocument& jsonDoc);
 };
-

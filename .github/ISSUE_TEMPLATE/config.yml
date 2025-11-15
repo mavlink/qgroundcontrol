@@ -1,5 +1,14 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: "💬 Developer Chat"
+  - name: 💬 Discussion Forum
+    url: https://discuss.px4.io/c/qgroundcontrol
+    about: For general questions and discussions, please use our forum
+  - name: 📖 User Documentation
+    url: https://docs.qgroundcontrol.com/
+    about: Read the user manual for help with using QGroundControl
+  - name: 🛠️ Developer Documentation
+    url: https://dev.qgroundcontrol.com/
+    about: Read the developer guide for help building and contributing
+  - name: 💻 Discord Community
     url: https://discord.gg/dronecode
-    about: "QGroundControl developers (and many regular/deeply-involved users) can be found on the #QGroundControl channel on the Dronecode Discord."
+    about: Join our Discord server for real-time chat

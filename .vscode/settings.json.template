@@ -1,0 +1,113 @@
+{
+  // QGroundControl VSCode Settings Template
+  // Copy this file to settings.json and adjust paths for your environment
+
+  // ============================================================================
+  // C/C++ Configuration
+  // ============================================================================
+  "C_Cpp.default.compilerPath": "${env:HOME}/Qt/6.10.0/gcc_64/bin/g++",
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+
+  // Or use clangd instead (recommended)
+  "clangd.path": "/usr/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu",
+    "--pch-storage=memory"
+  ],
+
+  // ============================================================================
+  // CMake Configuration
+  // ============================================================================
+  "cmake.configureOnOpen": false,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.generator": "Ninja",
+  "cmake.cmakePath": "${env:HOME}/Qt/6.10.0/gcc_64/bin/qt-cmake",
+  "cmake.configureSettings": {
+    "CMAKE_BUILD_TYPE": "Debug",
+    "QGC_BUILD_TESTING": "ON"
+  },
+
+  // ============================================================================
+  // Qt/QML Configuration
+  // ============================================================================
+  "qml.executablePath": "${env:HOME}/Qt/6.10.0/gcc_64/bin/qml",
+  "qml.importPath": [
+    "${env:HOME}/Qt/6.10.0/gcc_64/qml"
+  ],
+
+  // ============================================================================
+  // Files & Formatting
+  // ============================================================================
+  "files.associations": {
+    "*.qml": "qml",
+    "*.cmake": "cmake",
+    "CMakeLists.txt": "cmake",
+    "*.cc": "cpp",
+    "*.h": "cpp"
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+
+  // C++ formatting
+  "editor.formatOnSave": true,
+  "C_Cpp.formatting": "clangFormat",
+  "C_Cpp.clang_format_style": "file",
+
+  // ============================================================================
+  // Search & Exclusions
+  // ============================================================================
+  "files.exclude": {
+    "**/.git": true,
+    "**/build": true,
+    "**/build-*": true,
+    "**/.cache": true,
+    "**/node_modules": true,
+    "**/*.autosave": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/build-*": true,
+    "**/.cache": true,
+    "**/node_modules": true,
+    "**/docs/.vitepress/cache": true,
+    "**/docs/.vitepress/dist": true
+  },
+
+  // ============================================================================
+  // Git
+  // ============================================================================
+  "git.ignoreLimitWarning": true,
+  "git.enableSmartCommit": false,
+  "git.confirmSync": false,
+
+  // ============================================================================
+  // Terminal
+  // ============================================================================
+  "terminal.integrated.env.linux": {
+    "QT_QPA_PLATFORM": "xcb"
+  },
+
+  // ============================================================================
+  // Extensions
+  // ============================================================================
+  "cmake.showSystemKits": false,
+  "cmake.preferredGenerators": ["Ninja"],
+
+  // Disable telemetry
+  "telemetry.telemetryLevel": "off",
+
+  // ============================================================================
+  // Tasks & Launch
+  // ============================================================================
+  "tasks.problemMatchers": ["$gcc"],
+
+  // Recommended extensions warning
+  "extensions.ignoreRecommendations": false
+}

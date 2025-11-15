@@ -2,6 +2,15 @@ name: pre-commit
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' }}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest

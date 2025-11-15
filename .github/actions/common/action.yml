@@ -3,9 +3,9 @@ description: Common Setup for All Runners
 runs:
   using: composite
   steps:
-    - uses: lukka/get-cmake@latest
+    - uses: lukka/get-cmake@v3.31.4
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: '>=3.9'
 

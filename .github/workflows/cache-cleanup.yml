@@ -4,9 +4,17 @@ on:
     types:
       - closed
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' }}
+
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   cleanup:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     permissions:
       # `actions:write` permission is required to delete caches

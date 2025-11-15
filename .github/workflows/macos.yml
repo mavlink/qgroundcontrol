@@ -16,13 +16,18 @@ on:
       - 'src/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' }}
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+permissions:
+  contents: read
+  packages: write
+  id-token: write
 
 jobs:
   build:
+    timeout-minutes: 120
     runs-on: macos-latest
 
     strategy:

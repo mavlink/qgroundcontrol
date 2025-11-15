@@ -18,7 +18,7 @@ class MissionCommandUIInfo;
 class MissionCommandTreeTest : public UnitTest
 {
     Q_OBJECT
-    
+
 private slots:
     void init();
 

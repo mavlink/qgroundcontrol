@@ -4,7 +4,7 @@ inputs:
   gst_version:
     description: Version of GStreamer to Build
     required: true
-    default: 1.24.8
+    default: 1.26.8
   build_type:
     description: Build Type "release" or "debug"
     required: true
@@ -99,7 +99,7 @@ runs:
       shell: bash
 
     - name: Save artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: GStreamer-${{ inputs.build_type }}
         path: ${{ inputs.install_directory }}

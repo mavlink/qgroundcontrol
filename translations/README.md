@@ -40,7 +40,7 @@ The parser supports two known file types: "MAVCmdInfo" and "FactMetaData". If yo
 ### Manually specify parser instructions
 For this case dont include the `fileType` key/value pair. And include the followings keys (as needed) in the root object:
 
-* `translateKeys` This key is a string which is a list of all the keys which should be translated.  
+* `translateKeys` This key is a string which is a list of all the keys which should be translated.
 * `arrayIDKeys` The json localization parser provides additional information to the translator about where this string came from in the json hierarchy. If there is an array in the json, just displaying an array index as to where this came from is not that helpful. In most cases there is a key within each array element for which the value is unique. If this is the case then specify this key name(s) as the value for `arrayIDKeys`.
 
 ### Disambiguation
@@ -52,4 +52,3 @@ This is used when you have two strings in the same file which are equal, but the
 ```
 
 In the example above "baz" is the string which is the same for two different keys. The prefix `#loc.disambiguation#` indicates a disambiguation is to follow which is the string between the next set of `#`s.
-

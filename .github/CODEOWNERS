@@ -1,0 +1,34 @@
+# Code Owners for QGroundControl
+# These owners will be automatically requested for review when someone opens a pull request.
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+# * @mavlink/qgroundcontrol-maintainers
+
+# GitHub Actions and CI/CD workflows
+# /.github/workflows/ @mavlink/qgroundcontrol-maintainers
+# /.github/actions/ @mavlink/qgroundcontrol-maintainers
+# .github/dependabot.yml @mavlink/qgroundcontrol-maintainers
+
+# Build system
+# /cmake/ @mavlink/qgroundcontrol-maintainers
+# CMakeLists.txt @mavlink/qgroundcontrol-maintainers
+# /custom/ @mavlink/qgroundcontrol-maintainers
+
+# Core architecture - requires careful review
+# /src/FactSystem/ @mavlink/qgroundcontrol-maintainers
+# /src/Vehicle/ @mavlink/qgroundcontrol-maintainers
+# /src/FirmwarePlugin/ @mavlink/qgroundcontrol-maintainers
+# /src/AutoPilotPlugins/ @mavlink/qgroundcontrol-maintainers
+
+# MAVLink protocol handling
+# /src/MAVLink/ @mavlink/qgroundcontrol-maintainers
+# /src/Comms/ @mavlink/qgroundcontrol-maintainers
+
+# Documentation
+# /docs/ @mavlink/qgroundcontrol-maintainers
+# *.md @mavlink/qgroundcontrol-maintainers
+
+# Security-sensitive files
+# .github/SECURITY.md @mavlink/qgroundcontrol-maintainers

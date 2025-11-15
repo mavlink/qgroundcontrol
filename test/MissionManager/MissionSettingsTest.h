@@ -17,7 +17,7 @@ class MissionSettingsItem;
 class MissionSettingsTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
+
 public:
     MissionSettingsTest(void);
 

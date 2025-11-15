@@ -12,7 +12,7 @@
 
 QGC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
 
-QGCState::QGCState(const QString& stateName, QState* parentState) 
+QGCState::QGCState(const QString& stateName, QState* parentState)
     : QState(QState::ExclusiveStates, parentState)
 {
     setObjectName(stateName);
@@ -26,16 +26,16 @@ QGCState::QGCState(const QString& stateName, QState* parentState)
 }
 
 QGCStateMachine* QGCState::machine() const
-{ 
-    return qobject_cast<QGCStateMachine*>(QState::machine()); 
+{
+    return qobject_cast<QGCStateMachine*>(QState::machine());
 }
 
-Vehicle *QGCState::vehicle() 
-{ 
-    return machine()->vehicle(); 
+Vehicle *QGCState::vehicle()
+{
+    return machine()->vehicle();
 }
 
-QString QGCState::stateName() const 
+QString QGCState::stateName() const
 {
     if (machine()) {
         return QStringLiteral("%1:%2").arg(objectName(), machine()->machineName());

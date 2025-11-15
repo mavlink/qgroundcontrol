@@ -1,19 +1,38 @@
 {
-    "name": "qgc_vitepress_docs",
-    "version": "1.0.1",
-    "description": "QGC vitepress docs build dependencies.",
-    "scripts": {
-        "docs:dev": "vitepress dev docs",
-        "docs:build": "vitepress build docs",
-        "docs:preview": "vitepress preview docs",
-        "start": "yarn docs:dev"
-    },
-    "dependencies": {
-        "vitepress": "^1.6.3"
-    },
-    "license": "CC-BY-4.0",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/mavlink/qgroundcontrol"
-    }
+  "name": "qgroundcontrol-docs",
+  "version": "5.0.0",
+  "description": "QGroundControl developer documentation built with VitePress",
+  "private": true,
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "docs:serve": "vitepress serve docs",
+    "start": "npm run docs:dev",
+    "build": "npm run docs:build"
+  },
+  "dependencies": {
+    "vitepress": "^1.6.3"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "qgroundcontrol",
+    "mavlink",
+    "drone",
+    "uav",
+    "documentation"
+  ],
+  "license": "CC-BY-4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mavlink/qgroundcontrol"
+  },
+  "homepage": "https://qgroundcontrol.com",
+  "bugs": {
+    "url": "https://github.com/mavlink/qgroundcontrol/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
 }

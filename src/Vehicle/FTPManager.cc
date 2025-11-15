@@ -26,7 +26,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
     // Mock link responds immediately if at all, speed up unit tests with faster timoue
     _ackOrNakTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 10 : _ackOrNakTimeoutMsecs);
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
-    
+
     // Make sure we don't have bad structure packing
     Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
 }
@@ -180,7 +180,7 @@ void FTPManager::_terminateComplete(void)
 void FTPManager::_downloadComplete(const QString& errorMsg)
 {
     qCDebug(FTPManagerLog) << QString("_downloadComplete: errorMsg(%1)").arg(errorMsg);
-    
+
     QString downloadFilePath    = _downloadState.toDir.absoluteFilePath(_downloadState.fileName);
     QString error               = errorMsg;
 
@@ -202,7 +202,7 @@ void FTPManager::_downloadComplete(const QString& errorMsg)
 void FTPManager::_listDirectoryComplete(const QString& errorMsg)
 {
     qCDebug(FTPManagerLog) << QString("_listDirectoryComplete: errorMsg(%1)").arg(errorMsg);
-    
+
     _ackOrNakTimeoutTimer.stop();
     _rgStateMachine.clear();
     _currentStateMachineIndex = -1;
@@ -234,7 +234,7 @@ void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     if (data.target_system != qgcId) {
         return;
     }
-    
+
     MavlinkFTP::Request* request = (MavlinkFTP::Request*)&data.payload[0];
 
     // Ignore old/reordered packets (handle wrap-around properly)
@@ -482,7 +482,7 @@ void FTPManager::_listDirectoryWorker(bool firstRequest)
     request.hdr.offset  = _listDirectoryState.expectedOffset;
     request.hdr.size    = sizeof(request.data);
     _fillRequestDataWithString(&request, _listDirectoryState.fullPathOnVehicle);
-    
+
     if (firstRequest) {
         _listDirectoryState.retryCount = 0;
     } else {
@@ -729,7 +729,7 @@ void FTPManager::_resetSessionsTimeout(void)
 void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
 {
     _ackOrNakTimeoutTimer.start();
-    
+
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink) {
         request->hdr.seqNumber = _expectedIncomingSeqNumber + 1;    // Outgoing is 1 past last incoming
