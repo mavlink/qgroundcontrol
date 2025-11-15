@@ -27,9 +27,8 @@ ApplicationWindow {
     id:             mainWindow
     visible:        true
 
-    flags: Qt.platform.os === "android"
-        ? Qt.Window | Qt.ExpandedClientAreaHint
-        : Qt.Window
+    flags: Qt.Window | Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint
+    
     property bool   _utmspSendActTrigger
 
     Component.onCompleted: {
