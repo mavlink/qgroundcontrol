@@ -49,7 +49,7 @@ VehicleFactGroup::VehicleFactGroup(QObject *parent)
     _addFact(&_throttlePctFact);
     _addFact(&_imuTempFact);
 
-    _hobbsFact.setRawValue(QStringLiteral("0000:00:00"));
+    _hobbsFact.setRawValue(QStringLiteral("----:--:--"));
 }
 
 void VehicleFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)

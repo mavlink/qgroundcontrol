@@ -191,7 +191,7 @@ protected:
 
     QString _name;
     int _componentId = -1;
-    QVariant _rawValue = 0;
+    QVariant _rawValue; // QVariant::Invalid
     FactMetaData::ValueType_t _type = FactMetaData::valueTypeInt32;
     FactMetaData *_metaData = nullptr;
     bool _sendValueChangedSignals = true;
