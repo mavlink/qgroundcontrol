@@ -35,6 +35,7 @@ FlightMap {
 
     property var    _settingsManager:   QGroundControl.settingsManager
     property var    _settings:          _settingsManager ? _settingsManager.offlineMapsSettings : null
+    property var    _mapsSettings:      _settingsManager ? _settingsManager.mapsSettings : null
     property var    _fmSettings:        _settingsManager ? _settingsManager.flightMapSettings : null
     property var    _appSettings:       _settingsManager.appSettings
     property Fact   _tiandituFact:      _settingsManager ? _settingsManager.appSettings.tiandituToken : null
@@ -52,6 +53,7 @@ FlightMap {
     property string savedMapType:       ""
     property bool   _showPreview:       true
     property bool   _defaultSet:        tileSet && tileSet.defaultSet
+    property bool   _defaultCacheOverride: false
     property real   _margins:           ScreenTools.defaultFontPixelWidth * 0.5
     property real   _buttonSize:        ScreenTools.defaultFontPixelWidth * 12
     property real   _bigButtonSize:     ScreenTools.defaultFontPixelWidth * 16
@@ -72,14 +74,26 @@ FlightMap {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        QGroundControl.mapEngineManager.loadTileSets()
+        if (QGroundControl.mapEngineManager.tileSets.count === 0) {
+            QGroundControl.mapEngineManager.loadTileSets()
+        }
+        if (_defaultSet && _mapsSettings && _mapsSettings.disableDefaultCache && _mapsSettings.disableDefaultCache.rawValue) {
+            QGroundControl.mapEngineManager.setCachingDefaultSetEnabled(true)
+            _defaultCacheOverride = true
+        }
         resetMapToDefaults()
         updateMap()
         savedCenter = _map.toCoordinate(Qt.point(_map.width / 2, _map.height / 2), false /* clipToViewPort */)
         settingsPage.enabled = false // Prevent mouse events from bleeding through to the settings page which is below this in hierarchy
     }
 
-    Component.onDestruction: settingsPage.enabled = true
+    Component.onDestruction: {
+        settingsPage.enabled = true
+        if (_defaultCacheOverride && _mapsSettings && _mapsSettings.disableDefaultCache) {
+            QGroundControl.mapEngineManager.setCachingDefaultSetEnabled(!_mapsSettings.disableDefaultCache.rawValue)
+            _defaultCacheOverride = false
+        }
+    }
 
     Connections {
         target:                 QGroundControl.mapEngineManager
@@ -312,6 +326,20 @@ FlightMap {
                 Row {
                     spacing:    ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
+                    visible:    tileSet && !_defaultSet
+                    QGCLabel { text: qsTr("Queue:"); width: infoView._labelWidth; }
+                    QGCLabel {
+                        width: infoView._valueWidth
+                        horizontalAlignment: Text.AlignRight
+                        text: tileSet ? qsTr("%1 pending / %2 active / %3 error")
+                            .arg(tileSet.pendingTiles)
+                            .arg(tileSet.downloadingTiles)
+                            .arg(tileSet.errorTiles) : ""
+                    }
+                }
+                Row {
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
                     QGCButton {
                         text:       qsTr("Resume Download")
                         visible:    tileSet && tileSet && !_defaultSet && (!tileSet.complete && !tileSet.downloading)
@@ -322,19 +350,19 @@ FlightMap {
                         }
                     }
                     QGCButton {
-                        text:       qsTr("Cancel Download")
+                        text:       qsTr("Pause Download")
                         visible:    tileSet && tileSet && !_defaultSet && (!tileSet.complete && tileSet.downloading)
                         width:      ScreenTools.defaultFontPixelWidth * 16
                         onClicked: {
                             if(tileSet)
-                                tileSet.cancelDownloadTask()
+                                tileSet.pauseDownloadTask()
                         }
                     }
                     QGCButton {
                         text:       qsTr("Delete")
                         width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                         onClicked:  deleteConfirmationDialogComponent.createObject(mainWindow).open()
-                        enabled:    tileSet ? (tileSet.savedTileSize > 0) : false
+                        enabled:    tileSet ? (!tileSet.deleting && (_defaultSet ? tileSet.savedTileSize > 0 : true)) : false
                     }
                     QGCButton {
                         text:       qsTr("Ok")
@@ -765,4 +793,3 @@ FlightMap {
         }
     }
 }
-

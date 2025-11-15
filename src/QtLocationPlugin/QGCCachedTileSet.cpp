@@ -36,6 +36,17 @@ QGCCachedTileSet::~QGCCachedTileSet()
     qCDebug(QGCCachedTileSetLog) << this;
 }
 
+qreal QGCCachedTileSet::downloadProgress() const
+{
+    if (_defaultSet || (_totalTileCount == 0)) {
+        return 0.0;
+    }
+
+    // Calculate progress as percentage (0.0 - 1.0)
+    // Progress = downloaded / total
+    return static_cast<qreal>(_savedTileCount) / static_cast<qreal>(_totalTileCount);
+}
+
 QString QGCCachedTileSet::downloadStatus() const
 {
     if (_defaultSet) {
@@ -89,9 +100,70 @@ void QGCCachedTileSet::resumeDownloadTask()
     createDownloadTask();
 }
 
-void QGCCachedTileSet::cancelDownloadTask()
+void QGCCachedTileSet::pauseDownloadTask()
 {
     _cancelPending = true;
+
+    // Abort any in-flight network replies so they don't continue downloading
+    {
+        QMutexLocker lock(&_repliesMutex);
+        for (auto replyIt = _replies.begin(); replyIt != _replies.end(); ++replyIt) {
+            if (QNetworkReply *reply = replyIt.value()) {
+                reply->blockSignals(true);
+                reply->abort();
+                reply->deleteLater();
+            }
+        }
+        _replies.clear();
+    }
+
+    // Drop any queued tiles which haven't started downloading yet
+    qDeleteAll(_tilesToDownload);
+    _tilesToDownload.clear();
+
+    // Mark all tiles in this set as pending again so a future resume works
+    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+    }
+
+    setDownloading(false);
+}
+
+void QGCCachedTileSet::cancelDownloadTask()
+{
+    pauseDownloadTask();
+}
+
+void QGCCachedTileSet::copyFrom(const QGCCachedTileSet *other)
+{
+    if (!other || other == this) {
+        return;
+    }
+
+    setName(other->name());
+    setMapTypeStr(other->mapTypeStr());
+    setType(other->type());
+    setTopleftLat(other->topleftLat());
+    setTopleftLon(other->topleftLon());
+    setBottomRightLat(other->bottomRightLat());
+    setBottomRightLon(other->bottomRightLon());
+    setMinZoom(other->minZoom());
+    setMaxZoom(other->maxZoom());
+    setCreationDate(other->creationDate());
+    setId(other->id());
+    setDefaultSet(other->defaultSet());
+    setDeleting(other->deleting());
+    setDownloading(other->downloading());
+    setErrorCount(other->errorCount());
+    setSelected(other->selected());
+    setUniqueTileCount(other->uniqueTileCount());
+    setUniqueTileSize(other->uniqueTileSize());
+    setTotalTileCount(other->totalTileCount());
+    setTotalTileSize(other->totalTilesSize());
+    setSavedTileCount(other->savedTileCount());
+    setSavedTileSize(other->savedTileSize());
+    setDownloadStats(other->pendingTiles(), other->downloadingTiles(), other->errorTiles());
 }
 
 void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
@@ -126,10 +198,10 @@ void QGCCachedTileSet::_doneWithDownload()
         setTotalTileSize(_savedTileSize);
 
         quint32 avg = 0;
-        if (_savedTileSize != 0) {
+        if (_savedTileCount != 0) {
             avg = _savedTileSize / _savedTileCount;
         } else {
-            qCWarning(QGCCachedTileSetLog) << "_savedTileSize=0";
+            qCWarning(QGCCachedTileSetLog) << "_savedTileCount=0";
         }
 
         setUniqueTileSize(_uniqueTileCount * avg);
@@ -142,6 +214,13 @@ void QGCCachedTileSet::_doneWithDownload()
 
 void QGCCachedTileSet::_prepareDownload()
 {
+    if (_cancelPending) {
+        // Ensure queued tiles are dropped and no new requests are scheduled
+        qDeleteAll(_tilesToDownload);
+        _tilesToDownload.clear();
+        return;
+    }
+
     if (_tilesToDownload.isEmpty()) {
         if (_noMoreTiles) {
             _doneWithDownload();
@@ -151,11 +230,28 @@ void QGCCachedTileSet::_prepareDownload()
         return;
     }
 
-    for (qsizetype i = _replies.count(); i < QGeoTileFetcherQGC::concurrentDownloads(_type); i++) {
+    if (!_networkManager) {
+        qCWarning(QGCCachedTileSetLog) << "Network manager unavailable, delaying download";
+        createDownloadTask();
+        return;
+    }
+
+    const qsizetype maxConcurrent = QGeoTileFetcherQGC::concurrentDownloads(_type);
+
+    for (qsizetype i = 0; i < maxConcurrent; i++) {
         if (_tilesToDownload.isEmpty()) {
             break;
         }
 
+        // Check if we've reached the concurrent limit
+        {
+            QMutexLocker lock(&_repliesMutex);
+            if (_replies.count() >= maxConcurrent) {
+                break;
+            }
+        }
+
+        // Dequeue and prepare tile request without holding the mutex
         QGCTile* const tile = _tilesToDownload.dequeue();
         const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type);
         QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x, tile->y, tile->z);
@@ -167,10 +263,15 @@ void QGCCachedTileSet::_prepareDownload()
         QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*reply);
         (void) connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
         (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
-        (void) _replies.insert(tile->hash, reply);
+
+        // Insert into replies map
+        {
+            QMutexLocker lock(&_repliesMutex);
+            (void) _replies.insert(tile->hash, reply);
+        }
 
         delete tile;
-        if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (QGeoTileFetcherQGC::concurrentDownloads(_type) * 10))) {
+        if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (maxConcurrent * 10))) {
             createDownloadTask();
         }
     }
@@ -200,10 +301,13 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    if (_replies.contains(hash)) {
-        (void) _replies.remove(hash);
-    } else {
-        qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
+    {
+        QMutexLocker lock(&_repliesMutex);
+        if (_replies.contains(hash)) {
+            (void) _replies.remove(hash);
+        } else {
+            qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
+        }
     }
     qCDebug(QGCCachedTileSetLog) << "Tile fetched:" << hash;
 
@@ -215,7 +319,16 @@ void QGCCachedTileSet::_networkReplyFinished()
 
     const QString type = UrlFactory::tileHashToType(hash);
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromProviderType(type);
-    Q_CHECK_PTR(mapProvider);
+    if (!mapProvider) {
+        qCWarning(QGCCachedTileSetLog) << "Invalid map provider for type:" << type << "hash:" << hash;
+        setErrorCount(_errorCount + 1);
+        QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);
+        if (!getQGCMapEngine()->addTask(task)) {
+            task->deleteLater();
+        }
+        _prepareDownload();
+        return;
+    }
 
     if (mapProvider->isElevationProvider()) {
         const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
@@ -242,7 +355,7 @@ void QGCCachedTileSet::_networkReplyFinished()
     setSavedTileSize(_savedTileSize + image.size());
     setSavedTileCount(_savedTileCount + 1);
 
-    if (_savedTileCount % 10 == 0) {
+    if (_savedTileCount % kSizeEstimateInterval == 0) {
         const quint32 avg = _savedTileSize / _savedTileCount;
         setTotalTileSize(avg * _totalTileCount);
         setUniqueTileSize(avg * _uniqueTileCount);
@@ -259,7 +372,10 @@ void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
     }
     qCDebug(QGCCachedTileSetLog) << "Error fetching tile" << reply->errorString();
 
-    setErrorCount(_errorCount + 1);
+    const bool cancelled = (_cancelPending && (error == QNetworkReply::OperationCanceledError));
+    if (!cancelled) {
+        setErrorCount(_errorCount + 1);
+    }
 
     const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
     if (hash.isEmpty()) {
@@ -267,22 +383,28 @@ void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
         return;
     }
 
-    if (_replies.contains(hash)) {
-        (void) _replies.remove(hash);
-    } else {
-        qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
+    {
+        QMutexLocker lock(&_repliesMutex);
+        if (_replies.contains(hash)) {
+            (void) _replies.remove(hash);
+        } else {
+            qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
+        }
     }
 
-    if (error != QNetworkReply::OperationCanceledError) {
+    if (!cancelled && (error != QNetworkReply::OperationCanceledError)) {
         qCWarning(QGCCachedTileSetLog) << "Error:" << reply->errorString();
     }
 
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);
+    const QGCTile::TileState newState = cancelled ? QGCTile::StatePaused : QGCTile::StateError;
+    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, newState, hash);
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
     }
 
-    _prepareDownload();
+    if (!cancelled) {
+        _prepareDownload();
+    }
 }
 
 void QGCCachedTileSet::setSelected(bool sel)
@@ -294,6 +416,50 @@ void QGCCachedTileSet::setSelected(bool sel)
             emit _manager->selectedCountChanged();
         }
     }
+}
+
+void QGCCachedTileSet::setTotalTileCount(quint32 num)
+{
+    const bool wasComplete = complete();
+    if (num != _totalTileCount) {
+        _totalTileCount = num;
+        emit totalTileCountChanged();
+    }
+    if (wasComplete != complete()) {
+        emit completeChanged();
+    }
+}
+
+void QGCCachedTileSet::setSavedTileCount(quint32 num)
+{
+    const bool wasComplete = complete();
+    if (num != _savedTileCount) {
+        _savedTileCount = num;
+        emit savedTileCountChanged();
+    }
+    if (wasComplete != complete()) {
+        emit completeChanged();
+    }
+}
+
+void QGCCachedTileSet::setDefaultSet(bool def)
+{
+    const bool wasComplete = complete();
+    _defaultSet = def;
+    if (wasComplete != complete()) {
+        emit completeChanged();
+    }
+}
+
+void QGCCachedTileSet::setDownloadStats(quint32 pending, quint32 downloading, quint32 errors)
+{
+    if ((pending == _pendingTiles) && (downloading == _downloadingTiles) && (errors == _errorTiles)) {
+        return;
+    }
+    _pendingTiles = pending;
+    _downloadingTiles = downloading;
+    _errorTiles = errors;
+    emit downloadStatsChanged();
 }
 
 QString QGCCachedTileSet::errorCountStr() const

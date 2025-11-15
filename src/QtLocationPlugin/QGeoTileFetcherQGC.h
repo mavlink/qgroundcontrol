@@ -42,6 +42,8 @@ private:
 
     QNetworkAccessManager *m_networkManager = nullptr;
 
+    static constexpr int kNetworkRequestTimeoutMs = 10000;
+
 #if defined Q_OS_MACOS
     static constexpr const char* s_userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0";
 #elif defined Q_OS_WIN

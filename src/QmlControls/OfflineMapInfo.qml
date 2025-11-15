@@ -33,7 +33,20 @@ RowLayout {
 
     QGCLabel {
         id:     sizeLabel
-        text:   tileSet.downloadStatus + (_tileCount > 0 ? " (" + _tileCount + " tiles)" : "")
+        text:   tileSet.downloadStatus + (_tileCount > 0 ? " (" + _tileCount + " tiles)" : "") + _queueSuffix()
+        function _queueSuffix() {
+            if (!tileSet || tileSet.defaultSet) {
+                return ""
+            }
+            var parts = []
+            if (tileSet.pendingTiles > 0)
+                parts.push(qsTr("%1 pending").arg(tileSet.pendingTiles))
+            if (tileSet.downloadingTiles > 0)
+                parts.push(qsTr("%1 active").arg(tileSet.downloadingTiles))
+            if (tileSet.errorTiles > 0)
+                parts.push(qsTr("%1 error").arg(tileSet.errorTiles))
+            return parts.length ? " [" + parts.join(", ") + "]" : ""
+        }
     }
 
     Rectangle {

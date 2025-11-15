@@ -11,6 +11,8 @@
 
 #include "QGCTileSet.h"
 
+#include <memory>
+
 #include <QtCore/QObject>
 #include <QtCore/QByteArrayView>
 #include <QtCore/QStringView>
@@ -50,6 +52,9 @@ public:
     static int hashFromProviderType(QStringView type);
     static QString tileHashToType(QStringView tileHash);
     static QString getTileHash(QStringView type, int x, int y, int z);
+
+    static constexpr int defaultSetMapId() { return -1; }
+    static constexpr quint64 defaultTileSetId() { return 1; }
 
 private:
     static const QList<std::shared_ptr<const MapProvider>> _providers;
