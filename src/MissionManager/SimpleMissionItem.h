@@ -64,7 +64,7 @@ public:
     bool scanForSections(QmlObjectListModel* visualItems, int scanIndex, PlanMasterController* masterController);
 
     // Property accesors
-    
+
     QString         category            (void) const;
     int             command             (void) const { return _missionItem._commandFact.cookedValue().toInt(); }
     MAV_CMD         mavCommand          (void) const { return static_cast<MAV_CMD>(command()); }
@@ -87,7 +87,7 @@ public:
 
     void setRawEdit(bool rawEdit);
     void setAltitudeMode(QGroundControlQmlGlobal::AltMode altitudeMode);
-    
+
     void setCommandByIndex(int index);
 
     void setCommand(int command);
@@ -193,7 +193,7 @@ private:
     QmlObjectListModel  _textFieldFacts;
     QmlObjectListModel  _nanFacts;
     QmlObjectListModel  _comboboxFacts;
-    
+
     static FactMetaData*    _altitudeMetaData;
     static FactMetaData*    _commandMetaData;
     static FactMetaData*    _defaultParamMetaData;

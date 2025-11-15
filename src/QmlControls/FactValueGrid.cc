@@ -94,12 +94,12 @@ void FactValueGrid::_activeVehicleChanged(Vehicle* activeVehicle)
     _initForNewVehicle(activeVehicle);
 }
 
-FactValueGrid::~FactValueGrid() 
+FactValueGrid::~FactValueGrid()
 {
     _vehicleCardInstanceList.removeAll(this);
 }
 
-QGCMAVLink::VehicleClass_t FactValueGrid::vehicleClass(void) const 
+QGCMAVLink::VehicleClass_t FactValueGrid::vehicleClass(void) const
 {
     return QGCMAVLink::vehicleClass(currentVehicle()->vehicleType());
 }
@@ -334,7 +334,7 @@ void FactValueGrid::_resetFromSettings(void)
             QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
         }
         _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
-    
+
         // Initial setup of empty items
         int cRows       = settings.value(_rowCountKey).toInt();
         int cModelLists = settings.beginReadArray(_columnsKey);
@@ -347,7 +347,7 @@ void FactValueGrid::_resetFromSettings(void)
                 appendColumn();
             }
         }
-    
+
         // Fill in the items from settings
         for (int colIndex=0; colIndex<cModelLists; colIndex++) {
             settings.setArrayIndex(colIndex);

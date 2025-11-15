@@ -59,4 +59,3 @@ private:
 
     FlightModeList _modeList;
 };
-

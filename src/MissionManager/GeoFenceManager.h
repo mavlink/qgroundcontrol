@@ -27,11 +27,11 @@ Q_DECLARE_LOGGING_CATEGORY(GeoFenceManagerLog)
 class GeoFenceManager : public PlanManager
 {
     Q_OBJECT
-    
+
 public:
     GeoFenceManager(Vehicle* vehicle);
     ~GeoFenceManager();
-    
+
     bool supported(void) const;
 
     /// Signals sendComplete when done
@@ -60,7 +60,7 @@ public:
         BadPolygonItemFormat,   ///< Error re-creating polygons from mission items
         InvalidCircleRadius,
     } ErrorCode_t;
-    
+
 signals:
     void loadComplete       (void);
     void inProgressChanged  (bool inProgress);

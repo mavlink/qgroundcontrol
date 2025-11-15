@@ -32,11 +32,11 @@ class QTimer;
 class PX4FirmwareUpgradeThreadWorker : public QObject
 {
     Q_OBJECT
-    
+
 public:
     PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgradeThreadController* controller);
     ~PX4FirmwareUpgradeThreadWorker();
-    
+
 signals:
     void updateProgress         (int curr, int total);
     void foundBoard             (bool firstAttempt, const QGCSerialPortInfo& portInfo, int type, QString boardName);
@@ -48,7 +48,7 @@ signals:
     void eraseStarted           (void);
     void eraseComplete          (void);
     void flashComplete          (void);
-    
+
 private slots:
     void _init              (void);
     void _startFindBoardLoop(void);
@@ -57,13 +57,13 @@ private slots:
     void _findBoardOnce     (void);
     void _updateProgress    (int curr, int total) { emit updateProgress(curr, total); }
     void _cancel            (void);
-    
+
 private:
     bool _findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType, QString& boardName);
     bool _erase             (void);
-    
+
     PX4FirmwareUpgradeThreadController* _controller;
-    
+
     Bootloader*         _bootloader             = nullptr;
     QTimer*             _findBoardTimer         = nullptr;
     QTime               _elapsed;
@@ -78,24 +78,24 @@ private:
 class PX4FirmwareUpgradeThreadController : public QObject
 {
     Q_OBJECT
-    
+
 public:
     PX4FirmwareUpgradeThreadController(QObject* parent = nullptr);
     ~PX4FirmwareUpgradeThreadController(void);
-    
+
     /// @brief Begins the process of searching for a supported board connected to any serial port. This will
     /// continue until cancelFind is called. Signals foundBoard and boardGone as boards come and go.
     void startFindBoardLoop(void);
-    
+
     void cancel(void);
-    
+
     /// @brief Sends a reboot command to the bootloader
     void reboot(void) { emit _rebootOnThread(); }
-    
+
     void flash(const FirmwareImage* image);
-    
+
     const FirmwareImage* image(void) { return _image; }
-    
+
 signals:
     void foundBoard     (bool firstAttempt, const QGCSerialPortInfo &portInfo, int boardType, QString boardName);
     void noBoardFound   (void);
@@ -107,14 +107,14 @@ signals:
     void eraseComplete  (void);
     void flashComplete  (void);
     void updateProgress (int curr, int total);
-    
+
     // Internal signals to communicate with thread worker
     void _initThreadWorker          (void);
     void _startFindBoardLoopOnThread(void);
     void _rebootOnThread            (void);
     void _flashOnThread             (void);
     void _cancel                    (void);
-    
+
 private slots:
     void _foundBoard            (bool firstAttempt, const QGCSerialPortInfo& portInfo, int type, QString name) { emit foundBoard(firstAttempt, portInfo, type, name); }
     void _noBoardFound          (void) { emit noBoardFound(); }
@@ -125,13 +125,12 @@ private slots:
     void _eraseStarted          (void) { emit eraseStarted(); }
     void _eraseComplete         (void) { emit eraseComplete(); }
     void _flashComplete         (void) { emit flashComplete(); }
-    
+
 private:
     void _updateProgress(int curr, int total) { emit updateProgress(curr, total); }
-    
+
     PX4FirmwareUpgradeThreadWorker* _worker         = nullptr;
     QThread*                        _workerThread   = nullptr;  ///< Thread which PX4FirmwareUpgradeThreadWorker runs on
-    
+
     const FirmwareImage* _image;
 };
-

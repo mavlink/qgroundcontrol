@@ -7,6 +7,9 @@ inputs:
   arch:
     description: Arch
     required: true
+  dir:
+    description: Qt directory name
+    required: true
   version:
     description: Qt Version
     required: false
@@ -22,7 +25,7 @@ runs:
   using: composite
   steps:
     - name: Setup Java Environment
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: temurin
         java-version: 17
@@ -132,3 +135,9 @@ runs:
         modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
         setup-python: false
         cache: true
+
+    - name: Set Qt Host Directory
+      shell: bash
+      run: |
+        # Store desktop Qt directory name (QT_ROOT_DIR will point to Android Qt after all installations)
+        echo "QT_HOST_ARCH=${{ inputs.dir }}" >> $GITHUB_ENV

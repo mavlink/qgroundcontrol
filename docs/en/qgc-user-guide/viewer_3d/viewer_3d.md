@@ -1,6 +1,6 @@
 # 3D View
 
-The 3D View is used to visualize and monitor the vehicle, the environment, and the planned mission in 3D. Most of the capabilities available in the [Fly View](../fly_view/fly_view.md)  is also available in the 3D View. 
+The 3D View is used to visualize and monitor the vehicle, the environment, and the planned mission in 3D. Most of the capabilities available in the [Fly View](../fly_view/fly_view.md)  is also available in the 3D View.
 
 You can use it to:
 - To import and display the 3D map for any region of interest downloaded from the OpenStreetMap website (.osm file).
@@ -16,7 +16,7 @@ You can use it to:
 ![3D View](../../../assets/viewer_3d/viewer_3d_overview.jpg)
 
 # UI Overview
-The screenshot above shows the main elements of the 3D View. 
+The screenshot above shows the main elements of the 3D View.
 
 <font color="red">**Enabling the 3D View:** </font>The 3D View is disabled by default. To enable it, go to **Application Settings** ->**Fly View** tab, and under the **3D View** settings group, toggle the **Enabled** switch as shown below:
 
@@ -44,7 +44,5 @@ The following properties can be modified in the 3D View settings group:
 
 - **Enabled**: To enable or disable the 3D View.
 - **3D Map File**: The path to the .osm file of a region of interest to be visualized in the QGC. The .osm file can be uploaded by clicking on the **Select File** button. To clear the 3D View from the previously loaded .osm file, you can click on the **Clear** button.
-- **Average Building Level Height**: This parameter determines the height of each storey of the buildings, as in .osm file sometimes the height of the buildings is specified in terms of the level/storey. 
+- **Average Building Level Height**: This parameter determines the height of each storey of the buildings, as in .osm file sometimes the height of the buildings is specified in terms of the level/storey.
 - **Vehicle Altitude Bias**: This refers to the bias in the altitude of vehicles and their missions with respect to the ground level. It is helpful in cases where the estimated altitude of the vehicle by its flight control is biased, as the relative altitude is currently used in the 3D View.
-
-

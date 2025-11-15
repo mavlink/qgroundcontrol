@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "ms-vscode.cpptools",
+    "llvm-vs-code-extensions.vscode-clangd",
+    "ms-vscode.cmake-tools",
+    "twxs.cmake",
+    "seanwu.vscode-qt-for-python",
+    "bbenoist.qml",
+    "editorconfig.editorconfig",
+    "streetsidesoftware.code-spell-checker",
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "gruntfuggly.todo-tree",
+    "aaron-bond.better-comments",
+    "shd101wyy.markdown-preview-enhanced"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.cpptools-extension-pack"
+  ]
+}

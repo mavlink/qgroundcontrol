@@ -19,7 +19,7 @@ class Vehicle;
 class TransectStyleComplexItemTestBase : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     TransectStyleComplexItemTestBase(void);
 

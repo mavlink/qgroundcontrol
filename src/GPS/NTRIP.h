@@ -38,7 +38,7 @@ public:
     uint16_t messageLength() { return _messageLength; }
     uint16_t messageId();
     const uint8_t* crcBytes() const { return _crcBytes; }
-    int crcSize() const { return 3; }    
+    int crcSize() const { return 3; }
 
 private:
     enum State {
@@ -47,7 +47,7 @@ private:
         ReadingMessage,
         ReadingCRC
     };
-    
+
     State _state;
     uint8_t _buffer[1024];
     uint16_t _messageLength;
@@ -75,9 +75,9 @@ public:
     Q_INVOKABLE void debugFetchSourceTable();
 
     ~NTRIPTCPLink();
-    
+
 public slots:
-    void start();        
+    void start();
     void requestStop();
     void sendNMEA(const QByteArray& sentence);
 
@@ -87,7 +87,7 @@ signals:
     void RTCMDataUpdate(const QByteArray& message);
     // Called when SPARTN corrections are received from the NTRIPTCPLink
     // These corrections are forwarded to the connected vehicle (PX4/ArduPilot)
-    // using the same path as RTCM corrections via _rtcmDataReceived().    
+    // using the same path as RTCM corrections via _rtcmDataReceived().
     void SPARTNDataUpdate(const QByteArray& message);
     void connected();
 
@@ -103,30 +103,30 @@ private:
         waiting_for_rtcm_header,
         accumulating_rtcm_packet,
     };
-    
+
     void _hardwareConnect();
     void _parse(const QByteArray& buffer);
-    void _handleSpartnData(const QByteArray& data);    
+    void _handleSpartnData(const QByteArray& data);
 
     QTcpSocket* _socket = nullptr;
-    
+
     QString _hostAddress;
     int _port;
     QString _username;
     QString _password;
     QString _mountpoint;
-    bool _useSpartn = false;    
+    bool _useSpartn = false;
     QVector<int> _whitelist;
 
     RTCMParser* _rtcmParser = nullptr;
     NTRIPState _state;
-    
+
     std::atomic<bool> _stopping{false};
     QMetaObject::Connection _readyReadConn;
-    
+
     // Small buffer to strip a response header only once if needed
     QByteArray _spartnBuf;
-    bool _spartnNeedHeaderStrip = true;        
+    bool _spartnNeedHeaderStrip = true;
 
 };
 
@@ -171,19 +171,19 @@ private:
     QString _ntripStatus;
     QString _ggaSource;
     QMetaObject::Connection _ntripEnableConn;
-    
+
     NTRIPTCPLink* _tcpLink = nullptr;
     QThread* _tcpThread = nullptr;
     RTCMMavlink* _rtcmMavlink = nullptr;
     QTimer* _settingsCheckTimer = nullptr;
     bool _startStopBusy = false;
     bool _forcedOffOnce = false;
-    bool _useSpartn = false;    
-    
+    bool _useSpartn = false;
+
     QElapsedTimer _startupTimer;
     bool _startupSuppress = true;
-    int  _startupStableTicks = 0;    
-    
+    int  _startupStableTicks = 0;
+
     CasterStatus _casterStatus = CasterStatus::OtherError;
 
     static NTRIPManager* _instance;

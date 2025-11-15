@@ -25,7 +25,7 @@ class MissionManager : public PlanManager
 public:
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
-        
+
     /// Current mission item as reported by MISSION_CURRENT
     int currentIndex(void) const { return _currentMissionIndex; }
 

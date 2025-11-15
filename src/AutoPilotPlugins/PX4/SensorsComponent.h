@@ -19,16 +19,16 @@
 class SensorsComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
     SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     Q_PROPERTY(bool airspeedCalSupported    READ _airspeedCalSupported  STORED false NOTIFY setupCompleteChanged)
     Q_PROPERTY(bool airspeedCalRequired     READ _airspeedCalRequired   STORED false NOTIFY setupCompleteChanged)
 
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;
-    
+
     // Virtuals from VehicleComponent
     virtual QString name(void) const override;
     virtual QString description(void) const override;
@@ -37,7 +37,7 @@ public:
     virtual bool setupComplete(void) const override;
     virtual QUrl setupSource(void) const override;
     virtual QUrl summaryQmlSource(void) const override;
-    
+
 private:
     bool _airspeedCalSupported  (void) const;
     bool _airspeedCalRequired   (void) const;

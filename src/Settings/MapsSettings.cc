@@ -32,7 +32,7 @@ DECLARE_SETTINGGROUP(Maps, "Maps")
         deprecatedSettings.remove(kMaxMemCacheKey);
         newSettings.setValue("maxCacheMemorySize", maxMemCache);
     }
- 
+
 }
 
 DECLARE_SETTINGSFACT(MapsSettings, maxCacheDiskSize)

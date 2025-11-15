@@ -41,7 +41,7 @@ QObject* QmlObjectListModel::get(int index)
 int QmlObjectListModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
-    
+
     return _objectList.count();
 }
 
@@ -50,11 +50,11 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid()) {
         return QVariant();
     }
-    
+
     if (index.row() < 0 || index.row() >= _objectList.count()) {
         return QVariant();
     }
-    
+
     if (role == ObjectRole) {
         return QVariant::fromValue(_objectList[index.row()]);
     } else if (role == TextRole) {
@@ -67,10 +67,10 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> QmlObjectListModel::roleNames(void) const
 {
     QHash<int, QByteArray> hash;
-    
+
     hash[ObjectRole] = "object";
     hash[TextRole] = "text";
-    
+
     return hash;
 }
 
@@ -81,44 +81,44 @@ bool QmlObjectListModel::setData(const QModelIndex& index, const QVariant& value
         emit dataChanged(index, index);
         return true;
     }
-    
+
     return false;
 }
 
 bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& parent)
 {
     Q_UNUSED(parent);
-    
+
     if (position < 0 || position > _objectList.count() + 1) {
         qCWarning(QmlObjectListModelLog) << "Invalid position - position:count" << position << _objectList.count() << this;
     }
-    
+
     beginInsertRows(QModelIndex(), position, position + rows - 1);
     endInsertRows();
 
     _signalCountChangedIfNotNested();
-    
+
     return true;
 }
 
 bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& parent)
 {
     Q_UNUSED(parent);
-    
+
     if (position < 0 || position >= _objectList.count()) {
         qCWarning(QmlObjectListModelLog) << "Invalid position - position:count" << position << _objectList.count() << this;
     } else if (position + rows > _objectList.count()) {
         qCWarning(QmlObjectListModelLog) << "Invalid rows - position:rows:count" << position << rows << _objectList.count() << this;
     }
-    
+
     beginRemoveRows(QModelIndex(), position, position + rows - 1);
     for (int row=0; row<rows; row++) {
         _objectList.removeAt(position);
     }
     endRemoveRows();
-    
+
     _signalCountChangedIfNotNested();
-    
+
     return true;
 }
 

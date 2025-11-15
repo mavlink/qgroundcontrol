@@ -16,7 +16,7 @@
 class ParameterManagerTest : public UnitTest
 {
     Q_OBJECT
-    
+
 private slots:
     void _noFailure(void);
     void _requestListNoResponse(void);

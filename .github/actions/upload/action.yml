@@ -28,7 +28,7 @@ runs:
   using: composite
   steps:
     - name: Save artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ inputs.package_name }}
         path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}

@@ -754,4 +754,3 @@ void StructureScanComplexItem::_segmentTerrainCollisionChanged(bool terrainColli
     ComplexMissionItem::_segmentTerrainCollisionChanged(terrainCollision);
     _structurePolygon.setShowAltColor(_cTerrainCollisionSegments != 0);
 }
-

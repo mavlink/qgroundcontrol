@@ -47,4 +47,3 @@ void ComponentInformationTranslationTest::readJson(const QByteArray& bytes, QJso
     QTEST_ASSERT(parseError.error == QJsonParseError::NoError);
     QVERIFY(!jsonDoc.isEmpty());
 }
-

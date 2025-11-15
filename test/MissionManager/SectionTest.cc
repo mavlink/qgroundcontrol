@@ -18,7 +18,7 @@
 SectionTest::SectionTest(void)
     : _simpleItem(nullptr)
 {
-    
+
 }
 
 void SectionTest::init(void)

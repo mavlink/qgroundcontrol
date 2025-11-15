@@ -20,7 +20,7 @@ inputs:
   ccache-version:
     description: ccache Version to Install
     required: false
-    default: 4.11.3
+    default: 4.12.1
 runs:
   using: composite
   steps:
@@ -53,7 +53,7 @@ runs:
       shell: bash
 
     - name: Setup Build Cache
-      uses: hendrikmuhs/ccache-action@main
+      uses: hendrikmuhs/ccache-action@v1.2
       with:
         variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
@@ -73,6 +73,6 @@ runs:
       uses: actions/cache@v4
       with:
         path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('cmake/CPM*.cmake', 'CMakeLists.txt') }}
         restore-keys: ${{ github.workflow }}-cpm-modules-
         # enableCrossOsArchive: true

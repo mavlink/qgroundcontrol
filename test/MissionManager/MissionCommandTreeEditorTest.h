@@ -16,10 +16,10 @@
 class MissionCommandTreeEditorTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     MissionCommandTreeEditorTest(void);
-    
+
 private slots:
     void testEditors(void);
 

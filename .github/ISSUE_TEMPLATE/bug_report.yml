@@ -1,73 +1,163 @@
-name: Bug report
-description: Create a report to help us improve
-labels: ["Report: Bug"]
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["needs-triage"]
 type: bug
-
 body:
   - type: markdown
     attributes:
       value: |
-        The following template is for Issue/Bug reporting only.
-
-        For questions about how to use or build QGC, see:
-        [resources](http://qgroundcontrol.com/#resources)
+        Thank you for taking the time to report a bug! Please fill out the form below with as much detail as possible.
 
   - type: checkboxes
-    id: release-check
+    id: pre-check
     attributes:
-      label: Have you checked the latest release for fixes?
-      description: Check to verify the bug still exists.
+      label: Pre-Submission Checklist
+      description: Please verify the following before submitting
       options:
-        - label: Yes, I’ve tested on the latest release
+        - label: I have searched for existing issues and this is not a duplicate
           required: true
+        - label: I am using the latest stable release or daily build
+          required: false
+        - label: I have reviewed the user documentation
+          required: false
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: QGroundControl Version
+      description: Which version are you using?
+      options:
+        - v5.0 (Daily Build / Master)
+        - v4.4.x (Stable)
+        - v4.3.x or older
+        - Custom Build
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform are you experiencing the issue on?
+      multiple: true
+      options:
+        - Windows 10/11
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Linux (Ubuntu/Debian)
+        - Linux (Other)
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: dropdown
+    id: firmware
+    attributes:
+      label: Firmware
+      description: Which firmware are you using?
+      options:
+        - PX4
+        - ArduPilot Copter
+        - ArduPilot Plane
+        - ArduPilot Rover
+        - ArduPilot Sub
+        - Other
+        - Not Applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: vehicle-type
+    attributes:
+      label: Vehicle Type
+      description: What type of vehicle?
+      options:
+        - Multirotor
+        - Fixed-Wing
+        - VTOL
+        - Rover
+        - Submarine
+        - Other
+        - Not Applicable
+    validations:
+      required: false
 
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: |
-        Please describe your issue in detail. Include:
-        1. **Expected Behavior** – What you expected to happen.
-        2. **Current Behavior** – What actually happened instead.
-        3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
-        3. **Additional Details** – Any other context that helps explain the problem.
-      value: |
-        **Expected Behavior**
-        Describe what you thought should happen here.
-
-        **Current Behavior**
-        Describe what actually happened here.
-
-        **Steps To Reproduce**
-        1.
-        2.
-        3.
-
-        **Additional Details**
-        Add any extra info (errors, warnings, etc.) here.
+      label: Bug Description
+      description: A clear and concise description of the bug
+      placeholder: What happened?
     validations:
       required: true
 
   - type: textarea
-    id: system-information
+    id: expected
     attributes:
-      label: System Information
-      description: |
-        Please include the following information:
-        - QGC Version: [e.g. 4.4.0]
-        - QGC build: [e.g. daily, stable, self-built from source, etc...]
-        - Operating System: [e.g. Windows 11, Ubuntu 22.04, macOS 15, iOS 17 ]
-        - Flight Controller: [e.g. CubePilot Cube Orange, Pixhawk 6X, etc.]
-        - Autopilot Software (with version): [e.g., PX4 1.15.4, ArduCopter 4.5.7 ]
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: What should have happened?
     validations:
       required: true
 
   - type: textarea
-    id: logs-screenshots
+    id: steps
     attributes:
-      label: Log Files and Screenshots
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the issue
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log Files
       description: |
-        Include links to:
-          - [QGC Console Logs](https://docs.qgroundcontrol.com/en/settings_view/console_logging.html)
-          - Autopilot logs when available
-          - Screenshots of QGC to help identify the issue.
+        Please attach relevant log files. Logs can be found at:
+        - Windows: %LOCALAPPDATA%/QGroundControl/
+        - macOS: ~/Library/Application Support/QGroundControl/
+        - Linux: ~/.local/share/QGroundControl/
+        - Android: Use "Settings > Application Logs > Save to SD"
+      placeholder: Drag and drop log files here, or paste log excerpts
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Videos
+      description: If applicable, add screenshots or videos to help explain the problem
+      placeholder: Drag and drop images/videos here
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other information that might be relevant
+      placeholder: |
+        - Connection type (USB, WiFi, telemetry radio, etc.)
+        - Special hardware configuration
+        - Recent changes to setup
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting Steps Tried
+      description: Have you tried any of the following?
+      options:
+        - label: Restarted QGroundControl
+        - label: Rebooted the vehicle
+        - label: Checked connection cables
+        - label: Tried a different USB port/cable
+        - label: Tested with default settings
+        - label: Updated to latest version

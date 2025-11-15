@@ -39,7 +39,7 @@ typedef struct {
 class SimpleMissionItemTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
+
 public:
     SimpleMissionItemTest(void);
 

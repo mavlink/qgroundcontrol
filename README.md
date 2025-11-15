@@ -7,7 +7,15 @@
   <a href="https://github.com/mavlink/QGroundControl/releases">
     <img src="https://img.shields.io/github/release/mavlink/QGroundControl.svg" alt="Latest Release">
   </a>
+  <a href="https://github.com/mavlink/QGroundControl">
+    <img src="https://img.shields.io/badge/version-v5.0_daily-orange" alt="Version">
+  </a>
+  <a href="https://github.com/mavlink/QGroundControl/blob/master/LICENSE-APACHE">
+    <img src="https://img.shields.io/badge/license-Apache_2.0_|_GPL_v3-blue.svg" alt="License">
+  </a>
 </p>
+
+> **Note**: This is the **master branch** containing QGroundControl v5.0 (Daily Build). This is an active development version and may contain unstable features. For stable releases, see the [releases page](https://github.com/mavlink/QGroundControl/releases).
 
 *QGroundControl* (QGC) is a highly intuitive and powerful Ground Control Station (GCS) designed for UAVs. Whether you're a first-time pilot or an experienced professional, QGC provides a seamless user experience for flight control and mission planning, making it the go-to solution for any *MAVLink-enabled drone*.
 
@@ -30,7 +38,7 @@
 - ⚙️ *Vehicle Setup*: Tailored configuration for *PX4* and *ArduPilot* platforms.
 - 🔧 *Fully Open Source*: Customize and extend the software to suit your needs.
 
-🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/ChangeLog.md).
+🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/CHANGELOG.md).
 
 ---
 
@@ -38,7 +46,22 @@
 
 QGroundControl is *open-source*, meaning you have the power to shape it! Whether you're fixing bugs, adding features, or customizing for your specific needs, QGC welcomes contributions from the community.
 
-🛠️ Start building today with our [Developer Guide](https://dev.qgroundcontrol.com/en/) and [build instructions](https://dev.qgroundcontrol.com/en/getting_started/).
+#### 🚀 Quick Start for Developers
+
+**First time? Get up and running in 5 minutes:**
+```bash
+./tools/dev-setup.sh    # One-time setup
+./tools/quick-build.sh  # Build and run
+```
+
+📖 **Essential Reading:**
+- [QUICKSTART.md](QUICKSTART.md) - Fast-track development guide
+- [CONTRIBUTING.md](.github/CONTRIBUTING.md) - Coding standards and architecture
+- [Developer Guide](https://dev.qgroundcontrol.com/en/) - Complete documentation
+
+🛠️ **Development Tools:**
+- [tools/](tools/) - Build scripts and code quality checkers
+- [.github/DEV_CONFIG.md](.github/DEV_CONFIG.md) - Configuration files reference
 
 ---
 

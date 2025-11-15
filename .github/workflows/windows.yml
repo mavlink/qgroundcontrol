@@ -17,14 +17,19 @@ on:
       - CMakeLists.txt
       - cmake/**
       - tools/setup/*windows*
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' }}
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+permissions:
+  contents: read
+  packages: write
+  id-token: write
 
 jobs:
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    timeout-minutes: 120
     runs-on: ${{ matrix.os }}
 
     strategy:

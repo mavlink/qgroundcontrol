@@ -18,10 +18,10 @@ class PlanMasterController;
 class MissionItemTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     MissionItemTest(void);
-    
+
     void init(void) override;
     void cleanup(void) override;
 

@@ -18,14 +18,14 @@ class MultiSignalSpy;
 class StructureScanComplexItemTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     StructureScanComplexItemTest(void);
 
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
     void _testDirty(void);
     void _testSaveLoad(void);

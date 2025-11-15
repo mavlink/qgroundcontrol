@@ -528,7 +528,7 @@ gst_qml6_gl_sink_propose_allocation (GstBaseSink * bsink, GstQuery * query)
   }
 
   if (pool == NULL && need_pool) {
-  
+
     GST_DEBUG_OBJECT (qt_sink, "create new pool");
     pool = gst_gl_buffer_pool_new (qt_sink->context);
 

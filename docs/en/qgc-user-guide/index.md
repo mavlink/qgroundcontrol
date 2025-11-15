@@ -1,6 +1,6 @@
 # QGroundControl Guide (Daily Builds)
 
-[![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) 
+[![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage)
 [![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
 
 _QGroundControl_ provides full flight control and vehicle setup for PX4 or ArduPilot powered vehicles.

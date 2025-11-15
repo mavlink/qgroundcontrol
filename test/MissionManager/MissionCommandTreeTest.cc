@@ -207,4 +207,3 @@ void MissionCommandTreeTest::testAllTrees()
     }
 
 }
-

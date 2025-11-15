@@ -19,7 +19,7 @@ class PlanMasterController;
 class LandingComplexItemTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
+
 public:
     LandingComplexItemTest(void);
 

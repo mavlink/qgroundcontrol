@@ -615,7 +615,7 @@ void PlanMasterController::_updateOverallDirty(void)
     if(_previousOverallDirty != dirty()){
         _previousOverallDirty = dirty();
         emit dirtyChanged(_previousOverallDirty);
-    }    
+    }
 }
 
 void PlanMasterController::_updatePlanCreatorsList(void)

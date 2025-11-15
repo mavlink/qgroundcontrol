@@ -21,7 +21,7 @@ const char* SimpleLandingComplexItem::settingsGroup             = "SimpleLanding
 const char* SimpleLandingComplexItem::jsonComplexItemTypeValue  = "utSimpleLandingPattern";
 
 LandingComplexItemTest::LandingComplexItemTest(void)
-{    
+{
     rgSignals[finalApproachCoordinateChangedIndex]  = SIGNAL(finalApproachCoordinateChanged(QGeoCoordinate));
     rgSignals[slopeStartCoordinateChangedIndex]     = SIGNAL(slopeStartCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));

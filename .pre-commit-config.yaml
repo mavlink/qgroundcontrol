@@ -1,7 +1,50 @@
+# Pre-commit hooks for QGroundControl
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-    -   id: check-yaml
+      - id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
-    -   id: check-json
+      - id: check-json
+      - id: check-xml
+        exclude: 'test/MissionManager/Polygon(BadXml|BadCoordinatesNode)\.kml$'
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: trailing-whitespace
+        exclude: '.*\.(qml|qrc)$'
+      - id: end-of-file-fixer
+        exclude: '.*\.(qml|qrc)$'
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: '\.(bat|cmd|ps1)$'
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+
+  # CMake formatting
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        args: [--config-file, .cmake-format]
+      - id: cmake-lint
+        args: [--config-file, .cmake-format]
+        exclude: '^(cmake/CPM|libs/)'
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint-fix
+        args: [--disable, MD013, MD033, MD041]  # Line length, HTML, first line
+
+  # C++ formatting (optional - project uses clang-format workflow)
+  # - repo: https://github.com/pre-commit/mirrors-clang-format
+  #   rev: v19.1.7
+  #   hooks:
+  #     - id: clang-format
+  #       types_or: [c++, c]
+  #       args: [--style=file]

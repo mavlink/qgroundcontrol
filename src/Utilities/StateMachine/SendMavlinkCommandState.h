@@ -24,7 +24,7 @@ public:
     SendMavlinkCommandState(QState* parent);
 
     void setup(MAV_CMD command, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
-    
+
 signals:
     void success();
 

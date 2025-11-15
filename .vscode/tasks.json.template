@@ -1,0 +1,149 @@
+{
+  // QGroundControl VSCode Tasks Template
+  // Copy this file to tasks.json
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Configure (Debug)",
+      "type": "shell",
+      "command": "${env:HOME}/Qt/6.10.0/gcc_64/bin/qt-cmake",
+      "args": [
+        "-B",
+        "build",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DQGC_BUILD_TESTING=ON",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Configure (Release)",
+      "type": "shell",
+      "command": "${env:HOME}/Qt/6.10.0/gcc_64/bin/qt-cmake",
+      "args": [
+        "-B",
+        "build-release",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DQGC_STABLE_BUILD=ON"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build",
+        "--config",
+        "Debug",
+        "-j",
+        "$(nproc)"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"],
+      "dependsOn": []
+    },
+    {
+      "label": "Build (Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build-release",
+        "--config",
+        "Release",
+        "-j",
+        "$(nproc)"
+      ],
+      "group": "build",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Clean Build",
+      "type": "shell",
+      "command": "rm",
+      "args": ["-rf", "build"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Rebuild (Debug)",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/quick-build.sh",
+      "args": ["--clean"],
+      "group": "build",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Run Unit Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/Debug/QGroundControl",
+      "args": ["--unittest"],
+      "group": "test",
+      "problemMatcher": [],
+      "dependsOn": ["Build (Debug)"]
+    },
+    {
+      "label": "Format C++ Files",
+      "type": "shell",
+      "command": "clang-format",
+      "args": ["-i", "${file}"],
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Code Quality",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/check-code-quality.sh",
+      "args": [],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Fix Code Quality",
+      "type": "shell",
+      "command": "${workspaceFolder}/tools/check-code-quality.sh",
+      "args": ["--fix"],
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Pre-commit",
+      "type": "shell",
+      "command": "pre-commit",
+      "args": ["run", "--all-files"],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Documentation",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "docs:build"],
+      "group": "build",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Serve Documentation",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "docs:dev"],
+      "group": "none",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

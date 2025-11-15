@@ -17,7 +17,7 @@
 /// FactSystem Unit Test for PX4 autpilot
 FactSystemTestGeneric::FactSystemTestGeneric(void)
 {
-    
+
 }
 
 void FactSystemTestGeneric::init(void)

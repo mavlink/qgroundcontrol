@@ -24,11 +24,11 @@ Q_DECLARE_LOGGING_CATEGORY(RallyPointManagerLog)
 class RallyPointManager : public PlanManager
 {
     Q_OBJECT
-    
+
 public:
     RallyPointManager(Vehicle* vehicle);
     ~RallyPointManager();
-    
+
     bool                    supported       (void) const;
     void                    sendToVehicle   (const QList<QGeoCoordinate>& rgPoints);
     void                    removeAll       (void);
@@ -42,7 +42,7 @@ public:
         TooManyPoints,          ///< Too many points for valid geofence
         InvalidCircleRadius,
     } ErrorCode_t;
-    
+
 signals:
     void loadComplete       (void);
     void inProgressChanged  (bool inProgress);

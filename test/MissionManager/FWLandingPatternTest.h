@@ -18,7 +18,7 @@ class SimpleMissionItem;
 class FWLandingPatternTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
+
 public:
     FWLandingPatternTest(void);
 

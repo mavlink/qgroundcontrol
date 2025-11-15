@@ -11,15 +11,15 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         repository: ${{ inputs.repo }}
         ref: ${{ inputs.ref }}
         path: build-action
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
-        node-version: 22
+        node-version: 24
         cache: npm
         cache-dependency-path: build-action/package-lock.json
 

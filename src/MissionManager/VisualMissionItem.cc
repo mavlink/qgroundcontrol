@@ -69,7 +69,7 @@ const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& o
 }
 
 VisualMissionItem::~VisualMissionItem()
-{    
+{
 }
 
 void VisualMissionItem::setIsCurrentItem(bool isCurrentItem)

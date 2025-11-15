@@ -21,7 +21,7 @@ class PlanMasterController;
 class TransectStyleComplexItemTest : public TransectStyleComplexItemTestBase
 {
     Q_OBJECT
-    
+
 public:
     TransectStyleComplexItemTest(void);
 

@@ -283,7 +283,7 @@ bool _verifyPlugins()
     return result;
 }
 
-void _logDecoderRanks() 
+void _logDecoderRanks()
 {
     GList *decoderFactories = gst_element_factory_list_get_elements(
         static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),

@@ -1,0 +1,165 @@
+name: Android Build (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      runner-os:
+        description: 'Runner OS (ubuntu-latest, macos-latest, windows-latest)'
+        required: true
+        type: string
+      build-type:
+        description: 'Build type (Debug or Release)'
+        required: false
+        type: string
+        default: 'Release'
+      qt-version:
+        description: 'Qt version to use'
+        required: false
+        type: string
+        default: '6.10.0'
+      upload-aws:
+        description: 'Upload to AWS'
+        required: false
+        type: boolean
+        default: false
+      sign-apk:
+        description: 'Sign APK (requires keystore secrets)'
+        required: false
+        type: boolean
+        default: false
+      free-disk-space:
+        description: 'Free disk space before build (Linux only)'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      AWS_DISTRIBUTION_ID:
+        required: false
+
+jobs:
+  build:
+    name: Build Android ${{ inputs.runner-os }} ${{ inputs.qt-version }} ${{ inputs.build-type }}
+    runs-on: ${{ inputs.runner-os }}
+    timeout-minutes: 120
+
+    env:
+      PACKAGE: QGroundControl
+      QT_VERSION: ${{ inputs.qt-version }}
+      QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
+      QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
+      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      # Build both ABIs only for Release builds on Linux
+      QT_ANDROID_ABIS: ${{ inputs.build-type == 'Release' && contains(inputs.runner-os, 'ubuntu') && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Free Disk Space (Linux)
+        if: inputs.free-disk-space && contains(inputs.runner-os, 'ubuntu')
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: false
+          large-packages: false
+
+      - name: Detect Host Architecture
+        id: host-arch
+        shell: bash
+        run: |
+          if [[ "${{ inputs.runner-os }}" == *"ubuntu"* ]]; then
+            echo "arch=linux_gcc_64" >> $GITHUB_OUTPUT
+            echo "dir=gcc_64" >> $GITHUB_OUTPUT
+            echo "host=linux" >> $GITHUB_OUTPUT
+            echo "qt_host_dir=gcc_64" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.runner-os }}" == *"macos"* ]]; then
+            echo "arch=clang_64" >> $GITHUB_OUTPUT
+            echo "dir=macos" >> $GITHUB_OUTPUT
+            echo "host=mac" >> $GITHUB_OUTPUT
+            echo "qt_host_dir=macos" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.runner-os }}" == *"windows"* ]]; then
+            echo "arch=win64_msvc2022_64" >> $GITHUB_OUTPUT
+            echo "dir=msvc2022_64" >> $GITHUB_OUTPUT
+            echo "host=windows" >> $GITHUB_OUTPUT
+            echo "qt_host_dir=msvc2022_64" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install Qt for Android
+        uses: ./.github/actions/qt-android
+        with:
+          host: ${{ steps.host-arch.outputs.host }}
+          arch: ${{ steps.host-arch.outputs.arch }}
+          dir: ${{ steps.host-arch.outputs.dir }}
+          version: ${{ inputs.qt-version }}
+          abis: ${{ env.QT_ANDROID_ABIS }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+
+      - name: Configure (Windows)
+        if: contains(inputs.runner-os, 'windows')
+        working-directory: ${{ runner.temp }}/build
+        shell: cmd
+        run: |
+          "${{ env.QT_ROOT_DIR }}/bin/qt-cmake" -S "${{ github.workspace }}" -B . -G Ninja -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} -DCMAKE_WARN_DEPRECATED=FALSE -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" -DQT_ANDROID_BUILD_ALL_ABIS=OFF -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../${{ steps.host-arch.outputs.qt_host_dir }}" -DQT_ANDROID_SIGN_APK=${{ (inputs.sign-apk && secrets.ANDROID_KEYSTORE_PASSWORD != '') && 'ON' || 'OFF' }} -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+
+      - name: Configure (Unix)
+        if: "!contains(inputs.runner-os, 'windows')"
+        working-directory: ${{ runner.temp }}/build
+        shell: bash
+        run: |
+          "${{ env.QT_ROOT_DIR }}/bin/qt-cmake" -S "${{ github.workspace }}" -B . -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} \
+            -DCMAKE_WARN_DEPRECATED=FALSE \
+            -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
+            -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+            -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../${{ steps.host-arch.outputs.qt_host_dir }}" \
+            -DQT_ANDROID_SIGN_APK=${{ (inputs.sign-apk && secrets.ANDROID_KEYSTORE_PASSWORD != '') && 'ON' || 'OFF' }} \
+            -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        shell: bash
+        run: cmake --build . --target all --config ${{ inputs.build-type }} --parallel
+
+      - name: Copy APK (Windows)
+        if: contains(inputs.runner-os, 'windows')
+        shell: cmd
+        run: copy "${{ runner.temp }}\build\android-build\*.apk" "${{ runner.temp }}\build\${{ env.PACKAGE }}.apk"
+
+      - name: Copy APK (Unix)
+        if: "!contains(inputs.runner-os, 'windows')"
+        shell: bash
+        run: cp "${{ runner.temp }}/build/android-build/"*.apk "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk"
+
+      - name: Upload to AWS and GitHub
+        if: inputs.build-type == 'Release' && inputs.upload-aws
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ env.PACKAGE }}.apk
+          package_name: ${{ env.PACKAGE }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_aws: true
+
+      - name: Upload to GitHub Only
+        if: inputs.build-type == 'Release' && !inputs.upload-aws
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.PACKAGE }}-${{ steps.host-arch.outputs.host }}.apk
+          path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          retention-days: 7

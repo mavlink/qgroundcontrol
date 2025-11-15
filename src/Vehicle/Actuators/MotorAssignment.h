@@ -87,4 +87,3 @@ private:
     QList<QList<Fact*>> _functionFacts;
     QString _message; ///< current message to show to the user after initializing
 };
-

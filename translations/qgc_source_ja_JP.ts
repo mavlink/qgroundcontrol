@@ -3904,7 +3904,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="121"/>
       <source>Clicking &apos;Apply&apos; will save the changes you have made to your airframe configuration.&lt;br&gt;&lt;br&gt;                                                                        All vehicle parameters other than Radio Calibration will be reset.&lt;br&gt;&lt;br&gt;                                                                        Your vehicle will also be restarted in order to complete the process.</source>
-      <translation>&apos;適用&apos; をクリックすると、機体設定に加えた変更が保存されます。&lt;br&gt;&lt;br&gt;                                                                        送信機キャリブレーション以外のすべての機体パラメータがリセットされます。&lt;br&gt;&lt;br&gt;                                                                        
+      <translation>&apos;適用&apos; をクリックすると、機体設定に加えた変更が保存されます。&lt;br&gt;&lt;br&gt;                                                                        送信機キャリブレーション以外のすべての機体パラメータがリセットされます。&lt;br&gt;&lt;br&gt;
 また、プロセスを完了させるために機体が再起動されます。</translation>
     </message>
     <message>
@@ -4294,25 +4294,25 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     </message>
     <message>
       <location filename="../src/QmlControls/AutotuneUI.qml" line="35"/>
-      <source>WARNING!        
+      <source>WARNING!
 
-The auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure!         
+The auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure!
 
-Before starting the auto-tuning process, make sure that:         
-1. You have read the auto-tuning guide and have followed the preliminary steps         
-2. The current control gains are good enough to stabilize the drone in presence of medium disturbances         
-3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens.         
+Before starting the auto-tuning process, make sure that:
+1. You have read the auto-tuning guide and have followed the preliminary steps
+2. The current control gains are good enough to stabilize the drone in presence of medium disturbances
+3. You are ready to abort the auto-tuning sequence by moving the RC sticks, if anything unexpected happens.
 
 Click Ok to start the auto-tuning process.
 </source>
-      <translation>警告！        
+      <translation>警告！
 
-自動調整を行う前に、機体が十分に安定していることを確認してください！         
+自動調整を行う前に、機体が十分に安定していることを確認してください！
 
-自動調整を開始する前に、以下を確認してください:         
-1. 自動調整ガイドを確認し、予備ステップに従っていること         
-2. 現在の制御のゲイン[強度]が、中程度の外乱がある場合でもドローンを安定させるのに十分であること         
-3. 予期せぬことが起こった場合、送信機スティックを動かして自動調整シーケンスを中止する準備ができていること         
+自動調整を開始する前に、以下を確認してください:
+1. 自動調整ガイドを確認し、予備ステップに従っていること
+2. 現在の制御のゲイン[強度]が、中程度の外乱がある場合でもドローンを安定させるのに十分であること
+3. 予期せぬことが起こった場合、送信機スティックを動かして自動調整シーケンスを中止する準備ができていること
 
 OKをクリックして、自動調整プロセスを開始します。</translation>
     </message>

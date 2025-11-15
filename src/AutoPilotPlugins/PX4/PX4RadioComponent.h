@@ -15,13 +15,13 @@
 class PX4RadioComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
     PX4RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;
-    
+
     // Virtuals from VehicleComponent
     virtual QString name(void) const;
     virtual QString description(void) const;
@@ -30,7 +30,7 @@ public:
     virtual bool setupComplete(void) const;
     virtual QUrl setupSource(void) const;
     virtual QUrl summaryQmlSource(void) const;
-    
+
 private:
     const QString   _name;
     QVariantList    _summaryItems;

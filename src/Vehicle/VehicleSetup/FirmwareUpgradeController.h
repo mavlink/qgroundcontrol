@@ -95,16 +95,16 @@ public:
 
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
-    
+
     /// Progress bar for you know what
     Q_PROPERTY(QQuickItem* progressBar READ progressBar WRITE setProgressBar)
 
     /// Starts searching for boards on the background thread
     Q_INVOKABLE void startBoardSearch(void);
-    
+
     /// Cancels whatever state the upgrade worker thread is in
     Q_INVOKABLE void cancel(void);
-    
+
     /// Called when the firmware type has been selected by the user to continue the flash process.
     Q_INVOKABLE void flash(AutoPilotStackType_t stackType,
                            FirmwareBuildType_t firmwareType = StableFirmware,
@@ -116,18 +116,18 @@ public:
     Q_INVOKABLE void flashSingleFirmwareMode(FirmwareBuildType_t firmwareType);
 
     Q_INVOKABLE FirmwareVehicleType_t vehicleTypeFromFirmwareSelectionIndex(int index);
-    
+
     // overload, not exposed to qml side
     void flash(const FirmwareIdentifier& firmwareId);
 
     // Property accessors
-    
+
     QQuickItem* progressBar(void) { return _progressBar; }
     void setProgressBar(QQuickItem* progressBar) { _progressBar = progressBar; }
-    
+
     QQuickItem* statusLog(void) { return _statusLog; }
     void setStatusLog(QQuickItem* statusLog) { _statusLog = statusLog; }
-    
+
     QString boardPort(void) { return _boardInfo.portName(); }
     QString boardDescription(void) { return _boardInfo.description(); }
 
@@ -210,17 +210,17 @@ private:
     uint32_t    _bootloaderVersion;         ///< Bootloader version
     uint32_t    _bootloaderBoardID;         ///< Board ID
     uint32_t    _bootloaderBoardFlashSize;  ///< Flash size in bytes of board
-    
+
     bool                 _startFlashWhenBootloaderFound;
     FirmwareIdentifier   _startFlashWhenBootloaderFoundFirmwareIdentity;
 
     QPixmap _boardIcon;             ///< Icon used to display image of board
-    
+
     QString _firmwareFilename;      ///< Image which we are going to flash to the board
-    
+
     /// @brief Thread controller which is used to run bootloader commands on separate thread
     PX4FirmwareUpgradeThreadController* _threadController;
-    
+
     static const int    _eraseTickMsec = 500;       ///< Progress bar update tick time for erase
     static const int    _eraseTotalMsec = 15000;    ///< Estimated amount of time erase takes
     int                 _eraseTickCount;            ///< Number of ticks for erase progress update
@@ -228,12 +228,12 @@ private:
 
     static const int    _findBoardTimeoutMsec = 30000;      ///< Amount of time for user to plug in USB
     static const int    _findBootloaderTimeoutMsec = 5000;  ///< Amount time to look for bootloader
-    
+
     QQuickItem*     _statusLog;         ///< Status log TextArea Qml control
     QQuickItem*     _progressBar;
-    
+
     bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
-    
+
     QSerialPortInfo                 _boardInfo;
     QGCSerialPortInfo::BoardType_t  _boardType;
     QString                         _boardTypeName;

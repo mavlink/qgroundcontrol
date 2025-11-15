@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at 00:00 UTC
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.ref_type != 'tag' }}
 
 permissions:
   contents: write

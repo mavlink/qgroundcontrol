@@ -16,7 +16,7 @@ Welcome to the QGroundControl support guide. This document provides information 
 
 When you encounter a bug or unexpected behavior, please help us by reporting it:
 
-1. Search existing issues to avoid duplicates: https://github.com/mavlink/qgroundcontrol/issues  
+1. Search existing issues to avoid duplicates: https://github.com/mavlink/qgroundcontrol/issues
 2. Open a new issue with the following information:
    - QGroundControl version (e.g., v4.4.0)
    - Operating system and version
@@ -41,7 +41,7 @@ Join the community to ask questions, share experiences, and stay informed:
 
 For enterprise-grade support, consulting, and custom development, please contact our commercial partners:
 
-- **Dronecode Foundation**: https://www.dronecode.org  
+- **Dronecode Foundation**: https://www.dronecode.org
 
 ---
 
@@ -49,9 +49,9 @@ For enterprise-grade support, consulting, and custom development, please contact
 
 We welcome contributions of all kinds:
 
-- **Source Repository**: https://github.com/mavlink/qgroundcontrol  
-- **Contribution Guide**: https://dev.qgroundcontrol.com/en/contribute/contribute.html  
-- **Coding Standards**: Follow Qt 6 and C++17 guidelines; see `.clang-format`, `.pre-commit-config.yaml`, and CodingStyle files.
+- **Source Repository**: https://github.com/mavlink/qgroundcontrol
+- **Contribution Guide**: https://dev.qgroundcontrol.com/en/contribute/contribute.html
+- **Coding Standards**: Follow Qt 6 and C++20 guidelines; see `.clang-format`, `.pre-commit-config.yaml`, and CodingStyle files.
 - **Pull Requests**: Ensure all CI checks pass and include relevant test coverage.
 
 ---

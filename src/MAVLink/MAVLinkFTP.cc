@@ -82,4 +82,3 @@ QString MavlinkFTP::errorCodeToString(ErrorCode_t errorCode)
 
     return "Unknown Error";
 }
-

@@ -16,7 +16,7 @@
 
 VisualMissionItemTest::VisualMissionItemTest(void)
 {
-    
+
 }
 
 void VisualMissionItemTest::init(void)

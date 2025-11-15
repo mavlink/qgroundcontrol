@@ -73,7 +73,7 @@ const ItemExpected_t _rgItemExpected[] = {
 };
 
 SimpleMissionItemTest::SimpleMissionItemTest(void)
-{    
+{
     rgSimpleItemSignals[commandChangedIndex] =                          SIGNAL(commandChanged(int));
     rgSimpleItemSignals[altitudeModeChangedIndex] =                     SIGNAL(altitudeModeChanged());
     rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =              SIGNAL(friendlyEditAllowedChanged(bool));

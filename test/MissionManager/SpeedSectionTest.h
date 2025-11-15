@@ -17,7 +17,7 @@ class SpeedSection;
 class SpeedSectionTest : public SectionTest
 {
     Q_OBJECT
-    
+
 public:
     SpeedSectionTest(void);
 

@@ -69,4 +69,3 @@ private:
 
     static constexpr const char* kColPrevParam = "CP_DIST";
 };
-

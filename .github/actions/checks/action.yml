@@ -10,15 +10,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v5
 
   - name: Run clang-format style check for C++ Source Files.
     if: inputs.format == 'true'
-    uses: jidicula/clang-format-action@main
+    uses: jidicula/clang-format-action@v4.16.0
     with:
       clang-format-version: '17'
       check-path: 'src'
 
   - name: Check spelling
     if: inputs.spelling == 'true'
-    uses: crate-ci/typos@master
+    uses: crate-ci/typos@v1.39.0

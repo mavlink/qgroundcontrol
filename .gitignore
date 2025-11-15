@@ -6,11 +6,16 @@
 # IDEs & Editors
 # ------------------------------------------------------------------------------
 .idea/
-.vscode/
 .qtcreator/
 .fleet/
 .vs/
 .settings/
+
+# VSCode - ignore user configs, keep templates
+.vscode/*
+!.vscode/*.template
+!.vscode/extensions.json
+!.vscode/README.md
 
 # Editor temp/backup files
 *.swp

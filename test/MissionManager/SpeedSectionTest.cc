@@ -20,7 +20,7 @@ SpeedSectionTest::SpeedSectionTest(void)
     , _spySection(nullptr)
     , _speedSection(nullptr)
 {
-    
+
 }
 
 void SpeedSectionTest::init(void)

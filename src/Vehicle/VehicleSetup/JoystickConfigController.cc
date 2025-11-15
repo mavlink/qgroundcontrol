@@ -19,7 +19,7 @@ QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "Joystick.JoystickConfigContro
 
 JoystickConfigController::JoystickConfigController(void)
 {
-    
+
     connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
     _activeJoystickChanged(JoystickManager::instance()->activeJoystick());
     _setStickPositions();
@@ -243,7 +243,7 @@ bool JoystickConfigController::_stickSettleComplete(int axis, int value)
     }
 
     // We are waiting for the stick to settle out to a max position
-    
+
     if (abs(_stickDetectValue - value) > _calSettleDelta) {
         // Stick is moving too much to consider stopped
         qCDebug(JoystickConfigControllerLog) << "_stickSettleComplete still moving, axis:_stickDetectValue:value" << axis << _stickDetectValue << value;
@@ -265,7 +265,7 @@ bool JoystickConfigController::_stickSettleComplete(int axis, int value)
             _stickDetectSettleElapsed.start();
         }
     }
-    
+
     return false;
 }
 
@@ -279,7 +279,7 @@ void JoystickConfigController::_logJoystickInfo(const QString &methodName, Joyst
 }
 
 void JoystickConfigController::_inputStickDetect(Joystick::AxisFunction_t function, int axis, int value)
-{    
+{
     if (!_validAxis(axis)) {
         qCWarning(JoystickConfigControllerLog) << "Invalid axis axis:_axisCount" << axis << _axisCount;
         return;
@@ -430,11 +430,11 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings()
         struct AxisInfo* info = &_rgAxisInfo[i];
         info->function = Joystick::maxAxisFunction;
     }
-    
+
     for (size_t i = 0; i < Joystick::maxAxisFunction; i++) {
         _rgFunctionAxisMapping[i] = _axisNoAxis;
     }
-    
+
     qCDebug(JoystickConfigControllerLog) << "Calibration values" <<joystick->name();
     qCDebug(JoystickConfigControllerLog) << "  axis:min:max:trim:reversed";
     for (int axis = 0; axis < _axisCount; axis++) {
@@ -448,7 +448,7 @@ void JoystickConfigController::_setInternalCalibrationValuesFromSettings()
         emit axisDeadbandChanged(axis,info->deadband);
         qCDebug(JoystickConfigControllerLog) << "  " << axis << info->axisMin << info->axisMax << info->axisTrim << info->reversed;
     }
-    
+
     for (int function = 0; function < Joystick::maxAxisFunction; function++) {
         int paramAxis;
         paramAxis = joystick->getFunctionAxis(static_cast<Joystick::AxisFunction_t>(function));
@@ -502,7 +502,7 @@ void JoystickConfigController::_writeCalibration()
 {
     Joystick* joystick = JoystickManager::instance()->activeJoystick();
     _validateCalibration();
-    
+
     for (int axis = 0; axis < _axisCount; axis++) {
         Joystick::Calibration_t calibration;
         struct AxisInfo* info   = &_rgAxisInfo[axis];
@@ -513,12 +513,12 @@ void JoystickConfigController::_writeCalibration()
         calibration.deadband    = info->deadband;
         joystick->setCalibration(axis, calibration);
     }
-    
+
     // Write function mapping parameters
     for (int function = 0; function < Joystick::maxAxisFunction; function++) {
         joystick->setFunctionAxis(static_cast<Joystick::AxisFunction_t>(function), _rgFunctionAxisMapping[function]);
     }
-    
+
     _stopCalibration();
     _setInternalCalibrationValuesFromSettings();
 
@@ -686,7 +686,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         _axisCount = 0;
         _activeJoystick = nullptr;
     }
-    
+
     if (joystick) {
         _activeJoystick = joystick;
         if (joystickTransition) {

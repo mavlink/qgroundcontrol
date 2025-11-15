@@ -12,7 +12,7 @@ changelog:
         - "RN: IMPROVEMENT - CUSTOM BUILD"
         - "RN: REFACTORING"
     - title: Fixes
-      labels: 
+      labels:
         - "RN: BUGFIX"
         - "RN: BUGFIX - CUSTOM BUILD"
     - title: Targets

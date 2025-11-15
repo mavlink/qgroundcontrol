@@ -644,7 +644,7 @@ QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle) const
     const QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
     qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
     return timeStr;
-} 
+}
 
 bool APMFirmwarePlugin::hasGripper(const Vehicle *vehicle) const
 {

@@ -18,7 +18,7 @@ class SimpleMissionItem;
 class SectionTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
+
 public:
     SectionTest(void);
 

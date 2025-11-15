@@ -154,4 +154,3 @@ struct ActuatorGeometry
 
     RenderOptions renderOptions{};
 };
-

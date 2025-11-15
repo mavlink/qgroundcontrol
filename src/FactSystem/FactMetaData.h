@@ -30,7 +30,7 @@ class FactMetaData : public QObject
     QML_ELEMENT
 
     friend class SettingsManager;
-    
+
 public:
     enum ValueType_t {
         valueTypeUint8,

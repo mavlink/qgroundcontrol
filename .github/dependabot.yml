@@ -1,7 +1,45 @@
 version: 2
 updates:
+  # Monitor GitHub Actions in workflows directory
   - package-ecosystem: "github-actions"
     directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[CI] "
+    open-pull-requests-limit: 10
+
+  # Monitor GitHub Actions in custom actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/cache"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[CI] "
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/common"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[CI] "
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/upload"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[CI] "
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/checks"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "[CI] "
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/gstreamer"
     schedule:
       interval: "weekly"
     commit-message:

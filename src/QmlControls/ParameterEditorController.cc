@@ -24,7 +24,7 @@ ParameterTableModel::ParameterTableModel(QObject* parent)
 
 ParameterTableModel::~ParameterTableModel()
 {
-    
+
 }
 
 int ParameterTableModel::rowCount(const QModelIndex& /*parent*/) const
@@ -42,14 +42,14 @@ QVariant ParameterTableModel::data(const QModelIndex &index, int role) const
     if (!index.isValid()) {
         return QVariant();
     }
-    
+
     if (index.row() < 0 || index.row() >= _tableData.count()) {
         return QVariant();
     }
     if (index.column() < 0 || index.column() >= _tableViewColCount) {
         return QVariant();
     }
-    
+
     switch (role) {
         case Qt::DisplayRole:
             return QVariant::fromValue(_tableData[index.row()][index.column()]);
@@ -62,7 +62,7 @@ QVariant ParameterTableModel::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> ParameterTableModel::roleNames() const
 {
-    return { 
+    return {
         {Qt::DisplayRole, "display"},
         {FactRole, "fact"}
     };
@@ -133,9 +133,9 @@ Fact* ParameterTableModel::factAt(int row) const
 }
 
 
-ParameterEditorGroup::ParameterEditorGroup(QObject* parent) 
-    : QObject(parent) 
-{ 
+ParameterEditorGroup::ParameterEditorGroup(QObject* parent)
+    : QObject(parent)
+{
 
 }
 
@@ -514,7 +514,7 @@ void ParameterEditorController::_performSearch(void)
                                 !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
                                 !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
                             matched = false;
-                        }                    
+                        }
                     }
                 }
             }

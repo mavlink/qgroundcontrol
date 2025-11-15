@@ -33,8 +33,8 @@ void QGCLoggingCategoryManager::_insertSorted(QmlObjectListModel* model, QGCLogg
     model->append(item);
 }
 
-void QGCLoggingCategoryManager::registerCategory(const QString &fullCategory) 
-{ 
+void QGCLoggingCategoryManager::registerCategory(const QString &fullCategory)
+{
     //qDebug() << "Registering logging full category" << fullCategory;
 
     QString parentCategory;
@@ -47,7 +47,7 @@ void QGCLoggingCategoryManager::registerCategory(const QString &fullCategory)
         childCategory = fullCategory.mid(hierarchyIndex + 1);
         QString fullParentCategory = parentCategory + ".";
         //qDebug() << "  Parent category" << parentCategory << "child category" << childCategory << "full parent category" << fullParentCategory;
-        
+
         bool found = false;
         for (int j=0; j<currentParentModel->count(); j++) {
             auto item = qobject_cast<QGCLoggingCategoryItem*>(currentParentModel->get(j));
@@ -77,7 +77,7 @@ void QGCLoggingCategoryManager::registerCategory(const QString &fullCategory)
 void QGCLoggingCategoryManager::setCategoryLoggingOn(const QString &fullCategoryName, bool enable)
 {
     qCDebug(QGCLoggingCategoryRegisterLog) << "Set category logging" << fullCategoryName << enable;
-    
+
     QSettings settings;
     settings.beginGroup(kFilterRulesSettingsGroup);
     if (enable) {

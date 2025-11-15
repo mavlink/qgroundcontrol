@@ -18,7 +18,7 @@ Q_DECLARE_LOGGING_CATEGORY(GimbalLog)
 
 class GimbalController;
 
-class Gimbal : public FactGroup 
+class Gimbal : public FactGroup
 {
     Q_OBJECT
     Q_PROPERTY(Fact     *absoluteRoll           READ absoluteRoll               CONSTANT)
