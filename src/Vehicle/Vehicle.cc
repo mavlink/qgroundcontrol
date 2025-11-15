@@ -252,9 +252,6 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingHome);
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateAltAboveTerrain);
-    // Initialize alt above terrain to Nan so frontend can display it correctly in case the terrain query had no response
-    _altitudeAboveTerrFact.setRawValue(qQNaN());
-
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
@@ -347,8 +344,6 @@ void Vehicle::_commonInit(LinkInterface* link)
         }
     }
 
-    _flightDistanceFact.setRawValue(0);
-    _flightTimeFact.setRawValue(0);
     _flightTimeUpdater.setInterval(1000);
     _flightTimeUpdater.setSingleShot(false);
     connect(&_flightTimeUpdater, &QTimer::timeout, this, &Vehicle::_updateFlightTime);

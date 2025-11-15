@@ -321,6 +321,18 @@ QStringList Fact::selectedBitmaskStrings() const
 
 QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
 {
+    if (!variant.isValid()) {
+        switch (type()) {
+        case FactMetaData::valueTypeFloat:
+        case FactMetaData::valueTypeDouble:
+            return QStringLiteral("--.--");
+        case FactMetaData::valueTypeElapsedTimeInSeconds:
+            return QStringLiteral("--:--:--");
+        default:
+            return QStringLiteral("-");
+        }
+    }
+
     QString valueString;
 
     const auto stripNegativeZero = [](QString &candidate) {
