@@ -45,6 +45,10 @@ To configure a joystick:
 
    The joystick is _enabled_ as the last step of the calibration process.
 
+    ::: warning
+    On some radiocontrollers, the calibration process does not work because of wrong channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
+    :::
+
 1. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
 1. Select the flight modes/vehicle functions activated by each joystick button.
    ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
