@@ -246,7 +246,7 @@ Item {
             itemCoordinate: _missionItem.landingCoordinate
             visible:        _root.interactive
 
-            onItemCoordinateChanged: _missionItem.moveLandingPosition(itemCoordinate)
+            onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
         }
     }
 
