@@ -643,6 +643,19 @@ void LandingComplexItem::_setDirty(void)
     setDirty(true);
 }
 
+void LandingComplexItem::setCoordinate(const QGeoCoordinate& coordinate) {
+    if (!_landingCoordSet) {
+        setLandingCoordinate(coordinate);
+        return;
+    }
+
+    // Move entire complex item, preserving heading and distance
+    _ignoreRecalcSignals = true;
+    setLandingCoordinate(coordinate);
+    _ignoreRecalcSignals = false;
+    _recalcFromHeadingAndDistanceChange();
+}
+
 void LandingComplexItem::setSequenceNumber(int sequenceNumber)
 {
     if (_sequenceNumber != sequenceNumber) {
