@@ -120,6 +120,19 @@ ApplicationWindow {
         return globals.validationErrorCount <= previousValidationErrorCount
     }
 
+    function checkForVGM(compsInfo){
+        for (let i = 0; i < compsInfo.length; i++) {
+            let item = compsInfo[i];  // each item is a QVariantMap
+
+            let vendor = item["Vendor Id"];
+
+            if (vendor === 0xf4) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function showPlanView() {
         flyView.visible = false
         planView.visible = true

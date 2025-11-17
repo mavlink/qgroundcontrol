@@ -41,8 +41,8 @@ option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" ON)
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Qt6Multimedia_FOUND
 
 # MAVLink
-set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
-set(QGC_MAVLINK_GIT_TAG "19f9955598af9a9181064619bd2e3c04bd2d848a" CACHE STRING "Tag of MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_REPO "https://github.com/FoxFourAI/mavlink_c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_TAG "ef3d46df5dcb62256f9ff384ec353f91fe296ffd" CACHE STRING "Tag of MAVLink Git Repo")
 
 # APM
 option(QGC_DISABLE_APM_MAVLINK "Disable APM Dialect" OFF)

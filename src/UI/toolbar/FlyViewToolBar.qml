@@ -12,6 +12,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 
+
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.Palette
@@ -29,7 +30,8 @@ Rectangle {
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
     property color  _mainStatusBGColor: qgcPal.brandingPurple
-    property int    _currentComputer :  _activeVehicle ? _activeVehicle.onboardComputersManager.currentComputer : 0
+
+    property var    _computersManager :  _activeVehicle ? _activeVehicle.onboardComputersManager : false
 
     function dropMainStatusIndicatorTool() {
         mainStatusIndicator.dropMainStatusIndicator();
@@ -160,17 +162,22 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        anchors.margins:        5
-        source:                 "qrc:/qmlimages/F4/FoxFourTextLogo.svg"
-        visible:                _activeVehicle && _currentComputer
-        width:                  70
+        anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
+        source:                 _outdoorPalette ? "qrc:/qmlimages/F4/darkLogo.svg" : "qrc:/qmlimages/F4/lightLogo.svg"
+        visible:                _computersManager &&
+                                checkForVGM(_computersManager.computersInfo) &&
+                                x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
+        mipmap:                 true
+        fillMode:               Image.PreserveAspectFit
+
+        property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
 
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                let onboardCompStartIndex = 191
-                showVehicleConfigParametersPageComponent(qsTr("Component ") + (onboardCompStartIndex + _currentComputer - 1).toString())
+                console.log(qsTr("Component ") + _computersManager.currentComputerComponent)
+                showVehicleConfigParametersPageComponent(qsTr("Component ") + _computersManager.currentComputerComponent)
             }
         }
     }

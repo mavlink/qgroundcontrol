@@ -735,7 +735,7 @@ Item {
             break
         case actionSetEstimatedUAVPosition:
             let currentCompManager = _activeVehicle.onboardComputersManager;
-            let currentComp = currentCompManager.currentComputer;
+            let currentComp = currentCompManager.currentComputerComponent;
             console.warn("Current COMP", currentComp);
             currentCompManager.sendExternalPositionEstimate(actionData)
             break

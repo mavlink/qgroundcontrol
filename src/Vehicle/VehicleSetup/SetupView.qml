@@ -77,7 +77,7 @@ Rectangle {
                 panelLoader.setSourceComponent(messagePanelComponent)
             } else {
                 panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
-                for(var i = 0; i < componentRepeater.count; i++) {
+                for (var i = 0; i < componentRepeater.count; i++) {
                     var obj = componentRepeater.itemAt(i);
                     if (obj.text === vehicleComponent.name) {
                         obj.checked = true
@@ -271,6 +271,16 @@ Rectangle {
                 Layout.fillWidth:   true
                 icon.source:        "/qmlimages/subMenuButtonImage.png"
                 onClicked:          showPanel(this, "SetupParameterEditor.qml")
+            }
+
+            ConfigButton {
+                property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
+                property var ocMngr : vehicle ? vehicle.onboardComputersManager : 0
+                id:                 vgmInfo
+                visible:            ocMngr && checkForVGM(ocMngr.computersInfo)
+                text:               qsTr("Onboard Computers Info")
+                Layout.fillWidth:   true
+                onClicked:          showPanel(this,"OnboardComputersInfo.qml")
             }
 
             ConfigButton {
