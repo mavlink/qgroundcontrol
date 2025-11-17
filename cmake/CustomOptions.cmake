@@ -31,6 +31,7 @@ option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 # Debug-dependent options
 cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 
 # ============================================================================
 # Feature Flags

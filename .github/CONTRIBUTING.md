@@ -1,17 +1,324 @@
-# QGroundControl License
+# Contributing to QGroundControl
 
-Thank you for considering to contribute to QGroundControl.
+Thank you for considering contributing to QGroundControl! This guide will help you get started with contributing code, reporting issues, and improving documentation.
 
-Contributions must be made under QGroundControl's dual-license system, under GPLv3 and Apache 2.0. This by definition rules out the re-use of any copyleft (e.g. GPL) licensed code. All contributions must be original or from a compatible license (BSD 2/3 clause, MIT, Apache 2.0).
+## Table of Contents
 
-## Apache 2.0 License
+1. [Getting Started](#getting-started)
+2. [How to Contribute](#how-to-contribute)
+3. [Coding Standards](#coding-standards)
+4. [Testing Requirements](#testing-requirements)
+5. [Pull Request Process](#pull-request-process)
+6. [License Requirements](#license-requirements)
 
-The [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) License is a permissive license which allows QGC to be built and used in any environment, including proprietary applications. It allows QGC to be built for mobile app stores. When building with Apache 2.0 a commercial Qt license is required.
+---
 
-## GPL v3 License
+## Getting Started
 
-The [GPL v3 License](http://www.gnu.org/licenses/gpl-3.0.en.html) is a strong copyleft license. When building QGC under this license the open source version of Qt can be used. Our licensing grants the permission to use a later version of the license, however, contributions have to be made under 3.0.
+### Prerequisites
 
-## Contact
+Before you begin, please:
 
-If you have questions regarding the licensing, please contact the maintainer Lorenz Meier, [lm@groundcontrol.org].
+1. Read the [Developer Guide](https://dev.qgroundcontrol.com/en/)
+2. Review the [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
+3. Familiarize yourself with the [Architecture](copilot-instructions.md)
+
+### Development Environment
+
+- **Language**: C++20 with Qt 6.10+ framework
+- **Build System**: CMake 3.25+
+- **Platforms**: Windows, macOS, Linux, Android, iOS
+- **IDE**: Qt Creator (recommended), VS Code, or your preferred IDE
+
+---
+
+## How to Contribute
+
+### Reporting Issues
+
+Before creating a new issue:
+
+1. **Search existing issues** to avoid duplicates
+2. **Provide complete information**:
+   - QGroundControl version
+   - Operating system and version
+   - Detailed steps to reproduce
+   - Log files (from `~/.local/share/QGroundControl/`)
+   - Screenshots or videos if applicable
+
+**Create an issue**: https://github.com/mavlink/qgroundcontrol/issues
+
+**For security vulnerabilities**: See our [Security Policy](SECURITY.md) for responsible disclosure procedures.
+
+### Suggesting Enhancements
+
+Feature requests are welcome! Please:
+
+1. Check if the feature already exists or has been requested
+2. Explain the use case and benefits
+3. Consider implementation complexity
+4. Be prepared to contribute code if possible
+
+### Contributing Code
+
+1. **Fork the repository**
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/qgroundcontrol.git
+   cd qgroundcontrol
+   ```
+
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/my-new-feature
+   ```
+
+3. **Make your changes** following our [coding standards](#coding-standards)
+
+4. **Test your changes thoroughly**
+   - Run unit tests: `./qgroundcontrol --unittest`
+   - Test on all relevant platforms when possible
+   - Test with both PX4 and ArduPilot if applicable
+
+5. **Commit your changes**
+   ```bash
+   git add .
+   git commit -m "Add feature: brief description"
+   ```
+
+6. **Push to your fork**
+   ```bash
+   git push origin feature/my-new-feature
+   ```
+
+7. **Create a Pull Request** from your fork to `mavlink/qgroundcontrol:master`
+
+---
+
+## Coding Standards
+
+### C++ Guidelines
+
+- **Standard**: C++20
+- **Framework**: Qt 6 guidelines
+- **Naming Conventions**:
+  - Classes: `PascalCase`
+  - Methods/functions: `camelCase`
+  - Private members: `_leadingUnderscore`
+  - Constants: `ALL_CAPS` or `kPascalCase`
+
+- **Always use braces** for if/else/for/while statements
+  ```cpp
+  // Good
+  if (condition) {
+      doSomething();
+  }
+
+  // Bad
+  if (condition) doSomething();
+  ```
+
+- **Defensive coding**:
+  - Always null-check pointers before use
+  - Validate all inputs
+  - Use Q_ASSERT for debug-build development checks only (compiled out in release builds)
+  - Always use defensive error handling in production code paths (never rely on Q_ASSERT)
+  - Handle errors gracefully in production code
+
+- **Code formatting**:
+  - Run `clang-format` before committing
+  - Follow `.clang-format` in the repository
+  - 4 spaces for indentation (no tabs)
+
+### QML Guidelines
+
+- Follow Qt QML coding conventions
+- Use type annotations
+- Prefer declarative over imperative code
+- See `src/QmlControls/QGCButton.qml` for examples
+
+### Logging
+
+Use Qt logging categories:
+
+```cpp
+Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
+QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
+
+qCDebug(MyComponentLog) << "Debug message:" << value;
+qCWarning(MyComponentLog) << "Warning message";
+qCCritical(MyComponentLog) << "Critical error";
+```
+
+### Architecture Patterns
+
+#### Fact System (Required for Parameters)
+
+Always use the Fact System for vehicle parameters:
+
+```cpp
+Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
+if (param) {
+    param->setCookedValue(newValue);  // For display values
+    // param->setRawValue(newValue);  // For MAVLink values
+}
+```
+
+#### Multi-Vehicle Awareness
+
+Always check for null vehicles:
+
+```cpp
+Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+if (vehicle) {
+    // Use vehicle
+}
+```
+
+#### Firmware Plugin System
+
+Use FirmwarePlugin for firmware-specific behavior instead of hardcoding:
+
+```cpp
+vehicle->firmwarePlugin()->isCapable(capability);
+vehicle->firmwarePlugin()->flightModes();
+```
+
+---
+
+## Testing Requirements
+
+### Unit Tests
+
+- Add unit tests for new functionality
+- Place tests in `test/` directory mirroring `src/` structure
+- Use Qt Test framework with `UnitTest` base class
+- Run tests before submitting:
+  ```bash
+  ./qgroundcontrol --unittest
+  ```
+
+### Manual Testing
+
+Test your changes on:
+- Multiple platforms (Windows, macOS, Linux if possible)
+- Both PX4 and ArduPilot firmware (if applicable)
+- Different vehicle types (multirotor, fixed-wing, VTOL, rover)
+
+### Pre-commit Checks
+
+Run before committing:
+
+```bash
+# Format code
+clang-format -i path/to/changed/files.cc
+
+# Run pre-commit hooks (optional)
+pre-commit run --all-files
+```
+
+---
+
+## Pull Request Process
+
+### Before Submitting
+
+1. **Rebase on latest master**
+   ```bash
+   git fetch upstream
+   git rebase upstream/master
+   ```
+
+2. **Ensure all tests pass**
+3. **Update documentation** if needed
+4. **Write a clear PR description**:
+   - What problem does it solve?
+   - How was it tested?
+   - Breaking changes (if any)
+   - Screenshots for UI changes
+
+### PR Requirements
+
+- ✅ All CI checks must pass
+- ✅ Code follows style guidelines
+- ✅ Tests added for new features
+- ✅ No unrelated changes
+- ✅ Commit messages are clear and descriptive
+
+### Review Process
+
+- Maintainers will review your PR
+- Address feedback in new commits (don't force-push during review)
+- Once approved, a maintainer will merge your PR
+
+### After Merging
+
+- Delete your feature branch
+- Your contribution will appear in the next release
+- Thank you for contributing! 🎉
+
+---
+
+## License Requirements
+
+### Dual-License Requirement
+
+**Important**: All contributions to QGroundControl must be compatible with our **dual-license system** (Apache 2.0 AND GPL v3).
+
+### What This Means
+
+- **Your code must be original** or from a compatible license
+- **Compatible licenses**: BSD 2-clause, BSD 3-clause, MIT, Apache 2.0
+- **Incompatible licenses**: GPL-only, proprietary, copyleft-only licenses
+
+By contributing, you agree that:
+1. Your contributions are your original work or properly licensed
+2. You grant QGroundControl rights under **both** Apache 2.0 and GPL v3 licenses
+3. You have the right to submit the contribution
+
+### License Background
+
+QGroundControl uses a dual-license system:
+
+#### Apache License 2.0
+- Permissive license
+- Allows use in proprietary applications
+- Allows distribution via app stores
+- **Requires commercial Qt license**
+
+Full text: [LICENSE-APACHE](../LICENSE-APACHE)
+
+#### GNU General Public License v3 (GPL v3)
+- Copyleft license
+- Ensures software remains open source
+- **Can use open-source Qt**
+- Users can use later GPL versions (v3 is minimum for contributions)
+
+Full text: [LICENSE-GPL](../LICENSE-GPL)
+
+### Questions About Licensing
+
+If you have questions about licensing, please contact:
+- Lorenz Meier: lm@qgroundcontrol.org
+
+For more details, see [COPYING.md](COPYING.md).
+
+---
+
+## Additional Resources
+
+- **User Manual**: https://docs.qgroundcontrol.com/en/
+- **Developer Guide**: https://dev.qgroundcontrol.com/en/
+- **API Documentation**: In-code documentation and `copilot-instructions.md`
+- **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
+- **Discussion Forum**: https://discuss.px4.io/c/qgroundcontrol
+- **Discord**: https://discord.gg/dronecode
+
+---
+
+## Code of Conduct
+
+QGroundControl is part of the Dronecode Foundation. Please follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+
+Thank you for contributing to QGroundControl! Your efforts help make drone control accessible to everyone.
