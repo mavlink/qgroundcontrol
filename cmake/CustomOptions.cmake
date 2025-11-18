@@ -73,7 +73,7 @@ option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 # ============================================================================
 
 set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "MAVLink repository URL")
-set(QGC_MAVLINK_GIT_TAG "a9a10b52a6c87e54676fea22d2936c1b8b733f99" CACHE STRING "MAVLink repository commit/tag")
+set(QGC_MAVLINK_GIT_TAG "9b4f91bb02c1142edf01b14945b36b503be3075b" CACHE STRING "MAVLink repository commit/tag")
 
 # ============================================================================
 # Autopilot Plugin Configuration
