@@ -33,7 +33,7 @@ public:
 
     /// This custom build has it's own custom instrument panel. Don't show regular one.
     bool showInstrumentPanel() const final { return false; }
-    /// This custom build does not support conecting multiple vehicles to it.
+    /// This custom build does not support connecting multiple vehicles to it.
     /// This in turn simplifies various parts of the QGC ui.
     bool showMultiVehicleList() const final { return false; }
 };
