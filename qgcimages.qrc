@@ -83,6 +83,7 @@
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
         <file alias="Connect.svg">src/UI/toolbar/Images/Connect.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
+        <file alias="Focus.svg">src/FlightDisplay/Images/Focus.svg</file>
         <file alias="DatalinkLoss.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLoss.svg</file>
         <file alias="DatalinkLossLight.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg</file>
         <file alias="Disarmed.svg">src/UI/toolbar/Images/Disarmed.svg</file>
@@ -109,6 +110,7 @@
         <file alias="HelpBlack.svg">src/FlightMap/Images/HelpBlack.svg</file>
         <file alias="HITL.svg">src/AutoPilotPlugins/PX4/Images/HITL.svg</file>
         <file alias="Home.svg">src/FlightMap/Images/Home.svg</file>
+        <file alias="Home.png">src/FlightMap/Images/Home.png</file>
         <file alias="Joystick.png">src/UI/toolbar/Images/Joystick.png</file>
         <file alias="LandMode.svg">src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>

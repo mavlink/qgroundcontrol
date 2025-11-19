@@ -38,7 +38,7 @@ ListModel {
         name: qsTr("Video")
         url: "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/camera.svg"
-        pageVisible: function() { return QGroundControl.settingsManager.videoSettings.visible }
+        pageVisible: function() { return false }
     }
 
     ListElement {
@@ -96,13 +96,6 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("Help")
-        url: "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/question.svg"
-        pageVisible: function() { return true }
-    }
-
-    ListElement {
         name: qsTr("Mock Link")
         url: "qrc:/qml/QGroundControl/AppSettings/MockLink.qml"
         iconUrl: "qrc:/InstrumentValueIcons/drone.svg"
@@ -121,6 +114,13 @@ ListModel {
         url: "qrc:/qml/QGroundControl/AppSettings/QmlTest.qml"
         iconUrl: "qrc:/InstrumentValueIcons/photo.svg"
         pageVisible: function() { return ScreenTools.isDebug }
+    }
+
+    ListElement {
+        name: qsTr("Help")
+        url: "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/question.svg"
+        pageVisible: function() { return true }
     }
 }
 

@@ -17,10 +17,16 @@ import QGroundControl.Controls
 
 Rectangle {
     id:         _root
-    color:      qgcPal.windowTransparent
+    color:      QGroundControl.globalPalette.toolbarBackground
+    border.color: qgcPal.brandingBlue
+    border.width: 2
     width:      ScreenTools.defaultFontPixelWidth * 7
     height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
-    radius:     ScreenTools.defaultFontPixelWidth / 2
+    radius:     ScreenTools.defaultFontPixelWidth * 0.6
+
+    QGCPalette { id: qgcPal }
+
+    // Removed inner glow to avoid per-button cyan edge appearance
 
     property alias  model:              repeater.model
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter

@@ -115,6 +115,15 @@ AnalyzePage {
                     Layout.fillWidth: true
                     enabled: !LogDownloadController.requestingList && !LogDownloadController.downloadingLogs
                     text: qsTr("Refresh")
+                    textColor: QGroundControl.globalPalette.buttonText
+                    backgroundColor: QGroundControl.globalPalette.toolbarBackground
+
+                    background: Rectangle {
+                        radius: ScreenTools.buttonBorderRadius
+                        color: parent.backgroundColor
+                        border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                        border.width: 1
+                    }
 
                     onClicked: {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
@@ -130,6 +139,15 @@ AnalyzePage {
                     Layout.fillWidth: true
                     enabled: !LogDownloadController.requestingList && !LogDownloadController.downloadingLogs
                     text: qsTr("Download")
+                    textColor: QGroundControl.globalPalette.buttonText
+                    backgroundColor: QGroundControl.globalPalette.toolbarBackground
+
+                    background: Rectangle {
+                        radius: ScreenTools.buttonBorderRadius
+                        color: parent.backgroundColor
+                        border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                        border.width: 1
+                    }
 
                     onClicked: {
                         var logsSelected = false
@@ -169,6 +187,16 @@ AnalyzePage {
                     Layout.fillWidth: true
                     enabled: !LogDownloadController.requestingList && !LogDownloadController.downloadingLogs && (LogDownloadController.model.count > 0)
                     text: qsTr("Erase All")
+                    textColor: QGroundControl.globalPalette.buttonText
+                    backgroundColor: QGroundControl.globalPalette.toolbarBackground
+
+                    background: Rectangle {
+                        radius: ScreenTools.buttonBorderRadius
+                        color: parent.backgroundColor
+                        border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                        border.width: 1
+                    }
+
                     onClicked: mainWindow.showMessageDialog(
                         qsTr("Delete All Log Files"),
                         qsTr("All log files will be erased permanently. Is this really what you want?"),
@@ -181,6 +209,16 @@ AnalyzePage {
                     Layout.fillWidth: true
                     text: qsTr("Cancel")
                     enabled: LogDownloadController.requestingList || LogDownloadController.downloadingLogs
+                    textColor: QGroundControl.globalPalette.buttonText
+                    backgroundColor: QGroundControl.globalPalette.toolbarBackground
+
+                    background: Rectangle {
+                        radius: ScreenTools.buttonBorderRadius
+                        color: parent.backgroundColor
+                        border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                        border.width: 1
+                    }
+
                     onClicked: LogDownloadController.cancel()
                 }
             }

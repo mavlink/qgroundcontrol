@@ -27,7 +27,9 @@ QGCFlickable {
         anchors.right:  parent.right
         height: geoFenceItems.y + geoFenceItems.height + (_margin * 2)
         radius: _radius
-        color:  qgcPal.missionItemEditor
+        color:  QGroundControl.globalPalette.toolbarBackground
+        border.color: QGroundControl.globalPalette.groupBorder
+        border.width: 1
 
         QGCLabel {
             id:                 geoFenceLabel
@@ -45,8 +47,10 @@ QGCFlickable {
             anchors.right:      parent.right
             anchors.top:        geoFenceLabel.bottom
             height:             fenceColumn.y + fenceColumn.height + (_margin * 2)
-            color:              qgcPal.windowShadeDark
+            color:              QGroundControl.globalPalette.toolbarBackground
             radius:             _radius
+            border.color:       QGroundControl.globalPalette.groupBorder
+            border.width:       1
 
             Column {
                 id:                 fenceColumn
@@ -119,6 +123,14 @@ QGCFlickable {
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Polygon Fence")
+                        textColor:          QGroundControl.globalPalette.buttonText
+                        backgroundColor:    QGroundControl.globalPalette.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width: 1
+                        }
 
                         onClicked: {
                             var rect = Qt.rect(flightMap.centerViewport.x, flightMap.centerViewport.y, flightMap.centerViewport.width, flightMap.centerViewport.height)
@@ -131,6 +143,14 @@ QGCFlickable {
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Circular Fence")
+                        textColor:          QGroundControl.globalPalette.buttonText
+                        backgroundColor:    QGroundControl.globalPalette.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width: 1
+                        }
 
                         onClicked: {
                             var rect = Qt.rect(flightMap.centerViewport.x, flightMap.centerViewport.y, flightMap.centerViewport.width, flightMap.centerViewport.height)
@@ -210,6 +230,14 @@ QGCFlickable {
                             QGCButton {
                                 text:               qsTr("Del")
                                 Layout.alignment:   Qt.AlignHCenter
+                                textColor:          QGroundControl.globalPalette.buttonText
+                                backgroundColor:    QGroundControl.globalPalette.toolbarBackground
+                                background: Rectangle {
+                                    radius: ScreenTools.buttonBorderRadius
+                                    color: parent.backgroundColor
+                                    border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                                    border.width: 1
+                                }
                                 onClicked:          myGeoFenceController.deletePolygon(index)
                             }
                         }
@@ -302,6 +330,14 @@ QGCFlickable {
                             QGCButton {
                                 text:               qsTr("Del")
                                 Layout.alignment:   Qt.AlignHCenter
+                                textColor:          QGroundControl.globalPalette.buttonText
+                                backgroundColor:    QGroundControl.globalPalette.toolbarBackground
+                                background: Rectangle {
+                                    radius: ScreenTools.buttonBorderRadius
+                                    color: parent.backgroundColor
+                                    border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                                    border.width: 1
+                                }
                                 onClicked:          myGeoFenceController.deleteCircle(index)
                             }
                         }
@@ -319,6 +355,14 @@ QGCFlickable {
                         visible:            breachReturnSection.visible && !myGeoFenceController.breachReturnPoint.isValid
                         anchors.left:       parent.left
                         anchors.right:      parent.right
+                        textColor:          QGroundControl.globalPalette.buttonText
+                        backgroundColor:    QGroundControl.globalPalette.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width: 1
+                        }
 
                         onClicked: myGeoFenceController.breachReturnPoint = flightMap.center
                     }
@@ -328,6 +372,14 @@ QGCFlickable {
                         visible:            breachReturnSection.visible && myGeoFenceController.breachReturnPoint.isValid
                         anchors.left:       parent.left
                         anchors.right:      parent.right
+                        textColor:          QGroundControl.globalPalette.buttonText
+                        backgroundColor:    QGroundControl.globalPalette.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? QGroundControl.globalPalette.toolbarDivider : (parent.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width: 1
+                        }
 
                         onClicked: myGeoFenceController.breachReturnPoint = QtPositioning.coordinate()
                     }

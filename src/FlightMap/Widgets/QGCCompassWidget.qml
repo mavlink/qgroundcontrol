@@ -20,9 +20,9 @@ Rectangle {
     width:  size
     height: size
     radius: width / 2
-    color:  qgcPal.window
-    border.color:   qgcPal.text
-    border.width:   usedByMultipleVehicleList ? 1 : 0
+    color:  qgcPal.toolbarBackground
+    border.color:   qgcPal.brandingBlue
+    border.width:   usedByMultipleVehicleList ? 1 : 1.6
     opacity:        vehicle && usedByMultipleVehicleList && !vehicle.armed ? 0.5 : 1
 
     property real size:                         _defaultSize
@@ -151,5 +151,15 @@ Rectangle {
         y:                          size * 0.74
         text:                       vehicle && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
         horizontalAlignment:        Text.AlignHCenter
+        color:                      qgcPal.brandingBlue
+        font.bold:                  true
+    }
+
+    Rectangle {
+        anchors.fill:   parent
+        color:          "transparent"
+        border.color:   qgcPal.brandingBlue
+        opacity:        0.08
+        radius:         parent.radius
     }
 }

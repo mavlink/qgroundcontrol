@@ -20,6 +20,7 @@ Item {
     id: control
 
     property real offsetRadius: width / 2 - ScreenTools.defaultFontPixelHeight / 2
+    property color neonColor: qgcPal.brandingBlue
 
     function translateCenterToAngleX(radius, angle) {
         return radius * Math.sin(angle * (Math.PI / 180))
@@ -32,6 +33,8 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "N"
+        color:              neonColor
+        font.bold:          true
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 0)
@@ -42,6 +45,8 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "E"
+        color:              neonColor
+        font.bold:          true
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 90)
@@ -52,6 +57,8 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "S"
+        color:              neonColor
+        font.bold:          true
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 180)
@@ -62,6 +69,8 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "W"
+        color:              neonColor
+        font.bold:          true
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 270)
@@ -78,7 +87,7 @@ Item {
             x:                  size / 2
             width:              1
             height:             ScreenTools.defaultFontPixelHeight * 0.5
-            color:              qgcPal.text
+            color:              neonColor
 
             transform: Rotation {
                 origin.x:   0
@@ -98,7 +107,7 @@ Item {
             y:                  _margin
             width:              1
             height:             _margin
-            color:              qgcPal.text
+            color:              neonColor
 
             property real _margin: ScreenTools.defaultFontPixelHeight * 0.25
 
@@ -109,4 +118,22 @@ Item {
             }
         }
     }    
+
+    Canvas {
+        anchors.fill: parent
+        onPaint: {
+            var ctx = getContext("2d")
+            var r = Math.min(width, height) / 2 - ScreenTools.defaultFontPixelHeight * 0.2
+            ctx.strokeStyle = neonColor
+            ctx.lineWidth = 2
+            ctx.shadowColor = neonColor
+            ctx.shadowBlur = 8
+            ctx.beginPath()
+            ctx.arc(width/2, height/2, r, -Math.PI*0.2, Math.PI*0.2)
+            ctx.stroke()
+            ctx.beginPath()
+            ctx.arc(width/2, height/2, r, Math.PI*0.35, Math.PI*0.65)
+            ctx.stroke()
+        }
+    }
 }

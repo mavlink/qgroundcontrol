@@ -28,6 +28,12 @@ Button {
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
 
+    // Neon style options (optional)
+    property bool   neon:           false
+    property color  neonColor:      qgcPal.brandingBlue
+    property bool   pill:           false
+    property real   neonBorderWidth: 1
+
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
     property alias backgroundColor:     backRect.color
@@ -35,25 +41,29 @@ Button {
 
     property bool   _showHighlight:     enabled && (pressed | checked)
 
-    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth * 2
+    property int _horizontalPadding:    neon ? Math.round(ScreenTools.defaultFontPixelWidth * 1.25) : ScreenTools.defaultFontPixelWidth * 2
     property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     background: Rectangle {
         id:             backRect
-        radius:         backRadius
+        radius:         pill ? height/2 : backRadius
         implicitWidth:  ScreenTools.implicitButtonWidth
         implicitHeight: ScreenTools.implicitButtonHeight
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-        color:          primary ? qgcPal.primaryButton : qgcPal.button
+        border.width:   neon ? neonBorderWidth : 1
+        border.color:   neon ? neonColor : qgcPal.groupBorder
+        color:          qgcPal.toolbarBackground
+        antialiasing:   true
 
         Rectangle {
             anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
-            opacity:        _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+            anchors.margins: neon ? 1 : 0
+            color:          neon ? neonColor : qgcPal.toolStripHoverColor
+            opacity:        neon ? (_showHighlight ? 0.16 : control.enabled && control.hovered ? 0.08 : 0)
+                                : (_showHighlight ? 0.18 : control.enabled && control.hovered ? 0.10 : 0)
             radius:         parent.radius
+            antialiasing:   true
         }
     }
 
@@ -79,7 +89,7 @@ Button {
                 font.pointSize:         control.pointSize
                 font.family:            control.font.family
                 font.weight:            fontWeight
-                color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
+                color:                  neon ? neonColor : qgcPal.buttonText
                 visible:                control.text !== "" 
             }
     }

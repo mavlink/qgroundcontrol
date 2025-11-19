@@ -136,7 +136,11 @@ AnalyzePage {
                         }
                     }
 
-                    background: Rectangle { color: qgcPal.windowShade }
+                    background: Rectangle {
+                        color: qgcPal.toolbarBackground
+                        border.color: qgcPal.groupBorder
+                        border.width: 1
+                    }
 
                     Keys.onPressed: (event) => {
                         // ignore tabs

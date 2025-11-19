@@ -27,13 +27,18 @@ Item {
     property alias settingsGroup:           factValueGrid.settingsGroup
     property alias specificVehicleForCard:  factValueGrid.specificVehicleForCard
 
+    property color _cyan: "#00F0FF"
+    property color _panelBg: Qt.rgba(0.02, 0.10, 0.16, 0.9)
+
     Rectangle {
         id:         backgroundRect
         width:      control.width + extraWidth
         height:     control.height
-        color:      qgcPal.window
-        radius:     ScreenTools.defaultFontPixelWidth / 2
-        opacity:    0.75
+        color:      _panelBg
+        border.color: _cyan
+        border.width: 1
+        radius:     4
+        opacity:    0.95
     }
 
     ColumnLayout {
@@ -51,7 +56,7 @@ Item {
                 width:              ScreenTools.minTouchPixels * 0.75
                 height:             width
                 sourceSize.width:   width
-                color:              qgcPal.text
+                color:              qgcPal.windowTransparentText
                 fillMode:           Image.PreserveAspectFit
 
                 QGCMouseArea {

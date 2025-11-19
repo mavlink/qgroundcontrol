@@ -438,7 +438,9 @@ SetupPage {
                 color:              qgcPal.text
 
                 background: Rectangle {
-                    color: qgcPal.windowShade
+                    color: qgcPal.toolbarBackground
+                    border.color: qgcPal.groupBorder
+                    border.width: 1
                 }
             }
         } // ColumnLayout

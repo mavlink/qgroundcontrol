@@ -74,7 +74,9 @@ Popup {
             radius: ScreenTools.defaultFontPixelHeight / 2
             width:  parent.implicitWidth - _arrowPointWidth
             height: parent.implicitHeight
-            color:  _qgcPal.window
+            color:  _qgcPal.toolbarBackground
+            border.color: _qgcPal.groupBorder
+            border.width: 1
         }
 
         // Arrowhead
@@ -92,8 +94,11 @@ Popup {
                 context.lineTo(_dropRight ? _arrowPointWidth : 0, 0)
                 context.lineTo(_dropRight ? _arrowPointWidth : 0, _arrowPointWidth * 2)
                 context.closePath()
-                context.fillStyle = _qgcPal.window
+                context.fillStyle = _qgcPal.toolbarBackground
                 context.fill()
+                context.strokeStyle = _qgcPal.groupBorder
+                context.lineWidth = 1
+                context.stroke()
             }
         }
     }

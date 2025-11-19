@@ -1,0 +1,82 @@
+<svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path opacity="0.8" d="M20 50V20" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.8" d="M20 20H50" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.5" d="M30 30H45" stroke="#22D3EE"/>
+<path opacity="0.5" d="M30 30V45" stroke="#22D3EE"/>
+<path opacity="0.8" d="M260 50V20" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.8" d="M260 20H230" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.5" d="M250 30H235" stroke="#22D3EE"/>
+<path opacity="0.5" d="M250 30V45" stroke="#22D3EE"/>
+<path opacity="0.8" d="M20 230V260" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.8" d="M20 260H50" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.5" d="M30 250H45" stroke="#22D3EE"/>
+<path opacity="0.5" d="M30 250V235" stroke="#22D3EE"/>
+<path opacity="0.8" d="M260 230V260" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.8" d="M260 260H230" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.5" d="M250 250H235" stroke="#22D3EE"/>
+<path opacity="0.5" d="M250 250V235" stroke="#22D3EE"/>
+<path opacity="0.6" d="M60 35C113.333 28.3333 166.667 28.3333 220 35" stroke="#22D3EE" stroke-width="1.5"/>
+<path opacity="0.5" d="M60 35V45" stroke="#22D3EE"/>
+<path opacity="0.5" d="M220 35V45" stroke="#22D3EE"/>
+<path opacity="0.8" d="M70 20V28" stroke="#22D3EE"/>
+<path opacity="0.4" d="M82 20V23" stroke="#22D3EE"/>
+<path opacity="0.4" d="M94 20V25" stroke="#22D3EE"/>
+<path opacity="0.4" d="M106 20V23" stroke="#22D3EE"/>
+<path opacity="0.8" d="M118 20V28" stroke="#22D3EE"/>
+<path opacity="0.4" d="M130 20V23" stroke="#22D3EE"/>
+<path opacity="0.4" d="M142 20V25" stroke="#22D3EE"/>
+<path opacity="0.4" d="M154 20V23" stroke="#22D3EE"/>
+<path opacity="0.8" d="M166 20V28" stroke="#22D3EE"/>
+<path opacity="0.4" d="M178 20V23" stroke="#22D3EE"/>
+<path opacity="0.4" d="M190 20V25" stroke="#22D3EE"/>
+<path opacity="0.4" d="M202 20V23" stroke="#22D3EE"/>
+<path opacity="0.8" d="M214 20V28" stroke="#22D3EE"/>
+<path opacity="0.6" d="M70 20H214" stroke="#22D3EE"/>
+<path opacity="0.6" d="M60 245C113.333 251.667 166.667 251.667 220 245" stroke="#22D3EE" stroke-width="1.5"/>
+<path opacity="0.5" d="M60 245V235" stroke="#22D3EE"/>
+<path opacity="0.5" d="M220 245V235" stroke="#22D3EE"/>
+<path opacity="0.6" d="M140 200C173.137 200 200 173.137 200 140C200 106.863 173.137 80 140 80C106.863 80 80 106.863 80 140C80 173.137 106.863 200 140 200Z" stroke="#22D3EE" stroke-width="1.5"/>
+<path opacity="0.5" d="M140 180C162.091 180 180 162.091 180 140C180 117.909 162.091 100 140 100C117.909 100 100 117.909 100 140C100 162.091 117.909 180 140 180Z" stroke="#22D3EE"/>
+<path opacity="0.4" d="M140 160C151.046 160 160 151.046 160 140C160 128.954 151.046 120 140 120C128.954 120 120 128.954 120 140C120 151.046 128.954 160 140 160Z" stroke="#22D3EE"/>
+<path opacity="0.8" d="M140 142C141.105 142 142 141.105 142 140C142 138.895 141.105 138 140 138C138.895 138 138 138.895 138 140C138 141.105 138.895 142 140 142Z" fill="#22D3EE"/>
+<path opacity="0.6" d="M140 110V122" stroke="#22D3EE"/>
+<path opacity="0.6" d="M140 158V170" stroke="#22D3EE"/>
+<path opacity="0.6" d="M110 140H122" stroke="#22D3EE"/>
+<path opacity="0.6" d="M158 140H170" stroke="#22D3EE"/>
+<path opacity="0.7" d="M95 140H115" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.7" d="M165 140H185" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.7" d="M95 135V145" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.7" d="M185 135V145" stroke="#22D3EE" stroke-width="2"/>
+<path opacity="0.5" d="M20 80H30L35 85V95" stroke="#22D3EE"/>
+<path opacity="0.4" d="M25 82V88" stroke="#22D3EE"/>
+<path opacity="0.5" d="M260 80H250L245 85V95" stroke="#22D3EE"/>
+<path opacity="0.4" d="M255 82V88" stroke="#22D3EE"/>
+<path opacity="0.4" d="M220 45L240 30" stroke="#22D3EE"/>
+<path opacity="0.4" d="M60 45L40 30" stroke="#22D3EE"/>
+<path opacity="0.5" d="M197 140H203" stroke="#22D3EE"/>
+<path opacity="0.5" d="M189.363 168.5L194.56 171.5" stroke="#22D3EE"/>
+<path opacity="0.5" d="M168.5 189.363L171.5 194.56" stroke="#22D3EE"/>
+<path opacity="0.5" d="M140 197V203" stroke="#22D3EE"/>
+<path opacity="0.5" d="M111.5 189.363L108.5 194.56" stroke="#22D3EE"/>
+<path opacity="0.5" d="M90.6365 168.5L85.4404 171.5" stroke="#22D3EE"/>
+<path opacity="0.5" d="M83 140H77" stroke="#22D3EE"/>
+<path opacity="0.5" d="M90.6365 111.5L85.4404 108.5" stroke="#22D3EE"/>
+<path opacity="0.5" d="M111.5 90.6365L108.5 85.4404" stroke="#22D3EE"/>
+<path opacity="0.5" d="M140 83V77" stroke="#22D3EE"/>
+<path opacity="0.5" d="M168.5 90.6365L171.5 85.4404" stroke="#22D3EE"/>
+<path opacity="0.5" d="M189.363 111.5L194.56 108.5" stroke="#22D3EE"/>
+<g opacity="0.1">
+<path d="M40 50H240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M40 85H240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M40 120H240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M40 155H240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M40 190H240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M40 225H240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M50 40V240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M85 40V240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M120 40V240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M155 40V240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M190 40V240" stroke="#22D3EE" stroke-width="0.5"/>
+<path d="M225 40V240" stroke="#22D3EE" stroke-width="0.5"/>
+</g>
+</svg>

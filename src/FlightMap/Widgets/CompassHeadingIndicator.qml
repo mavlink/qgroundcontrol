@@ -34,23 +34,52 @@ Canvas {
 
     onPaint: {
         var ctx = getContext("2d")
-        ctx.strokeStyle = simplified ? "#EE3424" : _qgcPal.text
-        ctx.fillStyle = "#EE3424"
-        ctx.lineWidth = 1
+        ctx.clearRect(0, 0, width, height)
+        ctx.lineWidth = 1.6
+        ctx.lineJoin = 'round'
+        ctx.lineCap = 'round'
+
+        // Arrow path (right side)
         ctx.beginPath()
         ctx.moveTo(width / 2, 0)
         ctx.lineTo(width, height)
         ctx.lineTo(width / 2, height * 0.75)
-        ctx.lineTo(width / 2, 0)
+        ctx.closePath()
+
+        // Gradient fill inside triangle (no external shadow box)
+        var gradR = ctx.createRadialGradient(width/2, height*0.28, 0, width/2, height*0.28, height*0.65)
+        gradR.addColorStop(0, _qgcPal.brandingBlue)
+        gradR.addColorStop(1, '#00000000')
+        ctx.fillStyle = gradR
         ctx.fill()
-        ctx.stroke()
-        ctx.fillStyle = "#C72B27"
+
+        // Left side
         ctx.beginPath()
         ctx.moveTo(width / 2, 0)
         ctx.lineTo(0, height)
         ctx.lineTo(width / 2, height * 0.75)
-        ctx.lineTo(width / 2, 0)
+        ctx.closePath()
+
+        var gradL = ctx.createRadialGradient(width/2, height*0.28, 0, width/2, height*0.28, height*0.65)
+        gradL.addColorStop(0, _qgcPal.brandingBlue)
+        gradL.addColorStop(1, '#00000000')
+        ctx.fillStyle = gradL
         ctx.fill()
+
+        // Crisp outline using brand color
+        ctx.strokeStyle = _qgcPal.brandingBlue
+        ctx.beginPath()
+        ctx.moveTo(width / 2, 0)
+        ctx.lineTo(width, height)
+        ctx.lineTo(width / 2, height * 0.75)
+        ctx.closePath()
+        ctx.stroke()
+
+        ctx.beginPath()
+        ctx.moveTo(width / 2, 0)
+        ctx.lineTo(0, height)
+        ctx.lineTo(width / 2, height * 0.75)
+        ctx.closePath()
         ctx.stroke()
     }
 

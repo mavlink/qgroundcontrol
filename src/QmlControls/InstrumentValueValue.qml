@@ -31,12 +31,16 @@ ColumnLayout {
     property real   _horizontalLabelSpacing:        ScreenTools.defaultFontPixelWidth
     property real   _width:                         0
     property real   _height:                        0
+    property color  _cyan:                          "#00F0FF"
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     QGCLabel {
         id:                 label
         Layout.alignment:   Qt.AlignVCenter
         font.pointSize:     _fontSize
-        color:              instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
+        font.bold:          true
+        color:              instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : _cyan
         text:               valueText()
 
         function valueText() {

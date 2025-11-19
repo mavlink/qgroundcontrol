@@ -13,15 +13,21 @@ Button {
     text:           "Button"
     focusPolicy:    Qt.ClickFocus
     hoverEnabled:   !ScreenTools.isMobile
-    implicitHeight: ScreenTools.defaultFontPixelHeight * 2.5
+    implicitHeight: ScreenTools.defaultFontPixelHeight * 2.8
 
     property bool   setupComplete:  true                                    ///< true: setup complete indicator shows as completed
     property var    imageColor:     undefined
     property string imageResource:  "/qmlimages/subMenuButtonImage.png"     ///< Button image
     property bool   largeSize:      false
-    property bool   showHighlight:  control.pressed | control.checked
+    property bool   showHighlight:  control.pressed || control.checked
 
     property size   sourceSize:     Qt.size(ScreenTools.defaultFontPixelHeight * 2, ScreenTools.defaultFontPixelHeight * 2)
+
+    property real   _sidePadding:   ScreenTools.defaultFontPixelWidth * 1.2
+
+    // Customization hooks for border styling (optional)
+    property color  borderColor:    undefined
+    property real   borderWidth:    -1
 
     property ButtonGroup buttonGroup:    null
     onButtonGroupChanged: {
@@ -37,40 +43,56 @@ Button {
         colorGroupEnabled:  control.enabled
     }
 
-    background: Rectangle {
-        id:     innerRect
-        color:  qgcPal.windowShade
+    property color _cyan: "#00F0FF"
+    property color _panelBg: Qt.rgba(0.02, 0.10, 0.16, 0.9)
+    property color _white: "#FFFFFF"
 
-        implicitWidth: titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth
+    background: Rectangle {
+        id:         backgroundFrame
+        implicitWidth: contentRow.implicitWidth + (_sidePadding * 2)
+        implicitHeight: contentRow.implicitHeight + ScreenTools.defaultFontPixelHeight
+        radius:     ScreenTools.defaultFontPixelHeight * 0.55
+        color:      _panelBg
+        border.color: borderColor ? borderColor : (showHighlight || control.hovered ? _cyan : _cyan)
+        border.width: borderWidth > 0 ? borderWidth : 1
+        layer.enabled: true
+        layer.smooth:  true
 
         Rectangle {
             anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
-            opacity:        showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+            anchors.margins: 0
+            color:          _cyan
+            opacity:        control.pressed ? 0.22 : (control.checked ? 0.16 : (control.hovered ? 0.12 : 0.08))
+            radius:         parent.radius
+            visible:        true
         }
 
-        QGCColoredImage {
-            id:                     image
-            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
-            anchors.left:           parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width:                  ScreenTools.defaultFontPixelHeight * 2
-            height:                 ScreenTools.defaultFontPixelHeight * 2
-            fillMode:               Image.PreserveAspectFit
-            mipmap:                 true
-            color:                  imageColor ? imageColor : (control.setupComplete ? titleBar.color : "red")
-            source:                 control.imageResource
-            sourceSize:             control.sourceSize
-        }
+        RowLayout {
+            id:                 contentRow
+            anchors.fill:       parent
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.6
+            spacing:            ScreenTools.defaultFontPixelWidth
 
-        QGCLabel {
-            id:                     titleBar
-            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
-            anchors.left:           image.right
-            anchors.verticalCenter: parent.verticalCenter
-            verticalAlignment:      TextEdit.AlignVCenter
-            color:                  showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            text:                   control.text
+            QGCColoredImage {
+                id:                     image
+                Layout.alignment:       Qt.AlignVCenter
+                width:                  ScreenTools.defaultFontPixelHeight * 1.8
+                height:                 width
+                fillMode:               Image.PreserveAspectFit
+                mipmap:                 true
+                color:                  imageColor ? imageColor : (control.setupComplete ? _white : qgcPal.colorRed)
+                source:                 control.imageResource
+                sourceSize:             control.sourceSize
+            }
+
+            QGCLabel {
+                id:                     titleBar
+                Layout.alignment:       Qt.AlignVCenter
+                verticalAlignment:      Text.AlignVCenter
+                color:                  qgcPal.buttonText
+                font.pointSize:         ScreenTools.mediumFontPointSize
+                text:                   control.text
+            }
         }
     }
 

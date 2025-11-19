@@ -15,8 +15,10 @@ ColumnLayout {
 
     property alias contentSpacing: _contentLayout.spacing
 
-    property string defaultBorderColor  : QGroundControl.globalPalette.groupBorder
-    property string outerBorderColor    : defaultBorderColor
+    property color  backgroundColor     : QGroundControl.globalPalette.toolbarBackground
+    property color  highlightBorder     : QGroundControl.globalPalette.toolbarDivider
+    property color  defaultBorderColor  : highlightBorder
+    property color  outerBorderColor    : defaultBorderColor
 
     property string defaultHeadingPointSize:    ScreenTools.defaultFontPointSize + 1
     property string headingPointSize:           defaultHeadingPointSize
@@ -54,7 +56,7 @@ ColumnLayout {
         Layout.fillWidth:   true
         implicitWidth:      _contentLayout.implicitWidth + (showBorder ? _margins * 2 : 0)
         implicitHeight:     _contentLayout.implicitHeight + (showBorder ? _margins * 2: 0)
-        color:              "transparent"
+        color:              backgroundColor
         border.color:       outerBorderColor
         border.width:       showBorder ? 1 : 0
         radius:             ScreenTools.defaultFontPixelHeight / 2
@@ -67,7 +69,7 @@ ColumnLayout {
                 y:                  _contentItem.y + _contentItem.height + _margins + (showBorder ? _margins : 0)
                 width:              parent.width - (showBorder ? _margins * 2 : 0)
                 height:             1
-                color:              QGroundControl.globalPalette.groupBorder
+                color:              highlightBorder
 
                 property var _contentItem: _contentLayout.visibleChildren[index]
             }

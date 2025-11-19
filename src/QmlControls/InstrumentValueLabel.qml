@@ -39,7 +39,7 @@ ColumnLayout {
         fillMode:                   Image.PreserveAspectFit
         mipmap:                     true
         smooth:                     true
-        color:                      _color
+        color:                      instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.windowTransparentText
         opacity:                    instrumentValueData.currentOpacity
         visible:                    _iconVisible
 
@@ -69,7 +69,7 @@ ColumnLayout {
         height:             _tightHeight
         font.pointSize:     ScreenTools.smallFontPointSize
         text:               instrumentValueData.text
-        color:              _color
+        color:              instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.windowTransparentText
         opacity:            instrumentValueData.currentOpacity
         visible:            !_iconVisible
     }

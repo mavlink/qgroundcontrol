@@ -22,7 +22,9 @@ Rectangle {
     width:      mainLayout.width + (_margins * 2)
     height:     mainLayout.height + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
-    color:      qgcPal.window
+    color:      qgcPal.toolbarBackground
+    border.color: qgcPal.brandingBlue
+    border.width: 2
     visible:    _utmspEnabled === true ? utmspSliderTrigger: false
 
     property var    guidedController
@@ -93,6 +95,7 @@ Rectangle {
             Layout.rightMargin:     Layout.leftMargin
             text:                   control.message
             horizontalAlignment:    Text.AlignHCenter
+            color:                  qgcPal.windowTransparentText
         }
 
         QGCCheckBox {

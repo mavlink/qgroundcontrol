@@ -19,7 +19,7 @@ import QGroundControl.Controls
 
 Rectangle {
     id:     setupView
-    color:  qgcPal.window
+    color:  qgcPal.toolbarBackground
     z:      QGroundControl.zOrderTopMost
 
     // This need to block click event leakage to underlying map.
@@ -125,7 +125,9 @@ Rectangle {
     Component {
         id: noComponentsVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color: qgcPal.toolbarBackground
+            border.color: qgcPal.groupBorder
+            border.width: 1
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -143,7 +145,9 @@ Rectangle {
     Component {
         id: disconnectedVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color: qgcPal.toolbarBackground
+            border.color: qgcPal.groupBorder
+            border.width: 1
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -163,7 +167,9 @@ Rectangle {
         id: missingParametersVehicleSummaryComponent
 
         Rectangle {
-            color: qgcPal.windowShade
+            color: qgcPal.toolbarBackground
+            border.color: qgcPal.groupBorder
+            border.width: 1
 
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
@@ -291,7 +297,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.toolbarDivider
     }
 
     Loader {

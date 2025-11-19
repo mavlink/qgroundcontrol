@@ -16,11 +16,11 @@ import QGroundControl.FactControls
 Rectangle {
     id:             _root
     height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
-    color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    color:          qgcPal.toolbarBackground
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
-    border.width:   _readyForSave ? 0 : 2
-    border.color:   qgcPal.warningText
+    border.width:   1
+    border.color:   qgcPal.groupBorder
 
     property var    map                 ///< Map control
     property var    masterController
@@ -195,6 +195,14 @@ Rectangle {
                         Layout.fillWidth:   true
                         text:               qsTr("Move to vehicle position")
                         enabled:            _activeVehicle && missionItem.specifiesCoordinate
+                        textColor:          qgcPal.buttonText
+                        backgroundColor:    qgcPal.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? qgcPal.toolbarDivider : (parent.hovered ? qgcPal.toolbarDivider : qgcPal.groupBorder)
+                            border.width: 1
+                        }
 
                         onClicked: {
                             missionItem.coordinate = _activeVehicle.coordinate
@@ -208,6 +216,14 @@ Rectangle {
                         Layout.fillWidth:   true
                         text:               qsTr("Move to previous item position")
                         enabled:            _missionController.previousCoordinate.isValid
+                        textColor:          qgcPal.buttonText
+                        backgroundColor:    qgcPal.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? qgcPal.toolbarDivider : (parent.hovered ? qgcPal.toolbarDivider : qgcPal.groupBorder)
+                            border.width: 1
+                        }
                         onClicked: {
                             missionItem.coordinate = _missionController.previousCoordinate
                             hamburgerMenuDropPanel.close()
@@ -218,6 +234,14 @@ Rectangle {
                         Layout.fillWidth:   true
                         text:               qsTr("Edit position...")
                         enabled:            missionItem.specifiesCoordinate
+                        textColor:          qgcPal.buttonText
+                        backgroundColor:    qgcPal.toolbarBackground
+                        background: Rectangle {
+                            radius: ScreenTools.buttonBorderRadius
+                            color: parent.backgroundColor
+                            border.color: parent.pressed || parent.checked ? qgcPal.toolbarDivider : (parent.hovered ? qgcPal.toolbarDivider : qgcPal.groupBorder)
+                            border.width: 1
+                        }
                         onClicked: {
                             editPositionDialog.createObject(mainWindow).open()
                             hamburgerMenuDropPanel.close()

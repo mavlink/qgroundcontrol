@@ -59,16 +59,16 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(button,               "#ffffff", "#ffffff", "#707070", "#626270")
     DECLARE_QGC_COLOR(buttonBorder,         "#ffffff", "#d9d9d9", "#707070", "#adadb8")
     DECLARE_QGC_COLOR(buttonText,           "#9d9d9d", "#000000", "#A6A6A6", "#ffffff")
-    DECLARE_QGC_COLOR(buttonHighlight,      "#e4e4e4", "#946120", "#3a3a3a", "#fff291")
+    DECLARE_QGC_COLOR(buttonHighlight,      "#e4e4e4", "#6045c5", "#3a3a3a", "#48D6FF")
     DECLARE_QGC_COLOR(buttonHighlightText,  "#2c2c2c", "#ffffff", "#2c2c2c", "#000000")
     DECLARE_QGC_COLOR(primaryButton,        "#585858", "#8cb3be", "#585858", "#8cb3be")
     DECLARE_QGC_COLOR(primaryButtonText,    "#2c2c2c", "#000000", "#2c2c2c", "#000000")
     DECLARE_QGC_COLOR(textField,            "#ffffff", "#ffffff", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(textFieldText,        "#808080", "#000000", "#000000", "#000000")
     DECLARE_QGC_COLOR(mapButton,            "#585858", "#000000", "#585858", "#000000")
-    DECLARE_QGC_COLOR(mapButtonHighlight,   "#585858", "#be781c", "#585858", "#be781c")
-    DECLARE_QGC_COLOR(mapIndicator,         "#585858", "#be781c", "#585858", "#be781c")
-    DECLARE_QGC_COLOR(mapIndicatorChild,    "#585858", "#766043", "#585858", "#766043")
+    DECLARE_QGC_COLOR(mapButtonHighlight,   "#585858", "#48D6FF", "#585858", "#48D6FF")
+    DECLARE_QGC_COLOR(mapIndicator,         "#585858", "#48D6FF", "#585858", "#48D6FF")
+    DECLARE_QGC_COLOR(mapIndicatorChild,    "#585858", "#2AAED4", "#585858", "#2AAED4")
     DECLARE_QGC_COLOR(colorGreen,           "#008f2d", "#008f2d", "#00e04b", "#00e04b") 
     DECLARE_QGC_COLOR(colorYellow,          "#a2a200", "#a2a200", "#ffff00", "#ffff00")  
     DECLARE_QGC_COLOR(colorYellowGreen,     "#799f26", "#799f26", "#9dbe2f", "#9dbe2f")  
@@ -76,23 +76,31 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(colorRed,             "#b52b2b", "#b52b2b", "#f32836", "#f32836")
     DECLARE_QGC_COLOR(colorGrey,            "#808080", "#808080", "#bfbfbf", "#bfbfbf")
     DECLARE_QGC_COLOR(colorBlue,            "#1a72ff", "#1a72ff", "#536dff", "#536dff")
-    DECLARE_QGC_COLOR(alertBackground,      "#eecc44", "#eecc44", "#eecc44", "#eecc44")
-    DECLARE_QGC_COLOR(alertBorder,          "#808080", "#808080", "#808080", "#808080")
-    DECLARE_QGC_COLOR(alertText,            "#000000", "#000000", "#000000", "#000000")
+    DECLARE_QGC_COLOR(alertBackground,      "#05141f", "#05141f", "#05141f", "#05141f")
+    DECLARE_QGC_COLOR(alertBorder,          "#48D6FF", "#48D6FF", "#48D6FF", "#48D6FF")
+    DECLARE_QGC_COLOR(alertText,            "#ffffff", "#ffffff", "#ffffff", "#ffffff")
     DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#dbfef8", "#585858", "#585d83")
-    DECLARE_QGC_COLOR(toolStripHoverColor,  "#585858", "#9D9D9D", "#585858", "#585d83")
+    // Improve hover contrast for Indoor (light) and Outdoor (dark) modes
+    // Light: use brand purple; Dark: use bright cyan for strong visibility on dark background
+    DECLARE_QGC_COLOR(toolStripHoverColor,  "#585858", "#6045c5", "#585858", "#48D6FF")
     DECLARE_QGC_COLOR(statusFailedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
-    DECLARE_QGC_COLOR(toolbarBackground,    "#00ffffff", "#00ffffff", "#00222222", "#00222222")
-    DECLARE_QGC_COLOR(toolbarDivider,       "#00000000", "#00000000", "#00000000", "#00000000")
-    DECLARE_QGC_COLOR(groupBorder,          "#bbbbbb", "#bbbbbb", "#707070", "#707070")
+    // Neon-themed toolbar and grouping colors
+    // Light theme values are conservative; dark theme uses neon palette
+    DECLARE_QGC_COLOR(toolbarBackground,    "#f2f2f2", "#f2f2f2", "#eb05141f", "#eb05141f")
+    DECLARE_QGC_COLOR(toolbarDivider,       "#e500bff2", "#e500bff2", "#e500bff2", "#e500bff2")
+    DECLARE_QGC_COLOR(groupBorder,          "#bbbbbb", "#bbbbbb", "#9900bff2", "#9900bff2")
 
     // Colors not affecting by theming
     //                                              Disabled    Enabled
     DECLARE_QGC_NONTHEMED_COLOR(brandingPurple,     "#4A2C6D", "#4A2C6D")
-    DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,       "#48D6FF", "#6045c5")
-    DECLARE_QGC_NONTHEMED_COLOR(toolStripFGColor,   "#707070", "#ffffff")
+    DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,       "#48D6FF", "#48D6FF")
+
+    // Toolstrip foreground must adapt to theme for contrast
+    //                                      Light                 Dark
+    //                                      Disabled   Enabled    Disabled   Enabled
+    DECLARE_QGC_COLOR(toolStripFGColor,     "#9d9d9d", "#000000", "#bfbfbf", "#ffffff")
 
     // Colors not affecting by theming or enable/disable
     DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,          "#ffffff")

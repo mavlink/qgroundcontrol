@@ -16,7 +16,7 @@ import QGroundControl.Controls
 
 
 Rectangle {
-    color:          qgcPal.window
+    color:          qgcPal.toolbarBackground
     anchors.fill:   parent
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
@@ -33,11 +33,23 @@ Rectangle {
         GridLayout {
             id:         grid
             columns:    2
-
-            QGCLabel { text: qsTr("QGroundControl User Guide") }
+            QGCLabel { text: qsTr("Application") }
+            QGCLabel { text: qsTr("IG GCS FLY") }
+            QGCLabel { text: qsTr("Version") }
+            QGCLabel { text: QGroundControl.qgcVersion }
+            QGCLabel { text: qsTr("Organization") }
+            QGCLabel { text: qsTr("IG Drones") }
+            QGCLabel { text: qsTr("Website") }
             QGCLabel {
                 linkColor:          qgcPal.text
-                text:               "<a href=\"https://docs.qgroundcontrol.com\">https://docs.qgroundcontrol.com</a>"
+                text:               "<a href=\"https://igdrones.com\">https://igdrones.com</a>"
+                onLinkActivated:    (link) => Qt.openUrlExternally(link)
+            }
+
+            QGCLabel { text: qsTr("IG GCS FLY Website") }
+            QGCLabel {
+                linkColor:          qgcPal.text
+                text:               "<a href=\"https://igdrones.com\">https://igdrones.com</a>"
                 onLinkActivated:    (link) => Qt.openUrlExternally(link)
             }
 

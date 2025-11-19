@@ -26,6 +26,8 @@ import QGroundControl.FlightMap
 ApplicationWindow {
     id:             mainWindow
     visible:        true
+    title:          QGroundControl.appName
+    font.family:    ScreenTools.normalFontFamily
 
     property bool   _utmspSendActTrigger
 
@@ -67,6 +69,9 @@ ApplicationWindow {
     }
 
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
+
+    // Tracks which fly-view sidebar tool is currently active ("video", "plan", "analyze", "setup", "settings", or "")
+    property string activeFlySidebarTool: ""
 
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
@@ -115,11 +120,13 @@ ApplicationWindow {
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
+        activeFlySidebarTool = "plan"
     }
 
     function showFlyView() {
         flyView.visible = true
         planView.visible = false
+        activeFlySidebarTool = ""
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
@@ -132,10 +139,12 @@ ApplicationWindow {
 
     function showAnalyzeTool() {
         showTool(qsTr("Analyze Tools"), "qrc:/qml/QGroundControl/AnalyzeView/AnalyzeView.qml", "/qmlimages/Analyze.svg")
+        activeFlySidebarTool = "analyze"
     }
 
     function showVehicleConfig() {
         showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/SetupView.qml", "/qmlimages/Gears.svg")
+        activeFlySidebarTool = "setup"
     }
 
     function showVehicleConfigParametersPage() {
@@ -151,10 +160,22 @@ ApplicationWindow {
         }
     }
 
+    function showAboutTool() {
+        showTool(qsTr("About"), "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml", "/InstrumentValueIcons/question.svg")
+        activeFlySidebarTool = "about"
+    }
+
+    property string _pendingSettingsPage: ""
+
     function showSettingsTool(settingsPage = "") {
         showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
+        activeFlySidebarTool = settingsPage === "Video" ? "video" : "settings"
         if (settingsPage !== "") {
-            toolDrawerLoader.item.showSettingsPage(settingsPage)
+            _pendingSettingsPage = settingsPage
+            if (toolDrawerLoader.item) {
+                toolDrawerLoader.item.showSettingsPage(settingsPage)
+                _pendingSettingsPage = ""
+            }
         }
     }
 
@@ -271,6 +292,142 @@ ApplicationWindow {
         visible:        false
     }
 
+    // Permanent sidebar with menu buttons - visible in all views
+    Rectangle {
+        id:                     permanentSidebar
+        anchors.left:           parent.left
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter: parent.verticalCenter
+        width:                  Math.max(ScreenTools.defaultFontPixelWidth * 1.0, sidebarColumn.implicitWidth + (ScreenTools.defaultFontPixelWidth * 0.5))
+        height:                 sidebarColumn.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.6)
+        property color _cyan: "#00F0FF"
+        property color _panelBg: Qt.rgba(0.02, 0.10, 0.16, 0.7)
+        color:                  _panelBg
+        radius:                 4
+        border.color:           _cyan
+        border.width:           1
+        z:                      QGroundControl.zOrderTopMost
+        // Show only on the Fly map screen to avoid overlapping in Settings/Analyze/Setup/Plan views
+        visible:                flyView.visible && !QGroundControl.videoManager.fullScreen
+
+        ColumnLayout {
+            id:                     sidebarColumn
+            anchors.centerIn:       parent
+            anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.15
+            spacing:                ScreenTools.defaultFontPixelWidth * 0.2
+
+            SubMenuButton {
+                id:                 videoButton
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/InstrumentValueIcons/camera.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                // borderColor:        permanentSidebar._cyan
+                borderWidth:        0
+                checked:            mainWindow.activeFlySidebarTool === "video"
+                visible:            QGroundControl.settingsManager.videoSettings.visible
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "video"
+                        mainWindow.showSettingsTool("Video")
+                    }
+                }
+            }
+
+            SubMenuButton {
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/qmlimages/Plan.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                // borderColor:        permanentSidebar._cyan
+                borderWidth:        0
+                checked:            mainWindow.activeFlySidebarTool === "plan"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "plan"
+                        mainWindow.showPlanView()
+                    }
+                }
+            }
+
+            SubMenuButton {
+                id:                 analyzeButton
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/qmlimages/Analyze.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                // borderColor:        permanentSidebar._cyan
+                borderWidth:        0
+                visible:            QGroundControl.corePlugin.showAdvancedUI
+                checked:            mainWindow.activeFlySidebarTool === "analyze"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "analyze"
+                        mainWindow.showAnalyzeTool()
+                    }
+                }
+            }
+
+            SubMenuButton {
+                id:                 setupButton
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/res/VehicleConfig.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                // borderColor:        permanentSidebar._cyan
+                borderWidth:        0
+                checked:            mainWindow.activeFlySidebarTool === "setup"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "setup"
+                        mainWindow.showVehicleConfig()
+                    }
+                }
+            }
+
+            SubMenuButton {
+                id:                 aboutButton
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/InstrumentValueIcons/question.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                borderWidth:        0
+                checked:            mainWindow.activeFlySidebarTool === "about"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "about"
+                        mainWindow.showAboutTool()
+                    }
+                }
+            }
+
+            SubMenuButton {
+                id:                 settingsButton
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/qmlimages/Gears.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                imageColor:         undefined
+                // borderColor:        permanentSidebar._cyan
+                borderWidth:        0
+                visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                checked:            mainWindow.activeFlySidebarTool === "settings"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "settings"
+                        mainWindow.showSettingsTool()
+                    }
+                }
+            }
+        }
+    }
+
     footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
@@ -359,7 +516,7 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Vehicle Configuration")
-                        imageResource:      "/qmlimages/Gears.svg"
+                        imageResource:      "/res/VehicleConfig.svg"
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
                                 mainWindow.closeIndicatorDrawer()
@@ -373,8 +530,8 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Application Settings")
-                        imageResource:      "/res/QGCLogoFull.svg"
-                        imageColor:         "transparent"
+                        imageResource:      "/qmlimages/Gears.svg"
+                        imageColor:         undefined
                         visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
@@ -464,7 +621,7 @@ ApplicationWindow {
         id:             toolDrawer
         anchors.fill:   parent
         visible:        false
-        color:          qgcPal.window
+        color:          Qt.rgba(0, 0, 0, 0.6)
 
         property var backIcon
         property string toolTitle
@@ -474,45 +631,16 @@ ApplicationWindow {
         onVisibleChanged: {
             if (!toolDrawer.visible) {
                 toolDrawerLoader.source = ""
+                mainWindow._pendingSettingsPage = ""
             }
         }
 
         // This need to block click event leakage to underlying map.
-        DeadMouseArea {
+        MouseArea {
             anchors.fill: parent
-        }
-
-        Rectangle {
-            id:             toolDrawerToolbar
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.top:    parent.top
-            height:         ScreenTools.toolbarHeight
-            color:          qgcPal.toolbarBackground
-
-            RowLayout {
-                id:                 toolDrawerToolbarLayout
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.left:       parent.left
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                spacing:            ScreenTools.defaultFontPixelWidth
-
-                QGCLabel {
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    text:           "<"
-                }
-
-                QGCLabel {
-                    id:             toolbarDrawerText
-                    text:           qsTr("Exit") + " " + toolDrawer.toolTitle
-                    font.pointSize: ScreenTools.largeFontPointSize
-                }
-            }
-
-            QGCMouseArea {
-                anchors.fill: toolDrawerToolbarLayout
-                onClicked: {
+            onClicked: (mouse) => {
+                var pt = toolDrawerPanel.mapFromItem(this, mouse.x, mouse.y)
+                if (pt.x < 0 || pt.y < 0 || pt.x > toolDrawerPanel.width || pt.y > toolDrawerPanel.height) {
                     if (mainWindow.allowViewSwitch()) {
                         toolDrawer.visible = false
                     }
@@ -520,17 +648,75 @@ ApplicationWindow {
             }
         }
 
-        Loader {
-            id:             toolDrawerLoader
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.top:    toolDrawerToolbar.bottom
-            anchors.bottom: parent.bottom
+        Rectangle {
+            id:                         toolDrawerPanel
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.verticalCenter:     parent.verticalCenter
+            width:                      Math.min(parent.width  * 0.9,  ScreenTools.defaultFontPixelWidth  * 100)
+            height:                     Math.min(parent.height * 0.65, ScreenTools.defaultFontPixelHeight * 30)
+            radius:                     permanentSidebar.radius
+            color:                      permanentSidebar._panelBg
+            border.color:               permanentSidebar._cyan
+            border.width:               1
+            antialiasing:               true
+            clip:                       true
 
-            Connections {
-                target:                 toolDrawerLoader.item
-                ignoreUnknownSignals:   true
-                function onPopout() { toolDrawer.visible = false }
+            Rectangle {
+                id:             toolDrawerToolbar
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.top:    parent.top
+                height:         ScreenTools.toolbarHeight
+                color:          qgcPal.toolbarBackground
+                border.color:   qgcPal.toolbarDivider
+                border.width:   0
+
+                Rectangle {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    anchors.bottom: parent.bottom
+                    height:         1
+                    color:          qgcPal.toolbarDivider
+                }
+
+                RowLayout {
+                    id:                 toolDrawerToolbarLayout
+                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    spacing:            ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        id:             toolbarDrawerText
+                        text:           toolDrawer.toolTitle
+                        font.pointSize: ScreenTools.largeFontPointSize
+                    }
+                }
+            }
+
+            Loader {
+                id:                 toolDrawerLoader
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                anchors.top:        toolDrawerToolbar.bottom
+                anchors.bottom:     parent.bottom
+                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.4
+
+                onItemChanged: {
+                    if (item && _pendingSettingsPage !== "") {
+                        if (item.showSettingsPage) {
+                            item.showSettingsPage(_pendingSettingsPage)
+                            _pendingSettingsPage = ""
+                        }
+                    }
+                }
+
+                Connections {
+                    target:                 toolDrawerLoader.item
+                    ignoreUnknownSignals:   true
+                    function onPopout() { toolDrawer.visible = false }
+                }
             }
         }
     }
@@ -565,8 +751,11 @@ ApplicationWindow {
 
         background: Rectangle {
             anchors.fill:   parent
-            color:          qgcPal.alertBackground
-            radius:         ScreenTools.defaultFontPixelHeight * 0.5
+            color:          Qt.rgba(qgcPal.alertBackground.r,
+                                   qgcPal.alertBackground.g,
+                                   qgcPal.alertBackground.b,
+                                   0.7)
+            radius:         ScreenTools.defaultFontPixelHeight
             border.color:   qgcPal.alertBorder
             border.width:   2
 
@@ -574,8 +763,11 @@ ApplicationWindow {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 anchors.top:                parent.top
                 anchors.topMargin:          -(height / 2)
-                color:                      qgcPal.alertBackground
-                radius:                     ScreenTools.defaultFontPixelHeight * 0.25
+                color:                      Qt.rgba(qgcPal.alertBackground.r,
+                                                   qgcPal.alertBackground.g,
+                                                   qgcPal.alertBackground.b,
+                                                   0.7)
+                radius:                     ScreenTools.defaultFontPixelHeight * 0.5
                 border.color:               qgcPal.alertBorder
                 border.width:               1
                 width:                      vehicleWarningLabel.contentWidth + _margins
@@ -598,7 +790,7 @@ ApplicationWindow {
                 anchors.bottom:             parent.bottom
                 anchors.bottomMargin:       -(height / 2)
                 color:                      qgcPal.alertBackground
-                radius:                     ScreenTools.defaultFontPixelHeight * 0.25
+                radius:                     ScreenTools.defaultFontPixelHeight * 0.5
                 border.color:               qgcPal.alertBorder
                 border.width:               1
                 width:                      additionalErrorsLabel.contentWidth + _margins

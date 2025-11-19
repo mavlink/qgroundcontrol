@@ -27,7 +27,7 @@ FlightMap {
     id:                         _root
     allowGCSLocationCenter:     true
     allowVehicleLocationCenter: !_keepVehicleCentered
-    planView:                   false
+    planView:                   true
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 
@@ -40,6 +40,8 @@ FlightMap {
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _planMasterController:      planMasterController
+    // PlanMasterController used by the on-map mission visuals for the active vehicle
+    property var    _visualsPlanMasterController: null
     property var    _geoFenceController:        planMasterController.geoFenceController
     property var    _rallyPointController:      planMasterController.rallyPointController
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
@@ -322,6 +324,21 @@ FlightMap {
             PlanMasterController {
                 id: masterController
                 Component.onCompleted: startStaticActiveVehicle(object)
+            }
+
+            // Track which controller drives the active vehicle visuals
+            Component.onCompleted: {
+                if (_vehicle === QGroundControl.multiVehicleManager.activeVehicle) {
+                    _root._visualsPlanMasterController = masterController
+                }
+            }
+            Connections {
+                target: QGroundControl.multiVehicleManager
+                function onActiveVehicleChanged(activeVehicle) {
+                    if (_vehicle === activeVehicle) {
+                        _root._visualsPlanMasterController = masterController
+                    }
+                }
             }
         }
     }
@@ -733,6 +750,145 @@ FlightMap {
                         onClicked: {
                             mapClickDropPanel.close()
                             globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Add Waypoint")
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var mc = controller.missionController
+                            // Ensure Takeoff exists as first mission item (after Mission Settings)
+                            if (!mc.takeoffMissionItem) {
+                                var vis = mc.visualItems
+                                var firstCoord = mapClickCoord
+                                if (vis && vis.count > 1) {
+                                    for (var j = 1; j < vis.count; j++) {
+                                        var it = vis.get(j)
+                                        if (it && it.isSimpleItem && !it.isLandCommand) { firstCoord = it.coordinate; break }
+                                    }
+                                }
+                                var takeoffItem = mc.insertTakeoffItem(firstCoord, 1, false)
+                                // Ensure both main coordinate and launchCoordinate are set
+                                try { if (takeoffItem && takeoffItem.coordinate !== undefined) takeoffItem.coordinate = firstCoord } catch(e) {}
+                                try { if (takeoffItem && takeoffItem.launchCoordinate !== undefined) takeoffItem.launchCoordinate = firstCoord } catch(e) {}
+                                // Briefly make it current to force visuals update
+                                try { mc.setCurrentPlanViewSeqNum(takeoffItem && takeoffItem.sequenceNumber ? takeoffItem.sequenceNumber : 1, true) } catch(e) {}
+                            }
+                            // Append to end and make current for drag handles to appear
+                            mc.insertSimpleMissionItem(mapClickCoord, -1, true)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Delete Last Waypoint")
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var mc = controller.missionController
+                            var vis = mc.visualItems
+                            if (vis && vis.count > 1) {
+                                // Find last simple mission item (skip 0 which is MissionSettings)
+                                for (var i = vis.count - 1; i >= 1; i--) {
+                                    var item = vis.get(i)
+                                    if (item && item.isSimpleItem) {
+                                        mc.removeVisualItem(i)
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Delete Selected Waypoint")
+                        // Provide access to mission controller
+                        visible:            {
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var mc = controller.missionController
+                            var idx = mc.currentPlanViewVIIndex
+                            if (idx > 0) {
+                                var vis = mc.visualItems
+                                var it = vis ? vis.get(idx) : null
+                                return it && it.isSimpleItem
+                            }
+                            return false
+                        }
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var mc = controller.missionController
+                            var idx = mc.currentPlanViewVIIndex
+                            if (idx > 0) {
+                                var it = mc.visualItems.get(idx)
+                                if (it && it.isSimpleItem) {
+                                    mc.removeVisualItem(idx)
+                                }
+                            }
+                        }
+                    }
+
+                    Component {
+                        id: deleteAllWaypointsConfirmDialog
+                        QGCPopupDialog {
+                            id: dlg
+                            title: qsTr("Delete all waypoints?")
+                            buttons: 0
+                            property var mc
+                            ColumnLayout {
+                                spacing: ScreenTools.defaultFontPixelHeight * 0.5
+                                QGCLabel { text: qsTr("This will remove all waypoints, including Takeoff.") }
+                                RowLayout {
+                                    Layout.alignment: Qt.AlignRight
+                                    spacing: ScreenTools.defaultFontPixelWidth
+                                    QGCButton { text: qsTr("Cancel"); onClicked: dlg.close() }
+                                    QGCButton {
+                                        text: qsTr("Delete All")
+                                        primary: true
+                                        onClicked: {
+                                            var vis = mc.visualItems
+                                            for (var i = vis.count - 1; i >= 1; i--) { mc.removeVisualItem(i) }
+                                            dlg.close()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Delete All Waypoints")
+                        visible:            {
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var vis = controller.missionController.visualItems
+                            return vis && vis.count > 1
+                        }
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var mc = controller.missionController
+                            deleteAllWaypointsConfirmDialog.createObject(mainWindow, { mc: mc }).open()
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Return")
+                        enabled:            {
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            return controller && controller.missionController && controller.missionController.isInsertLandValid
+                        }
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            var mc = controller.missionController
+                            var nextIndex = mc.currentPlanViewVIIndex + 1
+                            mc.insertLandItem(mapClickCoord, nextIndex, true /* makeCurrentItem */)
                         }
                     }
 

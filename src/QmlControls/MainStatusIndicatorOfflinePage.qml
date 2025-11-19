@@ -56,6 +56,9 @@ ToolIndicatorPage {
                     visible:            !object.dynamic
                     enabled:            !object.link
                     autoExclusive:      true
+                    neon:               true
+                    pill:               true
+                    neonColor:          qgcPal.colorGreen
 
                     onClicked: {
                         QGroundControl.linkManager.createConnectedLink(object)

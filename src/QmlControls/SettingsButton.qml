@@ -23,7 +23,7 @@ Button {
     autoExclusive:  true
     icon.color:     textColor
 
-    property color textColor: checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    property color textColor: qgcPal.buttonText
 
     QGCPalette {
         id:                 qgcPal
@@ -31,8 +31,10 @@ Button {
     }
 
     background: Rectangle {
-        color:      qgcPal.buttonHighlight
-        opacity:    checked || pressed ? 1 : enabled && hovered ? .2 : 0
+        color:      qgcPal.toolbarBackground
+        border.color: checked || pressed ? qgcPal.toolbarDivider : (enabled && hovered ? qgcPal.toolbarDivider : qgcPal.groupBorder)
+        border.width: 1
+        opacity:    checked || pressed ? 1 : enabled && hovered ? 1 : 1
         radius:     ScreenTools.defaultFontPixelWidth / 2
     }
 

@@ -704,15 +704,60 @@ Item {
                     visible:    QGroundControl.corePlugin.options.enablePlanViewSelector  && !_utmspEnabled
                     Component.onCompleted: currentIndex = 0
                     QGCTabButton {
+                        id: missionTab
                         text:       qsTr("Mission")
+                        background: Rectangle {
+                            implicitWidth:  ScreenTools.implicitButtonWidth
+                            implicitHeight: ScreenTools.implicitButtonHeight
+                            color:          QGroundControl.globalPalette.toolbarBackground
+                            border.color:   missionTab.checked || missionTab.pressed ? QGroundControl.globalPalette.toolbarDivider : (missionTab.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width:   1
+                        }
+                        contentItem: Text {
+                            anchors.centerIn: parent
+                            text: missionTab.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.family: ScreenTools.normalFontFamily
+                            color: QGroundControl.globalPalette.buttonText
+                        }
                     }
                     QGCTabButton {
+                        id: fenceTab
                         text:       qsTr("Fence")
                         enabled:    _geoFenceController.supported
+                        background: Rectangle {
+                            implicitWidth:  ScreenTools.implicitButtonWidth
+                            implicitHeight: ScreenTools.implicitButtonHeight
+                            color:          QGroundControl.globalPalette.toolbarBackground
+                            border.color:   fenceTab.checked || fenceTab.pressed ? QGroundControl.globalPalette.toolbarDivider : (fenceTab.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width:   1
+                        }
+                        contentItem: Text {
+                            anchors.centerIn: parent
+                            text: fenceTab.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.family: ScreenTools.normalFontFamily
+                            color: QGroundControl.globalPalette.buttonText
+                        }
                     }
                     QGCTabButton {
+                        id: rallyTabFirst
                         text:       qsTr("Rally")
                         enabled:    _rallyPointController.supported
+                        background: Rectangle {
+                            implicitWidth:  ScreenTools.implicitButtonWidth
+                            implicitHeight: ScreenTools.implicitButtonHeight
+                            color:          QGroundControl.globalPalette.toolbarBackground
+                            border.color:   rallyTabFirst.checked || rallyTabFirst.pressed ? QGroundControl.globalPalette.toolbarDivider : (rallyTabFirst.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width:   1
+                        }
+                        contentItem: Text {
+                            anchors.centerIn: parent
+                            text: rallyTabFirst.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.family: ScreenTools.normalFontFamily
+                            color: QGroundControl.globalPalette.buttonText
+                        }
                     }
                 }
 
@@ -721,16 +766,60 @@ Item {
                     width:      parent.width
                     visible:    QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
                     QGCTabButton {
+                        id: missionTabUTMSP
                         text:       qsTr("Mission")
+                        background: Rectangle {
+                            implicitWidth:  ScreenTools.implicitButtonWidth
+                            implicitHeight: ScreenTools.implicitButtonHeight
+                            color:          QGroundControl.globalPalette.toolbarBackground
+                            border.color:   missionTabUTMSP.checked || missionTabUTMSP.pressed ? QGroundControl.globalPalette.toolbarDivider : (missionTabUTMSP.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width:   1
+                        }
+                        contentItem: Text {
+                            anchors.centerIn: parent
+                            text: missionTabUTMSP.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.family: ScreenTools.normalFontFamily
+                            color: QGroundControl.globalPalette.buttonText
+                        }
                     }
                     QGCTabButton {
+                        id: rallyTabUTMSP
                         text:       qsTr("Rally")
                         enabled:    _rallyPointController.supported
+                        background: Rectangle {
+                            implicitWidth:  ScreenTools.implicitButtonWidth
+                            implicitHeight: ScreenTools.implicitButtonHeight
+                            color:          QGroundControl.globalPalette.toolbarBackground
+                            border.color:   rallyTabUTMSP.checked || rallyTabUTMSP.pressed ? QGroundControl.globalPalette.toolbarDivider : (rallyTabUTMSP.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width:   1
+                        }
+                        contentItem: Text {
+                            anchors.centerIn: parent
+                            text: rallyTabUTMSP.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.family: ScreenTools.normalFontFamily
+                            color: QGroundControl.globalPalette.buttonText
+                        }
                     }
                     QGCTabButton {
                         id: utmspbutton
                         text:       qsTr("UTM-Adapter")
                         visible: _utmspEnabled
+                        background: Rectangle {
+                            implicitWidth:  ScreenTools.implicitButtonWidth
+                            implicitHeight: ScreenTools.implicitButtonHeight
+                            color:          QGroundControl.globalPalette.toolbarBackground
+                            border.color:   utmspbutton.checked || utmspbutton.pressed ? QGroundControl.globalPalette.toolbarDivider : (utmspbutton.hovered ? QGroundControl.globalPalette.toolbarDivider : QGroundControl.globalPalette.groupBorder)
+                            border.width:   1
+                        }
+                        contentItem: Text {
+                            anchors.centerIn: parent
+                            text: utmspbutton.text
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.family: ScreenTools.normalFontFamily
+                            color: QGroundControl.globalPalette.buttonText
+                        }
                     }
                 }
             }

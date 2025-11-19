@@ -27,6 +27,7 @@ Item {
 
     property real size:     50
     property real percent:  0
+    property color iconColor: qgcPal.buttonText
 
     QGCPalette { id: qgcPal }
 
@@ -48,7 +49,7 @@ Item {
         source:             getIcon()
         fillMode:           Image.PreserveAspectFit
         anchors.fill:       parent
-        color:              qgcPal.buttonText
+        color:              iconColor
         sourceSize.height:  size
     }
 }

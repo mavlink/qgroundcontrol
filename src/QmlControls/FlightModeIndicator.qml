@@ -67,9 +67,13 @@ Item {
         }
     }
 
+    function openIndicator() {
+        mainWindow.showIndicatorDrawer(drawerComponent, control)
+    }
+
     MouseArea {
         anchors.fill:   mainLayout
-        onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
+        onClicked:      openIndicator()
     }
 
     Component {

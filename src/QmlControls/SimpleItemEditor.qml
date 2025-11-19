@@ -13,8 +13,10 @@ import QGroundControl.FactControls
 Rectangle {
     width:  availableWidth
     height: editorColumn.height + (_margin * 2)
-    color:  qgcPal.windowShadeDark
+    color:  qgcPal.toolbarBackground
     radius: _radius
+    border.color: qgcPal.groupBorder
+    border.width: 1
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2

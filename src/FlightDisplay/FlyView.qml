@@ -105,8 +105,9 @@ Item {
         PipView {
             id:                     _pipView
             anchors.left:           parent.left
-            anchors.bottom:         parent.bottom
-            anchors.margins:        _toolsMargin
+            anchors.bottom:         gpsStatusStrip.top
+            anchors.leftMargin:     _toolsMargin
+            anchors.bottomMargin:   _toolsMargin
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
             item1:                  mapControl
             item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
@@ -114,8 +115,8 @@ Item {
                                         (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
             z:                      QGroundControl.zOrderWidgets
 
-            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
-            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
+            property real leftEdgeBottomInset: visible ? width + anchors.leftMargin : 0
+            property real bottomEdgeLeftInset: visible ? height + anchors.bottomMargin : 0
         }
 
         FlyViewWidgetLayer {
@@ -175,6 +176,15 @@ Item {
             id: viewer3DWindow
             anchors.fill: parent
         }
+
+        GPSStatusStrip {
+            id: gpsStatusStrip
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: _widgetMargin
+            anchors.bottomMargin: _widgetMargin
+            z: _fullItemZorder + 3
+        }
     }
 
     UTMSPActivationStatusBar {
@@ -191,5 +201,10 @@ Item {
     FlyViewToolBar {
         id:         toolbar
         visible:    !QGroundControl.videoManager.fullScreen
+    }
+
+    // Fullscreen connecting overlay during initial link/parameter sync
+    ConnectingOverlay {
+        anchors.fill: parent
     }
 }

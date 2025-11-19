@@ -25,7 +25,9 @@ Rectangle {
     width:          contentWidth
     height:         Math.max(contentHeight, minimumHeight)
     color:          qgcPal.toolbarBackground
-    radius:         ScreenTools.defaultFontPixelHeight / 2
+    border.color:   qgcPal.groupBorder
+    border.width:   1
+    radius:         ScreenTools.defaultFontPixelHeight * 0.6
     visible:        !QGroundControl.videoManager.fullScreen && _multipleVehicles && _settingEnableMVPanel
     clip:           true
 

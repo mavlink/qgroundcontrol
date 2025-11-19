@@ -20,7 +20,9 @@ QGCFlickable {
         width:  parent.width
         height: innerEditorRect.y + innerEditorRect.height + (_margin * 2)
         radius: _radius
-        color:  qgcPal.missionItemEditor
+        color:  QGroundControl.globalPalette.toolbarBackground
+        border.color: QGroundControl.globalPalette.groupBorder
+        border.width: 1
 
         QGCLabel {
             id:                 editorLabel
@@ -37,8 +39,10 @@ QGCFlickable {
             anchors.right:      parent.right
             anchors.top:        editorLabel.bottom
             height:             infoLabel.height + (_margin * 2)
-            color:              qgcPal.windowShadeDark
+            color:              QGroundControl.globalPalette.toolbarBackground
             radius:             _radius
+            border.color:       QGroundControl.globalPalette.groupBorder
+            border.width:       1
 
             QGCLabel {
                 id:                 infoLabel

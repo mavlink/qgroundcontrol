@@ -9,9 +9,11 @@
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FactControls
 
 RowLayout {
     id:         control
@@ -26,27 +28,127 @@ RowLayout {
     property bool   _vehicleFlies:      _activeVehicle ? _activeVehicle.airShip || _activeVehicle.fixedWing || _activeVehicle.vtol || _activeVehicle.multiRotor : false
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.flying || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
+    property bool   showStatusLabel:    true
+    property var    _cameraManager:     _activeVehicle ? _activeVehicle.cameraManager : null
+    property var    _camera:            _cameraManager ? _cameraManager.currentCameraInstance : null
+    // Match legacy PhotoVideoControl availability: show controls when camera can capture video or has a video stream
+    property bool   _cameraRecordAvailable: _camera && (_camera.capturesVideo || _camera.hasVideoStream)
+
+    QGCPalette { id: qgcPal }
 
     function dropMainStatusIndicator() {
         let overallStatusComponent = _activeVehicle ? overallStatusIndicatorPage : overallStatusOfflineIndicatorPage
         mainWindow.showIndicatorDrawer(overallStatusComponent, control)
     }
 
-    QGCPalette { id: qgcPal }
+    // Neon-style connection controls
+    RowLayout {
+        id:                 videoRecordMini
+        Layout.alignment:   Qt.AlignVCenter
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.5
+        visible:            _cameraRecordAvailable
 
-    QGCLabel {
-        id:                 mainStatusLabel
-        Layout.fillHeight:  true
-        Layout.preferredWidth: contentWidth + (vehicleMessagesIcon.visible ? vehicleMessagesIcon.width + control.spacing : 0)
-        verticalAlignment:  Text.AlignVCenter
-        text:               mainStatusText()
-        color:              qgcPal.windowTransparentText
-        font.pointSize:     ScreenTools.largeFontPointSize
+        Rectangle {
+            id:                 videoRecordCircle
+            Layout.alignment:   Qt.AlignVCenter
+            width:              ScreenTools.defaultFontPixelHeight * 1.4
+            height:             width
+            radius:             width / 2
+            color:              "transparent"
+            border.color:       qgcPal.windowTransparentText
+            border.width:       2
+
+            property bool _isRecording: control._camera && control._camera.videoCaptureStatus === MavlinkCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+
+            Rectangle {
+                anchors.centerIn:   parent
+                width:              parent.width * 0.7
+                height:             width
+                radius:             width / 2
+                color:              videoRecordCircle._isRecording ? qgcPal.colorRed : qgcPal.colorGrey
+            }
+
+            QGCMouseArea {
+                anchors.fill:   parent
+                onClicked: {
+                    if (control._camera) {
+                        // Ensure camera is in video mode before attempting to record, similar to PhotoVideoControl
+                        if (control._camera.hasModes && control._camera.capturesVideo &&
+                                control._camera.cameraMode !== MavlinkCameraControl.CAM_MODE_VIDEO) {
+                            control._camera.setCameraModeVideo()
+                        }
+                        control._camera.toggleVideoRecording()
+                    }
+                }
+            }
+        }
+
+        QGCLabel {
+            id:                 videoRecordTimeLabel
+            Layout.alignment:   Qt.AlignVCenter
+            text:               control._camera && videoRecordCircle._isRecording ? control._camera.recordTimeStr : "00:00:00"
+            font.pointSize:     ScreenTools.smallFontPointSize
+            color:              qgcPal.globalTheme === QGCPalette.Light ? qgcPal.text : qgcPal.brandingBlue
+        }
+
+        QGCColoredImage {
+            Layout.alignment:       Qt.AlignVCenter
+            source:                 "/res/gear-black.svg"
+            mipmap:                 true
+            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.4
+            Layout.preferredWidth:  Layout.preferredHeight
+            sourceSize.height:      Layout.preferredHeight
+            color:                  qgcPal.text
+            fillMode:               Image.PreserveAspectFit
+
+            QGCMouseArea {
+                fillItem:   parent
+                onClicked:  videoSettingsDialogComponent.createObject(mainWindow).open()
+            }
+        }
+    }
+
+    QGCButton {
+        id:                 connectNeon
+        Layout.fillHeight:  false
+        height:             ScreenTools.defaultFontPixelHeight * 1.9
+        text:               qsTr("CONNECT")
+        neon:               true
+        pill:               true
+        neonColor:          qgcPal.colorGreen
+        neonBorderWidth:    1
+        visible:            !_activeVehicle
+        onClicked:          dropMainStatusIndicator()
+    }
+
+    QGCButton {
+        id:                 disconnectNeon
+        Layout.fillHeight:  false
+        height:             ScreenTools.defaultFontPixelHeight * 1.9
+        text:               qsTr("DISCONNECT")
+        neon:               true
+        pill:               true
+        neonColor:          qgcPal.colorRed
+        neonBorderWidth:    1
+        visible:            _activeVehicle
+        onClicked:          _activeVehicle.closeVehicle()
+    }
+
+        QGCLabel {
+            id:                 mainStatusLabel
+            Layout.fillHeight:  true
+            Layout.preferredWidth: contentWidth + (vehicleMessagesIcon.visible ? vehicleMessagesIcon.width + control.spacing : 0)
+            verticalAlignment:  Text.AlignVCenter
+            text:               mainStatusText().toUpperCase()
+            color:              qgcPal.globalTheme === QGCPalette.Light ? qgcPal.text : qgcPal.brandingBlue
+            font.pointSize:     ScreenTools.largeFontPointSize
+            font.bold:          true
+            visible:            showStatusLabel && _activeVehicle
 
         property string _commLostText:      qsTr("Comms Lost")
         property string _readyToFlyText:    control._vehicleFlies ? qsTr("Ready To Fly") : qsTr("Ready")
         property string _notReadyToFlyText: qsTr("Not Ready")
-        property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
+        property string _disconnectedText:  qsTr("Disconnected")
         property string _armedText:         qsTr("Armed")
         property string _flyingText:        qsTr("Flying")
         property string _landingText:       qsTr("Landing")
@@ -151,9 +253,10 @@ RowLayout {
         id:                 vtolModeLabel
         Layout.fillHeight:  true
         verticalAlignment:  Text.AlignVCenter
-        text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        color:              qgcPal.windowTransparentText
+        text:               (_vtolInFWDFlight ? qsTr("FW(VTOL)") : qsTr("MR(VTOL)")).toUpperCase()
+        color:              qgcPal.globalTheme === QGCPalette.Light ? qgcPal.text : qgcPal.brandingBlue
         font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        font.bold:          true
         visible:            _activeVehicle && _activeVehicle.vtol
 
         QGCMouseArea {
@@ -161,6 +264,71 @@ RowLayout {
             onClicked: {
                 if (_vehicleInAir) {
                     mainWindow.showIndicatorDrawer(vtolTransitionIndicatorPage)
+                }
+            }
+        }
+    }
+
+    Component {
+        id: videoSettingsDialogComponent
+
+        QGCPopupDialog {
+            title:      qsTr("Settings")
+            buttons:    Dialog.Close
+
+            property var  _videoSettings: QGroundControl.settingsManager.videoSettings
+
+            ColumnLayout {
+                spacing: ScreenTools.defaultFontPixelHeight * 0.75
+
+                GridLayout {
+                    columns:            2
+                    rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.5
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+
+                    QGCLabel {
+                        text:       qsTr("Video Grid Lines")
+                    }
+
+                    QGCSwitch {
+                        checked:    _videoSettings.gridLines.rawValue
+                        onClicked:  _videoSettings.gridLines.rawValue = checked ? 1 : 0
+                    }
+
+                    QGCLabel {
+                        text:       qsTr("Compact HUD Size")
+                    }
+
+                    QGCSwitch {
+                        checked:    _videoSettings.hudCompact.rawValue
+                        onClicked:  _videoSettings.hudCompact.rawValue = checked ? 1 : 0
+                    }
+
+                    QGCLabel {
+                        text:       qsTr("Video Screen Fit")
+                    }
+
+                    FactComboBox {
+                        Layout.fillWidth:   true
+                        sizeToContents:     true
+                        fact:               _videoSettings.videoFit
+                        indexModel:         false
+                    }
+
+                    QGCLabel {
+                        text:       qsTr("Reset Camera Defaults")
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Reset")
+                        enabled:            control._cameraRecordAvailable && control._camera
+                        onClicked: {
+                            if (control._camera) {
+                                control._camera.resetSettings()
+                            }
+                        }
+                    }
                 }
             }
         }

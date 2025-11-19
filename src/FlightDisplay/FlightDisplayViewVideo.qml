@@ -30,6 +30,7 @@ Item {
                                             ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
                                             : QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
+    property bool   _hudCompact:        QGroundControl.settingsManager.videoSettings.hudCompact.rawValue
     property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
     property bool   _connected:         globals.activeVehicle ? !globals.activeVehicle.communicationLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -130,33 +131,249 @@ Item {
                     }
                 }
 
+                // Holographic HUD overlay over the video, reusing the Video Grid Lines toggle
+                // and styled similarly to the compass neon arcs.
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1,1,1,0.0)
                     height: parent.height
                     width:  1
                     x:      parent.width * 0.33
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                    visible: false
                 }
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1,1,1,0.0)
                     height: parent.height
                     width:  1
                     x:      parent.width * 0.66
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                    visible: false
                 }
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1,1,1,0.0)
                     width:  parent.width
                     height: 1
                     y:      parent.height * 0.33
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                    visible: false
                 }
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1,1,1,0.0)
                     width:  parent.width
                     height: 1
                     y:      parent.height * 0.66
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                    visible: false
+                }
+
+                Item {
+                    id:         holographicHud
+                    anchors.fill: parent
+                    visible:    _showGrid && !QGroundControl.videoManager.fullScreen
+                    scale:      _hudCompact ? 0.65 : 1.0
+                    transformOrigin: Item.Center
+
+                    QGCPalette { id: hudPal; colorGroupEnabled: true }
+
+                    // Central Focus SVG overlay
+                    Image {
+                        id:                 focusSvg
+                        anchors.centerIn:   parent
+                        width:              Math.min(parent.width, parent.height) * 0.55
+                        height:             width
+                        source:             "/qmlimages/Focus.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        smooth:             true
+                        opacity:            0.9
+                    }
+
+                    // Left roll tape - horizontal attitude (deg) from -15..+15
+                    Item {
+                        id:                     leftTape
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left:           parent.left
+                        anchors.leftMargin:     parent.width * 0.08
+                        width:                  parent.width * 0.12
+                        height:                 parent.height * 0.60
+                        visible:                globals.activeVehicle && globals.activeVehicle.altitudeAMSL
+
+                        property var  _vehicle:    globals.activeVehicle
+                        property real altSpan:     30
+                        property real altValue:    (_vehicle && _vehicle.altitudeAMSL) ? _vehicle.altitudeAMSL.rawValue : NaN
+                        property real altCenter:   isNaN(altValue) ? 0 : altValue
+                        property real altMin:      altCenter - altSpan / 2
+                        property real altMax:      altCenter + altSpan / 2
+
+                        function valueToY(v) {
+                            if (isNaN(v)) {
+                                return height / 2
+                            }
+                            var clamped = Math.max(altMin, Math.min(altMax, v))
+                            var ratio   = (clamped - altMin) / (altMax - altMin)
+                            return height - (ratio * height)
+                        }
+
+                        onAltValueChanged: altScale.requestPaint()
+
+                        Canvas {
+                            id:             altScale
+                            anchors.fill:   parent
+
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                ctx.clearRect(0, 0, width, height)
+
+                                if (isNaN(leftTape.altValue)) {
+                                    return
+                                }
+
+                                ctx.strokeStyle = hudPal.brandingBlue
+                                ctx.fillStyle   = hudPal.brandingBlue
+                                ctx.lineWidth   = 1.3
+
+                                var margin = width * 0.02
+                                var boxW   = width * 0.55
+                                var cx     = margin + boxW
+
+                                // Main vertical line
+                                ctx.beginPath()
+                                ctx.moveTo(cx, 0)
+                                ctx.lineTo(cx, height)
+                                ctx.stroke()
+
+                                // Ticks and labels (-15 .. +15 deg)
+                                var step = 5
+                                for (var v = leftTape.altMin; v <= leftTape.altMax; v += step) {
+                                    var y = leftTape.valueToY(v)
+                                    if (y < 0 || y > height) continue
+
+                                    ctx.beginPath()
+                                    ctx.moveTo(cx, y)
+                                    ctx.lineTo(cx + width * 0.18, y)
+                                    ctx.stroke()
+
+                                    ctx.font         = (ScreenTools.defaultFontPixelHeight * 0.9) + "px sans-serif"
+                                    ctx.textAlign    = "left"
+                                    ctx.textBaseline = "middle"
+                                    ctx.fillText(Math.round(v).toString(), cx + width * 0.22, y)
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            id:                 altBox
+                            width:              parent.width * 0.55
+                            height:             ScreenTools.defaultFontPixelHeight * 1.5
+                            radius:             ScreenTools.defaultFontPixelHeight * 0.2
+                            color:              Qt.rgba(0.0, 0.8, 1.0, 0.16)
+                            border.color:       hudPal.brandingBlue
+                            border.width:       1.2
+                            x:                  width * 0.02
+                            y:                  leftTape.valueToY(leftTape.altValue) - (height / 2)
+
+                            QGCLabel {
+                                anchors.centerIn:   parent
+                                text: {
+                                    if (isNaN(leftTape.altValue)) {
+                                        return "-- m"
+                                    }
+                                    return leftTape.altValue.toFixed(1) + " m"
+                                }
+                            }
+                        }
+                    }
+
+                    // Right pitch tape - vertical attitude (deg) from -15..+15
+                    Item {
+                        id:                     rightTape
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right:          parent.right
+                        anchors.rightMargin:    parent.width * 0.08
+                        width:                  parent.width * 0.12
+                        height:                 parent.height * 0.60
+                        visible:                globals.activeVehicle && globals.activeVehicle.altitudeRelative
+
+                        property var  _vehicle:    globals.activeVehicle
+                        property real altSpan:     30
+                        property real speedValue:  (_vehicle && _vehicle.altitudeRelative) ? _vehicle.altitudeRelative.rawValue : NaN
+                        property real speedCenter: isNaN(speedValue) ? 0 : speedValue
+                        property real speedMin:    speedCenter - altSpan / 2
+                        property real speedMax:    speedCenter + altSpan / 2
+
+                        function valueToY(v) {
+                            if (isNaN(v)) {
+                                return height / 2
+                            }
+                            var clamped = Math.max(speedMin, Math.min(speedMax, v))
+                            var ratio   = (clamped - speedMin) / (speedMax - speedMin)
+                            return height - (ratio * height)
+                        }
+
+                        onSpeedValueChanged: speedScale.requestPaint()
+
+                        Canvas {
+                            id:             speedScale
+                            anchors.fill:   parent
+
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                ctx.clearRect(0, 0, width, height)
+
+                                if (isNaN(rightTape.speedValue)) {
+                                    return
+                                }
+
+                                ctx.strokeStyle = hudPal.brandingBlue
+                                ctx.fillStyle   = hudPal.brandingBlue
+                                ctx.lineWidth   = 1.3
+
+                                var margin = width * 0.02
+                                var boxW   = width * 0.55
+                                var cx     = width - margin - boxW
+
+                                // Main vertical line
+                                ctx.beginPath()
+                                ctx.moveTo(cx, 0)
+                                ctx.lineTo(cx, height)
+                                ctx.stroke()
+
+                                // Ticks and labels (-15 .. +15 deg)
+                                var step = 5
+                                for (var v = rightTape.speedMin; v <= rightTape.speedMax; v += step) {
+                                    var y = rightTape.valueToY(v)
+                                    if (y < 0 || y > height) continue
+
+                                    ctx.beginPath()
+                                    ctx.moveTo(cx, y)
+                                    ctx.lineTo(cx - width * 0.18, y)
+                                    ctx.stroke()
+
+                                    ctx.font         = (ScreenTools.defaultFontPixelHeight * 0.9) + "px sans-serif"
+                                    ctx.textAlign    = "right"
+                                    ctx.textBaseline = "middle"
+                                    ctx.fillText(Math.round(v).toString(), cx - width * 0.22, y)
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            id:                 speedBox
+                            width:              parent.width * 0.55
+                            height:             ScreenTools.defaultFontPixelHeight * 1.5
+                            radius:             ScreenTools.defaultFontPixelHeight * 0.2
+                            color:              Qt.rgba(0.0, 0.8, 1.0, 0.16)
+                            border.color:       hudPal.brandingBlue
+                            border.width:       1.2
+                            x:                  width - speedBox.width - width * 0.02
+                            y:                  rightTape.valueToY(rightTape.speedValue) - (height / 2)
+
+                            QGCLabel {
+                                anchors.centerIn:   parent
+                                text: {
+                                    if (isNaN(rightTape.speedValue)) {
+                                        return "-- m"
+                                    }
+                                    return rightTape.speedValue.toFixed(1) + " m"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -40,6 +40,8 @@
         <file alias="QGCLogoBlack.svg">resources/QGCLogoBlack.svg</file>
         <file alias="QGCLogoFull.svg">resources/QGCLogoFull.svg</file>
         <file alias="QGCLogoWhite.svg">resources/QGCLogoWhite.svg</file>
+        <file alias="ApplicationSettings.svg">resources/ApplicationSettings.svg</file>
+        <file alias="VehicleConfig.svg">resources/VehicleConfig.svg</file>
         <file alias="QGCLogoArrow.svg">resources/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect.svg">resources/QGroundControlConnect.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>

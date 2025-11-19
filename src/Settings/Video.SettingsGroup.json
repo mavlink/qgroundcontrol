@@ -51,7 +51,14 @@
     "shortDesc":    "Video Grid Lines",
     "longDesc":     "Displays a grid overlaid over the video view.",
     "type":         "bool",
-    "default":      false
+    "default":      true
+},
+{
+    "name":             "hudCompact",
+    "shortDesc":        "Compact HUD Size",
+    "longDesc":         "Draw holographic HUD overlay smaller so it covers less of the video.",
+    "type":             "bool",
+    "default":          true
 },
 {
     "name":             "videoFit",

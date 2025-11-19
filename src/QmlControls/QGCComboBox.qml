@@ -90,12 +90,14 @@ T.ComboBox {
         contentItem: Text {
             text:                   _text
             font:                   control.font
-            color:                  control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  qgcPal.buttonText
             verticalAlignment:      Text.AlignVCenter
         }
 
         background: Rectangle {
-            color:                  control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+            color:                  qgcPal.toolbarBackground
+            border.color:           control.currentIndex === index ? qgcPal.toolbarDivider : "transparent"
+            border.width:           control.currentIndex === index ? 1 : 0
         }
 
         highlighted:                control.highlightedIndex === index
@@ -122,10 +124,17 @@ T.ComboBox {
     }
 
     background: Rectangle {
-        color:          qgcPal.button
-        border.color:   qgcPal.buttonBorder
-        border.width:   _showBorder ? 1 : 0
+        color:          qgcPal.toolbarBackground
+        border.color:   qgcPal.groupBorder
+        border.width:   1
         radius:         ScreenTools.buttonBorderRadius
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.toolbarDivider
+            opacity:        control.pressed || control.highlighted ? 0.18 : control.enabled && control.hovered ? 0.08 : 0
+            radius:         parent.radius
+        }
     }
 
     popup: T.Popup {
@@ -148,14 +157,16 @@ T.ComboBox {
                 width:          parent.width
                 height:         parent.height
                 color:          "transparent"
-                border.color:   qgcPal.text
+                border.color:   qgcPal.groupBorder
             }
 
             T.ScrollIndicator.vertical: ScrollIndicator { }
         }
 
         background: Rectangle {
-            color: qgcPal.window
+            color: qgcPal.toolbarBackground
+            border.color: qgcPal.groupBorder
+            border.width: 1
         }
     }
 }

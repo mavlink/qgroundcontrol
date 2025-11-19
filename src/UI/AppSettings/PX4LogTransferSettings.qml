@@ -23,7 +23,7 @@ import QGroundControl.Controls
 
 Rectangle {
     id:             __mavlinkRoot
-    color:          qgcPal.window
+    color:          qgcPal.toolbarBackground
     anchors.fill:   parent
 
     property real _labelWidth:          ScreenTools.defaultFontPixelWidth * 28
@@ -115,7 +115,9 @@ Rectangle {
             Rectangle {
                 height:         mavlogColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
                 width:          __mavlinkRoot.width * 0.8
-                color:          qgcPal.windowShade
+                color:          qgcPal.toolbarBackground
+                border.color:   qgcPal.groupBorder
+                border.width:   1
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        _showMavlinkLog && _isPX4
@@ -177,7 +179,9 @@ Rectangle {
             Rectangle {
                 height:         logColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
                 width:          __mavlinkRoot.width * 0.8
-                color:          qgcPal.windowShade
+                color:          qgcPal.toolbarBackground
+                border.color:   qgcPal.groupBorder
+                border.width:   1
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        _showMavlinkLog && _isPX4
@@ -413,7 +417,9 @@ Rectangle {
             Rectangle {
                 height:         logFilesColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
                 width:          __mavlinkRoot.width * 0.8
-                color:          qgcPal.windowShade
+                color:          qgcPal.toolbarBackground
+                border.color:   qgcPal.groupBorder
+                border.width:   1
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        _showMavlinkLog

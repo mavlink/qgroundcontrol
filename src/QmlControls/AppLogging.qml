@@ -29,12 +29,16 @@ Item {
             id:              logwindow
             anchors.fill:    parent
             anchors.margins: ScreenTools.defaultFontPixelWidth
-            color:           qgcPal.window
+            color:           QGroundControl.globalPalette.toolbarBackground
+            border.color:    QGroundControl.globalPalette.groupBorder
+            border.width:    1
 
             Component {
                 id: delegateItem
                 Rectangle {
-                    color:  index % 2 == 0 ? qgcPal.window : qgcPal.windowShade
+                    color:  index % 2 == 0 ? QGroundControl.globalPalette.toolbarBackground : QGroundControl.globalPalette.toolbarBackground
+                    border.color: QGroundControl.globalPalette.groupBorder
+                    border.width: 0
                     height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
                     width:  listView.width
 

@@ -228,7 +228,7 @@ SettingsPage {
         }
     }
 
-    RowLayout {
+    ColumnLayout {
         spacing: ScreenTools.defaultFontPixelWidth
 
         Connections {
@@ -245,6 +245,7 @@ SettingsPage {
         ColumnLayout {
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             Layout.alignment:   Qt.AlignTop
+            Layout.fillWidth:   true
 
             SettingsGroupLayout {
                 Layout.fillWidth:   true
@@ -462,6 +463,7 @@ SettingsPage {
         ColumnLayout {
             spacing:            ScreenTools.defaultFontPixelHeight / 2
             Layout.alignment:   Qt.AlignTop
+            Layout.fillWidth:   true
             SettingsGroupLayout {
                 heading:            qsTr("GroundStation Location")
                 Layout.fillWidth:   true

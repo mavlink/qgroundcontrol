@@ -18,7 +18,7 @@ import QGroundControl.Controls
 
 
 Rectangle {
-    color:          qgcPal.window
+    color:          qgcPal.toolbarBackground
     anchors.fill:   parent
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight

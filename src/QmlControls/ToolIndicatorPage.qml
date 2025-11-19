@@ -16,9 +16,14 @@ import QGroundControl.Controls
 // ToolIndicatorPage
 //      The base control for all Toolbar Indicator drop down pages. It supports a normal and expanded view.
 
-RowLayout {
+Item {
     id:         control
-    spacing:    ScreenTools.defaultFontPixelWidth
+
+    implicitWidth:  contentRow.implicitWidth + (padding * 2)
+    implicitHeight: contentRow.implicitHeight + (padding * 2)
+
+    property alias spacing: contentRow.spacing
+    property real padding: ScreenTools.defaultFontPixelWidth * 0.8
 
     property bool       showExpand:         false   // Controls whether the expand widget is shown or not
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
@@ -35,34 +40,51 @@ RowLayout {
 
     property bool _loadPages: !waitForParameters || parametersReady
 
+    Rectangle {
+        anchors.fill:   parent
+        radius:         ScreenTools.defaultFontPixelHeight * 0.6
+        color:          QGroundControl.globalPalette.toolbarBackground
+        border.color:   QGroundControl.globalPalette.groupBorder
+        border.width:   1
+    }
+
     QGCLabel {
         text:       qsTr("Waiting for parameters...")
         visible:    waitForParameters && !parametersReady
+        color:      QGroundControl.globalPalette.windowTransparentText
+        anchors.centerIn: parent
     }
 
-    Loader {
-        id:                 contentItemLoader
-        Layout.alignment:   Qt.AlignTop
-        sourceComponent:    _loadPages ? contentComponent : undefined
+    RowLayout {
+        id:                 contentRow
+        anchors.fill:       parent
+        anchors.margins:    padding
+        spacing:            ScreenTools.defaultFontPixelWidth
 
-        property var pageProperties: control.pageProperties
-    }
+        Loader {
+            id:                 contentItemLoader
+            Layout.alignment:   Qt.AlignTop
+            sourceComponent:    _loadPages ? contentComponent : undefined
 
-    Rectangle {
-        id:                     divider
-        Layout.preferredWidth:  visible ? 1 : -1
-        Layout.fillHeight:      true
-        color:                  QGroundControl.globalPalette.groupBorder
-        visible:                expanded
-    }
-    
-    Loader {
-        id:                     expandedItemLoader
-        Layout.alignment:       Qt.AlignTop
-        Layout.preferredWidth:  visible ? -1 : 0
-        visible:                expanded
-        sourceComponent:        expanded ? expandedComponent : undefined
+            property var pageProperties: control.pageProperties
+        }
 
-        property var pageProperties: control.pageProperties
+        Rectangle {
+            id:                     divider
+            Layout.preferredWidth:  visible ? 1 : -1
+            Layout.fillHeight:      true
+            color:                  QGroundControl.globalPalette.toolbarDivider
+            visible:                expanded
+        }
+
+        Loader {
+            id:                     expandedItemLoader
+            Layout.alignment:       Qt.AlignTop
+            Layout.preferredWidth:  visible ? -1 : 0
+            visible:                expanded
+            sourceComponent:        expanded ? expandedComponent : undefined
+
+            property var pageProperties: control.pageProperties
+        }
     }
 }

@@ -18,6 +18,7 @@ Button {
     width:          contentLayoutItem.contentWidth + (contentMargins * 2)
     height:         width
     hoverEnabled:   !ScreenTools.isMobile
+    focus:          false
     enabled:        toolStripAction.enabled
     visible:        toolStripAction.visible
     imageSource:    toolStripAction.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
@@ -36,8 +37,8 @@ Button {
     property real imageScale:        forceImageScale11 && (text == "") ? 0.8 : 0.6
     property real contentMargins:    innerText.height * 0.1
 
-    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.windowTransparentText
-    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.windowTransparentText : qgcPal.buttonHighlight
+    property color _currentContentColor:           qgcPal.brandingBlue
+    property color _currentContentColorSecondary:  qgcPal.toolbarDivider
 
     signal dropped(int index)
 
@@ -129,8 +130,20 @@ Button {
 
     background: Rectangle {
         id:     buttonBkRect
-        color:  (control.checked || control.pressed) ?
-                    qgcPal.buttonHighlight :
-                    ((control.enabled && control.hovered) ? qgcPal.toolStripHoverColor : "transparent")
+        color:  qgcPal.toolbarBackground
+        border.width: 0
+        antialiasing: true
+        clip:   true
+
+        // Neon overlay fill for hover/pressed/checked
+        Rectangle {
+            anchors.fill:   parent
+            anchors.margins: 0
+            color:          qgcPal.brandingBlue
+            visible:        control.hovered || control.checked || control.pressed
+            opacity:        control.pressed ? 0.22 : (control.checked ? 0.16 : 0.12)
+            radius:         buttonBkRect.radius
+            antialiasing:   true
+        }
     }
 }

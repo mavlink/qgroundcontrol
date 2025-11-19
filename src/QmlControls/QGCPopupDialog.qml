@@ -201,10 +201,13 @@ Popup {
         y:              mainLayout.y - _contentMargin
         width:          mainLayout.width + _contentMargin * 2
         height:         mainLayout.height + _contentMargin * 2
-        color:          _qgcPal.windowShade
+        color:          Qt.rgba(_qgcPal.toolbarBackground.r,
+                               _qgcPal.toolbarBackground.g,
+                               _qgcPal.toolbarBackground.b,
+                               0.7)
         radius:         root.padding / 2
         border.width:   1
-        border.color:   _qgcPal.windowShadeLight
+        border.color:   _qgcPal.groupBorder
     }
 
     ColumnLayout {
@@ -245,7 +248,10 @@ Popup {
             Layout.fillWidth:       true
             Layout.preferredWidth:  Math.min(maxAvailableWidth, totalContentWidth)
             Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
-            color:                  _qgcPal.window
+            color:                  Qt.rgba(_qgcPal.toolbarBackground.r,
+                                           _qgcPal.toolbarBackground.g,
+                                           _qgcPal.toolbarBackground.b,
+                                           0.7)
 
             property real totalContentWidth:    dialogContentParent.childrenRect.width + _contentMargin * 2
             property real totalContentHeight:   dialogContentParent.childrenRect.height + _contentMargin * 2

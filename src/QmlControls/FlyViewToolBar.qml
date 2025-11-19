@@ -47,14 +47,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.left:   parent.left
         width:          mainStatusLayout.width
-        opacity:        qgcPal.windowTransparent.a
-        
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: _mainStatusBGColor }
-            //GradientStop { position: qgcButton.x + qgcButton.width; color: _mainStatusBGColor }
-            GradientStop { position: 1; color: qgcPal.window }
-        }
+        color:          qgcPal.toolbarBackground
     }
 
     Rectangle {
@@ -62,7 +55,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.left:   gradientBackground.right
         anchors.right:  parent.right
-        color:          qgcPal.windowTransparent
+        color:          qgcPal.toolbarBackground
     }
 
     RowLayout {
@@ -91,12 +84,32 @@ Rectangle {
                     Layout.fillHeight:  true
                     icon.source:        "/res/QGCLogoFull.svg"
                     logo:               true
-                    onClicked:          mainWindow.showToolSelectDialog()
+                    // onClicked handler removed - permanent sidebar is now always visible
                 }
 
-                MainStatusIndicator {
-                    id:                 mainStatusIndicator
+                ColumnLayout {
+                    id:                 brandTitle
                     Layout.fillHeight:  true
+                    Layout.alignment:   Qt.AlignVCenter
+                    spacing:            ScreenTools.defaultFontPixelHeight * 0.10
+
+                    QGCLabel {
+                        id:                 appTitle
+                        Layout.alignment:   Qt.AlignVCenter
+                        text:               qsTr("IG GCS FLY")
+                        color:              qgcPal.globalTheme === QGCPalette.Light ? qgcPal.text : qgcPal.brandingBlue
+                        font.pointSize:     ScreenTools.largeFontPointSize
+                        font.bold:          true
+                    }
+
+                    QGCLabel {
+                        id:                 appTagline
+                        Layout.alignment:   Qt.AlignVCenter
+                        text:               qsTr("FOR THE NATION WITH PRECISION")
+                        color:              qgcPal.globalTheme === QGCPalette.Light ? qgcPal.windowTransparentText : qgcPal.brandingBlue
+                        opacity:            qgcPal.globalTheme === QGCPalette.Light ? 0.8 : 0.9
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                    }
                 }
             }
 
@@ -105,11 +118,24 @@ Rectangle {
                 text:       qsTr("Disconnect")
                 onClicked:  _activeVehicle.closeVehicle()
                 visible:    _activeVehicle && _communicationLost
+                neon:       true
+                pill:       true
+                neonColor:  qgcPal.colorRed
             }
+        }
 
-            FlightModeIndicator {
-                Layout.fillHeight:  true
-                visible:            _activeVehicle
+        Item {
+            id:                     centerStatusHolder
+            Layout.fillHeight:      true
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    topStatusPanel.visible ? topStatusPanel.implicitWidth : 0
+
+            FlyViewTopStatusPanel {
+                id:                 topStatusPanel
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+                flightModeIndicator: flightModeProxy
+                statusIndicator:     mainStatusIndicator
             }
         }
 
@@ -118,12 +144,31 @@ Rectangle {
             Layout.alignment:       Qt.AlignRight
             Layout.fillHeight:      true
             Layout.preferredWidth:  Math.min(contentWidth, availableWidth)
-            contentWidth:           toolIndicators.width
+            contentWidth:           rightRow.width
             flickableDirection:     Flickable.HorizontalFlick
 
-            property real availableWidth: mainLayout.width - leftStatusLayout.width
+            property real availableWidth: Math.max(0, mainLayout.width - leftStatusLayout.width - centerStatusHolder.width)
 
-            FlyViewToolBarIndicators { id: toolIndicators }
+            Row {
+                id:                 rightRow
+                height:             indicatorsFlickable.height
+                spacing:            ScreenTools.defaultFontPixelWidth
+
+                FlyViewToolBarIndicators { id: toolIndicators }
+
+                MainStatusIndicator {
+                    id:                 mainStatusIndicator
+                    height:             indicatorsFlickable.height
+                    showStatusLabel:    false
+                }
+            }
+
+    // Hidden flight mode indicator used to provide drawer interactions for the top status panel
+    FlightModeIndicator {
+        id:         flightModeProxy
+        visible:    false
+        enabled:    false
+    }
         }
     }
 

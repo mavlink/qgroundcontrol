@@ -135,8 +135,11 @@ Item {
                 context.lineTo(panelX, panelY)                              // top left
 
                 context.closePath()
-                context.fillStyle = qgcPal.windowShade
+                context.fillStyle = qgcPal.toolbarBackground
                 context.fill()
+                context.lineWidth = 1
+                context.strokeStyle = qgcPal.groupBorder
+                context.stroke()
             }
         } // Canvas - arrowCanvas
 

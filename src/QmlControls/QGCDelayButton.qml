@@ -66,20 +66,14 @@ DelayButton {
         radius:         backRadius
         implicitWidth:  Math.max(control._showHelp ? helpText.contentWidth : 0, ScreenTools.implicitButtonWidth)
         implicitHeight: ScreenTools.implicitButtonHeight
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-
-            GradientStop { position: 0.0; color: qgcPal.buttonHighlight }
-            GradientStop { position: 0.15; color: qgcPal.button }
-        }
+        border.width:   2
+        border.color:   qgcPal.brandingBlue
+        color:          qgcPal.toolbarBackground
 
         Rectangle {
             anchors.fill:           parent
             anchors.rightMargin:    control.pressed ? parent.width * (1.0 - control.progress) : 0
-            color:                  qgcPal.buttonHighlight
+            color:                  qgcPal.brandingBlue
             opacity:                _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
             radius:                 parent.radius
         }

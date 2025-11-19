@@ -19,7 +19,7 @@ import QGroundControl.Controls
 
 Rectangle {
     id:     _root
-    color:  qgcPal.window
+    color:  qgcPal.toolbarBackground
     z:      QGroundControl.zOrderTopMost
 
     signal popout()
@@ -34,6 +34,8 @@ Rectangle {
     DeadMouseArea {
         anchors.fill: parent
     }
+
+    QGCPalette { id: qgcPal }
 
     GeoTagController {
         id: geoController
@@ -107,7 +109,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.toolbarDivider
     }
 
     Loader {

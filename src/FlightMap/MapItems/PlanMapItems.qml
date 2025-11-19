@@ -42,7 +42,14 @@ Item {
         delegate: MissionItemMapVisual {
             map:        _map
             vehicle:    _vehicle
-            onClicked:  _guidedController.confirmAction(_guidedController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
+            onClicked:  {
+                // Select this item so its drag handles appear (since FlyView map is in planView mode)
+                _missionController.setCurrentPlanViewSeqNum(Math.max(object.sequenceNumber, 1), true)
+                // Only show guided 'Set Waypoint' when not editing plans on the fly map
+                if (!map.planView) {
+                    _guidedController.confirmAction(_guidedController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
+                }
+            }
         }
     }
 

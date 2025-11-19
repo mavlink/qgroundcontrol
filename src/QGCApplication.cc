@@ -79,19 +79,12 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     // Set application information
     QString applicationName;
     if (_runningUnitTests || _simpleBootTest) {
-        // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
-        // name. Also we want to run unit tests with clean settings every time.
-        applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
+        applicationName = QStringLiteral("IG-GCS-FLY_unittest");
     } else {
-#ifdef QGC_DAILY_BUILD
-        // This gives daily builds their own separate settings space. Allowing you to use daily and stable builds
-        // side by side without daily screwing up your stable settings.
-        applicationName = QStringLiteral("%1 Daily").arg(QGC_APP_NAME);
-#else
-        applicationName = QGC_APP_NAME;
-#endif
+        applicationName = QStringLiteral("IG-GCS-FLY");
     }
     setApplicationName(applicationName);
+    setApplicationDisplayName(applicationName);
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
@@ -271,7 +264,19 @@ void QGCApplication::_initForNormalAppBoot()
     QUrl windowIcon = QUrl("qrc:/res/qgroundcontrol.ico");
     windowIcon = _qmlAppEngine->interceptUrl(windowIcon, QQmlAbstractUrlInterceptor::UrlString);
     // The interceptor needs "qrc:/path" but QIcon expects ":/path"
-    setWindowIcon(QIcon(":" + windowIcon.path()));
+    const QIcon appIcon(":" + windowIcon.path());
+    setWindowIcon(appIcon);
+    if (mainRootWindow()) {
+        mainRootWindow()->setIcon(appIcon);
+    }
+#elif defined(Q_OS_WIN)
+    QUrl windowIcon = QUrl("qrc:/res/qgroundcontrol.ico");
+    windowIcon = _qmlAppEngine->interceptUrl(windowIcon, QQmlAbstractUrlInterceptor::UrlString);
+    const QIcon appIcon(":" + windowIcon.path());
+    setWindowIcon(appIcon);
+    if (mainRootWindow()) {
+        mainRootWindow()->setIcon(appIcon);
+    }
 #endif
 
     // Safe to show popup error messages now that main window is created
