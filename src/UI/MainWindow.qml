@@ -27,6 +27,8 @@ ApplicationWindow {
     id:             mainWindow
     visible:        true
 
+    flags: Qt.Window | Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint
+    
     property bool   _utmspSendActTrigger
 
     Component.onCompleted: {
