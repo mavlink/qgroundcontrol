@@ -31,9 +31,8 @@ jobs:
 
       - name: Update translation files
         run: |
-          cd translations
-          ${{ env.QT_ROOT_DIR }}/bin/lupdate ../src -ts qgc.ts -no-obsolete
-          python3 qgc-lupdate-json.py
+          ${{ env.QT_ROOT_DIR }}/bin/lupdate src -ts translations/qgc.ts -no-obsolete
+          python3 tools/translations/qgc-lupdate-json.py
 
       - name: Configure Git
         run: |
