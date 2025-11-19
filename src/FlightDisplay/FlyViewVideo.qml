@@ -151,7 +151,7 @@ Item {
         }
         onReleased: (mouse) => {
             onScreenGimbalController.releaseControl()
-            
+
             //if there is already a selection, delete it
             if (trackingROI !== null) {
                 trackingROI.destroy();

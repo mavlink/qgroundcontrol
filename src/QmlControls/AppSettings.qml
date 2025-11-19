@@ -146,4 +146,3 @@ Rectangle {
         anchors.bottom:         parent.bottom
     }
 }
-

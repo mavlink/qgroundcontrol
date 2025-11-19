@@ -70,9 +70,9 @@ QVariant PX4ParameterMetaData::_stringToTypedVariant(const QString& string, Fact
         convertTo = QMetaType::QByteArray;
         break;
     }
-    
+
     *convertOk = var.convert(QMetaType(convertTo));
-    
+
     return var;
 }
 
@@ -94,43 +94,43 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
         qWarning() << "Internal error: metaDataFile mission" << metaDataFile;
         return;
     }
-    
+
     if (!xmlFile.open(QIODevice::ReadOnly)) {
         qWarning() << "Internal error: Unable to open parameter file:" << metaDataFile << xmlFile.errorString();
         return;
     }
-    
+
     QXmlStreamReader xml(xmlFile.readAll());
     xmlFile.close();
     if (xml.hasError()) {
         qWarning() << "Badly formed XML" << xml.errorString();
         return;
     }
-    
+
     QString         factGroup;
     QString         errorString;
     FactMetaData*   metaData = nullptr;
     int             xmlState = XmlStateNone;
     bool            badMetaData = true;
-    
+
     while (!xml.atEnd()) {
         if (xml.isStartElement()) {
             QString elementName = xml.name().toString();
-            
+
             if (elementName == "parameters") {
                 if (xmlState != XmlStateNone) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundParameters;
-                
+
             } else if (elementName == "version") {
                 if (xmlState != XmlStateFoundParameters) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundVersion;
-                
+
                 bool convertOk;
                 QString strVersion = xml.readElementText();
                 int intVersion = strVersion.toInt(&convertOk);
@@ -143,7 +143,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                     qDebug() << "Parameter version stamp too old, skipping load. Found:" << intVersion << "Want: 3 File:" << metaDataFile;
                     return;
                 }
-                
+
             } else if (elementName == "parameter_version_major") {
                 // Just skip over for now
             } else if (elementName == "parameter_version_minor") {
@@ -156,30 +156,30 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                     return;
                 }
                 xmlState = XmlStateFoundGroup;
-                
+
                 if (!xml.attributes().hasAttribute("name")) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 factGroup = xml.attributes().value("name").toString();
                 qCDebug(PX4ParameterMetaDataLog) << "Found group: " << factGroup;
-                
+
             } else if (elementName == "parameter") {
                 if (xmlState != XmlStateFoundGroup) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
                 xmlState = XmlStateFoundParameter;
-                
+
                 if (!xml.attributes().hasAttribute("name") || !xml.attributes().hasAttribute("type")) {
                     qWarning() << "Badly formed XML";
                     return;
                 }
-                
+
                 QString name = xml.attributes().value("name").toString();
                 QString type = xml.attributes().value("type").toString();
                 QString strDefault =    xml.attributes().value("default").toString();
-                
+
                 QString category = xml.attributes().value("category").toString();
                 if (category.isEmpty()) {
                     category = QStringLiteral("Standard");
@@ -208,7 +208,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                     qWarning() << "Parameter meta data with bad type:" << type << " name:" << name;
                     return;
                 }
-                
+
                 // Now that we know type we can create meta data object and add it to the system
                 metaData = new FactMetaData(foundType, this);
                 if (_mapParameterName2FactMetaData.contains(name)) {
@@ -224,10 +224,10 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                     metaData->setGroup(factGroup);
                     metaData->setReadOnly(readOnly);
                     metaData->setVolatileValue(volatileValue);
-                    
+
                     if (xml.attributes().hasAttribute("default") && !strDefault.isEmpty()) {
                         QVariant varDefault;
-                        
+
                         if (metaData->convertAndValidateRaw(strDefault, false, varDefault, errorString)) {
                             metaData->setRawDefaultValue(varDefault);
                         } else {
@@ -235,7 +235,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                         }
                     }
                 }
-                
+
             } else {
                 // We should be getting meta data now
                 if (xmlState != XmlStateFoundParameter) {

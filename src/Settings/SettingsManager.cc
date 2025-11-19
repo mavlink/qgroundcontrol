@@ -207,7 +207,7 @@ void SettingsManager::_loadSettingsFiles()
                 qCDebug(SettingsManagerLog) << "  Loading settings:" << groupName << settingName;
 
                 if (!groupObject[settingName].isObject()) {
-                    qCWarning(SettingsManagerLog) << "Settings file incorrect format, setting is not an object:" << fileInfo.absoluteFilePath() 
+                    qCWarning(SettingsManagerLog) << "Settings file incorrect format, setting is not an object:" << fileInfo.absoluteFilePath()
                                                 << groupName << settingName;
                     continue;
                 }

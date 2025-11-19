@@ -23,7 +23,7 @@ Item {
 
     function translateCenterToAngleX(radius, angle) {
         return radius * Math.sin(angle * (Math.PI / 180))
-    } 
+    }
 
     function translateCenterToAngleY(radius, angle) {
         return -radius * Math.cos(angle * (Math.PI / 180))
@@ -108,5 +108,5 @@ Item {
                 angle:      45 / 2 + (45 * index)
             }
         }
-    }    
+    }
 }

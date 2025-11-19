@@ -35,8 +35,8 @@ void SendMavlinkCommandState::setup(MAV_CMD command, double param1, double param
     _param6 = param6;
     _param7 = param7;
 
-    connect(this, &QState::entered, this, [this] () 
-        { 
+    connect(this, &QState::entered, this, [this] ()
+        {
             qCDebug(QGCStateMachineLog) << QStringLiteral("Sending %1 command").arg(MissionCommandTree::instance()->friendlyName(_command)) << " - " << Q_FUNC_INFO;
             _sendMavlinkCommand();
         });

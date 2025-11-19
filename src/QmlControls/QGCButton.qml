@@ -80,7 +80,7 @@ Button {
                 font.family:            control.font.family
                 font.weight:            fontWeight
                 color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
-                visible:                control.text !== "" 
+                visible:                control.text !== ""
             }
     }
 }

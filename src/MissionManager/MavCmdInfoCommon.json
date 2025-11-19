@@ -300,7 +300,7 @@
                 "default":          0,
                 "decimalPlaces":    0,
                 "min":              0
-            }        
+            }
         },
         { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
         {

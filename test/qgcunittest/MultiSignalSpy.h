@@ -24,7 +24,7 @@ class QSignalSpy;
 class MultiSignalSpy : public QObject
 {
     Q_OBJECT
-    
+
 public:
     MultiSignalSpy(QObject* parent = nullptr);
     ~MultiSignalSpy();
@@ -57,7 +57,7 @@ public:
     void clearAllSignals(void);
 
     bool waitForSignalByIndex(quint32 index, int msec);
-    
+
     QSignalSpy* getSpyByIndex(quint32 index);
 
     // Returns the value type for the first parameter of the signal
@@ -68,7 +68,7 @@ public:
 private:
     // QObject overrides
     void timerEvent(QTimerEvent * event);
-    
+
     void _printSignalState(quint32 mask);
     bool _checkSignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed);
     bool _checkOnlySignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed);
@@ -79,4 +79,3 @@ private:
     size_t          _cSignals;
     bool            _timeout;
 };
-

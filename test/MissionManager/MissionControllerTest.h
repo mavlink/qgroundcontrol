@@ -19,7 +19,7 @@ class VisualMissionItem;
 class MissionControllerTest : public MissionControllerManagerTest
 {
     Q_OBJECT
-    
+
 public:
     MissionControllerTest(void);
 

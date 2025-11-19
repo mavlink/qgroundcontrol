@@ -19,7 +19,7 @@ class MissionSettingsItem;
 class TakeoffMissionItem : public SimpleMissionItem
 {
     Q_OBJECT
-    
+
 public:
     // Note: forLoad = true indicates that TakeoffMissionItem::load will be called onthe item
     TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);

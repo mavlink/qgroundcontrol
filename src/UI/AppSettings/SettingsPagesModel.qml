@@ -81,10 +81,10 @@ ListModel {
         name: qsTr("PX4 Log Transfer")
         url: "qrc:/qml/QGroundControl/AppSettings/PX4LogTransferSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/inbox-download.svg"
-        pageVisible: function() { 
+        pageVisible: function() {
             var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
-            return QGroundControl.corePlugin.options.showPX4LogTransferOptions && 
-                        QGroundControl.px4ProFirmwareSupported && 
+            return QGroundControl.corePlugin.options.showPX4LogTransferOptions &&
+                        QGroundControl.px4ProFirmwareSupported &&
                         (activeVehicle ? activeVehicle.px4Firmware : true)
         }
     }
@@ -131,4 +131,3 @@ ListModel {
         pageVisible: function() { return ScreenTools.isDebug }
     }
 }
-

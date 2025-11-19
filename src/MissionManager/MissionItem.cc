@@ -136,7 +136,7 @@ const MissionItem& MissionItem::operator=(const MissionItem& other)
 }
 
 MissionItem::~MissionItem()
-{    
+{
 
 }
 
@@ -184,7 +184,7 @@ bool MissionItem::_convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Jso
     if (json.contains(_jsonParamsKey)) {
         // Already V2 format
         return true;
-    }        
+    }
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },

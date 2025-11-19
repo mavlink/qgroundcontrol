@@ -87,7 +87,7 @@ Item {
             QGCLabel {
                 id:                     statusLabel
                 font.pointSize:         ScreenTools.smallFontPointSize
-                text:                   activeGimbal && activeGimbal.retracted ? 
+                text:                   activeGimbal && activeGimbal.retracted ?
                                             qsTr("Retracted") :
                                             (activeGimbal && activeGimbal.yawLock ? qsTr("Yaw locked") : qsTr("Yaw follow"))
                 color:                  qgcPal.windowTransparentText

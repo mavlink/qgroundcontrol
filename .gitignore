@@ -155,3 +155,6 @@ Qt*-linux*.tar.*
 # cc-sessions - personal AI development workflow
 sessions/
 CLAUDE.md
+
+# Pre-commit hooks
+.ruff_cache/

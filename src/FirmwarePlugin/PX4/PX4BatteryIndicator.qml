@@ -31,7 +31,7 @@ SettingsGroupLayout {
         label:                  qsTr("Warning Level")
         fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
         majorTickStepSize:      5
-    }   
+    }
 
     FactSlider {
         Layout.fillWidth:   true

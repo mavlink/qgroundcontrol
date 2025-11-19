@@ -6,7 +6,8 @@ QT_PATH="${QT_PATH:-/opt/Qt}"
 QT_HOST="${QT_HOST:-mac}"
 QT_TARGET="${QT_TARGET:-desktop}"
 QT_ARCH="${QT_ARCH:-mac}"
-QT_MODULES="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml}"
+QT_MODULES_STR="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml}"
+IFS=' ' read -r -a QT_MODULES <<< "$QT_MODULES_STR"
 
 set -e
 
@@ -15,7 +16,7 @@ echo "QT_PATH:    $QT_PATH"
 echo "QT_HOST:    $QT_HOST"
 echo "QT_TARGET:  $QT_TARGET"
 echo "QT_ARCH:    $QT_ARCH"
-echo "QT_MODULES: $QT_MODULES"
+echo "QT_MODULES: ${QT_MODULES[*]}"
 
 # Update Homebrew and install Python 3 (if needed)
 brew update
@@ -25,17 +26,23 @@ brew install python3
 pip3 install --upgrade setuptools wheel py7zr ninja cmake aqtinstall
 
 # Use aqtinstall to download and install Qt.
-aqt install-qt ${QT_HOST} ${QT_TARGET} ${QT_VERSION} ${QT_ARCH} -O ${QT_PATH} -m ${QT_MODULES}
+aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES[@]}"
 
 # macOS does not support GNU readlink -e.
 # We use realpath instead (or substitute with greadlink -f if needed).
 # Note: On macOS, dynamic libraries are resolved using DYLD_LIBRARY_PATH.
-export PATH="$(realpath ${QT_PATH}/${QT_VERSION}/${QT_ARCH}/bin):$PATH"
-export PKG_CONFIG_PATH="$(realpath ${QT_PATH}/${QT_VERSION}/${QT_ARCH}/lib/pkgconfig):$PKG_CONFIG_PATH"
-export DYLD_LIBRARY_PATH="$(realpath ${QT_PATH}/${QT_VERSION}/${QT_ARCH}/lib):$DYLD_LIBRARY_PATH"
-export QT_ROOT_DIR="$(realpath ${QT_PATH}/${QT_VERSION}/${QT_ARCH})"
-export QT_PLUGIN_PATH="$(realpath ${QT_PATH}/${QT_VERSION}/${QT_ARCH}/plugins)"
-export QML2_IMPORT_PATH="$(realpath ${QT_PATH}/${QT_VERSION}/${QT_ARCH}/qml)"
+QT_BIN_DIR=$(realpath "${QT_PATH}/${QT_VERSION}/${QT_ARCH}/bin")
+export PATH="$QT_BIN_DIR:$PATH"
+QT_PKGCONFIG_DIR=$(realpath "${QT_PATH}/${QT_VERSION}/${QT_ARCH}/lib/pkgconfig")
+export PKG_CONFIG_PATH="$QT_PKGCONFIG_DIR:$PKG_CONFIG_PATH"
+QT_LIB_DIR=$(realpath "${QT_PATH}/${QT_VERSION}/${QT_ARCH}/lib")
+export DYLD_LIBRARY_PATH="$QT_LIB_DIR:$DYLD_LIBRARY_PATH"
+QT_ROOT_DIR=$(realpath "${QT_PATH}/${QT_VERSION}/${QT_ARCH}")
+export QT_ROOT_DIR
+QT_PLUGIN_PATH=$(realpath "${QT_PATH}/${QT_VERSION}/${QT_ARCH}/plugins")
+export QT_PLUGIN_PATH
+QML2_IMPORT_PATH=$(realpath "${QT_PATH}/${QT_VERSION}/${QT_ARCH}/qml")
+export QML2_IMPORT_PATH
 
 echo "Updated environment variables:"
 echo "PATH:              $PATH"

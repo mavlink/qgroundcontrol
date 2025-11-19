@@ -48,13 +48,20 @@ runs:
       shell: bash
 
     - name: Upload tagged stable push build to S3 latest Bucket
-      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && github.ref_type == 'tag' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      if: >-
+        ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' &&
+        github.repository_owner == 'mavlink' && github.ref_type == 'tag' &&
+        inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       working-directory: ${{ runner.temp }}/build
       run: aws s3 cp "${{ inputs.artifact_name }}" "s3://qgroundcontrol/latest/${{ inputs.artifact_name }}" --acl public-read
       shell: bash
 
     - name: Invalidate tagged stable push build CloudFront Cache
-      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && github.ref_type == 'tag' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' && inputs.aws_distribution_id != '' }}
+      if: >-
+        ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' &&
+        github.repository_owner == 'mavlink' && github.ref_type == 'tag' &&
+        inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' &&
+        inputs.aws_distribution_id != '' }}
       run: |
         aws cloudfront create-invalidation \
           --distribution-id "${{ inputs.aws_distribution_id }}" \

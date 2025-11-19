@@ -25,7 +25,7 @@ class FTPManager : public QObject
     Q_OBJECT
 
     friend class Vehicle;
-    
+
 public:
     FTPManager(Vehicle* vehicle);
 
@@ -65,7 +65,7 @@ signals:
     /// Signalled during a lengthy command to show progress
     ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
     void commandProgress(float value);
-	
+
 private slots:
     void _ackOrNakTimeout(void);
 
@@ -175,8 +175,7 @@ private:
     QTimer                  _ackOrNakTimeoutTimer;
     int                     _currentStateMachineIndex   = -1;
     uint16_t                _expectedIncomingSeqNumber  = 0;
-    
+
     static const int _ackOrNakTimeoutMsecs  = 1000;
     static const int _maxRetry              = 3;
 };
-

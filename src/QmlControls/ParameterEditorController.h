@@ -24,13 +24,13 @@ class ParameterManager;
 class ParameterTableModel : public QAbstractTableModel
 {
     Q_OBJECT
-    
+
 public:
     explicit ParameterTableModel(QObject* parent = nullptr);
     ~ParameterTableModel() override;
 
     typedef QVector<QVariant> ColumnData;
-    
+
     enum {
         FactRole = Qt::UserRole + 1
     };
@@ -42,7 +42,7 @@ public:
     };
 
     Q_PROPERTY(int rowCount READ rowCount NOTIFY rowCountChanged)
-    
+
     void append      (Fact* fact);
     void insert      (int row, Fact* fact);
     void clear       ();

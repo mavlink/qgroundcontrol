@@ -32,9 +32,9 @@ Item {
     property var    separatorHeight:                        buttonHeight * 0.9
     property var    settingsPanelVisible:                   false
     property bool   outdoorPalette:                         qgcPal.globalTheme === QGCPalette.Light
-    
+
     // Used by control request popup, when other GCS ask us for control
-    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue // Use this as default in case something goes wrong. Usually it will be overriden on onRequestOperatorControlReceived 
+    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue // Use this as default in case something goes wrong. Usually it will be overriden on onRequestOperatorControlReceived
     property var    requestSysIdRequestingControl:          0
     property var    requestAllowTakeover:                   false
 
@@ -75,7 +75,7 @@ Item {
         opacity:            0.0
 
         function doOpacityAnimation() { opacityAnimation.restart() }
-        SequentialAnimation on opacity { 
+        SequentialAnimation on opacity {
             id:         opacityAnimation
             running:    false
             loops:      1
@@ -149,13 +149,13 @@ Item {
         }
     }
 
-    // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts 
+    // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts
     // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
     Component {
         id: allowTakeoverExpirationPopup
 
             ToolIndicatorPage {
-            // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts 
+            // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts
             // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
             TimedProgressTracker {
                 id:                     revertTakeoverProgressTracker
@@ -184,8 +184,8 @@ Item {
                 // Action label
                 QGCLabel {
                     font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
-                    text:                   qsTr("Reverting back to takeover not allowed if GCS ") + requestSysIdRequestingControl + 
-                                            qsTr(" doesn't take control in ") + revertTakeoverProgressTracker.progressLabel + 
+                    text:                   qsTr("Reverting back to takeover not allowed if GCS ") + requestSysIdRequestingControl +
+                                            qsTr(" doesn't take control in ") + revertTakeoverProgressTracker.progressLabel +
                                             qsTr(" seconds ...")
                 }
                 QGCButton {
@@ -248,7 +248,7 @@ Item {
                 }
                 QGCLabel {
                     text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Takeover allowed") : qsTr("Takeover NOT allowed")
-                    Layout.columnSpan:      2         
+                    Layout.columnSpan:      2
                     Layout.alignment:       Qt.AlignRight
                     Layout.fillWidth:       true
                     horizontalAlignment:    Text.AlignRight

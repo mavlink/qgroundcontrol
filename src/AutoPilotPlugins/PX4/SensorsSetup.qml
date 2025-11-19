@@ -395,7 +395,7 @@ Item {
                 id:             airspeedButton
                 width:          _buttonWidth
                 text:           qsTr("Airspeed")
-                visible:        vehicleComponent.airspeedCalSupported && 
+                visible:        vehicleComponent.airspeedCalSupported &&
                                     QGroundControl.corePlugin.options.showSensorCalibrationAirspeed &&
                                     showSensorCalibrationAirspeed
                 indicatorGreen: sens_dpres_off.value !== 0

@@ -9,13 +9,13 @@ Crowdin is configured to automatically sychronize the qgc.ts file once a day. So
 Add the new language from the CrowdIn settings as the first step.
 
 ### Periodically update the base transation files during the release cycle
-You do this by running the `source qgc-lupdate.sh` script to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
+You do this by running the `source tools/translations/qgc-lupdate.sh` script to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
 
 ## C++ and Qml code strings
 These are coded using the standard Qt tr() for C++ and qsTr() for Qml mechanisms.
 
 ## Translating strings within Json files
-QGC uses json files internally for metadata. These files need to be translated as well. There is a [python json parser](https://github.com/mavlink/qgroundcontrol/blob/master/translations/qgc-lupdate-json.py) which is used to find all the json files in the source tree and pull all the strings out for translation. This parser outputs the localization file for json strings in Qt .ts file format.
+QGC uses json files internally for metadata. These files need to be translated as well. There is a [python json parser](https://github.com/mavlink/qgroundcontrol/blob/master/tools/translations/qgc-lupdate-json.py) which is used to find all the json files in the source tree and pull all the strings out for translation. This parser outputs the localization file for json strings in Qt .ts file format.
 
 In order for the parser to know which strings must be translated additional keys must be available at the root object level.
 
@@ -52,4 +52,3 @@ This is used when you have two strings in the same file which are equal, but the
 ```
 
 In the example above "baz" is the string which is the same for two different keys. The prefix `#loc.disambiguation#` indicates a disambiguation is to follow which is the string between the next set of `#`s.
-

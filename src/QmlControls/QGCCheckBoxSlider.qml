@@ -25,16 +25,16 @@ AbstractButton   {
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
     contentItem: Item {
-        implicitWidth:  (label.visible ? label.contentWidth + ScreenTools.defaultFontPixelWidth : 0) + indicator.width 
+        implicitWidth:  (label.visible ? label.contentWidth + ScreenTools.defaultFontPixelWidth : 0) + indicator.width
         implicitHeight: label.contentHeight
 
-        QGCLabel { 
+        QGCLabel {
             id:             label
             anchors.left:   parent.left
             text:           visible ? control.text : "X"
             visible:        control.text !== ""
         }
-    
+
         Rectangle {
             id:                     indicator
             anchors.right:          parent.right

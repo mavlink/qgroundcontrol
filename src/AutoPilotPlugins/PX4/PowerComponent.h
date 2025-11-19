@@ -19,13 +19,13 @@
 class PowerComponent : public VehicleComponent
 {
     Q_OBJECT
-    
+
 public:
     PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     // Overrides from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;
-    
+
     // Overrides from VehicleComponent
     QString name                    (void) const override;
     QString description             (void) const override;
