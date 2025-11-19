@@ -146,6 +146,7 @@ option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence missing dependency 
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Enable verbose deployment output" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print search paths when package not found" ON)
 option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ON)
+option(QGC_ENABLE_QMLLINT "Enable automatic QML linting during build" OFF)
 
 # Debug environment variables (uncomment to enable)
 # set(ENV{QT_DEBUG_PLUGINS} "1")

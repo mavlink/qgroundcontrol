@@ -34,4 +34,3 @@ RowLayout {
         Layout.preferredWidth:  labelPreferredWidth
     }
 }
-

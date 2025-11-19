@@ -41,4 +41,3 @@ signals:
 private:
     Vehicle *_vehicle = nullptr;
 };
-

@@ -43,7 +43,7 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
         { APMPlaneMode::THERMAL       , _thermalFlightMode      },
         { APMPlaneMode::LOITER2QLAND  , _loiter2qlandFlightMode },
         { APMPlaneMode::AUTOLAND      , _autolandFlightMode     },
-        
+
     });
 
     static FlightModeList availableFlightModes = {

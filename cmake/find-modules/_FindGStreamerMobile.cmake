@@ -108,7 +108,7 @@ if(ANDROID_ABI MATCHES "^armeabi")
 elseif(ANDROID_ABI STREQUAL "x86")
     set(NEEDS_NOTEXT_FIX TRUE)
     set(NEEDS_BSYMBOLIC_FIX TRUE)
-# arm64: https://ffmpeg.org/pipermail/ffmpeg-devel/2022-July/298734.html 
+# arm64: https://ffmpeg.org/pipermail/ffmpeg-devel/2022-July/298734.html
 elseif(ANDROID_ABI STREQUAL "x86_64" OR ANDROID_ABI STREQUAL "arm64-v8a")
     set(NEEDS_BSYMBOLIC_FIX TRUE)
 endif()

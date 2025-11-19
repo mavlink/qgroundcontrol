@@ -104,7 +104,7 @@ void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinat
     if (!_centerDrag) {
         // When dragging center we don't signal path changed until all vertices are updated
         if (!_deferredPathChanged) {
-            // Only update the path once per event loop, to prevent lag-spikes 
+            // Only update the path once per event loop, to prevent lag-spikes
             _deferredPathChanged = true;
             QTimer::singleShot(0, this, [this]() {
                 emit pathChanged();
@@ -397,7 +397,7 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
 
         _center = newCenter;
         if (!_deferredPathChanged) {
-            // Only update the center once per event loop, to prevent lag-spikes 
+            // Only update the center once per event loop, to prevent lag-spikes
             _deferredPathChanged = true;
             QTimer::singleShot(0, this, [this, newCenter]() {
                 emit centerChanged(newCenter);

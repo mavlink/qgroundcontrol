@@ -36,7 +36,7 @@ Item {
     property bool   emergencyDeclared:  activeVehicle && remoteIDManager ? remoteIDManager.emergencyDeclared  : false
     property bool   operatorIDFlag:     activeVehicle && remoteIDManager ? remoteIDManager.operatorIDGood     : false
     property int    remoteIDState:      getRemoteIDState()
-    
+
     property int    regionOperation:    QGroundControl.settingsManager.remoteIDSettings.region.value
 
     enum RIDState {
@@ -53,16 +53,16 @@ Item {
 
     function getRidColor() {
         switch (remoteIDState) {
-            case RemoteIDIndicator.RIDState.HEALTHY: 
+            case RemoteIDIndicator.RIDState.HEALTHY:
                 return qgcPal.colorGreen
                 break
-            case RemoteIDIndicator.RIDState.WARNING: 
+            case RemoteIDIndicator.RIDState.WARNING:
                 return qgcPal.colorYellow
                 break
-            case RemoteIDIndicator.RIDState.ERROR: 
+            case RemoteIDIndicator.RIDState.ERROR:
                 return qgcPal.colorRed
                 break
-            case RemoteIDIndicator.RIDState.UNAVAILABLE: 
+            case RemoteIDIndicator.RIDState.UNAVAILABLE:
                 return qgcPal.colorGrey
                 break
             default:

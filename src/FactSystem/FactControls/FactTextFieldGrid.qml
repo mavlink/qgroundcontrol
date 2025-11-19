@@ -16,7 +16,7 @@ GridLayout {
     Repeater {
         model: parent.factList
 
-        QGCLabel { 
+        QGCLabel {
             text: {
                 if (factLabels) {
                     return factLabels[index]

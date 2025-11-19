@@ -6,7 +6,7 @@ import QGroundControl.Controls
 
 
 ColumnLayout {
-    id:                 control    
+    id:                 control
     spacing:            _margins / 2
     implicitWidth:      _contentLayout.implicitWidth + (_margins * 2)
     implicitHeight:     _contentLayout.implicitHeight + (_margins * 2)
@@ -34,13 +34,13 @@ ColumnLayout {
         spacing:            0
         visible:            heading !== ""
 
-        QGCLabel { 
+        QGCLabel {
             text:           heading
             font.pointSize: headingPointSize
             font.bold:      true
         }
 
-        QGCLabel { 
+        QGCLabel {
             Layout.fillWidth:   true
             text:               headingDescription
             wrapMode:           Text.WordWrap
@@ -72,7 +72,7 @@ ColumnLayout {
                 property var _contentItem: _contentLayout.visibleChildren[index]
             }
         }
- 
+
         ColumnLayout {
             id:                 _contentLayout
             x:                  showBorder ? _margins : 0

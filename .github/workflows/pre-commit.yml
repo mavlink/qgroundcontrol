@@ -20,7 +20,7 @@ jobs:
           QT_VERSION=6.10.0
           QT_ARCH=linux_gcc_64
           QT_PATH=/opt/Qt
-          aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH -m qtdeclarative
+          aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH
           echo "$QT_PATH/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
 
       - uses: pre-commit/action@v3.0.1

@@ -118,7 +118,7 @@
         <qresource prefix="/qml">
         <file alias="QGroundControl/AppSettings/NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
         <file alias="NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
-    </qresource>  
+    </qresource>
     <qresource prefix="/json">
         <file alias="NTRIP.SettingsGroup.json">src/Settings/NTRIP.SettingsGroup.json</file>
     </qresource>

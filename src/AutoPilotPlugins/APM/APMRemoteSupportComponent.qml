@@ -33,7 +33,7 @@ SetupPage {
             GridLayout {
                 id:               elementsRow
                 columns:          2
-                
+
                 anchors.left:           parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.margins:        ScreenTools.defaultFontPixelWidth

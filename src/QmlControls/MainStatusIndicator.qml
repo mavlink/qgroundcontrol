@@ -237,7 +237,7 @@ RowLayout {
                     on_RgLinkNamesChanged:  updateComboModel()
                     on_RgLinkStatusChanged: updateComboModel()
 
-                    onActivated:    (index) => { 
+                    onActivated:    (index) => {
                         _activeVehicle.vehicleLinkManager.primaryLinkName = _rgLinkNames[index]; currentIndex = -1
                         mainWindow.closeIndicatorDrawer()
                     }
@@ -249,7 +249,7 @@ RowLayout {
                 heading:            qsTr("Vehicle Messages")
                 visible:            !vehicleMessageList.noMessages
 
-                VehicleMessageList { 
+                VehicleMessageList {
                     id: vehicleMessageList
                 }
             }
@@ -331,7 +331,7 @@ RowLayout {
                         textFormat:         TextEdit.RichText
                         clip:               true
                         visible:            object.expanded
-                        
+
                         property var fact:  null
 
                         onLinkActivated: (link) => {
@@ -406,7 +406,7 @@ RowLayout {
                     QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Parameters") }
                     QGCButton {
                         text: qsTr("Configure")
-                        onClicked: {                            
+                        onClicked: {
                             mainWindow.showVehicleConfigParametersPage()
                             mainWindow.closeIndicatorDrawer()
                         }
@@ -415,7 +415,7 @@ RowLayout {
                     QGCLabel { Layout.fillWidth: true; text: qsTr("Vehicle Configuration") }
                     QGCButton {
                         text: qsTr("Configure")
-                        onClicked: {                            
+                        onClicked: {
                             mainWindow.showVehicleConfig()
                             mainWindow.closeIndicatorDrawer()
                         }
@@ -425,4 +425,3 @@ RowLayout {
         }
     }
 }
-

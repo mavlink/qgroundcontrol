@@ -152,7 +152,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueG
     FactValueGrid::FontSize defaultFontSize = FactValueGrid::DefaultFontSize;
 #else
     FactValueGrid::FontSize defaultFontSize = FactValueGrid::MediumFontSize;
-#endif    
+#endif
 
     if (factValueGrid->specificVehicleForCard()) {
         bool includeFWValues = factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid->vehicleClass() == QGCMAVLink::VehicleClassAirship;

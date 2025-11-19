@@ -49,7 +49,7 @@ const RallyPoint& RallyPoint::operator=(const RallyPoint& other)
 }
 
 RallyPoint::~RallyPoint()
-{    
+{
 
 }
 

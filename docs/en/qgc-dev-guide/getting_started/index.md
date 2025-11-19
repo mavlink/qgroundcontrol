@@ -47,9 +47,9 @@ We support Linux builds using a container found on the source tree of the reposi
 ### Native Builds
 
 _QGroundControl_ builds are supported for macOS, Linux, Windows, and Android. Creating a version of QGC for iOS is theoretically possible but is no longer supported as a standard build.
-_QGroundControl_ uses [Qt](http://www.qt.io) as its cross-platform support library. 
+_QGroundControl_ uses [Qt](http://www.qt.io) as its cross-platform support library.
 
-The required version of Qt is {{ $frontmatter.qt_version }} **(only)**. 
+The required version of Qt is {{ $frontmatter.qt_version }} **(only)**.
 
   ::: warning
   **Do not use any other version of Qt!**
@@ -70,7 +70,7 @@ To install Qt:
      - Set the downloaded file to executable using: `chmod +x`.
      - You may also need to install libxcb-cursor0
 
-1. On the _Installation Folder_ page select "Custom Installation"    
+1. On the _Installation Folder_ page select "Custom Installation"  
 
 1. On the _Select Components_ page:
 
@@ -140,9 +140,9 @@ Example commands to build a default QGC and run it afterwards:
    ```
 
    Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.
-   
+
    **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
-   
+
    * `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
    * `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
    * `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account

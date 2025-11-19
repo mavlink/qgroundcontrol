@@ -85,7 +85,7 @@ Item {
         visible:        QGroundControl.videoManager.decoding
         function getWidth() {
             if(_ar != 0.0){
-                if(_isMode_FIT_HEIGHT 
+                if(_isMode_FIT_HEIGHT
                         || (_isMode_FILL && (root.width/root.height < _ar))
                         || (_isMode_NO_CROP && (root.width/root.height > _ar))){
                     // This return value has different implications depending on the mode
@@ -100,8 +100,8 @@ Item {
         }
         function getHeight() {
             if(_ar != 0.0){
-                if(_isMode_FIT_WIDTH 
-                        || (_isMode_FILL && (root.width/root.height > _ar)) 
+                if(_isMode_FIT_WIDTH
+                        || (_isMode_FILL && (root.width/root.height > _ar))
                         || (_isMode_NO_CROP && (root.width/root.height < _ar))){
                     // This return value has different implications depending on the mode
                     // For FIT_WIDTH and FILL

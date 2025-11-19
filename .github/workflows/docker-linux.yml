@@ -39,7 +39,7 @@ jobs:
           fetch-tags: true
 
       - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
+        working-directory: ${{ github.workspace }}
         run: git fetch --all --tags --force --depth 1
 
       - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh

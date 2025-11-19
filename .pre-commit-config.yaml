@@ -84,22 +84,21 @@ repos:
                     print(f"Invalid JSON in {f}: {e}")
                     sys.exit(1)
 
-      # - id: check-no-qassert
-      #   name: Prevent Q_ASSERT in production code
-      #   entry: bash
-      #   language: system
-      #   files: \.(h|cc|cpp)$
-      #   exclude: ^(test/|UnitTest\.h|UnitTest\.cc)
-      #   pass_filenames: false
-      #   args:
-      #     - -c
-      #     - |
-      #       FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(h|cc|cpp)$' | grep -v '^test/' || true)
-      #       if [ -n "$FILES" ]; then
-      #         if echo "$FILES" | xargs grep -n 'Q_ASSERT' 2>/dev/null; then
-      #           echo "Error: Q_ASSERT found in production code. Use defensive checks with early returns."
-      #           exit 1
-      #         fi
-      #       fi
+      - id: check-no-qassert
+        name: Check for Q_ASSERT in production code
+        entry: bash
+        language: system
+        files: \.(h|cc|cpp)$
+        exclude: ^(test/|UnitTest\.h|UnitTest\.cc)
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(h|cc|cpp)$' | grep -v '^test/' || true)
+            if [ -n "$FILES" ]; then
+              if echo "$FILES" | xargs grep -n 'Q_ASSERT' 2>/dev/null; then
+                echo "Warning: Q_ASSERT found in production code. Consider using defensive checks with early returns."
+              fi
+            fi
 
 exclude: ^build/

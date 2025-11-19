@@ -19,7 +19,7 @@
 class RallyPoint : public QObject
 {
     Q_OBJECT
-    
+
 public:
     RallyPoint(const QGeoCoordinate& coordinate, QObject* parent = nullptr);
     RallyPoint(const RallyPoint& other, QObject* parent = nullptr);
@@ -27,7 +27,7 @@ public:
     ~RallyPoint();
 
     const RallyPoint& operator=(const RallyPoint& other);
-    
+
     Q_PROPERTY(QGeoCoordinate   coordinate      READ coordinate     WRITE setCoordinate     NOTIFY coordinateChanged)
     Q_PROPERTY(bool             dirty           READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(QVariantList     textFieldFacts  MEMBER _textFieldFacts                      CONSTANT)

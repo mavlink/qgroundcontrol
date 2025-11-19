@@ -214,9 +214,8 @@ private:
     static constexpr const char* _commentJsonKey               = "comment";
     static constexpr const char* _advancedCategory             = "Advanced";
 
-    friend class MissionCommandTree;    
+    friend class MissionCommandTree;
 #ifdef QGC_UNITTEST_BUILD
     friend class MissionCommandTreeTest;
 #endif
 };
-

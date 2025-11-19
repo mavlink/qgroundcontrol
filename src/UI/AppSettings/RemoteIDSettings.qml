@@ -373,7 +373,7 @@ SettingsPage {
                                 operatorIDTextField.clearValidationError(false /* preventViewSwitch */)
                             }
                         }
-                        
+
                         onTextChanged: {
                             operatorIDFact.value = text
                             if (_activeVehicle) {

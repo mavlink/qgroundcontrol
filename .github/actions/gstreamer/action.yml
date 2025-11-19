@@ -95,7 +95,9 @@ runs:
 
     - name: Setup Environment
       working-directory: ${{ runner.temp }}/gstreamer
-      run: echo "PKG_CONFIG_PATH=${{ inputs.install_directory }}/lib/x86_64-linux-gnu/pkgconfig:${{ inputs.install_directory }}/lib/x86_64-linux-gnu/gstreamer-1.0/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
+      run: >
+        echo "PKG_CONFIG_PATH=${{ inputs.install_directory }}/lib/x86_64-linux-gnu/pkgconfig:${{
+        inputs.install_directory }}/lib/x86_64-linux-gnu/gstreamer-1.0/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
       shell: bash
 
     - name: Save artifact

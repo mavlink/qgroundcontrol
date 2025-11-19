@@ -22,7 +22,7 @@ class QGCCachedFileDownload;
 class ComponentInformationTranslation : public QObject
 {
     Q_OBJECT
-    
+
 public:
     ComponentInformationTranslation(QObject* parent, QGCCachedFileDownload* cachedFileDownload);
 

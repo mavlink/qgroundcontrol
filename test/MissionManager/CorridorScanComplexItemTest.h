@@ -19,14 +19,14 @@ class CorridorScanComplexItem;
 class CorridorScanComplexItemTest : public TransectStyleComplexItemTestBase
 {
     Q_OBJECT
-    
+
 public:
     CorridorScanComplexItemTest(void);
 
 protected:
     void init   (void) final;
     void cleanup(void) final;
-    
+
 #if 1
 private slots:
     void _testDirty         (void);

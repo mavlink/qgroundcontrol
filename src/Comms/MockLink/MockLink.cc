@@ -2096,7 +2096,7 @@ void MockLink::_sendVideoInfo()
     }
 }
 
-void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased) 
+void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 {
     if (modeIndexOneBased > _availableModesCount()) {
         qCWarning(MockLinkLog) << "modeIndexOneBased out of range" << modeIndexOneBased << _availableModesCount();

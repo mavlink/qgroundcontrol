@@ -34,4 +34,3 @@ private slots:
 private:
     QString _motorDetectionMessages;
 };
-

@@ -27,12 +27,12 @@ Item {
 
     Component {
         id: forwardingSupportInfoPage
-        
+
         ToolIndicatorPage {
             contentComponent: SettingsGroupLayout {
                 QGCLabel { text: qsTr("Mavlink traffic is being forwarded to a support server") }
 
-                LabelledLabel { 
+                LabelledLabel {
                     label:      qsTr("Server name:")
                     labelText:  QGroundControl.settingsManager.mavlinkSettings.forwardMavlinkAPMSupportHostName.value
                 }
@@ -49,7 +49,7 @@ Item {
         source:             "/qmlimages/ForwardingSupportIconGreen.svg"
         fillMode:           Image.PreserveAspectFit
     }
-    
+
     MouseArea {
         anchors.fill: parent
         onClicked:      mainWindow.showIndicatorDrawer(forwardingSupportInfoPage, control)

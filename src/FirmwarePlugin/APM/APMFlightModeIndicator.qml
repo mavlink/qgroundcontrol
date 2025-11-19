@@ -30,7 +30,7 @@ SettingsGroupLayout {
         spacing:            ScreenTools.defaultFontPixelWidth * 2
 
         QGCLabel {
-            id:                 label  
+            id:                 label
             Layout.fillWidth:   true
             text:               qsTr("Return At")
         }
