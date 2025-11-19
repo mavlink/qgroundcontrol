@@ -22,6 +22,12 @@
     "default":              128,
     "mobileDefault":        16,
     "qgcRebootRequired":    true
+},
+{
+    "name":         "disableDefaultCache",
+    "shortDesc":    "Disable default map cache",
+    "type":         "Bool",
+    "default":      false
 }
 ]
 }

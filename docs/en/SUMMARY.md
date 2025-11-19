@@ -101,6 +101,7 @@
     - [MAVLink Logs](qgc-dev-guide/file_formats/mavlink.md)
   - [Developer Tools](qgc-dev-guide/tools/index.md)
     - [Mock Link](qgc-dev-guide/tools/mock_link.md)
+    - [Offline Map Cache](qgc-dev-guide/tools/map_cache.md)
   - [Command Line Options](qgc-dev-guide/command_line_options.md)
   - [Custom Builds](qgc-dev-guide/custom_build/custom_build.md)
     - [Initial Repository Setup For Custom Build](qgc-dev-guide/custom_build/fork_repo.md)
