@@ -30,39 +30,23 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 message(STATUS "QGC: Building MAVLink")
 
-# TODO: Enable dialect and version options
-# CPMAddPackage(
-#     NAME mavlink
-#     GITHUB_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
-#     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
-#     OPTIONS
-#         "MAVLINK_DIALECT all"
-#         "MAVLINK_VERSION 2.0"
-# )
-
 CPMAddPackage(
     NAME mavlink
     GIT_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
+    OPTIONS
+        "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
+        "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
 )
 
-# ----------------------------------------------------------------------------
-# MAVLink Dialect Includes
-# ----------------------------------------------------------------------------
-# For QGC, "all" dialects includes common and development
-# Development dialect should be restricted to debug builds only
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${mavlink_SOURCE_DIR}
-        ${mavlink_SOURCE_DIR}/all
-        ${mavlink_SOURCE_DIR}/common
-        ${mavlink_SOURCE_DIR}/development
-)
-
-# TODO: Enable warning suppression if needed
-# if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-#   target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
-# endif()
+if(mavlink_ADDED)
+    add_dependencies(${CMAKE_PROJECT_NAME} mavlink)
+    target_include_directories(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            ${mavlink_BINARY_DIR}/include/mavlink
+            ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
+    )
+endif()
 
 # ----------------------------------------------------------------------------
 # LibEvents - MAVLink event handling
