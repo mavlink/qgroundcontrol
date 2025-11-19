@@ -36,10 +36,10 @@ class SerialLink;
 class UDPConfiguration;
 class UdpIODevice;
 
-/// @brief Manage communication links
-///        The Link Manager organizes the physical Links. It can manage arbitrary
-///        links and takes care of connecting them as well assigning the correct
-///        protocol instance to transport the link data into the application.
+/// Manage communication links
+/// The Link Manager organizes the physical Links. It can manage arbitrary
+/// links and takes care of connecting them as well assigning the correct
+/// protocol instance to transport the link data into the application.
 class LinkManager : public QObject
 {
     Q_OBJECT
@@ -178,9 +178,9 @@ private:
     Q_PROPERTY(QStringList serialPorts       READ serialPorts       NOTIFY commPortsChanged)
 
 public:
-    static QStringList serialBaudRates();
     QStringList serialPortStrings();
     QStringList serialPorts();
+    static QStringList serialBaudRates();
 
 signals:
     void commPortStringsChanged();
