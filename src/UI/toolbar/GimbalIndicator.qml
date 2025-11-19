@@ -274,6 +274,32 @@ Item {
             }
 
             SettingsGroupLayout {
+                heading:        qsTr("Zoom speed")
+                showDividers:   false
+
+                QGCLabel {
+                        text:               qsTr("Max speed (min zoom):")
+                        visible:            true
+                    }
+
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMaxSpeed
+                        visible:            true
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Min speed (max zoom):")
+                        visible:            true
+                    }
+
+                    FactTextField {
+                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMinSpeed
+                        visible:            true
+                    }
+                
+            }
+
+            SettingsGroupLayout {
                 LabelledFactTextField {
                     label:      qsTr("Joystick buttons speed:")
                     fact:       _gimbalControllerSettings.joystickButtonsSpeed
