@@ -199,8 +199,21 @@ Rectangle {
                     width:              ScreenTools.defaultFontPixelWidth * 6
                     height:             width
                     radius:             width * 0.5
-                    border.color:       qgcPal.buttonText
-                    border.width:       3
+                    border.color:       Qt.rgba(0,0,0,.2)
+                    border.width:       width * 0.1
+
+                    Rectangle {
+                        anchors {
+                            centerIn:           parent
+                            alignWhenCentered:  false
+                        }
+                        color:              Qt.rgba(0,0,0,0)
+                        width:              parent.width - 1
+                        height:             width
+                        radius:             width * 0.5
+                        border.color:       "white"
+                        border.width:       parent.border.width - 1
+                    }
 
                     Rectangle {
                         // anchors.centerIn snaps to integer coordinates, which
@@ -210,10 +223,12 @@ Rectangle {
                             centerIn:           parent
                             alignWhenCentered:  false
                         }
-                        width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                        width:              parent.width * (_isShootingInPhotoMode ? 0.6 : (_isShootingInVideoMode ? 0.4 : 0.75))
                         height:             width
-                        radius:             _isShootingInCurrentMode ? 0 : width * 0.5
-                        color:              _isShootingInCurrentMode || _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
+                        radius:             _isShootingInVideoMode ? 0 : width * 0.5
+                        color:              _isShootingInCurrentMode || _canShootInCurrentMode ? (_cameraInVideoMode ? "#f32836" : "white") : qgcPal.colorGrey
+                        border.color:       Qt.rgba(0,0,0,.2)
+                        border.width:       .5
 
                         property bool _isShootingInPhotoMode:   _cameraInPhotoMode && _camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_IN_PROGRESS
                         property bool _isShootingInVideoMode:   (!_cameraInPhotoMode && _camera.videoCaptureStatus === MavlinkCameraControl.VIDEO_CAPTURE_STATUS_RUNNING)
@@ -245,7 +260,7 @@ Rectangle {
                 // Record time / Capture count
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  _videoCaptureIdle && _photoCaptureIdle ? "transparent" : qgcPal.colorRed
+                    color:                  _videoCaptureIdle && _photoCaptureIdle ? "transparent" : "#f32836"
                     Layout.preferredWidth:  (_cameraInVideoMode ? videoRecordTime.width : photoCaptureCount.width) + (_smallMargins * 2)
                     Layout.preferredHeight: (_cameraInVideoMode ? videoRecordTime.height : photoCaptureCount.height)
                     radius:                 _smallMargins
