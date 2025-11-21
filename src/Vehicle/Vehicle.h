@@ -74,6 +74,8 @@ class StandardModes;
 class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
+class GpsPathPoints;
+class OdometryPathPoints;
 class VehicleObjectAvoidance;
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
@@ -94,6 +96,8 @@ class Vehicle : public VehicleFactGroup
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("AutoPilotPlugin.h")
     Q_MOC_INCLUDE("TrajectoryPoints.h")
+    Q_MOC_INCLUDE("GpsPathPoints.h")
+    Q_MOC_INCLUDE("OdometryPathPoints.h")
     Q_MOC_INCLUDE("ParameterManager.h")
     Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
     Q_MOC_INCLUDE("Autotune.h")
@@ -147,6 +151,8 @@ public:
     Q_PROPERTY(QStringList          flightModes                 READ flightModes                                                    NOTIFY flightModesChanged)
     Q_PROPERTY(QString              flightMode                  READ flightMode                 WRITE setFlightMode                 NOTIFY flightModeChanged)
     Q_PROPERTY(TrajectoryPoints*    trajectoryPoints            MEMBER _trajectoryPoints                                            CONSTANT)
+    Q_PROPERTY(GpsPathPoints*       gpsPathPoints               MEMBER _gpsPathPoints                                               CONSTANT)
+    Q_PROPERTY(OdometryPathPoints*  odometryPathPoints          MEMBER _odometryPathPoints                                          CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints         READ cameraTriggerPoints                                            CONSTANT)
     Q_PROPERTY(float                latitude                    READ latitude                                                       NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude                   READ longitude                                                      NOTIFY coordinateChanged)
@@ -958,6 +964,7 @@ private:
     void _handleCommandAck              (mavlink_message_t& message);
     void _handleGpsRawInt               (mavlink_message_t& message);
     void _handleGlobalPositionInt       (mavlink_message_t& message);
+    void _handleOdometry                (mavlink_message_t& message);
     void _handleHighLatency             (mavlink_message_t& message);
     void _handleHighLatency2            (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
@@ -1096,6 +1103,8 @@ private:
     QElapsedTimer                   _flightTimer;
     QTimer                          _flightTimeUpdater;
     TrajectoryPoints*               _trajectoryPoints = nullptr;
+    GpsPathPoints*                  _gpsPathPoints = nullptr;
+    OdometryPathPoints*             _odometryPathPoints = nullptr;
     QmlObjectListModel              _cameraTriggerPoints;
     //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
 

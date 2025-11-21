@@ -47,6 +47,8 @@
 #include "TerrainProtocolHandler.h"
 #include "TerrainQuery.h"
 #include "TrajectoryPoints.h"
+#include "GpsPathPoints.h"
+#include "OdometryPathPoints.h"
 #include "VehicleLinkManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
@@ -97,6 +99,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _defaultCruiseSpeed           (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed            (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
+    , _gpsPathPoints                (new GpsPathPoints(this, this))
+    , _odometryPathPoints           (new OdometryPathPoints(this, this))
     , _mavlinkStreamConfig          (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _vehicleFactGroup             (this)
     , _gpsFactGroup                 (this)
@@ -205,6 +209,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _capabilityBitsKnown              (true)
     , _capabilityBits                   (MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _trajectoryPoints                 (new TrajectoryPoints(this, this))
+    , _gpsPathPoints                    (new GpsPathPoints(this, this))
+    , _odometryPathPoints               (new OdometryPathPoints(this, this))
     , _mavlinkStreamConfig              (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _vehicleFactGroup                 (this)
     , _gpsFactGroup                     (this)
@@ -556,6 +562,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
         _handleGlobalPositionInt(message);
         break;
+    case MAVLINK_MSG_ID_ODOMETRY:
+        _handleOdometry(message);
+        break;
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
@@ -735,6 +744,14 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
                 _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
             }
         }
+        
+        // Add GPS point to path tracking
+        if ((gpsRawInt.lat != 0 || gpsRawInt.lon != 0) && gpsRawInt.lat != INT32_MAX && gpsRawInt.lon != INT32_MAX) {
+            QGeoCoordinate gpsCoordinate(gpsRawInt.lat / (double)1E7, gpsRawInt.lon / (double)1E7, gpsRawInt.alt / 1000.0);
+            if (gpsCoordinate.isValid()) {
+                _gpsPathPoints->addGpsRawIntPoint(gpsCoordinate);
+            }
+        }
     }
 }
 
@@ -761,6 +778,19 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
         _coordinate = newPosition;
         emit coordinateChanged(_coordinate);
     }
+}
+
+void Vehicle::_handleOdometry(mavlink_message_t& message)
+{
+    mavlink_odometry_t odom;
+    mavlink_msg_odometry_decode(&message, &odom);
+    
+    qCDebug(VehicleLog) << "ODOMETRY received - frame_id:" << odom.frame_id 
+                        << "x:" << odom.x << "y:" << odom.y << "z:" << odom.z;
+    
+    // Add odometry point to path tracking (x=north, y=east, z=down in NED frame)
+    // frame_id should be MAV_FRAME_LOCAL_NED (1) or MAV_FRAME_BODY_NED (8)
+    _odometryPathPoints->addOdometryPoint(odom.x, odom.y, odom.z);
 }
 
 // TODO: VehicleFactGroup

@@ -271,6 +271,72 @@ FlightMap {
         }
     }
 
+    // GPS path from GPS_RAW_INT messages
+    MapPolyline {
+        id:         gpsPathPolyline
+        line.width: 2
+        line.color: "#00E04B"  // Green color matching MAVLink Inspector
+        z:          QGroundControl.zOrderTrajectoryLines
+        visible:    !pipMode && _activeVehicle && _activeVehicle.gpsPathPoints.enabled
+
+        Connections {
+            target:                 QGroundControl.multiVehicleManager
+            function onActiveVehicleChanged(activeVehicle) {
+                gpsPathPolyline.path = _activeVehicle && _activeVehicle.gpsPathPoints.enabled ? _activeVehicle.gpsPathPoints.list() : []
+            }
+        }
+
+        Connections {
+            target:                             _activeVehicle ? _activeVehicle.gpsPathPoints : null
+            function onPointAdded(coordinate) { 
+                if (gpsPathPolyline.visible) {
+                    gpsPathPolyline.addCoordinate(coordinate) 
+                }
+            }
+            function onPointsCleared() { gpsPathPolyline.path = [] }
+            function onEnabledChanged() {
+                if (_activeVehicle && _activeVehicle.gpsPathPoints.enabled) {
+                    gpsPathPolyline.path = _activeVehicle.gpsPathPoints.list()
+                } else {
+                    gpsPathPolyline.path = []
+                }
+            }
+        }
+    }
+
+    // Odometry path from ODOMETRY messages
+    MapPolyline {
+        id:         odometryPathPolyline
+        line.width: 2
+        line.color: "#536DFF"  // Blue color matching MAVLink Inspector
+        z:          QGroundControl.zOrderTrajectoryLines
+        visible:    !pipMode && _activeVehicle && _activeVehicle.odometryPathPoints.enabled
+
+        Connections {
+            target:                 QGroundControl.multiVehicleManager
+            function onActiveVehicleChanged(activeVehicle) {
+                odometryPathPolyline.path = _activeVehicle && _activeVehicle.odometryPathPoints.enabled ? _activeVehicle.odometryPathPoints.list() : []
+            }
+        }
+
+        Connections {
+            target:                             _activeVehicle ? _activeVehicle.odometryPathPoints : null
+            function onPointAdded(coordinate) { 
+                if (odometryPathPolyline.visible) {
+                    odometryPathPolyline.addCoordinate(coordinate) 
+                }
+            }
+            function onPointsCleared() { odometryPathPolyline.path = [] }
+            function onEnabledChanged() {
+                if (_activeVehicle && _activeVehicle.odometryPathPoints.enabled) {
+                    odometryPathPolyline.path = _activeVehicle.odometryPathPoints.list()
+                } else {
+                    odometryPathPolyline.path = []
+                }
+            }
+        }
+    }
+
     // Add the vehicles to the map
     MapItemView {
         model: QGroundControl.multiVehicleManager.vehicles

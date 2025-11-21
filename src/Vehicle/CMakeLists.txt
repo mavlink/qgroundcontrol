@@ -23,6 +23,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         TerrainProtocolHandler.h
         TrajectoryPoints.cc
         TrajectoryPoints.h
+        GpsPathPoints.cc
+        GpsPathPoints.h
+        OdometryPathPoints.cc
+        OdometryPathPoints.h
         Vehicle.cc
         Vehicle.h
         VehicleLinkManager.cc
