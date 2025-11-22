@@ -68,6 +68,7 @@ static QMap<int, QString> px4_board_name_map {
     {28, "nxp_fmuk66-v3_default"},
     {30, "nxp_fmuk66-e_default"},
     {31, "nxp_fmurt1062-v1_default"},
+    {37, "nxp_mr-tropic_default"},
     {85, "freefly_can-rtk-gps_default"},
     {120, "cubepilot_cubeyellow_default"},
     {136, "mro_x21-777_default"},
