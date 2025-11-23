@@ -309,13 +309,13 @@ To start a mission from landed:
 
 2. Select the _Start Mission_ action from the dialog.
 
-  ![Start mission action](../../../assets/fly/start_mission_action.jpg)
+   ![Start mission action](../../../assets/fly/start_mission_action.jpg)
 
-  (to display the confirmation slider)
+   (to display the confirmation slider)
 
 3. When the confirmation slider appears, drag it to start the mission.
 
-  ![Start mission](../../../assets/fly/start_mission.jpg)
+   ![Start mission](../../../assets/fly/start_mission.jpg)
 
 #### Continue Mission {#continue_mission}
 
@@ -333,11 +333,11 @@ You can continue the current mission while (unless already in a mission!):
 
 2. 在对话框中选择 _继续任务_ 操作。
 
-  ![继续任务/改变高度](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+   ![继续任务/改变高度](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
 3. 拖动滑块以确认继续执行任务。
 
-  ![继续任务](../../../assets/fly/continue_mission.jpg)
+   ![继续任务](../../../assets/fly/continue_mission.jpg)
 
 #### 恢复任务{#resume_mission}
 
