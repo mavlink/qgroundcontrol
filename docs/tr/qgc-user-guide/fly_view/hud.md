@@ -309,13 +309,13 @@ To start a mission from landed:
 
 2. Select the _Start Mission_ action from the dialog.
 
-  ![Start mission action](../../../assets/fly/start_mission_action.jpg)
+   ![Start mission action](../../../assets/fly/start_mission_action.jpg)
 
-  (to display the confirmation slider)
+   (to display the confirmation slider)
 
 3. When the confirmation slider appears, drag it to start the mission.
 
-  ![Start mission](../../../assets/fly/start_mission.jpg)
+   ![Start mission](../../../assets/fly/start_mission.jpg)
 
 #### Continue Mission {#continue_mission}
 
@@ -333,11 +333,11 @@ You can continue the current mission while (unless already in a mission!):
 
 2. Select the _Continue Mission_ action from the dialog.
 
-  ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
 3. Drag the confirmation slider to continue the mission.
 
-  ![Continue Mission](../../../assets/fly/continue_mission.jpg)
+   ![Continue Mission](../../../assets/fly/continue_mission.jpg)
 
 #### Resume Mission {#resume_mission}
 
