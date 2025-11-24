@@ -55,10 +55,13 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 # MAVLink Inspector is disabled by default due to GPL licensing of QtCharts
 # option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable MAVLink Inspector" OFF)
 
+# MAVLink
+set(QGC_MAVLINK_GIT_REPO "https://github.com/dakejahl/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_TAG "e4d7286066f86b5f6e0863070a050e1a971e3588" CACHE STRING "Tag of MAVLink Git Repo")
+
 # ============================================================================
 # Communication Options
 # ============================================================================
-
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth communication links" ON)
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
 option(QGC_AIRLINK_DISABLED "Disable AIRLink support" ON)

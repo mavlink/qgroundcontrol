@@ -5,6 +5,7 @@
 #include "PX4RadioComponent.h"
 #include "PX4TuningComponent.h"
 #include "PowerComponent.h"
+#include "AM32Component.h"
 #include "SafetyComponent.h"
 #include "SensorsComponent.h"
 #include "ParameterManager.h"
@@ -18,6 +19,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(nullptr)
     , _radioComponent(nullptr)
     , _esp8266Component(nullptr)
+    , _am32Component(nullptr)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
@@ -71,6 +73,17 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent = new PowerComponent(_vehicle, this, this);
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_powerComponent)));
+
+                // Add AM32 component if parameter DSHOT_ESC_TYPE exists and is set to AM32
+                bool dshotEscTypeExists = _vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "DSHOT_ESC_TYPE");
+                if (dshotEscTypeExists) {
+                    uint32_t escType = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "DSHOT_ESC_TYPE")->rawValue().toUInt();
+                    if (escType == 1) {
+                        _am32Component = new AM32Component(_vehicle, this, this);
+                        _am32Component->setupTriggerSignals();
+                        _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_am32Component)));
+                    }
+                }
 
                 if (_vehicle->actuators()) {
                     _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators

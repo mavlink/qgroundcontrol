@@ -487,6 +487,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     // Handle creation of dynamic fact group lists
     _batteryFactGroupListModel.handleMessageForFactGroupCreation(this, message);
     _escStatusFactGroupListModel.handleMessageForFactGroupCreation(this, message);
+    _am32EepromFactGroupListModel.handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {

@@ -17,26 +17,31 @@ bool EscStatusFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &
     switch (message.msgid) {
     case MAVLINK_MSG_ID_ESC_INFO:
     {
-        mavlink_esc_status_t escStatus{};
-        mavlink_msg_esc_status_decode(&message, &escStatus);
-        firstIndex = escStatus.index;
-        shouldHandle = true;
+        mavlink_esc_info_t escInfo{};
+        mavlink_msg_esc_info_decode(&message, &escInfo);
+        firstIndex = escInfo.index;
+        // ESC_INFO should only be handled if index is multiple of 4
+        shouldHandle = (firstIndex % 4 == 0);
     }
         break;
+
     case MAVLINK_MSG_ID_ESC_STATUS:
     {
         mavlink_esc_status_t escStatus{};
         mavlink_msg_esc_status_decode(&message, &escStatus);
         firstIndex = escStatus.index;
-        shouldHandle = true;
+        // ESC_STATUS should only be handled if index is multiple of 4
+        shouldHandle = (firstIndex % 4 == 0);
     }
         break;
+
     default:
         shouldHandle = false; // Not a message we care about
         break;
     }
 
     if (shouldHandle) {
+        // ESC_STATUS and ESC_INFO cover 4 consecutive ESCs
         for (uint32_t index = firstIndex; index <= firstIndex + 3; index++) {
             ids.append(index);
         }
@@ -73,6 +78,8 @@ EscStatusFactGroup::EscStatusFactGroup(uint32_t escIndex, QObject *parent)
     _failureFlagsFact.setRawValue(0);
     _errorCountFact.setRawValue(0);
     _temperatureFact.setRawValue(0);
+
+    setLiveUpdates(true);
 }
 
 void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -102,6 +109,7 @@ void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_
     }
 
     index %= 4; // Convert to 0-based index for the arrays in escInfo
+
     _countFact.setRawValue(escInfo.count);
     _connectionTypeFact.setRawValue(escInfo.connection_type);
     _infoFact.setRawValue(escInfo.info);
