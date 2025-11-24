@@ -13,8 +13,34 @@ permissions:
 
 jobs:
   build-windows:
-    name: Build Windows
-    runs-on: windows-2022
+    name: Build Windows ${{ matrix.package }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            host: windows
+            arch: win64_msvc2022_64
+            package: QGroundControl-installer-AMD64
+            msvc_arch: x64
+
+          - os: windows-11-arm
+            host: windows_arm64
+            arch: win64_msvc2022_arm64
+            package: QGroundControl-installer-ARM64
+            msvc_arch: arm64
+
+          - os: windows-2022
+            host: windows
+            arch: win64_msvc2022_arm64_cross_compiled
+            package: QGroundControl-installer-AMD64-ARM64
+            msvc_arch: amd64_arm64
+
+    defaults:
+      run:
+        shell: cmd
 
     env:
       QT_VERSION: 6.10.0
@@ -30,6 +56,7 @@ jobs:
         uses: ./.github/actions/common
 
       - name: Install GStreamer
+        if: matrix.arch == 'win64_msvc2022_64'
         uses: blinemedical/setup-gstreamer@v1
         with:
           version: 1.22.12
@@ -37,8 +64,8 @@ jobs:
       - name: Setup cache
         uses: ./.github/actions/cache
         with:
-          host: windows
-          target: win64_msvc2022_64
+          host: ${{ matrix.host }}
+          target: ${{ matrix.arch }}
           build-type: Release
           cpm-modules: ${{ runner.temp }}\build\cpm_modules
 
@@ -46,9 +73,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: windows
+          host: ${{ matrix.host }}
           target: desktop
-          arch: win64_msvc2022_64
+          arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
           setup-python: false
@@ -57,36 +84,39 @@ jobs:
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: x64
+          arch: ${{ matrix.msvc_arch }}
 
       - name: Configure
-        shell: cmd
         working-directory: ${{ runner.temp }}\build
         run: |
           ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} ^
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=ON
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }} ^
+            -DQT_HOST_PATH=${{ (matrix.arch == 'win64_msvc2022_arm64_cross_compiled') && format('{0}\\..\\msvc2022_64', env.QT_ROOT_DIR) || '' }}
 
       - name: Build
-        shell: cmd
         working-directory: ${{ runner.temp }}\build
         run: cmake --build . --target all --config Release --parallel
 
+      - name: Verify Executable
+        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        working-directory: ${{ runner.temp }}\build\Release
+        run: QGroundControl.exe --simple-boot-test
+
       - name: Create Installer
-        shell: cmd
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config Release
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QGroundControl-Windows-AMD64
-          path: ${{ runner.temp }}\build\QGroundControl-installer-AMD64.exe
+          name: ${{ matrix.package }}
+          path: ${{ runner.temp }}\build\${{ matrix.package }}.exe
           retention-days: 30
 
   build-macos:
-    name: Build macOS
+    name: Build macOS Universal
     runs-on: macos-latest
 
     env:
@@ -155,8 +185,26 @@ jobs:
           retention-days: 30
 
   build-linux:
-    name: Build Linux
-    runs-on: ubuntu-22.04
+    name: Build Linux ${{ matrix.package }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            package: QGroundControl-x86_64
+            host: linux
+            arch: linux_gcc_64
+
+          - os: ubuntu-24.04-arm
+            package: QGroundControl-aarch64
+            host: linux_arm64
+            arch: linux_gcc_arm64
+
+    defaults:
+      run:
+        shell: bash
 
     env:
       QT_VERSION: 6.10.0
@@ -179,8 +227,8 @@ jobs:
       - name: Setup Caching
         uses: ./.github/actions/cache
         with:
-          host: linux
-          target: linux_gcc_64
+          host: ${{ matrix.host }}
+          target: ${{ matrix.arch }}
           build-type: Release
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
@@ -188,9 +236,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: linux
+          host: ${{ matrix.host }}
           target: desktop
-          arch: linux_gcc_64
+          arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
           modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
           setup-python: false
@@ -208,15 +256,23 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config Release --parallel
 
+      - name: Verify Executable
+        working-directory: ${{ runner.temp }}/build/Release
+        run: xvfb-run -a ./QGroundControl --simple-boot-test
+
       - name: Create AppImage
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config Release
 
+      - name: Verify AppImage
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
+
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QGroundControl-Linux-x86_64
-          path: ${{ runner.temp }}/build/QGroundControl-x86_64.AppImage
+          name: ${{ matrix.package }}
+          path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
           retention-days: 30
 
   create-release:
@@ -237,7 +293,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "artifacts/QGroundControl-Windows-AMD64/QGroundControl-installer-AMD64.exe,artifacts/QGroundControl-macOS/QGroundControl.dmg,artifacts/QGroundControl-Linux-x86_64/QGroundControl-x86_64.AppImage"
+          artifacts: "artifacts/QGroundControl-installer-AMD64/QGroundControl-installer-AMD64.exe,artifacts/QGroundControl-installer-ARM64/QGroundControl-installer-ARM64.exe,artifacts/QGroundControl-installer-AMD64-ARM64/QGroundControl-installer-AMD64-ARM64.exe,artifacts/QGroundControl-macOS/QGroundControl.dmg,artifacts/QGroundControl-x86_64/QGroundControl-x86_64.AppImage,artifacts/QGroundControl-aarch64/QGroundControl-aarch64.AppImage"
           generateReleaseNotes: true
           draft: false
           prerelease: false
