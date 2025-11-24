@@ -70,7 +70,7 @@ private:
     };
 
     static constexpr const int _rgProgressWeights[] = {
-        1, //_stateRequestCapabilities
+        1, //_stateRequestAutopilotVersion
         1, //_stateRequestStandardModes
         5, //_stateRequestCompInfo
         5, //_stateRequestParameters
