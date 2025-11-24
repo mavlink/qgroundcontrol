@@ -61,3 +61,4 @@ For more information see: [Licenses](contribute/licences.md).
 The QGroundControl ground station is hosted under the governance of the [Dronecode Project](https://www.dronecode.org/).
 
 <div style="padding:10px">&nbsp</div>
+
