@@ -174,13 +174,12 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
 
     if (failureCode != Vehicle::RequestMessageNoFailure) {
         qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION failed. Assuming MAVLink 2 support";
-        uint64_t assumedCapabilities = 0;
+        // When AUTOPILOT_VERSION fails, we assume MAVLink 2 support for all vehicles
+        uint64_t assumedCapabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2;
         if (vehicle->px4Firmware() || vehicle->apmFirmware()) {
-            // We make some assumptions for known firmware
+            // We make additional assumptions for known firmware
             assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MISSION_INT | MAV_PROTOCOL_CAPABILITY_COMMAND_INT | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
         }
-        // Always assume MAVLink 2 support
-        assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MAVLINK2;
         vehicle->_setCapabilities(assumedCapabilities);
     }
 
