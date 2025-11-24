@@ -1,0 +1,248 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - '**'  # Trigger on all branches
+    tags:
+      - 'v*'  # Trigger on version tags
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-2022
+
+    env:
+      QT_VERSION: 6.10.0
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Common setup
+        uses: ./.github/actions/common
+
+      - name: Install GStreamer
+        uses: blinemedical/setup-gstreamer@v1
+        with:
+          version: 1.22.12
+
+      - name: Setup cache
+        uses: ./.github/actions/cache
+        with:
+          host: windows
+          target: win64_msvc2022_64
+          build-type: Release
+          cpm-modules: ${{ runner.temp }}\build\cpm_modules
+
+      - name: Install Qt ${{ env.QT_VERSION }}
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          setup-python: false
+          cache: true
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        shell: cmd
+        working-directory: ${{ runner.temp }}\build
+        run: |
+          ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} ^
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=ON
+
+      - name: Build
+        shell: cmd
+        working-directory: ${{ runner.temp }}\build
+        run: cmake --build . --target all --config Release --parallel
+
+      - name: Create Installer
+        shell: cmd
+        working-directory: ${{ runner.temp }}\build
+        run: cmake --install . --config Release
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QGroundControl-Windows-AMD64
+          path: ${{ runner.temp }}\build\QGroundControl-installer-AMD64.exe
+          retention-days: 30
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    env:
+      QT_VERSION: 6.10.0
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '<=16.x'
+
+      - name: Install Dependencies (include GStreamer)
+        working-directory: ${{ github.workspace }}/tools/setup
+        run: sh install-dependencies-osx.sh
+
+      - name: Setup Caching
+        uses: ./.github/actions/cache
+        with:
+          host: mac
+          target: clang_64
+          build-type: Release
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: mac
+          target: desktop
+          arch: clang_64
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          setup-python: false
+          cache: true
+
+      - name: CMake configure
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=Release
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_MACOS_SIGN_WITH_IDENTITY=OFF
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config Release --parallel
+
+      - name: Create app bundle
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QGroundControl-macOS
+          path: ${{ runner.temp }}/build/QGroundControl.dmg
+          retention-days: 30
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-22.04
+
+    env:
+      QT_VERSION: 6.10.0
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Install Dependencies
+        run: |
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+
+      - name: Setup Caching
+        uses: ./.github/actions/cache
+        with:
+          host: linux
+          target: linux_gcc_64
+          build-type: Release
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+
+      - name: Install Qt for Linux
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          dir: ${{ runner.temp }}
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          setup-python: false
+          cache: true
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=Release
+              -DQGC_BUILD_TESTING=OFF
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config Release --parallel
+
+      - name: Create AppImage
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QGroundControl-Linux-x86_64
+          path: ${{ runner.temp }}/build/QGroundControl-x86_64.AppImage
+          retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('build-{0}', github.sha) }}
+          name: ${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Build {0}', github.sha) }}
+          draft: false
+          prerelease: ${{ github.ref_type != 'tag' }}
+          generate_release_notes: true
+          files: |
+            artifacts/QGroundControl-Windows-AMD64/QGroundControl-installer-AMD64.exe
+            artifacts/QGroundControl-macOS/QGroundControl.dmg
+            artifacts/QGroundControl-Linux-x86_64/QGroundControl-x86_64.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
