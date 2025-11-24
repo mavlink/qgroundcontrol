@@ -460,7 +460,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     if (message.sysid != _id && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
-        if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
+        // We also allow ODOMETRY messages from system ID 255 (sensor) to pass through
+        if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link)) &&
+            !(message.msgid == MAVLINK_MSG_ID_ODOMETRY && message.sysid == 255)) {
             return;
         }
     }
@@ -785,8 +787,21 @@ void Vehicle::_handleOdometry(mavlink_message_t& message)
     mavlink_odometry_t odom;
     mavlink_msg_odometry_decode(&message, &odom);
     
-    qCDebug(VehicleLog) << "ODOMETRY received - frame_id:" << odom.frame_id 
+    qCDebug(VehicleLog) << "ODOMETRY received -"
+                        << "sys_id:" << message.sysid
+                        << "comp_id:" << message.compid
+                        << "frame_id:" << odom.frame_id 
+                        << "child_frame_id:" << odom.child_frame_id
+                        << "estimator_type:" << odom.estimator_type
+                        << "quality:" << odom.quality
                         << "x:" << odom.x << "y:" << odom.y << "z:" << odom.z;
+    
+    // Filter: Only process ODOMETRY from system ID 255 (sensor)
+    // Ignore ODOMETRY from EKF or other sources
+    if (message.sysid != 255) {
+        qCDebug(VehicleLog) << "ODOMETRY ignored - not from system 255";
+        return;
+    }
     
     // Add odometry point to path tracking (x=north, y=east, z=down in NED frame)
     // frame_id should be MAV_FRAME_LOCAL_NED (1) or MAV_FRAME_BODY_NED (8)

@@ -7,6 +7,10 @@ on:
     tags:
       - 'v*'  # Trigger on version tags
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-windows:
     name: Build Windows
@@ -220,7 +224,7 @@ jobs:
     name: Create GitHub Release
     needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    if: github.ref_type == 'tag'
 
     steps:
       - name: Download all artifacts
@@ -232,17 +236,11 @@ jobs:
         run: ls -R artifacts
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('build-{0}', github.sha) }}
-          name: ${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Build {0}', github.sha) }}
+          artifacts: "artifacts/QGroundControl-Windows-AMD64/QGroundControl-installer-AMD64.exe,artifacts/QGroundControl-macOS/QGroundControl.dmg,artifacts/QGroundControl-Linux-x86_64/QGroundControl-x86_64.AppImage"
+          generateReleaseNotes: true
           draft: false
-          prerelease: ${{ github.ref_type != 'tag' }}
-          generate_release_notes: true
-          files: |
-            artifacts/QGroundControl-Windows-AMD64/QGroundControl-installer-AMD64.exe
-            artifacts/QGroundControl-macOS/QGroundControl.dmg
-            artifacts/QGroundControl-Linux-x86_64/QGroundControl-x86_64.AppImage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 

@@ -4,18 +4,18 @@ on:
   push:
     branches:
       - master
-      - 'Stable*'
+      - "Stable*"
     tags:
-      - 'v*'
+      - "v*"
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - "docs/**" # Do not trigger for any changes under docs
   pull_request:
     paths:
-      - '.github/workflows/macos.yml'
-      - 'deploy/macos/**'
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+      - ".github/workflows/macos.yml"
+      - "deploy/macos/**"
+      - "src/**"
+      - "CMakeLists.txt"
+      - "cmake/**"
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -50,7 +50,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '<=16.x'
+          xcode-version: "<=16.x"
 
       - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
@@ -78,10 +78,11 @@ jobs:
 
       - name: CMake configure
         working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
+        run:
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+          -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+          -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
