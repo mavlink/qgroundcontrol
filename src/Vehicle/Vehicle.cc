@@ -200,7 +200,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _vehicleType                      (vehicleType)
     , _defaultCruiseSpeed               (SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed                (SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
-    , _mavlinkProtocolRequestComplete   (true)
     , _maxProtoVersion                  (200)
     , _capabilityBitsKnown              (true)
     , _capabilityBits                   (MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
@@ -902,14 +901,9 @@ void Vehicle::_setMaxProtoVersion(unsigned version) {
 
 void Vehicle::_setMaxProtoVersionFromBothSources()
 {
-    if (_mavlinkProtocolRequestComplete && _capabilityBitsKnown) {
-        if (_mavlinkProtocolRequestMaxProtoVersion != 0) {
-            qCDebug(VehicleLog) << "_setMaxProtoVersionFromBothSources using protocol version message";
-            _setMaxProtoVersion(_mavlinkProtocolRequestMaxProtoVersion);
-        } else {
-            qCDebug(VehicleLog) << "_setMaxProtoVersionFromBothSources using capability bits";
-            _setMaxProtoVersion(capabilityBits() & MAV_PROTOCOL_CAPABILITY_MAVLINK2 ? 200 : 100);
-        }
+    if (_capabilityBitsKnown) {
+        qCDebug(VehicleLog) << "_setMaxProtoVersionFromBothSources using capability bits";
+        _setMaxProtoVersion(capabilityBits() & MAV_PROTOCOL_CAPABILITY_MAVLINK2 ? 200 : 100);
     }
 }
 
@@ -2597,7 +2591,6 @@ bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
         // links where commands could be lost. Also these commands tend to just be requesting status so if they end up being delayed
         // there are no safety concerns that could occur.
     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
-    case MAV_CMD_REQUEST_PROTOCOL_VERSION:
     case MAV_CMD_REQUEST_MESSAGE:
     case MAV_CMD_PREFLIGHT_STORAGE:
     case MAV_CMD_RUN_PREARM_CHECKS:
