@@ -13,6 +13,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
+#include "FactMetaData.h"
 
 QGC_LOGGING_CATEGORY(RCToParamDialogControllerLog, "QMLControls.RCToParamDialogController")
 
@@ -46,6 +47,31 @@ void RCToParamDialogController::setTuningFact(Fact *tuningFact)
 {
     _tuningFact = tuningFact;
     emit tuningFactChanged(tuningFact);
+
+    // Check if the tuning parameter is an integer type
+    bool isIntegerType = false;
+    switch (_tuningFact->type()) {
+    case FactMetaData::valueTypeUint8:
+    case FactMetaData::valueTypeInt8:
+    case FactMetaData::valueTypeUint16:
+    case FactMetaData::valueTypeInt16:
+    case FactMetaData::valueTypeUint32:
+    case FactMetaData::valueTypeInt32:
+    case FactMetaData::valueTypeUint64:
+    case FactMetaData::valueTypeInt64:
+        isIntegerType = true;
+        break;
+    default:
+        isIntegerType = false;
+        break;
+    }
+
+    // For integer parameters, set decimal places to 0 to avoid displaying decimal points
+    if (isIntegerType) {
+        _centerFact->metaData()->setDecimalPlaces(0);
+        _minFact->metaData()->setDecimalPlaces(0);
+        _maxFact->metaData()->setDecimalPlaces(0);
+    }
 
     _centerFact->setRawValue(_tuningFact->rawValue().toDouble());
     _minFact->setRawValue(_tuningFact->rawMin().toDouble());
