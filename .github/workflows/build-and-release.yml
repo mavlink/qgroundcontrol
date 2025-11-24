@@ -24,8 +24,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
+          fetch-depth: 0
 
       - name: Common setup
         uses: ./.github/actions/common
@@ -98,8 +97,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
+          fetch-depth: 0
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -168,8 +166,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
+          fetch-depth: 0
 
       - name: Initial Setup
         uses: ./.github/actions/common
