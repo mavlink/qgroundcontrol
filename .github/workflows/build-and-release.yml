@@ -3,9 +3,9 @@ name: Build and Release
 on:
   push:
     branches:
-      - '**'  # Trigger on all branches
+      - "**" # Trigger on all branches
     tags:
-      - 'v*'  # Trigger on version tags
+      - "v*" # Trigger on version tags
 
 permissions:
   contents: write
@@ -107,7 +107,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '<=16.x'
+          xcode-version: "<=16.x"
 
       - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
@@ -135,10 +135,11 @@ jobs:
 
       - name: CMake configure
         working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=Release
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
-              -DQGC_MACOS_SIGN_WITH_IDENTITY=OFF
+        run:
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+          -DQGC_MACOS_SIGN_WITH_IDENTITY=OFF
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
@@ -200,10 +201,11 @@ jobs:
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=Release
-              -DQGC_BUILD_TESTING=OFF
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+        run:
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DQGC_BUILD_TESTING=OFF
+          -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
@@ -243,4 +245,3 @@ jobs:
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
-
