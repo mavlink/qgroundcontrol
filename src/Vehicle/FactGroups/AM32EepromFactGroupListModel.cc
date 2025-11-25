@@ -92,7 +92,8 @@ void AM32EepromFactGroupListModel::requestReadAll(Vehicle* vehicle)
 
 bool AM32EepromFactGroupListModel::_allEscsHaveMatchingChanges(const QList<int>& escIndices)
 {
-    if (escIndices.isEmpty()) {
+    // Only allow broadcast if ALL ESCs in the system are selected
+    if (escIndices.isEmpty() || escIndices.count() != count()) {
         return false;
     }
 
