@@ -55,10 +55,6 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 # MAVLink Inspector is disabled by default due to GPL licensing of QtCharts
 # option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable MAVLink Inspector" OFF)
 
-# MAVLink
-set(QGC_MAVLINK_GIT_REPO "https://github.com/dakejahl/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
-set(QGC_MAVLINK_GIT_TAG "e4d7286066f86b5f6e0863070a050e1a971e3588" CACHE STRING "Tag of MAVLink Git Repo")
-
 # ============================================================================
 # Communication Options
 # ============================================================================
@@ -87,8 +83,8 @@ option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 # MAVLink Configuration
 # ============================================================================
 
-set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/mavlink.git" CACHE STRING "MAVLink repository URL")
-set(QGC_MAVLINK_GIT_TAG "dd17c1a65de7b9ad8dd6e3491a8690c0d0b27ba1" CACHE STRING "MAVLink repository commit/tag")
+set(QGC_MAVLINK_GIT_REPO "https://github.com/dakejahl/mavlink.git" CACHE STRING "MAVLink repository URL")
+set(QGC_MAVLINK_GIT_TAG "458b42a3f0c754a4a9e8f860a99dd391adee7d78" CACHE STRING "MAVLink repository commit/tag")
 set(QGC_MAVLINK_DIALECT "all" CACHE STRING "MAVLink dialect")
 set(QGC_MAVLINK_VERSION "2.0" CACHE STRING "MAVLink protocol version")
 

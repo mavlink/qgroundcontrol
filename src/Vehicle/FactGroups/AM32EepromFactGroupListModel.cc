@@ -66,7 +66,7 @@ bool AM32EepromFactGroupListModel::_shouldHandleMessage(const mavlink_message_t 
     if (message.msgid == MAVLINK_MSG_ID_AM32_EEPROM) {
         mavlink_am32_eeprom_t eeprom{};
         mavlink_msg_am32_eeprom_decode(&message, &eeprom);
-        ids.append(eeprom.index);
+        ids.append(eeprom.esc_index);
         return true;
     }
 
@@ -81,10 +81,11 @@ void AM32EepromFactGroupListModel::requestReadAll(Vehicle* vehicle)
 
     vehicle->sendMavCommand(
         vehicle->defaultComponentId(),
-        MAV_CMD_AM32_REQUEST_EEPROM,
+        MAV_CMD_REQUEST_MESSAGE,
         false,  // showError
-        255,  // param1: ESC index -- 255 == all
-        0, 0, 0, 0, 0, 0  // unused params
+        MAVLINK_MSG_ID_AM32_EEPROM,
+        255, // param2: ESC index (255 = all)
+        0, 0, 0, 0, 0  // unused params
     );
 }
 
@@ -108,7 +109,7 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
     mavlink_am32_eeprom_t eeprom{};
     mavlink_msg_am32_eeprom_decode(&message, &eeprom);
 
-    if (eeprom.index != _idFact.rawValue().toUInt()) {
+    if (eeprom.esc_index != _idFact.rawValue().toUInt()) {
         // Only handle messages for our ESC index
         return;
     }
@@ -118,38 +119,31 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
         return;
     }
 
-    if (eeprom.mode == 0) {
-        // Store original data
-        _originalEepromData = QByteArray(reinterpret_cast<const char*>(eeprom.data), eeprom.length);
+    // Store original data
+    _originalEepromData = QByteArray(reinterpret_cast<const char*>(eeprom.data), eeprom.length);
 
-        // Parse read-only info
-        _eepromVersionFact.setRawValue(eeprom.data[1]);
-        _bootloaderVersionFact.setRawValue(eeprom.data[2]);
-        _firmwareMajorFact.setRawValue(eeprom.data[3]);
-        _firmwareMinorFact.setRawValue(eeprom.data[4]);
+    // Parse read-only info
+    _eepromVersionFact.setRawValue(eeprom.data[1]);
+    _bootloaderVersionFact.setRawValue(eeprom.data[2]);
+    _firmwareMajorFact.setRawValue(eeprom.data[3]);
+    _firmwareMinorFact.setRawValue(eeprom.data[4]);
 
-        // Update all settings
-        for (AM32Setting* setting : _settings) {
-            uint8_t index = setting->byteIndex();
-            if (index < eeprom.length) {
-                // qDebug() << "Updating " << setting->name() << "(" << index << ")" << "to" << eeprom.data[index];
-                setting->updateFromEeprom(eeprom.data[index]);
-            }
+    // Update all settings
+    for (AM32Setting* setting : _settings) {
+        uint8_t index = setting->byteIndex();
+        if (index < eeprom.length) {
+            // qDebug() << "Updating " << setting->name() << "(" << index << ")" << "to" << eeprom.data[index];
+            setting->updateFromEeprom(eeprom.data[index]);
         }
-
-        _dataLoaded = true;
-        emit dataLoadedChanged();
-
-        // Clear any unsaved changes flag since we just loaded fresh data
-        updateHasUnsavedChanges();
-
-        qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data";
     }
-    else if (eeprom.mode == 1) {
-        // Write acknowledgment
-        emit writeComplete(true);
-        qDebug() << "AM32 EEPROM write acknowledged for ESC" << eeprom.index;
-    }
+
+    _dataLoaded = true;
+    emit dataLoadedChanged();
+
+    // Clear any unsaved changes flag since we just loaded fresh data
+    updateHasUnsavedChanges();
+
+    qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data";
 }
 
 FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t id)
@@ -461,8 +455,7 @@ void AM32EepromFactGroup::requestWrite(Vehicle* vehicle)
 
     eeprom.target_system = vehicle->id();
     eeprom.target_component = vehicle->defaultComponentId();
-    eeprom.index = _escIndex;
-    eeprom.mode = 1;  // Write mode
+    eeprom.esc_index = _escIndex;
     memcpy(eeprom.write_mask, writeMask, sizeof(writeMask));
     eeprom.length = qMin(packedData.size(), (int)sizeof(eeprom.data));
     memcpy(eeprom.data, packedData.data(), eeprom.length);
