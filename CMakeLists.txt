@@ -156,41 +156,23 @@ find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
     REQUIRED
     COMPONENTS
-        Charts
         Concurrent
         Core
         Core5Compat
         Gui
-        LinguistTools
         Location
         LocationPrivate
-        Multimedia
         Network
         Positioning
         Qml
         QmlIntegration
         Quick
         QuickControls2
-        QuickWidgets
-        Sensors
         Sql
         Svg
-        TextToSpeech
         Widgets
         Xml
-        StateMachine
-    OPTIONAL_COMPONENTS
-        Bluetooth
-        MultimediaQuickPrivate
-        OpenGL
-        Quick3D
-        SerialPort
-        Test
 )
-
-if(LINUX)
-    find_package(Qt6 COMPONENTS WaylandClient)
-endif()
 
 qt_standard_project_setup(
     REQUIRES ${QGC_QT_MINIMUM_VERSION}
@@ -288,22 +270,9 @@ if(QGC_BUILD_TESTING)
 endif()
 
 # ----------------------------------------------------------------------------
-# Translation/Localization Configuration
+# Translation/Localization Configuration (Disabled for minimal build)
 # ----------------------------------------------------------------------------
-file(GLOB TS_SOURCES "${CMAKE_SOURCE_DIR}/translations/qgc_*.ts")
-set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
-
-qt_add_translations(${CMAKE_PROJECT_NAME}
-    TS_FILES ${TS_SOURCES}
-    RESOURCE_PREFIX "/"
-    LUPDATE_OPTIONS -no-obsolete
-    TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations"
-    TS_FILE_BASE ${CMAKE_PROJECT_NAME}
-    # TS_FILES_OUTPUT_VARIABLE _ts_files_generated
-    # TS_OUTPUT_DIRECTORY "{CMAKE_SOURCE_DIR}/translations"
-    # QM_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/i18n"
-    # MERGE_QT_TRANSLATIONS
-)
+# Translations removed for minimal map-only build
 
 # ----------------------------------------------------------------------------
 # Qt Quick Controls Configuration

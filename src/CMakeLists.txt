@@ -4,59 +4,28 @@
 
 qt_add_library(QGroundControlModule STATIC)
 
-# ----------------------------------------------------------------------------
-# QML Resources
-# ----------------------------------------------------------------------------
-set_source_files_properties(UI/MainWindow.qml
-    PROPERTIES
-        QT_RESOURCE_ALIAS MainWindow.qml
-)
-
 qt_add_qml_module(QGroundControlModule
     URI QGroundControl
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        UI/MainWindow.qml
+        MainWindow.qml
     IMPORTS
         QGC
     NO_PLUGIN
 )
 
 # ============================================================================
-# Subdirectories
+# Subdirectories - Minimal Map Only
 # ============================================================================
 
-# Core subsystems
-add_subdirectory(ADSB)
-add_subdirectory(AnalyzeView)
-add_subdirectory(API)
-add_subdirectory(AutoPilotPlugins)
-add_subdirectory(Camera)
-add_subdirectory(Comms)
+# Core subsystems for map
 add_subdirectory(FactSystem)
-add_subdirectory(FirmwarePlugin)
-add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
-add_subdirectory(FollowMe)
-add_subdirectory(Gimbal)
-add_subdirectory(GPS)
-add_subdirectory(Joystick)
-add_subdirectory(MAVLink)
-add_subdirectory(MissionManager)
-add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
-add_subdirectory(UI)
 add_subdirectory(Utilities)
-add_subdirectory(UTMSP)
-add_subdirectory(Vehicle)
-add_subdirectory(VideoManager)
-add_subdirectory(Viewer3D)
-
-# Platform-specific
-add_subdirectory(Android)
 
 # Qt plugins
 add_subdirectory(QtLocationPlugin)
@@ -68,19 +37,7 @@ add_subdirectory(QtLocationPlugin)
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         main.cc
-        pch.h
-        QGCApplication.cc
-        QGCApplication.h
 )
-
-# Platform-specific sources
-if(NOT ANDROID AND NOT IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            RunGuard.cc
-            RunGuard.h
-    )
-endif()
 
 # ----------------------------------------------------------------------------
 # Include Directories
@@ -97,19 +54,14 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
         # Qt6 Core
-        Qt6::Charts
         Qt6::Concurrent
         Qt6::Core
         Qt6::Core5Compat
-        Qt6::CorePrivate
         Qt6::Gui
         Qt6::Network
-        Qt6::Sensors
         Qt6::Svg
-        Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
-        Qt6::StateMachine
 
         # Qt6 QML/Quick
         Qt6::Qml
@@ -121,46 +73,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Location
         Qt6::LocationPrivate
         Qt6::Positioning
-        Qt6::PositioningPrivate
         Qt6::Sql
 
-        # Qt6 Multimedia
-        Qt6::Multimedia
-        Qt6::MultimediaQuickPrivate
-
-        # QGC Modules
-        AnalyzeViewModule
-        AppSettingsModule
-        AutoPilotPluginsCommonModule
-        FactControlsModule
-        FirstRunPromptDialogsModule
-        FlightDisplayModule
+        # QGC Modules - Minimal for Map
         FlightMapModule
-        QGroundControlControlsModule
         QGroundControlModule
-        ToolbarModule
-        UTMSPModule
-        VehicleSetupModule
 )
-
-# ----------------------------------------------------------------------------
-# Optional/Conditional Modules
-# ----------------------------------------------------------------------------
-if(NOT QGC_DISABLE_APM_PLUGIN)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
-endif()
-
-if(NOT QGC_DISABLE_PX4_PLUGIN)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
-endif()
-
-if(QGC_VIEWER3D)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
-endif()
-
-if(NOT QGC_AIRLINK_DISABLED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
-endif()
 
 # ============================================================================
 # Compile Definitions
@@ -176,8 +94,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         QGC_APP_DATE="${QGC_APP_DATE}"
         QGC_APP_DESCRIPTION="${QGC_APP_DESCRIPTION}"
         QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
-        $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
-        $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
 )
 
 # Build configuration-specific definitions
@@ -214,9 +130,9 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 )
 
 # ----------------------------------------------------------------------------
-# Precompiled Headers
+# Precompiled Headers (Disabled for minimal build)
 # ----------------------------------------------------------------------------
-target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
+# target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
 
 # ============================================================================
 # Custom Build Configuration

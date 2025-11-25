@@ -9,9 +9,9 @@ include(CMakeDependentOption)
 # Application Metadata
 # ============================================================================
 
-set(QGC_APP_NAME "QGroundControl" CACHE STRING "Application name")
+set(QGC_APP_NAME "QGCMapViewer" CACHE STRING "Application name")
 set(QGC_APP_COPYRIGHT "Copyright (c) 2025 QGroundControl. All rights reserved." CACHE STRING "Copyright notice")
-set(QGC_APP_DESCRIPTION "Open Source Ground Control App" CACHE STRING "Application description")
+set(QGC_APP_DESCRIPTION "Minimal Map Viewer with Tile Caching" CACHE STRING "Application description")
 set(QGC_ORG_NAME "QGroundControl" CACHE STRING "Organization name")
 set(QGC_ORG_DOMAIN "qgroundcontrol.com" CACHE STRING "Organization domain")
 set(QGC_PACKAGE_NAME "org.mavlink.qgroundcontrol" CACHE STRING "Package identifier")
@@ -138,8 +138,8 @@ set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundCo
 # Qt Configuration
 # ============================================================================
 
-set(QGC_QT_MINIMUM_VERSION "6.10.0" CACHE STRING "Minimum supported Qt version")
-set(QGC_QT_MAXIMUM_VERSION "6.10.0" CACHE STRING "Maximum supported Qt version")
+set(QGC_QT_MINIMUM_VERSION "6.10" CACHE STRING "Minimum supported Qt version")
+set(QGC_QT_MAXIMUM_VERSION "6.10" CACHE STRING "Maximum supported Qt version")
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "QML output directory")
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Additional QML import paths")
