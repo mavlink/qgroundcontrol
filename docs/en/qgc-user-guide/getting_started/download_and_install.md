@@ -39,7 +39,7 @@ Supported versions: macOS 12 (Monterey) or later:
 
 ::: info
 QGroundControl continues to not be signed. You will not to allow permission for it to install based on you macOS version.
-::
+:::
 
 ## Ubuntu Linux {#ubuntu}
 
