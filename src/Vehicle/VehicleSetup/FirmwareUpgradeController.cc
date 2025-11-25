@@ -95,7 +95,8 @@ static QMap<int, QString> px4_board_name_map {
     {5600, "zeroone_x6_default"},
     {6110, "svehicle_e2_default"},
     {7000, "cuav_7-nano_default"},
-    {7001, "cuav_fmu-v6x_default"}
+    {7001, "cuav_fmu-v6x_default"},
+    {7002, "cuav_x25-evo_default"}
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
