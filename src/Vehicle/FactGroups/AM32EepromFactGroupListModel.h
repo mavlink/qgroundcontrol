@@ -100,6 +100,7 @@ protected:
 
 private:
     bool _allEscsHaveMatchingChanges(const QList<int>& escIndices);
+    void _sendEepromWrite(Vehicle* vehicle, uint8_t escIndex, const QByteArray& data, const uint32_t writeMask[6]);
 };
 
 
@@ -145,9 +146,6 @@ public:
 
     /// Check if settings match another ESC
     Q_INVOKABLE bool settingsMatch(AM32EepromFactGroup* other) const;
-
-    /// Write EEPROM data to ESC (only modified bytes)
-    Q_INVOKABLE void requestWrite(Vehicle* vehicle);
 
     /// Discard all pending changes
     Q_INVOKABLE void discardChanges();
