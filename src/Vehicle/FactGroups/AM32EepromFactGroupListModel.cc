@@ -16,8 +16,8 @@
 // AM32Setting Implementation
 //-----------------------------------------------------------------------------
 
-AM32Setting::AM32Setting(uint8_t escIndex, const AM32SettingConfig& config)
-    : _escIndex(escIndex)
+AM32Setting::AM32Setting(const AM32SettingConfig& config, QObject* parent)
+    : QObject(parent)
     , _eepromByteIndex(config.eepromByteIndex)
     , _fromRaw(config.fromRaw)
     , _toRaw(config.toRaw)
@@ -162,7 +162,7 @@ void AM32EepromFactGroupListModel::requestWriteAll(Vehicle* vehicle, const QList
             return;
         }
 
-        QByteArray packedData = firstEsc->getModifiedEepromData();
+        QByteArray packedData = firstEsc->getEepromData();
 
         uint32_t writeMask[6] = {0};
         for (int escIndex : escIndices) {
@@ -184,7 +184,7 @@ void AM32EepromFactGroupListModel::requestWriteAll(Vehicle* vehicle, const QList
         for (int escIndex : escIndices) {
             auto* esc = value<AM32EepromFactGroup*>(escIndex);
             if (esc && esc->hasUnsavedChanges()) {
-                QByteArray packedData = esc->getModifiedEepromData();
+                QByteArray packedData = esc->getEepromData();
                 uint32_t writeMask[6];
                 esc->calculateWriteMask(writeMask);
                 _sendEepromWrite(vehicle, esc->escIndex(), packedData, writeMask);
@@ -432,7 +432,7 @@ void AM32EepromFactGroup::initializeEepromFacts()
     };
 
     for (const auto& config : configuration_array) {
-        auto setting = new AM32Setting(_escIndex, config);
+        auto setting = new AM32Setting(config, this);
 
         _addFact(setting->fact());
         _settings.append(setting);
@@ -491,7 +491,7 @@ bool AM32EepromFactGroup::settingsMatch(AM32EepromFactGroup* other) const
     return true;
 }
 
-QByteArray AM32EepromFactGroup::getModifiedEepromData() const
+QByteArray AM32EepromFactGroup::getEepromData() const
 {
     QByteArray data = _originalEepromData;
 
@@ -500,13 +500,11 @@ QByteArray AM32EepromFactGroup::getModifiedEepromData() const
         data[0] = 1; // Start byte
     }
 
-    // Update only modified settings
+    // Write all current setting values - the write mask controls what actually gets written
     for (const auto* setting : _settings) {
-        if (setting->hasPendingChanges()) {
-            uint8_t index = setting->byteIndex();
-            if (index < data.size()) {
-                data[index] = setting->getRawValue();
-            }
+        uint8_t index = setting->byteIndex();
+        if (index < data.size()) {
+            data[index] = setting->getRawValue();
         }
     }
 

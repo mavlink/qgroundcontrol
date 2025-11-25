@@ -52,7 +52,7 @@ class AM32Setting : public QObject
     Q_PROPERTY(bool hasPendingChanges READ hasPendingChanges NOTIFY pendingChangesChanged)
 
 public:
-    AM32Setting(uint8_t escIndex, const AM32SettingConfig& config);
+    explicit AM32Setting(const AM32SettingConfig& config, QObject* parent = nullptr);
 
     QString name() const { return _fact->name(); }
     Fact* fact() { return _fact; }
@@ -69,7 +69,6 @@ signals:
     void pendingChangesChanged();
 
 private:
-    uint8_t _escIndex;
     uint8_t _eepromByteIndex;
     uint8_t _rawOriginalValue = 0;
     Fact* _fact;
@@ -126,7 +125,6 @@ public:
     AM32EepromFactGroup(uint8_t escIndex, QObject* parent = nullptr);
 
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
-    void _handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
 
     QQmlPropertyMap* settings() { return _settingsMap; }
 
@@ -150,17 +148,17 @@ public:
     /// Discard all pending changes
     Q_INVOKABLE void discardChanges();
 
-    /// Get modified EEPROM data for transmission
-    QByteArray getModifiedEepromData() const;
+    /// Get current EEPROM data for transmission
+    QByteArray getEepromData() const;
 
     void calculateWriteMask(uint32_t writeMask[6]) const;
 
 signals:
     void dataLoadedChanged();
     void hasUnsavedChangesChanged();
-    void writeComplete(bool success);
 
 private:
+    void _handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
     void initializeEepromFacts();
     void updateHasUnsavedChanges();
 
