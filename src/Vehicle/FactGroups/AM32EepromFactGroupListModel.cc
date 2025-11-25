@@ -10,6 +10,7 @@
 #include "AM32EepromFactGroupListModel.h"
 #include "Vehicle.h"
 #include <QtCore/QDebug>
+// #include <cstring>
 
 //-----------------------------------------------------------------------------
 // AM32Setting Implementation
@@ -87,6 +88,102 @@ void AM32EepromFactGroupListModel::requestReadAll(Vehicle* vehicle)
         255, // param2: ESC index (255 = all)
         0, 0, 0, 0, 0  // unused params
     );
+}
+
+bool AM32EepromFactGroupListModel::_allEscsHaveMatchingChanges(const QList<int>& escIndices)
+{
+    if (escIndices.isEmpty()) {
+        return false;
+    }
+
+    auto* firstEsc = value<AM32EepromFactGroup*>(escIndices[0]);
+    if (!firstEsc || !firstEsc->hasUnsavedChanges()) {
+        return false;
+    }
+
+    for (int i = 1; i < escIndices.count(); i++) {
+        auto* esc = value<AM32EepromFactGroup*>(escIndices[i]);
+        if (!esc || !esc->hasUnsavedChanges()) {
+            return false;
+        }
+
+        if (!esc->settingsMatch(firstEsc)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void AM32EepromFactGroupListModel::requestWriteAll(Vehicle* vehicle, const QList<int>& escIndices)
+{
+    if (!vehicle || escIndices.isEmpty()) {
+        return;
+    }
+
+    if (_allEscsHaveMatchingChanges(escIndices)) {
+        // Broadcast write - all ESCs get the same data
+        qDebug() << "All ESCs have matching changes, using broadcast write";
+
+        auto* firstEsc = value<AM32EepromFactGroup*>(escIndices[0]);
+        if (!firstEsc) {
+            return;
+        }
+
+        QByteArray packedData = firstEsc->getModifiedEepromData();
+
+        uint32_t writeMask[6];
+        memset(writeMask, 0, 6 * sizeof(uint32_t));
+
+        for (int escIndex : escIndices) {
+            auto* esc = value<AM32EepromFactGroup*>(escIndex);
+            if (esc && esc->hasUnsavedChanges()) {
+                uint32_t escWriteMask[6];
+                esc->calculateWriteMask(escWriteMask);
+                for (int i = 0; i < 6; i++) {
+                    writeMask[i] |= escWriteMask[i];
+                }
+            }
+        }
+
+        qDebug() << "Write mask:" << Qt::hex
+                 << writeMask[0] << writeMask[1] << writeMask[2]
+                 << writeMask[3] << writeMask[4] << writeMask[5];
+
+        mavlink_message_t msg;
+        mavlink_am32_eeprom_t eeprom;
+
+        eeprom.target_system = vehicle->id();
+        eeprom.target_component = vehicle->defaultComponentId();
+        eeprom.esc_index = 255; // Broadcast to all ESCs
+        memcpy(eeprom.write_mask, writeMask, sizeof(writeMask));
+        eeprom.length = qMin(packedData.size(), (int)sizeof(eeprom.data));
+        memcpy(eeprom.data, packedData.data(), eeprom.length);
+
+        SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+
+        if (sharedLink) {
+            mavlink_msg_am32_eeprom_encode_chan(
+                vehicle->id(),
+                vehicle->defaultComponentId(),
+                sharedLink->mavlinkChannel(),
+                &msg,
+                &eeprom
+            );
+
+            vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        }
+    } else {
+        // Individual writes - ESCs have different changes
+        qDebug() << "ESCs have different changes, writing individually";
+
+        for (int escIndex : escIndices) {
+            auto* esc = value<AM32EepromFactGroup*>(escIndex);
+            if (esc && esc->hasUnsavedChanges()) {
+                esc->requestWrite(vehicle);
+            }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

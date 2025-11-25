@@ -121,12 +121,7 @@ Item {
     }
 
     function writeSettings() {
-        for (var i = 0; i < selectedEeproms.length; i++) {
-            var esc = eeproms.get(selectedEeproms[i])
-            if (esc && esc.hasUnsavedChanges) {
-                esc.requestWrite(vehicle)
-            }
-        }
+        eeproms.requestWriteAll(vehicle, selectedEeproms)
     }
 
     function updateSetting(name, value) {

@@ -90,10 +90,16 @@ public:
     /// Request EEPROM read from ESC
     Q_INVOKABLE void requestReadAll(Vehicle* vehicle);
 
+    /// Write settings to all ESCs at once (broadcast)
+    Q_INVOKABLE void requestWriteAll(Vehicle* vehicle, const QList<int>& escIndices);
+
 protected:
     // Overrides from FactGroupListModel
     bool _shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const final;
     FactGroupWithId *_createFactGroupWithId(uint32_t id) final;
+
+private:
+    bool _allEscsHaveMatchingChanges(const QList<int>& escIndices);
 };
 
 
@@ -149,6 +155,8 @@ public:
     /// Get modified EEPROM data for transmission
     QByteArray getModifiedEepromData() const;
 
+    void calculateWriteMask(uint32_t writeMask[6]) const;
+
 signals:
     void dataLoadedChanged();
     void hasUnsavedChangesChanged();
@@ -157,7 +165,6 @@ signals:
 private:
     void initializeEepromFacts();
     void updateHasUnsavedChanges();
-    void calculateWriteMask(uint32_t writeMask[6]) const;
 
     // Info facts (read-only)
     Fact _eepromVersionFact = Fact(0, QStringLiteral("eepromVersion"), FactMetaData::valueTypeUint8);
