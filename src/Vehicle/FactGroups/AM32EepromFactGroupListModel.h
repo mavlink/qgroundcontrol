@@ -15,6 +15,7 @@
 #include <functional>
 
 class Vehicle;
+class AM32EepromFactGroup;
 
 struct AM32SettingConfig {
     QString name;
@@ -50,6 +51,7 @@ class AM32Setting : public QObject
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(Fact* fact READ fact CONSTANT)
     Q_PROPERTY(bool hasPendingChanges READ hasPendingChanges NOTIFY pendingChangesChanged)
+    Q_PROPERTY(bool matchesMajority READ matchesMajority NOTIFY matchesMajorityChanged)
 
 public:
     explicit AM32Setting(const AM32SettingConfig& config, QObject* parent = nullptr);
@@ -59,6 +61,8 @@ public:
     uint8_t byteIndex() const { return _eepromByteIndex; }
 
     bool hasPendingChanges() const;
+    bool matchesMajority() const { return _matchesMajority; }
+    void setMatchesMajority(bool matches);
 
     Q_INVOKABLE void setPendingValue(const QVariant& value);
     void updateFromEeprom(uint8_t value);
@@ -67,11 +71,13 @@ public:
 
 signals:
     void pendingChangesChanged();
+    void matchesMajorityChanged();
 
 private:
     uint8_t _eepromByteIndex;
     uint8_t _rawOriginalValue = 0;
     Fact* _fact;
+    bool _matchesMajority = true;
 
     std::function<QVariant(uint8_t)> _fromRaw;
     std::function<uint8_t(QVariant)> _toRaw;
@@ -100,6 +106,8 @@ protected:
 private:
     bool _allEscsHaveMatchingChanges(const QList<int>& escIndices);
     void _sendEepromWrite(Vehicle* vehicle, uint8_t escIndex, const QByteArray& data, const uint32_t writeMask[6]);
+    void _updateMajorityMatches();
+    void _connectEscSignals(AM32EepromFactGroup* esc);
 };
 
 

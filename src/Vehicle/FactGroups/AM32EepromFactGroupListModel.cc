@@ -54,6 +54,15 @@ void AM32Setting::discardChanges()
     emit pendingChangesChanged();
 }
 
+void AM32Setting::setMatchesMajority(bool matches)
+{
+    if (_matchesMajority != matches) {
+        _matchesMajority = matches;
+        qDebug() << "Setting" << name() << "matchesMajority changed to" << matches;
+        emit matchesMajorityChanged();
+    }
+}
+
 //-----------------------------------------------------------------------------
 // AM32EepromFactGroupListModel Implementation
 //-----------------------------------------------------------------------------
@@ -254,7 +263,73 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
 FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t id)
 {
     // qDebug() << "_createFactGroupWithId: " << id;
-    return new AM32EepromFactGroup(id, this);
+    auto* esc = new AM32EepromFactGroup(id, this);
+    _connectEscSignals(esc);
+    return esc;
+}
+
+void AM32EepromFactGroupListModel::_connectEscSignals(AM32EepromFactGroup* esc)
+{
+    // When data is loaded, recalculate majority matches for all ESCs
+    connect(esc, &AM32EepromFactGroup::dataLoadedChanged, this, &AM32EepromFactGroupListModel::_updateMajorityMatches);
+
+    // When any setting changes, recalculate majority matches
+    connect(esc, &AM32EepromFactGroup::hasUnsavedChangesChanged, this, &AM32EepromFactGroupListModel::_updateMajorityMatches);
+}
+
+void AM32EepromFactGroupListModel::_updateMajorityMatches()
+{
+    qDebug() << "_updateMajorityMatches called, count:" << count();
+
+    // Collect all ESCs
+    QList<AM32EepromFactGroup*> escs;
+    for (int i = 0; i < count(); i++) {
+        auto* esc = value<AM32EepromFactGroup*>(i);
+        if (esc && esc->dataLoaded()) {
+            escs.append(esc);
+        }
+    }
+
+    qDebug() << "Loaded ESCs:" << escs.count();
+
+    if (escs.isEmpty()) {
+        return;
+    }
+
+    // Get list of setting names from first ESC
+    auto* firstEsc = escs.first();
+    QStringList settingNames = firstEsc->settings()->keys();
+
+    // For each setting, find majority value and update all ESCs
+    for (const QString& settingName : settingNames) {
+        // Count occurrences of each value
+        QMap<uint8_t, int> valueCounts;
+        for (auto* esc : escs) {
+            auto* setting = esc->getSetting(settingName);
+            if (setting) {
+                uint8_t rawValue = setting->getRawValue();
+                valueCounts[rawValue] = valueCounts.value(rawValue, 0) + 1;
+            }
+        }
+
+        // Find majority value
+        uint8_t majorityValue = 0;
+        int maxCount = 0;
+        for (auto it = valueCounts.begin(); it != valueCounts.end(); ++it) {
+            if (it.value() > maxCount) {
+                maxCount = it.value();
+                majorityValue = it.key();
+            }
+        }
+
+        // Update each ESC's setting with whether it matches
+        for (auto* esc : escs) {
+            auto* setting = esc->getSetting(settingName);
+            if (setting) {
+                setting->setMatchesMajority(setting->getRawValue() == majorityValue);
+            }
+        }
+    }
 }
 
 AM32EepromFactGroup::AM32EepromFactGroup(uint8_t escIndex, QObject* parent)

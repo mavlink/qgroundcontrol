@@ -333,12 +333,42 @@ Item {
                                 model: motorSliderConfigs
 
                                 Rectangle {
+                                    id: motorSliderRect
+                                    property string settingName: modelData.name
+
                                     color: "transparent"
                                     border.color: qgcPal.groupBorder
                                     border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
+
+                                    // ESC match indicator dots
+                                    Row {
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        anchors.margins: 4
+                                        spacing: 2
+                                        visible: eeproms && eeproms.count > 1
+
+                                        Repeater {
+                                            model: eeproms ? eeproms : null
+
+                                            Rectangle {
+                                                property var esc: object
+                                                property var setting: esc ? esc.settings[motorSliderRect.settingName] : null
+
+                                                width: 8
+                                                height: 8
+                                                radius: 4
+                                                color: {
+                                                    if (!esc || !esc.dataLoaded) return qgcPal.colorGrey
+                                                    if (!setting) return qgcPal.colorGrey
+                                                    return setting.matchesMajority ? qgcPal.colorGreen : qgcPal.colorRed
+                                                }
+                                            }
+                                        }
+                                    }
 
                                     AM32SettingSlider {
                                         id: sliderColumn
@@ -387,12 +417,42 @@ Item {
                                 model: extendedSliderConfigs
 
                                 Rectangle {
+                                    id: extendedSliderRect
+                                    property string settingName: modelData.name
+
                                     color: "transparent"
                                     border.color: qgcPal.groupBorder
                                     border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
+
+                                    // ESC match indicator dots
+                                    Row {
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        anchors.margins: 4
+                                        spacing: 2
+                                        visible: eeproms && eeproms.count > 1
+
+                                        Repeater {
+                                            model: eeproms ? eeproms : null
+
+                                            Rectangle {
+                                                property var esc: object
+                                                property var setting: esc ? esc.settings[extendedSliderRect.settingName] : null
+
+                                                width: 8
+                                                height: 8
+                                                radius: 4
+                                                color: {
+                                                    if (!esc || !esc.dataLoaded) return qgcPal.colorGrey
+                                                    if (!setting) return qgcPal.colorGrey
+                                                    return setting.matchesMajority ? qgcPal.colorGreen : qgcPal.colorRed
+                                                }
+                                            }
+                                        }
+                                    }
 
                                     AM32SettingSlider {
                                         id: sliderColumn
@@ -441,12 +501,42 @@ Item {
                                 model: limitsSliderConfigs
 
                                 Rectangle {
+                                    id: limitsSliderRect
+                                    property string settingName: modelData.name
+
                                     color: "transparent"
                                     border.color: qgcPal.groupBorder
                                     border.width: 1
                                     radius: 4
                                     implicitWidth: sliderColumn.width + _groupMargins * 2
                                     implicitHeight: sliderColumn.height + _groupMargins * 2
+
+                                    // ESC match indicator dots
+                                    Row {
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        anchors.margins: 4
+                                        spacing: 2
+                                        visible: eeproms && eeproms.count > 1
+
+                                        Repeater {
+                                            model: eeproms ? eeproms : null
+
+                                            Rectangle {
+                                                property var esc: object
+                                                property var setting: esc ? esc.settings[limitsSliderRect.settingName] : null
+
+                                                width: 8
+                                                height: 8
+                                                radius: 4
+                                                color: {
+                                                    if (!esc || !esc.dataLoaded) return qgcPal.colorGrey
+                                                    if (!setting) return qgcPal.colorGrey
+                                                    return setting.matchesMajority ? qgcPal.colorGreen : qgcPal.colorRed
+                                                }
+                                            }
+                                        }
+                                    }
 
                                     AM32SettingSlider {
                                         id: sliderColumn
@@ -476,12 +566,42 @@ Item {
                             model: currentControlSliderConfigs
 
                             Rectangle {
+                                id: currentControlSliderRect
+                                property string settingName: modelData.name
+
                                 color: "transparent"
                                 border.color: qgcPal.groupBorder
                                 border.width: 1
                                 radius: 4
                                 implicitWidth: sliderColumn.width + _groupMargins * 2
                                 implicitHeight: sliderColumn.height + _groupMargins * 2
+
+                                // ESC match indicator dots
+                                Row {
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: 4
+                                    spacing: 2
+                                    visible: eeproms && eeproms.count > 1
+
+                                    Repeater {
+                                        model: eeproms ? eeproms : null
+
+                                        Rectangle {
+                                            property var esc: object
+                                            property var setting: esc ? esc.settings[currentControlSliderRect.settingName] : null
+
+                                            width: 8
+                                            height: 8
+                                            radius: 4
+                                            color: {
+                                                if (!esc || !esc.dataLoaded) return qgcPal.colorGrey
+                                                if (!setting) return qgcPal.colorGrey
+                                                return setting.matchesMajority ? qgcPal.colorGreen : qgcPal.colorRed
+                                            }
+                                        }
+                                    }
+                                }
 
                                 AM32SettingSlider {
                                     id: sliderColumn
