@@ -147,7 +147,13 @@ Item {
             valueText:  fact ? (fact.value < 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
             visible:    controller.vehicle.fixedWing
 
-            property Fact fact: controller.getParameterFact(-1, "ALT_HOLD_RTL", false /* reportMissing */)
+            property Fact fact: {
+                if (controller.firmwareMajorVersion < 4 || (controller.firmwareMajorVersion === 4 && controller.firmwareMinorVersion < 5)) {
+                    return controller.getParameterFact(-1, "ALT_HOLD_RTL")
+                } else {
+                    return controller.getParameterFact(-1, "RTL_ALTITUDE")
+                }
+            }
         }
     }
 }
