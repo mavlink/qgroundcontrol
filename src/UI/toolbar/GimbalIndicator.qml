@@ -97,7 +97,7 @@ Item {
             QGCLabel {
                 id:             pitchLabel
                 font.pointSize: ScreenTools.smallFontPointSize
-                text:           activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.rawValue.toFixed(1) : ""
+                text:           activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.valueString : ""
                 color:          qgcPal.windowTransparentText
             }
             QGCLabel {
@@ -105,8 +105,8 @@ Item {
                 font.pointSize: ScreenTools.smallFontPointSize
                 text:           activeGimbal ?
                                     (showAzimuth ?
-                                        (qsTr("Az: ") + activeGimbal.absoluteYaw.rawValue.toFixed(1)) :
-                                        (qsTr("Y: ") + activeGimbal.bodyYaw.rawValue.toFixed(1))) :
+                                        (qsTr("Az: ") + activeGimbal.absoluteYaw.valueString) :
+                                        (qsTr("Y: ") + activeGimbal.bodyYaw.valueString)) :
                                     ""
                 color:          qgcPal.windowTransparentText
             }
