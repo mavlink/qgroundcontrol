@@ -267,7 +267,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.stuckRotorProtection : null
                                 text: qsTr("Stuck rotor protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -275,7 +275,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.antiStall : null
                                 text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -283,7 +283,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.hallSensors : null
                                 text: qsTr("Use hall sensors") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -291,7 +291,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.telemetry30ms : null
                                 text: qsTr("30ms interval telemetry") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -299,7 +299,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.variablePwmFreq : null
                                 text: qsTr("Variable PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -307,7 +307,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.complementaryPwm : null
                                 text: qsTr("Complementary PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -315,7 +315,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.autoTiming : null
                                 text: qsTr("Auto timing advance") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -399,7 +399,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.disableStickCalibration : null
                                 text: qsTr("Disable stick calibration") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
 
@@ -484,7 +484,7 @@ Item {
                                 property var setting: firstEeprom ? firstEeprom.settings.lowVoltageCutoff : null
                                 text: qsTr("Low voltage cut off") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
-                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : qgcPal.text
+                                textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
                                 onClicked: updateSetting(setting.name, checked)
                             }
                             Item { Layout.fillHeight: true } // Spacer

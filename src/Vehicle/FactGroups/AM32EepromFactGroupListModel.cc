@@ -58,8 +58,15 @@ void AM32Setting::setMatchesMajority(bool matches)
 {
     if (_matchesMajority != matches) {
         _matchesMajority = matches;
-        qDebug() << "Setting" << name() << "matchesMajority changed to" << matches;
         emit matchesMajorityChanged();
+    }
+}
+
+void AM32Setting::setAllMatch(bool allMatch)
+{
+    if (_allMatch != allMatch) {
+        _allMatch = allMatch;
+        emit allMatchChanged();
     }
 }
 
@@ -279,8 +286,6 @@ void AM32EepromFactGroupListModel::_connectEscSignals(AM32EepromFactGroup* esc)
 
 void AM32EepromFactGroupListModel::_updateMajorityMatches()
 {
-    qDebug() << "_updateMajorityMatches called, count:" << count();
-
     // Collect all ESCs
     QList<AM32EepromFactGroup*> escs;
     for (int i = 0; i < count(); i++) {
@@ -289,8 +294,6 @@ void AM32EepromFactGroupListModel::_updateMajorityMatches()
             escs.append(esc);
         }
     }
-
-    qDebug() << "Loaded ESCs:" << escs.count();
 
     if (escs.isEmpty()) {
         return;
@@ -322,11 +325,15 @@ void AM32EepromFactGroupListModel::_updateMajorityMatches()
             }
         }
 
-        // Update each ESC's setting with whether it matches
+        // All ESCs match if there's only one unique value
+        bool allMatch = (valueCounts.size() == 1);
+
+        // Update each ESC's setting with whether it matches majority and whether all match
         for (auto* esc : escs) {
             auto* setting = esc->getSetting(settingName);
             if (setting) {
                 setting->setMatchesMajority(setting->getRawValue() == majorityValue);
+                setting->setAllMatch(allMatch);
             }
         }
     }

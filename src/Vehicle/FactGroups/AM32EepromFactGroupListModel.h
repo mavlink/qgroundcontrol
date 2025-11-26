@@ -52,6 +52,7 @@ class AM32Setting : public QObject
     Q_PROPERTY(Fact* fact READ fact CONSTANT)
     Q_PROPERTY(bool hasPendingChanges READ hasPendingChanges NOTIFY pendingChangesChanged)
     Q_PROPERTY(bool matchesMajority READ matchesMajority NOTIFY matchesMajorityChanged)
+    Q_PROPERTY(bool allMatch READ allMatch NOTIFY allMatchChanged)
 
 public:
     explicit AM32Setting(const AM32SettingConfig& config, QObject* parent = nullptr);
@@ -63,6 +64,8 @@ public:
     bool hasPendingChanges() const;
     bool matchesMajority() const { return _matchesMajority; }
     void setMatchesMajority(bool matches);
+    bool allMatch() const { return _allMatch; }
+    void setAllMatch(bool allMatch);
 
     Q_INVOKABLE void setPendingValue(const QVariant& value);
     void updateFromEeprom(uint8_t value);
@@ -72,12 +75,14 @@ public:
 signals:
     void pendingChangesChanged();
     void matchesMajorityChanged();
+    void allMatchChanged();
 
 private:
     uint8_t _eepromByteIndex;
     uint8_t _rawOriginalValue = 0;
     Fact* _fact;
     bool _matchesMajority = true;
+    bool _allMatch = true;
 
     std::function<QVariant(uint8_t)> _fromRaw;
     std::function<uint8_t(QVariant)> _toRaw;
