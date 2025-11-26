@@ -2,6 +2,18 @@
 
 Ground Control Station for MAVLink-enabled UAVs supporting PX4 and ArduPilot.
 
+## Quick Start for AI Assistants
+
+**First-time here?** Start with these critical files:
+1. **This file** - Architecture patterns and coding standards
+2. `.github/CONTRIBUTING.md` - Contribution workflow
+3. `src/FactSystem/Fact.h` - The most important pattern in QGC
+4. `src/Vehicle/Vehicle.h` - Core vehicle model
+
+**Most Critical Pattern**: The **Fact System** handles ALL vehicle parameters. Never create custom parameter storage - always use Facts.
+
+**Golden Rule**: Multi-vehicle support means ALWAYS null-check `MultiVehicleManager::instance()->activeVehicle()`.
+
 ## Tech Stack
 - **C++20** with **Qt 6.10.0** (QtQml, QtQuick)
 - **Build**: CMake 3.25+, Ninja
@@ -146,6 +158,13 @@ void method(Vehicle* vehicle) {
 - Do NOT create verbose file headers or unnecessary documentation files
 - Do NOT add README files unless explicitly requested
 
+**Security & Dependencies:**
+- Never commit secrets, API keys, or credentials
+- Validate all external inputs (MAVLink messages, file uploads, user input)
+- Use Qt's built-in sanitization for SQL and string operations
+- When adding dependencies, check for known vulnerabilities
+- Prefer Qt's built-in functionality over external libraries
+
 ## Common Pitfalls (DO NOT!)
 
 1. ❌ Assume single vehicle - Always null-check `activeVehicle()`
@@ -173,6 +192,55 @@ cmake --build build --config Debug
 - `QGC_ENABLE_BLUETOOTH` - Bluetooth support
 - `QGC_DISABLE_APM_PLUGIN` / `QGC_DISABLE_PX4_PLUGIN`
 
+## Testing
+
+### Running Tests
+```bash
+# Run all unit tests
+./build/Debug/QGroundControl --unittest
+
+# Run specific test
+./build/Debug/QGroundControl --unittest:<TestClassName>
+
+# Run with verbose output
+./build/Debug/QGroundControl --unittest --logging:full
+```
+
+### Test Structure
+- Tests mirror `src/` structure in `test/` directory
+- Use `UnitTest` base class from Qt Test framework
+- Mock vehicle connections when testing vehicle-dependent code
+- Always test with null vehicle checks
+
+### Adding New Tests
+```cpp
+class MyComponentTest : public UnitTest {
+    Q_OBJECT
+private slots:
+    void init();    // Called before each test
+    void cleanup(); // Called after each test
+    void testMyFunction();
+};
+```
+
+## Troubleshooting
+
+### Build Issues
+- **Qt not found**: Set `CMAKE_PREFIX_PATH` to Qt installation, or use qt-cmake
+- **Submodule errors**: Run `git submodule update --init --recursive`
+- **Missing dependencies**: Check platform-specific build instructions at https://dev.qgroundcontrol.com/
+- **CMake cache issues**: Delete `build/` directory and reconfigure
+
+### Runtime Issues
+- **Crash on startup**: Check log files in `~/.local/share/QGroundControl/` (Linux/macOS) or `%LOCALAPPDATA%\QGroundControl` (Windows)
+- **Vehicle not connecting**: Verify MAVLink protocol compatibility, check link configuration
+- **Parameter load failures**: Ensure `parametersReady` signal before accessing Facts
+
+### Development Environment
+- **Qt Creator recommended**: Import CMakeLists.txt as project
+- **clangd for VSCode**: Uses `.clangd` config in repo root
+- **Pre-commit hooks**: Run `pre-commit install` to enable automatic formatting
+
 ## Performance Tips
 - Batch updates: `fact->setSendValueChangedSignals(false)`
 - Suppress live updates: `factGroup->setLiveUpdates(false)`
@@ -182,19 +250,116 @@ cmake --build build --config Debug
 
 ## Common Tasks
 
-**Add parameter:**
-1. Access via `vehicle->parameterManager()->getParameter()`
-2. Validate with `fact->validate()` before setting
-3. Listen to `valueChanged()` signal
+### Working with Vehicle Parameters
+```cpp
+// 1. Get parameter (always null-check!)
+Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+if (!vehicle) return;
 
-**Create settings group:**
-1. Subclass `SettingsGroup`, use `DEFINE_SETTINGFACT`
-2. Create `*.SettingsGroup.json` metadata
-3. Access via `SettingsManager::instance()`
+Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
+if (!param) {
+    qCWarning(Log) << "Parameter not found";
+    return;
+}
 
-**Add vehicle component:**
-1. Subclass `VehicleComponent`, implement virtuals
-2. Create QML UI, register in AutoPilotPlugin
+// 2. Validate before setting
+QString error = param->validate(newValue, false);
+if (!error.isEmpty()) {
+    qCWarning(Log) << "Invalid value:" << error;
+    return;
+}
+
+// 3. Set value (cookedValue for UI with units)
+param->setCookedValue(newValue);
+
+// 4. Listen to changes
+connect(param, &Fact::valueChanged, this, [](QVariant value) {
+    qCDebug(Log) << "Parameter changed:" << value;
+});
+```
+
+### Creating a Settings Group
+```cpp
+// 1. Define in MySettings.h
+class MySettings : public SettingsGroup {
+    Q_OBJECT
+public:
+    DEFINE_SETTINGFACT(mySetting)  // Creates Fact with JSON metadata
+};
+
+// 2. Create MySettings.SettingsGroup.json with metadata
+{
+    "mySetting": {
+        "shortDescription": "My setting",
+        "type": "uint32",
+        "default": 100,
+        "min": 0,
+        "max": 1000
+    }
+}
+
+// 3. Access anywhere
+int value = SettingsManager::instance()->mySettings()->mySetting()->rawValue().toInt();
+```
+
+### Adding a Vehicle Component
+```cpp
+// 1. Create MyComponent.h (subclass VehicleComponent)
+class MyComponent : public VehicleComponent {
+    Q_OBJECT
+public:
+    MyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
+
+    QString name() const override { return "My Component"; }
+    QString description() const override { return "Component description"; }
+    QString iconResource() const override { return "/qmlimages/MyComponentIcon.svg"; }
+    bool requiresSetup() const override { return true; }
+    bool setupComplete() const override { return _setupComplete; }
+    QUrl setupSource() const override { return QUrl::fromUserInput("qrc:/qml/MyComponentSetup.qml"); }
+};
+
+// 2. Register in AutoPilotPlugin::getVehicleComponents()
+```
+
+### Handling MAVLink Messages
+```cpp
+// In a FactGroup or custom component
+void MyFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t& message) {
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_MY_MESSAGE: {
+        mavlink_my_message_t msg;
+        mavlink_msg_my_message_decode(&message, &msg);
+
+        // Update Facts (thread-safe via Qt signals)
+        myFact()->setRawValue(msg.value);
+        break;
+    }
+    }
+}
+```
+
+### Adding a QML UI Component
+```qml
+// 1. Create MyControl.qml
+import QtQuick
+import QGroundControl
+import QGroundControl.Controls
+
+QGCButton {
+    text: "My Action"
+
+    property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+    enabled: vehicle && vehicle.armed
+
+    onClicked: {
+        if (vehicle) {
+            // Always null-check vehicle!
+            vehicle.sendMavCommand(...)
+        }
+    }
+}
+```
 
 ## Essential Files to Read
 1. `.github/CONTRIBUTING.md` - Contribution guidelines
