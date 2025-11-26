@@ -6,6 +6,8 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         AM32EepromFactGroupListModel.cc
+        AM32EepromSchema.cc
+        AM32EepromSchema.h
         BatteryFactGroupListModel.cc
         BatteryFactGroupListModel.h
         EscStatusFactGroupListModel.cc
@@ -53,6 +55,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 set(JSON_FILES
     AM32EepromFact.json
+    am32-eeprom-schema.json
     RPMFact.json
     TemperatureFact.json
     GPSFact.json

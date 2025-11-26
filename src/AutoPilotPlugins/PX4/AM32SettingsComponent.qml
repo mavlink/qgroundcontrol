@@ -272,7 +272,7 @@ Item {
                             }
 
                             QGCCheckBox {
-                                property var setting: firstEeprom ? firstEeprom.settings.antiStall : null
+                                property var setting: firstEeprom ? firstEeprom.settings.stallProtection : null
                                 text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)

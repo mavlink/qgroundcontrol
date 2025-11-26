@@ -8,21 +8,47 @@
  ****************************************************************************/
 
 #include "AM32EepromFactGroupListModel.h"
+#include "AM32EepromSchema.h"
 #include "Vehicle.h"
+
 #include <QtCore/QDebug>
-// #include <cstring>
 
 //-----------------------------------------------------------------------------
 // AM32Setting Implementation
 //-----------------------------------------------------------------------------
 
-AM32Setting::AM32Setting(const AM32SettingConfig& config, QObject* parent)
+AM32Setting::AM32Setting(const AM32FieldDef& fieldDef, QObject* parent)
     : QObject(parent)
-    , _eepromByteIndex(config.eepromByteIndex)
-    , _fromRaw(config.fromRaw)
-    , _toRaw(config.toRaw)
+    , _eepromByteIndex(fieldDef.offset)
+    , _displayName(fieldDef.displayName)
+    , _description(fieldDef.description)
+    , _unit(fieldDef.unit)
+    , _isEnum(fieldDef.isEnum)
+    , _isBool(fieldDef.isBool)
+    , _fromRaw(fieldDef.fromRaw)
+    , _toRaw(fieldDef.toRaw)
 {
-    _fact = new Fact(0, config.name, config.type, this);
+    _fact = new Fact(0, fieldDef.name, fieldDef.valueType, this);
+
+    // Apply min/max/units to the fact's metadata
+    FactMetaData* metaData = _fact->metaData();
+
+    // Use display min/max if available, otherwise raw
+    if (fieldDef.displayMin.isValid()) {
+        metaData->setRawMin(fieldDef.displayMin);
+    } else if (fieldDef.rawMin.isValid()) {
+        metaData->setRawMin(fieldDef.rawMin);
+    }
+
+    if (fieldDef.displayMax.isValid()) {
+        metaData->setRawMax(fieldDef.displayMax);
+    } else if (fieldDef.rawMax.isValid()) {
+        metaData->setRawMax(fieldDef.rawMax);
+    }
+
+    if (!fieldDef.unit.isEmpty()) {
+        metaData->setRawUnits(fieldDef.unit);
+    }
 }
 
 void AM32Setting::updateFromEeprom(uint8_t value)
@@ -76,7 +102,16 @@ void AM32Setting::setAllMatch(bool allMatch)
 
 AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
     : FactGroupListModel("am32Eeprom", parent)
-{}
+{
+    // Ensure schema is loaded
+    AM32EepromSchema* schema = AM32EepromSchema::instance();
+    if (!schema->isLoaded()) {
+        // Load from Qt resource
+        if (!schema->loadFromFile(QStringLiteral(":/json/Vehicle/am32-eeprom-schema.json"))) {
+            qWarning() << "Failed to load AM32 EEPROM schema from resources";
+        }
+    }
+}
 
 bool AM32EepromFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const
 {
@@ -227,6 +262,8 @@ void AM32EepromFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
 
 void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    Q_UNUSED(vehicle);
+
     mavlink_am32_eeprom_t eeprom{};
     mavlink_msg_am32_eeprom_decode(&message, &eeprom);
 
@@ -253,7 +290,6 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
     for (AM32Setting* setting : _settings) {
         uint8_t index = setting->byteIndex();
         if (index < eeprom.length) {
-            // qDebug() << "Updating " << setting->name() << "(" << index << ")" << "to" << eeprom.data[index];
             setting->updateFromEeprom(eeprom.data[index]);
         }
     }
@@ -262,14 +298,13 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
     emit dataLoadedChanged();
 
     // Clear any unsaved changes flag since we just loaded fresh data
-    updateHasUnsavedChanges();
+    _updateHasUnsavedChanges();
 
-    qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data";
+    qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data, version:" << eepromVersionValue();
 }
 
 FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t id)
 {
-    // qDebug() << "_createFactGroupWithId: " << id;
     auto* esc = new AM32EepromFactGroup(id, this);
     _connectEscSignals(esc);
     return esc;
@@ -352,177 +387,44 @@ AM32EepromFactGroup::AM32EepromFactGroup(uint8_t escIndex, QObject* parent)
     _addFact(&_firmwareMajorFact);
     _addFact(&_firmwareMinorFact);
 
-    initializeEepromFacts();
+    _initializeSettingsFromSchema();
 }
 
-void AM32EepromFactGroup::initializeEepromFacts()
+void AM32EepromFactGroup::_initializeSettingsFromSchema()
 {
-    AM32SettingConfig configuration_array[] = {
-        // Byte 5
-        { "maxRampSpeed", FactMetaData::valueTypeDouble, 5,
-          [](uint8_t v) { return QVariant(v / 10.0); },
-          [](QVariant v) { return uint8_t(v.toDouble() * 10); }
-        },
+    AM32EepromSchema* schema = AM32EepromSchema::instance();
+    if (!schema->isLoaded()) {
+        qWarning() << "AM32 schema not loaded, using empty settings";
+        return;
+    }
 
-        // Byte 6
-        { "minDutyCycle", FactMetaData::valueTypeDouble, 6,
-          [](uint8_t v) { return QVariant(v / 2.0); },
-          [](QVariant v) { return uint8_t(v.toDouble() * 2); }
-        },
+    // Get all editable fields from schema
+    // Note: We create settings for ALL fields regardless of EEPROM version.
+    // The UI will filter based on version. This allows settings to be updated
+    // when EEPROM data arrives and we know the actual version.
+    QList<const AM32FieldDef*> fields = schema->editableFieldsForEepromVersion(999);
 
-        // Byte 7
-        { "disableStickCalibration", FactMetaData::valueTypeBool, 7 },
+    for (const AM32FieldDef* fieldDef : fields) {
+        // Make a mutable copy so we can apply version overrides later if needed
+        AM32FieldDef field = *fieldDef;
 
-        // Byte 8
-        { "absoluteVoltageCutoff", FactMetaData::valueTypeDouble, 8,
-          [](uint8_t v) { return QVariant(v * 0.5); },
-          [](QVariant v) { return uint8_t(v.toDouble() / 0.5); }
-        },
-
-        // Byte 9
-        { "currentPidP", FactMetaData::valueTypeUint32, 9,
-          [](uint8_t v) { return QVariant(uint32_t(v * 2)); },
-          [](QVariant v) { return uint8_t(v.toUInt() / 2); }
-        },
-
-        // Byte 10
-        { "currentPidI", FactMetaData::valueTypeUint32, 10 },
-
-        // Byte 11
-        { "currentPidD", FactMetaData::valueTypeUint32, 11,
-          [](uint8_t v) { return QVariant(uint32_t(v * 10)); },
-          [](QVariant v) { return uint8_t(v.toUInt() / 10); }
-        },
-
-        // Byte 12
-        { "activeBrakePower", FactMetaData::valueTypeUint8, 12 },
-
-        // Bytes 13-16 are reserved
-
-        // Byte 17
-        { "directionReversed", FactMetaData::valueTypeBool, 17 },
-
-        // Byte 18
-        { "bidirectionalMode", FactMetaData::valueTypeBool, 18 },
-
-        // Byte 19
-        { "sineStartup", FactMetaData::valueTypeBool, 19 },
-
-        // Byte 20
-        { "complementaryPwm", FactMetaData::valueTypeBool, 20 },
-
-        // Byte 21
-        { "variablePwmFreq", FactMetaData::valueTypeBool, 21 },
-
-        // Byte 22
-        { "stuckRotorProtection", FactMetaData::valueTypeBool, 22 },
-
-        // Byte 23
-        { "timingAdvance", FactMetaData::valueTypeDouble, 23,
-          [](uint8_t v) { return QVariant(v * 0.9375); },
-          [](QVariant v) { return uint8_t(v.toDouble() / 0.9375); }
-        },
-
-        // Byte 24
-        { "pwmFrequency", FactMetaData::valueTypeUint8, 24 },
-
-        // Byte 25
-        { "startupPower", FactMetaData::valueTypeUint8, 25 },
-
-        // Byte 26
-        { "motorKv", FactMetaData::valueTypeUint32, 26,
-          [](uint8_t v) { return QVariant(uint32_t(v * 40)); },
-          [](QVariant v) { return uint8_t(v.toUInt() / 40); }
-        },
-
-        // Byte 27
-        { "motorPoles", FactMetaData::valueTypeUint8, 27 },
-
-        // Byte 28
-        { "brakeOnStop", FactMetaData::valueTypeBool, 28 },
-
-        // Byte 29
-        { "antiStall", FactMetaData::valueTypeBool, 29 },
-
-        // Byte 30
-        { "beepVolume", FactMetaData::valueTypeUint8, 30 },
-
-        // Byte 31
-        { "telemetry30ms", FactMetaData::valueTypeBool, 31 },
-
-        // Byte 32
-        { "servoLowThreshold", FactMetaData::valueTypeUint32, 32,
-          [](uint8_t v) { return QVariant(uint32_t((v * 2) + 750)); },
-          [](QVariant v) { return uint8_t((v.toUInt() - 750) / 2); }
-        },
-
-        // Byte 33
-        { "servoHighThreshold", FactMetaData::valueTypeUint32, 33,
-          [](uint8_t v) { return QVariant(uint32_t((v * 2) + 1750)); },
-          [](QVariant v) { return uint8_t((v.toUInt() - 1750) / 2); }
-        },
-
-        // Byte 34
-        { "servoNeutral", FactMetaData::valueTypeUint32, 34,
-          [](uint8_t v) { return QVariant(uint32_t(1374 + v)); },
-          [](QVariant v) { return uint8_t(v.toUInt() - 1374); }
-        },
-
-        // Byte 35
-        { "servoDeadband", FactMetaData::valueTypeUint8, 35 },
-
-        // Byte 36
-        { "lowVoltageCutoff", FactMetaData::valueTypeBool, 36 },
-
-        // Byte 37
-        { "lowVoltageThreshold", FactMetaData::valueTypeDouble, 37,
-          [](uint8_t v) { return QVariant((v + 250) / 100.0); },
-          [](QVariant v) { return uint8_t((v.toDouble() * 100) - 250); }
-        },
-
-        // Byte 38
-        { "rcCarReversing", FactMetaData::valueTypeBool, 38 },
-
-        // Byte 39
-        { "hallSensors", FactMetaData::valueTypeBool, 39 },
-
-        // Byte 40
-        { "sineModeRange", FactMetaData::valueTypeUint8, 40 },
-
-        // Byte 41
-        { "dragBrakeStrength", FactMetaData::valueTypeUint8, 41 },
-
-        // Byte 42
-        { "runningBrakeLevel", FactMetaData::valueTypeUint8, 42 },
-
-        // Byte 43
-        { "temperatureLimit", FactMetaData::valueTypeUint8, 43 },
-
-        // Byte 44
-        { "currentLimit", FactMetaData::valueTypeUint8, 44,
-          [](uint8_t v) { return QVariant(uint32_t(v * 2)); },
-          [](QVariant v) { return uint8_t(v.toUInt() / 2); }
-        },
-
-        // Byte 45
-        { "sineModePower", FactMetaData::valueTypeUint8, 45 },
-
-        // Byte 46
-        { "inputType", FactMetaData::valueTypeUint8, 46 },
-
-        // Byte 47
-        { "autoTiming", FactMetaData::valueTypeUint8, 47 }
-    };
-
-    for (const auto& config : configuration_array) {
-        auto setting = new AM32Setting(config, this);
+        auto* setting = new AM32Setting(field, this);
 
         _addFact(setting->fact());
         _settings.append(setting);
-        _settingsMap->insert(config.name, QVariant::fromValue(setting));
+        _settingsMap->insert(field.name, QVariant::fromValue(setting));
 
-        connect(setting, &AM32Setting::pendingChangesChanged, this, &AM32EepromFactGroup::updateHasUnsavedChanges);
+        connect(setting, &AM32Setting::pendingChangesChanged, this, &AM32EepromFactGroup::_updateHasUnsavedChanges);
     }
+
+    qDebug() << "Initialized" << _settings.count() << "settings from schema";
+}
+
+QString AM32EepromFactGroup::firmwareVersionString() const
+{
+    return QStringLiteral("%1.%2")
+        .arg(_firmwareMajorFact.rawValue().toInt())
+        .arg(_firmwareMinorFact.rawValue().toInt(), 2, 10, QChar('0'));
 }
 
 AM32Setting* AM32EepromFactGroup::getSetting(const QString& name)
@@ -535,6 +437,28 @@ AM32Setting* AM32EepromFactGroup::getSetting(const QString& name)
     return nullptr;
 }
 
+bool AM32EepromFactGroup::isSettingAvailable(const QString& name) const
+{
+    AM32EepromSchema* schema = AM32EepromSchema::instance();
+    const AM32FieldDef* field = schema->field(name);
+
+    if (!field) {
+        return false;
+    }
+
+    // Check EEPROM version
+    if (!field->isAvailableForEepromVersion(eepromVersionValue())) {
+        return false;
+    }
+
+    // Check firmware version
+    if (!field->isAvailableForFirmwareVersion(firmwareVersionString())) {
+        return false;
+    }
+
+    return true;
+}
+
 bool AM32EepromFactGroup::hasUnsavedChanges() const
 {
     for (const auto* setting : _settings) {
@@ -545,9 +469,8 @@ bool AM32EepromFactGroup::hasUnsavedChanges() const
     return false;
 }
 
-void AM32EepromFactGroup::updateHasUnsavedChanges()
+void AM32EepromFactGroup::_updateHasUnsavedChanges()
 {
-    // qDebug() << "updateHasUnsavedChanges";
     bool hasChanges = hasUnsavedChanges();
     if (_hasUnsavedChanges != hasChanges) {
         _hasUnsavedChanges = hasChanges;
@@ -617,9 +540,8 @@ void AM32EepromFactGroup::calculateWriteMask(uint32_t writeMask[6]) const
 
 void AM32EepromFactGroup::discardChanges()
 {
-    // qDebug() << "discardChanges";
     for (auto* setting : _settings) {
         setting->discardChanges();
     }
-    updateHasUnsavedChanges();
+    _updateHasUnsavedChanges();
 }

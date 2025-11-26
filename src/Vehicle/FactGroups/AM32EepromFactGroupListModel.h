@@ -16,32 +16,9 @@
 
 class Vehicle;
 class AM32EepromFactGroup;
+struct AM32FieldDef;
 
-struct AM32SettingConfig {
-    QString name;
-    FactMetaData::ValueType_t type;
-    uint8_t eepromByteIndex;
-
-    // Conversion functions
-    std::function<QVariant(uint8_t)> fromRaw;  // Convert raw byte to display value
-    std::function<uint8_t(QVariant)> toRaw;    // Convert display value to raw byte
-
-    // Constructor with default identity conversions
-    AM32SettingConfig(const QString& name,
-                      FactMetaData::ValueType_t type,
-                      uint8_t eepromByteIndex,
-                      std::function<QVariant(uint8_t)> fromRaw = nullptr,
-                      std::function<uint8_t(QVariant)> toRaw = nullptr)
-        : name(name)
-        , type(type)
-        , eepromByteIndex(eepromByteIndex)
-        , fromRaw(fromRaw ? fromRaw : [](uint8_t v) { return QVariant(v); })
-        , toRaw(toRaw ? toRaw : [](QVariant v) { return v.toUInt(); })
-    {
-    }
-};
-
-// AM32Setting class with conversion support
+/// AM32Setting class with conversion support - created dynamically from schema
 class AM32Setting : public QObject
 {
     Q_OBJECT
@@ -49,17 +26,28 @@ class AM32Setting : public QObject
     QML_UNCREATABLE("")
 
     Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString displayName READ displayName CONSTANT)
+    Q_PROPERTY(QString description READ description CONSTANT)
+    Q_PROPERTY(QString unit READ unit CONSTANT)
     Q_PROPERTY(Fact* fact READ fact CONSTANT)
     Q_PROPERTY(bool hasPendingChanges READ hasPendingChanges NOTIFY pendingChangesChanged)
     Q_PROPERTY(bool matchesMajority READ matchesMajority NOTIFY matchesMajorityChanged)
     Q_PROPERTY(bool allMatch READ allMatch NOTIFY allMatchChanged)
+    Q_PROPERTY(bool isEnum READ isEnum CONSTANT)
+    Q_PROPERTY(bool isBool READ isBool CONSTANT)
 
 public:
-    explicit AM32Setting(const AM32SettingConfig& config, QObject* parent = nullptr);
+    /// Create from schema field definition
+    explicit AM32Setting(const AM32FieldDef& fieldDef, QObject* parent = nullptr);
 
     QString name() const { return _fact->name(); }
+    QString displayName() const { return _displayName; }
+    QString description() const { return _description; }
+    QString unit() const { return _unit; }
     Fact* fact() { return _fact; }
     uint8_t byteIndex() const { return _eepromByteIndex; }
+    bool isEnum() const { return _isEnum; }
+    bool isBool() const { return _isBool; }
 
     bool hasPendingChanges() const;
     bool matchesMajority() const { return _matchesMajority; }
@@ -81,8 +69,13 @@ private:
     uint8_t _eepromByteIndex;
     uint8_t _rawOriginalValue = 0;
     Fact* _fact;
+    QString _displayName;
+    QString _description;
+    QString _unit;
     bool _matchesMajority = true;
     bool _allMatch = true;
+    bool _isEnum = false;
+    bool _isBool = false;
 
     std::function<QVariant(uint8_t)> _fromRaw;
     std::function<uint8_t(QVariant)> _toRaw;
@@ -127,6 +120,10 @@ class AM32EepromFactGroup : public FactGroupWithId
     Q_PROPERTY(Fact* bootloaderVersion READ bootloaderVersion CONSTANT)
     Q_PROPERTY(Fact* eepromVersion READ eepromVersion CONSTANT)
 
+    // Convenience version accessors for QML
+    Q_PROPERTY(int eepromVersionValue READ eepromVersionValue NOTIFY dataLoadedChanged)
+    Q_PROPERTY(QString firmwareVersionString READ firmwareVersionString NOTIFY dataLoadedChanged)
+
     // Dynamic qml binding map for AM32Settings
     Q_PROPERTY(QQmlPropertyMap* settings READ settings CONSTANT)
 
@@ -147,6 +144,10 @@ public:
     Fact* bootloaderVersion() { return &_bootloaderVersionFact; }
     Fact* eepromVersion() { return &_eepromVersionFact; }
 
+    // Convenience accessors
+    int eepromVersionValue() const { return _eepromVersionFact.rawValue().toInt(); }
+    QString firmwareVersionString() const;
+
     // Status
     bool dataLoaded() const { return _dataLoaded; }
     bool hasUnsavedChanges() const;
@@ -154,6 +155,9 @@ public:
 
     /// Get a setting by name
     Q_INVOKABLE AM32Setting* getSetting(const QString& name);
+
+    /// Check if a setting is available for this ESC's EEPROM/firmware version
+    Q_INVOKABLE bool isSettingAvailable(const QString& name) const;
 
     /// Check if settings match another ESC
     Q_INVOKABLE bool settingsMatch(AM32EepromFactGroup* other) const;
@@ -172,8 +176,8 @@ signals:
 
 private:
     void _handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
-    void initializeEepromFacts();
-    void updateHasUnsavedChanges();
+    void _initializeSettingsFromSchema();
+    void _updateHasUnsavedChanges();
 
     // Info facts (read-only)
     Fact _eepromVersionFact = Fact(0, QStringLiteral("eepromVersion"), FactMetaData::valueTypeUint8);
