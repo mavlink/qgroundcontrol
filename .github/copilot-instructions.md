@@ -309,7 +309,7 @@ class MyComponent : public VehicleComponent {
     Q_OBJECT
 public:
     MyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
-    
+
     QString name() const override { return "My Component"; }
     QString description() const override { return "Component description"; }
     QString iconResource() const override { return "/qmlimages/MyComponentIcon.svg"; }
@@ -329,7 +329,7 @@ void MyFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t& message) {
     case MAVLINK_MSG_ID_MY_MESSAGE: {
         mavlink_my_message_t msg;
         mavlink_msg_my_message_decode(&message, &msg);
-        
+
         // Update Facts (thread-safe via Qt signals)
         myFact()->setRawValue(msg.value);
         break;
@@ -347,11 +347,11 @@ import QGroundControl.Controls
 
 QGCButton {
     text: "My Action"
-    
+
     property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
-    
+
     enabled: vehicle && vehicle.armed
-    
+
     onClicked: {
         if (vehicle) {
             // Always null-check vehicle!
