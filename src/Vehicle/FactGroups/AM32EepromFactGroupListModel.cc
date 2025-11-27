@@ -112,9 +112,15 @@ AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
 
 bool AM32EepromFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const
 {
-    if (message.msgid == MAVLINK_MSG_ID_AM32_EEPROM) {
-        mavlink_am32_eeprom_t eeprom{};
-        mavlink_msg_am32_eeprom_decode(&message, &eeprom);
+    if (message.msgid == MAVLINK_MSG_ID_ESC_EEPROM) {
+        mavlink_esc_eeprom_t eeprom{};
+        mavlink_msg_esc_eeprom_decode(&message, &eeprom);
+
+        // Only handle AM32 firmware messages
+        if (eeprom.firmware != ESC_FIRMWARE_AM32) {
+            return false;
+        }
+
         ids.append(eeprom.esc_index);
         return true;
     }
@@ -132,7 +138,7 @@ void AM32EepromFactGroupListModel::requestReadAll(Vehicle* vehicle)
         vehicle->defaultComponentId(),
         MAV_CMD_REQUEST_MESSAGE,
         false,  // showError
-        MAVLINK_MSG_ID_AM32_EEPROM,
+        MAVLINK_MSG_ID_ESC_EEPROM,
         255, // param2: ESC index (255 = all)
         0, 0, 0, 0, 0  // unused params
     );
@@ -166,16 +172,19 @@ bool AM32EepromFactGroupListModel::_allEscsHaveMatchingChanges(const QList<int>&
 
 void AM32EepromFactGroupListModel::_sendEepromWrite(Vehicle* vehicle, uint8_t escIndex, const QByteArray& data, const uint32_t writeMask[6])
 {
-    qDebug() << "Writing AM32 EEPROM to ESC" << (escIndex == 255 ? "broadcast" : QString::number(escIndex + 1));
-    qDebug() << "Write mask:" << Qt::hex
+    qCDebug(AM32EepromLog) << "Writing AM32 EEPROM to ESC" << (escIndex == 255 ? "broadcast" : QString::number(escIndex + 1));
+    qCDebug(AM32EepromLog) << "Write mask:" << Qt::hex
              << writeMask[0] << writeMask[1] << writeMask[2]
              << writeMask[3] << writeMask[4] << writeMask[5];
 
     mavlink_message_t msg;
-    mavlink_am32_eeprom_t eeprom;
+    mavlink_esc_eeprom_t eeprom{};
 
     eeprom.target_system = vehicle->id();
     eeprom.target_component = vehicle->defaultComponentId();
+    eeprom.firmware = ESC_FIRMWARE_AM32;
+    eeprom.msg_index = 0;
+    eeprom.msg_count = 1;
     eeprom.esc_index = escIndex;
     memcpy(eeprom.write_mask, writeMask, sizeof(eeprom.write_mask));
     eeprom.length = qMin(data.size(), static_cast<qsizetype>(sizeof(eeprom.data)));
@@ -184,7 +193,7 @@ void AM32EepromFactGroupListModel::_sendEepromWrite(Vehicle* vehicle, uint8_t es
     SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
 
     if (sharedLink) {
-        mavlink_msg_am32_eeprom_encode_chan(
+        mavlink_msg_esc_eeprom_encode_chan(
             vehicle->id(),
             vehicle->defaultComponentId(),
             sharedLink->mavlinkChannel(),
@@ -249,20 +258,25 @@ void AM32EepromFactGroupListModel::requestWriteAll(Vehicle* vehicle, const QList
 void AM32EepromFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
     switch (message.msgid) {
-    case MAVLINK_MSG_ID_AM32_EEPROM:
-        _handleAM32Eeprom(vehicle, message);
+    case MAVLINK_MSG_ID_ESC_EEPROM:
+        _handleEscEeprom(vehicle, message);
         break;
     default:
         break;
     }
 }
 
-void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message)
+void AM32EepromFactGroup::_handleEscEeprom(Vehicle *vehicle, const mavlink_message_t &message)
 {
     Q_UNUSED(vehicle);
 
-    mavlink_am32_eeprom_t eeprom{};
-    mavlink_msg_am32_eeprom_decode(&message, &eeprom);
+    mavlink_esc_eeprom_t eeprom{};
+    mavlink_msg_esc_eeprom_decode(&message, &eeprom);
+
+    // Only handle AM32 firmware messages
+    if (eeprom.firmware != ESC_FIRMWARE_AM32) {
+        return;
+    }
 
     if (eeprom.esc_index != _idFact.rawValue().toUInt()) {
         // Only handle messages for our ESC index
@@ -270,7 +284,7 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
     }
 
     if (eeprom.length != 48) {
-        qWarning() << "AM32 EEPROM data length mismatch:" << eeprom.length;
+        qCWarning(AM32EepromLog) << "AM32 EEPROM data length mismatch:" << eeprom.length;
         return;
     }
 
@@ -297,7 +311,7 @@ void AM32EepromFactGroup::_handleAM32Eeprom(Vehicle *vehicle, const mavlink_mess
     // Clear any unsaved changes flag since we just loaded fresh data
     _updateHasUnsavedChanges();
 
-    qDebug() << "ESC" << (_escIndex + 1) << "received eeprom data, version:" << eepromVersionValue();
+    qCDebug(AM32EepromLog) << "ESC" << (_escIndex + 1) << "received eeprom data, version:" << eepromVersionValue();
 }
 
 FactGroupWithId *AM32EepromFactGroupListModel::_createFactGroupWithId(uint32_t id)
@@ -406,7 +420,7 @@ void AM32EepromFactGroup::_initializeSettingsFromSchema()
     disconnect(schema, &AM32EepromSchema::schemaLoaded, this, &AM32EepromFactGroup::_initializeSettingsFromSchema);
 
     if (!schema->isLoaded()) {
-        qCWarning(AM32EepromSchemaLog) << "AM32 schema not loaded, ESC settings unavailable";
+        qCWarning(AM32EepromLog) << "AM32 schema not loaded, ESC settings unavailable";
         return;
     }
 
@@ -429,7 +443,7 @@ void AM32EepromFactGroup::_initializeSettingsFromSchema()
         connect(setting, &AM32Setting::pendingChangesChanged, this, &AM32EepromFactGroup::_updateHasUnsavedChanges);
     }
 
-    qCDebug(AM32EepromSchemaLog) << "Initialized" << _settings.count() << "settings from schema for ESC" << (_escIndex + 1);
+    qCDebug(AM32EepromLog) << "Initialized" << _settings.count() << "settings from schema for ESC" << (_escIndex + 1);
 }
 
 QString AM32EepromFactGroup::firmwareVersionString() const

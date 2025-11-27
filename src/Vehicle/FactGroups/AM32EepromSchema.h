@@ -21,7 +21,7 @@
 
 class QGCCachedFileDownload;
 
-Q_DECLARE_LOGGING_CATEGORY(AM32EepromSchemaLog)
+Q_DECLARE_LOGGING_CATEGORY(AM32EepromLog)
 
 /// Schema-based field definition loaded from JSON
 struct AM32FieldDef {

@@ -18,7 +18,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(AM32EepromSchemaLog, "Vehicle.AM32EepromSchema")
+QGC_LOGGING_CATEGORY(AM32EepromLog, "Vehicle.AM32EepromSchema")
 
 AM32EepromSchema* AM32EepromSchema::_instance = nullptr;
 
@@ -42,18 +42,18 @@ AM32EepromSchema::AM32EepromSchema(QObject* parent)
 void AM32EepromSchema::fetchSchema()
 {
     if (_loaded) {
-        qCDebug(AM32EepromSchemaLog) << "Schema already loaded";
+        qCDebug(AM32EepromLog) << "Schema already loaded";
         emit schemaLoaded();
         return;
     }
 
     if (_fetching) {
-        qCDebug(AM32EepromSchemaLog) << "Schema fetch already in progress";
+        qCDebug(AM32EepromLog) << "Schema fetch already in progress";
         return;
     }
 
     _fetching = true;
-    qCDebug(AM32EepromSchemaLog) << "Fetching AM32 schema from" << schemaUrl;
+    qCDebug(AM32EepromLog) << "Fetching AM32 schema from" << schemaUrl;
 
     if (!_cachedFileDownload->download(schemaUrl, cacheMaxAgeSec)) {
         _fetching = false;
@@ -67,12 +67,12 @@ void AM32EepromSchema::_onDownloadComplete(const QString& remoteFile, const QStr
     _fetching = false;
 
     if (!errorMsg.isEmpty()) {
-        qCWarning(AM32EepromSchemaLog) << "Schema download failed:" << errorMsg;
+        qCWarning(AM32EepromLog) << "Schema download failed:" << errorMsg;
         emit schemaLoadError(QStringLiteral("Failed to download schema: %1").arg(errorMsg));
         return;
     }
 
-    qCDebug(AM32EepromSchemaLog) << "Schema downloaded to" << localFile;
+    qCDebug(AM32EepromLog) << "Schema downloaded to" << localFile;
 
     if (!loadFromFile(localFile)) {
         // Error already emitted by loadFromFile

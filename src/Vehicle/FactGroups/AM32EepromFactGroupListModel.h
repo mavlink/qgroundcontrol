@@ -175,7 +175,7 @@ signals:
     void hasUnsavedChangesChanged();
 
 private:
-    void _handleAM32Eeprom(Vehicle *vehicle, const mavlink_message_t &message);
+    void _handleEscEeprom(Vehicle *vehicle, const mavlink_message_t &message);
     void _initializeSettingsFromSchema();
     void _updateHasUnsavedChanges();
 
