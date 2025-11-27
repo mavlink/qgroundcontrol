@@ -10,7 +10,9 @@ qt_add_qml_module(AppSettingsModule
         DebugWindow.qml
         FlyViewSettings.qml
         GeneralSettings.qml
+        AboutSettings.qml
         HelpSettings.qml
+        AboutTool.qml
         LinkSettings.qml
         LogReplaySettings.qml
         MapSettings.qml

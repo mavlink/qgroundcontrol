@@ -33,6 +33,8 @@ Rectangle {
 
     property bool _commingFromRIDSettings:  false
 
+    property bool _isVideoPage: rightPanel.source === "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml" || mainWindow.activeFlySidebarTool === "video"
+
     function showSettingsPage(settingsPage) {
         for (var i=0; i<buttonRepeater.count; i++) {
             var button = buttonRepeater.itemAt(i)
@@ -74,6 +76,7 @@ Rectangle {
         contentHeight:      buttonColumn.height + _verticalMargin
         flickableDirection: Flickable.VerticalFlick
         clip:               true
+        visible:            !_isVideoPage
 
         ColumnLayout {
             id:         buttonColumn
@@ -131,6 +134,7 @@ Rectangle {
         anchors.bottom:         parent.bottom
         width:                  1
         color:                  qgcPal.windowShade
+        visible:                !_isVideoPage
     }
 
     //-- Panel Contents
@@ -140,7 +144,7 @@ Rectangle {
         anchors.rightMargin:    _horizontalMargin
         anchors.topMargin:      _verticalMargin
         anchors.bottomMargin:   _verticalMargin
-        anchors.left:           divider.right
+        anchors.left:           _isVideoPage ? parent.left : divider.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom

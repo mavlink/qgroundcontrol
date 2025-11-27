@@ -16,21 +16,21 @@ ListModel {
     ListElement {
         name: qsTr("General")
         url: "qrc:/qml/QGroundControl/AppSettings/GeneralSettings.qml"
-        iconUrl: "qrc:/res/QGCLogoWhite.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_General.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("Fly View")
         url: "qrc:/qml/QGroundControl/AppSettings/FlyViewSettings.qml"
-        iconUrl: "qrc:/qmlimages/PaperPlane.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_FlyView.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("Plan View")
         url: "qrc:/qml/QGroundControl/AppSettings/PlanViewSettings.qml"
-        iconUrl: "qrc:/qmlimages/Plan.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_PlanView.svg"
         pageVisible: function() { return true }
     }
 
@@ -44,35 +44,35 @@ ListModel {
     ListElement {
         name: qsTr("Telemetry")
         url: "qrc:/qml/QGroundControl/AppSettings/TelemetrySettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/drone.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_Telemetry.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("ADSB Server")
         url: "qrc:/qml/QGroundControl/AppSettings/ADSBServerSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/airplane.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_ADSBServer.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("Comm Links")
         url: "qrc:/qml/QGroundControl/AppSettings/LinkSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/usb.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_CommLinks.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("Maps")
         url: "qrc:/qml/QGroundControl/AppSettings/MapSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/globe.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_Maps.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("PX4 Log Transfer")
         url: "qrc:/qml/QGroundControl/AppSettings/PX4LogTransferSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/inbox-download.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_PX4LogTransfer.svg"
         pageVisible: function() { 
             var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
             return QGroundControl.corePlugin.options.showPX4LogTransferOptions && 
@@ -84,43 +84,37 @@ ListModel {
     ListElement {
         name: qsTr("Remote ID")
         url: "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml"
-        iconUrl: "qrc:/qmlimages/RidIconManNoID.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_RemoteID.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("Logging")
         url: "qrc:/qml/QGroundControl/Controls/AppLogging.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/conversation.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_Logging.svg"
         pageVisible: function() { return true }
     }
 
     ListElement {
         name: qsTr("Mock Link")
         url: "qrc:/qml/QGroundControl/AppSettings/MockLink.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/drone.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_MockLink.svg"
         pageVisible: function() { return ScreenTools.isDebug }
     }
 
     ListElement {
         name: qsTr("Debug")
         url: "qrc:/qml/QGroundControl/AppSettings/DebugWindow.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/bug.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_Debug.svg"
         pageVisible: function() { return ScreenTools.isDebug }
     }
 
     ListElement {
         name: qsTr("Palette Test")
         url: "qrc:/qml/QGroundControl/AppSettings/QmlTest.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/photo.svg"
+        iconUrl: "qrc:/qmlimages/AppSettings_PaletteTest.svg"
         pageVisible: function() { return ScreenTools.isDebug }
     }
 
-    ListElement {
-        name: qsTr("Help")
-        url: "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/question.svg"
-        pageVisible: function() { return true }
-    }
+    // Help and About moved to dedicated About tool
 }
-

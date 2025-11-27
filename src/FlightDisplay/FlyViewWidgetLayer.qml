@@ -63,10 +63,10 @@ Item {
         rightEdgeCenterInset:   Math.max(topRightPanel.rightEdgeCenterInset, toolStrip.rightEdgeCenterInset)
         rightEdgeBottomInset:   bottomRightRowLayout.rightEdgeBottomInset
         topEdgeLeftInset:       0
-        topEdgeCenterInset:     mapScale.topEdgeCenterInset
+        topEdgeCenterInset:     Math.max(mapScale.topEdgeCenterInset, bottomActionButtonsContainer.visible ? bottomActionButtonsContainer.height + bottomActionButtonsContainer.anchors.topMargin : 0)
         topEdgeRightInset:      Math.max(topRightPanel.topEdgeRightInset, toolStrip.topEdgeRightInset)
         bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  Math.max(bottomRightRowLayout.bottomEdgeCenterInset, bottomActionButtonsContainer.visible ? bottomActionButtonsContainer.height + bottomActionButtonsContainer.anchors.bottomMargin : 0)
+        bottomEdgeCenterInset:  bottomRightRowLayout.bottomEdgeCenterInset
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : bottomRightRowLayout.bottomEdgeRightInset
     }
 
@@ -215,12 +215,12 @@ Item {
         z:                  QGroundControl.zOrderTopMost
     }
 
-    // Bottom-center neon action buttons with outer border frame
+    // Top-center neon action buttons with outer border frame
     Rectangle {
         id:                 bottomActionButtonsContainer
-        anchors.bottom:     parent.bottom
+        anchors.top:        parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 2
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 2
         width:              bottomActionButtons.width + ScreenTools.defaultFontPixelWidth * 2
         height:             bottomActionButtons.height + ScreenTools.defaultFontPixelHeight * 0.8
         color:              "transparent"
@@ -295,11 +295,12 @@ Item {
                 }
             }
 
-            MouseArea {
+            QGCMouseArea {
                 id:             takeoffMouseArea
                 anchors.fill:   parent
                 enabled:        bottomActionButtons.takeoffEnabled
                 hoverEnabled:   true
+                cursorShape:    Qt.PointingHandCursor
                 onClicked: {
                     _guidedController.closeAll()
                     var pmc = mapControl && mapControl._visualsPlanMasterController ? mapControl._visualsPlanMasterController : _planMasterController
@@ -381,11 +382,12 @@ Item {
                 }
             }
 
-            MouseArea {
+            QGCMouseArea {
                 id:             returnMouseArea
                 anchors.fill:   parent
                 enabled:        bottomActionButtons.rthEnabled
                 hoverEnabled:   true
+                cursorShape:    Qt.PointingHandCursor
                 onClicked: {
                     _guidedController.closeAll()
                     _guidedController.confirmAction(_guidedController.actionRTL)

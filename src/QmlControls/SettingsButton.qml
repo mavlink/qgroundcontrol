@@ -21,7 +21,7 @@ Button {
     padding:        ScreenTools.defaultFontPixelWidth * 0.75
     hoverEnabled:   !ScreenTools.isMobile
     autoExclusive:  true
-    icon.color:     textColor
+    icon.color:     undefined
 
     property color textColor: qgcPal.buttonText
 

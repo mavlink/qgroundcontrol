@@ -217,5 +217,18 @@
         <file alias="Yield.svg">src/UI/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
+        <file alias="AppSettings_General.svg">src/UI/Application_Settings_Icons/General.svg</file>
+        <file alias="AppSettings_FlyView.svg">src/UI/Application_Settings_Icons/Fly View.svg</file>
+        <file alias="AppSettings_PlanView.svg">src/UI/Application_Settings_Icons/Plan View.svg</file>
+        <file alias="AppSettings_Telemetry.svg">src/UI/Application_Settings_Icons/Telemetry.svg</file>
+        <file alias="AppSettings_ADSBServer.svg">src/UI/Application_Settings_Icons/ADSB Server.svg</file>
+        <file alias="AppSettings_Maps.svg">src/UI/Application_Settings_Icons/Maps.svg</file>
+        <file alias="AppSettings_RemoteID.svg">src/UI/Application_Settings_Icons/Remote ID.svg</file>
+        <file alias="AppSettings_CommLinks.svg">src/UI/Application_Settings_Icons/Comm Links.svg</file>
+        <file alias="AppSettings_PX4LogTransfer.svg">src/UI/Application_Settings_Icons/Log Transfer.svg</file>
+        <file alias="AppSettings_Logging.svg">src/UI/Application_Settings_Icons/Logging.svg</file>
+        <file alias="AppSettings_MockLink.svg">src/UI/Application_Settings_Icons/Mock Link.svg</file>
+        <file alias="AppSettings_Debug.svg">src/UI/Application_Settings_Icons/Debug.svg</file>
+        <file alias="AppSettings_PaletteTest.svg">src/UI/Application_Settings_Icons/Palette Test.svg</file>
     </qresource>
 </RCC>

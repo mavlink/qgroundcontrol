@@ -49,10 +49,6 @@ ADSBVehicleManager::ADSBVehicleManager(ADSBVehicleManagerSettings *settings, QOb
             _stop();
         }
     });
-
-    if (adsbEnabled->rawValue().toBool()) {
-        _start(hostAddress->rawValue().toString(), port->rawValue().toUInt());
-    }
 }
 
 ADSBVehicleManager::~ADSBVehicleManager()

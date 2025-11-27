@@ -199,6 +199,9 @@ Item {
                         property real altCenter:   isNaN(altValue) ? 0 : altValue
                         property real altMin:      altCenter - altSpan / 2
                         property real altMax:      altCenter + altSpan / 2
+                        property real tapeMargin:  width * 0.02
+                        property real tapeBoxW:    width * 0.55
+                        property real cx:          tapeMargin + tapeBoxW
 
                         function valueToY(v) {
                             if (isNaN(v)) {
@@ -237,7 +240,7 @@ Item {
                                 ctx.lineTo(cx, height)
                                 ctx.stroke()
 
-                                // Ticks and labels (-15 .. +15 deg)
+                                // Ticks and labels
                                 var step = 5
                                 for (var v = leftTape.altMin; v <= leftTape.altMax; v += step) {
                                     var y = leftTape.valueToY(v)
@@ -248,7 +251,7 @@ Item {
                                     ctx.lineTo(cx + width * 0.18, y)
                                     ctx.stroke()
 
-                                    ctx.font         = (ScreenTools.defaultFontPixelHeight * 0.9) + "px sans-serif"
+                                    ctx.font         = (ScreenTools.defaultFontPixelHeight * 1.1) + "px sans-serif"
                                     ctx.textAlign    = "left"
                                     ctx.textBaseline = "middle"
                                     ctx.fillText(Math.round(v).toString(), cx + width * 0.22, y)
@@ -258,13 +261,13 @@ Item {
 
                         Rectangle {
                             id:                 altBox
-                            width:              parent.width * 0.55
-                            height:             ScreenTools.defaultFontPixelHeight * 1.5
-                            radius:             ScreenTools.defaultFontPixelHeight * 0.2
+                            width:              parent.width * 0.44
+                            height:             ScreenTools.defaultFontPixelHeight * 2.2
+                            radius:             ScreenTools.defaultFontPixelHeight * 0.25
                             color:              Qt.rgba(0.0, 0.8, 1.0, 0.16)
                             border.color:       hudPal.brandingBlue
-                            border.width:       1.2
-                            x:                  width * 0.02
+                            border.width:       1.6
+                            x:                  leftTape.cx + leftTape.tapeMargin
                             y:                  leftTape.valueToY(leftTape.altValue) - (height / 2)
 
                             QGCLabel {
@@ -275,6 +278,9 @@ Item {
                                     }
                                     return leftTape.altValue.toFixed(1) + " m"
                                 }
+                                font.bold:          true
+                                font.pointSize:     ScreenTools.defaultFontPointSize * 1.1
+                                color:              hudPal.brandingBlue
                             }
                         }
                     }
@@ -287,14 +293,17 @@ Item {
                         anchors.rightMargin:    parent.width * 0.08
                         width:                  parent.width * 0.12
                         height:                 parent.height * 0.60
-                        visible:                globals.activeVehicle && globals.activeVehicle.altitudeRelative
+                        visible:                globals.activeVehicle && globals.activeVehicle.groundSpeed
 
                         property var  _vehicle:    globals.activeVehicle
-                        property real altSpan:     30
-                        property real speedValue:  (_vehicle && _vehicle.altitudeRelative) ? _vehicle.altitudeRelative.rawValue : NaN
+                        property real speedSpan:   30
+                        property real speedValue:  (_vehicle && _vehicle.groundSpeed) ? _vehicle.groundSpeed.rawValue : NaN
                         property real speedCenter: isNaN(speedValue) ? 0 : speedValue
-                        property real speedMin:    speedCenter - altSpan / 2
-                        property real speedMax:    speedCenter + altSpan / 2
+                        property real speedMin:    speedCenter - speedSpan / 2
+                        property real speedMax:    speedCenter + speedSpan / 2
+                        property real tapeMargin:  width * 0.02
+                        property real tapeBoxW:    width * 0.55
+                        property real cx:          width - tapeMargin - tapeBoxW
 
                         function valueToY(v) {
                             if (isNaN(v)) {
@@ -333,7 +342,7 @@ Item {
                                 ctx.lineTo(cx, height)
                                 ctx.stroke()
 
-                                // Ticks and labels (-15 .. +15 deg)
+                                // Ticks and labels
                                 var step = 5
                                 for (var v = rightTape.speedMin; v <= rightTape.speedMax; v += step) {
                                     var y = rightTape.valueToY(v)
@@ -344,7 +353,7 @@ Item {
                                     ctx.lineTo(cx - width * 0.18, y)
                                     ctx.stroke()
 
-                                    ctx.font         = (ScreenTools.defaultFontPixelHeight * 0.9) + "px sans-serif"
+                                    ctx.font         = (ScreenTools.defaultFontPixelHeight * 1.1) + "px sans-serif"
                                     ctx.textAlign    = "right"
                                     ctx.textBaseline = "middle"
                                     ctx.fillText(Math.round(v).toString(), cx - width * 0.22, y)
@@ -354,23 +363,26 @@ Item {
 
                         Rectangle {
                             id:                 speedBox
-                            width:              parent.width * 0.55
-                            height:             ScreenTools.defaultFontPixelHeight * 1.5
-                            radius:             ScreenTools.defaultFontPixelHeight * 0.2
+                            width:              parent.width * 0.44
+                            height:             ScreenTools.defaultFontPixelHeight * 2.2
+                            radius:             ScreenTools.defaultFontPixelHeight * 0.25
                             color:              Qt.rgba(0.0, 0.8, 1.0, 0.16)
                             border.color:       hudPal.brandingBlue
-                            border.width:       1.2
-                            x:                  width - speedBox.width - width * 0.02
+                            border.width:       1.6
+                            x:                  rightTape.cx - speedBox.width - rightTape.tapeMargin
                             y:                  rightTape.valueToY(rightTape.speedValue) - (height / 2)
 
                             QGCLabel {
                                 anchors.centerIn:   parent
                                 text: {
                                     if (isNaN(rightTape.speedValue)) {
-                                        return "-- m"
+                                        return "-- m/s"
                                     }
-                                    return rightTape.speedValue.toFixed(1) + " m"
+                                    return rightTape.speedValue.toFixed(1) + " m/s"
                                 }
+                                font.bold:          true
+                                font.pointSize:     ScreenTools.defaultFontPointSize * 1.1
+                                color:              hudPal.brandingBlue
                             }
                         }
                     }

@@ -158,28 +158,29 @@ QGCFlickable {
                     }
 
                     // Logout button
-                    QGCButton{
-                        text:       qsTr("Logout")
-                        width:      ScreenTools.defaultFontPixelWidth * 7.8
-                        height:     ScreenTools.defaultFontPixelHeight * 2
-                        visible:    !UTMSPStateStorage.loginState
-                        onClicked:{
-                            UTMSPStateStorage.loginState = !UTMSPStateStorage.loginState
-                            loginSwitch.checked =!loginSwitch.checked
-                            loading.visible = false
-                            loginButton.opacity = 1
-                            removeFlightPlanTriggered()
-                            geoSwitch.enabled = true
-                            UTMSPStateStorage.removeFlightPlanState
+                        QGCButton{
+                            text:       qsTr("Logout")
+                            width:      ScreenTools.defaultFontPixelWidth * 7.8
+                            height:     ScreenTools.defaultFontPixelHeight * 2
+                            visible:    !UTMSPStateStorage.loginState
+                            onClicked:{
+                                UTMSPStateStorage.loginState = !UTMSPStateStorage.loginState
+                                loginSwitch.checked =!loginSwitch.checked
+                                loading.visible = false
+                                loginButton.opacity = 1
+                                removeFlightPlanTriggered()
+                                geoSwitch.enabled = true
+                                UTMSPStateStorage.removeFlightPlanState
 
-                            UTMSPStateStorage.indicatorIdleStatus = true
-                            UTMSPStateStorage.indicatorApprovedStatus = false
-                            UTMSPStateStorage.indicatorActivatedStatus = false
-                            UTMSPStateStorage.indicatorDisplayStatus = false
-                            UTMSPStateStorage.currentStateIndex = 0
-                            UTMSPStateStorage.currentNotificationIndex = 5
+                                UTMSPStateStorage.indicatorIdleStatus = true
+                                UTMSPStateStorage.indicatorApprovedStatus = false
+                                UTMSPStateStorage.indicatorActivatedStatus = false
+                                UTMSPStateStorage.indicatorDisplayStatus = false
+                                UTMSPStateStorage.currentStateIndex = 0
+                                UTMSPStateStorage.currentNotificationIndex = 5
+                                QGroundControl.linkManager.disableAutoConnect()
+                            }
                         }
-                    }
 
                     Rectangle{
                         width:   ScreenTools.defaultFontPixelWidth * 0.1
@@ -306,6 +307,7 @@ QGCFlickable {
                             running:    false
                             onTriggered: {
                                 UTMSPStateStorage.loginState = !UTMSPStateStorage.loginState
+                                QGroundControl.linkManager.enableAutoConnect()
                             }
                         }
                         Rectangle{
