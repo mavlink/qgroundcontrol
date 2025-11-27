@@ -55,7 +55,6 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 set(JSON_FILES
     AM32EepromFact.json
-    am32-eeprom-schema.json
     RPMFact.json
     TemperatureFact.json
     GPSFact.json

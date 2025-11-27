@@ -8,13 +8,17 @@
  ****************************************************************************/
 
 #include "AM32EepromSchema.h"
+#include "QGCCachedFileDownload.h"
+#include "QGCLoggingCategory.h"
 
-#include <QtCore/QDebug>
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QStandardPaths>
+
+QGC_LOGGING_CATEGORY(AM32EepromSchemaLog, "Vehicle.AM32EepromSchema")
 
 AM32EepromSchema* AM32EepromSchema::_instance = nullptr;
 
@@ -28,7 +32,52 @@ AM32EepromSchema* AM32EepromSchema::instance()
 
 AM32EepromSchema::AM32EepromSchema(QObject* parent)
     : QObject(parent)
+    , _cachedFileDownload(new QGCCachedFileDownload(
+          QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/AM32SchemaCache"), this))
 {
+    connect(_cachedFileDownload, &QGCCachedFileDownload::downloadComplete,
+            this, &AM32EepromSchema::_onDownloadComplete);
+}
+
+void AM32EepromSchema::fetchSchema()
+{
+    if (_loaded) {
+        qCDebug(AM32EepromSchemaLog) << "Schema already loaded";
+        emit schemaLoaded();
+        return;
+    }
+
+    if (_fetching) {
+        qCDebug(AM32EepromSchemaLog) << "Schema fetch already in progress";
+        return;
+    }
+
+    _fetching = true;
+    qCDebug(AM32EepromSchemaLog) << "Fetching AM32 schema from" << schemaUrl;
+
+    if (!_cachedFileDownload->download(schemaUrl, cacheMaxAgeSec)) {
+        _fetching = false;
+        emit schemaLoadError(QStringLiteral("Failed to start schema download"));
+    }
+}
+
+void AM32EepromSchema::_onDownloadComplete(const QString& remoteFile, const QString& localFile, const QString& errorMsg)
+{
+    Q_UNUSED(remoteFile);
+    _fetching = false;
+
+    if (!errorMsg.isEmpty()) {
+        qCWarning(AM32EepromSchemaLog) << "Schema download failed:" << errorMsg;
+        emit schemaLoadError(QStringLiteral("Failed to download schema: %1").arg(errorMsg));
+        return;
+    }
+
+    qCDebug(AM32EepromSchemaLog) << "Schema downloaded to" << localFile;
+
+    if (!loadFromFile(localFile)) {
+        // Error already emitted by loadFromFile
+        return;
+    }
 }
 
 bool AM32EepromSchema::loadFromFile(const QString& path)

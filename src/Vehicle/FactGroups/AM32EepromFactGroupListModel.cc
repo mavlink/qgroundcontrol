@@ -103,13 +103,10 @@ void AM32Setting::setAllMatch(bool allMatch)
 AM32EepromFactGroupListModel::AM32EepromFactGroupListModel(QObject* parent)
     : FactGroupListModel("am32Eeprom", parent)
 {
-    // Ensure schema is loaded
+    // Start fetching schema if not already loaded
     AM32EepromSchema* schema = AM32EepromSchema::instance();
-    if (!schema->isLoaded()) {
-        // Load from Qt resource
-        if (!schema->loadFromFile(QStringLiteral(":/json/Vehicle/am32-eeprom-schema.json"))) {
-            qWarning() << "Failed to load AM32 EEPROM schema from resources";
-        }
+    if (!schema->isLoaded() && !schema->isFetching()) {
+        schema->fetchSchema();
     }
 }
 
@@ -387,14 +384,29 @@ AM32EepromFactGroup::AM32EepromFactGroup(uint8_t escIndex, QObject* parent)
     _addFact(&_firmwareMajorFact);
     _addFact(&_firmwareMinorFact);
 
-    _initializeSettingsFromSchema();
+    AM32EepromSchema* schema = AM32EepromSchema::instance();
+    if (schema->isLoaded()) {
+        _initializeSettingsFromSchema();
+    } else {
+        // Schema not loaded yet - connect to signal to initialize when ready
+        connect(schema, &AM32EepromSchema::schemaLoaded, this, &AM32EepromFactGroup::_initializeSettingsFromSchema);
+    }
 }
 
 void AM32EepromFactGroup::_initializeSettingsFromSchema()
 {
+    // Avoid re-initialization
+    if (!_settings.isEmpty()) {
+        return;
+    }
+
     AM32EepromSchema* schema = AM32EepromSchema::instance();
+
+    // Disconnect from signal now that we're initializing
+    disconnect(schema, &AM32EepromSchema::schemaLoaded, this, &AM32EepromFactGroup::_initializeSettingsFromSchema);
+
     if (!schema->isLoaded()) {
-        qWarning() << "AM32 schema not loaded, using empty settings";
+        qCWarning(AM32EepromSchemaLog) << "AM32 schema not loaded, ESC settings unavailable";
         return;
     }
 
@@ -417,7 +429,7 @@ void AM32EepromFactGroup::_initializeSettingsFromSchema()
         connect(setting, &AM32Setting::pendingChangesChanged, this, &AM32EepromFactGroup::_updateHasUnsavedChanges);
     }
 
-    qDebug() << "Initialized" << _settings.count() << "settings from schema";
+    qCDebug(AM32EepromSchemaLog) << "Initialized" << _settings.count() << "settings from schema for ESC" << (_escIndex + 1);
 }
 
 QString AM32EepromFactGroup::firmwareVersionString() const

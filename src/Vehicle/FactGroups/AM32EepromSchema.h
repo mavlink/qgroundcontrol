@@ -12,11 +12,16 @@
 #include "FactMetaData.h"
 
 #include <QtCore/QJsonObject>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 
 #include <functional>
+
+class QGCCachedFileDownload;
+
+Q_DECLARE_LOGGING_CATEGORY(AM32EepromSchemaLog)
 
 /// Schema-based field definition loaded from JSON
 struct AM32FieldDef {
@@ -94,7 +99,11 @@ class AM32EepromSchema : public QObject
 public:
     static AM32EepromSchema* instance();
 
-    /// Load schema from a JSON file (resource or filesystem)
+    /// Start downloading schema from am32.ca (cached)
+    /// Emits schemaLoaded() on success or schemaLoadError() on failure
+    void fetchSchema();
+
+    /// Load schema from a JSON file (filesystem)
     bool loadFromFile(const QString& path);
 
     /// Load schema from JSON data
@@ -124,9 +133,21 @@ public:
     /// Check if schema is loaded
     bool isLoaded() const { return _loaded; }
 
+    /// Check if schema is currently being fetched
+    bool isFetching() const { return _fetching; }
+
+    /// URL for the AM32 EEPROM schema
+    static constexpr const char* schemaUrl = "https://am32.ca/eeprom.json";
+
+    /// Cache expiration time in seconds (7 days)
+    static constexpr int cacheMaxAgeSec = 7 * 24 * 3600;
+
 signals:
     void schemaLoaded();
     void schemaLoadError(const QString& error);
+
+private slots:
+    void _onDownloadComplete(const QString& remoteFile, const QString& localFile, const QString& errorMsg);
 
 private:
     AM32EepromSchema(QObject* parent = nullptr);
@@ -140,6 +161,9 @@ private:
     QList<AM32FieldGroup> _groups;
     QString _schemaVersion;
     bool _loaded = false;
+    bool _fetching = false;
+
+    QGCCachedFileDownload* _cachedFileDownload = nullptr;
 
     static AM32EepromSchema* _instance;
 };
