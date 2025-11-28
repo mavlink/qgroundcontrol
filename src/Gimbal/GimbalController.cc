@@ -16,6 +16,8 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
+#include <QtGui/QQuaternion>
+
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "Gimbal.GimbalController")
 
 GimbalController::GimbalController(Vehicle *vehicle)
@@ -234,15 +236,25 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
     gimbal->setYawLock((attitude_status.flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) > 0);
     gimbal->_neutral = (attitude_status.flags & GIMBAL_DEVICE_FLAGS_NEUTRAL) > 0;
 
-    float roll, pitch, yaw;
-    mavlink_quaternion_to_euler(attitude_status.q, &roll, &pitch, &yaw);
+    // Convert from QQuaternion to Euler angles. We specifically don't use mavlink_quaternion_to euler
+    // because that seems to spew NaNs for boundary conditions. Whereas QQuaternion seems to handle things
+    // more cleanly.
+    QQuaternion q(
+        attitude_status.q[0],
+        attitude_status.q[1],
+        attitude_status.q[2],
+        attitude_status.q[3]);
+    auto vector3D = q.toEulerAngles();
+    float roll = vector3D.z();
+    float pitch = vector3D.y();
+    float yaw = vector3D.x();
 
-    gimbal->setAbsoluteRoll(qRadiansToDegrees(roll));
-    gimbal->setAbsolutePitch(qRadiansToDegrees(pitch));
+    gimbal->setAbsoluteRoll(roll);
+    gimbal->setAbsolutePitch(pitch);
 
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(attitude_status.flags);
     if (yaw_in_vehicle_frame) {
-        const float bodyYaw = qRadiansToDegrees(yaw);
+        const float bodyYaw = yaw;
         float absoluteYaw = bodyYaw + _vehicle->heading()->rawValue().toFloat();
         if (absoluteYaw > 180.0f) {
             absoluteYaw -= 360.0f;
@@ -252,7 +264,7 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
         gimbal->setAbsoluteYaw(absoluteYaw);
 
     } else {
-        const float absoluteYaw = qRadiansToDegrees(yaw);
+        const float absoluteYaw = yaw;
         float bodyYaw = absoluteYaw - _vehicle->heading()->rawValue().toFloat();
         if (bodyYaw < -180.0f) {
             bodyYaw += 360.0f;

@@ -323,6 +323,14 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
 {
     QString valueString;
 
+    const auto stripNegativeZero = [](QString &candidate) {
+        static const QRegularExpression reNegativeZero(QStringLiteral("^-0\\.0+$"));
+        const auto match = reNegativeZero.match(candidate);
+        if (match.hasMatch() || candidate == QStringLiteral("-0")) {
+            candidate = candidate.mid(1);
+        }
+    };
+
     switch (type()) {
     case FactMetaData::valueTypeFloat:
     {
@@ -331,6 +339,7 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
             valueString = QStringLiteral("--.--");
         } else {
             valueString = QStringLiteral("%1").arg(fValue, 0, 'f', decimalPlaces);
+            stripNegativeZero(valueString);
         }
     }
         break;
@@ -341,6 +350,7 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
             valueString = QStringLiteral("--.--");
         } else {
             valueString = QStringLiteral("%1").arg(dValue, 0, 'f', decimalPlaces);
+            stripNegativeZero(valueString);
         }
         break;
     }
