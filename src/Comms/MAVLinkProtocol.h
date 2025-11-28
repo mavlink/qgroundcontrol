@@ -51,20 +51,11 @@ public:
     /// Get the component id of this application
     static int getComponentId() { return MAV_COMP_ID_MISSIONPLANNER; }
 
-    /// Get the protocol version
-    static int getVersion() { return MAVLINK_VERSION; }
-
-    /// Get the currently configured protocol version
-    unsigned getCurrentVersion() const { return _currentVersion; }
-
     /// Reset the counters for all metadata for this link.
     void resetMetadataForLink(LinkInterface *link);
 
     /// Suspend/Restart logging during replay.
     void suspendLogForReplay(bool suspend) { _logSuspendReplay = suspend; }
-
-    /// Set protocol version
-    void setVersion(unsigned version);
 
     /// Checks the temp directory for log files which may have been left there.
     /// This could happen if QGC crashes without the temp log file being saved.
@@ -107,7 +98,6 @@ private:
 
     void _updateCounters(uint8_t mavlinkChannel, const mavlink_message_t &message);
     bool _updateStatus(LinkInterface *link, const SharedLinkInterfacePtr linkPtr, uint8_t mavlinkChannel, const mavlink_message_t &message);
-    void _updateVersion(LinkInterface *link, uint8_t mavlinkChannel);
 
     void _saveTelemetryLog(const QString &tempLogfile);
     bool _checkTelemetrySavePath();
@@ -124,7 +114,6 @@ private:
     uint64_t _totalLossCounter[MAVLINK_COMM_NUM_BUFFERS]{};     ///< Total messages lost during transmission.
     float _runningLossPercent[MAVLINK_COMM_NUM_BUFFERS]{};      ///< Loss rate
 
-    unsigned _currentVersion = 100;
     bool _initialized = false;
 
     static constexpr const char *_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file

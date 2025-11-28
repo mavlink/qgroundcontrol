@@ -71,7 +71,7 @@ void RallyPointManager::removeAll(void)
 
 bool RallyPointManager::supported(void) const
 {
-    return (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY) && (_vehicle->maxProtoVersion() >= 200);
+    return _vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
 }
 
 void RallyPointManager::_planManagerLoadComplete(bool removeAllRequested)

@@ -127,7 +127,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 
     Vehicle *const vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, this);
-    (void) connect(vehicle, &Vehicle::requestProtocolVersion, this, &MultiVehicleManager::_requestProtocolVersion);
     (void) connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::allLinksRemoved, this, &MultiVehicleManager::_deleteVehiclePhase1);
     (void) connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 
@@ -156,26 +155,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         #endif
     }
 #endif
-}
-
-void MultiVehicleManager::_requestProtocolVersion(unsigned version) const
-{
-    if (_vehicles->count() == 0) {
-        MAVLinkProtocol::instance()->setVersion(version);
-        return;
-    }
-
-    unsigned maxversion = 0;
-    for (int i = 0; i < _vehicles->count(); i++) {
-        const Vehicle *const vehicle = qobject_cast<const Vehicle*>(_vehicles->get(i));
-        if (vehicle && (vehicle->maxProtoVersion() > maxversion)) {
-            maxversion = vehicle->maxProtoVersion();
-        }
-    }
-
-    if (MAVLinkProtocol::instance()->getCurrentVersion() != maxversion) {
-        MAVLinkProtocol::instance()->setVersion(maxversion);
-    }
 }
 
 void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)

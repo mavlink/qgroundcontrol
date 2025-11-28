@@ -66,14 +66,8 @@ void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::removeAllComplete,  this, &RallyPointController::_managerRemoveAllComplete);
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
-    //-- RallyPointController::supported() tests both the capability bit AND the protocol version.
     (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
         Q_UNUSED(capabilityBits);
-        emit supportedChanged(supported());
-    });
-
-    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
-        Q_UNUSED(version);
         emit supportedChanged(supported());
     });
 
@@ -261,7 +255,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
 
 bool RallyPointController::supported(void) const
 {
-    return (_managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY) && (_managerVehicle->maxProtoVersion() >= 200);
+    return _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
 }
 
 void RallyPointController::removePoint(QObject* rallyPoint)

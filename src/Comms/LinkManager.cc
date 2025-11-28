@@ -169,7 +169,6 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 
     MAVLinkProtocol::instance()->resetMetadataForLink(link.get());
-    MAVLinkProtocol::instance()->setVersion(MAVLinkProtocol::instance()->getCurrentVersion());
 
     // Try to connect before adding to active links list
     if (!link->_connect()) {

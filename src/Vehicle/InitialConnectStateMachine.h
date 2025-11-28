@@ -41,7 +41,6 @@ private slots:
 
 private:
     static void _stateRequestAutopilotVersion           (StateMachine* stateMachine);
-    static void _stateRequestProtocolVersion            (StateMachine* stateMachine);
     static void _stateRequestCompInfo                   (StateMachine* stateMachine);
     static void _stateRequestStandardModes              (StateMachine* stateMachine);
     static void _stateRequestCompInfoComplete           (void* requestAllCompleteFnData);
@@ -52,7 +51,6 @@ private:
     static void _stateSignalInitialConnectComplete      (StateMachine* stateMachine);
 
     static void _autopilotVersionRequestMessageHandler  (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
-    static void _protocolVersionRequestMessageHandler   (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
     float _progress(float subProgress = 0.f);
 
@@ -62,7 +60,6 @@ private:
 
     static constexpr const StateMachine::StateFn _rgStates[] = {
         _stateRequestAutopilotVersion,
-        _stateRequestProtocolVersion,
         _stateRequestStandardModes,
         _stateRequestCompInfo,
         _stateRequestParameters,
@@ -73,8 +70,7 @@ private:
     };
 
     static constexpr const int _rgProgressWeights[] = {
-        1, //_stateRequestCapabilities
-        1, //_stateRequestProtocolVersion
+        1, //_stateRequestAutopilotVersion
         1, //_stateRequestStandardModes
         5, //_stateRequestCompInfo
         5, //_stateRequestParameters

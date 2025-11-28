@@ -193,5 +193,5 @@ void GeoFenceManager::_planManagerLoadComplete(bool removeAllRequested)
 
 bool GeoFenceManager::supported(void) const
 {
-    return (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE) && (_vehicle->maxProtoVersion() >= 200);
+    return _vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE;
 }

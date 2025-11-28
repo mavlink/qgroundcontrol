@@ -47,7 +47,6 @@ DECLARE_SETTINGSFACT(MavlinkSettings, forwardMavlinkHostName)
 DECLARE_SETTINGSFACT(MavlinkSettings, forwardMavlinkAPMSupportHostName)
 DECLARE_SETTINGSFACT(MavlinkSettings, sendGCSHeartbeat)
 DECLARE_SETTINGSFACT(MavlinkSettings, gcsMavlinkSystemID)
-DECLARE_SETTINGSFACT(MavlinkSettings, requireMatchingMavlinkVersions)
 
 DECLARE_SETTINGSFACT_NO_FUNC(MavlinkSettings, mavlink2SigningKey)
 {

@@ -46,6 +46,7 @@ public:
     void removeVehicleReference();
     bool initMavlinkSigning();
     void setSigningSignatureFailure(bool failure);
+    void reportMavlinkV1Traffic();
 
 signals:
     void bytesReceived(LinkInterface *link, const QByteArray &data);
@@ -80,6 +81,7 @@ private:
     bool _decodedFirstMavlinkPacket = false;
     int _vehicleReferenceCount = 0;
     bool _signingSignatureFailure = false;
+    bool _mavlinkV1TrafficReported = false;
 };
 
 typedef std::shared_ptr<LinkInterface> SharedLinkInterfacePtr;
