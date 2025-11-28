@@ -321,6 +321,10 @@ QStringList Fact::selectedBitmaskStrings() const
 
 QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
 {
+    if (!variant.isValid()) {
+        return placeholderString(decimalPlaces);
+    }
+
     QString valueString;
 
     switch (type()) {
@@ -328,7 +332,7 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     {
         const float fValue = variant.toFloat();
         if (qIsNaN(fValue)) {
-            valueString = QStringLiteral("--.--");
+            valueString = placeholderString(decimalPlaces);
         } else {
             valueString = QStringLiteral("%1").arg(fValue, 0, 'f', decimalPlaces);
         }
@@ -338,7 +342,7 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     {
         const double dValue = variant.toDouble();
         if (qIsNaN(dValue)) {
-            valueString = QStringLiteral("--.--");
+            valueString = placeholderString(decimalPlaces);
         } else {
             valueString = QStringLiteral("%1").arg(dValue, 0, 'f', decimalPlaces);
         }
@@ -351,7 +355,7 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     {
         const double dValue = variant.toDouble();
         if (qIsNaN(dValue)) {
-            valueString = QStringLiteral("--:--:--");
+            valueString = placeholderString(decimalPlaces);
         } else {
             QTime time(0, 0, 0, 0);
             time = time.addSecs(dValue);
@@ -365,6 +369,22 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     }
 
     return valueString;
+}
+
+QString Fact::placeholderString(int decimalPlaces) const {
+    switch (type()) {
+    case FactMetaData::valueTypeFloat:
+    case FactMetaData::valueTypeDouble:
+        if (decimalPlaces <= 0) {
+            return QStringLiteral("-");
+        }
+        return QStringLiteral("-.") +
+               QString(decimalPlaces, QLatin1Char('-'));
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
+        return QStringLiteral("--:--:--");
+    default:
+        return QStringLiteral("-");
+    }
 }
 
 QString Fact::rawValueStringFullPrecision() const
