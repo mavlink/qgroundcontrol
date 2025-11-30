@@ -1,6 +1,6 @@
 # QGroundControl Quick Reference for AI Assistants
 
-**Ground Control Station** for UAVs using MAVLink protocol. **C++20/Qt 6.10.0** with QML UI.
+**Ground Control Station** for UAVs using MAVLink protocol. **C++20/Qt 6.10.1** with QML UI.
 
 ## 🔑 Most Critical Architecture Pattern
 
@@ -43,7 +43,7 @@ src/
 
 ```bash
 git submodule update --init --recursive
-~/Qt/6.10.0/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+~/Qt/6.10.1/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug
 ./build/Debug/QGroundControl --unittest  # Run tests
 ```

@@ -11,7 +11,7 @@
 # ————————————————————————————————
 # 1) Defaults (env overrides supported)
 # ————————————————————————————————
-$QT_VERSION = $env:QT_VERSION      -or '6.10.0'
+$QT_VERSION = $env:QT_VERSION      -or '6.10.1'
 $QT_PATH    = $env:QT_PATH         -or 'C:\Qt'
 $QT_HOST    = $env:QT_HOST         -or 'windows'
 $QT_TARGET  = $env:QT_TARGET       -or 'desktop'
