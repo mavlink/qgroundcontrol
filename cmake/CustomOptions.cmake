@@ -139,7 +139,7 @@ set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundCo
 # ============================================================================
 
 set(QGC_QT_MINIMUM_VERSION "6.10.0" CACHE STRING "Minimum supported Qt version")
-set(QGC_QT_MAXIMUM_VERSION "6.10.0" CACHE STRING "Maximum supported Qt version")
+set(QGC_QT_MAXIMUM_VERSION "6.10.1" CACHE STRING "Maximum supported Qt version")
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "QML output directory")
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Additional QML import paths")
@@ -149,6 +149,9 @@ option(QT_ENABLE_VERBOSE_DEPLOYMENT "Enable verbose deployment output" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print search paths when package not found" ON)
 option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ON)
 option(QGC_ENABLE_QMLLINT "Enable automatic QML linting during build" OFF)
+
+set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x061000" CACHE STRING "Disable Qt APIs deprecated before this version")
+set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x061000" CACHE STRING "Enable strict Qt API mode up to this version")
 
 # Debug environment variables (uncomment to enable)
 # set(ENV{QT_DEBUG_PLUGINS} "1")

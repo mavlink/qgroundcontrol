@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Release]
-        qt_version: [6.10.0]
+        qt_version: [6.10.1]
 
     defaults:
       run:
