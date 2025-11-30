@@ -26,6 +26,15 @@ static QtMessageHandler defaultHandler = nullptr;
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
+    // Downgrade Qt TextToSpeech plugin loading errors from critical to debug
+    // This occurs on systems where TTS backends are not properly installed/configured
+    // The error is harmless - TTS simply won't work, which AudioOutput handles gracefully
+    if (type == QtCriticalMsg && 
+        QString(context.category).startsWith("qt.speech.tts") &&
+        msg.contains("Error loading text-to-speech plug-in", Qt::CaseInsensitive)) {
+        type = QtDebugMsg;
+    }
+
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);
 
