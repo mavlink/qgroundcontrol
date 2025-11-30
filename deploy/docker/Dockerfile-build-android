@@ -27,7 +27,7 @@ RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;26.1.10909125"
 
 # Qt setup and environment variables
-ENV QT_VERSION="6.10.0"
+ENV QT_VERSION="6.10.1"
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
 ENV QT_HOST_ARCH="gcc_64"

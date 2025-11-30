@@ -38,7 +38,7 @@ RUN chmod +x /tmp/qt/*.sh && \
     /tmp/qt/install-qt-debian.sh && \
     rm -rf /tmp/qt   # keep the image slim
 
-ENV QT_ROOT_DIR=/opt/Qt/6.10.0/gcc_64
+ENV QT_ROOT_DIR=/opt/Qt/6.10.1/gcc_64
 ENV PATH=$QT_ROOT_DIR/bin:$PATH
 
 # ---------- Git safe directory (avoids “detected dubious ownership”) ----------

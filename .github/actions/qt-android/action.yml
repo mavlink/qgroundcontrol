@@ -10,7 +10,7 @@ inputs:
   version:
     description: Qt Version
     required: false
-    default: 6.10.0
+    default: 6.10.1
   abis:
     description: ABIs to Build
     required: false
