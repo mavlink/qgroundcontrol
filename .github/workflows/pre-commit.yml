@@ -17,7 +17,7 @@ jobs:
           pipx ensurepath
           USER_BASE_BIN="$(python3 -m site --user-base)/bin"
           export PATH="$USER_BASE_BIN:$PATH"
-          QT_VERSION=6.10.0
+          QT_VERSION=6.10.1
           QT_ARCH=linux_gcc_64
           QT_PATH=/opt/Qt
           aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH

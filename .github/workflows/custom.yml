@@ -32,7 +32,7 @@ jobs:
         shell: cmd
 
     env:
-      QT_VERSION: 6.10.0
+      QT_VERSION: 6.10.1
       GST_VERSION: 1.22.12
 
     steps:

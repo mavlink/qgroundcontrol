@@ -15,7 +15,7 @@ Ground Control Station for MAVLink-enabled UAVs supporting PX4 and ArduPilot.
 **Golden Rule**: Multi-vehicle support means ALWAYS null-check `MultiVehicleManager::instance()->activeVehicle()`.
 
 ## Tech Stack
-- **C++20** with **Qt 6.10.0** (QtQml, QtQuick)
+- **C++20** with **Qt 6.10.1** (QtQml, QtQuick)
 - **Build**: CMake 3.25+, Ninja
 - **Protocol**: MAVLink 2.0
 - **Platforms**: Windows, macOS, Linux, Android, iOS
@@ -181,7 +181,7 @@ void method(Vehicle* vehicle) {
 ## Build Commands
 ```bash
 git submodule update --init --recursive
-~/Qt/6.10.0/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+~/Qt/6.10.1/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug
 ./build/Debug/QGroundControl --unittest  # Run tests
 ```

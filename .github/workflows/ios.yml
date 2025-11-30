@@ -22,7 +22,7 @@ jobs:
     env:
       ARTIFACT: QGroundControl.app
       PACKAGE: QGroundControl
-      QT_VERSION: 6.10.0
+      QT_VERSION: 6.10.1
 
     steps:
       - name: Checkout repo
