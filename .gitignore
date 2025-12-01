@@ -6,7 +6,11 @@
 # IDEs & Editors
 # ------------------------------------------------------------------------------
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
 .qtcreator/
 .fleet/
 .vs/
@@ -71,8 +75,9 @@ bin/mac
 *.dylib
 *.dll
 
-# Build tool artifacts
-Makefile
+# Build tool artifacts (CMake-generated)
+**/Makefile
+!/Makefile
 *.ninja
 .ninja_log
 build.ninja
@@ -152,9 +157,13 @@ Qt*-linux*.tar.*
 # Claude Code
 .claude/
 
+# AI assistant config files
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
 # cc-sessions - personal AI development workflow
 sessions/
-CLAUDE.md
 
 # Pre-commit hooks
 .ruff_cache/

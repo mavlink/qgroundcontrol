@@ -1,0 +1,164 @@
+name: Android
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - '.github/workflows/android.yml'
+      - '.github/actions/**'
+      - 'deploy/android/**'
+      - 'src/**'
+      - 'test/**'
+      - 'android/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'translations/*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Android (${{ matrix.host }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: linux
+            runner: ubuntu-latest
+            arch: linux_gcc_64
+            qt_host_path: gcc_64
+            shell: bash
+            primary: true
+          - host: mac
+            runner: macos-latest
+            arch: clang_64
+            qt_host_path: macos
+            shell: bash
+            primary: false
+          - host: windows
+            runner: windows-latest
+            arch: win64_msvc2022_64
+            qt_host_path: msvc2022_64
+            shell: cmd
+            primary: false
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    env:
+      PACKAGE: QGroundControl
+      QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
+      QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
+      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      # Primary build (Linux) includes both ABIs, others just arm64
+      QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Free Disk Space
+        if: matrix.host == 'linux'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: false
+          large-packages: false
+
+      - name: Install Qt for Android
+        uses: ./.github/actions/qt-android
+        with:
+          host: ${{ matrix.host }}
+          arch: ${{ matrix.arch }}
+          version: ${{ steps.build-config.outputs.qt_version }}
+          modules: ${{ steps.build-config.outputs.qt_modules }}
+          abis: ${{ env.QT_ANDROID_ABIS }}
+          build-type: ${{ inputs.build_type || 'Release' }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          ndk-version: ${{ steps.build-config.outputs.ndk_version }}
+          java-version: ${{ steps.build-config.outputs.java_version }}
+          android-platform: ${{ steps.build-config.outputs.android_platform }}
+          ccache-version: ${{ steps.build-config.outputs.ccache_version }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }}
+              -DCMAKE_WARN_DEPRECATED=FALSE
+              -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
+              -DQT_ANDROID_BUILD_ALL_ABIS=OFF
+              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../${{ matrix.qt_host_path }}"
+              -DQT_ANDROID_SIGN_APK=${{ matrix.primary && env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }}
+              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_CUSTOM_GST_PACKAGE=ON
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config ${{ inputs.build_type || 'Release' }} --parallel
+
+      - name: Prepare Artifact
+        run: cp ${{ runner.temp }}/build/android-build/*.apk ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+
+      - name: Upload Build File
+        if: matrix.primary
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ env.PACKAGE }}.apk
+          package_name: ${{ env.PACKAGE }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          upload_aws: true
+
+      - name: Save APK
+        if: ${{ !matrix.primary }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.PACKAGE }}-${{ matrix.host }}.apk
+          path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+
+      # - name: Deploy to Play Store
+      #   if: matrix.primary
+      #   uses: ./.github/actions/playstore
+      #   with:
+      #     artifact_name: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+      #     service_account_json: ${{ secrets.SERVICE_ACCOUNT }}

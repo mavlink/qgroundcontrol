@@ -11,6 +11,7 @@ repos:
       - id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
+        exclude: ^\.vscode/  # VSCode uses JSONC (JSON with comments)
       - id: check-xml
         exclude: ^test/
       - id: check-merge-conflict
@@ -47,6 +48,7 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
+        args: ['-x', '-e', 'SC1091']  # -x follows sources, -e excludes SC1091 (not following)
 
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint
@@ -86,19 +88,83 @@ repos:
 
       - id: check-no-qassert
         name: Check for Q_ASSERT in production code
-        entry: bash
+        entry: python3
         language: system
         files: \.(h|cc|cpp)$
-        exclude: ^(test/|UnitTest\.h|UnitTest\.cc)
-        pass_filenames: false
+        exclude: ^test/
+        pass_filenames: true
+        verbose: true
         args:
           - -c
           - |
-            FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(h|cc|cpp)$' | grep -v '^test/' || true)
-            if [ -n "$FILES" ]; then
-              if echo "$FILES" | xargs grep -n 'Q_ASSERT' 2>/dev/null; then
-                echo "Warning: Q_ASSERT found in production code. Consider using defensive checks with early returns."
-              fi
-            fi
+            import sys, re
+            found = []
+            for filepath in sys.argv[1:]:
+                try:
+                    with open(filepath) as f:
+                        for i, line in enumerate(f, 1):
+                            if 'Q_ASSERT' in line and not line.strip().startswith('//'):
+                                found.append(f"{filepath}:{i}: {line.rstrip()}")
+                except Exception:
+                    pass
+            if found:
+                print("Warning: Q_ASSERT found. Consider defensive checks with early returns instead.")
+                print("Q_ASSERT is removed in release builds and can hide bugs.\n")
+                for f in found:
+                    print(f"  {f}")
+                # Exit 0 to warn but not block (change to sys.exit(1) to enforce)
+            sys.exit(0)
+
+      - id: check-old-qml-connections
+        name: Check for deprecated QML Connections syntax
+        entry: python3
+        language: system
+        files: \.qml$
+        exclude: ^build/
+        pass_filenames: true
+        args:
+          - -c
+          - |
+            import sys, re
+
+            # Pattern for old-style signal handlers: onSignalName: (not function onSignalName)
+            OLD_HANDLER = re.compile(r'^\s+on[A-Z][a-zA-Z0-9]*\s*:\s*[^/]')
+            CONNECTIONS_START = re.compile(r'Connections\s*\{')
+            FUNCTION_HANDLER = re.compile(r'^\s+function\s+on[A-Z]')
+
+            errors = []
+            for filepath in sys.argv[1:]:
+                try:
+                    with open(filepath) as f:
+                        content = f.read()
+                        lines = content.split('\n')
+
+                    # Only check files that have Connections blocks
+                    if 'Connections' not in content:
+                        continue
+
+                    in_connections = 0
+                    for i, line in enumerate(lines, 1):
+                        if CONNECTIONS_START.search(line):
+                            in_connections += 1
+                        elif in_connections > 0:
+                            if '{' in line:
+                                in_connections += line.count('{')
+                            if '}' in line:
+                                in_connections -= line.count('}')
+                            # Check for old-style handler inside Connections
+                            if OLD_HANDLER.match(line) and not FUNCTION_HANDLER.match(line):
+                                errors.append(f"{filepath}:{i}: {line.strip()}")
+                except Exception as e:
+                    print(f"Error reading {filepath}: {e}", file=sys.stderr)
+
+            if errors:
+                print("Deprecated QML Connections syntax found. Use 'function onSignal()' instead of 'onSignal:'")
+                print("See: https://doc.qt.io/qt-6/qml-qtqml-connections.html")
+                print()
+                for err in errors:
+                    print(f"  {err}")
+                # Exit 0 to warn but not block (change to sys.exit(1) to enforce)
+            sys.exit(0)
 
 exclude: ^build/

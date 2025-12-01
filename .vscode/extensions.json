@@ -1,0 +1,28 @@
+{
+    "recommendations": [
+        // C++ Development
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "llvm-vs-code-extensions.vscode-clangd",
+
+        // QML/Qt Development
+        "AoiHosizora.vscode-qt-qmake",
+        "nicothin.qt-qml",
+
+        // Code Quality
+        "streetsidesoftware.code-spell-checker",
+        "DavidAnson.vscode-markdownlint",
+        "EditorConfig.EditorConfig",
+
+        // Git
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+
+        // Utilities
+        "ms-vscode.hexeditor",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml"
+    ],
+    "unwantedRecommendations": []
+}

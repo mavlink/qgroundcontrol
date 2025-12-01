@@ -31,14 +31,18 @@ ENV LANG=en_US.UTF-8 \
 
 # ---------- Bring in the helper scripts ----------
 # They must be in the build context next to this Dockerfile.
+COPY .github/build-config.json                  /tmp/qt/
+COPY tools/setup/read-config.sh                 /tmp/qt/
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
-COPY tools/setup/install-qt-debian.sh          /tmp/qt/
+COPY tools/setup/install-qt-debian.sh           /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && \
     /tmp/qt/install-dependencies-debian.sh && \
     /tmp/qt/install-qt-debian.sh && \
     rm -rf /tmp/qt   # keep the image slim
 
-ENV QT_ROOT_DIR=/opt/Qt/6.10.1/gcc_64
+# Qt version passed from workflow (reads from .github/build-config.json)
+ARG QT_VERSION=6.10.1
+ENV QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64
 ENV PATH=$QT_ROOT_DIR/bin:$PATH
 
 # ---------- Git safe directory (avoids “detected dubious ownership”) ----------

@@ -1,0 +1,58 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    after_n_builds: 2  # Wait for at least 2 builds (Debug + Release)
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "30...90"
+
+  status:
+    project:
+      default:
+        target: 30%
+        threshold: 2%
+        base: auto
+        if_ci_failed: error
+    patch:
+      default:
+        target: 40%
+        threshold: 5%
+        base: auto
+        if_ci_failed: error
+
+comment:
+  layout: "reach,diff,flags,tree,footer"
+  behavior: default
+  require_changes: no
+  require_base: no
+  require_head: yes
+
+ignore:
+  - "test/**/*"
+  - "tools/**/*"
+  - "deploy/**/*"
+  - "custom/**/*"
+  - "custom-example/**/*"
+  - "libs/**/*"
+  - "docs/**/*"
+  - "translations/**/*"
+  - "android/**/*"
+  - "*.qml"
+  - "*.js"
+  - "**/moc_*.cpp"
+  - "**/qrc_*.cpp"
+  - "**/ui_*.h"
+  - "**/*_autogen/**"
+
+flags:
+  debug:
+    paths:
+      - src/
+    carryforward: true
+  release:
+    paths:
+      - src/
+    carryforward: true

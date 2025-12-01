@@ -10,61 +10,64 @@ inputs:
   build-type:
     description: Build Type
     required: true
-    type: choice
-    options:
-      - Debug
-      - Release
   cpm-modules:
     description: Path to CPM Modules
     required: false
   ccache-version:
-    description: ccache Version to Install
+    description: ccache version (use build-config.outputs.ccache_version)
     required: false
-    default: 4.11.3
+    default: '4.11.3'
+  ccache-max-size:
+    description: Maximum ccache size
+    required: false
+    default: '2G'
+  save-cache:
+    description: Save cache (set to false for PR builds to save storage)
+    required: false
+    default: 'true'
 runs:
   using: composite
   steps:
+    - name: Cache ccache binary (Linux)
+      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
+      id: ccache-binary
+      uses: actions/cache@v4
+      with:
+        path: /usr/local/bin/ccache
+        key: ccache-binary-${{ inputs.ccache-version }}-linux-x86_64
+
     - name: Install ccache (Linux)
-      if: inputs.host == 'linux' && inputs.target != 'linux_gcc_arm64'
+      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
       run: |
         set -e
-        echo "Downloading ccache..."
         wget --quiet https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
-        echo "Extracting archive..."
-        tar -xvf ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
-        cd ccache-${{ inputs.ccache-version }}-linux-x86_64
-        echo "Installing ccache..."
-        sudo make install
+        tar -xf ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
+        sudo make -C ccache-${{ inputs.ccache-version }}-linux-x86_64 install
 
-    # - name: Setup sccache (Windows)
-    #   if: runner.os == 'Windows' && inputs.target != 'android'
-    #   uses: mozilla-actions/sccache-action@v0.0.9
-
-    - name: Setup sccache (Windows)
-      if: runner.os == 'Windows' && inputs.target != 'android'
-      uses: ./.github/actions/build-action
-      with:
-        repo: mozilla-actions/sccache-action
-        ref: main
+    - name: Setup sccache (Windows x64 only)
+      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
+      uses: mozilla-actions/sccache-action@v0.0.9
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows' && inputs.target != 'android'
+      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
       shell: bash
 
     - name: Setup Build Cache
-      uses: hendrikmuhs/ccache-action@main
+      uses: hendrikmuhs/ccache-action@v1.2
       with:
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
           ${{ inputs.host }}-
-        max-size: 1G
-        verbose: 1
+        max-size: ${{ inputs.ccache-max-size }}
+        verbose: 2
         evict-old-files: job
+        save: ${{ inputs.save-cache == 'true' }}
 
     - name: Ensure cpm-modules directory exists
+      if: inputs.cpm-modules != ''
       run: mkdir -p "${{ inputs.cpm-modules }}"
       shell: bash
 
@@ -75,4 +78,3 @@ runs:
         path: ${{ inputs.cpm-modules }}
         key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
         restore-keys: ${{ github.workflow }}-cpm-modules-
-        # enableCrossOsArchive: true

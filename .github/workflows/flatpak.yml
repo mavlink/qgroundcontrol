@@ -1,11 +1,29 @@
 name: flatpak
-on: [workflow_dispatch]
+
+on:
+  workflow_dispatch:
+    inputs:
+      gnome_version:
+        description: 'GNOME runtime version'
+        required: false
+        default: '47'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   flatpak-builder:
     name: Flatpak
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     container:
-      image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      # Update gnome version periodically: https://hub.docker.com/r/bilelmoussaoui/flatpak-github-actions/tags
+      image: bilelmoussaoui/flatpak-github-actions:gnome-${{ inputs.gnome_version || '47' }}
       options: --privileged
     steps:
       - uses: actions/checkout@v6

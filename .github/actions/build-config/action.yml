@@ -1,0 +1,66 @@
+name: Build Config
+description: Read build toolchain versions from central config
+outputs:
+  qt_version:
+    description: Qt version
+    value: ${{ steps.read.outputs.qt_version }}
+  qt_modules:
+    description: Qt modules (desktop)
+    value: ${{ steps.read.outputs.qt_modules }}
+  qt_modules_ios:
+    description: Qt modules (iOS) - excludes unsupported modules
+    value: ${{ steps.read.outputs.qt_modules_ios }}
+  gstreamer_version:
+    description: GStreamer version
+    value: ${{ steps.read.outputs.gstreamer_version }}
+  xcode_version:
+    description: Xcode version for macOS/iOS builds
+    value: ${{ steps.read.outputs.xcode_version }}
+  ndk_version:
+    description: Android NDK version
+    value: ${{ steps.read.outputs.ndk_version }}
+  java_version:
+    description: Java version for Android builds
+    value: ${{ steps.read.outputs.java_version }}
+  android_platform:
+    description: Android platform/API level
+    value: ${{ steps.read.outputs.android_platform }}
+  ccache_version:
+    description: ccache version
+    value: ${{ steps.read.outputs.ccache_version }}
+runs:
+  using: composite
+  steps:
+    - name: Validate build config
+      shell: bash
+      run: |
+        CONFIG_FILE="${GITHUB_WORKSPACE}/.github/build-config.json"
+        if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+          echo "::error::Invalid JSON in $CONFIG_FILE"
+          exit 1
+        fi
+
+    - name: Read build config
+      id: read
+      shell: bash
+      run: |
+        CONFIG_FILE="${GITHUB_WORKSPACE}/.github/build-config.json"
+        QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")
+        QT_MODULES=$(jq -r '.qt_modules' "$CONFIG_FILE")
+        GST_VERSION=$(jq -r '.gstreamer_version // "1.22.12"' "$CONFIG_FILE")
+        XCODE_VERSION=$(jq -r '.xcode_version // "latest-stable"' "$CONFIG_FILE")
+        NDK_VERSION=$(jq -r '.ndk_version // "r27c"' "$CONFIG_FILE")
+        JAVA_VERSION=$(jq -r '.java_version // "17"' "$CONFIG_FILE")
+        ANDROID_PLATFORM=$(jq -r '.android_platform // "35"' "$CONFIG_FILE")
+        CCACHE_VERSION=$(jq -r '.ccache_version // "4.11.3"' "$CONFIG_FILE")
+        # Filter out modules not supported on iOS (no serial port support)
+        QT_MODULES_IOS=$(echo "$QT_MODULES" | sed 's/qtserialport//g; s/  */ /g; s/^ *//; s/ *$//')
+        echo "qt_version=$QT_VERSION" >> $GITHUB_OUTPUT
+        echo "qt_modules=$QT_MODULES" >> $GITHUB_OUTPUT
+        echo "qt_modules_ios=$QT_MODULES_IOS" >> $GITHUB_OUTPUT
+        echo "gstreamer_version=$GST_VERSION" >> $GITHUB_OUTPUT
+        echo "xcode_version=$XCODE_VERSION" >> $GITHUB_OUTPUT
+        echo "ndk_version=$NDK_VERSION" >> $GITHUB_OUTPUT
+        echo "java_version=$JAVA_VERSION" >> $GITHUB_OUTPUT
+        echo "android_platform=$ANDROID_PLATFORM" >> $GITHUB_OUTPUT
+        echo "ccache_version=$CCACHE_VERSION" >> $GITHUB_OUTPUT

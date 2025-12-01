@@ -1,0 +1,72 @@
+# Labeler configuration - auto-label PRs based on changed files
+# https://github.com/actions/labeler
+
+Docs:
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**'
+
+github_actions:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
+
+"Platform: Android":
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'android/**'
+          - 'deploy/android/**'
+
+"Platform: iOS":
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/ios/**'
+
+"Platform: Linux":
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/linux/**'
+          - 'deploy/docker/**'
+          - 'tools/setup/*debian*'
+          - 'tools/setup/*linux*'
+
+"Platform: Windows":
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/windows/**'
+          - 'tools/setup/*windows*'
+
+"Platform: OSX":
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'deploy/macos/**'
+          - 'tools/setup/*macos*'
+
+Tests:
+  - changed-files:
+      - any-glob-to-any-file: 'test/**'
+
+CMake:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'CMakeLists.txt'
+          - 'cmake/**'
+          - '**/CMakeLists.txt'
+
+Video:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/VideoManager/**'
+          - 'src/VideoReceiver/**'
+
+Translations:
+  - changed-files:
+      - any-glob-to-any-file: 'translations/**'
+
+QML:
+  - changed-files:
+      - any-glob-to-any-file: 'src/**/*.qml'
+
+MAVLink:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/MAVLink/**'
+          - 'src/comm/**'
