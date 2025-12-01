@@ -4,8 +4,20 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mavlink/QGroundControl/releases">
-    <img src="https://img.shields.io/github/release/mavlink/QGroundControl.svg" alt="Latest Release">
+  <a href="https://github.com/mavlink/qgroundcontrol/releases">
+    <img src="https://img.shields.io/github/release/mavlink/qgroundcontrol.svg" alt="Latest Release">
+  </a>
+  <a href="https://github.com/mavlink/qgroundcontrol/actions/workflows/linux.yml">
+    <img src="https://github.com/mavlink/qgroundcontrol/actions/workflows/linux.yml/badge.svg" alt="Linux Build">
+  </a>
+  <a href="https://github.com/mavlink/qgroundcontrol/actions/workflows/macos.yml">
+    <img src="https://github.com/mavlink/qgroundcontrol/actions/workflows/macos.yml/badge.svg" alt="macOS Build">
+  </a>
+  <a href="https://github.com/mavlink/qgroundcontrol/actions/workflows/windows.yml">
+    <img src="https://github.com/mavlink/qgroundcontrol/actions/workflows/windows.yml/badge.svg" alt="Windows Build">
+  </a>
+  <a href="https://crowdin.com/project/qgroundcontrol">
+    <img src="https://badges.crowdin.net/qgroundcontrol/localized.svg" alt="Crowdin">
   </a>
 </p>
 
@@ -30,7 +42,7 @@
 - ⚙️ *Vehicle Setup*: Tailored configuration for *PX4* and *ArduPilot* platforms.
 - 🔧 *Fully Open Source*: Customize and extend the software to suit your needs.
 
-🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/ChangeLog.md).
+🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/CHANGELOG.md).
 
 ---
 

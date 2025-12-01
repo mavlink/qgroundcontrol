@@ -1,12 +1,44 @@
 name: pre-commit
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/pre-commit.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/pre-commit.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   pre-commit:
+    name: Pre-commit Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
       - uses: actions/setup-python@v6
 
       - name: Install Qt and qmllint
@@ -17,7 +49,7 @@ jobs:
           pipx ensurepath
           USER_BASE_BIN="$(python3 -m site --user-base)/bin"
           export PATH="$USER_BASE_BIN:$PATH"
-          QT_VERSION=6.10.1
+          QT_VERSION=${{ steps.build-config.outputs.qt_version }}
           QT_ARCH=linux_gcc_64
           QT_PATH=/opt/Qt
           aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH

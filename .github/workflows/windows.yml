@@ -4,28 +4,45 @@ on:
   push:
     branches:
       - master
-      - Stable*
+      - 'Stable*'
     tags:
-      - v*
+      - 'v*'
     paths-ignore:
-      - docs/**
+      - 'docs/**'
   pull_request:
     paths:
-      - .github/workflows/windows.yml
-      - deploy/windows/**
-      - src/**
-      - CMakeLists.txt
-      - cmake/**
-      - tools/setup/*windows*
+      - '.github/workflows/windows.yml'
+      - '.github/actions/**'
+      - 'deploy/windows/**'
+      - 'src/**'
+      - 'test/**'
+      - 'custom-example/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'tools/setup/*windows*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    name: Build ${{ matrix.custom_build && 'Custom' || matrix.arch }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
 
     strategy:
       fail-fast: false
@@ -52,12 +69,16 @@ jobs:
             package: QGroundControl-installer-AMD64-ARM64
             qt_version: '6.10.0'
 
+          # Custom build example (tests custom-example template)
+          - os: windows-latest
+            host: windows
+            arch: win64_msvc2022_64
+            build_type: Release
+            custom_build: true
+
     defaults:
       run:
         shell: cmd
-
-    env:
-      QT_VERSION: 6.10.1
 
     steps:
       - name: Checkout repo
@@ -67,18 +88,22 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
+      - name: Enable custom build
+        if: matrix.custom_build
+        uses: ./.github/actions/custom-build
+
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
+
       - name: Common setup
         uses: ./.github/actions/common
-
-      # - name: Install dependencies
-      #   shell: pwsh
-      #   run: ./tools/setup/install-dependencies-windows.ps1 -Force
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
         uses: blinemedical/setup-gstreamer@v1
         with:
-          version: 1.22.12
+          version: ${{ steps.build-config.outputs.gstreamer_version }}
 
       - name: Setup cache
         uses: ./.github/actions/cache
@@ -87,16 +112,18 @@ jobs:
           target: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}\build\cpm_modules
+          ccache-version: ${{ steps.build-config.outputs.ccache_version }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install Qt ${{ matrix.qt_version || env.QT_VERSION }}
+      - name: Install Qt ${{ matrix.qt_version || steps.build-config.outputs.qt_version }}
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ matrix.qt_version || env.QT_VERSION }}
+          version: ${{ matrix.qt_version || steps.build-config.outputs.qt_version }}
           host: ${{ matrix.host }}
           target: desktop
           arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          modules: ${{ steps.build-config.outputs.qt_modules }}
           setup-python: false
           cache: true
 
@@ -121,14 +148,15 @@ jobs:
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
-        run: QGroundControl.exe --simple-boot-test
+        run: ${{ matrix.custom_build && 'Custom-QGroundControl.exe' || 'QGroundControl.exe' }} --simple-boot-test
 
       - name: Create Installer
+        if: ${{ !matrix.custom_build }}
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Upload artifact (installer)
-        if: matrix.build_type == 'Release'
+        if: matrix.build_type == 'Release' && !matrix.custom_build
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ matrix.package }}.exe
@@ -136,5 +164,4 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           upload_aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}
