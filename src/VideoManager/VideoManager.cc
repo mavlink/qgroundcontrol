@@ -90,12 +90,20 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->videoSource(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->rtspUrlBackup(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->rtspUrlAux(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->rtspUrlBackupAux(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
+    (void) connect(_videoSettings, &VideoSettings::auxStreamConfiguredChanged, this, &VideoManager::_enableAuxStream);
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
     (void) connect(this, &VideoManager::autoStreamConfiguredChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(this, &VideoManager::videoStreamChanged, this, &VideoManager::_videoSourceChanged);
+
+    // force aux stream enable/disable recognition on init
+    _enableAuxStream(_videoSettings->auxStreamConfigured());
 
     _mainWindow->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::BeforeSynchronizingStage);
 
@@ -118,7 +126,7 @@ void VideoManager::_initAfterQmlIsReady()
 
     static const QStringList videoStreamList = {
         "videoContent",
-        "thermalVideo"
+        "backupVideo"
     };
     for (const QString &streamName : videoStreamList) {
         VideoReceiver *receiver = QGCCorePlugin::instance()->createVideoReceiver(this);
@@ -173,6 +181,16 @@ void VideoManager::_cleanupOldVideos()
         qCDebug(VideoManagerLog) << "Removing old video file:" << path;
         (void) QFile::remove(path);
     }
+}
+
+QString VideoManager::_getRtspUrlForReceiver(VideoReceiver *receiver) const
+{
+    const Fact *fact = nullptr;
+    if (receiver->isPrimary())
+        fact = _usesPrimaryVideoStream ? _videoSettings->rtspUrl() : _videoSettings->rtspUrlAux();
+    else
+        fact = _usesPrimaryVideoStream ? _videoSettings->rtspUrlBackup() : _videoSettings->rtspUrlBackupAux();
+    return fact->rawValue().toString();
 }
 
 void VideoManager::startRecording(const QString &videoFile)
@@ -280,6 +298,27 @@ double VideoManager::thermalHfov() const
     return _videoSettings->aspectRatio()->rawValue().toDouble();
 }
 
+bool VideoManager::isPrimaryStream() const
+{
+    return _usesPrimaryVideoStream;
+}
+
+bool VideoManager::hasAuxStream() const
+{
+    return _hasAuxStreamConfigured;
+}
+
+bool VideoManager::hasBackup() const {
+    for (VideoReceiver *receiver : _videoReceivers) {
+        QGCVideoStreamInfo *pInfo = receiver->videoStreamInfo();
+        if (receiver->isBackup() && pInfo && !pInfo->uri().isEmpty()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool VideoManager::hasThermal() const
 {
     for (VideoReceiver *receiver : _videoReceivers) {
@@ -332,6 +371,17 @@ void VideoManager::setfullScreen(bool on)
     if (on != _fullScreen) {
         _fullScreen = on;
         emit fullScreenChanged();
+    }
+}
+
+void VideoManager::setStream(bool primary)
+{
+    if (!primary && !_hasAuxStreamConfigured)
+        return;
+
+    if (primary != _usesPrimaryVideoStream) {
+        _usesPrimaryVideoStream = primary;
+        emit videoStreamChanged();
     }
 }
 
@@ -391,6 +441,18 @@ void VideoManager::_videoSourceChanged()
     }
 }
 
+void VideoManager::_enableAuxStream(bool enable)
+{
+    if (enable != _hasAuxStreamConfigured) {
+        _hasAuxStreamConfigured = enable;
+        emit hasAuxStreamChanged();
+
+        if (!enable && !_usesPrimaryVideoStream) {
+            setStream(true);
+        }
+    }
+}
+
 bool VideoManager::_updateUVC(VideoReceiver *receiver)
 {
     bool result = false;
@@ -442,8 +504,12 @@ bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
     case VIDEO_STREAM_TYPE_RTSP:
         source = VideoSettings::videoSourceRTSP;
         url = pInfo->uri();
-        if (source == VideoSettings::videoSourceRTSP) {
-            _videoSettings->rtspUrl()->setRawValue(url);
+        if (receiver->isPrimary()) {
+            _usesPrimaryVideoStream ? _videoSettings->rtspUrl()->setRawValue(url)
+                                    : _videoSettings->rtspUrlAux()->setRawValue(url);
+        } else if (receiver->isBackup()) {
+            _usesPrimaryVideoStream ? _videoSettings->rtspUrlBackup()->setRawValue(url)
+                                    : _videoSettings->rtspUrlBackupAux()->setRawValue(url);
         }
         break;
     case VIDEO_STREAM_TYPE_TCP_MPEG:
@@ -530,7 +596,7 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
     } else if (source == VideoSettings::videoSourceMPEGTS) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("mpegts://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
     } else if (source == VideoSettings::videoSourceRTSP) {
-        settingsChanged |= _updateVideoUri(receiver, _videoSettings->rtspUrl()->rawValue().toString());
+        settingsChanged |= _updateVideoUri(receiver, _getRtspUrlForReceiver(receiver));
     } else if (source == VideoSettings::videoSourceTCP) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
     } else if (source == VideoSettings::videoSource3DRSolo) {
@@ -735,7 +801,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::streamingChanged, this, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "streaming changed, active:" << (active ? "yes" : "no");
-        if (!receiver->isThermal()) {
+        if (receiver->isPrimary()) {
             _streaming = active;
             emit streamingChanged();
         }
@@ -743,7 +809,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::decodingChanged, this, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "decoding changed, active:" << (active ? "yes" : "no");
-        if (!receiver->isThermal()) {
+        if (receiver->isPrimary()) {
             _decoding = active;
             emit decodingChanged();
         }
@@ -751,7 +817,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::recordingChanged, this, [this, receiver](bool active) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording changed, active:" << (active ? "yes" : "no");
-        if (!receiver->isThermal()) {
+        if (receiver->isPrimary()) {
             _recording = active;
             if (!active) {
                 _subtitleWriter->stopCapturingTelemetry();
@@ -762,14 +828,14 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
 
     (void) connect(receiver, &VideoReceiver::recordingStarted, this, [this, receiver](const QString &filename) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording started";
-        if (!receiver->isThermal()) {
+        if (receiver->isPrimary()) {
             _subtitleWriter->startCapturingTelemetry(filename, videoSize());
         }
     });
 
     (void) connect(receiver, &VideoReceiver::videoSizeChanged, this, [this, receiver](QSize size) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "resized. New resolution:" << size.width() << "x" << size.height();
-        if (!receiver->isThermal()) {
+        if (receiver->isPrimary()) {
             _videoSize = size;
             emit videoSizeChanged();
         }

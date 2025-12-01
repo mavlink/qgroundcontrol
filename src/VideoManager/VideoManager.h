@@ -37,6 +37,9 @@ class VideoManager : public QObject
     Q_PROPERTY(bool     autoStreamConfigured    READ autoStreamConfigured                       NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool     decoding                READ decoding                                   NOTIFY decodingChanged)
     Q_PROPERTY(bool     fullScreen              READ fullScreen             WRITE setfullScreen NOTIFY fullScreenChanged)
+    Q_PROPERTY(bool     hasBackup               READ hasBackup                                  NOTIFY hasVideoChanged)
+    Q_PROPERTY(bool     isPrimaryStream         READ isPrimaryStream            WRITE setStream NOTIFY videoStreamChanged)
+    Q_PROPERTY(bool     hasAuxStream            READ hasAuxStream                               NOTIFY hasAuxStreamChanged)
     Q_PROPERTY(bool     hasThermal              READ hasThermal                                 NOTIFY decodingChanged)
     Q_PROPERTY(bool     hasVideo                READ hasVideo                                   NOTIFY hasVideoChanged)
     Q_PROPERTY(bool     isStreamSource          READ isStreamSource                             NOTIFY isStreamSourceChanged)
@@ -70,6 +73,9 @@ public:
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
     bool fullScreen() const { return _fullScreen; }
+    bool isPrimaryStream() const;
+    bool hasAuxStream() const;
+    bool hasBackup() const;
     bool hasThermal() const;
     bool hasVideo() const;
     bool isStreamSource() const;
@@ -84,6 +90,7 @@ public:
     QString imageFile() const { return _imageFile; }
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
     void setfullScreen(bool on);
+    void setStream(bool primary);
     static bool gstreamerEnabled();
     static bool qtmultimediaEnabled();
     static bool uvcEnabled();
@@ -103,11 +110,14 @@ signals:
     void streamingChanged();
     void uvcVideoSourceIDChanged();
     void videoSizeChanged();
+    void videoStreamChanged();
+    void hasAuxStreamChanged();
 
 private slots:
     void _communicationLostChanged(bool communicationLost);
     void _setActiveVehicle(Vehicle *vehicle);
     void _videoSourceChanged();
+    void _enableAuxStream(bool enable);
 
 private:
     void _initAfterQmlIsReady();
@@ -121,6 +131,7 @@ private:
     void _startReceiver(VideoReceiver *receiver);
     void _stopReceiver(VideoReceiver *receiver);
     static void _cleanupOldVideos();
+    QString _getRtspUrlForReceiver(VideoReceiver *receiver) const;
 
     QList<VideoReceiver*> _videoReceivers;
 
@@ -130,6 +141,8 @@ private:
     bool _initialized = false;
     bool _initAfterQmlIsReadyDone = false;
     bool _fullScreen = false;
+    bool _usesPrimaryVideoStream = true;
+    bool _hasAuxStreamConfigured = false;
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
     QAtomicInteger<bool> _streaming = false;

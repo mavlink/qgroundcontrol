@@ -65,6 +65,38 @@ SettingsPage {
 
         LabelledFactTextField {
             Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("RTSP URL Backup")
+            fact:                       _videoSettings.rtspUrlBackup
+            visible:                    _isRTSP && _videoSettings.rtspUrlBackup.visible
+        }
+
+        FactCheckBoxSlider {
+            id:         auxStreamCheckBox
+            Layout.fillWidth: true
+            text:       fact.shortDescription
+            fact:       _videoSettings.rtspUseAux
+            visible:    fact.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("Aux RTSP URL")
+            fact:                       _videoSettings.rtspUrlAux
+            visible:                    _isRTSP && _videoSettings.rtspUrlAux.visible && auxStreamCheckBox.checked
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("Aux RTSP URL Backup")
+            fact:                       _videoSettings.rtspUrlBackupAux
+            visible:                    _isRTSP && _videoSettings.rtspUrlBackupAux.visible && auxStreamCheckBox.checked
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
             label:                      qsTr("TCP URL")
             textFieldPreferredWidth:    _urlFieldWidth
             fact:                       _videoSettings.tcpUrl
