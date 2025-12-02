@@ -14,18 +14,18 @@ import QtQuick.Layouts
 import QtQuick.Window
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FactControls
-
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
-    id:             mainWindow
-    visible:        true
+    id:         mainWindow
+    visible:    true
+    // The special casing for android prevents white bars from showing up on the edges of the screen with never android versions
+    flags:      Qt.Window | (ScreenTools.isAndroid ? Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint : 0)
 
     property bool   _utmspSendActTrigger
 
