@@ -48,7 +48,7 @@ Rectangle {
         anchors.left:   parent.left
         width:          mainStatusLayout.width
         opacity:        qgcPal.windowTransparent.a
-        
+
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0; color: _mainStatusBGColor }

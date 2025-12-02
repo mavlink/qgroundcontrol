@@ -51,4 +51,3 @@ QtObject {
     onRotationYaw270ValueChanged:   rotationValueChanged()
     onRotationYaw315ValueChanged:   rotationValueChanged()
 }
-

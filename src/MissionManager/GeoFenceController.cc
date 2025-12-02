@@ -105,14 +105,8 @@ void GeoFenceController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_geoFenceManager, &GeoFenceManager::removeAllComplete,              this, &GeoFenceController::_managerRemoveAllComplete);
     connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
-    //-- GeoFenceController::supported() tests both the capability bit AND the protocol version.
     (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
         Q_UNUSED(capabilityBits);
-        emit supportedChanged(supported());
-    });
-
-    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
-        Q_UNUSED(version);
         emit supportedChanged(supported());
     });
 
@@ -225,7 +219,7 @@ void GeoFenceController::save(QJsonObject& json)
 }
 
 void GeoFenceController::removeAll(void)
-{    
+{
     setBreachReturnPoint(QGeoCoordinate());
     _polygons.clearAndDeleteContents();
     _circles.clearAndDeleteContents();
@@ -489,7 +483,7 @@ void GeoFenceController::clearAllInteractive(void)
 
 bool GeoFenceController::supported(void) const
 {
-    return (_managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE) && (_managerVehicle->maxProtoVersion() >= 200);
+    return _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE;
 }
 
 /* Returns the radius of the "paramCircularFence"

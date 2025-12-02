@@ -53,6 +53,3 @@ ColumnLayout {
         axis: [ data ]
     }
 }
-
-
-

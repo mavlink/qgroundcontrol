@@ -43,22 +43,25 @@ jobs:
             build_type: Release
             package: QGroundControl-installer-ARM64
 
+          # Qt 6.10.0 for cross-compiled until aqtinstall fix is released
+          # See: https://github.com/miurahr/aqtinstall/pull/952
           - os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             build_type: Release
             package: QGroundControl-installer-AMD64-ARM64
+            qt_version: '6.10.0'
 
     defaults:
       run:
         shell: cmd
 
     env:
-      QT_VERSION: 6.10.0
+      QT_VERSION: 6.10.1
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 0
@@ -84,10 +87,10 @@ jobs:
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}\build\cpm_modules
 
-      - name: Install Qt ${{ env.QT_VERSION }}
+      - name: Install Qt ${{ matrix.qt_version || env.QT_VERSION }}
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ matrix.qt_version || env.QT_VERSION }}
           host: ${{ matrix.host }}
           target: desktop
           arch: ${{ matrix.arch }}

@@ -256,4 +256,3 @@ void CorridorScanComplexItemTest::_testItemGeneration(void)
         _testItemGenerationWorker(false /* imagesInTurnaround */, testCase.hasTurnaround, testCase.useConditionGate, _createExpectedCommands(testCase.hasTurnaround, testCase.useConditionGate));
     }
 }
-

@@ -25,7 +25,7 @@ ToolStripAction {
 
     property var _guidedController: globals.guidedControllerFlyView
 
-    property var _additionalActions: FlyViewAdditionalActionsList { 
+    property var _additionalActions: FlyViewAdditionalActionsList {
         guidedController: _guidedController
     }
 
@@ -40,7 +40,7 @@ ToolStripAction {
     }
 
     dropPanelComponent: Component {
-        FlyViewAdditionalActionsPanel { 
+        FlyViewAdditionalActionsPanel {
             additionalActions:  _additionalActions
             mavlinkActions:     _mavlinkActions.actions
             customActions:      _customActions

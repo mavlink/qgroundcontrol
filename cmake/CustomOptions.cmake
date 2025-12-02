@@ -31,6 +31,7 @@ option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 # Debug-dependent options
 cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 
 # ============================================================================
 # Feature Flags
@@ -71,8 +72,10 @@ option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 # MAVLink Configuration
 # ============================================================================
 
-set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "MAVLink repository URL")
-set(QGC_MAVLINK_GIT_TAG "a9a10b52a6c87e54676fea22d2936c1b8b733f99" CACHE STRING "MAVLink repository commit/tag")
+set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/mavlink.git" CACHE STRING "MAVLink repository URL")
+set(QGC_MAVLINK_GIT_TAG "dd17c1a65de7b9ad8dd6e3491a8690c0d0b27ba1" CACHE STRING "MAVLink repository commit/tag")
+set(QGC_MAVLINK_DIALECT "all" CACHE STRING "MAVLink dialect")
+set(QGC_MAVLINK_VERSION "2.0" CACHE STRING "MAVLink protocol version")
 
 # ============================================================================
 # Autopilot Plugin Configuration
@@ -136,7 +139,7 @@ set(QGC_WINDOWS_RESOURCE_FILE_PATH "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundCo
 # ============================================================================
 
 set(QGC_QT_MINIMUM_VERSION "6.10.0" CACHE STRING "Minimum supported Qt version")
-set(QGC_QT_MAXIMUM_VERSION "6.10.0" CACHE STRING "Maximum supported Qt version")
+set(QGC_QT_MAXIMUM_VERSION "6.10.1" CACHE STRING "Maximum supported Qt version")
 
 set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml" CACHE PATH "QML output directory")
 set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Additional QML import paths")
@@ -145,6 +148,10 @@ option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence missing dependency 
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Enable verbose deployment output" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print search paths when package not found" ON)
 option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ON)
+option(QGC_ENABLE_QMLLINT "Enable automatic QML linting during build" OFF)
+
+set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x061000" CACHE STRING "Disable Qt APIs deprecated before this version")
+set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x061000" CACHE STRING "Enable strict Qt API mode up to this version")
 
 # Debug environment variables (uncomment to enable)
 # set(ENV{QT_DEBUG_PLUGINS} "1")

@@ -84,5 +84,3 @@ ColumnLayout {
         chartDisplaySec: 50
     }
 }
-
-

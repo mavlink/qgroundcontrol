@@ -1,99 +1,160 @@
+# ==============================================================================
+# QGroundControl - Git Ignore Patterns
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# IDEs & Editors
+# ------------------------------------------------------------------------------
 .idea/
 .vscode/
-.cache/
-cmake-build-*/
-out/
-libs/lib/Frameworks/GStreamer.framework
-*_qmlcache.qrc
+.qtcreator/
+.fleet/
+.vs/
+.settings/
+
+# Editor temp/backup files
 *.swp
-*.nfs
-CMakeFiles
-tags
-build/
-obj
-.DS_Store
-*.log
 *~
 *~.skp
+*.autosave
+tags
+
+# ------------------------------------------------------------------------------
+# Build System & CMake
+# ------------------------------------------------------------------------------
+build/
+cmake-build-*/
+out/
+CMakeFiles
+CMakeLists.txt.user*
+CMakeUserPresets.json
+compile_commands.json
+cpm_modules
+.cache/
+
+# ------------------------------------------------------------------------------
+# Qt Generated Files
+# ------------------------------------------------------------------------------
+*_qmlcache.qrc
+qrc_*.cpp
+moc_*
+ui_*
+*.moc
+*.prl
+*.qm
+.qmlls.ini
+
+# ------------------------------------------------------------------------------
+# Compiled Objects & Binaries
+# ------------------------------------------------------------------------------
+*.o
+*.Debug
+*.Release
+*.app
+*.exe
+*.idb
+*.pdb
+tmp/
+obj/
+debug/
+release/
+/qgroundcontrol
 bin/*.exe
 bin/*.txt
 bin/mac
-*pro.user*
-.qmake.stash
-qrc_*.cpp
-*.Debug
-*.Release
-tmp
-debug
-release
-/qgroundcontrol
-qgroundcontrol.xcodeproj/**
-doc/html
-doc/doxy.log
-controller_log*
-user_config.pri
-*.app
-*.ncb
+
+# Libraries & dynamic/static objects
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# Build tool artifacts
+Makefile
+*.ninja
+.ninja_log
+build.ninja
+
+# Packaging & distribution
+*.dmg
+*.deb
+*.rpm
+*.AppImage
+*.apk
+*.aab
+*.ipa
+
+# ------------------------------------------------------------------------------
+# Platform-Specific
+# ------------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows - Visual Studio
 *.vcproj
 *.vcxproj*
-*.sdf
-*.ipch
-*.pdb
-*.sln
-*.sln
-*.vcproj
-*.user
-*.ncb
-*.idb
-*.project
-*.cproject
 *.sln
 *.suo
-*.uhf.txt
+*.ncb
+*.sdf
+*.ipch
 *.opensdf
-thirdParty/qserialport-build-desktop/
-thirdParty/qserialport/bin/
-thirdParty/qserialport/lib/
-libs/thirdParty/libxbee/lib/
-GeneratedFiles/
-gstreamer-1.0-android*
-localization/qgroundcontrol/
+*.uhf.txt
 
-*.autosave
-.settings/
-
-# iOS Generated files
+# iOS
 ios/iOSForAppStore-Info.plist
 
-# Generated files
-moc_*
-ui_*
-*.o
-*.moc
-*.prl
-.qmlls.ini
-
-# android
+# Android
 android/local.properties
 *.class
 
-# doxygen
-src/html/
-src/latex/
+# Linux
+*.nfs
 
-# vagrant
-.vagrant/
-Qt*-linux*.tar.*
-
-.vs/
-
-# vitepress - user guide
+# ------------------------------------------------------------------------------
+# Dependencies & Third Party
+# ------------------------------------------------------------------------------
+# Node.js (vitepress for user guide)
 node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 
-CMakeUserPresets.json
-cpm_modules
+# Python
+*.pyc
+__pycache__/
 
-.qtcreator/
+# ------------------------------------------------------------------------------
+# Runtime & Logs
+# ------------------------------------------------------------------------------
+*.log
+
+# Code coverage
+*.gcov
+*.gcda
+*.gcno
+*.coverage
+
+# ------------------------------------------------------------------------------
+# Vagrant
+# ------------------------------------------------------------------------------
+.vagrant/
+Qt*-linux*.tar.*
+
+# ------------------------------------------------------------------------------
+# Local Development Tools
+# ------------------------------------------------------------------------------
+
+# Claude Code
 .claude/
+
+# cc-sessions - personal AI development workflow
+sessions/
+CLAUDE.md
+
+# Pre-commit hooks
+.ruff_cache/

@@ -111,4 +111,3 @@ Item {
         id: obstacleDistance
     }
 }
-

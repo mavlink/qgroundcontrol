@@ -21,19 +21,18 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
-          version: 6.10.0
+          version: 6.10.1
           cache: true
 
       - name: Update translation files
         run: |
-          cd translations
-          ${{ env.QT_ROOT_DIR }}/bin/lupdate ../src -ts qgc.ts -no-obsolete
-          python3 qgc-lupdate-json.py
+          ${{ env.QT_ROOT_DIR }}/bin/lupdate src -ts translations/qgc.ts -no-obsolete
+          python3 tools/translations/qgc-lupdate-json.py
 
       - name: Configure Git
         run: |

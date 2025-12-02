@@ -199,6 +199,15 @@ qt_standard_project_setup(
 )
 
 # ----------------------------------------------------------------------------
+# QML Linting Configuration
+# ----------------------------------------------------------------------------
+if(QGC_ENABLE_QMLLINT)
+    set(QT_QML_GENERATE_QMLLINT ON CACHE BOOL "Enable automatic QML linting" FORCE)
+else()
+    set(QT_QML_GENERATE_QMLLINT OFF CACHE BOOL "Disable automatic QML linting" FORCE)
+endif()
+
+# ----------------------------------------------------------------------------
 # Qt Policies (Enable modern Qt6 behaviors)
 # ----------------------------------------------------------------------------
 qt_policy(

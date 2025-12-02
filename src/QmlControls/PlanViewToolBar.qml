@@ -29,7 +29,7 @@ Rectangle {
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property real   _controllerProgressPct: planMasterController.missionController.progressPct
-    
+
     QGCPalette { id: qgcPal }
 
     /// Bottom single pixel divider

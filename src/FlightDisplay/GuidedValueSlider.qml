@@ -63,7 +63,7 @@ Item {
     property int    _majorTickAdjustment:               _majorTicksVisibleAboveIndicator * _majorTickValueStep
 
     // Calculate the next major tick above/below min/max
-    property int    _majorTickMaxValue:     Math.ceil((_sliderMaxVal + _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep 
+    property int    _majorTickMaxValue:     Math.ceil((_sliderMaxVal + _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep
     property int    _majorTickMinValue:     Math.floor((_sliderMinVal - _majorTickAdjustment)/ _majorTickValueStep) * _majorTickValueStep
 
     // Now calculate the position we draw the first tick mark such that we are not allowed to flick above the max value
@@ -131,7 +131,7 @@ Item {
             font.pointSize:     ScreenTools.smallFontPointSize
             text:               _displayText
         }
-      
+
         QGCFlickable {
             id:                 sliderFlickable
             Layout.fillWidth:   true
@@ -268,8 +268,8 @@ Item {
             text:                   _clampedSliderValueString(_sliderValue) + " " + unitsString
             font.pointSize:         ScreenTools.largeFontPointSize
 
-            property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
-                                        QGroundControl.unitsConversion.appSettingsSpeedUnitsString : 
+            property var unitsString: _sliderType === GuidedValueSlider.Speed ?
+                                        QGroundControl.unitsConversion.appSettingsSpeedUnitsString :
                                             QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
         }
 

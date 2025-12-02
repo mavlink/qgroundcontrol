@@ -21,9 +21,9 @@ RowLayout {
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
 
-    QGCLabel { 
+    QGCLabel {
         id:                 _labelLabel
-        Layout.fillWidth:   true 
+        Layout.fillWidth:   true
     }
 
     QGCLabel {
@@ -31,4 +31,3 @@ RowLayout {
         Layout.preferredWidth:  labelPreferredWidth
     }
 }
-

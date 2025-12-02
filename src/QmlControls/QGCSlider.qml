@@ -25,7 +25,7 @@ Slider {
     // FIXME-QT6 - This property used to be available in Control 1. Now we will need to implement the visuals ourselves
     property bool tickmarksEnabled: false
 
-    
+
     property bool zeroCentered:         false   // Value indicator starts display from zero instead of min value
     property bool displayValue:         false
     property bool indicatorBarVisible:  true
@@ -34,10 +34,10 @@ Slider {
     property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
 
     background: Rectangle {
-        x:              control.horizontal ? 
-                            control.leftPadding : 
+        x:              control.horizontal ?
+                            control.leftPadding :
                             control.leftPadding + control.availableWidth / 2 - width / 2
-        y:              control.horizontal ? 
+        y:              control.horizontal ?
                             control.topPadding + control.availableHeight / 2 - height / 2 :
                             control.topPadding
         implicitWidth:  control.horizontal ? control._implicitBarLength : control._barHeight
@@ -75,10 +75,10 @@ Slider {
     }*/
 
     handle: Rectangle {
-        x:              control.horizontal ? 
+        x:              control.horizontal ?
                             control.leftPadding + control.visualPosition * (control.availableWidth - width) :
                             control.leftPadding + control.availableWidth / 2 - width / 2
-        y:              control.horizontal ? 
+        y:              control.horizontal ?
                             control.topPadding + control.availableHeight / 2 - height / 2 :
                             control.topPadding + control.visualPosition * (control.availableHeight - height)
         implicitWidth:  _radius * 2

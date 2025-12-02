@@ -160,6 +160,8 @@ public:
     DEFINE_QGC_COLOR(toolStripFGColor,              setToolStripFGColor)
     DEFINE_QGC_COLOR(toolStripHoverColor,           setToolStripHoverColor)
     DEFINE_QGC_COLOR(groupBorder,                   setGroupBorder)
+    DEFINE_QGC_COLOR(photoCaptureButtonColor,       setPhotoCaptureButtonColor)
+    DEFINE_QGC_COLOR(videoCaptureButtonColor,       setVideoCaptureButtonColor)
 
 #ifdef QGC_UTM_ADAPTER
     DEFINE_QGC_COLOR(switchUTMSP,                    setSwitchUTMSP)

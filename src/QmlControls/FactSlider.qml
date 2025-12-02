@@ -32,7 +32,7 @@ ValueSlider {
     property Fact _fact:                    fact ? fact : _nullFact
 
     property bool _loadComplete: false
-    
+
     Component.onCompleted: {
         _loadComplete = true
         if (fact && fact.minIsDefaultForType && fact.min == from) {

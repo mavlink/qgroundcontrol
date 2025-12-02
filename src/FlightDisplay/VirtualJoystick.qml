@@ -29,7 +29,7 @@ Item {
     property var   calibration:               false
     property var   uiTotalWidth
     property var   uiRealX
-        
+
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
         running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value

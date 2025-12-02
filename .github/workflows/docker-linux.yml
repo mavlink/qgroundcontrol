@@ -32,13 +32,13 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
+        working-directory: ${{ github.workspace }}
         run: git fetch --all --tags --force --depth 1
 
       - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh

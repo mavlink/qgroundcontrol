@@ -380,7 +380,7 @@ Item {
 				if(_utmspEnabled){
                 	QGroundControl.utmspManager.utmspVehicle.updateLastCoordinates(coordinate.latitude, coordinate.longitude)
                 }
-                
+
                 switch (_editingLayer) {
                 case _layerMission:
                     if (addWaypointRallyPointAction.checked) {

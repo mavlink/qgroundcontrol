@@ -254,8 +254,8 @@ Rectangle {
                         color:                  qgcPal.groupBorder
                     }
 
-                    QGCLabel { 
-                        text:       qsTr("Item #%1").arg(missionItem.sequenceNumber) 
+                    QGCLabel {
+                        text:       qsTr("Item #%1").arg(missionItem.sequenceNumber)
                         enabled:    false
                     }
                 }

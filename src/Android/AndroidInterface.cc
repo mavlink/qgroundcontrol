@@ -108,17 +108,17 @@ bool checkStoragePermissions()
 {
     // Call the Java method to check and request storage permissions
     const bool hasPermission = QJniObject::callStaticMethod<jboolean>(
-        kJniQGCActivityClassName, 
-        "checkStoragePermissions", 
+        kJniQGCActivityClassName,
+        "checkStoragePermissions",
         "()Z"
     );
-    
+
     if (hasPermission) {
         qCDebug(AndroidInterfaceLog) << "Storage permissions granted";
     } else {
         qCWarning(AndroidInterfaceLog) << "Storage permissions not granted";
     }
-    
+
     return hasPermission;
 }
 

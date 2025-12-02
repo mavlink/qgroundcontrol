@@ -35,6 +35,7 @@ Rectangle {
     property bool   _photoCaptureSingleIdle:    _camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_IDLE
     property bool   _photoCaptureIntervalIdle:  _camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE
     property bool   _photoCaptureIdle:          _photoCaptureSingleIdle || _photoCaptureIntervalIdle
+    property color  _captureButtonColor:       _cameraInPhotoMode ? qgcPal.photoCaptureButtonColor : qgcPal.videoCaptureButtonColor
 
 /*
     // Used for testing camera ui options. Set _camera to testCamera to use.
@@ -74,6 +75,25 @@ Rectangle {
             videoCaptureStatus = MavlinkCameraControl.VIDEO_CAPTURE_STATUS_STOPPED;
             photoCaptureStatus = MavlinkCameraControl.PHOTO_CAPTURE_IDLE;
         }
+
+        function takePhoto() {
+            photoCaptureStatus = MavlinkCameraControl.PHOTO_CAPTURE_IN_PROGRESS;
+            takePhotoTimer.start();
+        }
+
+        function toggleVideoRecording() {
+            if (videoCaptureStatus === MavlinkCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
+                videoCaptureStatus = MavlinkCameraControl.VIDEO_CAPTURE_STATUS_STOPPED;
+            } else {
+                videoCaptureStatus = MavlinkCameraControl.VIDEO_CAPTURE_STATUS_RUNNING;
+            }
+        }
+    }
+
+    Timer {
+        id:             takePhotoTimer
+        interval:       500
+        onTriggered:    testCamera.photoCaptureStatus = MavlinkCameraControl.PHOTO_CAPTURE_IDLE
     }
 */
 
@@ -110,7 +130,7 @@ Rectangle {
                 onValueChanged:     _camera.zoomLevel = value
             }
         }
-        
+
         ColumnLayout {
             spacing: _margins
 
@@ -157,7 +177,7 @@ Rectangle {
                         }
                     }
                 }
-                
+
                 //-- Photo Mode
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
@@ -195,31 +215,37 @@ Rectangle {
                 // Take Photo, Start/Stop Video button
                 Rectangle {
                     Layout.alignment:   Qt.AlignHCenter
-                    color:              Qt.rgba(0,0,0,0)
+                    color:              qgcPal.button
                     width:              ScreenTools.defaultFontPixelWidth * 6
                     height:             width
                     radius:             width * 0.5
-                    border.color:       qgcPal.buttonText
-                    border.width:       3
+                    border.width:       1
+                    border.color:       qgcPal.buttonBorder
+
+                   Rectangle {
+                        anchors.centerIn:           parent
+                        anchors.alignWhenCentered:  false // Prevents anchors.centerIn from snapping to integer coordinates, which can throw off centering.
+                        color:                      qgcPal.buttonBorder
+                        width:                      parent.width * 0.75
+                        height:                     width
+                        radius:                     width * 0.5
+                    }
 
                     Rectangle {
-                        // anchors.centerIn snaps to integer coordinates, which
-                        // depending on DPI can throw the centering off.
-                        // Setting alignWhenCentered to false avoids this issue.
-                        anchors {
-                            centerIn:           parent
-                            alignWhenCentered:  false
-                        }
-                        width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
-                        height:             width
-                        radius:             _isShootingInCurrentMode ? 0 : width * 0.5
-                        color:              _isShootingInCurrentMode || _canShootInCurrentMode ? qgcPal.colorRed : qgcPal.colorGrey
+                        anchors.centerIn:           parent
+                        anchors.alignWhenCentered:  false // Prevents anchors.centerIn from snapping to integer coordinates, which can throw off centering.
+                        width:                      parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
+                        height:                     width
+                        radius:                     _isShootingInCurrentMode ? ScreenTools.defaultFontPixelWidth * 0.5 : width * 0.5
+                        color:                      _captureButtonColor
+                        border.width:               1
+                        border.color:               qgcPal.buttonBorder
 
                         property bool _isShootingInPhotoMode:   _cameraInPhotoMode && _camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_IN_PROGRESS
                         property bool _isShootingInVideoMode:   (!_cameraInPhotoMode && _camera.videoCaptureStatus === MavlinkCameraControl.VIDEO_CAPTURE_STATUS_RUNNING)
                         property bool _isShootingInCurrentMode: _cameraInPhotoMode ? _isShootingInPhotoMode : _isShootingInVideoMode
                         property bool _isShootingInOtherMode:   _cameraInPhotoMode ? _isShootingInVideoMode : _isShootingInPhotoMode
-                        property bool _canShootInCurrentMode:   _isShootingInOtherMode ? 
+                        property bool _canShootInCurrentMode:   _isShootingInOtherMode ?
                                                                     (_cameraInPhotoMode ? _camera.photosInVideoMode : _camera.videoInPhotoMode) :
                                                                     true
                     }
@@ -245,7 +271,7 @@ Rectangle {
                 // Record time / Capture count
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  _videoCaptureIdle && _photoCaptureIdle ? "transparent" : qgcPal.colorRed
+                    color:                  _videoCaptureIdle && _photoCaptureIdle ? "transparent" : _captureButtonColor
                     Layout.preferredWidth:  (_cameraInVideoMode ? videoRecordTime.width : photoCaptureCount.width) + (_smallMargins * 2)
                     Layout.preferredHeight: (_cameraInVideoMode ? videoRecordTime.height : photoCaptureCount.height)
                     radius:                 _smallMargins
@@ -308,7 +334,7 @@ Rectangle {
                     Layout.preferredHeight: Layout.preferredWidth
                     border.color:           qgcPal.buttonText
                     border.width:           3
-                    
+
                     QGCColoredImage {
                         height:             parent.height * 0.5
                         width:              height

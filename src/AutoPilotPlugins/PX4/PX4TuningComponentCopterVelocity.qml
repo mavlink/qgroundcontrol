@@ -115,5 +115,3 @@ ColumnLayout {
         axis: [ horizontal, vertical ]
     }
 }
-
-

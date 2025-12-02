@@ -12,7 +12,7 @@ Rectangle {
     state:      orientation == QGCFlickableScrollIndicator.Vertical ? "vertical" : "horizontal"
 
     property bool showIndicator: false
-    property int  orientation:   QGCFlickableScrollIndicator.Vertical   
+    property int  orientation:   QGCFlickableScrollIndicator.Vertical
 
     enum Orientation {
         Vertical,
@@ -25,7 +25,7 @@ Rectangle {
     states: [
             State {
                 name: "vertical"
-                AnchorChanges { 
+                AnchorChanges {
                     target:         control
                     anchors.right: _flickable.right
                 }
@@ -44,7 +44,7 @@ Rectangle {
 
             State {
                 name: "horizontal"
-                AnchorChanges { 
+                AnchorChanges {
                     target:         control
                     anchors.bottom: _flickable.bottom
                 }

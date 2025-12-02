@@ -153,7 +153,7 @@ void SimpleMissionItem::_connectSignals(void)
     // For NAV_LOITER_X commands, they must emit a radiusChanged signal
     connect(&_missionItem._param2Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
-    
+
     // Exit coordinate is the same as entrance coordinate
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::exitCoordinateChanged);
 
@@ -245,7 +245,7 @@ void SimpleMissionItem::_setupMetaData(void)
 }
 
 SimpleMissionItem::~SimpleMissionItem()
-{    
+{
 }
 
 void SimpleMissionItem::save(QJsonArray&  missionItems)
@@ -406,7 +406,7 @@ QString SimpleMissionItem::abbreviation() const
 void SimpleMissionItem::_rebuildTextFieldFacts(void)
 {
     _textFieldFacts.clear();
-    
+
     if (rawEdit()) {
         _missionItem._param1Fact.setName("Param1");
         _missionItem._param1Fact.setMetaData(_defaultParamMetaData);
