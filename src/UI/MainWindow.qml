@@ -24,7 +24,7 @@ import QGroundControl.FlightMap
 ApplicationWindow {
     id:         mainWindow
     visible:    true
-    // The special casing for android prevents white bars from showing up on the edges of the screen with never android versions
+    // The special casing for android prevents white bars from showing up on the edges of the screen with newer android versions
     flags:      Qt.Window | (ScreenTools.isAndroid ? Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint : 0)
 
     property bool   _utmspSendActTrigger
