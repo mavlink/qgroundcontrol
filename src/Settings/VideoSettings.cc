@@ -250,10 +250,10 @@ void VideoSettings::_setForceVideoDecodeList()
     GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
     GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
     GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_WIN)
     GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
     GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#elif defined(Q_OS_WIN)
+#elif defined(Q_OS_LINUX)
     GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
     GStreamer::VideoDecoderOptions::ForceVideoDecoderVulkan,
 #elif defined(Q_OS_MACOS)
