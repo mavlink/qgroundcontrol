@@ -1,0 +1,86 @@
+title: "[Q&A] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! Please check the following resources first:
+        - [User Guide](https://docs.qgroundcontrol.com/)
+        - [Developer Guide](https://dev.qgroundcontrol.com/)
+        - [Existing discussions](https://github.com/mavlink/qgroundcontrol/discussions)
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What area does your question relate to?
+      options:
+        - Setup / Installation
+        - Vehicle Connection
+        - Flight Planning / Missions
+        - Video Streaming
+        - Telemetry / Parameters
+        - Custom Builds
+        - Development / Building from Source
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform are you using?
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS
+        - Multiple / N/A
+    validations:
+      required: true
+
+  - type: dropdown
+    id: firmware
+    attributes:
+      label: Flight Stack
+      description: What firmware are you using?
+      options:
+        - PX4
+        - ArduPilot
+        - Both / Either
+        - N/A
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: QGC Version
+      description: Which version of QGroundControl?
+      placeholder: "e.g., 4.4.0, daily build"
+    validations:
+      required: false
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: Describe your question in detail
+      placeholder: |
+        What I'm trying to do:
+
+        What I've tried:
+
+        What I expected vs what happened:
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any additional information, screenshots, or logs
+    validations:
+      required: false

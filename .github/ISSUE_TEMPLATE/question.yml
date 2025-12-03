@@ -1,6 +1,7 @@
 name: Question
 description: Ask a question related to QGC source
-labels: ["Question"]
+labels: ["question"]
+type: question
 
 body:
   - type: markdown
@@ -11,9 +12,27 @@ body:
         - If your question still isn't answered, please check the forums: https://discuss.px4.io/c/qgroundcontrol/15.
         - If it is about Qt or any QGC dependencies, please refer to them instead.
 
+        **Note:** For more involved discussions or design questions, please use [GitHub Discussions](https://github.com/mavlink/qgroundcontrol/discussions) instead.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: What area of QGC is your question about?
+      options:
+        - UI/QML
+        - Video Streaming
+        - MAVLink/Communication
+        - Vehicle/Flight Stack
+        - Build System
+        - Testing
+        - Other
+
   - type: textarea
     id: question
     attributes:
       label: Your Question
       description: Write your question related to the QGC source code.
       placeholder: Enter your question here.
+    validations:
+      required: true

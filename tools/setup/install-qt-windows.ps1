@@ -3,21 +3,41 @@
     Install Qt on Windows via aqtinstall.
 
 .DESCRIPTION
+    - Reads version/modules from centralized .github/build-config.json
     - Uses Python + pip to install helper packages (setuptools, wheel, py7zr, ninja, cmake, aqtinstall).
     - Runs `aqt install-qt` with the same modules list.
     - Adjusts PATH and Qt‑related env vars for the current session.
 #>
 
 # ————————————————————————————————
-# 1) Defaults (env overrides supported)
+# Helper: Find repo root and read build-config.json
 # ————————————————————————————————
-$QT_VERSION = $env:QT_VERSION      -or '6.10.1'
-$QT_PATH    = $env:QT_PATH         -or 'C:\Qt'
-$QT_HOST    = $env:QT_HOST         -or 'windows'
-$QT_TARGET  = $env:QT_TARGET       -or 'desktop'
-# Windows arch must be one of: win64_msvc2017_64, win64_msvc2019_64, win64_mingw81, etc. :contentReference[oaicite:0]{index=0}
-$QT_ARCH    = $env:QT_ARCH         -or 'win64_msvc2022_64'
-$QT_MODULES = $env:QT_MODULES      -or 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml'
+function Get-BuildConfig {
+    $scriptDir = Split-Path -Parent $MyInvocation.ScriptName
+    $dir = $scriptDir
+    while ($dir -and -not (Test-Path (Join-Path $dir ".github/build-config.json"))) {
+        $dir = Split-Path -Parent $dir
+    }
+    if (-not $dir) {
+        Write-Warning "Could not find .github/build-config.json, using defaults"
+        return $null
+    }
+    $configPath = Join-Path $dir ".github/build-config.json"
+    return Get-Content $configPath | ConvertFrom-Json
+}
+
+$config = Get-BuildConfig
+
+# ————————————————————————————————
+# 1) Defaults (env overrides supported, fallback to config, then hardcoded defaults)
+# ————————————————————————————————
+$QT_VERSION = if ($env:QT_VERSION) { $env:QT_VERSION } elseif ($config.qt_version) { $config.qt_version } else { '6.10.1' }
+$QT_PATH    = if ($env:QT_PATH) { $env:QT_PATH } else { 'C:\Qt' }
+$QT_HOST    = if ($env:QT_HOST) { $env:QT_HOST } else { 'windows' }
+$QT_TARGET  = if ($env:QT_TARGET) { $env:QT_TARGET } else { 'desktop' }
+# Windows arch must be one of: win64_msvc2017_64, win64_msvc2019_64, win64_mingw81, etc.
+$QT_ARCH    = if ($env:QT_ARCH) { $env:QT_ARCH } else { 'win64_msvc2022_64' }
+$QT_MODULES = if ($env:QT_MODULES) { $env:QT_MODULES } elseif ($config.qt_modules) { $config.qt_modules } else { 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml' }
 
 Write-Host "Using:"
 Write-Host "  QT_VERSION    = $QT_VERSION"
@@ -36,7 +56,7 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host "`nInstalling helper Python packages..."
-# The PyPI “ninja” wheels provide the Ninja build system executable :contentReference[oaicite:1]{index=1}
+# The PyPI "ninja" wheel provides the Ninja build system executable
 python -m pip install --upgrade pip
 python -m pip install setuptools wheel py7zr ninja cmake aqtinstall
 
@@ -82,4 +102,4 @@ Write-Host "  QT_ROOT_DIR        = $env:QT_ROOT_DIR"
 Write-Host "  QT_PLUGIN_PATH     = $env:QT_PLUGIN_PATH"
 Write-Host "  QML2_IMPORT_PATH   = $env:QML2_IMPORT_PATH"
 
-Write-Host "`n✅ Qt $QT_VERSION for $QT_ARCH installed successfully!"
+Write-Host "`nQt $QT_VERSION for $QT_ARCH installed successfully!"

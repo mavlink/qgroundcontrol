@@ -8,19 +8,24 @@ on:
       - master
     paths:
       - 'docs/en/**'
-  pull_request:
-    types:
-      - closed
-    branches:
-      - master
-    paths:
-      - 'docs/en/**'
   workflow_dispatch:
+
+concurrency:
+  group: crowdin-upload
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   upload-to-crowdin:
-    if: github.event.pull_request.merged == true || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    name: Upload to Crowdin
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout

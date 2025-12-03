@@ -8,7 +8,7 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - 'docs/**'
   pull_request:
     paths:
       - '.github/workflows/linux.yml'
@@ -19,15 +19,29 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*debian*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
 
 jobs:
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
 
     strategy:
       fail-fast: false
@@ -53,9 +67,6 @@ jobs:
       run:
         shell: bash
 
-    env:
-      QT_VERSION: 6.10.1
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -64,13 +75,15 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
+
       - name: Initial Setup
         uses: ./.github/actions/common
 
       - name: Install Dependencies
-        run: |
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
+        uses: ./.github/actions/install-dependencies
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -79,16 +92,18 @@ jobs:
           target: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          ccache-version: ${{ steps.build-config.outputs.ccache_version }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.build-config.outputs.qt_version }}
           host: ${{ matrix.host }}
           target: desktop
           arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          modules: ${{ steps.build-config.outputs.qt_modules }}
           setup-python: false
           cache: true
 
@@ -134,4 +149,3 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}

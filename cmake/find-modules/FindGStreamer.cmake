@@ -11,11 +11,16 @@
 # ----------------------------------------------------------------------------
 
 # Set default version based on platform
+# Android uses 1.22.12 with custom S3 package (full 1.24.x is 1.2GB and causes disk space issues)
+# Windows/macOS use 1.24.13 (latest stable release)
+# Linux uses system-installed version (minimum 1.20)
 if(NOT DEFINED GStreamer_FIND_VERSION)
     if(LINUX)
         set(GStreamer_FIND_VERSION 1.20)
-    else()
+    elseif(ANDROID)
         set(GStreamer_FIND_VERSION 1.22.12)
+    else()
+        set(GStreamer_FIND_VERSION 1.24.13)
     endif()
 endif()
 

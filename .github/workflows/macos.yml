@@ -12,29 +12,43 @@ on:
   pull_request:
     paths:
       - '.github/workflows/macos.yml'
+      - '.github/actions/**'
       - 'deploy/macos/**'
       - 'src/**'
+      - 'test/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: macOS
     runs-on: macos-latest
+    timeout-minutes: 120
 
     strategy:
       matrix:
-        BuildType: [Release]
+        build_type: [Release]
 
     defaults:
       run:
         shell: bash
-
-    env:
-      QT_VERSION: 6.10.1
 
     steps:
       - name: Checkout repo
@@ -44,48 +58,53 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
+
       - name: Initial Setup
         uses: ./.github/actions/common
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '<=16.x'
+          xcode-version: ${{ steps.build-config.outputs.xcode_version }}
 
-      - name: Install Dependencies (include GStreamer)
-        working-directory: ${{ github.workspace }}/tools/setup
-        run: sh install-dependencies-osx.sh
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Setup Caching
         uses: ./.github/actions/cache
         with:
           host: mac
           target: clang_64
-          build-type: ${{ matrix.BuildType }}
+          build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          ccache-version: ${{ steps.build-config.outputs.ccache_version }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.build-config.outputs.qt_version }}
           host: mac
           target: desktop
           arch: clang_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          modules: ${{ steps.build-config.outputs.qt_modules }}
           setup-python: false
           cache: true
 
       - name: CMake configure
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
               -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
+        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Sanity check dev build executable
         working-directory: ${{ runner.temp }}/build/Release/QGroundControl.app/Contents/MacOS
@@ -100,7 +119,7 @@ jobs:
 
       - name: Create signed/notarized/stapled app bundle
         working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config ${{ matrix.BuildType }}
+        run: cmake --install . --config ${{ matrix.build_type }}
         env:
           QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
           QGC_MACOS_NOTARIZATION_USERNAME: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
@@ -116,7 +135,7 @@ jobs:
         run: ./QGroundControl --simple-boot-test
 
       - name: Upload Build File
-        if: matrix.BuildType == 'Release'
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
         with:
           artifact_name: QGroundControl.dmg
@@ -124,4 +143,3 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}

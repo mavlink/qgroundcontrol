@@ -21,7 +21,7 @@ Before you begin, please:
 
 1. Read the [Developer Guide](https://dev.qgroundcontrol.com/en/)
 2. Review the [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
-3. Familiarize yourself with the [Architecture](copilot-instructions.md)
+3. Familiarize yourself with the [Architecture Patterns](#architecture-patterns) in this guide
 
 ### Development Environment
 
@@ -58,6 +58,10 @@ Feature requests are welcome! Please:
 2. Explain the use case and benefits
 3. Consider implementation complexity
 4. Be prepared to contribute code if possible
+
+### Contributing Translations
+
+QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for community translations. See [tools/translations/README.md](../tools/translations/README.md) for details on how translations are managed.
 
 ### Contributing Code
 
@@ -96,6 +100,8 @@ Feature requests are welcome! Please:
 
 ## Coding Standards
 
+For the complete coding style guide with examples, see [CODING_STYLE.md](../CODING_STYLE.md).
+
 ### C++ Guidelines
 
 - **Standard**: C++20
@@ -126,7 +132,8 @@ Feature requests are welcome! Please:
 
 - **Code formatting**:
   - Run `clang-format` before committing
-  - Follow `.clang-format` in the repository
+  - Follow `.clang-format`, `.clang-tidy`, `.editorconfig` in repo root
+  - See `CodingStyle.h`, `CodingStyle.cc`, `CodingStyle.qml` for examples
   - 4 spaces for indentation (no tabs)
 
 ### QML Guidelines
@@ -151,36 +158,66 @@ qCCritical(MyComponentLog) << "Critical error";
 
 ### Architecture Patterns
 
-#### Fact System (Required for Parameters)
+#### Fact System (Most Important!)
 
-Always use the Fact System for vehicle parameters:
+The Fact System handles ALL vehicle parameters. Never create custom parameter storage.
 
 ```cpp
+// Access parameters (always null-check!)
 Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
-if (param) {
-    param->setCookedValue(newValue);  // For display values
-    // param->setRawValue(newValue);  // For MAVLink values
+if (param && param->validate(newValue, false).isEmpty()) {
+    param->setCookedValue(newValue);  // Use cookedValue for UI (with units)
+    // param->rawValue() for MAVLink/storage
 }
 ```
 
-#### Multi-Vehicle Awareness
+**Key classes:**
+- `Fact` - Single parameter with validation, units, metadata
+- `FactGroup` - Hierarchical container (handles MAVLink via `handleMessage()`)
+- `FactMetaData` - JSON-based metadata (min/max, enums, descriptions)
 
-Always check for null vehicles:
+**Rules:**
+- Wait for `parametersReady` signal before accessing
+- Use `cookedValue` (display) vs `rawValue` (storage)
+- Metadata in `*.FactMetaData.json` files
+
+#### Multi-Vehicle Support
+
+Always null-check the active vehicle:
 
 ```cpp
 Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
-if (vehicle) {
-    // Use vehicle
-}
+if (!vehicle) return;
+
+// Other managers
+SettingsManager::instance()->appSettings()->...
+LinkManager::instance()->...
 ```
 
 #### Firmware Plugin System
 
-Use FirmwarePlugin for firmware-specific behavior instead of hardcoding:
+Use FirmwarePlugin for firmware-specific behavior:
 
 ```cpp
-vehicle->firmwarePlugin()->isCapable(capability);
+// FirmwarePlugin - Firmware behavior (flight modes, capabilities)
 vehicle->firmwarePlugin()->flightModes();
+vehicle->firmwarePlugin()->isCapable(capability);
+
+// AutoPilotPlugin - Vehicle setup UI
+// VehicleComponent - Individual setup items (Radio, Sensors, Safety)
+```
+
+#### QML/C++ Integration
+
+```cpp
+Q_OBJECT
+QML_ELEMENT           // Creatable in QML
+QML_SINGLETON         // Singleton
+QML_UNCREATABLE("")   // C++-only
+
+Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
+Q_INVOKABLE void method();
+Q_ENUM(EnumType)
 ```
 
 ---
@@ -308,7 +345,6 @@ For more details, see [COPYING.md](COPYING.md).
 
 - **User Manual**: https://docs.qgroundcontrol.com/en/
 - **Developer Guide**: https://dev.qgroundcontrol.com/en/
-- **API Documentation**: In-code documentation and `copilot-instructions.md`
 - **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
 - **Discussion Forum**: https://discuss.px4.io/c/qgroundcontrol
 - **Discord**: https://discord.gg/dronecode
