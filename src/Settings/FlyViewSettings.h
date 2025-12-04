@@ -39,4 +39,5 @@ public:
     DEFINE_SETTINGFACT(requestControlAllowTakeover)
     DEFINE_SETTINGFACT(requestControlTimeout)
     DEFINE_SETTINGFACT(showJoystickIndicatorInToolbar)
+    DEFINE_SETTINGFACT(enableAutomaticMissionPopups)
 };
