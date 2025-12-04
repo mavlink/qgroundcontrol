@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Determine the build directory
 if [[ -z "${BUILD_DIR:-}" ]]; then
-    BUILD_DIR="$(echo "$(dirname "$(readlink -f "$0")")" | rev | cut -f3- -d'/' | rev)/build"
+    BUILD_DIR="$(dirname "$(readlink -f "$0")" | rev | cut -f3- -d'/' | rev)/build"
 fi
 
 # Create the build directory if it doesn't exist
