@@ -173,42 +173,121 @@ Item {
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
         }
 
-        //-- Thermal Image
+        //-- Backup Image
         Item {
-            id:                 thermalItem
-            width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_FULL ? parent.height : (_camera.thermalMode === MavlinkCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
-            anchors.centerIn:   parent
-            visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== MavlinkCameraControl.THERMAL_OFF
-            function pipOrNot() {
-                if(_camera) {
-                    if(_camera.thermalMode === MavlinkCameraControl.THERMAL_PIP) {
-                        anchors.centerIn    = undefined
-                        anchors.top         = parent.top
-                        anchors.topMargin   = mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
-                        anchors.left        = parent.left
-                        anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 12
+            id:                 backupItem
+            width:              height * QGroundControl.videoManager.aspectRatio
+            height:             parent.height / 4
+            visible:            QGroundControl.settingsManager.videoSettings.rtspUrlBackup.rawValue !== "" && QGroundControl.videoManager.decoding
+            anchors.centerIn    : undefined
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left        : parent.left
+
+            function undefinePosition() {
+                anchors.centerIn    = undefined
+                anchors.horizontalCenter = undefined
+                anchors.top = undefined
+                anchors.bottom = undefined
+                anchors.verticalCenter = undefined
+                anchors.left        = undefined
+                anchors.right       = undefined
+            }
+
+            function leftPosition() {
+                undefinePosition()
+
+                anchors.verticalCenter = parent.verticalCenter
+                anchors.left        = parent.left
+            }
+
+            function rightPosition() {
+                undefinePosition()
+                anchors.verticalCenter = parent.verticalCenter
+                anchors.right = parent.right
+            }
+
+            function topPosition() {
+                undefinePosition()
+                anchors.horizontalCenter = parent.horizontalCenter
+                anchors.top = parent.top
+            }
+
+            function bottomPosition() {
+                undefinePosition()
+                anchors.horizontalCenter = parent.horizontalCenter
+                anchors.bottom = parent.bottom
+            }
+
+            QGCVideoBackground {
+                id:             backupVideo
+                objectName:     "backupVideo"
+                anchors.fill:   parent
+                opacity:        1.0
+            }
+
+            ToolTip {
+                delay: 1000
+                timeout: 3000
+                visible: parent.visible
+                anchors.centerIn: parent.centerIn
+                text: qsTr("Right-click to open control menu")
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.RightButton
+                onClicked: backupItemPositionMenu.popup()
+            }
+
+            QGCMenu {
+                id: backupItemPositionMenu
+
+                property bool hasAuxStream: QGroundControl.videoManager.hasAuxStream
+                property bool usesPrimaryStream: QGroundControl.videoManager.isPrimaryStream
+
+                QGCMenuItem {
+                    text:           qsTr("Left")
+                    onTriggered:    backupItem.leftPosition()
+                }
+
+                QGCMenuItem {
+                    text:           qsTr("Right")
+                    onTriggered:    backupItem.rightPosition()
+                }
+
+                QGCMenuItem {
+                    text:           qsTr("Top")
+                    onTriggered:    backupItem.topPosition()
+                }
+
+                QGCMenuItem {
+                    text:           qsTr("Bottom")
+                    onTriggered:    backupItem.bottomPosition()
+                }
+
+                QGCMenuSeparator {
+                    visible:        true    // should be visible when backup stream is configured
+                }
+
+                QGCMenuItem {
+                    id:             switchStreamMenuItem
+                    text:           qsTr("Switch video streams")
+                    visible:        true
+                    enabled:        false
+                    onTriggered:    QGroundControl.videoManager.isPrimaryStream = !QGroundControl.videoManager.isPrimaryStream
+                }
+
+                onHasAuxStreamChanged: {
+                    switchStreamMenuItem.enabled = hasAuxStream
+                }
+
+                onUsesPrimaryStreamChanged: {
+                    if (usesPrimaryStream) {
+                        switchStreamMenuItem.text = qsTr("Switch to auxiliary video stream")
                     } else {
-                        anchors.top         = undefined
-                        anchors.topMargin   = undefined
-                        anchors.left        = undefined
-                        anchors.leftMargin  = undefined
-                        anchors.centerIn    = parent
+                        switchStreamMenuItem.text = qsTr("Switch to primary video stream")
                     }
                 }
-            }
-            Connections {
-                target:                 _camera
-                function onThermalModeChanged() { thermalItem.pipOrNot() }
-            }
-            onVisibleChanged: {
-                thermalItem.pipOrNot()
-            }
-            QGCVideoBackground {
-                id:             thermalVideo
-                objectName:     "thermalVideo"
-                anchors.fill:   parent
-                opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }
         //-- Zoom

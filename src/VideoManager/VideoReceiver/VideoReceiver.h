@@ -27,6 +27,8 @@ public:
         : QObject(parent)
     {}
 
+    bool isPrimary() const { return (_name == QStringLiteral("videoContent")); }
+    bool isBackup() const { return (_name == QStringLiteral("backupVideo")); }
     bool isThermal() const { return (_name == QStringLiteral("thermalVideo")); }
 
     void *sink() { return _sink; }

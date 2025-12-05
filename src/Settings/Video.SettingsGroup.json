@@ -25,6 +25,34 @@
     "default":     ""
 },
 {
+    "name": "rtspUrlBackup",
+    "shortDesc": "Backup Video RTSP Url",
+    "longDesc": "Backup RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "type": "string",
+    "default": ""
+},
+{
+    "name":             "rtspUseAux",
+    "shortDesc": "Enable auxiliary video streams",
+    "longDesc":  "Enable auxiliary RTSP video streams and add possibility to switch between primary and aux ones",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "rtspUrlAux",
+    "shortDesc": "Video RTSP Url Aux",
+    "longDesc":  "Additional RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "rtspUrlBackupAux",
+    "shortDesc": "Backup Video RTSP Url Aux",
+    "longDesc":  "Additional backup RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "tcpUrl",
     "shortDesc": "Video TCP Url",
     "longDesc":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",

@@ -175,6 +175,38 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
     return _rtspUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrlBackup) {
+    if (!_rtspUrlBackupFact) {
+        _rtspUrlBackupFact = _createSettingsFact(rtspUrlBackupName);
+        connect(_rtspUrlBackupFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _rtspUrlBackupFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUseAux) {
+    if (!_rtspUseAuxFact) {
+        _rtspUseAuxFact = _createSettingsFact(rtspUseAuxName);
+        connect(_rtspUseAuxFact, &Fact::valueChanged, this, &VideoSettings::_auxConfigChanged);
+    }
+    return _rtspUseAuxFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrlAux) {
+    if (!_rtspUrlAuxFact) {
+        _rtspUrlAuxFact = _createSettingsFact(rtspUrlAuxName);
+        connect(_rtspUrlAuxFact, &Fact::valueChanged, this, &VideoSettings::_auxConfigChanged);
+    }
+    return _rtspUrlAuxFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrlBackupAux) {
+    if (!_rtspUrlBackupAuxFact) {
+        _rtspUrlBackupAuxFact = _createSettingsFact(rtspUrlBackupAuxName);
+        connect(_rtspUrlBackupAuxFact, &Fact::valueChanged, this, &VideoSettings::_auxConfigChanged);
+    }
+    return _rtspUrlBackupAuxFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
@@ -199,22 +231,22 @@ bool VideoSettings::streamConfigured(void)
     //-- If UDP, check for URL
     if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
         qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpUrl()->rawValue().toString();
-        return !udpUrl()->rawValue().toString().isEmpty();
+        return _isConfigured(udpUrl());
     }
     //-- If RTSP, check for URL
     if(vSource == videoSourceRTSP) {
         qCDebug(VideoManagerLog) << "Testing configuration for RTSP Stream:" << rtspUrl()->rawValue().toString();
-        return !rtspUrl()->rawValue().toString().isEmpty();
+        return _isConfigured(rtspUrl());
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {
         qCDebug(VideoManagerLog) << "Testing configuration for TCP Stream:" << tcpUrl()->rawValue().toString();
-        return !tcpUrl()->rawValue().toString().isEmpty();
+        return _isConfigured(tcpUrl());
     }
     //-- If MPEG-TS, check for URL
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpUrl()->rawValue().toString();
-        return !udpUrl()->rawValue().toString().isEmpty();
+        return _isConfigured(udpUrl());
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {
@@ -235,9 +267,30 @@ bool VideoSettings::streamConfigured(void)
     return false;
 }
 
+bool VideoSettings::auxStreamConfigured()
+{
+    QString vSource = videoSource()->rawValue().toString();
+    if(vSource != videoSourceRTSP || !rtspUseAux()->rawValue().toBool()) {
+        return false;
+    }
+
+    const bool primaryConfigured = _isConfigured(rtspUrl());
+    const bool backupConfigured = _isConfigured(rtspUrlBackup());
+
+    const bool auxConfigured = primaryConfigured ? _isConfigured(rtspUrlAux()) : false;
+    const bool auxBackupConfigured = backupConfigured ? _isConfigured(rtspUrlBackupAux()) : false;
+
+    return auxConfigured || auxBackupConfigured;
+}
+
 void VideoSettings::_configChanged(QVariant)
 {
     emit streamConfiguredChanged(streamConfigured());
+}
+
+void VideoSettings::_auxConfigChanged(QVariant)
+{
+    emit auxStreamConfiguredChanged(auxStreamConfigured());
 }
 
 void VideoSettings::_setForceVideoDecodeList()
@@ -271,4 +324,12 @@ void VideoSettings::_setForceVideoDecodeList()
         _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
     }
 #endif
+}
+
+bool VideoSettings::_isConfigured(const Fact* parameter)
+{
+    if (!parameter)
+        return false;
+
+    return !parameter->rawValue().toString().isEmpty();
 }
