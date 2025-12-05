@@ -41,7 +41,7 @@ ColumnLayout {
             if (instrumentValueData.fact) {
                 return instrumentValueData.fact.enumOrValueString + (instrumentValueData.showUnits ? " " + instrumentValueData.fact.units : "")
             } else {
-                return qsTr("--")
+                return qsTr("–")
             }
         }
     }
