@@ -151,7 +151,6 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCSimpleMessageDialog.qml
         QGCSlider.qml
         QGCSwipeView.qml
-        QGCSwitch.qml
         QGCTabBar.qml
         QGCTabButton.qml
         QGCTextField.qml
