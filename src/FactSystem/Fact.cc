@@ -386,14 +386,14 @@ QString Fact::invalidValueString(int decimalPlaces) const {
     case FactMetaData::valueTypeFloat:
     case FactMetaData::valueTypeDouble:
         if (decimalPlaces <= 0) {
-            return QStringLiteral("--");
+            return QStringLiteral("–");
         }
-        return QStringLiteral("--.") +
-               QString(decimalPlaces, QLatin1Char('-'));
+        return QStringLiteral("–.") +
+               QString(decimalPlaces, QChar(u'–'));
     case FactMetaData::valueTypeElapsedTimeInSeconds:
-        return QStringLiteral("--:--:--");
+        return QStringLiteral("––:––:––");
     default:
-        return QStringLiteral("--");
+        return QStringLiteral("–");
     }
 }
 
