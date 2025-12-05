@@ -156,7 +156,7 @@ void BatteryFactGroup::_handleBatteryStatus(Vehicle *vehicle, const mavlink_mess
 void BatteryFactGroup::_timeRemainingChanged(const QVariant &value)
 {
     if (qIsNaN(value.toDouble())) {
-        _timeRemainingStrFact.setRawValue("--:--:--");
+        _timeRemainingStrFact.setRawValue("––:––:––");
     } else {
         const int totalSeconds = value.toInt();
         const int hours = totalSeconds / 3600;

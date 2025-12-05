@@ -20,7 +20,7 @@ ToolIndicatorPage {
 
     property var    activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
     property string na:             qsTr("N/A", "No data to display")
-    property string valueNA:        qsTr("--", "No data to display")
+    property string valueNA:        qsTr("–", "No data to display")
 
     property var    _escs:          activeVehicle ? activeVehicle.escs : null
     property int    _onlineBitmask: _escs ? _escs.get(0).info.rawValue : 0
