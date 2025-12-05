@@ -13,12 +13,11 @@ import QGroundControl.FactControls
 
 // Editor for Mission Settings
 Rectangle {
-    id:                 valuesRect
-    width:              availableWidth
-    height:             valuesColumn.height + (_margin * 2)
-    color:              qgcPal.windowShadeDark
-    visible:            missionItem.isCurrentItem
-    radius:             _radius
+    id:     valuesRect
+    width:  availableWidth
+    height: valuesColumn.height + (_margin * 2)
+    color:  qgcPal.windowShadeDark
+    radius: _radius
 
     property var    _masterControler:               masterController
     property var    _missionController:             _masterControler.missionController

@@ -15,17 +15,16 @@ import QGroundControl.FactControls
 /// Mission item edit control
 Rectangle {
     id:             _root
-    height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
-    color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    height:         editorLoader.y + editorLoader.height + _innerMargin
+    color:          qgcPal.missionItemEditor
     radius:         _radius
-    opacity:        _currentItem ? 1.0 : 0.7
     border.width:   _readyForSave ? 0 : 2
     border.color:   qgcPal.warningText
 
     property var    map                 ///< Map control
     property var    masterController
     property var    missionItem         ///< MissionItem associated with this editor
-    property bool   readOnly            ///< true: read only view, false: full editing view
+    property bool   readOnly: false     ///< true: read only view, false: full editing view
 
     signal clicked
     signal remove
@@ -33,9 +32,8 @@ Rectangle {
 
     property var    _masterController:          masterController
     property var    _missionController:         _masterController.missionController
-    property bool   _currentItem:               missionItem.isCurrentItem
-    property color  _outerTextColor:            _currentItem ? qgcPal.primaryButtonText : qgcPal.text
-    property bool   _noMissionItemsAdded:       ListView.view.model.count === 1
+    property color  _outerTextColor:            qgcPal.text
+    property bool   _noMissionItemsAdded:       _missionController.visualItems.count === 1
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
     property bool   _readyForSave:              missionItem.readyForSaveState === VisualMissionItem.ReadyForSave
@@ -115,7 +113,7 @@ Rectangle {
             mipmap:                 true
             smooth:                 true
             color:                  qgcPal.text
-            visible:                _currentItem && missionItem.sequenceNumber !== 0
+            visible:                missionItem.sequenceNumber !== 0
             source:                 "/res/TrashDelete.svg"
 
             QGCMouseArea {
@@ -289,30 +287,12 @@ Rectangle {
         }
     }
 
-    /*
-    QGCLabel {
-        id:                     notReadyForSaveLabel
-        anchors.margins:        _margin
-        anchors.left:           notReadyForSaveIndicator.right
-        anchors.right:          parent.right
-        anchors.top:            commandPicker.bottom
-        visible:                _currentItem && !_readyForSave
-        text:                   missionItem.readyForSaveState === VisualMissionItem.NotReadyForSaveTerrain ?
-                                    qsTr("Incomplete: Waiting on terrain data.") :
-                                    qsTr("Incomplete: Item not fully specified.")
-        wrapMode:               Text.WordWrap
-        horizontalAlignment:    Text.AlignHCenter
-        color:                  qgcPal.warningText
-    }
-
-*/
-
     Loader {
         id:                 editorLoader
         anchors.margins:    _innerMargin
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
-        source:             _currentItem ? missionItem.editorQml : ""
+        source:             missionItem.editorQml
         asynchronous:       true
 
         property var    masterController:   _masterController

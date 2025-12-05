@@ -65,7 +65,6 @@ class QGCOptions : public QObject
     Q_PROPERTY(bool checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
     Q_PROPERTY(bool combineSettingsAndSetup         READ combineSettingsAndSetup        CONSTANT)
     Q_PROPERTY(bool disableVehicleConnection        READ disableVehicleConnection       CONSTANT)
-    Q_PROPERTY(bool enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(bool enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
     Q_PROPERTY(bool guidedActionsRequireRCRSSI      READ guidedActionsRequireRCRSSI     CONSTANT)
     Q_PROPERTY(bool missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
@@ -103,10 +102,6 @@ public:
     /// Main ToolBar Multiplier.
     /// @return Factor to use when computing toolbar height
     virtual double toolbarHeightMultiplier() const { return 1.0; }
-
-    /// Enable Plan View Selector (Mission, Fence or Rally)
-    /// @return True or false
-    virtual bool enablePlanViewSelector() const { return true; }
 
     /// Should the mission status indicator (Plan View) be shown?
     /// @return Yes or no
