@@ -633,13 +633,12 @@ Item {
 
         Rectangle {
             id:                     rightPanelBackground
-            height:                 parent.height
-            width:                  _utmspEnabled ? _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667 : _rightPanelWidth
-            color:                  qgcPal.window
-            opacity:                0.2
+            anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.right:          parent.right
-            anchors.rightMargin:    _toolsMargin
+            width:                  _utmspEnabled ? _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667 : _rightPanelWidth
+            color:                  qgcPal.window
+            opacity:                0.85
         }
 
         //-------------------------------------------------------
@@ -647,9 +646,11 @@ Item {
         Item {
             anchors.fill:           rightPanelBackground
             anchors.topMargin:      _toolsMargin
+
             DeadMouseArea {
                 anchors.fill:   parent
             }
+
             Column {
                 id:                 rightControls
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
@@ -700,21 +701,74 @@ Item {
                 id: startToolComponent
 
                 MissionItemEditor {
-                    map:                    editorMap
-                    masterController:       _planMasterController
-                    missionItem:            _missionController.visualItems.get(0)
+                    width:              parent.width
+                    map:                editorMap
+                    masterController:   _planMasterController
+                    missionItem:        _missionController.visualItems.get(0)
                 }
             }
 
             Component {
                 id: missionItemToolComponent
 
-                MissionItemEditor {
-                    map:                        editorMap
-                    masterController:           _planMasterController
-                    missionItem:                _missionController.currentPlanViewItem
-                    onRemove:                   _missionController.removeVisualItem(_missionController.currentPlanViewVIIndex)
-                    onSelectNextNotReadyItem:   selectNextNotReady()
+                Column {
+                    spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                    RowLayout {
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth / 2
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        height: ScreenTools.defaultFontPixelHeight
+
+                        QGCColoredImage {
+                            Layout.fillHeight:      true
+                            Layout.preferredWidth:  height
+                            source:                 "/InstrumentValueIcons/backward.svg"
+                            color:                  qgcPal.buttonText
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (_missionController.currentPlanViewVIIndex > 1) {
+                                        let prevItem = _missionController.visualItems.get(_missionController.currentPlanViewVIIndex - 1)
+                                        _missionController.setCurrentPlanViewSeqNum(prevItem.sequenceNumber, false)
+                                    }
+                                }
+                            }
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth:       true
+                            horizontalAlignment:    Text.AlignHCenter
+                            text:                   _missionController.currentPlanViewItem.commandName
+                        }
+
+                        QGCColoredImage {
+                            Layout.fillHeight:      true
+                            Layout.preferredWidth:  height
+                            source:                 "/InstrumentValueIcons/forward.svg"
+                            color:                  qgcPal.buttonText
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (_missionController.currentPlanViewVIIndex < _missionController.visualItems.count - 1) {
+                                        let nextItem = _missionController.visualItems.get(_missionController.currentPlanViewVIIndex + 1)
+                                        _missionController.setCurrentPlanViewSeqNum(nextItem.sequenceNumber, false)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    MissionItemEditor {
+                        width:                      parent.width
+                        map:                        editorMap
+                        masterController:           _planMasterController
+                        missionItem:                _missionController.currentPlanViewItem
+                        onRemove:                   _missionController.removeVisualItem(_missionController.currentPlanViewVIIndex)
+                        onSelectNextNotReadyItem:   selectNextNotReady()
+                    }
                 }
             }
 

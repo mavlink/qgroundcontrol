@@ -12,8 +12,8 @@ import QGroundControl.FactControls
 // Editor for Simple mission items
 Rectangle {
     width:  availableWidth
-    height: editorColumn.height + (_margin * 2)
-    color:  qgcPal.windowShadeDark
+    height: editorColumn.height //+ (_margin * 2)
+    color:  "transparent"
     radius: _radius
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
@@ -50,20 +50,10 @@ Rectangle {
 
     Column {
         id:                 editorColumn
-        anchors.margins:    _margin
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
         spacing:            _margin
-
-        QGCLabel {
-            width:          parent.width
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           missionItem.rawEdit ?
-                                qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
-                                missionItem.commandDescription
-        }
 
         ColumnLayout {
             anchors.left:       parent.left

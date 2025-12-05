@@ -5,18 +5,14 @@ import QtQml
 import QtQuick.Layouts
 
 import QGroundControl
-
-
 import QGroundControl.Controls
 import QGroundControl.FactControls
-
-
 
 /// Mission item edit control
 Rectangle {
     id:             _root
-    height:         editorLoader.y + editorLoader.height + _innerMargin
-    color:          qgcPal.missionItemEditor
+    height:         mainLayout.height
+    color:          "transparent"
     radius:         _radius
     border.width:   _readyForSave ? 0 : 2
     border.color:   qgcPal.warningText
@@ -26,7 +22,6 @@ Rectangle {
     property var    missionItem         ///< MissionItem associated with this editor
     property bool   readOnly: false     ///< true: read only view, false: full editing view
 
-    signal clicked
     signal remove
     signal selectNextNotReadyItem
 
@@ -42,8 +37,8 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _innerMargin:       2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
-    readonly property real  _hamburgerSize:     commandPicker.height * 0.75
-    readonly property real  _trashSize:         commandPicker.height * 0.75
+    readonly property real  _hamburgerSize:     ScreenTools.defaultFontPixelHeight
+    readonly property real  _trashSize:         ScreenTools.defaultFontPixelHeight
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     QGCPalette {
@@ -51,16 +46,104 @@ Rectangle {
         colorGroupEnabled: enabled
     }
 
-    FocusScope {
-        id:             currentItemScope
-        anchors.fill:   parent
+    Column {
+        id:                 mainLayout
+        anchors.margins:    _margin
+        anchors.left:       parent.left
+        width:              parent.width - (_margin * 2)
+        spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-        MouseArea {
-            anchors.fill:   parent
-            onClicked: {
-                if (mainWindow.allowViewSwitch()) {
-                    currentItemScope.focus = true
-                    _root.clicked()
+        Loader {
+            id:             editorLoader
+            source:         missionItem.editorQml
+            asynchronous:   true
+
+            property var    masterController:   _masterController
+            property real   availableWidth:     parent.width
+            property var    editorRoot:         _root
+        }
+
+        Rectangle {
+            id:         separator
+            width:      parent.width
+            height:     1
+            color:      "transparent"
+        }
+
+        RowLayout {
+            id:         bottomRowLayout
+            width:      parent.width
+            spacing:    ScreenTools.defaultFontPixelWidth
+
+            Rectangle {
+                id:                     notReadyForSaveIndicator
+                Layout.preferredWidth:  visible ? _hamburgerSize : 0
+                Layout.preferredHeight: _hamburgerSize
+                border.width:           1
+                border.color:           qgcPal.warningText
+                color:                  "white"
+                radius:                 width / 2
+                visible:                !_readyForSave
+
+                QGCLabel {
+                    id:                 readyForSaveLabel
+                    anchors.centerIn:   parent
+                    //: Indicator in Plan view to show mission item is not ready for save/send
+                    text:               qsTr("?")
+                    color:              qgcPal.warningText
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                }
+            }
+
+            QGCColoredImage {
+                id:                     deleteButton
+                Layout.preferredWidth:  visible ? _hamburgerSize : 0
+                Layout.preferredHeight: _hamburgerSize
+                Layout.fillHeight:      true
+                source:                 "/res/TrashDelete.svg"
+                sourceSize.height:      _hamburgerSize
+                fillMode:               Image.PreserveAspectFit
+                mipmap:                 true
+                smooth:                 true
+                color:                  qgcPal.text
+                visible:                missionItem.sequenceNumber !== 0
+
+                QGCMouseArea {
+                    fillItem:   parent
+                    onClicked:  remove()
+                }
+            }
+
+            QGCLabel {
+                Layout.fillWidth:       true
+                horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
+                text:                   missionItem.commandDescription
+                wrapMode:               Text.WordWrap
+                font.pointSize:         ScreenTools.smallFontPointSize
+            }
+
+            QGCColoredImage {
+                id:                     hamburger
+                Layout.alignment:       Qt.AlignRight
+                Layout.preferredWidth:  visible ? _hamburgerSize : 0
+                Layout.preferredHeight: _hamburgerSize
+                sourceSize.height:      _hamburgerSize
+                source:                 "qrc:/qmlimages/Hamburger.svg"
+                color:                  qgcPal.text
+                visible:                missionItem.sequenceNumber !== 0
+
+                QGCMouseArea {
+                    fillItem: hamburger
+
+                    onClicked: (position) => {
+                        currentItemScope.focus = true
+                        position = Qt.point(position.x, position.y)
+                        // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+                        position = mapToItem(globals.parent, position)
+                        var dropPanel = hamburgerMenuDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
+                        dropPanel.open()
+                    }
                 }
             }
         }
@@ -72,110 +155,6 @@ Rectangle {
         EditPositionDialog {
             coordinate:             missionItem.isSurveyItem ?  missionItem.centerCoordinate : missionItem.coordinate
             onCoordinateChanged:    missionItem.isSurveyItem ?  missionItem.centerCoordinate = coordinate : missionItem.coordinate = coordinate
-        }
-    }
-
-    Row {
-        id:                 topRowLayout
-        anchors.margins:    _margin
-        anchors.left:       parent.left
-        anchors.top:        parent.top
-        spacing:            _margin
-
-        Rectangle {
-            id:                     notReadyForSaveIndicator
-            anchors.verticalCenter: parent.verticalCenter
-            width:                  _hamburgerSize
-            height:                 width
-            border.width:           1
-            border.color:           qgcPal.warningText
-            color:                  "white"
-            radius:                 width / 2
-            visible:                !_readyForSave
-
-            QGCLabel {
-                id:                 readyForSaveLabel
-                anchors.centerIn:   parent
-                //: Indicator in Plan view to show mission item is not ready for save/send
-                text:               qsTr("?")
-                color:              qgcPal.warningText
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-        }
-
-        QGCColoredImage {
-            id:                     deleteButton
-            anchors.verticalCenter: parent.verticalCenter
-            height:                 _hamburgerSize
-            width:                  height
-            sourceSize.height:      height
-            fillMode:               Image.PreserveAspectFit
-            mipmap:                 true
-            smooth:                 true
-            color:                  qgcPal.text
-            visible:                missionItem.sequenceNumber !== 0
-            source:                 "/res/TrashDelete.svg"
-
-            QGCMouseArea {
-                fillItem:   parent
-                onClicked:  remove()
-            }
-        }
-
-        Item {
-            id:                     commandPicker
-            anchors.verticalCenter: parent.verticalCenter
-            height:                 ScreenTools.implicitComboBoxHeight
-            width:                  innerLayout.width
-            visible:                !commandLabel.visible
-
-            RowLayout {
-                id:                     innerLayout
-                anchors.verticalCenter: parent.verticalCenter
-                spacing:                _padding
-
-                property real _padding: ScreenTools.comboBoxPadding
-
-                QGCLabel { text: missionItem.commandName }
-
-                QGCColoredImage {
-                    height:             ScreenTools.defaultFontPixelWidth
-                    width:              height
-                    fillMode:           Image.PreserveAspectFit
-                    smooth:             true
-                    antialiasing:       true
-                    color:              qgcPal.text
-                    source:             "/qmlimages/arrow-down.png"
-                }
-            }
-
-            QGCMouseArea {
-                fillItem:   parent
-                onClicked:  commandDialog.createObject(mainWindow).open()
-            }
-
-            Component {
-                id: commandDialog
-
-                MissionCommandDialog {
-                    vehicle:                    masterController.controllerVehicle
-                    missionItem:                _root.missionItem
-                    map:                        _root.map
-                    // FIXME: Disabling fly through commands doesn't work since you may need to change from an RTL to something else
-                    flyThroughCommandsAllowed:  true //_missionController.flyThroughCommandsAllowed
-                }
-            }
-        }
-
-        QGCLabel {
-            id:                     commandLabel
-            anchors.verticalCenter: parent.verticalCenter
-            width:                  commandPicker.width
-            height:                 commandPicker.height
-            visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode || missionItem.isTakeoffItem
-            verticalAlignment:      Text.AlignVCenter
-            text:                   missionItem.commandName
-            color:                  _outerTextColor
         }
     }
 
@@ -222,6 +201,27 @@ Rectangle {
                         }
                     }
 
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Change command...")
+                        onClicked: {
+                            commandDialog.createObject(mainWindow).open()
+                            hamburgerMenuDropPanel.close()
+                        }
+
+                        Component {
+                            id: commandDialog
+
+                            MissionCommandDialog {
+                                vehicle:                    masterController.controllerVehicle
+                                missionItem:                _root.missionItem
+                                map:                        _root.map
+                                // FIXME: Disabling fly through commands doesn't work since you may need to change from an RTL to something else
+                                flyThroughCommandsAllowed:  true //_missionController.flyThroughCommandsAllowed
+                            }
+                        }
+                    }
+
                     Rectangle {
                         Layout.fillWidth:       true
                         Layout.preferredHeight: 1
@@ -259,44 +259,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-
-    QGCColoredImage {
-        id:                     hamburger
-        anchors.margins:        _margin
-        anchors.right:          parent.right
-        anchors.verticalCenter: topRowLayout.verticalCenter
-        width:                  _hamburgerSize
-        height:                 _hamburgerSize
-        sourceSize.height:      _hamburgerSize
-        source:                 "qrc:/qmlimages/Hamburger.svg"
-        visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
-        color:                  qgcPal.text
-
-        QGCMouseArea {
-            fillItem:   hamburger
-            onClicked: (position) => {
-                currentItemScope.focus = true
-                position = Qt.point(position.x, position.y)
-                // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
-                position = mapToItem(globals.parent, position)
-                var dropPanel = hamburgerMenuDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
-                dropPanel.open()
-            }
-        }
-    }
-
-    Loader {
-        id:                 editorLoader
-        anchors.margins:    _innerMargin
-        anchors.left:       parent.left
-        anchors.top:        topRowLayout.bottom
-        source:             missionItem.editorQml
-        asynchronous:       true
-
-        property var    masterController:   _masterController
-        property real   availableWidth:     _root.width - (anchors.margins * 2) ///< How wide the editor should be
-        property var    editorRoot:         _root
     }
 } // Rectangle
