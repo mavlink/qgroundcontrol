@@ -15,7 +15,7 @@ import QtQuick.Layouts
 import QGroundControl
 
 import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 
 ColumnLayout {
@@ -25,7 +25,7 @@ ColumnLayout {
 
     Loader {
         id:     modelContainer
-        source: "qrc:/qml/QGroundControl/FlightDisplay/DefaultChecklist.qml"
+        source: "qrc:/qml/QGroundControl/FlyView/DefaultChecklist.qml"
     }
 
     property bool allChecksPassed:  false
@@ -77,17 +77,17 @@ ColumnLayout {
         }
 
         if(vehicle.multiRotor) {
-            modelContainer.source = "qrc:/qml/QGroundControl/FlightDisplay/MultiRotorChecklist.qml"
+            modelContainer.source = "qrc:/qml/QGroundControl/FlyView/MultiRotorChecklist.qml"
         } else if(vehicle.vtol) {
-            modelContainer.source = "qrc:/qml/QGroundControl/FlightDisplay/VTOLChecklist.qml"
+            modelContainer.source = "qrc:/qml/QGroundControl/FlyView/VTOLChecklist.qml"
         } else if(vehicle.rover) {
-            modelContainer.source = "qrc:/qml/QGroundControl/FlightDisplay/RoverChecklist.qml"
+            modelContainer.source = "qrc:/qml/QGroundControl/FlyView/RoverChecklist.qml"
         } else if(vehicle.sub) {
-            modelContainer.source = "qrc:/qml/QGroundControl/FlightDisplay/SubChecklist.qml"
+            modelContainer.source = "qrc:/qml/QGroundControl/FlyView/SubChecklist.qml"
         } else if(vehicle.fixedWing) {
-            modelContainer.source = "qrc:/qml/QGroundControl/FlightDisplay/FixedWingChecklist.qml"
+            modelContainer.source = "qrc:/qml/QGroundControl/FlyView/FixedWingChecklist.qml"
         } else {
-            modelContainer.source = "qrc:/qml/QGroundControl/FlightDisplay/DefaultChecklist.qml"
+            modelContainer.source = "qrc:/qml/QGroundControl/FlyView/DefaultChecklist.qml"
         }
         return
     }

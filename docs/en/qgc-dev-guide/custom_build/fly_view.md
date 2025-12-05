@@ -5,9 +5,9 @@ The Fly View is designed in such a way that it can be cusomtized in multiple way
 ## Layers
 
 - There are three layers to the fly view from top to bottom visually:
-  - [`FlyView.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlightDisplay/FlyView.qml) This is the base layer of ui and business logic to control map and video switching.
-  - [`FlyViewWidgetsOverlay.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlightDisplay/FlyViewWidgetLayer.qml) This layer includes all the remaining widgets for the fly view.
-  - [`FlyViewCustomLayer.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlightDisplay/FlyViewCustomLayer.qml) This is a layer you override using resource override to add your own custom layer.
+  - [`FlyView.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlyView/FlyView.qml) This is the base layer of ui and business logic to control map and video switching.
+  - [`FlyViewWidgetsOverlay.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlyView/FlyViewWidgetLayer.qml) This layer includes all the remaining widgets for the fly view.
+  - [`FlyViewCustomLayer.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlyView/FlyViewCustomLayer.qml) This is a layer you override using resource override to add your own custom layer.
 
 ### Inset Negotiation using `QGCToolInsets`
 

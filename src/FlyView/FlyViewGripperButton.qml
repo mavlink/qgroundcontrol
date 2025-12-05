@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 import QGroundControl
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 ToolStripAction {
     id:         action

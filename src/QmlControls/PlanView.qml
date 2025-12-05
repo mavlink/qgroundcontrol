@@ -23,7 +23,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 import QGroundControl.UTMSP
 
 

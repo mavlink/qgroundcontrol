@@ -36,7 +36,7 @@ add_subdirectory(Camera)
 add_subdirectory(Comms)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
-add_subdirectory(FlightDisplay)
+add_subdirectory(FlyView)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Gimbal)
@@ -134,7 +134,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         AutoPilotPluginsCommonModule
         FactControlsModule
         FirstRunPromptDialogsModule
-        FlightDisplayModule
+        FlyViewModule
         FlightMapModule
         QGroundControlControlsModule
         QGroundControlModule

@@ -15,7 +15,7 @@ import QGroundControl
 
 
 import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 MapQuickItem {
     id:             _root

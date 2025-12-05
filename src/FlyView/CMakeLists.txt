@@ -3,10 +3,10 @@
 # In-flight view, telemetry displays, and vehicle control UI
 # ============================================================================
 
-qt_add_library(FlightDisplayModule STATIC)
+qt_add_library(FlyViewModule STATIC)
 
-qt_add_qml_module(FlightDisplayModule
-    URI QGroundControl.FlightDisplay
+qt_add_qml_module(FlyViewModule
+    URI QGroundControl.FlyView
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES

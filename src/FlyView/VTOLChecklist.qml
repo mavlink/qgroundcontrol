@@ -14,7 +14,7 @@ import QtQml.Models
 import QGroundControl
 
 import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 
 Item {
@@ -22,11 +22,11 @@ Item {
     PreFlightCheckModel {
         id:     listModel
         PreFlightCheckGroup {
-            name: qsTr("Multirotor Initial Checks")
+            name: qsTr("VTOL Initial Checks")
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
-                manualText:     qsTr("Props mounted and secured?")
+                manualText:     qsTr("Props mounted? Wings secured? Tail secured?")
             }
 
             PreFlightBatteryCheck {
@@ -50,13 +50,18 @@ Item {
             name: qsTr("Please arm the vehicle here")
 
             PreFlightCheckButton {
+                name:            qsTr("Actuators")
+                manualText:      qsTr("Move all control surfaces. Did they work properly?")
+            }
+
+            PreFlightCheckButton {
                 name:            qsTr("Motors")
                 manualText:      qsTr("Propellers free? Then throttle up gently. Working properly?")
             }
 
             PreFlightCheckButton {
-                name:           qsTr("Mission")
-                manualText:     qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
+                name:        qsTr("Mission")
+                manualText:  qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
             }
 
             PreFlightSoundCheck {
@@ -68,18 +73,18 @@ Item {
 
             // Check list item group 2 - Final checks before launch
             PreFlightCheckButton {
-                name:           qsTr("Payload")
-                manualText:     qsTr("Configured and started? Payload lid closed?")
+                name:        qsTr("Payload")
+                manualText:  qsTr("Configured and started? Payload lid closed?")
             }
 
             PreFlightCheckButton {
-                name:           qsTr("Wind & weather")
-                manualText:     qsTr("OK for your platform?")
+                name:        "Wind & weather"
+                manualText:  qsTr("OK for your platform? Lauching into the wind?")
             }
 
             PreFlightCheckButton {
-                name:           qsTr("Flight area")
-                manualText:     qsTr("Launch area and path free of obstacles/people?")
+                name:        qsTr("Flight area")
+                manualText:  qsTr("Launch area and path free of obstacles/people?")
             }
         }
     }

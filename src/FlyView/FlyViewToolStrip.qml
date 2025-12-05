@@ -7,14 +7,22 @@
  *
  ****************************************************************************/
 
-import QGroundControl
-import QGroundControl.FlightDisplay
+import QtQml.Models
 
-GuidedToolStripAction {
-    text:       _guidedController.landTitle
-    message:    _guidedController.landMessage
-    iconSource: "/res/land.svg"
-    visible:    _guidedController.showLand && !_guidedController.showTakeoff
-    enabled:    _guidedController.showLand
-    actionID:   _guidedController.actionLand
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FlyView
+
+ToolStrip {
+    id: _root
+
+    signal displayPreFlightChecklist
+
+    FlyViewToolStripActionList {
+        id: flyViewToolStripActionList
+
+        onDisplayPreFlightChecklist: _root.displayPreFlightChecklist()
+    }
+
+    model: flyViewToolStripActionList.model
 }
