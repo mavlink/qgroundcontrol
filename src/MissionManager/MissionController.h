@@ -183,6 +183,7 @@ public:
 
     /// Sets a new current mission item (PlanView).
     ///     @param sequenceNumber - index for new item, -1 to clear current item
+    ///     @param force - true: reset internals even if specified item is already selected
     Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);
 
     enum SendToVehiclePreCheckState {
