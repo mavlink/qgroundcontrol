@@ -113,7 +113,7 @@ public:
     virtual bool showMissionStatus() const { return true; }
 
     /// Provides an optional, custom preflight checklist
-    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/FlightDisplay/PreFlightCheckList.qml")); }
+    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/FlyView/PreFlightCheckList.qml")); }
 
     /// Allows replacing the toolbar Light Theme color
     virtual QColor toolbarBackgroundLight() const { return QColorConstants::White; }

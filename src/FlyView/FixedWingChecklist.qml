@@ -14,7 +14,7 @@ import QtQml.Models
 import QGroundControl
 
 import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 
 Item {
@@ -22,7 +22,7 @@ Item {
     PreFlightCheckModel {
         id:     listModel
         PreFlightCheckGroup {
-            name: qsTr("Generic Initial checks")
+            name: qsTr("Fixed Wing Initial Checks")
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")

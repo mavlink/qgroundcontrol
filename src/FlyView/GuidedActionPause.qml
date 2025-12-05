@@ -7,22 +7,13 @@
  *
  ****************************************************************************/
 
-import QtQml.Models
-
 import QGroundControl
-import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
-ToolStrip {
-    id: _root
-
-    signal displayPreFlightChecklist
-
-    FlyViewToolStripActionList {
-        id: flyViewToolStripActionList
-
-        onDisplayPreFlightChecklist: _root.displayPreFlightChecklist()
-    }
-
-    model: flyViewToolStripActionList.model
+GuidedToolStripAction {
+    text:       _guidedController.pauseTitle
+    iconSource: "/res/pause-mission.svg"
+    visible:    _guidedController.showPause
+    enabled:    _guidedController.showPause
+    actionID:   _guidedController.actionPause
 }
