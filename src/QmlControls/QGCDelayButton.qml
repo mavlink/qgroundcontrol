@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 DelayButton {
     id:             control
     hoverEnabled:   !ScreenTools.isMobile
@@ -69,19 +68,21 @@ DelayButton {
         border.width:   showBorder ? 1 : 0
         border.color:   qgcPal.buttonBorder
 
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
+        QGCColoredImage {
+            anchors.topMargin:      _sliderIndicatorMargin
+            anchors.bottomMargin:   _sliderIndicatorMargin
+            anchors.leftMargin:     control.pressed ? (parent.width - width) * control.progress : 0
+            anchors.left:           parent.left
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            width:                  height
+            source:                 "qrc:/res/chevron-double-right.svg"
+            sourceSize.height:      parent.height
+            fillMode:               Image.PreserveAspectFit
+            color:                  qgcPal.buttonText
+            opacity:                0.2
 
-            GradientStop { position: 0.0; color: qgcPal.buttonHighlight }
-            GradientStop { position: 0.15; color: qgcPal.button }
-        }
-
-        Rectangle {
-            anchors.fill:           parent
-            anchors.rightMargin:    control.pressed ? parent.width * (1.0 - control.progress) : 0
-            color:                  qgcPal.buttonHighlight
-            opacity:                _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
-            radius:                 parent.radius
+            property real _sliderIndicatorMargin: ScreenTools.defaultFontPixelWidth * 0.5
         }
 
         QGCLabel {
