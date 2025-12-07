@@ -23,6 +23,7 @@ Rectangle {
     property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
     property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeMixed
     property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
+    property real _fieldSpacing:            ScreenTools.defaultFontPixelHeight / 2
 
     function updateAltitudeModeText() {
         if (missionItem.altitudeMode === QGroundControl.AltitudeModeRelative) {
@@ -55,6 +56,7 @@ Rectangle {
         anchors.top:        parent.top
         spacing:            _margin
 
+        // Takeoff item
         ColumnLayout {
             anchors.left:       parent.left
             anchors.right:      parent.right
@@ -102,7 +104,7 @@ Rectangle {
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
-            spacing:            _altRectMargin
+            spacing:            _fieldSpacing
             visible:            !missionItem.wizardMode
 
             ColumnLayout {
@@ -170,6 +172,12 @@ Rectangle {
                 }
             }
 
+            Rectangle {
+                height:     1
+                width:      parent.width
+                color:      qgcPal.windowShadeLight
+            }
+
             ColumnLayout {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
@@ -198,68 +206,70 @@ Rectangle {
                 }
             }
 
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                flow:           GridLayout.TopToBottom
-                rows:           missionItem.textFieldFacts.count +
-                                missionItem.nanFacts.count +
-                                (missionItem.speedSection.available ? 1 : 0)
-                columns:        2
+            Repeater {
+                model: missionItem.textFieldFacts
 
-                Repeater {
-                    model: missionItem.textFieldFacts
+                ColumnLayout {
+                    width:      parent.width
+                    spacing:    _fieldSpacing
 
-                    QGCLabel { text: object.name }
-                }
-
-                Repeater {
-                    model: missionItem.nanFacts
-
-                    QGCCheckBox {
-                        text:           object.name
-                        checked:        !isNaN(object.rawValue)
-                        onClicked:      object.rawValue = checked ? 0 : NaN
-                    }
-                }
-
-                QGCCheckBox {
-                    id:         flightSpeedCheckbox
-                    text:       qsTr("Flight Speed")
-                    checked:    missionItem.speedSection.specifyFlightSpeed
-                    onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
-                    visible:    missionItem.speedSection.available
-                }
-
-
-                Repeater {
-                    model: missionItem.textFieldFacts
-
-                    FactTextField {
-                        showUnits:          true
-                        fact:               object
+                    FactTextFieldSlider {
                         Layout.fillWidth:   true
+                        label:              object.name
+                        fact:               object
                         enabled:            !object.readOnly
                     }
-                }
 
-                Repeater {
-                    model: missionItem.nanFacts
-
-                    FactTextField {
-                        showUnits:          true
-                        fact:               object
+                    Rectangle {
                         Layout.fillWidth:   true
-                        enabled:            !isNaN(object.rawValue)
+                        height:             1
+                        color:              qgcPal.windowShadeLight
                     }
                 }
+            }
 
-                FactTextField {
-                    fact:               missionItem.speedSection.flightSpeed
-                    Layout.fillWidth:   true
-                    enabled:            flightSpeedCheckbox.checked
-                    visible:            missionItem.speedSection.available
+            Repeater {
+                model: missionItem.nanFacts
+
+                ColumnLayout {
+                    width:      parent.width
+                    spacing:    _fieldSpacing
+
+                    FactTextFieldSlider {
+                        Layout.fillWidth:       true
+                        label:                  object.name
+                        fact:                   object
+                        showEnableCheckbox:     true
+                        enableCheckBoxChecked:  !isNaN(object.rawValue)
+
+                        onEnableCheckboxClicked: object.rawValue = enableCheckBoxChecked ? 0 : NaN
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        height:             1
+                        color:              qgcPal.windowShadeLight
+                    }
                 }
+            }
+
+            Rectangle {
+                height:     1
+                width:      parent.width
+                color:      qgcPal.windowShadeLight
+                visible:    missionItem.textFieldFacts.count === 0 && missionItem.nanFacts.count === 0
+            }
+
+            FactTextFieldSlider {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                label:                  qsTr("Flight Speed")
+                fact:                   missionItem.speedSection.flightSpeed
+                showEnableCheckbox:     true
+                enableCheckBoxChecked:  missionItem.speedSection.specifyFlightSpeed
+                visible:                missionItem.speedSection.available
+
+                onEnableCheckboxClicked: missionItem.speedSection.specifyFlightSpeed = enableCheckBoxChecked
             }
 
             CameraSection {
