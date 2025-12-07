@@ -56,7 +56,6 @@ Rectangle {
         Loader {
             id:             editorLoader
             source:         missionItem.editorQml
-            asynchronous:   true
 
             property var    masterController:   _masterController
             property real   availableWidth:     parent.width
@@ -137,7 +136,6 @@ Rectangle {
                     fillItem: hamburger
 
                     onClicked: (position) => {
-                        currentItemScope.focus = true
                         position = Qt.point(position.x, position.y)
                         // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
                         position = mapToItem(globals.parent, position)

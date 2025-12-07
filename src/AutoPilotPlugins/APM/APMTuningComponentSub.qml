@@ -77,21 +77,21 @@ SetupPage {
                     anchors.top:        parent.top
                     spacing:            _margins*1.5
 
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_ANG_PIT_P") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_ANG_RLL_P") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_ANG_YAW_P") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_P") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_I") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_IMAX") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_D") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_P") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_I") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_IMAX") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_D") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_P") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_I") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_IMAX") }
-                    FactTextFieldSlider { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_D") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_ANG_PIT_P") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_ANG_RLL_P") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_ANG_YAW_P") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_P") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_I") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_IMAX") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_PIT_D") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_P") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_I") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_IMAX") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_RLL_D") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_P") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_I") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_IMAX") }
+                    FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "ATC_RAT_YAW_D") }
 
                 } // Column - Position Controller Parameters
             } // Rectangle - Position Controller Parameters
@@ -113,17 +113,17 @@ SetupPage {
                         anchors.top:        parent.top
                         spacing:            _margins*1.5
 
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_POSXY_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_POSZ_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELXY_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELXY_I") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELXY_IMAX") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELZ_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_D") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FILT") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_I") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_IMAX") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_POSXY_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_POSZ_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELXY_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELXY_I") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELXY_IMAX") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELZ_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_D") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FILT") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_I") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_IMAX") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_P") }
 
                     } // Column - VEL parameters
                 }
@@ -136,19 +136,19 @@ SetupPage {
                         anchors.top:        parent.top
                         spacing:            _margins*1.5
 
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_POSXY_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_POSZ_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELXY_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELXY_I") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELXY_IMAX") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_VELZ_P") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_D") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FLTD") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FLTE") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FLTT") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_I") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_IMAX") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_POSXY_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_POSZ_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELXY_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELXY_I") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELXY_IMAX") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_VELZ_P") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_D") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FLTD") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FLTE") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_FLTT") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_I") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_IMAX") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "r.PSC_ACCZ_P") }
 
                     } // Column - VEL parameters
                 }
@@ -181,16 +181,16 @@ SetupPage {
                         spacing:            _margins*1.5
 
 
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_ACCEL") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_ACCEL_Z") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_LOIT_JERK") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_LOIT_MAXA") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_LOIT_MINA") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_LOIT_SPEED") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_RADIUS") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_SPEED") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_SPEED_DN") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_SPEED_UP") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_ACCEL") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_ACCEL_Z") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_LOIT_JERK") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_LOIT_MAXA") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_LOIT_MINA") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_LOIT_SPEED") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_RADIUS") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_SPEED") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_SPEED_DN") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_SPEED_UP") }
                     }
                 }
 
@@ -204,18 +204,18 @@ SetupPage {
                         anchors.top:        parent.top
                         spacing:            _margins*1.5
 
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_ACCEL") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_ACCEL_Z") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_RADIUS") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_SPEED") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_SPEED_DN") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "WPNAV_SPEED_UP") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "LOIT_SPEED") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "LOIT_ACC_MAX") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "LOIT_ANG_MAX") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "LOIT_BRK_ACCEL") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "LOIT_BRK_DELAY") }
-                        FactTextFieldSlider { fact: controller.getParameterFact(-1, "LOIT_BRK_JERK") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_ACCEL") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_ACCEL_Z") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_RADIUS") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_SPEED") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_SPEED_DN") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "WPNAV_SPEED_UP") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "LOIT_SPEED") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "LOIT_ACC_MAX") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "LOIT_ANG_MAX") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "LOIT_BRK_ACCEL") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "LOIT_BRK_DELAY") }
+                        FactTextFieldSlider2 { fact: controller.getParameterFact(-1, "LOIT_BRK_JERK") }
                     }
                 }
 

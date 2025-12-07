@@ -142,11 +142,6 @@ Rectangle {
                         spacing: _altRectMargin
 
                         QGCLabel {
-                            Layout.alignment:   Qt.AlignBaseline
-                            text:               qsTr("Altitude")
-                            font.pointSize:     ScreenTools.smallFontPointSize
-                        }
-                        QGCLabel {
                             id:                 altModeLabel
                             Layout.alignment:   Qt.AlignBaseline
                             visible:            _globalAltMode !== QGroundControl.AltitudeModeRelative
@@ -161,9 +156,10 @@ Rectangle {
                     }
                 }
 
-                FactTextField {
+                FactTextFieldSlider {
                     id:                 altField
                     Layout.fillWidth:   true
+                    label:              qsTr("Altitude")
                     fact:               missionItem.altitude
                 }
 
