@@ -29,6 +29,8 @@ Slider {
     property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
     property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
+
     background: Rectangle {
         x:              control.horizontal ?
                             control.leftPadding :
