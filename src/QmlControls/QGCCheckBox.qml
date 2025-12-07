@@ -9,10 +9,10 @@ CheckBox {
     id:             control
     spacing:        _noText ? 0 : ScreenTools.defaultFontPixelWidth
     focusPolicy:    Qt.ClickFocus
+    leftPadding:    0
 
     Component.onCompleted: {
         if (_noText) {
-            leftPadding = 0
             rightPadding = 0
         }
     }
@@ -52,7 +52,7 @@ CheckBox {
         color:          control.enabled ? "white" : "transparent"
         border.color:   qgcPal.buttonBorder
         border.width:   1
-        radius:         ScreenTools.buttonBorderRadius
+        radius:         ScreenTools.defaultBorderRadius
         opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
 
         QGCColoredImage {

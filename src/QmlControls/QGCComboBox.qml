@@ -125,7 +125,7 @@ T.ComboBox {
         color:          qgcPal.button
         border.color:   qgcPal.buttonBorder
         border.width:   _showBorder ? 1 : 0
-        radius:         ScreenTools.buttonBorderRadius
+        radius:         ScreenTools.defaultBorderRadius
     }
 
     popup: T.Popup {
