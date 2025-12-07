@@ -146,8 +146,9 @@ Rectangle {
 
             CameraSection {
                 id:         cameraSection
-                checked:    !_waypointsOnlyMode && missionItem.cameraSection.settingsSpecified
                 visible:    _showCameraSection
+
+                Component.onCompleted: checked = !_waypointsOnlyMode && missionItem.cameraSection.settingsSpecified
             }
 
             QGCLabel {

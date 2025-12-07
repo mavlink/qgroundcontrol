@@ -50,18 +50,15 @@ Rectangle {
     Component { id: altModeDialogComponent; AltModeDialog { } }
 
     Column {
-        id:                 editorColumn
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        parent.top
-        spacing:            _margin
+        id:         editorColumn
+        width:      parent.width
+        spacing:    _margin
 
         // Takeoff item
         ColumnLayout {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _margin
-            visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
+            width:      parent.width
+            spacing:    _margin
+            visible:    missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
                 text:               qsTr("Move '%1' %2 to the %3 location. %4")
@@ -102,16 +99,14 @@ Rectangle {
         }
 
         Column {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _fieldSpacing
-            visible:            !missionItem.wizardMode
+            width:      parent.width
+            spacing:    _fieldSpacing
+            visible:    !missionItem.wizardMode
 
             ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        0
-                visible:        _specifiesAltitude
+                width:      parent.width
+                spacing:    0
+                visible:    _specifiesAltitude
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -172,16 +167,9 @@ Rectangle {
                 }
             }
 
-            Rectangle {
-                height:     1
-                width:      parent.width
-                color:      qgcPal.windowShadeLight
-            }
-
             ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
+                width:      parent.width
+                spacing:    _margin
 
                 Repeater {
                     model: missionItem.comboboxFacts
@@ -209,60 +197,30 @@ Rectangle {
             Repeater {
                 model: missionItem.textFieldFacts
 
-                ColumnLayout {
-                    width:      parent.width
-                    spacing:    _fieldSpacing
-
-                    FactTextFieldSlider {
-                        Layout.fillWidth:   true
-                        label:              object.name
-                        fact:               object
-                        enabled:            !object.readOnly
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth:   true
-                        height:             1
-                        color:              qgcPal.windowShadeLight
-                    }
+                FactTextFieldSlider {
+                    width:          parent.width
+                    label:              object.name
+                    fact:               object
+                    enabled:            !object.readOnly
                 }
             }
 
             Repeater {
                 model: missionItem.nanFacts
 
-                ColumnLayout {
-                    width:      parent.width
-                    spacing:    _fieldSpacing
+                FactTextFieldSlider {
+                    width:                  parent.width
+                    label:                  object.name
+                    fact:                   object
+                    showEnableCheckbox:     true
+                    enableCheckBoxChecked:  !isNaN(object.rawValue)
 
-                    FactTextFieldSlider {
-                        Layout.fillWidth:       true
-                        label:                  object.name
-                        fact:                   object
-                        showEnableCheckbox:     true
-                        enableCheckBoxChecked:  !isNaN(object.rawValue)
-
-                        onEnableCheckboxClicked: object.rawValue = enableCheckBoxChecked ? 0 : NaN
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth:   true
-                        height:             1
-                        color:              qgcPal.windowShadeLight
-                    }
+                    onEnableCheckboxClicked: object.rawValue = enableCheckBoxChecked ? 0 : NaN
                 }
             }
 
-            Rectangle {
-                height:     1
-                width:      parent.width
-                color:      qgcPal.windowShadeLight
-                visible:    missionItem.textFieldFacts.count === 0 && missionItem.nanFacts.count === 0
-            }
-
             FactTextFieldSlider {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
+                width:                  parent.width
                 label:                  qsTr("Flight Speed")
                 fact:                   missionItem.speedSection.flightSpeed
                 showEnableCheckbox:     true
@@ -273,8 +231,10 @@ Rectangle {
             }
 
             CameraSection {
-                checked:    missionItem.cameraSection.settingsSpecified
+                width:      parent.width
                 visible:    missionItem.cameraSection.available
+
+                Component.onCompleted: checked = missionItem.cameraSection.settingsSpecified
             }
         }
     }

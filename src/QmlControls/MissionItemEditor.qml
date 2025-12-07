@@ -69,78 +69,87 @@ Rectangle {
             color:      "transparent"
         }
 
-        RowLayout {
-            id:         bottomRowLayout
+        Rectangle {
             width:      parent.width
-            spacing:    ScreenTools.defaultFontPixelWidth
+            height:     bottomRowLayout.implicitHeight + (_verticalMargin * 2)
+            color:      Qt.rgba(qgcPal.windowShadeLight.r, qgcPal.windowShadeLight.g, qgcPal.windowShadeLight.b, 0.2)
 
-            Rectangle {
-                id:                     notReadyForSaveIndicator
-                Layout.preferredWidth:  visible ? _hamburgerSize : 0
-                Layout.preferredHeight: _hamburgerSize
-                border.width:           1
-                border.color:           qgcPal.warningText
-                color:                  "white"
-                radius:                 width / 2
-                visible:                !_readyForSave
+            property real _verticalMargin: ScreenTools.defaultFontPixelHeight / 4
+
+            RowLayout {
+                id:         bottomRowLayout
+                y:          parent._verticalMargin
+                width:      parent.width
+                spacing:    ScreenTools.defaultFontPixelWidth
+
+                Rectangle {
+                    id:                     notReadyForSaveIndicator
+                    Layout.preferredWidth:  visible ? _hamburgerSize : 0
+                    Layout.preferredHeight: _hamburgerSize
+                    border.width:           1
+                    border.color:           qgcPal.warningText
+                    color:                  "white"
+                    radius:                 width / 2
+                    visible:                !_readyForSave
+
+                    QGCLabel {
+                        id:                 readyForSaveLabel
+                        anchors.centerIn:   parent
+                        //: Indicator in Plan view to show mission item is not ready for save/send
+                        text:               qsTr("?")
+                        color:              qgcPal.warningText
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                    }
+                }
+
+                QGCColoredImage {
+                    id:                     deleteButton
+                    Layout.preferredWidth:  visible ? _hamburgerSize : 0
+                    Layout.preferredHeight: _hamburgerSize
+                    Layout.fillHeight:      true
+                    source:                 "/res/TrashDelete.svg"
+                    sourceSize.height:      _hamburgerSize
+                    fillMode:               Image.PreserveAspectFit
+                    mipmap:                 true
+                    smooth:                 true
+                    color:                  qgcPal.text
+                    visible:                missionItem.sequenceNumber !== 0
+
+                    QGCMouseArea {
+                        fillItem:   parent
+                        onClicked:  remove()
+                    }
+                }
 
                 QGCLabel {
-                    id:                 readyForSaveLabel
-                    anchors.centerIn:   parent
-                    //: Indicator in Plan view to show mission item is not ready for save/send
-                    text:               qsTr("?")
-                    color:              qgcPal.warningText
-                    font.pointSize:     ScreenTools.smallFontPointSize
+                    Layout.fillWidth:       true
+                    horizontalAlignment:    Text.AlignHCenter
+                    verticalAlignment:      Text.AlignVCenter
+                    text:                   missionItem.commandDescription
+                    wrapMode:               Text.WordWrap
+                    font.pointSize:         ScreenTools.smallFontPointSize
                 }
-            }
 
-            QGCColoredImage {
-                id:                     deleteButton
-                Layout.preferredWidth:  visible ? _hamburgerSize : 0
-                Layout.preferredHeight: _hamburgerSize
-                Layout.fillHeight:      true
-                source:                 "/res/TrashDelete.svg"
-                sourceSize.height:      _hamburgerSize
-                fillMode:               Image.PreserveAspectFit
-                mipmap:                 true
-                smooth:                 true
-                color:                  qgcPal.text
-                visible:                missionItem.sequenceNumber !== 0
+                QGCColoredImage {
+                    id:                     hamburger
+                    Layout.alignment:       Qt.AlignRight
+                    Layout.preferredWidth:  visible ? _hamburgerSize : 0
+                    Layout.preferredHeight: _hamburgerSize
+                    sourceSize.height:      _hamburgerSize
+                    source:                 "qrc:/qmlimages/Hamburger.svg"
+                    color:                  qgcPal.text
+                    visible:                missionItem.sequenceNumber !== 0
 
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  remove()
-                }
-            }
+                    QGCMouseArea {
+                        fillItem: hamburger
 
-            QGCLabel {
-                Layout.fillWidth:       true
-                horizontalAlignment:    Text.AlignHCenter
-                verticalAlignment:      Text.AlignVCenter
-                text:                   missionItem.commandDescription
-                wrapMode:               Text.WordWrap
-                font.pointSize:         ScreenTools.smallFontPointSize
-            }
-
-            QGCColoredImage {
-                id:                     hamburger
-                Layout.alignment:       Qt.AlignRight
-                Layout.preferredWidth:  visible ? _hamburgerSize : 0
-                Layout.preferredHeight: _hamburgerSize
-                sourceSize.height:      _hamburgerSize
-                source:                 "qrc:/qmlimages/Hamburger.svg"
-                color:                  qgcPal.text
-                visible:                missionItem.sequenceNumber !== 0
-
-                QGCMouseArea {
-                    fillItem: hamburger
-
-                    onClicked: (position) => {
-                        position = Qt.point(position.x, position.y)
-                        // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
-                        position = mapToItem(globals.parent, position)
-                        var dropPanel = hamburgerMenuDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
-                        dropPanel.open()
+                        onClicked: (position) => {
+                            position = Qt.point(position.x, position.y)
+                            // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+                            position = mapToItem(globals.parent, position)
+                            var dropPanel = hamburgerMenuDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
+                            dropPanel.open()
+                        }
                     }
                 }
             }
