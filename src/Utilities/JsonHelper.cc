@@ -234,8 +234,8 @@ bool JsonHelper::validateKeyTypes(const QJsonObject &jsonObject, const QStringLi
         const QString valueKey = keys[i];
         if (jsonObject.contains(valueKey)) {
             const QJsonValue &jsonValue = jsonObject[valueKey];
-            if ((jsonValue.type() == QJsonValue::Null) && (types[i] == QJsonValue::Double)) {
-                // Null type signals a NaN on a double value
+            if ((jsonValue.type() == QJsonValue::Double) && (types[i] == QJsonValue::Null)) {
+                // Null type signals a possible NaN on a double value
                 continue;
             }
             if (jsonValue.type() != types[i]) {
