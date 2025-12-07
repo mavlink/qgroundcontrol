@@ -14,6 +14,11 @@ ColumnLayout {
     property alias textFieldShowUnits:      factTextField.textFieldShowUnits
     property alias textFieldShowHelp:       factTextField.textFieldShowHelp
     property alias textField:               factTextField
+    property alias enableCheckBoxChecked:   enableCheckbox.checked
+
+    property bool showEnableCheckbox: false ///< true: show enable/disable checkbox, false: hide
+
+    signal enableCheckboxClicked
 
     id:         control
     spacing:    0
@@ -46,17 +51,30 @@ ColumnLayout {
         }
     }
 
-    LabelledFactTextField {
-        id:                 factTextField
-        Layout.fillWidth:   true
-        label:              control.label
-        fact:               control.fact
+    RowLayout {
+        spacing: ScreenTools.defaultFontPixelWidth
+
+        QGCCheckBox {
+            id:         enableCheckbox
+            visible:    control.showEnableCheckbox
+
+            onClicked: control.enableCheckboxClicked()
+        }
+
+        LabelledFactTextField {
+            id:                 factTextField
+            Layout.fillWidth:   true
+            label:              control.label
+            fact:               control.fact
+            enabled:            !control.showEnableCheckbox || enableCheckbox.checked
+        }
     }
 
     Loader {
         id:                 sliderLoader
         Layout.fillWidth:   true
         sourceComponent:    control._showSlider ? sliderComponent : null
+        enabled:            !control.showEnableCheckbox || enableCheckbox.checked
     }
 
     Component {
