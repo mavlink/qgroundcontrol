@@ -10,6 +10,13 @@ CheckBox {
     spacing:        _noText ? 0 : ScreenTools.defaultFontPixelWidth
     focusPolicy:    Qt.ClickFocus
 
+    Component.onCompleted: {
+        if (_noText) {
+            leftPadding = 0
+            rightPadding = 0
+        }
+    }
+
     property color  textColor:          qgcPal.text
     property bool   textBold:           false
     property real   textFontPointSize:  ScreenTools.defaultFontPointSize
