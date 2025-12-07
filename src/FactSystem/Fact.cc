@@ -503,9 +503,34 @@ QVariant Fact::cookedMin() const
     }
 }
 
+QVariant Fact::rawUserMin() const
+{
+    if (_metaData) {
+        return _metaData->rawUserMin();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
+QVariant Fact::cookedUserMin() const
+{
+    if (_metaData) {
+        return _metaData->cookedUserMin();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
 QString Fact::cookedMinString() const
 {
     return _variantToString(cookedMin(), decimalPlaces());
+}
+
+QString Fact::cookedUserMinString() const
+{
+    return _variantToString(cookedUserMin(), decimalPlaces());
 }
 
 QVariant Fact::rawMax() const
@@ -528,9 +553,34 @@ QVariant Fact::cookedMax() const
     }
 }
 
+QVariant Fact::rawUserMax() const
+{
+    if (_metaData) {
+        return _metaData->rawUserMax();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
+QVariant Fact::cookedUserMax() const
+{
+    if (_metaData) {
+        return _metaData->cookedUserMax();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
 QString Fact::cookedMaxString() const
 {
     return _variantToString(cookedMax(), decimalPlaces());
+}
+
+QString Fact::cookedUserMaxString() const
+{
+    return _variantToString(cookedUserMax(), decimalPlaces());
 }
 
 bool Fact::minIsDefaultForType() const

@@ -34,6 +34,10 @@ class MissionCommandTreeTest;
 /// units           string              Units for value, should use FactMetaData units strings in order to get automatic translation
 /// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultValue is NaN.
 /// decimalPlaces   int     7           Number of decimal places to show for value
+/// min             double  unbounded   Minimum value for param
+/// max             double  unbounded   Maximum value for param
+/// userMin         double  NaN         Lower bound for user editing (NaN means not set)
+/// userMax         double  NaN         Upper bound for user editing (NaN means not set)
 /// enumStrings     string              Strings to show in combo box for selection
 /// enumValues      string              Values associated with each enum string
 /// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
@@ -58,6 +62,8 @@ public:
     Q_PROPERTY(bool         nanUnchanged    READ nanUnchanged   CONSTANT)
     Q_PROPERTY(double       min             READ min            CONSTANT)
     Q_PROPERTY(double       max             READ max            CONSTANT)
+    Q_PROPERTY(double       userMin         READ userMin        CONSTANT)
+    Q_PROPERTY(double       userMax         READ userMax        CONSTANT)
 
     int             decimalPlaces   (void) const { return _decimalPlaces; }
     double          defaultValue    (void) const { return _defaultValue; }
@@ -69,6 +75,8 @@ public:
     bool            nanUnchanged    (void) const { return _nanUnchanged; }
     double          min             (void) const { return _min; }
     double          max             (void) const { return _max; }
+    double          userMin         (void) const { return _userMin; }
+    double          userMax         (void) const { return _userMax; }
 
 private:
     int             _decimalPlaces;
@@ -81,6 +89,8 @@ private:
     bool            _nanUnchanged;
     double          _min;
     double          _max;
+    double          _userMin;
+    double          _userMax;
 
     friend class MissionCommandTree;
     friend class MissionCommandUIInfo;
@@ -194,6 +204,8 @@ private:
     static constexpr const char* _mavCmdInfoJsonKey            = "mavCmdInfo";
     static constexpr const char* _maxJsonKey                   = "max";
     static constexpr const char* _minJsonKey                   = "min";
+    static constexpr const char* _userMaxJsonKey               = "userMax";
+    static constexpr const char* _userMinJsonKey               = "userMin";
     static constexpr const char* _param1JsonKey                = "param1";
     static constexpr const char* _param2JsonKey                = "param2";
     static constexpr const char* _param3JsonKey                = "param3";
