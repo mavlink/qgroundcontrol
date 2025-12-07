@@ -48,6 +48,10 @@ class Fact : public QObject
     Q_PROPERTY(QVariant     min                     READ cookedMin                                              CONSTANT)
     Q_PROPERTY(QString      minString               READ cookedMinString                                        CONSTANT)
     Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMin                 READ cookedUserMin                                          CONSTANT)
+    Q_PROPERTY(QString      userMinString           READ cookedUserMinString                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMax                 READ cookedUserMax                                          CONSTANT)
+    Q_PROPERTY(QString      userMaxString           READ cookedUserMaxString                                    CONSTANT)
     Q_PROPERTY(QString      name                    READ name                                                   CONSTANT)
     Q_PROPERTY(bool         vehicleRebootRequired   READ vehicleRebootRequired                                  CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
@@ -112,6 +116,12 @@ public:
     QVariant cookedMin() const;
     QString cookedMinString() const;
     bool minIsDefaultForType() const;
+    QVariant rawUserMin() const;
+    QVariant cookedUserMin() const;
+    QString cookedUserMinString() const;
+    QVariant rawUserMax() const;
+    QVariant cookedUserMax() const;
+    QString cookedUserMaxString() const;
     QString name() const { return _name; }
     QString shortDescription() const;
     FactMetaData::ValueType_t type() const { return _type; }
