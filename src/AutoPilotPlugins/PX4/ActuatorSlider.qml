@@ -45,7 +45,6 @@ Column {
         live:   true
         anchors.horizontalCenter:   parent.horizontalCenter
         height:                     ScreenTools.defaultFontPixelHeight * _sliderHeight
-        indicatorBarVisible:        sendTimer.running
 
         onValueChanged: {
             if (blockUpdates)
