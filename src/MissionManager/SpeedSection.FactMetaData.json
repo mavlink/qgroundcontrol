@@ -5,12 +5,14 @@
 [
 {
     "name":             "FlightSpeed",
-    "shortDesc": "Set the current flight speed",
+    "shortDesc":        "Set the current flight speed",
     "type":             "double",
     "units":            "m/s",
     "min":              0,
     "decimalPlaces":    1,
-    "default":     0
+    "default":          0,
+    "userMin":          0,
+    "userMax":          30
 }
 ]
 }
