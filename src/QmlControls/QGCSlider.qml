@@ -13,22 +13,18 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 Slider {
     id:             control
-    implicitHeight: ScreenTools.implicitSliderHeight
+    implicitHeight: ScreenTools.implicitSliderHeight + (showBoundaryValues ? minLabel.contentHeight : 0)
     leftPadding:    0
     rightPadding:   0
     topPadding:     0
     bottomPadding:  0
 
-    // FIXME-QT6 - This property used to be available in Control 1. Now we will need to implement the visuals ourselves
-    property bool tickmarksEnabled: false
-
-
-    property bool zeroCentered:         false   // Value indicator starts display from zero instead of min value
-    property bool displayValue:         false
-    property bool indicatorBarVisible:  true
+    property bool zeroCentered:         false   ///< Value indicator starts display from zero instead of min value
+    property bool displayValue:         false   ///< true: Show value on handle
+    property bool mouseWheelSupport:    true    ///< false: Disable mouse wheel support for adjusting slider value
+    property bool showBoundaryValues:   false   ///< true: Show min/max values at slider ends
 
     property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
     property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
@@ -49,30 +45,6 @@ Slider {
         border.width:   1
         border.color:   qgcPal.buttonText
     }
-
-    // FIXME-QT6: Indicator portion of slider not yet supported
-/*
-        Item {
-            id:     indicatorBar
-            clip:   true
-            visible: indicatorBarVisible
-            x:      control.zeroCentered ? zeroCenteredIndicatorStart : 0
-            width:  control.zeroCentered ? centerIndicatorWidth : control.visualPosition
-            height: parent.height
-
-            property real zeroValuePosition:            (Math.abs(control.from) / (control.to - control.from)) * parent.width
-            property real zeroCenteredIndicatorStart:   Math.min(control.visualPosition, zeroValuePosition)
-            property real zeroCenteredIndicatorStop:    Math.max(control.visualPosition, zeroValuePosition)
-            property real centerIndicatorWidth:         zeroCenteredIndicatorStop - zeroCenteredIndicatorStart
-
-            Rectangle {
-                anchors.fill:   parent
-                color:          qgcPal.colorBlue
-                border.color:   Qt.darker(color, 1.2)
-                radius:         height/2
-            }
-        }
-    }*/
 
     handle: Rectangle {
         x:              control.horizontal ?
@@ -97,6 +69,48 @@ Slider {
             font.family:        ScreenTools.normalFontFamily
             font.pointSize:     ScreenTools.smallFontPointSize
             color:              qgcPal.buttonText
+        }
+    }
+
+    QGCLabel {
+        id:                 minLabel
+        anchors.left:       parent.left
+        anchors.leftMargin: control.leftPadding
+        anchors.bottom:     parent.bottom
+        text:               control.from.toFixed(1)
+        font.pointSize:     ScreenTools.smallFontPointSize
+        color:              qgcPal.buttonText
+        visible:            control.showBoundaryValues
+    }
+
+    QGCLabel {
+        id:                     maxLabel
+        anchors.right:          parent.right
+        anchors.rightMargin:    control.rightPadding
+        anchors.bottom:     parent.bottom
+        text:                   control.to.toFixed(1)
+        font.pointSize:         ScreenTools.smallFontPointSize
+        color:                  qgcPal.buttonText
+        visible:                control.showBoundaryValues
+    }
+
+    MouseArea {
+        anchors.fill:   parent
+        enabled:        !control.mouseWheelSupport
+
+        onWheel: (wheel) => {
+            // do nothing
+            wheel.accepted = true;
+        }
+
+        onPressed: (mouse) => {
+            // propagate/accept
+            mouse.accepted = false;
+        }
+
+        onReleased: (mouse) => {
+            // propagate/accept
+            mouse.accepted = false;
         }
     }
 }
