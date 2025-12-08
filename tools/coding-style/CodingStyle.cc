@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2025 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,10 +10,14 @@
 // This is an example class c++ file which is used to describe the QGroundControl
 // coding style. In general almost everything in here has some coding style meaning.
 // Not all style choices are explained.
+//
+// QGroundControl requires C++20. Use modern C++ features where appropriate.
 
 #include "CodingStyle.h"
 
-#include <math.h>
+#include <algorithm>
+#include <cmath>
+#include <ranges>
 
 #include <QtCore/QDebug>
 #include <QtCore/QFile>
@@ -162,3 +166,77 @@ void CodingStyle::_methodWithManyArguments(
     // This makes it clear the parameter is intentionally unused
     // Implementation here...
 }
+
+// =============================================================================
+// C++20 Features Examples
+// =============================================================================
+
+bool CodingStyle::validateInput(std::string_view input) const
+{
+    // C++20: std::string_view avoids allocations for read-only string operations
+    // Use when interfacing with non-Qt code or performance-critical paths
+    if (input.empty()) {
+        return false;
+    }
+
+    // C++20: Use std::ranges algorithms for cleaner code
+    return std::ranges::all_of(input, [](char c) {
+        return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+    });
+}
+
+void CodingStyle::processData(std::span<const int> data)
+{
+    // C++20: std::span provides safe, bounds-checked view of contiguous data
+    // Replaces (int* ptr, size_t size) parameter pairs
+    if (data.empty()) {
+        qCDebug(CodingStyleLog) << "No data to process";
+        return;
+    }
+
+    // C++20: Range-based for with init-statement
+    for (int sum = 0; const int value : data) {
+        sum += value;
+        qCDebug(CodingStyleLog) << "Running sum:" << sum;
+    }
+
+    // C++20: Use ranges for transformations
+    // Example: filter and transform in a pipeline
+    auto positiveDoubled = data
+        | std::views::filter([](int n) { return n > 0; })
+        | std::views::transform([](int n) { return n * 2; });
+
+    for (const int value : positiveDoubled) {
+        qCDebug(CodingStyleLog) << "Positive doubled:" << value;
+    }
+}
+
+// C++20: Use designated initializers for aggregate types (defined in header or locally)
+namespace {
+    struct ConfigOptions {
+        int timeout = 30;
+        bool enabled = true;
+        int retryCount = 3;
+    };
+
+    void exampleDesignatedInitializers()
+    {
+        // C++20: Designated initializers make struct initialization clear
+        const ConfigOptions config{
+            .timeout = 60,
+            .enabled = true,
+            .retryCount = 5
+        };
+        Q_UNUSED(config);
+    }
+
+    // C++20: Concepts can constrain template parameters (use sparingly, prefer concrete types)
+    template<typename T>
+    concept Numeric = std::integral<T> || std::floating_point<T>;
+
+    template<Numeric T>
+    T clampValue(T value, T min, T max)
+    {
+        return std::clamp(value, min, max);
+    }
+} // anonymous namespace

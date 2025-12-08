@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2025 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,10 +10,14 @@
 // This is an example class header file which is used to describe the QGroundControl
 // coding style. In general almost everything in here has some coding style meaning.
 // Not all style choices are explained.
+//
+// QGroundControl requires C++20. Use modern C++ features where appropriate.
 
 #pragma once
 
 #include <limits.h>
+#include <span>
+#include <string_view>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -68,14 +72,21 @@ public:
 
     /// Document public methods which are non-obvious in the header file
     /// Use Q_INVOKABLE for methods callable from QML
-    Q_INVOKABLE bool publicMethod1();
+    /// Use [[nodiscard]] for functions whose return value should not be ignored
+    [[nodiscard]] Q_INVOKABLE bool publicMethod1();
     Q_INVOKABLE void performAction(const QString& param);
 
-    // Public getters/setters
-    int exampleProperty() const { return _exampleProperty; }
+    // C++20: Use std::string_view for read-only string parameters when Qt types aren't needed
+    [[nodiscard]] bool validateInput(std::string_view input) const;
+
+    // C++20: Use std::span for array-like parameters instead of pointer + size
+    void processData(std::span<const int> data);
+
+    // Public getters/setters - use [[nodiscard]] for getters
+    [[nodiscard]] int exampleProperty() const { return _exampleProperty; }
     void setExampleProperty(int value);
-    Vehicle* vehicle() const { return _vehicle; }
-    bool readOnlyProperty() const { return _readOnlyProperty; }
+    [[nodiscard]] Vehicle* vehicle() const { return _vehicle; }
+    [[nodiscard]] bool readOnlyProperty() const { return _readOnlyProperty; }
 
 signals:
     /// Document signals which are non-obvious in the header file
