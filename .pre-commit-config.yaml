@@ -47,6 +47,7 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
+        args: ['-x']
 
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint

@@ -1,0 +1,10 @@
+{
+  "qt_version": "6.10.1",
+  "qt_modules": "qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml",
+  "gstreamer_version": "1.22.12",
+  "xcode_version": "16.x",
+  "ndk_version": "r27c",
+  "java_version": "17",
+  "android_platform": "35",
+  "ccache_version": "4.11.3"
+}

@@ -1,0 +1,211 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to create release for (e.g., v4.4.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  wait-for-builds:
+    name: Wait for Platform Builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Wait for builds to complete
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '') || '${{ inputs.tag }}';
+            console.log(`Waiting for builds for tag: ${tag}`);
+
+            // Workflows to wait for
+            const requiredWorkflows = ['Linux', 'Windows', 'MacOS', 'Android'];
+            const maxWait = 170 * 60 * 1000; // 170 minutes
+            const pollInterval = 60 * 1000; // 1 minute
+            const startTime = Date.now();
+
+            while (Date.now() - startTime < maxWait) {
+              const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head_sha: context.sha,
+                per_page: 100
+              });
+
+              const workflowStatus = {};
+              for (const run of runs.data.workflow_runs) {
+                if (requiredWorkflows.includes(run.name)) {
+                  workflowStatus[run.name] = run.status === 'completed' ? run.conclusion : run.status;
+                }
+              }
+
+              console.log('Current status:', JSON.stringify(workflowStatus, null, 2));
+
+              const allComplete = requiredWorkflows.every(w =>
+                workflowStatus[w] === 'success' || workflowStatus[w] === 'failure'
+              );
+
+              if (allComplete) {
+                const failed = requiredWorkflows.filter(w => workflowStatus[w] !== 'success');
+                if (failed.length > 0) {
+                  core.setFailed(`Builds failed: ${failed.join(', ')}`);
+                  return;
+                }
+                console.log('All builds completed successfully!');
+                return;
+              }
+
+              console.log(`Waiting ${pollInterval / 1000}s for builds to complete...`);
+              await new Promise(r => setTimeout(r, pollInterval));
+            }
+
+            core.setFailed('Timeout waiting for builds to complete');
+
+  create-release:
+    name: Create GitHub Release
+    needs: wait-for-builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get tag info
+        id: tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [ -z "$TAG" ] || [ "$TAG" = "$GITHUB_REF" ]; then
+            TAG="${{ inputs.tag }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Tag: $TAG"
+
+          # Check if this is a prerelease
+          if [[ "$TAG" == *"-"* ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts -type f | head -50 || echo "No artifacts found"
+
+      - name: Generate changelog
+        id: changelog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.tag.outputs.tag }}';
+
+            // Get previous tag
+            const tags = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 10
+            });
+
+            let previousTag = null;
+            for (let i = 0; i < tags.data.length; i++) {
+              if (tags.data[i].name === tag && i + 1 < tags.data.length) {
+                previousTag = tags.data[i + 1].name;
+                break;
+              }
+            }
+
+            console.log(`Generating changelog from ${previousTag || 'beginning'} to ${tag}`);
+
+            // Get commits between tags
+            let commits;
+            if (previousTag) {
+              const comparison = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: previousTag,
+                head: tag
+              });
+              commits = comparison.data.commits;
+            } else {
+              const commitList = await github.rest.repos.listCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: tag,
+                per_page: 50
+              });
+              commits = commitList.data;
+            }
+
+            // Categorize commits
+            const categories = {
+              'Features': [],
+              'Bug Fixes': [],
+              'Documentation': [],
+              'CI/Build': [],
+              'Other': []
+            };
+
+            for (const commit of commits) {
+              const msg = commit.commit.message.split('\n')[0];
+              const sha = commit.sha.substring(0, 7);
+              const entry = `- ${msg} (${sha})`;
+
+              if (msg.match(/^feat|^add|^new/i)) {
+                categories['Features'].push(entry);
+              } else if (msg.match(/^fix|^bug/i)) {
+                categories['Bug Fixes'].push(entry);
+              } else if (msg.match(/^doc/i)) {
+                categories['Documentation'].push(entry);
+              } else if (msg.match(/^ci|^build|^chore/i)) {
+                categories['CI/Build'].push(entry);
+              } else {
+                categories['Other'].push(entry);
+              }
+            }
+
+            // Build changelog
+            let changelog = '';
+            for (const [category, entries] of Object.entries(categories)) {
+              if (entries.length > 0) {
+                changelog += `### ${category}\n${entries.join('\n')}\n\n`;
+              }
+            }
+
+            if (!changelog) {
+              changelog = 'No notable changes in this release.';
+            }
+
+            const fs = require('fs');
+            fs.writeFileSync('CHANGELOG.md', changelog);
+            return changelog;
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: QGroundControl ${{ steps.tag.outputs.tag }}
+          body_path: CHANGELOG.md
+          prerelease: ${{ steps.tag.outputs.prerelease }}
+          files: |
+            artifacts/**/*.AppImage
+            artifacts/**/*.dmg
+            artifacts/**/*.exe
+            artifacts/**/*.apk
+          fail_on_unmatched_files: false

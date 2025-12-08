@@ -1,22 +1,29 @@
 #!/usr/bin/env bash
+#
+# Install Qt on macOS via aqtinstall
 
-# Set defaults appropriate for macOS.
-QT_VERSION="${QT_VERSION:-6.10.1}"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source centralized config (sets QT_VERSION, QT_MODULES if not already set)
+# shellcheck source=tools/setup/read-config.sh
+source "$SCRIPT_DIR/read-config.sh"
+
+# Set defaults appropriate for macOS
 QT_PATH="${QT_PATH:-/opt/Qt}"
 QT_HOST="${QT_HOST:-mac}"
 QT_TARGET="${QT_TARGET:-desktop}"
 QT_ARCH="${QT_ARCH:-mac}"
-QT_MODULES_STR="${QT_MODULES:-qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml}"
-IFS=' ' read -r -a QT_MODULES <<< "$QT_MODULES_STR"
-
-set -e
+QT_MODULES_STR="${QT_MODULES}"
+IFS=' ' read -r -a QT_MODULES_ARR <<< "$QT_MODULES_STR"
 
 echo "QT_VERSION: $QT_VERSION"
 echo "QT_PATH:    $QT_PATH"
 echo "QT_HOST:    $QT_HOST"
 echo "QT_TARGET:  $QT_TARGET"
 echo "QT_ARCH:    $QT_ARCH"
-echo "QT_MODULES: ${QT_MODULES[*]}"
+echo "QT_MODULES: ${QT_MODULES_ARR[*]}"
 
 # Update Homebrew and install Python 3 (if needed)
 brew update
@@ -26,7 +33,7 @@ brew install python3
 pip3 install --upgrade setuptools wheel py7zr ninja cmake aqtinstall
 
 # Use aqtinstall to download and install Qt.
-aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES[@]}"
+aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"
 
 # macOS does not support GNU readlink -e.
 # We use realpath instead (or substitute with greadlink -f if needed).

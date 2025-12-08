@@ -31,6 +31,8 @@ ENV LANG=en_US.UTF-8 \
 
 # ---------- Bring in the helper scripts ----------
 # They must be in the build context next to this Dockerfile.
+COPY .github/build-config.json                 /tmp/qt/
+COPY tools/setup/read-config.sh                /tmp/qt/
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
 COPY tools/setup/install-qt-debian.sh          /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && \

@@ -2,19 +2,23 @@ name: Update Translations
 
 on:
   workflow_dispatch:
-#   schedule:
-#     - cron: '0 0 * * 0'
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight UTC
 
 concurrency:
   group: 'lupdate'
   cancel-in-progress: true
 
-permissions:
-  contents: write
-
 jobs:
   update-translations:
+    name: Update Translations
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        shell: bash
+
     permissions:
       contents: write
       pull-requests: write
@@ -23,10 +27,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
 
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
+
       - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
-          version: 6.10.1
+          version: ${{ steps.build-config.outputs.qt_version }}
           cache: true
 
       - name: Update translation files
