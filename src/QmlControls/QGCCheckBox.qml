@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 CheckBox {
     id:             control
     spacing:        _noText ? 0 : ScreenTools.defaultFontPixelWidth
@@ -17,14 +16,14 @@ CheckBox {
         }
     }
 
-    property color  textColor:          qgcPal.text
+    property color  textColor:          qgcPal.buttonText
     property bool   textBold:           false
     property real   textFontPointSize:  ScreenTools.defaultFontPointSize
     property ButtonGroup buttonGroup: null
 
     property bool   _noText: text === ""
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
     onButtonGroupChanged: {
         if (buttonGroup) {
