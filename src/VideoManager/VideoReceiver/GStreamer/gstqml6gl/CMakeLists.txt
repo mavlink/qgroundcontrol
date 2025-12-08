@@ -12,7 +12,7 @@ if(MACOS)
     # NOTE: Using FindGStreamer.cmake is currently bypassed on macOS
     # Using hardwired framework path as a workaround
     find_library(GSTREAMER_FRAMEWORK GStreamer)
-    set(GST_REQUIRED_FRAMEWORK_VERSION 1.24.13)
+    set(GST_REQUIRED_FRAMEWORK_VERSION 1.22.12)
     set(GST_PLUGINS_VERSION ${GST_REQUIRED_FRAMEWORK_VERSION})
     set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
     if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")

@@ -5,15 +5,10 @@ runs:
   steps:
     - uses: lukka/get-cmake@latest
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: '>=3.9'
 
     - name: Create build directory
       shell: bash
       run: mkdir -p "$RUNNER_TEMP/build"
-
-    - name: Fetch all tags (for version-string logic)
-      shell: bash
-      working-directory: ${{ github.workspace }}
-      run: git fetch --all --tags --force --depth 1

@@ -1,4 +1,14 @@
 #! /usr/bin/env bash
+#
+# Install dependencies for macOS development
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source centralized config (sets GST_VERSION if not already set)
+# shellcheck source=tools/setup/read-config.sh
+source "$SCRIPT_DIR/read-config.sh"
 
 if ! command -v brew &> /dev/null
 then
@@ -12,7 +22,6 @@ brew install cmake ninja ccache git pkgconf create-dmg mold
 
 # Install GStreamer
 GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx
-GST_VERSION=1.24.13
 GST_PKG=gstreamer-1.0-$GST_VERSION-universal.pkg
 GST_DEV_PKG=gstreamer-1.0-devel-$GST_VERSION-universal.pkg
 pushd "$TMPDIR" || exit

@@ -1,4 +1,10 @@
 changelog:
+  exclude:
+    labels:
+      - dependencies
+    authors:
+      - dependabot
+      - dependabot[bot]
   categories:
     - title: Features
       labels:
@@ -15,6 +21,12 @@ changelog:
       labels:
         - "RN: BUGFIX"
         - "RN: BUGFIX - CUSTOM BUILD"
-    - title: Targets
+    - title: Hardware Support
       labels:
         - "RN: NEW BOARD SUPPORT"
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Other Changes
+      labels:
+        - "*"
