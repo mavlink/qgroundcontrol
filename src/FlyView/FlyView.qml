@@ -167,7 +167,7 @@ Item {
             anchors.right:      parent.right
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            anchors.topMargin:  toolbar.height
+            anchors.topMargin:  toolbar.height + _widgetMargin
             z:                  QGroundControl.zOrderTopMost
             visible:            false
         }
