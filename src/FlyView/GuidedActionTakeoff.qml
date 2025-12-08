@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 import QGroundControl
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 GuidedToolStripAction {
-    text:       _guidedController.pauseTitle
-    iconSource: "/res/pause-mission.svg"
-    visible:    _guidedController.showPause
-    enabled:    _guidedController.showPause
-    actionID:   _guidedController.actionPause
+    text:       _guidedController.takeoffTitle
+    iconSource: "/res/takeoff.svg"
+    visible:    _guidedController.showTakeoff || !_guidedController.showLand
+    enabled:    _guidedController.showTakeoff
+    actionID:   _guidedController.actionTakeoff
 }

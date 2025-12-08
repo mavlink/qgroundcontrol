@@ -142,6 +142,10 @@ public:
     QVariant rawMin() const { return _rawMin; }
     QVariant cookedMin() const;
     bool minIsDefaultForType() const { return (_rawMin == _minForType()); }
+    QVariant rawUserMin() const { return _rawUserMin; }
+    QVariant rawUserMax() const { return _rawUserMax; }
+    QVariant cookedUserMin() const;
+    QVariant cookedUserMax() const;
     QString name() const { return _name; }
     QString shortDescription() const { return _shortDescription; }
     ValueType_t type() const { return _type; }
@@ -180,6 +184,8 @@ public:
     void setLongDescription(const QString &longDescription) { _longDescription = longDescription;}
     void setRawMax(const QVariant &rawMax);
     void setRawMin(const QVariant &rawMin);
+    void setRawUserMin(const QVariant &rawUserMin);
+    void setRawUserMax(const QVariant &rawUserMax);
     void setName(const QString &name) { _name = name; }
     void setShortDescription(const QString &shortDescription) { _shortDescription = shortDescription; }
     void setRawUnits(const QString &rawUnits);
@@ -340,6 +346,8 @@ private:
     QString _longDescription;
     QVariant _rawMax = _maxForType();
     QVariant _rawMin = _minForType();
+    QVariant _rawUserMin;   // Specifically left as unset by default to indicate no user min
+    QVariant _rawUserMax;   // Specifically left as unset by default to indicate no user max
     QString _name;
     QString _shortDescription;
     QString _rawUnits;
@@ -439,6 +447,8 @@ private:
     static constexpr const char *_mobileDefaultValueJsonKey = "mobileDefault";
     static constexpr const char *_minJsonKey = "min";
     static constexpr const char *_maxJsonKey = "max";
+    static constexpr const char *_userMinJsonKey = "userMin";
+    static constexpr const char *_userMaxJsonKey = "userMax";
     static constexpr const char *_incrementJsonKey = "increment";
     static constexpr const char *_hasControlJsonKey = "control";
     static constexpr const char *_qgcRebootRequiredJsonKey = "qgcRebootRequired";

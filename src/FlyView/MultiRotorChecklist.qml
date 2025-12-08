@@ -14,7 +14,7 @@ import QtQml.Models
 import QGroundControl
 
 import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 
 Item {
@@ -22,11 +22,11 @@ Item {
     PreFlightCheckModel {
         id:     listModel
         PreFlightCheckGroup {
-            name: qsTr("Fixed Wing Initial Checks")
+            name: qsTr("Multirotor Initial Checks")
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
-                manualText:     qsTr("Props mounted? Wings secured? Tail secured?")
+                manualText:     qsTr("Props mounted and secured?")
             }
 
             PreFlightBatteryCheck {
@@ -48,11 +48,6 @@ Item {
 
         PreFlightCheckGroup {
             name: qsTr("Please arm the vehicle here")
-
-            PreFlightCheckButton {
-                name:            qsTr("Actuators")
-                manualText:      qsTr("Move all control surfaces. Did they work properly?")
-            }
 
             PreFlightCheckButton {
                 name:            qsTr("Motors")
@@ -79,7 +74,7 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Wind & weather")
-                manualText:     qsTr("OK for your platform? Lauching into the wind?")
+                manualText:     qsTr("OK for your platform?")
             }
 
             PreFlightCheckButton {

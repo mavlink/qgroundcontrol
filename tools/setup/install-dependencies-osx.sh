@@ -12,7 +12,7 @@ brew install cmake ninja ccache git pkgconf create-dmg mold
 
 # Install GStreamer
 GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx
-GST_VERSION=1.24.12
+GST_VERSION=1.24.13
 GST_PKG=gstreamer-1.0-$GST_VERSION-universal.pkg
 GST_DEV_PKG=gstreamer-1.0-devel-$GST_VERSION-universal.pkg
 pushd "$TMPDIR" || exit

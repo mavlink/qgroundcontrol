@@ -31,8 +31,6 @@ public:
     Q_PROPERTY(Fact*            valueSetIsDistance      READ    valueSetIsDistance                                          CONSTANT)
     Q_PROPERTY(Fact*            glideSlope              READ    glideSlope                                                  CONSTANT)
 
-    Q_INVOKABLE void moveLandingPosition(const QGeoCoordinate& coordinate); // Maintains the current landing distance and heading
-
     Fact*           glideSlope              (void) { return &_glideSlopeFact; }
     Fact*           valueSetIsDistance      (void) { return &_valueSetIsDistanceFact; }
 

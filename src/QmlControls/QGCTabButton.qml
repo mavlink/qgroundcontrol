@@ -27,7 +27,7 @@ TabButton {
     property bool   primary:        false                               ///< primary button for a group of buttons
     property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
-    property real   backRadius:     ScreenTools.buttonBorderRadius
+    property real   backRadius:     ScreenTools.defaultBorderRadius
     property real   heightFactor:   0.5
 
     property bool   _showHighlight:     enabled && (pressed | checked)

@@ -7,6 +7,9 @@
  *
  ****************************************************************************/
 
+/// Qt6 Import Style: Use unversioned imports (QtQuick not QtQuick 2.15)
+/// Import order: Qt modules, blank line, QGroundControl modules
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -18,20 +21,7 @@ import QGroundControl.Controls
 /// In general almost everything in here has some coding style meaning including order of
 /// code. Not all style choices are explained. If there is any confusion please ask
 /// and we'll answer and update style as needed.
-///
-/// Qt6 Import Style: Use unversioned imports (QtQuick not QtQuick 2.15)
-/// Import order: Qt modules, blank line, QGroundControl modules
 Item {
-    id: root  // Use descriptive id for root item, not underscore prefix
-
-    // ===================================================================================
-    // PROPERTY BINDING SECTION
-    // Bind to item properties first, before property definitions
-    // ===================================================================================
-
-    width:  ScreenTools.defaultFontPixelHeight * 10 // No hardcoded sizing. All sizing must be relative to a ScreenTools font size
-    height: ScreenTools.defaultFontPixelHeight * 20
-
     // ===================================================================================
     // PUBLIC PROPERTIES SECTION
     // Property definitions available to consumers of this Qml Item come first
@@ -44,6 +34,24 @@ Item {
     property bool myBoolProperty: false
 
     // ===================================================================================
+    // SIGNALS SECTION
+    // Define custom signals for communication
+    // ===================================================================================
+
+    signal buttonClicked()
+    signal valueChanged(int newValue)
+
+    id: root  // Use descriptive id for root item, not underscore prefix
+
+    // ===================================================================================
+    // PROPERTY BINDING SECTION
+    // Bind to item properties first, before property definitions
+    // ===================================================================================
+
+    width:  ScreenTools.defaultFontPixelHeight * 10 // No hardcoded sizing. All sizing must be relative to a ScreenTools font size
+    height: ScreenTools.defaultFontPixelHeight * 20
+
+    // ===================================================================================
     // PRIVATE PROPERTIES SECTION
     // Property definitions which are internal to the item are prepended with an underscore
     // to signal private and come second. Use readonly appropriately to increase binding performance.
@@ -53,14 +61,6 @@ Item {
     readonly property real _rectHeight: ScreenTools.defaultFontPixelWidth * 10
     readonly property bool _debugMode: false
     readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-    // ===================================================================================
-    // SIGNALS SECTION
-    // Define custom signals for communication
-    // ===================================================================================
-
-    signal buttonClicked()
-    signal valueChanged(int newValue)
 
     // ===================================================================================
     // FUNCTIONS SECTION

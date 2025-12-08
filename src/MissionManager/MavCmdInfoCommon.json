@@ -37,7 +37,9 @@
                 "units":            "secs",
                 "default":          0,
                 "decimalPlaces":    0,
-                "min":              0
+                "min":              0,
+                "userMin":          0,
+                "userMax":          600
             },
             "param2": {
                 "label":            "Acceptance",
@@ -57,7 +59,9 @@
                 "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    1,
+                "userMin":          -180,
+                "userMax":          180
             }
         },
         {
@@ -73,14 +77,18 @@
                 "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -100,
+                "userMax":          100
             },
             "param4": {
                 "label":            "Yaw",
                 "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -180,
+                "userMax":          180
             }
         },
         {
@@ -96,7 +104,9 @@
                 "label":            "Turns",
                 "default":          1,
                 "decimalPlaces":    0,
-                "min":              0
+                "min":              0,
+                "userMin":          0,
+                "userMax":          100
             },
             "param2": {
                 "label":            "Leave Loiter",
@@ -109,7 +119,9 @@
                 "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -100,
+                "userMax":          100
             },
             "param4": {
                 "label":            "Exit loiter from",
@@ -133,7 +145,9 @@
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0,
-                "min":              0
+                "min":              0,
+                "userMin":          0,
+                "userMax":          600
             },
             "param2": {
                 "label":            "Leave Loiter",
@@ -146,7 +160,9 @@
                 "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -100,
+                "userMax":          100
             },
             "param4": {
                 "label":            "Exit loiter from",
@@ -192,7 +208,9 @@
                 "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    1,
+                "userMin":          -180,
+                "userMax":          180
             }
         },
         {
@@ -245,7 +263,9 @@
                 "label":            "Radius",
                 "units":            "m",
                 "default":          50.0,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -100,
+                "userMax":          100
             },
             "param4": {
                 "label":            "Exit loiter from",
@@ -283,7 +303,9 @@
                 "label":            "Heading goal",
                 "default":          0,
                 "units":            "deg",
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -180,
+                "userMax":          180
             }
         },
         {
@@ -299,7 +321,9 @@
                 "units":            "secs",
                 "default":          0,
                 "decimalPlaces":    0,
-                "min":              0
+                "min":              0,
+                "userMin":          0,
+                "userMax":          600
             }
         },
         { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
@@ -325,7 +349,9 @@
                 "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -180,
+                "userMax":          180
             }
         },
         {
@@ -349,7 +375,9 @@
                 "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          -180,
+                "userMax":          180
             }
         },
         {
@@ -375,28 +403,36 @@
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0,
-                "min":              -1
+                "min":              -1,
+                "userMin":          -1,
+                "userMax":          600
             },
             "param2": {
                 "label":            "Hour (utc)",
                 "default":          0,
                 "decimalPlaces":    0,
                 "min":              -1,
-                "max":              23
+                "max":              23,
+                "userMin":          -1,
+                "userMax":          23
             },
             "param3": {
                 "label":            "Min (utc)",
                 "default":          0,
                 "decimalPlaces":    0,
                 "min":              -1,
-                "max":              59
+                "max":              59,
+                "userMin":          -1,
+                "userMax":          59
             },
             "param4": {
                 "label":            "Sec (utc)",
                 "default":          0,
                 "decimalPlaces":    0,
                 "min":              -1,
-                "max":              59
+                "max":              59,
+                "userMin":          -1,
+                "userMax":          59
             }
         },
         {
@@ -411,7 +447,9 @@
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0,
-                "min":              0
+                "min":              0,
+                "userMin":          0,
+                "userMax":          600
             }
         },
         {
@@ -427,6 +465,14 @@
                 "units":            "m/s",
                 "default":          5,
                 "decimalPlaces":    2
+            },
+            "param7": {
+                "label":            "Target",
+                "units":            "m",
+                "default":          100,
+                "decimalPlaces":    2,
+                "userMin":          0,
+                "userMax":          121.92
             }
         },
         {
@@ -440,7 +486,9 @@
                 "units":            "m",
                 "default":          10,
                 "decimalPlaces":    2,
-                "min":              0
+                "min":              0,
+                "userMin":          0,
+                "userMax":          100
             }
         },
         {
@@ -453,13 +501,17 @@
                 "label":            "Heading",
                 "units":            "deg",
                 "default":          0,
-                "decimalPlaces":    1
+                "decimalPlaces":    1,
+                "userMin":          -180,
+                "userMax":          180
             },
             "param2": {
                 "label":            "Rate",
                 "units":            "degrees/s",
                 "default":          5,
-                "decimalPlaces":    1
+                "decimalPlaces":    1,
+                "userMin":          1,
+                "userMax":          360
             },
             "param3": {
                 "label":            "Direction",

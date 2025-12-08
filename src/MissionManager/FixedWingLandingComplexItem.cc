@@ -135,16 +135,6 @@ void FixedWingLandingComplexItem::_calcGlideSlope(void)
     _glideSlopeFact.setRawValue(qRadiansToDegrees(qAtan(landingAltDifference / landingDistance)));
 }
 
-void FixedWingLandingComplexItem::moveLandingPosition(const QGeoCoordinate& coordinate)
-{
-    double savedHeading = landingHeading()->rawValue().toDouble();
-    double savedDistance = landingDistance()->rawValue().toDouble();
-
-    setLandingCoordinate(coordinate);
-    landingHeading()->setRawValue(savedHeading);
-    landingDistance()->setRawValue(savedDistance);
-}
-
 bool FixedWingLandingComplexItem::_isValidLandItem(const MissionItem& missionItem)
 {
     if (missionItem.command() != MAV_CMD_NAV_LAND ||

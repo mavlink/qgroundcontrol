@@ -203,7 +203,9 @@ void SimpleMissionItem::_setupMetaData(void)
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
         _altitudeMetaData->setRawUnits("m");
         _altitudeMetaData->setRawIncrement(1);
-        _altitudeMetaData->setDecimalPlaces(2);
+        _altitudeMetaData->setDecimalPlaces(1);
+        _altitudeMetaData->setRawUserMin(0.0);
+        _altitudeMetaData->setRawUserMax(121.92); // 400 feet
 
         enumStrings.clear();
         enumValues.clear();
@@ -459,6 +461,15 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
                     paramMetaData->setRawMin(paramInfo->min());
                     paramMetaData->setRawMax(paramInfo->max());
+                    const double userMin = paramInfo->userMin();
+                    const double userMax = paramInfo->userMax();
+                    // if user min/max are NaN, we leave them unchanged (invalid)
+                    if (!qIsNaN(userMin)) {
+                        paramMetaData->setRawUserMin(userMin);
+                    }
+                    if (!qIsNaN(userMax)) {
+                        paramMetaData->setRawUserMax(userMax);
+                    }
                     paramFact->setMetaData(paramMetaData);
                     _textFieldFacts.append(paramFact);
                 }
@@ -510,6 +521,15 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
                     paramMetaData->setRawMin(paramInfo->min());
                     paramMetaData->setRawMax(paramInfo->max());
+                    const double userMin = paramInfo->userMin();
+                    const double userMax = paramInfo->userMax();
+                    // if user min/max are NaN, we leave them unchanged (invalid)
+                    if (!qIsNaN(userMin)) {
+                        paramMetaData->setRawUserMin(userMin);
+                    }
+                    if (!qIsNaN(userMax)) {
+                        paramMetaData->setRawUserMax(userMax);
+                    }
                     paramFact->setMetaData(paramMetaData);
                     _nanFacts.append(paramFact);
                 }
@@ -596,6 +616,15 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                 paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
                 paramMetaData->setRawMin(paramInfo->min());
                 paramMetaData->setRawMax(paramInfo->max());
+                const double userMin = paramInfo->userMin();
+                const double userMax = paramInfo->userMax();
+                // if user min/max are NaN, we leave them unchanged (invalid)
+                if (!qIsNaN(userMin)) {
+                    paramMetaData->setRawUserMin(userMin);
+                }
+                if (!qIsNaN(userMax)) {
+                    paramMetaData->setRawUserMax(userMax);
+                }
                 paramFact->setMetaData(paramMetaData);
                 _comboboxFacts.append(paramFact);
             }
