@@ -165,7 +165,7 @@ Item {
         GuidedValueSlider {
             id:                 guidedValueSlider
             anchors.right:      parent.right
-            anchors.top:        parent.top
+            anchors.top:        toolbar.bottom
             anchors.bottom:     parent.bottom
             z:                  QGroundControl.zOrderTopMost
             visible:            false
