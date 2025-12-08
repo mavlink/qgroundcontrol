@@ -46,8 +46,6 @@ Item {
     property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
 
-    property bool utmspActTrigger
-
     QGCToolInsets {
         id:                     _totalToolInsets
         leftEdgeTopInset:       toolStrip.leftEdgeTopInset
@@ -103,15 +101,6 @@ Item {
         missionController:      _missionController
         geoFenceController:     _geoFenceController
         rallyPointController:   _rallyPointController
-    }
-
-    GuidedActionConfirm {
-        anchors.top:                parent.top
-        anchors.horizontalCenter:   parent.horizontalCenter
-        z:                          QGroundControl.zOrderTopMost
-        guidedController:           _guidedController
-        guidedValueSlider:          _guidedValueSlider
-        utmspSliderTrigger:         utmspActTrigger
     }
 
     //-- Virtual Joystick
