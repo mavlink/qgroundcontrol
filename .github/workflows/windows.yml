@@ -4,19 +4,31 @@ on:
   push:
     branches:
       - master
-      - Stable*
+      - 'Stable*'
     tags:
-      - v*
+      - 'v*'
     paths-ignore:
-      - docs/**
+      - 'docs/**'
   pull_request:
     paths:
-      - .github/workflows/windows.yml
-      - deploy/windows/**
-      - src/**
-      - CMakeLists.txt
-      - cmake/**
-      - tools/setup/*windows*
+      - '.github/workflows/windows.yml'
+      - '.github/actions/**'
+      - 'deploy/windows/**'
+      - 'src/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'tools/setup/*windows*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -81,7 +93,7 @@ jobs:
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
-        uses: blinemedical/setup-gstreamer@v1
+        uses: blinemedical/setup-gstreamer@v1.4.0
         with:
           version: ${{ steps.config.outputs.gstreamer_windows_version }}
 

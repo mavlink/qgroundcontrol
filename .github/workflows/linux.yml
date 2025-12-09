@@ -8,7 +8,7 @@ on:
     tags:
       - 'v*'
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - 'docs/**'
   pull_request:
     paths:
       - '.github/workflows/linux.yml'
@@ -19,6 +19,16 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*debian*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
