@@ -5,19 +5,36 @@
 .DESCRIPTION
     - Uses Python + pip to install helper packages (setuptools, wheel, py7zr, ninja, cmake, aqtinstall).
     - Runs `aqt install-qt` with the same modules list.
-    - Adjusts PATH and Qt‑related env vars for the current session.
+    - Adjusts PATH and Qt-related env vars for the current session.
 #>
 
 # ————————————————————————————————
-# 1) Defaults (env overrides supported)
+# 0) Source build config (required - no fallbacks)
 # ————————————————————————————————
-$QT_VERSION = $env:QT_VERSION      -or '6.10.1'
-$QT_PATH    = $env:QT_PATH         -or 'C:\Qt'
-$QT_HOST    = $env:QT_HOST         -or 'windows'
-$QT_TARGET  = $env:QT_TARGET       -or 'desktop'
-# Windows arch must be one of: win64_msvc2017_64, win64_msvc2019_64, win64_mingw81, etc. :contentReference[oaicite:0]{index=0}
-$QT_ARCH    = $env:QT_ARCH         -or 'win64_msvc2022_64'
-$QT_MODULES = $env:QT_MODULES      -or 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml'
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$configScript = Join-Path $scriptDir "read-config.ps1"
+if (Test-Path $configScript) {
+    . $configScript
+} else {
+    Write-Error "read-config.ps1 not found"
+    exit 1
+}
+
+# Verify required variables are set
+if (-not $env:QT_VERSION -or -not $env:QT_MODULES) {
+    Write-Error "QT_VERSION and QT_MODULES must be set (check build-config.json)"
+    exit 1
+}
+
+# ————————————————————————————————
+# 1) Platform defaults (can be overridden via environment)
+# ————————————————————————————————
+$QT_VERSION = $env:QT_VERSION
+$QT_PATH    = if ($env:QT_PATH)   { $env:QT_PATH }   else { 'C:\Qt' }
+$QT_HOST    = if ($env:QT_HOST)   { $env:QT_HOST }   else { 'windows' }
+$QT_TARGET  = if ($env:QT_TARGET) { $env:QT_TARGET } else { 'desktop' }
+$QT_ARCH    = if ($env:QT_ARCH)   { $env:QT_ARCH }   else { 'win64_msvc2022_64' }
+$QT_MODULES = $env:QT_MODULES
 
 Write-Host "Using:"
 Write-Host "  QT_VERSION    = $QT_VERSION"

@@ -3,17 +3,35 @@
     Install GStreamer (x64 only) and the latest Vulkan SDK on Windows.
 
 .DESCRIPTION
-    • Must run elevated.
-    • Downloads installers to $env:TEMP and removes them afterwards.
-    • Sets the required environment variables and updates PATH.
+    - Must run elevated.
+    - Downloads installers to $env:TEMP and removes them afterwards.
+    - Sets the required environment variables and updates PATH.
 #>
+
+# ────────────────────────────────
+# 0) Source build config (required - no fallbacks)
+# ────────────────────────────────
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$configScript = Join-Path $scriptDir "read-config.ps1"
+if (Test-Path $configScript) {
+    . $configScript
+} else {
+    Write-Error "read-config.ps1 not found"
+    exit 1
+}
+
+# Verify required variables are set (GStreamer Windows version)
+if (-not $env:GSTREAMER_WINDOWS_VERSION) {
+    Write-Error "GSTREAMER_WINDOWS_VERSION must be set (check build-config.json)"
+    exit 1
+}
 
 # ────────────────────────────────
 # 1) Elevation
 # ────────────────────────────────
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
     ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "Restarting with Administrator privileges…"
+    Write-Warning "Restarting with Administrator privileges..."
     Start-Process pwsh.exe -Verb RunAs -ArgumentList "-NoProfile","-ExecutionPolicy Bypass","-File `"$PSCommandPath`""
     exit
 }
@@ -27,9 +45,9 @@ Write-Host "`n==> Detected architecture: $arch"
 # 2) GStreamer config (x64 only)
 # ────────────────────────────────
 # Note: Must Use QtMultimedia VideoReceiver or build GStreamer manually for Arm64
-$installGst = $arch -eq 'AMD64'              # treat “x64/AMD64” as the only GS­treamer target
+$installGst = $arch -eq 'AMD64'              # treat "x64/AMD64" as the only GStreamer target
 if ($installGst) {
-    $gstVersion  = '1.22.12'
+    $gstVersion  = $env:GSTREAMER_WINDOWS_VERSION
     $gstPrefix   = 'C:\gstreamer\1.0\msvc_x86_64'
     $gstBaseUrl  = "https://gstreamer.freedesktop.org/data/pkg/windows/$gstVersion/msvc"
     $gstRuntime  = Join-Path $tempDir 'gstreamer-runtime.msi'

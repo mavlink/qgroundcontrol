@@ -1,5 +1,22 @@
 #! /usr/bin/env bash
 
+set -e
+
+# Source build config (required - no fallbacks)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/read-config.sh" ]]; then
+    source "$SCRIPT_DIR/read-config.sh"
+else
+    echo "Error: read-config.sh not found" >&2
+    exit 1
+fi
+
+# Verify required variables are set
+if [[ -z "${GSTREAMER_VERSION:-}" ]]; then
+    echo "Error: GSTREAMER_VERSION must be set (check build-config.json)" >&2
+    exit 1
+fi
+
 if ! command -v brew &> /dev/null
 then
     # install Homebrew if not installed yet
@@ -12,7 +29,7 @@ brew install cmake ninja ccache git pkgconf create-dmg mold
 
 # Install GStreamer
 GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx
-GST_VERSION=1.24.13
+GST_VERSION="$GSTREAMER_VERSION"
 GST_PKG=gstreamer-1.0-$GST_VERSION-universal.pkg
 GST_DEV_PKG=gstreamer-1.0-devel-$GST_VERSION-universal.pkg
 pushd "$TMPDIR" || exit

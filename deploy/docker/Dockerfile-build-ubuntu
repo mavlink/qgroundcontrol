@@ -29,17 +29,24 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# ---------- Bring in the helper scripts ----------
-# They must be in the build context next to this Dockerfile.
+# ---------- Bring in the helper scripts and config ----------
+COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
-COPY tools/setup/install-qt-debian.sh          /tmp/qt/
+COPY tools/setup/install-qt-debian.sh /tmp/qt/
+COPY tools/setup/read-config.sh /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && \
     /tmp/qt/install-dependencies-debian.sh && \
-    /tmp/qt/install-qt-debian.sh && \
-    rm -rf /tmp/qt   # keep the image slim
+    /tmp/qt/install-qt-debian.sh
 
-ENV QT_ROOT_DIR=/opt/Qt/6.10.1/gcc_64
-ENV PATH=$QT_ROOT_DIR/bin:$PATH
+# Extract Qt version and set environment (scripts install to /opt/Qt/<version>/gcc_64)
+RUN QT_VERSION=$(/tmp/qt/read-config.sh --get qt_version) && \
+    echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64" >> /etc/profile.d/qt.sh && \
+    echo 'export PATH=$QT_ROOT_DIR/bin:$PATH' >> /etc/profile.d/qt.sh && \
+    chmod +x /etc/profile.d/qt.sh && \
+    rm -rf /tmp/qt
+
+# Source qt.sh in bash login shells; for non-login, find Qt dynamically
+SHELL ["/bin/bash", "-lc"]
 
 # ---------- Git safe directory (avoids “detected dubious ownership”) ----------
 RUN git config --global --add safe.directory /project/source
