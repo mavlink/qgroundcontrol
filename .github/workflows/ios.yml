@@ -7,9 +7,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 120
 
     strategy:
       matrix:
@@ -47,6 +51,7 @@ jobs:
           target: ios
           build-type: ${{ matrix.BuildType }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt for MacOS
         uses: jurplel/install-qt-action@v4

@@ -23,10 +23,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build Android-Linux ${{ matrix.qt_version }} ${{ matrix.build_type }}
     runs-on: ubuntu-latest
+    timeout-minutes: 120
 
     strategy:
       fail-fast: false

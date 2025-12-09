@@ -21,9 +21,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 120
 
     strategy:
       matrix:
@@ -63,6 +67,7 @@ jobs:
           target: clang_64
           build-type: ${{ matrix.BuildType }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4

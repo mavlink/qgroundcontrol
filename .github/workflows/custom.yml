@@ -23,9 +23,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 120
 
     defaults:
       run:
@@ -65,6 +69,7 @@ jobs:
           target: win64_msvc2022_64
           build-type: Release
           cpm-modules: ${{ runner.temp }}\build\cpm_modules
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4

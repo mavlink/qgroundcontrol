@@ -14,12 +14,16 @@ on:
       - 'package*.json'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -49,6 +53,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Download Artifact

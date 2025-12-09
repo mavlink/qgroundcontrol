@@ -1,9 +1,14 @@
 name: flatpak
 on: [workflow_dispatch]
+
+permissions:
+  contents: read
+
 jobs:
   flatpak-builder:
     name: Flatpak
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-47
       options: --privileged
