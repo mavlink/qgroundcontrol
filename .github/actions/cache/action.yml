@@ -31,7 +31,7 @@ runs:
     - name: Cache ccache binary (Linux)
       if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
       id: ccache-binary
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
         key: ccache-binary-${{ inputs.ccache-version }}-linux-x86_64
@@ -73,7 +73,7 @@ runs:
 
     - name: Cache CPM Modules
       if: inputs.cpm-modules != ''
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ inputs.cpm-modules }}
         key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}

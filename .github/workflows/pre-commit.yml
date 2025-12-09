@@ -2,6 +2,10 @@ name: pre-commit
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 permissions:
   contents: read
 
@@ -11,6 +15,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
       - uses: actions/setup-python@v6
 
       - name: Install Qt and qmllint
@@ -21,7 +30,7 @@ jobs:
           pipx ensurepath
           USER_BASE_BIN="$(python3 -m site --user-base)/bin"
           export PATH="$USER_BASE_BIN:$PATH"
-          QT_VERSION=6.10.1
+          QT_VERSION=${{ steps.config.outputs.qt_version }}
           QT_ARCH=linux_gcc_64
           QT_PATH=/opt/Qt
           aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH

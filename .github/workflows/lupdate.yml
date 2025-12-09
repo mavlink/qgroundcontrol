@@ -24,10 +24,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
 
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
       - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
-          version: 6.10.1
+          version: ${{ steps.config.outputs.qt_version }}
           cache: true
 
       - name: Update translation files

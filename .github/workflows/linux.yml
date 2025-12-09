@@ -57,9 +57,6 @@ jobs:
       run:
         shell: bash
 
-    env:
-      QT_VERSION: 6.10.1
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -67,6 +64,10 @@ jobs:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -88,12 +89,12 @@ jobs:
       - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
           target: desktop
           arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          modules: ${{ steps.config.outputs.qt_modules }}
           setup-python: false
           cache: true
 

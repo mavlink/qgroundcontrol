@@ -60,9 +60,6 @@ jobs:
       run:
         shell: cmd
 
-    env:
-      QT_VERSION: 6.10.1
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -70,6 +67,10 @@ jobs:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
 
       - name: Common setup
         uses: ./.github/actions/common
@@ -82,7 +83,7 @@ jobs:
         if: matrix.arch == 'win64_msvc2022_64'
         uses: blinemedical/setup-gstreamer@v1
         with:
-          version: 1.22.12
+          version: ${{ steps.config.outputs.gstreamer_windows_version }}
 
       - name: Setup cache
         uses: ./.github/actions/cache
@@ -93,15 +94,15 @@ jobs:
           cpm-modules: ${{ runner.temp }}\build\cpm_modules
           save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install Qt ${{ matrix.qt_version || env.QT_VERSION }}
+      - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ matrix.qt_version || env.QT_VERSION }}
+          version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
           target: desktop
           arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          modules: ${{ steps.config.outputs.qt_modules }}
           setup-python: false
           cache: true
 
