@@ -69,10 +69,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width:                  parent.height * 0.75
                 height:                 width
-                x:                      (((reversed ? _pwmMax - Math.max(_pwmMin, Math.min(_pwmMax, rcValue)) : Math.max(_pwmMin, Math.min(_pwmMax, rcValue)) - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
                 radius:                 width / 2
                 color:                  qgcPal.text
                 visible:                mapped
+
+                readonly property int clampedRcValue: Math.max(_pwmMin, Math.min(_pwmMax, rcValue))
+
+                x: (((reversed ? _pwmMax - clampedRcValue : clampedRcValue - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
             }
 
             QGCLabel {
