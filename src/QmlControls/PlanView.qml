@@ -42,7 +42,6 @@ Item {
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
     property int    _editingLayer:                      _layerMission
-    property int    _editingTool:                       _editingToolMissionItem
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
@@ -54,13 +53,6 @@ Item {
 
     readonly property int _layerMission:        1
     readonly property int _layerOther:          2
-
-    // These much match the indices of _editingToolComponents
-    readonly property int _editingToolStart:        0
-    readonly property int _editingToolMissionItem:  1
-    readonly property int _editingToolOther:        2
-
-    property var _editingToolComponents: [ startToolComponent, missionItemToolComponent, otherToolComponent ]
 
     readonly property string _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
@@ -347,7 +339,7 @@ Item {
             property rect centerViewport:   Qt.rect(_leftToolWidth + _margin,  _margin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (terrainStatus.visible ? terrainStatus.y : height - _margin) - _margin)
 
             property real _leftToolWidth:       toolStrip.x + toolStrip.width
-            property real _rightToolWidth:      rightPanelBackground.width + rightPanelBackground.anchors.rightMargin
+            property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
             property real _nonInteractiveOpacity:  0.5
 
             // Initial map position duplicates Fly view position
@@ -630,214 +622,14 @@ Item {
             onDropped: allAddClickBoolsOff()
         }
 
-
-        Rectangle {
-            id:                     rightPanelBackground
+        PlanViewRightPanel {
+            id:                     rightPanel
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.right:          parent.right
             width:                  _utmspEnabled ? _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667 : _rightPanelWidth
-            color:                  qgcPal.window
-            opacity:                0.85
-        }
-
-        //-------------------------------------------------------
-        // Right Panel Controls
-        Item {
-            anchors.fill:           rightPanelBackground
-            anchors.topMargin:      _toolsMargin
-
-            DeadMouseArea {
-                anchors.fill:   parent
-            }
-
-            Column {
-                id:                 rightControls
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        parent.top
-
-                QGCTabBar {
-                    width: parent.width
-
-                    Component.onCompleted: currentIndex = 1
-
-                    QGCTabButton {
-                        text:       qsTr("Start")
-                        onClicked:  { _editingTool = _editingToolStart; _editingLayer = _layerMission }
-                    }
-
-                    QGCTabButton {
-                        text:       qsTr("Mission")
-                        onClicked:  { _editingTool = _editingToolMissionItem; _editingLayer = _layerMission }
-                    }
-
-                    QGCTabButton {
-                        text:       qsTr("Other")
-                        onClicked:  { _editingTool = _editingToolOther; _editingLayer = _layerOther }
-                    }
-                }
-            }
-
-            QGCFlickable {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                anchors.top:            rightControls.bottom
-                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.bottom:         parent.bottom
-                anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
-                contentHeight:          editingToolLoader.height
-
-                Loader {
-                    id:                 editingToolLoader
-                    width:              parent.width
-                    sourceComponent:    _editingToolComponents[_editingTool]
-                }
-            }
-
-            Component {
-                id: startToolComponent
-
-                MissionItemEditor {
-                    width:              parent.width
-                    map:                editorMap
-                    masterController:   _planMasterController
-                    missionItem:        _missionController.visualItems.get(0)
-                }
-            }
-
-            Component {
-                id: missionItemToolComponent
-
-                Column {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                    Column {
-                        width:      parent.width
-                        spacing:    ScreenTools.defaultFontPixelHeight / 2
-                        visible:    _missionController.currentPlanViewVIIndex !== 0
-
-                        RowLayout {
-                            anchors.margins:    ScreenTools.defaultFontPixelWidth / 2
-                            anchors.left:       parent.left
-                            anchors.right:      parent.right
-                            height: ScreenTools.defaultFontPixelHeight
-
-                            QGCColoredImage {
-                                Layout.fillHeight:      true
-                                Layout.preferredWidth:  height
-                                source:                 "/InstrumentValueIcons/backward.svg"
-                                color:                  qgcPal.buttonText
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        if (_missionController.currentPlanViewVIIndex > 1) {
-                                            let prevItem = _missionController.visualItems.get(_missionController.currentPlanViewVIIndex - 1)
-                                            _missionController.setCurrentPlanViewSeqNum(prevItem.sequenceNumber, false)
-                                        }
-                                    }
-                                }
-                            }
-
-                            QGCLabel {
-                                Layout.fillWidth:       true
-                                horizontalAlignment:    Text.AlignHCenter
-                                text:                   _missionController.currentPlanViewItem.commandName
-                            }
-
-                            QGCColoredImage {
-                                Layout.fillHeight:      true
-                                Layout.preferredWidth:  height
-                                source:                 "/InstrumentValueIcons/forward.svg"
-                                color:                  qgcPal.buttonText
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        if (_missionController.currentPlanViewVIIndex < _missionController.visualItems.count - 1) {
-                                            let nextItem = _missionController.visualItems.get(_missionController.currentPlanViewVIIndex + 1)
-                                            _missionController.setCurrentPlanViewSeqNum(nextItem.sequenceNumber, false)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        MissionItemEditor {
-                            width:                      parent.width
-                            map:                        editorMap
-                            masterController:           _planMasterController
-                            missionItem:                _missionController.currentPlanViewItem
-                            onRemove:                   _missionController.removeVisualItem(_missionController.currentPlanViewVIIndex)
-                            onSelectNextNotReadyItem:   selectNextNotReady()
-                        }
-                    }
-
-                    QGCLabel {
-                        width:                  parent.width
-                        horizontalAlignment:    Text.AlignHCenter
-                        verticalAlignment:      Text.AlignVCenter
-                        wrapMode:               Text.WordWrap
-                        text:                   qsTr("Use the tools on the left to add mission items to the plan.")
-                        visible:                _missionController.currentPlanViewVIIndex === 0
-                    }
-                }
-            }
-
-            Component {
-                id: otherToolComponent
-
-                Column {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                    GeoFenceEditor {
-                        width:                  parent.width
-                        myGeoFenceController:   _geoFenceController
-                        flightMap:              editorMap
-                    }
-
-                    RallyPointEditorHeader {
-                        width:              parent.width
-                        controller:         _rallyPointController
-                    }
-
-                    RallyPointItemEditor {
-                        width:              parent.width
-                        visible:            _rallyPointController.points.count
-                        rallyPoint:         _rallyPointController.currentRallyPoint
-                        controller:         _rallyPointController
-                    }
-
-                    UTMSPAdapterEditor{
-                        width:                  parent.width
-                        currentMissionItems:     _visualItems
-                        myGeoFenceController:    _geoFenceController
-                        flightMap:               editorMap
-                        triggerSubmitButton:     _triggerSubmit
-                        resetRegisterFlightPlan: _resetRegisterFlightPlan
-
-                        onRemoveFlightPlanTriggered: {
-                            _planMasterController.removeAllFromVehicle()
-                            _missionController.setCurrentPlanViewSeqNum(0, true)
-                            _resetRegisterFlightPlan = true
-                        }
-
-                        onResetGeofencePolygonTriggered: {
-                            resetUTMSPGeoFenceTimer.start()
-                        }
-
-                        Timer {
-                            id:             resetUTMSPGeoFenceTimer
-                            interval:       2500
-                            running:        false
-                            repeat:         false
-                            onTriggered:    _resetGeofencePolygon = true
-                        }
-                    }
-                }
-            }
+            planMasterController:   _planMasterController
+            editorMap:              editorMap
         }
 
         QGCLabel {
@@ -858,7 +650,7 @@ Item {
             anchors.margins:    _toolsMargin
             anchors.leftMargin: 0
             anchors.left:       mapScale.left
-            anchors.right:      rightPanelBackground.left
+            anchors.right:      rightPanel.left
             anchors.bottom:     parent.bottom
             height:             ScreenTools.defaultFontPixelHeight * 7
             missionController:  _missionController
