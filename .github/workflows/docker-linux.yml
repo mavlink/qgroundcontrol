@@ -12,8 +12,10 @@ on:
   pull_request:
     paths:
       - '.github/workflows/docker-linux.yml'
+      - '.github/build-config.json'
       - 'deploy/docker/**'
       - 'deploy/linux/**'
+      - 'tools/setup/**'
       - 'src/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
