@@ -36,6 +36,52 @@ Item {
         opacity:        0.85
     }
 
+
+    // Open/Close panel
+    Item {
+        id:                     panelOpenCloseButton
+        anchors.right:          parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        width:                  toggleButtonRect.width - toggleButtonRect.radius
+        height:                 toggleButtonRect.height
+        clip:                   true
+
+        property bool _expanded: root.anchors.right == root.parent.right
+
+        Rectangle {
+            id:             toggleButtonRect
+            width:          ScreenTools.defaultFontPixelWidth * 2.25
+            height:         width * 3
+            radius:         ScreenTools.defaultBorderRadius
+            color:          rightPanelBackground.color
+            opacity:        rightPanelBackground.opacity
+
+            QGCLabel {
+                id:                 toggleButtonLabel
+                anchors.centerIn:   parent
+                text:               panelOpenCloseButton._expanded ? ">" : "<"
+                color:              qgcPal.buttonText
+            }
+
+        }
+
+        QGCMouseArea {
+            anchors.fill: parent
+
+            onClicked: {
+                if (panelOpenCloseButton._expanded) {
+                    // Close panel
+                    root.anchors.right = undefined
+                    root.anchors.left = root.parent.right
+                } else {
+                    // Open panel
+                    root.anchors.left = undefined
+                    root.anchors.right = root.parent.right
+                }
+            }
+        }
+    }
+
     //-------------------------------------------------------
     // Right Panel Controls
     Item {
