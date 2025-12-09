@@ -1,6 +1,19 @@
 name: pre-commit
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
