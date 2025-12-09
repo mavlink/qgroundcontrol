@@ -16,9 +16,6 @@ inputs:
   aws_distribution_id:
     description: AWS distribution ID
     required: false
-  github_token:
-    description: GitHub Token
-    required: false
   upload_aws:
     description: Upload artifact to AWS
     required: true
@@ -67,7 +64,3 @@ runs:
           --distribution-id "${{ inputs.aws_distribution_id }}" \
           --paths "/latest/${{ inputs.artifact_name }}"
       shell: bash
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
-        AWS_REGION: us-west-2
