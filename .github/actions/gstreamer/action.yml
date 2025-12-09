@@ -101,7 +101,7 @@ runs:
       shell: bash
 
     - name: Save artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: GStreamer-${{ inputs.build_type }}
         path: ${{ inputs.install_directory }}
