@@ -21,6 +21,15 @@ on:
       - 'cmake/**'
       - 'translations/*'
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -64,7 +73,6 @@ jobs:
 
     env:
       PACKAGE: QGroundControl
-      QT_VERSION: 6.10.1
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -79,12 +87,16 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
       - name: Initial Setup
         uses: ./.github/actions/common
 
       - name: Free Disk Space
         if: matrix.host == 'linux'
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
           android: false
@@ -95,14 +107,21 @@ jobs:
         with:
           host: ${{ matrix.host }}
           arch: ${{ matrix.arch }}
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.config.outputs.qt_version }}
+          modules: ${{ steps.config.outputs.qt_modules }}
           abis: ${{ env.QT_ANDROID_ABIS }}
+          build-type: ${{ inputs.build_type || 'Release' }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          ndk-version: ${{ steps.config.outputs.ndk_version }}
+          java-version: ${{ steps.config.outputs.java_version }}
+          android-platform: ${{ steps.config.outputs.android_platform }}
+          ccache-version: ${{ steps.config.outputs.ccache_version }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=Release
+              -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }}
               -DCMAKE_WARN_DEPRECATED=FALSE
               -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
@@ -112,7 +131,7 @@ jobs:
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config Release --parallel
+        run: cmake --build . --target all --config ${{ inputs.build_type || 'Release' }} --parallel
 
       - name: Prepare Artifact
         run: cp ${{ runner.temp }}/build/android-build/*.apk ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk

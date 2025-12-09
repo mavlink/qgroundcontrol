@@ -1,107 +1,47 @@
 name: Build GStreamer
-description: Builds GStreamer using Meson
+description: Build GStreamer from source for QGC video streaming
 inputs:
-  gst_version:
-    description: Version of GStreamer to Build
+  version:
+    description: GStreamer version (use build-config.outputs.gstreamer_version)
     required: true
-    default: 1.24.8
-  build_type:
-    description: Build Type "release" or "debug"
-    required: true
+  build-type:
+    description: Build type (release or debug)
+    required: false
     default: release
-  working_directory:
-    description: Where to clone GStreamer source
-    required: true
+  work-dir:
+    description: Working directory for source
+    required: false
     default: ${{ runner.temp }}
-  install_directory:
-    description: Where to install GStreamer Build
-    required: true
+  prefix:
+    description: Install prefix
+    required: false
     default: ${{ runner.temp }}/gst
 runs:
-  using: "composite"
+  using: composite
   steps:
-    - name: Clone GStreamer
-      working-directory: ${{ inputs.working_directory }}
-      run: git clone --depth 1 --branch ${{ inputs.gst_version }} https://github.com/GStreamer/gstreamer.git
+    - name: Build GStreamer
       shell: bash
-
-    - name: Install Dependencies
-      run: python3 -m pip install --user ninja meson
-      shell: bash
-
-    - name: Configure GStreamer
-      working-directory: ${{ inputs.working_directory }}/gstreamer
-      run: meson setup
-        --prefix=${{ inputs.install_directory }}
-        --buildtype=${{ inputs.build_type }}
-        --wrap-mode=forcefallback
-        --strip
-        -Dauto_features=disabled
-        -Dgst-full-libraries=video,gl
-        -Dgpl=enabled
-        -Dlibav=enabled
-        -Dorc=enabled
-        -Dqt6=enabled
-        -Dvaapi=enabled
-        -Dbase=enabled
-        -Dgst-plugins-base:app=enabled
-        -Dgst-plugins-base:gl=enabled
-        -Dgst-plugins-base:gl_api=opengl,gles2
-        -Dgst-plugins-base:gl_platform=glx,egl
-        -Dgst-plugins-base:gl_winsys=x11,egl,wayland
-        -Dgst-plugins-base:playback=enabled
-        -Dgst-plugins-base:tcp=enabled
-        -Dgst-plugins-base:x11=enabled
-        -Dgood=enabled
-        -Dgst-plugins-good:isomp4=enabled
-        -Dgst-plugins-good:matroska=enabled
-        -Dgst-plugins-good:qt-egl=enabled
-        -Dgst-plugins-good:qt-method=auto
-        -Dgst-plugins-good:qt-wayland=enabled
-        -Dgst-plugins-good:qt-x11=enabled
-        -Dgst-plugins-good:qt6=enabled
-        -Dgst-plugins-good:rtp=enabled
-        -Dgst-plugins-good:rtpmanager=enabled
-        -Dgst-plugins-good:rtsp=enabled
-        -Dgst-plugins-good:udp=enabled
-        -Dbad=enabled
-        -Dgst-plugins-bad:gl=enabled
-        -Dgst-plugins-bad:mpegtsdemux=enabled
-        -Dgst-plugins-bad:rtp=enabled
-        -Dgst-plugins-bad:sdp=enabled
-        -Dgst-plugins-bad:va=enabled
-        -Dgst-plugins-bad:videoparsers=enabled
-        -Dgst-plugins-bad:wayland=enabled
-        -Dgst-plugins-bad:x11=enabled
-        -Dgst-plugins-bad:x265=enabled
-        -Dugly=enabled
-        -Dgst-plugins-ugly:x264=enabled
-        builddir
-        # --default-library=static
-        # --prefer_static=true
-        # -Dgst-full-target-type=static_library
-        # -Dgstreamer:gstreamer-static-full=true
-      shell: bash
-
-    - name: Compile GStreamer
-      working-directory: ${{ inputs.working_directory }}/gstreamer
-      run: meson compile -C builddir
-      shell: bash
-
-    - name: Install GStreamer
-      working-directory: ${{ inputs.working_directory }}/gstreamer
-      run: meson install -C builddir
-      shell: bash
+      run: |
+        "${{ github.workspace }}/tools/setup/build-gstreamer.sh" \
+          --version "${{ inputs.version }}" \
+          --type "${{ inputs.build-type }}" \
+          --work-dir "${{ inputs.work-dir }}" \
+          --prefix "${{ inputs.prefix }}"
 
     - name: Setup Environment
-      working-directory: ${{ runner.temp }}/gstreamer
-      run: >
-        echo "PKG_CONFIG_PATH=${{ inputs.install_directory }}/lib/x86_64-linux-gnu/pkgconfig:${{
-        inputs.install_directory }}/lib/x86_64-linux-gnu/gstreamer-1.0/pkgconfig:${{ env.PKG_CONFIG_PATH }}" >> "$GITHUB_ENV"
       shell: bash
+      run: |
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)  ARCH_DIR="x86_64-linux-gnu" ;;
+            aarch64) ARCH_DIR="aarch64-linux-gnu" ;;
+            *)       ARCH_DIR="$ARCH-linux-gnu" ;;
+        esac
+        echo "PKG_CONFIG_PATH=${{ inputs.prefix }}/lib/$ARCH_DIR/pkgconfig:$PKG_CONFIG_PATH" >> "$GITHUB_ENV"
+        echo "GST_PLUGIN_PATH=${{ inputs.prefix }}/lib/$ARCH_DIR/gstreamer-1.0" >> "$GITHUB_ENV"
 
     - name: Save artifact
       uses: actions/upload-artifact@v5
       with:
-        name: GStreamer-${{ inputs.build_type }}
-        path: ${{ inputs.install_directory }}
+        name: GStreamer-${{ inputs.build-type }}
+        path: ${{ inputs.prefix }}
