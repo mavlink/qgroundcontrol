@@ -11,7 +11,7 @@ on:
       - docs/**
   pull_request:
     paths:
-      - .github/workflows/windows.yml
+      - .github/workflows/custom.yml
       - deploy/windows/**
       - src/**
       - custom-example/**
@@ -21,7 +21,7 @@ on:
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+#   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
   build:

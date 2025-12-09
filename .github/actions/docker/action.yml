@@ -1,6 +1,13 @@
 # action.yml
 name: "QGC Linux Builder"
 description: "Helper action to build QGC in Ubuntu 22.04"
+
+inputs:
+  build-type:
+    description: 'CMake build type (Release or Debug)'
+    required: false
+    default: 'Release'
+
 runs:
   using: "docker"
   image: "./deploy/docker/Dockerfile-build-ubuntu"
