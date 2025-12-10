@@ -11,6 +11,12 @@ Usage:
     ./mock_vehicle.py --tcp               # TCP connection
     ./mock_vehicle.py --sitl              # SITL-compatible mode
     ./mock_vehicle.py --system-id 2       # Custom system ID
+    ./mock_vehicle.py --lat 37.7749 --lon -122.4194  # San Francisco
+
+Environment variables:
+    MOCK_VEHICLE_LAT    Initial latitude (default: 47.3977, Zurich)
+    MOCK_VEHICLE_LON    Initial longitude (default: 8.5456, Zurich)
+    MOCK_VEHICLE_ALT    Initial altitude in meters (default: 100)
 
 Requirements:
     pip install pymavlink
@@ -20,9 +26,10 @@ Based on MAVLink protocol v2.0
 
 import argparse
 import math
+import os
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 try:
     from pymavlink import mavutil
@@ -32,14 +39,34 @@ except ImportError:
     print("Install with: pip install pymavlink")
     sys.exit(1)
 
+# Default location (Zurich, Switzerland)
+DEFAULT_LAT = 47.3977
+DEFAULT_LON = 8.5456
+DEFAULT_ALT = 100.0
+
+
+def _get_default_lat() -> float:
+    """Get default latitude from env var or use Zurich."""
+    return float(os.environ.get("MOCK_VEHICLE_LAT", DEFAULT_LAT))
+
+
+def _get_default_lon() -> float:
+    """Get default longitude from env var or use Zurich."""
+    return float(os.environ.get("MOCK_VEHICLE_LON", DEFAULT_LON))
+
+
+def _get_default_alt() -> float:
+    """Get default altitude from env var."""
+    return float(os.environ.get("MOCK_VEHICLE_ALT", DEFAULT_ALT))
+
 
 @dataclass
 class VehicleState:
     """Current vehicle state."""
 
-    lat: float = 47.3977  # Zurich
-    lon: float = 8.5456
-    alt: float = 100.0
+    lat: float = field(default_factory=_get_default_lat)
+    lon: float = field(default_factory=_get_default_lon)
+    alt: float = field(default_factory=_get_default_alt)
     heading: float = 0.0
     roll: float = 0.0
     pitch: float = 0.0
@@ -386,10 +413,38 @@ def main():
     parser.add_argument(
         "--sitl", action="store_true", help="SITL-compatible mode (TCP on 5760)"
     )
+    parser.add_argument(
+        "--lat",
+        type=float,
+        default=None,
+        help=f"Initial latitude (default: env MOCK_VEHICLE_LAT or {DEFAULT_LAT})",
+    )
+    parser.add_argument(
+        "--lon",
+        type=float,
+        default=None,
+        help=f"Initial longitude (default: env MOCK_VEHICLE_LON or {DEFAULT_LON})",
+    )
+    parser.add_argument(
+        "--alt",
+        type=float,
+        default=None,
+        help=f"Initial altitude in meters (default: env MOCK_VEHICLE_ALT or {DEFAULT_ALT})",
+    )
 
     args = parser.parse_args()
 
     vehicle = MockVehicle(system_id=args.system_id)
+
+    # Override location from CLI if provided
+    if args.lat is not None:
+        vehicle.state.lat = args.lat
+    if args.lon is not None:
+        vehicle.state.lon = args.lon
+    if args.alt is not None:
+        vehicle.state.alt = args.alt
+
+    print(f"Initial position: {vehicle.state.lat:.4f}, {vehicle.state.lon:.4f} @ {vehicle.state.alt:.0f}m")
 
     if args.sitl:
         vehicle.connect_tcp(args.host, 5760)

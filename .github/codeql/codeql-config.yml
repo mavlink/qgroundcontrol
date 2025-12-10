@@ -1,16 +1,9 @@
-# =============================================================================
-# CodeQL Configuration
-# Custom configuration for C++ security analysis
-# =============================================================================
-
 name: "QGroundControl CodeQL Config"
 
-# Paths to analyze
 paths:
   - src
   - test
 
-# Paths to exclude from analysis
 paths-ignore:
   - '**/moc_*'
   - '**/qrc_*'
@@ -20,10 +13,7 @@ paths-ignore:
   - '**/3rdparty/**'
   - '**/build/**'
 
-# Query suites to use
-# Options: security-extended, security-and-quality, or specific query packs
 queries:
   - uses: security-extended
 
-# Trap caching for faster subsequent runs
 trap-caching: true

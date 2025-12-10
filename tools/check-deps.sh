@@ -154,8 +154,9 @@ check_qt_version() {
     local latest_info
     if command -v curl &> /dev/null; then
         # Try to get latest version info
+        # Extract Qt 6.x versions (portable grep)
         latest_info=$(curl -s "https://download.qt.io/official_releases/qt/" 2>/dev/null | \
-            grep -oP '6\.\d+' | sort -V | tail -1 || echo "")
+            grep -Eo '6\.[0-9]+' | sort -V | tail -1 || echo "")
 
         if [[ -n "$latest_info" ]]; then
             echo "  Latest minor: Qt $latest_info.x"
@@ -172,7 +173,7 @@ check_qt_version() {
     # Check installed Qt
     if command -v qmake &> /dev/null; then
         local installed
-        installed=$(qmake --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "not found")
+        installed=$(qmake --version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || echo "not found")
         echo "  Installed: Qt $installed"
     elif [[ -n "${QT_ROOT_DIR:-}" ]]; then
         echo "  QT_ROOT_DIR: $QT_ROOT_DIR"
@@ -196,7 +197,7 @@ check_gstreamer_version() {
     # Check installed version
     if command -v gst-launch-1.0 &> /dev/null; then
         local installed
-        installed=$(gst-launch-1.0 --version 2>/dev/null | head -1 | grep -oP '\d+\.\d+\.\d+' || echo "not found")
+        installed=$(gst-launch-1.0 --version 2>/dev/null | head -1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || echo "not found")
         echo "  Installed: GStreamer $installed"
     fi
 }

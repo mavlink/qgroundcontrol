@@ -25,10 +25,11 @@ THRESHOLDS_MB = {
     ".dmg": 150,
     ".exe": 200,
     ".apk": 150,
+    ".ipa": 150,
 }
 
 # File extensions to scan for
-ARTIFACT_EXTENSIONS = {".AppImage", ".dmg", ".exe", ".apk", ".deb", ".rpm", ".zip", ".tar.gz"}
+ARTIFACT_EXTENSIONS = {".AppImage", ".dmg", ".exe", ".apk", ".ipa", ".deb", ".rpm", ".zip", ".tar.gz"}
 
 
 def format_size(size_bytes: int) -> str:

@@ -122,7 +122,7 @@ run_memcheck() {
         --track-origins=yes \
         --verbose \
         --log-file="$output" \
-        --suppressions="$REPO_ROOT/tools/valgrind.supp" 2>/dev/null || true \
+        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" 2>/dev/null || true \
         "$EXECUTABLE" $EXTRA_ARGS
 
     log_ok "Memcheck complete. Results: $output"

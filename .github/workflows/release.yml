@@ -54,7 +54,6 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Tag: $TAG"
 
-          # Check if this is a prerelease
           if [[ "$TAG" == *"-"* ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
