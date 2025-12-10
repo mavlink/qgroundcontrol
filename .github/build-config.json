@@ -23,7 +23,7 @@
   "ccache_version": "4.11.3",
   "ccache_max_size": "2G",
   "clang_format_version": "17",
-  "node_version": "22",
+  "node_version": "24",
 
   "flatpak_gnome_version": "47"
 }

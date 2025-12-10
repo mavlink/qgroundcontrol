@@ -14,20 +14,28 @@ on:
       - 'package*.json'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: ${{ steps.config.outputs.node_version }}
           cache: npm
 
       - name: Install dependencies
@@ -46,13 +54,14 @@ jobs:
           retention-days: 1
 
   deploy:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v5
         with:
           name: qgc_docs_build
           path: ~/_book

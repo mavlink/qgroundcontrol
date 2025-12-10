@@ -57,9 +57,12 @@ RUN mkdir -p /project/source /project/build
 WORKDIR /project/build
 
 # ---------- Build + install when the container starts ----------
-# Multiline string is kept on ONE bash argument to avoid JSON-escaping nightmares.
+ENV BUILD_TYPE=Release
+
 CMD ["bash", "-lc", "\
-  qt-cmake -S /project/source -B /project/build -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+  case \"${BUILD_TYPE}\" in Release|Debug|RelWithDebInfo|MinSizeRel) ;; \n\
+    *) echo \"Invalid BUILD_TYPE: ${BUILD_TYPE}\"; exit 1 ;; esac && \n\
+  qt-cmake -S /project/source -B /project/build -G Ninja -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && \
   cmake --build /project/build --target all --parallel && \
-  cmake --install /project/build --config Release \
+  cmake --install /project/build --config ${BUILD_TYPE} \
 "]
