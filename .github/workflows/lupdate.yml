@@ -26,10 +26,11 @@ jobs:
         uses: ./.github/actions/build-config
 
       - name: Install Qt for Linux
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
-          cache: true
+          host: linux
+          arch: linux_gcc_64
 
       - name: Update translation files
         run: |

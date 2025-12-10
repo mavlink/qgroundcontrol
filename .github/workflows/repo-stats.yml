@@ -1,130 +1,41 @@
-name: Repository Stats
+name: Repository Metrics
 
 on:
   schedule:
-    - cron: '0 9 * * 1'  # Weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'  # Weekly Monday 9 AM UTC
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  stats:
-    name: Generate Weekly Stats
+  metrics:
+    name: Generate Repository Metrics
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
-      - name: Generate statistics
-        id: stats
-        uses: actions/github-script@v7
+      - name: Generate repository metrics
+        uses: lowlighter/metrics@latest
         with:
-          script: |
-            const now = new Date();
-            const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-            const weekAgoISO = weekAgo.toISOString();
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-            // Get repo stats
-            const repo = await github.rest.repos.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
+          filename: metrics.svg
+          output_action: none
 
-            // Get issues opened this week
-            const newIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'all',
-              since: weekAgoISO,
-              per_page: 100
-            });
+          user: mavlink
+          repo: qgroundcontrol
+          template: repository
 
-            const issuesOpened = newIssues.data.filter(i =>
-              !i.pull_request && new Date(i.created_at) > weekAgo
-            ).length;
+          plugin_lines: yes
+          plugin_issues: yes
+          plugin_stargazers: yes
 
-            const issuesClosed = newIssues.data.filter(i =>
-              !i.pull_request && i.state === 'closed' && i.closed_at && new Date(i.closed_at) > weekAgo
-            ).length;
+          config_timezone: UTC
 
-            // Get PRs
-            const prsOpened = newIssues.data.filter(i =>
-              i.pull_request && new Date(i.created_at) > weekAgo
-            ).length;
-
-            const prsClosed = newIssues.data.filter(i =>
-              i.pull_request && i.state === 'closed' && i.closed_at && new Date(i.closed_at) > weekAgo
-            ).length;
-
-            // Get stale issues count
-            const staleIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'stale',
-              per_page: 1
-            });
-
-            const netIssues = issuesOpened - issuesClosed;
-            const netPRs = prsOpened - prsClosed;
-            const stats = [
-              '## 📊 Weekly Repository Stats',
-              '',
-              `**Week of ${weekAgo.toDateString()} - ${now.toDateString()}**`,
-              '',
-              '### Repository',
-              '| Metric | Count |',
-              '|--------|-------|',
-              `| ⭐ Stars | ${repo.data.stargazers_count.toLocaleString()} |`,
-              `| 🍴 Forks | ${repo.data.forks_count.toLocaleString()} |`,
-              `| 👀 Watchers | ${repo.data.subscribers_count.toLocaleString()} |`,
-              '',
-              '### This Week\'s Activity',
-              '| Metric | Opened | Closed | Net |',
-              '|--------|--------|--------|-----|',
-              `| Issues | ${issuesOpened} | ${issuesClosed} | ${netIssues >= 0 ? '+' : ''}${netIssues} |`,
-              `| PRs | ${prsOpened} | ${prsClosed} | ${netPRs >= 0 ? '+' : ''}${netPRs} |`,
-              '',
-              '### Current State',
-              '| Metric | Count |',
-              '|--------|-------|',
-              `| 📋 Open Issues/PRs | ${repo.data.open_issues_count} |`,
-              `| 🏷️ Stale Items | ${staleIssues.data.length > 0 ? '1+' : '0'} |`,
-              '',
-              '---',
-              `*Generated automatically by GitHub Actions on ${now.toISOString()}*`
-            ].join('\n');
-
-            console.log(stats);
-
-            // Output to workflow summary
-            const fs = require('fs');
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, stats);
-
-            // Save stats as JSON for historical tracking
-            const jsonStats = {
-              date: now.toISOString(),
-              week_start: weekAgo.toISOString(),
-              repository: {
-                stars: repo.data.stargazers_count,
-                forks: repo.data.forks_count,
-                watchers: repo.data.subscribers_count
-              },
-              weekly: {
-                issues_opened: issuesOpened,
-                issues_closed: issuesClosed,
-                prs_opened: prsOpened,
-                prs_closed: prsClosed
-              },
-              current: {
-                open_issues: repo.data.open_issues_count
-              }
-            };
-            fs.writeFileSync('stats.json', JSON.stringify(jsonStats, null, 2));
-
-      - name: Upload stats artifact
+      - name: Upload metrics artifact
         uses: actions/upload-artifact@v5
         with:
-          name: repo-stats-${{ github.run_id }}
-          path: stats.json
+          name: repo-metrics-${{ github.run_id }}
+          path: /metrics-renders/metrics.svg
           retention-days: 90

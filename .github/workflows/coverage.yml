@@ -68,16 +68,11 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.build-config.outputs.qt_version }}
           host: linux
-          target: desktop
           arch: linux_gcc_64
-          dir: ${{ runner.temp }}
-          modules: ${{ steps.build-config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
 
       - name: Configure with Coverage
         working-directory: ${{ runner.temp }}/build
