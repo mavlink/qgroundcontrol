@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "schedule": ["before 6am on monday"],
+  "timezone": "UTC",
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+
+  "packageRules": [
+    {
+      "description": "Group all GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "GitHub Actions patch updates (auto-merge disabled)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": false
+    },
+    {
+      "description": "Group all git submodule updates",
+      "matchManagers": ["git-submodules"],
+      "groupName": "Git Submodules",
+      "schedule": ["before 6am on the first day of the month"]
+    },
+    {
+      "description": "Group Node.js updates (docs)",
+      "matchManagers": ["npm"],
+      "groupName": "Node.js Dependencies",
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Group Python updates (tools)",
+      "matchManagers": ["pip_requirements", "pip_setup"],
+      "groupName": "Python Dependencies",
+      "schedule": ["before 6am on monday"]
+    }
+  ],
+
+  "git-submodules": {
+    "enabled": true
+  },
+
+  "vulnerabilityAlerts": {
+    "labels": ["security", "priority"],
+    "schedule": ["at any time"]
+  }
+}

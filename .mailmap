@@ -1,0 +1,30 @@
+# Git author name/email normalization
+# Format: Canonical Name <canonical@email> Alternate Name <alternate@email>
+
+# Don Gagne - primary maintainer
+Don Gagne <don@thegagnes.com>
+Don Gagne <don@thegagnes.com> <DonLakeFlyer@users.noreply.github.com>
+Don Gagne <don@thegagnes.com> DonLakeFlyer <don@thegagnes.com>
+Don Gagne <don@thegagnes.com> <dongagne@outlook.com>
+Don Gagne <don@thegagnes.com> DoinLakeFlyer <don@thegagnes.com>
+Don Gagne <don@thegagnes.com> <Don@laptop-3.local>
+Don Gagne <don@thegagnes.com> <Don@don-laptop.local>
+Don Gagne <don@thegagnes.com> Donald Gagne <Don@laptop-3.local>
+Don Gagne <don@thegagnes.com> Don Gagne <>
+
+# Gus Grubba
+Gus Grubba <mavlink@grubba.com>
+Gus Grubba <mavlink@grubba.com> <gus@auterion.com>
+Gus Grubba <mavlink@grubba.com> dogmaphobic <mavlink@grubba.com>
+
+# Lorenz Meier - founder
+Lorenz Meier <lm@inf.ethz.ch>
+Lorenz Meier <lm@inf.ethz.ch> <lorenz@px4.io>
+Lorenz Meier <lm@inf.ethz.ch> LM <lm@student.ethz.ch>
+Lorenz Meier <lm@inf.ethz.ch> lm <mail@qgroundcontrol.org>
+Lorenz Meier <lm@inf.ethz.ch> lm <pixhawk@pixhawk02.(none)>
+Lorenz Meier <lm@inf.ethz.ch> pixhawk <pixhawk@student.ethz.ch>
+
+# Bots
+PX4BuildBot <bot@px4.io>
+PX4BuildBot <bot@px4.io> PX4 Build Bot <bot@px4.io>

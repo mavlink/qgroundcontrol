@@ -1,0 +1,57 @@
+# Typos Configuration
+# https://github.com/crate-ci/typos
+
+[default]
+extend-ignore-identifiers-re = [
+    # Hexadecimal values
+    "[0-9a-fA-F]+",
+]
+
+[default.extend-words]
+# Project-specific terms
+QGroundControl = "QGroundControl"
+MAVLink = "MAVLink"
+ArduPilot = "ArduPilot"
+PX4 = "PX4"
+
+# Common abbreviations in codebase
+Ack = "Ack"
+ack = "ack"
+Nack = "Nack"
+nack = "nack"
+Navit = "Navit"
+Ser = "Ser"
+ser = "ser"
+TELEM = "TELEM"
+telem = "telem"
+RSSI = "RSSI"
+rssi = "rssi"
+VTOL = "VTOL"
+vtol = "vtol"
+ADSB = "ADSB"
+adsb = "adsb"
+RTK = "RTK"
+rtk = "rtk"
+RTL = "RTL"
+rtl = "rtl"
+HSV = "HSV"
+NED = "NED"
+ENU = "ENU"
+FTP = "FTP"
+ftp = "ftp"
+ULog = "ULog"
+ulog = "ulog"
+
+# Parameter names that look like typos
+Slew = "Slew"
+slew = "slew"
+
+[files]
+extend-exclude = [
+    "build/",
+    "translations/",
+    "*.ts",
+    "libs/",
+    "*.json",
+    "*.geojson",
+]
