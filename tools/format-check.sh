@@ -65,7 +65,8 @@ if ! command -v clang-format &> /dev/null; then
     exit 1
 fi
 
-CLANG_FORMAT_VERSION=$(clang-format --version | grep -oP '\d+' | head -1)
+# Extract major version (works on both GNU and BSD grep)
+CLANG_FORMAT_VERSION=$(clang-format --version | grep -Eo '[0-9]+' | head -1)
 log_info "Using clang-format version $CLANG_FORMAT_VERSION"
 
 # Get files to format

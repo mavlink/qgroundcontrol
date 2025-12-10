@@ -1,0 +1,214 @@
+# Valgrind Suppression File for QGroundControl
+#
+# This file suppresses known false positives from Qt, GStreamer, and
+# system libraries when running QGC under Valgrind.
+#
+# Usage:
+#   valgrind --suppressions=tools/valgrind.supp ./build/QGroundControl
+#   ./tools/profile.sh --memcheck
+
+# ============================================================================
+# Qt 6 Suppressions
+# ============================================================================
+
+# Qt's QObject system uses intentional "leaks" for static data
+{
+   Qt_QMetaObject_static
+   Memcheck:Leak
+   ...
+   fun:*QMetaObject*
+}
+
+{
+   Qt_QFactoryLoader
+   Memcheck:Leak
+   ...
+   fun:*QFactoryLoader*
+}
+
+# Qt font database initialization
+{
+   Qt_QFontDatabase
+   Memcheck:Leak
+   ...
+   fun:*QFontDatabase*
+}
+
+# Qt's plugin system
+{
+   Qt_QPluginLoader
+   Memcheck:Leak
+   ...
+   fun:*QPluginLoader*
+}
+
+# QML engine static data
+{
+   Qt_QQmlEngine_static
+   Memcheck:Leak
+   ...
+   fun:*QQmlEngine*
+}
+
+{
+   Qt_QQmlMetaType
+   Memcheck:Leak
+   ...
+   fun:*QQmlMetaType*
+}
+
+# Qt event dispatcher
+{
+   Qt_QEventDispatcher
+   Memcheck:Leak
+   ...
+   fun:*QEventDispatcher*
+}
+
+# Qt thread storage
+{
+   Qt_QThreadStorage
+   Memcheck:Leak
+   ...
+   fun:*QThreadStorage*
+}
+
+# ============================================================================
+# GStreamer Suppressions
+# ============================================================================
+
+{
+   GStreamer_gst_init
+   Memcheck:Leak
+   ...
+   fun:gst_init*
+}
+
+{
+   GStreamer_gst_plugin
+   Memcheck:Leak
+   ...
+   fun:gst_plugin*
+}
+
+{
+   GStreamer_gst_registry
+   Memcheck:Leak
+   ...
+   fun:gst_registry*
+}
+
+{
+   GStreamer_gst_element_factory
+   Memcheck:Leak
+   ...
+   fun:gst_element_factory*
+}
+
+# ============================================================================
+# GLib Suppressions (used by GStreamer)
+# ============================================================================
+
+{
+   GLib_g_type_init
+   Memcheck:Leak
+   ...
+   fun:g_type_*
+}
+
+{
+   GLib_g_malloc
+   Memcheck:Leak
+   ...
+   fun:g_malloc*
+   ...
+   fun:g_type_*
+}
+
+# ============================================================================
+# OpenGL/Mesa Suppressions
+# ============================================================================
+
+{
+   Mesa_glX
+   Memcheck:Leak
+   ...
+   obj:*/libGL.so*
+}
+
+{
+   Mesa_dri
+   Memcheck:Leak
+   ...
+   obj:*dri*.so*
+}
+
+# ============================================================================
+# System Library Suppressions
+# ============================================================================
+
+# NSS (Name Service Switch) caches
+{
+   NSS_getpwuid
+   Memcheck:Leak
+   ...
+   fun:getpwuid*
+}
+
+# dlopen caches
+{
+   dlopen_cache
+   Memcheck:Leak
+   ...
+   fun:dlopen*
+}
+
+# Fontconfig
+{
+   Fontconfig_FcInit
+   Memcheck:Leak
+   ...
+   fun:FcInit*
+}
+
+{
+   Fontconfig_FcConfigCreate
+   Memcheck:Leak
+   ...
+   fun:FcConfigCreate*
+}
+
+# X11
+{
+   X11_XOpenDisplay
+   Memcheck:Leak
+   ...
+   fun:XOpenDisplay*
+}
+
+{
+   X11_xcb
+   Memcheck:Leak
+   ...
+   fun:xcb_*
+}
+
+# ============================================================================
+# C++ Runtime Suppressions
+# ============================================================================
+
+# Static initializers
+{
+   cxx_global_ctor
+   Memcheck:Leak
+   ...
+   fun:__cxa_*
+}
+
+# Thread-local storage
+{
+   cxx_tls
+   Memcheck:Leak
+   ...
+   fun:__tls_*
+}
