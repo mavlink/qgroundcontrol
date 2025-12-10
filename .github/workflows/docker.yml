@@ -1,4 +1,4 @@
-name: Docker Linux
+name: Docker
 
 on:
   push:
@@ -11,8 +11,8 @@ on:
       - 'docs/**'
   pull_request:
     paths:
-      - '.github/workflows/docker-linux.yml'
-      - '.github/actions/**'
+      - '.github/workflows/docker.yml'
+      - '.github/actions/docker/**'
       - '.github/build-config.json'
       - 'deploy/docker/**'
       - 'deploy/linux/**'
@@ -31,9 +31,21 @@ permissions:
 
 jobs:
   build:
-    name: Docker Linux
+    name: Docker ${{ matrix.platform }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Linux
+            dockerfile: Dockerfile-build-ubuntu
+            fuse: true
+
+          - platform: Android
+            dockerfile: Dockerfile-build-android
+            fuse: false
 
     defaults:
       run:
@@ -49,3 +61,7 @@ jobs:
 
       - name: Build with Docker
         uses: ./.github/actions/docker
+        with:
+          dockerfile: ${{ matrix.dockerfile }}
+          fuse: ${{ matrix.fuse }}
+          docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
