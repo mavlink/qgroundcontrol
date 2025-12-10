@@ -1,23 +1,52 @@
-<!--- Title -->
-
-Description
------------
-<!--- Describe your changes in detail. -->
-
-Test Steps
------------
-<!-- Describe the steps to reproduce. -->
-
-Checklist:
-----------
-<!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
-- [ ] [Review Contribution Guidelines](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CONTRIBUTING.md).
-- [ ] [Review Code of Conduct](https://github.com/mavlink/qgroundcontrol/blob/master/.github/CODE_OF_CONDUCT.md).
-- [ ] I have tested my changes.
-
-Related Issue
------------
-<!-- If any, please provide issue ID. -->
+## Description
+<!-- Describe your changes in detail. What problem does this solve? -->
 
 
-By submitting this pull request, I confirm that you can use, modify, copy, and redistribute this contribution, under the terms of your choice.
+## Type of Change
+<!-- Put an 'x' in the relevant boxes -->
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Documentation update
+- [ ] Refactoring (no functional changes)
+- [ ] CI/Build changes
+- [ ] Other
+
+## Testing
+<!-- Describe the tests you ran and how to reproduce them -->
+- [ ] Tested locally
+- [ ] Added/updated unit tests
+- [ ] Tested with simulator (SITL)
+- [ ] Tested with hardware
+
+### Platforms Tested
+<!-- Check all that apply -->
+- [ ] Linux
+- [ ] Windows
+- [ ] macOS
+- [ ] Android
+- [ ] iOS
+
+### Flight Stacks Tested
+<!-- If applicable -->
+- [ ] PX4
+- [ ] ArduPilot
+
+## Screenshots
+<!-- If applicable, add screenshots to help explain your changes -->
+
+
+## Checklist
+<!-- Go over all the following points, and put an 'x' in all the boxes that apply -->
+- [ ] I have read the [Contribution Guidelines](CONTRIBUTING.md)
+- [ ] I have read the [Code of Conduct](CODE_OF_CONDUCT.md)
+- [ ] My code follows the project's coding standards
+- [ ] I have added tests that prove my fix/feature works
+- [ ] New and existing unit tests pass locally
+
+## Related Issues
+<!-- Link any related issues using #issue_number -->
+
+
+---
+By submitting this pull request, I confirm that my contribution is made under the terms of the project's dual license (Apache 2.0 and GPL v3).

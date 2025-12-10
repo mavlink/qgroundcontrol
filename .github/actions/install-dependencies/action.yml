@@ -41,20 +41,23 @@ runs:
     - name: Install dependencies (Linux)
       if: runner.os == 'Linux'
       shell: bash
+      env:
+        EXTRA_PACKAGES: ${{ inputs.extra-packages }}
       run: |
         if [ -f "./tools/setup/install-dependencies-debian.sh" ]; then
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
         fi
-        if [ -n "${{ inputs.extra-packages }}" ]; then
-          sudo apt-get install -y ${{ inputs.extra-packages }}
+        if [ -n "$EXTRA_PACKAGES" ]; then
+          # shellcheck disable=SC2086  # Word splitting is intentional for package list
+          sudo apt-get install -y $EXTRA_PACKAGES
         fi
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        if [ -f "./tools/setup/install-dependencies-osx.sh" ]; then
-          chmod a+x ./tools/setup/install-dependencies-osx.sh
-          ./tools/setup/install-dependencies-osx.sh
+        if [ -f "./tools/setup/install-dependencies-macos.sh" ]; then
+          chmod a+x ./tools/setup/install-dependencies-macos.sh
+          ./tools/setup/install-dependencies-macos.sh
         fi

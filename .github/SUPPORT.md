@@ -7,8 +7,8 @@ Welcome to the QGroundControl support guide. This document provides information 
 ## 1. Getting Started
 
 - **Documentation**: Comprehensive user and developer guides are available on the official website:
-  - User Guide: https://docs.qgroundcontrol.com/master/en/qgc-user-guide/
-  - Developer Guide: https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/
+  - User Guide: https://docs.qgroundcontrol.com/
+  - Developer Guide: https://dev.qgroundcontrol.com/
 
 ---
 
@@ -18,7 +18,7 @@ When you encounter a bug or unexpected behavior, please help us by reporting it:
 
 1. Search existing issues to avoid duplicates: https://github.com/mavlink/qgroundcontrol/issues  
 2. Open a new issue with the following information:
-   - QGroundControl version (e.g., v4.4.0)
+   - QGroundControl version (e.g., v5.0.0)
    - Operating system and version
    - Detailed steps to reproduce the problem
    - Log files and console output (attach via GitHub issue)
@@ -51,22 +51,20 @@ We welcome contributions of all kinds:
 
 - **Source Repository**: https://github.com/mavlink/qgroundcontrol  
 - **Contribution Guide**: https://dev.qgroundcontrol.com/en/contribute/contribute.html  
-- **Coding Standards**: Follow Qt 6 and C++20 guidelines; see `.clang-format`, `.pre-commit-config.yaml`, and CodingStyle files.
+- **Coding Standards**: Follow Qt 6 and C++20 guidelines; see `.clang-format` and `.pre-commit-config.yaml`.
 - **Pull Requests**: Ensure all CI checks pass and include relevant test coverage.
 
 ---
 
 ## 6. Security and Privacy
 
-To report security vulnerabilities or privacy concerns:
-
-- Submit an issue and include a detailed description and any proof-of-concept code.
+To report security vulnerabilities, please use GitHub's Security tab to privately report the issue. See [SECURITY.md](SECURITY.md) for details.
 
 ---
 
 ## 7. License
 
-QGroundControl is licensed under the GNU General Public License v3.0. See [LICENSE](https://github.com/mavlink/qgroundcontrol/blob/master/LICENSE) for details.
+QGroundControl is dual-licensed under the Apache License 2.0 and the GNU General Public License v3. See [COPYING.md](COPYING.md) for details.
 
 ---
 

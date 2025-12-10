@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "--preset", "debug"
+                "--preset", "default"
             ],
             "group": "build",
             "problemMatcher": []
@@ -16,7 +16,7 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "--preset", "release"
+                "--preset", "default-release"
             ],
             "group": "build",
             "problemMatcher": []
