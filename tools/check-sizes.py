@@ -29,7 +29,17 @@ THRESHOLDS_MB = {
 }
 
 # File extensions to scan for
-ARTIFACT_EXTENSIONS = {".AppImage", ".dmg", ".exe", ".apk", ".ipa", ".deb", ".rpm", ".zip", ".tar.gz"}
+ARTIFACT_EXTENSIONS = {
+    ".AppImage",
+    ".dmg",
+    ".exe",
+    ".apk",
+    ".ipa",
+    ".deb",
+    ".rpm",
+    ".zip",
+    ".tar.gz",
+}
 
 
 def format_size(size_bytes: int) -> str:
@@ -63,28 +73,33 @@ def find_artifacts(directory: Path) -> list[dict]:
         size_mb = size_bytes / (1024 * 1024)
         threshold_mb = THRESHOLDS_MB.get(ext)
 
-        artifacts.append({
-            "name": path.name,
-            "path": str(path),
-            "extension": ext,
-            "size_bytes": size_bytes,
-            "size_mb": round(size_mb, 2),
-            "size_human": format_size(size_bytes),
-            "threshold_mb": threshold_mb,
-            "exceeds_threshold": threshold_mb is not None and size_mb > threshold_mb,
-        })
+        artifacts.append(
+            {
+                "name": path.name,
+                "path": str(path),
+                "extension": ext,
+                "size_bytes": size_bytes,
+                "size_mb": round(size_mb, 2),
+                "size_human": format_size(size_bytes),
+                "threshold_mb": threshold_mb,
+                "exceeds_threshold": threshold_mb is not None and size_mb > threshold_mb,
+            }
+        )
 
     return sorted(artifacts, key=lambda x: x["name"])
 
 
 def output_json(artifacts: list[dict], warnings: list[str]) -> str:
     """Generate JSON output."""
-    return json.dumps({
-        "artifacts": artifacts,
-        "warnings": warnings,
-        "total_count": len(artifacts),
-        "warning_count": len(warnings),
-    }, indent=2)
+    return json.dumps(
+        {
+            "artifacts": artifacts,
+            "warnings": warnings,
+            "total_count": len(artifacts),
+            "warning_count": len(warnings),
+        },
+        indent=2,
+    )
 
 
 def output_markdown(artifacts: list[dict], warnings: list[str]) -> str:
@@ -150,7 +165,8 @@ def main():
         help="Output as markdown table",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         help="Write output to file",
     )

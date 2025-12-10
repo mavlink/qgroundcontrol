@@ -16,7 +16,6 @@ Exit codes:
 
 import argparse
 import datetime
-import os
 import re
 import sys
 from pathlib import Path
@@ -97,17 +96,20 @@ def main():
         help="Directory to process (default: src/)",
     )
     parser.add_argument(
-        "-c", "--check",
+        "-c",
+        "--check",
         action="store_true",
         help="Check only, don't modify files (for CI)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Show all files, not just those needing updates",
     )
     parser.add_argument(
-        "-q", "--quiet",
+        "-q",
+        "--quiet",
         action="store_true",
         help="Only show summary",
     )

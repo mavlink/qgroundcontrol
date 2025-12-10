@@ -22,12 +22,14 @@ Requirements:
 """
 
 import argparse
+import contextlib
 import os
 import re
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import ClassVar
 
 # Try to import pymavlink for tlog support
 try:
@@ -41,9 +43,7 @@ except ImportError:
 class LogEntry:
     """Represents a single log entry."""
 
-    def __init__(
-        self, timestamp=None, level=None, component=None, message=None, raw=None
-    ):
+    def __init__(self, timestamp=None, level=None, component=None, message=None, raw=None):
         self.timestamp = timestamp
         self.level = level or "INFO"
         self.component = component or "unknown"
@@ -51,11 +51,7 @@ class LogEntry:
         self.raw = raw or ""
 
     def __str__(self):
-        ts = (
-            self.timestamp.strftime("%H:%M:%S.%f")[:-3]
-            if self.timestamp
-            else "??:??:??"
-        )
+        ts = self.timestamp.strftime("%H:%M:%S.%f")[:-3] if self.timestamp else "??:??:??"
         return f"[{ts}] [{self.level:5}] [{self.component}] {self.message}"
 
 
@@ -63,7 +59,7 @@ class QGCLogParser:
     """Parser for QGC application logs."""
 
     # Common QGC log patterns
-    PATTERNS = [
+    PATTERNS: ClassVar[list] = [
         # Qt debug format: "qgc.component: message"
         re.compile(r"^(?P<component>qgc\.[a-z.]+):\s*(?P<message>.*)$", re.IGNORECASE),
         # Timestamped format: "[HH:MM:SS.mmm] message"
@@ -75,7 +71,7 @@ class QGCLogParser:
         ),
     ]
 
-    LEVEL_KEYWORDS = {
+    LEVEL_KEYWORDS: ClassVar[dict] = {
         "error": "ERROR",
         "err": "ERROR",
         "warning": "WARN",
@@ -91,8 +87,8 @@ class QGCLogParser:
 
     def parse_file(self, filepath):
         """Parse a QGC log file."""
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            for line_num, line in enumerate(f, 1):
+        with open(filepath, encoding="utf-8", errors="replace") as f:
+            for _line_num, line in enumerate(f, 1):
                 line = line.strip()
                 if not line:
                     continue
@@ -120,16 +116,10 @@ class QGCLogParser:
                     entry.level = groups["level"].upper()
                 if "time" in groups:
                     try:
-                        entry.timestamp = datetime.strptime(
-                            groups["time"], "%H:%M:%S.%f"
-                        )
+                        entry.timestamp = datetime.strptime(groups["time"], "%H:%M:%S.%f")
                     except ValueError:
-                        try:
-                            entry.timestamp = datetime.strptime(
-                                groups["time"], "%H:%M:%S"
-                            )
-                        except ValueError:
-                            pass
+                        with contextlib.suppress(ValueError):
+                            entry.timestamp = datetime.strptime(groups["time"], "%H:%M:%S")
                 break
 
         # If no pattern matched, use the whole line as message
@@ -215,9 +205,7 @@ class LogAnalyzer:
             "total_entries": len(self.entries),
             "by_level": Counter(e.level for e in self.entries),
             "by_component": Counter(e.component for e in self.entries),
-            "errors": [
-                e for e in self.entries if e.level in ("ERROR", "CRIT", "CRITICAL")
-            ],
+            "errors": [e for e in self.entries if e.level in ("ERROR", "CRIT", "CRITICAL")],
             "warnings": [e for e in self.entries if e.level in ("WARN", "WARNING")],
         }
 
@@ -236,8 +224,7 @@ class LogAnalyzer:
             if entry.timestamp:
                 # Round to interval
                 ts = entry.timestamp.replace(
-                    second=(entry.timestamp.second // interval_seconds)
-                    * interval_seconds,
+                    second=(entry.timestamp.second // interval_seconds) * interval_seconds,
                     microsecond=0,
                 )
                 timeline[ts].append(entry)
@@ -290,15 +277,9 @@ def main():
     )
     parser.add_argument("logfile", help="Log file to analyze")
     parser.add_argument("-e", "--errors", action="store_true", help="Show only errors")
-    parser.add_argument(
-        "-w", "--warnings", action="store_true", help="Show errors and warnings"
-    )
-    parser.add_argument(
-        "-c", "--component", metavar="PATTERN", help="Filter by component name"
-    )
-    parser.add_argument(
-        "-m", "--message", metavar="PATTERN", help="Filter by message pattern"
-    )
+    parser.add_argument("-w", "--warnings", action="store_true", help="Show errors and warnings")
+    parser.add_argument("-c", "--component", metavar="PATTERN", help="Filter by component name")
+    parser.add_argument("-m", "--message", metavar="PATTERN", help="Filter by message pattern")
     parser.add_argument("-s", "--stats", action="store_true", help="Show statistics")
     parser.add_argument("-t", "--timeline", action="store_true", help="Show timeline")
     parser.add_argument(
@@ -342,14 +323,10 @@ def main():
         entries = analyzer.filter_by_level("WARN")
 
     if args.component:
-        entries = [
-            e for e in entries if re.search(args.component, e.component, re.IGNORECASE)
-        ]
+        entries = [e for e in entries if re.search(args.component, e.component, re.IGNORECASE)]
 
     if args.message:
-        entries = [
-            e for e in entries if re.search(args.message, e.message, re.IGNORECASE)
-        ]
+        entries = [e for e in entries if re.search(args.message, e.message, re.IGNORECASE)]
 
     # Output
     if args.stats:

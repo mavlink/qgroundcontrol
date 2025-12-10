@@ -22,7 +22,6 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -39,13 +38,13 @@ class Parameter:
     max_value: str = ""
     increment: str = ""
     decimal_places: int = 0
-    enum_strings: List[str] = field(default_factory=list)
-    enum_values: List[str] = field(default_factory=list)
+    enum_strings: list[str] = field(default_factory=list)
+    enum_values: list[str] = field(default_factory=list)
     group: str = ""
     source_file: str = ""
 
 
-def find_factmetadata_files(search_path: Path) -> List[Path]:
+def find_factmetadata_files(search_path: Path) -> list[Path]:
     """Find all FactMetaData JSON files."""
     files = []
     for pattern in ["*.FactMetaData.json", "*FactMetaData.json"]:
@@ -53,14 +52,14 @@ def find_factmetadata_files(search_path: Path) -> List[Path]:
     return sorted(set(files))
 
 
-def parse_factmetadata(filepath: Path) -> List[Parameter]:
+def parse_factmetadata(filepath: Path) -> list[Parameter]:
     """Parse a FactMetaData JSON file."""
     params = []
 
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         print(f"Warning: Could not parse {filepath}: {e}", file=sys.stderr)
         return []
 
@@ -120,17 +119,15 @@ def parse_factmetadata(filepath: Path) -> List[Parameter]:
     return params
 
 
-def generate_markdown(params: List[Parameter], group_by: str = "group") -> str:
+def generate_markdown(params: list[Parameter], group_by: str = "group") -> str:
     """Generate Markdown documentation."""
     lines = []
     lines.append("# QGroundControl Parameters\n")
     lines.append("This document describes the parameters used in QGroundControl.\n")
-    lines.append(
-        f"Generated from {len(set(p.source_file for p in params))} FactMetaData files.\n"
-    )
+    lines.append(f"Generated from {len({p.source_file for p in params})} FactMetaData files.\n")
 
     # Group parameters
-    groups: Dict[str, List[Parameter]] = {}
+    groups: dict[str, list[Parameter]] = {}
     for param in params:
         key = getattr(param, group_by) or "Ungrouped"
         if key not in groups:
@@ -172,9 +169,7 @@ def generate_markdown(params: List[Parameter], group_by: str = "group") -> str:
             if param.enum_strings:
                 lines.append("\n**Options:**\n")
                 for i, enum_str in enumerate(param.enum_strings):
-                    enum_val = (
-                        param.enum_values[i] if i < len(param.enum_values) else str(i)
-                    )
+                    enum_val = param.enum_values[i] if i < len(param.enum_values) else str(i)
                     lines.append(f"- `{enum_val}`: {enum_str}")
 
             lines.append("")
@@ -182,7 +177,7 @@ def generate_markdown(params: List[Parameter], group_by: str = "group") -> str:
     return "\n".join(lines)
 
 
-def generate_html(params: List[Parameter]) -> str:
+def generate_html(params: list[Parameter]) -> str:
     """Generate HTML documentation."""
     html_parts = []
 
@@ -211,7 +206,7 @@ def generate_html(params: List[Parameter]) -> str:
 """)
 
     # Group parameters
-    groups: Dict[str, List[Parameter]] = {}
+    groups: dict[str, list[Parameter]] = {}
     for param in params:
         key = param.group or "Ungrouped"
         if key not in groups:
@@ -223,9 +218,7 @@ def generate_html(params: List[Parameter]) -> str:
 
         for param in sorted(groups[group_name], key=lambda p: p.name):
             html_parts.append('<div class="param">')
-            html_parts.append(
-                f'<div class="param-name">{html.escape(param.name)}</div>'
-            )
+            html_parts.append(f'<div class="param-name">{html.escape(param.name)}</div>')
 
             if param.short_desc:
                 html_parts.append(
@@ -233,9 +226,7 @@ def generate_html(params: List[Parameter]) -> str:
                 )
 
             if param.long_desc:
-                html_parts.append(
-                    f'<div class="param-desc">{html.escape(param.long_desc)}</div>'
-                )
+                html_parts.append(f'<div class="param-desc">{html.escape(param.long_desc)}</div>')
 
             html_parts.append("<table>")
             html_parts.append("<tr><th>Property</th><th>Value</th></tr>")
@@ -258,9 +249,7 @@ def generate_html(params: List[Parameter]) -> str:
             if param.enum_strings:
                 html_parts.append('<div class="enum"><strong>Options:</strong><ul>')
                 for i, enum_str in enumerate(param.enum_strings):
-                    enum_val = (
-                        param.enum_values[i] if i < len(param.enum_values) else str(i)
-                    )
+                    enum_val = param.enum_values[i] if i < len(param.enum_values) else str(i)
                     html_parts.append(
                         f"<li><code>{html.escape(enum_val)}</code>: {html.escape(enum_str)}</li>"
                     )
@@ -272,7 +261,7 @@ def generate_html(params: List[Parameter]) -> str:
     return "\n".join(html_parts)
 
 
-def generate_json_output(params: List[Parameter]) -> str:
+def generate_json_output(params: list[Parameter]) -> str:
     """Generate JSON output."""
     output = []
     for param in params:
@@ -302,9 +291,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument(
-        "path", nargs="?", default="src", help="Directory to search (default: src)"
-    )
+    parser.add_argument("path", nargs="?", default="src", help="Directory to search (default: src)")
     parser.add_argument(
         "-f",
         "--format",
@@ -314,9 +301,7 @@ def main():
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     parser.add_argument("-g", "--group", help="Filter by group name")
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Show verbose output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Show verbose output")
 
     args = parser.parse_args()
 

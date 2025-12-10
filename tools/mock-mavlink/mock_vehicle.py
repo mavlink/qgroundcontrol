@@ -266,9 +266,7 @@ class MockVehicle:
         # Battery drain
         if self.state.armed:
             self.state.battery_remaining = max(0, self.state.battery_remaining - 0.01)
-            self.state.battery_voltage = (
-                10.5 + (self.state.battery_remaining / 100) * 2.1
-            )
+            self.state.battery_voltage = 10.5 + (self.state.battery_remaining / 100) * 2.1
 
     def handle_commands(self):
         """Handle incoming MAVLink commands."""
@@ -397,22 +395,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument(
-        "--host", default="127.0.0.1", help="Host address (default: 127.0.0.1)"
-    )
-    parser.add_argument(
-        "--port", type=int, default=14550, help="Port number (default: 14550)"
-    )
+    parser.add_argument("--host", default="127.0.0.1", help="Host address (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=14550, help="Port number (default: 14550)")
     parser.add_argument("--tcp", action="store_true", help="Use TCP instead of UDP")
-    parser.add_argument(
-        "--system-id", type=int, default=1, help="MAVLink system ID (default: 1)"
-    )
-    parser.add_argument(
-        "--rate", type=int, default=10, help="Telemetry rate in Hz (default: 10)"
-    )
-    parser.add_argument(
-        "--sitl", action="store_true", help="SITL-compatible mode (TCP on 5760)"
-    )
+    parser.add_argument("--system-id", type=int, default=1, help="MAVLink system ID (default: 1)")
+    parser.add_argument("--rate", type=int, default=10, help="Telemetry rate in Hz (default: 10)")
+    parser.add_argument("--sitl", action="store_true", help="SITL-compatible mode (TCP on 5760)")
     parser.add_argument(
         "--lat",
         type=float,
@@ -444,7 +432,9 @@ def main():
     if args.alt is not None:
         vehicle.state.alt = args.alt
 
-    print(f"Initial position: {vehicle.state.lat:.4f}, {vehicle.state.lon:.4f} @ {vehicle.state.alt:.0f}m")
+    print(
+        f"Initial position: {vehicle.state.lat:.4f}, {vehicle.state.lon:.4f} @ {vehicle.state.alt:.0f}m"
+    )
 
     if args.sitl:
         vehicle.connect_tcp(args.host, 5760)
