@@ -47,6 +47,7 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
+        args: ['-e', 'SC1091']  # Don't warn about not following sourced files
 
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint

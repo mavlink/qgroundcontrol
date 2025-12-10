@@ -11,22 +11,24 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-translations:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
 
       - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
-          version: 6.10.1
+          version: ${{ steps.config.outputs.qt_version }}
           cache: true
 
       - name: Update translation files

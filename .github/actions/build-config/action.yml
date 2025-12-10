@@ -1,0 +1,144 @@
+name: Build Config
+description: Read build toolchain versions from .github/build-config.json
+
+outputs:
+  qt_version:
+    description: Qt version
+    value: ${{ steps.read.outputs.qt_version }}
+  qt_minimum_version:
+    description: Qt minimum supported version
+    value: ${{ steps.read.outputs.qt_minimum_version }}
+  qt_modules:
+    description: Qt modules (desktop)
+    value: ${{ steps.read.outputs.qt_modules }}
+  qt_modules_ios:
+    description: Qt modules (iOS, excludes qtserialport/qtscxml)
+    value: ${{ steps.read.outputs.qt_modules_ios }}
+  gstreamer_version:
+    description: GStreamer version (macOS/Linux)
+    value: ${{ steps.read.outputs.gstreamer_version }}
+  gstreamer_android_version:
+    description: GStreamer version (Android)
+    value: ${{ steps.read.outputs.gstreamer_android_version }}
+  gstreamer_windows_version:
+    description: GStreamer version (Windows)
+    value: ${{ steps.read.outputs.gstreamer_windows_version }}
+  ndk_version:
+    description: Android NDK version (short form)
+    value: ${{ steps.read.outputs.ndk_version }}
+  ndk_full_version:
+    description: Android NDK version (full form for sdkmanager)
+    value: ${{ steps.read.outputs.ndk_full_version }}
+  java_version:
+    description: Java version
+    value: ${{ steps.read.outputs.java_version }}
+  android_platform:
+    description: Android platform/API level
+    value: ${{ steps.read.outputs.android_platform }}
+  android_min_sdk:
+    description: Android minimum SDK version
+    value: ${{ steps.read.outputs.android_min_sdk }}
+  android_build_tools:
+    description: Android build tools version
+    value: ${{ steps.read.outputs.android_build_tools }}
+  android_cmdline_tools:
+    description: Android command line tools version
+    value: ${{ steps.read.outputs.android_cmdline_tools }}
+  xcode_version:
+    description: Xcode version (macOS)
+    value: ${{ steps.read.outputs.xcode_version }}
+  xcode_ios_version:
+    description: Xcode version (iOS)
+    value: ${{ steps.read.outputs.xcode_ios_version }}
+  cmake_minimum_version:
+    description: CMake minimum version
+    value: ${{ steps.read.outputs.cmake_minimum_version }}
+  ccache_version:
+    description: ccache version
+    value: ${{ steps.read.outputs.ccache_version }}
+  ccache_max_size:
+    description: ccache max cache size
+    value: ${{ steps.read.outputs.ccache_max_size }}
+  clang_format_version:
+    description: clang-format version
+    value: ${{ steps.read.outputs.clang_format_version }}
+  node_version:
+    description: Node.js version
+    value: ${{ steps.read.outputs.node_version }}
+  flatpak_gnome_version:
+    description: GNOME version for Flatpak
+    value: ${{ steps.read.outputs.flatpak_gnome_version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate and read build config
+      id: read
+      shell: bash
+      run: |
+        CONFIG_FILE="${GITHUB_WORKSPACE}/.github/build-config.json"
+        if [[ ! -f "$CONFIG_FILE" ]]; then
+          echo "::error::Build config not found: $CONFIG_FILE"
+          exit 1
+        fi
+        if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+          echo "::error::Invalid JSON in $CONFIG_FILE"
+          exit 1
+        fi
+
+        # Read all values (no fallbacks - config is authoritative)
+        QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")
+        QT_MIN_VERSION=$(jq -r '.qt_minimum_version' "$CONFIG_FILE")
+        QT_MODULES=$(jq -r '.qt_modules' "$CONFIG_FILE")
+        QT_MODULES_IOS=$(echo "$QT_MODULES" | sed 's/qtserialport//g; s/qtscxml//g; s/  */ /g; s/^ *//; s/ *$//')
+        GST_VERSION=$(jq -r '.gstreamer_version' "$CONFIG_FILE")
+        GST_ANDROID_VERSION=$(jq -r '.gstreamer_android_version' "$CONFIG_FILE")
+        GST_WIN_VERSION=$(jq -r '.gstreamer_windows_version' "$CONFIG_FILE")
+        NDK_VERSION=$(jq -r '.ndk_version' "$CONFIG_FILE")
+        NDK_FULL_VERSION=$(jq -r '.ndk_full_version' "$CONFIG_FILE")
+        JAVA_VERSION=$(jq -r '.java_version' "$CONFIG_FILE")
+        ANDROID_PLATFORM=$(jq -r '.android_platform' "$CONFIG_FILE")
+        ANDROID_MIN_SDK=$(jq -r '.android_min_sdk' "$CONFIG_FILE")
+        ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' "$CONFIG_FILE")
+        ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' "$CONFIG_FILE")
+        XCODE_VERSION=$(jq -r '.xcode_version' "$CONFIG_FILE")
+        XCODE_IOS_VERSION=$(jq -r '.xcode_ios_version' "$CONFIG_FILE")
+        CMAKE_MIN_VERSION=$(jq -r '.cmake_minimum_version' "$CONFIG_FILE")
+        CCACHE_VERSION=$(jq -r '.ccache_version' "$CONFIG_FILE")
+        CCACHE_MAX_SIZE=$(jq -r '.ccache_max_size' "$CONFIG_FILE")
+        CLANG_FORMAT_VERSION=$(jq -r '.clang_format_version' "$CONFIG_FILE")
+        NODE_VERSION=$(jq -r '.node_version' "$CONFIG_FILE")
+        FLATPAK_GNOME_VERSION=$(jq -r '.flatpak_gnome_version' "$CONFIG_FILE")
+
+        {
+          echo "qt_version=$QT_VERSION"
+          echo "qt_minimum_version=$QT_MIN_VERSION"
+          echo "qt_modules=$QT_MODULES"
+          echo "qt_modules_ios=$QT_MODULES_IOS"
+          echo "gstreamer_version=$GST_VERSION"
+          echo "gstreamer_android_version=$GST_ANDROID_VERSION"
+          echo "gstreamer_windows_version=$GST_WIN_VERSION"
+          echo "ndk_version=$NDK_VERSION"
+          echo "ndk_full_version=$NDK_FULL_VERSION"
+          echo "java_version=$JAVA_VERSION"
+          echo "android_platform=$ANDROID_PLATFORM"
+          echo "android_min_sdk=$ANDROID_MIN_SDK"
+          echo "android_build_tools=$ANDROID_BUILD_TOOLS"
+          echo "android_cmdline_tools=$ANDROID_CMDLINE_TOOLS"
+          echo "xcode_version=$XCODE_VERSION"
+          echo "xcode_ios_version=$XCODE_IOS_VERSION"
+          echo "cmake_minimum_version=$CMAKE_MIN_VERSION"
+          echo "ccache_version=$CCACHE_VERSION"
+          echo "ccache_max_size=$CCACHE_MAX_SIZE"
+          echo "clang_format_version=$CLANG_FORMAT_VERSION"
+          echo "node_version=$NODE_VERSION"
+          echo "flatpak_gnome_version=$FLATPAK_GNOME_VERSION"
+        } >> "$GITHUB_OUTPUT"
+
+    # Only set commonly-used variables as environment variables to avoid polluting the env.
+    # All values are available as step outputs (e.g., steps.config.outputs.ndk_version).
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "QT_VERSION=${{ steps.read.outputs.qt_version }}" >> "$GITHUB_ENV"
+        echo "GSTREAMER_VERSION=${{ steps.read.outputs.gstreamer_version }}" >> "$GITHUB_ENV"

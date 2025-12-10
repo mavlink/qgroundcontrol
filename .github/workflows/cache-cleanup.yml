@@ -1,23 +1,24 @@
-name: cleanup-branch-caches
+name: Cache Cleanup
+
 on:
   pull_request_target:
     types:
       - closed
   workflow_dispatch:
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    permissions:
-      # `actions:write` permission is required to delete caches
-      #   See also: https://docs.github.com/en/rest/actions/cache?apiVersion=2022-11-28#delete-a-github-actions-cache-for-a-repository-using-a-cache-id
-      actions: write
-      contents: read
+    timeout-minutes: 15
     steps:
-      - name: Check out code
+      - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Cleanup
+      - name: Delete PR caches
         run: |
           gh extension install actions/gh-actions-cache
 

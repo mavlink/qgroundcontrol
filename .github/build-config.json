@@ -1,0 +1,29 @@
+{
+  "qt_version": "6.10.1",
+  "qt_minimum_version": "6.10.0",
+  "qt_modules": "qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml",
+
+  "gstreamer_version": "1.24.13",
+  "gstreamer_android_version": "1.22.12",
+  "gstreamer_windows_version": "1.22.12",
+
+  "ndk_version": "r27c",
+  "ndk_full_version": "27.2.12829759",
+  "java_version": "17",
+  "android_platform": "35",
+  "android_min_sdk": "28",
+  "android_build_tools": "35.0.0",
+  "android_cmdline_tools": "13114758",
+
+  "xcode_version": "16.x",
+  "xcode_ios_version": "latest-stable",
+
+  "cmake_minimum_version": "3.25",
+
+  "ccache_version": "4.11.3",
+  "ccache_max_size": "2G",
+  "clang_format_version": "17",
+  "node_version": "24",
+
+  "flatpak_gnome_version": "47"
+}
