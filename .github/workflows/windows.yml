@@ -71,7 +71,6 @@ jobs:
             package: QGroundControl-installer-AMD64-ARM64
             qt_version: '6.10.0'
 
-          # Custom build example (tests custom-example template)
           - os: windows-2022
             host: windows
             arch: win64_msvc2022_64
@@ -120,16 +119,11 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
-          target: desktop
           arch: ${{ matrix.arch }}
-          dir: ${{ runner.temp }}
-          modules: ${{ steps.config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1

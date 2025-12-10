@@ -99,19 +99,11 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt for Linux
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
-          target: desktop
           arch: ${{ matrix.arch }}
-          dir: ${{ runner.temp }}
-          modules: ${{ steps.config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
-
-      # - name: Build GStreamer
-      #   uses: ./.github/actions/gstreamer
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build

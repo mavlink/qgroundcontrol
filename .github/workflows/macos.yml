@@ -85,16 +85,11 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: mac
-          target: desktop
           arch: clang_64
-          dir: ${{ runner.temp }}
-          modules: ${{ steps.config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
 
       - name: CMake configure
         working-directory: ${{ runner.temp }}/build

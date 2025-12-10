@@ -18,6 +18,10 @@ inputs:
     description: Installation directory
     required: false
     default: ${{ runner.temp }}
+  modules:
+    description: Qt modules to install (defaults to standard QGC modules)
+    required: false
+    default: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
 runs:
   using: composite
   steps:
@@ -29,6 +33,6 @@ runs:
         target: ${{ inputs.target }}
         arch: ${{ inputs.arch }}
         dir: ${{ inputs.dir }}
-        modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+        modules: ${{ inputs.modules }}
         setup-python: false
         cache: true
