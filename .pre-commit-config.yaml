@@ -49,6 +49,12 @@ repos:
       - id: shellcheck
         args: ['-e', 'SC1091']  # Don't warn about not following sourced files
 
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.9
+    hooks:
+      - id: actionlint
+
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1

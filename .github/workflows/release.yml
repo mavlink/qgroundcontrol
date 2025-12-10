@@ -90,14 +90,14 @@ jobs:
           if [ -z "$TAG" ] || [ "$TAG" = "$GITHUB_REF" ]; then
             TAG="${{ inputs.tag }}"
           fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Tag: $TAG"
 
           # Check if this is a prerelease
           if [[ "$TAG" == *"-"* ]]; then
-            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
-            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download artifacts
