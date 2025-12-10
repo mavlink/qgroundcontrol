@@ -70,3 +70,7 @@ MAVLink:
       - any-glob-to-any-file:
           - 'src/MAVLink/**'
           - 'src/comm/**'
+
+Tools:
+  - changed-files:
+      - any-glob-to-any-file: 'tools/**'

@@ -2,8 +2,6 @@ name: Update Translations
 
 on:
   workflow_dispatch:
-#   schedule:
-#     - cron: '0 0 * * 0'
 
 concurrency:
   group: 'lupdate'
@@ -31,6 +29,7 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Update translation files
         run: ./tools/translations/qgc-lupdate.sh

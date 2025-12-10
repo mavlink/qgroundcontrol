@@ -30,7 +30,7 @@ Fixes #
 - [ ] N/A
 
 ## Checklist
-- [ ] I have read the [Contribution Guidelines](CONTRIBUTING.md)
+- [ ] I have read the [Contribution Guidelines](../.github/CONTRIBUTING.md)
 - [ ] My code follows the project's coding standards
 - [ ] I have added a test that reproduces the bug
 - [ ] New and existing unit tests pass locally

@@ -30,6 +30,7 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,8 +63,9 @@ jobs:
             build_type: Release
             package: QGroundControl-installer-ARM64
 
-          # Qt 6.10.0 for cross-compiled until aqtinstall fix is released
-          # See: https://github.com/miurahr/aqtinstall/pull/952
+          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
+          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
+          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
           - os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
@@ -124,6 +126,7 @@ jobs:
           version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
           arch: ${{ matrix.arch }}
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1

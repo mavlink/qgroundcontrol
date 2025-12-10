@@ -6,7 +6,8 @@ on:
       - master
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   analysis:
@@ -15,6 +16,7 @@ jobs:
     timeout-minutes: 15
 
     permissions:
+      contents: read
       security-events: write
       id-token: write
 

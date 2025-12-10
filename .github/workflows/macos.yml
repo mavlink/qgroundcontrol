@@ -28,6 +28,7 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -90,6 +91,7 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: mac
           arch: clang_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: CMake configure
         working-directory: ${{ runner.temp }}/build
