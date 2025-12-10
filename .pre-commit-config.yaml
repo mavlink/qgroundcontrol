@@ -11,6 +11,9 @@ repos:
       - id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
+      - id: pretty-format-json
+        args: ['--autofix', '--indent=2']
+        exclude: ^(translations/|package-lock\.json)
       - id: check-xml
         exclude: ^test/
       - id: check-merge-conflict
@@ -42,6 +45,13 @@ repos:
         args: [--fix]
       - id: ruff-format
 
+  # Python type checking
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.391
+    hooks:
+      - id: pyright
+        files: ^(tools|test)/.*\.py$
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
@@ -61,6 +71,28 @@ repos:
     hooks:
       - id: yamllint
         args: ['-d', '{extends: default, rules: {line-length: {max: 200}, document-start: disable, truthy: {check-keys: false}, comments: {min-spaces-from-content: 1}}}']
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.46.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        exclude: ^(translations/|CHANGELOG\.md)
+
+  # Prose linting (documentation quality)
+  - repo: https://github.com/errata-ai/vale
+    rev: v3.9.4
+    hooks:
+      - id: vale
+        files: ^docs/
+        args: ['--no-exit']  # Don't fail on warnings, just report
+
+  # Spell checking
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.28.4
+    hooks:
+      - id: typos
 
   # QGC-specific checks
   - repo: local

@@ -33,9 +33,7 @@ jobs:
           arch: linux_gcc_64
 
       - name: Update translation files
-        run: |
-          ${{ env.QT_ROOT_DIR }}/bin/lupdate src -ts translations/qgc.ts -no-obsolete
-          python3 tools/translations/qgc-lupdate-json.py
+        run: ./tools/translations/qgc-lupdate.sh
 
       - name: Configure Git
         run: |

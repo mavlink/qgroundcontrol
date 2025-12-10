@@ -52,8 +52,8 @@ permissions:
   contents: read
   id-token: write
   attestations: write
-  security-events: write  # For CodeQL
-  actions: read           # For CodeQL
+  security-events: write
+  actions: read
 
 jobs:
   build:
