@@ -35,6 +35,7 @@ runs:
         case "$ARCH" in
             x86_64)  ARCH_DIR="x86_64-linux-gnu" ;;
             aarch64) ARCH_DIR="aarch64-linux-gnu" ;;
+            armv7l)  ARCH_DIR="arm-linux-gnueabihf" ;;
             *)       ARCH_DIR="$ARCH-linux-gnu" ;;
         esac
         echo "PKG_CONFIG_PATH=${{ inputs.prefix }}/lib/$ARCH_DIR/pkgconfig:$PKG_CONFIG_PATH" >> "$GITHUB_ENV"

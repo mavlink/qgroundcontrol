@@ -12,6 +12,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/docker-linux.yml'
+      - '.github/actions/**'
       - '.github/build-config.json'
       - 'deploy/docker/**'
       - 'deploy/linux/**'
@@ -19,6 +20,7 @@ on:
       - 'src/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,6 +31,7 @@ permissions:
 
 jobs:
   build:
+    name: Docker Linux
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
@@ -37,15 +40,12 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
 
-      - name: Make script executable
-        run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
-
       - name: Build with Docker
-        run: ./deploy/docker/run-docker-ubuntu.sh
+        uses: ./.github/actions/docker

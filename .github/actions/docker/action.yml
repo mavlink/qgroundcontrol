@@ -1,14 +1,38 @@
-name: QGC Linux Builder
-description: "Helper action to build QGC in Ubuntu 22.04"
+name: Docker Build
+description: Build QGC using Docker (Ubuntu)
 
 inputs:
   build-type:
-    description: 'CMake build type (Release or Debug)'
+    description: CMake build type (Release or Debug)
     required: false
     default: 'Release'
 
 runs:
-  using: "docker"
-  image: "./deploy/docker/Dockerfile-build-ubuntu"
-  args:
-    - ${{ inputs.build-type }}
+  using: composite
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./deploy/docker/Dockerfile-build-ubuntu
+        tags: qgc-ubuntu-builder:latest
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Run Docker build
+      shell: bash
+      run: |
+        mkdir -p "${{ github.workspace }}/build"
+        docker run \
+          --rm \
+          --cap-add SYS_ADMIN \
+          --device /dev/fuse \
+          --security-opt apparmor:unconfined \
+          -v "${{ github.workspace }}:/project/source" \
+          -v "${{ github.workspace }}/build:/project/build" \
+          -e BUILD_TYPE="${{ inputs.build-type }}" \
+          qgc-ubuntu-builder:latest
