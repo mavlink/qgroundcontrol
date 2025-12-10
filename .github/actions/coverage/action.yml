@@ -1,0 +1,51 @@
+name: Coverage Report
+description: Generate and upload code coverage reports
+
+inputs:
+  build-dir:
+    description: Path to CMake build directory
+    required: true
+  codecov-token:
+    description: Codecov upload token (optional for public repos)
+    required: false
+    default: ''
+  artifact-name:
+    description: Name for coverage artifact
+    required: false
+    default: coverage-report
+  retention-days:
+    description: Days to retain coverage artifact
+    required: false
+    default: '14'
+  flags:
+    description: Codecov flags (comma-separated)
+    required: false
+    default: unittests
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Coverage Report
+      working-directory: ${{ inputs.build-dir }}
+      shell: bash
+      run: cmake --build . --target coverage-report
+
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ${{ inputs.build-dir }}/coverage.xml
+        flags: ${{ inputs.flags }}
+        name: qgc-coverage
+        token: ${{ inputs.codecov-token }}
+        fail_ci_if_error: false
+        verbose: true
+
+    - name: Upload Coverage Artifact
+      uses: actions/upload-artifact@v5
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.build-dir }}/coverage.xml
+          ${{ inputs.build-dir }}/coverage.html
+          ${{ inputs.build-dir }}/coverage.*.html
+        retention-days: ${{ inputs.retention-days }}

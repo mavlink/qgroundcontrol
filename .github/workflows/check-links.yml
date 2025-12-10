@@ -12,8 +12,6 @@ on:
       - 'docs/**'
       - '**.md'
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * 0'  # Weekly on Sunday
 
 permissions:
   contents: read

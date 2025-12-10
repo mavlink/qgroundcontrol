@@ -96,14 +96,6 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/common
 
-      - name: Free Disk Space
-        if: matrix.host == 'linux'
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: false
-          android: false
-          large-packages: false
-
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
         with:

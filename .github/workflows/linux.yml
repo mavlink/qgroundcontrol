@@ -29,6 +29,20 @@ on:
         options:
           - Release
           - Debug
+      codeql:
+        description: 'Run CodeQL security analysis (disabled by default - conflicts with GitHub default setup)'
+        required: false
+        default: false
+        type: boolean
+      codeql_suite:
+        description: 'CodeQL query suite'
+        required: false
+        default: 'security-extended'
+        type: choice
+        options:
+          - default
+          - security-extended
+          - security-and-quality
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,6 +52,8 @@ permissions:
   contents: read
   id-token: write
   attestations: write
+  security-events: write  # For CodeQL
+  actions: read           # For CodeQL
 
 jobs:
   build:
@@ -105,16 +121,31 @@ jobs:
           host: ${{ matrix.host }}
           arch: ${{ matrix.arch }}
 
+      - name: Initialize CodeQL
+        if: inputs.codeql && matrix.build_type == 'Debug'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+          queries: ${{ inputs.codeql_suite }}
+          config-file: ./.github/codeql/codeql-config.yml
+
       - name: Configure
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
               -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
+              -DQGC_ENABLE_COVERAGE=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+
+      - name: Perform CodeQL Analysis
+        if: inputs.codeql && matrix.build_type == 'Debug'
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:c-cpp"
 
       - name: Verify Executable
         if: matrix.build_type == 'Release'
@@ -134,6 +165,12 @@ jobs:
         if: matrix.build_type == 'Debug'
         working-directory: ${{ runner.temp }}/build
         run: xvfb-run -a ./${{ matrix.package }}.AppImage --unittest
+
+      - name: Coverage Report
+        if: matrix.build_type == 'Debug'
+        uses: ./.github/actions/coverage
+        with:
+          build-dir: ${{ runner.temp }}/build
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

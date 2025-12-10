@@ -43,6 +43,7 @@ apt-get install -y -qq --no-install-recommends \
 pipx ensurepath
 pipx install cmake
 pipx install ninja
+pipx install gcovr
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
