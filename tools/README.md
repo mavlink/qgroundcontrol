@@ -8,6 +8,7 @@ This directory contains development tools, scripts, and configuration files for 
 tools/
 ├── analyze.sh               # Static analysis (clang-tidy, cppcheck)
 ├── check-deps.sh            # Check for outdated dependencies
+├── check-sizes.py           # Check artifact sizes against thresholds
 ├── clean.sh                 # Clean build artifacts and caches
 ├── coverage.sh              # Code coverage reports
 ├── format-check.sh          # Check/apply clang-format
@@ -75,7 +76,7 @@ Clean build artifacts and caches.
 
 ### coverage.sh
 
-Generate code coverage reports.
+Generate code coverage reports. Wrapper around CMake coverage targets.
 
 ```bash
 ./tools/coverage.sh              # Build with coverage, run tests, generate report
@@ -84,7 +85,18 @@ Generate code coverage reports.
 ./tools/coverage.sh --clean      # Clean coverage data
 ```
 
-Requires: `lcov`, `genhtml`
+Requires: `gcovr` (`pip install gcovr`)
+
+**Direct CMake usage:**
+
+```bash
+cmake -B build -DQGC_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+ctest --test-dir build
+cmake --build build --target coverage-report  # XML + HTML
+cmake --build build --target coverage-html    # HTML only
+cmake --build build --target coverage-clean   # Clean .gcda files
+```
 
 ### profile.sh
 
@@ -109,6 +121,19 @@ Check for outdated dependencies and submodules.
 ./tools/check-deps.sh --qt         # Check Qt version
 ./tools/check-deps.sh --update     # Update submodules to latest
 ```
+
+### check-sizes.py
+
+Check artifact sizes against thresholds. Used by CI and locally to catch unexpected size increases.
+
+```bash
+./tools/check-sizes.py build/              # Check local build artifacts
+./tools/check-sizes.py artifacts/ --json   # Output JSON (for CI)
+./tools/check-sizes.py --markdown          # Output markdown table
+./tools/check-sizes.py --list-thresholds   # Show configured thresholds
+```
+
+Default thresholds: AppImage 200MB, DMG 150MB, EXE 200MB, APK 150MB
 
 ### generate-docs.sh
 

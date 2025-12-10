@@ -4,16 +4,15 @@
 #
 # Usage:
 #   ./tools/coverage.sh                    # Build with coverage and run tests
-#   ./tools/coverage.sh --report           # Generate HTML report only (after tests)
+#   ./tools/coverage.sh --report           # Generate report only (after tests)
 #   ./tools/coverage.sh --open             # Generate and open report in browser
 #   ./tools/coverage.sh --clean            # Clean coverage data
+#   ./tools/coverage.sh --xml              # Generate XML only (for CI tools)
 #
 # Requirements:
-#   - gcov (from GCC) or llvm-cov
-#   - lcov and genhtml (for HTML reports)
-#   - Optional: gcovr (for Cobertura XML output)
+#   - gcovr (pip install gcovr)
 #
-# The script configures CMake with coverage flags, runs tests, and generates reports.
+# This script wraps CMake coverage targets defined in cmake/modules/Coverage.cmake
 
 set -euo pipefail
 
@@ -34,14 +33,13 @@ log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 
 # Defaults
 BUILD_DIR="$REPO_ROOT/build-coverage"
-COVERAGE_DIR="$REPO_ROOT/coverage"
 REPORT_ONLY=false
 OPEN_REPORT=false
 CLEAN_ONLY=false
-TEST_FILTER=""
+XML_ONLY=false
 
 show_help() {
-    head -16 "$0" | tail -14
+    head -14 "$0" | tail -12
     exit 0
 }
 
@@ -63,9 +61,9 @@ while [[ $# -gt 0 ]]; do
             CLEAN_ONLY=true
             shift
             ;;
-        -t|--test)
-            TEST_FILTER="$2"
-            shift 2
+        --xml)
+            XML_ONLY=true
+            shift
             ;;
         -b|--build-dir)
             BUILD_DIR="$2"
@@ -79,18 +77,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 check_dependencies() {
-    local missing=()
-
-    if ! command -v lcov &> /dev/null; then
-        missing+=("lcov")
-    fi
-    if ! command -v genhtml &> /dev/null; then
-        missing+=("genhtml (part of lcov)")
-    fi
-
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        log_error "Missing dependencies: ${missing[*]}"
-        log_info "Install with: sudo apt install lcov"
+    if ! command -v gcovr &> /dev/null; then
+        log_error "gcovr not found"
+        log_info "Install with: pip install gcovr"
         exit 1
     fi
 }
@@ -98,20 +87,22 @@ check_dependencies() {
 clean_coverage() {
     log_info "Cleaning coverage data..."
     rm -rf "$BUILD_DIR"
-    rm -rf "$COVERAGE_DIR"
-    find "$REPO_ROOT" -name "*.gcda" -delete 2>/dev/null || true
-    find "$REPO_ROOT" -name "*.gcno" -delete 2>/dev/null || true
     log_ok "Coverage data cleaned"
 }
 
 configure_build() {
-    log_info "Configuring build with coverage..."
+    if [[ -f "$BUILD_DIR/CMakeCache.txt" ]]; then
+        # Check if already configured with coverage
+        if grep -q "QGC_ENABLE_COVERAGE:BOOL=ON" "$BUILD_DIR/CMakeCache.txt" 2>/dev/null; then
+            log_info "Using existing coverage build configuration"
+            return
+        fi
+    fi
 
+    log_info "Configuring build with coverage..."
     cmake -B "$BUILD_DIR" -S "$REPO_ROOT" \
         -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
-        -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
-        -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+        -DQGC_ENABLE_COVERAGE=ON \
         -DQGC_BUILD_TESTING=ON \
         -G Ninja
 
@@ -126,60 +117,28 @@ build_project() {
 
 run_tests() {
     log_info "Running tests..."
-
-    local test_args="--unittest"
-    if [[ -n "$TEST_FILTER" ]]; then
-        test_args="--unittest:$TEST_FILTER"
-    fi
-
-    # Run tests (continue even if some fail)
-    # shellcheck disable=SC2086  # Intentional word splitting for test args
-    "$BUILD_DIR/QGroundControl" $test_args || true
-
+    # Run via ctest for proper test discovery
+    ctest --test-dir "$BUILD_DIR" --output-on-failure --timeout 300 || true
     log_ok "Tests complete"
 }
 
 generate_report() {
     log_info "Generating coverage report..."
 
-    mkdir -p "$COVERAGE_DIR"
+    if [[ "$XML_ONLY" == true ]]; then
+        cmake --build "$BUILD_DIR" --target coverage-report
+    else
+        cmake --build "$BUILD_DIR" --target coverage-report
+    fi
 
-    # Capture coverage data
-    lcov --capture \
-        --directory "$BUILD_DIR" \
-        --output-file "$COVERAGE_DIR/coverage.info" \
-        --ignore-errors mismatch \
-        --rc lcov_branch_coverage=1
-
-    # Remove system headers and test files from coverage
-    lcov --remove "$COVERAGE_DIR/coverage.info" \
-        '/usr/*' \
-        '*/build/*' \
-        '*/test/*' \
-        '*/libs/*' \
-        '*/_deps/*' \
-        '*/Qt/*' \
-        --output-file "$COVERAGE_DIR/coverage.filtered.info" \
-        --rc lcov_branch_coverage=1
-
-    # Generate HTML report
-    genhtml "$COVERAGE_DIR/coverage.filtered.info" \
-        --output-directory "$COVERAGE_DIR/html" \
-        --title "QGroundControl Coverage Report" \
-        --legend \
-        --branch-coverage \
-        --highlight
-
-    # Print summary
     echo ""
-    log_ok "Coverage report generated: $COVERAGE_DIR/html/index.html"
-
-    # Show summary statistics
-    lcov --summary "$COVERAGE_DIR/coverage.filtered.info" 2>&1 | grep -E "(lines|functions|branches)"
+    log_ok "Coverage report generated:"
+    log_info "  HTML: $BUILD_DIR/coverage.html"
+    log_info "  XML:  $BUILD_DIR/coverage.xml"
 }
 
 open_report() {
-    local report="$COVERAGE_DIR/html/index.html"
+    local report="$BUILD_DIR/coverage.html"
     if [[ ! -f "$report" ]]; then
         log_error "Report not found. Run coverage first."
         exit 1

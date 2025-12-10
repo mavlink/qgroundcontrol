@@ -18,6 +18,12 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/check-sizes.py
+          sparse-checkout-cone-mode: false
+
       - name: Download artifacts
         uses: actions/download-artifact@v5
         with:
@@ -26,84 +32,12 @@ jobs:
           path: artifacts
 
       - name: Check sizes
-        id: sizes
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            // Size thresholds in bytes
-            const thresholds = {
-              'AppImage': 200 * 1024 * 1024,  // 200 MB
-              'dmg': 150 * 1024 * 1024,       // 150 MB
-              'exe': 200 * 1024 * 1024,       // 200 MB
-              'apk': 150 * 1024 * 1024        // 150 MB
-            };
-
-            // Warning threshold (% increase from baseline)
-            const warningPercent = 10;
-
-            function getFiles(dir, files = []) {
-              if (!fs.existsSync(dir)) return files;
-              const items = fs.readdirSync(dir);
-              for (const item of items) {
-                const fullPath = path.join(dir, item);
-                if (fs.statSync(fullPath).isDirectory()) {
-                  getFiles(fullPath, files);
-                } else {
-                  files.push(fullPath);
-                }
-              }
-              return files;
-            }
-
-            const files = getFiles('artifacts');
-            const sizes = {};
-            const warnings = [];
-
-            for (const file of files) {
-              const stats = fs.statSync(file);
-              const ext = path.extname(file).slice(1);
-              const name = path.basename(file);
-              const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
-
-              sizes[name] = {
-                bytes: stats.size,
-                mb: sizeMB,
-                extension: ext
-              };
-
-              console.log(`${name}: ${sizeMB} MB`);
-
-              // Check against threshold
-              const threshold = thresholds[ext];
-              if (threshold && stats.size > threshold) {
-                const thresholdMB = (threshold / (1024 * 1024)).toFixed(0);
-                warnings.push(`⚠️ ${name} (${sizeMB} MB) exceeds ${thresholdMB} MB threshold`);
-              }
-            }
-
-            // Output sizes as JSON
-            fs.writeFileSync('sizes.json', JSON.stringify(sizes, null, 2));
-
-            // Create summary
-            let summary = '## 📦 Artifact Sizes\n\n';
-            summary += '| Artifact | Size |\n';
-            summary += '|----------|------|\n';
-
-            for (const [name, info] of Object.entries(sizes)) {
-              summary += `| ${name} | ${info.mb} MB |\n`;
-            }
-
-            if (warnings.length > 0) {
-              summary += '\n### ⚠️ Warnings\n';
-              summary += warnings.join('\n');
-            }
-
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
-
-            return { sizes, warnings };
+        run: |
+          python tools/check-sizes.py artifacts/ \
+            --json \
+            --output sizes.json \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            --no-fail
 
       - name: Upload size report
         uses: actions/upload-artifact@v5
@@ -112,12 +46,8 @@ jobs:
           path: sizes.json
           retention-days: 90
 
-      - name: Warn on size regression
-        if: steps.sizes.outputs.result != ''
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const result = ${{ steps.sizes.outputs.result }};
-            if (result.warnings && result.warnings.length > 0) {
-              core.warning(`Artifact size warnings:\n${result.warnings.join('\n')}`);
-            }
+      - name: Check for warnings
+        run: |
+          if python -c "import json; d=json.load(open('sizes.json')); exit(0 if d['warning_count'] > 0 else 1)" 2>/dev/null; then
+            echo "::warning::Artifact size thresholds exceeded. See size report for details."
+          fi
