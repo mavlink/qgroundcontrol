@@ -11,17 +11,14 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-translations:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v6
 
       - name: Get build config

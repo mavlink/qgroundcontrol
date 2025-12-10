@@ -30,6 +30,12 @@ runs:
         name: ${{ inputs.package_name }}
         path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
 
+    - name: Attest build provenance
+      if: ${{ github.event_name == 'push' && github.repository_owner == 'mavlink' }}
+      uses: actions/attest-build-provenance@v2
+      with:
+        subject-path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
+
     - name: Configure AWS Credentials
       if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
       uses: aws-actions/configure-aws-credentials@v4

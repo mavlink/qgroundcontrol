@@ -9,6 +9,8 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -89,8 +91,9 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      - name: Save App
-        uses: actions/upload-artifact@v5
+      - name: Upload Build File
+        uses: ./.github/actions/upload
         with:
-          name: ${{ env.PACKAGE }}
-          path: ${{ runner.temp }}/build/*.app
+          artifact_name: ${{ env.PACKAGE }}.app
+          package_name: ${{ env.PACKAGE }}
+          upload_aws: 'false'

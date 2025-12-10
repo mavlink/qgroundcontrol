@@ -7,6 +7,10 @@ on:
     - cron: '0 0 * * 0' # Runs every Sunday at 00:00 UTC
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
@@ -15,12 +19,11 @@ jobs:
   synchronize-with-crowdin:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: crowdin action
+      - name: Download translations from Crowdin
         uses: crowdin/github-action@v2
         with:
           config: 'docs/crowdin_docs.yml'

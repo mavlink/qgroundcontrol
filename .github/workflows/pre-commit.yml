@@ -27,13 +27,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
 
       - name: Get build config
         id: config
         uses: ./.github/actions/build-config
 
-      - uses: actions/setup-python@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
 
       - name: Install Qt and qmllint
         run: |
@@ -49,4 +51,5 @@ jobs:
           aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH
           echo "$QT_PATH/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
 
-      - uses: pre-commit/action@v3.0.1
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1

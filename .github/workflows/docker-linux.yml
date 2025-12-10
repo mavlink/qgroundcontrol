@@ -1,4 +1,4 @@
-name: Docker-Linux
+name: Docker Linux
 
 on:
   push:
@@ -44,7 +44,8 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
-      - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
+      - name: Make script executable
+        run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
 
-      - name: Run Docker Build
+      - name: Build with Docker
         run: ./deploy/docker/run-docker-ubuntu.sh
