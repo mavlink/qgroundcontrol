@@ -1,0 +1,106 @@
+# =============================================================================
+# CodeQL Security Analysis
+# C++ security scanning for QGroundControl
+#
+# NOTE: This workflow is disabled by default because the upstream repo has
+# "default setup" CodeQL enabled, which conflicts with custom workflows.
+# The default setup currently only scans JS/Python/Actions, NOT C++.
+#
+# To enable C++ security scanning, either:
+# 1. Ask maintainers to add C++ to the default setup in repo settings
+# 2. Or disable default setup and uncomment the triggers below
+# =============================================================================
+
+name: "CodeQL"
+
+on:
+  # Disabled: conflicts with default setup. Uncomment when default setup is disabled.
+  # push:
+  #   branches: [master, 'Stable*']
+  #   paths: ['src/**', 'test/**']
+  # pull_request:
+  #   branches: [master]
+  #   paths: ['src/**', 'test/**']
+  # schedule:
+  #   - cron: '0 6 * * 1'  # Weekly on Monday at 6 AM UTC
+
+  # Manual trigger only (doesn't conflict with default setup)
+  workflow_dispatch:
+    inputs:
+      query_suite:
+        description: 'Query suite to use'
+        required: false
+        default: 'security-extended'
+        type: choice
+        options:
+          - default
+          - security-extended
+          - security-and-quality
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze C++
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Get build config
+        id: build-config
+        uses: ./.github/actions/build-config
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+          queries: ${{ inputs.query_suite || 'security-extended' }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ steps.build-config.outputs.qt_version }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          dir: ${{ runner.temp }}
+          modules: ${{ steps.build-config.outputs.qt_modules }}
+          setup-python: false
+          cache: true
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DQGC_BUILD_TESTING=OFF
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config Debug --parallel
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:c-cpp"
