@@ -30,6 +30,7 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -110,6 +111,8 @@ jobs:
           ndk-version: ${{ steps.config.outputs.ndk_version }}
           java-version: ${{ steps.config.outputs.java_version }}
           android-platform: ${{ steps.config.outputs.android_platform }}
+          android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
+          android-build-tools: ${{ steps.config.outputs.android_build_tools }}
           ccache-version: ${{ steps.config.outputs.ccache_version }}
           save-cache: ${{ github.event_name != 'pull_request' }}
 

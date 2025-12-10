@@ -63,6 +63,7 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: mac
           arch: clang_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Install Qt for iOS
         uses: ./.github/actions/qt-install

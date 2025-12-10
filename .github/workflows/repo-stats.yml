@@ -37,5 +37,5 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: repo-metrics-${{ github.run_id }}
-          path: /metrics-renders/metrics.svg
+          path: ./metrics.svg
           retention-days: 90
