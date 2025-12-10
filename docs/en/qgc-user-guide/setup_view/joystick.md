@@ -46,7 +46,7 @@ To configure a joystick:
    The joystick is _enabled_ as the last step of the calibration process.
 
     ::: warning
-    On some radiocontrollers, the calibration process does not work because of wrong channels mapping. You can follow [supported joysticks section](#supported-joysticks) for more information.
+    On some controllers the calibration process does not work because of incorrect channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
     :::
 
 1. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
@@ -173,9 +173,9 @@ The Taranis is an open system that is openly being worked on.
 It is possible that at time of writing there is a firmware or configuration that allows it to work effectively as a joystick.
 :::
 
-### Radiocontroller TBS TANGO 2
+### TBS Tango 2
 
-The radio TBS TANGO 2 can also be used as a joystick controlled via QGroundControl. In order to make it work, you need to remap the channels by using the following commands:
+The TBS Tango 2 can also be used as a joystick controlled via QGroundControl. In order to make it work, you need to remap the channels by using the following commands:
 
 ```bash
 export SDL_GAMECONTROLLERCONFIG="03002de7d80400001057000011010000,Team-BlackSheep TBS Joystick,a:b0,b:b1,x:b3,y:b4,back:b10,guide:b12,start:b11,leftstick:b13,rightstick:b14,leftshoulder:b6,rightshoulder:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,crc:e72d,platform:Linux"
