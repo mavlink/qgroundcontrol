@@ -2,6 +2,22 @@
   "version": 6,
   "configurePresets": [
     {
+      "name": "default",
+      "displayName": "Default (Debug)",
+      "description": "Cross-platform debug build with Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["dev", "debug"]
+    },
+    {
+      "name": "default-release",
+      "displayName": "Default (Release)",
+      "description": "Cross-platform release build with Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["release"]
+    },
+    {
       "name": "dev",
       "hidden": true,
       "warnings": {

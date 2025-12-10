@@ -142,7 +142,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | Script | Platform | Description |
 |--------|----------|-------------|
 | `install-dependencies-debian.sh` | Linux | Install build dependencies via apt |
-| `install-dependencies-osx.sh` | macOS | Install dependencies via Homebrew + GStreamer |
+| `install-dependencies-macos.sh` | macOS | Install dependencies via Homebrew + GStreamer |
 | `install-dependencies-windows.ps1` | Windows | Install GStreamer (Vulkan SDK optional) |
 | `install-qt-debian.sh` | Linux | Install Qt via aqtinstall |
 | `install-qt-macos.sh` | macOS | Install Qt via aqtinstall |
@@ -158,7 +158,7 @@ sudo ./tools/setup/install-dependencies-debian.sh
 ./tools/setup/install-qt-debian.sh
 
 # macOS: Install all dependencies
-./tools/setup/install-dependencies-osx.sh
+./tools/setup/install-dependencies-macos.sh
 ./tools/setup/install-qt-macos.sh
 
 # Windows (PowerShell as Admin):

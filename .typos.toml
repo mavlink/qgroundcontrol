@@ -52,6 +52,9 @@ extend-exclude = [
     "translations/",
     "*.ts",
     "libs/",
-    "*.json",
     "*.geojson",
+    # JSON files with auto-generated or external content
+    "package-lock.json",
+    "*.FactMetaData.json",
+    "*.SettingsGroup.json",
 ]

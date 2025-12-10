@@ -28,7 +28,7 @@
       "description": "Group all git submodule updates",
       "matchManagers": ["git-submodules"],
       "groupName": "Git Submodules",
-      "schedule": ["before 6am on the first day of the month"]
+      "schedule": ["before 6am on monday"]
     },
     {
       "description": "Group Node.js updates (docs)",

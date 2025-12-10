@@ -48,7 +48,7 @@ lint:
 	pre-commit run --all-files
 
 format:
-	find src \( -name "*.h" -o -name "*.cc" -o -name "*.cpp" \) -print0 | xargs -0 clang-format -i
+	find src test \( -name "*.h" -o -name "*.cc" -o -name "*.cpp" \) -print0 | xargs -0 clang-format -i
 
 docker:
 	./deploy/docker/run-docker-ubuntu.sh

@@ -1,6 +1,6 @@
 name: Bug report
 description: Create a report to help us improve
-labels: ["Report: Bug"]
+labels: ["bug"]
 type: bug
 
 body:
@@ -30,7 +30,7 @@ body:
         1. **Expected Behavior** – What you expected to happen.
         2. **Current Behavior** – What actually happened instead.
         3. **Steps To Reproduce** – Step-by-step list of actions to reproduce the issue.
-        3. **Additional Details** – Any other context that helps explain the problem.
+        4. **Additional Details** – Any other context that helps explain the problem.
       value: |
         **Expected Behavior**
         Describe what you thought should happen here.
@@ -47,6 +47,31 @@ body:
         Add any extra info (errors, warnings, etc.) here.
     validations:
       required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform are you running QGC on?
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: dropdown
+    id: flight-stack
+    attributes:
+      label: Flight Stack
+      description: Which flight stack are you using?
+      options:
+        - PX4
+        - ArduPilot
+        - Other
+        - N/A
 
   - type: textarea
     id: system-information

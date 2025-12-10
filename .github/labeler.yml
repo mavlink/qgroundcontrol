@@ -34,7 +34,7 @@ github_actions:
           - 'deploy/windows/**'
           - 'tools/setup/*windows*'
 
-"Platform: OSX":
+"Platform: macOS":
   - changed-files:
       - any-glob-to-any-file:
           - 'deploy/macos/**'

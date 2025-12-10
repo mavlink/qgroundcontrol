@@ -27,7 +27,7 @@ permissions:
 jobs:
   coverage:
     name: Generate Coverage
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 120
 
     defaults:
@@ -91,11 +91,12 @@ jobs:
         run: cmake --build . --target all --config Debug --parallel
 
       - name: Run Tests
+        id: tests
         working-directory: ${{ runner.temp }}/build
         run: xvfb-run -a ctest --output-on-failure --timeout 300
-        continue-on-error: true
 
       - name: Generate Coverage Report
+        if: always()
         working-directory: ${{ runner.temp }}/build
         run: |
           gcovr --root ${{ github.workspace }} \
@@ -110,6 +111,7 @@ jobs:
                 --print-summary
 
       - name: Upload to Codecov
+        if: always()
         uses: codecov/codecov-action@v5
         with:
           files: ${{ runner.temp }}/build/coverage.xml
@@ -119,6 +121,7 @@ jobs:
           verbose: true
 
       - name: Upload Coverage Artifact
+        if: always()
         uses: actions/upload-artifact@v5
         with:
           name: coverage-report
