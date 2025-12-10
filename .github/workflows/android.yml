@@ -80,6 +80,7 @@ jobs:
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+      HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
       - name: Checkout repo
@@ -124,7 +125,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
             -DCMAKE_WARN_DEPRECATED=FALSE \
             -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
-            -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
             -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
             -DQT_ANDROID_SIGN_APK=${{ matrix.primary && env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }} \
             -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
@@ -141,26 +141,18 @@ jobs:
           cp "${TEMP_DIR}/build/android-build/"*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
 
       - name: Upload Build File
-        if: matrix.primary
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.PACKAGE }}.apk
-          package_name: ${{ env.PACKAGE }}
+          package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload_aws: true
+          upload_aws: ${{ matrix.primary }}
 
-      - name: Save APK
-        if: ${{ !matrix.primary }}
-        uses: actions/upload-artifact@v5
+      - name: Deploy to Play Store
+        if: matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true'
+        uses: ./.github/actions/playstore
         with:
-          name: ${{ env.PACKAGE }}-${{ matrix.host }}.apk
-          path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-
-      # - name: Deploy to Play Store
-      #   if: matrix.primary
-      #   uses: ./.github/actions/playstore
-      #   with:
-      #     artifact_name: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-      #     service_account_json: ${{ secrets.SERVICE_ACCOUNT }}
+          artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}

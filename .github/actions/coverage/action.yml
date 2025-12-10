@@ -28,7 +28,26 @@ runs:
     - name: Generate Coverage Report
       working-directory: ${{ inputs.build-dir }}
       shell: bash
-      run: cmake --build . --target coverage-report
+      run: |
+        cmake --build . --target coverage-report 2>&1 | tee coverage-output.txt
+
+        # Extract coverage summary for GitHub Step Summary
+        {
+          echo "## 📊 Code Coverage"
+          echo ""
+          if grep -q "lines:" coverage-output.txt; then
+            LINE_COV=$(grep "lines:" coverage-output.txt | tail -1)
+            BRANCH_COV=$(grep "branches:" coverage-output.txt | tail -1 || echo "branches: N/A")
+            echo "| Metric | Coverage |"
+            echo "|--------|----------|"
+            echo "| Lines | ${LINE_COV#*: } |"
+            echo "| Branches | ${BRANCH_COV#*: } |"
+          else
+            echo "Coverage data not available"
+          fi
+          echo ""
+          echo "[View detailed report](coverage.html)"
+        } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Upload to Codecov
       uses: codecov/codecov-action@v5

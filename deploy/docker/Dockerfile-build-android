@@ -85,7 +85,6 @@ CMD ["bash", "-lc", "\
     qt-cmake -S /project/source -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DQT_HOST_PATH=$QT_HOST_PATH \
-        -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
         -DQT_ANDROID_ABIS=\"armeabi-v7a;arm64-v8a\" \
         -DANDROID_BUILD_TOOLS=$ANDROID_BUILD_TOOLS_DIR \
         -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
