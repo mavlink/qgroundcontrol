@@ -86,7 +86,7 @@ jobs:
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Attest Build Provenance
-        if: matrix.build_type == 'Release'
+        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.app'
