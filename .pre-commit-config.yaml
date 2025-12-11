@@ -13,7 +13,7 @@ repos:
       - id: check-json
       - id: pretty-format-json
         args: ['--indent=2', '--no-ensure-ascii']
-        exclude: ^(translations/|package-lock\.json)
+        exclude: ^(translations/|package-lock\.json|src/|test/|resources/|deploy/|cmake/)
       - id: check-xml
         exclude: ^test/
       - id: check-merge-conflict
@@ -30,7 +30,7 @@ repos:
 
   # C++ formatting (check-only, use 'clang-format -i' to fix)
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v19.1.7
+    rev: v21.1.7
     hooks:
       - id: clang-format
         args: ['--dry-run', '--Werror']
@@ -48,7 +48,7 @@ repos:
 
   # Python formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.1
+    rev: v0.14.8
     hooks:
       - id: ruff
         args: [--fix]
@@ -56,7 +56,7 @@ repos:
 
   # Python type checking
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.391
+    rev: v1.1.407
     hooks:
       - id: pyright
         files: ^(tools|test)/.*\.py$
@@ -91,7 +91,7 @@ repos:
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.46.0
+    rev: v0.47.0
     hooks:
       - id: markdownlint
         args: ['--fix']
@@ -99,7 +99,7 @@ repos:
 
   # Prose linting (documentation quality)
   - repo: https://github.com/errata-ai/vale
-    rev: v3.9.4
+    rev: v3.13.0
     hooks:
       - id: vale
         files: ^docs/
@@ -107,7 +107,7 @@ repos:
 
   # Spell checking
   - repo: https://github.com/crate-ci/typos
-    rev: v1.28.4
+    rev: v1
     hooks:
       - id: typos
 

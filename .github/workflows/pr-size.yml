@@ -16,6 +16,7 @@ jobs:
 
     steps:
       - name: Label PR by size
+        continue-on-error: true
         uses: codelytv/pr-size-labeler@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
