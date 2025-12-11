@@ -1,10 +1,12 @@
 {
-    "Keys": ["qgc-maps"],
-    "Provider": "QGroundControl",
-    "Version": 101,
-    "Experimental": false,
-    "Features": [
-        "OnlineMappingFeature",
-        "OfflineMappingFeature"
-    ]
+  "Experimental": false,
+  "Features": [
+    "OnlineMappingFeature",
+    "OfflineMappingFeature"
+  ],
+  "Keys": [
+    "qgc-maps"
+  ],
+  "Provider": "QGroundControl",
+  "Version": 101
 }

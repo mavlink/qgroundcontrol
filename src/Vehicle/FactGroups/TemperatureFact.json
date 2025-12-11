@@ -1,28 +1,27 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "temperature1",
-    "shortDesc": "Temperature (1)",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "C"
-},
-{
-    "name":             "temperature2",
-    "shortDesc": "Temperature (2)",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "C"
-},
-{
-    "name":             "temperature3",
-    "shortDesc": "Temperature (3)",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "C"
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "decimalPlaces": 2,
+      "name": "temperature1",
+      "shortDesc": "Temperature (1)",
+      "type": "double",
+      "units": "C"
+    },
+    {
+      "decimalPlaces": 2,
+      "name": "temperature2",
+      "shortDesc": "Temperature (2)",
+      "type": "double",
+      "units": "C"
+    },
+    {
+      "decimalPlaces": 2,
+      "name": "temperature3",
+      "shortDesc": "Temperature (3)",
+      "type": "double",
+      "units": "C"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

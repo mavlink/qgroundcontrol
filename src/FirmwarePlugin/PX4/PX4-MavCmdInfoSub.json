@@ -1,8 +1,6 @@
 {
-    "comment":      "PX4 Pro, Sub",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-    ]
+  "comment": "PX4 Pro, Sub",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [],
+  "version": 1
 }

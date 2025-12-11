@@ -10,16 +10,19 @@ tools/
 ├── check-deps.sh            # Check for outdated dependencies
 ├── check-sizes.py           # Check artifact sizes against thresholds
 ├── clean.sh                 # Clean build artifacts and caches
+├── common.sh                # Shared shell functions
 ├── coverage.sh              # Code coverage reports
 ├── format-check.sh          # Check/apply clang-format
 ├── generate-docs.sh         # Generate API docs (Doxygen)
 ├── param-docs.py            # Generate parameter documentation
-├── profile.sh               # Profiling (valgrind, perf)
+├── update-headers.py        # License header management
 ├── ccache.conf              # ccache configuration
-├── HeaderUpdater.py         # License header management
-├── qt6.natvis               # Visual Studio debugger visualizers
 ├── coding-style/            # Code style examples
-├── gdb-pretty-printers/     # GDB/LLDB Qt type formatters
+├── debuggers/               # Debugging tools
+│   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
+│   ├── profile.sh           # Profiling (valgrind, perf)
+│   ├── qt6.natvis           # Visual Studio debugger visualizers
+│   └── valgrind.supp        # Valgrind suppressions
 ├── log-analyzer/            # QGC log analysis tools
 ├── mock-mavlink/            # MAVLink vehicle simulator
 ├── setup/                   # Environment setup scripts
@@ -27,6 +30,28 @@ tools/
 ```
 
 ## Quick Start
+
+The repository includes **Makefile** and **justfile** wrappers for common commands:
+
+```bash
+# Using make (pre-installed on most systems)
+make help        # Show all available commands
+make configure   # Configure CMake build
+make build       # Build the project
+make test        # Run unit tests
+make lint        # Run pre-commit checks
+make check       # Run lint + test
+
+# Using just (install: cargo install just, brew install just, or apt install just)
+just             # Show all available commands
+just configure   # Configure CMake build
+just build       # Build the project
+just setup       # Full setup: deps, submodules, configure, build
+```
+
+Both read configuration from `.github/build-config.json` for consistent versioning.
+
+### Direct Script Usage
 
 ```bash
 # Format changed files
@@ -98,17 +123,17 @@ cmake --build build --target coverage-html    # HTML only
 cmake --build build --target coverage-clean   # Clean .gcda files
 ```
 
-### profile.sh
+### debuggers/profile.sh
 
 Profile QGC for performance and memory issues.
 
 ```bash
-./tools/profile.sh                # CPU profiling with perf
-./tools/profile.sh --memcheck     # Memory leak detection (valgrind)
-./tools/profile.sh --callgrind    # CPU profiling (valgrind)
-./tools/profile.sh --massif       # Heap profiling (valgrind)
-./tools/profile.sh --heaptrack    # Heap profiling (heaptrack)
-./tools/profile.sh --sanitize     # Build with AddressSanitizer
+./tools/debuggers/profile.sh                # CPU profiling with perf
+./tools/debuggers/profile.sh --memcheck     # Memory leak detection (valgrind)
+./tools/debuggers/profile.sh --callgrind    # CPU profiling (valgrind)
+./tools/debuggers/profile.sh --massif       # Heap profiling (valgrind)
+./tools/debuggers/profile.sh --heaptrack    # Heap profiling (heaptrack)
+./tools/debuggers/profile.sh --sanitize     # Build with AddressSanitizer
 ```
 
 ### check-deps.sh
@@ -196,22 +221,22 @@ sudo ./tools/setup/install-dependencies-debian.sh
 
 ## Debugging Tools
 
-### gdb-pretty-printers/
+### debuggers/gdb-pretty-printers/
 
 GDB pretty printers for Qt 6 types. Makes debugging Qt containers and strings readable.
 
 ```bash
 # In GDB:
-source tools/gdb-pretty-printers/qt6.py
+source tools/debuggers/gdb-pretty-printers/qt6.py
 
 # Then:
 (gdb) print myQString
 $1 = "Hello, World!"
 ```
 
-See [gdb-pretty-printers/README.md](gdb-pretty-printers/README.md) for setup instructions.
+See [debuggers/gdb-pretty-printers/README.md](debuggers/gdb-pretty-printers/README.md) for setup instructions.
 
-### qt6.natvis
+### debuggers/qt6.natvis
 
 Visual Studio debugger visualizers for Qt6 types. Automatically loaded by VS when debugging.
 
@@ -279,14 +304,14 @@ See [translations/README.md](translations/README.md) for Crowdin integration.
 
 ## Code Quality Tools
 
-### HeaderUpdater.py
+### update-headers.py
 
 Updates or validates license headers in source files.
 
 ```bash
-python3 tools/HeaderUpdater.py              # Update headers
-python3 tools/HeaderUpdater.py --check      # Check only (for CI)
-python3 tools/HeaderUpdater.py --check src/ # Check specific directory
+python3 tools/update-headers.py              # Update headers
+python3 tools/update-headers.py --check      # Check only (for CI)
+python3 tools/update-headers.py --check src/ # Check specific directory
 ```
 
 ### ccache.conf

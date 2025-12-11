@@ -1,174 +1,173 @@
 {
-    "version":              1,
-    "fileType":             "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":         "operatorID",
-    "shortDesc":    "Operator ID",
-    "longDesc":     "Operator ID. Maximum 20 characters.",
-    "type":         "string",
-    "default":      ""
-},
-{
-    "name":         "operatorIDValid",
-    "shortDesc":    "Operator ID is valid",
-    "longDesc":     "Operator ID has been checked using checksum.",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "operatorIDType",
-    "shortDesc":    "Operator ID type",
-    "type":         "uint8",
-    "enumStrings":  "CAA",
-    "enumValues":   "0",
-    "default":      0
-},
-{
-    "name":         "sendOperatorID",
-    "shortDesc":    "Send Operator ID",
-    "longDesc":     "When enabled, sends operator ID message",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "selfIDFree",
-    "shortDesc":    "Flight Purpose",
-    "longDesc":     "Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.",
-    "type":         "string",
-    "default":      ""
-},
-{
-    "name":         "selfIDEmergency",
-    "shortDesc":    "Emergency Text",
-    "longDesc":     "Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.",
-    "type":         "string",
-    "default":      "Pilot Emergency Status"
-},
-{
-    "name":         "selfIDExtended",
-    "shortDesc":    "Extended Status",
-    "longDesc":     "Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.",
-    "type":         "string",
-    "default":      ""
-},
-{
-    "name":         "selfIDType",
-    "shortDesc":    "Self ID type",
-    "type":         "uint8",
-    "enumStrings":  "Flight Purpose,Emergency,Extended Status",
-    "enumValues":   "0,1,2",
-    "default":      0
-},
-{
-    "name":         "sendSelfID",
-    "shortDesc":    "Send Self ID",
-    "longDesc":     "When enabled, sends self ID message",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "basicID",
-    "shortDesc":    "Basic ID",
-    "type":         "string",
-    "default":      ""
-},
-{
-    "name":         "basicIDType",
-    "shortDesc":    "Basic ID Type",
-    "type":         "uint8",
-    "enumStrings":  "None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific",
-    "enumValues":   "0,1,2,3,4",
-    "default":      2
-},
-{
-    "name":         "basicIDUaType",
-    "shortDesc":    "UA type",
-    "type":         "uint8",
-    "enumStrings":  "Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other",
-    "enumValues":   "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
-    "default":      0
-},
-{
-    "name":         "sendBasicID",
-    "shortDesc":    "Send Basic ID",
-    "longDesc":     "When enabled, sends basic ID message",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "region",
-    "shortDesc":    "Region of operation",
-    "longDesc":     "The region of operation the mission will take place in",
-    "type":         "uint8",
-    "enumStrings":  "FAA,EU",
-    "enumValues":   "0,1",
-    "default":      0
-},
-{
-    "name":         "locationType",
-    "shortDesc":    "Location Type",
-    "longDesc":     "Operator location Type",
-    "type":         "uint8",
-    "enumStrings":  "Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)",
-    "enumValues":   "0,1,2",
-    "default":      1
-},
-{
-    "name":             "latitudeFixed",
-    "shortDesc":        "Latitude Fixed",
-    "longDesc":         "Fixed latitude to send on SYSTEM message",
-    "type":             "double",
-    "minValue":         "-90",
-    "maxValue":         "90",
-    "decimalPlaces":    7,
-    "default":          0
-},
-{
-    "name":             "longitudeFixed",
-    "shortDesc":        "Longitude Fixed",
-    "longDesc":         "Fixed Longitude to send on SYSTEM message",
-    "type":             "double",
-    "minValue":         "-180",
-    "maxValue":         "180",
-    "decimalPlaces":    7,
-    "default":          0
-},
-{
-    "name":             "altitudeFixed",
-    "shortDesc":        "Altitude Fixed",
-    "longDesc":         "Fixed Altitude to send on SYSTEM message",
-    "type":             "double",
-    "decimalPlaces":    7,
-    "default":          0
-},
-{
-    "name":         "classificationType",
-    "shortDesc":    "Classification Type",
-    "longDesc":     "Classification Type of UAS",
-    "type":         "uint8",
-    "enumStrings":  "Undeclared,EU",
-    "enumValues":   "0,1",
-    "default":      0
-},
-{
-    "name":         "categoryEU",
-    "shortDesc":    "Category",
-    "longDesc":     "Category of the UAS in the EU region",
-    "type":         "uint8",
-    "enumStrings":  "Undeclared,Open,Specific,Certified",
-    "enumValues":   "0,1,2,3",
-    "default":      0
-},
-{
-    "name":         "classEU",
-    "shortDesc":    "Class",
-    "longDesc":     "Class of the UAS in the EU region",
-    "type":         "uint8",
-    "enumStrings":  "Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6",
-    "enumValues":   "0,1,2,3,4,5,6,7",
-    "default":      0
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "default": "",
+      "longDesc": "Operator ID. Maximum 20 characters.",
+      "name": "operatorID",
+      "shortDesc": "Operator ID",
+      "type": "string"
+    },
+    {
+      "default": false,
+      "longDesc": "Operator ID has been checked using checksum.",
+      "name": "operatorIDValid",
+      "shortDesc": "Operator ID is valid",
+      "type": "bool"
+    },
+    {
+      "default": 0,
+      "enumStrings": "CAA",
+      "enumValues": "0",
+      "name": "operatorIDType",
+      "shortDesc": "Operator ID type",
+      "type": "uint8"
+    },
+    {
+      "default": false,
+      "longDesc": "When enabled, sends operator ID message",
+      "name": "sendOperatorID",
+      "shortDesc": "Send Operator ID",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "longDesc": "Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.",
+      "name": "selfIDFree",
+      "shortDesc": "Flight Purpose",
+      "type": "string"
+    },
+    {
+      "default": "Pilot Emergency Status",
+      "longDesc": "Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.",
+      "name": "selfIDEmergency",
+      "shortDesc": "Emergency Text",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "longDesc": "Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.",
+      "name": "selfIDExtended",
+      "shortDesc": "Extended Status",
+      "type": "string"
+    },
+    {
+      "default": 0,
+      "enumStrings": "Flight Purpose,Emergency,Extended Status",
+      "enumValues": "0,1,2",
+      "name": "selfIDType",
+      "shortDesc": "Self ID type",
+      "type": "uint8"
+    },
+    {
+      "default": false,
+      "longDesc": "When enabled, sends self ID message",
+      "name": "sendSelfID",
+      "shortDesc": "Send Self ID",
+      "type": "bool"
+    },
+    {
+      "default": "",
+      "name": "basicID",
+      "shortDesc": "Basic ID",
+      "type": "string"
+    },
+    {
+      "default": 2,
+      "enumStrings": "None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific",
+      "enumValues": "0,1,2,3,4",
+      "name": "basicIDType",
+      "shortDesc": "Basic ID Type",
+      "type": "uint8"
+    },
+    {
+      "default": 0,
+      "enumStrings": "Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other",
+      "enumValues": "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
+      "name": "basicIDUaType",
+      "shortDesc": "UA type",
+      "type": "uint8"
+    },
+    {
+      "default": false,
+      "longDesc": "When enabled, sends basic ID message",
+      "name": "sendBasicID",
+      "shortDesc": "Send Basic ID",
+      "type": "bool"
+    },
+    {
+      "default": 0,
+      "enumStrings": "FAA,EU",
+      "enumValues": "0,1",
+      "longDesc": "The region of operation the mission will take place in",
+      "name": "region",
+      "shortDesc": "Region of operation",
+      "type": "uint8"
+    },
+    {
+      "default": 1,
+      "enumStrings": "Takeoff(Not Supported),Live GNNS, Fixed (not for FAA)",
+      "enumValues": "0,1,2",
+      "longDesc": "Operator location Type",
+      "name": "locationType",
+      "shortDesc": "Location Type",
+      "type": "uint8"
+    },
+    {
+      "decimalPlaces": 7,
+      "default": 0,
+      "longDesc": "Fixed latitude to send on SYSTEM message",
+      "maxValue": "90",
+      "minValue": "-90",
+      "name": "latitudeFixed",
+      "shortDesc": "Latitude Fixed",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 7,
+      "default": 0,
+      "longDesc": "Fixed Longitude to send on SYSTEM message",
+      "maxValue": "180",
+      "minValue": "-180",
+      "name": "longitudeFixed",
+      "shortDesc": "Longitude Fixed",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 7,
+      "default": 0,
+      "longDesc": "Fixed Altitude to send on SYSTEM message",
+      "name": "altitudeFixed",
+      "shortDesc": "Altitude Fixed",
+      "type": "double"
+    },
+    {
+      "default": 0,
+      "enumStrings": "Undeclared,EU",
+      "enumValues": "0,1",
+      "longDesc": "Classification Type of UAS",
+      "name": "classificationType",
+      "shortDesc": "Classification Type",
+      "type": "uint8"
+    },
+    {
+      "default": 0,
+      "enumStrings": "Undeclared,Open,Specific,Certified",
+      "enumValues": "0,1,2,3",
+      "longDesc": "Category of the UAS in the EU region",
+      "name": "categoryEU",
+      "shortDesc": "Category",
+      "type": "uint8"
+    },
+    {
+      "default": 0,
+      "enumStrings": "Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6",
+      "enumValues": "0,1,2,3,4,5,6,7",
+      "longDesc": "Class of the UAS in the EU region",
+      "name": "classEU",
+      "shortDesc": "Class",
+      "type": "uint8"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

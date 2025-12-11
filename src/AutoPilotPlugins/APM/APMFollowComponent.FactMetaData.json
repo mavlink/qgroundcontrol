@@ -1,35 +1,34 @@
 {
-    "version": 1,
-    "fileType": "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name": "angle",
-    "shortDesc": "Angle from ground station to vehicle",
-    "type": "double",
-    "min": 0,
-    "max": 360,
-    "decimalPlaces": 1,
-    "units": "deg",
-    "default": 45
-},
-{
-    "name": "distance",
-    "shortDesc": "Horizontal distance from ground station to vehicle",
-    "type": "double",
-    "min": 0,
-    "decimalPlaces": 1,
-    "units": "m",
-    "default": 5
-},
-{
-    "name": "height",
-    "shortDesc": "Vertical distance from Launch (home) position to vehicle",
-    "type": "double",
-    "min": 0,
-    "decimalPlaces": 1,
-    "units": "m",
-    "default": 5
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "decimalPlaces": 1,
+      "default": 45,
+      "max": 360,
+      "min": 0,
+      "name": "angle",
+      "shortDesc": "Angle from ground station to vehicle",
+      "type": "double",
+      "units": "deg"
+    },
+    {
+      "decimalPlaces": 1,
+      "default": 5,
+      "min": 0,
+      "name": "distance",
+      "shortDesc": "Horizontal distance from ground station to vehicle",
+      "type": "double",
+      "units": "m"
+    },
+    {
+      "decimalPlaces": 1,
+      "default": 5,
+      "min": 0,
+      "name": "height",
+      "shortDesc": "Vertical distance from Launch (home) position to vehicle",
+      "type": "double",
+      "units": "m"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

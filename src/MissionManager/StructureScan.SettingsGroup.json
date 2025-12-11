@@ -1,55 +1,54 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "GimbalPitch",
-    "shortDesc": "Gimbal pitch rotation.",
-    "type":             "double",
-    "units":            "gimbal-degrees",
-    "min":              -90,
-    "max":              0,
-    "decimalPlaces":    0,
-    "default":     0
-},
-{
-    "name":             "EntranceAltitude",
-    "shortDesc": "Vehicle will fly to/from the structure at this altitude.",
-    "type":             "double",
-    "units":            "m",
-    "decimalPlaces":    1,
-    "default":     50
-},
-{
-    "name":             "ScanBottomAlt",
-    "shortDesc": "Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.",
-    "type":             "double",
-    "units":            "m",
-    "decimalPlaces":    1,
-    "default":     50
-},
-{
-    "name":             "Layers",
-    "shortDesc": "Number of scan layers.",
-    "type":             "uint32",
-    "min":              1,
-    "default":     1
-},
-{
-    "name":             "StructureHeight",
-    "shortDesc": "Height of structure being scanned.",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "m",
-    "min":              1,
-    "default":     100
-},
-{
-    "name":             "StartFromTop",
-    "shortDesc": "Start scanning from top of structure.",
-    "type":             "bool",
-    "default":     true
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "decimalPlaces": 0,
+      "default": 0,
+      "max": 0,
+      "min": -90,
+      "name": "GimbalPitch",
+      "shortDesc": "Gimbal pitch rotation.",
+      "type": "double",
+      "units": "gimbal-degrees"
+    },
+    {
+      "decimalPlaces": 1,
+      "default": 50,
+      "name": "EntranceAltitude",
+      "shortDesc": "Vehicle will fly to/from the structure at this altitude.",
+      "type": "double",
+      "units": "m"
+    },
+    {
+      "decimalPlaces": 1,
+      "default": 50,
+      "name": "ScanBottomAlt",
+      "shortDesc": "Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.",
+      "type": "double",
+      "units": "m"
+    },
+    {
+      "default": 1,
+      "min": 1,
+      "name": "Layers",
+      "shortDesc": "Number of scan layers.",
+      "type": "uint32"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": 100,
+      "min": 1,
+      "name": "StructureHeight",
+      "shortDesc": "Height of structure being scanned.",
+      "type": "double",
+      "units": "m"
+    },
+    {
+      "default": true,
+      "name": "StartFromTop",
+      "shortDesc": "Start scanning from top of structure.",
+      "type": "bool"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

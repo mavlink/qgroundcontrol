@@ -1,93 +1,92 @@
 {
-    "version":      1,
-    "fileType":     "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":                 "baseReceiverManufacturers",
-    "shortDesc":            "GPS manufacturers for settings",
-    "type":                 "uint8",
-    "enumStrings":          "All,Trimble,Septentrio,Femtomes,UBlox",
-    "enumValues":           "0,1,2,3,4",
-    "default":              1
-},
-{
-    "name":                 "surveyInAccuracyLimit",
-    "shortDesc":            "Survey in accuracy",
-    "longDesc":             "The minimum accuracy value that Survey-In must achieve before it can complete.",
-    "type":                 "double",
-    "default":              2.0,
-    "min":                  0.01,
-    "max":                  5.0,
-    "increment":            0.01,
-    "units":                "m",
-    "decimalPlaces":        2,
-    "qgcRebootRequired":    true
-},
-{
-    "name":                 "surveyInMinObservationDuration",
-    "shortDesc":            "Min observation time",
-    "longDesc":             "Defines the minimum amount of observation time for the position calculation.",
-    "type":                 "Uint32",
-    "default":              180,
-    "min":                  1,
-    "max":                  360,
-    "increment":            1,
-    "units":                "secs",
-    "decimalPlaces":        0,
-    "qgcRebootRequired":    true
-},
-{
-    "name":                 "useFixedBasePosition",
-    "shortDesc":            "Use specified base mode",
-    "longDesc":             "Specify the mode for the RTK base 0: Survey-In (Fixed + Auto) 1: Specify position (Fixed + Manual)",
-    "type":                 "uint8",
-    "enumStrings":          "Survey-In, Fixed",
-    "enumValues":           "0,1",
-    "default":              0,
-    "qgcRebootRequired":    true
-},
-{
-    "name":                 "fixedBasePositionLatitude",
-    "shortDesc":     "Base Position Latitude",
-    "longDesc":      "Defines the latitude of the fixed RTK base position.",
-    "type":                 "double",
-    "default":         0,
-    "min":                  -90,
-    "max":                  90,
-    "decimalPlaces":        9,
-    "qgcRebootRequired":    true
-},
-{
-    "name":                 "fixedBasePositionLongitude",
-    "shortDesc":     "Base Position Longitude",
-    "longDesc":      "Defines the longitude of the fixed RTK base position.",
-    "type":                 "double",
-    "default":         0,
-    "min":                  -180,
-    "max":                  180,
-    "decimalPlaces":        9,
-    "qgcRebootRequired":    true
-},
-{
-    "name":                 "fixedBasePositionAltitude",
-    "shortDesc":     "Base Position Alt (WGS84)",
-    "longDesc":      "Defines the altitude of the fixed RTK base position.",
-    "type":                 "float",
-    "default":         0,
-    "units":                "m",
-    "decimalPlaces":        2,
-    "qgcRebootRequired":    true
-},
-{
-    "name":                 "fixedBasePositionAccuracy",
-    "shortDesc":     "Base Position Accuracy",
-    "longDesc":      "Defines the accuracy of the fixed RTK base position.",
-    "type":                 "float",
-    "default":         0,
-    "units":                "m",
-    "decimalPlaces":        2,
-    "qgcRebootRequired":    true
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "default": 1,
+      "enumStrings": "All,Trimble,Septentrio,Femtomes,UBlox",
+      "enumValues": "0,1,2,3,4",
+      "name": "baseReceiverManufacturers",
+      "shortDesc": "GPS manufacturers for settings",
+      "type": "uint8"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": 2.0,
+      "increment": 0.01,
+      "longDesc": "The minimum accuracy value that Survey-In must achieve before it can complete.",
+      "max": 5.0,
+      "min": 0.01,
+      "name": "surveyInAccuracyLimit",
+      "qgcRebootRequired": true,
+      "shortDesc": "Survey in accuracy",
+      "type": "double",
+      "units": "m"
+    },
+    {
+      "decimalPlaces": 0,
+      "default": 180,
+      "increment": 1,
+      "longDesc": "Defines the minimum amount of observation time for the position calculation.",
+      "max": 360,
+      "min": 1,
+      "name": "surveyInMinObservationDuration",
+      "qgcRebootRequired": true,
+      "shortDesc": "Min observation time",
+      "type": "Uint32",
+      "units": "secs"
+    },
+    {
+      "default": 0,
+      "enumStrings": "Survey-In, Fixed",
+      "enumValues": "0,1",
+      "longDesc": "Specify the mode for the RTK base 0: Survey-In (Fixed + Auto) 1: Specify position (Fixed + Manual)",
+      "name": "useFixedBasePosition",
+      "qgcRebootRequired": true,
+      "shortDesc": "Use specified base mode",
+      "type": "uint8"
+    },
+    {
+      "decimalPlaces": 9,
+      "default": 0,
+      "longDesc": "Defines the latitude of the fixed RTK base position.",
+      "max": 90,
+      "min": -90,
+      "name": "fixedBasePositionLatitude",
+      "qgcRebootRequired": true,
+      "shortDesc": "Base Position Latitude",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 9,
+      "default": 0,
+      "longDesc": "Defines the longitude of the fixed RTK base position.",
+      "max": 180,
+      "min": -180,
+      "name": "fixedBasePositionLongitude",
+      "qgcRebootRequired": true,
+      "shortDesc": "Base Position Longitude",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": 0,
+      "longDesc": "Defines the altitude of the fixed RTK base position.",
+      "name": "fixedBasePositionAltitude",
+      "qgcRebootRequired": true,
+      "shortDesc": "Base Position Alt (WGS84)",
+      "type": "float",
+      "units": "m"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": 0,
+      "longDesc": "Defines the accuracy of the fixed RTK base position.",
+      "name": "fixedBasePositionAccuracy",
+      "qgcRebootRequired": true,
+      "shortDesc": "Base Position Accuracy",
+      "type": "float",
+      "units": "m"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }
