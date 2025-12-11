@@ -1,0 +1,151 @@
+# =============================================================================
+# Builder Image for QGroundControl Application
+# Base: Ubuntu 24.04
+# =============================================================================
+
+# ---------- Base Image ----------
+FROM ubuntu:24.04 AS builder
+
+# ---------- Environment Configuration ----------
+    #  Non-interactive APT
+ENV DEBIAN_FRONTEND=noninteractive \
+    #  UTF-8 Localization
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8 \
+    #  Ensure pipx is in PATH
+    PATH=/root/.local/bin:$PATH \
+    #  Build Arguments
+    BUILD_TYPE=Release
+
+# ---------- Configure APT for reduced verbosity ----------
+RUN echo 'DPkg::Use-Pty "0";\nDPkg::Progress-Fancy "0";\nAPT::Color "0";' \
+    > /etc/apt/apt.conf.d/00-reduce-verbosity
+
+# ---------- Required System Packages Installation ----------
+RUN apt-get update -qq && \
+    apt-get install -qq --no-install-recommends \
+        ca-certificates \
+        gnupg2 \
+        software-properties-common && \
+    add-apt-repository -y universe && \
+    apt-get update -qq && \
+    apt-get install -qq --no-install-recommends \
+        # Core build tools and utilities
+        appstream \
+        binutils \
+        build-essential \
+        ccache \
+        cmake \
+        cppcheck \
+        curl \
+        file \
+        gdb \
+        git \
+        libfuse2 \
+        fuse3 \
+        libtool \
+        locales \
+        mold \
+        ninja-build \
+        patchelf \
+        pipx \
+        pkgconf \
+        python3 \
+        python3-pip \
+        rsync \
+        unzip \
+        wget \
+        zsync \
+        # Qt6 dependencies (https://doc.qt.io/qt-6/linux-requirements.html)
+        libatspi2.0-dev \
+        libfontconfig1-dev \
+        libfreetype-dev \
+        libgtk-3-dev \
+        libsm-dev \
+        libx11-dev \
+        libx11-xcb-dev \
+        libxcb-cursor-dev \
+        libxcb-glx0-dev \
+        libxcb-icccm4-dev \
+        libxcb-image0-dev \
+        libxcb-keysyms1-dev \
+        libxcb-present-dev \
+        libxcb-randr0-dev \
+        libxcb-render-util0-dev \
+        libxcb-render0-dev \
+        libxcb-shape0-dev \
+        libxcb-shm0-dev \
+        libxcb-sync-dev \
+        libxcb-util-dev \
+        libxcb-xfixes0-dev \
+        libxcb-xinerama0-dev \
+        libxcb-xkb-dev \
+        libxcb1-dev \
+        libxext-dev \
+        libxfixes-dev \
+        libxi-dev \
+        libxkbcommon-dev \
+        libxkbcommon-x11-dev \
+        libxrender-dev \
+        libunwind-dev \
+        # GStreamer for video/telemetry streaming
+        libgstreamer1.0-dev \
+        libgstreamer-plugins-bad1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        libgstreamer-plugins-good1.0-dev \
+        libgstreamer-gl1.0-0 \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-plugins-rtp \
+        gstreamer1.0-gl \
+        gstreamer1.0-libav \
+        gstreamer1.0-rtsp \
+        gstreamer1.0-x \
+        gstreamer1.0-qt6 \
+        # SDL
+        libusb-1.0-0-dev \
+        # Graphics and Audio utilities
+        libvulkan-dev \
+        libpipewire-0.3-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ---------- Locale Configuration ----------
+RUN <<EOF
+sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+locale-gen
+update-locale LANG=en_US.UTF-8
+EOF
+
+# ---------- Qt Installation ----------
+COPY --chmod=511 tools/setup/install-qt-debian.sh /tmp/qt/
+COPY --chmod=511 tools/setup/read-config.sh       /tmp/qt/
+COPY --chmod=444 .github/build-config.json        /tmp/qt/
+
+RUN /tmp/qt/install-qt-debian.sh
+
+# ---------- Set Qt environment variables ----------
+RUN <<EOF
+QT_VERSION=$(/tmp/qt/read-config.sh --get qt_version)
+echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64" >> /etc/profile.d/qt.sh
+echo 'export PATH=$QT_ROOT_DIR/bin:$PATH' >> /etc/profile.d/qt.sh
+chmod +x /etc/profile.d/qt.sh
+rm -rf /tmp/qt
+EOF
+
+RUN /bin/bash -lc "qt-cmake --version"
+
+# ---------- Git Configuration ----------
+RUN git config --global --add safe.directory /project/source
+
+# ---------- Working Directory Setup ----------
+RUN mkdir -p /project/source /project/build
+WORKDIR /project/build
+
+# ---------- Build Entrypoint ----------
+COPY --chmod=511 tools/setup/container-entrypoint.sh /usr/local/bin/
+
+ENTRYPOINT [ "/bin/bash", "-lc", "container-entrypoint.sh" ]

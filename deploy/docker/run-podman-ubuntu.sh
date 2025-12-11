@@ -15,7 +15,7 @@ fi
 
 # Define variables for better maintainability
 PARALLEL_BUILD_AMOUNT=$(nproc --all)
-DOCKERFILE_PATH="./deploy/docker/Dockerfile-build-ubuntu"
+DOCKERFILE_PATH="./deploy/docker/Containerfile-build-ubuntu"
 IMAGE_NAME="qgc-ubuntu-docker"
 SOURCE_DIR=$(pwd)
 BUILD_DIR="${SOURCE_DIR}/build"
