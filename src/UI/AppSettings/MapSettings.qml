@@ -188,6 +188,12 @@ Item {
                 label:                      qsTr("VWorld")
                 fact:                       _appSettings.vworldToken
             }
+
+            LabelledFactTextField {
+                textFieldPreferredWidth:    _largeTextFieldWidth
+                label:                      qsTr("OpenAIP")
+                fact:                       _appSettings.openaipToken
+            }
         }
 
         SettingsGroupLayout {

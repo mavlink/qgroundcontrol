@@ -260,7 +260,7 @@
     <localization>
         <!-- If no appropriate locale is found, the original (above) will be used -->
         <!-- At runtime, the code will go through every "description" and "option name" looking for "original" and replace it with "translated" -->
-        <locale name="pt_BR"> 
+        <locale name="pt_BR">
             <strings original="Aperture" translated="Abertura" />
             <strings original="Auto" translated="Automático" />
             <strings original="Average" translated="Média" />

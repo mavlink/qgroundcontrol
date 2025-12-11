@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
+
 #include <QtBluetooth/QBluetoothAddress>
 #include <QtBluetooth/QBluetoothDeviceDiscoveryAgent>
 #include <QtBluetooth/QBluetoothDeviceInfo>
@@ -22,8 +25,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
+#include <atomic>
 
 class QThread;
 
@@ -207,4 +209,5 @@ private:
     const BluetoothConfiguration *_bluetoothConfig = nullptr;
     BluetoothWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

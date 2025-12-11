@@ -22,6 +22,7 @@
 #include <QtQuick/QQuickImageProvider>
 #include <QtQuick/QQuickWindow>
 #include <QtQuickControls2/QQuickStyle>
+#include <QtSvg/QSvgRenderer>
 
 #include <QtCore/private/qthread_p.h>
 
@@ -147,6 +148,9 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
+
+    // Force old SVG Tiny 1.2 behavior for compatibility
+    QSvgRenderer::setDefaultOptions(QtSvg::Tiny12FeaturesOnly);
 
 #ifndef QGC_DAILY_BUILD
     _checkForNewVersion();

@@ -120,7 +120,7 @@ Map {
     signal mapPanStart
     signal mapPanStop
     signal mapClicked(var position)
-    
+
     PinchHandler {
         id:     pinchHandler
         target: null

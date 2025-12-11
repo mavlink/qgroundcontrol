@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LogReplayLink.h"
@@ -66,5 +67,5 @@ private:
     qreal _playbackSpeed = 1;
     QString _playheadTime;
     QString _totalTime;
-    LogReplayLink *_link = nullptr;
+    QPointer<LogReplayLink> _link;
 };

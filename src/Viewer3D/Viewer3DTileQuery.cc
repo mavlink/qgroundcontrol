@@ -227,4 +227,3 @@ QString MapTileQuery::getTileKey(int mapId, int x, int y, int zoomLevel)
 {
     return QString::asprintf("%010d%08d%08d%03d", mapId, x, y, zoomLevel);
 }
-

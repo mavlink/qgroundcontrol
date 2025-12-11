@@ -1,4 +1,4 @@
-name: Docker-Linux
+name: Docker Linux
 
 on:
   push:
@@ -12,37 +12,40 @@ on:
   pull_request:
     paths:
       - '.github/workflows/docker-linux.yml'
+      - '.github/actions/**'
+      - '.github/build-config.json'
       - 'deploy/docker/**'
       - 'deploy/linux/**'
+      - 'tools/setup/**'
       - 'src/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+  workflow_dispatch:
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Docker Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 120
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
 
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: git fetch --all --tags --force --depth 1
-
-      - run: chmod a+x ./deploy/docker/run-docker-ubuntu.sh
-
-      - name: Run Docker Build
-        run: ./deploy/docker/run-docker-ubuntu.sh
+      - name: Build with Docker
+        uses: ./.github/actions/docker

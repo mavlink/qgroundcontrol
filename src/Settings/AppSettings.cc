@@ -24,7 +24,7 @@
 // Release languages are 90%+ complete
 QList<QLocale::Language> AppSettings::_rgReleaseLanguages = {
     QLocale::English,
-    QLocale::Azerbaijani,    
+    QLocale::Azerbaijani,
     QLocale::Chinese,
     QLocale::Japanese,
     QLocale::Korean,
@@ -140,6 +140,7 @@ DECLARE_SETTINGSFACT(AppSettings, mapboxStyle)
 DECLARE_SETTINGSFACT(AppSettings, esriToken)
 DECLARE_SETTINGSFACT(AppSettings, customURL)
 DECLARE_SETTINGSFACT(AppSettings, vworldToken)
+DECLARE_SETTINGSFACT(AppSettings, openaipToken)
 DECLARE_SETTINGSFACT(AppSettings, gstDebugLevel)
 DECLARE_SETTINGSFACT(AppSettings, followTarget)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
@@ -320,9 +321,9 @@ void AppSettings::firstRunPromptIdsMarkIdAsShown(int id)
 }
 
 /// Returns the current qLocaleLanguage setting bypassing the standard SettingsGroup path. It also validates
-/// that the value is a supported language. This should only be used by QGCApplication::setLanguage to query 
-/// the language setting as early in the boot process as possible. Specfically prior to any JSON files being 
-/// loaded such that JSON file can be translated. Also since this is a one-off mechanism custom build overrides 
+/// that the value is a supported language. This should only be used by QGCApplication::setLanguage to query
+/// the language setting as early in the boot process as possible. Specfically prior to any JSON files being
+/// loaded such that JSON file can be translated. Also since this is a one-off mechanism custom build overrides
 /// for language are not currently supported.
 QLocale::Language AppSettings::_qLocaleLanguageEarlyAccess(void)
 {

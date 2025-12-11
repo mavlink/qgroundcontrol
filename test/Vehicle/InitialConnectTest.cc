@@ -25,8 +25,6 @@ void InitialConnectTest::_performTestCases(void)
     { MockConfiguration::FailNone,                                                   "No failures" },
     { MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionFailure,    "REQUEST_MESSAGE:AUTOPILOT_VERSION returns failure" },
     { MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionLost,       "REQUEST_MESSAGE:AUTOPILOT_VERSION success, AUTOPILOT_VERSION never sent" },
-    { MockConfiguration::FailInitialConnectRequestMessageProtocolVersionFailure,     "REQUEST_MESSAGE:PROTOCOL_VERSION returns failure" },
-    { MockConfiguration::FailInitialConnectRequestMessageProtocolVersionLost,        "REQUEST_MESSAGE:PROTOCOL_VERSION success, PROTOCOL_VERSION never sent" },
     };
 
     for (const struct TestCase_s& testCase: rgTestCases) {

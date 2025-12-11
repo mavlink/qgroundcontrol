@@ -167,4 +167,3 @@ ColumnLayout {
         showAutoTuning:     true
     }
 }
-

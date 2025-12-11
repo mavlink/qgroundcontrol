@@ -128,14 +128,14 @@ public class QGCActivity extends QtActivity {
     public static String getSDCardPath() {
         StorageManager storageManager = (StorageManager)m_instance.getSystemService(Activity.STORAGE_SERVICE);
         List<StorageVolume> volumes = storageManager.getStorageVolumes();
-        
+
         for (StorageVolume vol : volumes) {
             if (!vol.isRemovable()) {
                 continue;
             }
-            
+
             String path = null;
-            
+
             // For Android 11+ (API 30+), use the proper getDirectory() method
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 File directory = vol.getDirectory();
@@ -152,13 +152,13 @@ public class QGCActivity extends QtActivity {
                     continue;
                 }
             }
-            
+
             if (path != null && !path.isEmpty()) {
                 Log.i(TAG, "removable sd card mounted at " + path);
                 return path;
             }
         }
-        
+
         Log.w(TAG, "No removable SD card found");
         return "";
     }

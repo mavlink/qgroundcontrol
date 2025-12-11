@@ -4,7 +4,7 @@
 * Copy the `custom_example` directory to a new `custom` directory at the root of the repo.
 * Tweak the source in `custom` directory as needed.
 
-You can also rename the `custom_example` directory to `custom` but that can lead to merge problems when you bring your fork up to date with newer upstream version of regular QGC.
+You can also rename the `custom-example` directory to `custom` but that can lead to merge problems when you bring your fork up to date with newer upstream version of regular QGC.
 
 
 ## Modifying Mainline QGC Source Code

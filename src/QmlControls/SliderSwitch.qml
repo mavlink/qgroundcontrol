@@ -19,7 +19,7 @@ Rectangle {
     property string confirmText                         ///< Text for slider
     property alias  fontPointSize: label.font.pointSize ///< Point size for text
 
-    property real _border:                      4   
+    property real _border:                      4
     property real _diameter:                    height - (_border * 2)
     property real _dragStartX:                  _border
     property real _dragStopX:                   _root.width - (_diameter + _border)

@@ -22,7 +22,7 @@
 
 MissionControllerTest::MissionControllerTest(void)
 {
-    
+
 }
 
 void MissionControllerTest::cleanup(void)

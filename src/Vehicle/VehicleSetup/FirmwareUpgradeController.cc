@@ -68,6 +68,7 @@ static QMap<int, QString> px4_board_name_map {
     {28, "nxp_fmuk66-v3_default"},
     {30, "nxp_fmuk66-e_default"},
     {31, "nxp_fmurt1062-v1_default"},
+    {37, "nxp_mr-tropic_default"},
     {85, "freefly_can-rtk-gps_default"},
     {120, "cubepilot_cubeyellow_default"},
     {136, "mro_x21-777_default"},
@@ -90,12 +91,13 @@ static QMap<int, QString> px4_board_name_map {
     {1058, "holybro_kakuteh7mini_default"},
     {1105, "holybro_kakuteh7-wing_default"},
     {1110, "jfb_jfb110_default"},
-    {1123, "siyi_n7_default"},    
+    {1123, "siyi_n7_default"},
     {1124, "3dr_ctrl-zero-h7-oem-revg_default"},
     {5600, "zeroone_x6_default"},
     {6110, "svehicle_e2_default"},
     {7000, "cuav_7-nano_default"},
-    {7001, "cuav_fmu-v6x_default"}
+    {7001, "cuav_fmu-v6x_default"},
+    {7002, "cuav_x25-evo_default"}
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
@@ -141,7 +143,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     connect(_threadController, &PX4FirmwareUpgradeThreadController::eraseComplete,          this, &FirmwareUpgradeController::_eraseComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
-    
+
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
 #if !defined(QGC_NO_ARDUPILOT_DIALECT)
@@ -256,7 +258,7 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
                                                                                 DefaultVehicleFirmware);
         }
     }
-    
+
     qCDebug(FirmwareUpgradeLog) << _boardType << _boardTypeName;
     emit boardFound();
 }
@@ -280,12 +282,12 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
     _bootloaderVersion          = static_cast<uint32_t>(bootloaderVersion);
     _bootloaderBoardID          = static_cast<uint32_t>(boardID);
     _bootloaderBoardFlashSize   = static_cast<uint32_t>(flashSize);
-    
+
     _appendStatusLog(tr("Connected to bootloader:"));
     _appendStatusLog(tr("  Version: %1").arg(_bootloaderVersion));
     _appendStatusLog(tr("  Board ID: %1").arg(_bootloaderBoardID));
     _appendStatusLog(tr("  Flash size: %1").arg(_bootloaderBoardFlashSize));
-    
+
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
     } else {
@@ -348,7 +350,7 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
             return;
         }
     }
-    
+
     if (_firmwareFilename.isEmpty()) {
         _errorCancel(tr("No firmware file selected"));
     } else {
@@ -360,10 +362,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
-    
+
     _appendStatusLog(tr("Downloading firmware..."));
     _appendStatusLog(tr(" From: %1").arg(_firmwareFilename));
-    
+
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_firmwareDownloadComplete);
     connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
@@ -384,23 +386,23 @@ void FirmwareUpgradeController::_firmwareDownloadComplete(QString /*remoteFile*/
 {
     if (errorMsg.isEmpty()) {
     _appendStatusLog(tr("Download complete"));
-    
+
     FirmwareImage* image = new FirmwareImage(this);
-    
+
     connect(image, &FirmwareImage::statusMessage, this, &FirmwareUpgradeController::_status);
     connect(image, &FirmwareImage::errorMessage, this, &FirmwareUpgradeController::_error);
-    
+
     if (!image->load(localFile, _bootloaderBoardID)) {
         _errorCancel(tr("Image load failed"));
         return;
     }
-    
+
     // We can't proceed unless we have the bootloader
     if (!_bootloaderFound) {
         _errorCancel(tr("Bootloader not found"));
         return;
     }
-    
+
     if (_bootloaderBoardFlashSize != 0 && image->imageSize() > _bootloaderBoardFlashSize) {
         _errorCancel(tr("Image size of %1 is too large for board flash size %2").arg(image->imageSize()).arg(_bootloaderBoardFlashSize));
         return;
@@ -433,7 +435,7 @@ void FirmwareUpgradeController::_flashComplete(void)
 {
     delete _image;
     _image = nullptr;
-    
+
     _appendStatusLog(tr("Upgrade complete"), true);
     _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
@@ -444,7 +446,7 @@ void FirmwareUpgradeController::_error(const QString& errorString)
 {
     delete _image;
     _image = nullptr;
-    
+
     _errorCancel(QString("Error: %1").arg(errorString));
 }
 
@@ -473,15 +475,15 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool critical)
 {
     Q_ASSERT(_statusLog);
-    
+
     QString varText;
-    
+
     if (critical) {
         varText = QString("<font color=\"yellow\">%1</font>").arg(text);
     } else {
         varText = text;
     }
-    
+
     QMetaObject::invokeMethod(_statusLog,
                               "append",
                               Q_ARG(QString, varText));

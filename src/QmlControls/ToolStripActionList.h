@@ -19,7 +19,7 @@ class ToolStripActionList : public QObject
     QML_ELEMENT
 public:
     explicit ToolStripActionList(QObject* parent = nullptr);
-    
+
     Q_PROPERTY(QQmlListProperty<QObject> model READ model NOTIFY modelChanged)
 
     QQmlListProperty<QObject> model();

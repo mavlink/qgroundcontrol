@@ -14,7 +14,7 @@
 class StructureScanPlanCreator : public PlanCreator
 {
     Q_OBJECT
-    
+
 public:
     StructureScanPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
 

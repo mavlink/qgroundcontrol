@@ -27,12 +27,12 @@ class FirmwareImage;
 class Bootloader : public QObject
 {
     Q_OBJECT
-    
+
 public:
     explicit Bootloader(bool sikRadio, QObject *parent = 0);
-    
+
     QString errorString(void) { return _errorString; }
-    
+
     bool open               (const QString portName);
     void close              (void) { _port.close(); }
     bool getBoardInfo       (uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize);
@@ -53,7 +53,7 @@ public:
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
     void updateProgress(int curr, int total);
-    
+
 private:
     bool    _sync               (void);
     bool    _syncWorker         (void);
@@ -78,12 +78,12 @@ private:
         PROTO_INSYNC =          0x12,   ///< 'in sync' byte sent before status
         PROTO_BAD_SILICON_REV = 0x14,   ///< device is using silicon not suitable for the target the bootloader was used for
         PROTO_EOC =             0x20,   ///< end of command
-        
+
         // Reply bytes
         PROTO_OK =              0x10,   ///< INSYNC/OK      - 'ok' response
         PROTO_FAILED =          0x11,   ///< INSYNC/FAILED  - 'fail' response
         PROTO_INVALID =         0x13,	///< INSYNC/INVALID - 'invalid' response for bad commands
-        
+
         // Command bytes
         PROTO_GET_SYNC =        0x21,   ///< NOP for re-establishing sync
         PROTO_GET_DEVICE =      0x22,   ///< get device ID bytes
@@ -92,22 +92,22 @@ private:
         PROTO_PROG_MULTI =      0x27,   ///< write bytes at program address and increment
         PROTO_GET_CRC =         0x29,	///< compute & return a CRC
         PROTO_BOOT =            0x30,   ///< boot the application
-        
+
         // Command bytes - Rev 2 boootloader only
         PROTO_CHIP_VERIFY	=   0x24, ///< begin verify mode
         PROTO_READ_MULTI	=   0x28, ///< read bytes at programm address and increment
-        
+
         INFO_BL_REV         =   1,    ///< bootloader protocol revision
         BL_REV_MIN          =   2,    ///< Minimum supported bootlader protocol
         BL_REV_MAX			=   5,    ///< Maximum supported bootloader protocol
         INFO_BOARD_ID		=   2,    ///< board type
         INFO_BOARD_REV		=   3,    ///< board revision
         INFO_FLASH_SIZE		=   4,    ///< max firmware size in bytes
-        
+
         PROG_MULTI_MAX		=   64,     ///< write size for PROTO_PROG_MULTI, must be multiple of 4
         READ_MULTI_MAX		=   0x28    ///< read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
     };
-    
+
     QSerialPort _port;
     bool        _sikRadio           = false;
     bool        _inBootloaderMode   = false;    ///< true: board is in bootloader mode, false: special case for SiK Radio, board is in command mode
@@ -117,7 +117,7 @@ private:
     uint32_t    _imageCRC           = 0;        ///< CRC for image in currently selected firmware file
     QString     _firmwareFilename;              ///< Currently selected firmware file to flash
     QString     _errorString;                   ///< Last error
-    
+
     static const int _eraseTimeout                      = 20000;    ///< Msecs to wait for response from erase command
     static const int _rebootTimeout                     = 10000;    ///< Msecs to wait for reboot command to cause serial port to disconnect
     static const int _verifyTimeout                     = 5000;     ///< Msecs to wait for response to PROTO_GET_CRC command

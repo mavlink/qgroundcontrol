@@ -20,7 +20,7 @@ class MissionController;
 class PlanCreator : public QObject
 {
     Q_OBJECT
-    
+
 public:
     PlanCreator(PlanMasterController* planMasterController, QString name, QString imageResource, QObject* parent = nullptr);
 

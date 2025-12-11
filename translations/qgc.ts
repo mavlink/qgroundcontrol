@@ -5085,87 +5085,87 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>DefaultChecklist</name>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="25"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="25"/>
         <source>Generic Initial checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="28"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="28"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="29"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="29"/>
         <source>Props mounted? Wings secured? Tail secured?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="50"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="50"/>
         <source>Please arm the vehicle here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="53"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="53"/>
         <source>Actuators</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="54"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="54"/>
         <source>Move all control surfaces. Did they work properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="58"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="58"/>
         <source>Motors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="59"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="59"/>
         <source>Propellers free? Then throttle up gently. Working properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="63"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="63"/>
         <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="64"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="64"/>
         <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="72"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="72"/>
         <source>Last preparations before launch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="76"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="76"/>
         <source>Payload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="77"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="77"/>
         <source>Configured and started? Payload lid closed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="81"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="81"/>
         <source>Wind &amp; weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="82"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="82"/>
         <source>OK for your platform? Lauching into the wind?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="86"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="86"/>
         <source>Flight area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="87"/>
+        <location filename="../src/FlyView/DefaultChecklist.qml" line="87"/>
         <source>Launch area and path free of obstacles/people?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6218,87 +6218,87 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FixedWingChecklist</name>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="25"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="25"/>
         <source>Fixed Wing Initial Checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="28"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="28"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="29"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="29"/>
         <source>Props mounted? Wings secured? Tail secured?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="50"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="50"/>
         <source>Please arm the vehicle here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="53"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="53"/>
         <source>Actuators</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="54"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="54"/>
         <source>Move all control surfaces. Did they work properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="58"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="58"/>
         <source>Motors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="59"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="59"/>
         <source>Propellers free? Then throttle up gently. Working properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="63"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="63"/>
         <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="64"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="64"/>
         <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="72"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="72"/>
         <source>Last preparations before launch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="76"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="76"/>
         <source>Payload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="77"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="77"/>
         <source>Configured and started? Payload lid closed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="81"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="81"/>
         <source>Wind &amp; weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="82"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="82"/>
         <source>OK for your platform? Lauching into the wind?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="86"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="86"/>
         <source>Flight area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="87"/>
+        <location filename="../src/FlyView/FixedWingChecklist.qml" line="87"/>
         <source>Launch area and path free of obstacles/people?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6319,12 +6319,12 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlightDisplayViewVideo</name>
     <message>
-        <location filename="../src/FlightDisplay/FlightDisplayViewVideo.qml" line="73"/>
+        <location filename="../src/FlyView/FlightDisplayViewVideo.qml" line="73"/>
         <source>WAITING FOR VIDEO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlightDisplayViewVideo.qml" line="73"/>
+        <location filename="../src/FlyView/FlightDisplayViewVideo.qml" line="73"/>
         <source>VIDEO DISABLED</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6433,7 +6433,7 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewAdditionalActionsButton</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewAdditionalActionsButton.qml" line="21"/>
+        <location filename="../src/FlyView/FlyViewAdditionalActionsButton.qml" line="21"/>
         <source>Actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6441,81 +6441,81 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewMap</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="356"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="356"/>
         <source>R</source>
         <comment>rally point map item label</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="452"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="452"/>
         <source>Go here</source>
         <comment>Go to location waypoint</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="592"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="592"/>
         <source>ROI here</source>
         <comment>Make this a Region Of Interest</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="619"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="619"/>
         <source>Orbit</source>
         <comment>Orbit waypoint</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="682"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="682"/>
         <source>Go to location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="699"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="699"/>
         <source>Orbit at location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="710"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="710"/>
         <source>ROI at location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="720"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="720"/>
         <source>Set home here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="730"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="730"/>
         <source>Set Estimator Origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="740"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="740"/>
         <source>Set Heading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="750"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="750"/>
         <source>Lat: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="751"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="751"/>
         <source>Lon: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="627"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="627"/>
         <source>Edit ROI Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="648"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="648"/>
         <source>Cancel ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMap.qml" line="657"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="657"/>
         <source>Edit Position</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6523,37 +6523,37 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewMissionCompleteDialog</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="62"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="62"/>
         <source>Flight Plan complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="78"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="78"/>
         <source>%1 Images Taken</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="85"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="85"/>
         <source>Remove plan from vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="96"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="96"/>
         <source>Leave plan on vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="115"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="115"/>
         <source>Resume Mission From Waypoint %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="126"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="126"/>
         <source>Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewMissionCompleteDialog.qml" line="134"/>
+        <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="134"/>
         <source>If you are changing batteries for Resume Mission do not disconnect from the vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6561,7 +6561,7 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewPreFlightChecklistPopup</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewPreFlightChecklistPopup.qml" line="21"/>
+        <location filename="../src/FlyView/FlyViewPreFlightChecklistPopup.qml" line="21"/>
         <source>Pre-Flight Checklist</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6761,13 +6761,13 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewToolStripActionList</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="27"/>
-        <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="43"/>
+        <location filename="../src/FlyView/FlyViewToolStripActionList.qml" line="27"/>
+        <location filename="../src/FlyView/FlyViewToolStripActionList.qml" line="43"/>
         <source>3D View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="40"/>
+        <location filename="../src/FlyView/FlyViewToolStripActionList.qml" line="40"/>
         <source>Fly</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6775,47 +6775,47 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewTopRightPanel</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="66"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="66"/>
         <source>Selected: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="138"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="138"/>
         <source>Multi Vehicle Selection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="147"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="147"/>
         <source>Select All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="153"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="153"/>
         <source>Deselect All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="162"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="162"/>
         <source>Multi Vehicle Actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="171"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="171"/>
         <source>Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="180"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="180"/>
         <source>Disarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="189"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="189"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="198"/>
+        <location filename="../src/FlyView/FlyViewTopRightPanel.qml" line="198"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6823,7 +6823,7 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FlyViewVideo</name>
     <message>
-        <location filename="../src/FlightDisplay/FlyViewVideo.qml" line="72"/>
+        <location filename="../src/FlyView/FlyViewVideo.qml" line="72"/>
         <source>Double-click to exit full screen</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7634,12 +7634,12 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>GuidedActionConfirm</name>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionConfirm.qml" line="118"/>
+        <location filename="../src/FlyView/GuidedActionConfirm.qml" line="118"/>
         <source>Slide to confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionConfirm.qml" line="118"/>
+        <location filename="../src/FlyView/GuidedActionConfirm.qml" line="118"/>
         <source>Slide or hold spacebar</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7647,342 +7647,342 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>GuidedActionsController</name>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="35"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="35"/>
         <source>EMERGENCY STOP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="36"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="36"/>
         <source>Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="37"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="37"/>
         <source>Arm (MV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="39"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="39"/>
         <source>Disarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="40"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="40"/>
         <source>Disarm (MV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="41"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="41"/>
         <source>Return</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="42"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="42"/>
         <source>Takeoff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="44"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="44"/>
         <source>Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="45"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="45"/>
         <source>Start Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="46"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="46"/>
         <source>Start Mission (MV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="47"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="47"/>
         <source>Continue Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="48"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="48"/>
         <source>Resume FAILED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="49"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="49"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="50"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="50"/>
         <source>Pause (MV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="51"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="51"/>
         <source>Change Altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="55"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="55"/>
         <source>Orbit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="56"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="56"/>
         <source>Land Abort</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="57"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="57"/>
         <source>Set Waypoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="58"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="58"/>
         <source>Go To Location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="79"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="79"/>
         <source>Return to the launch position of the vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="59"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="59"/>
         <source>VTOL Transition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="38"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="38"/>
         <source>Force Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="43"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="43"/>
         <source>Gripper Function</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="52"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="52"/>
         <source>Change Loiter Radius</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="53"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="53"/>
         <source>Change Max Ground Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="54"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="54"/>
         <source>Change Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="60"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="60"/>
         <source>ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="61"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="61"/>
         <source>Set Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="62"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="62"/>
         <source>Set Estimator origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="63"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="63"/>
         <source>Set Flight Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="64"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="64"/>
         <source>Change Heading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="66"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="66"/>
         <source>Arm the vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="67"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="67"/>
         <source>Arm selected vehicles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="68"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="68"/>
         <source>WARNING: This will force arming of the vehicle bypassing any safety checks.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="69"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="69"/>
         <source>Disarm the vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="70"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="70"/>
         <source>Disarm selected vehicles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="71"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="71"/>
         <source>WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="72"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="72"/>
         <source>Takeoff from ground and hold position.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="73"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="73"/>
         <source>Grab or Release the cargo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="74"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="74"/>
         <source>Takeoff from ground and start the current mission.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="75"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="75"/>
         <source>Takeoff from ground and start the current mission for selected vehicles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="76"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="76"/>
         <source>Continue the mission from the current waypoint.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="77"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="77"/>
         <source>Upload of resume mission failed. Confirm to retry upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="78"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="78"/>
         <source>Land the vehicle at the current position.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="80"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="80"/>
         <source>Change the altitude of the vehicle up or down.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="81"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="81"/>
         <source>Change the forward flight loiter radius.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="82"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="82"/>
         <source>Change the maximum horizontal cruise speed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="83"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="83"/>
         <source>Change the equivalent airspeed setpoint.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="84"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="84"/>
         <source>Move the vehicle to the specified location.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="85"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="85"/>
         <source>Adjust current waypoint to %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="86"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="86"/>
         <source>Orbit the vehicle around the specified location.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="87"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="87"/>
         <source>Abort the landing sequence.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="88"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="88"/>
         <source>Pause the vehicle at it&apos;s current position, adjusting altitude up or down as needed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="89"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="89"/>
         <source>Pause selected vehicles at their current position.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="90"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="90"/>
         <source>Transition VTOL to fixed wing flight.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="91"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="91"/>
         <source>Transition VTOL to multi-rotor flight.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="92"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="92"/>
         <source>Make the specified location a Region Of Interest.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="93"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="93"/>
         <source>Set vehicle home as the specified location. This will affect Return to Home position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="94"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="94"/>
         <source>Make the specified location the estimator origin.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="95"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="95"/>
         <source>Set the vehicle flight mode to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="96"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="96"/>
         <source>Set the vehicle heading towards the specified location.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="221"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="221"/>
         <source>_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _missionItemCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="232"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="232"/>
         <source>Height (rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="240"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="240"/>
         <source>Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="247"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="247"/>
         <source>Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="257"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="257"/>
         <source>Alt (rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="497"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="497"/>
         <source>Smart RTL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="736"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="736"/>
         <source>Internal error: unknown actionCode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8338,7 +8338,7 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/Vehicle/VehicleSetup/JoystickConfig.qml" line="83"/>
-        <source>Button Assigment</source>
+        <source>Button Assignment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10516,77 +10516,77 @@ Do you wish to proceed?</source>
 <context>
     <name>MultiRotorChecklist</name>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="25"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="25"/>
         <source>Multirotor Initial Checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="28"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="28"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="29"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="29"/>
         <source>Props mounted and secured?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="50"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="50"/>
         <source>Please arm the vehicle here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="53"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="53"/>
         <source>Motors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="54"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="54"/>
         <source>Propellers free? Then throttle up gently. Working properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="58"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="58"/>
         <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="59"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="59"/>
         <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="67"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="67"/>
         <source>Last preparations before launch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="71"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="71"/>
         <source>Payload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="72"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="72"/>
         <source>Configured and started? Payload lid closed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="76"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="76"/>
         <source>Wind &amp; weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="77"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="77"/>
         <source>OK for your platform?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="81"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="81"/>
         <source>Flight area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="82"/>
+        <location filename="../src/FlyView/MultiRotorChecklist.qml" line="82"/>
         <source>Launch area and path free of obstacles/people?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10594,12 +10594,12 @@ Do you wish to proceed?</source>
 <context>
     <name>MultiVehicleList</name>
     <message>
-        <location filename="../src/FlightDisplay/MultiVehicleList.qml" line="198"/>
+        <location filename="../src/FlyView/MultiVehicleList.qml" line="198"/>
         <source>Armed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/MultiVehicleList.qml" line="198"/>
+        <location filename="../src/FlyView/MultiVehicleList.qml" line="198"/>
         <source>Disarmed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13403,22 +13403,22 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightBatteryCheck</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightBatteryCheck.qml" line="18"/>
+        <location filename="../src/FlyView/PreFlightBatteryCheck.qml" line="18"/>
         <source>Battery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightBatteryCheck.qml" line="19"/>
+        <location filename="../src/FlyView/PreFlightBatteryCheck.qml" line="19"/>
         <source>Battery connector firmly plugged?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightBatteryCheck.qml" line="22"/>
+        <location filename="../src/FlyView/PreFlightBatteryCheck.qml" line="22"/>
         <source>Warning - Battery charge below %1%.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightBatteryCheck.qml" line="23"/>
+        <location filename="../src/FlyView/PreFlightBatteryCheck.qml" line="23"/>
         <source>Battery charge below %1%. Please recharge.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13442,12 +13442,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightCheckList</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightCheckList.qml" line="134"/>
+        <location filename="../src/FlyView/PreFlightCheckList.qml" line="134"/>
         <source>(Passed)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightCheckList.qml" line="134"/>
+        <location filename="../src/FlyView/PreFlightCheckList.qml" line="134"/>
         <source>In Progress</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13455,7 +13455,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightCheckListShowAction</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightCheckListShowAction.qml" line="14"/>
+        <location filename="../src/FlyView/PreFlightCheckListShowAction.qml" line="14"/>
         <source>Checklist</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13463,22 +13463,22 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightGPSCheck</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightGPSCheck.qml" line="17"/>
+        <location filename="../src/FlyView/PreFlightGPSCheck.qml" line="17"/>
         <source>GPS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightGPSCheck.qml" line="20"/>
+        <location filename="../src/FlyView/PreFlightGPSCheck.qml" line="20"/>
         <source>Waiting for 3D lock.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightGPSCheck.qml" line="31"/>
+        <location filename="../src/FlyView/PreFlightGPSCheck.qml" line="31"/>
         <source>Warning - Sat count below %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightGPSCheck.qml" line="31"/>
+        <location filename="../src/FlyView/PreFlightGPSCheck.qml" line="31"/>
         <source>Waiting for sat count above %1.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13486,17 +13486,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightRCCheck</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightRCCheck.qml" line="17"/>
+        <location filename="../src/FlyView/PreFlightRCCheck.qml" line="17"/>
         <source>Radio Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightRCCheck.qml" line="18"/>
+        <location filename="../src/FlyView/PreFlightRCCheck.qml" line="18"/>
         <source>Receiving signal. Perform range test &amp; confirm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightRCCheck.qml" line="19"/>
+        <location filename="../src/FlyView/PreFlightRCCheck.qml" line="19"/>
         <source>No signal or invalid autopilot-RC config. Check RC and console.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13504,42 +13504,42 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightSensorsHealthCheck</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="17"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="17"/>
         <source>Sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="35"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="35"/>
         <source>Failure. Magnetometer issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="36"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="36"/>
         <source>Failure. Accelerometer issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="37"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="37"/>
         <source>Failure. Gyroscope issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="38"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="38"/>
         <source>Failure. Barometer issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="39"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="39"/>
         <source>Failure. Airspeed sensor issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="40"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="40"/>
         <source>Failure. AHRS issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSensorsHealthCheck.qml" line="41"/>
+        <location filename="../src/FlyView/PreFlightSensorsHealthCheck.qml" line="41"/>
         <source>Failure. GPS issues. Check console.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13547,17 +13547,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightSoundCheck</name>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSoundCheck.qml" line="16"/>
+        <location filename="../src/FlyView/PreFlightSoundCheck.qml" line="16"/>
         <source>Sound output</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSoundCheck.qml" line="17"/>
+        <location filename="../src/FlyView/PreFlightSoundCheck.qml" line="17"/>
         <source>QGC audio output enabled. System audio output enabled, too?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/PreFlightSoundCheck.qml" line="18"/>
+        <location filename="../src/FlyView/PreFlightSoundCheck.qml" line="18"/>
         <source>QGC audio output is disabled. Please enable it under application settings-&gt;general to hear audio warnings!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13565,7 +13565,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>ProximityRadarValues</name>
     <message>
-        <location filename="../src/FlightDisplay/ProximityRadarValues.qml" line="43"/>
+        <location filename="../src/FlyView/ProximityRadarValues.qml" line="43"/>
         <source>--.--</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15083,67 +15083,67 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
 <context>
     <name>RoverChecklist</name>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="25"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="25"/>
         <source>Rover Initial Checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="28"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="28"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="29"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="29"/>
         <source>Battery mounted and secured?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="50"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="50"/>
         <source>Please arm the vehicle here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="53"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="53"/>
         <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="54"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="54"/>
         <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="62"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="62"/>
         <source>Last preparations before launch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="66"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="66"/>
         <source>Payload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="67"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="67"/>
         <source>Configured and started? Payload lid closed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="71"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="71"/>
         <source>Wind &amp; weather</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="72"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="72"/>
         <source>OK for your platform?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="76"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="76"/>
         <source>Mission area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/RoverChecklist.qml" line="77"/>
+        <location filename="../src/FlyView/RoverChecklist.qml" line="77"/>
         <source>Mission area and path free of obstacles/people?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16473,67 +16473,67 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>SubChecklist</name>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="25"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="25"/>
         <source>Submarine Initial checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="28"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="28"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="29"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="29"/>
         <source>All seals in place?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="50"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="50"/>
         <source>Please arm the vehicle here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="53"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="53"/>
         <source>Actuators</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="54"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="54"/>
         <source>Move all control surfaces. Did they work properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="58"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="58"/>
         <source>Motors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="59"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="59"/>
         <source>Propellers free? Then throttle up gently. Working properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="63"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="63"/>
         <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="64"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="64"/>
         <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="72"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="72"/>
         <source>Last preparations before launch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="76"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="76"/>
         <source>Payload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/SubChecklist.qml" line="77"/>
+        <location filename="../src/FlyView/SubChecklist.qml" line="77"/>
         <source>Configured and started? Payload lid closed?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16966,12 +16966,12 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>TerrainProgress</name>
     <message>
-        <location filename="../src/FlightDisplay/TerrainProgress.qml" line="69"/>
+        <location filename="../src/FlyView/TerrainProgress.qml" line="69"/>
         <source>Terrain Load Progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/TerrainProgress.qml" line="87"/>
+        <location filename="../src/FlyView/TerrainProgress.qml" line="87"/>
         <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17569,82 +17569,82 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>VTOLChecklist</name>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="25"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="25"/>
         <source>VTOL Initial Checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="28"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="28"/>
         <source>Hardware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="29"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="29"/>
         <source>Props mounted? Wings secured? Tail secured?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="50"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="50"/>
         <source>Please arm the vehicle here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="53"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="53"/>
         <source>Actuators</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="54"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="54"/>
         <source>Move all control surfaces. Did they work properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="58"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="58"/>
         <source>Motors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="59"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="59"/>
         <source>Propellers free? Then throttle up gently. Working properly?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="63"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="63"/>
         <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="64"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="64"/>
         <source>Please confirm mission is valid (waypoints valid, no terrain collision).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="72"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="72"/>
         <source>Last preparations before launch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="76"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="76"/>
         <source>Payload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="77"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="77"/>
         <source>Configured and started? Payload lid closed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="82"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="82"/>
         <source>OK for your platform? Lauching into the wind?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="86"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="86"/>
         <source>Flight area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="87"/>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="87"/>
         <source>Launch area and path free of obstacles/people?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18085,12 +18085,12 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>VehicleWarnings</name>
     <message>
-        <location filename="../src/FlightDisplay/VehicleWarnings.qml" line="37"/>
+        <location filename="../src/FlyView/VehicleWarnings.qml" line="37"/>
         <source>No GPS Lock for Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightDisplay/VehicleWarnings.qml" line="56"/>
+        <location filename="../src/FlyView/VehicleWarnings.qml" line="56"/>
         <source>The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure.</source>
         <translation type="unfinished"></translation>
     </message>

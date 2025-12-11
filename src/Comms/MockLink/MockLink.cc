@@ -62,7 +62,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _missionItemHandler(new MockLinkMissionItemHandler(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
 {
-    // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(MockLinkLog) << this;
 
     // Initialize 5 ADS-B vehicles with different starting conditions _numberOfVehicles
     _adsbVehicles.resize(_numberOfVehicles);
@@ -87,6 +87,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     _runningTime.start();
 
     _workerThread = new QThread(this);
+    _workerThread->setObjectName(QStringLiteral("Mock_%1").arg(_mockConfig->name()));
     _worker = new MockLinkWorker(this);
     _worker->moveToThread(_workerThread);
     (void) connect(_workerThread, &QThread::started, _worker, &MockLinkWorker::startWork);
@@ -107,13 +108,14 @@ MockLink::~MockLink()
         _workerThread->wait();
     }
 
-    // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
+    qCDebug(MockLinkLog) << this;
 }
 
 bool MockLink::_connect()
 {
     if (!_connected) {
         _connected = true;
+        _disconnectedEmitted = false;
         mavlink_status_t *const mavlinkStatus = mavlink_get_channel_status(mavlinkChannel());
         mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         mavlink_status_t *const auxStatus = mavlink_get_channel_status(_getMavlinkAuxChannel());
@@ -130,7 +132,9 @@ void MockLink::disconnect()
 
     if (_connected) {
         _connected = false;
-        emit disconnected();
+        if (!_disconnectedEmitted.exchange(true)) {
+            emit disconnected();
+        }
     }
 }
 
@@ -1814,39 +1818,6 @@ void MockLink::_handleRequestMessageAutopilotVersion(const mavlink_command_long_
     _respondWithAutopilotVersion();
 }
 
-void MockLink::_handleRequestMessageProtocolVersion(const mavlink_command_long_t &request, bool &accepted)
-{
-    accepted = true;
-
-    switch (_failureMode) {
-    case MockConfiguration::FailNone:
-        break;
-    case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionFailure:
-        accepted = false;
-        return;
-    case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionLost:
-        accepted = true;
-        return;
-    default:
-        break;
-    }
-
-    const uint8_t nullHash[8]{};
-    mavlink_message_t responseMsg{};
-    (void) mavlink_msg_protocol_version_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        mavlinkChannel(),
-        &responseMsg,
-        200,
-        100,
-        200,
-        nullHash,
-        nullHash
-    );
-    respondWithMavlinkMessage(responseMsg);
-}
-
 void MockLink::_handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck)
 {
     accepted = true;
@@ -1941,9 +1912,6 @@ void MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool
     switch (static_cast<int>(request.param1)) {
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
         _handleRequestMessageAutopilotVersion(request, accepted);
-        break;
-    case MAVLINK_MSG_ID_PROTOCOL_VERSION:
-        _handleRequestMessageProtocolVersion(request, accepted);
         break;
     case MAVLINK_MSG_ID_COMPONENT_METADATA:
         if (_firmwareType == MAV_AUTOPILOT_PX4) {
@@ -2092,7 +2060,7 @@ void MockLink::_sendVideoInfo()
     }
 }
 
-void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased) 
+void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 {
     if (modeIndexOneBased > _availableModesCount()) {
         qCWarning(MockLinkLog) << "modeIndexOneBased out of range" << modeIndexOneBased << _availableModesCount();

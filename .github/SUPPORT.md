@@ -51,7 +51,7 @@ We welcome contributions of all kinds:
 
 - **Source Repository**: https://github.com/mavlink/qgroundcontrol  
 - **Contribution Guide**: https://dev.qgroundcontrol.com/en/contribute/contribute.html  
-- **Coding Standards**: Follow Qt 6 and C++17 guidelines; see `.clang-format`, `.pre-commit-config.yaml`, and CodingStyle files.
+- **Coding Standards**: Follow Qt 6 and C++20 guidelines; see `.clang-format`, `.pre-commit-config.yaml`, and CodingStyle files.
 - **Pull Requests**: Ensure all CI checks pass and include relevant test coverage.
 
 ---

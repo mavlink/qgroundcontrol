@@ -195,7 +195,7 @@ SetupPage {
                         fact:              _motSpinArm
                     }
                 }
- 
+
                 Flow {
                     id:                 flowLayout
                     Layout.fillWidth:   true
@@ -233,7 +233,7 @@ SetupPage {
 
                     SettingsGroupLayout {
                         heading: qsTr("In Flight Tuning")
-                        
+
                         ColumnLayout {
                             id:     channel6TuningOptColumn
                             spacing: ScreenTools.defaultFontPixelHeight

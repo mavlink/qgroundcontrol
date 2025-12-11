@@ -24,9 +24,9 @@ RowLayout {
     id:         _root
     spacing:    ScreenTools.defaultFontPixelWidth * 2
 
-    QGCLabel { 
+    QGCLabel {
         id:                 _label
-        Layout.fillWidth:   true 
+        Layout.fillWidth:   true
     }
 
     QGCButton {
@@ -35,4 +35,3 @@ RowLayout {
         onClicked:              _root.clicked()
     }
 }
-

@@ -174,11 +174,7 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
 
     if (failureCode != Vehicle::RequestMessageNoFailure) {
         qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION failed. Setting no capabilities";
-        uint64_t assumedCapabilities = 0;
-        if (vehicle->_mavlinkProtocolRequestMaxProtoVersion >= 200) {
-            // Link already running mavlink 2
-            assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MAVLINK2;
-        }
+        uint64_t assumedCapabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2;
         if (vehicle->px4Firmware() || vehicle->apmFirmware()) {
             // We make some assumptions for known firmware
             assumedCapabilities |= MAV_PROTOCOL_CAPABILITY_MISSION_INT | MAV_PROTOCOL_CAPABILITY_COMMAND_INT | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
@@ -189,74 +185,6 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
     connectMachine->advance();
 }
 
-void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stateMachine)
-{
-    InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
-    Vehicle*                    vehicle         = connectMachine->_vehicle;
-    SharedLinkInterfacePtr      sharedLink      = vehicle->vehicleLinkManager()->primaryLink().lock();
-
-    if (!sharedLink) {
-        qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to no primary link";
-        connectMachine->advance();
-    } else {
-        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isLogReplay()) {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to link type";
-            connectMachine->advance();
-        } else if (vehicle->apmFirmware()) {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping REQUEST_MESSAGE:PROTOCOL_VERSION request due to Ardupilot firmware";
-            connectMachine->advance();
-        } else {
-            qCDebug(InitialConnectStateMachineLog) << "Sending REQUEST_MESSAGE:PROTOCOL_VERSION";
-            vehicle->requestMessage(_protocolVersionRequestMessageHandler,
-                                    connectMachine,
-                                    MAV_COMP_ID_AUTOPILOT1,
-                                    MAVLINK_MSG_ID_PROTOCOL_VERSION);
-        }
-    }
-}
-
-void InitialConnectStateMachine::_protocolVersionRequestMessageHandler(void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
-{
-    InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(resultHandlerData);
-    Vehicle*                    vehicle         = connectMachine->_vehicle;
-
-    switch (failureCode) {
-    case Vehicle::RequestMessageNoFailure:
-    {
-        mavlink_protocol_version_t protoVersion;
-        mavlink_msg_protocol_version_decode(&message, &protoVersion);
-
-        qCDebug(InitialConnectStateMachineLog) << "PROTOCOL_VERSION received mav_version:" << protoVersion.max_version;
-        vehicle->_mavlinkProtocolRequestMaxProtoVersion = protoVersion.max_version;
-        vehicle->_mavlinkProtocolRequestComplete = true;
-        vehicle->_setMaxProtoVersionFromBothSources();
-    }
-        break;
-    case Vehicle::RequestMessageFailureCommandError:
-        qCDebug(InitialConnectStateMachineLog) << QStringLiteral("REQUEST_MESSAGE PROTOCOL_VERSION command error(%1)").arg(commandResult);
-        break;
-    case Vehicle::RequestMessageFailureCommandNotAcked:
-        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE PROTOCOL_VERSION command never acked";
-        break;
-    case Vehicle::RequestMessageFailureMessageNotReceived:
-        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE PROTOCOL_VERSION command acked but message never received";
-        break;
-    case Vehicle::RequestMessageFailureDuplicateCommand:
-        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE PROTOCOL_VERSION Internal Error: Duplicate command";
-        break;
-    }
-
-    if (failureCode != Vehicle::RequestMessageNoFailure) {
-        // Either the PROTOCOL_VERSION message didn't make it through the pipe from Vehicle->QGC because the pipe is mavlink 1.
-        // Or the PROTOCOL_VERSION message was lost on a noisy connection. Either way the best we can do is fall back to mavlink 1.
-        qCDebug(InitialConnectStateMachineLog) << QStringLiteral("Setting _maxProtoVersion to 100 due to timeout on receiving PROTOCOL_VERSION message.");
-        vehicle->_mavlinkProtocolRequestMaxProtoVersion = 100;
-        vehicle->_mavlinkProtocolRequestComplete = true;
-        vehicle->_setMaxProtoVersionFromBothSources();
-    }
-
-    connectMachine->advance();
-}
 void InitialConnectStateMachine::_stateRequestCompInfo(StateMachine* stateMachine)
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
@@ -401,4 +329,3 @@ void InitialConnectStateMachine::_stateSignalInitialConnectComplete(StateMachine
     qCDebug(InitialConnectStateMachineLog) << "Signalling initialConnectComplete";
     emit vehicle->initialConnectComplete();
 }
-

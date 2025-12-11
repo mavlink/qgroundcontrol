@@ -15,7 +15,7 @@ QGC_LOGGING_CATEGORY(MockConfigurationLog, "Comms.MockLink.MockConfiguration")
 MockConfiguration::MockConfiguration(const QString &name, QObject *parent)
     : LinkConfiguration(name, parent)
 {
-    // qCDebug(MockConfigurationLog) << Q_FUNC_INFO << this;
+    qCDebug(MockConfigurationLog) << this;
 }
 
 MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *parent)
@@ -26,21 +26,19 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _incrementVehicleId(copy->incrementVehicleId())
     , _failureMode(copy->failureMode())
 {
-    // qCDebug(MockConfigurationLog) << Q_FUNC_INFO << this;
+    qCDebug(MockConfigurationLog) << this;
 }
 
 MockConfiguration::~MockConfiguration()
 {
-    // qCDebug(MockConfigurationLog) << Q_FUNC_INFO << this;
+    qCDebug(MockConfigurationLog) << this;
 }
 
 void MockConfiguration::copyFrom(const LinkConfiguration *source)
 {
-    Q_ASSERT(source);
     LinkConfiguration::copyFrom(source);
 
-    const MockConfiguration *const mockLinkSource = qobject_cast<const MockConfiguration*>(source);
-    Q_ASSERT(mockLinkSource);
+    const MockConfiguration *mockLinkSource = qobject_cast<const MockConfiguration*>(source);
 
     setFirmwareType(mockLinkSource->firmwareType());
     setVehicleType(mockLinkSource->vehicleType());

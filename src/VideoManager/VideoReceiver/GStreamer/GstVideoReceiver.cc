@@ -239,10 +239,12 @@ void GstVideoReceiver::stop()
     qCDebug(GstVideoReceiverLog) << "Stopping" << _uri;
 
     if (_teeProbeId != 0) {
-        GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
-        if (sinkpad) {
-            gst_pad_remove_probe(sinkpad, _teeProbeId);
-            gst_clear_object(&sinkpad);
+        if (_tee) {
+            GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
+            if (sinkpad) {
+                gst_pad_remove_probe(sinkpad, _teeProbeId);
+                gst_clear_object(&sinkpad);
+            }
         }
         _teeProbeId = 0;
     }
@@ -918,7 +920,7 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
     qCDebug(GstVideoReceiverLog) << "Decoding started" << _uri;
 }
 
-void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3) 
+void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3)
 {
     GValue value = G_VALUE_INIT;
     GstIterator *iter = gst_bin_iterate_elements(GST_BIN(decodebin3));

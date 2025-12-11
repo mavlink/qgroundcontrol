@@ -22,7 +22,7 @@ Button {
 
     property bool   primary:        false                               ///< primary button for a group of buttons
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
-    property real   backRadius:     ScreenTools.buttonBorderRadius
+    property real   backRadius:     ScreenTools.defaultBorderRadius
     property real   heightFactor:   0.5
     property string iconSource:     ""
     property real   fontWeight:     Font.Normal // default for qml Text
@@ -80,7 +80,7 @@ Button {
                 font.family:            control.font.family
                 font.weight:            fontWeight
                 color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
-                visible:                control.text !== "" 
+                visible:                control.text !== ""
             }
     }
 }

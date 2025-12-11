@@ -55,7 +55,7 @@ RowLayout {
         color:                  QGroundControl.globalPalette.groupBorder
         visible:                expanded
     }
-    
+
     Loader {
         id:                     expandedItemLoader
         Layout.alignment:       Qt.AlignTop
