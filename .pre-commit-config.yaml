@@ -95,7 +95,7 @@ repos:
     hooks:
       - id: markdownlint
         args: ['--fix']
-        exclude: ^(translations/|CHANGELOG\.md)
+        exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
 
   # Prose linting (documentation quality)
   - repo: https://github.com/errata-ai/vale
