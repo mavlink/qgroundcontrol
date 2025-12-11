@@ -46,7 +46,7 @@ Before creating a new issue:
    - Log files (from `~/.local/share/QGroundControl/`)
    - Screenshots or videos if applicable
 
-**Create an issue**: https://github.com/mavlink/qgroundcontrol/issues
+**Create an issue**: <https://github.com/mavlink/qgroundcontrol/issues>
 
 **For security vulnerabilities**: See our [Security Policy](SECURITY.md) for responsible disclosure procedures.
 
@@ -66,12 +66,14 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 ### Contributing Code
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/YOUR-USERNAME/qgroundcontrol.git
    cd qgroundcontrol
    ```
 
 2. **Create a feature branch**
+
    ```bash
    git checkout -b feature/my-new-feature
    ```
@@ -84,12 +86,14 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
    - Test with both PX4 and ArduPilot if applicable
 
 5. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "Add feature: brief description"
    ```
 
 6. **Push to your fork**
+
    ```bash
    git push origin feature/my-new-feature
    ```
@@ -113,6 +117,7 @@ For the complete coding style guide with examples, see [CODING_STYLE.md](../CODI
   - Constants: `ALL_CAPS` or `kPascalCase`
 
 - **Always use braces** for if/else/for/while statements
+
   ```cpp
   // Good
   if (condition) {
@@ -172,11 +177,13 @@ if (param && param->validate(newValue, false).isEmpty()) {
 ```
 
 **Key classes:**
+
 - `Fact` - Single parameter with validation, units, metadata
 - `FactGroup` - Hierarchical container (handles MAVLink via `handleMessage()`)
 - `FactMetaData` - JSON-based metadata (min/max, enums, descriptions)
 
 **Rules:**
+
 - Wait for `parametersReady` signal before accessing
 - Use `cookedValue` (display) vs `rawValue` (storage)
 - Metadata in `*.FactMetaData.json` files
@@ -230,6 +237,7 @@ Q_ENUM(EnumType)
 - Place tests in `test/` directory mirroring `src/` structure
 - Use Qt Test framework with `UnitTest` base class
 - Run tests before submitting:
+
   ```bash
   ./qgroundcontrol --unittest
   ```
@@ -237,6 +245,7 @@ Q_ENUM(EnumType)
 ### Manual Testing
 
 Test your changes on:
+
 - Multiple platforms (Windows, macOS, Linux if possible)
 - Both PX4 and ArduPilot firmware (if applicable)
 - Different vehicle types (multirotor, fixed-wing, VTOL, rover)
@@ -265,6 +274,7 @@ See [tools/README.md](../tools/README.md) for all available development commands
 ### Before Submitting
 
 1. **Rebase on latest master**
+
    ```bash
    git fetch upstream
    git rebase upstream/master
@@ -313,6 +323,7 @@ See [tools/README.md](../tools/README.md) for all available development commands
 - **Incompatible licenses**: GPL-only, proprietary, copyleft-only licenses
 
 By contributing, you agree that:
+
 1. Your contributions are your original work or properly licensed
 2. You grant QGroundControl rights under **both** Apache 2.0 and GPL v3 licenses
 3. You have the right to submit the contribution
@@ -322,6 +333,7 @@ By contributing, you agree that:
 QGroundControl uses a dual-license system:
 
 #### Apache License 2.0
+
 - Permissive license
 - Allows use in proprietary applications
 - Allows distribution via app stores
@@ -330,6 +342,7 @@ QGroundControl uses a dual-license system:
 Full text: [LICENSE-APACHE](../LICENSE-APACHE)
 
 #### GNU General Public License v3 (GPL v3)
+
 - Copyleft license
 - Ensures software remains open source
 - **Can use open-source Qt**
@@ -340,7 +353,8 @@ Full text: [LICENSE-GPL](../LICENSE-GPL)
 ### Questions About Licensing
 
 If you have questions about licensing, please contact:
-- Lorenz Meier: lm@qgroundcontrol.org
+
+- Lorenz Meier: <lm@qgroundcontrol.org>
 
 For more details, see [COPYING.md](COPYING.md).
 
@@ -348,11 +362,11 @@ For more details, see [COPYING.md](COPYING.md).
 
 ## Additional Resources
 
-- **User Manual**: https://docs.qgroundcontrol.com/en/
-- **Developer Guide**: https://dev.qgroundcontrol.com/en/
+- **User Manual**: <https://docs.qgroundcontrol.com/en/>
+- **Developer Guide**: <https://dev.qgroundcontrol.com/en/>
 - **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
-- **Discussion Forum**: https://discuss.px4.io/c/qgroundcontrol
-- **Discord**: https://discord.gg/dronecode
+- **Discussion Forum**: <https://discuss.px4.io/c/qgroundcontrol>
+- **Discord**: <https://discord.gg/dronecode>
 
 ---
 

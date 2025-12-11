@@ -7,8 +7,8 @@ Welcome to the QGroundControl support guide. This document provides information 
 ## 1. Getting Started
 
 - **Documentation**: Comprehensive user and developer guides are available on the official website:
-  - User Guide: https://docs.qgroundcontrol.com/
-  - Developer Guide: https://dev.qgroundcontrol.com/
+  - User Guide: <https://docs.qgroundcontrol.com/>
+  - Developer Guide: <https://dev.qgroundcontrol.com/>
 
 ---
 
@@ -16,7 +16,7 @@ Welcome to the QGroundControl support guide. This document provides information 
 
 When you encounter a bug or unexpected behavior, please help us by reporting it:
 
-1. Search existing issues to avoid duplicates: https://github.com/mavlink/qgroundcontrol/issues  
+1. Search existing issues to avoid duplicates: <https://github.com/mavlink/qgroundcontrol/issues>  
 2. Open a new issue with the following information:
    - QGroundControl version (e.g., v5.0.0)
    - Operating system and version
@@ -24,7 +24,7 @@ When you encounter a bug or unexpected behavior, please help us by reporting it:
    - Log files and console output (attach via GitHub issue)
    - Screenshots or screen recordings (optional)
 
-**Issue Tracking**: https://github.com/mavlink/qgroundcontrol/issues
+**Issue Tracking**: <https://github.com/mavlink/qgroundcontrol/issues>
 
 ---
 
@@ -32,8 +32,8 @@ When you encounter a bug or unexpected behavior, please help us by reporting it:
 
 Join the community to ask questions, share experiences, and stay informed:
 
-- **Discourse Forum**: https://discuss.px4.io/c/qgroundcontrol
-- **Discord**: https://discord.gg/dronecode
+- **Discourse Forum**: <https://discuss.px4.io/c/qgroundcontrol>
+- **Discord**: <https://discord.gg/dronecode>
 
 ---
 
@@ -41,7 +41,7 @@ Join the community to ask questions, share experiences, and stay informed:
 
 For enterprise-grade support, consulting, and custom development, please contact our commercial partners:
 
-- **Dronecode Foundation**: https://www.dronecode.org  
+- **Dronecode Foundation**: <https://www.dronecode.org>  
 
 ---
 
@@ -49,8 +49,8 @@ For enterprise-grade support, consulting, and custom development, please contact
 
 We welcome contributions of all kinds:
 
-- **Source Repository**: https://github.com/mavlink/qgroundcontrol  
-- **Contribution Guide**: https://dev.qgroundcontrol.com/en/contribute/contribute.html  
+- **Source Repository**: <https://github.com/mavlink/qgroundcontrol>  
+- **Contribution Guide**: <https://dev.qgroundcontrol.com/en/contribute/contribute.html>  
 - **Coding Standards**: Follow Qt 6 and C++20 guidelines; see `.clang-format` and `.pre-commit-config.yaml`.
 - **Pull Requests**: Ensure all CI checks pass and include relevant test coverage.
 

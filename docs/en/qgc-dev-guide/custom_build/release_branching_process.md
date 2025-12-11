@@ -8,7 +8,7 @@ The best place to start is understanding the mechanism QGC uses to do it's own r
 
 ## Custom build/release types
 
-Regular QGC has two main build types: Stable and Daily. The build type for a custom build is more complex. Throughout this discussion we will use the term "upstream" to refer to the main QGC repo (https://github.com/mavlink/qgroundcontrol). Also when we talk about a "new" upstream stable release, this means a major/minor release, not a patch release.
+Regular QGC has two main build types: Stable and Daily. The build type for a custom build is more complex. Throughout this discussion we will use the term "upstream" to refer to the main QGC repo (<https://github.com/mavlink/qgroundcontrol>). Also when we talk about a "new" upstream stable release, this means a major/minor release, not a patch release.
 
 ### Synchronized Stable
 

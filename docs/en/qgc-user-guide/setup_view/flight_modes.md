@@ -57,6 +57,6 @@ Commonly this is done by encoding the positions of a 2- and a 3-position switch 
 On the FrSky Taranis this process involves assigning a "logical switch" to each combination of positions of the two real switches.
 Each logical switch is then assigned to a different PWM value on the same channel.
 
-This video shows how this is done with the _FrSky Taranis_ transmitter: https://youtu.be/TFEjEQZqdVA
+This video shows how this is done with the _FrSky Taranis_ transmitter: <https://youtu.be/TFEjEQZqdVA>
 
 <!-- @[youtube](https://youtu.be/BNzeVGD8IZI?t=427) - video showing how to set the QGC side - at about 7mins and 3 secs -->

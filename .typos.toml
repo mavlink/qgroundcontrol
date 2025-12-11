@@ -48,6 +48,17 @@ ulog = "ulog"
 Slew = "Slew"
 slew = "slew"
 
+# Throttle abbreviations (common in parameter names like THR_MIN, Q_THR_MIN_PWM)
+THR = "THR"
+Thr = "Thr"
+thr = "thr"
+
+# Thread abbreviation (e.g., osmThr for OSM parser thread)
+# Note: Thr already covered above
+
+# Geographic/organizational acronyms
+LINZ = "LINZ"  # Land Information New Zealand
+
 [files]
 extend-exclude = [
     "build/",
@@ -59,4 +70,16 @@ extend-exclude = [
     "package-lock.json",
     "*.FactMetaData.json",
     "*.SettingsGroup.json",
+    # Foreign language documentation (avoid false positives)
+    "docs/ko/",
+    "docs/tr/",
+    "docs/zh/",
+    "docs/ru/",
+    "docs/ja/",
+    "docs/de/",
+    "docs/es/",
+    "docs/fa/",
+    "docs/fr/",
+    "docs/he/",
+    "docs/uk/",
 ]

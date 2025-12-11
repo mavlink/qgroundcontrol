@@ -55,7 +55,7 @@ public:
     Q_INVOKABLE void addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     /// Deletes the specified polygon from the polygon list
-    ///     @param index: Index of poygon to delete
+    ///     @param index: Index of polygon to delete
     Q_INVOKABLE void deletePolygon(int index);
 
     /// Deletes the specified circle from the circle list
