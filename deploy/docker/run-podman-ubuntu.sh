@@ -3,22 +3,17 @@
 # Exit immediately if a command exits with a non-zero status
 set -euo pipefail
 
-# Determine the build directory
-if [[ -z "${BUILD_DIR:-}" ]]; then
-    BUILD_DIR="$(dirname "$(readlink -f "$0")" | rev | cut -f3- -d'/' | rev)/build"
-fi
+# Define variables for better maintainability
+PARALLEL_BUILD_AMOUNT=$(nproc --all)
+DOCKERFILE_PATH="./deploy/docker/Containerfile-build-ubuntu"
+IMAGE_NAME="qgc-ubuntu-docker"
+SOURCE_DIR=$(dirname "$(readlink -f "$0")" | rev | cut -f3- -d'/' | rev)
+BUILD_DIR="$SOURCE_DIR/build"
 
 # Create the build directory if it doesn't exist
 if [[ ! -d "$BUILD_DIR" ]]; then
     mkdir -p "$BUILD_DIR"
 fi
-
-# Define variables for better maintainability
-PARALLEL_BUILD_AMOUNT=$(nproc --all)
-DOCKERFILE_PATH="./deploy/docker/Containerfile-build-ubuntu"
-IMAGE_NAME="qgc-ubuntu-docker"
-SOURCE_DIR=$(pwd)
-BUILD_DIR="${SOURCE_DIR}/build"
 
 # Build the Docker image
 podman build \
