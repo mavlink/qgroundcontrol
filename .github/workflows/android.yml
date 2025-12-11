@@ -84,6 +84,12 @@ jobs:
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
+      - name: Harden Runner
+        if: runner.os == 'Linux'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -142,6 +148,11 @@ jobs:
         run: |
           TEMP_DIR="${RUNNER_TEMP//\\//}"  # Convert backslashes for Windows
           cp "${TEMP_DIR}/build/android-build/"*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
 
       - name: Upload Build File
         uses: ./.github/actions/upload

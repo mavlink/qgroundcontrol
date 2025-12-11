@@ -41,6 +41,12 @@
       "matchManagers": ["pip_requirements", "pip_setup"],
       "groupName": "Python Dependencies",
       "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Group pre-commit hook updates",
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks",
+      "schedule": ["before 6am on monday"]
     }
   ],
 

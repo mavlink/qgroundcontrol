@@ -28,6 +28,7 @@ concurrency:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   build:
@@ -59,9 +60,30 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Build with Docker
         uses: ./.github/actions/docker
         with:
           dockerfile: ${{ matrix.dockerfile }}
           fuse: ${{ matrix.fuse }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Scan Docker image for vulnerabilities
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: 'qgc-builder:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-${{ matrix.platform }}'

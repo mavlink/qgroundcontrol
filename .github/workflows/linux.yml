@@ -87,6 +87,11 @@ jobs:
         shell: bash
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -165,14 +170,34 @@ jobs:
 
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
+        id: tests
         working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./${{ matrix.package }}.AppImage --unittest
+        run: |
+          set +e
+          xvfb-run -a ./${{ matrix.package }}.AppImage --unittest 2>&1 | tee test-output.txt
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $TEST_EXIT_CODE
+
+      - name: Upload Test Results
+        if: matrix.build_type == 'Debug' && always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results-${{ matrix.arch }}
+          path: ${{ runner.temp }}/build/test-output.txt
+          retention-days: 7
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
+
+      - name: Attest Build Provenance
+        if: matrix.build_type == 'Release'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: '${{ runner.temp }}/build/${{ matrix.package }}.AppImage'
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

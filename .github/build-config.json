@@ -8,7 +8,7 @@
   "gstreamer_windows_version": "1.22.12",
 
   "ndk_version": "r27c",
-  "ndk_full_version": "27.2.12829759",
+  "ndk_full_version": "27.2.12479018",
   "java_version": "17",
   "android_platform": "35",
   "android_min_sdk": "28",
