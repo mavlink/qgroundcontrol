@@ -15,24 +15,21 @@ fi
 
 # Define variables for better maintainability
 PARALLEL_BUILD_AMOUNT=$(nproc --all)
-DOCKERFILE_PATH="./deploy/docker/Containerfile-build-ubuntu"
-IMAGE_NAME="qgc-ubuntu-docker"
+DOCKERFILE_PATH="./deploy/docker/Dockerfile-build-android"
+IMAGE_NAME="qgc-android-docker"
 SOURCE_DIR=$(pwd)
 BUILD_DIR="${SOURCE_DIR}/build"
 
-# Build the Docker image
+# Build the Docker image for Android
 podman build \
     --jobs="${PARALLEL_BUILD_AMOUNT}" \
     --file "${DOCKERFILE_PATH}" \
     --tag "${IMAGE_NAME}" \
     "${SOURCE_DIR}"
 
-# Run the Docker container with necessary permissions and volume mounts
+# Run the Docker container with adjusted mount points
 podman run \
     --rm \
-    --cap-add SYS_ADMIN \
-    --device /dev/fuse \
-    --security-opt apparmor:unconfined \
     -v "${SOURCE_DIR}:/project/source" \
     -v "${BUILD_DIR}:/project/build" \
     "${IMAGE_NAME}"
