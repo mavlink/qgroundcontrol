@@ -5,11 +5,13 @@ Quick reference for AI coding assistants. For complete documentation, see the li
 ## Quick Start
 
 **Critical files to understand:**
+
 1. `src/FactSystem/Fact.h` - Parameter system (READ FIRST!)
 2. `src/Vehicle/Vehicle.h` - Core vehicle model
 3. `src/FirmwarePlugin/FirmwarePlugin.h` - Firmware abstraction
 
 **Golden Rules:**
+
 - **Fact System**: ALL vehicle parameters use the Fact System. Never create custom parameter storage.
 - **Multi-Vehicle**: ALWAYS null-check `MultiVehicleManager::instance()->activeVehicle()`.
 
@@ -55,11 +57,13 @@ Q_PROPERTY(Fact* myParam READ myParam CONSTANT)
 ```
 
 **Key classes:**
+
 - `Fact` - Single parameter with validation, units, metadata
 - `FactGroup` - Hierarchical container (handles MAVLink via `handleMessage()`)
 - `FactMetaData` - JSON-based metadata (min/max, enums, descriptions)
 
 **Rules:**
+
 - Wait for `parametersReady` signal before accessing
 - Use `cookedValue` (display) vs `rawValue` (storage)
 - Metadata in `*.FactMetaData.json` files
@@ -213,6 +217,7 @@ Connections {
 ```
 
 **QML Rules:**
+
 - No hardcoded sizes - Use `ScreenTools.defaultFontPixelHeight/Width`
 - No hardcoded colors - Use `QGCPalette`
 - Use QGC controls: `QGCButton`, `QGCLabel`, `QGCTextField`

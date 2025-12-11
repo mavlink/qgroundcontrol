@@ -1,7 +1,6 @@
 ## Description
 <!-- Describe your changes in detail. What problem does this solve? -->
 
-
 ## Type of Change
 <!-- Put an 'x' in the relevant boxes -->
 - [ ] Bug fix (non-breaking change that fixes an issue)
@@ -35,7 +34,6 @@
 ## Screenshots
 <!-- If applicable, add screenshots to help explain your changes -->
 
-
 ## Checklist
 <!-- Go over all the following points, and put an 'x' in all the boxes that apply -->
 - [ ] I have read the [Contribution Guidelines](CONTRIBUTING.md)
@@ -46,7 +44,6 @@
 
 ## Related Issues
 <!-- Link any related issues using #issue_number -->
-
 
 ---
 By submitting this pull request, I confirm that my contribution is made under the terms of the project's dual license (Apache 2.0 and GPL v3).

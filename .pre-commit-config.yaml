@@ -105,11 +105,12 @@ repos:
         files: ^docs/
         args: ['--no-exit']  # Don't fail on warnings, just report
 
-  # Spell checking
+  # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
     rev: v1
     hooks:
       - id: typos
+        args: []  # Empty args disables auto-fix mode
 
   # QGC-specific checks
   - repo: local

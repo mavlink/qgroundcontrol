@@ -52,6 +52,7 @@ pip install pymavlink
 ## Simulated Behavior
 
 When armed:
+
 - Vehicle slowly rotates (heading changes)
 - Small position drift
 - Battery slowly drains
@@ -70,11 +71,13 @@ When armed:
 ## Limitations
 
 This is a minimal simulator for UI testing. It does not:
+
 - Simulate flight dynamics
 - Support mission execution
 - Provide realistic sensor data
 - Support all MAVLink commands
 
 For full simulation, use:
+
 - [ArduPilot SITL](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html)
 - [PX4 SITL](https://docs.px4.io/main/en/simulation/)

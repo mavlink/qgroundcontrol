@@ -4,10 +4,10 @@
 # Onboard parameters for Vehicle 1
 #
 # # Vehicle-Id Component-Id Name Value Type
-1	1	ACRO_LOCKING	0	2
-1	1	ACRO_PITCH_RATE	180	4
-1	1	ACRO_ROLL_RATE	180	4
-1	1	ADSB_ENABLE	0	2
+1 1 ACRO_LOCKING 0 2
+1 1 ACRO_PITCH_RATE 180 4
+1 1 ACRO_ROLL_RATE 180 4
+1 1 ADSB_ENABLE 0 2
 ```
 
 Above is an example of a parameter file with four parameters. The file can include as many parameters as needed.

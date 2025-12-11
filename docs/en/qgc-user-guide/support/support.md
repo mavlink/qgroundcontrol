@@ -52,6 +52,6 @@ Troubleshooting information is linked from [here](../troubleshooting/index.md).
 
 _Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For more information see: [Console Logging](../settings_view/console_logging.md).
 
-## Help Improve these Docs!
+## Help Improve these Docs
 
 Just like _QGroundControl_ itself, the user guide is an open source, user created and supported GitBook. We welcome [Pull Requests](https://github.com/mavlink/qgc-user-guide/pulls) against the guide for fixes and/or updates.

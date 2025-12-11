@@ -21,7 +21,6 @@
 
 🔍 For a deeper dive into using QGC, check out the [User Manual](https://docs.qgroundcontrol.com/en/) – although thanks to QGC's intuitive UI, you may not even need it!
 
-
 ---
 
 ### 🚁 *Key Features*

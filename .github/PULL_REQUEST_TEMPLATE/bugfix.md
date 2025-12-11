@@ -6,18 +6,18 @@ Fixes #
 ## Root Cause
 <!-- What was causing the bug? -->
 
-
 ## Solution
 <!-- How does this PR fix the bug? -->
 
-
 ## Testing
+
 - [ ] Tested locally
 - [ ] Added regression test
 - [ ] Tested with simulator (SITL)
 - [ ] Tested with hardware
 
 ### Platforms Tested
+
 - [ ] Linux
 - [ ] Windows
 - [ ] macOS
@@ -25,11 +25,13 @@ Fixes #
 - [ ] iOS
 
 ### Flight Stacks Tested
+
 - [ ] PX4
 - [ ] ArduPilot
 - [ ] N/A
 
 ## Checklist
+
 - [ ] I have read the [Contribution Guidelines](../.github/CONTRIBUTING.md)
 - [ ] My code follows the project's coding standards
 - [ ] I have added a test that reproduces the bug

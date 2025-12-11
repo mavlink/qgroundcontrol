@@ -257,6 +257,7 @@ The repository includes configuration for automatic formatting:
 - `.editorconfig` - Editor settings
 
 Run pre-commit checks:
+
 ```bash
 pre-commit run --all-files
 ```

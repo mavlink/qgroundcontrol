@@ -35,6 +35,7 @@ To see if your hardware is being recognized at the OS level do this:
 - You will see continuous output of the serial ports on your device.
 - Plug in your USB comm device.
 - You should see a new device show in in the console output. Example:
+
   ```
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:520 - "-----------------------------------------------------"
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:521 - "portName:           "cu.usbmodem4201""
@@ -45,6 +46,7 @@ To see if your hardware is being recognized at the OS level do this:
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:526 - "vendorIdentifier:   1155"
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:527 - "productIdentifier:  22336"
   ```
+
 - After that it should continue to log a connection to that device as shown in the first example.
 
 If you don't see a new serial port should up in the console output when you plug it in then something is likely wrong with your hardware at the OS level.

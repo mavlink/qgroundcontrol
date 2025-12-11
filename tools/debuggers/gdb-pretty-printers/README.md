@@ -7,6 +7,7 @@ This directory contains GDB pretty printers for displaying Qt types in a human-r
 ### Quick Setup (per session)
 
 In GDB:
+
 ```gdb
 source /path/to/qgroundcontrol/tools/gdb-pretty-printers/qt6.py
 ```
@@ -14,6 +15,7 @@ source /path/to/qgroundcontrol/tools/gdb-pretty-printers/qt6.py
 ### Permanent Setup
 
 Add to your `~/.gdbinit`:
+
 ```gdb
 python
 import sys
