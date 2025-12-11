@@ -1,23 +1,22 @@
 {
-    "comment":      "ArduPilot, Multi Rotor",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-        {
-            "id":           16,
-            "comment":      "MAV_CMD_NAV_WAYPOINT",
-            "paramRemove":  "3,4"
-        },
-        {
-            "id":           21,
-            "comment":      "MAV_CMD_NAV_LAND",
-            "paramRemove":  "1,4"
-        },
-        {
-            "id":           22,
-            "comment":      "MAV_CMD_NAV_TAKEOFF",
-            "paramRemove":  "1,2,3,4"
-        }
-    ]
+  "comment": "ArduPilot, Multi Rotor",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [
+    {
+      "comment": "MAV_CMD_NAV_WAYPOINT",
+      "id": 16,
+      "paramRemove": "3,4"
+    },
+    {
+      "comment": "MAV_CMD_NAV_LAND",
+      "id": 21,
+      "paramRemove": "1,4"
+    },
+    {
+      "comment": "MAV_CMD_NAV_TAKEOFF",
+      "id": 22,
+      "paramRemove": "1,2,3,4"
+    }
+  ],
+  "version": 1
 }

@@ -1,34 +1,34 @@
 {
-    "version": 1,
-    "fileType": "FactMetaData",
-    "QGC.MetaData.Facts": [
-        {
-            "name": "valueDisplay",
-            "shortDesc": "Select values to display in indicator",
-            "enumStrings": "Percentage,Voltage,Percentage and Voltage",
-            "enumValues": "0,1,2",
-            "type": "uint32",
-            "default": false
-        },
-        {
-            "name": "threshold1",
-            "shortDesc": "Battery level threshold 1",
-            "type": "uint32",
-            "default": 80,
-            "units": "%"
-        },
-        {
-            "name": "threshold2",
-            "shortDesc": "Battery level threshold 2",
-            "type": "uint32",
-            "default": 60,
-            "units": "%"
-        },
-        {
-            "name": "consolidateMultipleBatteries",
-            "shortDesc": "Consolidate multiple battery readings",
-            "type": "bool",
-            "default": true
-        }
-    ]
+  "QGC.MetaData.Facts": [
+    {
+      "default": false,
+      "enumStrings": "Percentage,Voltage,Percentage and Voltage",
+      "enumValues": "0,1,2",
+      "name": "valueDisplay",
+      "shortDesc": "Select values to display in indicator",
+      "type": "uint32"
+    },
+    {
+      "default": 80,
+      "name": "threshold1",
+      "shortDesc": "Battery level threshold 1",
+      "type": "uint32",
+      "units": "%"
+    },
+    {
+      "default": 60,
+      "name": "threshold2",
+      "shortDesc": "Battery level threshold 2",
+      "type": "uint32",
+      "units": "%"
+    },
+    {
+      "default": true,
+      "name": "consolidateMultipleBatteries",
+      "shortDesc": "Consolidate multiple battery readings",
+      "type": "bool"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

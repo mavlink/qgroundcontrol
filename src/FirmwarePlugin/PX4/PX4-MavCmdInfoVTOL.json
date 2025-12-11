@@ -1,8 +1,6 @@
 {
-    "comment":      "PX4 Pro, VTOL",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-    ]
+  "comment": "PX4 Pro, VTOL",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [],
+  "version": 1
 }

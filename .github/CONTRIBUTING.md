@@ -246,12 +246,17 @@ Test your changes on:
 Run before committing:
 
 ```bash
+# Using Makefile or justfile (recommended)
+make lint        # or: just lint
+
 # Format code
 clang-format -i path/to/changed/files.cc
 
 # Run pre-commit hooks (optional)
 pre-commit run --all-files
 ```
+
+See [tools/README.md](../tools/README.md) for all available development commands.
 
 ---
 

@@ -37,6 +37,7 @@ apt-get install -y -qq --no-install-recommends \
     python3 \
     python3-pip \
     rsync \
+    unzip \
     wget \
     zsync
 

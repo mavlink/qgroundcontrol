@@ -1,8 +1,6 @@
 {
-    "comment":      "ArduPilot, Rover",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-    ]
+  "comment": "ArduPilot, Rover",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [],
+  "version": 1
 }

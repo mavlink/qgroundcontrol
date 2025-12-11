@@ -1,106 +1,104 @@
 {
-    "version":  1,
-    "fileType": "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "id",
-    "shortDesc":        "ESC index",
-    "type":             "uint32"
-},
-{
-    "name":             "rpm",
-    "shortDesc":        "Rotation Per Minute",
-    "type":             "float",
-    "decimalPlaces":    2,
-    "default":          null
-},
-{
-    "name":             "current",
-    "shortDesc":        "Current",
-    "type":             "float",
-    "decimalPlaces":    2,
-    "default":          null,
-    "units":            "A"
-
-},
-{
-    "name":             "voltage",
-    "shortDesc":        "Voltage",
-    "type":             "float",
-    "decimalPlaces":    2,
-    "default":          null,
-    "units":            "V"
-},
-{
-    "name":             "count",
-    "shortDesc":        "Total number of ESCs",
-    "type":             "uint8",
-    "default":          0
-},
-{
-    "name":             "connectionType",
-    "shortDesc":        "ESC protocol",
-    "type":             "uint8",
-    "default":          0,
-    "enumStrings":      "PPM,Serial Bus,One Shot,I2C,CAN-Bus,DShot",
-    "enumValues":       "0,1,2,3,4,5"
-},
-{
-    "name":             "info",
-    "shortDesc":        "Online/Offline status",
-    "type":             "uint8",
-    "default":          0
-},
-{
-    "name":             "failureFlags",
-    "shortDesc":        "Failure flags",
-    "type":             "uint16",
-    "default":          0,
+  "QGC.MetaData.Facts": [
+    {
+      "name": "id",
+      "shortDesc": "ESC index",
+      "type": "uint32"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": null,
+      "name": "rpm",
+      "shortDesc": "Rotation Per Minute",
+      "type": "float"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": null,
+      "name": "current",
+      "shortDesc": "Current",
+      "type": "float",
+      "units": "A"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": null,
+      "name": "voltage",
+      "shortDesc": "Voltage",
+      "type": "float",
+      "units": "V"
+    },
+    {
+      "default": 0,
+      "name": "count",
+      "shortDesc": "Total number of ESCs",
+      "type": "uint8"
+    },
+    {
+      "default": 0,
+      "enumStrings": "PPM,Serial Bus,One Shot,I2C,CAN-Bus,DShot",
+      "enumValues": "0,1,2,3,4,5",
+      "name": "connectionType",
+      "shortDesc": "ESC protocol",
+      "type": "uint8"
+    },
+    {
+      "default": 0,
+      "name": "info",
+      "shortDesc": "Online/Offline status",
+      "type": "uint8"
+    },
+    {
       "bitmask": [
         {
-          "index": 0,
-          "description": "Over current failure"
+          "description": "Over current failure",
+          "index": 0
         },
         {
-          "index": 1,
-          "description": "Over voltage failure"
+          "description": "Over voltage failure",
+          "index": 1
         },
         {
-          "index": 2,
-          "description": "Over temperature failure"
+          "description": "Over temperature failure",
+          "index": 2
         },
         {
-          "index": 3,
-          "description": "Over RPM failure"
+          "description": "Over RPM failure",
+          "index": 3
         },
         {
-          "index": 4,
-          "description": "Inconsistent command failure"
+          "description": "Inconsistent command failure",
+          "index": 4
         },
         {
-          "index": 5,
-          "description": "Motor stuck failure"
+          "description": "Motor stuck failure",
+          "index": 5
         },
         {
-          "index": 6,
-          "description": "Generic ESC failure"
+          "description": "Generic ESC failure",
+          "index": 6
         }
-      ]
-},
-{
-    "name":             "temperature",
-    "shortDesc":        "Temperature",
-    "type":             "float",
-    "decimalPlaces":    1,
-    "default":          0,
-    "units":            "centi-celsius"
-},
-{
-    "name":             "errorCount",
-    "shortDesc":        "Error Count",
-    "type":             "uint32",
-    "default":          0
-}
-]
+      ],
+      "default": 0,
+      "name": "failureFlags",
+      "shortDesc": "Failure flags",
+      "type": "uint16"
+    },
+    {
+      "decimalPlaces": 1,
+      "default": 0,
+      "name": "temperature",
+      "shortDesc": "Temperature",
+      "type": "float",
+      "units": "centi-celsius"
+    },
+    {
+      "default": 0,
+      "name": "errorCount",
+      "shortDesc": "Error Count",
+      "type": "uint32"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

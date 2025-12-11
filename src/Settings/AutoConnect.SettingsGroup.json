@@ -1,87 +1,86 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "autoConnectUDP",
-    "shortDesc": "Automatically open a connection over UDP",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "autoConnectPixhawk",
-    "shortDesc": "Automatically connect to a Pixhawk board",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "autoConnectSiKRadio",
-    "shortDesc": "Automatically connect to a SiK Radio",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "autoConnectRTKGPS",
-    "shortDesc": "Automatically connect to an RTK GPS",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "autoConnectLibrePilot",
-    "shortDesc": "Automatically connect to a LibrePilot",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "autoConnectNmeaPort",
-    "shortDesc": "NMEA GPS device for GCS position",
-    "longDesc":  "NMEA GPS device for GCS position",
-    "type":             "string",
-    "default":     "Disabled"
-},
-{
-    "name":             "autoConnectNmeaBaud",
-    "shortDesc": "NMEA GPS Baudrate",
-    "longDesc":  "NMEA GPS Baudrate",
-    "type":             "uint32",
-    "default":     4800
-},
-{
-    "name":             "autoConnectZeroConf",
-    "shortDesc": "Automatically open a connection with Zero-Conf",
-    "longDesc":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "udpListenPort",
-    "shortDesc": "UDP port for autoconnect",
-    "type":             "uint32",
-    "default":     14550
-},
-{
-    "name":             "udpTargetHostIP",
-    "shortDesc": "UDP target host IP for autoconnect",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "udpTargetHostPort",
-    "shortDesc": "UDP target host port for autoconnect",
-    "type":             "uint32",
-    "default":     14550
-},
-{
-    "name":             "nmeaUdpPort",
-    "shortDesc": "Udp port to receive NMEA streams",
-    "type":             "uint32",
-    "default":     14401
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "default": true,
+      "longDesc": "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.",
+      "name": "autoConnectUDP",
+      "shortDesc": "Automatically open a connection over UDP",
+      "type": "bool"
+    },
+    {
+      "default": true,
+      "longDesc": "If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.",
+      "name": "autoConnectPixhawk",
+      "shortDesc": "Automatically connect to a Pixhawk board",
+      "type": "bool"
+    },
+    {
+      "default": true,
+      "longDesc": "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.",
+      "name": "autoConnectSiKRadio",
+      "shortDesc": "Automatically connect to a SiK Radio",
+      "type": "bool"
+    },
+    {
+      "default": true,
+      "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+      "name": "autoConnectRTKGPS",
+      "shortDesc": "Automatically connect to an RTK GPS",
+      "type": "bool"
+    },
+    {
+      "default": true,
+      "longDesc": "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
+      "name": "autoConnectLibrePilot",
+      "shortDesc": "Automatically connect to a LibrePilot",
+      "type": "bool"
+    },
+    {
+      "default": "Disabled",
+      "longDesc": "NMEA GPS device for GCS position",
+      "name": "autoConnectNmeaPort",
+      "shortDesc": "NMEA GPS device for GCS position",
+      "type": "string"
+    },
+    {
+      "default": 4800,
+      "longDesc": "NMEA GPS Baudrate",
+      "name": "autoConnectNmeaBaud",
+      "shortDesc": "NMEA GPS Baudrate",
+      "type": "uint32"
+    },
+    {
+      "default": true,
+      "longDesc": "If this option is enabled GroundControl will automatically connect to a vehicle which is detected over Zero-Conf.",
+      "name": "autoConnectZeroConf",
+      "shortDesc": "Automatically open a connection with Zero-Conf",
+      "type": "bool"
+    },
+    {
+      "default": 14550,
+      "name": "udpListenPort",
+      "shortDesc": "UDP port for autoconnect",
+      "type": "uint32"
+    },
+    {
+      "default": "",
+      "name": "udpTargetHostIP",
+      "shortDesc": "UDP target host IP for autoconnect",
+      "type": "string"
+    },
+    {
+      "default": 14550,
+      "name": "udpTargetHostPort",
+      "shortDesc": "UDP target host port for autoconnect",
+      "type": "uint32"
+    },
+    {
+      "default": 14401,
+      "name": "nmeaUdpPort",
+      "shortDesc": "Udp port to receive NMEA streams",
+      "type": "uint32"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

@@ -1,98 +1,28 @@
 {
-  "version": 1,
-  "translation": {
-    "items": {
-      "first_element": {
-        "items": {
-          "first_list_element": {
-            "list": {
-              "key": "name",
-              "translate": ["label", "text"]
-            }
-          },
-          "second_list_element": {
-            "list": {
-              "translate": ["label", "text"]
-            }
-          },
-          "object1": {
-            "translate": ["list_of_strings"]
-          },
-          "object2": {
-            "items": {
-              "*": {
-                "translate": ["name"]
-              }
-            }
-          }
-        }
-      },
-      "second_element": {
-        "items": {
-          "*": {
-            "translate-global": ["category"]
-          }
-        }
-      },
-      "third_element": {
-        "items": {
-          "subgroups": {
-            "$ref": "#/$defs/recursive-def"
-          }
-        }
-      }
-    },
-    "$defs": {
-      "recursive-def": {
-        "list": {
-          "translate": ["description"],
-          "items": {
-            "subgroups": {
-              "$ref": "#/$defs/recursive-def"
-            }
-          }
-        }
-      }
-    }
-  },
-
   "first_element": {
     "first_list_element": [
       {
-        "name": "1. element",
         "label": "translate-me-list1-1.0",
+        "name": "1. element",
         "text": "translate-me-list1-1.1"
       },
       {
-        "name": "2. element",
         "label": "translate-me-list1-2.0",
+        "name": "2. element",
         "text": "translate-me-list1-2.1"
       },
       {
-        "name": "3. element",
         "label": "translate-me-list1-3.0",
+        "name": "3. element",
         "text": "translate-me-list1-3.1"
       }
     ],
-    "second_list_element": [
-      {
-        "name": "1. element",
-        "label": "translate-me-list2-1.0",
-        "text": "translate-me-list2-1.1"
-      },
-      {
-        "name": "2. element",
-        "label": "translate-me-list2-2.0",
-        "text": "translate-me-list2-2.1"
-      },
-      {
-        "name": "3. element",
-        "label": "translate-me-list2-3.0",
-        "text": "translate-me-list2-3.1"
-      }
-    ],
     "object1": {
-      "list_of_strings": ["translate-me-list-of-strings-1", "translate-me-list-of-strings-2", "translate-me-list-of-strings-3"]
+      "list_of_strings": [
+        "translate-me-list-of-strings-1",
+        "translate-me-list-of-strings-2",
+        "translate-me-list-of-strings-3"
+      ]
     },
     "object2": {
       "key1": {
@@ -104,7 +34,24 @@
       "key3": {
         "name": "translate-me-name3"
       }
-    }
+    },
+    "second_list_element": [
+      {
+        "label": "translate-me-list2-1.0",
+        "name": "1. element",
+        "text": "translate-me-list2-1.1"
+      },
+      {
+        "label": "translate-me-list2-2.0",
+        "name": "2. element",
+        "text": "translate-me-list2-2.1"
+      },
+      {
+        "label": "translate-me-list2-3.0",
+        "name": "3. element",
+        "text": "translate-me-list2-3.1"
+      }
+    ]
   },
   "second_element": {
     "element1": {
@@ -147,5 +94,75 @@
         ]
       }
     ]
-  }
+  },
+  "translation": {
+    "$defs": {
+      "recursive-def": {
+        "list": {
+          "items": {
+            "subgroups": {
+              "$ref": "#/$defs/recursive-def"
+            }
+          },
+          "translate": [
+            "description"
+          ]
+        }
+      }
+    },
+    "items": {
+      "first_element": {
+        "items": {
+          "first_list_element": {
+            "list": {
+              "key": "name",
+              "translate": [
+                "label",
+                "text"
+              ]
+            }
+          },
+          "object1": {
+            "translate": [
+              "list_of_strings"
+            ]
+          },
+          "object2": {
+            "items": {
+              "*": {
+                "translate": [
+                  "name"
+                ]
+              }
+            }
+          },
+          "second_list_element": {
+            "list": {
+              "translate": [
+                "label",
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "second_element": {
+        "items": {
+          "*": {
+            "translate-global": [
+              "category"
+            ]
+          }
+        }
+      },
+      "third_element": {
+        "items": {
+          "subgroups": {
+            "$ref": "#/$defs/recursive-def"
+          }
+        }
+      }
+    }
+  },
+  "version": 1
 }

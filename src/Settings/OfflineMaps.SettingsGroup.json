@@ -1,29 +1,28 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "minZoomLevelDownload",
-    "shortDesc": "Minimum zoom level for downloads.",
-    "type":             "Uint32",
-    "min":              1,
-    "max":              20,
-    "default":     13
-},
-{
-    "name":             "maxZoomLevelDownload",
-    "shortDesc": "Maximum zoom level for downloads.",
-    "type":             "Uint32",
-    "min":              1,
-    "max":              20,
-    "default":     19
-},
-{
-    "name":             "maxTilesForDownload",
-    "shortDesc": "Maximum number of tiles for download.",
-    "type":             "Uint32",
-    "default":     100000
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "default": 13,
+      "max": 20,
+      "min": 1,
+      "name": "minZoomLevelDownload",
+      "shortDesc": "Minimum zoom level for downloads.",
+      "type": "Uint32"
+    },
+    {
+      "default": 19,
+      "max": 20,
+      "min": 1,
+      "name": "maxZoomLevelDownload",
+      "shortDesc": "Maximum zoom level for downloads.",
+      "type": "Uint32"
+    },
+    {
+      "default": 100000,
+      "name": "maxTilesForDownload",
+      "shortDesc": "Maximum number of tiles for download.",
+      "type": "Uint32"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

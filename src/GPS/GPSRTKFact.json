@@ -1,68 +1,67 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "connected",
-    "shortDesc": "Connected",
-    "type":             "bool",
-    "default":          false
-},
-{
-    "name":             "currentAccuracy",
-    "shortDesc": "Current Survey-In Accuracy",
-    "type":             "double",
-    "decimalPlaces":    1,
-    "units":            "m",
-    "default":          null
-},
-{
-    "name":             "currentLatitude",
-    "shortDesc": "Current Survey-In Latitude",
-    "type":             "double",
-    "decimalPlaces":    7,
-    "default":          null
-},
-{
-    "name":             "currentLongitude",
-    "shortDesc": "Current Survey-In Longitude",
-    "type":             "double",
-    "decimalPlaces":    7,
-    "default":          null
-},
-{
-    "name":             "currentAltitude",
-    "shortDesc": "Current Survey-In Altitude",
-    "type":             "float",
-    "decimalPlaces":    2,
-    "default":          null
-},
-{
-    "name":             "currentDuration",
-    "shortDesc": "Current Survey-In Duration",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "units":            "s",
-    "default":          0
-},
-{
-    "name":             "valid",
-    "shortDesc": "Survey-In Valid",
-    "type":             "bool",
-    "default":          false
-},
-{
-    "name":             "active",
-    "shortDesc": "Survey-In Active",
-    "type":             "bool",
-    "default":          false
-},
-{
-    "name":             "numSatellites",
-    "shortDesc": "Number of Satellites",
-    "type":             "int32",
-    "default":          0
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "default": false,
+      "name": "connected",
+      "shortDesc": "Connected",
+      "type": "bool"
+    },
+    {
+      "decimalPlaces": 1,
+      "default": null,
+      "name": "currentAccuracy",
+      "shortDesc": "Current Survey-In Accuracy",
+      "type": "double",
+      "units": "m"
+    },
+    {
+      "decimalPlaces": 7,
+      "default": null,
+      "name": "currentLatitude",
+      "shortDesc": "Current Survey-In Latitude",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 7,
+      "default": null,
+      "name": "currentLongitude",
+      "shortDesc": "Current Survey-In Longitude",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 2,
+      "default": null,
+      "name": "currentAltitude",
+      "shortDesc": "Current Survey-In Altitude",
+      "type": "float"
+    },
+    {
+      "decimalPlaces": 0,
+      "default": 0,
+      "name": "currentDuration",
+      "shortDesc": "Current Survey-In Duration",
+      "type": "double",
+      "units": "s"
+    },
+    {
+      "default": false,
+      "name": "valid",
+      "shortDesc": "Survey-In Valid",
+      "type": "bool"
+    },
+    {
+      "default": false,
+      "name": "active",
+      "shortDesc": "Survey-In Active",
+      "type": "bool"
+    },
+    {
+      "default": 0,
+      "name": "numSatellites",
+      "shortDesc": "Number of Satellites",
+      "type": "int32"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

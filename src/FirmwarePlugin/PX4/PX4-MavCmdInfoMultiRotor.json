@@ -1,8 +1,6 @@
 {
-    "comment":      "PX4 Pro, Multi Rotor",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-    ]
+  "comment": "PX4 Pro, Multi Rotor",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [],
+  "version": 1
 }

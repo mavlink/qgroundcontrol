@@ -1,21 +1,20 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "blocksPending",
-    "shortDesc": "Blocks Pending",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "default":          0
-},
-{
-    "name":             "blocksLoaded",
-    "shortDesc": "Blocks Loaded",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "default":          0
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "decimalPlaces": 0,
+      "default": 0,
+      "name": "blocksPending",
+      "shortDesc": "Blocks Pending",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 0,
+      "default": 0,
+      "name": "blocksLoaded",
+      "shortDesc": "Blocks Loaded",
+      "type": "double"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

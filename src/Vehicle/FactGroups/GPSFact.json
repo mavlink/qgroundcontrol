@@ -1,63 +1,62 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "lat",
-    "shortDesc": "Latitude",
-    "type":             "double",
-    "decimalPlaces":    7
-},
-{
-    "name":             "lon",
-    "shortDesc": "Longitude",
-    "type":             "double",
-    "decimalPlaces":    7
-},
-{
-    "name":             "mgrs",
-    "shortDesc": "MGRS Position",
-    "type":             "string"
-},
-{
-    "name":             "hdop",
-    "shortDesc": "HDOP",
-    "type":             "double",
-    "decimalPlaces":    1
-},
-{
-    "name":             "vdop",
-    "shortDesc": "VDOP",
-    "type":             "double",
-    "decimalPlaces":    1
-},
-{
-    "name":             "courseOverGround",
-    "shortDesc": "Course Over Ground",
-    "type":             "double",
-    "decimalPlaces":    1,
-    "units":            "deg"
-},
-{
-    "name":             "yaw",
-    "shortDesc": "Yaw",
-    "type":             "double",
-    "decimalPlaces":    1,
-    "units":            "deg"
-},
-{
-    "name":             "lock",
-    "shortDesc": "GPS Lock",
-    "type":             "uint32",
-    "enumStrings":      "None,No Fix,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)",
-    "enumValues":       "0,1,2,3,4,5,6,7",
-    "decimalPlaces":    0
-},
-{
-    "name":             "count",
-    "shortDesc": "Sat Count",
-    "type":             "uint32"
-}
-]
+  "QGC.MetaData.Facts": [
+    {
+      "decimalPlaces": 7,
+      "name": "lat",
+      "shortDesc": "Latitude",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 7,
+      "name": "lon",
+      "shortDesc": "Longitude",
+      "type": "double"
+    },
+    {
+      "name": "mgrs",
+      "shortDesc": "MGRS Position",
+      "type": "string"
+    },
+    {
+      "decimalPlaces": 1,
+      "name": "hdop",
+      "shortDesc": "HDOP",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 1,
+      "name": "vdop",
+      "shortDesc": "VDOP",
+      "type": "double"
+    },
+    {
+      "decimalPlaces": 1,
+      "name": "courseOverGround",
+      "shortDesc": "Course Over Ground",
+      "type": "double",
+      "units": "deg"
+    },
+    {
+      "decimalPlaces": 1,
+      "name": "yaw",
+      "shortDesc": "Yaw",
+      "type": "double",
+      "units": "deg"
+    },
+    {
+      "decimalPlaces": 0,
+      "enumStrings": "None,No Fix,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)",
+      "enumValues": "0,1,2,3,4,5,6,7",
+      "name": "lock",
+      "shortDesc": "GPS Lock",
+      "type": "uint32"
+    },
+    {
+      "name": "count",
+      "shortDesc": "Sat Count",
+      "type": "uint32"
+    }
+  ],
+  "fileType": "FactMetaData",
+  "version": 1
 }

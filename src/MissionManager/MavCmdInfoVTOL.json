@@ -1,8 +1,6 @@
 {
-    "comment":      "Any Firmware, VTOL",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-    ]
+  "comment": "Any Firmware, VTOL",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [],
+  "version": 1
 }

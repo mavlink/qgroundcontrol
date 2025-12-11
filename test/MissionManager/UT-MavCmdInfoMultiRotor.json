@@ -1,8 +1,6 @@
 {
-    "comment":      "Any Firmware, Multi Rotor (unit test)",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
-
-    "mavCmdInfo": [
-    ]
+  "comment": "Any Firmware, Multi Rotor (unit test)",
+  "fileType": "MavCmdInfo",
+  "mavCmdInfo": [],
+  "version": 1
 }
