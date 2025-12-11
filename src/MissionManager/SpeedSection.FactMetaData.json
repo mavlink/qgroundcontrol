@@ -1,17 +1,18 @@
 {
-  "QGC.MetaData.Facts": [
-    {
-      "decimalPlaces": 1,
-      "default": 0,
-      "min": 0,
-      "name": "FlightSpeed",
-      "shortDesc": "Set the current flight speed",
-      "type": "double",
-      "units": "m/s",
-      "userMax": 30,
-      "userMin": 0
-    }
-  ],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "FlightSpeed",
+    "shortDesc":        "Set the current flight speed",
+    "type":             "double",
+    "units":            "m/s",
+    "min":              0,
+    "decimalPlaces":    1,
+    "default":          0,
+    "userMin":          0,
+    "userMax":          30
+}
+]
 }

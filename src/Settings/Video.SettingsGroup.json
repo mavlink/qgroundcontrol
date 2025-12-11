@@ -1,139 +1,140 @@
 {
-  "QGC.MetaData.Facts": [
-    {
-      "default": "",
-      "longDesc": "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
-      "name": "videoSource",
-      "shortDesc": "Video source",
-      "type": "string"
-    },
-    {
-      "default": "0.0.0.0:5600",
-      "longDesc": "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
-      "name": "udpUrl",
-      "shortDesc": "Video UDP Url",
-      "type": "string"
-    },
-    {
-      "default": "",
-      "longDesc": "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
-      "name": "rtspUrl",
-      "shortDesc": "Video RTSP Url",
-      "type": "string"
-    },
-    {
-      "default": "",
-      "longDesc": "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
-      "name": "tcpUrl",
-      "shortDesc": "Video TCP Url",
-      "type": "string"
-    },
-    {
-      "default": "",
-      "longDesc": "Directory to save videos to.",
-      "name": "videoSavePath",
-      "shortDesc": "Video save directory",
-      "type": "string"
-    },
-    {
-      "decimalPlaces": 6,
-      "default": 1.777777,
-      "longDesc": "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
-      "name": "aspectRatio",
-      "shortDesc": "Video Aspect Ratio",
-      "type": "float"
-    },
-    {
-      "default": false,
-      "longDesc": "Displays a grid overlaid over the video view.",
-      "name": "gridLines",
-      "shortDesc": "Video Grid Lines",
-      "type": "bool"
-    },
-    {
-      "default": 1,
-      "enumStrings": "Fit Width,Fit Height,Fill,No Crop",
-      "enumValues": "0,1,2,3",
-      "longDesc": "Handle Video Aspect Ratio.",
-      "name": "videoFit",
-      "shortDesc": "Video Display Fit",
-      "type": "uint32"
-    },
-    {
-      "default": true,
-      "longDesc": "Show recording control in the UI.",
-      "name": "showRecControl",
-      "shortDesc": "Show Video Record Control",
-      "type": "bool"
-    },
-    {
-      "default": 2,
-      "enumStrings": "mp4,mov,mkv",
-      "enumValues": "2,1,0",
-      "longDesc": "Video recording file format.",
-      "name": "recordingFormat",
-      "shortDesc": "Video Recording Format",
-      "type": "uint32"
-    },
-    {
-      "default": 10240,
-      "longDesc": "Maximum amount of disk space used by video recording.",
-      "min": 100,
-      "mobileDefault": 2048,
-      "name": "maxVideoSize",
-      "shortDesc": "Max Video Storage Usage",
-      "type": "uint32",
-      "units": "MB"
-    },
-    {
-      "default": false,
-      "longDesc": "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
-      "mobileDefault": true,
-      "name": "enableStorageLimit",
-      "shortDesc": "Enable/Disable Limits on Storage Usage",
-      "type": "bool"
-    },
-    {
-      "default": 8,
-      "longDesc": "How long to wait before assuming RTSP link is gone.",
-      "min": 1,
-      "name": "rtspTimeout",
-      "shortDesc": "RTSP Video Timeout",
-      "type": "uint32",
-      "units": "s"
-    },
-    {
-      "default": true,
-      "longDesc": "Start/Stop Video Stream.",
-      "name": "streamEnabled",
-      "shortDesc": "Video Stream Enabled",
-      "type": "bool"
-    },
-    {
-      "default": false,
-      "longDesc": "Disable Video Stream when disarmed.",
-      "name": "disableWhenDisarmed",
-      "shortDesc": "Video Stream Disnabled When Armed",
-      "type": "bool"
-    },
-    {
-      "default": false,
-      "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
-      "name": "lowLatencyMode",
-      "shortDesc": "Tweaks video for lower latency",
-      "type": "bool"
-    },
-    {
-      "default": 0,
-      "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
-      "enumValues": "0,1,8,2,3,4,5,6,7",
-      "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
-      "name": "forceVideoDecoder",
-      "qgcRebootRequired": true,
-      "shortDesc": "Force video decoder priority",
-      "type": "uint32"
-    }
-  ],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "videoSource",
+    "shortDesc": "Video source",
+    "longDesc":  "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "udpUrl",
+    "shortDesc": "Video UDP Url",
+    "longDesc":  "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
+    "type":             "string",
+    "default":     "0.0.0.0:5600"
+},
+{
+    "name":             "rtspUrl",
+    "shortDesc": "Video RTSP Url",
+    "longDesc":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "tcpUrl",
+    "shortDesc": "Video TCP Url",
+    "longDesc":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "videoSavePath",
+    "shortDesc": "Video save directory",
+    "longDesc":  "Directory to save videos to.",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "aspectRatio",
+    "shortDesc": "Video Aspect Ratio",
+    "longDesc":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+    "type":             "float",
+    "decimalPlaces":    6,
+    "default":     1.777777
+},
+{
+    "name":         "gridLines",
+    "shortDesc":    "Video Grid Lines",
+    "longDesc":     "Displays a grid overlaid over the video view.",
+    "type":         "bool",
+    "default":      false
+},
+{
+    "name":             "videoFit",
+    "shortDesc": "Video Display Fit",
+    "longDesc":  "Handle Video Aspect Ratio.",
+    "type":             "uint32",
+    "enumStrings":      "Fit Width,Fit Height,Fill,No Crop",
+    "enumValues":       "0,1,2,3",
+    "default":     1
+},
+{
+    "name":             "showRecControl",
+    "shortDesc": "Show Video Record Control",
+    "longDesc":  "Show recording control in the UI.",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "recordingFormat",
+    "shortDesc": "Video Recording Format",
+    "longDesc":  "Video recording file format.",
+    "type":             "uint32",
+    "enumStrings":      "mp4,mov,mkv",
+    "enumValues":       "2,1,0",
+    "default":     2
+},
+{
+    "name":             "maxVideoSize",
+    "shortDesc": "Max Video Storage Usage",
+    "longDesc":  "Maximum amount of disk space used by video recording.",
+    "type":             "uint32",
+    "min":              100,
+    "units":            "MB",
+    "default":     10240,
+    "mobileDefault":   2048
+},
+{
+    "name":             "enableStorageLimit",
+    "shortDesc": "Enable/Disable Limits on Storage Usage",
+    "longDesc":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
+    "type":             "bool",
+    "default":     false,
+    "mobileDefault":   true
+},
+{
+    "name":             "rtspTimeout",
+    "shortDesc": "RTSP Video Timeout",
+    "longDesc":  "How long to wait before assuming RTSP link is gone.",
+    "type":             "uint32",
+    "min":              1,
+    "units":            "s",
+    "default":     8
+},
+{
+    "name":             "streamEnabled",
+    "shortDesc": "Video Stream Enabled",
+    "longDesc":  "Start/Stop Video Stream.",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "disableWhenDisarmed",
+    "shortDesc": "Video Stream Disnabled When Armed",
+    "longDesc":  "Disable Video Stream when disarmed.",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "lowLatencyMode",
+    "shortDesc": "Tweaks video for lower latency",
+    "longDesc":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "forceVideoDecoder",
+    "shortDesc":        "Force video decoder priority",
+    "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
+    "type":             "uint32",
+    "enumStrings":      "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
+    "enumValues":       "0,1,8,2,3,4,5,6,7",
+    "default":           0,
+    "qgcRebootRequired": true
+}
+]
 }

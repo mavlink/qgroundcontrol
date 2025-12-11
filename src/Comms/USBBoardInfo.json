@@ -1,579 +1,134 @@
 {
-  "boardDescriptionFallback": [
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ZeroOne x6.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ZeroOne BL x6.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^Svehicle e2.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^Svehicle BL e2.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v6U.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v6U.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v6X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v6X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v6XRT.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v6XRT.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v5X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v5X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v5.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v5.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v4.x PRO$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v4.x PRO$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v4.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v4.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v2.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v2.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU v1.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL FMU v1.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^MindPX FMU v2.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^MindPX BL FMU v2.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 TAP v1.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL TAP v1.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 ASC v1.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL ASC v1.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 FMU"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 Crazyflie v2.0"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^JFB JFB110$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^JFB BL JFB110$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^Crazyflie BL"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 OmnibusF4SD"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^fmuv[2345]$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^mRoControlZeroF7"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK FMU v6X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK BL FMU v6X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK FPV.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK BL FPV.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK Pi6X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK BL Pi6X.x$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 TROPIC Community"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 MR-TROPIC"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^PX4 BL MR-TROPIC"
-    },
-    {
-      "boardClass": "SiK Radio",
-      "regExp": "^FT231X USB UART$"
-    },
-    {
-      "androidOnly": true,
-      "boardClass": "SiK Radio",
-      "comment": "Very broad fallback, too dangerous for non-android",
-      "regExp": "USB UART$"
-    }
-  ],
-  "boardInfo": [
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V1",
-      "productID": 16,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V2",
-      "productID": 17,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V4",
-      "productID": 18,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V4 PRO",
-      "productID": 19,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "comment": "Bootloader on older Pixhawk V2 boards",
-      "name": "PX4 FMU V2",
-      "productID": 22,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "AeroCore",
-      "productID": 4097,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "AUAV X2.1 FMU V2",
-      "productID": 33,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "MindPX FMU V2",
-      "productID": 48,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V5",
-      "productID": 50,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V5X",
-      "productID": 51,
-      "vendorID": 12677
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V6U",
-      "productID": 54,
-      "vendorID": 7052
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V6X",
-      "productID": 53,
-      "vendorID": 12677
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V6C",
-      "productID": 56,
-      "vendorID": 12677
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU V6X-RT",
-      "productID": 29,
-      "vendorID": 13891
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "TAP V1",
-      "productID": 64,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ASC V1",
-      "productID": 65,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "Crazyflie 2",
-      "productID": 22,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "Omnibus F4 SD",
-      "productID": 1,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMUK66 v3.x",
-      "productID": 28,
-      "vendorID": 8137
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "Tropic-Community VMU",
-      "productID": 36,
-      "vendorID": 8137
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "MR-TROPIC",
-      "productID": 37,
-      "vendorID": 8137
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU ModalAI FCv1",
-      "productID": 41775,
-      "vendorID": 1155
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU ModalAI FCv2",
-      "productID": 41776,
-      "vendorID": 1155
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 DurandalV1",
-      "productID": 75,
-      "vendorID": 12642
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "Holybro Kakute Flight Controller",
-      "productID": 80,
-      "vendorID": 12642
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU UVify Core",
-      "productID": 1,
-      "vendorID": 4104
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "CUAV Flight Controller",
-      "productID": 76,
-      "vendorID": 12643
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 FMU SmartAP AIRLink",
-      "productID": 55,
-      "vendorID": 1155
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ARK FMU V6X",
-      "productID": 57,
-      "vendorID": 12677
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ARK Pi6X",
-      "productID": 58,
-      "vendorID": 12677
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ARK FPV",
-      "productID": 59,
-      "vendorID": 12677
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ArduPilot ChibiOS",
-      "productID": 22336,
-      "vendorID": 1155
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ArduPilot ChibiOS",
-      "productID": 22336,
-      "vendorID": 4617
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ArduPilot ChibiOS",
-      "productID": 22337,
-      "vendorID": 4617
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "Holybro",
-      "productID": 0,
-      "vendorID": 12642
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "CubePilot",
-      "productID": 0,
-      "vendorID": 11694
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "JFB JFB110",
-      "productID": 110,
-      "vendorID": 2702
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ThePeach FCC-K1",
-      "productID": 1,
-      "vendorID": 13735
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ThePeach FCC-R1",
-      "productID": 2,
-      "vendorID": 13735
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "mRo Pixracer Pro",
-      "productID": 4119,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "mRo Control Zero Classic",
-      "productID": 4130,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "mRo Control Zero H7",
-      "productID": 4131,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "mRo Control Zero H7 OEM",
-      "productID": 4132,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "3DR Control Zero H7 OEM Rev G",
-      "productID": 4388,
-      "vendorID": 9900
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "PX4 Accton Godwit GA1",
-      "productID": 7120,
-      "vendorID": 2106
-    },
-    {
-      "boardClass": "SiK Radio",
-      "comment": "3DR Radio",
-      "name": "SiK Radio",
-      "productID": 24597,
-      "vendorID": 1027
-    },
-    {
-      "boardClass": "SiK Radio",
-      "comment": "SILabs Radio",
-      "name": "SiK Radio",
-      "productID": 60000,
-      "vendorID": 4292
-    },
-    {
-      "boardClass": "SiK Radio",
-      "comment": "ESP32-based telemetry radio",
-      "name": "DroneBridge Radio",
-      "productID": 4097,
-      "vendorID": 12346
-    },
-    {
-      "boardClass": "RTK GPS",
-      "comment": "U-blox RTK GPS (M8P)",
-      "name": "U-blox RTK GPS",
-      "productID": 424,
-      "vendorID": 5446
-    },
-    {
-      "boardClass": "RTK GPS",
-      "comment": "U-blox RTK GPS (F9P)",
-      "name": "U-blox RTK GPS",
-      "productID": 425,
-      "vendorID": 5446
-    },
-    {
-      "boardClass": "RTK GPS",
-      "name": "Trimble RTK GPS",
-      "productID": 42151,
-      "vendorID": 1317
-    },
-    {
-      "boardClass": "RTK GPS",
-      "name": "Septentrio RTK GPS",
-      "productID": 34240,
-      "vendorID": 5418
-    },
-    {
-      "boardClass": "OpenPilot",
-      "name": "OpenPilot OPLink",
-      "productID": 16732,
-      "vendorID": 8352
-    },
-    {
-      "boardClass": "OpenPilot",
-      "name": "OpenPilot CC3D",
-      "productID": 16733,
-      "vendorID": 8352
-    },
-    {
-      "boardClass": "OpenPilot",
-      "name": "OpenPilot Revolution",
-      "productID": 16734,
-      "vendorID": 8352
-    },
-    {
-      "boardClass": "OpenPilot",
-      "name": "Taulabs Sparky2",
-      "productID": 16848,
-      "vendorID": 8352
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "ZeroOne X6",
-      "productID": 5600,
-      "vendorID": 13891
-    },
-    {
-      "boardClass": "Pixhawk",
-      "name": "Svehicle e2",
-      "productID": 16888,
-      "vendorID": 8355
-    }
-  ],
-  "boardManufacturerFallback": [
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ArduPilot$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^ARK$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^Hex/ProfiCNC$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^Holybro$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^mRo$"
-    },
-    {
-      "boardClass": "Pixhawk",
-      "regExp": "^3DR$"
-    }
-  ],
-  "comment": "AutoConnect usb board info",
-  "fileType": "USBBoardInfo",
-  "version": 1
+    "comment":  "AutoConnect usb board info",
+    "version":  1,
+    "fileType": "USBBoardInfo",
+
+    "boardInfo": [
+        { "vendorID": 9900, "productID": 16,        "boardClass": "Pixhawk",    "name": "PX4 FMU V1" },
+        { "vendorID": 9900, "productID": 17,        "boardClass": "Pixhawk",    "name": "PX4 FMU V2" },
+        { "vendorID": 9900, "productID": 18,        "boardClass": "Pixhawk",    "name": "PX4 FMU V4" },
+        { "vendorID": 9900, "productID": 19,        "boardClass": "Pixhawk",    "name": "PX4 FMU V4 PRO" },
+        { "vendorID": 9900, "productID": 22,        "boardClass": "Pixhawk",    "name": "PX4 FMU V2",           "comment": "Bootloader on older Pixhawk V2 boards" },
+        { "vendorID": 9900, "productID": 4097,      "boardClass": "Pixhawk",    "name": "AeroCore" },
+        { "vendorID": 9900, "productID": 33,        "boardClass": "Pixhawk",    "name": "AUAV X2.1 FMU V2" },
+        { "vendorID": 9900, "productID": 48,        "boardClass": "Pixhawk",    "name": "MindPX FMU V2" },
+        { "vendorID": 9900, "productID": 50,        "boardClass": "Pixhawk",    "name": "PX4 FMU V5" },
+        { "vendorID": 12677, "productID": 51,       "boardClass": "Pixhawk",    "name": "PX4 FMU V5X" },
+        { "vendorID": 7052, "productID": 54,        "boardClass": "Pixhawk",    "name": "PX4 FMU V6U" },
+        { "vendorID": 12677, "productID": 53,       "boardClass": "Pixhawk",    "name": "PX4 FMU V6X" },
+        { "vendorID": 12677, "productID": 56,       "boardClass": "Pixhawk",    "name": "PX4 FMU V6C" },
+        { "vendorID": 13891, "productID": 29,       "boardClass": "Pixhawk",    "name": "PX4 FMU V6X-RT" },
+        { "vendorID": 9900, "productID": 64,        "boardClass": "Pixhawk",    "name": "TAP V1" },
+        { "vendorID": 9900, "productID": 65,        "boardClass": "Pixhawk",    "name": "ASC V1" },
+        { "vendorID": 9900, "productID": 22,        "boardClass": "Pixhawk",    "name": "Crazyflie 2" },
+        { "vendorID": 9900, "productID": 1,         "boardClass": "Pixhawk",    "name": "Omnibus F4 SD" },
+        { "vendorID": 8137, "productID": 28,        "boardClass": "Pixhawk",    "name": "PX4 FMUK66 v3.x" },
+        { "vendorID": 8137, "productID": 36,        "boardClass": "Pixhawk",    "name": "Tropic-Community VMU" },
+        { "vendorID": 8137, "productID": 37,        "boardClass": "Pixhawk",    "name": "MR-TROPIC" },
+        { "vendorID": 1155, "productID": 41775,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv1" },
+        { "vendorID": 1155, "productID": 41776,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv2" },
+        { "vendorID":12642, "productID": 75,        "boardClass": "Pixhawk",    "name": "PX4 DurandalV1" },
+        { "vendorID":12642, "productID": 80,        "boardClass": "Pixhawk",    "name": "Holybro Kakute Flight Controller" },
+        { "vendorID": 4104, "productID": 1,         "boardClass": "Pixhawk",    "name": "PX4 FMU UVify Core" },
+        { "vendorID": 12643, "productID": 76,       "boardClass": "Pixhawk",    "name": "CUAV Flight Controller" },
+        { "vendorID": 1155, "productID": 55,        "boardClass": "Pixhawk",    "name": "PX4 FMU SmartAP AIRLink" },
+        { "vendorID": 12677, "productID": 57,       "boardClass": "Pixhawk",    "name": "ARK FMU V6X" },
+        { "vendorID": 12677, "productID": 58,       "boardClass": "Pixhawk",    "name": "ARK Pi6X" },
+        { "vendorID": 12677, "productID": 59,       "boardClass": "Pixhawk",    "name": "ARK FPV" },
+
+        { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
+        { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
+        { "vendorID": 4617, "productID": 22337,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
+
+        { "vendorID": 12642, "productID": 0,        "boardClass": "Pixhawk",    "name": "Holybro" },
+
+        { "vendorID": 11694, "productID": 0,        "boardClass": "Pixhawk",    "name": "CubePilot" },
+
+        { "vendorID": 2702,  "productID": 110,      "boardClass": "Pixhawk",    "name": "JFB JFB110" },
+
+        { "vendorID": 13735, "productID": 1,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-K1" },
+        { "vendorID": 13735, "productID": 2,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-R1" },
+
+        { "vendorID": 9900, "productID": 4119,      "boardClass": "Pixhawk",    "name": "mRo Pixracer Pro" },
+        { "vendorID": 9900, "productID": 4130,      "boardClass": "Pixhawk",    "name": "mRo Control Zero Classic" },
+        { "vendorID": 9900, "productID": 4131,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7" },
+        { "vendorID": 9900, "productID": 4132,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7 OEM" },
+        { "vendorID": 9900, "productID": 4388,      "boardClass": "Pixhawk",    "name": "3DR Control Zero H7 OEM Rev G" },
+
+        { "vendorID": 2106, "productID": 7120,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GA1" },
+
+        { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
+        { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
+        { "vendorID": 12346, "productID": 4097,     "boardClass": "SiK Radio",  "name": "DroneBridge Radio",    "comment": "ESP32-based telemetry radio" },
+
+        { "vendorID": 5446, "productID": 424,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (M8P)" },
+        { "vendorID": 5446, "productID": 425,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (F9P)" },
+        { "vendorID": 1317, "productID": 42151,     "boardClass": "RTK GPS",    "name": "Trimble RTK GPS" },
+        { "vendorID": 5418, "productID": 34240,     "boardClass": "RTK GPS",    "name": "Septentrio RTK GPS" },
+        { "vendorID": 8352, "productID": 16732,     "boardClass": "OpenPilot",  "name": "OpenPilot OPLink" },
+        { "vendorID": 8352, "productID": 16733,     "boardClass": "OpenPilot",  "name": "OpenPilot CC3D" },
+        { "vendorID": 8352, "productID": 16734,     "boardClass": "OpenPilot",  "name": "OpenPilot Revolution" },
+        { "vendorID": 8352, "productID": 16848,     "boardClass": "OpenPilot",  "name": "Taulabs Sparky2" },
+        { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" },
+        { "vendorID": 8355, "productID": 16888,     "boardClass": "Pixhawk",    "name": "Svehicle e2" }
+    ],
+
+    "boardDescriptionFallback": [
+        { "regExp": "^ZeroOne x6.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^ZeroOne BL x6.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^Svehicle e2.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^Svehicle BL e2.x$",   "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v6U.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v6U.x$",   "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v6X.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v6X.x$",   "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v6XRT.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v6XRT.x$", "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v5X.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v5X.x$",   "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v5.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v5.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v4.x PRO$",   "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v4.x PRO$","boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v4.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v4.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v2.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v2.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v1.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v1.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^MindPX FMU v2.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^MindPX BL FMU v2.x$", "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 TAP v1.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL TAP v1.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 ASC v1.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL ASC v1.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU",             "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 Crazyflie v2.0",  "boardClass": "Pixhawk" },
+        { "regExp": "^JFB JFB110$",         "boardClass": "Pixhawk" },
+        { "regExp": "^JFB BL JFB110$",      "boardClass": "Pixhawk" },
+        { "regExp": "^Crazyflie BL",        "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 OmnibusF4SD",     "boardClass": "Pixhawk" },
+        { "regExp": "^fmuv[2345]$",         "boardClass": "Pixhawk" },
+        { "regExp": "^mRoControlZeroF7",    "boardClass": "Pixhawk" },
+        { "regExp": "^ARK FMU v6X.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL FMU v6X.x$",   "boardClass": "Pixhawk" },
+        { "regExp": "^ARK FPV.x$",          "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL FPV.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^ARK Pi6X.x$",         "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL Pi6X.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 TROPIC Community","boardClass": "Pixhawk" },
+        { "regExp": "^PX4 MR-TROPIC",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL MR-TROPIC",    "boardClass": "Pixhawk" },
+        { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
+        { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
+    ],
+
+    "boardManufacturerFallback": [
+        { "regExp": "^ArduPilot$",      "boardClass": "Pixhawk" },
+        { "regExp": "^ARK$",            "boardClass": "Pixhawk" },
+        { "regExp": "^Hex/ProfiCNC$",   "boardClass": "Pixhawk" },
+        { "regExp": "^Holybro$",        "boardClass": "Pixhawk" },
+        { "regExp": "^mRo$",            "boardClass": "Pixhawk" },
+        { "regExp": "^3DR$",            "boardClass": "Pixhawk" }
+    ]
 }

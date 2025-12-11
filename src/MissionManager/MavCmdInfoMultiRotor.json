@@ -1,38 +1,39 @@
 {
-  "comment": "Any Firmware, Multi Rotor",
-  "fileType": "MavCmdInfo",
-  "mavCmdInfo": [
-    {
-      "comment": "MAV_CMD_NAV_LOITER_UNLIM",
-      "id": 17,
-      "paramRemove": "3"
-    },
-    {
-      "comment": "MAV_CMD_NAV_LOITER_TURNS",
-      "id": 18,
-      "paramRemove": "1,2,3,4"
-    },
-    {
-      "comment": "MAV_CMD_NAV_LOITER_TIME",
-      "id": 19,
-      "paramRemove": "2,3,4"
-    },
-    {
-      "comment": "MAV_CMD_NAV_TAKEOFF",
-      "id": 22,
-      "param4": {
-        "decimalPlaces": 2,
-        "default": null,
-        "label": "Yaw",
-        "nanUnchanged": true,
-        "units": "deg"
-      }
-    },
-    {
-      "comment": "MAV_CMD_NAV_LOITER_TO_ALT",
-      "id": 31,
-      "paramRemove": "1,2,4"
-    }
-  ],
-  "version": 1
+    "comment":  "Any Firmware, Multi Rotor",
+    "version":  1,
+    "fileType": "MavCmdInfo",
+
+    "mavCmdInfo": [
+        {
+            "id":           17,
+            "comment":      "MAV_CMD_NAV_LOITER_UNLIM",
+            "paramRemove":  "3"
+        },
+        {
+            "id":           18,
+            "comment":      "MAV_CMD_NAV_LOITER_TURNS",
+            "paramRemove":  "1,2,3,4"
+        },
+        {
+            "id":           19,
+            "comment":      "MAV_CMD_NAV_LOITER_TIME",
+            "paramRemove":  "2,3,4"
+        },
+        {
+            "id":           22,
+            "comment":      "MAV_CMD_NAV_TAKEOFF",
+            "param4": {
+                "label":            "Yaw",
+                "units":            "deg",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2
+            }
+        },
+        {
+            "id":           31,
+            "comment":      "MAV_CMD_NAV_LOITER_TO_ALT",
+            "paramRemove":  "1,2,4"
+        }
+    ]
 }

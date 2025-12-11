@@ -1,28 +1,29 @@
 {
-  "comment": "PX4 Pro, Any Vehicle",
-  "fileType": "MavCmdInfo",
-  "mavCmdInfo": [
-    {
-      "comment": "MAV_CMD_NAV_WAYPOINT",
-      "id": 16,
-      "paramRemove": "2,3"
-    },
-    {
-      "comment": "MAV_CMD_NAV_LAND",
-      "id": 21,
-      "paramRemove": "1"
-    },
-    {
-      "comment": "MAV_CMD_DO_LAND_START",
-      "id": 189,
-      "specifiesCoordinate": false,
-      "standaloneCoordinate": false
-    },
-    {
-      "comment": "MAV_CMD_VIDEO_START_CAPTURE",
-      "id": 2500,
-      "paramRemove": "2"
-    }
-  ],
-  "version": 1
+    "comment":  "PX4 Pro, Any Vehicle",
+    "version":  1,
+    "fileType": "MavCmdInfo",
+
+    "mavCmdInfo": [
+        {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "2,3"
+        },
+        {
+            "id":           21,
+            "comment":      "MAV_CMD_NAV_LAND",
+            "paramRemove":  "1"
+        },
+        {
+            "id":           189,
+            "comment":      "MAV_CMD_DO_LAND_START",
+            "specifiesCoordinate":  false,
+            "standaloneCoordinate": false
+        },
+        {
+            "id":           2500,
+            "comment":      "MAV_CMD_VIDEO_START_CAPTURE",
+            "paramRemove":  "2"
+        }
+    ]
 }

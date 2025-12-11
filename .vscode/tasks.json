@@ -1,129 +1,116 @@
 {
-  "inputs": [
-    {
-      "description": "Test class name (e.g., FactSystemTest)",
-      "id": "testClass",
-      "type": "promptString"
-    }
-  ],
-  "tasks": [
-    {
-      "args": [
-        "--preset",
-        "default"
-      ],
-      "command": "cmake",
-      "group": "build",
-      "label": "CMake: Configure (Debug)",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [
-        "--preset",
-        "default-release"
-      ],
-      "command": "cmake",
-      "group": "build",
-      "label": "CMake: Configure (Release)",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [
-        "--build",
-        "build",
-        "--parallel"
-      ],
-      "command": "cmake",
-      "group": {
-        "isDefault": true,
-        "kind": "build"
-      },
-      "label": "CMake: Build",
-      "problemMatcher": "$gcc",
-      "type": "shell"
-    },
-    {
-      "args": [
-        "--build",
-        "build",
-        "--target",
-        "clean"
-      ],
-      "command": "cmake",
-      "group": "build",
-      "label": "CMake: Clean",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [
-        "--unittest"
-      ],
-      "command": "${workspaceFolder}/build/QGroundControl",
-      "dependsOn": "CMake: Build",
-      "group": {
-        "isDefault": true,
-        "kind": "test"
-      },
-      "label": "Run Unit Tests",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [
-        "--unittest:${input:testClass}"
-      ],
-      "command": "${workspaceFolder}/build/QGroundControl",
-      "dependsOn": "CMake: Build",
-      "group": "test",
-      "label": "Run Specific Test",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [
-        "--check"
-      ],
-      "command": "${workspaceFolder}/tools/format-check.sh",
-      "group": "none",
-      "label": "Format: Check Changed Files",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [],
-      "command": "${workspaceFolder}/tools/format-check.sh",
-      "group": "none",
-      "label": "Format: Fix Changed Files",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "command": "${workspaceFolder}/tools/analyze.sh",
-      "group": "none",
-      "label": "Static Analysis",
-      "problemMatcher": "$gcc",
-      "type": "shell"
-    },
-    {
-      "command": "${workspaceFolder}/tools/clean.sh",
-      "group": "none",
-      "label": "Clean All",
-      "problemMatcher": [],
-      "type": "shell"
-    },
-    {
-      "args": [
-        "${workspaceFolder}/tools/translations/qgc-lupdate.sh"
-      ],
-      "command": "source",
-      "group": "none",
-      "label": "Update Translations",
-      "problemMatcher": [],
-      "type": "shell"
-    }
-  ],
-  "version": "2.0.0"
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--preset", "default"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Configure (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--preset", "default-release"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Build",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", "build",
+                "--parallel"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "CMake: Clean",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", "build",
+                "--target", "clean"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Unit Tests",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/QGroundControl",
+            "args": ["--unittest"],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "dependsOn": "CMake: Build"
+        },
+        {
+            "label": "Run Specific Test",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/QGroundControl",
+            "args": ["--unittest:${input:testClass}"],
+            "group": "test",
+            "problemMatcher": [],
+            "dependsOn": "CMake: Build"
+        },
+        {
+            "label": "Format: Check Changed Files",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/format-check.sh",
+            "args": ["--check"],
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Format: Fix Changed Files",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/format-check.sh",
+            "args": [],
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Static Analysis",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/analyze.sh",
+            "group": "none",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Clean All",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/clean.sh",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Update Translations",
+            "type": "shell",
+            "command": "source",
+            "args": ["${workspaceFolder}/tools/translations/qgc-lupdate.sh"],
+            "group": "none",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testClass",
+            "type": "promptString",
+            "description": "Test class name (e.g., FactSystemTest)"
+        }
+    ]
 }

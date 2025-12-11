@@ -1,32 +1,33 @@
 {
-  "comment": "Any Firmware, Fixed Wing",
-  "fileType": "MavCmdInfo",
-  "mavCmdInfo": [
-    {
-      "comment": "MAV_CMD_NAV_WAYPOINT",
-      "id": 16,
-      "paramRemove": "1,4"
-    },
-    {
-      "comment": "MAV_CMD_NAV_LOITER_UNLIM",
-      "id": 17,
-      "paramRemove": "4"
-    },
-    {
-      "comment": "MAV_CMD_NAV_LAND",
-      "id": 21,
-      "paramRemove": "4"
-    },
-    {
-      "comment": "MAV_CMD_NAV_TAKEOFF",
-      "id": 22,
-      "param1": {
-        "decimalPlaces": 2,
-        "default": 15,
-        "label": "Pitch",
-        "units": "deg"
-      }
-    }
-  ],
-  "version": 1
+    "comment":      "Any Firmware, Fixed Wing",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
+
+    "mavCmdInfo": [
+        {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "1,4"
+        },
+        {
+            "id":           17,
+            "comment":      "MAV_CMD_NAV_LOITER_UNLIM",
+            "paramRemove":  "4"
+        },
+        {
+            "id":           21,
+            "comment":      "MAV_CMD_NAV_LAND",
+            "paramRemove":  "4"
+        },
+        {
+            "id":           22,
+            "comment":      "MAV_CMD_NAV_TAKEOFF",
+            "param1": {
+                "label":            "Pitch",
+                "units":            "deg",
+                "default":          15,
+                "decimalPlaces":    2
+            }
+        }
+    ]
 }

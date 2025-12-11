@@ -1,6 +1,8 @@
 {
-  "comment": "ArduPilot, VTOL",
-  "fileType": "MavCmdInfo",
-  "mavCmdInfo": [],
-  "version": 1
+    "comment":      "ArduPilot, VTOL",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
+
+    "mavCmdInfo": [
+    ]
 }

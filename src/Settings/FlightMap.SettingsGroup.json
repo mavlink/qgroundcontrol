@@ -1,24 +1,25 @@
 {
-  "QGC.MetaData.Facts": [
-    {
-      "default": "Bing",
-      "name": "mapProvider",
-      "shortDesc": "Currently selected map provider for flight maps",
-      "type": "string"
-    },
-    {
-      "default": "Hybrid",
-      "name": "mapType",
-      "shortDesc": "Currently selected map type for flight maps",
-      "type": "string"
-    },
-    {
-      "default": "Copernicus",
-      "name": "elevationMapProvider",
-      "shortDesc": "Currently selected elevation map provider",
-      "type": "string"
-    }
-  ],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "mapProvider",
+    "shortDesc": "Currently selected map provider for flight maps",
+    "type":             "string",
+    "default":     "Bing"
+},
+{
+    "name":             "mapType",
+    "shortDesc": "Currently selected map type for flight maps",
+    "type":             "string",
+    "default":     "Hybrid"
+},
+{
+    "name":      "elevationMapProvider",
+    "shortDesc": "Currently selected elevation map provider",
+    "type":      "string",
+    "default":   "Copernicus"
+}
+]
 }

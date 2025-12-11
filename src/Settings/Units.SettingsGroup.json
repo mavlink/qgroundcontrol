@@ -1,5 +1,7 @@
 {
-  "QGC.MetaData.Facts": [],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+]
 }

@@ -1,104 +1,97 @@
 {
+  "version": 6,
   "configurePresets": [
     {
-      "binaryDir": "${sourceDir}/build",
-      "description": "Cross-platform debug build with Ninja",
+      "name": "default",
       "displayName": "Default (Debug)",
+      "description": "Cross-platform debug build with Ninja",
       "generator": "Ninja",
-      "inherits": [
-        "dev",
-        "debug"
-      ],
-      "name": "default"
-    },
-    {
       "binaryDir": "${sourceDir}/build",
-      "description": "Cross-platform release build with Ninja",
-      "displayName": "Default (Release)",
-      "generator": "Ninja",
-      "inherits": [
-        "release"
-      ],
-      "name": "default-release"
+      "inherits": ["dev", "debug"]
     },
     {
-      "errors": {
-        "deprecated": true,
-        "dev": true
-      },
-      "hidden": true,
+      "name": "default-release",
+      "displayName": "Default (Release)",
+      "description": "Cross-platform release build with Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["release"]
+    },
+    {
       "name": "dev",
+      "hidden": true,
       "warnings": {
-        "deprecated": true,
         "dev": true,
-        "systemVars": true,
+        "deprecated": true,
         "uninitialized": false,
-        "unusedCli": true
+        "unusedCli": true,
+        "systemVars": true
+      },
+      "errors": {
+        "dev": true,
+        "deprecated": true
       }
     },
     {
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache"
-      },
+      "name": "ccache",
       "hidden": true,
-      "name": "ccache"
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+      }
     },
     {
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache",
-        "CMAKE_C_COMPILER_LAUNCHER": "sccache"
-      },
+      "name": "sccache",
       "hidden": true,
-      "name": "sccache"
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_LAUNCHER": "sccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache"
+      }
     },
     {
+      "name": "debug",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "QGC_BUILD_TESTING": "ON",
         "QGC_DEBUG_QML": "ON"
-      },
-      "hidden": true,
-      "name": "debug"
+      }
     },
     {
+      "name": "release",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "QGC_BUILD_INSTALLER": "ON",
         "QGC_BUILD_TESTING": "OFF",
-        "QGC_DEBUG_QML": "OFF"
-      },
-      "hidden": true,
-      "name": "release"
+        "QGC_DEBUG_QML": "OFF",
+        "QGC_BUILD_INSTALLER": "ON"
+      }
     },
     {
+      "name": "coverage",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "QGC_BUILD_TESTING": "ON",
         "QGC_ENABLE_COVERAGE": "ON"
-      },
-      "hidden": true,
-      "name": "coverage"
+      }
     },
     {
+      "name": "minimal",
+      "hidden": true,
       "cacheVariables": {
+        "QGC_VIEWER3D": "OFF",
         "QGC_ENABLE_BLUETOOTH": "OFF",
         "QGC_ENABLE_GST_VIDEOSTREAMING": "OFF",
-        "QGC_ENABLE_UVC": "OFF",
-        "QGC_VIEWER3D": "OFF"
-      },
-      "hidden": true,
-      "name": "minimal"
+        "QGC_ENABLE_UVC": "OFF"
+      }
     }
   ],
   "testPresets": [
     {
-      "hidden": true,
       "name": "default",
-      "output": {
-        "outputOnFailure": true
-      }
+      "hidden": true,
+      "output": { "outputOnFailure": true }
     }
-  ],
-  "version": 6
+  ]
 }

@@ -1,26 +1,27 @@
 {
-  "QGC.MetaData.Facts": [
-    {
-      "decimalPlaces": 3,
-      "name": "temperature",
-      "shortDesc": "Temperature",
-      "type": "double",
-      "units": "deg"
-    },
-    {
-      "decimalPlaces": 3,
-      "name": "humidity",
-      "shortDesc": "Humidity %",
-      "type": "double",
-      "units": "%"
-    },
-    {
-      "decimalPlaces": 0,
-      "name": "hygrometerid",
-      "shortDesc": "ID",
-      "type": "uint16"
-    }
-  ],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "temperature",
+    "shortDesc": "Temperature",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "deg"
+},
+{
+    "name":             "humidity",
+    "shortDesc": "Humidity %",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "%"
+},
+{
+    "name":             "hygrometerid",
+    "shortDesc": "ID",
+    "type":             "uint16",
+    "decimalPlaces":    0
+}
+]
 }
