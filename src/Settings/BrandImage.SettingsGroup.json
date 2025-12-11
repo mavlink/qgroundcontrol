@@ -1,20 +1,21 @@
 {
-  "QGC.MetaData.Facts": [
-    {
-      "default": "",
-      "longDesc": "Location in file system of user-selected brand image (indoor)",
-      "name": "userBrandImageIndoor",
-      "shortDesc": "User-selected brand image",
-      "type": "string"
-    },
-    {
-      "default": "",
-      "longDesc": "Location in file system of user-selected brand image (outdoor)",
-      "name": "userBrandImageOutdoor",
-      "shortDesc": "User-selected brand image",
-      "type": "string"
-    }
-  ],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "userBrandImageIndoor",
+    "shortDesc": "User-selected brand image",
+    "longDesc":  "Location in file system of user-selected brand image (indoor)",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "userBrandImageOutdoor",
+    "shortDesc": "User-selected brand image",
+    "longDesc":  "Location in file system of user-selected brand image (outdoor)",
+    "type":             "string",
+    "default":     ""
+}
+]
 }

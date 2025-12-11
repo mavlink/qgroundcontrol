@@ -1,121 +1,122 @@
 {
-  "QGC.MetaData.Facts": [
-    {
-      "name": "health",
-      "shortDesc": "Health",
-      "type": "int8"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "ecuIndex",
-      "shortDesc": "Ecu Index",
-      "type": "float",
-      "units": "A"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "rpm",
-      "shortDesc": "Rpm",
-      "type": "float"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "fuelConsumed",
-      "shortDesc": "Fuel Consumed",
-      "type": "float",
-      "units": "cm^3"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "fuelFlow",
-      "shortDesc": "Fuel Flow",
-      "type": "float",
-      "units": "cm^3/min"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "engineLoad",
-      "shortDesc": "Engine Load",
-      "type": "float",
-      "units": "%"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "throttlePos",
-      "shortDesc": "Throttle Position",
-      "type": "float",
-      "units": "%"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "sparkTime",
-      "shortDesc": "Spark dwell time",
-      "type": "float",
-      "units": "ms"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "baroPress",
-      "shortDesc": "BarometricPressure",
-      "type": "float",
-      "units": "kPa"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "intakePress",
-      "shortDesc": "Intake mainfold pressure",
-      "type": "float",
-      "units": "kPa"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "intakeTemp",
-      "shortDesc": "Intake mainfold temperature",
-      "type": "float",
-      "units": "\u00b0C"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "cylinderTemp",
-      "shortDesc": "Cylinder head temperature",
-      "type": "float",
-      "units": "\u00b0C"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "ignTime",
-      "shortDesc": "Ignition Timing",
-      "type": "float",
-      "units": "deg"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "injTime",
-      "shortDesc": "Injection Time",
-      "type": "float",
-      "units": "ms"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "exGasTemp",
-      "shortDesc": "Exhaust gas Temperature",
-      "type": "float",
-      "units": "\u00b0C"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "throttleOut",
-      "shortDesc": "Throttle Out",
-      "type": "float",
-      "units": "%"
-    },
-    {
-      "decimalPlaces": 1,
-      "name": "ptComp",
-      "shortDesc": "Pt Compensation",
-      "type": "float"
-    }
-  ],
-  "fileType": "FactMetaData",
-  "version": 1
+    "version":              1,
+    "fileType":             "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "health",
+    "shortDesc":        "Health",
+    "type":             "int8"
+},
+{
+    "name":             "ecuIndex",
+    "shortDesc":        "Ecu Index",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "A"
+},
+{
+    "name":             "rpm",
+    "shortDesc":        "Rpm",
+    "type":             "float",
+    "decimalPlaces":    1
+},
+{
+    "name":             "fuelConsumed",
+    "shortDesc":        "Fuel Consumed",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "cm^3"
+},
+{
+    "name":             "fuelFlow",
+    "shortDesc":        "Fuel Flow",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "cm^3/min"
+},
+{
+    "name":             "engineLoad",
+    "shortDesc":        "Engine Load",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "%"
+},
+{
+    "name":             "throttlePos",
+    "shortDesc":        "Throttle Position",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "%"
+},
+{
+    "name":             "sparkTime",
+    "shortDesc":        "Spark dwell time",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "ms"
+},
+{
+    "name":             "baroPress",
+    "shortDesc":        "BarometricPressure",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "kPa"
+},
+{
+    "name":             "intakePress",
+    "shortDesc":        "Intake mainfold pressure",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "kPa"
+},
+{
+    "name":             "intakeTemp",
+    "shortDesc":        "Intake mainfold temperature",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "°C"
+},
+{
+    "name":             "cylinderTemp",
+    "shortDesc":        "Cylinder head temperature",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "°C"
+},
+{
+    "name":             "ignTime",
+    "shortDesc":        "Ignition Timing",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "injTime",
+    "shortDesc":        "Injection Time",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "ms"
+},
+{
+    "name":             "exGasTemp",
+    "shortDesc":        "Exhaust gas Temperature",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "°C"
+},
+{
+    "name":             "throttleOut",
+    "shortDesc":        "Throttle Out",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "%"
+},
+{
+    "name":             "ptComp",
+    "shortDesc":        "Pt Compensation",
+    "type":             "float",
+    "decimalPlaces":    1
+}
+]
 }

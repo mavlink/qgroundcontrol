@@ -12,7 +12,7 @@ repos:
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
       - id: pretty-format-json
-        args: ['--autofix', '--indent=2']
+        args: ['--indent=2', '--no-ensure-ascii']
         exclude: ^(translations/|package-lock\.json)
       - id: check-xml
         exclude: ^test/

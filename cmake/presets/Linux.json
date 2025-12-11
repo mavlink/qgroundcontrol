@@ -1,269 +1,178 @@
 {
-  "buildPresets": [
-    {
-      "configurePreset": "Linux",
-      "displayName": "Linux Release",
-      "name": "Linux"
-    },
-    {
-      "configurePreset": "Linux-debug",
-      "displayName": "Linux Debug",
-      "name": "Linux-debug"
-    },
-    {
-      "configurePreset": "Linux-ccache",
-      "displayName": "Linux Release with ccache",
-      "name": "Linux-ccache"
-    },
-    {
-      "configurePreset": "Linux-debug-ccache",
-      "displayName": "Linux Debug with ccache",
-      "name": "Linux-debug-ccache"
-    },
-    {
-      "configurePreset": "Linux-coverage",
-      "displayName": "Linux Coverage",
-      "name": "Linux-coverage"
-    },
-    {
-      "configurePreset": "Linux-minimal",
-      "displayName": "Linux Minimal",
-      "name": "Linux-minimal"
-    }
-  ],
+  "version": 6,
+  "include": ["common.json"],
   "configurePresets": [
     {
-      "binaryDir": "${sourceParentDir}/build/qt6-Linux",
-      "cacheVariables": {
-        "QT_VERSION_MAJOR": "6"
-      },
+      "name": "Linux",
       "displayName": "Linux Release",
       "generator": "Ninja",
-      "inherits": [
-        "release"
-      ],
-      "name": "Linux",
-      "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake"
+      "binaryDir": "${sourceParentDir}/build/qt6-Linux",
+      "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+      "inherits": ["release"],
+      "cacheVariables": {
+        "QT_VERSION_MAJOR": "6"
+      }
     },
     {
-      "binaryDir": "${sourceParentDir}/build/qt6-Linux-debug",
+      "name": "Linux-debug",
       "displayName": "Linux Debug",
-      "inherits": [
-        "debug",
-        "Linux"
-      ],
-      "name": "Linux-debug"
+      "inherits": ["debug", "Linux"],
+      "binaryDir": "${sourceParentDir}/build/qt6-Linux-debug"
     },
     {
+      "name": "Linux-ccache",
       "displayName": "Linux Release with ccache",
-      "inherits": [
-        "dev",
-        "ccache",
-        "Linux"
-      ],
-      "name": "Linux-ccache"
+      "inherits": ["dev", "ccache", "Linux"]
     },
     {
+      "name": "Linux-debug-ccache",
       "displayName": "Linux Debug with ccache",
-      "inherits": [
-        "dev",
-        "ccache",
-        "Linux-debug"
-      ],
-      "name": "Linux-debug-ccache"
+      "inherits": ["dev", "ccache", "Linux-debug"]
     },
     {
-      "binaryDir": "${sourceParentDir}/build/qt6-Linux-coverage",
+      "name": "Linux-coverage",
       "displayName": "Linux Coverage",
-      "inherits": [
-        "coverage",
-        "Linux"
-      ],
-      "name": "Linux-coverage"
+      "inherits": ["coverage", "Linux"],
+      "binaryDir": "${sourceParentDir}/build/qt6-Linux-coverage"
     },
     {
-      "binaryDir": "${sourceParentDir}/build/qt6-Linux-minimal",
+      "name": "Linux-minimal",
       "displayName": "Linux Minimal (fast build)",
-      "inherits": [
-        "minimal",
-        "Linux-debug"
-      ],
-      "name": "Linux-minimal"
+      "inherits": ["minimal", "Linux-debug"],
+      "binaryDir": "${sourceParentDir}/build/qt6-Linux-minimal"
     }
   ],
-  "include": [
-    "common.json"
-  ],
-  "packagePresets": [
+  "buildPresets": [
     {
-      "configurePreset": "Linux",
-      "displayName": "Linux Release package",
-      "name": "Linux"
+      "name": "Linux",
+      "displayName": "Linux Release",
+      "configurePreset": "Linux"
     },
     {
-      "configurePreset": "Linux-ccache",
-      "displayName": "Linux Release package with ccache",
-      "name": "Linux-ccache"
+      "name": "Linux-debug",
+      "displayName": "Linux Debug",
+      "configurePreset": "Linux-debug"
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux Release with ccache",
+      "configurePreset": "Linux-ccache"
+    },
+    {
+      "name": "Linux-debug-ccache",
+      "displayName": "Linux Debug with ccache",
+      "configurePreset": "Linux-debug-ccache"
+    },
+    {
+      "name": "Linux-coverage",
+      "displayName": "Linux Coverage",
+      "configurePreset": "Linux-coverage"
+    },
+    {
+      "name": "Linux-minimal",
+      "displayName": "Linux Minimal",
+      "configurePreset": "Linux-minimal"
     }
   ],
   "testPresets": [
     {
-      "configurePreset": "Linux",
+      "name": "Linux",
       "displayName": "Linux Release tests",
-      "inherits": [
-        "default"
-      ],
-      "name": "Linux"
+      "configurePreset": "Linux",
+      "inherits": ["default"]
     },
     {
-      "configurePreset": "Linux-debug",
+      "name": "Linux-debug",
       "displayName": "Linux Debug tests",
-      "inherits": [
-        "default"
-      ],
-      "name": "Linux-debug"
+      "configurePreset": "Linux-debug",
+      "inherits": ["default"]
     },
     {
-      "configurePreset": "Linux-ccache",
+      "name": "Linux-ccache",
       "displayName": "Linux Release tests with ccache",
-      "inherits": [
-        "default"
-      ],
-      "name": "Linux-ccache"
+      "configurePreset": "Linux-ccache",
+      "inherits": ["default"]
     },
     {
-      "configurePreset": "Linux-debug-ccache",
+      "name": "Linux-debug-ccache",
       "displayName": "Linux Debug tests with ccache",
-      "inherits": [
-        "default"
-      ],
-      "name": "Linux-debug-ccache"
+      "configurePreset": "Linux-debug-ccache",
+      "inherits": ["default"]
     },
     {
-      "configurePreset": "Linux-coverage",
+      "name": "Linux-coverage",
       "displayName": "Linux Coverage tests",
-      "inherits": [
-        "default"
-      ],
-      "name": "Linux-coverage"
+      "configurePreset": "Linux-coverage",
+      "inherits": ["default"]
     }
   ],
-  "version": 6,
+  "packagePresets": [
+    {
+      "name": "Linux",
+      "displayName": "Linux Release package",
+      "configurePreset": "Linux"
+    },
+    {
+      "name": "Linux-ccache",
+      "displayName": "Linux Release package with ccache",
+      "configurePreset": "Linux-ccache"
+    }
+  ],
   "workflowPresets": [
     {
-      "displayName": "Linux Release workflow",
       "name": "Linux",
+      "displayName": "Linux Release workflow",
       "steps": [
-        {
-          "name": "Linux",
-          "type": "configure"
-        },
-        {
-          "name": "Linux",
-          "type": "build"
-        },
-        {
-          "name": "Linux",
-          "type": "test"
-        },
-        {
-          "name": "Linux",
-          "type": "package"
-        }
+        { "type": "configure", "name": "Linux" },
+        { "type": "build", "name": "Linux" },
+        { "type": "test", "name": "Linux" },
+        { "type": "package", "name": "Linux" }
       ]
     },
     {
-      "displayName": "Linux Debug workflow",
       "name": "Linux-debug",
+      "displayName": "Linux Debug workflow",
       "steps": [
-        {
-          "name": "Linux-debug",
-          "type": "configure"
-        },
-        {
-          "name": "Linux-debug",
-          "type": "build"
-        },
-        {
-          "name": "Linux-debug",
-          "type": "test"
-        }
+        { "type": "configure", "name": "Linux-debug" },
+        { "type": "build", "name": "Linux-debug" },
+        { "type": "test", "name": "Linux-debug" }
       ]
     },
     {
-      "displayName": "Linux Release workflow with ccache",
       "name": "Linux-ccache",
+      "displayName": "Linux Release workflow with ccache",
       "steps": [
-        {
-          "name": "Linux-ccache",
-          "type": "configure"
-        },
-        {
-          "name": "Linux-ccache",
-          "type": "build"
-        },
-        {
-          "name": "Linux-ccache",
-          "type": "test"
-        },
-        {
-          "name": "Linux-ccache",
-          "type": "package"
-        }
+        { "type": "configure", "name": "Linux-ccache" },
+        { "type": "build", "name": "Linux-ccache" },
+        { "type": "test", "name": "Linux-ccache" },
+        { "type": "package", "name": "Linux-ccache" }
       ]
     },
     {
-      "displayName": "Linux Debug workflow with ccache",
       "name": "Linux-debug-ccache",
+      "displayName": "Linux Debug workflow with ccache",
       "steps": [
-        {
-          "name": "Linux-debug-ccache",
-          "type": "configure"
-        },
-        {
-          "name": "Linux-debug-ccache",
-          "type": "build"
-        },
-        {
-          "name": "Linux-debug-ccache",
-          "type": "test"
-        }
+        { "type": "configure", "name": "Linux-debug-ccache" },
+        { "type": "build", "name": "Linux-debug-ccache" },
+        { "type": "test", "name": "Linux-debug-ccache" }
       ]
     },
     {
-      "displayName": "Linux Coverage workflow",
       "name": "Linux-coverage",
+      "displayName": "Linux Coverage workflow",
       "steps": [
-        {
-          "name": "Linux-coverage",
-          "type": "configure"
-        },
-        {
-          "name": "Linux-coverage",
-          "type": "build"
-        },
-        {
-          "name": "Linux-coverage",
-          "type": "test"
-        }
+        { "type": "configure", "name": "Linux-coverage" },
+        { "type": "build", "name": "Linux-coverage" },
+        { "type": "test", "name": "Linux-coverage" }
       ]
     },
     {
-      "displayName": "Linux CI workflow (Release)",
       "name": "Linux-CI",
+      "displayName": "Linux CI workflow (Release)",
       "steps": [
-        {
-          "name": "Linux-ccache",
-          "type": "configure"
-        },
-        {
-          "name": "Linux-ccache",
-          "type": "build"
-        },
-        {
-          "name": "Linux-ccache",
-          "type": "package"
-        }
+        { "type": "configure", "name": "Linux-ccache" },
+        { "type": "build", "name": "Linux-ccache" },
+        { "type": "package", "name": "Linux-ccache" }
       ]
     }
   ]
