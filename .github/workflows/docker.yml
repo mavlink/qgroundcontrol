@@ -53,6 +53,17 @@ jobs:
         shell: bash
 
     steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: ${{ matrix.platform != 'Android' }}
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: false
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -73,6 +84,7 @@ jobs:
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Scan Docker image for vulnerabilities
+        if: success()
         uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: 'qgc-builder:latest'
@@ -83,7 +95,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: success()
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-${{ matrix.platform }}'
