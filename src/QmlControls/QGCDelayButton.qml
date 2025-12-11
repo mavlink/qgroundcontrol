@@ -81,7 +81,7 @@ DelayButton {
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
             color:                  control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            opacity:                control._showHighlight ? 0.75 :0.2
+            opacity:                control._showHighlight ? 0.75 : 0.2
 
             property real _sliderIndicatorMargin: ScreenTools.defaultFontPixelWidth * 0.5
         }
