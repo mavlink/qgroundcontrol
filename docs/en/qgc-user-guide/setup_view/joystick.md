@@ -45,6 +45,10 @@ To configure a joystick:
 
    The joystick is _enabled_ as the last step of the calibration process.
 
+    ::: warning
+    On some controllers the calibration process does not work because of incorrect channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
+    :::
+
 1. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
 1. Select the flight modes/vehicle functions activated by each joystick button.
    ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
@@ -168,6 +172,23 @@ The Taranis does not allow you to use button options (to be precise, you can set
 The Taranis is an open system that is openly being worked on.
 It is possible that at time of writing there is a firmware or configuration that allows it to work effectively as a joystick.
 :::
+
+### TBS Tango 2
+
+The TBS Tango 2 can also be used as a joystick controlled via QGroundControl. In order to make it work, you need to remap the channels by using the following commands:
+
+```bash
+export SDL_GAMECONTROLLERCONFIG="03002de7d80400001057000011010000,Team-BlackSheep TBS Joystick,a:b0,b:b1,x:b3,y:b4,back:b10,guide:b12,start:b11,leftstick:b13,rightstick:b14,leftshoulder:b6,rightshoulder:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,crc:e72d,platform:Linux"
+./QGroundControl-x86_64.AppImage
+```
+
+For another radio, the first command above can be found by using the [jstest software tool](http://github.com/meleu/jstest-sdl) and run:
+
+```bash
+jstest-sdl -l
+```
+
+**Take care of the channels remapping you need to do between a2, a3 and other if needed**
 
 ### Logitech Gamepad F310
 
