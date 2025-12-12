@@ -56,13 +56,9 @@ RUN git config --global --add safe.directory /project/source
 RUN mkdir -p /project/source /project/build
 WORKDIR /project/build
 
-# ---------- Build + install when the container starts ----------
-ENV BUILD_TYPE=Release
+# ---------- Entrypoint ----------
+COPY deploy/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD ["bash", "-lc", "\
-  case \"${BUILD_TYPE}\" in Release|Debug|RelWithDebInfo|MinSizeRel) ;; \n\
-    *) echo \"Invalid BUILD_TYPE: ${BUILD_TYPE}\"; exit 1 ;; esac && \n\
-  qt-cmake -S /project/source -B /project/build -G Ninja -DCMAKE_BUILD_TYPE=${BUILD_TYPE} && \
-  cmake --build /project/build --target all --parallel && \
-  cmake --install /project/build --config ${BUILD_TYPE} \
-"]
+ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
+CMD ["Release"]

@@ -10514,7 +10514,7 @@
     </parameter>
     <parameter name="COM_DISARM_MAN" default="1" type="INT32" boolean="true">
       <short_desc>Allow disarming via switch/stick/button on multicopters in manual thrust modes</short_desc>
-      <long_desc>0: Disallow disarming when not landed 1: Allow disarming in multicopter flight in modes where the thrust is directly controlled by thr throttle stick e.g. Stabilized, Acro</long_desc>
+      <long_desc>0: Disallow disarming when not landed 1: Allow disarming in multicopter flight in modes where the thrust is directly controlled by the throttle stick e.g. Stabilized, Acro</long_desc>
     </parameter>
     <parameter name="COM_DISARM_PRFLT" default="10.0" type="FLOAT">
       <short_desc>Time-out for auto disarm if not taking off</short_desc>
@@ -12197,7 +12197,7 @@
       <decimal>3</decimal>
     </parameter>
     <parameter name="EKF2_RNG_QLTY_T" default="1.0" type="FLOAT">
-      <short_desc>Minumum range validity period</short_desc>
+      <short_desc>Minimum range validity period</short_desc>
       <long_desc>Minimum duration during which the reported range finder signal quality needs to be non-zero in order to be declared valid (s)</long_desc>
       <min>0.1</min>
       <max>5</max>

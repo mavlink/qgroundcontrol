@@ -40,6 +40,14 @@ inputs:
     description: ccache version (use build-config.outputs.ccache_version)
     required: false
     default: '4.11.3'
+  android-cmdline-tools:
+    description: Android cmdline-tools version (use build-config.outputs.android_cmdline_tools)
+    required: false
+    default: '13114758'
+  android-build-tools:
+    description: Android build-tools version (use build-config.outputs.android_build_tools)
+    required: false
+    default: '35.0.0'
   save-cache:
     description: Save cache (set to false for PR builds)
     required: false
@@ -61,8 +69,8 @@ runs:
       uses: android-actions/setup-android@v3
       id: setup-android
       with:
-        cmdline-tools-version: 13114758
-        packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-platform }}.0.0'
+        cmdline-tools-version: ${{ inputs.android-cmdline-tools }}
+        packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-build-tools }}'
         log-accepted-android-sdk-licenses: false
 
     - name: Install Android NDK

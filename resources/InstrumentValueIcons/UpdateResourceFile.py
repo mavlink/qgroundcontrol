@@ -3,20 +3,17 @@ import os
 
 
 def main():
-    qrcFile = open("InstrumentValueIcons.qrc", "wt")
+    with open("InstrumentValueIcons.qrc", "w") as qrcFile:
+        qrcFile.write("<RCC>\n")
+        qrcFile.write('\t<qresource prefix="/InstrumentValueIcons">\n')
 
-    qrcFile.write("<RCC>\n")
-    qrcFile.write('\t<qresource prefix="/InstrumentValueIcons">\n')
+        files = os.listdir(".")
+        for filename in files:
+            if filename.endswith(".svg"):
+                qrcFile.write(f'\t\t<file alias="{filename}">{filename}</file>\n')
 
-    files = os.listdir(".")
-    for filename in files:
-        if filename.endswith(".svg"):
-            qrcFile.write('\t\t<file alias="%s">%s</file>\n' % (filename, filename))
-
-    qrcFile.write("\t</qresource>\n")
-    qrcFile.write("</RCC>\n")
-
-    qrcFile.close()
+        qrcFile.write("\t</qresource>\n")
+        qrcFile.write("</RCC>\n")
 
 
 if __name__ == "__main__":

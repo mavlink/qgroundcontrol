@@ -2,7 +2,6 @@
 
 This topic contains the cumulative release notes for _QGroundControl v3.x_.
 
-
 ## Stable Version 3.5
 
 This section contains a high level and _non-exhaustive_ list of new features added to _QGroundControl_ in version 3.5.
@@ -111,7 +110,6 @@ This section contains a high level and _non-exhaustive_ list of new features add
 - **Analyze**
   - **Mavlink console** - New support for communicating with Mavlink console.
   - **Log Download** - Moved from Menu to Analyze view.
-
 
 ## Stable Version 3.3 (Detailed)
 

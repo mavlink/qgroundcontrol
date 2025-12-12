@@ -21,7 +21,6 @@
 
 🔍 For a deeper dive into using QGC, check out the [User Manual](https://docs.qgroundcontrol.com/en/) – although thanks to QGC's intuitive UI, you may not even need it!
 
-
 ---
 
 ### 🚁 *Key Features*
@@ -54,3 +53,9 @@ QGroundControl is *open-source*, meaning you have the power to shape it! Whether
 ---
 
 With QGroundControl, you're in full command of your UAV, ready to take your missions to the next level.
+
+---
+
+### Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/mavlink/qgroundcontrol.svg?variant=adaptive)](https://starchart.cc/mavlink/qgroundcontrol)

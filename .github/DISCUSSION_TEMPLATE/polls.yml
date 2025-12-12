@@ -1,0 +1,18 @@
+title: "[Poll] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Create a poll to gather community feedback. After creating this discussion, use the poll button in the editor to add your poll options.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Poll Context
+      description: Provide background information for your poll
+      placeholder: |
+        What decision or feedback are you seeking?
+        Why is this important to the community?
+    validations:
+      required: true

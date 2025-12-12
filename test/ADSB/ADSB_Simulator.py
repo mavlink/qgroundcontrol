@@ -1,7 +1,8 @@
 import socket
 import threading
-import numpy as np
 import time
+
+import numpy as np
 
 
 class Aircraft:
@@ -14,9 +15,7 @@ class Aircraft:
         self.altitude = np.random.randint(0, 40000)
         self.velocity = np.random.randint(50, 600)
         self.heading = np.random.randint(0, 360)
-        self.verticalRate = np.random.randint(
-            -3000, 3000
-        )  # Vertical rate in feet per minute
+        self.verticalRate = np.random.randint(-3000, 3000)  # Vertical rate in feet per minute
         # Generate a valid squawk code as a four-digit octal number ranging from 0000 to 7777.
         # Squawk codes are assigned by ATC and represent a specific aircraft's transponder setting.
         # We use `np.random.randint(0, 4096)` to generate values from 0 to 4095 (decimal),
@@ -25,15 +24,11 @@ class Aircraft:
 
     def generate_icao_address(self):
         # Generate a random ICAO address in the format of 6 hexadecimal digits
-        return "{:06X}".format(
-            np.random.randint(0, 0x1000000)
-        )  # Generates a number from 0 to 16777215
+        return f"{np.random.randint(0, 0x1000000):06X}"  # Generates a number from 0 to 16777215
 
     def update(self):
         # Update position to move in a more linear direction
-        distance_movement = np.random.uniform(
-            0.05, 0.15
-        )  # Small constant step for smooth movement
+        distance_movement = np.random.uniform(0.05, 0.15)  # Small constant step for smooth movement
         self.lat += distance_movement * np.cos(np.radians(self.heading))
         self.lon += distance_movement * np.sin(np.radians(self.heading))
 
@@ -42,22 +37,16 @@ class Aircraft:
         self.lon = max(19.0, min(self.lon, 29.0))  # Longitude range in Greece
 
         # Altitude can change gradually (e.g., climbing or descending)
-        self.altitude += np.random.choice(
-            [-20, 20, 0]
-        )  # Climb or descend 20 feet or stay level
+        self.altitude += np.random.choice([-20, 20, 0])  # Climb or descend 20 feet or stay level
         self.altitude = max(0, self.altitude)  # Ensure altitude doesn't go below 0
 
         # Velocity can change with small gradual adjustments
         self.velocity += np.random.uniform(-2, 2)  # Smooth adjustments to speed
-        self.velocity = max(
-            0, min(self.velocity, 600)
-        )  # Ensure velocity is within bounds
+        self.velocity = max(0, min(self.velocity, 600))  # Ensure velocity is within bounds
 
         # Gradually update heading to simulate a more consistent direction
         heading_change = np.random.uniform(-1, 1)  # Slightly adjust heading
-        self.heading = (
-            self.heading + heading_change
-        ) % 360  # Keep heading in 0-360 range
+        self.heading = (self.heading + heading_change) % 360  # Keep heading in 0-360 range
 
     def generate_adsb_message(self):
         # Format message as "MSG,1,..."
@@ -96,9 +85,7 @@ class Aircraft:
             msg_parts[18] = "0"  # Field 19: Alert (0 means no alert)
             msg_parts[19] = "0"  # Field 20: Emergency (0 means no emergency)
             msg_parts[20] = "0"  # Field 21: SPI (0 means no SPI)
-            msg_parts[21] = (
-                "0"  # Field 22: IsOnGround (0 means the aircraft is airborne)
-            )
+            msg_parts[21] = "0"  # Field 22: IsOnGround (0 means the aircraft is airborne)
         if msg_type == 4:
             msg_parts[12] = str(int(self.velocity))  # GroundSpeed as an integer
             msg_parts[13] = str(int(self.heading))  # Track (Heading) as an integer
@@ -156,9 +143,7 @@ def start_server(host="0.0.0.0", port=30003):
     while True:
         client_socket, addr = server_socket.accept()
         print(f"Accepted connection from {addr}")
-        client_handler = threading.Thread(
-            target=handle_client, args=(client_socket, aircrafts)
-        )
+        client_handler = threading.Thread(target=handle_client, args=(client_socket, aircrafts))
         client_handler.start()
 
 

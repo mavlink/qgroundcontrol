@@ -37,12 +37,14 @@ apt-get install -y -qq --no-install-recommends \
     python3 \
     python3-pip \
     rsync \
+    unzip \
     wget \
     zsync
 
 pipx ensurepath
 pipx install cmake
 pipx install ninja
+pipx install gcovr
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies

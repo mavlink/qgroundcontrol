@@ -1,11 +1,10 @@
 # Initial Repository Setup For Custom Build
 
-* Navigate to the [QGC repo](https://github.com/mavlink/qgroundcontrol) and create your own fork.
-* Copy the `custom_example` directory to a new `custom` directory at the root of the repo.
-* Tweak the source in `custom` directory as needed.
+- Navigate to the [QGC repo](https://github.com/mavlink/qgroundcontrol) and create your own fork.
+- Copy the `custom_example` directory to a new `custom` directory at the root of the repo.
+- Tweak the source in `custom` directory as needed.
 
 You can also rename the `custom-example` directory to `custom` but that can lead to merge problems when you bring your fork up to date with newer upstream version of regular QGC.
-
 
 ## Modifying Mainline QGC Source Code
 
