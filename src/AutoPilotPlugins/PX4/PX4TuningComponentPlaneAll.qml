@@ -23,7 +23,7 @@ PX4TuningComponent {
             tuningPage: "PX4TuningComponentPlaneRate.qml"
         }
         ListElement {
-            buttonText: qsTr("Rate Controller")
+            buttonText: qsTr("Attitude Controller")
             tuningPage: "PX4TuningComponentPlaneAttitude.qml"
         }
     }
