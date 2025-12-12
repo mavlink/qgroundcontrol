@@ -141,4 +141,23 @@ SettingsPage {
             enabled:            _videoSettings.enableStorageLimit.rawValue
         }
     }
+
+    SettingsGroupLayout {
+        Layout.fillWidth: true
+        heading:            qsTr("Fly View")
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Video Grid Lines")
+            fact:               _videoSettings.gridLines
+            visible:            fact.visible
+        }
+
+        LabelledFactComboBox {
+            Layout.fillWidth:   true
+            label:              qsTr("Video Screen Fit")
+            fact:               _videoSettings.videoFit
+            visible:            fact.visible
+        }
+    }
 }
