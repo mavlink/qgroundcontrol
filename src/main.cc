@@ -21,11 +21,6 @@
     #include "RunGuard.h"
 #endif
 
-#ifdef Q_OS_LINUX
-    #include <unistd.h>
-    #include <sys/types.h>
-#endif
-
 #ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
@@ -42,7 +37,7 @@ int main(int argc, char *argv[])
 #endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    if (::getuid() == 0) {
+    if (Platform::isUserRoot()) {
         const QApplication errorApp(argc, argv);
         // QErrorMessage
         (void) QMessageBox::critical(nullptr,
