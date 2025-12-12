@@ -1427,7 +1427,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     }
 
     emit remoteControlRSSIChanged(channels.rssi);
-    emit rcChannelsChanged(channels.chancount, pwmValues);
+    emit rcChannelsChanged(std::min(channels.chancount, QGCMAVLink::maxRcChannels), pwmValues);
 }
 
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
