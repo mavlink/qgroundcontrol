@@ -9,7 +9,7 @@ COPY tools/setup/read-config.sh /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && /tmp/qt/install-dependencies-debian.sh
 
 # Read all versions from centralized config
-RUN apt-get update && apt-get install -y jq && \
+RUN apt-get update && apt-get install -y jq unzip && \
     CONFIG=/tmp/qt/build-config.json && \
     echo "export QT_VERSION=$(jq -r '.qt_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
     echo "export QT_MODULES=\"$(jq -r '.qt_modules' $CONFIG)\"" >> /etc/profile.d/qgc.sh && \
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y jq && \
     echo "export ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' $CONFIG)" >> /etc/profile.d/qgc.sh && \
     chmod +x /etc/profile.d/qgc.sh
 
-RUN . /etc/profile.d/qgc.sh && apt-get install -y openjdk-${JAVA_VERSION}-jdk
+RUN . /etc/profile.d/qgc.sh && apt-get update -qq && apt-get install -qq openjdk-${JAVA_VERSION}-jdk
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
@@ -28,8 +28,8 @@ ENV ANDROID_HOME=$ANDROID_SDK_ROOT
 # Install Android SDK and NDK
 RUN . /etc/profile.d/qgc.sh && \
     mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
-    wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
-    unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
+    wget -nv "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
+    unzip -q /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
     mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
     rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
     rm /opt/cmdline-tools.zip && \
@@ -45,8 +45,7 @@ RUN . /etc/profile.d/qgc.sh && \
 # Qt setup
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
-ENV QT_HOST_ARCH="gcc_64"
-ENV QT_HOST_ARCH_DIR="linux_gcc_64"
+ENV QT_HOST_ARCH="linux_gcc_64"
 ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
@@ -60,7 +59,7 @@ RUN . /etc/profile.d/qgc.sh && \
     aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH_DIR" >> /etc/profile.d/qgc.sh
+    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH" >> /etc/profile.d/qgc.sh
 
 RUN . /etc/profile.d/qgc.sh && \
     echo "export JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64" >> /etc/profile.d/qgc.sh
