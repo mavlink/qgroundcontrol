@@ -389,7 +389,8 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Close %1").arg(QGroundControl.appName)
-                        imageResource:      "/res/cancel.svg"
+                        imageResource:      "/res/XDeleteBlack.svg"
+                        imageColor:         QGroundControl.globalPalette.brandingPurple
                         visible:            mainWindow.visibility === Window.FullScreen
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
