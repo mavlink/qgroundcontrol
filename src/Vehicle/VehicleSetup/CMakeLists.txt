@@ -25,6 +25,8 @@ if(NOT QGC_NO_SERIAL_LINK)
             FirmwareUpgradeController.h
             PX4FirmwareUpgradeThread.cc
             PX4FirmwareUpgradeThread.h
+            RemoteControlCalibrationController.cc
+            RemoteControlCalibrationController.h
     )
 endif()
 

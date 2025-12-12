@@ -199,7 +199,7 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            function onRollChannelRCValueChanged(rcValue) { rollLoader.item.rcValue = rcValue }
+                            function onRollChannelValueChanged(rcValue) { rollLoader.item.rcValue = rcValue }
                         }
                     }
 
@@ -228,7 +228,7 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            function onPitchChannelRCValueChanged(rcValue) { pitchLoader.item.rcValue = rcValue }
+                            function onPitchChannelValueChanged(rcValue) { pitchLoader.item.rcValue = rcValue }
                         }
                     }
 
@@ -257,7 +257,7 @@ SetupPage {
                         Connections {
                             target: controller
 
-                            function onYawChannelRCValueChanged(rcValue) { yawLoader.item.rcValue = rcValue }
+                            function onYawChannelValueChanged(rcValue) { yawLoader.item.rcValue = rcValue }
                         }
                     }
 
@@ -285,7 +285,7 @@ SetupPage {
 
                         Connections {
                             target:                             controller
-                            function onThrottleChannelRCValueChanged(rcValue) { throttleLoader.item.rcValue = rcValue }
+                            function onThrottleChannelValueChanged(rcValue) { throttleLoader.item.rcValue = rcValue }
                         }
                     }
                 } // Column - Attitude Control labels
@@ -405,7 +405,7 @@ SetupPage {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          ScreenTools.defaultFontPixelWidth * 40
+                width:          ScreenTools.defaultFontPixelWidth * 30
                 spacing:        ScreenTools.defaultFontPixelHeight / 2
 
                 Row {
