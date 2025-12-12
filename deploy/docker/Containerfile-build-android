@@ -1,0 +1,294 @@
+# QGroundControl Android Build Environment
+FROM ubuntu:24.04
+
+# ========== CONFIGURATION AND METADATA ==========
+LABEL maintainer="QGroundControl Team"
+LABEL description="Android build environment for QGroundControl"
+LABEL version="1.0"
+
+# ---------- Environment Variables ----------
+    # Reduce APT interactions
+ENV DEBIAN_FRONTEND=noninteractive \
+    APT_LISTCHANGES_FRONTEND=none \
+    # UTF-8 Localization
+    LANGUAGE=en_US:en \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    # Android SDK paths
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_HOME=$ANDROID_SDK_ROOT \
+    # Qt installation paths and architectures
+    QT_PATH=/opt/Qt \
+    QT_HOST=linux \
+    QT_HOST_ARCH=linux_gcc_64 \
+    QT_TARGET=android \
+    QT_TARGET_ARCH_ARMV7=android_armv7 \
+    QT_TARGET_ARCH_ARM64=android_arm64_v8a \
+    # Ensure pipx is in PATH
+    PATH=/root/.local/bin:$PATH \
+    #  Build Type
+    BUILD_TYPE=Release
+
+# ---------- Arguments for the Build ----------
+ARG CONFIG_FILE=/tmp/qt/build-config.json \
+    ANDROID_SDK_MANAGER=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager
+
+# Configure APT to assume yes to all prompts and keep existing config files
+RUN echo 'APT::Get::Assume-Yes "true";' >> /etc/apt/apt.conf.d/90assumeyes && \
+    echo 'DPkg::Options::="--force-confdef";' >> /etc/apt/apt.conf.d/90assumeyes && \
+    echo 'DPkg::Options::="--force-confold";' >> /etc/apt/apt.conf.d/90assumeyes
+
+# ========== SYSTEM SETUP ==========
+# Configure locale and base system
+RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
+        ca-certificates \
+        gnupg2 \
+        locales \
+        software-properties-common && \
+    add-apt-repository -y universe && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
+
+# ========== PACKAGE INSTALLATION ==========
+# Install all packages in a single layer for better caching
+RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
+    # Core build tools and utilities
+    appstream \
+    binutils \
+    build-essential \
+    ccache \
+    cmake \
+    cppcheck \
+    curl \
+    file \
+    fuse3 \
+    gdb \
+    git \
+    jq \
+    libfuse2 \
+    libtool \
+    mold \
+    ninja-build \
+    patchelf \
+    pipx \
+    pkgconf \
+    python3 \
+    python3-pip \
+    rsync \
+    unzip \
+    wget \
+    zsync \
+    # Qt6 dependencies (https://doc.qt.io/qt-6/linux-requirements.html)
+    libatspi2.0-dev \
+    libfontconfig1-dev \
+    libfreetype-dev \
+    libgtk-3-dev \
+    libsm-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxcb-cursor-dev \
+    libxcb-glx0-dev \
+    libxcb-icccm4-dev \
+    libxcb-image0-dev \
+    libxcb-keysyms1-dev \
+    libxcb-present-dev \
+    libxcb-randr0-dev \
+    libxcb-render-util0-dev \
+    libxcb-render0-dev \
+    libxcb-shape0-dev \
+    libxcb-shm0-dev \
+    libxcb-sync-dev \
+    libxcb-util-dev \
+    libxcb-xfixes0-dev \
+    libxcb-xinerama0-dev \
+    libxcb-xkb-dev \
+    libxcb1-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxi-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libxrender-dev \
+    libunwind-dev \
+    # GStreamer for video/telemetry streaming
+    gstreamer1.0-gl \
+    gstreamer1.0-libav \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-rtp \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-qt6 \
+    gstreamer1.0-rtsp \
+    gstreamer1.0-x \
+    libgstreamer-plugins-bad1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev \
+    libgstreamer1.0-dev \
+    libgstreamer-gl1.0-0 \
+    # SDL
+    libusb-1.0-0-dev \
+    # Graphics and Audio utilities
+    libvulkan-dev \
+    libpipewire-0.3-dev
+
+# Clean up APT caches to reduce image size
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ========== ENVIRONMENT CONFIGURATION ==========
+# Copy configuration file
+COPY --chmod=644 .github/build-config.json ${CONFIG_FILE}
+
+# Extract environment variables to create profile script
+RUN <<EOF
+# Create profile script
+if test -f "$CONFIG_FILE"; then
+    {
+    echo "#!/bin/bash"
+    echo "export QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")"
+    echo "export QT_MODULES=\"$(jq -r '.qt_modules' "$CONFIG_FILE")\""
+    echo "export JAVA_VERSION=$(jq -r '.java_version' "$CONFIG_FILE")"
+    echo "export NDK_FULL_VERSION=$(jq -r '.ndk_full_version' "$CONFIG_FILE")"
+    echo "export ANDROID_PLATFORM=$(jq -r '.android_platform' "$CONFIG_FILE")"
+    echo "export ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' "$CONFIG_FILE")"
+    echo "export ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' "$CONFIG_FILE")"
+    } >> /etc/profile.d/qgc.sh
+else
+    echo "Warning: Configuration file not found at $CONFIG_FILE"
+    exit 1
+fi
+
+# Make profile script executable
+chmod +x /etc/profile.d/qgc.sh
+
+# Source profile script to set environment variables
+. /etc/profile.d/qgc.sh
+
+# Android SDK paths
+{
+echo "export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT"/ndk/"${NDK_FULL_VERSION}""
+echo "export ANDROID_BUILD_TOOLS_DIR="$ANDROID_SDK_ROOT"/build-tools/"${ANDROID_BUILD_TOOLS}""
+
+# Qt paths
+echo "export QT_HOST_PATH="$QT_PATH"/"$QT_VERSION"/"$QT_HOST_ARCH""
+echo "export QT_ROOT_DIR_ARMV7="$QT_PATH"/"$QT_VERSION"/"$QT_TARGET_ARCH_ARMV7""
+echo "export QT_ROOT_DIR_ARM64="$QT_PATH"/"$QT_VERSION"/"$QT_TARGET_ARCH_ARM64""
+
+# Java path
+echo "export JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64"
+} >> /etc/profile.d/qgc.sh
+
+# Update PATH
+echo 'export PATH=\
+/usr/lib/ccache:\
+$JAVA_HOME/bin:\
+$QT_HOST_PATH/bin:\
+$QT_ROOT_DIR_ARMV7/bin:\
+$QT_ROOT_DIR_ARM64/bin:\
+$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\
+$ANDROID_SDK_ROOT/platform-tools:\
+$ANDROID_SDK_ROOT/tools:\
+$ANDROID_BUILD_TOOLS_DIR:\
+$PATH' >> /etc/profile.d/qgc.sh
+EOF
+
+# ========== JAVA INSTALLATION ==========
+RUN . /etc/profile.d/qgc.sh && \
+    apt-get update -qq && \
+    apt-get install -qq --no-install-recommends \
+        openjdk-${JAVA_VERSION}-jdk && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ========== ANDROID SDK SETUP ==========
+RUN <<EOF
+. /etc/profile.d/qgc.sh
+
+# Create SDK directory
+mkdir -p "$ANDROID_SDK_ROOT"/cmdline-tools
+
+# Download and extract command line tools
+wget -q "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" \
+    -O /tmp/cmdline-tools.zip
+unzip -qq /tmp/cmdline-tools.zip -d "$ANDROID_SDK_ROOT"/cmdline-tools
+mv "$ANDROID_SDK_ROOT"/cmdline-tools/cmdline-tools \
+   "$ANDROID_SDK_ROOT"/cmdline-tools/latest
+rm /tmp/cmdline-tools.zip
+
+# Verify installation
+echo "Android SDK Manager: $("${ANDROID_SDK_MANAGER}" --version)"
+
+# Accept licenses
+yes | "$ANDROID_SDK_MANAGER" --sdk_root="$ANDROID_SDK_ROOT" --licenses > /dev/null 2>&1
+
+# Install Android components
+"$ANDROID_SDK_MANAGER" --sdk_root="$ANDROID_SDK_ROOT" \
+    "platform-tools" \
+    "platforms;android-${ANDROID_PLATFORM}" \
+    "build-tools;${ANDROID_BUILD_TOOLS}" \
+    "ndk;${NDK_FULL_VERSION}"
+EOF
+
+# ========== QT INSTALLATION ==========
+# Install aqtinstall
+RUN pipx install -q aqtinstall
+
+# Create Qt directory
+RUN mkdir -p "$QT_PATH"
+
+# Install Qt for host and target architectures
+RUN . /etc/profile.d/qgc.sh && \
+    # Install Qt for host (desktop)
+    aqt install-qt "$QT_HOST" desktop "$QT_VERSION" "$QT_HOST_ARCH" \
+            -O "$QT_PATH" \
+            -m "$QT_MODULES" && \
+    # Install Qt for Android (armeabi-v7a)
+    aqt install-qt "$QT_HOST" "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARMV7" \
+        -O "$QT_PATH" \
+        -m "$QT_MODULES" \
+        --autodesktop && \
+    # Install Qt for Android (arm64-v8a)
+    aqt install-qt "$QT_HOST" "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARM64" \
+        -O "$QT_PATH" \
+        -m "$QT_MODULES" \
+        --autodesktop
+
+# ========== FINAL CONFIGURATION ==========
+# Configure git for container usage
+RUN git config --global --add safe.directory /project/source
+
+# Set working directory
+WORKDIR /project/build
+
+# Create build script for easier debugging and flexibility
+COPY --chmod=755 <<EOF /usr/local/bin/build-qgc.sh
+#!/bin/bash
+set -euo pipefail
+
+# Create build directory
+mkdir -p /workspace/build
+cd /workspace/build
+
+# Configure with CMake
+qt-cmake -S /project/source \
+    -G Ninja \
+    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+    -DQT_HOST_PATH="${QT_HOST_PATH}" \
+    -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+    -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
+    -DANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS_DIR}" \
+    -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
+    -DQT_ANDROID_SIGN_APK=OFF \
+    -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_ROOT}"/build/cmake/android.toolchain.cmake
+
+# Build
+cmake --build . \
+      --target all \
+      --config "${BUILD_TYPE}" \
+      --parallel "$(nproc)"
+EOF
+
+# ========== DEFAULT ENTRYPOINT ==========
+# Use exec form for better signal handling
+ENTRYPOINT ["/bin/bash", "-lc", "build-qgc.sh"]
