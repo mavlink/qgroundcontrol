@@ -27,11 +27,10 @@ ENV ANDROID_HOME=$ANDROID_SDK_ROOT
 
 # Install Android SDK and NDK
 RUN . /etc/profile.d/qgc.sh && \
-    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
     wget -nv "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
     unzip -q /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
-    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
-    rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
+    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     rm /opt/cmdline-tools.zip && \
     yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
     $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
@@ -46,6 +45,7 @@ RUN . /etc/profile.d/qgc.sh && \
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
 ENV QT_HOST_ARCH="linux_gcc_64"
+ENV QT_HOST_ARCH_DIR="gcc_64"
 ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
@@ -60,7 +60,7 @@ RUN . /etc/profile.d/qgc.sh && \
     /opt/aqtinstall-venv/bin/aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH" >> /etc/profile.d/qgc.sh
+    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH_DIR" >> /etc/profile.d/qgc.sh
 
 RUN . /etc/profile.d/qgc.sh && \
     echo "export JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64" >> /etc/profile.d/qgc.sh
@@ -79,6 +79,8 @@ $ANDROID_BUILD_TOOLS_DIR:\
 $ANDROID_NDK_ROOT:\
 $PATH' >> /etc/profile.d/qgc.sh
 
+ENV LANGUAGE=en_US:en
+ENV LANG=en_US.UTF-8
 RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
 
 RUN git config --global --add safe.directory /project/source

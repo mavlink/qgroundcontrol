@@ -12,7 +12,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     #  UTF-8 Localization
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8 \
     #  Ensure pipx is in PATH
     PATH=/root/.local/bin:$PATH \
     #  Build Arguments

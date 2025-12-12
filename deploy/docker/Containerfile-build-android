@@ -13,7 +13,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     # UTF-8 Localization
     LANGUAGE=en_US:en \
     LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
     # Android SDK paths
     ANDROID_SDK_ROOT=/opt/android-sdk \
     ANDROID_HOME=$ANDROID_SDK_ROOT \
@@ -21,6 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     QT_PATH=/opt/Qt \
     QT_HOST=linux \
     QT_HOST_ARCH=linux_gcc_64 \
+    QT_HOST_ARCH_DIR=gcc_64 \
     QT_TARGET=android \
     QT_TARGET_ARCH_ARMV7=android_armv7 \
     QT_TARGET_ARCH_ARM64=android_arm64_v8a \
@@ -142,22 +142,23 @@ COPY --chmod=644 .github/build-config.json ${CONFIG_FILE}
 
 # Extract environment variables to create profile script
 RUN <<EOF
-# Create profile script
-if test -f "$CONFIG_FILE"; then
-    {
-    echo "#!/bin/bash"
-    echo "export QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")"
-    echo "export QT_MODULES=\"$(jq -r '.qt_modules' "$CONFIG_FILE")\""
-    echo "export JAVA_VERSION=$(jq -r '.java_version' "$CONFIG_FILE")"
-    echo "export NDK_FULL_VERSION=$(jq -r '.ndk_full_version' "$CONFIG_FILE")"
-    echo "export ANDROID_PLATFORM=$(jq -r '.android_platform' "$CONFIG_FILE")"
-    echo "export ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' "$CONFIG_FILE")"
-    echo "export ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' "$CONFIG_FILE")"
-    } >> /etc/profile.d/qgc.sh
-else
+# Check if configuration file exists
+if ! test -f "$CONFIG_FILE"; then
     echo "Warning: Configuration file not found at $CONFIG_FILE"
     exit 1
 fi
+
+# Create profile script with variables from configuration file
+{
+echo "#!/bin/bash"
+echo "export QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")"
+echo "export QT_MODULES=\"$(jq -r '.qt_modules' "$CONFIG_FILE")\""
+echo "export JAVA_VERSION=$(jq -r '.java_version' "$CONFIG_FILE")"
+echo "export NDK_FULL_VERSION=$(jq -r '.ndk_full_version' "$CONFIG_FILE")"
+echo "export ANDROID_PLATFORM=$(jq -r '.android_platform' "$CONFIG_FILE")"
+echo "export ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' "$CONFIG_FILE")"
+echo "export ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' "$CONFIG_FILE")"
+} >> /etc/profile.d/qgc.sh
 
 # Make profile script executable
 chmod +x /etc/profile.d/qgc.sh
@@ -167,11 +168,11 @@ chmod +x /etc/profile.d/qgc.sh
 
 # Android SDK paths
 {
-echo "export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT"/ndk/"${NDK_FULL_VERSION}""
-echo "export ANDROID_BUILD_TOOLS_DIR="$ANDROID_SDK_ROOT"/build-tools/"${ANDROID_BUILD_TOOLS}""
+echo "export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT"/ndk/"$NDK_FULL_VERSION""
+echo "export ANDROID_BUILD_TOOLS_DIR="$ANDROID_SDK_ROOT"/build-tools/"$ANDROID_BUILD_TOOLS""
 
 # Qt paths
-echo "export QT_HOST_PATH="$QT_PATH"/"$QT_VERSION"/"$QT_HOST_ARCH""
+echo "export QT_HOST_PATH="$QT_PATH"/"$QT_VERSION"/"$QT_HOST_ARCH_DIR""
 echo "export QT_ROOT_DIR_ARMV7="$QT_PATH"/"$QT_VERSION"/"$QT_TARGET_ARCH_ARMV7""
 echo "export QT_ROOT_DIR_ARM64="$QT_PATH"/"$QT_VERSION"/"$QT_TARGET_ARCH_ARM64""
 
@@ -191,6 +192,9 @@ $ANDROID_SDK_ROOT/platform-tools:\
 $ANDROID_SDK_ROOT/tools:\
 $ANDROID_BUILD_TOOLS_DIR:\
 $PATH' >> /etc/profile.d/qgc.sh
+
+# Verify environment configuration
+cat /etc/profile.d/qgc.sh
 EOF
 
 # ========== JAVA INSTALLATION ==========
@@ -242,16 +246,16 @@ RUN . /etc/profile.d/qgc.sh && \
     # Install Qt for host (desktop)
     aqt install-qt "$QT_HOST" desktop "$QT_VERSION" "$QT_HOST_ARCH" \
             -O "$QT_PATH" \
-            -m "$QT_MODULES" && \
+            -m $QT_MODULES && \
     # Install Qt for Android (armeabi-v7a)
     aqt install-qt "$QT_HOST" "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARMV7" \
         -O "$QT_PATH" \
-        -m "$QT_MODULES" \
+        -m $QT_MODULES \
         --autodesktop && \
     # Install Qt for Android (arm64-v8a)
     aqt install-qt "$QT_HOST" "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARM64" \
         -O "$QT_PATH" \
-        -m "$QT_MODULES" \
+        -m $QT_MODULES \
         --autodesktop
 
 # ========== FINAL CONFIGURATION ==========
@@ -280,7 +284,7 @@ qt-cmake -S /project/source \
     -DANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS_DIR}" \
     -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
     -DQT_ANDROID_SIGN_APK=OFF \
-    -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_ROOT}"/build/cmake/android.toolchain.cmake
+    -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake"
 
 # Build
 cmake --build . \
