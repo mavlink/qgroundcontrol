@@ -9,16 +9,25 @@ qt_add_library(gstqml6gl STATIC)
 # Platform-Specific GStreamer Linking
 # ----------------------------------------------------------------------------
 if(MACOS)
-    # NOTE: Using FindGStreamer.cmake is currently bypassed on macOS
-    # Using hardwired framework path as a workaround
+    # macOS uses framework path directly (FindGStreamer.cmake bypassed)
     find_library(GSTREAMER_FRAMEWORK GStreamer)
-    set(GST_PLUGINS_VERSION 1.24.12)
+    set(GST_REQUIRED_FRAMEWORK_VERSION ${QGC_CONFIG_GSTREAMER_VERSION})
+    set(GST_PLUGINS_VERSION ${GST_REQUIRED_FRAMEWORK_VERSION})
     set(GSTREAMER_FRAMEWORK_PATH "/Library/Frameworks/GStreamer.framework")
     if(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
         message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}. Install GStreamer using tools/setup/install-dependencies-osx.sh script")
     endif()
     target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
     target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+    # Verify correct framework version
+    execute_process(
+        COMMAND defaults read "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0/Resources/Info.plist" CFBundleShortVersionString
+        OUTPUT_VARIABLE GST_INSTALLED_FRAMEWORK_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT GST_INSTALLED_FRAMEWORK_VERSION STREQUAL GST_REQUIRED_FRAMEWORK_VERSION)
+        message(FATAL_ERROR "GStreamer.framework version (${GST_INSTALLED_FRAMEWORK_VERSION}) does not match required framework version (${GST_REQUIRED_FRAMEWORK_VERSION}). Please install the correct version using tools/setup/install-dependencies-osx.sh script")
+    endif()
 else()
     target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
 endif()

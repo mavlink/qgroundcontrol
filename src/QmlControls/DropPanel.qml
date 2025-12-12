@@ -83,7 +83,7 @@ Popup {
             y:      _arrowPointPositionY - _arrowPointWidth
             width:  _arrowPointWidth
             height: _arrowPointWidth * 2
-            
+
             onPaint: {
                 var context = getContext("2d")
                 context.reset()

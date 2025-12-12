@@ -24,7 +24,7 @@ QGCButton {
     contentItem: Item {
         id: contItem
         implicitWidth:  Math.max(textLabel.implicitWidth , icon.implicitWidth ) * 1.1
-        implicitHeight: iconSource === "" ? textLabel.implicitHeight : textLabel.implicitHeight * 2.5 
+        implicitHeight: iconSource === "" ? textLabel.implicitHeight : textLabel.implicitHeight * 2.5
         ColumnLayout {
             anchors.fill: parent
             QGCColoredImage {
@@ -39,7 +39,7 @@ QGCButton {
                 sourceSize.height:      height
                 sourceSize.width:       width
                 visible:                control.iconSource !== "" ? true : false
-            }   
+            }
 
             Item {
                 id:                     textLabelContainer
@@ -54,7 +54,7 @@ QGCButton {
                     font.pointSize:             control.font.pointSize
                     color:                      _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
                     anchors.baseline:           iconSource !== "" ? parent.bottom : undefined
-                    anchors.centerIn:           iconSource === "" ? parent : undefined   
+                    anchors.centerIn:           iconSource === "" ? parent : undefined
                     anchors.horizontalCenter:   parent.horizontalCenter
                 }
             }

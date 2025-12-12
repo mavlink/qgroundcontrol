@@ -56,7 +56,7 @@ SetupPage {
                 id:         motorSlider
                 enabled:    safetySwitch.checked
                 spacing:    ScreenTools.defaultFontPixelWidth * 4
-                
+
                 ValueSlider {
                     id:                 sliderThrottle
                     width:              motorButtons.width

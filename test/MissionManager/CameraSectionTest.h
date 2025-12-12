@@ -19,7 +19,7 @@ class SimpleMissionItem;
 class CameraSectionTest : public SectionTest
 {
     Q_OBJECT
-    
+
 public:
     CameraSectionTest(void);
 

@@ -17,6 +17,7 @@
         <file alias="clockwise-arrow.svg">resources/clockwise-arrow.svg</file>
         <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
         <file alias="chevron-down.svg">resources/chevron-down.svg</file>
+        <file alias="chevron-double-right.svg">resources/chevron-double-right.svg</file>
         <file alias="chevron-up.svg">resources/chevron-up.svg</file>
         <file alias="DropArrow.svg">resources/DropArrow.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
@@ -118,7 +119,7 @@
         <qresource prefix="/qml">
         <file alias="QGroundControl/AppSettings/NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
         <file alias="NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
-    </qresource>  
+    </qresource>
     <qresource prefix="/json">
         <file alias="NTRIP.SettingsGroup.json">src/Settings/NTRIP.SettingsGroup.json</file>
     </qresource>

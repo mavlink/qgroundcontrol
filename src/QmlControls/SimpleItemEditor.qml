@@ -12,8 +12,8 @@ import QGroundControl.FactControls
 // Editor for Simple mission items
 Rectangle {
     width:  availableWidth
-    height: editorColumn.height + (_margin * 2)
-    color:  qgcPal.windowShadeDark
+    height: editorColumn.height //+ (_margin * 2)
+    color:  "transparent"
     radius: _radius
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
@@ -23,6 +23,7 @@ Rectangle {
     property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
     property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeMixed
     property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
+    property real _fieldSpacing:            ScreenTools.defaultFontPixelHeight / 2
 
     function updateAltitudeModeText() {
         if (missionItem.altitudeMode === QGroundControl.AltitudeModeRelative) {
@@ -49,27 +50,15 @@ Rectangle {
     Component { id: altModeDialogComponent; AltModeDialog { } }
 
     Column {
-        id:                 editorColumn
-        anchors.margins:    _margin
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.top:        parent.top
-        spacing:            _margin
+        id:         editorColumn
+        width:      parent.width
+        spacing:    _margin
 
-        QGCLabel {
-            width:          parent.width
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           missionItem.rawEdit ?
-                                qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
-                                missionItem.commandDescription
-        }
-
+        // Takeoff item
         ColumnLayout {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _margin
-            visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
+            width:      parent.width
+            spacing:    _margin
+            visible:    missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
                 text:               qsTr("Move '%1' %2 to the %3 location. %4")
@@ -110,16 +99,14 @@ Rectangle {
         }
 
         Column {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            spacing:            _altRectMargin
-            visible:            !missionItem.wizardMode
+            width:      parent.width
+            spacing:    _fieldSpacing
+            visible:    !missionItem.wizardMode
 
             ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        0
-                visible:        _specifiesAltitude
+                width:      parent.width
+                spacing:    0
+                visible:    _specifiesAltitude
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -152,11 +139,6 @@ Rectangle {
                         spacing: _altRectMargin
 
                         QGCLabel {
-                            Layout.alignment:   Qt.AlignBaseline
-                            text:               qsTr("Altitude")
-                            font.pointSize:     ScreenTools.smallFontPointSize
-                        }
-                        QGCLabel {
                             id:                 altModeLabel
                             Layout.alignment:   Qt.AlignBaseline
                             visible:            _globalAltMode !== QGroundControl.AltitudeModeRelative
@@ -171,9 +153,10 @@ Rectangle {
                     }
                 }
 
-                FactTextField {
+                FactTextFieldSlider {
                     id:                 altField
                     Layout.fillWidth:   true
+                    label:              qsTr("Altitude")
                     fact:               missionItem.altitude
                 }
 
@@ -185,9 +168,8 @@ Rectangle {
             }
 
             ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
+                width:      parent.width
+                spacing:    _margin
 
                 Repeater {
                     model: missionItem.comboboxFacts
@@ -212,73 +194,47 @@ Rectangle {
                 }
             }
 
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                flow:           GridLayout.TopToBottom
-                rows:           missionItem.textFieldFacts.count +
-                                missionItem.nanFacts.count +
-                                (missionItem.speedSection.available ? 1 : 0)
-                columns:        2
+            Repeater {
+                model: missionItem.textFieldFacts
 
-                Repeater {
-                    model: missionItem.textFieldFacts
-
-                    QGCLabel { text: object.name }
-                }
-
-                Repeater {
-                    model: missionItem.nanFacts
-
-                    QGCCheckBox {
-                        text:           object.name
-                        checked:        !isNaN(object.rawValue)
-                        onClicked:      object.rawValue = checked ? 0 : NaN
-                    }
-                }
-
-                QGCCheckBox {
-                    id:         flightSpeedCheckbox
-                    text:       qsTr("Flight Speed")
-                    checked:    missionItem.speedSection.specifyFlightSpeed
-                    onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
-                    visible:    missionItem.speedSection.available
-                }
-
-
-                Repeater {
-                    model: missionItem.textFieldFacts
-
-                    FactTextField {
-                        showUnits:          true
-                        fact:               object
-                        Layout.fillWidth:   true
-                        enabled:            !object.readOnly
-                    }
-                }
-
-                Repeater {
-                    model: missionItem.nanFacts
-
-                    FactTextField {
-                        showUnits:          true
-                        fact:               object
-                        Layout.fillWidth:   true
-                        enabled:            !isNaN(object.rawValue)
-                    }
-                }
-
-                FactTextField {
-                    fact:               missionItem.speedSection.flightSpeed
-                    Layout.fillWidth:   true
-                    enabled:            flightSpeedCheckbox.checked
-                    visible:            missionItem.speedSection.available
+                FactTextFieldSlider {
+                    width:          parent.width
+                    label:              object.name
+                    fact:               object
+                    enabled:            !object.readOnly
                 }
             }
 
+            Repeater {
+                model: missionItem.nanFacts
+
+                FactTextFieldSlider {
+                    width:                  parent.width
+                    label:                  object.name
+                    fact:                   object
+                    showEnableCheckbox:     true
+                    enableCheckBoxChecked:  !isNaN(object.rawValue)
+
+                    onEnableCheckboxClicked: object.rawValue = enableCheckBoxChecked ? 0 : NaN
+                }
+            }
+
+            FactTextFieldSlider {
+                width:                  parent.width
+                label:                  qsTr("Flight Speed")
+                fact:                   missionItem.speedSection.flightSpeed
+                showEnableCheckbox:     true
+                enableCheckBoxChecked:  missionItem.speedSection.specifyFlightSpeed
+                visible:                missionItem.speedSection.available
+
+                onEnableCheckboxClicked: missionItem.speedSection.specifyFlightSpeed = enableCheckBoxChecked
+            }
+
             CameraSection {
-                checked:    missionItem.cameraSection.settingsSpecified
+                width:      parent.width
                 visible:    missionItem.cameraSection.available
+
+                Component.onCompleted: checked = missionItem.cameraSection.settingsSpecified
             }
         }
     }

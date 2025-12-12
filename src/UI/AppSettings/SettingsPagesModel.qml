@@ -42,10 +42,7 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("Telemetry")
-        url: "qrc:/qml/QGroundControl/AppSettings/TelemetrySettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/drone.svg"
-        pageVisible: function() { return true }
+        name: "Divider"
     }
 
     ListElement {
@@ -54,19 +51,18 @@ ListModel {
         iconUrl: "qrc:/InstrumentValueIcons/airplane.svg"
         pageVisible: function() { return true }
     }
-    ListElement {
-        name: qsTr("NTRIP/RTK")
-        url: "qrc:/qml/QGroundControl/AppSettings/NTRIPSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/globe.svg"
-        pageVisible: function() {
-            return QGroundControl.settingsManager &&
-                   QGroundControl.settingsManager.ntripSettings !== undefined
-        }
-    }
+
     ListElement {
         name: qsTr("Comm Links")
         url: "qrc:/qml/QGroundControl/AppSettings/LinkSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/usb.svg"
+        pageVisible: function() { return true }
+    }
+
+    ListElement {
+        name: qsTr("Logging")
+        url: "qrc:/qml/QGroundControl/Controls/AppLogging.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/conversation.svg"
         pageVisible: function() { return true }
     }
 
@@ -78,13 +74,23 @@ ListModel {
     }
 
     ListElement {
+        name: qsTr("NTRIP/RTK")
+        url: "qrc:/qml/QGroundControl/AppSettings/NTRIPSettings.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/globe.svg"
+        pageVisible: function() {
+            return QGroundControl.settingsManager &&
+                   QGroundControl.settingsManager.ntripSettings !== undefined
+        }
+    }
+
+    ListElement {
         name: qsTr("PX4 Log Transfer")
         url: "qrc:/qml/QGroundControl/AppSettings/PX4LogTransferSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/inbox-download.svg"
-        pageVisible: function() { 
+        pageVisible: function() {
             var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
-            return QGroundControl.corePlugin.options.showPX4LogTransferOptions && 
-                        QGroundControl.px4ProFirmwareSupported && 
+            return QGroundControl.corePlugin.options.showPX4LogTransferOptions &&
+                        QGroundControl.px4ProFirmwareSupported &&
                         (activeVehicle ? activeVehicle.px4Firmware : true)
         }
     }
@@ -97,10 +103,14 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("Logging")
-        url: "qrc:/qml/QGroundControl/Controls/AppLogging.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/conversation.svg"
+        name: qsTr("Telemetry")
+        url: "qrc:/qml/QGroundControl/AppSettings/TelemetrySettings.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/drone.svg"
         pageVisible: function() { return true }
+    }
+
+    ListElement {
+        name: "Divider"
     }
 
     ListElement {
@@ -108,6 +118,10 @@ ListModel {
         url: "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/question.svg"
         pageVisible: function() { return true }
+    }
+
+    ListElement {
+        name: "Divider"
     }
 
     ListElement {
@@ -131,4 +145,3 @@ ListModel {
         pageVisible: function() { return ScreenTools.isDebug }
     }
 }
-

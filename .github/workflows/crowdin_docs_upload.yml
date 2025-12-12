@@ -17,15 +17,23 @@ on:
       - 'docs/en/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   upload-to-crowdin:
     if: github.event.pull_request.merged == true || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      - name: crowdin push
+        uses: actions/checkout@v6
+
+      - name: Upload sources to Crowdin
         uses: crowdin/github-action@v2
         with:
           config: 'docs/crowdin_docs.yml'

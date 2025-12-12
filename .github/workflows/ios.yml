@@ -3,34 +3,42 @@ name: iOS
 on:
   workflow_dispatch:
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
 
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 120
 
     strategy:
       matrix:
-        BuildType: [Release]
+        build_type: [Release]
 
     defaults:
       run:
         shell: bash
 
     env:
-      ARTIFACT: QGroundControl.app
       PACKAGE: QGroundControl
-      QT_VERSION: 6.10.0
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -38,52 +46,54 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
 
       - name: Setup Caching
         uses: ./.github/actions/cache
         with:
           host: mac
           target: ios
-          build-type: ${{ matrix.BuildType }}
+          build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt for MacOS
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.config.outputs.qt_version }}
           host: mac
           target: desktop
           arch: clang_64
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          modules: ${{ steps.config.outputs.qt_modules }}
           setup-python: false
           cache: true
 
       - name: Install Qt for iOS
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ steps.config.outputs.qt_version }}
           host: mac
           target: ios
           arch: ios
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: ${{ steps.config.outputs.qt_modules_ios }}
           cache: true
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.BuildType }} --parallel
+        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      - name: Save App
-        uses: actions/upload-artifact@v5
+      - name: Upload Build File
+        uses: ./.github/actions/upload
         with:
-          name: ${{ env.PACKAGE }}
-          path: ${{ runner.temp }}/build/*.app
+          artifact_name: ${{ env.PACKAGE }}.app
+          package_name: ${{ env.PACKAGE }}
+          upload_aws: 'false'

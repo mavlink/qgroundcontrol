@@ -226,7 +226,7 @@ QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround
         singleTransect.takeFirst();
         singleTransect.takeLast();
     }
-    
+
     for (int i=0; i<_expectedTransectCount; i++) {
         expectedCommands.append(singleTransect);
     }

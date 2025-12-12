@@ -17,20 +17,13 @@ import QtQuick.Window
 
 import QGroundControl
 import QGroundControl.FlightMap
-
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
-
-
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 import QGroundControl.UTMSP
-
 
 Item {
     id: _root
-
-    property bool planControlColapsed: false
 
     readonly property int   _decimalPlaces:             8
     readonly property real  _margin:                    ScreenTools.defaultFontPixelHeight * 0.5
@@ -48,26 +41,20 @@ Item {
     property bool   _lightWidgetBorders:                editorMap.isSatelliteMap
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
-     property int    _editingLayer:                      {if(!_utmspEnabled){layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission}else{layerTabBarUTMSP.currentIndex ? _layersUTMSP[layerTabBarUTMSP.currentIndex] : _layerMission}}
+    property int    _editingLayer:                      _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
     property bool   _promptForPlanUsageShowing:         false
     property bool   _utmspEnabled:                      QGroundControl.utmspSupported
     property bool   _resetGeofencePolygon:              false   //Reset the Geofence Polygon
-    property var    _vehicleID
     property bool   _triggerSubmit
     property bool   _resetRegisterFlightPlan
 
-    readonly property var       _layers:                    [_layerMission, _layerGeoFence, _layerRallyPoints]
-    readonly property var       _layersUTMSP:               [_layerMission, _layerRallyPoints, _layerUTMSP] //Adds additional UTMSP layer
+    readonly property int _layerMission:        1
+    readonly property int _layerOther:          2
 
-    readonly property int       _layerMission:              1
-    readonly property int       _layerGeoFence:             2
-    readonly property int       _layerRallyPoints:          3
-    readonly property int       _layerUTMSP:                4 // Additional Tab button when UTMSP is enabled
-    readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
-
+    readonly property string _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
     function mapCenter() {
         var coordinate = editorMap.center
@@ -380,7 +367,7 @@ Item {
 				if(_utmspEnabled){
                 	QGroundControl.utmspManager.utmspVehicle.updateLastCoordinates(coordinate.latitude, coordinate.longitude)
                 }
-                
+
                 switch (_editingLayer) {
                 case _layerMission:
                     if (addWaypointRallyPointAction.checked) {
@@ -389,20 +376,10 @@ Item {
                         insertROIAfterCurrent(coordinate)
                         _addROIOnClick = false
                     }
-
                     break
-                case _layerRallyPoints:
+                case _layerOther:
                     if (_rallyPointController.supported && addWaypointRallyPointAction.checked) {
                         _rallyPointController.addPoint(coordinate)
-                    }
-                    break
-
-                case _layerUTMSP:
-                    if (addWaypointRallyPointAction.checked) {
-                    	insertSimpleItemAfterCurrent(coordinate)
-                    } else if (_addROIOnClick) {
-                    	insertROIAfterCurrent(coordinate)
-                        _addROIOnClick = false
                     }
                     break
                 }
@@ -413,8 +390,8 @@ Item {
                 model: _missionController.visualItems
                 delegate: MissionItemMapVisual {
                     map:         editorMap
-                    opacity:     _editingLayer == _layerMission || _editingLayer == _layerUTMSP ? 1 : editorMap._nonInteractiveOpacity
-                    interactive: _editingLayer == _layerMission || _editingLayer == _layerUTMSP
+                    opacity:     _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
+                    interactive: _editingLayer == _layerMission
                     vehicle:     _planMasterController.controllerVehicle
                     onClicked:   (sequenceNumber) => { _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false) }
                 }
@@ -424,12 +401,12 @@ Item {
             MissionLineView {
                 showSpecialVisual:  _missionController.isROIBeginCurrentItem
                 model:              _missionController.simpleFlightPathSegments
-                opacity:            _editingLayer == _layerMission ||  _editingLayer == _layerUTMSP  ? 1 : editorMap._nonInteractiveOpacity
+                opacity:            _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
             }
 
             // Direction arrows in waypoint lines
             MapItemView {
-                model: _editingLayer == _layerMission ||_editingLayer == _layerUTMSP ? _missionController.directionArrows : undefined
+                model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
 
                 delegate: MapLineArrow {
                     fromCoord:      object ? object.coordinate1 : undefined
@@ -458,7 +435,7 @@ Item {
                 anchorPoint.x:  sourceItem.width / 2
                 anchorPoint.y:  sourceItem.height / 2
                 z:              QGroundControl.zOrderWaypointLines + 1
-                visible:        _editingLayer == _layerMission ||  _editingLayer == _layerUTMSP
+                visible:        _editingLayer == _layerMission
 
                 sourceItem: SplitIndicator {
                     onClicked:  _missionController.insertSimpleMissionItem(splitSegmentItem.coordinate,
@@ -503,47 +480,30 @@ Item {
             GeoFenceMapVisuals {
                 map:                    editorMap
                 myGeoFenceController:   _geoFenceController
-                interactive:            _editingLayer == _layerGeoFence
+                interactive:            _editingLayer == _layerOther
                 homePosition:           _missionController.plannedHomePosition
                 planView:               true
-                opacity:                _editingLayer != _layerGeoFence ? editorMap._nonInteractiveOpacity : 1
+                opacity:                _editingLayer != _layerOther ? editorMap._nonInteractiveOpacity : 1
             }
 
             RallyPointMapVisuals {
                 map:                    editorMap
                 myRallyPointController: _rallyPointController
-                interactive:            _editingLayer == _layerRallyPoints
+                interactive:            _editingLayer == _layerOther
                 planView:               true
-                opacity:                _editingLayer != _layerRallyPoints ? editorMap._nonInteractiveOpacity : 1
+                opacity:                _editingLayer != _layerOther ? editorMap._nonInteractiveOpacity : 1
             }
 
             UTMSPMapVisuals {
-                id: utmspvisual
                 enabled:                _utmspEnabled
                 map:                    editorMap
                 currentMissionItems:    _visualItems
                 myGeoFenceController:   _geoFenceController
-                interactive:            _editingLayer == _layerUTMSP
+                interactive:            _editingLayer == _layerOther
                 homePosition:           _missionController.plannedHomePosition
                 planView:               true
-                opacity:                _editingLayer != _layerUTMSP ? editorMap._nonInteractiveOpacity : 1
+                opacity:                _editingLayer != _layerOther ? editorMap._nonInteractiveOpacity : 1
                 resetCheck:             _resetGeofencePolygon
-            }
-
-            Connections {
-                target: utmspEditor
-                function onResetGeofencePolygonTriggered() {
-                    resetTimer.start()
-                }
-            }
-            Timer {
-                id: resetTimer
-                interval: 2500
-                running: false
-                repeat: false
-                onTriggered: {
-                    _resetGeofencePolygon = true
-                }
             }
         }
 
@@ -565,9 +525,8 @@ Item {
             readonly property int landButtonIndex:      5
             readonly property int centerButtonIndex:    6
 
-            property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
+            property bool _isRallyLayer:    _editingLayer == _layerOther
             property bool _isMissionLayer:  _editingLayer == _layerMission
-            property bool _isUtmspLayer:     _editingLayer == _layerUTMSP
 
             ToolStripActionList {
                 id: toolStripActionList
@@ -585,7 +544,7 @@ Item {
                         text:       qsTr("Takeoff")
                         iconSource: "/res/takeoff.svg"
                         enabled:    _missionController.isInsertTakeoffValid
-                        visible:    (toolStrip._isMissionLayer || toolStrip._isUtmspLayer) && !_planMasterController.controllerVehicle.rover
+                        visible:    toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertTakeoffItemAfterCurrent()
@@ -594,10 +553,10 @@ Item {
                     },
                     ToolStripAction {
                         id:                 addWaypointRallyPointAction
-                        text:               _editingLayer == _layerRallyPoints ? qsTr("Rally Point") : qsTr("Waypoint")
+                        text:               _editingLayer == _layerOther ? qsTr("Rally Point") : qsTr("Waypoint")
                         iconSource:         "/qmlimages/MapAddMission.svg"
                         enabled:            toolStrip._isRallyLayer ? true : _missionController.flyThroughCommandsAllowed
-                        visible:            toolStrip._isRallyLayer || toolStrip._isMissionLayer || toolStrip._isUtmspLayer
+                        visible:            toolStrip._isRallyLayer || toolStrip._isMissionLayer
                         checkable:          true
                     },
                     ToolStripAction {
@@ -637,7 +596,7 @@ Item {
                                       : qsTr("Land")
                         iconSource: "/res/rtl.svg"
                         enabled:    _missionController.isInsertLandValid
-                        visible:    toolStrip._isMissionLayer || toolStrip._isUtmspLayer
+                        visible:    toolStrip._isMissionLayer
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertLandItemAfterCurrent()
@@ -663,165 +622,14 @@ Item {
             onDropped: allAddClickBoolsOff()
         }
 
-        //-----------------------------------------------------------
-        // Right pane for mission editing controls
-        Rectangle {
-            id:                 rightPanel
-            height:             parent.height
-            width:{
-                 if(_utmspEnabled){
-                     _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667
-                 }
-                 else{
-                     _rightPanelWidth
-                 }
-             }
-            color:              qgcPal.window
-            opacity:            layerTabBar.visible ? 0.2 : 0
-            anchors.bottom:     parent.bottom
-            anchors.right:      parent.right
-            anchors.rightMargin: _toolsMargin
-        }
-        //-------------------------------------------------------
-        // Right Panel Controls
-        Item {
-            anchors.fill:           rightPanel
-            anchors.topMargin:      _toolsMargin
-            DeadMouseArea {
-                anchors.fill:   parent
-            }
-            Column {
-                id:                 rightControls
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        parent.top
-                //-------------------------------------------------------
-                // Mission Controls (Expanded)
-                QGCTabBar {
-                    id:         layerTabBar
-                    width:      parent.width
-                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector  && !_utmspEnabled
-                    Component.onCompleted: currentIndex = 0
-                    QGCTabButton {
-                        text:       qsTr("Mission")
-                    }
-                    QGCTabButton {
-                        text:       qsTr("Fence")
-                        enabled:    _geoFenceController.supported
-                    }
-                    QGCTabButton {
-                        text:       qsTr("Rally")
-                        enabled:    _rallyPointController.supported
-                    }
-                }
-
-                QGCTabBar {
-                    id:         layerTabBarUTMSP
-                    width:      parent.width
-                    visible:    QGroundControl.corePlugin.options.enablePlanViewSelector && _utmspEnabled
-                    QGCTabButton {
-                        text:       qsTr("Mission")
-                    }
-                    QGCTabButton {
-                        text:       qsTr("Rally")
-                        enabled:    _rallyPointController.supported
-                    }
-                    QGCTabButton {
-                        id: utmspbutton
-                        text:       qsTr("UTM-Adapter")
-                        visible: _utmspEnabled
-                    }
-                }
-            }
-            //-------------------------------------------------------
-            // Mission Item Editor
-            Item {
-                id:                     missionItemEditor
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                anchors.top:            rightControls.bottom
-                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.bottom:         parent.bottom
-                anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
-                visible:                _editingLayer == _layerMission && !planControlColapsed
-                QGCListView {
-                    id:                 missionItemEditorListView
-                    anchors.fill:       parent
-                    spacing:            ScreenTools.defaultFontPixelHeight / 4
-                    orientation:        ListView.Vertical
-                    model:              _missionController.visualItems
-                    cacheBuffer:        Math.max(height * 2, 0)
-                    clip:               true
-                    currentIndex:       _missionController.currentPlanViewSeqNum
-                    highlightMoveDuration: 250
-                    visible:            _editingLayer == _layerMission && !planControlColapsed
-                    //-- List Elements
-                    delegate: MissionItemEditor {
-                        map:            editorMap
-                        masterController:  _planMasterController
-                        missionItem:    object
-                        width:          missionItemEditorListView.width
-                        readOnly:       false
-                        onClicked: (sequenceNumber) => { _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false) }
-                        onRemove: {
-                            var removeVIIndex = index
-                            _missionController.removeVisualItem(removeVIIndex)
-                            if (removeVIIndex >= _missionController.visualItems.count) {
-                                removeVIIndex--
-                            }
-                        }
-                        onSelectNextNotReadyItem:   selectNextNotReady()
-                    }
-                }
-            }
-            // GeoFence Editor
-            GeoFenceEditor {
-                anchors.top:            rightControls.bottom
-                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.bottom:         parent.bottom
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                myGeoFenceController:   _geoFenceController
-                flightMap:              editorMap
-                visible:                _editingLayer == _layerGeoFence
-            }
-
-            // Rally Point Editor
-            RallyPointEditorHeader {
-                id:                     rallyPointHeader
-                anchors.top:            rightControls.bottom
-                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                visible:                _editingLayer == _layerRallyPoints
-                controller:             _rallyPointController
-            }
-            RallyPointItemEditor {
-                id:                     rallyPointEditor
-                anchors.top:            rallyPointHeader.bottom
-                anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                visible:                _editingLayer == _layerRallyPoints && _rallyPointController.points.count
-                rallyPoint:             _rallyPointController.currentRallyPoint
-                controller:             _rallyPointController
-            }
-            UTMSPAdapterEditor{
-                id: utmspEditor
-                enabled:                 _utmspEnabled
-                anchors.top:             rightControls.bottom
-                anchors.topMargin:       ScreenTools.defaultFontPixelHeight * 0.25
-                anchors.bottom:          parent.bottom
-                anchors.left:            parent.left
-                anchors.right:           parent.right
-                currentMissionItems:     _visualItems
-                myGeoFenceController:    _geoFenceController
-                flightMap:               editorMap
-                visible:                 _editingLayer == _layerUTMSP
-                triggerSubmitButton:     _triggerSubmit
-                resetRegisterFlightPlan: _resetRegisterFlightPlan
-            }
+        PlanViewRightPanel {
+            id:                     rightPanel
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            anchors.right:          parent.right
+            width:                  _utmspEnabled ? _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667 : _rightPanelWidth
+            planMasterController:   _planMasterController
+            editorMap:              editorMap
         }
 
         QGCLabel {
@@ -1162,18 +970,4 @@ Item {
         }
     }
 
-    Connections {
-        target: utmspEditor
-        function onVehicleIDSent(id) {
-            _vehicleID = id
-        }
-    }
-    Connections {
-        target: utmspEditor
-        function onRemoveFlightPlanTriggered() {
-            _planMasterController.removeAllFromVehicle();
-            _missionController.setCurrentPlanViewSeqNum(0, true);
-            if(_utmspEnabled){_resetRegisterFlightPlan = true}
-        }
-    }
 }

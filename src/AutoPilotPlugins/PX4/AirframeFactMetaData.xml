@@ -377,4 +377,5 @@
       <class>Spacecraft</class>
       <type>Free-Flyer</type>
     </airframe>
+  </airframe_group>
 </airframes>

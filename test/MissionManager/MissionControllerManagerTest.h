@@ -20,19 +20,19 @@ class MultiSignalSpy;
 class MissionControllerManagerTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     MissionControllerManagerTest(void);
-    
+
 protected slots:
     void cleanup(void);
-    
+
 protected:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _checkInProgressValues(bool inProgress);
-    
+
     MissionManager* _missionManager;
-    
+
     typedef struct {
         int             sequenceNumber;
         QGeoCoordinate  coordinate;
@@ -45,7 +45,7 @@ protected:
         bool            isCurrentItem;
         MAV_FRAME       frame;
     } ItemInfo_t;
-    
+
     typedef struct {
         const char*         itemStream;
         const ItemInfo_t    expectedItem;

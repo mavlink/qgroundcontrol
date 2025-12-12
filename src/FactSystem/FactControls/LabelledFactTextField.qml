@@ -37,4 +37,3 @@ RowLayout {
         Layout.preferredWidth:  textFieldPreferredWidth
     }
 }
-

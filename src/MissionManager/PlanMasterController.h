@@ -30,7 +30,7 @@ class PlanMasterController : public QObject
     QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
-    
+
 public:
     PlanMasterController(QObject* parent = nullptr);
 #ifdef QT_DEBUG

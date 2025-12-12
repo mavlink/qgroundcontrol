@@ -16,19 +16,19 @@ import QGroundControl.Controls
 
 PX4TuningComponent {
     model: ListModel {
-        ListElement { 
+        ListElement {
             buttonText: qsTr("Rate Controller")
             tuningPage: "PX4TuningComponentSpacecraftRate.qml"
         }
-        ListElement { 
+        ListElement {
             buttonText: qsTr("Attitude Controller")
             tuningPage: "PX4TuningComponentSpacecraftAttitude.qml"
         }
-        ListElement { 
+        ListElement {
             buttonText: qsTr("Velocity Controller")
             tuningPage: "PX4TuningComponentSpacecraftVelocity.qml"
         }
-        ListElement { 
+        ListElement {
             buttonText: qsTr("Position Controller")
             tuningPage: "PX4TuningComponentSpacecraftPosition.qml"
         }

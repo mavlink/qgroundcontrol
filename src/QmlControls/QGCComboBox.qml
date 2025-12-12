@@ -77,7 +77,7 @@ T.ComboBox {
         width:  _popupWidth
         height: Math.round(popupItemMetrics.height * 1.75)
 
-        property string _text: control.textRole ? 
+        property string _text: control.textRole ?
                                     (model.hasOwnProperty(control.textRole) ? model[control.textRole] : modelData[control.textRole]) :
                                     modelData
 
@@ -125,7 +125,7 @@ T.ComboBox {
         color:          qgcPal.button
         border.color:   qgcPal.buttonBorder
         border.width:   _showBorder ? 1 : 0
-        radius:         ScreenTools.buttonBorderRadius
+        radius:         ScreenTools.defaultBorderRadius
     }
 
     popup: T.Popup {

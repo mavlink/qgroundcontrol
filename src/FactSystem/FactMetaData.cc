@@ -107,6 +107,8 @@ const FactMetaData &FactMetaData::operator=(const FactMetaData &other)
     _longDescription = other._longDescription;
     _rawMax = other._rawMax;
     _rawMin = other._rawMin;
+    _rawUserMin = other._rawUserMin;
+    _rawUserMax = other._rawUserMax;
     _name = other._name;
     _shortDescription = other._shortDescription;
     _type = other._type;
@@ -149,12 +151,16 @@ void FactMetaData::setRawMin(const QVariant &rawMin)
 {
     if (isInRawMinLimit(rawMin)) {
         _rawMin = rawMin;
+        if (_rawUserMin.isValid() && !isInRawMinLimit(_rawUserMin)) {
+            _rawUserMin = _rawMin;
+        }
     } else {
         qWarning(FactMetaDataLog) << "Attempt to set min below allowable value for fact:" << name()
                                   << ", value attempted:" << rawMin
                                   << ", type:" << type()
                                   << ", min for type:" << _minForType();
         _rawMin = _minForType();
+        _rawUserMin = _rawMin;
     }
 }
 
@@ -162,12 +168,42 @@ void FactMetaData::setRawMax(const QVariant &rawMax)
 {
     if (isInRawMaxLimit(rawMax)) {
         _rawMax = rawMax;
+        if (_rawUserMax.isValid() && !isInRawMaxLimit(_rawUserMax)) {
+            _rawUserMax = _rawMax;
+        }
     } else {
         qWarning(FactMetaDataLog) << "Attempt to set max above allowable value for fact:" << name()
                                   << ", value attempted:" << rawMax
                                   << ", type:" << type()
                                   << ", max for type:" << _maxForType();
         _rawMax = _maxForType();
+        _rawUserMax = _rawMax;
+    }
+}
+
+void FactMetaData::setRawUserMin(const QVariant &rawUserMin)
+{
+    if (isInRawMinLimit(rawUserMin)) {
+        _rawUserMin = rawUserMin;
+    } else {
+        qWarning(FactMetaDataLog) << "Attempt to set user min below allowable value for fact:" << name()
+                                  << ", value attempted:" << rawUserMin
+                                  << ", type:" << type()
+                                  << ", min:" << _rawMin;
+        _rawUserMin = _rawMin;
+    }
+}
+
+void FactMetaData::setRawUserMax(const QVariant &rawUserMax)
+{
+    if (isInRawMaxLimit(rawUserMax)) {
+        _rawUserMax = rawUserMax;
+    } else {
+        qWarning(FactMetaDataLog) << "Attempt to set user max above allowable value for fact:" << name()
+                                  << ", value attempted:" << rawUserMax
+                                  << ", type:" << type()
+                                  << ", max:" << _rawMax;
+        _rawUserMax = _rawMax;
     }
 }
 
@@ -1152,6 +1188,8 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
         { _decimalPlacesJsonKey,        QJsonValue::Double, false },
         { _minJsonKey,                  QJsonValue::Double, false },
         { _maxJsonKey,                  QJsonValue::Double, false },
+        { _userMinJsonKey,              QJsonValue::Double, false },
+        { _userMaxJsonKey,              QJsonValue::Double, false },
         { _hasControlJsonKey,           QJsonValue::Bool,   false },
         { _qgcRebootRequiredJsonKey,    QJsonValue::Bool,   false },
         { _rebootRequiredJsonKey,       QJsonValue::Bool,   false },
@@ -1296,6 +1334,38 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
             metaData->setRawMax(typedValue);
         } else {
             qWarning(FactMetaDataLog) << "Invalid max value,"
+                                      << "name:" << metaData->name()
+                                      << "type:" << metaData->type()
+                                      << "value:" << initialValue
+                                      << "error:" << errorString;
+        }
+    }
+
+    // If userMin/Max not specified, we leave at invalid so the ui can decide what to do
+
+    if (json.contains(_userMinJsonKey)) {
+        QVariant typedValue;
+        QString errorString;
+        const QVariant initialValue = json[_userMinJsonKey].toVariant();
+        if (metaData->convertAndValidateRaw(initialValue, true /* convertOnly */, typedValue, errorString)) {
+            metaData->setRawUserMin(typedValue);
+        } else {
+            qWarning(FactMetaDataLog) << "Invalid userMin value,"
+                                      << "name:" << metaData->name()
+                                      << "type:" << metaData->type()
+                                      << "value:" << initialValue
+                                      << "error:" << errorString;
+        }
+    }
+
+    if (json.contains(_userMaxJsonKey)) {
+        QVariant typedValue;
+        QString errorString;
+        const QVariant initialValue = json[_userMaxJsonKey].toVariant();
+        if (metaData->convertAndValidateRaw(initialValue, true /* convertOnly */, typedValue, errorString)) {
+            metaData->setRawUserMax(typedValue);
+        } else {
+            qWarning(FactMetaDataLog) << "Invalid userMax value,"
                                       << "name:" << metaData->name()
                                       << "type:" << metaData->type()
                                       << "value:" << initialValue
@@ -1520,4 +1590,22 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject &jsonObject, QStringList
     }
 
     return true;
+}
+
+QVariant FactMetaData::cookedUserMin() const
+{
+    if (!_rawUserMin.isValid()) {
+        return QVariant();
+    }
+
+    return _rawTranslator(_rawUserMin);
+}
+
+QVariant FactMetaData::cookedUserMax() const
+{
+    if (!_rawUserMax.isValid()) {
+        return QVariant();
+    }
+
+    return _rawTranslator(_rawUserMax);
 }

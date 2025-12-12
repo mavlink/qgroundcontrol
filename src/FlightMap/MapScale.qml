@@ -149,13 +149,13 @@ Item {
         function onZoomLevelChanged() { triggerRecalc() }
     }
 
-    PropertyAnimation { 
+    PropertyAnimation {
         id:         autoHideAnimation
         target:     control
         property:   "opacity"
         from:       1
         to:         0
-        duration:   500 
+        duration:   500
     }
 
     Timer {

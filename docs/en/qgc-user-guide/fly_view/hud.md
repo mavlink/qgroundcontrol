@@ -118,7 +118,7 @@ The Vehicle Messages Indicator dropdown shows you messages which come from the v
 
 ![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/gps_indicator.png)
 
-The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings. 
+The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings.
 ### Battery Indicator
 
 ![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/battery_indicator.png)

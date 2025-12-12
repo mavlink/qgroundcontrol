@@ -10,12 +10,16 @@
 # Default Configuration
 # ----------------------------------------------------------------------------
 
-# Set default version based on platform
+# Set default version based on platform (from build-config.json)
 if(NOT DEFINED GStreamer_FIND_VERSION)
     if(LINUX)
         set(GStreamer_FIND_VERSION 1.20)
+    elseif(WIN32)
+        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_WIN_VERSION})
+    elseif(ANDROID)
+        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_ANDROID_VERSION})
     else()
-        set(GStreamer_FIND_VERSION 1.22.12)
+        set(GStreamer_FIND_VERSION ${QGC_CONFIG_GSTREAMER_VERSION})
     endif()
 endif()
 

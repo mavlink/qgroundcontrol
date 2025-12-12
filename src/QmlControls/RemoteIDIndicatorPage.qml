@@ -29,7 +29,7 @@ ToolIndicatorPage {
     property bool   commsFlag:          _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.commsGood          : false
     property bool   emergencyDeclared:  _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.emergencyDeclared  : false
     property bool   operatorIDFlag:     _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.operatorIDGood     : false
-    
+
     property int    _regionOperation:   QGroundControl.settingsManager.remoteIDSettings.region.value
 
     // Flags visual properties
@@ -142,7 +142,7 @@ ToolIndicatorPage {
                             onClicked:      goToSettings()
                         }
                     }
-                    
+
                     Image {
                         id:                 gpsFlagImage
                         width:              flagsWidth

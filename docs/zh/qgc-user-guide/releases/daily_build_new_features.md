@@ -39,5 +39,5 @@
 - 开发者更改
   - 构建系统完全转换为 cmake
     - qmake 不再支持
-  - Source updated to use Qt 6.10.0
+  - Source updated to use Qt 6.10.1
   - GStreamer 支持已更新到 1.22

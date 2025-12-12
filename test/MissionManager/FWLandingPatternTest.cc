@@ -17,7 +17,7 @@
 
 FWLandingPatternTest::FWLandingPatternTest(void)
 {
-    
+
 }
 
 void FWLandingPatternTest::init(void)

@@ -58,7 +58,7 @@ Item {
                 clip:                   true
                 model:                  debugMessageModel
                 delegate:               delegateItem
- 
+
                 function scrollToEnd() {
                     if (listViewLoadCompleted) {
                         if (followTail.checked) {
@@ -280,4 +280,3 @@ Item {
         }
     }
 }
-

@@ -48,6 +48,10 @@ class Fact : public QObject
     Q_PROPERTY(QVariant     min                     READ cookedMin                                              CONSTANT)
     Q_PROPERTY(QString      minString               READ cookedMinString                                        CONSTANT)
     Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMin                 READ cookedUserMin                                          CONSTANT)
+    Q_PROPERTY(QString      userMinString           READ cookedUserMinString                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMax                 READ cookedUserMax                                          CONSTANT)
+    Q_PROPERTY(QString      userMaxString           READ cookedUserMaxString                                    CONSTANT)
     Q_PROPERTY(QString      name                    READ name                                                   CONSTANT)
     Q_PROPERTY(bool         vehicleRebootRequired   READ vehicleRebootRequired                                  CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
@@ -56,6 +60,7 @@ class Fact : public QObject
     Q_PROPERTY(QVariant     value                   READ cookedValue                WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(QVariant     rawValue                READ rawValue                   WRITE setRawValue           NOTIFY rawValueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                     NOTIFY valueChanged)
+    Q_PROPERTY(QString      invalidValueString      READ invalidValueString                                     CONSTANT)
     Q_PROPERTY(QString      valueString             READ cookedValueString                                      NOTIFY valueChanged)
     Q_PROPERTY(QString      enumOrValueString       READ enumOrValueString                                      NOTIFY valueChanged)
     Q_PROPERTY(double       increment               READ cookedIncrement                                        CONSTANT)
@@ -111,11 +116,19 @@ public:
     QVariant cookedMin() const;
     QString cookedMinString() const;
     bool minIsDefaultForType() const;
+    QVariant rawUserMin() const;
+    QVariant cookedUserMin() const;
+    QString cookedUserMinString() const;
+    QVariant rawUserMax() const;
+    QVariant cookedUserMax() const;
+    QString cookedUserMaxString() const;
     QString name() const { return _name; }
     QString shortDescription() const;
     FactMetaData::ValueType_t type() const { return _type; }
     QString cookedUnits() const;
     QString rawUnits() const;
+    QString invalidValueString(int decimalPlaces) const;
+    QString invalidValueString() const { return invalidValueString(decimalPlaces()); }
     QString rawValueString() const;
     QString cookedValueString() const;
     bool valueEqualsDefault() const;
@@ -191,7 +204,7 @@ protected:
 
     QString _name;
     int _componentId = -1;
-    QVariant _rawValue = 0;
+    QVariant _rawValue; // QVariant::Invalid
     FactMetaData::ValueType_t _type = FactMetaData::valueTypeInt32;
     FactMetaData *_metaData = nullptr;
     bool _sendValueChangedSignals = true;

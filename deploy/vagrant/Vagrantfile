@@ -2,10 +2,15 @@
 # vi: set ft=ruby :
 
 require 'yaml'
+require 'json'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
 configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
 yaml_config    = configfile['configs']['dev']
+
+# Load centralized build config
+build_config_path = File.join(current_dir, '../../.github/build-config.json')
+build_config = JSON.parse(File.read(build_config_path))
 
 env_global = [
   'JOBS=4',
@@ -91,10 +96,10 @@ Vagrant.configure(2) do |config|
      apt-get install -y patchelf
 
      dir="%{qt_deps_unpack_dir}"
-     version="6.10.0"
+     version="%{qt_version}"
      host="linux"
      target="desktop"
-     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml"
+     modules="%{qt_modules}"
      su - vagrant -c "rm -rf ${dir}"
      su - vagrant -c "mkdir -p ${dir}"
      su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
@@ -144,7 +149,6 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
 
   config.vm.provision "dev", type: "shell", inline: $config_shell  % {
     :shadow_build_dir => yaml_config['shadow_build_dir'],
-    :qt_deps_tarball => yaml_config['qt_deps_tarball'],
     :spec => yaml_config['spec'],
     :apt_pkgs => (packages).join(' '),
     :build_env => env_global.select { |item| item.is_a?(String) }.join(' '),
@@ -152,16 +156,15 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
     :project_root_dir => yaml_config['project_root_dir'],
     :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],
     :qt_deps_unpack_dir => yaml_config['qt_deps_unpack_dir'],
-    :qt_deps_bin_unpack_dir => yaml_config['qt_deps_bin_unpack_dir'],
-    :qt_deps_lib_unpack_dir => yaml_config['qt_deps_lib_unpack_dir'],
-    :qt_deps_plugins_unpack_dir => yaml_config['qt_deps_plugins_unpack_dir'],
-    :qt_deps_qml_unpack_dir => yaml_config['qt_deps_qml_unpack_dir'],
 
     :qt_deps_dir => yaml_config['qt_deps_dir'],
     :qt_deps_bin_dir => yaml_config['qt_deps_bin_dir'],
     :qt_deps_lib_dir => yaml_config['qt_deps_lib_dir'],
     :qt_deps_plugins_dir => yaml_config['qt_deps_plugins_dir'],
     :qt_deps_qml_dir => yaml_config['qt_deps_qml_dir'],
+
+    :qt_version => build_config['qt_version'],
+    :qt_modules => build_config['qt_modules'],
   }
 
 

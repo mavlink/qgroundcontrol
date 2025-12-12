@@ -151,7 +151,6 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCSimpleMessageDialog.qml
         QGCSlider.qml
         QGCSwipeView.qml
-        QGCSwitch.qml
         QGCTabBar.qml
         QGCTabButton.qml
         QGCTextField.qml
@@ -202,6 +201,7 @@ qt_add_qml_module(QGroundControlControlsModule
         PlanEditToolbar.qml
         PlanToolBarIndicators.qml
         PlanView.qml
+        PlanViewRightPanel.qml
         RallyPointEditorHeader.qml
         RallyPointItemEditor.qml
         RallyPointMapVisuals.qml

@@ -42,4 +42,3 @@ private:
     QString _cacheDir;
     QString _tmpFilesDir;
 };
-

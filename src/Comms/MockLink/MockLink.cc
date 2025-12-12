@@ -1818,39 +1818,6 @@ void MockLink::_handleRequestMessageAutopilotVersion(const mavlink_command_long_
     _respondWithAutopilotVersion();
 }
 
-void MockLink::_handleRequestMessageProtocolVersion(const mavlink_command_long_t &request, bool &accepted)
-{
-    accepted = true;
-
-    switch (_failureMode) {
-    case MockConfiguration::FailNone:
-        break;
-    case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionFailure:
-        accepted = false;
-        return;
-    case MockConfiguration::FailInitialConnectRequestMessageProtocolVersionLost:
-        accepted = true;
-        return;
-    default:
-        break;
-    }
-
-    const uint8_t nullHash[8]{};
-    mavlink_message_t responseMsg{};
-    (void) mavlink_msg_protocol_version_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        mavlinkChannel(),
-        &responseMsg,
-        200,
-        100,
-        200,
-        nullHash,
-        nullHash
-    );
-    respondWithMavlinkMessage(responseMsg);
-}
-
 void MockLink::_handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck)
 {
     accepted = true;
@@ -1945,9 +1912,6 @@ void MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool
     switch (static_cast<int>(request.param1)) {
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
         _handleRequestMessageAutopilotVersion(request, accepted);
-        break;
-    case MAVLINK_MSG_ID_PROTOCOL_VERSION:
-        _handleRequestMessageProtocolVersion(request, accepted);
         break;
     case MAVLINK_MSG_ID_COMPONENT_METADATA:
         if (_firmwareType == MAV_AUTOPILOT_PX4) {
@@ -2096,7 +2060,7 @@ void MockLink::_sendVideoInfo()
     }
 }
 
-void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased) 
+void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 {
     if (modeIndexOneBased > _availableModesCount()) {
         qCWarning(MockLinkLog) << "modeIndexOneBased out of range" << modeIndexOneBased << _availableModesCount();

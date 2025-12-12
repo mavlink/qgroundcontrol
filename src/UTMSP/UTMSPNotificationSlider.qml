@@ -23,7 +23,7 @@ import QGroundControl.FactControls
 
 
 import QGroundControl.UTMSP
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 
 
@@ -179,5 +179,3 @@ Rectangle {
     }
 
 }
-
-

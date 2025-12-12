@@ -1,11 +1,55 @@
 name: pre-commit
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-      - uses: pre-commit/action@v3.0.1
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+
+      - name: Install Qt and qmllint
+        run: |
+          sudo apt-get update -y --quiet
+          sudo apt-get install python3 python3-pip pipx -y
+          pipx install aqtinstall
+          pipx ensurepath
+          USER_BASE_BIN="$(python3 -m site --user-base)/bin"
+          export PATH="$USER_BASE_BIN:$PATH"
+          QT_VERSION=${{ steps.config.outputs.qt_version }}
+          QT_ARCH=linux_gcc_64
+          QT_PATH=/opt/Qt
+          aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH
+          echo "$QT_PATH/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1

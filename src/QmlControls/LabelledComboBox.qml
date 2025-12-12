@@ -28,7 +28,7 @@ RowLayout {
     signal activated(int index)
 
     QGCLabel {
-        id:                 label  
+        id:                 label
         Layout.fillWidth:   true
     }
 

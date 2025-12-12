@@ -428,8 +428,16 @@ public class QGCUsbSerialManager {
         final List<String> deviceInfoList = new ArrayList<>();
 
         for (final UsbDevice device : usbManager.getDeviceList().values()) {
-            final String deviceInfo = formatDeviceInfo(device);
-            deviceInfoList.add(deviceInfo);
+            try {
+                final String deviceInfo = formatDeviceInfo(device);
+                deviceInfoList.add(deviceInfo);
+            } catch (SecurityException e) {
+                // On some integrated controllers like the Siyi UNIRC7 the usb device is used for video output.
+                // This in turn causes a security exception when trying to access device info without permission.
+                // This could also happen if the user decides not to grant permission to access the device for a real
+                // case of a usb device being plugged in.
+                // We just eat the exception in these cases to prevent log spamming.
+            }
         }
 
         return deviceInfoList.toArray(new String[0]);

@@ -36,7 +36,7 @@ add_subdirectory(Camera)
 add_subdirectory(Comms)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
-add_subdirectory(FlightDisplay)
+add_subdirectory(FlyView)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Gimbal)
@@ -134,7 +134,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         AutoPilotPluginsCommonModule
         FactControlsModule
         FirstRunPromptDialogsModule
-        FlightDisplayModule
+        FlyViewModule
         FlightMapModule
         QGroundControlControlsModule
         QGroundControlModule
@@ -181,6 +181,12 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 )
 
 # Build configuration-specific definitions
+target_compile_definitions(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QT_DISABLE_DEPRECATED_UP_TO=${QGC_QT_DISABLE_DEPRECATED_UP_TO}
+        QT_ENABLE_STRICT_MODE_UP_TO=${QGC_QT_ENABLE_STRICT_MODE_UP_TO}
+)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -191,11 +197,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 else()
     target_compile_definitions(${CMAKE_PROJECT_NAME}
         PRIVATE
-            QT_DISABLE_DEPRECATED_UP_TO=0x060800
-            QT_ENABLE_STRICT_MODE_UP_TO=0x060800
             $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
     )
 endif()
+
+# ============================================================================
+# Code Coverage Configuration
+# ============================================================================
+
+include(Coverage)
 
 # ============================================================================
 # Target Properties

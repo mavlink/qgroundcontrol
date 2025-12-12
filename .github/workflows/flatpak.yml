@@ -1,15 +1,43 @@
-name: flatpak
-on: [workflow_dispatch]
+name: Flatpak
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
+  config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      gnome_version: ${{ steps.config.outputs.flatpak_gnome_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
   flatpak-builder:
     name: Flatpak
     runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: config
     container:
-      image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      image: bilelmoussaoui/flatpak-github-actions:gnome-${{ needs.config.outputs.gnome_version }}
       options: --privileged
     steps:
-      - uses: actions/checkout@v5
-      - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build Flatpak
+        uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: org.mavlink.qgroundcontrol.flatpak
           manifest-path: ./deploy/flatpak/org.mavlink.qgroundcontrol.yml
