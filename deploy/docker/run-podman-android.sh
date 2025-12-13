@@ -17,7 +17,7 @@ fi
 
 # Build the Docker image for Android
 podman build \
-    --jobs="${PARALLEL_BUILD_AMOUNT}" \
+    --jobs "${PARALLEL_BUILD_AMOUNT}" \
     --file "${DOCKERFILE_PATH}" \
     --tag "${IMAGE_NAME}" \
     "${SOURCE_DIR}"

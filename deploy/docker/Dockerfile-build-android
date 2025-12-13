@@ -5,7 +5,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Copy build config and setup scripts
 COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
-COPY tools/setup/read-config.sh /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && /tmp/qt/install-dependencies-debian.sh
 
 # Read all versions from centralized config
@@ -52,12 +51,10 @@ ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
 
 # Install aqtinstall and download Qt for both host and target architectures
 RUN . /etc/profile.d/qgc.sh && \
-    python3 -m venv /opt/aqtinstall-venv && \
-    /opt/aqtinstall-venv/bin/python3 -m pip install aqtinstall && \
     mkdir -p $QT_PATH && \
-    /opt/aqtinstall-venv/bin/aqt install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
-    /opt/aqtinstall-venv/bin/aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
-    /opt/aqtinstall-venv/bin/aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    aqt install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
+    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
     echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH_DIR" >> /etc/profile.d/qgc.sh
@@ -93,16 +90,16 @@ WORKDIR /project/build
 
 # Build the project (uses environment from /etc/profile.d/qgc.sh)
 CMD ["bash", "-lc", "\
-    mkdir -p /workspace/build/build && \
-    cd /workspace/build/build && \
-    qt-cmake -S /project/source -G Ninja \
+    qt-cmake -S /project/source -B /project/build \
+        -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DQT_HOST_PATH=$QT_HOST_PATH \
         -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+        -DANDROID_PLATFORM=android-${ANDROID_PLATFORM} \
         -DQT_ANDROID_ABIS=\"armeabi-v7a;arm64-v8a\" \
         -DANDROID_BUILD_TOOLS=$ANDROID_BUILD_TOOLS_DIR \
         -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
         -DQT_ANDROID_SIGN_APK=OFF \
         -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake && \
-    cmake --build . --target all --config Release --parallel \
+    cmake --build /project/build --target all --config Release --parallel \
 "]

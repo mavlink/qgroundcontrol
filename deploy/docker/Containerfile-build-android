@@ -33,11 +33,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 ARG CONFIG_FILE=/tmp/qt/build-config.json \
     ANDROID_SDK_MANAGER=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager
 
-# Configure APT to assume yes to all prompts and keep existing config files
-RUN echo 'APT::Get::Assume-Yes "true";' >> /etc/apt/apt.conf.d/90assumeyes && \
-    echo 'DPkg::Options::="--force-confdef";' >> /etc/apt/apt.conf.d/90assumeyes && \
-    echo 'DPkg::Options::="--force-confold";' >> /etc/apt/apt.conf.d/90assumeyes
-
 # ========== SYSTEM SETUP ==========
 # Configure locale and base system
 RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
@@ -49,8 +44,6 @@ RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
     locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8
 
-# ========== PACKAGE INSTALLATION ==========
-# Install all packages in a single layer for better caching
 RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
     # Core build tools and utilities
     appstream \
@@ -136,11 +129,11 @@ RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# ========== ENVIRONMENT CONFIGURATION ==========
+# ========== BUILD ENVIRONMENT CONFIGURATION ==========
 # Copy configuration file
 COPY --chmod=644 .github/build-config.json ${CONFIG_FILE}
 
-# Extract environment variables to create profile script
+# Create profile script with variables from configuration file
 RUN <<EOF
 # Check if configuration file exists
 if ! test -f "$CONFIG_FILE"; then
@@ -148,7 +141,6 @@ if ! test -f "$CONFIG_FILE"; then
     exit 1
 fi
 
-# Create profile script with variables from configuration file
 {
 echo "#!/bin/bash"
 echo "export QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")"
@@ -190,6 +182,7 @@ $QT_ROOT_DIR_ARM64/bin:\
 $ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\
 $ANDROID_SDK_ROOT/platform-tools:\
 $ANDROID_SDK_ROOT/tools:\
+$ANDROID_NDK_ROOT:\
 $ANDROID_BUILD_TOOLS_DIR:\
 $PATH' >> /etc/profile.d/qgc.sh
 
@@ -265,34 +258,21 @@ RUN git config --global --add safe.directory /project/source
 # Set working directory
 WORKDIR /project/build
 
-# Create build script for easier debugging and flexibility
-COPY --chmod=755 <<EOF /usr/local/bin/build-qgc.sh
-#!/bin/bash
-set -euo pipefail
-
-# Create build directory
-mkdir -p /workspace/build
-cd /workspace/build
-
-# Configure with CMake
-qt-cmake -S /project/source \
-    -G Ninja \
-    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-    -DQT_HOST_PATH="${QT_HOST_PATH}" \
-    -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
-    -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
-    -DANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS_DIR}" \
-    -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
-    -DQT_ANDROID_SIGN_APK=OFF \
-    -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake"
-
-# Build
-cmake --build . \
-      --target all \
-      --config "${BUILD_TYPE}" \
-      --parallel "$(nproc)"
-EOF
-
-# ========== DEFAULT ENTRYPOINT ==========
+# ========== DEFAULT CMD ==========
 # Use exec form for better signal handling
-ENTRYPOINT ["/bin/bash", "-lc", "build-qgc.sh"]
+CMD ["/bin/bash", "-lc", "\
+    qt-cmake -S /project/source -B /project/build \
+        -G Ninja \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+        -DQT_HOST_PATH=${QT_HOST_PATH} \
+        -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
+        -DANDROID_PLATFORM=android-${ANDROID_PLATFORM} \
+        -DQT_ANDROID_ABIS=\"armeabi-v7a;arm64-v8a\" \
+        -DANDROID_SDK_ROOT=${ANDROID_SDK_ROOT} \
+        -DQT_ANDROID_SIGN_APK=OFF \
+        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake && \
+    cmake --build /project/build \
+        --target all \
+        --config ${BUILD_TYPE} \
+        --parallel $(nproc)\
+"]
