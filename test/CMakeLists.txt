@@ -68,9 +68,6 @@ add_qgc_test(LogDownloadTest)
 add_qgc_test(PX4LogParserTest)
 # add_qgc_test(ULogParserTest)
 
-# add_subdirectory(AutoPilotPlugins)
-# add_qgc_test(RadioConfigTest)
-
 add_subdirectory(Camera)
 add_qgc_test(QGCCameraManagerTest)
 

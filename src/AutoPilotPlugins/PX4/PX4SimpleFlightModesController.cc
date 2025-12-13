@@ -26,11 +26,11 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
         return;
     }
 
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::_rcChannelsChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::channelValuesChanged);
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
-void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
+void PX4SimpleFlightModesController::channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
     _rcChannelValues.clear();
     for (int i=0; i<channelCount; i++) {

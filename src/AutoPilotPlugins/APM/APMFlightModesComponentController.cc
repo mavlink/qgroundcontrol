@@ -59,10 +59,10 @@ APMFlightModesComponentController::APMFlightModesComponentController(QObject *pa
         _rgChannelOptionEnabled.append(QVariant(false));
     }
 
-    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::_rcChannelsChanged);
+    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::channelValuesChanged);
 }
 
-void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
+void APMFlightModesComponentController::channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
 {
     int flightModeChannel = 4;
 
