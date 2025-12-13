@@ -35,7 +35,8 @@ class RemoteControlCalibrationController : public FactPanelController
     Q_PROPERTY(int yawChannelReversed READ yawChannelReversed NOTIFY yawChannelReversedChanged)
     Q_PROPERTY(int throttleChannelReversed READ throttleChannelReversed NOTIFY throttleChannelReversedChanged)
     Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
-    Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
+    Q_PROPERTY(QList<int> stickDisplayPositions READ stickDisplayPositions NOTIFY stickDisplayPositionsChanged)
+    Q_PROPERTY(bool centeredThrottle READ centeredThrottle WRITE setCenteredThrottle NOTIFY centeredThrottleChanged)
 
 public:
     RemoteControlCalibrationController(QObject *parent = nullptr);
@@ -51,54 +52,44 @@ public:
     int pitchChannelValue();
     int yawChannelValue();
     int throttleChannelValue();
-
     bool rollChannelMapped();
     bool pitchChannelMapped();
     bool yawChannelMapped();
     bool throttleChannelMapped();
-
     bool rollChannelReversed();
     bool pitchChannelReversed();
     bool yawChannelReversed();
     bool throttleChannelReversed();
-
     int channelCount() const { return _chanCount; }
-
     int transmitterMode() const { return _transmitterMode; }
+    QList<int> stickDisplayPositions() const { return _stickDisplayPositions; }
+    bool centeredThrottle() const { return _centeredThrottle; }
+
     void setTransmitterMode(int mode);
+    void setCenteredThrottle(bool centered);
 
 signals:
     void statusTextChanged();
     void cancelButtonChanged();
     void nextButtonChanged();
     void skipButtonChanged();
-
     void channelCountChanged(int channelCount);
     void channelValueChanged(int channel, int value);
-
     void rollChannelMappedChanged(bool mapped);
     void pitchChannelMappedChanged(bool mapped);
     void yawChannelMappedChanged(bool mapped);
     void throttleChannelMappedChanged(bool mapped);
-
     void rollChannelValueChanged(int rcValue);
     void pitchChannelValueChanged(int rcValue);
     void yawChannelValueChanged(int rcValue);
     void throttleChannelValueChanged(int rcValue);
-
     void rollChannelReversedChanged(bool reversed);
     void pitchChannelReversedChanged(bool reversed);
     void yawChannelReversedChanged(bool reversed);
     void throttleChannelReversedChanged(bool reversed);
-
-    void imageHelpChanged(QString source);
-    void transmitterModeChanged(int mode);
-
-    /// Signalled when in unit test mode and a message box should be displayed by the next button
-    void nextButtonMessageBoxDisplayed();
-
-    /// Signalled to QML to indicate reboot is required
-    void functionMappingChangedAPMReboot();
+    void transmitterModeChanged();
+    void stickDisplayPositionsChanged();
+    void centeredThrottleChanged(bool centeredThrottle);
 
 public slots:
     /// Super class must call this when the channel values change
@@ -154,57 +145,64 @@ protected:
     void _signalAllAttitudeValueChanges();
 
 private:
+    // Stick display position in calibration image
+    //  horizontal - -1 indicates left, 0 indicates centered, +1 indicates right
+    //  vertical   - -1 indicates down, 0 indicates centered, +1 indicates up
+    struct StickDisplayPosition {
+        int horizontal;
+        int vertical;
+    };
+
+    struct BothSticksDisplayPositions {
+        StickDisplayPosition leftStick;
+        StickDisplayPosition rightStick;
+    };
+
+    enum StateMachineStepFunction {
+        StateMachineStepStickNeutral,
+        StateMachineStepThrottleUp,
+        StateMachineStepThrottleDown,
+        StateMachineStepYawRight,
+        StateMachineStepYawLeft,
+        StateMachineStepRollRight,
+        StateMachineStepRollLeft,
+        StateMachineStepPitchUp,
+        StateMachineStepPitchDown,
+        StateMachineStepPitchCenter,
+        StateMachineStepSwitchMinMax,
+        StateMachineStepComplete
+    };
+
     typedef void (RemoteControlCalibrationController::*inputFn)(enum StickFunction function, int chan, int value);
     typedef void (RemoteControlCalibrationController::*buttonFn)(void);
-    struct stateMachineEntry {
+    struct StateMachineEntry {
         enum StickFunction function;
-        const char *instructions;
-        const char *image;
+        enum StateMachineStepFunction stepFunction;
         inputFn channelInputFn;
         buttonFn nextButtonFn;
         buttonFn skipButtonFn;
     };
-    /// Returns the state machine entry for the specified state.
-    const stateMachineEntry *_getStateMachineEntry(int step) const;
 
+    const StateMachineEntry &_getStateMachineEntry(int step) const;
     void _advanceState();
-    /// Sets up the state machine according to the current step from _currentStep.
     void _setupCurrentState();
-
     void _inputCenterWaitBegin(StickFunction function, int channel, int value);
     void _inputStickDetect(StickFunction function, int channel, int value);
     void _inputStickMin(StickFunction function, int channel, int value);
     void _inputCenterWait(StickFunction function, int channel, int value);
-    /// Saves min/max for non-mapped channels
-    void _inputSwitchMinMax(StickFunction function, int channel, int value);
+    void _inputSwitchMinMax(StickFunction function, int channel, int value);    ///< Saves min/max for non-mapped channels
     void _inputSwitchDetect(StickFunction function, int channel, int value);
-
     void _switchDetect(StickFunction function, int channel, int value, bool moveToNextStep);
-
     void _saveAllTrims();
-
     bool _stickSettleComplete(int value);
-
-    /// Resets internal calibration values to their initial state in preparation for a new calibration sequence.
-    void _resetInternalCalibrationValues();
-
-    /// Starts the calibration process
+    void _resetInternalCalibrationValues(); ///< Resets internal calibration values to their initial state in preparation for a new calibration sequence.
     void _startCalibration();
-    /// Set up the Save state of calibration.
-    void _rcCalSave();
+    void _saveCurrentRawValues();   ///< Saves the current channel values, so that we can detect when the user moves an input.
+    void _loadCalibrationUISettings();
+    void _saveCalibrationUISettings();
 
-    void _writeParameters();
-
-    /// Saves the current channel values, so that we can detect when the use moves an input.
-    void _rcCalSaveCurrentValues();
-
-    void _setHelpImage(const char *imageFile);
-
-    void _loadSettings();
-    void _storeSettings();
-
-    int _currentStep = -1; ///< Current step of state machine
-    int _transmitterMode = 2; ///< 1: transmitter is mode 1, 2: transmitted is mode 2
+    int _currentStep = -1;
+    int _transmitterMode = 2;
 
     /// The states of the calibration state machine.
     enum rcCalStates {
@@ -217,10 +215,9 @@ private:
         rcCalStateTrims,
         rcCalStateSave
     };
-    rcCalStates _rcCalState = rcCalStateChannelWait; ///< Current calibration state
 
-    int _rcValueSave[_chanMax]{}; ///< Saved values prior to detecting channel movement
-    int _rcRawValue[_chanMax]{}; ///< Current set of raw channel values
+    int _channelValueSave[_chanMax]{};  ///< Saved values prior to detecting channel movement
+    int _channelRawValue[_chanMax]{};   ///< Current set of raw channel values
 
     int _stickDetectChannel = 0;
     int _stickDetectValue = 0;
@@ -232,7 +229,13 @@ private:
     QQuickItem *_nextButton = nullptr;
     QQuickItem *_skipButton = nullptr;
 
-    QString _imageHelp;
+    QList<int> _stickDisplayPositions;
+    bool _centeredThrottle = false;
+    QMap<StateMachineStepFunction, QString> _stepFunctionToMsgStringMap;
+    QMap<StateMachineStepFunction, QMap<int, BothSticksDisplayPositions>> _bothStickDisplayPositionThrottleCenteredMap;
+    QMap<StateMachineStepFunction, QMap<int, BothSticksDisplayPositions>> _bothStickDisplayPositionThrottleDownMap;
+
+    QList<StateMachineEntry> _stateMachine;
 
     static constexpr int _updateInterval = 150;             ///< Interval for timer which updates radio channel widgets
 
@@ -241,5 +244,12 @@ private:
     static constexpr const char *_settingsGroup = "RadioCalibration";
     static constexpr const char *_settingsKeyTransmitterMode = "TransmitterMode";
 
-    static constexpr const char *_imageCenter = "radioCenter.png";
+    // All the valid single stick positions used in calibration stick display
+    static constexpr StickDisplayPosition _stickDisplayPositionCentered         = {0, 0};
+    static constexpr StickDisplayPosition _stickDisplayPositionXCenteredYDown   = {0, -1};
+    static constexpr StickDisplayPosition _stickDisplayPositionXCenteredYUp     = {0,  1};
+    static constexpr StickDisplayPosition _stickDisplayPositionXLeftYCentered   = {-1, 0};
+    static constexpr StickDisplayPosition _stickDisplayPositionXRightYCentered  = { 1, 0};
+    static constexpr StickDisplayPosition _stickDisplayPositionXLeftYDown       = {-1, -1};
+    static constexpr StickDisplayPosition _stickDisplayPositionXRightYDown      = { 1, -1};
 };
