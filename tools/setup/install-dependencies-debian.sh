@@ -2,20 +2,20 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get update -y -qq
-apt-get install -y -qq --no-install-recommends \
+apt-get update -qq
+apt-get install -qq --no-install-recommends \
     software-properties-common \
     gnupg2 \
     ca-certificates
 
 # Enable the “universe” component (needed for several dev packages)
 add-apt-repository -y universe
-apt-get update -y -qq
+apt-get update -qq
 
 # --------------------------------------------------------------------
 # Core build tools
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     appstream \
     binutils \
     build-essential \
@@ -40,15 +40,15 @@ apt-get install -y -qq --no-install-recommends \
     wget \
     zsync
 
-pipx ensurepath
-pipx install cmake
-pipx install ninja
+pipx ensurepath -q
+pipx install -q cmake
+pipx install -q ninja
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
 # See: https://doc.qt.io/qt-6/linux-requirements.html
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libatspi2.0-dev \
     libfontconfig1-dev \
     libfreetype-dev \
@@ -84,7 +84,7 @@ apt-get install -y -qq --no-install-recommends \
 # --------------------------------------------------------------------
 # GStreamer (video/telemetry streaming)
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libgstreamer1.0-dev \
     libgstreamer-plugins-bad1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -102,19 +102,19 @@ apt-get install -y -qq --no-install-recommends \
 
 # Optional – only present on Ubuntu 22.04+; skip gracefully otherwise
 if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1; then
-    apt-get install -y -qq --no-install-recommends gstreamer1.0-qt6
+    apt-get install -qq --no-install-recommends gstreamer1.0-qt6
 fi
 
 # --------------------------------------------------------------------
 # SDL
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libusb-1.0-0-dev
 
 # --------------------------------------------------------------------
 # Miscellaneous
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libvulkan-dev \
     libpipewire-0.3-dev
 

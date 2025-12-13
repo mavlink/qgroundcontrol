@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-
-set -e
+set -euo pipefail
 
 # Source build config (required - no fallbacks)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/read-config.sh" ]]; then
-    source "$SCRIPT_DIR/read-config.sh"
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")/read-config.sh"
+if [[ -f "$SCRIPT_DIR" ]]; then
+    . "${SCRIPT_DIR}"
 else
     echo "Error: read-config.sh not found" >&2
     exit 1
@@ -35,12 +34,14 @@ echo "QT_ARCH_DIR $QT_ARCH_DIR"
 echo "QT_ROOT_DIR $QT_ROOT_DIR"
 echo "QT_MODULES ${QT_MODULES_ARR[*]}"
 
-apt-get update -y --quiet
-apt-get install python3 python3-pip pipx -y
-pipx install aqtinstall
-pipx install cmake
-pipx install ninja
-pipx ensurepath
+apt-get update -qq
+apt-get install -qq python3 python3-pip pipx
+
+pipx ensurepath -q
+pipx install -q aqtinstall
+pipx install -q cmake
+pipx install -q ninja
+
 USER_BASE_BIN="$(python3 -m site --user-base)/bin"
 export PATH="$USER_BASE_BIN:$PATH"
 aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"
