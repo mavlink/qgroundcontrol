@@ -1,24 +1,11 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.FactControls
 import QGroundControl.Controls
-
-
-
 
 SetupPage {
     id:             radioPage
@@ -43,13 +30,12 @@ SetupPage {
             QGCPalette { id: qgcPal; colorGroupEnabled: radioPage.enabled }
 
             RadioComponentController {
-                id:             controller
-                statusText:     statusText
-                cancelButton:   cancelButton
-                nextButton:     nextButton
-                skipButton:     skipButton
+                id:                                 controller
+                statusText:                         statusText
+                cancelButton:                       cancelButton
+                nextButton:                         nextButton
+                skipButton:                         skipButton
                 onChannelCountChanged:              updateChannelCount()
-                onFunctionMappingChangedAPMReboot:  mainWindow.showMessageDialog(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."))
                 onThrottleReversedCalFailure:       mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
             }
 
@@ -401,41 +387,102 @@ SetupPage {
             }
 
             // Right side column
-            Column {
+            ColumnLayout {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          ScreenTools.defaultFontPixelWidth * 30
                 spacing:        ScreenTools.defaultFontPixelHeight / 2
 
-                Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
+                Rectangle {
+                    id:             stickDisplayContainer
+                    implicitWidth:  stickDisplayLayout.width + _margins * 2
+                    implicitHeight: stickDisplayLayout.height + _margins * 2
+                    border.color:   qgcPal.text
+                    border.width:   1
+                    color:          qgcPal.window
+                    radius:         ScreenTools.defaultBorderRadius
 
-                    QGCRadioButton {
-                        text:       qsTr("Mode 1")
-                        checked:    controller.transmitterMode == 1
-                        onClicked:  controller.transmitterMode = 1
+                    property real _margins:     ScreenTools.defaultFontPixelHeight / 2
+                    property real _stickAdjust: leftStickDisplay.width / 2 - _margins * 1.25
+
+                    ColumnLayout {
+                        id:                 stickDisplayLayout
+                        anchors.leftMargin: stickDisplayContainer._margins
+                        anchors.topMargin:  stickDisplayContainer._margins
+                        anchors.left:       parent.left
+                        anchors.top:        parent.top
+                        spacing:            stickDisplayContainer._margins
+
+                        RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                            QGCComboBox {
+                                id:                     transmitterModeComboBox
+                                model:                  [ qsTr("Mode 1"), qsTr("Mode 2"), qsTr("Mode 3"), qsTr("Mode 4") ]
+                                onActivated: (index) => controller.transmitterMode = index + 1
+
+                                Component.onCompleted: currentIndex = controller.transmitterMode - 1
+                            }
+
+                            QGCCheckBox {
+                                id:         centeredThrottleCheckBox
+                                text:       qsTr("Centered Throttle")
+                                checked:    controller.centeredThrottle
+                                onClicked:  controller.centeredThrottle = checked
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth:    true
+                            spacing:            stickDisplayContainer._margins * 2
+
+                            Rectangle {
+                                id:                 leftStickDisplay
+                                Layout.alignment:   Qt.AlignLeft
+                                implicitWidth:      ScreenTools.defaultFontPixelHeight * 5
+                                implicitHeight:     implicitWidth
+                                radius:             implicitWidth / 2
+                                border.color:       qgcPal.buttonHighlight
+                                border.width:       1
+                                color:              qgcPal.window
+
+                                Rectangle {
+                                    x:      parent.width / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[0] - width / 2
+                                    y:      parent.height / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[1] - height / 2
+                                    width:  ScreenTools.defaultFontPixelHeight
+                                    height: width
+                                    radius: width / 2
+                                    color:  qgcPal.buttonHighlight
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.alignment:   Qt.AlignRight
+                                implicitWidth:      leftStickDisplay.implicitWidth
+                                implicitHeight:     implicitWidth
+                                radius:             implicitWidth / 2
+                                border.color:       qgcPal.buttonHighlight
+                                border.width:       1
+                                color:              qgcPal.window
+
+                                Rectangle {
+                                    x:      parent.width / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[2] - width / 2
+                                    y:      parent.height / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[3] - height / 2
+                                    width:  ScreenTools.defaultFontPixelHeight
+                                    height: width
+                                    radius: width / 2
+                                    color:  qgcPal.buttonHighlight
+                                }
+                            }
+                        }
                     }
-
-                    QGCRadioButton {
-                        text:       qsTr("Mode 2")
-                        checked:    controller.transmitterMode == 2
-                        onClicked:  controller.transmitterMode = 2
-                    }
-                }
-
-                Image {
-                    width:      parent.width
-                    fillMode:   Image.PreserveAspectFit
-                    smooth:     true
-                    source:     controller.imageHelp
                 }
 
                 RCChannelMonitor {
-                    width:      parent.width
-                    twoColumn:  true
+                    Layout.fillWidth:   true
+                    twoColumn:          true
                 }
-            } // Column - Right Column
-        } // Item
-    } // Component - pageComponent
-} // SetupPage
+            }
+        }
+    }
+}
