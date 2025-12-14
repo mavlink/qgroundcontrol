@@ -151,7 +151,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pointSize:         ScreenTools.largeFontPointSize
-                text:                   qsTr("Vehicle configuration pages will display after connecting your vehicle and parameters are downloaded.")
+                text:                   qsTr("Vehicle configuration pages will display after you connect your vehicle and parameters have been downloaded.")
             }
         }
     }
