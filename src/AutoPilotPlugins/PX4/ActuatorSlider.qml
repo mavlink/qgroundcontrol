@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 Column {
     property var channel
     property alias value:             channelSlider.value

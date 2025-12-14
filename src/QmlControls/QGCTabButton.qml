@@ -13,7 +13,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 TabButton {
     id:             control
     topPadding:     _verticalPadding

@@ -19,7 +19,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
 Item {
     id:     signalRoot
     width:  size

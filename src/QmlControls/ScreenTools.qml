@@ -17,7 +17,6 @@ import QGroundControl
  Usage:
 
         import QGroundControl.Controls
-
         Rectangle {
             anchors.fill:       parent
             anchors.margins:    ScreenTools.defaultFontPixelWidth

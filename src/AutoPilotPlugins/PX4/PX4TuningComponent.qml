@@ -14,8 +14,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 ColumnLayout {
     id:         root
     spacing:    ScreenTools.defaultFontPixelWidth / 4

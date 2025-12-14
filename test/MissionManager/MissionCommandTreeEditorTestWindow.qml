@@ -14,12 +14,9 @@ import QtQuick.Layouts
 import QtQuick.Window
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-
 
 ApplicationWindow {
     id:         _root

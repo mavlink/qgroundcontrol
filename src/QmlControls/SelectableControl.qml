@@ -13,8 +13,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
-
 import QGroundControl.FactControls
 
 /// Controt that allows the user to select from a list of controls to display.

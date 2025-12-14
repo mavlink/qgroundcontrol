@@ -13,7 +13,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 // Label control whichs pop up a flight mode change menu when clicked
 QGCLabel {
     id:     _root

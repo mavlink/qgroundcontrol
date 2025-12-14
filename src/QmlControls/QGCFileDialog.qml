@@ -7,8 +7,6 @@ import Qt.labs.platform as Labs
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 /// This control is meant to be a direct replacement for the standard Qml FileDialog control.
 /// It differs for mobile builds which uses a completely custom file picker.
 Item {

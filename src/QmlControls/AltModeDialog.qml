@@ -15,7 +15,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 QGCPopupDialog {
     title:   qsTr("Select Altitude Mode")
     buttons: Dialog.Close

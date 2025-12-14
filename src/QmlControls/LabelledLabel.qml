@@ -13,7 +13,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 RowLayout {
     property alias label:                   _labelLabel.text
     property alias labelText:              _label.text

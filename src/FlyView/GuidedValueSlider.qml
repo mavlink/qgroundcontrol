@@ -14,10 +14,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
-
 Item {
     id:     control
     width:  indicatorCanvas.width

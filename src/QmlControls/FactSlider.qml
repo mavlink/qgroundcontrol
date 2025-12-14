@@ -14,9 +14,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
 ValueSlider {
     id:             control
     value:          _fact.value

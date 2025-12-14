@@ -20,8 +20,6 @@ import QtQuick.Effects
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 Item {
     id: root
 

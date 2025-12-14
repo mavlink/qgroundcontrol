@@ -4,12 +4,8 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
-
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
-
 import QGroundControl.FlightMap
 
 TransectStyleComplexItemEditor {

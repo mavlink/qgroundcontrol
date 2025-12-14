@@ -12,9 +12,7 @@ import QtLocation
 import QtQuick.Controls
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 
 /// Marker for displaying a camera trigger on the map
 MapQuickItem {

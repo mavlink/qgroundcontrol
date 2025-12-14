@@ -11,7 +11,6 @@ import QtQuick
 
 import QGroundControl
 
-
 Canvas {
     id: canvas
     anchors.fill: parent

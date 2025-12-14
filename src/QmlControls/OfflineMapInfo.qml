@@ -14,7 +14,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 RowLayout {
     id:                 control
     Layout.fillWidth:   true

@@ -17,10 +17,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
-
-
 import QGroundControl.FlightMap
-
 import QGroundControl.FactControls
 
 FlightMap {

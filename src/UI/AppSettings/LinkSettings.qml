@@ -16,8 +16,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-
-
 SettingsPage {
     property var _linkManager:          QGroundControl.linkManager
     property var _autoConnectSettings:  QGroundControl.settingsManager.autoConnectSettings

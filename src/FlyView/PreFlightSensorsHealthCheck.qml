@@ -12,7 +12,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
 PreFlightCheckButton {
     name:               qsTr("Sensors")
     telemetryFailure:   _unhealthySensors & _allCheckedSensors

@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 // Important Note: SubMenuButtons must manage their checked state manually in order to support
 // view switch prevention. This means they can't be checkable or autoExclusive.
 

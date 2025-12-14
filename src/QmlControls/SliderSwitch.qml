@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 /// The SliderSwitch control implements a sliding switch control similar to the power off
 /// control on an iPhone. It supports holding the space bar to slide the switch.
 Rectangle {

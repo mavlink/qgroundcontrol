@@ -11,10 +11,7 @@
 import QtQuick
 
 import QGroundControl
-
 import QGroundControl.Controls
-
-
 
 Item {
     // The following properties must be passed in from the Loader
