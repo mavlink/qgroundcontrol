@@ -11,7 +11,6 @@ import QtQuick
 import QtLocation
 
 import QGroundControl
-
 import QGroundControl.Controls
 
 /// Use to drag a MissionItemIndicator

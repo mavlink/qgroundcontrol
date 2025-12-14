@@ -13,9 +13,6 @@ import QtQuick.Controls
 import QtQml
 
 import QGroundControl.Controls
-
-
-
 import QGroundControl.FlightMap
 import QGroundControl
 

@@ -4,10 +4,8 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FactControls
-
 import QGroundControl.UTMSP
 
 // Toolbar for Plan View

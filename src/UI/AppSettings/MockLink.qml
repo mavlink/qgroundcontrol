@@ -15,8 +15,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 Rectangle {
     color:          qgcPal.window
     anchors.fill:   parent

@@ -14,7 +14,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 Rectangle {
     // Indicates whether calibration is valid for this control
     property bool calValid: false

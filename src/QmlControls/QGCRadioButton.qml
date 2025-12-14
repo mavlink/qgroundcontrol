@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 RadioButton {
     id:             control
     font.family:    ScreenTools.normalFontFamily

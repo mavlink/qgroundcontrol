@@ -12,7 +12,6 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 
 import QGroundControl
-
 import QGroundControl.Controls
 
 /// Popup container for preflight checklists

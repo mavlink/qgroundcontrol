@@ -2,9 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 
 Item {
     property int    axisValue:          0

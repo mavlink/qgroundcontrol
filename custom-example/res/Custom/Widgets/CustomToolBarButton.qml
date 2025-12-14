@@ -14,8 +14,6 @@ import QtQuick.Controls
 
 import QGroundControl.Controls
 
-
-
 Button {
     id:                             button
     autoExclusive:                  true

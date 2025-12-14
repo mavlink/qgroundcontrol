@@ -13,7 +13,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 QGCPopupDialog {
     property alias  text:           label.text
     property var    acceptFunction: null        // Mainly used by MainRootWindow.showMessage to specify accept function in call

@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 /// Standard push button control:
 ///     If there is both an icon and text the icon will be to the left of the text
 ///     If icon only, icon will be centered

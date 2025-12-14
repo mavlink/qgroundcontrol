@@ -15,7 +15,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
 
-
 ToolStripAction {
     id:         action
     text:       qsTr("Actions")

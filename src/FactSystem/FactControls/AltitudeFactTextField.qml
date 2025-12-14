@@ -11,9 +11,7 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 
 FactTextField {
     unitsLabel:                 fact ? fact.units : ""

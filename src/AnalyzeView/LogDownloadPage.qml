@@ -15,8 +15,6 @@ import Qt.labs.qmlmodels
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 AnalyzePage {
     id: logDownloadPage
     pageComponent: pageComponent

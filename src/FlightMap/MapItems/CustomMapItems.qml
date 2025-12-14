@@ -15,7 +15,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-
 // Allow custom builds to add visual items associated with the Flight Plan to the map
 Item {
     property var    map             ///< Map control to show items on

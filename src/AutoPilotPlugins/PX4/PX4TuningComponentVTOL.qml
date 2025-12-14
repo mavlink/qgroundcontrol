@@ -14,8 +14,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 PX4TuningComponent {
     model: ListModel {
         ListElement {

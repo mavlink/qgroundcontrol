@@ -13,7 +13,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 RowLayout {
     property alias label:                   label.text
     property alias model:                   _comboBox.model

@@ -13,8 +13,6 @@ import QtQuick.Controls
 import QtQuick.Templates as T
 
 import QGroundControl
-
-
 import QGroundControl.Controls
 
 T.ComboBox {

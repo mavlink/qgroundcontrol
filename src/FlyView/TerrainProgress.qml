@@ -11,10 +11,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
-
-
 import QGroundControl.Controls
-
 
 Rectangle {
     implicitHeight: mainLayout.height + (_margins * 2)

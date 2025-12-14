@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 TextField {
     id:                 control
     color:              qgcPal.textFieldText

@@ -18,14 +18,9 @@ import QtQuick.Window
 import QtQml.Models
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-
-
-
 
 // To implement a custom overlay copy this code to your own control in your custom code source. Then override the
 // FlyViewCustomLayer.qml resource with your own qml. See the custom example and documentation for details.

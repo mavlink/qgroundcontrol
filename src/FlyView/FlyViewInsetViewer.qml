@@ -19,11 +19,8 @@ import QtQml.Models
 
 import QGroundControl
 import QGroundControl.Controls
-
 import QGroundControl.FlyView
-
 import QGroundControl.FlightMap
-
 
 // This is the ui overlay layer for the widgets/tools for Fly View
 Item {

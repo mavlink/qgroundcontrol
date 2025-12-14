@@ -13,9 +13,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
 //-------------------------------------------------------------------------
 //-- Remote ID Indicator
 Item {

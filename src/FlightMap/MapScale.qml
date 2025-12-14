@@ -13,8 +13,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 /// Map scale control
 Item {
     id:     control

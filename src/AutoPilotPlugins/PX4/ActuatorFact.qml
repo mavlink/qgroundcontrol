@@ -6,7 +6,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-
 Loader {
 	property var fact
 	id:                     loader

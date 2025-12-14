@@ -12,9 +12,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
 Item {
     id:             rootItem
     anchors.fill:   parent

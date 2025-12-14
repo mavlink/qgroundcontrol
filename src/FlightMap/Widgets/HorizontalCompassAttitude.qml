@@ -12,8 +12,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 Rectangle {
     id:     control
     width:  Math.min(_defaultWidth, _maxWidth)
