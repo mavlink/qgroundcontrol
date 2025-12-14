@@ -36,7 +36,7 @@ Rectangle {
     readonly property real      _buttonWidth:       _defaultTextWidth * 18
     readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while the vehicle is armed.")
 
-    property var    _activeVehicle:                 _activeVehicle
+    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
     property bool   _vehicleArmed:                  _activeVehicle ? _activeVehicle.armed : false
     property string _messagePanelText:              qsTr("missing message panel text")
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !_activeVehicle.parameterManager.missingParameters
