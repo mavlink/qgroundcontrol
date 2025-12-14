@@ -18,11 +18,10 @@ import QGroundControl.FlightMap
 
 
 ColumnLayout {
-    width: _rightPanelWidth
+    spacing: ScreenTools.defaultFontPixelHeight / 2
 
     TerrainProgress {
-        Layout.alignment:       Qt.AlignTop
-        Layout.preferredWidth:  _rightPanelWidth
+        Layout.fillWidth: true
     }
 
     // We use a Loader to load the photoVideoControlComponent only when we have an active vehicle and a camera manager.
@@ -30,7 +29,7 @@ ColumnLayout {
     // to be null all over the place
     Loader {
         id:                 photoVideoControlLoader
-        Layout.alignment:   Qt.AlignTop | Qt.AlignRight
+        Layout.alignment:   Qt.AlignRight
         sourceComponent:    globals.activeVehicle && globals.activeVehicle.cameraManager ? photoVideoControlComponent : undefined
 
         property real rightEdgeCenterInset: visible ? parent.width - x : 0
