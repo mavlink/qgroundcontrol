@@ -28,6 +28,7 @@ SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent
         emit videoCaptureStatusChanged();
     });
     connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
+    connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::infoChanged);
 
     (void) connect(SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
 
@@ -193,7 +194,7 @@ bool SimulatedCameraControl::capturesPhotos() const
 
 bool SimulatedCameraControl::hasVideoStream() const
 {
-    return VideoManager::instance()->hasVideo();
+    return VideoManager::instance()->decoding();
 }
 
 void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControl::PhotoCaptureMode photoCaptureMode)
