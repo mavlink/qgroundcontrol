@@ -221,7 +221,7 @@ Rectangle {
                     radius:             width * 0.5
                     border.width:       1
                     border.color:       captureButtonPalette.buttonBorder
-                    enabled:            _cameraInVideoMode && _camera.hasVideoStream
+                    enabled:            _cameraInPhotoMode || (_cameraInVideoMode && _camera.hasVideoStream)
 
                     property color  captureButtonColor:  _cameraInPhotoMode ? captureButtonPalette.photoCaptureButtonColor : captureButtonPalette.videoCaptureButtonColor
 
