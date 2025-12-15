@@ -21,7 +21,7 @@ CheckBox {
     property real   textFontPointSize:  ScreenTools.defaultFontPointSize
     property ButtonGroup buttonGroup: null
 
-    property bool   _noText: text === ""
+    property bool _noText: text === ""
 
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
@@ -53,6 +53,13 @@ CheckBox {
         border.width:   1
         radius:         ScreenTools.defaultBorderRadius
         opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.buttonHighlight
+            opacity:        control.hovered ? .2 : 0
+            radius:         parent.radius
+        }
 
         QGCColoredImage {
             source:             "/qmlimages/checkbox-check.svg"
