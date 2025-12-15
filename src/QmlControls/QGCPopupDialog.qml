@@ -15,8 +15,6 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 // Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
 //
 // Example usage:

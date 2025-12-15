@@ -15,13 +15,9 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-
-
-
 
 FlightMap {
     id:                         _root

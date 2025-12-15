@@ -11,15 +11,14 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
-
-
 import QGroundControl.Controls
 
-
 Rectangle {
+    implicitWidth:  mainLayout.width + (_margins * 2)
     implicitHeight: mainLayout.height + (_margins * 2)
-    visible:        false
     color:          qgcPal.window
+    radius:         ScreenTools.defaultBorderRadius
+    visible:        false
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
@@ -50,7 +49,7 @@ Rectangle {
 
     Timer {
         id:             visibilityTimer
-        interval:       30 * 1000
+        interval:       15 * 1000
         onTriggered:    parent.visible = false
     }
 
@@ -61,7 +60,6 @@ Rectangle {
         anchors.margins:    _margins
         anchors.top:        parent.top
         anchors.left:       parent.left
-        anchors.right:      parent.right
         spacing:            _margins
 
         QGCLabel {

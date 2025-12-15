@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 ColumnLayout {
     id:                 control
     spacing:            _margins / 2

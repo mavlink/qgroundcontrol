@@ -19,19 +19,229 @@
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerLog, "RemoteControl.RemoteControlCalibrationController")
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerVerboseLog, "RemoteControl.RemoteControlCalibrationController:verbose")
 
+static constexpr const char *msgBeginThrottleDown = QT_TR_NOOP(
+        "Lower the Throttle stick all the way down as shown in diagram\n\n"
+        "Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n\n"
+        "Click Next to continue"
+);
+static constexpr const char *msgBeginThrottleCenter = QT_TR_NOOP(
+    "Center the Throttle stick as shown in diagram.\n\n"
+    "Please ensure all motor power is disconnected from the vehicle.\n\n"
+    "Click Next to continue"
+);
+static constexpr const char *msgThrottleUp =    QT_TR_NOOP("Move the Throttle stick all the way up and hold it there...");
+static constexpr const char *msgThrottleDown =  QT_TR_NOOP("Move the Throttle stick all the way down and leave it there...");
+static constexpr const char *msgYawLeft =       QT_TR_NOOP("Move the Yaw stick all the way to the left and hold it there...");
+static constexpr const char *msgYawRight =      QT_TR_NOOP("Move the Yaw stick all the way to the right and hold it there...");
+static constexpr const char *msgRollLeft =      QT_TR_NOOP("Move the Roll stick all the way to the left and hold it there...");
+static constexpr const char *msgRollRight =     QT_TR_NOOP("Move the Roll stick all the way to the right and hold it there...");
+static constexpr const char *msgPitchDown =     QT_TR_NOOP("Move the Pitch stick all the way down and hold it there...");
+static constexpr const char *msgPitchUp =       QT_TR_NOOP("Move the Pitch stick all the way up and hold it there...");
+static constexpr const char *msgPitchCenter =   QT_TR_NOOP("Allow the Pitch stick to move back to center...");
+static constexpr const char *msgSwitchMinMax =  QT_TR_NOOP("Move all the transmitter switches and/or dials back and forth to their extreme positions.");
+static constexpr const char *msgComplete =      QT_TR_NOOP("All settings have been captured. Click Next to write the new parameters to your board.");
+
 RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *parent)
     : FactPanelController(parent)
+    , _stateMachine{
+        { stickFunctionMax,         StateMachineStepStickNeutral,   &RemoteControlCalibrationController::_inputCenterWaitBegin,   &RemoteControlCalibrationController::_saveAllTrims, nullptr },
+        { stickFunctionThrottle,    StateMachineStepThrottleUp,     &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                            nullptr },
+        { stickFunctionThrottle,    StateMachineStepThrottleDown,   &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                            nullptr },
+        { stickFunctionYaw,         StateMachineStepYawRight,       &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                            nullptr },
+        { stickFunctionYaw,         StateMachineStepYawLeft,        &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                            nullptr },
+        { stickFunctionRoll,        StateMachineStepRollRight,      &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                            nullptr },
+        { stickFunctionRoll,        StateMachineStepRollLeft,       &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                            nullptr },
+        { stickFunctionPitch,       StateMachineStepPitchUp,        &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                            nullptr },
+        { stickFunctionPitch,       StateMachineStepPitchDown,      &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                            nullptr },
+        { stickFunctionPitch,       StateMachineStepPitchCenter,    &RemoteControlCalibrationController::_inputCenterWait,        nullptr,                                            nullptr },
+        { stickFunctionMax,         StateMachineStepSwitchMinMax,   &RemoteControlCalibrationController::_inputSwitchMinMax,      &RemoteControlCalibrationController::_advanceState, nullptr },
+        { stickFunctionMax,         StateMachineStepComplete,       nullptr,                                                      &RemoteControlCalibrationController::_saveStoredCalibrationValues, nullptr },
+    }
 {
     // qCDebug(RemoteControlCalibrationControllerLog) << Q_FUNC_INFO << this;
 
-    _loadSettings();
+    _loadCalibrationUISettings();
 
     _resetInternalCalibrationValues();
+
+    _stickDisplayPositions = { _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical,
+                               _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical };
+
+    if (_vehicle->rover()) {
+        _centeredThrottle = true;
+    }
+
+    _stepFunctionToMsgStringMap = {
+        { StateMachineStepStickNeutral,    msgBeginThrottleCenter },    // First entry must be adjusted based on throttle centered or not
+        { StateMachineStepThrottleUp,      msgThrottleUp },
+        { StateMachineStepThrottleDown,    msgThrottleDown },
+        { StateMachineStepYawRight,        msgYawRight },
+        { StateMachineStepYawLeft,         msgYawLeft },
+        { StateMachineStepRollRight,       msgRollRight },
+        { StateMachineStepRollLeft,        msgRollLeft },
+        { StateMachineStepPitchUp,         msgPitchUp },
+        { StateMachineStepPitchDown,       msgPitchDown },
+        { StateMachineStepPitchCenter,     msgPitchCenter },
+        { StateMachineStepSwitchMinMax,    msgSwitchMinMax },
+        { StateMachineStepComplete,        msgComplete },
+    };
+
+    // Map for throttle centered neutral position
+    _bothStickDisplayPositionThrottleCenteredMap = {
+        { StateMachineStepStickNeutral, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepThrottleUp, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+            { 2, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+            { 4, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepThrottleDown, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 2, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 4, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepYawRight, {
+            { 1, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+            { 4, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+        }},
+        { StateMachineStepYawLeft, {
+            { 1, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+            { 4, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+        }},
+        { StateMachineStepRollRight, {
+            { 1, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+            { 2, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+            { 3, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepRollLeft, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+            { 2, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+            { 3, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepPitchUp, {
+            { 1, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+            { 3, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+        }},
+        { StateMachineStepPitchDown, {
+            { 1, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 3, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+        }},
+        { StateMachineStepPitchCenter, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepSwitchMinMax, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepComplete, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+    };
+
+    // Map for throttle down neutral position
+    _bothStickDisplayPositionThrottleDownMap = {
+        { StateMachineStepStickNeutral, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 2, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 4, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepThrottleUp, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+            { 2, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+            { 4, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepThrottleDown, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 2, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 4, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepYawRight, {
+            { 1, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+            { 4, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+        }},
+        { StateMachineStepYawLeft, {
+            { 1, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+            { 4, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+        }},
+        { StateMachineStepRollRight, {
+            { 1, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+            { 2, { _stickDisplayPositionCentered,           _stickDisplayPositionXRightYCentered } },
+            { 3, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXRightYCentered,    _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepRollLeft, {
+            { 1, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+            { 2, { _stickDisplayPositionCentered,       _stickDisplayPositionXLeftYCentered } },
+            { 3, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepPitchUp, {
+            { 1, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+            { 3, { _stickDisplayPositionXCenteredYUp,   _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYUp } },
+        }},
+        { StateMachineStepPitchDown, {
+            { 1, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+            { 3, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered,       _stickDisplayPositionXCenteredYDown } },
+        }},
+        { StateMachineStepPitchCenter, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepSwitchMinMax, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepComplete, {
+            { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+    };
 }
 
 RemoteControlCalibrationController::~RemoteControlCalibrationController()
 {
-    _storeSettings();
+    _saveCalibrationUISettings();
 
     // qCDebug(RemoteControlCalibrationControllerLog) << Q_FUNC_INFO << this;
 }
@@ -42,85 +252,14 @@ void RemoteControlCalibrationController::start()
     _readStoredCalibrationValues();
 }
 
-const RemoteControlCalibrationController::stateMachineEntry* RemoteControlCalibrationController::_getStateMachineEntry(int step) const
+const RemoteControlCalibrationController::StateMachineEntry &RemoteControlCalibrationController::_getStateMachineEntry(int step) const
 {
-    static constexpr const char *msgThrottleUp =    QT_TR_NOOP("Move the Throttle stick all the way up and hold it there...");
-    static constexpr const char *msgThrottleDown =  QT_TR_NOOP("Move the Throttle stick all the way down and leave it there...");
-    static constexpr const char *msgYawLeft =       QT_TR_NOOP("Move the Yaw stick all the way to the left and hold it there...");
-    static constexpr const char *msgYawRight =      QT_TR_NOOP("Move the Yaw stick all the way to the right and hold it there...");
-    static constexpr const char *msgRollLeft =      QT_TR_NOOP("Move the Roll stick all the way to the left and hold it there...");
-    static constexpr const char *msgRollRight =     QT_TR_NOOP("Move the Roll stick all the way to the right and hold it there...");
-    static constexpr const char *msgPitchDown =     QT_TR_NOOP("Move the Pitch stick all the way down and hold it there...");
-    static constexpr const char *msgPitchUp =       QT_TR_NOOP("Move the Pitch stick all the way up and hold it there...");
-    static constexpr const char *msgPitchCenter =   QT_TR_NOOP("Allow the Pitch stick to move back to center...");
-    static constexpr const char *msgSwitchMinMax =  QT_TR_NOOP("Move all the transmitter switches and/or dials back and forth to their extreme positions.");
-    static constexpr const char *msgComplete =      QT_TR_NOOP("All settings have been captured. Click Next to write the new parameters to your board.");
-
-    static constexpr const char *imageHome =         "radioHome.png";
-    static constexpr const char *imageThrottleUp =   "radioThrottleUp.png";
-    static constexpr const char *imageThrottleDown = "radioThrottleDown.png";
-    static constexpr const char *imageYawLeft =      "radioYawLeft.png";
-    static constexpr const char *imageYawRight =     "radioYawRight.png";
-    static constexpr const char *imageRollLeft =     "radioRollLeft.png";
-    static constexpr const char *imageRollRight =    "radioRollRight.png";
-    static constexpr const char *imagePitchUp =      "radioPitchUp.png";
-    static constexpr const char *imagePitchDown =    "radioPitchDown.png";
-    static constexpr const char *imageSwitchMinMax = "radioSwitchMinMax.png";
-
-    static constexpr const stateMachineEntry rgStateMachinePX4[] = {
-        //Function
-        { stickFunctionMax,         nullptr,            imageHome,         &RemoteControlCalibrationController::_inputCenterWaitBegin,   &RemoteControlCalibrationController::_saveAllTrims,       nullptr },
-        { stickFunctionThrottle,    msgThrottleUp,      imageThrottleUp,   &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionThrottle,    msgThrottleDown,    imageThrottleDown, &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionYaw,         msgYawRight,        imageYawRight,     &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionYaw,         msgYawLeft,         imageYawLeft,      &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionRoll,        msgRollRight,       imageRollRight,    &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionRoll,        msgRollLeft,        imageRollLeft,     &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionPitch,       msgPitchUp,         imagePitchUp,      &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionPitch,       msgPitchDown,       imagePitchDown,    &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionPitch,       msgPitchCenter,     imageHome,         &RemoteControlCalibrationController::_inputCenterWait,        nullptr,                                        nullptr },
-        { stickFunctionMax,         msgSwitchMinMax,    imageSwitchMinMax, &RemoteControlCalibrationController::_inputSwitchMinMax,      &RemoteControlCalibrationController::_advanceState, nullptr },
-        { stickFunctionMax,         msgComplete,        imageThrottleDown, nullptr,                                                      &RemoteControlCalibrationController::_saveStoredCalibrationValues, nullptr },
-    };
-
-    static constexpr const stateMachineEntry rgStateMachineAPM[] = {
-        //Function
-        { stickFunctionMax,         nullptr,            imageHome,         &RemoteControlCalibrationController::_inputCenterWaitBegin,   &RemoteControlCalibrationController::_saveAllTrims,       nullptr },
-        { stickFunctionThrottle,    msgThrottleUp,      imageThrottleUp,   &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionThrottle,    msgThrottleDown,    imageThrottleDown, &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionYaw,         msgYawRight,        imageYawRight,     &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionYaw,         msgYawLeft,         imageYawLeft,      &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionRoll,        msgRollRight,       imageRollRight,    &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionRoll,        msgRollLeft,        imageRollLeft,     &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionPitch,       msgPitchUp,         imagePitchUp,      &RemoteControlCalibrationController::_inputStickDetect,       nullptr,                                        nullptr },
-        { stickFunctionPitch,       msgPitchDown,       imagePitchDown,    &RemoteControlCalibrationController::_inputStickMin,          nullptr,                                        nullptr },
-        { stickFunctionPitch,       msgPitchCenter,     imageHome,         &RemoteControlCalibrationController::_inputCenterWait,        nullptr,                                        nullptr },
-        { stickFunctionMax,         msgSwitchMinMax,    imageSwitchMinMax, &RemoteControlCalibrationController::_inputSwitchMinMax,      &RemoteControlCalibrationController::_advanceState, nullptr },
-        { stickFunctionMax,         msgComplete,        imageThrottleDown, nullptr,                                                      &RemoteControlCalibrationController::_saveStoredCalibrationValues, nullptr },
-    };
-
-    bool badStep = false;
-    if (step < 0) {
-        badStep = true;
-    }
-
-    if (_vehicle->px4Firmware()) {
-        if (step >= std::size(rgStateMachinePX4)) {
-            badStep = true;
-        }
-    } else {
-        if (step >= std::size(rgStateMachineAPM)) {
-            badStep = true;
-        }
-    }
-
-    if (badStep) {
+    if (step < 0 || step >= _stateMachine.size()) {
         qCWarning(RemoteControlCalibrationControllerLog) << "Bad step value" << step;
         step = 0;
     }
 
-    const stateMachineEntry *const stateMachine = _vehicle->px4Firmware() ? rgStateMachinePX4 : rgStateMachineAPM;
-    return &stateMachine[step];
+    return _stateMachine[step];
 }
 
 void RemoteControlCalibrationController::_advanceState()
@@ -131,40 +270,29 @@ void RemoteControlCalibrationController::_advanceState()
 
 void RemoteControlCalibrationController::_setupCurrentState()
 {
-    static constexpr const char *msgBegin = QT_TR_NOOP(
-        "Lower the Throttle stick all the way down as shown in diagram\n\n"
-        "Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n\n"
-        "Click Next to continue"
-    );
-    static constexpr const char *msgBeginRover = QT_TR_NOOP(
-        "Center the Throttle stick as shown in diagram.\n\n"
-        "Please ensure all motor power is disconnected from the vehicle.\n\n"
-        "Click Next to continue"
-    );
 
-    const stateMachineEntry *const state = _getStateMachineEntry(_currentStep);
 
-    const char *instructions = state->instructions;
-    const char *helpImage = state->image;
-    if (_currentStep == 0) {
-        if (_vehicle->rover()) {
-            instructions = msgBeginRover;
-            helpImage = _imageCenter;
-        } else {
-            instructions = msgBegin;
-        }
-    }
+    auto state = _getStateMachineEntry(_currentStep);
 
-    _statusText->setProperty("text", instructions);
-    _setHelpImage(helpImage);
+    _stepFunctionToMsgStringMap[StateMachineStepStickNeutral] = _centeredThrottle ? msgBeginThrottleCenter : msgBeginThrottleDown;
+
+    BothSticksDisplayPositions defaultPositions = { _stickDisplayPositionCentered, _stickDisplayPositionCentered };
+    BothSticksDisplayPositions bothStickPositions = _centeredThrottle
+        ? _bothStickDisplayPositionThrottleCenteredMap.value(state.stepFunction).value(_transmitterMode, defaultPositions)
+        : _bothStickDisplayPositionThrottleDownMap.value(state.stepFunction).value(_transmitterMode, defaultPositions);
+
+    _statusText->setProperty("text", _stepFunctionToMsgStringMap.value(state.stepFunction, QString()));
+    _stickDisplayPositions = { bothStickPositions.leftStick.horizontal, bothStickPositions.leftStick.vertical,
+                               bothStickPositions.rightStick.horizontal, bothStickPositions.rightStick.vertical };
+    emit stickDisplayPositionsChanged();
 
     _stickDetectChannel = _chanMax;
     _stickDetectSettleStarted = false;
 
-    _rcCalSaveCurrentValues();
+    _saveCurrentRawValues();
 
-    _nextButton->setEnabled(state->nextButtonFn != nullptr);
-    _skipButton->setEnabled(state->skipButtonFn != nullptr);
+    _nextButton->setEnabled(state.nextButtonFn != nullptr);
+    _skipButton->setEnabled(state.skipButtonFn != nullptr);
 }
 
 void RemoteControlCalibrationController::channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
@@ -185,7 +313,7 @@ void RemoteControlCalibrationController::channelValuesChanged(int channelCount, 
         if (channelValue != -1) {
             qCDebug(RemoteControlCalibrationControllerVerboseLog) << "Raw value" << channel << channelValue;
 
-            _rcRawValue[channel] = channelValue;
+            _channelRawValue[channel] = channelValue;
             emit channelValueChanged(channel, channelValue);
 
             // Signal attitude rc values to Qml if mapped
@@ -214,13 +342,9 @@ void RemoteControlCalibrationController::channelValuesChanged(int channelCount, 
                     emit channelCountChanged(_chanCount);
                 }
             } else {
-                const stateMachineEntry *const state = _getStateMachineEntry(_currentStep);
-                if (state) {
-                    if (state->channelInputFn) {
-                        (this->*state->channelInputFn)(state->function, channel, channelValue);
-                    }
-                } else {
-                    qCWarning(RemoteControlCalibrationControllerLog) << "Internal error: nullptr _getStateMachineEntry return";
+                auto state = _getStateMachineEntry(_currentStep);
+                if (state.channelInputFn) {
+                    (this->*state.channelInputFn)(state.function, channel, channelValue);
                 }
             }
         }
@@ -237,11 +361,9 @@ void RemoteControlCalibrationController::nextButtonClicked()
         }
         _startCalibration();
     } else {
-        const stateMachineEntry *const state = _getStateMachineEntry(_currentStep);
-        if (state && state->nextButtonFn) {
-            (this->*state->nextButtonFn)();
-        } else {
-            qCWarning(RemoteControlCalibrationControllerLog) << "Internal error: nullptr _getStateMachineEntry return";
+        auto state = _getStateMachineEntry(_currentStep);
+        if (state.nextButtonFn) {
+            (this->*state.nextButtonFn)();
         }
     }
 }
@@ -253,11 +375,9 @@ void RemoteControlCalibrationController::skipButtonClicked()
         return;
     }
 
-    const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-    if (state && state->skipButtonFn) {
-        (this->*state->skipButtonFn)();
-    } else {
-        qCWarning(RemoteControlCalibrationControllerLog) << "Internal error: nullptr _getStateMachineEntry return";
+    auto state = _getStateMachineEntry(_currentStep);
+    if (state.skipButtonFn) {
+        (this->*state.skipButtonFn)();
     }
 }
 
@@ -274,8 +394,8 @@ void RemoteControlCalibrationController::_saveAllTrims()
     // trims reset to correct values.
 
     for (int i=0; i<_chanCount; i++) {
-        qCDebug(RemoteControlCalibrationControllerLog) << "_saveAllTrims channel trim" << i<< _rcRawValue[i];
-        _rgChannelInfo[i].rcTrim = _rcRawValue[i];
+        qCDebug(RemoteControlCalibrationControllerLog) << "_saveAllTrims channel trim" << i<< _channelRawValue[i];
+        _rgChannelInfo[i].rcTrim = _channelRawValue[i];
     }
     _advanceState();
 }
@@ -337,7 +457,7 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction functio
     if (_stickDetectChannel == _chanMax) {
         // We have not detected enough movement on a channel yet
 
-        if (abs(_rcValueSave[channel] - value) > _calMoveDelta) {
+        if (abs(_channelValueSave[channel] - value) > _calMoveDelta) {
             // Stick has moved far enough to consider it as being selected for the function
 
             qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickDetect Starting settle wait";
@@ -354,7 +474,7 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction functio
             info->function = function;
 
             // A non-reversed channel should show a higher PWM value than center.
-            info->reversed = value < _rcValueSave[channel];
+            info->reversed = value < _channelValueSave[channel];
             if (info->reversed) {
                 _rgChannelInfo[channel].rcMin = value;
             } else {
@@ -479,7 +599,7 @@ void RemoteControlCalibrationController::_switchDetect(StickFunction function, i
         return;
     }
 
-    if (abs(_rcValueSave[channel] - value) > _calMoveDelta) {
+    if (abs(_channelValueSave[channel] - value) > _calMoveDelta) {
         ChannelInfo *const info = &_rgChannelInfo[channel];
 
         // Switch has moved far enough to consider it as being selected for the function
@@ -614,45 +734,20 @@ void RemoteControlCalibrationController::_stopCalibration()
         _skipButton->setEnabled(false);
     }
 
-    _setHelpImage(_imageCenter);
+    _stickDisplayPositions = { _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical,
+                               _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical };
+    emit stickDisplayPositionsChanged();
 }
 
-void RemoteControlCalibrationController::_rcCalSaveCurrentValues()
+void RemoteControlCalibrationController::_saveCurrentRawValues()
 {
     for (int i = 0; i < _chanMax; i++) {
-        _rcValueSave[i] = _rcRawValue[i];
-        qCDebug(RemoteControlCalibrationControllerLog) << "_rcCalSaveCurrentValues channel:value" << i << _rcValueSave[i];
+        _channelValueSave[i] = _channelRawValue[i];
+        qCDebug(RemoteControlCalibrationControllerLog) << "_saveCurrentRawValues channel:value" << i << _channelValueSave[i];
     }
 }
 
-void RemoteControlCalibrationController::_rcCalSave()
-{
-    _rcCalState = rcCalStateSave;
-
-    if (_statusText) {
-        _statusText->setProperty(
-            "text",
-            tr("The current calibration settings are now displayed for each channel on screen.\n\n"
-            "Click the Next button to upload calibration to board. Click Cancel if you don't want to save these values.")
-        );
-    }
-
-    if (_nextButton) {
-        _nextButton->setEnabled(true);
-    }
-    if (_skipButton) {
-        _skipButton->setEnabled(false);
-    }
-    if (_cancelButton) {
-        _cancelButton->setEnabled(true);
-    }
-
-    // This updates the internal values according to the validation rules. Then _updateView will tick and update ui
-    // such that the settings that will be written our are displayed.
-    _validateAndAdjustCalibrationValues();
-}
-
-void RemoteControlCalibrationController::_loadSettings()
+void RemoteControlCalibrationController::_loadCalibrationUISettings()
 {
     QSettings settings;
 
@@ -660,12 +755,12 @@ void RemoteControlCalibrationController::_loadSettings()
     _transmitterMode = settings.value(_settingsKeyTransmitterMode, 2).toInt();
     settings.endGroup();
 
-    if (!(_transmitterMode == 1 || _transmitterMode == 2)) {
+    if (_transmitterMode < 1 || _transmitterMode > 4) {
         _transmitterMode = 2;
     }
 }
 
-void RemoteControlCalibrationController::_storeSettings()
+void RemoteControlCalibrationController::_saveCalibrationUISettings()
 {
     QSettings settings;
 
@@ -674,34 +769,10 @@ void RemoteControlCalibrationController::_storeSettings()
     settings.endGroup();
 }
 
-void RemoteControlCalibrationController::_setHelpImage(const char *imageFile)
-{
-    static constexpr const char *imageFilePrefix =   "calibration/";
-    static constexpr const char *imageFileMode1Dir = "mode1/";
-    static constexpr const char *imageFileMode2Dir = "mode2/";
-
-    QString file = imageFilePrefix;
-
-    if (_transmitterMode == 1) {
-        file += imageFileMode1Dir;
-    } else if (_transmitterMode == 2) {
-        file += imageFileMode2Dir;
-    } else {
-        qCWarning(RemoteControlCalibrationControllerLog) << "Internal error: Bad _transmitterMode value";
-        return;
-    }
-    file += imageFile;
-
-    qCDebug(RemoteControlCalibrationControllerLog) << "_setHelpImage" << file;
-
-    _imageHelp = file;
-    emit imageHelpChanged(file);
-}
-
 int RemoteControlCalibrationController::rollChannelValue()
 {
     if (_rgFunctionChannelMapping[stickFunctionRoll] != _chanMax) {
-        return _rcRawValue[stickFunctionRoll];
+        return _channelRawValue[stickFunctionRoll];
     } else {
         return 1500;
     }
@@ -710,7 +781,7 @@ int RemoteControlCalibrationController::rollChannelValue()
 int RemoteControlCalibrationController::pitchChannelValue()
 {
     if (_rgFunctionChannelMapping[stickFunctionPitch] != _chanMax) {
-        return _rcRawValue[stickFunctionPitch];
+        return _channelRawValue[stickFunctionPitch];
     } else {
         return 1500;
     }
@@ -719,7 +790,7 @@ int RemoteControlCalibrationController::pitchChannelValue()
 int RemoteControlCalibrationController::yawChannelValue()
 {
     if (_rgFunctionChannelMapping[stickFunctionYaw] != _chanMax) {
-        return _rcRawValue[stickFunctionYaw];
+        return _channelRawValue[stickFunctionYaw];
     } else {
         return 1500;
     }
@@ -728,7 +799,7 @@ int RemoteControlCalibrationController::yawChannelValue()
 int RemoteControlCalibrationController::throttleChannelValue()
 {
     if (_rgFunctionChannelMapping[stickFunctionThrottle] != _chanMax) {
-        return _rcRawValue[stickFunctionThrottle];
+        return _channelRawValue[stickFunctionThrottle];
     } else {
         return 1500;
     }
@@ -792,12 +863,13 @@ bool RemoteControlCalibrationController::throttleChannelReversed()
 
 void RemoteControlCalibrationController::setTransmitterMode(int mode)
 {
-    if (mode == 1 || mode == 2) {
+    if (mode < 1 || mode > 4) {
+        qCWarning(RemoteControlCalibrationControllerLog) << "Invalid transmitter mode set:" << mode;
+        mode = 2;
+    }
+    if (_transmitterMode != mode) {
         _transmitterMode = mode;
-        if (_currentStep != -1) {
-            const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-            _setHelpImage(state->image);
-        }
+        emit transmitterModeChanged();
     }
 }
 
@@ -832,5 +904,13 @@ QString RemoteControlCalibrationController::_stickFunctionToString(StickFunction
         return tr("Throttle");
     default:
         return tr("Unknown");
+    }
+}
+
+void RemoteControlCalibrationController::setCenteredThrottle(bool centered)
+{
+    if (_centeredThrottle != centered) {
+        _centeredThrottle = centered;
+        emit centeredThrottleChanged(centered);
     }
 }

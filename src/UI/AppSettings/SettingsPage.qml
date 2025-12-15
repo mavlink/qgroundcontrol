@@ -14,12 +14,8 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.FactControls
 import QGroundControl.Controls
-
-
-
 
 Item {
     id: root

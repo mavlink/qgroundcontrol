@@ -15,8 +15,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 Button {
     id:                             _rootButton
     width:                          parent.height * 1.25

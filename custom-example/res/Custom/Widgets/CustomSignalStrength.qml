@@ -15,8 +15,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 Item {
     width:  size
     height: size

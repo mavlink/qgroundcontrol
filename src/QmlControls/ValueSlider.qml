@@ -15,10 +15,6 @@ import Qt.labs.animation
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
-
 Control {
     id: control
 

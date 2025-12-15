@@ -16,16 +16,10 @@ import QtLocation
 
 import QGroundControl
 import QGroundControl.FlightMap
-
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
-
-
 import QGroundControl.UTMSP
 import QGroundControl.FlyView
-
-
 
 Rectangle {
     id: _root

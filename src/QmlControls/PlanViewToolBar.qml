@@ -15,10 +15,6 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
-
 Rectangle {
     id:     _root
     width:  parent.width

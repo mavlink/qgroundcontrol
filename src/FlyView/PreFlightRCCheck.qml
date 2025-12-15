@@ -12,7 +12,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
 PreFlightCheckButton {
     name:                   qsTr("Radio Control")
     manualText:             qsTr("Receiving signal. Perform range test & confirm.")

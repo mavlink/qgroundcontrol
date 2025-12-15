@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-
 import QGroundControl.Controls
 
 // Statistics section for TransectStyleComplexItems

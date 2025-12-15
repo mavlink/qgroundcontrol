@@ -16,8 +16,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 ComboBox {
     id:         control
     padding:    ScreenTools.comboBoxPadding

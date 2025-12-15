@@ -11,14 +11,10 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.FactControls
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-
-
-
 
 Rectangle {
     id:             topRightPanel

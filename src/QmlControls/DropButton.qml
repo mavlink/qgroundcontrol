@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 Item {
     id: _root
     z:  QGroundControl.zOrderWidgets

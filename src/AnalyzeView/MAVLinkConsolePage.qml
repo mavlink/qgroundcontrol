@@ -14,8 +14,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
-
 AnalyzePage {
     id: root
     pageComponent: pageComponent

@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 Item {
     property color  color:          qgcPal.text
     property alias  contentHeight:  _measureText.contentHeight

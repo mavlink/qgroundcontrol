@@ -13,10 +13,8 @@ import QtQml.Models
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FlyView
-
 
 ColumnLayout {
     spacing: 0.8 * ScreenTools.defaultFontPixelWidth

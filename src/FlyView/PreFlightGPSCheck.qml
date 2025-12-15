@@ -12,7 +12,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
 PreFlightCheckButton {
     name:                           qsTr("GPS")
     telemetryFailure:               _3dLockFailure || _satCountFailure

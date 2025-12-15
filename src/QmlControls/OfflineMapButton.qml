@@ -13,7 +13,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 Button {
     id:                 mapButton
     height:             ScreenTools.defaultFontPixelHeight * 4

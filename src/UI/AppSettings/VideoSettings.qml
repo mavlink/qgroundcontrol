@@ -13,10 +13,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.FactControls
 import QGroundControl.Controls
-
 
 SettingsPage {
     property var    _settingsManager:            QGroundControl.settingsManager

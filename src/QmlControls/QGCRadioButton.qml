@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 RadioButton {
     id:             control
     font.family:    ScreenTools.normalFontFamily
@@ -18,11 +17,18 @@ RadioButton {
     indicator: Rectangle {
         implicitWidth:          ScreenTools.radioButtonIndicatorSize
         implicitHeight:         width
-        color:                  qgcPal.button
+        color:                  control.enabled ? "white" : "transparent"
         border.color:           qgcPal.buttonBorder
         radius:                 height / 2
         x:                      control.leftPadding
         y:                      parent.height / 2 - height / 2
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.buttonHighlight
+            opacity:        control.hovered ? .2 : 0
+            radius:         parent.radius
+        }
 
         Rectangle {
             anchors.centerIn:   parent

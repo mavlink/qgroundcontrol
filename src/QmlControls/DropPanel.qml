@@ -14,7 +14,6 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-
 /// Drop panel that displays positioned next to the specified click position.
 /// By default the panel drops to the right of the click position. If there isn't
 /// enough room to the right then the panel will drop to the left.

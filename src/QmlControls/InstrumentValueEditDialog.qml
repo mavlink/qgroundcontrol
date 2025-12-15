@@ -14,11 +14,7 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
-
-
 import QGroundControl.FactControls
-
-
 
 QGCPopupDialog {
     id:         root

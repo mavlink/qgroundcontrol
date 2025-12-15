@@ -12,9 +12,6 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-
-
-
 Rectangle {
     id:     root
     width:  size

@@ -15,10 +15,7 @@ import QtPositioning
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
-
 import QGroundControl.FlightMap
 
 /// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI

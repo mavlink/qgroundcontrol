@@ -15,12 +15,8 @@ import QtQuick.Dialogs
 import Qt.labs.animation
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-
-
-
 
 Map {
     id: _map

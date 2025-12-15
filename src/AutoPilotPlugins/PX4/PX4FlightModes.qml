@@ -14,12 +14,8 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.FactControls
-
 import QGroundControl.Controls
-
-
 
 /// PX4 Flight Mode configuration. This control will load either the Simple or Advanced Flight Mode config
 /// based on current parameter settings.

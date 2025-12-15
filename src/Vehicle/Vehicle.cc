@@ -2751,20 +2751,28 @@ void Vehicle::_sendMavCommandResponseTimeoutCheck(void)
 
 void Vehicle::showCommandAckError(const mavlink_command_ack_t& ack)
 {
-    QString rawCommandName  = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(ack.command));
+    QString rawName  = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(ack.command));
+    QString friendlyName = MissionCommandTree::instance()->friendlyName(static_cast<MAV_CMD>(ack.command));
+    QString commandStr;
+
+    if (friendlyName.isEmpty()) {
+        commandStr = rawName;
+    } else {
+        commandStr = QStringLiteral("%1 (%2)").arg(friendlyName).arg(rawName);
+    }
 
     switch (ack.result) {
         case MAV_RESULT_TEMPORARILY_REJECTED:
-            qgcApp()->showAppMessage(tr("%1 command temporarily rejected").arg(rawCommandName));
+            qgcApp()->showAppMessage(tr("%1 command temporarily rejected").arg(commandStr));
             break;
         case MAV_RESULT_DENIED:
-            qgcApp()->showAppMessage(tr("%1 command denied").arg(rawCommandName));
+            qgcApp()->showAppMessage(tr("%1 command denied").arg(commandStr));
             break;
         case MAV_RESULT_UNSUPPORTED:
-            qgcApp()->showAppMessage(tr("%1 command not supported").arg(rawCommandName));
+            qgcApp()->showAppMessage(tr("%1 command not supported").arg(commandStr));
             break;
         case MAV_RESULT_FAILED:
-            qgcApp()->showAppMessage(tr("%1 command failed").arg(rawCommandName));
+            qgcApp()->showAppMessage(tr("%1 command failed").arg(commandStr));
             break;
         default:
             // Do nothing
