@@ -20,14 +20,14 @@ QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerLog, "RemoteControl.Remot
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerVerboseLog, "RemoteControl.RemoteControlCalibrationController:verbose")
 
 static constexpr const char *msgBeginThrottleDown = QT_TR_NOOP(
-        "Lower the Throttle stick all the way down as shown in diagram\n\n"
-        "Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n\n"
-        "Click Next to continue"
+        "* Lower the Throttle stick all the way down as shown in diagram\n"
+        "* Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n"
+        "* Click Next to continue"
 );
 static constexpr const char *msgBeginThrottleCenter = QT_TR_NOOP(
-    "Center the Throttle stick as shown in diagram.\n\n"
-    "Please ensure all motor power is disconnected from the vehicle.\n\n"
-    "Click Next to continue"
+    "* Center the Throttle stick as shown in diagram.\n"
+    "* Please ensure all motor power is disconnected from the vehicle.\n"
+    "* Click Next to continue"
 );
 static constexpr const char *msgThrottleUp =    QT_TR_NOOP("Move the Throttle stick all the way up and hold it there...");
 static constexpr const char *msgThrottleDown =  QT_TR_NOOP("Move the Throttle stick all the way down and leave it there...");
