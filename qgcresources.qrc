@@ -40,12 +40,14 @@
         <file alias="QGCLogoBlack.svg">resources/QGCLogoBlack.svg</file>
         <file alias="QGCLogoFull.svg">resources/QGCLogoFull.svg</file>
         <file alias="QGCLogoWhite.svg">resources/QGCLogoWhite.svg</file>
+        <file alias="IGCSFly.svg">resources/ig-gcs-fly.svg</file>
         <file alias="ApplicationSettings.svg">resources/ApplicationSettings.svg</file>
         <file alias="VehicleConfig.svg">resources/VehicleConfig.svg</file>
         <file alias="QGCLogoArrow.svg">resources/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect.svg">resources/QGroundControlConnect.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
+        <file alias="IGCSFlyLogo.png">resources/SplashScreen.png</file>
         <file alias="Stop.svg">resources/Stop.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="terrain.svg">resources/terrain.svg</file>
@@ -63,6 +65,15 @@
         <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
         <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
         <file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>
+        <file alias="Sidebar_Plan.svg">resources/Sidebar_Icons/Plan.svg</file>
+        <file alias="Sidebar_Analyze.svg">resources/Sidebar_Icons/Analyze.svg</file>
+        <file alias="Sidebar_VehicleConfig.svg">resources/Sidebar_Icons/VehicleConfig.svg</file>
+        <file alias="Sidebar_ApplicationSettings.svg">resources/Sidebar_Icons/ApplicationSettings.svg</file>
+        <file alias="Sidebar_About.svg">resources/Sidebar_Icons/About.svg</file>
+        <file alias="Sidebar_Video.svg">resources/Sidebar_Icons/Video.svg</file>
+        <file alias="Sidebar_Profile.svg">resources/Sidebar_Icons/Profile.svg</file>
+        <file alias="Adobe_Express.svg">resources/Adobe_Express.svg</file>
+        <file alias="pointer.svg">resources/pointer.svg</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>

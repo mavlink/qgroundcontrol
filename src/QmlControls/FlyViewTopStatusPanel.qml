@@ -249,7 +249,7 @@ Rectangle {
                 font.bold: true
             }
         }
-
+        
         Rectangle {
             width: 1
             height: statusRow.height * 0.6
@@ -368,4 +368,3 @@ Rectangle {
         }
     }
 }
-

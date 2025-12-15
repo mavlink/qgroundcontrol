@@ -361,24 +361,7 @@ RowLayout {
             RowLayout {
                 spacing: ScreenTools.defaultFontPixelWidth
 
-                QGCDelayButton {
-                    enabled:    _armed || !_healthAndArmingChecksSupported || _activeVehicle.healthAndArmingCheckReport.canArm
-                    text:       _armed ? qsTr("Disarm") : (control._allowForceArm ? qsTr("Force Arm") : qsTr("Arm"))
-
-                    onActivated: {
-                        if (_armed) {
-                            _activeVehicle.armed = false
-                        } else {
-                            if (_allowForceArm) {
-                                _allowForceArm = false
-                                _activeVehicle.forceArm()
-                            } else {
-                                _activeVehicle.armed = true
-                            }
-                        }
-                        mainWindow.closeIndicatorDrawer()
-                    }
-                }
+                // Arm button moved to FlyViewToolBar next to IG GCS FLY
 
                 LabelledComboBox {
                     id:                 primaryLinkCombo

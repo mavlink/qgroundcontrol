@@ -335,10 +335,10 @@ public:
     virtual QString brandImageOutdoor(const Vehicle* /*vehicle*/) const { return QString(); }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
-    virtual QString vehicleImageOpaque(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOpaque.svg"); }
+    virtual QString vehicleImageOpaque(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOpaque.png"); }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is light (Map for instance)
-    virtual QString vehicleImageOutline(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOutline.svg"); }
+    virtual QString vehicleImageOutline(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOutline.png"); }
 
     virtual QVariant expandedToolbarIndicatorSource(const Vehicle* /*vehicle*/, const QString& /*indicatorName*/) const { return QVariant(); }
 

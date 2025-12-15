@@ -206,23 +206,64 @@ void _setGstEnvVars()
 #elif defined(Q_OS_WIN)
     const QString binDir = appDir;
     const QString libDir = QDir(binDir).filePath("../lib");
-    const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
+    const QString pluginDirExeSide = QDir(binDir).filePath("gstreamer-1.0");
+    const QString pluginDirLibSide = QDir(libDir).filePath("gstreamer-1.0");
     const QString gioMod = QDir(libDir).filePath("gio/modules");
     const QString libexecDir = QDir(binDir).filePath("../libexec");
     const QString scanner = QDir(libexecDir).filePath("gstreamer-1.0/gst-plugin-scanner");
     const QString ptp = QDir(libexecDir).filePath("gstreamer-1.0/gst-ptp-helper");
 
-    if (QFileInfo::exists(pluginDir)) {
+    QString finalPluginDir = QFileInfo::exists(pluginDirExeSide) ? pluginDirExeSide : pluginDirLibSide;
+    QString finalGioMod = gioMod;
+    QString finalScanner = scanner;
+    QString finalPtp = ptp;
+
+    // Fallback search for typical GStreamer installations on Windows
+    if (!QFileInfo::exists(finalPluginDir)) {
+        const QStringList candidates = {
+            // Environment-driven roots
+            qEnvironmentVariable("GSTREAMER_1_0_ROOT_X86_64"),
+            qEnvironmentVariable("GSTREAMER_ROOT"),
+            qEnvironmentVariable("GSTREAMER_HOME"),
+            // Common install paths
+            QStringLiteral("C:/gstreamer/1.0/msvc_x86_64"),
+            QStringLiteral("C:/Program Files/GStreamer/1.0/msvc_x86_64"),
+            QStringLiteral("C:/Program Files (x86)/GStreamer/1.0/msvc_x86_64")
+        };
+
+        for (const QString &root : candidates) {
+            if (root.isEmpty()) continue;
+            const QString candPlugin = QDir(root).filePath("lib/gstreamer-1.0");
+            if (QFileInfo::exists(candPlugin)) {
+                finalPluginDir = candPlugin;
+                finalGioMod = QDir(root).filePath("lib/gio/modules");
+                finalScanner = QDir(root).filePath("libexec/gstreamer-1.0/gst-plugin-scanner.exe");
+                finalPtp = QDir(root).filePath("libexec/gstreamer-1.0/gst-ptp-helper.exe");
+                break;
+            }
+        }
+    }
+
+    if (QFileInfo::exists(finalPluginDir)) {
         qputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-        qputenv("GIO_EXTRA_MODULES", gioMod.toUtf8().constData());
-        qputenv("GST_PTP_HELPER_1_0", ptp.toUtf8().constData());
-        qputenv("GST_PTP_HELPER", ptp.toUtf8().constData());
-        qputenv("GST_PLUGIN_SCANNER_1_0", scanner.toUtf8().constData());
-        qputenv("GST_PLUGIN_SCANNER", scanner.toUtf8().constData());
-        qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_SYSTEM_PATH", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_PATH_1_0", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_PATH", pluginDir.toUtf8().constData());
+        if (QFileInfo::exists(finalGioMod)) {
+            qputenv("GIO_EXTRA_MODULES", finalGioMod.toUtf8().constData());
+        }
+        if (QFileInfo::exists(finalPtp)) {
+            qputenv("GST_PTP_HELPER_1_0", finalPtp.toUtf8().constData());
+            qputenv("GST_PTP_HELPER", finalPtp.toUtf8().constData());
+        }
+        if (QFileInfo::exists(finalScanner)) {
+            qputenv("GST_PLUGIN_SCANNER_1_0", finalScanner.toUtf8().constData());
+            qputenv("GST_PLUGIN_SCANNER", finalScanner.toUtf8().constData());
+        }
+        qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", finalPluginDir.toUtf8().constData());
+        qputenv("GST_PLUGIN_SYSTEM_PATH", finalPluginDir.toUtf8().constData());
+        qputenv("GST_PLUGIN_PATH_1_0", finalPluginDir.toUtf8().constData());
+        qputenv("GST_PLUGIN_PATH", finalPluginDir.toUtf8().constData());
+        qCDebug(GStreamerLog) << "Using GStreamer plugin path:" << finalPluginDir;
+    } else {
+        qCWarning(GStreamerLog) << "GStreamer plugin directory not found. RTSP/UDP/TCP sources may be unavailable.";
     }
 #endif
 }

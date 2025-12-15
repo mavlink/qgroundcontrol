@@ -12,6 +12,7 @@ import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
 import QGroundControl.Viewer3D
+import QtQuick3D
 
 View3D {
     id: topView

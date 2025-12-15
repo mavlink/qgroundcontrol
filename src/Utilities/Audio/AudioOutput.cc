@@ -11,10 +11,13 @@
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
+#include <QtTextToSpeech/QVoice>
 
 QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
@@ -81,10 +84,7 @@ void AudioOutput::init(Fact *mutedFact)
 
     (void) connect(_engine, &QTextToSpeech::engineChanged, this, [this](const QString &engine) {
         qCDebug(AudioOutputLog) << "TTS Engine set to:" << engine;
-        const QLocale defaultLocale = QLocale("en_US");
-        if (_engine->availableLocales().contains(defaultLocale)) {
-            _engine->setLocale(defaultLocale);
-        }
+        _applySpeechLocaleFromSettings();
     });
 
     (void) connect(_engine, &QTextToSpeech::aboutToSynthesize, this, [this](qsizetype id) {
@@ -95,6 +95,10 @@ void AudioOutput::init(Fact *mutedFact)
 
     (void) connect(mutedFact, &Fact::valueChanged, this, [this](QVariant value) {
         setMuted(value.toBool());
+    });
+
+    (void) connect(SettingsManager::instance()->appSettings()->audioSpeechLanguage(), &Fact::rawValueChanged, this, [this](QVariant) {
+        _applySpeechLocaleFromSettings();
     });
 
     if (AudioOutputLog().isDebugEnabled()) {
@@ -119,6 +123,8 @@ void AudioOutput::init(Fact *mutedFact)
     _initialized = true;
 
     qCDebug(AudioOutputLog) << "AudioOutput initialized with muted state:" << _muted;
+
+    _applySpeechLocaleFromSettings();
 }
 
 void AudioOutput::setMuted(bool muted)
@@ -126,6 +132,52 @@ void AudioOutput::setMuted(bool muted)
     if (_muted.exchange(muted) != muted) {
         (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, muted ? 0.0 : 1.0);
         qCDebug(AudioOutputLog) << "AudioOutput muted state set to:" << muted;
+    }
+}
+
+void AudioOutput::_applySpeechLocaleFromSettings()
+{
+    AppSettings* app = SettingsManager::instance()->appSettings();
+    QLocale::Language lang = static_cast<QLocale::Language>(app->audioSpeechLanguage()->rawValue().toInt());
+
+    QLocale desired;
+    if (lang == QLocale::AnyLanguage) {
+        desired = QLocale::system();
+    } else if (lang == QLocale::Hindi) {
+        desired = QLocale(QStringLiteral("hi_IN"));
+    } else {
+        desired = QLocale(lang);
+    }
+
+    const QList<QLocale> locales = _engine->availableLocales();
+    qCDebug(AudioOutputLog) << "Available TTS locales:" << locales;
+    QLocale selected = QLocale(QStringLiteral("en_US"));
+    if (locales.contains(desired)) {
+        selected = desired;
+    } else {
+        for (const QLocale& l : locales) {
+            if (l.language() == desired.language()) {
+                selected = l;
+                break;
+            }
+        }
+    }
+
+    (void) QMetaObject::invokeMethod(_engine, "setLocale", Qt::AutoConnection, selected);
+
+    const QList<QVoice> voices = _engine->availableVoices();
+    qCDebug(AudioOutputLog) << "Available TTS voices:" << voices;
+    QVoice voiceToUse;
+    bool hasVoice = false;
+    for (const QVoice& v : voices) {
+        if (v.locale().language() == selected.language()) {
+            voiceToUse = v;
+            hasVoice = true;
+            break;
+        }
+    }
+    if (hasVoice) {
+        (void) QMetaObject::invokeMethod(_engine, "setVoice", Qt::AutoConnection, voiceToUse);
     }
 }
 

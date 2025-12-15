@@ -24,19 +24,20 @@ Rectangle {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     QGCFlickable {
-        anchors.margins:    _margins
+        anchors.margins:    0
         anchors.fill:       parent
-        contentWidth:       grid.width
+        contentWidth:       parent.width
         contentHeight:      grid.height
         clip:               true
 
         GridLayout {
             id:         grid
+            width:      parent.width
             columns:    2
             QGCLabel { text: qsTr("Application") }
             QGCLabel { text: qsTr("IG GCS FLY") }
             QGCLabel { text: qsTr("Version") }
-            QGCLabel { text: QGroundControl.qgcVersion }
+            QGCLabel { text: QGroundControl.qgcVersion.replace(/^v[^ ]+/, "v2.0.3") }
             QGCLabel { text: qsTr("Organization") }
             QGCLabel { text: qsTr("IG Drones") }
             QGCLabel { text: qsTr("Website") }
@@ -64,13 +65,6 @@ Rectangle {
             QGCLabel {
                 linkColor:          qgcPal.text
                 text:               "<a href=\"https://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol\">https://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol</a>"
-                onLinkActivated:    (link) => Qt.openUrlExternally(link)
-            }
-
-            QGCLabel { text: qsTr("QGroundControl Discord Channel") }
-            QGCLabel {
-                linkColor:          qgcPal.text
-                text:               "<a href=\"https://discord.com/channels/1022170275984457759/1022185820683255908\">https://discord.com/channels/1022170275984457759/1022185820683255908</a>"
                 onLinkActivated:    (link) => Qt.openUrlExternally(link)
             }
         }

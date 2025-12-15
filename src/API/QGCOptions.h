@@ -10,6 +10,9 @@
 #pragma once
 
 #include <QtGui/QColor>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QScreen>
+#include <algorithm>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -171,8 +174,28 @@ public:
     virtual QString firmwareUpgradeSingleURL() const { return QString(); }
 
     /// Device specific pixel ratio/density (for when Qt doesn't properly read it from the hardware)
-    virtual float devicePixelRatio() const { return 0.0f; }
-    virtual float devicePixelDensity() const { return 0.0f; }
+    virtual float devicePixelRatio() const {
+        const QScreen *screen = QGuiApplication::primaryScreen();
+        if (!screen) {
+            return 1.0f;
+        }
+        const qreal ratio = screen->devicePixelRatio();
+        return ratio > 0.0 ? static_cast<float>(ratio) : 1.0f;
+    }
+    virtual float devicePixelDensity() const {
+        const QScreen *screen = QGuiApplication::primaryScreen();
+        if (!screen) {
+            return 0.0f;
+        }
+        const qreal dpi = screen->physicalDotsPerInch();
+        if (dpi <= 0.0) {
+            return 0.0f;
+        }
+        const qreal pxPerMm = dpi / 25.4; // convert DPI to pixels per millimeter
+        // Clamp to reasonable range to avoid bogus driver reports
+        const qreal clamped = std::clamp(pxPerMm, 2.5, 20.0);
+        return static_cast<float>(clamped);
+    }
 
     virtual const QGCFlyViewOptions *flyViewOptions() const { return _defaultFlyViewOptions; }
 

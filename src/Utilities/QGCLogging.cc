@@ -30,12 +30,21 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
     const QString message = qFormatLogMessage(type, context, msg);
 
     // Filter out Qt Quick internals
-    if (QGCLogging::instance() && !QString(context.category).startsWith("qt.quick")) {
+    const bool isQtQuickInternal = QString(context.category).startsWith("qt.quick");
+
+    // Suppress noisy Windows pointer API warnings from Qt
+    const QString lowerMessage = message.toLower();
+    const bool isPointerTypeParameterWarning = (
+        (lowerMessage.contains("getpointertype") && lowerMessage.contains("parameter is incorrect")) ||
+        lowerMessage.contains("getpointertype() failed")
+    );
+
+    if (QGCLogging::instance() && !isQtQuickInternal && !isPointerTypeParameterWarning) {
         QGCLogging::instance()->log(message);
     }
 
     // Call the previous handler if it exists
-    if (defaultHandler) {
+    if (defaultHandler && !isPointerTypeParameterWarning) {
         defaultHandler(type, context, msg);
     }
 }

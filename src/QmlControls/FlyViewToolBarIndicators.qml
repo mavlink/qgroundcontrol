@@ -37,7 +37,8 @@ Item {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 source:             modelData
-                visible:            item.showIndicator
+                active:             modelData.toString().indexOf("BatteryIndicator") === -1
+                visible:            item && item.showIndicator
             }
         }
 
@@ -49,7 +50,8 @@ Item {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 source:             modelData
-                visible:            item.showIndicator
+                active:             modelData.toString().indexOf("BatteryIndicator") === -1
+                visible:            item && item.showIndicator
             }
         }
     }

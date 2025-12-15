@@ -206,6 +206,33 @@ void AppSettings::_qLocaleLanguageChanged()
     qgcApp()->setLanguage();
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, audioSpeechLanguage)
+{
+    if (!_audioSpeechLanguageFact) {
+        _audioSpeechLanguageFact = _createSettingsFact(audioSpeechLanguageName);
+
+        FactMetaData* metaData = _audioSpeechLanguageFact->metaData();
+        QStringList rgEnumStrings;
+        QVariantList rgEnumValues;
+
+        rgEnumStrings.append(_rgLanguageInfo[0].languageName);
+        rgEnumValues.append(_rgLanguageInfo[0].languageId);
+
+        rgEnumStrings.append(QStringLiteral("English"));
+        rgEnumValues.append(QLocale::English);
+
+        rgEnumStrings.append(QStringLiteral("Hindi"));
+        rgEnumValues.append(QLocale::Hindi);
+
+        metaData->setEnumInfo(rgEnumStrings, rgEnumValues);
+
+        if (_audioSpeechLanguageFact->enumIndex() == -1) {
+            _audioSpeechLanguageFact->setRawValue(QLocale::AnyLanguage);
+        }
+    }
+    return _audioSpeechLanguageFact;
+}
+
 void AppSettings::_checkSavePathDirectories(void)
 {
     QDir savePathDir(savePath()->rawValue().toString());

@@ -48,9 +48,13 @@ Item {
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapControl
     property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
-    property bool   _pendingTakeoffAfterUpload: false
-    property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
+    
+    property real   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
+    property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
+    property var    _activePmc:             mapControl && mapControl._visualsPlanMasterController ? mapControl._visualsPlanMasterController : _planMasterController
+
+    property bool   _showTakeoffActions:    false
 
     property bool utmspActTrigger
 
@@ -63,34 +67,14 @@ Item {
         rightEdgeCenterInset:   Math.max(topRightPanel.rightEdgeCenterInset, toolStrip.rightEdgeCenterInset)
         rightEdgeBottomInset:   bottomRightRowLayout.rightEdgeBottomInset
         topEdgeLeftInset:       0
-        topEdgeCenterInset:     mapScale.topEdgeCenterInset
+        topEdgeCenterInset:     Math.max(mapScale.topEdgeCenterInset, bottomActionButtonsContainer.visible ? bottomActionButtonsContainer.height + bottomActionButtonsContainer.anchors.topMargin : 0)
         topEdgeRightInset:      Math.max(topRightPanel.topEdgeRightInset, toolStrip.topEdgeRightInset)
         bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  Math.max(bottomRightRowLayout.bottomEdgeCenterInset, bottomActionButtonsContainer.visible ? bottomActionButtonsContainer.height + bottomActionButtonsContainer.anchors.bottomMargin : 0)
+        bottomEdgeCenterInset:  bottomRightRowLayout.bottomEdgeCenterInset
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : bottomRightRowLayout.bottomEdgeRightInset
     }
 
-    // Watch for plan upload completion to chain into Takeoff when requested
-    Connections {
-        target: _planMasterController
-        function onSyncInProgressChanged() {
-            if (!_planMasterController.syncInProgress && _pendingTakeoffAfterUpload) {
-                _pendingTakeoffAfterUpload = false
-                _guidedController.confirmAction(_guidedController.actionTakeoff)
-            }
-        }
-    }
-    // Also listen to the visuals PlanMasterController (if used to send plan)
-    Connections {
-        target: mapControl && mapControl._visualsPlanMasterController ? mapControl._visualsPlanMasterController : null
-        function onSyncInProgressChanged() {
-            var pmc = mapControl && mapControl._visualsPlanMasterController ? mapControl._visualsPlanMasterController : null
-            if (pmc && !pmc.syncInProgress && _pendingTakeoffAfterUpload) {
-                _pendingTakeoffAfterUpload = false
-                _guidedController.confirmAction(_guidedController.actionTakeoff)
-            }
-        }
-    }
+    
 
     FlyViewTopRightPanel {
         id:                     topRightPanel
@@ -215,12 +199,12 @@ Item {
         z:                  QGroundControl.zOrderTopMost
     }
 
-    // Bottom-center neon action buttons with outer border frame
+    // Top-center neon action buttons with outer border frame
     Rectangle {
         id:                 bottomActionButtonsContainer
-        anchors.bottom:     parent.bottom
+        anchors.top:        parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 2
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 2
         width:              bottomActionButtons.width + ScreenTools.defaultFontPixelWidth * 2
         height:             bottomActionButtons.height + ScreenTools.defaultFontPixelHeight * 0.8
         color:              "transparent"
@@ -295,34 +279,16 @@ Item {
                 }
             }
 
-            MouseArea {
+            QGCMouseArea {
                 id:             takeoffMouseArea
                 anchors.fill:   parent
                 enabled:        bottomActionButtons.takeoffEnabled
                 hoverEnabled:   true
+                cursorShape:    Qt.PointingHandCursor
                 onClicked: {
                     _guidedController.closeAll()
-                    var pmc = mapControl && mapControl._visualsPlanMasterController ? mapControl._visualsPlanMasterController : _planMasterController
-                    var mc = pmc.missionController
-                    // Ensure Takeoff exists as first mission item if there are waypoints
-                    if (!mc.takeoffMissionItem) {
-                        var visList = mc.visualItems
-                        var firstCoord = null
-                        for (var j=1; j<visList.count; j++) {
-                            var it = visList.get(j)
-                            if (it && it.isSimpleItem && !it.isLandCommand) { firstCoord = it.coordinate; break }
-                        }
-                        if (firstCoord) mc.insertTakeoffItem(firstCoord, 1, false)
-                    }
-
-                    _root._pendingTakeoffAfterUpload = true
-                    if (pmc && pmc.dirty) {
-                        if (!pmc.syncInProgress) {
-                            pmc.sendToVehicle()
-                        }
-                    } else {
-                        _guidedController.confirmAction(_guidedController.actionTakeoff)
-                    }
+                    _guidedController.confirmAction(_guidedController.actionTakeoff)
+                    _showTakeoffActions = true
                 }
             }
         }
@@ -381,11 +347,12 @@ Item {
                 }
             }
 
-            MouseArea {
+            QGCMouseArea {
                 id:             returnMouseArea
                 anchors.fill:   parent
                 enabled:        bottomActionButtons.rthEnabled
                 hoverEnabled:   true
+                cursorShape:    Qt.PointingHandCursor
                 onClicked: {
                     _guidedController.closeAll()
                     _guidedController.confirmAction(_guidedController.actionRTL)
@@ -394,6 +361,44 @@ Item {
         }
         }
     }
+
+    // Bottom-center overlay with Arm / Engage / Cancel buttons (frontend only)
+    Rectangle {
+        id:                         takeoffActionsOverlay
+        anchors.bottom:             parent.bottom
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 4.2
+        z:                          QGroundControl.zOrderWidgets
+        visible:                    _showTakeoffActions && !QGroundControl.videoManager.fullScreen
+        color:                      qgcPal.toolbarBackground
+        border.color:               qgcPal.brandingBlue
+        border.width:               1
+        radius:                     6
+        width:                      actionsRow.implicitWidth + ScreenTools.defaultFontPixelWidth * 2
+        height:                     actionsRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.8
+
+        RowLayout {
+            id:                 actionsRow
+            anchors.centerIn:   parent
+            spacing:            ScreenTools.defaultFontPixelWidth
+
+            QGCButton {
+                text:       qsTr("Arm")
+                Layout.fillWidth: true
+            }
+            QGCButton {
+                text:       qsTr("Engage")
+                Layout.fillWidth: true
+            }
+            QGCButton {
+                text:       qsTr("Cancel")
+                Layout.fillWidth: true
+                onClicked:  _showTakeoffActions = false
+            }
+        }
+    }
+
+    
 
     MapScale {
         id:                 mapScale

@@ -1096,9 +1096,13 @@ void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
         }
     }
 
-    // For non aircraft vehicles, we would be in guided mode, so we need to send the mission start command
     if (!vehicle->fixedWing()) {
-        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
+        if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
+            qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+            return;
+        }
+        const int startIndex = qMax(0, vehicle->missionManager()->currentIndex());
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true, static_cast<float>(startIndex));
     }
 }
 

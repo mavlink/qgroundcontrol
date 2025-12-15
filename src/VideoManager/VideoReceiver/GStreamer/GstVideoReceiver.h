@@ -114,6 +114,8 @@ private:
     GstElement *_source = nullptr;
     GstElement *_tee = nullptr;
     GstElement *_videoSink = nullptr;
+    GstElement *_decoderQueue = nullptr;
+    GstElement *_recorderQueue = nullptr;
     GstVideoWorker *_worker = nullptr;
     gulong _teeProbeId = 0;
     gulong _videoSinkProbeId = 0;

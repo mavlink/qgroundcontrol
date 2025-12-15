@@ -20,16 +20,16 @@ Canvas {
     property bool   child:                  false
     property bool   highlightSelected:      false
     property var    color:                  checked ? "green" : (child ? qgcPal.mapIndicatorChild : qgcPal.mapIndicator)
-    property real   anchorPointX:           _height / 2
-    property real   anchorPointY:           _height / 2
+    property real   anchorPointX:           indicator.height / 2
+    property real   anchorPointY:           indicator.height / 2
     property bool   specifiesCoordinate:    true
     property real   gimbalYaw
     property real   vehicleYaw
     property bool   showGimbalYaw:          false
     property bool   showSequenceNumbers:    true
 
-    property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
-    property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
+    property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControlLabel.width : indicator.width) : (labelControl.visible ? labelControlLabel.width : indicator.width)
+    property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControlLabel.height : indicator.height)
     property real   _gimbalYawRadius:   ScreenTools.defaultFontPixelHeight
     property real   _gimbalYawWidth:    _gimbalYawRadius * 2
     property real   _smallRadiusRaw:    Math.ceil((ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2)

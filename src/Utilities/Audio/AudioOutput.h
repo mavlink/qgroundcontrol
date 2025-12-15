@@ -92,13 +92,14 @@ private:
 
     /// Converts millisecond values to a more readable format (seconds and minutes).
     static QString _convertMilliseconds(const QString &input);
-
     /// Extracts a millisecond value from the given string.
     ///     @param string The string to extract from.
     ///     @param match The extracted millisecond string.
     ///     @param number The extracted number.
     ///     @return True if extraction is successful, false otherwise.
     static bool _getMillisecondString(const QString &string, QString &match, int &number);
+
+    void _applySpeechLocaleFromSettings();
 
 };
 Q_DECLARE_OPERATORS_FOR_FLAGS(AudioOutput::TextMods)

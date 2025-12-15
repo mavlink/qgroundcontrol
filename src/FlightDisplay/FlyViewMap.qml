@@ -770,15 +770,12 @@ FlightMap {
                                         if (it && it.isSimpleItem && !it.isLandCommand) { firstCoord = it.coordinate; break }
                                     }
                                 }
-                                var takeoffItem = mc.insertTakeoffItem(firstCoord, 1, false)
-                                // Ensure both main coordinate and launchCoordinate are set
-                                try { if (takeoffItem && takeoffItem.coordinate !== undefined) takeoffItem.coordinate = firstCoord } catch(e) {}
-                                try { if (takeoffItem && takeoffItem.launchCoordinate !== undefined) takeoffItem.launchCoordinate = firstCoord } catch(e) {}
-                                // Briefly make it current to force visuals update
-                                try { mc.setCurrentPlanViewSeqNum(takeoffItem && takeoffItem.sequenceNumber ? takeoffItem.sequenceNumber : 1, true) } catch(e) {}
+                                mc.insertTakeoffItem(firstCoord, 1, false)
                             }
                             // Append to end and make current for drag handles to appear
                             mc.insertSimpleMissionItem(mapClickCoord, -1, true)
+                            // Mark plan dirty so Fly View shows Upload Required
+                            try { controller.dirty = true } catch(e) {}
                         }
                     }
 
@@ -878,6 +875,22 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        text:               qsTr("Upload Required")
+                        visible:            {
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            return controller && !controller.offline && controller.containsItems && controller.dirty
+                        }
+                        onClicked: {
+                            mapClickDropPanel.close()
+                            var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
+                            if (controller && !controller.syncInProgress) {
+                                controller.sendToVehicle()
+                            }
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
                         text:               qsTr("Return")
                         enabled:            {
                             var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
@@ -934,7 +947,7 @@ FlightMap {
         anchors.top:        parent.top
         mapControl:         _root
         buttonsOnLeft:      true
-        visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state === mapControl.pipState.windowState
+        visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl && (!mapControl.pipState || mapControl.pipState.state === mapControl.pipState.windowState)
 
         property real centerInset: visible ? parent.height - y : 0
     }

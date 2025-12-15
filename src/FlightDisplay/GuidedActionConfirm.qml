@@ -138,7 +138,7 @@ Rectangle {
         anchors.rightMargin:    _margins / 2
         anchors.top:            parent.top
         anchors.right:          parent.right
-        height:                 ScreenTools.defaultFontPixelHeight * 0.5
+        height:                 ScreenTools.defaultFontPixelHeight * 0.9
         width:                  height
         source:                 "/res/XDelete.svg"
         fillMode:               Image.PreserveAspectFit

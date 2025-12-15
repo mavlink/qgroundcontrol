@@ -12,6 +12,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Window
+import QtQuick.LocalStorage
 
 import QGroundControl
 
@@ -30,10 +31,120 @@ ApplicationWindow {
     font.family:    ScreenTools.normalFontFamily
 
     property bool   _utmspSendActTrigger
+    property bool   loggedIn: false
+    property string authMode: "login"
+    property string _authError: ""
+    property string currentUserEmail: ""
+
+    onLoggedInChanged: {
+        if (!loggedIn && profilePopup.visible) {
+            profilePopup.close()
+        }
+    }
 
     Component.onCompleted: {
-        // Start the sequence of first run prompt(s)
+        if (loggedIn) {
+            firstRunPromptManager.nextPrompt()
+        }
+        ensureAuthTables()
+        QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
+    }
+
+    function db() {
+        return LocalStorage.openDatabaseSync("IGCSAuth", "1.0", "IGCS auth", 1000000)
+    }
+
+    function ensureAuthTables() {
+        var d = db()
+        d.transaction(function(tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY NOT NULL, password_hash TEXT NOT NULL, salt TEXT NOT NULL, created_at INTEGER NOT NULL)')
+        })
+    }
+
+    function hashPassword(email, password, salt) {
+        return Qt.md5(email + ':' + password + ':' + salt)
+    }
+
+    function performLogin() {
+        var email = emailField.text.trim()
+        var password = passwordField.text
+        if (email.length === 0 || password.length === 0) {
+            _authError = qsTr("Please enter email and password")
+            errorLabel.text = _authError
+            errorLabel.visible = true
+            return
+        }
+        var d = db()
+        var ok = false
+        d.transaction(function(tx) {
+            var rs = tx.executeSql('SELECT email, password_hash, salt FROM users WHERE email = ?', [email])
+            if (rs.rows.length === 1) {
+                var row = rs.rows.item(0)
+                var h = hashPassword(email, password, row.salt)
+                ok = (h === row.password_hash)
+            }
+        })
+        if (!ok) {
+            _authError = qsTr("Incorrect email or password")
+            errorLabel.text = _authError
+            errorLabel.visible = true
+            return
+        }
+        errorLabel.visible = false
+        loggedIn = true
+        currentUserEmail = email
+        QGroundControl.linkManager.enableAutoConnect()
+        QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.rawValue = true
         firstRunPromptManager.nextPrompt()
+    }
+
+    function isValidEmail(e) {
+        var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return re.test(e)
+    }
+
+    function performSignup() {
+        var email = signupEmail.text.trim()
+        var password = signupPassword.text
+        var confirm = signupConfirmPassword.text
+        if (!isValidEmail(email)) {
+            _authError = qsTr("Enter a valid email address")
+            errorLabel.text = _authError
+            errorLabel.visible = true
+            return
+        }
+        if (password.length < 8) {
+            _authError = qsTr("Password must be at least 8 characters")
+            errorLabel.text = _authError
+            errorLabel.visible = true
+            return
+        }
+        if (password !== confirm) {
+            _authError = qsTr("Passwords do not match")
+            errorLabel.text = _authError
+            errorLabel.visible = true
+            return
+        }
+        var salt = String(new Date().getTime())
+        var hash = hashPassword(email, password, salt)
+        var d = db()
+        var inserted = false
+        d.transaction(function(tx) {
+            try {
+                tx.executeSql('INSERT INTO users (email, password_hash, salt, created_at) VALUES (?,?,?,?)', [email, hash, salt, Date.now()])
+                inserted = true
+            } catch (e) {
+                inserted = false
+            }
+        })
+        if (!inserted) {
+            _authError = qsTr("Account already exists")
+            errorLabel.text = _authError
+            errorLabel.visible = true
+            return
+        }
+        errorLabel.visible = false
+        authMode = "login"
     }
 
     /// Saves main window position and size and re-opens it in the same position and size next time
@@ -118,18 +229,21 @@ ApplicationWindow {
     }
 
     function showPlanView() {
+        closeTransientPopups()
         flyView.visible = false
         planView.visible = true
         activeFlySidebarTool = "plan"
     }
 
     function showFlyView() {
+        closeTransientPopups()
         flyView.visible = true
         planView.visible = false
         activeFlySidebarTool = ""
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
+        closeTransientPopups()
         toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
         toolDrawer.toolTitle    = toolTitle
         toolDrawer.toolSource   = toolSource
@@ -138,11 +252,13 @@ ApplicationWindow {
     }
 
     function showAnalyzeTool() {
+        closeTransientPopups()
         showTool(qsTr("Analyze Tools"), "qrc:/qml/QGroundControl/AnalyzeView/AnalyzeView.qml", "/qmlimages/Analyze.svg")
         activeFlySidebarTool = "analyze"
     }
 
     function showVehicleConfig() {
+        closeTransientPopups()
         showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/SetupView.qml", "/qmlimages/Gears.svg")
         activeFlySidebarTool = "setup"
     }
@@ -161,14 +277,16 @@ ApplicationWindow {
     }
 
     function showAboutTool() {
-        showTool(qsTr("About"), "qrc:/qml/QGroundControl/AppSettings/HelpSettings.qml", "/InstrumentValueIcons/question.svg")
+        closeTransientPopups()
+        showTool(qsTr("About"), "qrc:/qml/QGroundControl/AppSettings/AboutTool.qml", "/InstrumentValueIcons/question.svg")
         activeFlySidebarTool = "about"
     }
 
     property string _pendingSettingsPage: ""
 
     function showSettingsTool(settingsPage = "") {
-        showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
+        var title = settingsPage === "Video" ? qsTr("Video") : qsTr("Application Settings")
+        showTool(title, "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
         activeFlySidebarTool = settingsPage === "Video" ? "video" : "settings"
         if (settingsPage !== "") {
             _pendingSettingsPage = settingsPage
@@ -176,6 +294,12 @@ ApplicationWindow {
                 toolDrawerLoader.item.showSettingsPage(settingsPage)
                 _pendingSettingsPage = ""
             }
+        }
+    }
+
+    function closeTransientPopups() {
+        if (profilePopup.visible) {
+            profilePopup.close()
         }
     }
 
@@ -317,11 +441,34 @@ ApplicationWindow {
             spacing:                ScreenTools.defaultFontPixelWidth * 0.2
 
             SubMenuButton {
+                id:                 profileButton
+                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                Layout.fillWidth:   true
+                text:               ""
+                imageResource:      "/res/Sidebar_Profile.svg"
+                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                borderWidth:        0
+                checked:            mainWindow.activeFlySidebarTool === "profile"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.activeFlySidebarTool = "profile"
+                        toolDrawer.backIcon   = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
+                        toolDrawer.toolTitle  = qsTr("Profile")
+                        toolDrawer.toolIcon   = "/res/Sidebar_Profile.svg"
+                        toolDrawer.visible    = true
+                        toolDrawerLoader.source = ""
+                        toolDrawerLoader.sourceComponent = profileToolComponent
+                    }
+                }
+            }
+            QGCLabel { text: qsTr("Profile"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
+
+            SubMenuButton {
                 id:                 videoButton
                 height:             ScreenTools.defaultFontPixelHeight * 1.6
                 Layout.fillWidth:   true
                 text:               ""
-                imageResource:      "/InstrumentValueIcons/camera.svg"
+                imageResource:      "/res/Sidebar_Video.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 // borderColor:        permanentSidebar._cyan
                 borderWidth:        0
@@ -334,12 +481,13 @@ ApplicationWindow {
                     }
                 }
             }
+            QGCLabel { text: qsTr("video"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize; visible: QGroundControl.settingsManager.videoSettings.visible }
 
             SubMenuButton {
                 height:             ScreenTools.defaultFontPixelHeight * 1.6
                 Layout.fillWidth:   true
                 text:               ""
-                imageResource:      "/qmlimages/Plan.svg"
+                imageResource:      "/res/Sidebar_Plan.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 // borderColor:        permanentSidebar._cyan
                 borderWidth:        0
@@ -351,13 +499,14 @@ ApplicationWindow {
                     }
                 }
             }
+            QGCLabel { text: qsTr("plan"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
 
             SubMenuButton {
                 id:                 analyzeButton
                 height:             ScreenTools.defaultFontPixelHeight * 1.6
                 Layout.fillWidth:   true
                 text:               ""
-                imageResource:      "/qmlimages/Analyze.svg"
+                imageResource:      "/res/Sidebar_Analyze.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 // borderColor:        permanentSidebar._cyan
                 borderWidth:        0
@@ -370,13 +519,14 @@ ApplicationWindow {
                     }
                 }
             }
+            QGCLabel { text: qsTr("Analyze"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize; visible: QGroundControl.corePlugin.showAdvancedUI }
 
             SubMenuButton {
                 id:                 setupButton
                 height:             ScreenTools.defaultFontPixelHeight * 1.6
                 Layout.fillWidth:   true
                 text:               ""
-                imageResource:      "/res/VehicleConfig.svg"
+                imageResource:      "/res/Sidebar_VehicleConfig.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 // borderColor:        permanentSidebar._cyan
                 borderWidth:        0
@@ -388,13 +538,14 @@ ApplicationWindow {
                     }
                 }
             }
+            QGCLabel { text: qsTr("Configuration"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
 
             SubMenuButton {
                 id:                 aboutButton
                 height:             ScreenTools.defaultFontPixelHeight * 1.6
                 Layout.fillWidth:   true
                 text:               ""
-                imageResource:      "/InstrumentValueIcons/question.svg"
+                imageResource:      "/res/Sidebar_About.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 borderWidth:        0
                 checked:            mainWindow.activeFlySidebarTool === "about"
@@ -405,13 +556,14 @@ ApplicationWindow {
                     }
                 }
             }
+            QGCLabel { text: qsTr("About"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
 
             SubMenuButton {
                 id:                 settingsButton
                 height:             ScreenTools.defaultFontPixelHeight * 1.6
                 Layout.fillWidth:   true
                 text:               ""
-                imageResource:      "/qmlimages/Gears.svg"
+                imageResource:      "/res/Sidebar_ApplicationSettings.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 imageColor:         undefined
                 // borderColor:        permanentSidebar._cyan
@@ -424,6 +576,161 @@ ApplicationWindow {
                         mainWindow.showSettingsTool()
                     }
                 }
+            }
+            QGCLabel { text: qsTr("Settings"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize; visible: !QGroundControl.corePlugin.options.combineSettingsAndSetup }
+        }
+    }
+
+    Popup {
+        id:                 profilePopup
+        modal:              true
+        focus:              true
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        width:              Math.min(mainWindow.width * 0.4, Math.max(ScreenTools.defaultFontPixelWidth * 20, contentItem.implicitWidth + ScreenTools.defaultFontPixelWidth * 2))
+        background: Rectangle { color: qgcPal.window; radius: ScreenTools.defaultFontPixelHeight * 0.3; border.width: 1; border.color: qgcPal.text }
+        contentItem: Column {
+            spacing: ScreenTools.defaultFontPixelHeight * 0.5
+            width: profilePopup.width - ScreenTools.defaultFontPixelWidth * 2
+
+            QGCLabel {
+                text: mainWindow.loggedIn && mainWindow.currentUserEmail.length > 0
+                      ? qsTr("User: ") + mainWindow.currentUserEmail
+                      : qsTr("User: Guest")
+                wrapMode: Text.WrapAnywhere
+            }
+            QGCButton {
+                text: qsTr("Change Password")
+                enabled: mainWindow.loggedIn
+                onClicked: changePasswordDialogComponent.createObject(mainWindow).open()
+            }
+            QGCButton {
+                text: qsTr("Sign out")
+                onClicked: {
+                    mainWindow.loggedIn = false
+                    mainWindow.currentUserEmail = ""
+                    mainWindow.authMode = "login"
+                    QGroundControl.linkManager.disableAutoConnect()
+                    QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
+                    profilePopup.close()
+                }
+            }
+        }
+    }
+
+    // Center tool drawer page for Profile content
+    Component {
+        id: profileToolComponent
+
+        Item {
+            anchors.fill: parent
+
+            ColumnLayout {
+                anchors.fill:       parent
+                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.6
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.6
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    text: mainWindow.loggedIn && mainWindow.currentUserEmail.length > 0
+                          ? qsTr("User: ") + mainWindow.currentUserEmail
+                          : qsTr("User: Guest")
+                    wrapMode:           Text.WordWrap
+                    font.pointSize:     ScreenTools.defaultFontPointSize
+                }
+
+                RowLayout {
+                    Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelWidth
+
+                    QGCButton {
+                        text:       qsTr("Change Password")
+                        primary:    true
+                        onClicked:  changePasswordDialogComponent.createObject(mainWindow).open()
+                        enabled:    mainWindow.loggedIn
+                    }
+
+                    QGCButton {
+                        text:       qsTr("Sign out")
+                        onClicked: {
+                            mainWindow.loggedIn = false
+                            mainWindow.currentUserEmail = ""
+                            mainWindow.authMode = "login"
+                            QGroundControl.linkManager.disableAutoConnect()
+                            QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
+                            toolDrawer.visible = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: changePasswordDialogComponent
+
+        QGCPopupDialog {
+            title: qsTr("Change Password")
+            buttons: Dialog.Apply | Dialog.Close
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                QGCLabel { text: qsTr("Email") }
+                QGCTextField { Layout.fillWidth: true; text: mainWindow.currentUserEmail; enabled: false }
+
+                QGCLabel { text: qsTr("Current Password") }
+                QGCTextField { id: curPass; Layout.fillWidth: true; echoMode: TextInput.Password }
+
+                QGCLabel { text: qsTr("New Password") }
+                QGCTextField { id: newPass; Layout.fillWidth: true; echoMode: TextInput.Password }
+
+                QGCLabel { text: qsTr("Confirm Password") }
+                QGCTextField { id: confPass; Layout.fillWidth: true; echoMode: TextInput.Password }
+
+                QGCLabel { id: changePassError; Layout.fillWidth: true; color: QGroundControl.globalPalette.alertText; visible: false }
+            }
+
+            onAccepted: {
+                var email = mainWindow.currentUserEmail
+                var cur = curPass.text
+                var np = newPass.text
+                var cp = confPass.text
+                if (!mainWindow.loggedIn || email.length === 0) { changePassError.text = qsTr("Not logged in"); changePassError.visible = true; preventClose = true; return }
+                var d = mainWindow.db()
+                var ok = false
+                var salt = ""
+                d.transaction(function(tx) {
+                    var rs = tx.executeSql('SELECT password_hash, salt FROM users WHERE email = ?', [email])
+                    if (rs.rows.length === 1) {
+                        var row = rs.rows.item(0)
+                        var h = mainWindow.hashPassword(email, cur, row.salt)
+                        ok = (h === row.password_hash)
+                        salt = row.salt
+                    }
+                })
+                if (!ok) { changePassError.text = qsTr("Incorrect current password"); changePassError.visible = true; preventClose = true; return }
+                if (np.length < 8) { changePassError.text = qsTr("Password must be at least 8 characters"); changePassError.visible = true; preventClose = true; return }
+                if (np !== cp) { changePassError.text = qsTr("Passwords do not match"); changePassError.visible = true; preventClose = true; return }
+                var newSalt = String(new Date().getTime())
+                var newHash = mainWindow.hashPassword(email, np, newSalt)
+                var updated = false
+                d.transaction(function(tx) {
+                    tx.executeSql('UPDATE users SET password_hash = ?, salt = ? WHERE email = ?', [newHash, newSalt, email])
+                    updated = true
+                })
+                if (!updated) { changePassError.text = qsTr("Update failed"); changePassError.visible = true; preventClose = true; return }
+                changePassError.visible = false
+            }
+        }
+    }
+
+    Connections {
+        target: flyView
+        function onVisibleChanged() {
+            if (!flyView.visible && profilePopup.visible) {
+                profilePopup.close()
             }
         }
     }
@@ -462,7 +769,7 @@ ApplicationWindow {
             }
         }
     }
-
+    
     function showToolSelectDialog() {
         if (mainWindow.allowViewSwitch()) {
             mainWindow.showIndicatorDrawer(toolSelectComponent, null)
@@ -487,7 +794,7 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Plan Flight")
-                        imageResource:      "/qmlimages/Plan.svg"
+                        imageResource:      "/res/Sidebar_Plan.svg"
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
                                 mainWindow.closeIndicatorDrawer()
@@ -501,7 +808,7 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Analyze Tools")
-                        imageResource:      "/qmlimages/Analyze.svg"
+                        imageResource:      "/res/Sidebar_Analyze.svg"
                         visible:            QGroundControl.corePlugin.showAdvancedUI
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
@@ -516,7 +823,7 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Vehicle Configuration")
-                        imageResource:      "/res/VehicleConfig.svg"
+                        imageResource:      "/res/Sidebar_VehicleConfig.svg"
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
                                 mainWindow.closeIndicatorDrawer()
@@ -530,7 +837,7 @@ ApplicationWindow {
                         height:             toolSelectDialog._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Application Settings")
-                        imageResource:      "/qmlimages/Gears.svg"
+                        imageResource:      "/res/Sidebar_ApplicationSettings.svg"
                         imageColor:         undefined
                         visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                         onClicked: {
@@ -626,11 +933,13 @@ ApplicationWindow {
         property var backIcon
         property string toolTitle
         property alias toolSource:  toolDrawerLoader.source
+        property alias toolSourceComponent: toolDrawerLoader.sourceComponent
         property var toolIcon
 
         onVisibleChanged: {
             if (!toolDrawer.visible) {
                 toolDrawerLoader.source = ""
+                toolDrawerLoader.sourceComponent = null
                 mainWindow._pendingSettingsPage = ""
             }
         }
@@ -652,8 +961,8 @@ ApplicationWindow {
             id:                         toolDrawerPanel
             anchors.horizontalCenter:   parent.horizontalCenter
             anchors.verticalCenter:     parent.verticalCenter
-            width:                      Math.min(parent.width  * 0.9,  ScreenTools.defaultFontPixelWidth  * 100)
-            height:                     Math.min(parent.height * 0.65, ScreenTools.defaultFontPixelHeight * 30)
+            width:                      Math.max(ScreenTools.defaultFontPixelWidth * 60, Math.min(parent.width * 0.95, ScreenTools.defaultFontPixelWidth * 120))
+            height:                     Math.max(ScreenTools.defaultFontPixelHeight * 25, Math.min(parent.height * 0.65, ScreenTools.defaultFontPixelHeight * 30))
             radius:                     permanentSidebar.radius
             color:                      permanentSidebar._panelBg
             border.color:               permanentSidebar._cyan
@@ -718,6 +1027,252 @@ ApplicationWindow {
                     function onPopout() { toolDrawer.visible = false }
                 }
             }
+        }
+    }
+
+    Rectangle {
+        id:             loginOverlay
+        anchors.fill:   parent
+        color:          Qt.rgba(0.0, 0.09, 0.15, 1)
+        z:              QGroundControl.zOrderTopMost + 1
+        visible:        !loggedIn
+
+        Rectangle {
+            id:                         loginPanel
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.verticalCenter:     parent.verticalCenter
+            width:                      Math.min(parent.width  * 0.9,  ScreenTools.defaultFontPixelWidth  * 80)
+            height:                     Math.min(parent.height * 0.85, ScreenTools.defaultFontPixelHeight * 40)
+            radius:                     4
+            color:                      Qt.rgba(0.02, 0.10, 0.16, 0.94)
+            border.color:               "#00F0FF"
+            border.width:               1
+            antialiasing:               true
+            z:                          1
+            clip:                       true
+
+            ColumnLayout {
+                anchors.fill:       parent
+                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.6
+
+                Image {
+                    id:                     igLogo
+                    Layout.alignment:       Qt.AlignHCenter
+                    Layout.preferredWidth:  Math.min(ScreenTools.defaultFontPixelWidth * 40, loginPanel.width * 0.5)
+                    Layout.preferredHeight: Layout.preferredWidth * 0.4
+                    source:                 "/res/IGCSFly.svg"
+                    fillMode:               Image.PreserveAspectFit
+                    sourceSize.height:      Layout.preferredHeight
+                    smooth:                 true
+                    mipmap:                 true
+                    cache:                  false
+                    onStatusChanged:        { if (status === Image.Error) { source = "file:///C:/IGCS/resources/ig-gcs-fly.svg" } }
+                }
+
+                
+
+                Item { Layout.fillWidth: true; height: ScreenTools.defaultFontPixelHeight * 0.5 }
+
+                Rectangle { Layout.fillWidth: true; height: 1; color: "#00F0FF"; opacity: 0.25 }
+
+                Item { Layout.fillWidth: true; visible: authMode === "login" }
+                QGCLabel { text: qsTr("SYSTEM LOGIN"); Layout.alignment: Qt.AlignHCenter; color: "#00F0FF" }
+
+                // Login fields
+                Item { Layout.fillWidth: true; visible: authMode === "login" }
+                QGCLabel { text: qsTr("EMAIL ADDRESS"); visible: authMode === "login" }
+                Item {
+                    Layout.fillWidth:   true
+                    visible:            authMode === "login"
+                    height:             ScreenTools.defaultFontPixelHeight * 2.4
+                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.10, 0.16, 0.9); border.color: "#00F0FF"; border.width: 1 }
+                    RowLayout {
+                        anchors.fill:   parent
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        QGCColoredImage { Layout.alignment: Qt.AlignVCenter; source: "/InstrumentValueIcons/at-symbol.svg"; color: "#00F0FF"; width: ScreenTools.defaultFontPixelHeight; height: width; fillMode: Image.PreserveAspectFit; sourceSize.height: height }
+                        QGCTextField { id: emailField; Layout.fillWidth: true; placeholderText: qsTr("operator@igcs.mil"); inputMethodHints: Qt.ImhEmailCharactersOnly }
+                    }
+                }
+
+                QGCLabel { text: qsTr("PASSWORD"); visible: authMode === "login" }
+                Item {
+                    Layout.fillWidth:   true
+                    visible:            authMode === "login"
+                    height:             ScreenTools.defaultFontPixelHeight * 2.4
+                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.10, 0.16, 0.9); border.color: "#00F0FF"; border.width: 1 }
+                    RowLayout {
+                        anchors.fill:   parent
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        QGCColoredImage { Layout.alignment: Qt.AlignVCenter; source: "/res/LockClosed.svg"; color: "#00F0FF"; width: ScreenTools.defaultFontPixelHeight; height: width; fillMode: Image.PreserveAspectFit; sourceSize.height: height }
+                        QGCTextField { id: passwordField; Layout.fillWidth: true; placeholderText: qsTr("Enter password"); echoMode: TextInput.Password; onAccepted: mainWindow.performLogin() }
+                    }
+                }
+
+                // Signup fields
+                Item { Layout.fillWidth: true; visible: authMode === "signup" }
+                QGCLabel { text: qsTr("REGISTER ACCOUNT"); Layout.alignment: Qt.AlignHCenter; color: "#00F0FF"; visible: authMode === "signup" }
+                QGCLabel { text: qsTr("EMAIL ADDRESS"); visible: authMode === "signup" }
+                Item {
+                    Layout.fillWidth:   true
+                    visible:            authMode === "signup"
+                    height:             ScreenTools.defaultFontPixelHeight * 2.4
+                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.10, 0.16, 0.9); border.color: "#00F0FF"; border.width: 1 }
+                    RowLayout {
+                        anchors.fill:   parent
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        QGCColoredImage { Layout.alignment: Qt.AlignVCenter; source: "/InstrumentValueIcons/at-symbol.svg"; color: "#00F0FF"; width: ScreenTools.defaultFontPixelHeight; height: width; fillMode: Image.PreserveAspectFit; sourceSize.height: height }
+                        QGCTextField { id: signupEmail; Layout.fillWidth: true; placeholderText: qsTr("operator@igcs.mil"); inputMethodHints: Qt.ImhEmailCharactersOnly }
+                    }
+                }
+                QGCLabel { text: qsTr("PASSWORD"); visible: authMode === "signup" }
+                Item {
+                    Layout.fillWidth:   true
+                    visible:            authMode === "signup"
+                    height:             ScreenTools.defaultFontPixelHeight * 2.4
+                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.10, 0.16, 0.9); border.color: "#00F0FF"; border.width: 1 }
+                    RowLayout {
+                        anchors.fill:   parent
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        QGCColoredImage { Layout.alignment: Qt.AlignVCenter; source: "/res/LockClosed.svg"; color: "#00F0FF"; width: ScreenTools.defaultFontPixelHeight; height: width; fillMode: Image.PreserveAspectFit; sourceSize.height: height }
+                        QGCTextField { id: signupPassword; Layout.fillWidth: true; placeholderText: qsTr("Enter password"); echoMode: TextInput.Password }
+                    }
+                }
+                QGCLabel { text: qsTr("CONFIRM PASSWORD"); visible: authMode === "signup" }
+                Item {
+                    Layout.fillWidth:   true
+                    visible:            authMode === "signup"
+                    height:             ScreenTools.defaultFontPixelHeight * 2.4
+                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.10, 0.16, 0.9); border.color: "#00F0FF"; border.width: 1 }
+                    RowLayout {
+                        anchors.fill:   parent
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        QGCColoredImage { Layout.alignment: Qt.AlignVCenter; source: "/res/LockClosed.svg"; color: "#00F0FF"; width: ScreenTools.defaultFontPixelHeight; height: width; fillMode: Image.PreserveAspectFit; sourceSize.height: height }
+                        QGCTextField { id: signupConfirmPassword; Layout.fillWidth: true; placeholderText: qsTr("Re-enter password"); echoMode: TextInput.Password; onAccepted: mainWindow.performSignup() }
+                    }
+                }
+
+                QGCLabel {
+                    id:                 errorLabel
+                    Layout.fillWidth:   true
+                    color:              QGroundControl.globalPalette.alertText
+                    visible:            false
+                    wrapMode:           Text.WordWrap
+                }
+
+                RowLayout {
+                    Layout.fillWidth:   true
+                    spacing:            ScreenTools.defaultFontPixelWidth
+
+                    Item {
+                        Layout.fillWidth:   true
+                        height:             ScreenTools.defaultFontPixelHeight * 2.4
+
+                        QGCButton {
+                            id:                 loginButton
+                            anchors.fill:       parent
+                            text:               ""
+                            iconSource:         ""
+                            primary:            true
+                            neon:               true
+                            pill:               false
+                            backRadius:         6
+                            heightFactor:       1.0
+                            neonBorderWidth:    1
+                            neonColor:          "#00F0FF"
+                            onClicked:          authMode === "login" ? mainWindow.performLogin() : mainWindow.performSignup()
+                        }
+
+                        RowLayout {
+                            anchors.centerIn:   parent
+                            spacing:            ScreenTools.defaultFontPixelWidth
+                            QGCColoredImage {
+                                source:             authMode === "login" ? "/res/ArrowRight.svg" : "/InstrumentValueIcons/user-add.svg"
+                                color:              "#00F0FF"
+                                width:              ScreenTools.defaultFontPixelHeight * 1.2
+                                height:             width
+                                fillMode:           Image.PreserveAspectFit
+                                sourceSize.height:  height
+                            }
+                        QGCLabel {
+                            text:               authMode === "login" ? qsTr("LOGIN") : qsTr("REGISTER")
+                            font.pointSize:     ScreenTools.defaultFontPointSize
+                            font.weight:        Font.DemiBold
+                            color:              "#00F0FF"
+                            wrapMode:           Text.NoWrap
+                            elide:              Text.ElideRight
+                        }
+                    }
+
+                        Rectangle { width: 12; height: 1; color: "#00F0FF"; opacity: 0.9; anchors.left: parent.left; anchors.top: parent.top }
+                        Rectangle { width: 1; height: 12; color: "#00F0FF"; opacity: 0.9; anchors.left: parent.left; anchors.top: parent.top }
+                        Rectangle { width: 12; height: 1; color: "#00F0FF"; opacity: 0.9; anchors.right: parent.right; anchors.bottom: parent.bottom }
+                        Rectangle { width: 1; height: 12; color: "#00F0FF"; opacity: 0.9; anchors.right: parent.right; anchors.bottom: parent.bottom }
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth:   true
+                    height:             ScreenTools.defaultFontPixelHeight * 2
+                    QGCLabel {
+                        anchors.centerIn:   parent
+                        text:               authMode === "login" ? qsTr("DON'T HAVE AN ACCOUNT? REGISTER") : qsTr("ALREADY HAVE AN ACCOUNT? LOGIN")
+                        color:              "#00F0FF"
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode:           Text.NoWrap
+                        elide:              Text.ElideRight
+                    }
+                    MouseArea {
+                        anchors.fill:   parent
+                        cursorShape:    Qt.PointingHandCursor
+                        onClicked:      authMode = authMode === "login" ? "signup" : "login"
+                    }
+                }
+
+                Item { Layout.fillWidth: true; height: ScreenTools.defaultFontPixelHeight }
+                QGCLabel {
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               qsTr("CLASSIFIED SYSTEM – AUTHORIZED PERSONNEL ONLY")
+                    color:              "#00F0FF"
+                }
+            }
+            Rectangle { width: 6; height: 6; color: "#00F0FF"; anchors.left: parent.left; anchors.top: parent.top }
+            Rectangle { width: 6; height: 6; color: "#00F0FF"; anchors.right: parent.right; anchors.top: parent.top }
+            Rectangle { width: 6; height: 6; color: "#00F0FF"; anchors.left: parent.left; anchors.bottom: parent.bottom }
+            Rectangle { width: 6; height: 6; color: "#00F0FF"; anchors.right: parent.right; anchors.bottom: parent.bottom }
+        }
+        Repeater {
+            model: 40
+            delegate: Column {
+                width: 12
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                x: index * 20
+                spacing: 6
+                z: -1
+                Repeater {
+                    model: 50
+                    delegate: Text {
+                        text: Math.random() > 0.5 ? '0' : '1'
+                        color: "#00F0FF"
+                        opacity: 0.06
+                        font.pointSize: 8
+                    }
+                }
+            }
+        }
+        QGCLabel {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom:           parent.bottom
+            anchors.bottomMargin:     ScreenTools.defaultFontPixelHeight * 0.5
+            text:                     qsTr("© IG Drones, All Rights Reserved")
+            color:                    "#00F0FF"
+            opacity:                  0.6
         }
     }
 

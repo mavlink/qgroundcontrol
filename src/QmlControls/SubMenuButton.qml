@@ -26,7 +26,7 @@ Button {
     property real   _sidePadding:   ScreenTools.defaultFontPixelWidth * 1.2
 
     // Customization hooks for border styling (optional)
-    property color  borderColor:    undefined
+    property var    borderColor:    undefined
     property real   borderWidth:    -1
 
     property ButtonGroup buttonGroup:    null

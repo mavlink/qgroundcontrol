@@ -10,7 +10,10 @@
 #include "Platform.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtGui/QGuiApplication>
 #include <QtCore/QProcessEnvironment>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QDir>
 
 #include "QGCCommandLineParser.h"
 
@@ -165,6 +168,9 @@ void Platform::setupPreApp(const QGCCommandLineParser::CommandLineParseResult &c
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
+    QCoreApplication::setAttribute(Qt::AA_SynthesizeMouseForUnhandledTouchEvents);
+    
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 }
 
 void Platform::setupPostApp()
@@ -176,5 +182,18 @@ void Platform::setupPostApp()
 
 #ifdef Q_OS_ANDROID
     AndroidInterface::checkStoragePermissions();
+#endif
+
+#ifdef Q_OS_WIN
+    const QString pluginPath = QCoreApplication::applicationDirPath() + QLatin1String("/gstreamer-1.0");
+    if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH")) {
+        (void) qputenv("GST_PLUGIN_PATH", pluginPath.toUtf8());
+    }
+    const QString regDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QLatin1String("/gstreamer");
+    QDir().mkpath(regDir);
+    const QString registry = regDir + QLatin1String("/registry.bin");
+    if (!qEnvironmentVariableIsSet("GST_REGISTRY")) {
+        (void) qputenv("GST_REGISTRY", registry.toUtf8());
+    }
 #endif
 }

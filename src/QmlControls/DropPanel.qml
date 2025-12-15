@@ -25,7 +25,7 @@ Popup {
     rightPadding:   _dropRight ? _innerMargin : _innerMargin + _arrowPointWidth
     modal:          true
     focus:          true
-    closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnReleaseOutside | Popup.CloseOnDragOutside
     clip:           false
     dim:            false
 

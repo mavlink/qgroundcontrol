@@ -165,9 +165,9 @@ Item {
 
         component Divider: Rectangle {
             implicitWidth: 1
-            implicitHeight: infoRow.height * 0.55
             color: _divider
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: infoRow.height * 0.55
         }
     }
 
@@ -192,4 +192,3 @@ Item {
         }
     }
 }
-

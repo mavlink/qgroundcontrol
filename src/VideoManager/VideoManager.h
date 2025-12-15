@@ -65,6 +65,8 @@ public:
     Q_INVOKABLE void stopRecording();
     Q_INVOKABLE void stopVideo();
 
+    Q_INVOKABLE void initAfterQmlReady();
+
     void init(QQuickWindow *mainWindow);
     void cleanup();
     bool autoStreamConfigured() const;

@@ -80,11 +80,18 @@
     "decimalPlaces":    1
 },
 {
-    "name":             "audioMuted",
-    "shortDesc": "Mute audio output",
-    "longDesc":  "If this option is enabled all audio output will be muted.",
-    "type":             "bool",
-    "default":     false
+        "name":             "audioMuted",
+        "shortDesc": "Mute audio output",
+        "longDesc":  "If this option is enabled all audio output will be muted.",
+        "type":             "bool",
+        "default":     false
+},
+{
+    "name":             "audioSpeechLanguage",
+    "shortDesc": "Audio speech language",
+    "longDesc":  "Language used by text-to-speech audio output.",
+    "type":             "uint32",
+    "default":     0
 },
 {
     "name":             "virtualJoystick",

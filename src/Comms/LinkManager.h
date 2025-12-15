@@ -117,6 +117,9 @@ public:
 
     void startAutoConnectedLinks();
 
+    Q_INVOKABLE void enableAutoConnect();
+    Q_INVOKABLE void disableAutoConnect();
+
     static bool isBluetoothAvailable();
 
     static bool isLinkUSBDirect(const LinkInterface *link);
@@ -154,6 +157,8 @@ private:
     bool _mavlinkSupportForwardingEnabled = false;
     uint32_t _mavlinkChannelsUsedBitMask = 1;
     QString _connectionsSuspendedReason;            ///< User visible reason for suspension
+
+    bool _autoConnectAllowed = false;
 
     QMutex _linksMutex;                             ///< Protects _rgLinks access from multiple threads
     QList<SharedLinkInterfacePtr> _rgLinks;

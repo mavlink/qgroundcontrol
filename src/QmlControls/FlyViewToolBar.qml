@@ -111,19 +111,24 @@ Rectangle {
                         font.pointSize:     ScreenTools.smallFontPointSize
                     }
                 }
-            }
 
-            QGCButton {
-                id:         disconnectButton
-                text:       qsTr("Disconnect")
-                onClicked:  _activeVehicle.closeVehicle()
-                visible:    _activeVehicle && _communicationLost
-                neon:       true
-                pill:       true
-                neonColor:  qgcPal.colorRed
+                QGCDelayButton {
+                    id:                 armButton
+                    Layout.alignment:   Qt.AlignVCenter
+                    Layout.leftMargin:  ScreenTools.defaultFontPixelWidth
+                    text:               _activeVehicle && _activeVehicle.armed ? qsTr("Disarm") : qsTr("Arm")
+                    enabled:            _activeVehicle && (_activeVehicle.armed || !_activeVehicle.healthAndArmingCheckReport.supported || _activeVehicle.healthAndArmingCheckReport.canArm)
+                    onActivated: {
+                        if (!_activeVehicle) return
+                        if (_activeVehicle.armed) {
+                            _activeVehicle.armed = false
+                        } else {
+                            _activeVehicle.armed = true
+                        }
+                    }
+                }
             }
         }
-
         Item {
             id:                     centerStatusHolder
             Layout.fillHeight:      true

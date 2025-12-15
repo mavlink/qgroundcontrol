@@ -49,13 +49,17 @@ Rectangle {
         anchors.bottom:         parent.bottom
         spacing:                ScreenTools.defaultFontPixelWidth / 2
 
-        QGCLabel {
-            font.pointSize: ScreenTools.largeFontPointSize
-            text:           "<"
+        QGCColoredImage {
+            source:         "/res/Adobe_Express.svg"
+            height:         ScreenTools.defaultFontPixelHeight * 1.6
+            width:          height
+            fillMode:       Image.PreserveAspectFit
+            sourceSize.height: height
+            color:          qgcPal.buttonText
         }
 
         QGCLabel {
-            text:           qsTr("Exit Plan")
+            // text:           qsTr("Exit Plan")
             font.pointSize: ScreenTools.largeFontPointSize
         }
     }

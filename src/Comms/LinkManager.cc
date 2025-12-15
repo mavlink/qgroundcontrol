@@ -418,6 +418,9 @@ void LinkManager::loadLinkConfigurationList()
 
 void LinkManager::_addUDPAutoConnectLink()
 {
+    if (!_autoConnectAllowed) {
+        return;
+    }
     if (!_autoConnectSettings->autoConnectUDP()->rawValue().toBool()) {
         return;
     }
@@ -442,6 +445,9 @@ void LinkManager::_addUDPAutoConnectLink()
 
 void LinkManager::_addMAVLinkForwardingLink()
 {
+    if (!_autoConnectAllowed) {
+        return;
+    }
     if (!SettingsManager::instance()->mavlinkSettings()->forwardMavlink()->rawValue().toBool()) {
         return;
     }
@@ -464,6 +470,9 @@ void LinkManager::_addMAVLinkForwardingLink()
 #ifdef QGC_ZEROCONF_ENABLED
 void LinkManager::_addZeroConfAutoConnectLink()
 {
+    if (!_autoConnectAllowed) {
+        return;
+    }
     if (!_autoConnectSettings->autoConnectZeroConf()->rawValue().toBool()) {
         return;
     }
@@ -538,6 +547,9 @@ void LinkManager::_addZeroConfAutoConnectLink()
 
 void LinkManager::_updateAutoConnectLinks()
 {
+    if (!_autoConnectAllowed) {
+        return;
+    }
     if (_connectionsSuspended) {
         return;
     }
@@ -733,11 +745,27 @@ SharedLinkConfigurationPtr LinkManager::addConfiguration(LinkConfiguration *conf
 
 void LinkManager::startAutoConnectedLinks()
 {
+    if (!_autoConnectAllowed) {
+        return;
+    }
     for (SharedLinkConfigurationPtr &sharedConfig : _rgLinkConfigs) {
         if (sharedConfig->isAutoConnect()) {
             createConnectedLink(sharedConfig);
         }
     }
+}
+
+void LinkManager::enableAutoConnect()
+{
+    _autoConnectAllowed = true;
+    _updateAutoConnectLinks();
+    startAutoConnectedLinks();
+}
+
+void LinkManager::disableAutoConnect()
+{
+    _autoConnectAllowed = false;
+    disconnectAll();
 }
 
 uint8_t LinkManager::allocateMavlinkChannel()
