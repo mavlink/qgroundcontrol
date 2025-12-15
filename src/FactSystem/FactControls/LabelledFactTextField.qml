@@ -28,6 +28,7 @@ RowLayout {
     QGCLabel {
         Layout.fillWidth:   true
         text:               label
+        visible:            label !== ""
     }
 
     FactTextField {
