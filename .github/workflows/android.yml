@@ -161,7 +161,7 @@ jobs:
 
       - name: Save APK
         if: ${{ !matrix.primary }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.PACKAGE }}-${{ matrix.host }}.apk
           path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
