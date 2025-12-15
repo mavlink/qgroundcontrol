@@ -45,7 +45,7 @@ Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 
 VideoManager::VideoManager(QObject* parent)
     : QObject(parent),
-       _subtitleWriter(new SubtitleWriter(this)),
+      _subtitleWriter(new SubtitleWriter(this)),
       _videoSettings(SettingsManager::instance()->videoSettings()) {
     qCDebug(VideoManagerLog) << this;
 

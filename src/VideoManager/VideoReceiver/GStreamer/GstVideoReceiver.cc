@@ -75,8 +75,8 @@ void GstVideoReceiver::start(uint32_t timeout) {
     bool pipelineUp = false;
     bool invalidUrl = false;
 
-        _decoderQueue = nullptr;
-        _recorderQueue = nullptr;
+    _decoderQueue = nullptr;
+    _recorderQueue = nullptr;
 
     do {
         _tee = gst_element_factory_make("tee", nullptr);
@@ -128,7 +128,6 @@ void GstVideoReceiver::start(uint32_t timeout) {
                 }
             }
         }
-
         _pipeline = gst_pipeline_new("receiver");
         if (!_pipeline) {
             qCCritical(GstVideoReceiverLog) << "gst_pipeline_new() failed";
@@ -137,7 +136,6 @@ void GstVideoReceiver::start(uint32_t timeout) {
 
         g_object_set(_pipeline, "message-forward", TRUE, nullptr);
 
-        // Verify required source element exists for the given URI scheme before building the pipeline
         {
             QUrl sourceUrl(_uri);
             const QString scheme = sourceUrl.scheme().toLower();
@@ -220,6 +218,7 @@ void GstVideoReceiver::start(uint32_t timeout) {
             }
         }
 
+        
         GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
         if (bus) {
             gst_bus_enable_sync_message_emission(bus);
@@ -423,7 +422,6 @@ void GstVideoReceiver::startDecoding(void* sink) {
         _dispatchSignal([this]() { emit onStartDecodingComplete(STATUS_FAIL); });
         return;
     }
-
     if (_decoderValve) {
         g_object_set(_decoderValve, "drop", FALSE, nullptr);
     }
@@ -947,7 +945,6 @@ void GstVideoReceiver::_onNewSourcePad(GstPad* pad) {
         qCCritical(GstVideoReceiverLog) << "_addDecoder() failed";
         return;
     }
-
     if (_decoderValve) {
         g_object_set(_decoderValve, "drop", FALSE, nullptr);
     }
@@ -1401,9 +1398,9 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus* /* bus */, GstMessage* msg, gpo
             }
 
             if (error) {
-                const gchar* src_name = msg->src ? GST_OBJECT_NAME(msg->src) : "<unknown>";
-                qCCritical(GstVideoReceiverLog) << "GStreamer error:" << error->message << "- src:" << src_name;
-                g_clear_error(&error);
+    const gchar* src_name = msg->src ? GST_OBJECT_NAME(msg->src) : "<unknown>";
+    qCCritical(GstVideoReceiverLog) << "GStreamer error:" << error->message << "- src:" << src_name;
+    g_clear_error(&error);
             }
 
             pThis->_worker->dispatch([pThis]() {

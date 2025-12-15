@@ -94,7 +94,7 @@ ApplicationWindow {
         loggedIn = true
         currentUserEmail = email
         QGroundControl.linkManager.enableAutoConnect()
-        QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.rawValue = true
+        QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(true)
         firstRunPromptManager.nextPrompt()
     }
 
@@ -448,16 +448,15 @@ ApplicationWindow {
                 imageResource:      "/res/Sidebar_Profile.svg"
                 sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
                 borderWidth:        0
-                checked:            mainWindow.activeFlySidebarTool === "profile"
+                checked:            false
                 onClicked: {
-                    if (mainWindow.allowViewSwitch()) {
-                        mainWindow.activeFlySidebarTool = "profile"
-                        toolDrawer.backIcon   = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
-                        toolDrawer.toolTitle  = qsTr("Profile")
-                        toolDrawer.toolIcon   = "/res/Sidebar_Profile.svg"
-                        toolDrawer.visible    = true
-                        toolDrawerLoader.source = ""
-                        toolDrawerLoader.sourceComponent = profileToolComponent
+                    if (profilePopup.visible) {
+                        profilePopup.close()
+                    } else {
+                        var pt = profileButton.mapToItem(Overlay.overlay, 0, 0)
+                        profilePopup.x = pt.x + profileButton.width + ScreenTools.defaultFontPixelWidth
+                        profilePopup.y = pt.y
+                        profilePopup.open()
                     }
                 }
             }
@@ -592,6 +591,7 @@ ApplicationWindow {
         contentItem: Column {
             spacing: ScreenTools.defaultFontPixelHeight * 0.5
             width: profilePopup.width - ScreenTools.defaultFontPixelWidth * 2
+            padding: ScreenTools.defaultFontPixelWidth
 
             QGCLabel {
                 text: mainWindow.loggedIn && mainWindow.currentUserEmail.length > 0
@@ -613,54 +613,6 @@ ApplicationWindow {
                     QGroundControl.linkManager.disableAutoConnect()
                     QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
                     profilePopup.close()
-                }
-            }
-        }
-    }
-
-    // Center tool drawer page for Profile content
-    Component {
-        id: profileToolComponent
-
-        Item {
-            anchors.fill: parent
-
-            ColumnLayout {
-                anchors.fill:       parent
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.6
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.6
-
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    text: mainWindow.loggedIn && mainWindow.currentUserEmail.length > 0
-                          ? qsTr("User: ") + mainWindow.currentUserEmail
-                          : qsTr("User: Guest")
-                    wrapMode:           Text.WordWrap
-                    font.pointSize:     ScreenTools.defaultFontPointSize
-                }
-
-                RowLayout {
-                    Layout.fillWidth:   true
-                    spacing:            ScreenTools.defaultFontPixelWidth
-
-                    QGCButton {
-                        text:       qsTr("Change Password")
-                        primary:    true
-                        onClicked:  changePasswordDialogComponent.createObject(mainWindow).open()
-                        enabled:    mainWindow.loggedIn
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Sign out")
-                        onClicked: {
-                            mainWindow.loggedIn = false
-                            mainWindow.currentUserEmail = ""
-                            mainWindow.authMode = "login"
-                            QGroundControl.linkManager.disableAutoConnect()
-                            QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
-                            toolDrawer.visible = false
-                        }
-                    }
                 }
             }
         }
