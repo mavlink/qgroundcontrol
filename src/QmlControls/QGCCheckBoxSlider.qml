@@ -21,7 +21,7 @@ AbstractButton   {
 
     property bool _showBorder:      qgcPal.globalTheme === QGCPalette.Light
     property int  _sliderInset:     2
-    property bool _showHighlight:   enabled && (pressed | checked)
+    property bool _showHighlight:   enabled && (pressed || checked)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
