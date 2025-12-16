@@ -1,0 +1,19 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="Slider icon">
+  <!-- Background (optional) -->
+  <rect width="256" height="256" fill="none"/>
+
+  <!-- Top slider bar -->
+  <rect x="24" y="48" width="208" height="16" rx="8" />
+  <!-- Top slider knob -->
+  <circle cx="88" cy="56" r="22" />
+
+  <!-- Middle slider bar -->
+  <rect x="24" y="120" width="208" height="16" rx="8" />
+  <!-- Middle slider knob -->
+  <circle cx="160" cy="128" r="22" />
+
+  <!-- Bottom slider bar -->
+  <rect x="24" y="192" width="208" height="16" rx="8" />
+  <!-- Bottom slider knob -->
+  <circle cx="64" cy="200" r="22" />
+</svg>

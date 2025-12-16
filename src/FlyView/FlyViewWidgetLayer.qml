@@ -177,8 +177,6 @@ Item {
         anchors.left:       toolStrip.right
         anchors.top:        parent.top
         mapControl:         _mapControl
-        buttonsOnLeft:      true
-        zoomButtonsVisible: false
         autoHide:           true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && !isViewer3DOpen && mapControl.pipState.state === mapControl.pipState.fullState
 
