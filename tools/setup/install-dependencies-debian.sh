@@ -4,13 +4,20 @@ export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -qq
 apt-get install -qq --no-install-recommends \
-    software-properties-common \
+    ca-certificates \
     gnupg2 \
-    ca-certificates
+    locales \
+    software-properties-common
 
 # Enable the “universe” component (needed for several dev packages)
 add-apt-repository -y universe
 apt-get update -qq
+
+# --------------------------------------------------------------------
+# Configure language environment
+# --------------------------------------------------------------------
+locale-gen en_US.UTF-8 && \
+update-locale LANG=en_US.UTF-8
 
 # --------------------------------------------------------------------
 # Core build tools
@@ -22,13 +29,14 @@ apt-get install -qq --no-install-recommends \
     ccache \
     cmake \
     cppcheck \
+    curl \
     file \
+    fuse3 \
     gdb \
     git \
+    jq \
     libfuse2 \
-    fuse3 \
     libtool \
-    locales \
     mold \
     ninja-build \
     patchelf \
@@ -37,9 +45,11 @@ apt-get install -qq --no-install-recommends \
     python3 \
     python3-pip \
     rsync \
+    unzip \
     wget \
     zsync
 
+# Install cmake and ninja via pipx to get more recent versions
 pipx ensurepath -q
 pipx install -q cmake
 pipx install -q ninja
