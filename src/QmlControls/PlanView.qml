@@ -52,7 +52,9 @@ Item {
     property bool   _resetRegisterFlightPlan
 
     readonly property int _layerMission:        1
-    readonly property int _layerOther:          2
+    readonly property int _layerFence:          2
+    readonly property int _layerRally:          3
+    readonly property int _layerUTMSP:          4
 
     readonly property string _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
@@ -277,18 +279,6 @@ Item {
         _missionController.insertLandItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
     }
 
-
-    function selectNextNotReady() {
-        var foundCurrent = false
-        for (var i=0; i<_missionController.visualItems.count; i++) {
-            var vmi = _missionController.visualItems.get(i)
-            if (vmi.readyForSaveState === VisualMissionItem.NotReadyForSaveData) {
-                _missionController.setCurrentPlanViewSeqNum(vmi.sequenceNumber, true)
-                break
-            }
-        }
-    }
-
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings ? _appSettings.missionSavePath : ""
@@ -377,7 +367,7 @@ Item {
                         _addROIOnClick = false
                     }
                     break
-                case _layerOther:
+                case _layerRally:
                     if (_rallyPointController.supported && addWaypointRallyPointAction.checked) {
                         _rallyPointController.addPoint(coordinate)
                     }
@@ -480,18 +470,18 @@ Item {
             GeoFenceMapVisuals {
                 map:                    editorMap
                 myGeoFenceController:   _geoFenceController
-                interactive:            _editingLayer == _layerOther
+                interactive:            _editingLayer == _layerFence
                 homePosition:           _missionController.plannedHomePosition
                 planView:               true
-                opacity:                _editingLayer != _layerOther ? editorMap._nonInteractiveOpacity : 1
+                opacity:                _editingLayer != _layerFence ? editorMap._nonInteractiveOpacity : 1
             }
 
             RallyPointMapVisuals {
                 map:                    editorMap
                 myRallyPointController: _rallyPointController
-                interactive:            _editingLayer == _layerOther
+                interactive:            _editingLayer == _layerRally
                 planView:               true
-                opacity:                _editingLayer != _layerOther ? editorMap._nonInteractiveOpacity : 1
+                opacity:                _editingLayer != _layerRally ? editorMap._nonInteractiveOpacity : 1
             }
 
             UTMSPMapVisuals {
@@ -499,10 +489,10 @@ Item {
                 map:                    editorMap
                 currentMissionItems:    _visualItems
                 myGeoFenceController:   _geoFenceController
-                interactive:            _editingLayer == _layerOther
+                interactive:            _editingLayer == _layerUTMSP
                 homePosition:           _missionController.plannedHomePosition
                 planView:               true
-                opacity:                _editingLayer != _layerOther ? editorMap._nonInteractiveOpacity : 1
+                opacity:                _editingLayer != _layerUTMSP ? editorMap._nonInteractiveOpacity : 1
                 resetCheck:             _resetGeofencePolygon
             }
         }
@@ -525,7 +515,7 @@ Item {
             readonly property int landButtonIndex:      5
             readonly property int centerButtonIndex:    6
 
-            property bool _isRallyLayer:    _editingLayer == _layerOther
+            property bool _isRallyLayer:    _editingLayer == _layerRally
             property bool _isMissionLayer:  _editingLayer == _layerMission
 
             ToolStripActionList {
@@ -553,7 +543,7 @@ Item {
                     },
                     ToolStripAction {
                         id:                 addWaypointRallyPointAction
-                        text:               _editingLayer == _layerOther ? qsTr("Rally Point") : qsTr("Waypoint")
+                        text:               _editingLayer == _layerRally ? qsTr("Rally Point") : qsTr("Waypoint")
                         iconSource:         "/qmlimages/MapAddMission.svg"
                         enabled:            toolStrip._isRallyLayer ? true : _missionController.flyThroughCommandsAllowed
                         visible:            toolStrip._isRallyLayer || toolStrip._isMissionLayer

@@ -6,8 +6,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.UTMSP
 
-pragma ComponentBehavior: Bound
-
 Item {
     required property var editorMap
     required property var planMasterController
@@ -15,17 +13,28 @@ Item {
     id: root
 
     // These must match the indices of _editingToolComponents
-    readonly property int _editingToolStart:        0
-    readonly property int _editingToolMissionItem:  1
-    readonly property int _editingToolOther:        2
+    readonly property int _editingToolMission:  0
+    readonly property int _editingToolFence:    1
+    readonly property int _editingToolRally:    2
 
-    property int _editingTool:              _editingToolMissionItem
+    property int _editingTool:              _editingToolMission
     property var _missionController:        planMasterController.missionController
     property var _geoFenceController:       planMasterController.geoFenceController
     property var _rallyPointController:     planMasterController.rallyPointController
     property var _visualItems:              _missionController.visualItems
-    property var _editingToolComponents:    [ startToolComponent, missionItemToolComponent, otherToolComponent ]
+    property var _editingToolComponents:    [ missionToolComponent, fenceToolComponent, rallyToolComponent ]
     property real  _toolsMargin:            ScreenTools.defaultFontPixelWidth * 0.75
+
+    function selectNextNotReady() {
+        var foundCurrent = false
+        for (var i=0; i<_missionController.visualItems.count; i++) {
+            var vmi = _missionController.visualItems.get(i)
+            if (vmi.readyForSaveState === VisualMissionItem.NotReadyForSaveData) {
+                _missionController.setCurrentPlanViewSeqNum(vmi.sequenceNumber, true)
+                break
+            }
+        }
+    }
 
     QGCPalette { id: qgcPal }
 
@@ -92,143 +101,76 @@ Item {
             anchors.fill:   parent
         }
 
-        Column {
-            id:                 rightControls
-            spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            anchors.top:        parent.top
+        ColumnLayout {
+            anchors.fill:   parent
+            spacing:        ScreenTools.defaultFontPixelHeight * 0.5
 
             QGCTabBar {
-                width: parent.width
-
-                Component.onCompleted: currentIndex = 1
-
-                QGCTabButton {
-                    text:       qsTr("Start")
-                    onClicked:  { root._editingTool = root._editingToolStart; _editingLayer = _layerMission }
-                }
+                Layout.fillWidth: true
 
                 QGCTabButton {
                     text:       qsTr("Mission")
-                    onClicked:  { root._editingTool = root._editingToolMissionItem; _editingLayer = _layerMission }
+                    onClicked:  { root._editingTool = root._editingToolMission; _editingLayer = _layerMission }
                 }
 
                 QGCTabButton {
-                    text:       qsTr("Other")
-                    onClicked:  { root._editingTool = root._editingToolOther; _editingLayer = _layerOther }
+                    text:       qsTr("Fence")
+                    onClicked:  { root._editingTool = root._editingToolFence; _editingLayer = _layerFence }
+                }
+
+                QGCTabButton {
+                    text:       qsTr("Rally")
+                    onClicked:  { root._editingTool = root._editingToolRally; _editingLayer = _layerRally }
                 }
             }
-        }
-
-        QGCFlickable {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            anchors.top:            rightControls.bottom
-            anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-            anchors.bottom:         parent.bottom
-            anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
-            contentHeight:          editingToolLoader.height
 
             Loader {
                 id:                 editingToolLoader
-                width:              parent.width
+                Layout.fillWidth:   true
+                Layout.fillHeight:  true
                 sourceComponent:    root._editingToolComponents[root._editingTool]
             }
         }
 
         Component {
-            id: startToolComponent
+            id: missionToolComponent
 
-            MissionItemEditor {
-                width:              parent.width
-                map:                root.editorMap
-                masterController:   root.planMasterController
-                missionItem:        root._missionController.visualItems.get(0)
-            }
-        }
+            QGCListView {
+                id:                 missionItemEditorListView
+                anchors.fill:       parent
+                spacing:            ScreenTools.defaultFontPixelHeight / 4
+                orientation:        ListView.Vertical
+                model:              _missionController.visualItems
+                cacheBuffer:        Math.max(height * 2, 0)
+                clip:               true
+                currentIndex:       _missionController.currentPlanViewSeqNum
+                highlightMoveDuration: 250
 
-        Component {
-            id: missionItemToolComponent
+                //-- List Elements
+                delegate: MissionItemEditor {
+                    map:                editorMap
+                    masterController:   planMasterController
+                    missionItem:        object
+                    width:              missionItemEditorListView.width
+                    readOnly:           false
 
-            Column {
-                spacing: ScreenTools.defaultFontPixelHeight / 2
+                    onClicked: _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
 
-                Column {
-                    width:      parent.width
-                    spacing:    ScreenTools.defaultFontPixelHeight / 2
-                    visible:    root._missionController.currentPlanViewVIIndex !== 0
-
-                    RowLayout {
-                        anchors.margins:    ScreenTools.defaultFontPixelWidth / 2
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
-                        height: ScreenTools.defaultFontPixelHeight
-
-                        QGCColoredImage {
-                            Layout.fillHeight:      true
-                            Layout.preferredWidth:  height
-                            source:                 "/InstrumentValueIcons/backward.svg"
-                            color:                  qgcPal.buttonText
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    if (root._missionController.currentPlanViewVIIndex > 1) {
-                                        let prevItem = root._missionController.visualItems.get(root._missionController.currentPlanViewVIIndex - 1)
-                                        root._missionController.setCurrentPlanViewSeqNum(prevItem.sequenceNumber, false)
-                                    }
-                                }
-                            }
-                        }
-
-                        QGCLabel {
-                            Layout.fillWidth:       true
-                            horizontalAlignment:    Text.AlignHCenter
-                            text:                   root._missionController.currentPlanViewItem.commandName
-                        }
-
-                        QGCColoredImage {
-                            Layout.fillHeight:      true
-                            Layout.preferredWidth:  height
-                            source:                 "/InstrumentValueIcons/forward.svg"
-                            color:                  qgcPal.buttonText
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    if (root._missionController.currentPlanViewVIIndex < root._missionController.visualItems.count - 1) {
-                                        let nextItem = root._missionController.visualItems.get(root._missionController.currentPlanViewVIIndex + 1)
-                                        root._missionController.setCurrentPlanViewSeqNum(nextItem.sequenceNumber, false)
-                                    }
-                                }
-                            }
+                    onRemove: {
+                        var removeVIIndex = index
+                        _missionController.removeVisualItem(removeVIIndex)
+                        if (removeVIIndex >= _missionController.visualItems.count) {
+                            removeVIIndex--
                         }
                     }
 
-                    MissionItemEditor {
-                        width:                      parent.width
-                        map:                        root.editorMap
-                        masterController:           root.planMasterController
-                        missionItem:                root._missionController.currentPlanViewItem
-                        onRemove:                   root._missionController.removeVisualItem(root._missionController.currentPlanViewVIIndex)
-                        onSelectNextNotReadyItem:   selectNextNotReady()
-                    }
-                }
-
-                QGCLabel {
-                    width:                  parent.width
-                    horizontalAlignment:    Text.AlignHCenter
-                    verticalAlignment:      Text.AlignVCenter
-                    wrapMode:               Text.WordWrap
-                    text:                   qsTr("Use the tools on the left to add mission items to the plan.")
-                    visible:                root._missionController.currentPlanViewVIIndex === 0
+                    onSelectNextNotReadyItem: selectNextNotReady()
                 }
             }
         }
 
         Component {
-            id: otherToolComponent
+            id: fenceToolComponent
 
             Column {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
@@ -238,6 +180,15 @@ Item {
                     myGeoFenceController:   root._geoFenceController
                     flightMap:              root.editorMap
                 }
+            }
+        }
+
+
+        Component {
+            id: rallyToolComponent
+
+            Column {
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
                 RallyPointEditorHeader {
                     width:              parent.width
@@ -250,6 +201,14 @@ Item {
                     rallyPoint:         root._rallyPointController.currentRallyPoint
                     controller:         root._rallyPointController
                 }
+            }
+        }
+
+        Component {
+            id: utmspToolComponent
+
+            Column {
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
                 UTMSPAdapterEditor{
                     width:                  parent.width
