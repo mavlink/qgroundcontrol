@@ -23,7 +23,7 @@ Item {
     property var _rallyPointController:     planMasterController.rallyPointController
     property var _visualItems:              _missionController.visualItems
     property var _editingToolComponents:    [ missionToolComponent, fenceToolComponent, rallyToolComponent ]
-    property real  _toolsMargin:            ScreenTools.defaultFontPixelWidth * 0.75
+    property real _toolsMargin:             ScreenTools.defaultFontPixelWidth * 0.75
 
     function selectNextNotReady() {
         var foundCurrent = false
@@ -135,36 +135,102 @@ Item {
         Component {
             id: missionToolComponent
 
-            QGCListView {
-                id:                 missionItemEditorListView
-                anchors.fill:       parent
-                spacing:            ScreenTools.defaultFontPixelHeight / 4
-                orientation:        ListView.Vertical
-                model:              _missionController.visualItems
-                cacheBuffer:        Math.max(height * 2, 0)
-                clip:               true
-                currentIndex:       _missionController.currentPlanViewSeqNum
-                highlightMoveDuration: 250
+            ColumnLayout {
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                //-- List Elements
-                delegate: MissionItemEditor {
-                    map:                editorMap
-                    masterController:   planMasterController
-                    missionItem:        object
-                    width:              missionItemEditorListView.width
-                    readOnly:           false
+                GridLayout {
+                    Layout.margins: _toolsMargin
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: _toolsMargin
+                    rowSpacing: _toolsMargin
+                    visible: !planMasterController.containsItems
 
-                    onClicked: _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
-
-                    onRemove: {
-                        var removeVIIndex = index
-                        _missionController.removeVisualItem(removeVIIndex)
-                        if (removeVIIndex >= _missionController.visualItems.count) {
-                            removeVIIndex--
-                        }
+                    QGCLabel {
+                        Layout.columnSpan: 2
+                        text: qsTr("Create from template")
                     }
 
-                    onSelectNextNotReadyItem: selectNextNotReady()
+                    Repeater {
+                        model: planMasterController.planCreators
+
+                        Rectangle {
+                            id: planCreatorButton
+                            Layout.fillWidth: true
+                            implicitHeight: planCreatorLayout.implicitHeight
+                            color: planCreatorButtonMouseArea.pressed || planCreatorButtonMouseArea.containsMouse ? qgcPal.buttonHighlight : qgcPal.button
+
+                            ColumnLayout {
+                                id: planCreatorLayout
+                                width: parent.width
+                                spacing: 0
+
+                                Image {
+                                    id: planCreatorImage
+                                    Layout.fillWidth: true
+                                    source: object.imageResource
+                                    sourceSize.width: width
+                                    fillMode: Image.PreserveAspectFit
+                                    mipmap: true
+                                }
+
+                                QGCLabel {
+                                    id: planCreatorNameLabel
+                                    Layout.fillWidth: true
+                                    Layout.maximumWidth: parent.width
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: object.name
+                                    color: planCreatorButtonMouseArea.pressed || planCreatorButtonMouseArea.containsMouse ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                }
+                            }
+
+                            QGCMouseArea {
+                                id: planCreatorButtonMouseArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                preventStealing: true
+                                onClicked: object.createPlan(_mapCenter())
+
+                                function _mapCenter() {
+                                    var centerPoint = Qt.point(editorMap.centerViewport.left + (editorMap.centerViewport.width / 2), editorMap.centerViewport.top + (editorMap.centerViewport.height / 2))
+                                    return editorMap.toCoordinate(centerPoint, false /* clipToViewPort */)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                QGCListView {
+                    id:                 missionItemEditorListView
+                    Layout.fillWidth:   true
+                    Layout.fillHeight:  true
+                    spacing:            ScreenTools.defaultFontPixelHeight / 4
+                    orientation:        ListView.Vertical
+                    model:              _missionController.visualItems
+                    cacheBuffer:        Math.max(height * 2, 0)
+                    clip:               true
+                    currentIndex:       _missionController.currentPlanViewSeqNum
+                    highlightMoveDuration: 250
+
+                    delegate: MissionItemEditor {
+                        map:                editorMap
+                        masterController:   planMasterController
+                        missionItem:        object
+                        width:              missionItemEditorListView.width
+                        readOnly:           false
+
+                        onClicked: _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
+
+                        onRemove: {
+                            var removeVIIndex = index
+                            _missionController.removeVisualItem(removeVIIndex)
+                            if (removeVIIndex >= _missionController.visualItems.count) {
+                                removeVIIndex--
+                            }
+                        }
+
+                        onSelectNextNotReadyItem: selectNextNotReady()
+                    }
                 }
             }
         }

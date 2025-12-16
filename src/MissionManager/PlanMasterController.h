@@ -116,7 +116,7 @@ public:
     static constexpr const char* kJsonRallyPointsObjectKey =   "rallyPoints";
 
 signals:
-    void containsItemsChanged               (bool containsItems);
+    void containsItemsChanged               ();
     void syncInProgressChanged              (void);
     void dirtyChanged                       (bool dirty);
     void offlineChanged                     (bool offlineEditing);

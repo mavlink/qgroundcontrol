@@ -68,7 +68,6 @@ private slots:
     void _managerSendComplete       (bool error);
     void _managerRemoveAllComplete  (bool error);
     void _setFirstPointCurrent      (void);
-    void _updateContainsItems       (void);
     void _managerVehicleChanged     (Vehicle* managerVehicle);
 
 private:
