@@ -1,11 +1,8 @@
 {
-  "name": "QGroundControl Dev",
   "build": {
-    "dockerfile": "../deploy/docker/Dockerfile-build-ubuntu",
-    "context": ".."
+    "context": "..",
+    "dockerfile": "../deploy/docker/Dockerfile-build-ubuntu"
   },
-  "workspaceFolder": "/workspaces/qgroundcontrol",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/qgroundcontrol,type=bind,consistency=cached",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -17,15 +14,15 @@
         "GitHub.copilot"
       ],
       "settings": {
-        "cmake.configureOnOpen": true,
-        "cmake.generator": "Ninja",
-        "cmake.buildDirectory": "${workspaceFolder}/build",
         "clangd.arguments": [
           "--background-index",
           "--clang-tidy",
           "--header-insertion=iwyu",
           "--completion-style=detailed"
         ],
+        "cmake.buildDirectory": "${workspaceFolder}/build",
+        "cmake.configureOnOpen": true,
+        "cmake.generator": "Ninja",
         "editor.formatOnSave": true,
         "files.associations": {
           "*.qml": "qml"
@@ -37,6 +34,9 @@
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  "name": "QGroundControl Dev",
   "postCreateCommand": "git submodule update --init --recursive",
-  "remoteUser": "root"
+  "remoteUser": "root",
+  "workspaceFolder": "/workspaces/qgroundcontrol",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/qgroundcontrol,type=bind,consistency=cached"
 }

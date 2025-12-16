@@ -50,15 +50,13 @@ ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
 
-# Install aqtinstall and download Qt for both host and target architectures
+# Install Qt for both host and target architectures using aqtinstall
 RUN . /etc/profile.d/qgc.sh && \
     apt-get update && apt-get install -y pipx && \
-    pipx install aqtinstall && \
-    export PATH="$PATH:/root/.local/bin" && \
     mkdir -p $QT_PATH && \
-    aqt install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
-    aqt install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
-    aqt install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    pipx run aqtinstall install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
+    pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
     echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH" >> /etc/profile.d/qgc.sh

@@ -15,14 +15,14 @@
 
 #pragma once
 
-#include <limits.h>
-#include <span>
-#include <string_view>
-
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include <limits.h>
+#include <span>
+#include <string_view>
 
 #include "Fact.h"
 #include "Vehicle.h"
@@ -55,15 +55,16 @@ class CodingStyle : public QObject
     /// Format: Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
     /// Use CONSTANT for properties that never change
     /// Use MEMBER for direct member access (rarely needed)
-    Q_PROPERTY(int      exampleProperty     READ exampleProperty    WRITE setExampleProperty    NOTIFY examplePropertyChanged)
-    Q_PROPERTY(Vehicle* vehicle             READ vehicle                                        CONSTANT)
-    Q_PROPERTY(bool     readOnlyProperty    READ readOnlyProperty                               NOTIFY readOnlyPropertyChanged)
-public:
+    Q_PROPERTY(int exampleProperty READ exampleProperty WRITE setExampleProperty NOTIFY examplePropertyChanged)
+    Q_PROPERTY(Vehicle* vehicle READ vehicle CONSTANT)
+    Q_PROPERTY(bool readOnlyProperty READ readOnlyProperty NOTIFY readOnlyPropertyChanged)
+   public:
     explicit CodingStyle(QObject* parent = nullptr);  // Use nullptr, not NULL
-    ~CodingStyle() override;  // Use override keyword for virtual destructors
+    ~CodingStyle() override;                          // Use override keyword for virtual destructors
 
     // Enums exposed to QML must use Q_ENUM
-    enum class ExampleEnum {
+    enum class ExampleEnum
+    {
         EnumValue1,
         EnumValue2,
         EnumValue3,
@@ -83,53 +84,57 @@ public:
     void processData(std::span<const int> data);
 
     // Public getters/setters - use [[nodiscard]] for getters
-    [[nodiscard]] int exampleProperty() const { return _exampleProperty; }
+    [[nodiscard]] int exampleProperty() const
+    {
+        return _exampleProperty;
+    }
     void setExampleProperty(int value);
-    [[nodiscard]] Vehicle* vehicle() const { return _vehicle; }
-    [[nodiscard]] bool readOnlyProperty() const { return _readOnlyProperty; }
+    [[nodiscard]] Vehicle* vehicle() const
+    {
+        return _vehicle;
+    }
+    [[nodiscard]] bool readOnlyProperty() const
+    {
+        return _readOnlyProperty;
+    }
 
-signals:
+   signals:
     /// Document signals which are non-obvious in the header file
     /// Signals should be emitted when properties change to maintain QML bindings
     void examplePropertyChanged(int newValue);
     void readOnlyPropertyChanged();
     void qtSignal();
 
-public slots:
+   public slots:
     // Public slots should only be used if the slot is connected to from another class.
     // Most slots should be private. Prefer signals/slots over direct method calls for loose coupling.
     void publicSlot();
 
     // Don't use protected methods or variables unless the class is specifically meant to be used as a base class.
-protected:
-    int _protectedVariable = 0; ///< variable names are camelCase
+   protected:
+    int _protectedVariable = 0;  ///< variable names are camelCase
 
-    void _protectedMethod();    ///< method names are camelCase
+    void _protectedMethod();     ///< method names are camelCase
 
-private slots:
+   private slots:
     void _privateSlot();
 
-private:
+   private:
     // Private methods and variable names begin with an "_". Documentation for
     // non-obvious private methods goes in the header file.
     void _privateMethod();
     void _commonInit();
 
     // For methods with many arguments, align parameters vertically
-    void _methodWithManyArguments(
-        QObject* parent,
-        const QString& caption,
-        const QString& dir,
-        int options1,
-        int options2,
-        int options3);
+    void _methodWithManyArguments(QObject* parent, const QString& caption, const QString& dir, int options1,
+                                  int options2, int options3);
 
     /// Document non-obvious variables in the header file. Long descriptions go here.
     int _exampleProperty = 0;
     bool _readOnlyProperty = false;
     Vehicle* _vehicle = nullptr;
 
-    int _privateVariable1 = 2;        ///< Short descriptions go here
+    int _privateVariable1 = 2;  ///< Short descriptions go here
     int _privateVariable2 = 3;
 
     static constexpr int _privateStaticVariable = 42;  // Use constexpr for compile-time constants

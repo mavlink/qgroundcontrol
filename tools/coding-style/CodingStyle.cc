@@ -15,12 +15,12 @@
 
 #include "CodingStyle.h"
 
+#include <QtCore/QDebug>
+#include <QtCore/QFile>
+
 #include <algorithm>
 #include <cmath>
 #include <ranges>
-
-#include <QtCore/QDebug>
-#include <QtCore/QFile>
 
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
@@ -32,8 +32,7 @@
 // Use QGC_LOGGING_CATEGORY instead of Q_LOGGING_CATEGORY for runtime log configuration support
 QGC_LOGGING_CATEGORY(CodingStyleLog, "Example.CodingStyle")
 
-CodingStyle::CodingStyle(QObject* parent)
-    : QObject(parent)
+CodingStyle::CodingStyle(QObject* parent) : QObject(parent)
 {
     // Constructor body - use member initializer list above for initialization
     _commonInit();
@@ -121,9 +120,7 @@ void CodingStyle::_privateSlot()
     const QVariant cookedValue = fact->cookedValue();
     const QVariant rawValue = fact->rawValue();
 
-    qCDebug(CodingStyleLog) << "Fact changed:" << fact->name()
-                            << "cooked:" << cookedValue
-                            << "raw:" << rawValue;
+    qCDebug(CodingStyleLog) << "Fact changed:" << fact->name() << "cooked:" << cookedValue << "raw:" << rawValue;
 
     // Example switch statement with proper formatting
     QVariant typedValue;
@@ -154,13 +151,9 @@ void CodingStyle::_privateSlot()
     }
 }
 
-void CodingStyle::_methodWithManyArguments(
-    QObject* parent,
-    const QString& caption,
-    const QString& dir,
-    int options1,
-    int /* options2 */,  // Unused arguments: comment out name but keep type
-    int options3)
+void CodingStyle::_methodWithManyArguments(QObject* parent, const QString& caption, const QString& dir, int options1,
+                                           int /* options2 */,  // Unused arguments: comment out name but keep type
+                                           int options3)
 {
     // Do not use Q_UNUSED for method parameters - comment out the parameter name instead
     // This makes it clear the parameter is intentionally unused
@@ -180,9 +173,7 @@ bool CodingStyle::validateInput(std::string_view input) const
     }
 
     // C++20: Use std::ranges algorithms for cleaner code
-    return std::ranges::all_of(input, [](char c) {
-        return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
-    });
+    return std::ranges::all_of(input, [](char c) { return std::isalnum(static_cast<unsigned char>(c)) || c == '_'; });
 }
 
 void CodingStyle::processData(std::span<const int> data)
@@ -202,9 +193,8 @@ void CodingStyle::processData(std::span<const int> data)
 
     // C++20: Use ranges for transformations
     // Example: filter and transform in a pipeline
-    auto positiveDoubled = data
-        | std::views::filter([](int n) { return n > 0; })
-        | std::views::transform([](int n) { return n * 2; });
+    auto positiveDoubled =
+        data | std::views::filter([](int n) { return n > 0; }) | std::views::transform([](int n) { return n * 2; });
 
     for (const int value : positiveDoubled) {
         qCDebug(CodingStyleLog) << "Positive doubled:" << value;
@@ -213,30 +203,27 @@ void CodingStyle::processData(std::span<const int> data)
 
 // C++20: Use designated initializers for aggregate types (defined in header or locally)
 namespace {
-    struct ConfigOptions {
-        int timeout = 30;
-        bool enabled = true;
-        int retryCount = 3;
-    };
+struct ConfigOptions
+{
+    int timeout = 30;
+    bool enabled = true;
+    int retryCount = 3;
+};
 
-    void exampleDesignatedInitializers()
-    {
-        // C++20: Designated initializers make struct initialization clear
-        const ConfigOptions config{
-            .timeout = 60,
-            .enabled = true,
-            .retryCount = 5
-        };
-        Q_UNUSED(config);
-    }
+void exampleDesignatedInitializers()
+{
+    // C++20: Designated initializers make struct initialization clear
+    const ConfigOptions config{.timeout = 60, .enabled = true, .retryCount = 5};
+    Q_UNUSED(config);
+}
 
-    // C++20: Concepts can constrain template parameters (use sparingly, prefer concrete types)
-    template<typename T>
-    concept Numeric = std::integral<T> || std::floating_point<T>;
+// C++20: Concepts can constrain template parameters (use sparingly, prefer concrete types)
+template <typename T>
+concept Numeric = std::integral<T> || std::floating_point<T>;
 
-    template<Numeric T>
-    T clampValue(T value, T min, T max)
-    {
-        return std::clamp(value, min, max);
-    }
-} // anonymous namespace
+template <Numeric T>
+T clampValue(T value, T min, T max)
+{
+    return std::clamp(value, min, max);
+}
+}  // anonymous namespace
