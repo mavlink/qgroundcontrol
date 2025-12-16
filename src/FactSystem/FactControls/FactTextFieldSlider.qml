@@ -7,7 +7,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 Rectangle {
-    property alias label:                   factTextField.label
+    property string label
     property alias fact:                    factTextField.fact
     property alias textFieldPreferredWidth: factTextField.textFieldPreferredWidth
     property alias textFieldUnitsLabel:     factTextField.textFieldUnitsLabel
@@ -66,16 +66,18 @@ Rectangle {
             spacing: ScreenTools.defaultFontPixelWidth
 
             QGCCheckBox {
-                id:         enableCheckbox
-                visible:    control.showEnableCheckbox
+                id:                 enableCheckbox
+                Layout.fillWidth:   visible
+                text:               control.label
+                visible:            control.showEnableCheckbox
 
                 onClicked: control.enableCheckboxClicked()
             }
 
             LabelledFactTextField {
                 id:                 factTextField
-                Layout.fillWidth:   true
-                label:              control.label
+                Layout.fillWidth:   !control.showEnableCheckbox
+                label:              control.showEnableCheckbox ? "" : control.label
                 fact:               control.fact
                 enabled:            !control.showEnableCheckbox || enableCheckbox.checked
             }

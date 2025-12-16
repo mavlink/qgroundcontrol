@@ -70,7 +70,8 @@ $installGst = $arch -eq 'AMD64'
 if ($installGst) {
     $gstInstallDir = 'C:\gstreamer'  # MSI INSTALLDIR (root)
     $gstPrefix     = 'C:\gstreamer\1.0\msvc_x86_64'  # Actual path after install
-    $gstBaseUrl    = "https://gstreamer.freedesktop.org/data/pkg/windows/$gstVersion/msvc"
+    # We now download from S3 because the official GStreamer site is unreliable
+    $gstBaseUrl    = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/$gstVersion"
     $gstRuntime    = Join-Path $tempDir 'gstreamer-runtime.msi'
     $gstDevel      = Join-Path $tempDir 'gstreamer-devel.msi'
 }
@@ -115,7 +116,7 @@ function Add-ToPath {
 # 5) Download + install GStreamer
 # ────────────────────────────────
 if ($installGst) {
-    Write-Host "`n==> Downloading GStreamer $gstVersion..."
+    Write-Host "`n==> Downloading GStreamer version $gstVersion from $gstBaseUrl"
     Invoke-WebRequest "$gstBaseUrl/gstreamer-1.0-msvc-x86_64-$gstVersion.msi" -OutFile $gstRuntime
     Invoke-WebRequest "$gstBaseUrl/gstreamer-1.0-devel-msvc-x86_64-$gstVersion.msi" -OutFile $gstDevel
 

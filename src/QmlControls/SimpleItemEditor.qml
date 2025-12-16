@@ -9,8 +9,8 @@ import QGroundControl.FactControls
 // Editor for Simple mission items
 Rectangle {
     width:  availableWidth
-    height: editorColumn.height //+ (_margin * 2)
-    color:  "transparent"
+    height: editorColumn.height + (_margin * 2)
+    color:  qgcPal.windowShadeDark
     radius: _radius
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
@@ -47,13 +47,18 @@ Rectangle {
     Component { id: altModeDialogComponent; AltModeDialog { } }
 
     Column {
-        id:         editorColumn
-        width:      parent.width
-        spacing:    _margin
+        id:                 editorColumn
+        anchors.margins:    _margin
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        parent.top
+        spacing:            _margin
 
         // Takeoff item
         ColumnLayout {
-            width:      parent.width
+            anchors.margins:    _margin
+            anchors.left:       parent.left
+            anchors.right:      parent.right
             spacing:    _margin
             visible:    missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
