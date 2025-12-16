@@ -16,49 +16,49 @@ import QGroundControl
 import QGroundControl.Controls
 
 Rectangle {
-    id:     _root
-    width:  parent.width
+    id: _root
+    width: parent.width
     height: ScreenTools.toolbarHeight
-    color:  qgcPal.toolbarBackground
+    color: qgcPal.toolbarBackground
 
-    property var    planMasterController
+    property var planMasterController
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property real   _controllerProgressPct: planMasterController.missionController.progressPct
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property real _controllerProgressPct: planMasterController.missionController.progressPct
 
     QGCPalette { id: qgcPal }
 
     /// Bottom single pixel divider
     Rectangle {
-        anchors.left:   parent.left
-        anchors.right:  parent.right
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height:         1
-        color:          "black"
-        visible:        qgcPal.globalTheme === QGCPalette.Light
+        height: 1
+        color: "black"
+        visible: qgcPal.globalTheme === QGCPalette.Light
     }
 
     RowLayout {
-        id:                     viewButtonRow
-        anchors.bottomMargin:   1
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        spacing:                ScreenTools.defaultFontPixelWidth / 2
+        id: viewButtonRow
+        anchors.bottomMargin: 1
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        spacing: ScreenTools.defaultFontPixelWidth / 2
 
         QGCLabel {
             font.pointSize: ScreenTools.largeFontPointSize
-            text:           "<"
+            text: "<"
         }
 
         QGCLabel {
-            text:           qsTr("Exit Plan")
+            text: qsTr("Exit Plan")
             font.pointSize: ScreenTools.largeFontPointSize
         }
     }
 
     QGCMouseArea {
-        anchors.fill:   viewButtonRow
-        onClicked:      {
+        anchors.fill: viewButtonRow
+        onClicked: {
             if (mainWindow.allowViewSwitch()) {
                 mainWindow.showFlyView()
             }
@@ -66,33 +66,33 @@ Rectangle {
     }
 
     QGCFlickable {
-        id:                     toolsFlickable
-        //anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
-        anchors.left:           viewButtonRow.right
-        anchors.bottomMargin:   1
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        anchors.right:          parent.right
-        contentWidth:           toolIndicators.width
-        flickableDirection:     Flickable.HorizontalFlick
+        id: toolsFlickable
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+        anchors.bottomMargin: 1
+        anchors.left: viewButtonRow.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        contentWidth: toolIndicators.width
+        flickableDirection: Flickable.HorizontalFlick
 
         PlanToolBarIndicators {
-            id:                     toolIndicators
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            planMasterController:   _root.planMasterController
+            id: toolIndicators
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            planMasterController: _root.planMasterController
         }
     }
 
     // Small mission download progress bar
     Rectangle {
-        id:             progressBar
-        anchors.left:   parent.left
+        id: progressBar
+        anchors.left: parent.left
         anchors.bottom: parent.bottom
-        height:         4
-        width:          _controllerProgressPct * parent.width
-        color:          qgcPal.colorGreen
-        visible:        false
+        height: 4
+        width: _controllerProgressPct * parent.width
+        color: qgcPal.colorGreen
+        visible: false
 
         onVisibleChanged: {
             if (visible) {
@@ -103,57 +103,58 @@ Rectangle {
 
     // Large mission download progress bar
     Rectangle {
-        id:             largeProgressBar
+        id: largeProgressBar
         anchors.bottom: parent.bottom
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        height:         parent.height
-        color:          qgcPal.window
-        visible:        _showLargeProgress
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: parent.height
+        color: qgcPal.window
+        visible: _showLargeProgress
 
-        property bool _userHide:                false
-        property bool _showLargeProgress:       progressBar.visible && !_userHide && qgcPal.globalTheme === QGCPalette.Light
+        property bool _userHide: false
+        property bool _showLargeProgress: progressBar.visible && !_userHide && qgcPal.globalTheme === QGCPalette.Light
 
         Connections {
-            target:                 QGroundControl.multiVehicleManager
+            target: QGroundControl.multiVehicleManager
             function onActiveVehicleChanged(activeVehicle) { largeProgressBar._userHide = false }
         }
 
         Rectangle {
-            anchors.top:    parent.top
+            anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width:          _controllerProgressPct * parent.width
-            color:          qgcPal.colorGreen
+            width: _controllerProgressPct * parent.width
+            color: qgcPal.colorGreen
         }
 
         QGCLabel {
-            anchors.centerIn:   parent
-            text:               qsTr("Syncing Mission")
-            font.pointSize:     ScreenTools.largeFontPointSize
-            visible:            _controllerProgressPct !== 1
+            anchors.centerIn: parent
+            text: qsTr("Syncing Mission")
+            font.pointSize: ScreenTools.largeFontPointSize
+            visible: _controllerProgressPct !== 1
         }
 
         QGCLabel {
-            anchors.centerIn:   parent
-            text:               qsTr("Done")
-            font.pointSize:     ScreenTools.largeFontPointSize
-            visible:            _controllerProgressPct === 1
+            anchors.centerIn: parent
+            text: qsTr("Done")
+            font.pointSize: ScreenTools.largeFontPointSize
+            visible: _controllerProgressPct === 1
         }
 
         QGCLabel {
-            anchors.margins:    _margin
-            anchors.right:      parent.right
-            anchors.bottom:     parent.bottom
-            text:               qsTr("Click anywhere to hide")
+            anchors.margins: _margin
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            text: qsTr("Click anywhere to hide")
 
             property real _margin: ScreenTools.defaultFontPixelWidth / 2
         }
 
         MouseArea {
-            anchors.fill:   parent
-            onClicked:      largeProgressBar._userHide = true
+            anchors.fill: parent
+            onClicked: largeProgressBar._userHide = true
         }
     }
+
     // Progress bar
     Connections {
         target: planMasterController.missionController
@@ -172,8 +173,8 @@ Rectangle {
     }
 
     Timer {
-        id:             resetProgressTimer
-        interval:       3000
-        onTriggered:    progressBar.visible = false
+        id: resetProgressTimer
+        interval: 3000
+        onTriggered: progressBar.visible = false
     }
 }

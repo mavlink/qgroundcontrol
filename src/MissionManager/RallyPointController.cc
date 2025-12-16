@@ -27,7 +27,7 @@ RallyPointController::RallyPointController(PlanMasterController* masterControlle
     , _managerVehicle               (masterController->managerVehicle())
     , _rallyPointManager    (masterController->managerVehicle()->rallyPointManager())
 {
-    connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
+    connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::containsItemsChanged);
 }
 
 RallyPointController::~RallyPointController()
@@ -293,11 +293,6 @@ void RallyPointController::_setFirstPointCurrent(void)
 bool RallyPointController::containsItems(void) const
 {
     return _points.count() > 0;
-}
-
-void RallyPointController::_updateContainsItems(void)
-{
-    emit containsItemsChanged(containsItems());
 }
 
 bool RallyPointController::showPlanFromManagerVehicle (void)
