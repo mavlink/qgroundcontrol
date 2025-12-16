@@ -17,6 +17,7 @@
         <file alias="clockwise-arrow.svg">resources/clockwise-arrow.svg</file>
         <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
         <file alias="chevron-down.svg">resources/chevron-down.svg</file>
+        <file alias="chevron-double-left.svg">resources/chevron-double-left.svg</file>
         <file alias="chevron-double-right.svg">resources/chevron-double-right.svg</file>
         <file alias="chevron-up.svg">resources/chevron-up.svg</file>
         <file alias="DropArrow.svg">resources/DropArrow.svg</file>
@@ -44,6 +45,7 @@
         <file alias="QGCLogoArrow.svg">resources/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect.svg">resources/QGroundControlConnect.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
+        <file alias="sliders.svg">resources/sliders.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop.svg">resources/Stop.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
