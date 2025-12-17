@@ -15,21 +15,19 @@ esac
 
 if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
     # Validate required Android environment variables
-    for var in QT_HOST_PATH ANDROID_BUILD_TOOLS_DIR ANDROID_NDK_ROOT; do
+    for var in QT_HOST_PATH QT_ROOT_DIR_ARM64 ANDROID_SDK_ROOT; do
         if [[ -z "${!var:-}" ]]; then
             echo "Error: Required environment variable $var is not set" >&2
             exit 1
         fi
     done
     echo "Building QGroundControl for Android (${BUILD_TYPE})..."
-    qt-cmake -S /project/source -B /project/build -G Ninja \
+    "${QT_ROOT_DIR_ARM64}/bin/qt-cmake" -S /project/source -B /project/build -G Ninja \
         -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
         -DQT_HOST_PATH="${QT_HOST_PATH}" \
         -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
-        -DANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS_DIR}" \
         -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
-        -DQT_ANDROID_SIGN_APK=OFF \
-        -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake"
+        -DQT_ANDROID_SIGN_APK=OFF
     cmake --build /project/build --target all --config "${BUILD_TYPE}" --parallel
 else
     echo "Building QGroundControl (${BUILD_TYPE})..."

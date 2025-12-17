@@ -83,6 +83,14 @@ jobs:
           fuse: ${{ matrix.fuse }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Free disk space for Trivy scan
+        if: success()
+        run: |
+          docker builder prune -af || true
+          docker system prune -f --volumes || true
+          rm -rf /project/build || true
+          df -h /
+
       - name: Scan Docker image for vulnerabilities
         if: success()
         uses: aquasecurity/trivy-action@0.33.1
