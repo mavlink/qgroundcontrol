@@ -110,7 +110,7 @@ jobs:
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
-        uses: apple-actions/import-codesign-certs@v5
+        uses: apple-actions/import-codesign-certs@v6
         with:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Attest Build Provenance
         if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: '${{ runner.temp }}/build/QGroundControl.dmg'
 

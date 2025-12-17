@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Get PR number
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Try to get PR number from the workflow run
@@ -41,7 +41,7 @@ jobs:
       - name: Collect build results
         if: steps.pr.outputs.result != 'null'
         id: results
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const headSha = context.payload.workflow_run.head_sha;
