@@ -45,7 +45,7 @@ RUN . /etc/profile.d/qgc.sh && \
 # Qt setup
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
-ENV QT_HOST_ARCH="linux_gcc_64"
+ENV QT_HOST_ARCH="gcc_64"
 ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
