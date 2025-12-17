@@ -43,7 +43,7 @@ class MissionCommandTreeTest;
 /// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
 ///
 /// Note on NaN usage:
-///     To indicate a NaN as a value in the json file use the value 'null' (with no quotes)
+///     To indicate a NaN as a value in the JSON file use the value 'null' (with no quotes)
 ///     Internally, these null values are converted to NaN (Not a Number) when loaded by JsonHelper.
 
 class MissionCmdParamInfo : public QObject {
