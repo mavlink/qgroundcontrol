@@ -45,12 +45,14 @@ RUN . /etc/profile.d/qgc.sh && \
 # Qt setup
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
-ENV QT_HOST_ARCH="gcc_64"
+ENV QT_HOST_ARCH="linux_gcc_64"
+ENV QT_HOST_DIR="gcc_64"
 ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
 
 # Install Qt for both host and target architectures using aqtinstall
+# Note: aqtinstall uses linux_gcc_64 as arch param but creates gcc_64 directory
 RUN . /etc/profile.d/qgc.sh && \
     apt-get update && apt-get install -y pipx && \
     mkdir -p $QT_PATH && \
@@ -59,7 +61,7 @@ RUN . /etc/profile.d/qgc.sh && \
     pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH" >> /etc/profile.d/qgc.sh
+    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_DIR" >> /etc/profile.d/qgc.sh
 
 RUN . /etc/profile.d/qgc.sh && \
     echo "export JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64" >> /etc/profile.d/qgc.sh
