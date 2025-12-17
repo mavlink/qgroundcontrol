@@ -1,8 +1,8 @@
 name: PR Checks
 
 on:
-  pull_request:
-    types: [opened, edited, synchronize]
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
 
 permissions:
   contents: read
@@ -75,3 +75,15 @@ jobs:
             package-lock.json
             *.lock
             translations/*
+
+  label:
+    name: Label PR by Files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Label PR by changed files
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true
