@@ -50,25 +50,6 @@ RowLayout {
         }
     }
 
-    function _vehicleClearButtonClicked() {
-        mainWindow.showMessageDialog(qsTr("Clear"),
-                                     qsTr("Are you sure you want to remove the plan from the Vehicle and the plan editor?"),
-                                     Dialog.Yes | Dialog.Cancel,
-                                     function() {
-                                        _planMasterController.removeAllFromVehicle();
-                                        if (_utmspEnabled) {
-                                            _resetRegisterFlightPlan = true;
-                                            QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);
-                                            UTMSPStateStorage.startTimeStamp = "";
-                                            UTMSPStateStorage.showActivationTab = false;
-                                            UTMSPStateStorage.flightID = "";
-                                            UTMSPStateStorage.enableMissionUploadButton = false;
-                                            UTMSPStateStorage.indicatorPendingStatus = true;
-                                            UTMSPStateStorage.indicatorApprovedStatus = false;
-                                            UTMSPStateStorage.indicatorActivatedStatus = false;
-                                            UTMSPStateStorage.currentStateIndex = 0}})
-    }
-
     function _openButtonClicked() {
         if (_planMasterController.dirty) {
             mainWindow.showMessageDialog(qsTr("Open Plan"),
@@ -105,88 +86,114 @@ RowLayout {
                                      function() { _planMasterController.removeAll(); })
     }
 
+    function _vehicleClearButtonClicked() {
+        mainWindow.showMessageDialog(qsTr("Clear"),
+                                     qsTr("Are you sure you want to remove the plan from the vehicle and the plan editor?"),
+                                     Dialog.Yes | Dialog.Cancel,
+                                     function() {
+                                        _planMasterController.removeAllFromVehicle();
+                                        if (_utmspEnabled) {
+                                            _resetRegisterFlightPlan = true;
+                                            QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);
+                                            UTMSPStateStorage.startTimeStamp = "";
+                                            UTMSPStateStorage.showActivationTab = false;
+                                            UTMSPStateStorage.flightID = "";
+                                            UTMSPStateStorage.enableMissionUploadButton = false;
+                                            UTMSPStateStorage.indicatorPendingStatus = true;
+                                            UTMSPStateStorage.indicatorApprovedStatus = false;
+                                            UTMSPStateStorage.indicatorActivatedStatus = false;
+                                            UTMSPStateStorage.currentStateIndex = 0}})
+    }
+
+    function _clearClicked() {
+        if (_planMasterController.offline) {
+            _storageClearButtonClicked();
+        } else {
+            _vehicleClearButtonClicked();
+        }
+    }
+
     QGCPalette { id: qgcPal }
 
-    RowLayout {
-        spacing: root.spacing
-        visible: !_controllerOffline
+    QGCButton {
+        text: qsTr("Open")
+        iconSource: "/qmlimages/Plan.svg"
+        enabled: !_planMasterController.syncInProgress
+        onClicked: _openButtonClicked()
+    }
 
-        Rectangle {
-            width: 1
-            Layout.margins: ScreenTools.defaultFontPixelHeight / 4
-            Layout.fillHeight: true
-            color: qgcPal.text
-        }
+    QGCButton {
+        text: _planMasterController.currentPlanFile === "" ? qsTr("Save As") : qsTr("Save")
+        iconSource: "/res/SaveToDisk.svg"
+        enabled: !_syncInProgress && _hasPlanItems
+        primary: _controllerDirty
+        onClicked: _saveButtonClicked()
+    }
 
-        QGCLabel {
-            text: qsTr("Vehicle")
-            font.pointSize: ScreenTools.smallFontPointSize
-        }
+    QGCButton {
+        id: uploadButton
+        text: qsTr("Upload")
+        iconSource: "/res/UploadToVehicle.svg"
+        enabled: _utmspEnabled ? (!_syncInProgress && UTMSPStateStorage.enableMissionUploadButton) : (!_syncInProgress && _hasPlanItems)
+        visible: !_syncInProgress
+        primary: _controllerDirty
+        onClicked: _uploadClicked()
+    }
 
-        QGCButton {
-            id: uploadButton
-            text: qsTr("Upload")
-            enabled: _utmspEnabled ? !_syncInProgress && UTMSPStateStorage.enableMissionUploadButton : !_syncInProgress && _hasPlanItems
-            visible: !_syncInProgress
-            primary: _controllerDirty
-            onClicked: _uploadClicked()
-        }
+    QGCButton {
+        text: qsTr("Clear")
+        iconSource: "/res/TrashCan.svg"
+        enabled: !_syncInProgress
+        onClicked: _clearClicked()
+    }
 
-        QGCButton {
-            id: downloadButton
-            text: qsTr("Download")
-            enabled: _utmspEnabled ? !_syncInProgress && UTMSPStateStorage.enableMissionDownloadButton : !_syncInProgress
-            visible: !_syncInProgress
-            onClicked: _downloadClicked()
-        }
+    QGCButton {
+        iconSource: "qrc:/qmlimages/Hamburger.svg"
 
-        QGCButton {
-            text: qsTr("Clear")
-            enabled: !_syncInProgress
-            onClicked: _vehicleClearButtonClicked()
+        onClicked: {
+            let position = Qt.point(width, height / 2)
+            // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+            position = mapToItem(globals.parent, position)
+            var dropPanel = hamburgerDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
+            dropPanel.open()
         }
     }
 
-    Rectangle {
-        width: 1
-        Layout.margins: ScreenTools.defaultFontPixelHeight / 4
-        Layout.fillHeight: true
-        color: qgcPal.text
-    }
 
-    RowLayout {
-        spacing: root.spacing
+    Component {
+        id: hamburgerDropPanelComponent
 
-        QGCLabel {
-            text: qsTr("Storage")
-            font.pointSize: ScreenTools.smallFontPointSize
-        }
+        DropPanel {
+            id: dropPanel
 
-        QGCButton {
-            text: qsTr("Open")
-            Layout.fillWidth: true
-            enabled: !_planMasterController.syncInProgress
-            onClicked: _openButtonClicked()
-        }
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelHeight / 2
 
-        QGCButton {
-            text: _planMasterController.currentPlanFile === "" ? qsTr("Save As") : qsTr("Save")
-            Layout.fillWidth: true
-            enabled: !_syncInProgress && _hasPlanItems
-            primary: _controllerDirty
-            onClicked: _saveButtonClicked()
-        }
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Save as KML")
+                        enabled: !_syncInProgress && _hasPlanItems
 
-        QGCButton {
-            text: qsTr("Save as KML")
-            enabled: !_syncInProgress && _hasPlanItems
-            onClicked: _saveAsKMLClicked()
-        }
+                        onClicked: {
+                            dropPanel.close()
+                            _saveAsKMLClicked()
+                        }
+                    }
 
-        QGCButton {
-            text: qsTr("Clear")
-            enabled: !_syncInProgress && _hasPlanItems
-            onClicked: _storageClearButtonClicked()
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Download")
+                        enabled: _utmspEnabled ? !_syncInProgress && UTMSPStateStorage.enableMissionDownloadButton : !_syncInProgress
+                        visible: !_syncInProgress
+
+                        onClicked: {
+                            dropPanel.close()
+                            _downloadClicked()
+                        }
+                    }
+                }
+            }
         }
     }
 }

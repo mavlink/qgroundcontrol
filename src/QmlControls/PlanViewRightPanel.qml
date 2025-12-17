@@ -94,8 +94,7 @@ Item {
     //-------------------------------------------------------
     // Right Panel Controls
     Item {
-        anchors.fill:           rightPanelBackground
-        anchors.topMargin:      _toolsMargin
+        anchors.fill: rightPanelBackground
 
         DeadMouseArea {
             anchors.fill:   parent

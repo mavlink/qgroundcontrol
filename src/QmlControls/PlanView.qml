@@ -528,6 +528,12 @@ Item {
                             toolStrip.allAddClickBoolsOff()
                             insertLandItemAfterCurrent()
                         }
+                    },
+                    ToolStripAction {
+                        text: qsTr("Stats")
+                        iconSource: "/res/chevron-double-right.svg"
+                        visible: missionStatus.hidden && QGroundControl.corePlugin.options.showMissionStatus
+                        onTriggered: missionStatus.showMissionStatus()
                     }
                 ]
             }
@@ -567,11 +573,15 @@ Item {
             anchors.right: rightPanel.left
             anchors.bottom: parent.bottom
             spacing: 0
-            visible: _editingLayer == _layerMission && QGroundControl.corePlugin.options.showMissionStatus
+            visible: !hidden && _editingLayer == _layerMission && QGroundControl.corePlugin.options.showMissionStatus
 
-            property bool _missionStatusVisible: _planViewSettings.showMissionItemStatus.rawValue
+            readonly property bool hidden: _planViewSettings.showMissionItemStatus.rawValue ? false : true
 
-            function _toggleMissionStatsVisibility() {
+            function showMissionStatus() {
+                _planViewSettings.showMissionItemStatus.rawValue = true
+            }
+
+            function _toggleMissionStatusVisibility() {
                 _planViewSettings.showMissionItemStatus.rawValue = _planViewSettings.showMissionItemStatus.rawValue ? false : true
             }
 
@@ -588,7 +598,6 @@ Item {
                     implicitWidth: missionStatsButtonLayout._buttonImplicitWidth
                     implicitHeight: implicitWidth
                     color: checked ? QGroundControl.globalPalette.buttonHighlight : QGroundControl.globalPalette.button
-                    visible: missionStatus._missionStatusVisible
 
                     property bool checked: true
 
@@ -613,7 +622,6 @@ Item {
                     implicitWidth: missionStatsButtonLayout._buttonImplicitWidth
                     implicitHeight: implicitWidth
                     color: checked ? QGroundControl.globalPalette.buttonHighlight : QGroundControl.globalPalette.button
-                    visible: missionStatus._missionStatusVisible
 
                     property bool checked: false
 
@@ -642,13 +650,13 @@ Item {
                     QGCColoredImage {
                         anchors.margins: missionStatsButtonLayout._buttonImageMargins
                         anchors.fill: parent
-                        source: missionStatus._missionStatusVisible ? "/res/chevron-double-left.svg" : "/res/chevron-double-right.svg"
+                        source: "/res/chevron-double-left.svg"
                         color: QGroundControl.globalPalette.buttonText
                     }
 
                     QGCMouseArea {
                         anchors.fill: parent
-                        onClicked: missionStatus._toggleMissionStatsVisibility()
+                        onClicked: missionStatus._toggleMissionStatusVisibility()
                     }
                 }
             }
@@ -659,7 +667,7 @@ Item {
                 Layout.fillWidth: true
                 height: ScreenTools.defaultFontPixelHeight * 7
                 missionController: _missionController
-                visible: terrainButton.checked && missionStatus._missionStatusVisible
+                visible: terrainButton.checked
                 onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
             }
 
@@ -667,7 +675,7 @@ Item {
                 id: missionStats
                 Layout.alignment: Qt.AlignBottom
                 Layout.fillWidth: true
-                visible: missionStatsButton.checked && missionStatus._missionStatusVisible
+                visible: missionStatsButton.checked
                 planMasterController: _root._planMasterController
             }
         }
