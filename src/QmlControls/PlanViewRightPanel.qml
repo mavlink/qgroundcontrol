@@ -143,7 +143,7 @@ Item {
                     columns: 2
                     columnSpacing: _toolsMargin
                     rowSpacing: _toolsMargin
-                    visible: !planMasterController.containsItems
+                    visible: !planMasterController.containsItems && !planMasterController.manualCreation
 
                     QGCLabel {
                         Layout.columnSpan: 2
@@ -188,7 +188,13 @@ Item {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 preventStealing: true
-                                onClicked: object.createPlan(_mapCenter())
+                                onClicked: {
+                                    if (object.blankPlan) {
+                                        planMasterController.manualCreation = true
+                                    } else {
+                                        object.createPlan(_mapCenter())
+                                    }
+                                }
 
                                 function _mapCenter() {
                                     var centerPoint = Qt.point(editorMap.centerViewport.left + (editorMap.centerViewport.width / 2), editorMap.centerViewport.top + (editorMap.centerViewport.height / 2))
