@@ -364,7 +364,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
 
             // Validate key types
             QList<QJsonValue::Type> types;
-            types << QJsonValue::Null << QJsonValue::Double << QJsonValue::String << QJsonValue::String
+            types << QJsonValue::Double << QJsonValue::Double << QJsonValue::String << QJsonValue::String
                   << QJsonValue::String << QJsonValue::String << QJsonValue::Bool
                   << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
             if (!JsonHelper::validateKeyTypes(paramObject, allParamKeys, types, internalError)) {
