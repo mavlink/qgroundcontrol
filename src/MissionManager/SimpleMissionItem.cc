@@ -302,7 +302,7 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
             QList<JsonHelper::KeyValidateInfo> keyInfoList = {
                 { _jsonAltitudeModeKey,         QJsonValue::Double, true },
                 { _jsonAltitudeKey,             QJsonValue::Double, true },
-                { _jsonAMSLAltAboveTerrainKey,  QJsonValue::Double, true },
+                { _jsonAMSLAltAboveTerrainKey,  QJsonValue::Null, true },
             };
             if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
                 return false;
