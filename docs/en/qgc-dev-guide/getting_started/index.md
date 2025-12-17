@@ -14,7 +14,7 @@ Versions are provided for all platforms.
 
 ## Source Code
 
-Source code for _QGroundControl_ is kept on GitHub here: <https://github.com/mavlink/qgroundcontrol>.
+Source code for _QGroundControl_ is kept on GitHub here: https://github.com/mavlink/qgroundcontrol.
 It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
 To get the source files:
@@ -75,12 +75,11 @@ To install Qt:
 1. On the _Select Components_ page:
 
    - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
-
 - Under Qt -> _Qt {{ $frontmatter.qt_version }}_ select:
-  - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
-  - **Mac**: Desktop
-  - **Linux**: Desktop gcc 64-bit
-  - **Android**: Android
+   - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
+   - **Mac**: Desktop
+   - **Linux**: Desktop gcc 64-bit
+   - **Android**: Android
 - Select all _Additional Libraries_
 - Deselect QT Design Studio
 
@@ -89,7 +88,7 @@ To install Qt:
    - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-macos.sh`
+   - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
    - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
    - **Android** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Search for "Qt 6.10 android" on the internet to find the correct "Gettting Started with Qt for Android" page. Read it full and carefully! An example of what you are looking for is [here](https://doc.qt.io/qt-6/android-getting-started.html).
 
@@ -101,6 +100,7 @@ To install Qt:
    :::
 
    - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
+
 
 #### Install Visual Studio (Windows Only) {#vs}
 
@@ -143,10 +143,10 @@ Example commands to build a default QGC and run it afterwards:
 
    **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
 
-   - `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
-   - `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
-   - `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
-   - `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
+   * `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
+   * `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
+   * `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
+   * `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
 
 1. Build
 

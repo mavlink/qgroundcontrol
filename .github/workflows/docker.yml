@@ -56,13 +56,13 @@ jobs:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
-          tool-cache: false
+          tool-cache: true
           android: ${{ matrix.platform != 'Android' }}
           dotnet: true
           haskell: true
           large-packages: true
-          docker-images: false
-          swap-storage: false
+          docker-images: true
+          swap-storage: true
 
       - name: Checkout
         uses: actions/checkout@v6

@@ -35,7 +35,7 @@ The following steps are required for debugging both types of problems:
 
 For _Resume Mission Dialog_ problems follow the [common steps above](#common_steps), and then:
 
-1. Save the _Console Log_ to a file.
+7. Save the _Console Log_ to a file.
 1. Place the _Console Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
 1. Create the issue with details and links to all three files.
 
@@ -43,7 +43,7 @@ For _Resume Mission Dialog_ problems follow the [common steps above](#common_ste
 
 For _Resume Mission Generation_ problems follow the [common steps above](#common_steps), and then:
 
-1. Click **Resume Mission**.
+7. Click **Resume Mission**.
 1. The new mission should be generated.
 1. Go to [Plan View](../plan_view/plan_view.md).
 1. Select **Download** from the _File/Sync_ menu.

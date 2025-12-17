@@ -119,7 +119,6 @@ The Vehicle Messages Indicator dropdown shows you messages which come from the v
 ![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/gps_indicator.png)
 
 The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings.
-
 ### Battery Indicator
 
 ![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/battery_indicator.png)
@@ -154,10 +153,8 @@ To takeoff (when landed):
 
 1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
 1. Optionally set the takeoff altitude in the right-side vertical slider.
-
-- You can slide up/down to change the altitude
-- You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
-
+  - You can slide up/down to change the altitude
+  - You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
 1. Confirm takeoff using the slider.
 
 ![takeoff](../../../assets/fly/takeoff.png)
@@ -188,8 +185,8 @@ You can change altitude while flying, except when in a mission:
 
 1. Press the **Actions** button on the _Fly Tools_
 1. Select the _Change Altitude_ button
-1. Select the new altitude from the vertical slider
-1. Confirm the action
+2. Select the new altitude from the vertical slider
+3. Confirm the action
 
 ## Instrument Panel (Telemetry) {#instrument_panel}
 
@@ -201,9 +198,9 @@ The default values include altitude (relative to the home location), horizontal 
 
 You can configure where the information is displayed by:
 
-- Tablets: Press and hold over control
-- Desktop: Right click control
-- Click to Lock icon to close and save changes
+* Tablets: Press and hold over control
+* Desktop: Right click control
+* Click to Lock icon to close and save changes
 
 ![Instrument Panel - edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
 
@@ -228,9 +225,9 @@ The selection list on the top right is used to select a particular telemetry val
 
 You can select from multiple types of instruments by:
 
-- Tablets: Press and hold over control
-- Desktop: Right click over control
-- Click the Lock icon to close and save changes
+* Tablets: Press and hold over control
+* Desktop: Right click over control
+* Click the Lock icon to close and save changes
 
 ![Instrument Panel - hover for move/edit tools](../../../assets/fly/hud_select_variant.png)
 

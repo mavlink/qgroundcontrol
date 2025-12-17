@@ -1,9 +1,12 @@
 # Coding Style
 
-For the complete coding style guide, see [CODING_STYLE.md](https://github.com/mavlink/qgroundcontrol/blob/master/CODING_STYLE.md).
+High level style information:
 
-Example files demonstrating the style:
+- Tabs expanded to 4 spaces
+- Pascal/CamelCase naming conventions
 
-- [CodingStyle.h](https://github.com/mavlink/qgroundcontrol/blob/master/tools/coding-style/CodingStyle.h) - C++ header
-- [CodingStyle.cc](https://github.com/mavlink/qgroundcontrol/blob/master/tools/coding-style/CodingStyle.cc) - C++ implementation
-- [CodingStyle.qml](https://github.com/mavlink/qgroundcontrol/blob/master/tools/coding-style/CodingStyle.qml) - QML
+The style itself is documents in the following example files:
+
+- [CodingStyle.cc](https://github.com/mavlink/qgroundcontrol/blob/master/CodingStyle.cc)
+- [CodingStyle.h](https://github.com/mavlink/qgroundcontrol/blob/master/CodingStyle.h)
+- [CodingStyle.qml](https://github.com/mavlink/qgroundcontrol/blob/master/CodingStyle.qml)

@@ -64,7 +64,6 @@ At login, your shell takes a snapshot of your user and group memberships. Becaus
 
 1. (Optional) Disable ModemManager
 On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
-
 ```
 # preferred: stop and mask the service
 sudo systemctl mask --now ModemManager.service
@@ -74,7 +73,6 @@ sudo apt remove --purge modemmanager
 ```
 
 1. On the command prompt, enter:
-
 ```sh
 sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
 sudo apt install libfuse2 -y
@@ -86,7 +84,6 @@ sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
 1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
 
 1. Make the AppImage executable
-
 ```
 chmod +x QGroundControl-<arch>.AppImage
 ```

@@ -83,7 +83,7 @@ Let's walk through an example hierarchy for `MAV_CMD_NAV_WAYPOINT`. Root informa
 
 ### Root - Vehicle Type Specific leaf node
 
-The next level of the hiearchy is generic mavlink but vehicle specific. Json files are here: [MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json). And here are the overrides for (Fixed Wings)(<https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7>):
+The next level of the hiearchy is generic mavlink but vehicle specific. Json files are here: [MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json), [FW](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json), [ROVER](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoRover.json), [Sub](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoSub.json), [VTOL](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoVTOL.json). And here are the overrides for (Fixed Wings)(https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoFixedWing.json#L7):
 
 ```
         {
@@ -97,7 +97,7 @@ What this does is remove the editing UI for param4 which is Yaw and not used by 
 
 ### Root - Firmware Type Specific leaf node
 
-The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets look at the waypoint overrides:
+The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets loook at the waypoint overrides:
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6):
 

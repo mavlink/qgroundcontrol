@@ -8,9 +8,9 @@ The default values include altitude (relative to the home location), horizontal 
 
 You can configure where the information is displayed by:
 
-- Tablets: Press and hold over control
-- Desktop: Right click control
-- Click to Lock icon to close and save changes
+* Tablets: Press and hold over control
+* Desktop: Right click control
+* Click to Lock icon to close and save changes
 
 ![Instrument Panel - edit tools](../../../assets/fly/instrument_panel/instrument_panel_tools_edit.png)
 

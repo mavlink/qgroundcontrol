@@ -12,7 +12,7 @@ repos:
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
       - id: pretty-format-json
-        args: ['--indent=2', '--no-ensure-ascii']
+        args: ['--indent=2', '--no-ensure-ascii', '--check']
         exclude: ^(translations/|package-lock\.json|src/|test/|resources/|deploy/|cmake/)
       - id: check-xml
         exclude: ^test/
@@ -25,7 +25,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat))$
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ['--fix=no']
         exclude: \.(bat|ps1)$
 
   # C++ formatting (check-only, use 'clang-format -i' to fix)
@@ -46,13 +46,13 @@ repos:
         types_or: [c++, c]
         exclude: ^(build/|libs/|test/)
 
-  # Python formatting
+  # Python formatting (report-only)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.8
     hooks:
       - id: ruff
-        args: [--fix]
       - id: ruff-format
+        args: [--check]
 
   # Python type checking
   - repo: https://github.com/RobertCraigie/pyright-python
@@ -68,11 +68,12 @@ repos:
       - id: shellcheck
         args: ['-e', 'SC1091']  # Don't warn about not following sourced files
 
-  # CMake formatting
+  # CMake formatting (report-only)
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
       - id: cmake-format
+        args: [--check]
       - id: cmake-lint
         exclude: ^(build/|libs/)
 
@@ -89,12 +90,11 @@ repos:
       - id: yamllint
         args: ['-d', '{extends: default, rules: {line-length: {max: 200}, document-start: disable, truthy: {check-keys: false}, comments: {min-spaces-from-content: 1}}}']
 
-  # Markdown linting
+  # Markdown linting (report-only, doesn't auto-fix)
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.47.0
     hooks:
       - id: markdownlint
-        args: ['--fix']
         exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
 
   # Prose linting (documentation quality)

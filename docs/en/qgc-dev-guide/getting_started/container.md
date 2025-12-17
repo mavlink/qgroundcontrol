@@ -11,7 +11,6 @@ It pre-installs all the dependencies at build time, including Qt, thanks to a sc
 The main advantage of using the container is the usage of the `CMake` build system and its many improvements over `qmake`
 
 ## Building the Container
-
 ### Script
 
 To build the container using the script, run this command in the qgc root directory
@@ -19,9 +18,7 @@ To build the container using the script, run this command in the qgc root direct
 ```
 ./deploy/docker/run-docker-ubuntu.sh
 ```
-
 ### Manual
-
 if you want to Build using the container manually, then you first have to build the image.
 You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 

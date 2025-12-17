@@ -146,23 +146,17 @@ To make the controller work wirelessly under Linux the [jstest-gtk](https://jste
 The steps are:
 
 1. Install _jstest-gtk_:
-
    ```
    sudo apt install jstest-gtk
    ```
-
 1. Install _ds4drv_:
-
    ```
    sudo pip install ds4drv
    ```
-
 1. Run ds4drv
-
    ```
    sudo ds4drv
    ```
-
 1. Hold **Share** button and then **PS** button until controller LED starts blinking rapidly.
    The _ds4drv_ should then detect a new device.
 1. Last of all, you should check the controller setup by running the _jstest-gtk_ utility.
