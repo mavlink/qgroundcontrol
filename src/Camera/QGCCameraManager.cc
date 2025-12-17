@@ -59,8 +59,6 @@ static void _requestFovOnZoom_Handler(
     mavlink_msg_camera_fov_status_decode(&message, &fov);
 
     if (!mgr) return;
-    if (auto* cam = mgr->currentCameraInstance()) {
-    }
 }
 
 /*===========================================================================*/
@@ -333,7 +331,7 @@ void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
     if (info.resolution_h > 0 && info.resolution_v > 0) {
         aspect = double(info.resolution_v) / double(info.resolution_h);
     } else if (info.sensor_size_h > 0.f && info.sensor_size_v > 0.f) {
-        aspect = double(info.sensor_size_v / info.sensor_size_h);
+        aspect = double(info.sensor_size_v) / double(info.sensor_size_h);
     }
 
     _aspectByCompId.insert(message.compid, aspect);
@@ -341,11 +339,6 @@ void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
     const double sensorH = static_cast<double>(info.sensor_size_h);
     const double sensorV = static_cast<double>(info.sensor_size_v);
     const double focal   = static_cast<double>(info.focal_length);
-
-    if (sensorH > 0.0 && sensorV > 0.0 && focal > 0.0) {
-        const double hfovDeg = 2.0 * std::atan(sensorH / (2.0 * focal)) * 180.0 / M_PI;
-        const double vfovDeg = 2.0 * std::atan(sensorV / (2.0 * focal)) * 180.0 / M_PI;
-    }
 }
 
 void QGCCameraManager::_checkForLostCameras()
@@ -429,7 +422,18 @@ void QGCCameraManager::_handleCameraSettings(const mavlink_message_t& message)
         mavlink_msg_camera_settings_decode(&message, &settings);
         pCamera->handleSettings(settings);
 
-        zoomValueCurrent = static_cast<double>(settings.zoomLevel);
+        const int newZoom = static_cast<int>(settings.zoomLevel);
+        if (QThread::currentThread() == thread()) {
+            _setCurrentZoomLevel(newZoom);
+        } else {
+            QMetaObject::invokeMethod(
+                this,
+                "_setCurrentZoomLevel",
+                Qt::QueuedConnection,
+                Q_ARG(int, newZoom)
+            );
+        }
+
         requestCameraFovForComp(message.compid);
     }
 }
@@ -742,6 +746,10 @@ const QVariantList &QGCCameraManager::cameraList() const
 }
 
 void QGCCameraManager::requestCameraFovForComp(int compId) {
+    if (!_vehicle) {
+        qCWarning(CameraManagerLog) << "requestCameraFovForComp: vehicle is null";
+        return;
+    }
     _vehicle->requestMessage(_requestFovOnZoom_Handler, /*user*/this,
                              compId, MAVLINK_MSG_ID_CAMERA_FOV_STATUS);
 }
@@ -754,8 +762,8 @@ double QGCCameraManager::aspectForComp(int compId) const {
            : it.value();
 }
 
-double QGCCameraManager::currentCameraAspect() const {
-    if (auto* cam = const_cast<QGCCameraManager*>(this)->currentCameraInstance()) {
+double QGCCameraManager::currentCameraAspect(){
+    if (auto* cam = currentCameraInstance()) {
         return aspectForComp(cam->compID());
     }
     return std::numeric_limits<double>::quiet_NaN();
@@ -764,17 +772,43 @@ void QGCCameraManager::_handleCameraFovStatus(const mavlink_message_t& message)
 {
     mavlink_camera_fov_status_t fov{};
     mavlink_msg_camera_fov_status_decode(&message, &fov);
-    if (!std::isfinite(fov.hfov) || fov.hfov <= 0.0 || fov.hfov >= 180.0) return;
-    double aspect = aspectForComp(message.compid);
 
-    if (!std::isfinite(aspect) || aspect <= 0.0) aspect = 9.0/16.0;
+    if (!std::isfinite(fov.hfov) || fov.hfov <= 0.0 || fov.hfov >= 180.0) {
+        return;
+    }
+
+    double aspect = aspectForComp(message.compid);
+    if (!std::isfinite(aspect) || aspect <= 0.0) {
+        aspect = 16.0 / 9.0;
+    }
+
     const double hfovRad = fov.hfov * kPi / 180.0;
     const double vfovRad = 2.0 * std::atan(std::tan(hfovRad * 0.5) * aspect);
     const double vfovDeg = vfovRad * 180.0 / kPi;
-    SettingsManager::instance()->gimbalControllerSettings()->CameraHFov()->setRawValue(QVariant::fromValue(fov.hfov));
-    SettingsManager::instance()->gimbalControllerSettings()->CameraVFov()->setRawValue(QVariant::fromValue(vfovDeg));
+
+    if (!std::isfinite(vfovDeg) || vfovDeg <= 0.0 || vfovDeg >= 180.0) {
+        qCWarning(CameraManagerLog) << "Invalid calculated VFOV:" << vfovDeg
+                                    << "hfov:" << fov.hfov
+                                    << "aspect:" << aspect
+                                    << "compId:" << message.compid;
+        return;
+    }
+
+    auto* settings = SettingsManager::instance()->gimbalControllerSettings();
+    settings->CameraHFov()->setRawValue(fov.hfov);
+    settings->CameraVFov()->setRawValue(vfovDeg);
 }
 
-int QGCCameraManager::currentZoomLevel() const {
-    return zoomValueCurrent;
+void QGCCameraManager::_setCurrentZoomLevel(int level)
+{
+    if (_zoomValueCurrent == level) {
+        return;
+    }
+    _zoomValueCurrent = level;
+    emit currentZoomLevelChanged();
+}
+
+int QGCCameraManager::currentZoomLevel() const
+{
+    return _zoomValueCurrent;
 }

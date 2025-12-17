@@ -277,25 +277,15 @@ Item {
                 heading:        qsTr("Zoom speed")
                 showDividers:   false
 
-                QGCLabel {
-                        text:               qsTr("Max speed (min zoom):")
-                        visible:            true
-                    }
+                LabelledFactTextField {
+                    label:      qsTr("Max speed (min zoom)")
+                    fact:       _gimbalControllerSettings.zoomMaxSpeed
+                }
 
-                    FactTextField {
-                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMaxSpeed
-                        visible:            true
-                    }
-
-                    QGCLabel {
-                        text:               qsTr("Min speed (max zoom):")
-                        visible:            true
-                    }
-
-                    FactTextField {
-                        fact:               QGroundControl.settingsManager.gimbalControllerSettings.zoomMinSpeed
-                        visible:            true
-                    }
+                LabelledFactTextField {
+                    label:      qsTr("Min speed (max zoom)")
+                    fact:       _gimbalControllerSettings.zoomMinSpeed
+                }
                 
             }
 
