@@ -2,6 +2,7 @@
 set -euo pipefail
 
 BUILD_TYPE="${1:-${BUILD_TYPE:-Release}}"
+ANDROID_ABIS="${ANDROID_ABIS:-arm64-v8a}"  # Options: arm64-v8a, armeabi-v7a, or both with semicolon
 
 case "${BUILD_TYPE}" in
     Release|Debug|RelWithDebInfo|MinSizeRel) ;;
@@ -24,7 +25,7 @@ if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
     qt-cmake -S /project/source -B /project/build -G Ninja \
         -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
         -DQT_HOST_PATH="${QT_HOST_PATH}" \
-        -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
+        -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
         -DANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS_DIR}" \
         -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
         -DQT_ANDROID_SIGN_APK=OFF \

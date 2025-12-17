@@ -60,7 +60,7 @@ jobs:
           android: ${{ matrix.platform != 'Android' }}
           dotnet: true
           haskell: true
-          large-packages: true
+          large-packages: false  # Slowest option (~5min) - disabled for faster builds
           docker-images: true
           swap-storage: true
 
