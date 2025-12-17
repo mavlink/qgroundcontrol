@@ -192,7 +192,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
     }
 
     // Vehicle changed so we need to signal everything
-    emit containsItemsChanged(containsItems());
+    emit containsItemsChanged();
     emit syncInProgressChanged();
     emit dirtyChanged(dirty());
 

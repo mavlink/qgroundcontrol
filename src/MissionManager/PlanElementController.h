@@ -58,7 +58,7 @@ public:
 
 signals:
     void supportedChanged       (bool supported);
-    void containsItemsChanged   (bool containsItems);
+    void containsItemsChanged   ();
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);
     void sendComplete           (void);
