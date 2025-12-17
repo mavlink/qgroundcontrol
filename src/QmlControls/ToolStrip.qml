@@ -43,10 +43,7 @@ Rectangle {
     QGCFlickable {
         id:                 flickable
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
-        anchors.top:        parent.top
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        height:             parent.height - anchors.margins * 2
+        anchors.fill:       parent
         contentHeight:      toolStripColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true
