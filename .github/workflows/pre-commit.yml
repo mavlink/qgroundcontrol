@@ -46,10 +46,12 @@ jobs:
           modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Run pre-commit
+        id: pre-commit
+        continue-on-error: true
         uses: pre-commit/action@v3.0.1
 
       - name: Show diff on failure
-        if: failure()
+        if: steps.pre-commit.outcome == 'failure'
         run: |
           echo "::group::Files modified by pre-commit hooks"
           git diff --stat
