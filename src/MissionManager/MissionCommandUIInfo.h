@@ -44,7 +44,7 @@ class MissionCommandTreeTest;
 ///
 /// Note on NaN usage:
 ///     To indicate a NaN as a value in the json file use the value 'null' (with no quotes)
-///     For Json type validation internally these fields are represented using QJsonValue::Null to JsonHelper methods which indicates a double which supports NaN/null
+///     Internally, these null values are converted to NaN (Not a Number) when loaded by JsonHelper.
 
 class MissionCmdParamInfo : public QObject {
 
