@@ -42,6 +42,10 @@ class MissionCommandTreeTest;
 /// enumValues      string              Values associated with each enum string
 /// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
 ///
+/// Note on NaN usage:
+///     To indicate a NaN as a value in the json file use the value 'null' (with no quotes)
+///     For Json type validation internally these fields are represented using QJsonValue::Null to JsonHelper methods which indicates a double which supports NaN/null
+
 class MissionCmdParamInfo : public QObject {
 
     Q_OBJECT
