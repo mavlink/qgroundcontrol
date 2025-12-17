@@ -29,19 +29,23 @@ class MissionCommandTreeTest;
 ///
 /// The json format for a MissionCmdParamInfo object is:
 ///
-/// Key             Type    Default     Description
-/// label           string  required    Label for text field
-/// units           string              Units for value, should use FactMetaData units strings in order to get automatic translation
-/// default         double  0.0/NaN     Default value for param. If no default value specified and nanUnchanged == true, then defaultValue is NaN.
-/// decimalPlaces   int     7           Number of decimal places to show for value
-/// min             double  unbounded   Minimum value for param
-/// max             double  unbounded   Maximum value for param
-/// userMin         double  NaN         Lower bound for user editing (NaN means not set)
-/// userMax         double  NaN         Upper bound for user editing (NaN means not set)
-/// enumStrings     string              Strings to show in combo box for selection
-/// enumValues      string              Values associated with each enum string
-/// nanUnchanged    bool    false       True: value can be set to NaN to signal unchanged
+/// Key             Type    Default     QJsonValue::Type    Description
+/// label           string  required    String              Label for text field
+/// units           string              String              Units for value, should use FactMetaData units strings in order to get automatic translation
+/// default         double  0.0/NaN     Null                Default value for param. If no default value specified and nanUnchanged == true, then defaultValue is NaN.
+/// decimalPlaces   int     7           Double              Number of decimal places to show for value
+/// min             double  unbounded   Double              Minimum value for param
+/// max             double  unbounded   Double              Maximum value for param
+/// userMin         double  NaN         Null                Lower bound for user editing (NaN means not set)
+/// userMax         double  NaN         Null                Upper bound for user editing (NaN means not set)
+/// enumStrings     string              String              Strings to show in combo box for selection
+/// enumValues      string              String              Values associated with each enum string
+/// nanUnchanged    bool    false       Bool                True: value can be set to NaN to signal unchanged
 ///
+/// Note on NaN usage:
+///     To indicate a NaN as a value in the json file use the value 'null' (with no quotes)
+///     Internally, these null values are converted to NaN when the json is read
+
 class MissionCmdParamInfo : public QObject {
 
     Q_OBJECT
