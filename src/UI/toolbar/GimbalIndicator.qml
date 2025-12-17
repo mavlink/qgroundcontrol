@@ -286,7 +286,7 @@ Item {
                     label:      qsTr("Min speed (max zoom)")
                     fact:       _gimbalControllerSettings.zoomMinSpeed
                 }
-                
+
             }
 
             SettingsGroupLayout {
