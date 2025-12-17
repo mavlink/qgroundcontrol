@@ -81,6 +81,7 @@ namespace JsonHelper
                               QString &errorString);         ///< returned error string if validation fails
 
     /// Validates the types of specified keys are in the object
+    ///     A Key type of JsonValue::Null indicates a double type which may be null which indicates NaN
     /// @return false: validation failed, errorString set
     bool validateKeyTypes(const QJsonObject &jsonObject,         ///< json object to validate
                           const QStringList &keys,               ///< keys to validate
