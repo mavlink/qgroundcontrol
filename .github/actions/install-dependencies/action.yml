@@ -49,6 +49,13 @@ runs:
           sudo ./tools/setup/install-dependencies-debian.sh
         fi
         if [ -n "$EXTRA_PACKAGES" ]; then
+          # Validate package names to prevent command injection
+          for pkg in $EXTRA_PACKAGES; do
+            if [[ ! "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9.+-]*$ ]]; then
+              echo "Error: Invalid package name '$pkg'" >&2
+              exit 1
+            fi
+          done
           # shellcheck disable=SC2086  # Word splitting is intentional for package list
           sudo apt-get install -y $EXTRA_PACKAGES
         fi

@@ -13,6 +13,13 @@ case "${BUILD_TYPE}" in
 esac
 
 if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
+    # Validate required Android environment variables
+    for var in QT_HOST_PATH ANDROID_BUILD_TOOLS_DIR ANDROID_NDK_ROOT; do
+        if [[ -z "${!var:-}" ]]; then
+            echo "Error: Required environment variable $var is not set" >&2
+            exit 1
+        fi
+    done
     echo "Building QGroundControl for Android (${BUILD_TYPE})..."
     qt-cmake -S /project/source -B /project/build -G Ninja \
         -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \

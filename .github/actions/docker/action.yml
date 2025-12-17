@@ -39,6 +39,20 @@ runs:
         username: ${{ inputs.docker-username }}
         password: ${{ inputs.docker-token }}
 
+    - name: Validate dockerfile input
+      shell: bash
+      run: |
+        case "${{ inputs.dockerfile }}" in
+          Dockerfile-build-ubuntu|Dockerfile-build-android)
+            echo "Using dockerfile: ${{ inputs.dockerfile }}"
+            ;;
+          *)
+            echo "Error: Invalid dockerfile '${{ inputs.dockerfile }}'" >&2
+            echo "Allowed values: Dockerfile-build-ubuntu, Dockerfile-build-android" >&2
+            exit 1
+            ;;
+        esac
+
     - name: Build Docker image
       uses: docker/build-push-action@v6
       with:
