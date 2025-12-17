@@ -295,15 +295,15 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
     case AltitudeModeNone:
         return QString();
     case AltitudeModeRelative:
-        return tr("Relative To Launch");
+        return tr("Rel");
     case AltitudeModeAbsolute:
         return tr("AMSL");
     case AltitudeModeCalcAboveTerrain:
-        return tr("Calc Above Terrain");
+        return tr("TerrC");
     case AltitudeModeTerrainFrame:
-        return tr("Terrain Frame");
+        return tr("TerrA");
     case AltitudeModeMixed:
-        return tr("Mixed Modes");
+        return tr("Mix");
     }
 
     // Should never get here but makes some compilers happy
