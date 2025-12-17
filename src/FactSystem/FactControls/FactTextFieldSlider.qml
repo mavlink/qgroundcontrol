@@ -44,7 +44,6 @@ Rectangle {
 
     Component.onCompleted: {
         _loadComplete = true
-        updateSliderToClampedValue()
     }
 
     Connections {
@@ -88,6 +87,8 @@ Rectangle {
             Layout.fillWidth:   true
             sourceComponent:    control._showSlider ? sliderComponent : null
             enabled:            !control.showEnableCheckbox || enableCheckbox.checked
+
+            onLoaded: control.updateSliderToClampedValue()
         }
 
         Component {
