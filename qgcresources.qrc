@@ -46,11 +46,14 @@
         <file alias="QGroundControlConnect.svg">resources/QGroundControlConnect.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="sliders.svg">resources/sliders.svg</file>
+        <file alias="SaveToDisk.svg">resources/SaveToDisk.svg</file>
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop.svg">resources/Stop.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="terrain.svg">resources/terrain.svg</file>
+        <file alias="TrashCan.svg">resources/TrashCan.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
+        <file alias="UploadToVehicle.svg">resources/UploadToVehicle.svg</file>
         <file alias="VehicleMessages.png">resources/VehicleMessages.png</file>
         <file alias="waves.svg">resources/waves.svg</file>
         <file alias="wind-guru.svg">resources/wind-guru.svg</file>
