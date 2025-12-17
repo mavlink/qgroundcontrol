@@ -1,0 +1,70 @@
+name: Install Dependencies
+description: Install platform-specific build dependencies (GStreamer, etc.)
+
+inputs:
+  gstreamer:
+    description: 'Install GStreamer (Windows x64 only)'
+    required: false
+    default: 'true'
+  gstreamer-version:
+    description: 'GStreamer version (default: from build-config.json)'
+    required: false
+    default: ''
+  vulkan:
+    description: 'Install Vulkan SDK (Windows only, for validation layers)'
+    required: false
+    default: 'false'
+  extra-packages:
+    description: 'Additional packages to install (space-separated, Linux only)'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $params = @{}
+        if ('${{ inputs.gstreamer-version }}') {
+          $params['GStreamerVersion'] = '${{ inputs.gstreamer-version }}'
+        }
+        if ('${{ inputs.gstreamer }}' -ne 'true') {
+          $params['SkipGStreamer'] = $true
+        }
+        if ('${{ inputs.vulkan }}' -eq 'true') {
+          $params['InstallVulkan'] = $true
+        }
+        & "${{ github.workspace }}/tools/setup/install-dependencies-windows.ps1" @params
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      env:
+        EXTRA_PACKAGES: ${{ inputs.extra-packages }}
+      run: |
+        if [ -f "./tools/setup/install-dependencies-debian.sh" ]; then
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+        fi
+        if [ -n "$EXTRA_PACKAGES" ]; then
+          # Validate package names to prevent command injection
+          for pkg in $EXTRA_PACKAGES; do
+            if [[ ! "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9.+-]*$ ]]; then
+              echo "Error: Invalid package name '$pkg'" >&2
+              exit 1
+            fi
+          done
+          # shellcheck disable=SC2086  # Word splitting is intentional for package list
+          sudo apt-get install -y $EXTRA_PACKAGES
+        fi
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        if [ -f "./tools/setup/install-dependencies-macos.sh" ]; then
+          chmod a+x ./tools/setup/install-dependencies-macos.sh
+          ./tools/setup/install-dependencies-macos.sh
+        fi

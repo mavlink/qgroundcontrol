@@ -36,14 +36,8 @@ echo "QT_ROOT_DIR $QT_ROOT_DIR"
 echo "QT_MODULES ${QT_MODULES_ARR[*]}"
 
 apt-get update -y --quiet
-apt-get install python3 python3-pip pipx -y
-pipx install aqtinstall
-pipx install cmake
-pipx install ninja
-pipx ensurepath
-USER_BASE_BIN="$(python3 -m site --user-base)/bin"
-export PATH="$USER_BASE_BIN:$PATH"
-aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"
+apt-get install -y python3 python3-pip pipx
+pipx run aqtinstall install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"
 
 QT_ROOT_DIR=$(readlink -e "${QT_ROOT_DIR}")
 export QT_ROOT_DIR

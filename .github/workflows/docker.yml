@@ -1,0 +1,109 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - '.github/workflows/docker.yml'
+      - '.github/actions/docker/**'
+      - '.github/build-config.json'
+      - 'deploy/docker/**'
+      - 'deploy/linux/**'
+      - 'tools/setup/**'
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  build:
+    name: Docker ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Linux
+            dockerfile: Dockerfile-build-ubuntu
+            fuse: true
+
+          - platform: Android
+            dockerfile: Dockerfile-build-android
+            fuse: false
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: ${{ matrix.platform != 'Android' }}
+          dotnet: true
+          haskell: true
+          large-packages: false  # Slowest option (~5min) - disabled for faster builds
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Build with Docker
+        uses: ./.github/actions/docker
+        with:
+          dockerfile: ${{ matrix.dockerfile }}
+          fuse: ${{ matrix.fuse }}
+          docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Free disk space for Trivy scan
+        if: success()
+        run: |
+          docker builder prune -af || true
+          docker system prune -f --volumes || true
+          rm -rf /project/build || true
+          df -h /
+
+      - name: Scan Docker image for vulnerabilities
+        if: success()
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: 'qgc-builder:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: success()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-${{ matrix.platform }}'

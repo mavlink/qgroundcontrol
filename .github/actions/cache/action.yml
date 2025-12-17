@@ -41,7 +41,7 @@ runs:
       shell: bash
       run: |
         set -e
-        wget --quiet https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
+        wget --quiet --tries=3 --waitretry=5 https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
         tar -xf ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
         sudo make -C ccache-${{ inputs.ccache-version }}-linux-x86_64 install
 

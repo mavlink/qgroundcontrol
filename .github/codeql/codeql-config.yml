@@ -1,0 +1,19 @@
+name: "QGroundControl CodeQL Config"
+
+paths:
+  - src
+  - test
+
+paths-ignore:
+  - '**/moc_*'
+  - '**/qrc_*'
+  - '**/ui_*'
+  - '**/*_autogen/**'
+  - '**/libs/**'
+  - '**/3rdparty/**'
+  - '**/build/**'
+
+queries:
+  - uses: security-extended
+
+trap-caching: true

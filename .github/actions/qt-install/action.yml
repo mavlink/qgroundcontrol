@@ -1,0 +1,38 @@
+name: Install Qt
+description: Install Qt with standard QGroundControl modules
+inputs:
+  version:
+    description: Qt version to install
+    required: true
+  host:
+    description: Host platform (linux, mac, windows, etc.)
+    required: true
+  target:
+    description: Target platform (desktop, android, ios)
+    required: false
+    default: desktop
+  arch:
+    description: Architecture (linux_gcc_64, clang_64, win64_msvc2022_64, etc.)
+    required: true
+  dir:
+    description: Installation directory
+    required: false
+    default: ${{ runner.temp }}
+  modules:
+    description: Qt modules to install (use build-config.outputs.qt_modules)
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Install Qt ${{ inputs.version }}
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ inputs.version }}
+        host: ${{ inputs.host }}
+        target: ${{ inputs.target }}
+        arch: ${{ inputs.arch }}
+        dir: ${{ inputs.dir }}
+        modules: ${{ inputs.modules }}
+        setup-python: false
+        cache: true

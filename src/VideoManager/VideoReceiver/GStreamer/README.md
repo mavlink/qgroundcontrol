@@ -10,7 +10,7 @@ If you do have the proper GStreamer development libraries installed where QGC lo
 
 ### Gstreamer logs
 
-For cases, when it is need to have more control over gstreamer logging than is availabe via QGroundControl's UI, it is possible to configure gstreamer logging via environment variables. Please see https://developer.gnome.org/gstreamer/stable/gst-running.html for details.
+For cases, when it is need to have more control over gstreamer logging than is availabe via QGroundControl's UI, it is possible to configure gstreamer logging via environment variables. Please see <https://developer.gnome.org/gstreamer/stable/gst-running.html> for details.
 
 ### UDP Pipeline
 
@@ -89,7 +89,7 @@ The build system is setup to use pkgconfig and it will find the necessary header
 
 ### Mac OS
 
-Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/osx. Supported version is 1.22.12.
+Download the gstreamer framework from here: <http://gstreamer.freedesktop.org/data/pkg/osx>. Supported version is 1.22.12.
 
 You need two packages:
 
@@ -126,7 +126,7 @@ To enable Developer Mode:
 
 ### Windows
 
-Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/windows. Supported version is 1.22.12. QGC may work with newer version, but it is untested.
+Download the gstreamer framework from here: <http://gstreamer.freedesktop.org/data/pkg/windows>. Supported version is 1.22.12. QGC may work with newer version, but it is untested.
 
 You need two packages:
 

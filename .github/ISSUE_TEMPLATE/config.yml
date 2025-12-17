@@ -1,5 +1,20 @@
 blank_issues_enabled: true
 contact_links:
+  - name: "❓ Questions & Help"
+    url: https://github.com/mavlink/qgroundcontrol/discussions/categories/q-a
+    about: "Ask questions in GitHub Discussions - please don't open issues for support questions."
   - name: "💬 Developer Chat"
     url: https://discord.gg/dronecode
-    about: "QGroundControl developers (and many regular/deeply-involved users) can be found on the #QGroundControl channel on the Dronecode Discord."
+    about: "Chat with developers on the #QGroundControl channel on Dronecode Discord."
+  - name: "📖 User Guide"
+    url: https://docs.qgroundcontrol.com/
+    about: "Check the QGC User Guide for usage questions and troubleshooting."
+  - name: "🛠️ Developer Guide"
+    url: https://dev.qgroundcontrol.com/
+    about: "Developer documentation for building and contributing to QGC."
+  - name: "💬 PX4 Forum"
+    url: https://discuss.px4.io/c/qgroundcontrol/15
+    about: "Community discussion forum for QGC topics."
+  - name: "🔍 Search Existing Issues"
+    url: https://github.com/mavlink/qgroundcontrol/issues?q=is%3Aissue
+    about: "Search for existing issues before creating a new one."

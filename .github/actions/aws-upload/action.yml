@@ -1,0 +1,60 @@
+name: AWS Upload
+description: Upload release artifacts to AWS S3 and invalidate CloudFront cache
+
+inputs:
+  artifact_name:
+    description: Artifact filename to upload
+    required: true
+  artifact_path:
+    description: Path to artifact file
+    required: true
+  aws_key_id:
+    description: AWS access key ID
+    required: true
+  aws_secret_access_key:
+    description: AWS secret access key
+    required: true
+  aws_distribution_id:
+    description: AWS CloudFront distribution ID (optional, for cache invalidation)
+    required: false
+  aws_region:
+    description: AWS region
+    required: false
+    default: 'us-west-2'
+  s3_bucket:
+    description: S3 bucket name
+    required: false
+    default: 'qgroundcontrol'
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Upload to S3 builds folder
+      shell: bash
+      run: |
+        aws s3 cp "${{ inputs.artifact_path }}" \
+          "s3://${{ inputs.s3_bucket }}/builds/${{ github.ref_name }}/${{ inputs.artifact_name }}" \
+          --acl public-read
+
+    - name: Upload to S3 latest folder
+      if: github.ref_type == 'tag'
+      shell: bash
+      run: |
+        aws s3 cp "${{ inputs.artifact_path }}" \
+          "s3://${{ inputs.s3_bucket }}/latest/${{ inputs.artifact_name }}" \
+          --acl public-read
+
+    - name: Invalidate CloudFront cache
+      if: github.ref_type == 'tag' && inputs.aws_distribution_id != ''
+      shell: bash
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id "${{ inputs.aws_distribution_id }}" \
+          --paths "/latest/${{ inputs.artifact_name }}"

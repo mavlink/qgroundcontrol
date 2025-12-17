@@ -6,9 +6,8 @@ The following is a list of versions the development team is currently supporting
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.0     | :white_check_mark: |
-| 4.4.x   | :white_check_mark: |
-| < 4.4   | :x:                |
+| 5.0.x   | :white_check_mark: |
+| < 5.0   | :x:                |
 
 ## Reporting a Vulnerability
 
