@@ -33,7 +33,7 @@ SetupPage {
 
             // Those user visible strings are hard to translate because we can't send the
             // HTML strings to translation as this can create a security risk. we need to find
-            // a better way to hightlight them, or use less highlights.
+            // a better way to highlight them, or use less highlights.
 
             // User visible strings
             readonly property string title:             qsTr("Firmware Setup") // Popup dialog title

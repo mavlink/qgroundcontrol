@@ -21,7 +21,7 @@ Before you begin, please:
 
 1. Read the [Developer Guide](https://dev.qgroundcontrol.com/en/)
 2. Review the [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
-3. Familiarize yourself with the [Architecture](copilot-instructions.md)
+3. Familiarize yourself with the [Architecture Patterns](#architecture-patterns) in this guide
 
 ### Development Environment
 
@@ -46,7 +46,7 @@ Before creating a new issue:
    - Log files (from `~/.local/share/QGroundControl/`)
    - Screenshots or videos if applicable
 
-**Create an issue**: https://github.com/mavlink/qgroundcontrol/issues
+**Create an issue**: <https://github.com/mavlink/qgroundcontrol/issues>
 
 **For security vulnerabilities**: See our [Security Policy](SECURITY.md) for responsible disclosure procedures.
 
@@ -59,15 +59,21 @@ Feature requests are welcome! Please:
 3. Consider implementation complexity
 4. Be prepared to contribute code if possible
 
+### Contributing Translations
+
+QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for community translations. See [tools/translations/README.md](../tools/translations/README.md) for details on how translations are managed.
+
 ### Contributing Code
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/YOUR-USERNAME/qgroundcontrol.git
    cd qgroundcontrol
    ```
 
 2. **Create a feature branch**
+
    ```bash
    git checkout -b feature/my-new-feature
    ```
@@ -80,12 +86,14 @@ Feature requests are welcome! Please:
    - Test with both PX4 and ArduPilot if applicable
 
 5. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "Add feature: brief description"
    ```
 
 6. **Push to your fork**
+
    ```bash
    git push origin feature/my-new-feature
    ```
@@ -95,6 +103,8 @@ Feature requests are welcome! Please:
 ---
 
 ## Coding Standards
+
+For the complete coding style guide with examples, see [CODING_STYLE.md](../CODING_STYLE.md).
 
 ### C++ Guidelines
 
@@ -107,6 +117,7 @@ Feature requests are welcome! Please:
   - Constants: `ALL_CAPS` or `kPascalCase`
 
 - **Always use braces** for if/else/for/while statements
+
   ```cpp
   // Good
   if (condition) {
@@ -126,7 +137,8 @@ Feature requests are welcome! Please:
 
 - **Code formatting**:
   - Run `clang-format` before committing
-  - Follow `.clang-format` in the repository
+  - Follow `.clang-format`, `.clang-tidy`, `.editorconfig` in repo root
+  - See `CodingStyle.h`, `CodingStyle.cc`, `CodingStyle.qml` for examples
   - 4 spaces for indentation (no tabs)
 
 ### QML Guidelines
@@ -151,36 +163,68 @@ qCCritical(MyComponentLog) << "Critical error";
 
 ### Architecture Patterns
 
-#### Fact System (Required for Parameters)
+#### Fact System (Most Important!)
 
-Always use the Fact System for vehicle parameters:
+The Fact System handles ALL vehicle parameters. Never create custom parameter storage.
 
 ```cpp
+// Access parameters (always null-check!)
 Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
-if (param) {
-    param->setCookedValue(newValue);  // For display values
-    // param->setRawValue(newValue);  // For MAVLink values
+if (param && param->validate(newValue, false).isEmpty()) {
+    param->setCookedValue(newValue);  // Use cookedValue for UI (with units)
+    // param->rawValue() for MAVLink/storage
 }
 ```
 
-#### Multi-Vehicle Awareness
+**Key classes:**
 
-Always check for null vehicles:
+- `Fact` - Single parameter with validation, units, metadata
+- `FactGroup` - Hierarchical container (handles MAVLink via `handleMessage()`)
+- `FactMetaData` - JSON-based metadata (min/max, enums, descriptions)
+
+**Rules:**
+
+- Wait for `parametersReady` signal before accessing
+- Use `cookedValue` (display) vs `rawValue` (storage)
+- Metadata in `*.FactMetaData.json` files
+
+#### Multi-Vehicle Support
+
+Always null-check the active vehicle:
 
 ```cpp
 Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
-if (vehicle) {
-    // Use vehicle
-}
+if (!vehicle) return;
+
+// Other managers
+SettingsManager::instance()->appSettings()->...
+LinkManager::instance()->...
 ```
 
 #### Firmware Plugin System
 
-Use FirmwarePlugin for firmware-specific behavior instead of hardcoding:
+Use FirmwarePlugin for firmware-specific behavior:
 
 ```cpp
-vehicle->firmwarePlugin()->isCapable(capability);
+// FirmwarePlugin - Firmware behavior (flight modes, capabilities)
 vehicle->firmwarePlugin()->flightModes();
+vehicle->firmwarePlugin()->isCapable(capability);
+
+// AutoPilotPlugin - Vehicle setup UI
+// VehicleComponent - Individual setup items (Radio, Sensors, Safety)
+```
+
+#### QML/C++ Integration
+
+```cpp
+Q_OBJECT
+QML_ELEMENT           // Creatable in QML
+QML_SINGLETON         // Singleton
+QML_UNCREATABLE("")   // C++-only
+
+Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
+Q_INVOKABLE void method();
+Q_ENUM(EnumType)
 ```
 
 ---
@@ -193,6 +237,7 @@ vehicle->firmwarePlugin()->flightModes();
 - Place tests in `test/` directory mirroring `src/` structure
 - Use Qt Test framework with `UnitTest` base class
 - Run tests before submitting:
+
   ```bash
   ./qgroundcontrol --unittest
   ```
@@ -200,6 +245,7 @@ vehicle->firmwarePlugin()->flightModes();
 ### Manual Testing
 
 Test your changes on:
+
 - Multiple platforms (Windows, macOS, Linux if possible)
 - Both PX4 and ArduPilot firmware (if applicable)
 - Different vehicle types (multirotor, fixed-wing, VTOL, rover)
@@ -209,12 +255,17 @@ Test your changes on:
 Run before committing:
 
 ```bash
+# Using Makefile or justfile (recommended)
+make lint        # or: just lint
+
 # Format code
 clang-format -i path/to/changed/files.cc
 
 # Run pre-commit hooks (optional)
 pre-commit run --all-files
 ```
+
+See [tools/README.md](../tools/README.md) for all available development commands.
 
 ---
 
@@ -223,6 +274,7 @@ pre-commit run --all-files
 ### Before Submitting
 
 1. **Rebase on latest master**
+
    ```bash
    git fetch upstream
    git rebase upstream/master
@@ -271,6 +323,7 @@ pre-commit run --all-files
 - **Incompatible licenses**: GPL-only, proprietary, copyleft-only licenses
 
 By contributing, you agree that:
+
 1. Your contributions are your original work or properly licensed
 2. You grant QGroundControl rights under **both** Apache 2.0 and GPL v3 licenses
 3. You have the right to submit the contribution
@@ -280,6 +333,7 @@ By contributing, you agree that:
 QGroundControl uses a dual-license system:
 
 #### Apache License 2.0
+
 - Permissive license
 - Allows use in proprietary applications
 - Allows distribution via app stores
@@ -288,6 +342,7 @@ QGroundControl uses a dual-license system:
 Full text: [LICENSE-APACHE](../LICENSE-APACHE)
 
 #### GNU General Public License v3 (GPL v3)
+
 - Copyleft license
 - Ensures software remains open source
 - **Can use open-source Qt**
@@ -298,7 +353,8 @@ Full text: [LICENSE-GPL](../LICENSE-GPL)
 ### Questions About Licensing
 
 If you have questions about licensing, please contact:
-- Lorenz Meier: lm@qgroundcontrol.org
+
+- Lorenz Meier: <lm@qgroundcontrol.org>
 
 For more details, see [COPYING.md](COPYING.md).
 
@@ -306,12 +362,11 @@ For more details, see [COPYING.md](COPYING.md).
 
 ## Additional Resources
 
-- **User Manual**: https://docs.qgroundcontrol.com/en/
-- **Developer Guide**: https://dev.qgroundcontrol.com/en/
-- **API Documentation**: In-code documentation and `copilot-instructions.md`
+- **User Manual**: <https://docs.qgroundcontrol.com/en/>
+- **Developer Guide**: <https://dev.qgroundcontrol.com/en/>
 - **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
-- **Discussion Forum**: https://discuss.px4.io/c/qgroundcontrol
-- **Discord**: https://discord.gg/dronecode
+- **Discussion Forum**: <https://discuss.px4.io/c/qgroundcontrol>
+- **Discord**: <https://discord.gg/dronecode>
 
 ---
 

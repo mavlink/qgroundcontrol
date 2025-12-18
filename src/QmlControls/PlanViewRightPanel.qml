@@ -23,7 +23,7 @@ Item {
     property var _rallyPointController:     planMasterController.rallyPointController
     property var _visualItems:              _missionController.visualItems
     property var _editingToolComponents:    [ missionToolComponent, fenceToolComponent, rallyToolComponent ]
-    property real  _toolsMargin:            ScreenTools.defaultFontPixelWidth * 0.75
+    property real _toolsMargin:             ScreenTools.defaultFontPixelWidth * 0.75
 
     function selectNextNotReady() {
         var foundCurrent = false
@@ -94,8 +94,7 @@ Item {
     //-------------------------------------------------------
     // Right Panel Controls
     Item {
-        anchors.fill:           rightPanelBackground
-        anchors.topMargin:      _toolsMargin
+        anchors.fill: rightPanelBackground
 
         DeadMouseArea {
             anchors.fill:   parent
@@ -135,36 +134,40 @@ Item {
         Component {
             id: missionToolComponent
 
-            QGCListView {
-                id:                 missionItemEditorListView
-                anchors.fill:       parent
-                spacing:            ScreenTools.defaultFontPixelHeight / 4
-                orientation:        ListView.Vertical
-                model:              _missionController.visualItems
-                cacheBuffer:        Math.max(height * 2, 0)
-                clip:               true
-                currentIndex:       _missionController.currentPlanViewSeqNum
-                highlightMoveDuration: 250
+            ColumnLayout {
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                //-- List Elements
-                delegate: MissionItemEditor {
-                    map:                editorMap
-                    masterController:   planMasterController
-                    missionItem:        object
-                    width:              missionItemEditorListView.width
-                    readOnly:           false
+                QGCListView {
+                    id:                 missionItemEditorListView
+                    Layout.fillWidth:   true
+                    Layout.fillHeight:  true
+                    spacing:            ScreenTools.defaultFontPixelHeight / 4
+                    orientation:        ListView.Vertical
+                    model:              _missionController.visualItems
+                    cacheBuffer:        Math.max(height * 2, 0)
+                    clip:               true
+                    currentIndex:       _missionController.currentPlanViewSeqNum
+                    highlightMoveDuration: 250
 
-                    onClicked: _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
+                    delegate: MissionItemEditor {
+                        map:                editorMap
+                        masterController:   planMasterController
+                        missionItem:        object
+                        width:              missionItemEditorListView.width
+                        readOnly:           false
 
-                    onRemove: {
-                        var removeVIIndex = index
-                        _missionController.removeVisualItem(removeVIIndex)
-                        if (removeVIIndex >= _missionController.visualItems.count) {
-                            removeVIIndex--
+                        onClicked: _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
+
+                        onRemove: {
+                            var removeVIIndex = index
+                            _missionController.removeVisualItem(removeVIIndex)
+                            if (removeVIIndex >= _missionController.visualItems.count) {
+                                removeVIIndex--
+                            }
                         }
-                    }
 
-                    onSelectNextNotReadyItem: selectNextNotReady()
+                        onSelectNextNotReadyItem: selectNextNotReady()
+                    }
                 }
             }
         }

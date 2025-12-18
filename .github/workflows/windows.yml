@@ -30,6 +30,7 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,8 +63,9 @@ jobs:
             build_type: Release
             package: QGroundControl-installer-ARM64
 
-          # Qt 6.10.0 for cross-compiled until aqtinstall fix is released
-          # See: https://github.com/miurahr/aqtinstall/pull/952
+          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
+          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
+          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
           - os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
@@ -71,7 +73,6 @@ jobs:
             package: QGroundControl-installer-AMD64-ARM64
             qt_version: '6.10.0'
 
-          # Custom build example (tests custom-example template)
           - os: windows-2022
             host: windows
             arch: win64_msvc2022_64
@@ -120,16 +121,12 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
-          target: desktop
           arch: ${{ matrix.arch }}
-          dir: ${{ runner.temp }}
           modules: ${{ steps.config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -162,6 +159,12 @@ jobs:
       - name: Create Installer
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
+
+      - name: Attest Build Provenance
+        if: matrix.build_type == 'Release' && !matrix.custom_build && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: '${{ runner.temp }}\build\${{ matrix.package }}.exe'
 
       - name: Upload artifact (installer)
         if: matrix.build_type == 'Release' && !matrix.custom_build

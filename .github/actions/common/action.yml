@@ -3,6 +3,14 @@ description: Common Setup for All Runners
 runs:
   using: composite
   steps:
+    - name: Free Disk Space
+      if: runner.os == 'Linux'
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: false
+        android: false
+        large-packages: false
+
     - uses: lukka/get-cmake@v4.2.1
 
     - uses: actions/setup-python@v6

@@ -1,0 +1,13 @@
+name: Task
+description: Record a task for maintainers
+labels: ["task"]
+type: task
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done?
+    validations:
+      required: true

@@ -1,0 +1,63 @@
+name: Check Links
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --exclude-mail
+            --exclude '^https://github.com/mavlink/qgroundcontrol/(pull|issues|compare)/'
+            --exclude 'localhost'
+            --exclude '127\.0\.0\.1'
+            --exclude '192\.168\.'
+            --exclude '10\.\d+\.'
+            --accept 200,204,301,302,403,429
+            '**/*.md'
+            'docs/**'
+          fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+      - name: Add to step summary
+        if: always()
+        run: |
+          echo "## 🔗 Link Check Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f ./lychee/out.md ]]; then
+            cat ./lychee/out.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report generated" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload report
+        uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: link-check-report
+          path: ./lychee/out.md
+          retention-days: 7

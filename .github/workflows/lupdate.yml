@@ -2,8 +2,6 @@ name: Update Translations
 
 on:
   workflow_dispatch:
-#   schedule:
-#     - cron: '0 0 * * 0'
 
 concurrency:
   group: 'lupdate'
@@ -26,15 +24,15 @@ jobs:
         uses: ./.github/actions/build-config
 
       - name: Install Qt for Linux
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
-          cache: true
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Update translation files
-        run: |
-          ${{ env.QT_ROOT_DIR }}/bin/lupdate src -ts translations/qgc.ts -no-obsolete
-          python3 tools/translations/qgc-lupdate-json.py
+        run: ./tools/translations/qgc-lupdate.sh
 
       - name: Configure Git
         run: |

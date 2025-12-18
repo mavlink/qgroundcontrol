@@ -40,7 +40,7 @@ QtObject {
     property var    rgRotationValueStrings:     [ rotationNoneValueString, rotationYaw45ValueString, rotationYaw90ValueString, rotationYaw135ValueString, rotationYaw180ValueString, rotationYaw225ValueString, rotationYaw270ValueString, rotationYaw315ValueString ]
 
     property var    _distanceSensors:       vehicle ? vehicle.distanceSensors : null
-    property string _noValueStr:            qsTr("--.--")
+    property string _noValueStr:            qsTr("–.––")
 
     onRotationNoneValueChanged:     rotationValueChanged()
     onRotationYaw45ValueChanged:    rotationValueChanged()

@@ -1,0 +1,89 @@
+name: PR Checks
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check PR title format
+        continue-on-error: true
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^.{1,80}$
+          subjectPatternError: PR title must be 80 characters or less.
+          wip: true
+          validateSingleCommit: false
+
+  size:
+    name: Label PR Size
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Label PR by size
+        continue-on-error: true
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/XS'
+          xs_max_size: 100
+          s_label: 'size/S'
+          s_max_size: 300
+          m_label: 'size/M'
+          m_max_size: 700
+          l_label: 'size/L'
+          l_max_size: 1000
+          xl_label: 'size/XL'
+          fail_if_xl: false
+          message_if_xl: |
+            ## ⚠️ Large PR Warning
+
+            This PR has **more than 1000 lines** changed, which can be difficult to review thoroughly.
+
+            Consider:
+            - Splitting into smaller, focused PRs
+            - Separating refactoring from feature changes
+            - Breaking out unrelated changes into separate PRs
+
+            Smaller PRs get reviewed faster and reduce the risk of bugs slipping through.
+          files_to_ignore: |
+            package-lock.json
+            *.lock
+            translations/*
+
+  label:
+    name: Label PR by Files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Label PR by changed files
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true

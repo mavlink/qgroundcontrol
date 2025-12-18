@@ -1,15 +1,81 @@
-# Ignore Git repository files
+# ==============================================================================
+# Docker Build Context Exclusions
+# ==============================================================================
+
+# Git
 .git
 .gitignore
 .gitattributes
+.gitmodules
+.mailmap
 
-# Ignore node_modules or other build artifacts
-node_modules
-build
+# GitHub (except build-config.json needed by Dockerfile)
+.github/
+!.github/build-config.json
 
-# Ignore Docker-related files
-Dockerfile*
-docker-compose.yml
-
+# Documentation (not needed for build)
+docs/
 README.md
+CHANGELOG.md
+LICENSE-*
+
+# Build artifacts
+build/
+cmake-build-*/
+out/
+cpm_modules/
+compile_commands.json
 CMakeLists.txt.user*
+CMakeUserPresets.json
+
+# IDEs & Editors
+.idea/
+.vscode/
+.qtcreator/
+.fleet/
+.vs/
+.settings/
+*.swp
+*~
+tags
+
+# Node.js (docs build)
+node_modules/
+package-lock.json
+
+# Python
+*.pyc
+__pycache__/
+.ruff_cache/
+
+# Local development
+.claude/
+.cache/
+sessions/
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+
+# Platform artifacts
+.DS_Store
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+*.dmg
+*.deb
+*.rpm
+*.AppImage
+*.apk
+*.aab
+*.ipa
+
+# Test artifacts
+*.gcov
+*.gcda
+*.gcno
+*.coverage
+
+# Vagrant
+.vagrant/

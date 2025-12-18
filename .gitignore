@@ -6,7 +6,6 @@
 # IDEs & Editors
 # ------------------------------------------------------------------------------
 .idea/
-.vscode/
 .qtcreator/
 .fleet/
 .vs/
@@ -158,3 +157,6 @@ CLAUDE.md
 
 # Pre-commit hooks
 .ruff_cache/
+
+# Vale prose linter (downloaded via `vale sync`)
+.github/styles/

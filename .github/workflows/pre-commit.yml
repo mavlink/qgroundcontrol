@@ -37,19 +37,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
 
-      - name: Install Qt and qmllint
-        run: |
-          sudo apt-get update -y --quiet
-          sudo apt-get install python3 python3-pip pipx -y
-          pipx install aqtinstall
-          pipx ensurepath
-          USER_BASE_BIN="$(python3 -m site --user-base)/bin"
-          export PATH="$USER_BASE_BIN:$PATH"
-          QT_VERSION=${{ steps.config.outputs.qt_version }}
-          QT_ARCH=linux_gcc_64
-          QT_PATH=/opt/Qt
-          aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH
-          echo "$QT_PATH/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
+      - name: Install Qt (for qmllint)
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Run pre-commit
+        id: pre-commit
+        continue-on-error: true
         uses: pre-commit/action@v3.0.1
+
+      - name: Show diff on failure
+        if: steps.pre-commit.outcome == 'failure'
+        run: |
+          echo "::group::Files modified by pre-commit hooks"
+          git diff --stat
+          echo "::endgroup::"
+          echo ""
+          echo "::group::Full diff (apply these changes to fix)"
+          git diff --color=always
+          echo "::endgroup::"
+          echo ""
+          echo "💡 To fix locally, run: pre-commit run --all-files"

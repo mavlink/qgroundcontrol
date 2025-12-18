@@ -1417,10 +1417,11 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     }
 
     for (int i=0; i<QGCMAVLink::maxRcChannels; i++) {
-        uint16_t channelValue = *_rgChannelvalues[i];
+        int channelValue = *_rgChannelvalues[i];
 
         if (i < channels.chancount) {
-            pwmValues[i] = channelValue == UINT16_MAX ? -1 : channelValue;
+            // Radio cal can only handle pwm values in the 1000:2000 range, so constrain to that
+            pwmValues[i] = channelValue == UINT16_MAX ? -1 : std::min(std::max(channelValue, 1000), 2000);
         } else {
             pwmValues[i] = -1;
         }

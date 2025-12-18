@@ -64,7 +64,6 @@ class QGCOptions : public QObject
     Q_PROPERTY(bool allowJoystickSelection          READ allowJoystickSelection         NOTIFY allowJoystickSelectionChanged)
     Q_PROPERTY(bool checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
     Q_PROPERTY(bool combineSettingsAndSetup         READ combineSettingsAndSetup        CONSTANT)
-    Q_PROPERTY(bool disableVehicleConnection        READ disableVehicleConnection       CONSTANT)
     Q_PROPERTY(bool enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
     Q_PROPERTY(bool guidedActionsRequireRCRSSI      READ guidedActionsRequireRCRSSI     CONSTANT)
     Q_PROPERTY(bool missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
@@ -127,9 +126,6 @@ public:
     virtual bool allowJoystickSelection() const { return true; }
 
     virtual bool checkFirmwareVersion() const { return true; }
-
-    /// @return true: vehicle connection is disabled
-    virtual bool disableVehicleConnection() const { return false; }
 
     /// @return true: Guided actions will be disabled is there is no RC RSSI
     virtual bool guidedActionsRequireRCRSSI() const { return false; }

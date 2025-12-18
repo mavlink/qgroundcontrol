@@ -8,6 +8,7 @@ import QGroundControl.FactControls
 
 // Editor for Simple mission items
 Rectangle {
+    id: root
     width:  availableWidth
     height: editorColumn.height + (_margin * 2)
     color:  qgcPal.windowShadeDark
@@ -22,29 +23,7 @@ Rectangle {
     property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
     property real _fieldSpacing:            ScreenTools.defaultFontPixelHeight / 2
 
-    function updateAltitudeModeText() {
-        if (missionItem.altitudeMode === QGroundControl.AltitudeModeRelative) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative)
-        } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute)
-        } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeCalcAboveTerrain) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeCalcAboveTerrain)
-        } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
-            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame)
-        } else {
-            altModeLabel.text = qsTr("Internal Error")
-        }
-    }
-
-    Component.onCompleted: updateAltitudeModeText()
-
-    Connections {
-        target:                 missionItem
-        function onAltitudeModeChanged() { updateAltitudeModeText() }
-    }
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    Component { id: altModeDialogComponent; AltModeDialog { } }
+    QGCPalette { id: qgcPal; colorGroupEnabled: root.enabled }
 
     Column {
         id:                 editorColumn
@@ -107,7 +86,7 @@ Rectangle {
 
             ColumnLayout {
                 width:      parent.width
-                spacing:    0
+                spacing:    _fieldSpacing
                 visible:    _specifiesAltitude
 
                 QGCLabel {
@@ -118,48 +97,35 @@ Rectangle {
                     visible:            missionItem.isLandCommand
                 }
 
-                MouseArea {
-                    Layout.preferredWidth:  childrenRect.width
-                    Layout.preferredHeight: childrenRect.height
+                RowLayout {
+                    Layout.fillWidth: true
+                    visible: _globalAltModeIsMixed
 
-                    onClicked: {
-                        if (_globalAltModeIsMixed) {
-                            var removeModes = []
-                            var updateFunction = function(altMode){ missionItem.altitudeMode = altMode }
-                            if (!_controllerVehicle.supportsTerrainFrame) {
-                                removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
-                            }
-                            if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && missionItem.altitudeMode !== QGroundControl.AltitudeModeAbsolute) {
-                                removeModes.push(QGroundControl.AltitudeModeAbsolute)
-                            }
-                            removeModes.push(QGroundControl.AltitudeModeMixed)
-                            altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
-                        }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("Altitude mode")
                     }
 
-                    RowLayout {
-                        spacing: _altRectMargin
-
-                        QGCLabel {
-                            id:                 altModeLabel
-                            Layout.alignment:   Qt.AlignBaseline
-                            visible:            _globalAltMode !== QGroundControl.AltitudeModeRelative
-                        }
-                        QGCColoredImage {
-                            height:     ScreenTools.defaultFontPixelHeight / 2
-                            width:      height
-                            source:     "/res/DropArrow.svg"
-                            color:      qgcPal.text
-                            visible:    _globalAltModeIsMixed
-                        }
+                    AltModeCombo {
+                        altitudeMode: missionItem.altitudeMode
+                        vehicle: _controllerVehicle
+                        onAltitudeModeChanged: missionItem.altitudeMode = altitudeMode
                     }
                 }
 
                 FactTextFieldSlider {
                     id:                 altField
                     Layout.fillWidth:   true
-                    label:              qsTr("Altitude")
+                    label:              qsTr("Altitude%1").arg(_extraLabelText())
                     fact:               missionItem.altitude
+
+                    function _extraLabelText() {
+                        if (!_globalAltModeIsMixed && missionItem.altitudeMode !== QGroundControl.AltitudeModeRelative) {
+                            return qsTr(" (%1)").arg(QGroundControl.altitudeModeShortDescription(missionItem.altitudeMode))
+                        } else {
+                            return ""
+                        }
+                    }
                 }
 
                 QGCLabel {

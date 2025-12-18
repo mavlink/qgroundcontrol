@@ -1,11 +1,12 @@
 name: Upload Release
-description: Uploads a built release file
+description: Upload release artifact to GitHub and optionally to AWS
+
 inputs:
   artifact_name:
-    description: Artifact name
+    description: Artifact filename
     required: true
   package_name:
-    description: Package name
+    description: Package name (for GitHub artifact)
     required: true
   aws_key_id:
     description: AWS access key ID
@@ -14,11 +15,11 @@ inputs:
     description: AWS secret access key
     required: false
   aws_distribution_id:
-    description: AWS distribution ID
+    description: AWS CloudFront distribution ID
     required: false
   upload_aws:
     description: Upload artifact to AWS
-    required: true
+    required: false
     default: 'true'
 
 runs:
@@ -31,42 +32,22 @@ runs:
         path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
 
     - name: Attest build provenance
-      if: ${{ github.event_name == 'push' && github.repository_owner == 'mavlink' }}
+      if: github.event_name == 'push' && github.repository_owner == 'mavlink'
       uses: actions/attest-build-provenance@v2
       with:
         subject-path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
 
-    - name: Configure AWS Credentials
-      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Upload to AWS
+      if: >-
+        fromJSON(inputs.upload_aws) &&
+        github.event_name == 'push' &&
+        github.repository_owner == 'mavlink' &&
+        inputs.aws_key_id != '' &&
+        inputs.aws_secret_access_key != ''
+      uses: ./.github/actions/aws-upload
       with:
-        aws-access-key-id: ${{ inputs.aws_key_id }}
-        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
-        aws-region: us-west-2
-
-    - name: Upload all push builds to S3 Bucket
-      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
-      working-directory: ${{ runner.temp }}/build
-      run: aws s3 cp "${{ inputs.artifact_name }}" "s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }}" --acl public-read
-      shell: bash
-
-    - name: Upload tagged stable push build to S3 latest Bucket
-      if: >-
-        ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' &&
-        github.repository_owner == 'mavlink' && github.ref_type == 'tag' &&
-        inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
-      working-directory: ${{ runner.temp }}/build
-      run: aws s3 cp "${{ inputs.artifact_name }}" "s3://qgroundcontrol/latest/${{ inputs.artifact_name }}" --acl public-read
-      shell: bash
-
-    - name: Invalidate tagged stable push build CloudFront Cache
-      if: >-
-        ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' &&
-        github.repository_owner == 'mavlink' && github.ref_type == 'tag' &&
-        inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' &&
-        inputs.aws_distribution_id != '' }}
-      run: |
-        aws cloudfront create-invalidation \
-          --distribution-id "${{ inputs.aws_distribution_id }}" \
-          --paths "/latest/${{ inputs.artifact_name }}"
-      shell: bash
+        artifact_name: ${{ inputs.artifact_name }}
+        artifact_path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
+        aws_key_id: ${{ inputs.aws_key_id }}
+        aws_secret_access_key: ${{ inputs.aws_secret_access_key }}
+        aws_distribution_id: ${{ inputs.aws_distribution_id }}
