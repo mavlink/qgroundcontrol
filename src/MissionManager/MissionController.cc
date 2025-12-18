@@ -179,7 +179,9 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             i = 1;
         }
 
+        bool weHaveItemsFromVehicle = false;
         for (; i < newMissionItems.count(); i++) {
+            weHaveItemsFromVehicle = true;
             const MissionItem* missionItem = newMissionItems[i];
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, _flyView, *missionItem);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
@@ -196,7 +198,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _settingsItem = settingsItem;
 
         // We set Altitude mode to mixed, otherwise if we need a non relative altitude frame we won't be able to change it
-        setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeMixed);
+        setGlobalAltitudeMode(weHaveItemsFromVehicle ? QGroundControlQmlGlobal::AltitudeModeMixed : QGroundControlQmlGlobal::AltitudeModeRelative);
 
         MissionController::_scanForAdditionalSettings(_visualItems, _masterController);
 
