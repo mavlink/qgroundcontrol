@@ -40,6 +40,7 @@
 #include "VehicleLocalPositionFactGroup.h"
 #include "VehicleLocalPositionSetpointFactGroup.h"
 #include "VehicleRPMFactGroup.h"
+#include "VehicleRPMSensorFactGroup.h"
 #include "VehicleSetpointFactGroup.h"
 #include "VehicleTemperatureFactGroup.h"
 #include "VehicleVibrationFactGroup.h"
@@ -599,6 +600,7 @@ public:
     FactGroup* generatorFactGroup           () { return &_generatorFactGroup; }
     FactGroup* efiFactGroup                 () { return &_efiFactGroup; }
     FactGroup* rpmFactGroup                 () { return &_rpmFactGroup; }
+    FactGroup* rpmSensorFactGroup           () { return &_rpmSensorFactGroup; }
 
     QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; }
     QmlObjectListModel* escs                () { return &_escStatusFactGroupListModel; }
@@ -1234,6 +1236,7 @@ private:
     const QString _generatorFactGroupName =          QStringLiteral("generator");
     const QString _efiFactGroupName =                QStringLiteral("efi");
     const QString _rpmFactGroupName =                QStringLiteral("rpm");
+    const QString _rpmSensorFactGroupName =          QStringLiteral("rpmSensor");
 
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup             _gpsFactGroup;
@@ -1251,6 +1254,7 @@ private:
     VehicleGeneratorFactGroup       _generatorFactGroup;
     VehicleEFIFactGroup             _efiFactGroup;
     VehicleRPMFactGroup             _rpmFactGroup;
+    VehicleRPMSensorFactGroup       _rpmSensorFactGroup;
     TerrainFactGroup                _terrainFactGroup;
 
     // Dynamic FactGroups

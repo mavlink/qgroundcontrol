@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "VehicleSetpointFactGroup.h"
+#include "VehicleRPMFactGroup.h"
 #include "Vehicle.h"
 
 VehicleRPMFactGroup::VehicleRPMFactGroup(QObject *parent)

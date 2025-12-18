@@ -114,6 +114,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _generatorFactGroup           (this)
     , _efiFactGroup                 (this)
     , _rpmFactGroup                 (this)
+    , _rpmSensorFactGroup           (this)
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
@@ -334,6 +335,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     _addFactGroup(&_generatorFactGroup,         _generatorFactGroupName);
     _addFactGroup(&_efiFactGroup,               _efiFactGroupName);
     _addFactGroup(&_rpmFactGroup,               _rpmFactGroupName);
+    _addFactGroup(&_rpmSensorFactGroup,         _rpmSensorFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
 
     // Add firmware-specific fact groups, if provided

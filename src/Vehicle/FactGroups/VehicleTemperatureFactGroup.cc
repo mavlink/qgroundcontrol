@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#include "VehicleSetpointFactGroup.h"
+#include "VehicleTemperatureFactGroup.h"
 #include "Vehicle.h"
 
 VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject *parent)

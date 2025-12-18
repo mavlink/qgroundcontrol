@@ -33,6 +33,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         VehicleLocalPositionSetpointFactGroup.h
         VehicleRPMFactGroup.cc
         VehicleRPMFactGroup.h
+        VehicleRPMSensorFactGroup.cc
+        VehicleRPMSensorFactGroup.h
         VehicleSetpointFactGroup.cc
         VehicleSetpointFactGroup.h
         VehicleTemperatureFactGroup.cc
@@ -50,6 +52,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 set(JSON_FILES
     RPMFact.json
+    RPMSensorFact.json
     TemperatureFact.json
     GPSFact.json
     EscStatusFactGroup.json
