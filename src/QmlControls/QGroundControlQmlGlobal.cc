@@ -277,9 +277,9 @@ QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltMode altMode)
     case AltitudeModeAbsolute:
         return tr("(AMSL)");
     case AltitudeModeCalcAboveTerrain:
-        return tr("(CalcT)");
+        return tr("(TerrC)");
     case AltitudeModeTerrainFrame:
-        return tr("(TerrF)");
+        return tr("(Terr)");
     case AltitudeModeMixed:
         qWarning() << "Internal Error: QGroundControlQmlGlobal::altitudeModeExtraUnits called with altMode == AltitudeModeMixed";
         return QString();
@@ -301,7 +301,7 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
     case AltitudeModeCalcAboveTerrain:
         return tr("TerrC");
     case AltitudeModeTerrainFrame:
-        return tr("TerrA");
+        return tr("Terr");
     case AltitudeModeMixed:
         return tr("Mix");
     }
