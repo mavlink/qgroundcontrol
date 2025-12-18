@@ -14,9 +14,9 @@ Rectangle {
     color: qgcPal.windowShadeDark
     radius: ScreenTools.defaultBorderRadius
 
-    property var _masterControler: masterController
-    property var _missionController: _masterControler.missionController
-    property var _controllerVehicle: _masterControler.controllerVehicle
+    property var _masterController: masterController
+    property var _missionController: _masterController.missionController
+    property var _controllerVehicle: _masterController.controllerVehicle
     property bool _vehicleHasHomePosition: _controllerVehicle.homePosition.isValid
     property bool _showCruiseSpeed: !_controllerVehicle.multiRotor
     property bool _showHoverSpeed: _controllerVehicle.multiRotor || _controllerVehicle.vtol
@@ -35,7 +35,7 @@ Rectangle {
 
     readonly property string _firmwareLabel: qsTr("Firmware")
     readonly property string _vehicleLabel: qsTr("Vehicle")
-    readonly property real  _margin: ScreenTools.defaultFontPixelWidth / 2
+    readonly property real _margin: ScreenTools.defaultFontPixelWidth / 2
 
     QGCPalette { id: qgcPal }
     Component { id: altModeDialogComponent; AltModeDialog { } }
@@ -55,7 +55,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        spacing: _margin
+        spacing: ScreenTools.defaultFontPixelHeight / 2
 
         LabelledButton {
             Layout.fillWidth: true
@@ -86,33 +86,90 @@ Rectangle {
             }
         }
 
-        QGCLabel {
-            text: qsTr("Initial Waypoint Alt")
-            font.pointSize: ScreenTools.smallFontPointSize
-        }
-        FactTextField {
-            fact: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+        FactTextFieldSlider {
             Layout.fillWidth: true
+            label: qsTr("Waypoints Altitude")
+            fact: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+        }
+
+        FactTextFieldSlider {
+            Layout.fillWidth: true
+            label: qsTr("Flight Speed")
+            fact: missionItem.speedSection.flightSpeed
+            showEnableCheckbox: true
+            enableCheckBoxChecked: missionItem.speedSection.specifyFlightSpeed
+            visible: missionItem.speedSection.available
+
+            onEnableCheckboxClicked: missionItem.speedSection.specifyFlightSpeed = enableCheckBoxChecked
+        }
+
+        SectionHeader {
+            id: createFromTemplateSection
+            Layout.fillWidth: true
+            text: qsTr("Create Plan From Template")
+            checked: true
+            visible: !_masterController.containsItems && !_masterController.manualCreation
         }
 
         GridLayout {
             Layout.fillWidth: true
-            columnSpacing: ScreenTools.defaultFontPixelWidth
-            rowSpacing: columnSpacing
             columns: 2
+            columnSpacing: ScreenTools.defaultFontPixelWidth * 0.75
+            rowSpacing: columnSpacing
+            visible: createFromTemplateSection.visible && createFromTemplateSection.checked
 
-            QGCCheckBox {
-                id: flightSpeedCheckBox
-                text: qsTr("Flight speed")
-                visible: _showFlightSpeed
-                checked: missionItem.speedSection.specifyFlightSpeed
-                onClicked: missionItem.speedSection.specifyFlightSpeed = checked
-            }
-            FactTextField {
-                Layout.fillWidth: true
-                fact: missionItem.speedSection.flightSpeed
-                visible: _showFlightSpeed
-                enabled: flightSpeedCheckBox.checked
+            Repeater {
+                model: _masterController.planCreators
+
+                Rectangle {
+                    id: planCreatorButton
+                    Layout.fillWidth: true
+                    implicitHeight: planCreatorLayout.implicitHeight
+                    color: planCreatorButtonMouseArea.pressed || planCreatorButtonMouseArea.containsMouse ? qgcPal.buttonHighlight : qgcPal.button
+
+                    ColumnLayout {
+                        id: planCreatorLayout
+                        width: parent.width
+                        spacing: 0
+
+                        Image {
+                            id: planCreatorImage
+                            Layout.fillWidth: true
+                            source: object.imageResource
+                            sourceSize.width: width
+                            fillMode: Image.PreserveAspectFit
+                            mipmap: true
+                        }
+
+                        QGCLabel {
+                            id: planCreatorNameLabel
+                            Layout.fillWidth: true
+                            Layout.maximumWidth: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            text: object.name
+                            color: planCreatorButtonMouseArea.pressed || planCreatorButtonMouseArea.containsMouse ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                        }
+                    }
+
+                    QGCMouseArea {
+                        id: planCreatorButtonMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        preventStealing: true
+                        onClicked: {
+                            if (object.blankPlan) {
+                                _masterController.manualCreation = true
+                            } else {
+                                object.createPlan(_mapCenter())
+                            }
+                        }
+
+                        function _mapCenter() {
+                            var centerPoint = Qt.point(editorMap.centerViewport.left + (editorMap.centerViewport.width / 2), editorMap.centerViewport.top + (editorMap.centerViewport.height / 2))
+                            return editorMap.toCoordinate(centerPoint, false /* clipToViewPort */)
+                        }
+                    }
+                }
             }
         }
 
