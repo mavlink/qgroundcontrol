@@ -76,7 +76,7 @@ To install Qt:
 
 - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
 - Under Qt -> _Qt {{ $frontmatter.qt_version }}_ select:
-  - **Windows**: MSVC 2022 _<<arch>>_ - where _<<arch>>_ is the architecture of your machine
+  - **Windows**: MSVC 2022 \<_arch_\> - where \<_arch_\> is the architecture of your machine
   - **Mac**: Desktop
   - **Linux**: Desktop gcc 64-bit
   - **Android**: Android
