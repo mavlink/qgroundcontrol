@@ -48,7 +48,6 @@ SetupPage {
             property Fact _dlLossAction:        controller.getParameterFact(-1, "NAV_DLL_ACT")
             property Fact _disarmLandDelay:     controller.getParameterFact(-1, "COM_DISARM_LAND")
             property Fact _collisionPrevention: controller.getParameterFact(-1, "CP_DIST")
-            property Fact _objectAvoidance:     controller.getParameterFact(-1, "COM_OBS_AVOID")
             property Fact _landSpeedMC:         controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
             property bool _hitlAvailable:       controller.parameterExists(-1, hitlParam)
             property Fact _hitlEnabled:         controller.getParameterFact(-1, hitlParam, false)
@@ -172,23 +171,6 @@ SetupPage {
                                         _collisionPrevention.value = index > 0 ? 5 : -1
                                         console.log('Collision prevention enabled: ' + _collisionPrevention.value)
                                         showObstacleDistanceOverlayCheckBox.checked = _collisionPrevention.value > 0
-                                    }
-                                }
-                            }
-
-                            QGCLabel {
-                                text:               qsTr("Obstacle Avoidance:")
-                                Layout.fillWidth:   true
-                            }
-                            QGCComboBox {
-                                model:              [qsTr("Disabled"), qsTr("Enabled")]
-                                enabled:            _objectAvoidance && _collisionPrevention.rawValue > 0
-                                Layout.minimumWidth:_editFieldWidth
-                                Layout.fillWidth:   true
-                                currentIndex:       _objectAvoidance ? (_objectAvoidance.value === 0 ? 0 : 1) : 0
-                                onActivated: (index) => {
-                                    if(_objectAvoidance) {
-                                        _objectAvoidance.value = index > 0 ? 1 : 0
                                     }
                                 }
                             }

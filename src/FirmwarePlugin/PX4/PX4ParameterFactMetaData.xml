@@ -10864,9 +10864,6 @@
         <value code="7">Disarm</value>
       </values>
     </parameter>
-    <parameter name="COM_OBS_AVOID" default="0" type="INT32" boolean="true">
-      <short_desc>Flag to enable obstacle avoidance</short_desc>
-    </parameter>
     <parameter name="COM_OF_LOSS_T" default="1.0" type="FLOAT">
       <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action</short_desc>
       <long_desc>See COM_OBL_RC_ACT to configure action.</long_desc>
