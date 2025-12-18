@@ -196,19 +196,31 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
 
-                            QGCLabel {
-                                text: {
-                                    if (object.firmwareMajor && object.firmwareMinor) {
-                                        return "v" + object.firmwareMajor.rawValue + "." + object.firmwareMinor.rawValue
-                                    }
-                                    return "---"
-                                }
-                                font.pointSize: ScreenTools.smallFontPointSize
+                            Grid {
+                                columns: 2
+                                columnSpacing: ScreenTools.defaultFontPixelWidth
+                                rowSpacing: 1
                                 anchors.horizontalCenter: parent.horizontalCenter
-                            }
 
-                            // TODO: show bootloader version
-                            // TODO: guard this whole thing on eeprom version
+                                QGCLabel { text: "FW:"; font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel {
+                                    text: (object.firmwareMajor && object.firmwareMinor) ?
+                                          object.firmwareMajor.rawValue + "." + object.firmwareMinor.rawValue : "---"
+                                    font.pointSize: ScreenTools.smallFontPointSize
+                                }
+
+                                QGCLabel { text: "BL:"; font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel {
+                                    text: object.bootloaderVersion ? object.bootloaderVersion.rawValue : "---"
+                                    font.pointSize: ScreenTools.smallFontPointSize
+                                }
+
+                                QGCLabel { text: "EE:"; font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel {
+                                    text: object.eepromVersion ? object.eepromVersion.rawValue : "---"
+                                    font.pointSize: ScreenTools.smallFontPointSize
+                                }
+                            }
                         }
                     }
                 }
@@ -265,6 +277,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.stuckRotorProtection : null
+                                visible: setting && firstEeprom.isSettingAvailable("stuckRotorProtection")
                                 text: qsTr("Stuck rotor protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -273,6 +286,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.stallProtection : null
+                                visible: setting && firstEeprom.isSettingAvailable("stallProtection")
                                 text: qsTr("Stall protection") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -281,6 +295,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.hallSensors : null
+                                visible: setting && firstEeprom.isSettingAvailable("hallSensors")
                                 text: qsTr("Use hall sensors") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -289,6 +304,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.telemetry30ms : null
+                                visible: setting && firstEeprom.isSettingAvailable("telemetry30ms")
                                 text: qsTr("30ms interval telemetry") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -297,6 +313,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.variablePwmFreq : null
+                                visible: setting && firstEeprom.isSettingAvailable("variablePwmFreq")
                                 text: qsTr("Variable PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -305,6 +322,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.complementaryPwm : null
+                                visible: setting && firstEeprom.isSettingAvailable("complementaryPwm")
                                 text: qsTr("Complementary PWM") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -313,6 +331,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.autoTiming : null
+                                visible: setting && firstEeprom.isSettingAvailable("autoTiming")
                                 text: qsTr("Auto timing advance") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -336,6 +355,7 @@ Item {
                                     id: motorSliderRect
                                     property string settingName: modelData.name
 
+                                    visible: firstEeprom && firstEeprom.isSettingAvailable(settingName)
                                     color: "transparent"
                                     border.color: qgcPal.groupBorder
                                     border.width: 1
@@ -397,6 +417,7 @@ Item {
                             spacing: _groupMargins
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.disableStickCalibration : null
+                                visible: setting && firstEeprom.isSettingAvailable("disableStickCalibration")
                                 text: qsTr("Disable stick calibration") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -420,6 +441,7 @@ Item {
                                     id: extendedSliderRect
                                     property string settingName: modelData.name
 
+                                    visible: firstEeprom && firstEeprom.isSettingAvailable(settingName)
                                     color: "transparent"
                                     border.color: qgcPal.groupBorder
                                     border.width: 1
@@ -482,6 +504,7 @@ Item {
 
                             QGCCheckBox {
                                 property var setting: firstEeprom ? firstEeprom.settings.lowVoltageCutoff : null
+                                visible: setting && firstEeprom.isSettingAvailable("lowVoltageCutoff")
                                 text: qsTr("Low voltage cut off") + (setting && setting.hasPendingChanges ? " *" : "")
                                 checked: setting ? setting.fact.rawValue === true : false
                                 textColor: setting && setting.hasPendingChanges ? qgcPal.colorOrange : (setting && !setting.allMatch ? qgcPal.colorRed : qgcPal.text)
@@ -504,6 +527,7 @@ Item {
                                     id: limitsSliderRect
                                     property string settingName: modelData.name
 
+                                    visible: firstEeprom && firstEeprom.isSettingAvailable(settingName)
                                     color: "transparent"
                                     border.color: qgcPal.groupBorder
                                     border.width: 1
@@ -569,6 +593,7 @@ Item {
                                 id: currentControlSliderRect
                                 property string settingName: modelData.name
 
+                                visible: firstEeprom && firstEeprom.isSettingAvailable(settingName)
                                 color: "transparent"
                                 border.color: qgcPal.groupBorder
                                 border.width: 1

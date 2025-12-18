@@ -57,6 +57,7 @@ public:
 
     Q_INVOKABLE void setPendingValue(const QVariant& value);
     void updateFromEeprom(uint8_t value);
+    void updateConversions(const AM32FieldDef& fieldDef);
     uint8_t getRawValue() const;
     void discardChanges();
 

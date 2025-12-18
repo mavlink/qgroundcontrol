@@ -58,6 +58,21 @@ void AM32Setting::updateFromEeprom(uint8_t value)
     emit pendingChangesChanged();
 }
 
+void AM32Setting::updateConversions(const AM32FieldDef& fieldDef)
+{
+    _fromRaw = fieldDef.fromRaw;
+    _toRaw = fieldDef.toRaw;
+
+    // Update fact metadata with version-specific min/max
+    FactMetaData* metaData = _fact->metaData();
+    if (fieldDef.displayMin.isValid()) {
+        metaData->setRawMin(fieldDef.displayMin);
+    }
+    if (fieldDef.displayMax.isValid()) {
+        metaData->setRawMax(fieldDef.displayMax);
+    }
+}
+
 uint8_t AM32Setting::getRawValue() const
 {
     return _toRaw(_fact->rawValue());
@@ -296,6 +311,20 @@ void AM32EepromFactGroup::_handleEscEeprom(Vehicle *vehicle, const mavlink_messa
     _bootloaderVersionFact.setRawValue(eeprom.data[2]);
     _firmwareMajorFact.setRawValue(eeprom.data[3]);
     _firmwareMinorFact.setRawValue(eeprom.data[4]);
+
+    int eepromVer = eeprom.data[1];
+
+    // Apply version-specific overrides to settings
+    AM32EepromSchema* schema = AM32EepromSchema::instance();
+    for (AM32Setting* setting : _settings) {
+        const AM32FieldDef* baseDef = schema->field(setting->name());
+        if (baseDef && !baseDef->versionOverrides.isEmpty()) {
+            AM32FieldDef updatedDef = *baseDef;
+            updatedDef.applyVersionOverrides(eepromVer);
+            AM32EepromSchema::setupConversionFunctions(updatedDef);
+            setting->updateConversions(updatedDef);
+        }
+    }
 
     // Update all settings
     for (AM32Setting* setting : _settings) {

@@ -136,6 +136,10 @@ public:
     /// Check if schema is currently being fetched
     bool isFetching() const { return _fetching; }
 
+    /// Setup conversion functions for a field definition
+    /// (must be called after modifying factor/offset via applyVersionOverrides)
+    static void setupConversionFunctions(AM32FieldDef& field);
+
     /// URL for the AM32 EEPROM schema
     static constexpr const char* schemaUrl = "https://am32.ca/eeprom.json";
 
@@ -154,7 +158,6 @@ private:
 
     bool parseSchema(const QJsonObject& root);
     AM32FieldDef parseField(const QString& name, const QJsonObject& fieldObj);
-    void setupConversionFunctions(AM32FieldDef& field);
     FactMetaData::ValueType_t determineValueType(const AM32FieldDef& field);
 
     QMap<QString, AM32FieldDef> _fields;
