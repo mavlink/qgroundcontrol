@@ -2,16 +2,18 @@ name: PR Checks
 
 on:
   pull_request_target:
-    types: [opened, edited, synchronize, reopened]
+    types: [opened, edited, synchronize, reopened, closed]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   title:
     name: Validate PR Title
     runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
     timeout-minutes: 5
 
     steps:
@@ -42,6 +44,7 @@ jobs:
   size:
     name: Label PR Size
     runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
     timeout-minutes: 5
 
     steps:
@@ -79,6 +82,7 @@ jobs:
   label:
     name: Label PR by Files
     runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
     timeout-minutes: 5
 
     steps:
@@ -87,3 +91,53 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
+
+  auto-merge:
+    name: Auto-merge Dependabot
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed' && github.event.pull_request.user.login == 'dependabot[bot]'
+    timeout-minutes: 5
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for patch/minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cache-cleanup:
+    name: Cleanup PR Caches
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Delete PR caches
+        run: |
+          gh extension install actions/gh-actions-cache
+
+          REPO="${{ github.repository }}"
+          BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
+
+          echo "Fetching list of cache keys"
+          cacheKeysForPR=$(gh actions-cache list -R "$REPO" -B "$BRANCH" | cut -f 1 )
+
+          set +e
+          echo "Deleting caches..."
+          for cacheKey in $cacheKeysForPR
+          do
+            gh actions-cache delete "$cacheKey" -R "$REPO" -B "$BRANCH" --confirm
+          done
+          echo "Done"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
