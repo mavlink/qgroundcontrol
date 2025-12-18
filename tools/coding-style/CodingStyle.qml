@@ -48,7 +48,7 @@ Item {
     // Bind to item properties first, before property definitions
     // ===================================================================================
 
-    width:  ScreenTools.defaultFontPixelHeight * 10 // No hardcoded sizing. All sizing must be relative to a ScreenTools font size
+    width: ScreenTools.defaultFontPixelHeight * 10 // No hardcoded sizing. All sizing must be relative to a ScreenTools font size
     height: ScreenTools.defaultFontPixelHeight * 20
 
     // ===================================================================================
@@ -94,21 +94,21 @@ Item {
 
     // Use QGCPalette for all color theming - no hardcoded colors
     QGCPalette {
-        id:                 qgcPal  // Note how id does not use an underscore
-        colorGroupEnabled:  enabled
+        id: qgcPal  // Note how id does not use an underscore
+        colorGroupEnabled: enabled
     }
 
     // Use ColumnLayout or RowLayout for better organization when appropriate
     ColumnLayout {
-        anchors.fill:   parent
-        spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.fill: parent
+        spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
         // You should always use the QGC provided variants of base controls since they automatically support
         // our theming and font support (QGCButton, QGCLabel, QGCTextField, QGCCheckBox, etc.)
         QGCButton {
             // Note how there is no id: specified for this control. Only add id: if it is needed.
-            Layout.fillWidth:   true
-            text:               qsTr("Click Me")  // Use qsTr() for all user-visible strings
+            Layout.fillWidth: true
+            text: qsTr("Click Me")  // Use qsTr() for all user-visible strings
 
             onClicked: {
                 myFunction()
@@ -117,31 +117,31 @@ Item {
         }
 
         QGCLabel {
-            Layout.fillWidth:   true
-            text:               qsTr("Example Label: %1").arg(myIntProperty)
-            wrapMode:           Text.WordWrap
+            Layout.fillWidth: true
+            text: qsTr("Example Label: %1").arg(myIntProperty)
+            wrapMode: Text.WordWrap
         }
 
         Rectangle {
-            Layout.fillWidth:   true
-            Layout.fillHeight:  true
-            color:              qgcPal.window   // Use QGC palette colors for everything, no hardcoded colors
-            border.color:       qgcPal.text
-            border.width:       1
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: qgcPal.window   // Use QGC palette colors for everything, no hardcoded colors
+            border.color: qgcPal.text
+            border.width: 1
 
             QGCLabel {
-                anchors.centerIn:   parent
-                text:               _debugMode ? qsTr("Debug Mode") : qsTr("Normal Mode")
-                color:              qgcPal.text
+                anchors.centerIn: parent
+                text: _debugMode ? qsTr("Debug Mode") : qsTr("Normal Mode")
+                color: qgcPal.text
             }
         }
 
         // Example: Conditional visibility
         QGCButton {
-            Layout.fillWidth:   true
-            text:               qsTr("Vehicle Action")
-            visible:            _activeVehicle !== null  // Defensive: always check for null vehicle
-            enabled:            _activeVehicle ? _activeVehicle.armed : false
+            Layout.fillWidth: true
+            text: qsTr("Vehicle Action")
+            visible: _activeVehicle !== null  // Defensive: always check for null vehicle
+            enabled: _activeVehicle ? _activeVehicle.armed : false
 
             onClicked: {
                 if (_activeVehicle) {  // Always null-check before use
@@ -175,8 +175,4 @@ Item {
         console.log("CodingStyle QML component loaded")
         _privateFunction()
     }
-
-    // For scoped blocks which are long include a comment so you can tell what the brace is matching.
-    // This is very handy when the top level brace scrolls off the screen. The end-brace comment in this
-    // specific file is only included as style info. This example code is not long enough to really need it.
-} // Item - CodingStyle
+}
