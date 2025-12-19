@@ -119,8 +119,13 @@ endfunction()
 # ----------------------------------------------------------------------------
 # qgc_enable_pie
 # Enables Position Independent Executables (PIE) for improved security
+# Note: MSVC/Windows uses ASLR instead of PIE (enabled by default)
 # ----------------------------------------------------------------------------
 function(qgc_enable_pie)
+    if(MSVC)
+        return()
+    endif()
+
     include(CheckPIESupported)
     check_pie_supported(OUTPUT_VARIABLE _output LANGUAGES C CXX)
 

@@ -3,9 +3,6 @@ name: Dependency Review
 on:
   pull_request:
     paths:
-      - '**/CMakeLists.txt'
-      - '**/*.cmake'
-      - '.gitmodules'
       - 'package*.json'
 
 permissions:
