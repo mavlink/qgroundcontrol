@@ -38,38 +38,18 @@ Rectangle {
         visible: qgcPal.globalTheme === QGCPalette.Light
     }
 
-    RowLayout {
-        id: viewButtonRow
-        anchors.bottomMargin: 1
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        spacing: ScreenTools.defaultFontPixelWidth / 2
-
-        QGCLabel {
-            font.pointSize: ScreenTools.largeFontPointSize
-            text: "<"
-        }
-
-        QGCLabel {
-            text: qsTr("Exit Plan")
-            font.pointSize: ScreenTools.largeFontPointSize
-        }
-    }
-
-    QGCMouseArea {
-        anchors.fill: viewButtonRow
-        onClicked: {
-            if (mainWindow.allowViewSwitch()) {
-                mainWindow.showFlyView()
-            }
-        }
+    QGCToolBarButton {
+        id: qgcButton
+        height: parent.height
+        icon.source: "/res/QGCLogoFull.svg"
+        logo: true
+        onClicked: mainWindow.showToolSelectDialog()
     }
 
     QGCFlickable {
         id: toolsFlickable
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
         anchors.bottomMargin: 1
-        anchors.left: viewButtonRow.right
+        anchors.left: qgcButton.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
