@@ -13,6 +13,7 @@
         <file alias="ArrowRight.svg">resources/ArrowRight.svg</file>
         <file alias="buttonLeft.svg">resources/buttonLeft.svg</file>
         <file alias="buttonRight.svg">resources/buttonRight.svg</file>
+        <file alias="BingNoTileBytes.dat">resources/BingNoTileBytes.dat</file>
         <file alias="cancel.svg">resources/cancel.svg</file>
         <file alias="clockwise-arrow.svg">resources/clockwise-arrow.svg</file>
         <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
@@ -21,10 +22,11 @@
         <file alias="chevron-double-right.svg">resources/chevron-double-right.svg</file>
         <file alias="chevron-up.svg">resources/chevron-up.svg</file>
         <file alias="DropArrow.svg">resources/DropArrow.svg</file>
+        <file alias="FlyingPaperPlane.svg">resources/FlyingPaperPlane.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
+        <file alias="GearWithPaperPlane.svg">resources/GearWithPaperPlane.svg</file>
         <file alias="helicoptericon.svg">resources/helicoptericon.svg</file>
-        <file alias="BingNoTileBytes.dat">resources/BingNoTileBytes.dat</file>
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
         <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
         <file alias="land.svg">resources/land.svg</file>
@@ -34,6 +36,7 @@
         <file alias="LockOpen.svg">resources/LockOpen.svg</file>
         <file alias="notile.png">resources/notile.png</file>
         <file alias="NoVideoBackground.jpg">resources/NoVideoBackground.jpg</file>
+        <file alias="OpenDoor.svg">resources/OpenDoor.svg</file>
         <file alias="Pause.svg">resources/Pause.svg</file>
         <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="pencil.svg">resources/pencil.svg</file>
