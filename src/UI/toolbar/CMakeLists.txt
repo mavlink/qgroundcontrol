@@ -16,6 +16,7 @@ qt_add_qml_module(ToolbarModule
         RCRSSIIndicator.qml
         RemoteIDIndicator.qml
         RTKGPSIndicator.qml
+        SelectViewDropdown.qml
         TelemetryRSSIIndicator.qml
         VehicleGPSIndicator.qml
     NO_PLUGIN

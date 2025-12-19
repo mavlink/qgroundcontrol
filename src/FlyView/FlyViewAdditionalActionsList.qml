@@ -12,8 +12,15 @@ import QtQml
 QtObject {
     property var guidedController
 
-    property bool anyActionAvailable: guidedController.showStartMission || guidedController.showContinueMission || guidedController.showChangeAlt ||
-                                      guidedController.showChangeLoiterRadius ||  guidedController.showLandAbort || guidedController.showChangeSpeed
+    property bool anyActionAvailable: {
+        for (var i = 0; i < model.length; i++) {
+            if (model[i].visible)
+                return true
+        }
+
+        return false
+    }
+
     property var model: [
         {
             title:      guidedController.startMissionTitle,
