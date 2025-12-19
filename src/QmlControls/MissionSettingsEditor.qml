@@ -59,7 +59,7 @@ Rectangle {
 
         LabelledButton {
             Layout.fillWidth: true
-            label: qsTr("Global Altitude Mode")
+            label: qsTr("Altitude Mode")
             buttonText: QGroundControl.altitudeModeShortDescription(_missionController.globalAltitudeMode)
 
             onClicked: {

@@ -103,7 +103,7 @@ Rectangle {
 
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: qsTr("Altitude mode")
+                        text: qsTr("Altitude Mode")
                     }
 
                     AltModeCombo {
