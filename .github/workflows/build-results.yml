@@ -42,7 +42,7 @@ jobs:
             --output sizes.json \
             --summary "$GITHUB_STEP_SUMMARY" \
             --no-fail
-          echo "json=$(cat sizes.json | jq -c)" >> $GITHUB_OUTPUT
+          echo "json=$(jq -c . sizes.json)" >> $GITHUB_OUTPUT
 
       - name: Upload size report
         uses: actions/upload-artifact@v5
