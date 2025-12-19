@@ -43,10 +43,12 @@ jobs:
           - platform: Linux
             dockerfile: Dockerfile-build-ubuntu
             fuse: true
+            artifact_pattern: "*.AppImage"
 
           - platform: Android
             dockerfile: Dockerfile-build-android
             fuse: false
+            artifact_pattern: "*.apk"
 
     defaults:
       run:
@@ -83,27 +85,50 @@ jobs:
           fuse: ${{ matrix.fuse }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Free disk space for Trivy scan
-        if: success()
+      - name: Find build artifact
+        id: artifact
         run: |
-          docker builder prune -af || true
-          docker system prune -f --volumes || true
-          rm -rf /project/build || true
-          df -h /
+          set +o pipefail  # Disable pipefail to handle find | head gracefully
+          BUILD_DIR="${{ github.workspace }}/build"
+          echo "Searching for ${{ matrix.artifact_pattern }} in ${BUILD_DIR}"
 
-      - name: Scan Docker image for vulnerabilities
-        if: success()
+          # Check if build directory exists
+          if [ ! -d "${BUILD_DIR}" ]; then
+            echo "::warning::Build directory does not exist: ${BUILD_DIR}"
+            echo "found=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Show build directory structure for debugging (ignore permission errors from Docker-created dirs)
+          echo "Build directory contents:"
+          find "${BUILD_DIR}" -maxdepth 4 \( -name "*.apk" -o -name "*.AppImage" \) -type f 2>/dev/null || true
+
+          # Find the produced artifact (APK or AppImage)
+          # Use -quit for efficiency and to avoid broken pipe with head
+          ARTIFACT=$(find "${BUILD_DIR}" -name "${{ matrix.artifact_pattern }}" -type f -print -quit 2>/dev/null)
+          if [ -z "$ARTIFACT" ]; then
+            echo "::warning::No artifact matching ${{ matrix.artifact_pattern }} found"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found artifact: $ARTIFACT"
+            echo "path=$ARTIFACT" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Scan artifact for vulnerabilities
+        if: steps.artifact.outputs.found == 'true'
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: 'qgc-builder:latest'
+          scan-type: 'fs'
+          scan-ref: ${{ steps.artifact.outputs.path }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
 
       - name: Upload Trivy results to GitHub Security
+        if: steps.artifact.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v3
-        if: success()
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-${{ matrix.platform }}'

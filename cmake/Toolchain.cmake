@@ -35,6 +35,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # ----------------------------------------------------------------------------
 
 qgc_enable_pie()
+
 if(NOT LINUX)
     qgc_enable_ipo()
 endif()

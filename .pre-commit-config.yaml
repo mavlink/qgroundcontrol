@@ -12,7 +12,7 @@ repos:
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
       - id: pretty-format-json
-        args: ['--indent=2', '--no-ensure-ascii', '--check']
+        args: ['--indent=2', '--no-ensure-ascii']
         exclude: ^(translations/|package-lock\.json|src/|test/|resources/|deploy/|cmake/)
       - id: check-xml
         exclude: ^test/
@@ -107,7 +107,7 @@ repos:
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
-    rev: v1
+    rev: v1.40.0
     hooks:
       - id: typos
         args: []  # Empty args disables auto-fix mode
