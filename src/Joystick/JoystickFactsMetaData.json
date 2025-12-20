@@ -1,0 +1,42 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "axisFrequencyHz",
+            "shortDesc": "Axis update frequency",
+            "type": "double",
+            "default": 25,
+            "units": "Hz",
+            "min": 0.25,
+            "max": 200,
+            "userMin": 0.25,
+            "userMax": 200,
+            "decimalPlaces": 2
+        },
+        {
+            "name": "buttonFrequencyHz",
+            "shortDesc": "Button repeat frequency",
+            "type": "double",
+            "default": 5,
+            "units": "Hz",
+            "min": 0.25,
+            "max": 50,
+            "userMin": 0.25,
+            "userMax": 50,
+            "decimalPlaces": 2
+        },
+        {
+            "name": "exponentialPct",
+            "shortDesc": "Stick Exponential",
+            "type": "double",
+            "default": 0,
+            "units": "%",
+            "decimalPlaces": 1,
+            "min": 0,
+            "max": 50,
+            "userMin": 0,
+            "userMax": 50
+        }
+    ]
+}

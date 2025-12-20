@@ -16,6 +16,17 @@ SetupPage {
         id: pageComponent
 
         RemoteControlCalibration {
+            id: remoteControlCalibration
+
+            controller: RadioComponentController {
+                statusText: remoteControlCalibration.statusText
+                cancelButton: remoteControlCalibration.cancelButton
+                nextButton: remoteControlCalibration.nextButton
+                joystickMode: false
+
+                onThrottleReversedCalFailure: mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
+            }
+
             additionalSetupComponent: ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
 
@@ -32,7 +43,7 @@ SetupPage {
 
                         LabelledFactComboBox {
                             label: fact.shortDescription
-                            fact: _controller.getParameterFact(-1, modelData)
+                            fact: controller.getParameterFact(-1, modelData)
                             indexModel: false
                         }
                     }
@@ -58,7 +69,7 @@ SetupPage {
                         onClicked: mainWindow.showMessageDialog(qsTr("CRSF Bind"),
                                                                 qsTr("Click Ok to place your CRSF receiver in the bind mode."),
                                                                 Dialog.Ok | Dialog.Cancel,
-                                                                function() { _controller.crsfBindMode() })
+                                                                function() { controller.crsfBindMode() })
                     }
 
                     QGCButton {
@@ -66,7 +77,7 @@ SetupPage {
                         onClicked: mainWindow.showMessageDialog(qsTr("Copy Trims"),
                                                                 qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
                                                                 Dialog.Ok | Dialog.Cancel,
-                                                                function() { _controller.copyTrims() })
+                                                                function() { controller.copyTrims() })
                     }
                 }
 
@@ -77,7 +88,7 @@ SetupPage {
                         title: qsTr("Spektrum Bind")
                         buttons: Dialog.Ok | Dialog.Cancel
 
-                        onAccepted: { _controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
+                        onAccepted: { controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
 
                         ButtonGroup { id: radioGroup }
 

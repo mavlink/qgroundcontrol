@@ -33,6 +33,7 @@ public:
     // bool requiresCalibration() const final { return !_isGamepad; }
 
     static bool init();
+    static bool rediscoverNeeded();
     static QMap<QString, Joystick*> discover();
 
 private:
@@ -41,7 +42,7 @@ private:
     bool _update() final;
 
     bool _getButton(int idx) const final;
-    int _getAxis(int idx) const final;
+    int _getAxisValue(int idx) const final;
     bool _getHat(int hat, int idx) const final;
 
     static void _loadGamepadMappings();

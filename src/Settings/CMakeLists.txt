@@ -27,6 +27,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FlyViewSettings.h
         GimbalControllerSettings.cc
         GimbalControllerSettings.h
+        JoystickManagerSettings.cc
+        JoystickManagerSettings.h
         MavlinkSettings.cc
         MavlinkSettings.h
         OfflineMapsSettings.cc

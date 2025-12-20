@@ -41,6 +41,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _tuningComponent(nullptr)
     , _flightBehavior(nullptr)
     , _syslinkComponent(nullptr)
+    , _joystickComponent(nullptr)
 {
     if (!vehicle) {
         qWarning() << "Internal error";
@@ -119,6 +120,11 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                     _esp8266Component->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_esp8266Component)));
                 }
+
+                _joystickComponent = new JoystickComponent(_vehicle, this, this);
+                _joystickComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_joystickComponent)));
+
             } else {
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
             }

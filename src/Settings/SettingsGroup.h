@@ -52,7 +52,7 @@ class SettingsGroup : public QObject
 
 public:
     /// @param name Name for this Settings group
-    /// @param settingsGroup Group to place settings in for QSettings::setGroup
+    /// @param settingsGroup Group to place settings in for QSettings::beingGroup
     SettingsGroup(const QString &name, const QString &settingsGroup, QObject* parent = nullptr);
 
     Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY visibleChanged)
