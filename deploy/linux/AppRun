@@ -31,6 +31,13 @@ if [ -n "$SYSTEM_GLIB" ]; then
     fi
 fi
 
+# Use system OpenGL libraries to avoid conflicts with bundled libGLESv2
+# Bundled GLES can conflict with system desktop OpenGL causing "Unrecognized OpenGL version"
+SYSTEM_LIBDIR="${LIB_PATH:-/usr/lib/${MULTIARCH}}"
+if [ -f "${SYSTEM_LIBDIR}/libEGL.so.1" ]; then
+    export LD_PRELOAD="${SYSTEM_LIBDIR}/libEGL.so.1:${SYSTEM_LIBDIR}/libGLESv2.so.2${LD_PRELOAD:+:$LD_PRELOAD}"
+fi
+
 if [ -n "$MULTIARCH" ]; then
     export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/gstreamer-1.0:/usr/lib/${MULTIARCH}:/lib/${MULTIARCH}:/usr/lib64:/usr/lib:${LD_LIBRARY_PATH}"
 else
