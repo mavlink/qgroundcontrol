@@ -88,33 +88,47 @@ jobs:
             TOTAL_FAILED=0
             TOTAL_SKIPPED=0
 
-            for dir in test-results/*/; do
-              if [[ -f "${dir}test-output.txt" ]]; then
-                ARCH=$(basename "$dir" | sed 's/test-results-//')
+            # Function to process a test output file
+            process_test_file() {
+              local file="$1"
+              local arch="$2"
 
-                PASSED=$(grep -c "^PASS" "${dir}test-output.txt" 2>/dev/null || echo "0")
-                FAILED=$(grep -c "^FAIL" "${dir}test-output.txt" 2>/dev/null || echo "0")
-                SKIPPED=$(grep -c "^SKIP" "${dir}test-output.txt" 2>/dev/null || echo "0")
+              # grep -c outputs count but exits 1 if no matches, so we can't use ||
+              PASSED=$(grep -c "^PASS" "$file" 2>/dev/null) || PASSED=0
+              FAILED=$(grep -c "^FAIL" "$file" 2>/dev/null) || FAILED=0
+              SKIPPED=$(grep -c "^SKIP" "$file" 2>/dev/null) || SKIPPED=0
 
-                TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
-                TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
-                TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
+              TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+              TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+              TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
 
-                if [[ "$FAILED" -gt 0 ]]; then
-                  echo "**$ARCH**: ❌ $PASSED passed, $FAILED failed, $SKIPPED skipped" >> comment.md
-                  echo "" >> comment.md
-                  echo "<details><summary>Failed tests</summary>" >> comment.md
-                  echo "" >> comment.md
-                  echo '```' >> comment.md
-                  grep "^FAIL" "${dir}test-output.txt" | head -20 >> comment.md
-                  echo '```' >> comment.md
-                  echo "</details>" >> comment.md
-                else
-                  echo "**$ARCH**: ✅ $PASSED passed, $SKIPPED skipped" >> comment.md
-                fi
+              if [[ "$FAILED" -gt 0 ]]; then
+                echo "**$arch**: ❌ $PASSED passed, $FAILED failed, $SKIPPED skipped" >> comment.md
                 echo "" >> comment.md
+                echo "<details><summary>Failed tests</summary>" >> comment.md
+                echo "" >> comment.md
+                echo '```' >> comment.md
+                grep "^FAIL" "$file" | head -20 >> comment.md
+                echo '```' >> comment.md
+                echo "</details>" >> comment.md
+              else
+                echo "**$arch**: ✅ $PASSED passed, $SKIPPED skipped" >> comment.md
+              fi
+              echo "" >> comment.md
+            }
+
+            # Check for test files in subdirectories (multiple artifacts downloaded)
+            for dir in test-results/*/; do
+              if [[ -d "$dir" && -f "${dir}test-output.txt" ]]; then
+                ARCH=$(basename "$dir" | sed 's/test-results-//')
+                process_test_file "${dir}test-output.txt" "$ARCH"
               fi
             done
+
+            # Also check for test file directly in test-results/ (single artifact case)
+            if [[ -f "test-results/test-output.txt" ]]; then
+              process_test_file "test-results/test-output.txt" "linux_gcc_64"
+            fi
 
             if [[ "$TOTAL_FAILED" -gt 0 ]]; then
               echo "**Total: $TOTAL_PASSED passed, $TOTAL_FAILED failed, $TOTAL_SKIPPED skipped** ❌" >> comment.md
