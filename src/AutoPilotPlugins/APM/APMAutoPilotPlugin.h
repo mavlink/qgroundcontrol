@@ -18,6 +18,7 @@ class ESP8266Component;
 class APMHeliComponent;
 class APMRemoteSupportComponent;
 class APMFollowComponent;
+class JoystickComponent;
 class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(APMAutoPilotPluginLog)
@@ -51,6 +52,7 @@ protected:
     APMHeliComponent *_heliComponent = nullptr;
     APMRemoteSupportComponent *_apmRemoteSupportComponent = nullptr;
     APMFollowComponent *_followComponent = nullptr;
+    JoystickComponent *_joystickComponent = nullptr;
 
 #ifndef QGC_NO_SERIAL_LINK
 private slots:

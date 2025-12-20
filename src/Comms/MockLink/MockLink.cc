@@ -1042,46 +1042,6 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
     respondWithMavlinkMessage(responseMsg);
 }
 
-void MockLink::emitRemoteControlChannelRawChanged(int channel, uint16_t raw)
-{
-    uint16_t chanRaw[18]{};
-
-    for (int i = 0; i < 18; i++) {
-        chanRaw[i] = UINT16_MAX;
-    }
-    chanRaw[channel] = raw;
-
-    mavlink_message_t responseMsg{};
-    (void) mavlink_msg_rc_channels_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        mavlinkChannel(),
-        &responseMsg,          // Outgoing message
-        0,                     // time since boot, ignored
-        18,                    // channel count
-        chanRaw[0],            // channel raw value
-        chanRaw[1],            // channel raw value
-        chanRaw[2],            // channel raw value
-        chanRaw[3],            // channel raw value
-        chanRaw[4],            // channel raw value
-        chanRaw[5],            // channel raw value
-        chanRaw[6],            // channel raw value
-        chanRaw[7],            // channel raw value
-        chanRaw[8],            // channel raw value
-        chanRaw[9],            // channel raw value
-        chanRaw[10],           // channel raw value
-        chanRaw[11],           // channel raw value
-        chanRaw[12],           // channel raw value
-        chanRaw[13],           // channel raw value
-        chanRaw[14],           // channel raw value
-        chanRaw[15],           // channel raw value
-        chanRaw[16],           // channel raw value
-        chanRaw[17],           // channel raw value
-        0                      // rss
-    );
-    respondWithMavlinkMessage(responseMsg);
-}
-
 void MockLink::_handleFTP(const mavlink_message_t &msg)
 {
     _mockLinkFTP->mavlinkMessageReceived(msg);
@@ -1584,12 +1544,12 @@ void MockLink::_sendRCChannels()
         _vehicleComponentId,
         mavlinkChannel(),
         &msg,
-        0,                     // time_boot_ms
-        16,                    // chancount
-        1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 1-8
-        1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 9-16
-        UINT16_MAX, UINT16_MAX,
-        0                      // rssi
+        0, // time_boot_ms
+        16, // chancount
+        1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, // channel 1-8
+        1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, // channel 9-16
+        UINT16_MAX, UINT16_MAX, // channel 17/18 unused
+        0 // rssi
     );
     respondWithMavlinkMessage(msg);
 }

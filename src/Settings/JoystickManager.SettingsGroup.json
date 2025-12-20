@@ -1,0 +1,19 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":              "activeJoystickName",
+    "shortDesc":         "Currenetly active joystick name",
+    "type":              "string",
+    "default":           ""
+},
+{
+    "name":              "joystickEnabledVehiclesIds",
+    "shortDesc":         "Comma separated list of vehicle IDs with joystick enabled",
+    "type":              "string",
+    "default":           ""
+}
+]
+}

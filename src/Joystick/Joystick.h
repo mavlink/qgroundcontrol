@@ -7,45 +7,49 @@
 #include <QtCore/QThread>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "RemoteControlCalibrationController.h"
+#include "Fact.h"
+#include "JoystickSettings.h"
+
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 class MavlinkActionManager;
 class QmlObjectListModel;
 class Vehicle;
-
-/*===========================================================================*/
+class JoystickManager;
+class JoystickConfigController;
 
 class AssignedButtonAction
 {
 public:
-    AssignedButtonAction(const QString &name);
+    AssignedButtonAction(const QString &name, bool repeat);
 
-    QString action;
-    QElapsedTimer buttonTime;
+    QString actionName;
     bool repeat = false;
+    QElapsedTimer buttonElapsedTimer;
 };
 
-// TODO: Q_GADGET
-class AssignableButtonAction : public QObject
+class AvailableButtonAction : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString  action      READ action     CONSTANT)
     Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
 
 public:
-    AssignableButtonAction(const QString &action_, bool canRepeat_ = false, QObject *parent = nullptr);
+    AvailableButtonAction(const QString &actionName, bool canRepeat, QObject *parent = nullptr);
 
-    const QString &action() const { return _action; }
+    const QString &action() const { return _actionName; }
     bool canRepeat() const { return _repeat; }
 
 private:
-    const QString _action;
+    const QString _actionName;
     const bool _repeat = false;
 };
 
-/*===========================================================================*/
-
+// There is only one Joystick instance active in the system at a time.
+// You get access to it through JoystickManager.
+// It is associated with a specific Vehicle instance.
 class Joystick : public QThread
 {
     Q_OBJECT
@@ -53,39 +57,29 @@ class Joystick : public QThread
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
-    Q_PROPERTY(bool                     accumulator             READ    accumulator             WRITE setAccumulator        NOTIFY accumulatorChanged)
-    Q_PROPERTY(bool                     calibrated              MEMBER  _calibrated                                         NOTIFY calibratedChanged)
-    Q_PROPERTY(bool                     circleCorrection        READ    circleCorrection        WRITE setCircleCorrection   NOTIFY circleCorrectionChanged)
-    Q_PROPERTY(bool                     negativeThrust          READ    negativeThrust          WRITE setNegativeThrust     NOTIFY negativeThrustChanged)
-    Q_PROPERTY(bool                     requiresCalibration     READ    requiresCalibration                                 CONSTANT)
-    Q_PROPERTY(float                    axisFrequencyHz         READ    axisFrequencyHz         WRITE setAxisFrequency      NOTIFY axisFrequencyHzChanged)
-    Q_PROPERTY(float                    buttonFrequencyHz       READ    buttonFrequencyHz       WRITE setButtonFrequency    NOTIFY buttonFrequencyHzChanged)
-    Q_PROPERTY(float                    exponential             READ    exponential             WRITE setExponential        NOTIFY exponentialChanged)
-    Q_PROPERTY(float                    maxAxisFrequencyHz      MEMBER  _maxAxisFrequencyHz                                 CONSTANT)
-    Q_PROPERTY(float                    maxButtonFrequencyHz    MEMBER  _maxButtonFrequencyHz                               CONSTANT)
-    Q_PROPERTY(float                    minAxisFrequencyHz      MEMBER  _minAxisFrequencyHz                                 CONSTANT)
-    Q_PROPERTY(float                    minButtonFrequencyHz    MEMBER  _minButtonFrequencyHz                               CONSTANT)
-    Q_PROPERTY(int                      axisCount               READ    axisCount                                           CONSTANT)
-    Q_PROPERTY(int                      throttleMode            READ    throttleMode            WRITE setThrottleMode       NOTIFY throttleModeChanged)
-    Q_PROPERTY(int                      totalButtonCount        READ    totalButtonCount                                    CONSTANT)
-    Q_PROPERTY(const QmlObjectListModel *assignableActions      READ    assignableActions                                   NOTIFY assignableActionsChanged)
-    Q_PROPERTY(QString                  disabledActionName      READ    disabledActionName                                  CONSTANT)
-    Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)
-    Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
-    Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
-    Q_PROPERTY(bool                     enableManualControlExtensions READ enableManualControlExtensions WRITE setEnableManualControlExtensions NOTIFY enableManualControlExtensionsChanged)
-
-    enum ButtonEvent_t {
-        BUTTON_UP,
-        BUTTON_DOWN,
-        BUTTON_REPEAT
-    };
 
 public:
+    Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)
+    Q_PROPERTY(JoystickSettings*        settings                READ    settings                                            CONSTANT)
+    Q_PROPERTY(int                      axisCount               READ    axisCount                                           CONSTANT)
+    Q_PROPERTY(int                      buttonCount             READ    buttonCount                                         CONSTANT)
+    Q_PROPERTY(const QmlObjectListModel *assignableActions      READ    assignableActions                                   NOTIFY assignableActionsChanged)
+    Q_PROPERTY(QString                  disabledActionName      READ    disabledActionName                                  CONSTANT)
+    Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
+    Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
+    Q_PROPERTY(QString                  buttonActionNone        READ    buttonActionNone                                    CONSTANT)
+
     Joystick(const QString &name, int axisCount, int buttonCount, int hatCount, QObject *parent = nullptr);
     virtual ~Joystick();
 
-    struct Calibration_t {
+    enum ButtonEvent_t {
+        ButtonEventUpTransition,
+        ButtonEventDownTransition,
+        ButtonEventRepeat,
+        ButtonEventNone
+    };
+
+    struct AxisCalibration_t {
         int min = -32767;
         int max = 32767;
         int center = 0;
@@ -100,102 +94,45 @@ public:
         throttleFunction,
         gimbalPitchFunction,
         gimbalYawFunction,
-        maxAxisFunction
+        maxAxisFunction // If the value of this is changed, be sure to update JoystickAxis.SettingsGroup.json/stickFunction metadata
     };
     static QString axisFunctionToString(AxisFunction_t function);
-
-    enum ThrottleMode_t {
-        ThrottleModeCenterZero,
-        ThrottleModeDownZero,
-        ThrottleModeMax
-    };
 
     Q_INVOKABLE void setButtonRepeat(int button, bool repeat);
     Q_INVOKABLE bool getButtonRepeat(int button);
     Q_INVOKABLE void setButtonAction(int button, const QString &action);
     Q_INVOKABLE QString getButtonAction(int button) const;
 
+    JoystickSettings* settings() { return &_joystickSettings; }
     QString name() const { return _name; }
-    int totalButtonCount() const { return _totalButtonCount; }
+    int buttonCount() const { return _totalButtonCount; }
     int axisCount() const { return _axisCount; }
     QStringList buttonActions() const;
-    const QmlObjectListModel *assignableActions() const { return _assignableButtonActions; }
-    QStringList assignableActionTitles() const { return _availableActionTitles; }
+    QString buttonActionNone() const { return _buttonActionNone; }
     QString disabledActionName() const { return _buttonActionNone; }
-
-    void stop();
-
-    /// Start the polling thread which will in turn emit joystick signals
-    void startPolling(Vehicle *vehicle);
-    void stopPolling();
-
-    void setCalibration(int axis, const Calibration_t &calibration);
-    Calibration_t getCalibration(int axis) const;
+    const QmlObjectListModel *assignableActions() const { return _availableButtonActions; }
+    QStringList assignableActionTitles() const { return _availableActionTitles; }
 
     void setFunctionAxis(AxisFunction_t function, int axis);
     int getFunctionAxis(AxisFunction_t function) const;
+    void setAxisCalibration(int axis, const AxisCalibration_t &calibration);
+    Joystick::AxisCalibration_t getAxisCalibration(int axis) const;
 
-    // Joystick index used by sdl library
-    // Settable because sdl library remaps indices after certain events
-    // virtual int index(void) = 0;
-    // virtual void setIndex(int index) = 0;
+    RemoteControlCalibrationController::StickFunction mapAxisFunctionToRCCStickFunction(AxisFunction_t axisFunction) const;
+    AxisFunction_t mapRCCStickFunctionToAxisFunction(RemoteControlCalibrationController::StickFunction stickFunction) const;
 
-	virtual bool requiresCalibration() const { return true; }
+    void setFunctionForChannel(RemoteControlCalibrationController::StickFunction stickFunction, int channel);
+    int getChannelForFunction(RemoteControlCalibrationController::StickFunction stickFunction) const ;
 
-    int throttleMode() const { return _throttleMode; }
-    void setThrottleMode(int mode);
+    Q_INVOKABLE void startConfiguration(); ///< Tells the joystick that the configuration UI is being displayed so it can do any special processing required
+    Q_INVOKABLE void stopConfiguration(); ///< Tells the joystick that the configuration UI is being closed so it can do any special processing required
 
-    bool negativeThrust() const { return _negativeThrust; }
-    void setNegativeThrust(bool allowNegative);
-
-    float exponential() const { return _exponential; }
-    void setExponential(float expo);
-
-    bool accumulator() const { return _accumulator; }
-    void setAccumulator(bool accu);
-
-    bool deadband() const { return _deadband; }
-    void setDeadband(bool accu);
-
-    bool circleCorrection() const { return _circleCorrection; }
-    void setCircleCorrection(bool circleCorrection);
-
-    int getTXMode() const { return _transmitterMode; }
-    void setTXMode(int mode);
-
-    /// Set the current calibration mode
-    void setCalibrationMode(bool calibrating);
-
-    /// Get joystick message rate (in Hz)
-    float axisFrequencyHz() const { return _axisFrequencyHz; }
-    /// Set joystick message rate (in Hz)
-    void setAxisFrequency(float val);
-
-    /// Get joystick button repeat rate (in Hz)
-    float buttonFrequencyHz() const { return _buttonFrequencyHz; }
-    /// Set joystick button repeat rate (in Hz)
-    void setButtonFrequency(float val);
-
-    bool enableManualControlExtensions() const { return _enableManualControlExtensions; }
-    void setEnableManualControlExtensions(bool enable);
+    void stop();
 
 signals:
-    // The raw signals are only meant for use by calibration
-    void rawAxisValueChanged(int index, int value);
-    void rawButtonPressedChanged(int index, int pressed);
-    void calibratedChanged(bool calibrated);
     void buttonActionsChanged();
     void assignableActionsChanged();
-    void throttleModeChanged(int mode);
-    void negativeThrustChanged(bool allowNegative);
-    void exponentialChanged(float exponential);
-    void accumulatorChanged(bool accumulator);
-    void enabledChanged(bool enabled);
-    void circleCorrectionChanged(bool circleCorrection);
-    void enableManualControlExtensionsChanged();
     void axisValues(float roll, float pitch, float yaw, float throttle);
-    void axisFrequencyHzChanged();
-    void buttonFrequencyHzChanged();
     void startContinuousZoom(int direction);
     void stopContinuousZoom();
     void stepZoom(int direction);
@@ -220,19 +157,18 @@ signals:
     void landingGearRetract();
     void motorInterlock(bool enable);
     void unknownAction(const QString &action);
+    void vehicleJoystickData(float roll, float pitch, float yaw, float throttle, uint16_t buttonsLow, uint16_t buttonsHigh, float gimbalPitch, float gimbalYaw);
+    void rawChannelValuesChanged(QVector<int> channelValues); ///< Signalled during PollingForConfiguration
+    void rawButtonPressedChanged(int index, bool pressed); ///< Signalled during PollingForConfiguration
 
 protected:
-    void _setDefaultCalibration();
-
     QString _name;
     int _axisCount = 0;
     int _buttonCount = 0;
     int _hatCount = 0;
 
 private slots:
-    void _activeVehicleChanged(Vehicle *activeVehicle);
-    void _vehicleCountChanged(int count);
-    void _flightModesChanged() { _buildActionList(_activeVehicle); }
+    void _flightModesChanged() { _buildActionList(_pollingVehicle); }
 
 private:
     virtual bool _open() = 0;
@@ -240,71 +176,63 @@ private:
     virtual bool _update() = 0;
 
     virtual bool _getButton(int i) const = 0;
-    virtual int _getAxis(int i) const = 0;
+    virtual int _getAxisValue(int axis) const = 0;
     virtual bool _getHat(int hat, int i) const = 0;
 
     void run() override;
 
-    void _saveSettings();
-    void _saveButtonSettings();
-    void _loadSettings();
+    enum PollingType {
+        NotPolling, ///< Not currrently polling
+        PollingForConfiguration, ///< Polling for configuration/calibration display
+        PollingForVehicle, ///< Normal polling for joystick output to Vehicle
+    };
+    void _startPollingForVehicle(Vehicle &vehicle);
+    void _startPollingForConfiguration();
+    void _stopPollingForConfiguration();
+    void _stopAllPolling();
+    QString _pollingTypeToString(PollingType pollingType) const;
+    PollingType _currentPollingType = NotPolling;
+    PollingType _previousPollingType = NotPolling;
+    Vehicle* _pollingVehicle = nullptr;
+
+    void _loadFromSettingsIntoCalibrationData();
+    void _saveFromCalibrationDataIntoSettings();
 
     /// Adjust the raw axis value to the -1:1 range given calibration information
-    float _adjustRange(int value, const Calibration_t &calibration, bool withDeadbands);
+    float _adjustRange(int value, const AxisCalibration_t &calibration, bool withDeadbands);
 
-    void _executeButtonAction(const QString &action, bool buttonDown);
-    int  _findAssignableButtonAction(const QString &action);
+    void _executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent);
+    int  _findAvailableButtonActionIndex(const QString &action);
     bool _validAxis(int axis) const;
     bool _validButton(int button) const;
     void _handleAxis();
     void _handleButtons();
-    void _buildActionList(Vehicle *activeVehicle);
+    void _buildActionList(Vehicle *vehicle);
+    AxisFunction_t _getFunctionForAxis(int axis) const;
+    void _updateButtonEventState(int buttonIndex, const bool buttonPressed, ButtonEvent_t &buttonEventState);
+    void _updateButtonEventStates(QVector<ButtonEvent_t> &buttonEventStates);
+    void _migrateLegacySettings();
 
-    void _updateTXModeSettingsKey(Vehicle *activeVehicle);
 
     /// Relative mappings of axis functions between different TX modes
     int _mapFunctionMode(int mode, int function);
 
     /// Remap current axis functions from current TX mode to new TX mode
-    void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxAxisFunction]);
+    void _remapAxes(int fromMode, int toMode, int (&newMapping)[maxAxisFunction]);
 
     int _hatButtonCount = 0;
     int _totalButtonCount = 0;
-    int *_rgAxisValues = nullptr;
-    Calibration_t *_rgCalibration = nullptr;
-    uint8_t *_rgButtonValues = nullptr;
+    QVector<AxisCalibration_t> _rgCalibration;
+    QVector<ButtonEvent_t> _buttonEventStates;
+    QVector<AssignedButtonAction*> _assignedButtonActions;
     MavlinkActionManager *_mavlinkActionManager = nullptr;
-    QmlObjectListModel *_assignableButtonActions = nullptr;
+    QmlObjectListModel *_availableButtonActions = nullptr;
+    JoystickSettings _joystickSettings;
 
-    bool _accumulator = false;
-    bool _calibrated = false;
-    bool _calibrationMode = false;
-    bool _circleCorrection = true;
-    bool _deadband = false;
-    bool _negativeThrust = false;
-    bool _pollingStartedForCalibration = false;
-    bool _enableManualControlExtensions = false;
-    float _axisFrequencyHz = _defaultAxisFrequencyHz;
-    float _buttonFrequencyHz = _defaultButtonFrequencyHz;
-    float _exponential = 0;
     int _rgFunctionAxis[maxAxisFunction] = {};
-    QElapsedTimer _axisTime;
-    QList<AssignedButtonAction*> _buttonActionArray;
+    QElapsedTimer _axisElapsedTimer;
     QStringList _availableActionTitles;
     std::atomic<bool> _exitThread = false;    ///< true: signal thread to exit
-    ThrottleMode_t _throttleMode = ThrottleModeDownZero;
-    Vehicle *_activeVehicle = nullptr;
-    const char *_txModeSettingsKey = nullptr;
-
-    static int _transmitterMode;
-
-    static constexpr float _defaultAxisFrequencyHz = 25.0f;
-    static constexpr float _defaultButtonFrequencyHz = 5.0f;
-    // Arbitrary Limits
-    static constexpr float _minAxisFrequencyHz = 0.25f;
-    static constexpr float _maxAxisFrequencyHz = 200.0f;
-    static constexpr float _minButtonFrequencyHz = 0.25f;
-    static constexpr float _maxButtonFrequencyHz = 50.0f;
 
     static constexpr const char *_rgFunctionSettingsKey[maxAxisFunction] = {
         "RollAxis",
@@ -314,25 +242,6 @@ private:
         "GimbalPitchAxis",
         "GimbalYawAxis"
     };
-
-    static constexpr const char *_settingsGroup =                  "Joysticks";
-    static constexpr const char *_calibratedSettingsKey =          "Calibrated4"; // Increment number to force recalibration
-    static constexpr const char *_buttonActionNameKey =            "ButtonActionName%1";
-    static constexpr const char *_buttonActionRepeatKey =          "ButtonActionRepeat%1";
-    static constexpr const char *_throttleModeSettingsKey =        "ThrottleMode";
-    static constexpr const char *_negativeThrustSettingsKey =      "NegativeThrust";
-    static constexpr const char *_exponentialSettingsKey =         "Exponential";
-    static constexpr const char *_accumulatorSettingsKey =         "Accumulator";
-    static constexpr const char *_deadbandSettingsKey =            "Deadband";
-    static constexpr const char *_circleCorrectionSettingsKey =    "Circle_Correction";
-    static constexpr const char *_axisFrequencySettingsKey =       "AxisFrequency";
-    static constexpr const char *_buttonFrequencySettingsKey =     "ButtonFrequency";
-    static constexpr const char *_fixedWingTXModeSettingsKey =     "TXMode_FixedWing";
-    static constexpr const char *_multiRotorTXModeSettingsKey =    "TXMode_MultiRotor";
-    static constexpr const char *_roverTXModeSettingsKey =         "TXMode_Rover";
-    static constexpr const char *_vtolTXModeSettingsKey =          "TXMode_VTOL";
-    static constexpr const char *_submarineTXModeSettingsKey =     "TXMode_Submarine";
-    static constexpr const char *_manualControlExtensionsEnabledKey = "ManualControlExtensionsEnabled";
 
     static constexpr const char *_buttonActionNone =               QT_TR_NOOP("No Action");
     static constexpr const char *_buttonActionArm =                QT_TR_NOOP("Arm");
@@ -367,4 +276,7 @@ private:
     static constexpr const char *_buttonActionLandingGearRetract=  QT_TR_NOOP("Landing gear retract");
     static constexpr const char *_buttonActionMotorInterlockEnable=   QT_TR_NOOP("Motor Interlock enable");
     static constexpr const char *_buttonActionMotorInterlockDisable=  QT_TR_NOOP("Motor Interlock disable");
+
+    friend class JoystickManager;
+    friend class JoystickConfigController;
 };

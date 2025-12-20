@@ -108,7 +108,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _terrainFactGroup             (this)
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
-    connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
     connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived,        this, &Vehicle::_mavlinkMessageReceived);
@@ -344,9 +343,6 @@ void Vehicle::_commonInit(LinkInterface* link)
         SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
         SettingsManager::instance()->videoSettings()->lowLatencyMode()->setRawValue(true);
     }
-
-    // enable Joystick if appropriate
-    _loadJoystickSettings();
 
     _gimbalController = new GimbalController(this);
 
@@ -1379,51 +1375,51 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
 
     mavlink_msg_rc_channels_decode(&message, &channels);
 
-    uint16_t* _rgChannelvalues[QGCMAVLink::maxRcChannels] = {
-        &channels.chan1_raw,
-        &channels.chan2_raw,
-        &channels.chan3_raw,
-        &channels.chan4_raw,
-        &channels.chan5_raw,
-        &channels.chan6_raw,
-        &channels.chan7_raw,
-        &channels.chan8_raw,
-        &channels.chan9_raw,
-        &channels.chan10_raw,
-        &channels.chan11_raw,
-        &channels.chan12_raw,
-        &channels.chan13_raw,
-        &channels.chan14_raw,
-        &channels.chan15_raw,
-        &channels.chan16_raw,
-        &channels.chan17_raw,
-        &channels.chan18_raw,
-    };
-    int pwmValues[QGCMAVLink::maxRcChannels];
+    QVector<uint16_t> rawChannelValues({
+        channels.chan1_raw,
+        channels.chan2_raw,
+        channels.chan3_raw,
+        channels.chan4_raw,
+        channels.chan5_raw,
+        channels.chan6_raw,
+        channels.chan7_raw,
+        channels.chan8_raw,
+        channels.chan9_raw,
+        channels.chan10_raw,
+        channels.chan11_raw,
+        channels.chan12_raw,
+        channels.chan13_raw,
+        channels.chan14_raw,
+        channels.chan15_raw,
+        channels.chan16_raw,
+        channels.chan17_raw,
+        channels.chan18_raw,
+    });
 
-    // Below is a hack that's needed by ELRS
-    // ELRS is not sending a full RC_CHANNELS packet, only channel update
-    // packets via RC_CHANNELS_RAW, to update the position of the values.
-    // Therefore, the number of channels is not set.
-    if (channels.chancount == 0) {
-        for(const auto& channelValue : _rgChannelvalues) {
-            if (*channelValue != UINT16_MAX) channels.chancount++;
+    // The internals of radio calibration can ony deal with contiguous channels (other stuff as well!)
+    int validChannelCount = 0;
+    int firstUnusedChannelIndex = -1;
+    for (int i=0; i<rawChannelValues.size(); i++) {
+        if (rawChannelValues[i] != UINT16_MAX) {
+            validChannelCount++;
+        } else if (firstUnusedChannelIndex == -1) {
+            firstUnusedChannelIndex = i;
         }
     }
+    if (firstUnusedChannelIndex != -1 && firstUnusedChannelIndex != validChannelCount) {
+        qCWarning(VehicleLog) << "Non-contiguous RC channels detected. Not publishing data from RC_CHANNELS.";
+        return;
+    }
 
-    for (int i=0; i<QGCMAVLink::maxRcChannels; i++) {
-        int channelValue = *_rgChannelvalues[i];
-
-        if (i < channels.chancount) {
-            // Radio cal can only handle pwm values in the 1000:2000 range, so constrain to that
-            pwmValues[i] = channelValue == UINT16_MAX ? -1 : std::min(std::max(channelValue, 1000), 2000);
-        } else {
-            pwmValues[i] = -1;
-        }
+    QVector<int> channelValues(validChannelCount);
+    for (int channelIndex = 0; channelIndex < validChannelCount; ++channelIndex) {
+        int channelValue = rawChannelValues[channelIndex];
+        // Radio cal can only handle pwm values in the 1000:2000 range, so constrain to that
+        channelValues[channelIndex] = std::min(std::max(channelValue, 1000), 2000);
     }
 
     emit remoteControlRSSIChanged(channels.rssi);
-    emit rcChannelsChanged(std::min(channels.chancount, QGCMAVLink::maxRcChannels), pwmValues);
+    emit rcChannelsChanged(channelValues);
 }
 
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
@@ -1466,90 +1462,10 @@ bool Vehicle::xConfigMotors()
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-// this function called in three cases:
-// 1. On constructor of vehicle, to see if we should enable a joystick
-// 2. When there is a new active joystick
-// 3. When the active joystick is disconnected (even if there isnt a new one)
-void Vehicle::_loadJoystickSettings()
-{
-    QSettings settings;
-    settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    if (JoystickManager::instance()->activeJoystick()) {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified of an active joystick. Loading setting joystickenabled: " << settings.value(_joystickEnabledSettingsKey, false).toBool();
-        setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
-    } else {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Notified that there is no active joystick";
-        setJoystickEnabled(false);
-    }
-}
-
-// This is called from the UI when a deliberate action is taken to enable or disable the joystick
-// This save allows the joystick enable state to persist restarts, disconnections of the joystick etc
-void Vehicle::saveJoystickSettings()
-{
-    QSettings settings;
-    settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    // The joystick enabled setting should only be changed if a joystick is present
-    // since the checkbox can only be clicked if one is present
-    if (JoystickManager::instance()->joysticks().count()) {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Saving setting joystickenabled: " << _joystickEnabled;
-        settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
-    }
-}
-
-bool Vehicle::joystickEnabled() const
-{
-    return _joystickEnabled;
-}
-
-void Vehicle::setJoystickEnabled(bool enabled)
-{
-    if (enabled){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Enabled";
-    }
-    else {
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Joystick Disabled";
-    }
-
-    // _joystickEnabled is the runtime state - it determines whether a vehicle is using joystick data when it is active
-    _joystickEnabled = enabled;
-
-    // if we are the active vehicle, call start polling on the active joystick
-    // This routes the joystick signals to this vehicle
-    if (enabled && MultiVehicleManager::instance()->activeVehicle() == this){
-        _captureJoystick();
-    }
-
-    emit joystickEnabledChanged(_joystickEnabled);
-}
-
 void Vehicle::_activeVehicleChanged(Vehicle *newActiveVehicle)
 {
-    // the new active vehicle should always capture the joystick
-    // even if the new active vehicle has joystick disabled
-    // capturing the joystick will stop the joystick data going to the inactive vehicle
-    if (newActiveVehicle == this){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " is the new active vehicle";
-        _captureJoystick();
-        _isActiveVehicle = true;
-    } else {
-        _isActiveVehicle = false;
-    }
+    _isActiveVehicle = newActiveVehicle == this;
 }
-
-// tells the active joystick where to send data
-void Vehicle::_captureJoystick()
-{
-    Joystick* joystick = JoystickManager::instance()->activeJoystick();
-
-    if(joystick){
-        qCDebug(JoystickLog) << "Vehicle " << this->id() << " Capture Joystick" << joystick->name();
-        joystick->startPolling(this);
-    }
-}
-
 
 QGeoCoordinate Vehicle::homePosition()
 {
@@ -1858,7 +1774,7 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
-    if (!_joystickEnabled) {
+    if (!JoystickManager::instance()->joystickEnabledForVehicle(this)) {
         sendJoystickDataThreadSafe(
                     static_cast<float>(roll),
                     static_cast<float>(pitch),
@@ -3832,7 +3748,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     // Incoming values are in the range -1:1
     float axesScaling =         1.0 * 1000.0;
     float newRollCommand =      roll * axesScaling;
-    float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
+    float newPitchCommand  =    pitch * axesScaling;
     float newYawCommand    =    yaw * axesScaling;
     float newThrustCommand =    thrust * axesScaling;
     float newGimbalPitch   =    gimbalPitch * axesScaling;

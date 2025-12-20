@@ -29,6 +29,9 @@ public:
     Q_INVOKABLE void spektrumBindMode(int mode);
     Q_INVOKABLE void crsfBindMode();
 
+    // Overrides from RemoteControlCalibrationController
+    void start() final override;
+
 signals:
     /// Signalled to indicate cal failure due to reversed throttle
     void throttleReversedCalFailure();

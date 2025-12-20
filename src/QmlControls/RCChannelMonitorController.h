@@ -25,7 +25,7 @@ signals:
     void channelValueChanged(int channel, int rcValue);
 
 private slots:
-    void channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
+    void channelValuesChanged(QVector<int> pwmValues);
 
 private:
     int _chanCount = 0;

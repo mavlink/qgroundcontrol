@@ -18,7 +18,7 @@ Item {
     readonly property int _pwmRange:    _pwmMax - _pwmMin
 
     RCChannelMonitorController {
-        id:             controller
+        id: controller
     }
 
     // Live channel monitor control component
