@@ -30,7 +30,7 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           # Config in .lychee.toml, files to check passed as args
-          args: '**/*.md' 'docs/**'
+          args: '**/*.md docs/**'
           fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Add to step summary
