@@ -1,0 +1,27 @@
+# Lychee link checker configuration
+# https://lychee.cli.rs/configuration/
+
+# Output verbosity
+verbose = true
+
+# Disable progress bar (cleaner CI output)
+no_progress = true
+
+# Accept these HTTP status codes as valid
+accept = [200, 204, 301, 302, 403, 429]
+
+# Exclude patterns (regex)
+exclude = [
+    # GitHub dynamic URLs (PRs, issues, compare views)
+    '^https://github\.com/mavlink/qgroundcontrol/(pull|issues|compare)/',
+    # Local development URLs
+    'localhost',
+    '127\.0\.0\.1',
+    # Private network ranges
+    '192\.168\.',
+    '10\.\d+\.',
+]
+
+# Files to check are passed as CLI args in the workflow:
+#   lychee '**/*.md' 'docs/**'
+# This allows the same config to work locally and in CI.
