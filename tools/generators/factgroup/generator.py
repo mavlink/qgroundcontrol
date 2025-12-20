@@ -5,16 +5,25 @@ Generates all boilerplate files for a new FactGroup:
 - VehicleXxxFactGroup.h
 - VehicleXxxFactGroup.cc
 - XxxFact.json
+
+Supports both CLI arguments and YAML spec files.
 """
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
+import json
 
 try:
     from jinja2 import Environment, FileSystemLoader
 except ImportError:
     raise ImportError("Jinja2 is required. Install with: pip install jinja2")
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 
 @dataclass
@@ -207,3 +216,114 @@ def parse_mavlink_string(mavlink_str: str) -> list[MavlinkMessageSpec]:
         if msg_id:
             messages.append(MavlinkMessageSpec(message_id=msg_id))
     return messages
+
+
+def load_spec_from_file(spec_path: Path) -> FactGroupSpec:
+    """
+    Load FactGroup specification from a YAML or JSON file.
+
+    Args:
+        spec_path: Path to spec file (.yaml, .yml, or .json)
+
+    Returns:
+        FactGroupSpec parsed from the file
+
+    Example YAML spec:
+        domain: Wind
+        update_rate_ms: 1000
+        facts:
+          - name: direction
+            type: double
+            units: deg
+            short_desc: Wind direction
+            decimal_places: 1
+          - name: speed
+            type: double
+            units: m/s
+        mavlink_messages:
+          - WIND_COV
+          - HIGH_LATENCY2
+    """
+    content = spec_path.read_text()
+
+    if spec_path.suffix in ('.yaml', '.yml'):
+        if not HAS_YAML:
+            raise ImportError("PyYAML is required for YAML specs. Install with: pip install pyyaml")
+        data = yaml.safe_load(content)
+    elif spec_path.suffix == '.json':
+        data = json.loads(content)
+    else:
+        raise ValueError(f"Unsupported spec file format: {spec_path.suffix}")
+
+    return parse_spec_dict(data)
+
+
+def parse_spec_dict(data: dict[str, Any]) -> FactGroupSpec:
+    """
+    Parse a specification dictionary into a FactGroupSpec.
+
+    Args:
+        data: Dictionary with spec data
+
+    Returns:
+        FactGroupSpec instance
+    """
+    facts = []
+    for fact_data in data.get('facts', []):
+        facts.append(FactSpec(
+            name=fact_data['name'],
+            value_type=fact_data.get('type', 'double'),
+            units=fact_data.get('units', ''),
+            short_desc=fact_data.get('short_desc', fact_data['name'].replace('_', ' ').title()),
+            decimal_places=fact_data.get('decimal_places', 2),
+            min_value=fact_data.get('min'),
+            max_value=fact_data.get('max'),
+        ))
+
+    mavlink_messages = []
+    for msg in data.get('mavlink_messages', []):
+        if isinstance(msg, str):
+            mavlink_messages.append(MavlinkMessageSpec(message_id=msg.upper()))
+        elif isinstance(msg, dict):
+            mavlink_messages.append(MavlinkMessageSpec(message_id=msg['id'].upper()))
+
+    return FactGroupSpec(
+        domain=data['domain'],
+        facts=facts,
+        mavlink_messages=mavlink_messages,
+        update_rate_ms=data.get('update_rate_ms', 1000),
+    )
+
+
+def validate_spec(spec: FactGroupSpec) -> list[str]:
+    """
+    Validate a FactGroupSpec for common errors.
+
+    Args:
+        spec: The specification to validate
+
+    Returns:
+        List of error messages (empty if valid)
+    """
+    errors = []
+
+    if not spec.domain:
+        errors.append("Domain name is required")
+
+    if not spec.facts:
+        errors.append("At least one fact is required")
+
+    # Check for duplicate fact names
+    names = [f.name for f in spec.facts]
+    duplicates = [n for n in names if names.count(n) > 1]
+    if duplicates:
+        errors.append(f"Duplicate fact names: {set(duplicates)}")
+
+    # Validate fact types
+    valid_types = {'double', 'float', 'uint8', 'uint16', 'uint32', 'uint64',
+                   'int8', 'int16', 'int32', 'int64', 'string', 'bool'}
+    for fact in spec.facts:
+        if fact.value_type not in valid_types:
+            errors.append(f"Invalid type '{fact.value_type}' for fact '{fact.name}'")
+
+    return errors

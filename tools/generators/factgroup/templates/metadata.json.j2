@@ -12,8 +12,7 @@
             "min": {{ fact.min_value }}{% endif %}{% if fact.max_value is not none %},
             "max": {{ fact.max_value }}{% endif %}
 
-        }{% if not loop.last %},{% endif %}
-
+        }{{ "," if not loop.last else "" }}
 {% endfor %}
     ]
 }

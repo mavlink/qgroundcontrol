@@ -17,18 +17,28 @@ tools/
 ├── param-docs.py            # Generate parameter documentation
 ├── update-headers.py        # License header management
 ├── ccache.conf              # ccache configuration
+├── analyzers/               # Static analysis scripts
+│   └── vehicle_null_check.py
 ├── coding-style/            # Code style examples
+├── common/                  # Shared Python utilities
+│   ├── patterns.py          # QGC regex patterns
+│   └── file_traversal.py    # File discovery
 ├── debuggers/               # Debugging tools
 │   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
 │   ├── profile.sh           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
-├── log-analyzer/            # QGC log analysis tools
-├── mock-mavlink/            # MAVLink vehicle simulator
-├── qtcreator-plugin/        # QtCreator IDE integration tools
-├── analyzers/               # Static analysis scripts
 ├── generators/              # Code generation tools
+│   └── factgroup/           # FactGroup generator
+├── log-analyzer/            # QGC log analysis tools
+├── qtcreator-plugin/        # QtCreator IDE integration tools
+│   ├── schemas/             # JSON schemas
+│   ├── snippets/            # QtCreator snippets
+│   └── locators/            # CLI search tools
 ├── setup/                   # Environment setup scripts
+├── simulation/              # Vehicle simulators
+│   ├── mock_vehicle.py      # Lightweight MAVLink simulator
+│   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
 └── translations/            # Translation tools
 ```
 
@@ -237,6 +247,9 @@ python3 tools/analyzers/vehicle_null_check.py src/Vehicle/*.cc
 # Analyze entire directory
 python3 tools/analyzers/vehicle_null_check.py src/
 
+# JSON output for CI/editor integration
+python3 tools/analyzers/vehicle_null_check.py --json src/
+
 # Run via pre-commit
 pre-commit run vehicle-null-check --all-files
 ```
@@ -244,6 +257,10 @@ pre-commit run vehicle-null-check --all-files
 **Detects:**
 - `activeVehicle()->method()` without prior null check
 - `getParameter()` result used without validation
+
+**Output includes fix suggestions** for each detected issue.
+
+See [analyzers/README.md](analyzers/README.md) for details.
 
 ## Code Generators
 
@@ -254,26 +271,39 @@ Scripts in `generators/` generate boilerplate code from specifications.
 Generate complete FactGroup boilerplate (header, source, JSON metadata).
 
 ```bash
-# Preview generated files
-python -m tools.generators.factgroup.cli \
-  --name Example \
-  --facts "temp:double:degC,pressure:double:Pa" \
+# From YAML spec (recommended)
+python3 -m tools.generators.factgroup.cli \
+  --spec tools/generators/factgroup/examples/wind.yaml \
   --dry-run
 
-# Generate with MAVLink handlers
-python -m tools.generators.factgroup.cli \
+# From CLI arguments
+python3 -m tools.generators.factgroup.cli \
   --name Wind \
   --facts "direction:double:deg,speed:double:m/s" \
   --mavlink "WIND_COV,HIGH_LATENCY2" \
   --output src/Vehicle/FactGroups/
+
+# Validate spec only
+python3 -m tools.generators.factgroup.cli --spec wind.yaml --validate
 ```
 
 **Generates:**
-- `VehicleExampleFactGroup.h` - Header with Q_PROPERTY, accessors, members
-- `VehicleExampleFactGroup.cc` - Implementation with constructor, handlers
-- `ExampleFact.json` - FactMetaData JSON
+- `VehicleWindFactGroup.h` - Header with Q_PROPERTY, accessors, members
+- `VehicleWindFactGroup.cc` - Implementation with constructor, handlers
+- `WindFact.json` - FactMetaData JSON
 
-**Requires:** `pip install jinja2`
+**Requires:** `pip install jinja2` (and `pyyaml` for YAML specs)
+
+See [generators/factgroup/README.md](generators/factgroup/README.md) for spec format and examples.
+
+## Shared Utilities
+
+Common utilities in `common/` are used by multiple tools:
+
+- `patterns.py` - QGC-specific regex patterns (Fact, FactGroup, MAVLink)
+- `file_traversal.py` - File discovery with proper filtering
+
+See [common/README.md](common/README.md) for API documentation.
 
 ## Debugging Tools
 
@@ -296,25 +326,26 @@ See [debuggers/gdb-pretty-printers/README.md](debuggers/gdb-pretty-printers/READ
 
 Visual Studio debugger visualizers for Qt6 types. Automatically loaded by VS when debugging.
 
-## Testing Tools
+## Simulation Tools
 
-### mock-mavlink/
+Vehicle simulators for testing QGC without hardware.
 
-Simple MAVLink vehicle simulator for testing QGC without hardware.
+### Mock Vehicle (Lightweight)
 
 ```bash
-# Install dependency
 pip install pymavlink
-
-# Run mock vehicle (QGC connects to UDP 14550)
-./tools/mock-mavlink/mock_vehicle.py
-
-# Multiple vehicles
-./tools/mock-mavlink/mock_vehicle.py --system-id 1 --port 14550 &
-./tools/mock-mavlink/mock_vehicle.py --system-id 2 --port 14551 &
+./tools/simulation/mock_vehicle.py              # QGC connects to UDP 14550
+./tools/simulation/mock_vehicle.py --tcp --port 5760  # TCP mode
 ```
 
-See [mock-mavlink/README.md](mock-mavlink/README.md) for details.
+### ArduCopter SITL (Full Simulation)
+
+```bash
+./tools/simulation/run-arducopter-sitl.sh       # Connect to tcp://localhost:5760
+./tools/simulation/run-arducopter-sitl.sh --with-latency  # Simulate network lag
+```
+
+See [simulation/README.md](simulation/README.md) for details.
 
 ### log-analyzer/
 

@@ -9,6 +9,7 @@ Detects unsafe patterns:
 Usage:
     python3 vehicle_null_check.py [files...]
     python3 vehicle_null_check.py src/          # Analyze directory
+    python3 vehicle_null_check.py --json src/   # JSON output
     python3 vehicle_null_check.py               # Analyze stdin (for pre-commit)
 
 Exit codes:
@@ -16,16 +17,29 @@ Exit codes:
     1 - Issues found
 """
 
+import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Generator
+
+# Add tools to path for imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from common.patterns import (
+    ACTIVE_VEHICLE_DIRECT_PATTERN,
+    ACTIVE_VEHICLE_ASSIGN_PATTERN,
+    GET_PARAMETER_DIRECT_PATTERN,
+    NULL_CHECK_PATTERNS,
+)
+from common.file_traversal import find_cpp_files
+
 
 @dataclass
 class Violation:
     """A detected null-safety violation."""
-    file: Path
+    file: str
     line: int
     column: int
     pattern: str
@@ -33,49 +47,19 @@ class Violation:
     suggestion: str
 
 
-# Pattern: activeVehicle() followed by -> without intervening null check
-# Captures: method call immediately after activeVehicle()
-UNSAFE_ACTIVE_VEHICLE_DIRECT = re.compile(
-    r'activeVehicle\(\)\s*->\s*(\w+)\s*\('
-)
-
-# Pattern: Variable assigned from activeVehicle(), then used with -> on same/next lines
-ACTIVE_VEHICLE_ASSIGN = re.compile(
-    r'(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)->)?activeVehicle\(\)'
-)
-
-# Pattern: getParameter() result used directly without check
-UNSAFE_GET_PARAMETER = re.compile(
-    r'getParameter\s*\([^)]*\)\s*->\s*(\w+)\s*\('
-)
-
-# Null check patterns that make the code safe
-NULL_CHECK_PATTERNS = [
-    r'if\s*\(\s*!\s*\w+\s*\)',           # if (!var)
-    r'if\s*\(\s*\w+\s*==\s*nullptr\s*\)', # if (var == nullptr)
-    r'if\s*\(\s*\w+\s*!=\s*nullptr\s*\)', # if (var != nullptr)
-    r'if\s*\(\s*\w+\s*\)',                # if (var)
-    r'\?\s*:',                            # ternary operator
-]
-
-
 def has_null_check_before(lines: list[str], current_line: int, var_name: str = None) -> bool:
     """Check if there's a null check in the preceding lines (within same function scope)."""
-    # Look back up to 10 lines for a null check
     start = max(0, current_line - 10)
     context = '\n'.join(lines[start:current_line])
 
     for pattern in NULL_CHECK_PATTERNS:
         if var_name:
-            # Check for specific variable
             specific_pattern = pattern.replace(r'\w+', re.escape(var_name))
             if re.search(specific_pattern, context):
                 return True
         if re.search(pattern, context):
             return True
 
-    # Also check if we're inside an if block that checked the variable
-    # Simple heuristic: look for "if (!vehicle)" or similar before this line
     if var_name and re.search(rf'if\s*\([^)]*{re.escape(var_name)}[^)]*\)\s*\{{', context):
         return True
 
@@ -93,17 +77,16 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
     lines = content.split('\n')
 
     for line_num, line in enumerate(lines):
-        # Skip comments
         stripped = line.strip()
         if stripped.startswith('//') or stripped.startswith('/*'):
             continue
 
         # Check for direct activeVehicle()->method() calls
-        for match in UNSAFE_ACTIVE_VEHICLE_DIRECT.finditer(line):
+        for match in ACTIVE_VEHICLE_DIRECT_PATTERN.finditer(line):
             method_name = match.group(1)
             if not has_null_check_before(lines, line_num):
                 yield Violation(
-                    file=file_path,
+                    file=str(file_path),
                     line=line_num + 1,
                     column=match.start() + 1,
                     pattern='unsafe_active_vehicle_direct',
@@ -116,16 +99,15 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
                 )
 
         # Check for activeVehicle() assignment followed by use without check
-        assign_match = ACTIVE_VEHICLE_ASSIGN.search(line)
+        assign_match = ACTIVE_VEHICLE_ASSIGN_PATTERN.search(line)
         if assign_match:
             var_name = assign_match.group(1)
-            # Look ahead for usage without null check
             for future_line_num in range(line_num + 1, min(line_num + 5, len(lines))):
                 future_line = lines[future_line_num]
                 if re.search(rf'\b{re.escape(var_name)}\s*->', future_line):
                     if not has_null_check_before(lines, future_line_num, var_name):
                         yield Violation(
-                            file=file_path,
+                            file=str(file_path),
                             line=future_line_num + 1,
                             column=1,
                             pattern='unsafe_active_vehicle_use',
@@ -135,13 +117,12 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
                                 f'  if (!{var_name}) return;'
                             )
                         )
-                    break  # Only report first use
+                    break
 
         # Check for getParameter() result used directly
-        for match in UNSAFE_GET_PARAMETER.finditer(line):
-            method_name = match.group(1)
+        for match in GET_PARAMETER_DIRECT_PATTERN.finditer(line):
             yield Violation(
-                file=file_path,
+                file=str(file_path),
                 line=line_num + 1,
                 column=match.start() + 1,
                 pattern='unsafe_get_parameter',
@@ -154,23 +135,8 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
             )
 
 
-def find_cpp_files(paths: list[Path]) -> Generator[Path, None, None]:
-    """Find all C++ files in the given paths."""
-    for path in paths:
-        if path.is_file():
-            if path.suffix in ('.cc', '.cpp', '.cxx', '.h', '.hpp', '.hxx'):
-                yield path
-        elif path.is_dir():
-            for pattern in ('**/*.cc', '**/*.cpp', '**/*.h', '**/*.hpp'):
-                for file_path in path.glob(pattern):
-                    # Skip build directories and libs
-                    if any(skip in str(file_path) for skip in ('build/', 'libs/', 'test/', '.cache/')):
-                        continue
-                    yield file_path
-
-
 def format_violation(v: Violation) -> str:
-    """Format a violation for output."""
+    """Format a violation for human-readable output."""
     return (
         f"{v.file}:{v.line}:{v.column}: warning: {v.pattern}\n"
         f"  {v.code}\n"
@@ -180,31 +146,37 @@ def format_violation(v: Violation) -> str:
 
 def main() -> int:
     """Main entry point."""
-    # Parse arguments
-    if len(sys.argv) > 1:
-        paths = [Path(arg) for arg in sys.argv[1:]]
+    json_output = False
+    args = sys.argv[1:]
+
+    if '--json' in args:
+        json_output = True
+        args.remove('--json')
+
+    if '-h' in args or '--help' in args:
+        print(__doc__)
+        return 0
+
+    if args:
+        paths = [Path(arg) for arg in args]
     else:
-        # Read file list from stdin (for pre-commit)
         paths = [Path(line.strip()) for line in sys.stdin if line.strip()]
 
     if not paths:
-        print("Usage: vehicle_null_check.py [files or directories...]", file=sys.stderr)
+        print("Usage: vehicle_null_check.py [--json] [files or directories...]", file=sys.stderr)
         return 0
 
-    violations = []
-    for file_path in find_cpp_files(paths):
-        for violation in analyze_file(file_path):
-            violations.append(violation)
+    violations = list(v for file_path in find_cpp_files(paths) for v in analyze_file(file_path))
 
-    # Output violations
-    for v in violations:
-        print(format_violation(v))
+    if json_output:
+        print(json.dumps([asdict(v) for v in violations], indent=2))
+    else:
+        for v in violations:
+            print(format_violation(v))
+        if violations:
+            print(f"\nFound {len(violations)} potential null-safety issue(s).", file=sys.stderr)
 
-    if violations:
-        print(f"\nFound {len(violations)} potential null-safety issue(s).", file=sys.stderr)
-        return 1
-
-    return 0
+    return 1 if violations else 0
 
 
 if __name__ == '__main__':

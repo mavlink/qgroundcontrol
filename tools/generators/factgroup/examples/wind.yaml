@@ -1,0 +1,33 @@
+# Example FactGroup specification for Wind data
+#
+# Usage:
+#   python -m tools.generators.factgroup.cli --spec tools/generators/factgroup/examples/wind.yaml --dry-run
+
+domain: Wind
+update_rate_ms: 1000
+
+facts:
+  - name: direction
+    type: double
+    units: deg
+    short_desc: Wind direction
+    decimal_places: 1
+    min: 0
+    max: 360
+
+  - name: speed
+    type: double
+    units: m/s
+    short_desc: Wind speed
+    decimal_places: 2
+    min: 0
+
+  - name: verticalSpeed
+    type: double
+    units: m/s
+    short_desc: Vertical wind speed
+    decimal_places: 2
+
+mavlink_messages:
+  - WIND_COV
+  - HIGH_LATENCY2

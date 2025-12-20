@@ -87,6 +87,9 @@ python3 tools/analyzers/vehicle_null_check.py src/Vehicle/*.cc
 # Analyze directory
 python3 tools/analyzers/vehicle_null_check.py src/
 
+# JSON output for CI/editor integration
+python3 tools/analyzers/vehicle_null_check.py --json src/
+
 # Integrated with pre-commit (runs automatically)
 pre-commit run vehicle-null-check --all-files
 ```
@@ -94,6 +97,8 @@ pre-commit run vehicle-null-check --all-files
 **Detects:**
 - `activeVehicle()->method()` without prior null check
 - `getParameter()` result used without validation
+
+**Output includes fix suggestions** for each violation found.
 
 ### 4. QGC Locator CLI
 
@@ -112,6 +117,12 @@ python3 tools/qtcreator-plugin/locators/qgc_locator.py mavlink HEARTBEAT
 
 # Find parameters in JSON metadata
 python3 tools/qtcreator-plugin/locators/qgc_locator.py param BATT
+
+# JSON output for programmatic use
+python3 tools/qtcreator-plugin/locators/qgc_locator.py --json fact lat
+
+# Limit results
+python3 tools/qtcreator-plugin/locators/qgc_locator.py --limit 10 fact lat
 ```
 
 **Output format:** `name<TAB>path:line` (for editor integration)
@@ -122,28 +133,53 @@ See `locators/README.md` for editor integration instructions.
 
 Generate complete FactGroup boilerplate from a specification.
 
-**Usage:**
+**Usage with YAML spec (recommended):**
 ```bash
-# Generate with dry-run preview
-python -m tools.generators.factgroup.cli \
-  --name Example \
-  --facts "temp:double:degC,pressure:double:Pa" \
-  --dry-run
+# Validate spec without generating
+python3 -m tools.generators.factgroup.cli --spec wind.yaml --validate
 
-# Generate with MAVLink handlers
-python -m tools.generators.factgroup.cli \
+# Preview generated files
+python3 -m tools.generators.factgroup.cli --spec wind.yaml --dry-run
+
+# Generate files
+python3 -m tools.generators.factgroup.cli \
+  --spec tools/generators/factgroup/examples/wind.yaml \
+  --output src/Vehicle/FactGroups/
+```
+
+**Usage with CLI arguments:**
+```bash
+python3 -m tools.generators.factgroup.cli \
   --name Wind \
-  --facts "direction:double:deg,speed:double:m/s,verticalSpeed:double:m/s" \
+  --facts "direction:double:deg,speed:double:m/s" \
   --mavlink "WIND_COV,HIGH_LATENCY2" \
   --output src/Vehicle/FactGroups/
 ```
 
-**Generates:**
-- `VehicleExampleFactGroup.h` - Header with Q_PROPERTY, accessors, members
-- `VehicleExampleFactGroup.cc` - Implementation with constructor, handlers
-- `ExampleFact.json` - FactMetaData JSON
+**Example YAML spec** (`tools/generators/factgroup/examples/wind.yaml`):
+```yaml
+domain: Wind
+update_rate_ms: 1000
+facts:
+  - name: direction
+    type: double
+    units: deg
+    short_desc: Wind direction
+    min: 0
+    max: 360
+  - name: speed
+    type: double
+    units: m/s
+mavlink_messages:
+  - WIND_COV
+```
 
-**Requires:** `pip install jinja2`
+**Generates:**
+- `VehicleWindFactGroup.h` - Header with Q_PROPERTY, accessors, members
+- `VehicleWindFactGroup.cc` - Implementation with constructor, handlers
+- `WindFact.json` - FactMetaData JSON
+
+**Requires:** `pip install jinja2` (and optionally `pyyaml` for YAML specs)
 
 ---
 
