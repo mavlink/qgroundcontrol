@@ -1,0 +1,29 @@
+# TruffleHog secret scanner configuration
+# https://trufflesecurity.com/trufflehog
+
+# Only report verified secrets (reduces false positives)
+only_verified: true
+
+# Detectors to use (empty = all detectors)
+# detectors: []
+
+# Paths to exclude from scanning
+exclude_paths:
+  - "**/*_test.go"
+  - "**/test/**"
+  - "**/tests/**"
+  - "**/testdata/**"
+  - "**/*.md"
+  - "**/vendor/**"
+  - "**/node_modules/**"
+  - "**/.git/**"
+
+# File globs to exclude
+exclude_globs:
+  - "*.lock"
+  - "package-lock.json"
+  - "*.min.js"
+  - "*.min.css"
+
+# Known false positives to ignore (add hashes of known safe detections)
+# exclude_detectors: []
