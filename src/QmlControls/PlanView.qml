@@ -39,7 +39,6 @@ Item {
     property var    _rallyPointController: _planMasterController.rallyPointController
     property var    _visualItems: _missionController.visualItems
     property bool   _lightWidgetBorders: editorMap.isSatelliteMap
-    property bool   _addROIOnClick: false
     property bool   _singleComplexItem: _missionController.complexMissionItemNames.length === 1
     property int    _editingLayer: _layerMission
     property int    _toolStripBottom: toolStrip.height + toolStrip.y
@@ -307,19 +306,45 @@ Item {
                 }
 
                 switch (_editingLayer) {
-                case _layerMission: if (addWaypointRallyPointAction.checked) {
-                        insertSimpleItemAfterCurrent(coordinate)
-                    } else if (_addROIOnClick) {
-                        insertROIAfterCurrent(coordinate)
-                        _addROIOnClick = false
-                    }
+                case _layerMission:
+                    insertSimpleItemAfterCurrent(coordinate)
                     break
-                case _layerRally: if (_rallyPointController.supported && addWaypointRallyPointAction.checked) {
+                case _layerRally:
+                    if (_rallyPointController.supported) {
                         _rallyPointController.addPoint(coordinate)
                     }
                     break
                 }
             }
+
+            function _mapRightClicked(position) {
+                // Take focus to close any previous editing
+                editorMap.focus = true
+                if (!mainWindow.allowViewSwitch()) {
+                    return
+                }
+                var coordinate = editorMap.toCoordinate(position, false /* clipToViewPort */)
+                coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+
+                if (_editingLayer === _layerMission) {
+                    if (!planMasterController.controllerVehicle.roiModeSupported) {
+                        return
+                    }
+                    if (_missionController.isROIActive) {
+                        // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+                        position = editorMap.mapToItem(globals.parent, position)
+                        var dropPanel = insertOrCancelROIDropPanelComponent.createObject(mainWindow, { mapClickCoord: coordinate, clickRect: Qt.rect(position.x, position.y, 0, 0) })
+                        dropPanel.open()
+                    } else {
+                        insertROIAfterCurrent(coordinate)
+                    }
+                }
+            }
+
+            onMapRightClicked: (position) => _mapRightClicked(position)
+            onMapPressAndHold: (position) => _mapRightClicked(position)
 
             // Add the mission item visuals to the map
             Repeater {
@@ -452,6 +477,7 @@ Item {
             anchors.top: parent.top
             z: QGroundControl.zOrderWidgets
             maxHeight: parent.height - toolStrip.y
+            visible: _editingLayer == _layerMission
 
             readonly property int fileButtonIndex: 0
             readonly property int takeoffButtonIndex: 1
@@ -473,34 +499,9 @@ Item {
                         enabled: _missionController.isInsertTakeoffValid
                         visible: toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
-                            toolStrip.allAddClickBoolsOff()
                             insertTakeoffItemAfterCurrent()
                             _triggerSubmit = true
                         }
-                    },
-                    ToolStripAction {
-                        id: addWaypointRallyPointAction
-                        text: _editingLayer == _layerRally ? qsTr("Rally Point") : qsTr("Waypoint")
-                        iconSource: "/qmlimages/MapAddMission.svg"
-                        enabled: toolStrip._isRallyLayer ? true : _missionController.flyThroughCommandsAllowed
-                        visible: toolStrip._isRallyLayer || toolStrip._isMissionLayer
-                        checkable: true
-                    },
-                    ToolStripAction {
-                        text: _missionController.isROIActive ? qsTr("Cancel ROI") : qsTr("ROI")
-                        iconSource: "/qmlimages/MapAddMission.svg"
-                        enabled: !_missionController.onlyInsertTakeoffValid
-                        visible: toolStrip._isMissionLayer && _planMasterController.controllerVehicle.roiModeSupported
-                        checkable: !_missionController.isROIActive
-                        onCheckedChanged: _addROIOnClick = checked
-                        onTriggered: {
-                            if (_missionController.isROIActive) {
-                                toolStrip.allAddClickBoolsOff()
-                                insertCancelROIAfterCurrent()
-                            }
-                        }
-                        property bool myAddROIOnClick: _addROIOnClick
-                        onMyAddROIOnClickChanged: checked = _addROIOnClick
                     },
                     ToolStripAction {
                         text: _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern")
@@ -509,7 +510,6 @@ Item {
                         visible: toolStrip._isMissionLayer
                         dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                         onTriggered: {
-                            toolStrip.allAddClickBoolsOff()
                             if (_singleComplexItem) {
                                 insertComplexItemAfterCurrent(_missionController.complexMissionItemNames[0])
                             }
@@ -525,7 +525,6 @@ Item {
                         enabled: _missionController.isInsertLandValid
                         visible: toolStrip._isMissionLayer
                         onTriggered: {
-                            toolStrip.allAddClickBoolsOff()
                             insertLandItemAfterCurrent()
                         }
                     },
@@ -539,13 +538,6 @@ Item {
             }
 
             model: toolStripActionList.model
-
-            function allAddClickBoolsOff() {
-                _addROIOnClick =        false
-                addWaypointRallyPointAction.checked = false
-            }
-
-            onDropped: allAddClickBoolsOff()
         }
 
         MapScale {
@@ -743,6 +735,42 @@ Item {
                         }
                         _promptForPlanUsageShowing = false
                         close()
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: insertOrCancelROIDropPanelComponent
+
+        DropPanel {
+            id: insertOrCancelROIDropPanel
+
+            property var mapClickCoord
+
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Insert ROI")
+
+                        onClicked: {
+                            insertOrCancelROIDropPanel.close()
+                            insertROIAfterCurrent(mapClickCoord)
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Insert Cancel ROI")
+
+                        onClicked: {
+                            insertOrCancelROIDropPanel.close()
+                            insertCancelROIAfterCurrent()
+                        }
                     }
                 }
             }
