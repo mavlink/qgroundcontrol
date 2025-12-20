@@ -58,9 +58,21 @@ class FactSpec:
 
 
 @dataclass
+class FieldMapping:
+    """Mapping from MAVLink message field to Fact."""
+    fact_name: str          # Name of the Fact to update (e.g., "speed")
+    source_field: str       # MAVLink struct field name (e.g., "vel")
+    scaling: str = ""       # Scaling expression (e.g., "/ 100.0", "* 1e-7")
+    transform: str = ""     # Full transform (e.g., "qRadiansToDegrees({field})")
+    # If transform is set, it overrides source_field + scaling
+
+
+@dataclass
 class MavlinkMessageSpec:
     """Specification for a MAVLink message handler."""
-    message_id: str  # e.g., "GPS_RAW_INT"
+    message_id: str                                     # e.g., "GPS_RAW_INT"
+    field_mappings: list[FieldMapping] = field(default_factory=list)
+    dialect: str = ""                                   # e.g., "ardupilot" for #ifndef guards
 
     @property
     def handler_name(self) -> str:
@@ -84,6 +96,18 @@ class MavlinkMessageSpec:
     def msg_id_constant(self) -> str:
         """Get the MAVLink message ID constant."""
         return f"MAVLINK_MSG_ID_{self.message_id}"
+
+    @property
+    def local_var_name(self) -> str:
+        """Get the local variable name for decoded struct."""
+        # Convert GPS_RAW_INT -> gpsRawInt
+        parts = self.message_id.lower().split('_')
+        return parts[0] + ''.join(p.capitalize() for p in parts[1:])
+
+    @property
+    def is_ardupilot_dialect(self) -> bool:
+        """Check if this message requires ArduPilot dialect guard."""
+        return self.dialect.lower() == "ardupilot"
 
 
 @dataclass
@@ -218,6 +242,16 @@ def parse_mavlink_string(mavlink_str: str) -> list[MavlinkMessageSpec]:
     return messages
 
 
+def parse_field_mapping(mapping_data: dict[str, Any]) -> FieldMapping:
+    """Parse a field mapping from spec data."""
+    return FieldMapping(
+        fact_name=mapping_data['fact'],
+        source_field=mapping_data.get('field', mapping_data['fact']),  # Default to fact name
+        scaling=mapping_data.get('scaling', ''),
+        transform=mapping_data.get('transform', ''),
+    )
+
+
 def load_spec_from_file(spec_path: Path) -> FactGroupSpec:
     """
     Load FactGroup specification from a YAML or JSON file.
@@ -285,7 +319,16 @@ def parse_spec_dict(data: dict[str, Any]) -> FactGroupSpec:
         if isinstance(msg, str):
             mavlink_messages.append(MavlinkMessageSpec(message_id=msg.upper()))
         elif isinstance(msg, dict):
-            mavlink_messages.append(MavlinkMessageSpec(message_id=msg['id'].upper()))
+            # Parse field mappings if present
+            field_mappings = []
+            for mapping_data in msg.get('mappings', []):
+                field_mappings.append(parse_field_mapping(mapping_data))
+
+            mavlink_messages.append(MavlinkMessageSpec(
+                message_id=msg['id'].upper(),
+                field_mappings=field_mappings,
+                dialect=msg.get('dialect', ''),
+            ))
 
     return FactGroupSpec(
         domain=data['domain'],

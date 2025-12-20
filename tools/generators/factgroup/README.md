@@ -21,10 +21,9 @@ python3 -m tools.generators.factgroup.cli \
 
 ## Specification Format
 
-### YAML (Recommended)
+### Basic YAML Spec
 
 ```yaml
-# wind.yaml
 domain: Wind                    # Required: becomes VehicleWindFactGroup
 update_rate_ms: 1000           # Optional: default 1000
 
@@ -37,13 +36,52 @@ facts:
     min: 0                     # Optional: minimum value
     max: 360                   # Optional: maximum value
 
-  - name: speed
-    type: double
-    units: m/s
-
 mavlink_messages:              # Optional: generates handler stubs
+  - WIND_COV                   # Simple: just message ID
+```
+
+### Advanced: MAVLink Field Mappings
+
+Specify exactly how MAVLink fields map to Facts with optional scaling:
+
+```yaml
+mavlink_messages:
+  # Simple - generates TODO stub
   - WIND_COV
-  - HIGH_LATENCY2
+
+  # With field mappings and scaling
+  - id: GPS_RAW_INT
+    mappings:
+      - fact: lat              # Fact to update
+        field: lat             # MAVLink field (default: same as fact)
+        scaling: "* 1e-7"      # Scaling expression (degE7 → deg)
+      - fact: alt
+        field: alt
+        scaling: "/ 1000.0"    # mm → m
+      - fact: groundSpeed
+        field: vel
+        scaling: "/ 100.0"     # cm/s → m/s
+
+  # ArduPilot dialect (generates #ifndef guard)
+  - id: WIND
+    dialect: ardupilot
+    mappings:
+      - fact: direction
+        field: direction
+      - fact: speed
+        field: speed
+```
+
+### Transform Expressions
+
+For complex transformations beyond simple scaling:
+
+```yaml
+mappings:
+  - fact: direction
+    field: wind_x
+    transform: "qRadiansToDegrees(qAtan2({var}.wind_y, {field}))"
+    # {var} = decoded struct name, {field} = struct.source_field
 ```
 
 ### JSON Alternative
@@ -55,7 +93,11 @@ mavlink_messages:              # Optional: generates handler stubs
   "facts": [
     {"name": "direction", "type": "double", "units": "deg"}
   ],
-  "mavlink_messages": ["WIND_COV"]
+  "mavlink_messages": [
+    {"id": "GPS_RAW_INT", "mappings": [
+      {"fact": "lat", "field": "lat", "scaling": "* 1e-7"}
+    ]}
+  ]
 }
 ```
 
@@ -79,8 +121,20 @@ For `--name Wind`:
 | File | Contents |
 |------|----------|
 | `VehicleWindFactGroup.h` | Class declaration, Q_PROPERTY, accessors |
-| `VehicleWindFactGroup.cc` | Constructor, MAVLink handlers |
+| `VehicleWindFactGroup.cc` | Constructor, MAVLink handlers with mappings |
 | `WindFact.json` | FactMetaData for each fact |
+
+## Common MAVLink Scaling Factors
+
+| Field Pattern | Scaling | Description |
+|---------------|---------|-------------|
+| lat, lon (degE7) | `* 1e-7` | Degrees × 10^7 → degrees |
+| alt (mm) | `/ 1000.0` | Millimeters → meters |
+| vel (cm/s) | `/ 100.0` | Centimeters/sec → m/s |
+| eph, epv (cm) | `/ 100.0` | Centimeters → meters |
+| cog, hdg (cdeg) | `/ 100.0` | Centidegrees → degrees |
+| temperature (cdegC) | `/ 100.0` | Centidegrees → °C |
+| press_abs (hPa→Pa) | `* 100.0` | Hectopascals → Pascals |
 
 ## Supported Types
 
@@ -106,11 +160,13 @@ For `--name Wind`:
 3. Add member: `VehicleWindFactGroup _windFactGroup;`
 4. Initialize in `Vehicle.cc` constructor
 5. Call `_addFactGroup(&_windFactGroup, "wind")` in `_commonInit()`
-6. Fill in MAVLink handler TODOs with actual field mappings
+6. Review generated MAVLink handlers and adjust as needed
 
 ## Examples
 
-See `examples/` directory for sample specifications.
+See `examples/` directory:
+- `wind.yaml` - Wind with scaling, ArduPilot dialect
+- `gps.yaml` - GPS with common degE7/mm scaling patterns
 
 ## Customizing Templates
 
