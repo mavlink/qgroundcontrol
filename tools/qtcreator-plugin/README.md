@@ -16,14 +16,17 @@ QGroundControl development involves several cross-cutting patterns (Fact System,
 ```
 qtcreator-plugin/
 ├── README.md                      # This file
-├── schemas/
-│   └── factmetadata.schema.json   # JSON Schema for FactMetaData validation
 ├── snippets/
 │   └── qgc-cpp.xml                # QtCreator C++ snippets
-└── locators/
-    ├── qgc_locator.py             # CLI search tool
-    └── README.md                  # Locator usage docs
+└── lua/
+    └── QGCTools/                  # QtCreator Lua extension
+        ├── QGCTools.lua           # Extension spec
+        └── init.lua               # Main implementation
 ```
+
+**Note:** Editor-agnostic tools moved to top-level `tools/` directories:
+- `tools/schemas/` - JSON schemas for validation
+- `tools/locators/` - CLI search tools
 
 ---
 
@@ -75,7 +78,48 @@ copy snippets\qgc-cpp.xml %APPDATA%\QtProject\qtcreator\snippets\
 | `factgroupctor` | FactGroup constructor |
 | `handlemsg` | handleMessage() override |
 
-### 3. Vehicle Null-Check Analyzer
+### 3. QtCreator Lua Extension (Qt Creator 14+)
+
+Full IDE integration with menu actions, keyboard shortcuts, and dialogs.
+
+**Requirements:**
+- Qt Creator 14.0.0 or later (Lua extension support)
+- Python 3.10+
+
+**Installation:**
+```bash
+# Linux
+mkdir -p ~/.local/share/QtProject/qtcreator/lua/extensions
+cp -r lua/QGCTools ~/.local/share/QtProject/qtcreator/lua/extensions/
+
+# macOS
+mkdir -p ~/Library/Application\ Support/QtProject/qtcreator/lua/extensions
+cp -r lua/QGCTools ~/Library/Application\ Support/QtProject/qtcreator/lua/extensions/
+
+# Windows
+xcopy /E /I lua\QGCTools %APPDATA%\QtProject\qtcreator\lua\extensions\QGCTools
+```
+
+Restart Qt Creator after installation. Access via **Tools → QGC**.
+
+**Features:**
+
+| Menu Action | Shortcut | Description |
+|-------------|----------|-------------|
+| Search Facts... | `Ctrl+Shift+F` | Search for Fact names in codebase |
+| Search FactGroups... | `Ctrl+Shift+G` | Search for FactGroup classes |
+| Search MAVLink Usage... | `Ctrl+Shift+M` | Find MAVLink message handlers |
+| Check Null Safety (File) | `Ctrl+Shift+N` | Analyze current file for null issues |
+| Check Null Safety (Project) | - | Analyze entire src/ directory |
+| Generate FactGroup... | `Ctrl+Shift+Alt+G` | Interactive FactGroup generator wizard |
+
+**Workflow:**
+1. Press shortcut or use menu
+2. Enter search query or generator parameters
+3. Results shown in picker dialog
+4. Click result to open file at line
+
+### 4. Vehicle Null-Check Analyzer (CLI)
 
 Static analysis to detect unsafe `activeVehicle()` access patterns.
 
@@ -100,36 +144,36 @@ pre-commit run vehicle-null-check --all-files
 
 **Output includes fix suggestions** for each violation found.
 
-### 4. QGC Locator CLI
+### 5. QGC Locator CLI
 
 Search for Facts, FactGroups, and MAVLink messages from command line.
 
 **Usage:**
 ```bash
 # Find Fact names containing 'lat'
-python3 tools/qtcreator-plugin/locators/qgc_locator.py fact lat
+python3 tools/locators/qgc_locator.py fact lat
 
 # Find FactGroup classes with 'gps'
-python3 tools/qtcreator-plugin/locators/qgc_locator.py factgroup gps
+python3 tools/locators/qgc_locator.py factgroup gps
 
 # Find MAVLink message usage
-python3 tools/qtcreator-plugin/locators/qgc_locator.py mavlink HEARTBEAT
+python3 tools/locators/qgc_locator.py mavlink HEARTBEAT
 
 # Find parameters in JSON metadata
-python3 tools/qtcreator-plugin/locators/qgc_locator.py param BATT
+python3 tools/locators/qgc_locator.py param BATT
 
 # JSON output for programmatic use
-python3 tools/qtcreator-plugin/locators/qgc_locator.py --json fact lat
+python3 tools/locators/qgc_locator.py --json fact lat
 
 # Limit results
-python3 tools/qtcreator-plugin/locators/qgc_locator.py --limit 10 fact lat
+python3 tools/locators/qgc_locator.py --limit 10 fact lat
 ```
 
 **Output format:** `name<TAB>path:line` (for editor integration)
 
-See `locators/README.md` for editor integration instructions.
+See `tools/locators/README.md` for editor integration instructions.
 
-### 5. FactGroup Generator
+### 6. FactGroup Generator
 
 Generate complete FactGroup boilerplate from a specification.
 
@@ -193,11 +237,11 @@ Add via **Tools → External → Configure**:
 
 ### QGC Fact Locator
 - **Executable**: `python3`
-- **Arguments**: `%{CurrentProject:Path}/tools/qtcreator-plugin/locators/qgc_locator.py fact %{CurrentDocument:Selection}`
+- **Arguments**: `%{CurrentProject:Path}/tools/locators/qgc_locator.py fact %{CurrentDocument:Selection}`
 
 ### QGC MAVLink Locator
 - **Executable**: `python3`
-- **Arguments**: `%{CurrentProject:Path}/tools/qtcreator-plugin/locators/qgc_locator.py mavlink %{CurrentDocument:Selection}`
+- **Arguments**: `%{CurrentProject:Path}/tools/locators/qgc_locator.py mavlink %{CurrentDocument:Selection}`
 
 ---
 

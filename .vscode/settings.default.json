@@ -2,7 +2,7 @@
   "json.schemas": [
     {
       "fileMatch": ["**/FactGroups/*Fact.json"],
-      "url": "./tools/qtcreator-plugin/schemas/factmetadata.schema.json"
+      "url": "./tools/schemas/factmetadata.schema.json"
     }
   ],
   "C_Cpp.codeAnalysis.clangTidy.enabled": true,
