@@ -27,7 +27,8 @@
                 "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "advanced":        true
             }
         },
         {

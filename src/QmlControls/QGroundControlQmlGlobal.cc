@@ -325,11 +325,6 @@ QString QGroundControlQmlGlobal::parameterFileExtension() const
     return AppSettings::parameterFileExtension;
 }
 
-QString QGroundControlQmlGlobal::missionFileExtension() const
-{
-    return AppSettings::missionFileExtension;
-}
-
 QString QGroundControlQmlGlobal::telemetryFileExtension() const
 {
     return AppSettings::telemetryFileExtension;

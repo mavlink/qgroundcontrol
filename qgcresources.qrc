@@ -41,6 +41,9 @@
         <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="pencil.svg">resources/pencil.svg</file>
         <file alias="Play.svg">resources/Play.svg</file>
+        <file alias="PlanSimpleItemAdvanced.svg">resources/AdvancedSliders.svg</file>
+        <file alias="PlanSimpleItemBasic.svg">resources/gear-black.svg</file>
+        <file alias="PlanSimpleItemCamera.svg">resources/camera.svg</file>
         <file alias="PowerButton.svg">resources/PowerButton.svg</file>
         <file alias="QGCLogoBlack.svg">resources/QGCLogoBlack.svg</file>
         <file alias="QGCLogoFull.svg">resources/QGCLogoFull.svg</file>
