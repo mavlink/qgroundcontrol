@@ -26,14 +26,14 @@ runs:
   using: composite
   steps:
     - name: Save artifact
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.package_name }}
         path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
 
     - name: Attest build provenance
       if: github.event_name == 'push' && github.repository_owner == 'mavlink'
-      uses: actions/attest-build-provenance@v2
+      uses: actions/attest-build-provenance@v3
       with:
         subject-path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
 

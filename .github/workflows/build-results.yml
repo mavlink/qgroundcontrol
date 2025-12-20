@@ -11,8 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  check-sizes:
-    name: Check Artifact Sizes
+  collect-sizes:
+    name: Collect Artifact Sizes
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 15
@@ -28,24 +28,23 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts
 
-      - name: Check sizes
+      - name: Collect sizes
         id: sizes
         run: |
           python tools/check-sizes.py artifacts/ \
             --json \
             --output sizes.json \
-            --summary "$GITHUB_STEP_SUMMARY" \
-            --no-fail
+            --summary "$GITHUB_STEP_SUMMARY"
           echo "json=$(jq -c . sizes.json)" >> $GITHUB_OUTPUT
 
       - name: Upload size report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: size-report-${{ github.event.workflow_run.id }}
           path: sizes.json
@@ -53,28 +52,22 @@ jobs:
 
       - name: Save baseline sizes (master only)
         if: github.event.workflow_run.head_branch == 'master'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: sizes.json
           key: artifact-sizes-baseline-${{ github.run_id }}
 
       - name: Save baseline sizes as latest
         if: github.event.workflow_run.head_branch == 'master'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: sizes.json
           key: artifact-sizes-baseline-latest
 
-      - name: Check for warnings
-        run: |
-          if python -c "import json; d=json.load(open('sizes.json')); exit(0 if d['warning_count'] > 0 else 1)" 2>/dev/null; then
-            echo "::warning::Artifact size thresholds exceeded. See size report for details."
-          fi
-
   post-pr-comment:
     name: Post Build Results
     runs-on: ubuntu-latest
-    needs: check-sizes
+    needs: collect-sizes
     if: github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 10
 
@@ -87,7 +80,7 @@ jobs:
 
       - name: Get PR number
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const run = context.payload.workflow_run;
@@ -105,7 +98,7 @@ jobs:
       - name: Collect build status
         if: steps.pr.outputs.result != 'null'
         id: builds
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const headSha = context.payload.workflow_run.head_sha;
@@ -164,7 +157,7 @@ jobs:
 
       - name: Download PR artifacts for size comparison
         if: steps.pr.outputs.result != 'null'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -173,7 +166,7 @@ jobs:
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != 'null'
         id: baseline
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-latest
@@ -192,7 +185,7 @@ jobs:
           HEADER
 
           # Generate size report
-          python tools/check-sizes.py artifacts-pr/ --json --output pr-sizes.json --no-fail 2>/dev/null || true
+          python tools/check-sizes.py artifacts-pr/ --json --output pr-sizes.json 2>/dev/null || true
 
           if [[ -f "pr-sizes.json" ]]; then
             echo "### 📦 Artifact Sizes" >> comment.md
@@ -215,20 +208,19 @@ jobs:
 
           if baseline:
               lines.extend([
-                  '| Artifact | Size | Δ from master | Status |',
-                  '|----------|------|---------------|--------|'
+                  '| Artifact | Size | Δ from master |',
+                  '|----------|------|---------------|'
               ])
           else:
               lines.extend([
-                  '| Artifact | Size | Threshold | Status |',
-                  '|----------|------|-----------|--------|'
+                  '| Artifact | Size |',
+                  '|----------|------|'
               ])
 
           total_delta = 0
           for a in pr_data.get('artifacts', []):
               name = a['name']
               size = a['size_human']
-              status = '⚠️' if a.get('exceeds_threshold') else '✅'
 
               if baseline and name in baseline:
                   old_size = baseline[name]['size_bytes']
@@ -243,10 +235,9 @@ jobs:
                   else:
                       delta_str = 'No change'
 
-                  lines.append(f'| {name} | {size} | {delta_str} | {status} |')
+                  lines.append(f'| {name} | {size} | {delta_str} |')
               else:
-                  threshold = f"{a.get('threshold_mb', '-')} MB" if a.get('threshold_mb') else '-'
-                  lines.append(f'| {name} | {size} | {threshold} | {status} |')
+                  lines.append(f'| {name} | {size} |')
 
           lines.append('')
           if baseline and total_delta != 0:

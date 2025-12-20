@@ -1,0 +1,86 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+#include "{{ spec.class_name }}.h"
+#include "Vehicle.h"
+
+{{ spec.class_name }}::{{ spec.class_name }}(QObject *parent)
+    : FactGroup({{ spec.update_rate_ms }}, QStringLiteral("{{ spec.json_resource_path }}"), parent)
+{
+{% for fact in spec.facts %}
+    _addFact(&_{{ fact.name }}Fact);
+{% endfor %}
+
+{% for fact in spec.facts %}
+{% if fact.value_type in ('double', 'float') %}
+    _{{ fact.name }}Fact.setRawValue(qQNaN());
+{% else %}
+    _{{ fact.name }}Fact.setRawValue(0);
+{% endif %}
+{% endfor %}
+}
+
+void {{ spec.class_name }}::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
+{
+    Q_UNUSED(vehicle);
+
+{% if spec.mavlink_messages %}
+    switch (message.msgid) {
+{% for msg in spec.mavlink_messages %}
+{% if msg.is_ardupilot_dialect %}
+#ifndef QGC_NO_ARDUPILOT_DIALECT
+{% endif %}
+    case {{ msg.msg_id_constant }}:
+        {{ msg.handler_name }}(message);
+        break;
+{% if msg.is_ardupilot_dialect %}
+#endif
+{% endif %}
+{% endfor %}
+    default:
+        break;
+    }
+{% else %}
+    Q_UNUSED(message);
+    // TODO: Add MAVLink message handlers
+{% endif %}
+}
+
+{% for msg in spec.mavlink_messages %}
+{% if msg.is_ardupilot_dialect %}
+#ifndef QGC_NO_ARDUPILOT_DIALECT
+{% endif %}
+void {{ spec.class_name }}::{{ msg.handler_name }}(const mavlink_message_t &message)
+{
+    {{ msg.struct_name }} {{ msg.local_var_name }}{};
+    {{ msg.decode_func }}(&message, &{{ msg.local_var_name }});
+
+{% if msg.field_mappings %}
+{% for mapping in msg.field_mappings %}
+{% if mapping.transform %}
+    {{ mapping.fact_name }}()->setRawValue({{ mapping.transform | replace('{var}', msg.local_var_name) | replace('{field}', msg.local_var_name ~ '.' ~ mapping.source_field) }});
+{% elif mapping.scaling %}
+    {{ mapping.fact_name }}()->setRawValue(static_cast<double>({{ msg.local_var_name }}.{{ mapping.source_field }}) {{ mapping.scaling }});
+{% else %}
+    {{ mapping.fact_name }}()->setRawValue({{ msg.local_var_name }}.{{ mapping.source_field }});
+{% endif %}
+{% endfor %}
+{% else %}
+    // TODO: Map decoded fields to facts
+    // Example:
+    // _speedFact.setRawValue({{ msg.local_var_name }}.speed);
+{% endif %}
+
+    _setTelemetryAvailable(true);
+}
+{% if msg.is_ardupilot_dialect %}
+#endif
+{% endif %}
+
+{% endfor %}

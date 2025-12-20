@@ -1,0 +1,29 @@
+# Test specification for FactGroup generator
+domain: Test
+update_rate_ms: 500
+
+facts:
+  - name: temperature
+    type: double
+    units: degC
+    short_desc: Temperature reading
+    decimal_places: 1
+    min: -40
+    max: 85
+
+  - name: pressure
+    type: double
+    units: Pa
+    short_desc: Atmospheric pressure
+    decimal_places: 0
+
+  - name: humidity
+    type: uint8
+    units: "%"
+    short_desc: Relative humidity
+    min: 0
+    max: 100
+
+mavlink_messages:
+  - SCALED_PRESSURE
+  - HIGHRES_IMU
