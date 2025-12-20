@@ -11,11 +11,28 @@ Language Server Protocol (LSP) implementation for QGC-specific C++ patterns.
 | `null-vehicle` | Unsafe `activeVehicle()` dereference without null check |
 | `null-parameter` | Unsafe `getParameter()` result used without null check |
 
+### MAVLink Completion
+
+The server provides intelligent autocomplete for MAVLink code patterns:
+
+**Message ID Constants** — Type `MAVLINK_MSG_ID_` to get:
+- All 29+ common MAVLink message IDs (HEARTBEAT, ATTITUDE, GPS_RAW_INT, etc.)
+- Message ID number and category in the completion popup
+- Full documentation on hover/resolve
+
+**Decode Functions** — Type `mavlink_msg_` to get:
+- Decode functions: `mavlink_msg_heartbeat_decode(&message, &heartbeat)`
+- Field getters: `mavlink_msg_heartbeat_get_type(&message)`
+- Field documentation with units
+
+**Switch Case Snippets** — In a `switch(message.msgid)` block:
+- Full case statement templates with decode pattern
+- Automatically includes struct declaration and decode call
+
 ### Planned Features
 
-- MAVLink message ID completion in `handleMessage()` switch statements
 - Fact name completion in JSON metadata files
-- Hover documentation for MAVLink types
+- Hover documentation for MAVLink types (partially implemented via completion resolve)
 - Go-to-definition for Facts
 
 ## Installation
@@ -125,6 +142,7 @@ Add to `LSP.sublime-settings`:
 ```
 tools/lsp/
 ├── server.py           # Main LSP server (pygls-based)
+├── mavlink_data.py     # MAVLink message definitions for completion
 ├── __init__.py
 ├── __main__.py         # Entry point for `python -m tools.lsp`
 ├── analyzers/          # Diagnostic providers
