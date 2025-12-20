@@ -165,3 +165,9 @@ CLAUDE.md
 
 # Vale prose linter (downloaded via `vale sync`)
 .github/styles/
+eeprom.bin
+logs/
+mav.parm
+mav.tlog
+mav.tlog.raw
+terrain/

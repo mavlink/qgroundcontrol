@@ -36,6 +36,96 @@ Map {
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    _kamikazeLocManager:        QGroundControl.kamikazeLocManager
+
+    // KEYBOARD map controls
+    focus: true
+    property bool wPressed: false
+    property bool aPressed: false
+    property bool sPressed: false
+    property bool dPressed: false
+    property bool qPressed: false
+    property bool ePressed: false
+
+    Timer {
+        id: panTimer
+        interval: 16
+        running: true
+        repeat: true
+        onTriggered: {
+            const basePan = 0.0001
+            const zoomFactor = Math.pow(2, 18 - _map.zoomLevel)  // tweak 18 to your max zoom
+            const panAmount = basePan * zoomFactor
+
+            let dx = 0, dy = 0
+            if (wPressed) dy += 1
+            if (sPressed) dy -= 1
+            if (aPressed) dx -= 1
+            if (dPressed) dx += 1
+
+            const length = Math.sqrt(dx*dx + dy*dy)
+            if (length > 0) {
+                _map.center.latitude += (dy / length) * panAmount
+                _map.center.longitude += (dx / length) * panAmount
+            }
+
+            if (qPressed) _map.zoomLevel = Math.max(_map.zoomLevel - 0.1, 2) // Minimum zoom level
+            if (ePressed) _map.zoomLevel = Math.min(_map.zoomLevel + 0.1, 18) // Maximum zoom level
+
+        }
+    }
+
+    Keys.onPressed: function(event) {
+        switch (event.key) {
+        case Qt.Key_W: wPressed = true; break;
+        case Qt.Key_A: aPressed = true; break;
+        case Qt.Key_S: sPressed = true; break;
+        case Qt.Key_D: dPressed = true; break;
+        case Qt.Key_Q: qPressed = true; break;
+        case Qt.Key_E: ePressed = true; break;
+        }
+    }
+
+    Keys.onReleased: function(event) {
+        switch (event.key) {
+        case Qt.Key_W: wPressed = false; break;
+        case Qt.Key_A: aPressed = false; break;
+        case Qt.Key_S: sPressed = false; break;
+        case Qt.Key_D: dPressed = false; break;
+        case Qt.Key_Q: qPressed = false; break;
+        case Qt.Key_E: ePressed = false; break;
+        }
+    }
+
+    // QR icon at set location
+    MapQuickItem {
+        anchorPoint.x: kamikaze_icon.width / 2
+        anchorPoint.y: kamikaze_icon.height / 2
+        visible: true
+        coordinate: _kamikazeLocManager.coordinate
+
+        sourceItem: Image {
+            id: kamikaze_icon
+            source:  "/res/qr.png" //"/res/zoom-gps.svg"
+            mipmap: true
+            antialiasing: true
+            fillMode: Image.PreserveAspectFit
+
+            property real baseSize: ScreenTools.defaultFontPixelHeight / 4
+            property real referenceZoom: 15
+
+            // SCALE WITH ZOOM
+            width:  baseSize * Math.pow(2, _map.zoomLevel - referenceZoom)
+            height: width
+
+            sourceSize.height: height
+            transform: Rotation {
+                origin.x:       kamikaze_icon.width  / 2
+                origin.y:       kamikaze_icon.height / 2
+                angle:          0
+            }
+        }
+    }
 
     function setVisibleRegion(region) {
         // TODO: Is this still necessary with Qt 5.11?
@@ -169,6 +259,13 @@ Map {
             isPressed = true
             pressAndHold = false
             pressAndHoldTimer.start()
+
+            let coord = _map.toCoordinate(Qt.point(touchPoints[0].x, touchPoints[0].y), false)
+            if (_kamikazeLocManager) {
+                _kamikazeLocManager.setCoordinate(coord)
+            } else {
+                console.warn("kamikazeLocManager not available yet")
+            }
         }
 
         onGestureStarted: (gesture) => {
@@ -250,4 +347,46 @@ Map {
             }
         }
     }
+
+    // restore Focus FIX: for changing page loses focus, WASD movement not working
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onEntered: { forceActiveFocus() }
+        onPressed: { forceActiveFocus() } // also restore on press for touch
+        acceptedButtons: Qt.LeftButton // keep it non-blocking by setting acceptedButtons appropriately if needed
+    }
+
+    PositionSource {
+        id: deviceLocation
+        active: true
+        preferredPositioningMethods: PositionSource.SatellitePositioningMethods | PositionSource.NonSatellitePositioningMethods
+    }
+
+    QGCButton {
+        id: zoomToDeviceButton
+        icon.source: "qrc:/res/zoom-gps.svg"
+        icon.color: "green"
+        anchors {
+            left: parent.left
+            bottom: parent.bottom
+            leftMargin: ScreenTools.defaultFontPixelWidth * 2
+            bottomMargin: ScreenTools.defaultFontPixelHeight * 2
+        }
+        ToolTip.text: qsTr("Zoom to My GPS Location")
+        visible: true
+
+        onClicked: {
+            if (deviceLocation.position.coordinate.isValid) {
+                _map.center = deviceLocation.position.coordinate
+                _map.zoomLevel = 18
+            } else {
+                console.warn("Device location not available; using IP fallback")
+                // Example: city-level fallback
+                _map.center = QtPositioning.coordinate(39.815565, 30.531929)
+                _map.zoomLevel = 15
+            }
+        }
+    }
+
 } // Map

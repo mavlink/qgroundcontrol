@@ -6,6 +6,8 @@
         <file alias="NanumGothic-Bold">resources/fonts/NanumGothic-Bold.ttf</file>
     </qresource>
     <qresource prefix="/res">
+        <file alias="zoom-gps.svg">resources/zoom-gps.svg</file>
+        <file alias="qr.png">resources/qr.png</file>
         <file alias="action.svg">resources/action.svg</file>
         <file alias="AntennaRC.svg">resources/Antenna_RC.svg</file>
         <file alias="AntennaT.svg">resources/Antenna_T.svg</file>

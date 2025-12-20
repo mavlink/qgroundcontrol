@@ -346,3 +346,4 @@ include(Install)
 # ============================================================================
 
 include(PrintSummary)
+add_subdirectory(src/AAD)

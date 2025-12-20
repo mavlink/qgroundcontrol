@@ -205,9 +205,10 @@ ApplicationWindow {
         if (!(_closeChecksToSkip & _skipPendingParameterWritesCheckMask) && !checkForPendingParameterWrites()) {
             return false
         }
-        if (!(_closeChecksToSkip & _skipActiveConnectionsCheckMask) && !checkForActiveConnections()) {
-            return false
-        }
+        // Alt+f4
+        // if (!(_closeChecksToSkip & _skipActiveConnectionsCheckMask) && !checkForActiveConnections()) {
+        //     return false
+        // }
         finishCloseProcess()
         return true
     }
