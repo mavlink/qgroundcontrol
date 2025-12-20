@@ -83,7 +83,6 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
 
         # Check for direct activeVehicle()->method() calls
         for match in ACTIVE_VEHICLE_DIRECT_PATTERN.finditer(line):
-            method_name = match.group(1)
             if not has_null_check_before(lines, line_num):
                 yield Violation(
                     file=str(file_path),

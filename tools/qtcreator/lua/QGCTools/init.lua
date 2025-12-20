@@ -431,7 +431,7 @@ local function setupLspClient()
         return false
     end
 
-    -- Create LSP client for QGC
+    -- Create LSP client for QGC C++ and Fact JSON files
     local client = lsp.Client.create({
         name = "QGC LSP",
         cmd = function()
@@ -439,12 +439,22 @@ local function setupLspClient()
         end,
         transport = "stdio",
         languageFilter = {
-            patterns = { "*.cpp", "*.cc", "*.cxx", "*.h", "*.hpp", "*.hxx" },
-            mimeTypes = { "text/x-c++src", "text/x-c++hdr", "text/x-csrc", "text/x-chdr" },
+            patterns = {
+                -- C++ files
+                "*.cpp", "*.cc", "*.cxx", "*.h", "*.hpp", "*.hxx",
+                -- Fact JSON files
+                "*Fact.json", "*Facts.json", "*FactMetaData.json",
+            },
+            mimeTypes = {
+                "text/x-c++src", "text/x-c++hdr", "text/x-csrc", "text/x-chdr",
+                "application/json",
+            },
         },
         startBehavior = "RequiresFile",
         settings = {},
-        initializationOptions = {},
+        initializationOptions = {
+            projectRoot = projectRoot,
+        },
     })
 
     if client then

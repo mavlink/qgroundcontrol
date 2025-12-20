@@ -26,10 +26,9 @@ from lsprotocol import types
 from pygls.lsp.server import LanguageServer
 from pygls.workspace import TextDocument
 
-from .mavlink_data import MAVLINK_MESSAGES, MAVLinkMessage
+from .mavlink_data import MAVLinkMessage, get_all_messages
 from .fact_schema import (
     FACT_PROPERTIES,
-    FACT_PROPERTIES_BY_NAME,
     COMMON_UNITS,
     ROOT_KEYS,
     get_type_values,
@@ -53,6 +52,19 @@ class QGCLanguageServer(LanguageServer):
             version="0.1.0",
         )
         self.diagnostics: dict[str, tuple[Optional[int], list[types.Diagnostic]]] = {}
+        self._project_root: Optional[Path] = None
+        self._mavlink_messages: Optional[list[MAVLinkMessage]] = None
+
+    def set_project_root(self, root: Path):
+        """Set the project root directory for dynamic loading."""
+        self._project_root = root
+        self._mavlink_messages = None  # Reset cache
+
+    def get_mavlink_messages(self) -> list[MAVLinkMessage]:
+        """Get MAVLink messages, loading from XML if project root is set."""
+        if self._mavlink_messages is None:
+            self._mavlink_messages = get_all_messages(self._project_root)
+        return self._mavlink_messages
 
     def analyze_document(self, document: TextDocument) -> list[types.Diagnostic]:
         """Analyze a document and return diagnostics."""
@@ -90,7 +102,6 @@ class QGCLanguageServer(LanguageServer):
         active_vehicle_pattern = re.compile(
             r'(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)|_vehicleManager|qgcApp\(\)->toolbox\(\)->multiVehicleManager\(\))->activeVehicle\(\)'
         )
-        unsafe_deref_pattern = re.compile(r'\b(\w+)->(?!$)')
 
         lines = document.lines
         vehicle_vars: dict[str, int] = {}  # var_name -> line_declared
@@ -203,6 +214,23 @@ class QGCLanguageServer(LanguageServer):
 server = QGCLanguageServer()
 
 
+@server.feature(types.INITIALIZED)
+def initialized(ls: QGCLanguageServer, params: types.InitializedParams):
+    """Handle post-initialization setup."""
+    # Try to get the workspace root for dynamic MAVLink loading
+    if ls.workspace.root_path:
+        root = Path(ls.workspace.root_path).resolve()
+        ls.set_project_root(root)
+        logger.info(f"Set project root to: {root}")
+    elif ls.workspace.root_uri:
+        # Convert URI to path (resolve to canonical path for security)
+        from urllib.parse import urlparse, unquote
+        parsed = urlparse(ls.workspace.root_uri)
+        root = Path(unquote(parsed.path)).resolve()
+        ls.set_project_root(root)
+        logger.info(f"Set project root to: {root}")
+
+
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: QGCLanguageServer, params: types.DidOpenTextDocumentParams):
     """Analyze document when opened."""
@@ -299,11 +327,14 @@ def completion(ls: QGCLanguageServer, params: types.CompletionParams) -> types.C
 
     items: list[types.CompletionItem] = []
 
+    # Get MAVLink messages (uses dynamic loading if project root is set)
+    messages = ls.get_mavlink_messages()
+
     # Check for MAVLINK_MSG_ID_ completion
     match = re.search(r'MAVLINK_MSG_ID_(\w*)$', prefix_text, re.IGNORECASE)
     if match:
         filter_text = match.group(1).upper()
-        items = _get_message_id_completions(filter_text)
+        items = _get_message_id_completions(filter_text, messages)
         logger.debug(f"MAVLINK_MSG_ID_ completion: {len(items)} items for '{filter_text}'")
         return types.CompletionList(is_incomplete=False, items=items)
 
@@ -311,7 +342,7 @@ def completion(ls: QGCLanguageServer, params: types.CompletionParams) -> types.C
     match = re.search(r'mavlink_msg_(\w*)$', prefix_text, re.IGNORECASE)
     if match:
         filter_text = match.group(1).lower()
-        items = _get_decode_completions(filter_text)
+        items = _get_decode_completions(filter_text, messages)
         logger.debug(f"mavlink_msg_ completion: {len(items)} items for '{filter_text}'")
         return types.CompletionList(is_incomplete=False, items=items)
 
@@ -321,9 +352,9 @@ def completion(ls: QGCLanguageServer, params: types.CompletionParams) -> types.C
             match = re.search(r'case\s+MAVLINK_MSG_ID_(\w*)$', prefix_text, re.IGNORECASE)
             if match:
                 filter_text = match.group(1).upper()
-                items = _get_message_id_completions(filter_text, include_case=True)
+                items = _get_message_id_completions(filter_text, messages, include_case=True)
         elif prefix_text.strip().endswith("case") or prefix_text.strip() == "":
-            items = _get_case_completions()
+            items = _get_case_completions(messages)
         logger.debug(f"Switch context completion: {len(items)} items")
         return types.CompletionList(is_incomplete=False, items=items)
 
@@ -337,8 +368,9 @@ def completion_resolve(ls: QGCLanguageServer, item: types.CompletionItem) -> typ
     if item.data and isinstance(item.data, dict):
         msg_name = item.data.get("message")
         if msg_name:
-            from .mavlink_data import MESSAGES_BY_NAME
-            msg = MESSAGES_BY_NAME.get(msg_name)
+            # Search in dynamic messages first
+            messages = ls.get_mavlink_messages()
+            msg = next((m for m in messages if m.name == msg_name), None)
             if msg:
                 doc_lines = [f"**{msg.name}** (ID: {msg.id})", "", msg.description, "", "**Fields:**"]
                 for field in msg.fields:
@@ -355,10 +387,14 @@ def completion_resolve(ls: QGCLanguageServer, item: types.CompletionItem) -> typ
     return item
 
 
-def _get_message_id_completions(filter_text: str, include_case: bool = False) -> list[types.CompletionItem]:
+def _get_message_id_completions(
+    filter_text: str,
+    messages: list[MAVLinkMessage],
+    include_case: bool = False,
+) -> list[types.CompletionItem]:
     """Get completion items for MAVLINK_MSG_ID_ constants."""
     items = []
-    for msg in MAVLINK_MESSAGES:
+    for msg in messages:
         if filter_text and not msg.name.startswith(filter_text):
             continue
 
@@ -387,10 +423,10 @@ def _get_message_id_completions(filter_text: str, include_case: bool = False) ->
     return items
 
 
-def _get_decode_completions(filter_text: str) -> list[types.CompletionItem]:
+def _get_decode_completions(filter_text: str, messages: list[MAVLinkMessage]) -> list[types.CompletionItem]:
     """Get completion items for mavlink_msg_* functions."""
     items = []
-    for msg in MAVLINK_MESSAGES:
+    for msg in messages:
         lower_name = msg.name.lower()
 
         # Check if filter matches message name
@@ -433,10 +469,10 @@ def _get_decode_completions(filter_text: str) -> list[types.CompletionItem]:
     return items
 
 
-def _get_case_completions() -> list[types.CompletionItem]:
+def _get_case_completions(messages: list[MAVLinkMessage]) -> list[types.CompletionItem]:
     """Get completion items for case statements in a switch(msgid) block."""
     items = []
-    for msg in MAVLINK_MESSAGES:
+    for msg in messages:
         lower_name = msg.name.lower()
 
         # Full case statement with decode pattern
@@ -655,6 +691,153 @@ def _get_boolean_completions(filter_text: str) -> list[types.CompletionItem]:
             insert_text_format=types.InsertTextFormat.PlainText,
         ))
     return items
+
+
+# ============================================================================
+# Go-to-Definition for Facts
+# ============================================================================
+
+@server.feature(types.TEXT_DOCUMENT_DEFINITION)
+def definition(
+    ls: QGCLanguageServer, params: types.DefinitionParams
+) -> Optional[types.Location]:
+    """Provide go-to-definition for Fact references."""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    # Only handle C++ files
+    if not ls._is_cpp_file(doc.uri):
+        return None
+
+    line_num = params.position.line
+    char_pos = params.position.character
+    lines = doc.lines
+
+    if line_num >= len(lines):
+        return None
+
+    line = lines[line_num]
+
+    # Find the word under cursor
+    word_start = char_pos
+    word_end = char_pos
+
+    while word_start > 0 and (line[word_start - 1].isalnum() or line[word_start - 1] == '_'):
+        word_start -= 1
+    while word_end < len(line) and (line[word_end].isalnum() or line[word_end] == '_'):
+        word_end += 1
+
+    word = line[word_start:word_end]
+
+    # Try to find a Fact reference
+    fact_name = _extract_fact_name(word, line, word_start, word_end)
+    if not fact_name:
+        return None
+
+    logger.debug(f"Looking for Fact definition: {fact_name}")
+
+    # Search for the Fact JSON definition
+    location = _find_fact_definition(ls, fact_name)
+    if location:
+        logger.info(f"Found Fact definition for '{fact_name}' at {location.uri}")
+        return location
+
+    return None
+
+
+def _extract_fact_name(word: str, line: str, word_start: int, word_end: int) -> Optional[str]:
+    """Extract the Fact name from various patterns."""
+    # Pattern 1: _nameFact member variable
+    if word.startswith('_') and word.endswith('Fact'):
+        return word[1:-4]  # Remove _ prefix and Fact suffix
+
+    # Pattern 2: nameFact() accessor method
+    if word.endswith('Fact'):
+        # Check if followed by ()
+        rest = line[word_end:].lstrip()
+        if rest.startswith('('):
+            return word[:-4]  # Remove Fact suffix
+
+    # Pattern 3: QStringLiteral("name") in Fact constructor
+    # Look for pattern like: Fact(0, QStringLiteral("name"), ...)
+    string_match = re.search(r'QStringLiteral\s*\(\s*"(\w+)"\s*\)', line)
+    if string_match:
+        name = string_match.group(1)
+        # Check if word is near the string literal
+        if word_start <= string_match.end() and word_end >= string_match.start():
+            return name
+
+    # Pattern 4: Direct string in Fact JSON path
+    # Like: ":/json/Vehicle/VehicleFact.json"
+    json_match = re.search(r'":/json/([^"]+)Fact\.json"', line)
+    if json_match:
+        return None  # This is a FactGroup, not a single Fact
+
+    return None
+
+
+def _find_fact_definition(
+    ls: QGCLanguageServer, fact_name: str
+) -> Optional[types.Location]:
+    """Find the JSON definition of a Fact."""
+    if not ls._project_root:
+        return None
+
+    # Search for Fact JSON files in the project
+    import glob
+
+    json_patterns = [
+        str(ls._project_root / "src" / "**" / "*Fact.json"),
+        str(ls._project_root / "src" / "**" / "*Facts.json"),
+        str(ls._project_root / "src" / "**" / "FactMetaData" / "*.json"),
+    ]
+
+    for pattern in json_patterns:
+        for json_path in glob.glob(pattern, recursive=True):
+            location = _search_fact_in_json(json_path, fact_name)
+            if location:
+                return location
+
+    return None
+
+
+def _search_fact_in_json(json_path: str, fact_name: str) -> Optional[types.Location]:
+    """Search for a Fact name in a JSON file and return its location."""
+    import json
+
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Parse JSON to find the Fact
+        data = json.loads(content)
+        facts = data.get("QGC.MetaData.Facts", [])
+
+        for fact in facts:
+            if fact.get("name") == fact_name:
+                # Find the line number of this Fact in the file
+                line_num = _find_fact_line(content, fact_name)
+                if line_num >= 0:
+                    return types.Location(
+                        uri=f"file://{json_path}",
+                        range=types.Range(
+                            start=types.Position(line=line_num, character=0),
+                            end=types.Position(line=line_num, character=0),
+                        ),
+                    )
+    except (json.JSONDecodeError, IOError) as e:
+        logger.debug(f"Failed to parse {json_path}: {e}")
+
+    return None
+
+
+def _find_fact_line(content: str, fact_name: str) -> int:
+    """Find the line number where a Fact is defined in JSON content."""
+    lines = content.split('\n')
+    for i, line in enumerate(lines):
+        # Look for "name": "factName"
+        if re.search(rf'"name"\s*:\s*"{re.escape(fact_name)}"', line):
+            return i
+    return -1
 
 
 def main():

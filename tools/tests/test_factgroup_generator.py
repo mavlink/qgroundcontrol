@@ -256,7 +256,7 @@ class TestGenerator:
             facts=[FactSpec(name="value", value_type="double")],
         )
         generator = FactGroupGenerator(spec, tmp_path)
-        files = generator.generate_all(dry_run=False)
+        generator.generate_all(dry_run=False)
 
         assert (tmp_path / "VehicleTestFactGroup.h").exists()
         assert (tmp_path / "VehicleTestFactGroup.cc").exists()

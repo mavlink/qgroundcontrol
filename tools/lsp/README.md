@@ -49,10 +49,19 @@ The server provides intelligent autocomplete for `*Fact.json` metadata files:
 **Boolean Values** — After boolean property names:
 - `true` / `false` completion
 
+### Go-to-Definition for Facts
+
+Navigate directly from C++ Fact references to their JSON definitions:
+
+- **`_rollFact`** → jumps to `"name": "roll"` in VehicleFact.json
+- **`headingFact()`** → finds the `heading` Fact definition
+- **`QStringLiteral("pitch")`** → navigates to the Fact metadata
+
+Works with cursor on any Fact variable or accessor in C++ code.
+
 ### Planned Features
 
 - Hover documentation for MAVLink types (partially implemented via completion resolve)
-- Go-to-definition for Facts
 
 ## Installation
 

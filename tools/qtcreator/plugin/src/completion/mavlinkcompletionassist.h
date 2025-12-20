@@ -60,6 +60,10 @@ private:
     };
 
     void loadMAVLinkMessages();
+    static bool loadFromXml(const QString &projectRoot);
+    static QString findMavlinkDefinitions(const QString &projectRoot);
+    static QList<MAVLinkMessage> parseMavlinkXml(const QString &xmlPath, const QString &defsDir);
+
     TextEditor::IAssistProposal *createMessageIdProposal(const QString &prefix);
     TextEditor::IAssistProposal *createDecodeProposal(const QString &prefix);
     TextEditor::IAssistProposal *createFieldProposal(const QString &messageName);
@@ -69,6 +73,7 @@ private:
 
     static QList<MAVLinkMessage> s_messages;
     static bool s_messagesLoaded;
+    static QString s_projectRoot;
 };
 
 } // namespace QGC::Internal

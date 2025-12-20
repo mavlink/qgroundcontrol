@@ -4,12 +4,18 @@ MAVLink message definitions for code completion.
 This module provides MAVLink message metadata for IDE features like
 autocomplete, hover documentation, and code generation.
 
-The data is a curated subset of common messages used in QGC.
+When available, messages are loaded dynamically from MAVLink XML definitions.
+Falls back to a curated subset of common messages used in QGC.
+
 For the full MAVLink specification, see: https://mavlink.io/en/messages/common.html
 """
 
+import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -446,3 +452,71 @@ def get_messages_by_category(category: str) -> list[MAVLinkMessage]:
 def get_categories() -> list[str]:
     """Get list of all message categories."""
     return sorted(set(msg.category for msg in MAVLINK_MESSAGES if msg.category))
+
+
+# Dynamic loading support
+_dynamic_messages: Optional[list[MAVLinkMessage]] = None
+_dynamic_loaded = False
+
+
+def load_messages_from_xml(project_root: Path) -> list[MAVLinkMessage]:
+    """Load MAVLink messages from XML definitions if available.
+
+    Args:
+        project_root: Root directory of the QGC project
+
+    Returns:
+        List of MAVLinkMessage objects from XML, or empty list if not found
+    """
+    try:
+        from .mavlink_parser import load_all_messages
+        return load_all_messages(project_root)
+    except ImportError:
+        logger.debug("mavlink_parser not available")
+        return []
+    except Exception as e:
+        logger.warning(f"Failed to load MAVLink XML: {e}")
+        return []
+
+
+def get_all_messages(project_root: Optional[Path] = None) -> list[MAVLinkMessage]:
+    """Get all available MAVLink messages.
+
+    Tries to load from XML definitions first, falls back to hardcoded messages.
+
+    Args:
+        project_root: Optional project root for XML loading
+
+    Returns:
+        List of MAVLinkMessage objects
+    """
+    global _dynamic_messages, _dynamic_loaded
+
+    # Try dynamic loading once if project root provided
+    if project_root is not None and not _dynamic_loaded:
+        _dynamic_loaded = True
+        _dynamic_messages = load_messages_from_xml(project_root)
+        if _dynamic_messages:
+            logger.info(f"Using {len(_dynamic_messages)} messages from MAVLink XML")
+
+    # Return dynamic messages if available, otherwise fallback
+    if _dynamic_messages:
+        return _dynamic_messages
+
+    return MAVLINK_MESSAGES
+
+
+def reset_dynamic_messages():
+    """Reset dynamic message cache (for testing)."""
+    global _dynamic_messages, _dynamic_loaded
+    _dynamic_messages = None
+    _dynamic_loaded = False
+
+
+def get_message_by_name(name: str, project_root: Optional[Path] = None) -> Optional[MAVLinkMessage]:
+    """Get a message by name, checking dynamic messages first."""
+    messages = get_all_messages(project_root)
+    for msg in messages:
+        if msg.name == name.upper():
+            return msg
+    return None

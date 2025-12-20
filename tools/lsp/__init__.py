@@ -13,6 +13,15 @@ Requirements:
     pip install pygls lsprotocol
 """
 
+from typing import TYPE_CHECKING
+
+# Lazy imports - actual loading happens in __getattr__
+# These TYPE_CHECKING imports make names visible to static analyzers
+if TYPE_CHECKING:
+    from .mavlink_data import MAVLINK_MESSAGES as MAVLINK_MESSAGES
+    from .server import QGCLanguageServer as QGCLanguageServer
+    from .server import server as server
+
 __all__ = ["QGCLanguageServer", "server", "MAVLINK_MESSAGES"]
 
 

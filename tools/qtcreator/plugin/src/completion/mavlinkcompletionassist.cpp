@@ -9,21 +9,33 @@
 
 #include "mavlinkcompletionassist.h"
 
+#include <coreplugin/editormanager/editormanager.h>
+#include <projectexplorer/project.h>
+#include <projectexplorer/projectmanager.h>
 #include <texteditor/codeassist/assistinterface.h>
 #include <texteditor/codeassist/assistproposalitem.h>
 #include <texteditor/codeassist/genericproposal.h>
 #include <texteditor/codeassist/genericproposalmodel.h>
 #include <utils/icon.h>
 
+#include <QDebug>
+#include <QDir>
+#include <QDirIterator>
+#include <QFile>
 #include <QIcon>
 #include <QRegularExpression>
+#include <QSet>
 #include <QTextDocument>
+#include <QXmlStreamReader>
+
+#include <functional>
 
 namespace QGC::Internal {
 
 // Static member initialization
 QList<MAVLinkCompletionProcessor::MAVLinkMessage> MAVLinkCompletionProcessor::s_messages;
 bool MAVLinkCompletionProcessor::s_messagesLoaded = false;
+QString MAVLinkCompletionProcessor::s_projectRoot;
 
 // Common MAVLink messages used in QGC
 static const QList<MAVLinkCompletionProcessor::MAVLinkMessage> kCommonMessages = {
@@ -162,11 +174,170 @@ void MAVLinkCompletionProcessor::loadMAVLinkMessages()
     if (s_messagesLoaded)
         return;
 
-    s_messages = kCommonMessages;
-    s_messagesLoaded = true;
+    // Try to get project root from Project Explorer
+    QString projectRoot;
+    if (auto *project = ProjectExplorer::ProjectManager::startupProject()) {
+        projectRoot = project->projectDirectory().toString();
+    }
 
-    // TODO: Parse actual MAVLink definitions from project if available
-    // This would require finding the mavlink submodule and parsing XML
+    // Try to load from XML first
+    if (!projectRoot.isEmpty() && loadFromXml(projectRoot)) {
+        qDebug() << "[QGC Plugin] Loaded" << s_messages.size()
+                 << "MAVLink messages from XML definitions";
+    } else {
+        // Fall back to hardcoded messages
+        s_messages = kCommonMessages;
+        qDebug() << "[QGC Plugin] Using" << s_messages.size()
+                 << "hardcoded MAVLink messages";
+    }
+
+    s_messagesLoaded = true;
+}
+
+bool MAVLinkCompletionProcessor::loadFromXml(const QString &projectRoot)
+{
+    QString defsDir = findMavlinkDefinitions(projectRoot);
+    if (defsDir.isEmpty())
+        return false;
+
+    QString commonXml = defsDir + QStringLiteral("/common.xml");
+    if (!QFile::exists(commonXml))
+        return false;
+
+    s_messages = parseMavlinkXml(commonXml, defsDir);
+    s_projectRoot = projectRoot;
+
+    return !s_messages.isEmpty();
+}
+
+QString MAVLinkCompletionProcessor::findMavlinkDefinitions(const QString &projectRoot)
+{
+    // Search common locations for MAVLink definitions
+    static const QStringList searchPatterns = {
+        QStringLiteral("build/cpm_modules/mavlink/*/message_definitions/v1.0"),
+        QStringLiteral("libs/mavlink/message_definitions/v1.0"),
+        QStringLiteral("submodules/mavlink/message_definitions/v1.0"),
+        QStringLiteral("mavlink/message_definitions/v1.0"),
+    };
+
+    for (const QString &pattern : searchPatterns) {
+        // Handle glob pattern with *
+        QString searchPath = projectRoot + QLatin1Char('/') + pattern;
+        int starPos = searchPath.indexOf(QLatin1Char('*'));
+
+        if (starPos >= 0) {
+            // Has wildcard - search parent directory
+            QString parentDir = searchPath.left(starPos);
+            QString suffix = searchPath.mid(starPos + 1);
+
+            QDir parent(parentDir);
+            if (!parent.exists())
+                continue;
+
+            for (const QString &entry : parent.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+                QString candidate = parentDir + entry + suffix;
+                QDir candidateDir(candidate);
+                if (candidateDir.exists() &&
+                    QFile::exists(candidate + QStringLiteral("/common.xml"))) {
+                    return candidate;
+                }
+            }
+        } else {
+            // No wildcard - direct check
+            QDir dir(searchPath);
+            if (dir.exists() &&
+                QFile::exists(searchPath + QStringLiteral("/common.xml"))) {
+                return searchPath;
+            }
+        }
+    }
+
+    return {};
+}
+
+QList<MAVLinkCompletionProcessor::MAVLinkMessage>
+MAVLinkCompletionProcessor::parseMavlinkXml(const QString &xmlPath, const QString &defsDir)
+{
+    QList<MAVLinkMessage> messages;
+    QSet<QString> processedFiles;
+
+    // Recursive helper to handle includes
+    std::function<void(const QString &)> parseFile = [&](const QString &filePath) {
+        if (processedFiles.contains(filePath))
+            return;
+        processedFiles.insert(filePath);
+
+        QFile file(filePath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qDebug() << "[QGC Plugin] Failed to open MAVLink XML:" << filePath;
+            return;
+        }
+
+        QXmlStreamReader xml(&file);
+
+        while (!xml.atEnd()) {
+            xml.readNext();
+
+            if (xml.isStartElement()) {
+                // Handle includes
+                if (xml.name() == QStringLiteral("include")) {
+                    QString includeName = xml.readElementText();
+                    QString includePath = defsDir + QLatin1Char('/') + includeName;
+                    parseFile(includePath);
+                }
+                // Parse message
+                else if (xml.name() == QStringLiteral("message")) {
+                    MAVLinkMessage msg;
+                    msg.id = xml.attributes().value(QStringLiteral("id")).toInt();
+                    msg.name = xml.attributes().value(QStringLiteral("name")).toString();
+
+                    // Parse message content
+                    while (!(xml.isEndElement() && xml.name() == QStringLiteral("message"))) {
+                        xml.readNext();
+
+                        if (xml.isStartElement()) {
+                            if (xml.name() == QStringLiteral("description")) {
+                                msg.description = xml.readElementText().simplified();
+                            } else if (xml.name() == QStringLiteral("field")) {
+                                QString fieldName =
+                                    xml.attributes().value(QStringLiteral("name")).toString();
+                                if (!fieldName.isEmpty())
+                                    msg.fields.append(fieldName);
+                            } else if (xml.name() == QStringLiteral("extensions")) {
+                                // Skip extension fields for now
+                            }
+                        }
+                    }
+
+                    if (!msg.name.isEmpty()) {
+                        // Check if message already exists (overrides from dialect)
+                        bool found = false;
+                        for (int i = 0; i < messages.size(); ++i) {
+                            if (messages[i].id == msg.id) {
+                                messages[i] = msg;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                            messages.append(msg);
+                    }
+                }
+            }
+        }
+
+        file.close();
+    };
+
+    parseFile(xmlPath);
+
+    // Sort by message ID
+    std::sort(messages.begin(), messages.end(),
+              [](const MAVLinkMessage &a, const MAVLinkMessage &b) {
+                  return a.id < b.id;
+              });
+
+    return messages;
 }
 
 QString MAVLinkCompletionProcessor::getCurrentPrefix() const
