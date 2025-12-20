@@ -103,6 +103,8 @@ Rectangle {
             onEnableCheckboxClicked: missionItem.speedSection.specifyFlightSpeed = enableCheckBoxChecked
         }
 
+        /*
+        Removed for now. May come back...
         SectionHeader {
             id: createFromTemplateSection
             Layout.fillWidth: true
@@ -166,12 +168,13 @@ Rectangle {
 
                         function _mapCenter() {
                             var centerPoint = Qt.point(editorMap.centerViewport.left + (editorMap.centerViewport.width / 2), editorMap.centerViewport.top + (editorMap.centerViewport.height / 2))
-                            return editorMap.toCoordinate(centerPoint, false /* clipToViewPort */)
+                            return editorMap.toCoordinate(centerPoint, false)
                         }
                     }
                 }
             }
         }
+        */
 
         Column {
             Layout.fillWidth: true
