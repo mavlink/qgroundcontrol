@@ -18,6 +18,7 @@ QGC_LOGGING_CATEGORY(MissionCommandsLog, "Plan.MissionCommands")
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)
+    , _advanced(false)
     , _min   (FactMetaData::minForType(FactMetaData::valueTypeDouble).toDouble())
     , _max   (FactMetaData::maxForType(FactMetaData::valueTypeDouble).toDouble())
     , _userMin(std::numeric_limits<double>::quiet_NaN())
@@ -42,6 +43,7 @@ const MissionCmdParamInfo& MissionCmdParamInfo::operator=(const MissionCmdParamI
     _param =            other._param;
     _units =            other._units;
     _nanUnchanged =     other._nanUnchanged;
+    _advanced =         other._advanced;
     _min =              other._min;
     _max =              other._max;
     _userMin =          other._userMin;
@@ -352,6 +354,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             QStringList allParamKeys;
             allParamKeys << _defaultJsonKey << _decimalPlacesJsonKey << _enumStringsJsonKey << _enumValuesJsonKey
                          << _labelJsonKey << _unitsJsonKey << _nanUnchangedJsonKey
+                         << _advancedJsonKey
                          << _minJsonKey << _maxJsonKey << _userMinJsonKey << _userMaxJsonKey;
 
             // Look for unknown keys in param object
@@ -366,6 +369,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             QList<QJsonValue::Type> types;
             types << QJsonValue::Null << QJsonValue::Double << QJsonValue::String << QJsonValue::String
                   << QJsonValue::String << QJsonValue::String << QJsonValue::Bool
+                                    << QJsonValue::Bool
                   << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
             if (!JsonHelper::validateKeyTypes(paramObject, allParamKeys, types, internalError)) {
                 errorString = _loadErrorString(internalError);
@@ -387,6 +391,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_param =         i;
             paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
+            paramInfo->_advanced =      paramObject.value(_advancedJsonKey).toBool(false);
             paramInfo->_enumStrings =   FactMetaData::splitTranslatedList(paramObject.value(_enumStringsJsonKey).toString());
 
             // The min and max values are defaulted correctly already, so only set them if a value is present in the JSON.
@@ -447,6 +452,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                                         << paramInfo->_enumStrings
                                         << paramInfo->_enumValues
                                         << paramInfo->_nanUnchanged
+                                        << paramInfo->_advanced
                                         << paramInfo->_min
                                         << paramInfo->_max
                                         << paramInfo->_userMin

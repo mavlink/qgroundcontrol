@@ -11,6 +11,7 @@ Column {
     property alias buttonGroup: cameraSectionHeader.buttonGroup
     property alias showSpacer:  cameraSectionHeader.showSpacer
     property alias checked:     cameraSectionHeader.checked
+    property bool showSectionHeader: true
 
     spacing: _margin
 
@@ -23,12 +24,13 @@ Column {
         width:          parent.width
         text:           qsTr("Camera")
         checked:        false
+        visible:        showSectionHeader
     }
 
     Column {
         width:      parent.width
         spacing:    _margin
-        visible:    cameraSectionHeader.checked
+        visible:    !showSectionHeader || cameraSectionHeader.checked
 
         LabelledFactComboBox {
             id:         cameraActionCombo
