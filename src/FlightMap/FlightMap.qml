@@ -352,10 +352,16 @@ Map {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onEntered: { forceActiveFocus() }
-        onPressed: { forceActiveFocus() } // also restore on press for touch
-        acceptedButtons: Qt.LeftButton // keep it non-blocking by setting acceptedButtons appropriately if needed
+        acceptedButtons: Qt.LeftButton
+
+        onPressed: function(mouse) {
+            forceActiveFocus() // restore keyboard focus to the Map
+            mouse.accepted = false // IMPORTANT: allow the event to propagate so underlying handlers still run
+        }
+
+        onEntered: function() { forceActiveFocus() }
     }
+
 
     PositionSource {
         id: deviceLocation

@@ -8,3 +8,11 @@ KamikazeLocManager* KamikazeLocManager::instance()
 {
     return _kamikazeLocManager();
 }
+
+void KamikazeLocManager::setCoordinate(QGeoCoordinate coord) {
+    if (coord.isValid()) {
+        _Coordinate = coord;
+        emit coordinateChanged();
+        return;
+    }
+}

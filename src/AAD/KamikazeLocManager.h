@@ -12,11 +12,7 @@ class KamikazeLocManager : public QObject
 public:
     static KamikazeLocManager* instance();
 
-    Q_INVOKABLE void setCoordinate(QGeoCoordinate coord) {
-        _Coordinate = coord;
-        qDebug() << "Current Coordinate:" << _Coordinate;
-        emit coordinateChanged();
-    }
+    Q_INVOKABLE void setCoordinate(QGeoCoordinate coord);
 
     QGeoCoordinate coordinate() const { return _Coordinate; }
 

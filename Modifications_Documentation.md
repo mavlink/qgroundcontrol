@@ -79,7 +79,7 @@ ADDED folder: src/AAD
         QGeoCoordinate _Coordinate;
     };
 ```
-	
+
 ## CMakeLists.txt:
 ```
     target_sources(${CMAKE_PROJECT_NAME}
@@ -225,4 +225,37 @@ commented out connection check
 	// }
 ```
 
+
+# Build
+
+## first run cmake with build dir: qgroundcontrol/build
+Example:
+```
+cd ~/qgroundcontrol
+rm -rf build
+mkdir build
+cd build
+CC=/usr/bin/gcc CXX=/usr/bin/g++ CCACHE_DISABLE=1 \
+cmake -S .. -B . -GNinja \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DQt6_DIR=~/Qt/6.10.0/gcc_64/lib/cmake/Qt6 \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+## set alias
+```
+nano ~/.bashrc
+```
+add
+```
+# QGroundControl dev aliases
+alias qgc-build='ninja -C ~/qgroundcontrol/build -j8 QGroundControl'
+alias qgc-run='~/qgroundcontrol/build/RelWithDebInfo/QGroundControl'
+alias qgc-br='ninja -C ~/qgroundcontrol/build -j8 QGroundControl && ~/qgroundcontrol/build/RelWithDebInfo/QGroundControl'
+
+```
+## note: -j option of ninja:
+```
+-j N   run N jobs in parallel (0 means infinity) [default=#CPUs]
+```
+### i have 12 cores and use -j8 to limit core usage and prevent freeze
 
