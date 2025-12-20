@@ -24,7 +24,6 @@ RadioComponentController::RadioComponentController(QObject *parent)
     _calRoughCenterDelta = 50;
     _calMoveDelta = 300;
     _calSettleDelta = 20;
-    _calMinDelta = 100;
 
     // Deal with parameter differences between PX4 and Ardupilot
     if (parameterExists(ParameterManager::defaultComponentId, QStringLiteral("RC1_REVERSED"))) {
@@ -37,12 +36,25 @@ RadioComponentController::RadioComponentController(QObject *parent)
         _revParamIsBool = false; // param value if -1 indicates reversed
     }
 
-    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RemoteControlCalibrationController::channelValuesChanged);
+    // Let the mav known we are starting calibration. This should turn off motors and so forth.
+    _vehicle->startCalibration(QGCMAVLink::CalibrationRadio);
 }
 
 RadioComponentController::~RadioComponentController()
 {
     // qCDebug(RadioComponentControllerLog) << Q_FUNC_INFO << this;
+    if (_vehicle) {
+        // Only PX4 is known to support this command in all versions. For other firmware which may or may not
+        // support this we don't show errors on failure.
+        _vehicle->stopCalibration(_vehicle->px4Firmware() ? true : false /* showError */);
+    }
+}
+
+void RadioComponentController::start(void)
+{
+    RemoteControlCalibrationController::start();
+    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RemoteControlCalibrationController::rawChannelValuesChanged);
+
 }
 
 void RadioComponentController::spektrumBindMode(int mode)
@@ -89,7 +101,7 @@ void RadioComponentController::_setChannelReversedParamValue(int channel, bool r
 
 void RadioComponentController::_saveStoredCalibrationValues()
 {
-    if (!_vehicle->px4Firmware() && ((_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) || (_vehicle->multiRotor()) &&  _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionThrottle]].reversed)) {
+    if (!_vehicle->px4Firmware() && ((_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) || (_vehicle->multiRotor()) &&  _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionThrottle]].channelReversed)) {
         // A reversed throttle could lead to dangerous power up issues if the firmware doesn't handle it absolutely correctly in all places.
         // So in this case fail the calibration for anything other than PX4 which is known to be able to handle this correctly.
         emit throttleReversedCalFailure();
@@ -111,15 +123,15 @@ void RadioComponentController::_saveStoredCalibrationValues()
 
             Fact* paramFact = getParameterFact(ParameterManager::defaultComponentId, trimTpl.arg(oneBasedChannel));
             if (paramFact) {
-                paramFact->setRawValue(static_cast<float>(info->rcTrim));
+                paramFact->setRawValue(static_cast<float>(info->channelTrim));
             }
             paramFact = getParameterFact(ParameterManager::defaultComponentId, minTpl.arg(oneBasedChannel));
             if (paramFact) {
-                paramFact->setRawValue(static_cast<float>(info->rcMin));
+                paramFact->setRawValue(static_cast<float>(info->channelMin));
             }
             paramFact = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(oneBasedChannel));
             if (paramFact) {
-                paramFact->setRawValue(static_cast<float>(info->rcMax));
+                paramFact->setRawValue(static_cast<float>(info->channelMax));
             }
 
             // For multi-rotor we can determine reverse setting during radio cal. For anything other than multi-rotor, servo installation
@@ -127,10 +139,10 @@ void RadioComponentController::_saveStoredCalibrationValues()
             if (_vehicle->px4Firmware() || _vehicle->multiRotor()) {
                 // APM multi-rotor has a backwards interpretation of "reversed" on the Pitch control. So be careful.
                 bool reversed;
-                if (_vehicle->px4Firmware() || info->function != stickFunctionPitch) {
-                    reversed = info->reversed;
+                if (_vehicle->px4Firmware() || info->stickFunction != stickFunctionPitch) {
+                    reversed = info->channelReversed;
                 } else {
-                    reversed = !info->reversed;
+                    reversed = !info->channelReversed;
                 }
                 _setChannelReversedParamValue(chan, reversed);
             }
@@ -166,7 +178,7 @@ void RadioComponentController::_saveStoredCalibrationValues()
         }
     }
 
-    _stopCalibration();
+    // Read back since validation may have changed values
     _readStoredCalibrationValues();
 }
 
@@ -176,7 +188,7 @@ void RadioComponentController::_readStoredCalibrationValues()
 
     for (int i = 0; i < _chanMax; i++) {
         ChannelInfo *const info = &_rgChannelInfo[i];
-        info->function = stickFunctionMax;
+        info->stickFunction = stickFunctionMax;
     }
 
     for (size_t i = 0; i < stickFunctionMax; i++) {
@@ -193,29 +205,29 @@ void RadioComponentController::_readStoredCalibrationValues()
         ChannelInfo *const info = &_rgChannelInfo[i];
 
         if (!parameterExists(ParameterManager::defaultComponentId, minTpl.arg(i+1))) {
-            info->rcTrim = 1500;
-            info->rcMin = 1100;
-            info->rcMax = 1900;
-            info->reversed = false;
+            info->channelTrim = 1500;
+            info->channelMin = 1100;
+            info->channelMax = 1900;
+            info->channelReversed = false;
             continue;
         }
 
         Fact *paramFact = getParameterFact(ParameterManager::defaultComponentId, trimTpl.arg(i+1));
         if (paramFact) {
-            info->rcTrim = paramFact->rawValue().toInt();
+            info->channelTrim = paramFact->rawValue().toInt();
         }
 
         paramFact = getParameterFact(ParameterManager::defaultComponentId, minTpl.arg(i+1));
         if (paramFact) {
-            info->rcMin = paramFact->rawValue().toInt();
+            info->channelMin = paramFact->rawValue().toInt();
         }
 
         paramFact = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(i+1));
         if (paramFact) {
-            info->rcMax = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt();
+            info->channelMax = getParameterFact(ParameterManager::defaultComponentId, maxTpl.arg(i+1))->rawValue().toInt();
         }
 
-        info->reversed = _channelReversedParamValue(i);
+        info->channelReversed = _channelReversedParamValue(i);
     }
 
     for (int i=0; i<stickFunctionMax; i++) {
@@ -228,7 +240,7 @@ void RadioComponentController::_readStoredCalibrationValues()
 
             if (paramChannel > 0 && paramChannel <= _chanMax) {
                 _rgFunctionChannelMapping[i] = paramChannel - 1;
-                _rgChannelInfo[paramChannel - 1].function = static_cast<StickFunction>(i);
+                _rgChannelInfo[paramChannel - 1].stickFunction = static_cast<StickFunction>(i);
             }
         }
     }

@@ -13,6 +13,7 @@
 #include "APMSubFrameComponent.h"
 #include "APMTuningComponent.h"
 #include "ESP8266Component.h"
+#include "JoystickComponent.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
@@ -131,6 +132,10 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
             _apmRemoteSupportComponent = new APMRemoteSupportComponent(_vehicle, this);
             _apmRemoteSupportComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_apmRemoteSupportComponent)));
+
+            _joystickComponent = new JoystickComponent(_vehicle, this, this);
+            _joystickComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_joystickComponent)));
         } else {
             qCWarning(APMAutoPilotPluginLog) << "Call to vehicleComponents prior to parametersReady";
         }

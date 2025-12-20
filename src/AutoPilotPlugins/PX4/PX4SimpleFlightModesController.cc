@@ -5,7 +5,6 @@
 
 PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
     : _activeFlightMode(0)
-    , _channelCount(QGCMAVLink::maxRcChannels)
 
 {
     QStringList usedParams;
@@ -20,13 +19,20 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
-void PX4SimpleFlightModesController::channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
+void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues)
 {
+    int channelCount = pwmValues.size();
+
     _rcChannelValues.clear();
     for (int i=0; i<channelCount; i++) {
         _rcChannelValues.append(pwmValues[i]);
     }
     emit rcChannelValuesChanged();
+
+    if (channelCount != _channelCount) {
+        _channelCount = channelCount;
+        emit channelCountChanged();
+    }
 
     Fact* pFact = getParameterFact(-1, "RC_MAP_FLTMODE");
     if(!pFact) {

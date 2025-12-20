@@ -11,6 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ESP8266ComponentController.h
         MotorComponent.cc
         MotorComponent.h
+        JoystickComponent.cc
+        JoystickComponent.h
         RadioComponentController.cc
         RadioComponentController.h
         SyslinkComponent.cc
@@ -33,6 +35,7 @@ qt_add_qml_module(AutoPilotPluginsCommonModule
     QML_FILES
         ESP8266Component.qml
         ESP8266ComponentSummary.qml
+        JoystickComponentSummary.qml
         MotorComponent.qml
         RadioComponent.qml
         SyslinkComponent.qml
