@@ -129,7 +129,7 @@ jobs:
           modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Set up MSVC environment
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
