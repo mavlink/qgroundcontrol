@@ -8,7 +8,7 @@ This directory contains development tools, scripts, and configuration files for 
 tools/
 ├── analyze.sh               # Static analysis (clang-tidy, cppcheck)
 ├── check-deps.sh            # Check for outdated dependencies
-├── check-sizes.py           # Check artifact sizes against thresholds
+├── check-sizes.py           # Report artifact sizes
 ├── clean.sh                 # Clean build artifacts and caches
 ├── common.sh                # Shared shell functions
 ├── coverage.sh              # Code coverage reports
@@ -164,16 +164,13 @@ Check for outdated dependencies and submodules.
 
 ### check-sizes.py
 
-Check artifact sizes against thresholds. Used by CI and locally to catch unexpected size increases.
+Report artifact sizes. Used by CI to track build output sizes.
 
 ```bash
-./tools/check-sizes.py build/              # Check local build artifacts
+./tools/check-sizes.py build/              # Report local build artifacts
 ./tools/check-sizes.py artifacts/ --json   # Output JSON (for CI)
 ./tools/check-sizes.py --markdown          # Output markdown table
-./tools/check-sizes.py --list-thresholds   # Show configured thresholds
 ```
-
-Default thresholds: AppImage 200MB, DMG 150MB, EXE 200MB, APK 150MB
 
 ### generate-docs.sh
 
