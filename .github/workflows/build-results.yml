@@ -28,7 +28,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -44,7 +44,7 @@ jobs:
           echo "json=$(jq -c . sizes.json)" >> $GITHUB_OUTPUT
 
       - name: Upload size report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: size-report-${{ github.event.workflow_run.id }}
           path: sizes.json
@@ -52,14 +52,14 @@ jobs:
 
       - name: Save baseline sizes (master only)
         if: github.event.workflow_run.head_branch == 'master'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: sizes.json
           key: artifact-sizes-baseline-${{ github.run_id }}
 
       - name: Save baseline sizes as latest
         if: github.event.workflow_run.head_branch == 'master'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: sizes.json
           key: artifact-sizes-baseline-latest
@@ -80,7 +80,7 @@ jobs:
 
       - name: Get PR number
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const run = context.payload.workflow_run;
@@ -98,7 +98,7 @@ jobs:
       - name: Collect build status
         if: steps.pr.outputs.result != 'null'
         id: builds
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const headSha = context.payload.workflow_run.head_sha;
@@ -157,7 +157,7 @@ jobs:
 
       - name: Download PR artifacts for size comparison
         if: steps.pr.outputs.result != 'null'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -166,7 +166,7 @@ jobs:
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != 'null'
         id: baseline
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-latest

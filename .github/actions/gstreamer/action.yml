@@ -42,7 +42,7 @@ runs:
         echo "GST_PLUGIN_PATH=${{ inputs.prefix }}/lib/$ARCH_DIR/gstreamer-1.0" >> "$GITHUB_ENV"
 
     - name: Save artifact
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: GStreamer-${{ inputs.build-type }}
         path: ${{ inputs.prefix }}
