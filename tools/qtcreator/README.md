@@ -14,14 +14,17 @@ QGroundControl development involves several cross-cutting patterns (Fact System,
 ## Directory Structure
 
 ```
-qtcreator-plugin/
+qtcreator/
 ├── README.md                      # This file
 ├── snippets/
 │   └── qgc-cpp.xml                # QtCreator C++ snippets
-└── lua/
-    └── QGCTools/                  # QtCreator Lua extension
-        ├── QGCTools.lua           # Extension spec
-        └── init.lua               # Main implementation
+├── lua/
+│   └── QGCTools/                  # QtCreator Lua extension (14+)
+│       ├── QGCTools.lua           # Extension spec
+│       └── init.lua               # Main implementation
+└── plugin/                        # Native C++ plugin
+    ├── CMakeLists.txt             # Plugin build config
+    └── src/                       # Plugin source code
 ```
 
 **Related tools:**

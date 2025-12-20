@@ -102,7 +102,7 @@ lspconfig.qgc_lsp.setup({})
 **Option B: Via Lua Extension (Recommended)**
 
 If you have the QGCTools Lua extension installed, the LSP server is automatically configured.
-See `tools/qtcreator-plugin/README.md` for installation.
+See `tools/qtcreator/README.md` for installation.
 
 #### Sublime Text (with LSP package)
 

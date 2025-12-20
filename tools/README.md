@@ -32,8 +32,9 @@ tools/
 │   └── factgroup/           # FactGroup generator
 ├── log-analyzer/            # QGC log analysis tools
 ├── locators/                # CLI search tools (Facts, MAVLink)
-├── qtcreator-plugin/        # QtCreator IDE integration
+├── qtcreator/               # QtCreator IDE integration
 │   ├── lua/                 # Lua extension (Qt Creator 14+)
+│   ├── plugin/              # Native C++ plugin
 │   └── snippets/            # QtCreator snippets
 ├── schemas/                 # JSON schemas for editor validation
 ├── setup/                   # Environment setup scripts
