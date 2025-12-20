@@ -25,6 +25,9 @@ tools/
 │   └── valgrind.supp        # Valgrind suppressions
 ├── log-analyzer/            # QGC log analysis tools
 ├── mock-mavlink/            # MAVLink vehicle simulator
+├── qtcreator-plugin/        # QtCreator IDE integration tools
+├── analyzers/               # Static analysis scripts
+├── generators/              # Code generation tools
 ├── setup/                   # Environment setup scripts
 └── translations/            # Translation tools
 ```
@@ -218,6 +221,59 @@ sudo ./tools/setup/install-dependencies-debian.sh
 # Build GStreamer from source (Linux, optional)
 ./tools/setup/build-gstreamer.sh -p /opt/gstreamer
 ```
+
+## Static Analyzers
+
+Scripts in `analyzers/` perform QGC-specific static analysis.
+
+### vehicle_null_check.py
+
+Detects unsafe `activeVehicle()` access patterns that could cause null pointer dereferences.
+
+```bash
+# Analyze specific files
+python3 tools/analyzers/vehicle_null_check.py src/Vehicle/*.cc
+
+# Analyze entire directory
+python3 tools/analyzers/vehicle_null_check.py src/
+
+# Run via pre-commit
+pre-commit run vehicle-null-check --all-files
+```
+
+**Detects:**
+- `activeVehicle()->method()` without prior null check
+- `getParameter()` result used without validation
+
+## Code Generators
+
+Scripts in `generators/` generate boilerplate code from specifications.
+
+### FactGroup Generator
+
+Generate complete FactGroup boilerplate (header, source, JSON metadata).
+
+```bash
+# Preview generated files
+python -m tools.generators.factgroup.cli \
+  --name Example \
+  --facts "temp:double:degC,pressure:double:Pa" \
+  --dry-run
+
+# Generate with MAVLink handlers
+python -m tools.generators.factgroup.cli \
+  --name Wind \
+  --facts "direction:double:deg,speed:double:m/s" \
+  --mavlink "WIND_COV,HIGH_LATENCY2" \
+  --output src/Vehicle/FactGroups/
+```
+
+**Generates:**
+- `VehicleExampleFactGroup.h` - Header with Q_PROPERTY, accessors, members
+- `VehicleExampleFactGroup.cc` - Implementation with constructor, handlers
+- `ExampleFact.json` - FactMetaData JSON
+
+**Requires:** `pip install jinja2`
 
 ## Debugging Tools
 

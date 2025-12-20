@@ -11,6 +11,11 @@
 .vs/
 .settings/
 
+# VS Code - track .default files, ignore personal overrides
+.vscode/*
+!.vscode/extensions.json
+!.vscode/*.default.json
+
 # Editor temp/backup files
 *.swp
 *~
