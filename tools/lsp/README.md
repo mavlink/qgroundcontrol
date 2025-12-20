@@ -29,9 +29,28 @@ The server provides intelligent autocomplete for MAVLink code patterns:
 - Full case statement templates with decode pattern
 - Automatically includes struct declaration and decode call
 
+### Fact JSON Completion
+
+The server provides intelligent autocomplete for `*Fact.json` metadata files:
+
+**Property Keys** — After `{` or `,` in the Facts array:
+- All 22 Fact properties (name, type, units, min, max, etc.)
+- Required properties (`name`, `type`) sorted first
+- Property descriptions and type info
+
+**Type Values** — After `"type": "`:
+- All 14 valid Fact types (uint8, int32, double, string, bool, etc.)
+- Type descriptions (bit widths, ranges)
+
+**Unit Values** — After `"units": "`:
+- 33+ common units (m, m/s, deg, %, mV, etc.)
+- Unit descriptions
+
+**Boolean Values** — After boolean property names:
+- `true` / `false` completion
+
 ### Planned Features
 
-- Fact name completion in JSON metadata files
 - Hover documentation for MAVLink types (partially implemented via completion resolve)
 - Go-to-definition for Facts
 
@@ -143,6 +162,7 @@ Add to `LSP.sublime-settings`:
 tools/lsp/
 ├── server.py           # Main LSP server (pygls-based)
 ├── mavlink_data.py     # MAVLink message definitions for completion
+├── fact_schema.py      # Fact JSON schema for completion
 ├── __init__.py
 ├── __main__.py         # Entry point for `python -m tools.lsp`
 ├── analyzers/          # Diagnostic providers

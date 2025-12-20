@@ -27,6 +27,13 @@ from pygls.lsp.server import LanguageServer
 from pygls.workspace import TextDocument
 
 from .mavlink_data import MAVLINK_MESSAGES, MAVLinkMessage
+from .fact_schema import (
+    FACT_PROPERTIES,
+    FACT_PROPERTIES_BY_NAME,
+    COMMON_UNITS,
+    ROOT_KEYS,
+    get_type_values,
+)
 
 # Logging setup
 logging.basicConfig(
@@ -63,6 +70,16 @@ class QGCLanguageServer(LanguageServer):
         """Check if the URI points to a C++ file."""
         path = uri.lower()
         return any(path.endswith(ext) for ext in ('.cpp', '.cc', '.cxx', '.h', '.hpp', '.hxx'))
+
+    def _is_fact_json_file(self, uri: str) -> bool:
+        """Check if the URI points to a Fact metadata JSON file."""
+        path = uri.lower()
+        # Match *Fact.json, *.FactMetaData.json, or files in Vehicle/FactGroups
+        if path.endswith('fact.json') or path.endswith('.factmetadata.json'):
+            return True
+        if '/factgroups/' in path and path.endswith('.json'):
+            return True
+        return False
 
     def _check_vehicle_null_safety(self, document: TextDocument) -> list[types.Diagnostic]:
         """Check for unsafe activeVehicle() access patterns."""
@@ -249,17 +266,13 @@ def did_save(ls: QGCLanguageServer, params: types.DidSaveTextDocumentParams):
 @server.feature(
     types.TEXT_DOCUMENT_COMPLETION,
     types.CompletionOptions(
-        trigger_characters=["_", "M", "m"],
+        trigger_characters=["_", "M", "m", '"', ":"],
         resolve_provider=True,
     ),
 )
 def completion(ls: QGCLanguageServer, params: types.CompletionParams) -> types.CompletionList:
-    """Provide MAVLink message completions."""
+    """Provide MAVLink message and Fact JSON completions."""
     doc = ls.workspace.get_text_document(params.text_document.uri)
-
-    # Only provide completions for C++ files
-    if not ls._is_cpp_file(doc.uri):
-        return types.CompletionList(is_incomplete=False, items=[])
 
     # Get the current line and cursor position
     line_num = params.position.line
@@ -271,6 +284,18 @@ def completion(ls: QGCLanguageServer, params: types.CompletionParams) -> types.C
 
     line = lines[line_num]
     prefix_text = line[:char_pos]
+
+    # Handle Fact JSON files
+    if ls._is_fact_json_file(doc.uri):
+        items = _get_fact_json_completions(lines, line_num, char_pos, prefix_text)
+        if items:
+            logger.debug(f"Fact JSON completion: {len(items)} items")
+            return types.CompletionList(is_incomplete=False, items=items)
+        return types.CompletionList(is_incomplete=False, items=[])
+
+    # Handle C++ files
+    if not ls._is_cpp_file(doc.uri):
+        return types.CompletionList(is_incomplete=False, items=[])
 
     items: list[types.CompletionItem] = []
 
@@ -453,6 +478,183 @@ def _is_in_switch_context(lines: list[str], line_num: int, char_pos: int) -> boo
             return brace_depth <= 0
 
     return False
+
+
+def _get_fact_json_completions(
+    lines: list[str], line_num: int, char_pos: int, prefix_text: str
+) -> list[types.CompletionItem]:
+    """Get completion items for Fact JSON files."""
+    items: list[types.CompletionItem] = []
+
+    # Determine context: are we in the Facts array or at root level?
+    in_facts_array = _is_in_facts_array(lines, line_num)
+
+    # Check if we're typing a property key (after { or ,)
+    # Pattern: after opening brace or comma, possibly with whitespace and quote
+    key_context = re.search(r'[{,]\s*"(\w*)$', prefix_text)
+    if key_context:
+        filter_text = key_context.group(1).lower()
+        if in_facts_array:
+            items = _get_fact_property_completions(filter_text)
+        else:
+            items = _get_root_key_completions(filter_text)
+        return items
+
+    # Check if we're typing a value for "type": "
+    type_value_context = re.search(r'"type"\s*:\s*"(\w*)$', prefix_text)
+    if type_value_context:
+        filter_text = type_value_context.group(1).lower()
+        items = _get_type_value_completions(filter_text)
+        return items
+
+    # Check if we're typing a value for "units": "
+    units_value_context = re.search(r'"units"\s*:\s*"([^"]*)$', prefix_text)
+    if units_value_context:
+        filter_text = units_value_context.group(1).lower()
+        items = _get_units_value_completions(filter_text)
+        return items
+
+    # Check if we're typing a boolean value
+    bool_value_context = re.search(
+        r'"(volatileValue|hasControl|readOnly|writeOnly|nanUnchanged|rebootRequired)"\s*:\s*(\w*)$',
+        prefix_text
+    )
+    if bool_value_context:
+        filter_text = bool_value_context.group(2).lower()
+        items = _get_boolean_completions(filter_text)
+        return items
+
+    return items
+
+
+def _is_in_facts_array(lines: list[str], line_num: int) -> bool:
+    """Check if cursor is inside the QGC.MetaData.Facts array."""
+    # Look backwards for "QGC.MetaData.Facts" key
+    bracket_depth = 0
+    for i in range(line_num, max(-1, line_num - 100), -1):
+        line = lines[i] if i < len(lines) else ""
+        bracket_depth += line.count(']') - line.count('[')
+
+        if '"QGC.MetaData.Facts"' in line or '"QGC.MetaData.Facts":' in line:
+            return bracket_depth <= 0
+
+    return False
+
+
+def _get_fact_property_completions(filter_text: str) -> list[types.CompletionItem]:
+    """Get completion items for Fact property keys."""
+    items = []
+    for prop in FACT_PROPERTIES:
+        if filter_text and not prop.name.lower().startswith(filter_text):
+            continue
+
+        # Required properties get higher priority
+        sort_prefix = "0" if prop.required else "1"
+
+        detail = f"{'Required' if prop.required else 'Optional'}"
+        if prop.type == "enum":
+            detail += f" | {', '.join(prop.enum_values[:3])}..."
+
+        items.append(types.CompletionItem(
+            label=prop.name,
+            kind=types.CompletionItemKind.Property,
+            detail=detail,
+            documentation=prop.description,
+            insert_text=f'"{prop.name}": ',
+            insert_text_format=types.InsertTextFormat.PlainText,
+            sort_text=f"{sort_prefix}_{prop.name}",
+        ))
+    return items
+
+
+def _get_root_key_completions(filter_text: str) -> list[types.CompletionItem]:
+    """Get completion items for root-level JSON keys."""
+    items = []
+    for key, description in ROOT_KEYS:
+        if filter_text and not key.lower().startswith(filter_text):
+            continue
+
+        items.append(types.CompletionItem(
+            label=key,
+            kind=types.CompletionItemKind.Property,
+            detail="Root property",
+            documentation=description,
+            insert_text=f'"{key}": ',
+            insert_text_format=types.InsertTextFormat.PlainText,
+        ))
+    return items
+
+
+def _get_type_value_completions(filter_text: str) -> list[types.CompletionItem]:
+    """Get completion items for Fact type values."""
+    items = []
+    type_values = get_type_values()
+
+    for type_val in type_values:
+        if filter_text and not type_val.lower().startswith(filter_text):
+            continue
+
+        # Add description based on type
+        descriptions = {
+            "uint8": "Unsigned 8-bit integer (0-255)",
+            "int8": "Signed 8-bit integer (-128 to 127)",
+            "uint16": "Unsigned 16-bit integer (0-65535)",
+            "int16": "Signed 16-bit integer",
+            "uint32": "Unsigned 32-bit integer",
+            "int32": "Signed 32-bit integer",
+            "uint64": "Unsigned 64-bit integer",
+            "int64": "Signed 64-bit integer",
+            "float": "32-bit floating point",
+            "double": "64-bit floating point",
+            "string": "Text string",
+            "bool": "Boolean (true/false)",
+            "elapsedTimeInSeconds": "Time duration in seconds",
+            "custom": "Custom type (requires special handling)",
+        }
+
+        items.append(types.CompletionItem(
+            label=type_val,
+            kind=types.CompletionItemKind.EnumMember,
+            detail="Fact type",
+            documentation=descriptions.get(type_val, ""),
+            insert_text=f'{type_val}"',
+            insert_text_format=types.InsertTextFormat.PlainText,
+        ))
+    return items
+
+
+def _get_units_value_completions(filter_text: str) -> list[types.CompletionItem]:
+    """Get completion items for common unit values."""
+    items = []
+    for unit, description in COMMON_UNITS:
+        if filter_text and not unit.lower().startswith(filter_text):
+            continue
+
+        items.append(types.CompletionItem(
+            label=unit,
+            kind=types.CompletionItemKind.Unit,
+            detail=description,
+            insert_text=f'{unit}"',
+            insert_text_format=types.InsertTextFormat.PlainText,
+        ))
+    return items
+
+
+def _get_boolean_completions(filter_text: str) -> list[types.CompletionItem]:
+    """Get completion items for boolean values."""
+    items = []
+    for val in ["true", "false"]:
+        if filter_text and not val.startswith(filter_text):
+            continue
+
+        items.append(types.CompletionItem(
+            label=val,
+            kind=types.CompletionItemKind.Keyword,
+            detail="Boolean",
+            insert_text=val,
+            insert_text_format=types.InsertTextFormat.PlainText,
+        ))
+    return items
 
 
 def main():
