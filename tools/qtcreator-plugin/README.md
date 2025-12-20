@@ -24,7 +24,8 @@ qtcreator-plugin/
         └── init.lua               # Main implementation
 ```
 
-**Note:** Editor-agnostic tools moved to top-level `tools/` directories:
+**Related tools:**
+- `tools/lsp/` - Language Server for real-time diagnostics
 - `tools/schemas/` - JSON schemas for validation
 - `tools/locators/` - CLI search tools
 
@@ -118,6 +119,15 @@ Restart Qt Creator after installation. Access via **Tools → QGC**.
 2. Enter search query or generator parameters
 3. Results shown in picker dialog
 4. Click result to open file at line
+
+**LSP Integration (Qt Creator 14+):**
+
+The Lua extension automatically registers the QGC Language Server for real-time diagnostics:
+- Warnings appear inline as you type (no manual analysis needed)
+- Detects `null-vehicle` and `null-parameter` issues
+- Requires: `pip install pygls lsprotocol`
+
+If LSP setup fails, the menu-based analyzers still work as a fallback.
 
 ### 4. Vehicle Null-Check Analyzer (CLI)
 

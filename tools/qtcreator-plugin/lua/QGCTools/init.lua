@@ -406,5 +406,59 @@ a.create({
     onTriggered = runGeneratorWizard,
 })
 
+-- ============================================================================
+-- LSP Client Integration
+-- ============================================================================
+
+-- Try to register QGC LSP server with Qt Creator's built-in LSP client
+local function setupLspClient()
+    local ok, lsp = pcall(require, "lsp")
+    if not ok then
+        print("[QGC Tools] LSP module not available (Qt Creator < 14.0)")
+        return false
+    end
+
+    local projectRoot = getProjectRoot()
+    if not projectRoot then
+        print("[QGC Tools] LSP: No project root found, will retry when project opens")
+        return false
+    end
+
+    -- Check if LSP server exists
+    local serverPath = projectRoot .. "/tools/lsp/server.py"
+    if not utils.fileExists(serverPath) then
+        print("[QGC Tools] LSP: Server not found at " .. serverPath)
+        return false
+    end
+
+    -- Create LSP client for QGC
+    local client = lsp.Client.create({
+        name = "QGC LSP",
+        cmd = function()
+            return { Config.python, "-m", "tools.lsp" }
+        end,
+        transport = "stdio",
+        languageFilter = {
+            patterns = { "*.cpp", "*.cc", "*.cxx", "*.h", "*.hpp", "*.hxx" },
+            mimeTypes = { "text/x-c++src", "text/x-c++hdr", "text/x-csrc", "text/x-chdr" },
+        },
+        startBehavior = "RequiresFile",
+        settings = {},
+        initializationOptions = {},
+    })
+
+    if client then
+        print("[QGC Tools] LSP client registered - diagnostics active for C++ files")
+        return true
+    else
+        print("[QGC Tools] LSP: Failed to create client")
+        return false
+    end
+end
+
+-- Attempt LSP setup (may fail if no project is open yet)
+local lspOk = setupLspClient()
+
 -- Status message on load
-print("[QGC Tools] Extension loaded - access via Tools > QGC menu")
+local lspStatus = lspOk and " + LSP diagnostics" or ""
+print("[QGC Tools] Extension loaded - access via Tools > QGC menu" .. lspStatus)
