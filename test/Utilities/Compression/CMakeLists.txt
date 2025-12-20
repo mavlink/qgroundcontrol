@@ -1,12 +1,12 @@
 # ============================================================================
 # Compression Utilities Unit Tests
-# Tests for decompression (GZIP, XZ, ZIP)
+# Tests for QGCCompression (format detection, ZIP, GZIP, XZ)
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        DecompressionTest.cc
-        DecompressionTest.h
+        QGCCompressionTest.cc
+        QGCCompressionTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -16,7 +16,7 @@
 #include "QGCCorePlugin.h"
 #include "FirmwareUpgradeSettings.h"
 #include "SettingsManager.h"
-#include "QGCZlib.h"
+#include "QGCCompression.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
@@ -664,7 +664,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
         qCDebug(FirmwareUpgradeLog) << "_ardupilotManifestDownloadFinished" << remoteFile << localFile;
 
         QString jsonFileName(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath("ArduPilot.Manifest.json"));
-        if (!QGCZlib::inflateGzipFile(localFile, jsonFileName)) {
+        if (!QGCCompression::decompressFile(localFile, jsonFileName)) {
             qCWarning(FirmwareUpgradeLog) << "Inflate of compressed manifest failed" << localFile;
             return;
         }
