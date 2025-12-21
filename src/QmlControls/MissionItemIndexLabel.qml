@@ -73,8 +73,6 @@ Canvas {
         paintGimbalYaw(context)
     }
 
-    Behavior on _indicatorRadius { PropertyAnimation {} }
-
     Rectangle {
         id:                     labelControl
         anchors.leftMargin:     -((_labelMargin * 2) + indicator.width)
