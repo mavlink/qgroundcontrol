@@ -2,21 +2,73 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [master]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to create release for (e.g., v4.4.0)'
-        required: true
-        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
+  semantic-release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      new_release: ${{ steps.release.outputs.new_release }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Run semantic-release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./tools/release.sh --install
+
+          # Capture semantic-release output
+          set +e
+          OUTPUT=$(./tools/release.sh --run 2>&1)
+          EXIT_CODE=$?
+          echo "$OUTPUT"
+          set -e
+
+          # Check if a new release was created
+          if echo "$OUTPUT" | grep -q "Published release"; then
+            VERSION=$(echo "$OUTPUT" | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+")
+            echo "new_release=true" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "New release: v$VERSION"
+          else
+            echo "new_release=false" >> $GITHUB_OUTPUT
+            echo "No new release"
+          fi
+
   wait-for-builds:
     name: Wait for Platform Builds
+    needs: semantic-release
+    if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
 
@@ -32,9 +84,10 @@ jobs:
           timeout-minutes: 170
           poll-interval-minutes: 1
 
-  create-release:
-    name: Create GitHub Release
-    needs: wait-for-builds
+  upload-artifacts:
+    name: Upload Release Artifacts
+    needs: [semantic-release, wait-for-builds]
+    if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -49,21 +102,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get tag info
-        id: tag
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          if [ -z "$TAG" ] || [ "$TAG" = "$GITHUB_REF" ]; then
-            TAG="${{ inputs.tag }}"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "Tag: $TAG"
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+          artifact-name: sbom-spdx
 
-          if [[ "$TAG" == *"-"* ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Generate SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          artifact-name: sbom-cyclonedx
 
       - name: Download artifacts
         uses: actions/download-artifact@v7
@@ -74,16 +127,15 @@ jobs:
       - name: List artifacts
         run: find artifacts -type f | head -50 || echo "No artifacts found"
 
-      - name: Create Release
+      - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: QGroundControl ${{ steps.tag.outputs.tag }}
-          generate_release_notes: true
-          prerelease: ${{ steps.tag.outputs.prerelease }}
+          tag_name: v${{ needs.semantic-release.outputs.version }}
           files: |
             artifacts/**/*.AppImage
             artifacts/**/*.dmg
             artifacts/**/*.exe
             artifacts/**/*.apk
+            sbom.spdx.json
+            sbom.cdx.json
           fail_on_unmatched_files: false

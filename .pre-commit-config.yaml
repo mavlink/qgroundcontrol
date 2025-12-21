@@ -125,11 +125,19 @@ repos:
     hooks:
       - id: qmllint
         name: Lint QML files
-        entry: bash -c 'if command -v qmllint &>/dev/null; then qmllint "$@"; else echo "qmllint not found - skipping (install Qt SDK or qt6-declarative-dev-tools)" >&2; exit 0; fi' --
+        entry: ./tools/analyze.sh --tool qmllint
         language: system
         files: \.qml$
         exclude: ^build/
-        pass_filenames: true
+        pass_filenames: false
+
+      - id: clazy
+        name: Qt static analysis (clazy)
+        entry: ./tools/analyze.sh --tool clazy
+        language: system
+        types: [c++]
+        exclude: ^(build/|libs/|test/)
+        pass_filenames: false
 
       - id: check-no-qassert
         name: Check for Q_ASSERT in production code

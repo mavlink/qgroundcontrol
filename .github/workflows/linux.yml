@@ -145,7 +145,9 @@ jobs:
         working-directory: ${{ runner.temp }}/build/Debug
         run: |
           set +e
-          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee ../test-output.txt
+          xvfb-run -a ./QGroundControl --unittest \
+            -o ../junit-results.xml,junitxml \
+            -o -,txt 2>&1 | tee ../test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
           exit $TEST_EXIT_CODE
@@ -155,8 +157,19 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.arch }}
-          path: ${{ runner.temp }}/build/test-output.txt
+          path: |
+            ${{ runner.temp }}/build/test-output.txt
+            ${{ runner.temp }}/build/junit-results.xml
           retention-days: 7
+
+      - name: Upload to Trunk Flaky Tests
+        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: trunk-io/analytics-uploader@v1
+        with:
+          junit-paths: ${{ runner.temp }}/build/junit-results.xml
+          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
