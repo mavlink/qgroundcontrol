@@ -1,5 +1,6 @@
 name: iOS
 
+# iOS builds are experimental - manual trigger only until stable
 on:
   workflow_dispatch:
 

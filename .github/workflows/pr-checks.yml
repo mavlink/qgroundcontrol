@@ -45,7 +45,7 @@ jobs:
 
       - name: Suggest title with GitHub Models
         if: steps.title_check.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -170,7 +170,7 @@ jobs:
 
       - name: Minimize suggestion if title valid
         if: steps.title_check.outcome == 'success'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const pr = context.payload.pull_request;

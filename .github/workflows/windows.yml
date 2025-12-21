@@ -16,7 +16,6 @@ on:
       - 'deploy/windows/**'
       - 'src/**'
       - 'test/**'
-      - 'custom-example/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*windows*'
@@ -44,42 +43,37 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ matrix.custom_build && 'Custom' || matrix.arch }} ${{ matrix.build_type }}
+    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
+        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
+        variant: [amd64, arm64, arm64-cross]
         include:
-          - os: windows-2022
+          - variant: amd64
+            os: windows-2022
             host: windows
             arch: win64_msvc2022_64
-            build_type: Release
             package: QGroundControl-installer-AMD64
 
-          - os: windows-11-arm
+          - variant: arm64
+            os: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
-            build_type: Release
             package: QGroundControl-installer-ARM64
 
           # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
           # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
           # Tracking: https://github.com/miurahr/aqtinstall/pull/952
-          - os: windows-2022
+          - variant: arm64-cross
+            os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
-            build_type: Release
             package: QGroundControl-installer-AMD64-ARM64
             qt_version: '6.10.0'
-
-          - os: windows-2022
-            host: windows
-            arch: win64_msvc2022_64
-            build_type: Release
-            custom_build: true
-            package: Custom-QGroundControl
 
     defaults:
       run:
@@ -97,10 +91,6 @@ jobs:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
-
-      - name: Enable custom build
-        if: matrix.custom_build
-        uses: ./.github/actions/custom-build
 
       - name: Get build config
         id: config
@@ -153,21 +143,16 @@ jobs:
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Verify Executable
-        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && !matrix.custom_build
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
         run: QGroundControl.exe --simple-boot-test
-
-      - name: Verify Custom Executable
-        if: matrix.custom_build
-        working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
-        run: Custom-QGroundControl.exe --simple-boot-test
 
       - name: Create Installer
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Upload artifact (installer)
-        if: matrix.build_type == 'Release' && !matrix.custom_build
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ matrix.package }}.exe

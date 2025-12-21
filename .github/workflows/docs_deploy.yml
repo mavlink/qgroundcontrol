@@ -28,14 +28,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ steps.config.outputs.node_version }}
+          node-version: 'lts/*'
           cache: npm
 
       - name: Install dependencies

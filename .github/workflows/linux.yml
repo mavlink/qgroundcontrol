@@ -65,7 +65,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [Debug, Release]
+        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Debug", "Release"]') }}
         os: [ubuntu-24.04-arm, ubuntu-22.04]
         include:
           - os: ubuntu-24.04-arm
@@ -154,27 +154,13 @@ jobs:
         with:
           category: "/language:c-cpp"
 
-      - name: Verify Executable
-        if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
-        run: xvfb-run -a ./QGroundControl --simple-boot-test
-
-      - name: Create AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config ${{ matrix.build_type }}
-
-      - name: Verify AppImage
-        if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
-
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
         id: tests
-        working-directory: ${{ runner.temp }}/build
+        working-directory: ${{ runner.temp }}/build/Debug
         run: |
           set +e
-          xvfb-run -a ./${{ matrix.package }}.AppImage --unittest 2>&1 | tee test-output.txt
+          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee ../test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
           exit $TEST_EXIT_CODE
@@ -192,6 +178,20 @@ jobs:
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
+
+      - name: Verify Executable
+        if: matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
+        run: xvfb-run -a ./QGroundControl --simple-boot-test
+
+      - name: Create AppImage
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config ${{ matrix.build_type }}
+
+      - name: Verify AppImage
+        if: matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

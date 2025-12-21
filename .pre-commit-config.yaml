@@ -28,6 +28,13 @@ repos:
         args: ['--fix=no']
         exclude: \.(bat|ps1)$
 
+  # Secret detection
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.92.4
+    hooks:
+      - id: trufflehog
+        args: ['--config=tools/configs/trufflehog.yaml']
+
   # C++ formatting (check-only, use 'clang-format -i' to fix)
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v21.1.7

@@ -147,7 +147,13 @@ jobs:
         shell: bash
         run: |
           TEMP_DIR="${RUNNER_TEMP//\\//}"  # Convert backslashes for Windows
-          cp "${TEMP_DIR}/build/android-build/"*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
+          APK_DIR="${TEMP_DIR}/build/android-build"
+          if ! ls "${APK_DIR}"/*.apk 1>/dev/null 2>&1; then
+            echo "::error::No APK files found in ${APK_DIR}"
+            ls -la "${APK_DIR}" 2>/dev/null || echo "Build directory does not exist"
+            exit 1
+          fi
+          cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
 
       - name: Upload Build File
         uses: ./.github/actions/upload

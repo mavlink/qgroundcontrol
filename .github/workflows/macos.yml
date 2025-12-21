@@ -47,7 +47,7 @@ jobs:
 
     strategy:
       matrix:
-        build_type: [Release]
+        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
 
     defaults:
       run:
@@ -132,7 +132,12 @@ jobs:
 
       - name: Mount DMG
         working-directory: ${{ runner.temp }}/build
-        run: hdiutil attach QGroundControl.dmg
+        run: |
+          if ! hdiutil attach QGroundControl.dmg; then
+            echo "::error::Failed to mount DMG"
+            ls -la QGroundControl.dmg 2>/dev/null || echo "DMG file not found"
+            exit 1
+          fi
 
       - name: Sanity check DMG executable
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS

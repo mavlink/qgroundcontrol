@@ -14,9 +14,12 @@ outputs:
   qt_modules_ios:
     description: Qt modules (iOS, excludes qtserialport/qtscxml)
     value: ${{ steps.read.outputs.qt_modules_ios }}
-  gstreamer_version:
-    description: GStreamer version (macOS/Linux)
-    value: ${{ steps.read.outputs.gstreamer_version }}
+  gstreamer_minimum_version:
+    description: GStreamer minimum supported version
+    value: ${{ steps.read.outputs.gstreamer_minimum_version }}
+  gstreamer_macos_version:
+    description: GStreamer version (macOS)
+    value: ${{ steps.read.outputs.gstreamer_macos_version }}
   gstreamer_android_version:
     description: GStreamer version (Android)
     value: ${{ steps.read.outputs.gstreamer_android_version }}
@@ -53,12 +56,6 @@ outputs:
   cmake_minimum_version:
     description: CMake minimum version
     value: ${{ steps.read.outputs.cmake_minimum_version }}
-  clang_format_version:
-    description: clang-format version
-    value: ${{ steps.read.outputs.clang_format_version }}
-  node_version:
-    description: Node.js version
-    value: ${{ steps.read.outputs.node_version }}
 
 runs:
   using: composite
@@ -82,7 +79,8 @@ runs:
         QT_MIN_VERSION=$(jq -r '.qt_minimum_version' "$CONFIG_FILE")
         QT_MODULES=$(jq -r '.qt_modules' "$CONFIG_FILE")
         QT_MODULES_IOS=$(echo "$QT_MODULES" | sed 's/qtserialport//g; s/qtscxml//g; s/  */ /g; s/^ *//; s/ *$//')
-        GST_VERSION=$(jq -r '.gstreamer_version' "$CONFIG_FILE")
+        GST_MIN_VERSION=$(jq -r '.gstreamer_minimum_version' "$CONFIG_FILE")
+        GST_MACOS_VERSION=$(jq -r '.gstreamer_macos_version' "$CONFIG_FILE")
         GST_ANDROID_VERSION=$(jq -r '.gstreamer_android_version' "$CONFIG_FILE")
         GST_WIN_VERSION=$(jq -r '.gstreamer_windows_version' "$CONFIG_FILE")
         NDK_VERSION=$(jq -r '.ndk_version' "$CONFIG_FILE")
@@ -95,15 +93,14 @@ runs:
         XCODE_VERSION=$(jq -r '.xcode_version' "$CONFIG_FILE")
         XCODE_IOS_VERSION=$(jq -r '.xcode_ios_version' "$CONFIG_FILE")
         CMAKE_MIN_VERSION=$(jq -r '.cmake_minimum_version' "$CONFIG_FILE")
-        CLANG_FORMAT_VERSION=$(jq -r '.clang_format_version' "$CONFIG_FILE")
-        NODE_VERSION=$(jq -r '.node_version' "$CONFIG_FILE")
 
         {
           echo "qt_version=$QT_VERSION"
           echo "qt_minimum_version=$QT_MIN_VERSION"
           echo "qt_modules=$QT_MODULES"
           echo "qt_modules_ios=$QT_MODULES_IOS"
-          echo "gstreamer_version=$GST_VERSION"
+          echo "gstreamer_minimum_version=$GST_MIN_VERSION"
+          echo "gstreamer_macos_version=$GST_MACOS_VERSION"
           echo "gstreamer_android_version=$GST_ANDROID_VERSION"
           echo "gstreamer_windows_version=$GST_WIN_VERSION"
           echo "ndk_version=$NDK_VERSION"
@@ -116,8 +113,6 @@ runs:
           echo "xcode_version=$XCODE_VERSION"
           echo "xcode_ios_version=$XCODE_IOS_VERSION"
           echo "cmake_minimum_version=$CMAKE_MIN_VERSION"
-          echo "clang_format_version=$CLANG_FORMAT_VERSION"
-          echo "node_version=$NODE_VERSION"
         } >> "$GITHUB_OUTPUT"
 
     # Only set commonly-used variables as environment variables to avoid polluting the env.
@@ -126,4 +121,4 @@ runs:
       shell: bash
       run: |
         echo "QT_VERSION=${{ steps.read.outputs.qt_version }}" >> "$GITHUB_ENV"
-        echo "GSTREAMER_VERSION=${{ steps.read.outputs.gstreamer_version }}" >> "$GITHUB_ENV"
+        echo "GSTREAMER_VERSION=${{ steps.read.outputs.gstreamer_minimum_version }}" >> "$GITHUB_ENV"
