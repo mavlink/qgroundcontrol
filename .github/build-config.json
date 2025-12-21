@@ -3,8 +3,6 @@
   "android_cmdline_tools": "13114758",
   "android_min_sdk": "28",
   "android_platform": "35",
-  "ccache_max_size": "2G",
-  "ccache_version": "4.11.3",
   "clang_format_version": "17",
   "cmake_minimum_version": "3.25",
   "gstreamer_android_version": "1.22.12",

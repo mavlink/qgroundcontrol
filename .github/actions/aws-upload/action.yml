@@ -38,23 +38,35 @@ runs:
 
     - name: Upload to S3 builds folder
       shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.artifact_path }}
+        S3_BUCKET: ${{ inputs.s3_bucket }}
+        REF_NAME: ${{ github.ref_name }}
+        ARTIFACT_NAME: ${{ inputs.artifact_name }}
       run: |
-        aws s3 cp "${{ inputs.artifact_path }}" \
-          "s3://${{ inputs.s3_bucket }}/builds/${{ github.ref_name }}/${{ inputs.artifact_name }}" \
+        aws s3 cp "$ARTIFACT_PATH" \
+          "s3://${S3_BUCKET}/builds/${REF_NAME}/${ARTIFACT_NAME}" \
           --acl public-read
 
     - name: Upload to S3 latest folder
       if: github.ref_type == 'tag'
       shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.artifact_path }}
+        S3_BUCKET: ${{ inputs.s3_bucket }}
+        ARTIFACT_NAME: ${{ inputs.artifact_name }}
       run: |
-        aws s3 cp "${{ inputs.artifact_path }}" \
-          "s3://${{ inputs.s3_bucket }}/latest/${{ inputs.artifact_name }}" \
+        aws s3 cp "$ARTIFACT_PATH" \
+          "s3://${S3_BUCKET}/latest/${ARTIFACT_NAME}" \
           --acl public-read
 
     - name: Invalidate CloudFront cache
       if: github.ref_type == 'tag' && inputs.aws_distribution_id != ''
       shell: bash
+      env:
+        DISTRIBUTION_ID: ${{ inputs.aws_distribution_id }}
+        ARTIFACT_NAME: ${{ inputs.artifact_name }}
       run: |
         aws cloudfront create-invalidation \
-          --distribution-id "${{ inputs.aws_distribution_id }}" \
-          --paths "/latest/${{ inputs.artifact_name }}"
+          --distribution-id "$DISTRIBUTION_ID" \
+          --paths "/latest/${ARTIFACT_NAME}"

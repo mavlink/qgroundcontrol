@@ -40,6 +40,7 @@ permissions:
   contents: read
   id-token: write
   attestations: write
+  actions: read
 
 jobs:
   build:
@@ -119,7 +120,6 @@ jobs:
           android-platform: ${{ steps.config.outputs.android_platform }}
           android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
           android-build-tools: ${{ steps.config.outputs.android_build_tools }}
-          ccache-version: ${{ steps.config.outputs.ccache_version }}
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Configure
@@ -148,12 +148,6 @@ jobs:
         run: |
           TEMP_DIR="${RUNNER_TEMP//\\//}"  # Convert backslashes for Windows
           cp "${TEMP_DIR}/build/android-build/"*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
-
-      - name: Attest Build Provenance
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
 
       - name: Upload Build File
         uses: ./.github/actions/upload

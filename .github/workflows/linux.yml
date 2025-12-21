@@ -193,12 +193,6 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
 
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: '${{ runner.temp }}/build/${{ matrix.package }}.AppImage'
-
       - name: Upload Build File
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload

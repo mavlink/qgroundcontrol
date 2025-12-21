@@ -66,18 +66,21 @@ jobs:
           name: qgc_docs_build
           path: ~/_book
 
-      - name: Deploy
-        env:
-          GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
-          GIT_PASS: ${{ secrets.PX4BUILDBOT_PASS }}
+      - name: Checkout docs repo
+        uses: actions/checkout@v6
+        with:
+          repository: mavlink/docs.qgroundcontrol.com
+          token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          path: docs.qgroundcontrol.com
+
+      - name: Deploy docs
         run: |
-          git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
-          rm -rf docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
-          mkdir -p docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
-          cp -r ~/_book/* docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}/
+          rm -rf "docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}"
+          mkdir -p "docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}"
+          cp -r ~/_book/* "docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}/"
           cd docs.qgroundcontrol.com
           git config user.email "bot@px4.io"
           git config user.name "PX4BuildBot"
-          git add ${{ env.BRANCH_NAME }}
-          git commit -a -m "QGC docs build update `date`"
+          git add "${{ env.BRANCH_NAME }}"
+          git commit -m "QGC docs build update $(date -u +%Y-%m-%d)"
           git push origin master

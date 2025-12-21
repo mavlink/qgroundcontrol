@@ -53,12 +53,6 @@ outputs:
   cmake_minimum_version:
     description: CMake minimum version
     value: ${{ steps.read.outputs.cmake_minimum_version }}
-  ccache_version:
-    description: ccache version
-    value: ${{ steps.read.outputs.ccache_version }}
-  ccache_max_size:
-    description: ccache max cache size
-    value: ${{ steps.read.outputs.ccache_max_size }}
   clang_format_version:
     description: clang-format version
     value: ${{ steps.read.outputs.clang_format_version }}
@@ -101,8 +95,6 @@ runs:
         XCODE_VERSION=$(jq -r '.xcode_version' "$CONFIG_FILE")
         XCODE_IOS_VERSION=$(jq -r '.xcode_ios_version' "$CONFIG_FILE")
         CMAKE_MIN_VERSION=$(jq -r '.cmake_minimum_version' "$CONFIG_FILE")
-        CCACHE_VERSION=$(jq -r '.ccache_version' "$CONFIG_FILE")
-        CCACHE_MAX_SIZE=$(jq -r '.ccache_max_size' "$CONFIG_FILE")
         CLANG_FORMAT_VERSION=$(jq -r '.clang_format_version' "$CONFIG_FILE")
         NODE_VERSION=$(jq -r '.node_version' "$CONFIG_FILE")
 
@@ -124,8 +116,6 @@ runs:
           echo "xcode_version=$XCODE_VERSION"
           echo "xcode_ios_version=$XCODE_IOS_VERSION"
           echo "cmake_minimum_version=$CMAKE_MIN_VERSION"
-          echo "ccache_version=$CCACHE_VERSION"
-          echo "ccache_max_size=$CCACHE_MAX_SIZE"
           echo "clang_format_version=$CLANG_FORMAT_VERSION"
           echo "node_version=$NODE_VERSION"
         } >> "$GITHUB_OUTPUT"

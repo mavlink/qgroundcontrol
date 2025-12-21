@@ -40,6 +40,7 @@ permissions:
   contents: read
   id-token: write
   attestations: write
+  actions: read
 
 jobs:
   build:
@@ -85,6 +86,11 @@ jobs:
         shell: cmd
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -159,12 +165,6 @@ jobs:
       - name: Create Installer
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
-
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && !matrix.custom_build && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: '${{ runner.temp }}\build\${{ matrix.package }}.exe'
 
       - name: Upload artifact (installer)
         if: matrix.build_type == 'Release' && !matrix.custom_build

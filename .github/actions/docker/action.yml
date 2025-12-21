@@ -39,9 +39,10 @@ runs:
         username: ${{ inputs.docker-username }}
         password: ${{ inputs.docker-token }}
 
-    - name: Validate dockerfile input
+    - name: Validate inputs
       shell: bash
       run: |
+        # Validate dockerfile
         case "${{ inputs.dockerfile }}" in
           Dockerfile-build-ubuntu|Dockerfile-build-android)
             echo "Using dockerfile: ${{ inputs.dockerfile }}"
@@ -49,6 +50,18 @@ runs:
           *)
             echo "Error: Invalid dockerfile '${{ inputs.dockerfile }}'" >&2
             echo "Allowed values: Dockerfile-build-ubuntu, Dockerfile-build-android" >&2
+            exit 1
+            ;;
+        esac
+
+        # Validate build-type
+        case "${{ inputs.build-type }}" in
+          Release|Debug)
+            echo "Build type: ${{ inputs.build-type }}"
+            ;;
+          *)
+            echo "Error: Invalid build-type '${{ inputs.build-type }}'" >&2
+            echo "Allowed values: Release, Debug" >&2
             exit 1
             ;;
         esac
