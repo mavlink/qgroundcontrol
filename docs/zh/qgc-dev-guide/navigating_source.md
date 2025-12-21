@@ -4,7 +4,7 @@ QGC is a large code base. With that it can be daunting to find what your are loo
 
 ## Start from the top of the UI
 
-The top level window Qml UI code is found in `MainWindow.qml`. You can start here and work your way down through the UI hierarchy till you find what you are looking for.
+The top level window Qml UI code is found in `MainRootWindow.qml`. You can start here and work your way down through the UI hierarchy till you find what you are looking for.
 
 In this qml file you'll find things like:
 

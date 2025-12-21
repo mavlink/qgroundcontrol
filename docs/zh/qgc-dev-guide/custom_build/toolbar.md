@@ -32,9 +32,9 @@ These are indicators which are associated with information about the vehicle. Th
 
 ### Modifying the toolbar UI itself
 
-This is accomplished by using resource overrides on the qml files associated with the toolbar. This provides a high level of customization but also a higher level of complexity. The primary ui for the toolbar is in `MainToolBar.qml`. The main window code in `MainWindow.qml` interacts with the toolbar to show different indicator sections based on current view as well as whether the mode indicators show or not also based on current view.
+This is accomplished by using resource overrides on the qml files associated with the toolbar. This provides a high level of customization but also a higher level of complexity. The primary ui for the toolbar is in `MainToolBar.qml`. The main window code in `MainRootWindow.qml` interacts with the toolbar to show different indicator sections based on current view as well as whether the mode indicators show or not also based on current view.
 
-If you want full control over the toolbar then you can override `MainToolBar.qml` and make your own completely different version. You will need to pay special attention to the interactions of the main toolbar with `MainWindow.qml` since you are going to need to replicated those interactions in your own custom version.
+If you want full control over the toolbar then you can override `MainToolBar.qml` and make your own completely different version. You will need to pay special attention to the interactions of the main toolbar with `MainRootWindow.qml` since you are going to need to replicated those interactions in your own custom version.
 
 There are two standard indicator ui sections of the toolbar:
 
