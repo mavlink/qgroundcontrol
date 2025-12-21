@@ -1,0 +1,26 @@
+messages:
+  - role: system
+    content: |
+      You are a commit message expert. Generate conventional commit PR titles.
+      Reply with ONLY the suggested title, nothing else.
+
+  - role: user
+    content: |
+      Generate a conventional commit PR title for these changes.
+
+      Current title: {{current_title}}
+
+      PR Description:
+      {{pr_body}}
+
+      Changed files:
+      {{changed_files}}
+
+      Rules:
+      - Format: <type>(<scope>): <description>
+      - Types: feat, fix, docs, refactor, perf, test, ci, chore, build, style, revert
+      - Scope should reflect main area: Vehicle, Gimbal, Camera, FlyView, PlanView, MAVLink, Comms, UI, Settings, Mission, Firmware, etc.
+      - Description: imperative mood, max 60 chars, no period
+      - Scope is optional if changes span multiple areas
+
+model: openai/gpt-4o-mini
