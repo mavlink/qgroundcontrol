@@ -16,7 +16,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 QGCPopupDialog {
-    title:   qsTr("Global Altitude Mode")
+    title:   qsTr("Altitude Mode")
     buttons: Dialog.Close
 
     property var rgRemoveModes
@@ -46,28 +46,28 @@ QGCPopupDialog {
         id: buttonModel
 
         ListElement {
-            modeName:   qsTr("Relative To Launch (Rel)")
-            help:       qsTr("Altitudes are relative to the launch point.")
+            modeName:   qsTr("Relative")
+            help:       qsTr("Altitude above home position")
             modeValue:  QGroundControl.AltitudeModeRelative
         }
         ListElement {
-            modeName:   qsTr("AMSL")
-            help:       qsTr("Altitudes are absolute above mean sea level.")
+            modeName:   qsTr("Absolute")
+            help:       qsTr("Altitude above mean sea level (AMSL)")
             modeValue:  QGroundControl.AltitudeModeAbsolute
         }
         ListElement {
-            modeName:   qsTr("Calculated Above Terrain (TerrC)")
-            help:       qsTr("Altitudes are terrain-relative; converting to AMSL before upload.")
-            modeValue:  QGroundControl.AltitudeModeCalcAboveTerrain
-        }
-        ListElement {
-            modeName:   qsTr("Above Terrain (Terr)")
-            help:       qsTr("Vehicle maintains a terrain-relative height using onboard data.")
+            modeName:   qsTr("Terrain")
+            help:       qsTr("Altitude above terrain at waypoint")
             modeValue:  QGroundControl.AltitudeModeTerrainFrame
         }
         ListElement {
-            modeName:   qsTr("Mixed Modes (Mix)")
-            help:       qsTr("Each mission item can choose its own altitude mode.")
+            modeName:   qsTr("Terrain Calculated")
+            help:       qsTr("Altitudes are terrain-relative; converting to AMSL before upload")
+            modeValue:  QGroundControl.AltitudeModeCalcAboveTerrain
+        }
+        ListElement {
+            modeName:   qsTr("Waypoint Defined")
+            help:       qsTr("Each waypoint specifies its own altitude mode")
             modeValue:  QGroundControl.AltitudeModeMixed
         }
     }
@@ -76,7 +76,7 @@ QGCPopupDialog {
         spacing: ScreenTools.defaultFontPixelWidth
 
         QGCLabel {
-            text: qsTr("Altitude mode for all mission items.")
+            text: qsTr("Altitude mode for mission items")
             font.pointSize: ScreenTools.smallFontPointSize
         }
 

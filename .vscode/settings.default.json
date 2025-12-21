@@ -1,4 +1,10 @@
 {
+  "json.schemas": [
+    {
+      "fileMatch": ["**/FactGroups/*Fact.json"],
+      "url": "./tools/schemas/factmetadata.schema.json"
+    }
+  ],
   "C_Cpp.codeAnalysis.clangTidy.enabled": true,
   "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",

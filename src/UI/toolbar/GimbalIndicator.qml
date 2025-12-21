@@ -273,6 +273,22 @@ Item {
             }
 
             SettingsGroupLayout {
+                heading:        qsTr("Zoom speed")
+                showDividers:   false
+
+                LabelledFactTextField {
+                    label:      qsTr("Max speed (min zoom)")
+                    fact:       _gimbalControllerSettings.zoomMaxSpeed
+                }
+
+                LabelledFactTextField {
+                    label:      qsTr("Min speed (max zoom)")
+                    fact:       _gimbalControllerSettings.zoomMinSpeed
+                }
+
+            }
+
+            SettingsGroupLayout {
                 LabelledFactTextField {
                     label:      qsTr("Joystick buttons speed:")
                     fact:       _gimbalControllerSettings.joystickButtonsSpeed

@@ -38,13 +38,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_res"
     PREFIX "/unittest"
     FILES
-        100Waypoints.mission
-        100Waypoints.waypoints.txt
-        800Waypoints.mission
-        800Waypoints.waypoints.txt
         MissionPlanner.waypoints
         MissionPlanner.waypoints.txt
-        OldFileFormat.mission
         PolygonAreaTest.kml
         PolygonBadCoordinatesNode.kml
         PolygonBadXml.kml

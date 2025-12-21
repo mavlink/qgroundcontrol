@@ -8,7 +8,7 @@ This directory contains development tools, scripts, and configuration files for 
 tools/
 ├── analyze.sh               # Static analysis (clang-tidy, cppcheck)
 ├── check-deps.sh            # Check for outdated dependencies
-├── check-sizes.py           # Check artifact sizes against thresholds
+├── check-sizes.py           # Report artifact sizes
 ├── clean.sh                 # Clean build artifacts and caches
 ├── common.sh                # Shared shell functions
 ├── coverage.sh              # Code coverage reports
@@ -17,15 +17,30 @@ tools/
 ├── param-docs.py            # Generate parameter documentation
 ├── update-headers.py        # License header management
 ├── ccache.conf              # ccache configuration
+├── analyzers/               # Static analysis scripts
+│   └── vehicle_null_check.py
 ├── coding-style/            # Code style examples
+├── common/                  # Shared Python utilities
+│   ├── patterns.py          # QGC regex patterns
+│   └── file_traversal.py    # File discovery
 ├── debuggers/               # Debugging tools
 │   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
 │   ├── profile.sh           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
+├── generators/              # Code generation tools
+│   └── factgroup/           # FactGroup generator
 ├── log-analyzer/            # QGC log analysis tools
-├── mock-mavlink/            # MAVLink vehicle simulator
+├── locators/                # CLI search tools (Facts, MAVLink)
+├── qtcreator/               # QtCreator IDE integration
+│   ├── lua/                 # Lua extension (Qt Creator 14+)
+│   ├── plugin/              # Native C++ plugin
+│   └── snippets/            # QtCreator snippets
+├── schemas/                 # JSON schemas for editor validation
 ├── setup/                   # Environment setup scripts
+├── simulation/              # Vehicle simulators
+│   ├── mock_vehicle.py      # Lightweight MAVLink simulator
+│   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
 └── translations/            # Translation tools
 ```
 
@@ -149,16 +164,13 @@ Check for outdated dependencies and submodules.
 
 ### check-sizes.py
 
-Check artifact sizes against thresholds. Used by CI and locally to catch unexpected size increases.
+Report artifact sizes. Used by CI to track build output sizes.
 
 ```bash
-./tools/check-sizes.py build/              # Check local build artifacts
+./tools/check-sizes.py build/              # Report local build artifacts
 ./tools/check-sizes.py artifacts/ --json   # Output JSON (for CI)
 ./tools/check-sizes.py --markdown          # Output markdown table
-./tools/check-sizes.py --list-thresholds   # Show configured thresholds
 ```
-
-Default thresholds: AppImage 200MB, DMG 150MB, EXE 200MB, APK 150MB
 
 ### generate-docs.sh
 
@@ -219,6 +231,79 @@ sudo ./tools/setup/install-dependencies-debian.sh
 ./tools/setup/build-gstreamer.sh -p /opt/gstreamer
 ```
 
+## Static Analyzers
+
+Scripts in `analyzers/` perform QGC-specific static analysis.
+
+### vehicle_null_check.py
+
+Detects unsafe `activeVehicle()` access patterns that could cause null pointer dereferences.
+
+```bash
+# Analyze specific files
+python3 tools/analyzers/vehicle_null_check.py src/Vehicle/*.cc
+
+# Analyze entire directory
+python3 tools/analyzers/vehicle_null_check.py src/
+
+# JSON output for CI/editor integration
+python3 tools/analyzers/vehicle_null_check.py --json src/
+
+# Run via pre-commit
+pre-commit run vehicle-null-check --all-files
+```
+
+**Detects:**
+- `activeVehicle()->method()` without prior null check
+- `getParameter()` result used without validation
+
+**Output includes fix suggestions** for each detected issue.
+
+See [analyzers/README.md](analyzers/README.md) for details.
+
+## Code Generators
+
+Scripts in `generators/` generate boilerplate code from specifications.
+
+### FactGroup Generator
+
+Generate complete FactGroup boilerplate (header, source, JSON metadata).
+
+```bash
+# From YAML spec (recommended)
+python3 -m tools.generators.factgroup.cli \
+  --spec tools/generators/factgroup/examples/wind.yaml \
+  --dry-run
+
+# From CLI arguments
+python3 -m tools.generators.factgroup.cli \
+  --name Wind \
+  --facts "direction:double:deg,speed:double:m/s" \
+  --mavlink "WIND_COV,HIGH_LATENCY2" \
+  --output src/Vehicle/FactGroups/
+
+# Validate spec only
+python3 -m tools.generators.factgroup.cli --spec wind.yaml --validate
+```
+
+**Generates:**
+- `VehicleWindFactGroup.h` - Header with Q_PROPERTY, accessors, members
+- `VehicleWindFactGroup.cc` - Implementation with constructor, handlers
+- `WindFact.json` - FactMetaData JSON
+
+**Requires:** `pip install jinja2` (and `pyyaml` for YAML specs)
+
+See [generators/factgroup/README.md](generators/factgroup/README.md) for spec format and examples.
+
+## Shared Utilities
+
+Common utilities in `common/` are used by multiple tools:
+
+- `patterns.py` - QGC-specific regex patterns (Fact, FactGroup, MAVLink)
+- `file_traversal.py` - File discovery with proper filtering
+
+See [common/README.md](common/README.md) for API documentation.
+
 ## Debugging Tools
 
 ### debuggers/gdb-pretty-printers/
@@ -240,25 +325,26 @@ See [debuggers/gdb-pretty-printers/README.md](debuggers/gdb-pretty-printers/READ
 
 Visual Studio debugger visualizers for Qt6 types. Automatically loaded by VS when debugging.
 
-## Testing Tools
+## Simulation Tools
 
-### mock-mavlink/
+Vehicle simulators for testing QGC without hardware.
 
-Simple MAVLink vehicle simulator for testing QGC without hardware.
+### Mock Vehicle (Lightweight)
 
 ```bash
-# Install dependency
 pip install pymavlink
-
-# Run mock vehicle (QGC connects to UDP 14550)
-./tools/mock-mavlink/mock_vehicle.py
-
-# Multiple vehicles
-./tools/mock-mavlink/mock_vehicle.py --system-id 1 --port 14550 &
-./tools/mock-mavlink/mock_vehicle.py --system-id 2 --port 14551 &
+./tools/simulation/mock_vehicle.py              # QGC connects to UDP 14550
+./tools/simulation/mock_vehicle.py --tcp --port 5760  # TCP mode
 ```
 
-See [mock-mavlink/README.md](mock-mavlink/README.md) for details.
+### ArduCopter SITL (Full Simulation)
+
+```bash
+./tools/simulation/run-arducopter-sitl.sh       # Connect to tcp://localhost:5760
+./tools/simulation/run-arducopter-sitl.sh --with-latency  # Simulate network lag
+```
+
+See [simulation/README.md](simulation/README.md) for details.
 
 ### log-analyzer/
 

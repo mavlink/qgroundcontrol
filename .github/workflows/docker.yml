@@ -123,12 +123,11 @@ jobs:
           scan-ref: ${{ steps.artifact.outputs.path }}
           format: 'sarif'
           output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
+          trivy-config: '.github/trivy.yaml'
 
       - name: Upload Trivy results to GitHub Security
         if: steps.artifact.outputs.found == 'true'
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-${{ matrix.platform }}'

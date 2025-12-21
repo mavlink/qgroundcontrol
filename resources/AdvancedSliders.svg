@@ -1,0 +1,30 @@
+<svg
+    width="72"
+    height="72"
+    viewBox="14 8 44 56"
+    xmlns="http://www.w3.org/2000/svg"
+>
+    <style>
+        .track {
+            stroke: black;
+            stroke-width: 4;
+            stroke-linecap: round;
+            fill: none;
+        }
+        .knob {
+            fill: black;
+        }
+    </style>
+
+    <!-- Left slider -->
+    <line class="track" x1="20" y1="10" x2="20" y2="62" />
+    <rect class="knob" x="14" y="30" width="12" height="12" rx="2" ry="2" />
+
+    <!-- Middle slider -->
+    <line class="track" x1="36" y1="10" x2="36" y2="62" />
+    <rect class="knob" x="30" y="20" width="12" height="12" rx="2" ry="2" />
+
+    <!-- Right slider -->
+    <line class="track" x1="52" y1="10" x2="52" y2="62" />
+    <rect class="knob" x="46" y="40" width="12" height="12" rx="2" ry="2" />
+</svg>

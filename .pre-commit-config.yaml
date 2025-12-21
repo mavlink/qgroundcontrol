@@ -131,4 +131,12 @@ repos:
         exclude: ^test/
         pass_filenames: true
 
+      - id: vehicle-null-check
+        name: Check vehicle null safety
+        entry: python3 tools/analyzers/vehicle_null_check.py
+        language: python
+        types: [c++]
+        exclude: ^(build/|libs/|test/)
+        pass_filenames: true
+
 exclude: ^build/

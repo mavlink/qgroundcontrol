@@ -159,6 +159,30 @@ RowLayout {
         }
     }
 
+    ColumnLayout {
+        Layout.alignment: Qt.AlignVCenter
+        spacing: 0
+
+        QGCLabel {
+            text: _leftClickText()
+            font.pointSize: ScreenTools.smallFontPointSize
+            visible: _editingLayer === _layerMission || _editingLayer === _layerRally
+
+            function _leftClickText() {
+                if (_editingLayer === _layerMission) {
+                    return qsTr("- Click on the map to add Waypoint")
+                } else {
+                    return qsTr("- Click on the map to add Rally Point")
+                }
+            }
+        }
+
+        QGCLabel {
+            text: qsTr("- %1 to add ROI %2").arg(ScreenTools.isMobile ? qsTr("Press and hold") : qsTr("Right click")).arg(_missionController.isROIActive ? qsTr("or Cancel ROI") : "")
+            font.pointSize: ScreenTools.smallFontPointSize
+            visible: _editingLayer === _layerMission && _planMasterController.controllerVehicle.roiModeSupported
+        }
+    }
 
     Component {
         id: hamburgerDropPanelComponent

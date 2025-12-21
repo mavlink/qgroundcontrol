@@ -1,0 +1,10 @@
+# Invalid specification - should fail validation
+domain: Invalid
+
+facts:
+  - name: duplicate
+    type: double
+  - name: duplicate
+    type: float
+  - name: badType
+    type: invalidtype

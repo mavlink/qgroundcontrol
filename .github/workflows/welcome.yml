@@ -17,10 +17,10 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/first-interaction@v1
+      - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: |
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_message: |
             Thanks for opening your first issue! 👋
 
             A maintainer will review this soon. In the meantime:
@@ -29,7 +29,7 @@ jobs:
             - 🔍 Search [existing issues](https://github.com/mavlink/qgroundcontrol/issues) for similar reports
 
             Please make sure you've provided all requested information in the template.
-          pr-message: |
+          pr_message: |
             Thanks for your first pull request! 🎉
 
             A maintainer will review this soon. Please ensure:

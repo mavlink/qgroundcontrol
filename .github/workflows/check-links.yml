@@ -29,18 +29,8 @@ jobs:
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: >-
-            --verbose
-            --no-progress
-            --exclude-mail
-            --exclude '^https://github.com/mavlink/qgroundcontrol/(pull|issues|compare)/'
-            --exclude 'localhost'
-            --exclude '127\.0\.0\.1'
-            --exclude '192\.168\.'
-            --exclude '10\.\d+\.'
-            --accept 200,204,301,302,403,429
-            '**/*.md'
-            'docs/**'
+          # Config in .lychee.toml, files to check passed as args
+          args: '**/*.md docs/**'
           fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Add to step summary
@@ -55,7 +45,7 @@ jobs:
           fi
 
       - name: Upload report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: link-check-report

@@ -627,7 +627,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
         { _jsonPlannedHomePositionKey,      QJsonValue::Object, true },
         { _jsonItemsKey,                    QJsonValue::Array,  true },
-        { _jsonMavAutopilotKey,             QJsonValue::Double, true },
+        { _jsonMavAutopilotKey,             QJsonValue::Double, false },
         { _jsonComplexItemsKey,             QJsonValue::Array,  true },
     };
     if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
@@ -916,24 +916,15 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
 bool MissionController::_loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
 {
-    // V1 file format has no file type key and version key is string. Convert to new format.
-    if (!json.contains(JsonHelper::jsonFileTypeKey)) {
-        json[JsonHelper::jsonFileTypeKey] = _jsonFileTypeValue;
-    }
-
     int fileVersion;
     JsonHelper::validateExternalQGCJsonFile(json,
                                             _jsonFileTypeValue,    // expected file type
-                                            1,                     // minimum supported version
+                                            2,                     // minimum supported version
                                             2,                     // maximum supported version
                                             fileVersion,
                                             errorString);
 
-    if (fileVersion == 1) {
-        return _loadJsonMissionFileV1(json, visualItems, errorString);
-    } else {
-        return _loadJsonMissionFileV2(json, visualItems, errorString);
-    }
+    return _loadJsonMissionFileV2(json, visualItems, errorString);
 }
 
 bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString)
@@ -1036,30 +1027,6 @@ bool MissionController::load(const QJsonObject& json, QString& errorString)
         errorString = errorMessage.arg(errorStr);
         return false;
     }
-    _initLoadedVisualItems(loadedVisualItems);
-
-    return true;
-}
-
-bool MissionController::loadJsonFile(QFile& file, QString& errorString)
-{
-    QString         errorStr;
-    QString         errorMessage = tr("Mission: %1");
-    QJsonDocument   jsonDoc;
-    QByteArray      bytes = file.readAll();
-
-    if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
-        return false;
-    }
-
-    QJsonObject json = jsonDoc.object();
-    QmlObjectListModel* loadedVisualItems = new QmlObjectListModel(this);
-    if (!_loadItemsFromJson(json, loadedVisualItems, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
-        return false;
-    }
-
     _initLoadedVisualItems(loadedVisualItems);
 
     return true;

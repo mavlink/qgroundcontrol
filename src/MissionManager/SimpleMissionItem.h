@@ -47,9 +47,12 @@ public:
     Q_PROPERTY(QObject*         cameraSection           READ cameraSection                                      NOTIFY cameraSectionChanged)
 
     // These properties are used to display the editing ui
-    Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  nanFacts        READ nanFacts       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  comboboxFacts           READ comboboxFacts           CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  comboboxFactsAdvanced   READ comboboxFactsAdvanced   CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  textFieldFacts          READ textFieldFacts          CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  textFieldFactsAdvanced  READ textFieldFactsAdvanced  CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  nanFacts                READ nanFacts                CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  nanFactsAdvanced        READ nanFactsAdvanced        CONSTANT)
 
     /// This should be called before changing the command. It is needed if the command changes
     /// from an item which does not include a coordinate to an item which requires a coordinate.
@@ -82,8 +85,11 @@ public:
     SpeedSection*   speedSection        (void) { return _speedSection; }
 
     QmlObjectListModel* textFieldFacts  (void) { return &_textFieldFacts; }
+    QmlObjectListModel* textFieldFactsAdvanced (void) { return &_textFieldFactsAdvanced; }
     QmlObjectListModel* nanFacts        (void) { return &_nanFacts; }
+    QmlObjectListModel* nanFactsAdvanced (void) { return &_nanFactsAdvanced; }
     QmlObjectListModel* comboboxFacts   (void) { return &_comboboxFacts; }
+    QmlObjectListModel* comboboxFactsAdvanced (void) { return &_comboboxFactsAdvanced; }
 
     void setRawEdit(bool rawEdit);
     void setAltitudeMode(QGroundControlQmlGlobal::AltMode altitudeMode);
@@ -191,8 +197,11 @@ private:
     Fact                                _amslAltAboveTerrainFact;
 
     QmlObjectListModel  _textFieldFacts;
+    QmlObjectListModel  _textFieldFactsAdvanced;
     QmlObjectListModel  _nanFacts;
+    QmlObjectListModel  _nanFactsAdvanced;
     QmlObjectListModel  _comboboxFacts;
+    QmlObjectListModel  _comboboxFactsAdvanced;
 
     static FactMetaData*    _altitudeMetaData;
     static FactMetaData*    _commandMetaData;

@@ -408,6 +408,7 @@ QString SimpleMissionItem::abbreviation() const
 void SimpleMissionItem::_rebuildTextFieldFacts(void)
 {
     _textFieldFacts.clear();
+    _textFieldFactsAdvanced.clear();
 
     if (rawEdit()) {
         _missionItem._param1Fact.setName("Param1");
@@ -471,7 +472,11 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
                         paramMetaData->setRawUserMax(userMax);
                     }
                     paramFact->setMetaData(paramMetaData);
-                    _textFieldFacts.append(paramFact);
+                    if (paramInfo->advanced()) {
+                        _textFieldFactsAdvanced.append(paramFact);
+                    } else {
+                        _textFieldFacts.append(paramFact);
+                    }
                 }
             }
         }
@@ -483,6 +488,7 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
 void SimpleMissionItem::_rebuildNaNFacts(void)
 {
     _nanFacts.clear();
+    _nanFactsAdvanced.clear();
 
     if (!rawEdit()) {
         _ignoreDirtyChangeSignals = true;
@@ -531,7 +537,11 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                         paramMetaData->setRawUserMax(userMax);
                     }
                     paramFact->setMetaData(paramMetaData);
-                    _nanFacts.append(paramFact);
+                    if (paramInfo->advanced()) {
+                        _nanFactsAdvanced.append(paramFact);
+                    } else {
+                        _nanFacts.append(paramFact);
+                    }
                 }
             }
         }
@@ -584,6 +594,7 @@ double SimpleMissionItem::loiterRadius() const
 void SimpleMissionItem::_rebuildComboBoxFacts(void)
 {
     _comboboxFacts.clear();
+    _comboboxFactsAdvanced.clear();
 
     if (rawEdit()) {
         _comboboxFacts.append(&_missionItem._commandFact);
@@ -626,7 +637,11 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                     paramMetaData->setRawUserMax(userMax);
                 }
                 paramFact->setMetaData(paramMetaData);
-                _comboboxFacts.append(paramFact);
+                if (paramInfo->advanced()) {
+                    _comboboxFactsAdvanced.append(paramFact);
+                } else {
+                    _comboboxFacts.append(paramFact);
+                }
             }
         }
 

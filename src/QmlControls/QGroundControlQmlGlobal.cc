@@ -295,15 +295,15 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
     case AltitudeModeNone:
         return QString();
     case AltitudeModeRelative:
-        return tr("Rel");
+        return tr("Relative");
     case AltitudeModeAbsolute:
-        return tr("AMSL");
+        return tr("Absolute");
     case AltitudeModeCalcAboveTerrain:
-        return tr("TerrC");
+        return tr("TerrainC");
     case AltitudeModeTerrainFrame:
-        return tr("Terr");
+        return tr("Terrain");
     case AltitudeModeMixed:
-        return tr("Mix");
+        return tr("Waypoint");
     }
 
     // Should never get here but makes some compilers happy
@@ -323,11 +323,6 @@ QString QGroundControlQmlGlobal::elevationProviderNotice()
 QString QGroundControlQmlGlobal::parameterFileExtension() const
 {
     return AppSettings::parameterFileExtension;
-}
-
-QString QGroundControlQmlGlobal::missionFileExtension() const
-{
-    return AppSettings::missionFileExtension;
 }
 
 QString QGroundControlQmlGlobal::telemetryFileExtension() const
