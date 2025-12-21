@@ -29,20 +29,6 @@ on:
         options:
           - Release
           - Debug
-      codeql:
-        description: 'Run CodeQL security analysis (disabled by default - conflicts with GitHub default setup)'
-        required: false
-        default: false
-        type: boolean
-      codeql_suite:
-        description: 'CodeQL query suite'
-        required: false
-        default: 'security-extended'
-        type: choice
-        options:
-          - default
-          - security-extended
-          - security-and-quality
   workflow_call:
 
 concurrency:
@@ -129,11 +115,10 @@ jobs:
           modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Initialize CodeQL
-        if: inputs.codeql && matrix.build_type == 'Debug'
+        if: matrix.build_type == 'Debug'
         uses: github/codeql-action/init@v4
         with:
           languages: c-cpp
-          queries: ${{ inputs.codeql_suite }}
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
@@ -149,7 +134,7 @@ jobs:
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Perform CodeQL Analysis
-        if: inputs.codeql && matrix.build_type == 'Debug'
+        if: matrix.build_type == 'Debug'
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:c-cpp"

@@ -23,6 +23,11 @@
   ],
   "packageRules": [
     {
+      "description": "Auto-merge patch updates after CI passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
       "description": "Group all git submodule updates",
       "groupName": "Git Submodules",
       "matchManagers": [

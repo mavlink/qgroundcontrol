@@ -41,32 +41,36 @@ runs:
 
     - name: Validate inputs
       shell: bash
+      env:
+        DOCKERFILE: ${{ inputs.dockerfile }}
+        BUILD_TYPE: ${{ inputs.build-type }}
       run: |
         # Validate dockerfile
-        case "${{ inputs.dockerfile }}" in
+        case "$DOCKERFILE" in
           Dockerfile-build-ubuntu|Dockerfile-build-android)
-            echo "Using dockerfile: ${{ inputs.dockerfile }}"
+            echo "Using dockerfile: $DOCKERFILE"
             ;;
           *)
-            echo "Error: Invalid dockerfile '${{ inputs.dockerfile }}'" >&2
+            echo "Error: Invalid dockerfile '$DOCKERFILE'" >&2
             echo "Allowed values: Dockerfile-build-ubuntu, Dockerfile-build-android" >&2
             exit 1
             ;;
         esac
 
         # Validate build-type
-        case "${{ inputs.build-type }}" in
+        case "$BUILD_TYPE" in
           Release|Debug)
-            echo "Build type: ${{ inputs.build-type }}"
+            echo "Build type: $BUILD_TYPE"
             ;;
           *)
-            echo "Error: Invalid build-type '${{ inputs.build-type }}'" >&2
+            echo "Error: Invalid build-type '$BUILD_TYPE'" >&2
             echo "Allowed values: Release, Debug" >&2
             exit 1
             ;;
         esac
 
     - name: Build Docker image
+      if: contains(fromJSON('["Dockerfile-build-ubuntu", "Dockerfile-build-android"]'), inputs.dockerfile)
       uses: docker/build-push-action@v6
       with:
         context: .
@@ -77,11 +81,17 @@ runs:
         cache-to: type=gha,mode=max,scope=${{ inputs.dockerfile }}
 
     - name: Run Docker build
+      if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)
       shell: bash
       env:
         SOURCE_DIR: ${{ github.workspace }}
         BUILD_DIR: ${{ github.workspace }}/build
+        BUILD_TYPE: ${{ inputs.build-type }}
+        ENABLE_FUSE: ${{ inputs.fuse }}
       run: |
         chmod +x ./deploy/docker/docker-run.sh
-        FUSE_FLAG=${{ inputs.fuse == 'true' && '--fuse' || '' }}
-        ./deploy/docker/docker-run.sh $FUSE_FLAG qgc-builder:latest ${{ inputs.build-type }}
+        FUSE_FLAG=""
+        if [[ "$ENABLE_FUSE" == "true" ]]; then
+          FUSE_FLAG="--fuse"
+        fi
+        ./deploy/docker/docker-run.sh ${FUSE_FLAG:+"$FUSE_FLAG"} qgc-builder:latest "$BUILD_TYPE"

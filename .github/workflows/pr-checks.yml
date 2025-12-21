@@ -5,9 +5,8 @@ on:
     types: [opened, edited, synchronize, reopened, closed]
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
-  actions: write
   models: read
 
 jobs:
@@ -64,7 +63,8 @@ jobs:
             const fileList = files.map(f => `${f.filename} (+${f.additions}/-${f.deletions})`).join('\n');
             const prBody = (pr.body || '').slice(0, 2000);
 
-            // Call GitHub Models API
+            // Call GitHub Models API (official GitHub service - GITHUB_TOKEN is the intended auth method)
+            // See: https://docs.github.com/en/github-models
             const response = await fetch('https://models.github.ai/inference/chat/completions', {
               method: 'POST',
               headers: {
@@ -289,6 +289,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action == 'closed'
     timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: Checkout

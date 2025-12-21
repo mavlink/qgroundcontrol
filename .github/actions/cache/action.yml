@@ -69,7 +69,7 @@ runs:
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
           ${{ inputs.host }}-
-        max-size: ${{ steps.validate.outputs.max_size }}
+        max-size: ${{ steps.ccache-config.outputs.max_size }}
         verbose: 2
         evict-old-files: job
         save: ${{ inputs.save-cache == 'true' }}

@@ -64,3 +64,7 @@ jobs:
           echo "::endgroup::"
           echo ""
           echo "💡 To fix locally, run: pre-commit run --all-files"
+
+      - name: Fail if pre-commit failed
+        if: steps.pre-commit.outcome == 'failure'
+        run: exit 1

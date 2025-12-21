@@ -36,6 +36,7 @@ repos:
         args: ['--config=tools/configs/trufflehog.yaml']
 
   # C++ formatting (check-only, use 'clang-format -i' to fix)
+  # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v21.1.7
     hooks:
