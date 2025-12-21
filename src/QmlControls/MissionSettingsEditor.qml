@@ -25,7 +25,6 @@ Rectangle {
     property real _fieldWidth: ScreenTools.defaultFontPixelWidth * 16
     property bool _mobile: ScreenTools.isMobile
     property var _savePath: QGroundControl.settingsManager.appSettings.missionSavePath
-    property var _fileExtension: QGroundControl.settingsManager.appSettings.missionFileExtension
     property var _appSettings: QGroundControl.settingsManager.appSettings
     property bool _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
     property bool _showCameraSection: (_waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI) && !_controllerVehicle.apmFirmware
@@ -59,7 +58,7 @@ Rectangle {
 
         LabelledButton {
             Layout.fillWidth: true
-            label: qsTr("Global Altitude Mode")
+            label: qsTr("Altitude Mode")
             buttonText: QGroundControl.altitudeModeShortDescription(_missionController.globalAltitudeMode)
 
             onClicked: {
@@ -103,6 +102,8 @@ Rectangle {
             onEnableCheckboxClicked: missionItem.speedSection.specifyFlightSpeed = enableCheckBoxChecked
         }
 
+        /*
+        Removed for now. May come back...
         SectionHeader {
             id: createFromTemplateSection
             Layout.fillWidth: true
@@ -166,12 +167,13 @@ Rectangle {
 
                         function _mapCenter() {
                             var centerPoint = Qt.point(editorMap.centerViewport.left + (editorMap.centerViewport.width / 2), editorMap.centerViewport.top + (editorMap.centerViewport.height / 2))
-                            return editorMap.toCoordinate(centerPoint, false /* clipToViewPort */)
+                            return editorMap.toCoordinate(centerPoint, false)
                         }
                     }
                 }
             }
         }
+        */
 
         Column {
             Layout.fillWidth: true

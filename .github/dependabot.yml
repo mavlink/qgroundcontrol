@@ -1,3 +1,7 @@
+# Dependabot configuration
+# To merge dependabot PRs, comment "@dependabot merge" after CI passes
+# See: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-pull-requests-for-dependency-updates
+
 version: 2
 updates:
   # Monitor GitHub Actions in workflows and all custom actions

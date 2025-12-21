@@ -18,20 +18,20 @@ QGCComboBox {
         id: altModeModel
 
         ListElement {
-            modeName: qsTr("Rel")
+            modeName: qsTr("Relative")
             modeValue: QGroundControl.AltitudeModeRelative
         }
         ListElement {
-            modeName: qsTr("AMSL")
+            modeName: qsTr("Absolute")
             modeValue: QGroundControl.AltitudeModeAbsolute
         }
         ListElement {
-            modeName: qsTr("TerrC")
-            modeValue: QGroundControl.AltitudeModeCalcAboveTerrain
+            modeName: qsTr("Terrain")
+            modeValue: QGroundControl.AltitudeModeTerrainFrame
         }
         ListElement {
-            modeName: qsTr("Terr")
-            modeValue: QGroundControl.AltitudeModeTerrainFrame
+            modeName: qsTr("TerrainC")
+            modeValue: QGroundControl.AltitudeModeCalcAboveTerrain
         }
     }
 

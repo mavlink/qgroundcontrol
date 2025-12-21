@@ -1,0 +1,39 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+#pragma once
+
+#include "FactGroup.h"
+
+class {{ spec.class_name }} : public FactGroup
+{
+    Q_OBJECT
+{% for fact in spec.facts %}
+    Q_PROPERTY(Fact *{{ fact.name }} READ {{ fact.name }} CONSTANT)
+{% endfor %}
+
+public:
+    explicit {{ spec.class_name }}(QObject *parent = nullptr);
+
+{% for fact in spec.facts %}
+    Fact *{{ fact.name }}() { return &_{{ fact.name }}Fact; }
+{% endfor %}
+
+    // Overrides from FactGroup
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
+
+private:
+{% for msg in spec.mavlink_messages %}
+    void {{ msg.handler_name }}(const mavlink_message_t &message);
+{% endfor %}
+
+{% for fact in spec.facts %}
+    Fact _{{ fact.name }}Fact = Fact(0, QStringLiteral("{{ fact.name }}"), {{ fact.cpp_type }});
+{% endfor %}
+};

@@ -51,14 +51,16 @@ class CodingStyle : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")  // Use Q_MOC_INCLUDE for forward-declared types used in Q_PROPERTY
+
     /// Q_PROPERTY definitions for QML binding
     /// Format: Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
     /// Use CONSTANT for properties that never change
-    /// Use MEMBER for direct member access (rarely needed)
-    Q_PROPERTY(int exampleProperty READ exampleProperty WRITE setExampleProperty NOTIFY examplePropertyChanged)
-    Q_PROPERTY(Vehicle* vehicle READ vehicle CONSTANT)
-    Q_PROPERTY(bool readOnlyProperty READ readOnlyProperty NOTIFY readOnlyPropertyChanged)
-   public:
+    /// Use tab spacing to align property elements vertically. Don't take to an extreme, goal is to improve readability.
+    Q_PROPERTY(int      exampleProperty     READ exampleProperty WRITE setExampleProperty NOTIFY examplePropertyChanged)
+    Q_PROPERTY(Vehicle* vehicle             READ vehicle            CONSTANT)
+    Q_PROPERTY(bool     readOnlyProperty    READ readOnlyProperty   NOTIFY readOnlyPropertyChanged)
+
+public:
     explicit CodingStyle(QObject* parent = nullptr);  // Use nullptr, not NULL
     ~CodingStyle() override;                          // Use override keyword for virtual destructors
 
@@ -105,21 +107,21 @@ class CodingStyle : public QObject
     void readOnlyPropertyChanged();
     void qtSignal();
 
-   public slots:
+public slots:
     // Public slots should only be used if the slot is connected to from another class.
     // Most slots should be private. Prefer signals/slots over direct method calls for loose coupling.
     void publicSlot();
 
     // Don't use protected methods or variables unless the class is specifically meant to be used as a base class.
-   protected:
+protected:
     int _protectedVariable = 0;  ///< variable names are camelCase
 
     void _protectedMethod();     ///< method names are camelCase
 
-   private slots:
+private slots:
     void _privateSlot();
 
-   private:
+private:
     // Private methods and variable names begin with an "_". Documentation for
     // non-obvious private methods goes in the header file.
     void _privateMethod();

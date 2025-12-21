@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Check PR title format
         continue-on-error: true
-        uses: amannn/action-semantic-pull-request@v5
+        uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -48,25 +48,35 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Remove old size labels
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          for label in size%2FXS size%2FS size%2FM size%2FL size%2FXL; do
+            gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/${label}" \
+              -X DELETE 2>/dev/null || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Label PR by size
         continue-on-error: true
         uses: codelytv/pr-size-labeler@v1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           xs_label: 'size/XS'
-          xs_max_size: 100
+          xs_max_size: 150
           s_label: 'size/S'
-          s_max_size: 300
+          s_max_size: 500
           m_label: 'size/M'
-          m_max_size: 700
+          m_max_size: 1000
           l_label: 'size/L'
-          l_max_size: 1000
+          l_max_size: 1500
           xl_label: 'size/XL'
           fail_if_xl: false
           message_if_xl: |
             ## ⚠️ Large PR Warning
 
-            This PR has **more than 1000 lines** changed, which can be difficult to review thoroughly.
+            This PR has **more than 1500 lines** changed, which can be difficult to review thoroughly.
 
             Consider:
             - Splitting into smaller, focused PRs
@@ -87,30 +97,10 @@ jobs:
 
     steps:
       - name: Label PR by changed files
-        uses: actions/labeler@v5
+        uses: actions/labeler@v6
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
-
-  auto-merge:
-    name: Auto-merge Dependabot
-    runs-on: ubuntu-latest
-    if: github.event.action != 'closed' && github.event.pull_request.user.login == 'dependabot[bot]'
-    timeout-minutes: 5
-
-    steps:
-      - name: Fetch Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Enable auto-merge for patch/minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   cache-cleanup:
     name: Cleanup PR Caches
