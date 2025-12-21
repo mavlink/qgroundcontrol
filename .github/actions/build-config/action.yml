@@ -65,9 +65,6 @@ outputs:
   node_version:
     description: Node.js version
     value: ${{ steps.read.outputs.node_version }}
-  flatpak_gnome_version:
-    description: GNOME version for Flatpak
-    value: ${{ steps.read.outputs.flatpak_gnome_version }}
 
 runs:
   using: composite
@@ -108,7 +105,6 @@ runs:
         CCACHE_MAX_SIZE=$(jq -r '.ccache_max_size' "$CONFIG_FILE")
         CLANG_FORMAT_VERSION=$(jq -r '.clang_format_version' "$CONFIG_FILE")
         NODE_VERSION=$(jq -r '.node_version' "$CONFIG_FILE")
-        FLATPAK_GNOME_VERSION=$(jq -r '.flatpak_gnome_version' "$CONFIG_FILE")
 
         {
           echo "qt_version=$QT_VERSION"
@@ -132,7 +128,6 @@ runs:
           echo "ccache_max_size=$CCACHE_MAX_SIZE"
           echo "clang_format_version=$CLANG_FORMAT_VERSION"
           echo "node_version=$NODE_VERSION"
-          echo "flatpak_gnome_version=$FLATPAK_GNOME_VERSION"
         } >> "$GITHUB_OUTPUT"
 
     # Only set commonly-used variables as environment variables to avoid polluting the env.
