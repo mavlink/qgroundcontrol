@@ -20,10 +20,10 @@ Slider {
     rightPadding:   0
     topPadding:     0
     bottomPadding:  0
+    wheelEnabled:   false
 
     property bool zeroCentered:         false   ///< Value indicator starts display from zero instead of min value
     property bool displayValue:         false   ///< true: Show value on handle
-    property bool mouseWheelSupport:    true    ///< false: Disable mouse wheel support for adjusting slider value
     property bool showBoundaryValues:   false   ///< true: Show min/max values at slider ends
 
     property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
@@ -94,25 +94,5 @@ Slider {
         font.pointSize:         ScreenTools.smallFontPointSize
         color:                  qgcPal.buttonText
         visible:                control.showBoundaryValues
-    }
-
-    MouseArea {
-        anchors.fill:   parent
-        enabled:        !control.mouseWheelSupport
-
-        onWheel: (wheel) => {
-            // do nothing
-            wheel.accepted = true;
-        }
-
-        onPressed: (mouse) => {
-            // propagate/accept
-            mouse.accepted = false;
-        }
-
-        onReleased: (mouse) => {
-            // propagate/accept
-            mouse.accepted = false;
-        }
     }
 }
