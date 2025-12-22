@@ -117,8 +117,9 @@ runs:
 
     # Only set commonly-used variables as environment variables to avoid polluting the env.
     # All values are available as step outputs (e.g., steps.config.outputs.ndk_version).
+    # Note: GSTREAMER_VERSION is NOT set here - workflows should set platform-specific version
+    # using gstreamer_macos_version, gstreamer_windows_version, or gstreamer_minimum_version.
     - name: Set environment variables
       shell: bash
       run: |
         echo "QT_VERSION=${{ steps.read.outputs.qt_version }}" >> "$GITHUB_ENV"
-        echo "GSTREAMER_VERSION=${{ steps.read.outputs.gstreamer_minimum_version }}" >> "$GITHUB_ENV"

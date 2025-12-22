@@ -80,6 +80,8 @@ jobs:
 
       - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
+        env:
+          GSTREAMER_VERSION: ${{ steps.config.outputs.gstreamer_macos_version }}
         run: sh install-dependencies-macos.sh
 
       - name: Setup Caching
