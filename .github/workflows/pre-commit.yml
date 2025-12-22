@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Full history needed for diff vs master
 
       - name: Get build config
         id: config

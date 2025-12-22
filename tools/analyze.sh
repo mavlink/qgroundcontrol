@@ -81,17 +81,26 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Check if we can compare against master branch
+can_compare_master() {
+    git -C "$REPO_ROOT" rev-parse --verify master &>/dev/null || \
+    git -C "$REPO_ROOT" rev-parse --verify origin/master &>/dev/null
+}
+
 # Get C++ files to analyze
 get_cpp_files() {
     if [[ -n "$TARGET_PATH" ]]; then
         find "$REPO_ROOT/$TARGET_PATH" -type f \( -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) 2>/dev/null
     elif [[ "$ANALYZE_ALL" == true ]]; then
         find "$REPO_ROOT/src" -type f \( -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \)
-    else
+    elif can_compare_master; then
         # Only changed files vs master
         git -C "$REPO_ROOT" diff --name-only master... -- '*.cc' '*.cpp' '*.h' '*.hpp' 2>/dev/null | \
             xargs -I{} echo "$REPO_ROOT/{}" | \
             while read -r f; do [[ -f "$f" ]] && echo "$f"; done
+    else
+        log_warn "master branch not available, analyzing all files"
+        find "$REPO_ROOT/src" -type f \( -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \)
     fi
 }
 
@@ -101,11 +110,14 @@ get_qml_files() {
         find "$REPO_ROOT/$TARGET_PATH" -type f -name "*.qml" 2>/dev/null
     elif [[ "$ANALYZE_ALL" == true ]]; then
         find "$REPO_ROOT/src" -type f -name "*.qml"
-    else
+    elif can_compare_master; then
         # Only changed files vs master
         git -C "$REPO_ROOT" diff --name-only master... -- '*.qml' 2>/dev/null | \
             xargs -I{} echo "$REPO_ROOT/{}" | \
             while read -r f; do [[ -f "$f" ]] && echo "$f"; done
+    else
+        log_warn "master branch not available, analyzing all files"
+        find "$REPO_ROOT/src" -type f -name "*.qml"
     fi
 }
 
