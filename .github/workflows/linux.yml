@@ -114,12 +114,13 @@ jobs:
           arch: ${{ matrix.arch }}
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      - name: Initialize CodeQL
-        if: matrix.build_type == 'Debug'
-        uses: github/codeql-action/init@v4
-        with:
-          languages: c-cpp
-          config-file: ./.github/codeql/codeql-config.yml
+      # Advanced CodeQL: Uncomment these steps after disabling default setup in repo settings
+      # - name: Initialize CodeQL
+      #   if: matrix.build_type == 'Debug'
+      #   uses: github/codeql-action/init@v4
+      #   with:
+      #     languages: c-cpp
+      #     config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -133,11 +134,11 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      - name: Perform CodeQL Analysis
-        if: matrix.build_type == 'Debug'
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:c-cpp"
+      # - name: Perform CodeQL Analysis
+      #   if: matrix.build_type == 'Debug'
+      #   uses: github/codeql-action/analyze@v4
+      #   with:
+      #     category: "/language:c-cpp"
 
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'

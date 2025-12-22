@@ -135,10 +135,14 @@ set -e
 
 echo ""
 
-# Parse results
-PASSED=$(grep -c 'Passed' "$TEMP_OUTPUT" 2>/dev/null || echo 0)
-FAILED=$(grep -c 'Failed' "$TEMP_OUTPUT" 2>/dev/null || echo 0)
-SKIPPED=$(grep -c 'Skipped' "$TEMP_OUTPUT" 2>/dev/null || echo 0)
+# Parse results - ensure numeric values
+PASSED=$(grep -c 'Passed' "$TEMP_OUTPUT" 2>/dev/null || true)
+FAILED=$(grep -c 'Failed' "$TEMP_OUTPUT" 2>/dev/null || true)
+SKIPPED=$(grep -c 'Skipped' "$TEMP_OUTPUT" 2>/dev/null || true)
+# Default to 0 if empty or non-numeric
+[[ "$PASSED" =~ ^[0-9]+$ ]] || PASSED=0
+[[ "$FAILED" =~ ^[0-9]+$ ]] || FAILED=0
+[[ "$SKIPPED" =~ ^[0-9]+$ ]] || SKIPPED=0
 
 # Summary
 if [[ $EXIT_CODE -eq 0 ]]; then
@@ -165,11 +169,12 @@ if [[ "$CI_MODE" == true ]]; then
             echo "skipped=$SKIPPED"
         } >> "$GITHUB_OUTPUT"
 
-        # Write summary to GITHUB_OUTPUT (multiline)
+        # Write summary to GITHUB_OUTPUT (multiline with unique delimiter)
+        DELIMITER="PRECOMMIT_SUMMARY_$(date +%s)"
         {
-            echo "summary<<EOF"
+            echo "summary<<${DELIMITER}"
             grep -E '\.\.\.\.\.\.\.\.\.\.' "$TEMP_OUTPUT" 2>/dev/null | head -40 | sed 's/\x1b\[[0-9;]*m//g' || echo "No results"
-            echo "EOF"
+            echo "${DELIMITER}"
         } >> "$GITHUB_OUTPUT"
     fi
 
