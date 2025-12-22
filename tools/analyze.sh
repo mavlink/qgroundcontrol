@@ -71,6 +71,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             TARGET_PATH="$1"
+            # Validate path - prevent traversal and ensure relative
+            if [[ "$TARGET_PATH" =~ \.\. ]] || [[ "$TARGET_PATH" = /* ]]; then
+                log_error "Invalid path: $TARGET_PATH (must be relative, no '..')"
+                exit 1
+            fi
             shift
             ;;
     esac

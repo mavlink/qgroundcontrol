@@ -64,6 +64,33 @@ jobs:
             });
             return files.map(f => `${f.filename} (+${f.additions}/-${f.deletions})`).join('\n');
 
+      - name: Sanitize inputs for AI
+        id: sanitize
+        if: steps.title_check.outcome == 'failure'
+        shell: bash
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          CHANGED_FILES: ${{ steps.files.outputs.result }}
+        run: |
+          # Truncate inputs to prevent token flooding
+          SAFE_TITLE=$(echo "$PR_TITLE" | head -c 200 | tr -d '\r')
+          SAFE_BODY=$(echo "$PR_BODY" | head -c 2000 | tr -d '\r')
+          SAFE_FILES=$(echo "$CHANGED_FILES" | head -30)
+
+          # Write to outputs using heredoc for multiline safety
+          {
+            echo "title<<EOF"
+            echo "$SAFE_TITLE"
+            echo "EOF"
+            echo "body<<EOF"
+            echo "$SAFE_BODY"
+            echo "EOF"
+            echo "files<<EOF"
+            echo "$SAFE_FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Suggest title with GitHub Models
         id: suggest
         if: steps.title_check.outcome == 'failure'
@@ -73,9 +100,9 @@ jobs:
           prompt-file: .github/prompts/pr-title-suggestion.prompt.yml
           max-tokens: 100
           input: |
-            current_title: ${{ github.event.pull_request.title }}
-            pr_body: ${{ github.event.pull_request.body }}
-            changed_files: ${{ steps.files.outputs.result }}
+            current_title: ${{ steps.sanitize.outputs.title }}
+            pr_body: ${{ steps.sanitize.outputs.body }}
+            changed_files: ${{ steps.sanitize.outputs.files }}
 
       - name: Comment title suggestion
         if: steps.title_check.outcome == 'failure' && steps.suggest.outputs.response
@@ -85,12 +112,26 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            const suggestedTitle = process.env.SUGGESTED_TITLE.trim();
+            let suggestedTitle = process.env.SUGGESTED_TITLE.trim();
+
+            // Validate AI output format - must be conventional commit
+            const validFormat = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9\-\/]+\))?:\s.{1,80}$/;
+            if (!validFormat.test(suggestedTitle)) {
+              console.log('AI response did not match conventional commit format, skipping');
+              return;
+            }
+
+            // Escape HTML entities for safety
+            suggestedTitle = suggestedTitle
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: pr.number
+              issue_number: pr.number,
+              per_page: 100
             });
 
             const botComment = comments.find(c =>
@@ -98,12 +139,12 @@ jobs:
             );
 
             const commentBody = `<!-- pr-title-suggestion -->
-            ## 📝 PR Title Suggestion
+            ## PR Title Suggestion
 
             Your PR title doesn't follow the [conventional commit](https://www.conventionalcommits.org/) format.
 
-            | Current | Suggested |
-            |---------|-----------|
+            | Current Title | Suggested Title |
+            |---------------|-----------------|
             | \`${pr.title}\` | \`${suggestedTitle}\` |
 
             ### Format
@@ -111,7 +152,7 @@ jobs:
 
             **Types:** \`feat\` \`fix\` \`docs\` \`refactor\` \`perf\` \`test\` \`ci\` \`chore\` \`build\` \`style\` \`revert\`
 
-            <sub>🤖 Suggested by GitHub Models • Update your title to dismiss</sub>`;
+            *Suggested by GitHub Models. Update your title to dismiss this suggestion.*`;
 
             if (botComment) {
               await github.rest.issues.updateComment({
@@ -139,7 +180,8 @@ jobs:
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: pr.number
+              issue_number: pr.number,
+              per_page: 100
             });
 
             const botComment = comments.find(c =>
@@ -149,7 +191,7 @@ jobs:
             if (botComment && !botComment.body.includes('(resolved)')) {
               const minimizedBody = `<!-- pr-title-suggestion -->
             <details>
-            <summary>📝 PR Title Suggestion (resolved ✓)</summary>
+            <summary>PR Title Suggestion (resolved)</summary>
 
             ${botComment.body.replace('<!-- pr-title-suggestion -->', '')}
             </details>`;
@@ -195,7 +237,7 @@ jobs:
           xl_label: 'size/XL'
           fail_if_xl: false
           message_if_xl: |
-            ## ⚠️ Large PR Warning
+            ## Large PR Warning
 
             This PR has **more than 1500 lines** changed, which can be difficult to review thoroughly.
 

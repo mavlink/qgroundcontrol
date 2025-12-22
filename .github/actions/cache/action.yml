@@ -23,11 +23,16 @@ runs:
     - name: Get ccache config
       id: ccache-config
       shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
       run: |
-        # Get latest ccache version from GitHub releases
-        CCACHE_VERSION=$(gh api repos/ccache/ccache/releases/latest --jq '.tag_name' | sed 's/^v//')
+        # Pin ccache version for reproducibility and to avoid API calls
+        # Update periodically via Dependabot or manually
+        CCACHE_VERSION="4.10.2"
+
+        # Validate version format (defense in depth)
+        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
+          exit 1
+        fi
         echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
 
         # Read max_size from tools/ccache.conf (single source of truth)

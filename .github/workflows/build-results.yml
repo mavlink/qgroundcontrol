@@ -58,20 +58,20 @@ jobs:
             });
 
             const platforms = {
-              'Linux': { status: '⏳', conclusion: 'pending', url: '' },
-              'Windows': { status: '⏳', conclusion: 'pending', url: '' },
-              'MacOS': { status: '⏳', conclusion: 'pending', url: '' },
-              'Android': { status: '⏳', conclusion: 'pending', url: '' }
+              'Linux': { status: 'Pending', conclusion: 'pending', url: '' },
+              'Windows': { status: 'Pending', conclusion: 'pending', url: '' },
+              'MacOS': { status: 'Pending', conclusion: 'pending', url: '' },
+              'Android': { status: 'Pending', conclusion: 'pending', url: '' }
             };
 
             for (const run of runs.data.workflow_runs) {
               if (platforms[run.name]) {
                 if (run.status === 'completed') {
-                  platforms[run.name].status = run.conclusion === 'success' ? '✅' : '❌';
+                  platforms[run.name].status = run.conclusion === 'success' ? 'Passed' : 'Failed';
                   platforms[run.name].conclusion = run.conclusion;
                   platforms[run.name].url = run.html_url;
                 } else if (run.status === 'in_progress') {
-                  platforms[run.name].status = '🔄';
+                  platforms[run.name].status = 'Running';
                   platforms[run.name].conclusion = 'in_progress';
                   platforms[run.name].url = run.html_url;
                 }
@@ -92,10 +92,10 @@ jobs:
             let summary = '';
             if (allComplete) {
               summary = allSuccess
-                ? '✅ All builds passed!'
-                : '❌ Some builds failed.';
+                ? 'All builds passed.'
+                : 'Some builds failed.';
             } else {
-              summary = '⏳ Some builds still in progress...';
+              summary = 'Some builds still in progress.';
             }
 
             core.setOutput('table', table);
@@ -133,7 +133,7 @@ jobs:
         if: steps.pr.outputs.result != 'null'
         run: |
           cat > comment.md << 'HEADER'
-          ## 🏗️ Build Results
+          ## Build Results
 
           ### Platform Status
 
@@ -144,7 +144,7 @@ jobs:
 
           # === Test Results Section ===
           if ls artifacts/test-results-*/test-output.txt 1>/dev/null 2>&1; then
-            echo "### 🧪 Test Results" >> comment.md
+            echo "### Test Results" >> comment.md
             echo "" >> comment.md
 
             TOTAL_PASSED=0
@@ -165,7 +165,7 @@ jobs:
 
               if [[ "$FAILED" -gt 0 ]]; then
                 HAS_FAILURES=true
-                echo "**$ARCH**: ❌ $PASSED passed, $FAILED failed, $SKIPPED skipped" >> comment.md
+                echo "**$ARCH**: $PASSED passed, $FAILED failed, $SKIPPED skipped" >> comment.md
                 echo "" >> comment.md
                 echo "<details><summary>Failed tests</summary>" >> comment.md
                 echo "" >> comment.md
@@ -174,22 +174,22 @@ jobs:
                 echo '```' >> comment.md
                 echo "</details>" >> comment.md
               else
-                echo "**$ARCH**: ✅ $PASSED passed, $SKIPPED skipped" >> comment.md
+                echo "**$ARCH**: $PASSED passed, $SKIPPED skipped" >> comment.md
               fi
               echo "" >> comment.md
             done
 
             if [[ "$HAS_FAILURES" == "true" ]]; then
-              echo "**Total: $TOTAL_PASSED passed, $TOTAL_FAILED failed, $TOTAL_SKIPPED skipped** ❌" >> comment.md
+              echo "**Total: $TOTAL_PASSED passed, $TOTAL_FAILED failed, $TOTAL_SKIPPED skipped**" >> comment.md
             else
-              echo "**Total: $TOTAL_PASSED passed, $TOTAL_SKIPPED skipped** ✅" >> comment.md
+              echo "**Total: $TOTAL_PASSED passed, $TOTAL_SKIPPED skipped**" >> comment.md
             fi
             echo "" >> comment.md
           fi
 
           # === Coverage Section ===
           if [[ -f "artifacts/coverage-report/coverage.xml" ]]; then
-            echo "### 📊 Code Coverage" >> comment.md
+            echo "### Code Coverage" >> comment.md
             echo "" >> comment.md
 
             COVERAGE=$(python3 -c "
@@ -234,7 +234,7 @@ jobs:
           python tools/check-sizes.py artifacts/ --json --output pr-sizes.json 2>/dev/null || true
 
           if [[ -f "pr-sizes.json" ]]; then
-            echo "### 📦 Artifact Sizes" >> comment.md
+            echo "### Artifact Sizes" >> comment.md
             echo "" >> comment.md
 
             python3 << 'EOF'
@@ -275,9 +275,9 @@ jobs:
                   total_delta += delta
 
                   if delta > 0:
-                      delta_str = f'+{delta / 1024 / 1024:.2f} MB 📈'
+                      delta_str = f'+{delta / 1024 / 1024:.2f} MB (increase)'
                   elif delta < 0:
-                      delta_str = f'{delta / 1024 / 1024:.2f} MB 📉'
+                      delta_str = f'{delta / 1024 / 1024:.2f} MB (decrease)'
                   else:
                       delta_str = 'No change'
 
