@@ -36,13 +36,13 @@ def parse_coverage(xml_path: str) -> dict | None:
 
 
 def coverage_badge(pct: float) -> str:
-    """Return emoji badge based on coverage percentage."""
+    """Return text label based on coverage percentage."""
     if pct >= 80:
-        return "\U0001f7e2"  # green circle
+        return "Good"
     elif pct >= 60:
-        return "\U0001f7e1"  # yellow circle
+        return "Fair"
     else:
-        return "\U0001f534"  # red circle
+        return "Low"
 
 
 def delta_str(old: float | None, new: float) -> str:
@@ -51,9 +51,9 @@ def delta_str(old: float | None, new: float) -> str:
         return "N/A"
     delta = new - old
     if delta > 0:
-        return f"+{delta:.2f}% \U0001f4c8"  # chart increasing
+        return f"+{delta:.2f}%"
     elif delta < 0:
-        return f"{delta:.2f}% \U0001f4c9"  # chart decreasing
+        return f"{delta:.2f}%"
     else:
         return "No change"
 
@@ -65,7 +65,7 @@ def main() -> None:
     if not coverage_xml or not os.path.exists(coverage_xml):
         print("Coverage XML not found", file=sys.stderr)
         with open("coverage-comment.md", "w") as f:
-            f.write("## \U0001f4ca Code Coverage Report\n\n*Coverage data not available*\n")
+            f.write("## Code Coverage Report\n\n*Coverage data not available*\n")
         sys.exit(0)
 
     pr_cov = parse_coverage(coverage_xml)
@@ -73,7 +73,7 @@ def main() -> None:
     if baseline_xml and os.path.exists(baseline_xml):
         baseline_cov = parse_coverage(baseline_xml)
 
-    lines = ["## \U0001f4ca Code Coverage Report", ""]
+    lines = ["## Code Coverage Report", ""]
 
     if pr_cov:
         line_badge = coverage_badge(pr_cov["line"])
@@ -101,9 +101,9 @@ def main() -> None:
         lines.append("")
 
         if pr_cov["line"] < 60:
-            lines.append("> \u26a0\ufe0f Coverage is below 60%. Consider adding more tests.")
+            lines.append("> **Warning:** Coverage is below 60%. Consider adding more tests.")
         elif pr_cov["line"] >= 80:
-            lines.append("> \u2705 Great coverage!")
+            lines.append("> Great coverage!")
     else:
         lines.append("*Coverage data not available*")
 

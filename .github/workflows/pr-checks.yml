@@ -93,7 +93,9 @@ jobs:
 
       - name: Suggest title with GitHub Models
         id: suggest
-        if: steps.title_check.outcome == 'failure'
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
         continue-on-error: true
         uses: actions/ai-inference@v1
         with:
@@ -122,10 +124,14 @@ jobs:
             }
 
             // Escape HTML entities for safety
-            suggestedTitle = suggestedTitle
+            const escapeHtml = (str) => str
               .replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;');
+              .replace(/>/g, '&gt;')
+              .replace(/`/g, '&#96;');
+
+            const currentTitle = escapeHtml(pr.title);
+            suggestedTitle = escapeHtml(suggestedTitle);
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -145,7 +151,7 @@ jobs:
 
             | Current Title | Suggested Title |
             |---------------|-----------------|
-            | \`${pr.title}\` | \`${suggestedTitle}\` |
+            | \`${currentTitle}\` | \`${suggestedTitle}\` |
 
             ### Format
             \`<type>(<scope>): <description>\`

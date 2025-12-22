@@ -40,7 +40,12 @@ runs:
         if ($env:INSTALL_VULKAN -eq 'true') {
           $params['InstallVulkan'] = $true
         }
-        & "$env:GITHUB_WORKSPACE/tools/setup/install-dependencies-windows.ps1" @params
+        $workspace = $env:GITHUB_WORKSPACE
+        if (-not $workspace) {
+          $workspace = Resolve-Path "$PSScriptRoot/../.."
+        }
+        $scriptPath = Join-Path $workspace 'tools/setup/install-dependencies-windows.ps1'
+        & $scriptPath @params
 
     - name: Install dependencies (Linux)
       if: runner.os == 'Linux'

@@ -36,7 +36,17 @@ runs:
         echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
 
         # Read max_size from tools/ccache.conf (single source of truth)
-        CCACHE_MAX_SIZE=$(grep -E '^max_size\s*=' "${{ github.workspace }}/tools/ccache.conf" | sed 's/.*=\s*//' || echo "2G")
+        CCACHE_CONF_PATH="${{ github.workspace }}/tools/ccache.conf"
+        if [[ -f "$CCACHE_CONF_PATH" ]]; then
+          CCACHE_MAX_SIZE=$(grep -E '^max_size\s*=' "$CCACHE_CONF_PATH" | sed 's/.*=\s*//' || true)
+          if [[ -z "$CCACHE_MAX_SIZE" ]]; then
+            echo "Warning: max_size not found in $CCACHE_CONF_PATH, defaulting to 2G" >&2
+            CCACHE_MAX_SIZE="2G"
+          fi
+        else
+          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, defaulting max_size to 2G" >&2
+          CCACHE_MAX_SIZE="2G"
+        fi
         echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
 
     - name: Cache ccache binary (Linux)

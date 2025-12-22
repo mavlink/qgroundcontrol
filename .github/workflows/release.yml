@@ -56,7 +56,7 @@ jobs:
 
           # Check if a new release was created
           if echo "$OUTPUT" | grep -q "Published release"; then
-            VERSION=$(echo "$OUTPUT" | grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+")
+            VERSION=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*Published release \([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' | head -n1)
             echo "new_release=true" >> $GITHUB_OUTPUT
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "New release: v$VERSION"

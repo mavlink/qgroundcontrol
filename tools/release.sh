@@ -73,13 +73,14 @@ if [[ "$NODE_VERSION" -lt 18 ]]; then
 fi
 
 # Install dependencies if requested or missing
+# Pin versions for reproducibility and security (update via Dependabot)
 if [[ "$INSTALL_DEPS" == true ]] || ! command -v semantic-release &> /dev/null; then
     log_info "Installing semantic-release dependencies..."
     npm install -g \
-        semantic-release \
-        @semantic-release/changelog \
-        @semantic-release/git \
-        conventional-changelog-conventionalcommits
+        semantic-release@24.2.5 \
+        @semantic-release/changelog@6.0.3 \
+        @semantic-release/git@10.0.1 \
+        conventional-changelog-conventionalcommits@8.0.0
     log_ok "Dependencies installed"
 
     if [[ "$INSTALL_DEPS" == true ]]; then
@@ -98,7 +99,8 @@ if [[ "$DRY_RUN" == true ]]; then
     log_info "This will show what would happen without making changes"
     echo ""
 
-    npx semantic-release --dry-run
+    # Use globally installed version (pinned above)
+    semantic-release --dry-run
 
     echo ""
     log_ok "Dry-run complete (no changes made)"
@@ -111,6 +113,7 @@ else
     fi
 
     log_info "Running semantic-release..."
-    npx semantic-release
+    # Use globally installed version (pinned above)
+    semantic-release
     log_ok "Release complete"
 fi
