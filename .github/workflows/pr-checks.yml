@@ -141,7 +141,7 @@ jobs:
             });
 
             const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('<!-- pr-title-suggestion -->')
+              c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
             );
 
             const commentBody = `<!-- pr-title-suggestion -->
@@ -191,7 +191,7 @@ jobs:
             });
 
             const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('<!-- pr-title-suggestion -->')
+              c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
             );
 
             if (botComment && !botComment.body.includes('(resolved)')) {

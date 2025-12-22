@@ -76,12 +76,22 @@ while [[ $# -gt 0 ]]; do
                 log_error "Invalid path: $TARGET_PATH (must be relative, no '..')"
                 exit 1
             fi
+            # Resolve to absolute and verify within repo (defense in depth)
+            if [[ -e "$REPO_ROOT/$TARGET_PATH" ]]; then
+                RESOLVED_PATH="$(cd "$REPO_ROOT" && realpath -m "$TARGET_PATH" 2>/dev/null || true)"
+                if [[ -z "$RESOLVED_PATH" ]] || [[ "$RESOLVED_PATH" != "$REPO_ROOT"* ]]; then
+                    log_error "Invalid path: resolves outside repository"
+                    exit 1
+                fi
+            fi
             shift
             ;;
     esac
 done
 
 # Check if we can compare against master branch
+# SECURITY: Branch name "master" is hardcoded to prevent command injection.
+# If making this dynamic, validate: [[ "$branch" =~ ^[a-zA-Z0-9/_-]+$ ]]
 can_compare_master() {
     git -C "$REPO_ROOT" rev-parse --verify master &>/dev/null || \
     git -C "$REPO_ROOT" rev-parse --verify origin/master &>/dev/null
@@ -94,10 +104,12 @@ get_cpp_files() {
     elif [[ "$ANALYZE_ALL" == true ]]; then
         find "$REPO_ROOT/src" -type f \( -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \)
     elif can_compare_master; then
-        # Only changed files vs master
+        # Only changed files vs master (prepend repo root and filter existing files)
         git -C "$REPO_ROOT" diff --name-only master... -- '*.cc' '*.cpp' '*.h' '*.hpp' 2>/dev/null | \
-            xargs -I{} echo "$REPO_ROOT/{}" | \
-            while read -r f; do [[ -f "$f" ]] && echo "$f"; done
+            while read -r f; do
+                local full_path="$REPO_ROOT/$f"
+                [[ -f "$full_path" ]] && echo "$full_path"
+            done
     else
         log_warn "master branch not available, analyzing all files"
         find "$REPO_ROOT/src" -type f \( -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \)
@@ -111,10 +123,12 @@ get_qml_files() {
     elif [[ "$ANALYZE_ALL" == true ]]; then
         find "$REPO_ROOT/src" -type f -name "*.qml"
     elif can_compare_master; then
-        # Only changed files vs master
+        # Only changed files vs master (prepend repo root and filter existing files)
         git -C "$REPO_ROOT" diff --name-only master... -- '*.qml' 2>/dev/null | \
-            xargs -I{} echo "$REPO_ROOT/{}" | \
-            while read -r f; do [[ -f "$f" ]] && echo "$f"; done
+            while read -r f; do
+                local full_path="$REPO_ROOT/$f"
+                [[ -f "$full_path" ]] && echo "$full_path"
+            done
     else
         log_warn "master branch not available, analyzing all files"
         find "$REPO_ROOT/src" -type f -name "*.qml"
@@ -162,18 +176,18 @@ run_clang_format() {
         fi
     else
         log_info "Checking formatting on $file_count files..."
-        local needs_format=()
+        local needs_format=""
 
         while read -r file; do
             if ! clang-format --dry-run --Werror "$file" 2>/dev/null; then
-                needs_format+=("${file#"$REPO_ROOT"/}")
+                needs_format+="${file#"$REPO_ROOT"/}"$'\n'
             fi
         done <<< "$files"
 
-        if [[ ${#needs_format[@]} -gt 0 ]]; then
+        if [[ -n "$needs_format" ]]; then
             log_error "The following files need formatting:"
-            for f in "${needs_format[@]}"; do
-                echo "  $f"
+            echo "$needs_format" | while read -r f; do
+                [[ -n "$f" ]] && echo "  $f"
             done
             echo ""
             log_info "Run: ./tools/analyze.sh --tool clang-format --fix"
@@ -209,7 +223,8 @@ run_clang_tidy() {
     log_info "Running clang-tidy on $file_count files..."
 
     local exit_code=0
-    echo "$files" | while read -r file; do
+    # Use process substitution to avoid subshell (preserves exit_code)
+    while read -r file; do
         echo -n "  Analyzing: ${file#"$REPO_ROOT"/}... "
         if clang-tidy -p "$BUILD_DIR" "$file" 2>/dev/null; then
             echo -e "${GREEN}OK${NC}"
@@ -217,7 +232,7 @@ run_clang_tidy() {
             echo -e "${RED}ISSUES${NC}"
             exit_code=1
         fi
-    done
+    done < <(echo "$files")
 
     return $exit_code
 }
@@ -243,6 +258,7 @@ run_cppcheck() {
     # Create file list
     local filelist
     filelist=$(mktemp)
+    trap 'rm -f "$filelist"' RETURN
     echo "$files" > "$filelist"
 
     cppcheck \
@@ -255,9 +271,7 @@ run_cppcheck() {
         --error-exitcode=1 \
         2>&1
 
-    local exit_code=$?
-    rm -f "$filelist"
-    return $exit_code
+    return $?
 }
 
 run_clazy() {
@@ -295,8 +309,10 @@ run_clazy() {
     local issues_found=0
     local output_file
     output_file=$(mktemp)
+    trap 'rm -f "$output_file"' RETURN
 
-    echo "$files" | while read -r file; do
+    # Use process substitution to avoid subshell (preserves issues_found)
+    while read -r file; do
         local relpath="${file#"$REPO_ROOT"/}"
         if clazy-standalone -p "$BUILD_DIR" --checks="$checks" "$file" 2>"$output_file"; then
             : # No issues
@@ -307,9 +323,7 @@ run_clazy() {
                 issues_found=1
             fi
         fi
-    done
-
-    rm -f "$output_file"
+    done < <(echo "$files")
 
     if [[ $issues_found -eq 1 ]]; then
         log_warn "Clazy found Qt-specific issues"

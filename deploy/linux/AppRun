@@ -50,14 +50,25 @@ unset QML2_IMPORT_PATH
 
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-# Find the main executable (supports custom builds with different names)
+# Find the main executable (prefer known names, fall back to first executable)
 QGC_BINARY=""
-for bin in "${APPDIR}/usr/bin/"*; do
-    if [ -x "$bin" ] && [ -f "$bin" ]; then
-        QGC_BINARY="$bin"
+# Try known binary names first for security (prevents malicious binary injection)
+for expected_name in QGroundControl Custom-QGroundControl; do
+    if [ -x "${APPDIR}/usr/bin/${expected_name}" ] && [ -f "${APPDIR}/usr/bin/${expected_name}" ]; then
+        QGC_BINARY="${APPDIR}/usr/bin/${expected_name}"
         break
     fi
 done
+# Fallback to first executable (for custom builds with different names)
+if [ -z "$QGC_BINARY" ]; then
+    for bin in "${APPDIR}/usr/bin/"*; do
+        if [ -x "$bin" ] && [ -f "$bin" ]; then
+            QGC_BINARY="$bin"
+            echo "Warning: Using non-standard binary: $(basename "$bin")" >&2
+            break
+        fi
+    done
+fi
 
 if [ -z "$QGC_BINARY" ]; then
     echo "Error: No executable found in ${APPDIR}/usr/bin/" >&2

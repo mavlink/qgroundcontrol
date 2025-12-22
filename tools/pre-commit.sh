@@ -109,6 +109,8 @@ ARGS=(
 
 if [[ "$MODE" == "changed" ]]; then
     # Check if we can compare against master
+    # SECURITY: Branch name "master" is hardcoded to prevent command injection.
+    # If making this dynamic, validate: [[ "$branch" =~ ^[a-zA-Z0-9/_-]+$ ]]
     if git rev-parse --verify master &>/dev/null || git rev-parse --verify origin/master &>/dev/null; then
         log_info "Running on files changed vs master..."
         ARGS+=("--from-ref" "master" "--to-ref" "HEAD")
@@ -135,14 +137,8 @@ set -e
 
 echo ""
 
-# Parse results - ensure numeric values
-PASSED=$(grep -c 'Passed' "$TEMP_OUTPUT" 2>/dev/null || true)
-FAILED=$(grep -c 'Failed' "$TEMP_OUTPUT" 2>/dev/null || true)
-SKIPPED=$(grep -c 'Skipped' "$TEMP_OUTPUT" 2>/dev/null || true)
-# Default to 0 if empty or non-numeric
-[[ "$PASSED" =~ ^[0-9]+$ ]] || PASSED=0
-[[ "$FAILED" =~ ^[0-9]+$ ]] || FAILED=0
-[[ "$SKIPPED" =~ ^[0-9]+$ ]] || SKIPPED=0
+# Parse results - single awk pass for efficiency
+read -r PASSED FAILED SKIPPED < <(awk '/Passed/{p++} /Failed/{f++} /Skipped/{s++} END{print p+0, f+0, s+0}' "$TEMP_OUTPUT" 2>/dev/null || echo "0 0 0")
 
 # Summary
 if [[ $EXIT_CODE -eq 0 ]]; then
@@ -184,17 +180,17 @@ if [[ "$CI_MODE" == true ]]; then
             echo "## Pre-commit Results"
             echo ""
             if [[ $EXIT_CODE -eq 0 ]]; then
-                echo "✅ **All checks passed**"
+                echo "**All checks passed**"
             else
-                echo "⚠️ **Some checks failed**"
+                echo "**Some checks failed**"
             fi
             echo ""
             echo "| Status | Count |"
             echo "|--------|-------|"
-            echo "| ✅ Passed | $PASSED |"
-            echo "| ❌ Failed | $FAILED |"
+            echo "| Passed | $PASSED |"
+            echo "| Failed | $FAILED |"
             if [[ $SKIPPED -gt 0 ]]; then
-                echo "| ⏭️ Skipped | $SKIPPED |"
+                echo "| Skipped | $SKIPPED |"
             fi
             echo ""
             echo "<details>"

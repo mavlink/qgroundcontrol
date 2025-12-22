@@ -37,15 +37,13 @@ runs:
 
         # Read max_size from tools/ccache.conf (single source of truth)
         CCACHE_CONF_PATH="${{ github.workspace }}/tools/ccache.conf"
+        CCACHE_MAX_SIZE="2G"  # Default
         if [[ -f "$CCACHE_CONF_PATH" ]]; then
-          CCACHE_MAX_SIZE=$(grep -E '^max_size\s*=' "$CCACHE_CONF_PATH" | sed 's/.*=\s*//' || true)
-          if [[ -z "$CCACHE_MAX_SIZE" ]]; then
-            echo "Warning: max_size not found in $CCACHE_CONF_PATH, defaulting to 2G" >&2
-            CCACHE_MAX_SIZE="2G"
-          fi
+          # Single awk pass to extract value (more robust than grep|sed)
+          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
+          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
         else
-          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, defaulting max_size to 2G" >&2
-          CCACHE_MAX_SIZE="2G"
+          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
         fi
         echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
 
@@ -64,9 +62,12 @@ runs:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
       run: |
         set -e
+        # Download pre-built binary (not source tarball)
         wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
         tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        sudo make -C "ccache-${CCACHE_VERSION}-linux-x86_64" install
+        # Copy pre-built binary directly (no compilation needed)
+        sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
+        sudo chmod +x /usr/local/bin/ccache
 
     - name: Setup sccache (Windows x64 only)
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
