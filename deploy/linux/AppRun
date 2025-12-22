@@ -50,8 +50,24 @@ unset QML2_IMPORT_PATH
 
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
+# Find the main executable (supports custom builds with different names)
+QGC_BINARY=""
+for bin in "${APPDIR}/usr/bin/"*; do
+    if [ -x "$bin" ] && [ -f "$bin" ]; then
+        QGC_BINARY="$bin"
+        break
+    fi
+done
+
+if [ -z "$QGC_BINARY" ]; then
+    echo "Error: No executable found in ${APPDIR}/usr/bin/" >&2
+    exit 1
+fi
+
+QGC_NAME=$(basename "$QGC_BINARY")
+
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
-    echo "QGroundControl AppImage: Forcing xcb platform (Wayland support incomplete)" >&2
+    echo "${QGC_NAME} AppImage: Forcing xcb platform (Wayland support incomplete)" >&2
     export QT_QPA_PLATFORM=xcb
 fi
 
@@ -73,4 +89,4 @@ export GST_PLUGIN_SYSTEM_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
 export GST_PLUGIN_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
 export GST_PLUGIN_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
 
-exec "${APPDIR}/usr/bin/QGroundControl" "$@"
+exec "$QGC_BINARY" "$@"
