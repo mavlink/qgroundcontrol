@@ -1,0 +1,40 @@
+# QGroundControl Custom Pre-commit Hooks
+# These hooks are loaded by .pre-commit-config.yaml via "repo: ."
+#
+# To use in another repo:
+#   - repo: https://github.com/mavlink/qgroundcontrol
+#     rev: master
+#     hooks:
+#       - id: qmllint
+
+- id: qmllint
+  name: Lint QML files
+  entry: ./tools/analyze.sh --tool qmllint
+  language: system
+  files: \.qml$
+  exclude: ^build/
+  pass_filenames: false
+
+- id: clazy
+  name: Qt static analysis (clazy)
+  entry: ./tools/analyze.sh --tool clazy
+  language: system
+  types: [c++]
+  exclude: ^(build/|libs/|test/)
+  pass_filenames: false
+
+- id: check-no-qassert
+  name: Check for Q_ASSERT in production code
+  entry: bash -c 'if grep -n "Q_ASSERT" "$@" 2>/dev/null; then echo "::warning::Q_ASSERT found. Consider defensive checks with early returns instead." >&2; fi; exit 0' --
+  language: system
+  types: [c++]
+  exclude: ^test/
+  pass_filenames: true
+
+- id: vehicle-null-check
+  name: Check vehicle null safety
+  entry: python3 tools/analyzers/vehicle_null_check.py
+  language: python
+  types: [c++]
+  exclude: ^(build/|libs/|test/)
+  pass_filenames: true

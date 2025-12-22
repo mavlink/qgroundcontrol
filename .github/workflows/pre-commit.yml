@@ -21,6 +21,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   pre-commit:
@@ -41,6 +42,17 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install pre-commit
+        run: |
+          python -m pip install pre-commit
+          python -m pip freeze --local
+
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
       - name: Install Qt (for qmllint)
         uses: ./.github/actions/qt-install
         with:
@@ -52,21 +64,99 @@ jobs:
       - name: Run pre-commit
         id: pre-commit
         continue-on-error: true
-        uses: pre-commit/action@v3.0.1
+        env:
+          PRE_COMMIT_OUTPUT: pre-commit-output.txt
+        run: ./tools/pre-commit.sh --ci
 
-      - name: Show diff on failure
-        if: steps.pre-commit.outcome == 'failure'
-        run: |
-          echo "::group::Files modified by pre-commit hooks"
-          git diff --stat
-          echo "::endgroup::"
-          echo ""
-          echo "::group::Full diff (apply these changes to fix)"
-          git diff --color=always
-          echo "::endgroup::"
-          echo ""
-          echo "💡 To fix locally, run: pre-commit run --all-files"
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const exitCode = '${{ steps.pre-commit.outputs.exit_code }}' || '1';
+            const passed = parseInt('${{ steps.pre-commit.outputs.passed }}') || 0;
+            const failed = parseInt('${{ steps.pre-commit.outputs.failed }}') || 0;
+            const skipped = parseInt('${{ steps.pre-commit.outputs.skipped }}') || 0;
+            const success = exitCode === '0';
+
+            // Build comment body
+            let body = success
+              ? '## ✅ Pre-commit Checks Passed\n\n'
+              : '## ⚠️ Pre-commit Checks Failed\n\n';
+
+            body += `| Status | Count |\n|--------|-------|\n`;
+            body += `| ✅ Passed | ${passed} |\n`;
+            body += `| ❌ Failed | ${failed} |\n`;
+            if (skipped > 0) {
+              body += `| ⏭️ Skipped | ${skipped} |\n`;
+            }
+            body += '\n';
+
+            // Add hook summary
+            const summary = `${{ steps.pre-commit.outputs.summary }}`;
+            if (summary && summary.trim() && summary !== 'No results') {
+              body += '<details>\n<summary>Hook Results</summary>\n\n```\n';
+              body += summary;
+              body += '\n```\n</details>\n\n';
+            }
+
+            if (!success) {
+              // Add diff if files were modified
+              let diff = '';
+              try {
+                const { execSync } = require('child_process');
+                diff = execSync('git diff --stat', { encoding: 'utf8', maxBuffer: 50 * 1024 });
+              } catch (e) {
+                diff = '';
+              }
+
+              if (diff.trim()) {
+                body += '<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n';
+                body += diff;
+                body += '```\n</details>\n\n';
+              }
+
+              body += '### How to Fix\n\n';
+              body += '```bash\n';
+              body += './tools/pre-commit.sh\n';
+              body += 'git add -u && git commit --amend --no-edit\n';
+              body += '```\n';
+            }
+
+            body += `\n<sub>Run ID: [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})</sub>`;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = '## ✅ Pre-commit Checks Passed';
+            const marker2 = '## ⚠️ Pre-commit Checks Failed';
+            const existing = comments.data.find(c =>
+              c.user.type === 'Bot' &&
+              (c.body.includes(marker) || c.body.includes(marker2))
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
 
       - name: Fail if pre-commit failed
-        if: steps.pre-commit.outcome == 'failure'
+        if: steps.pre-commit.outputs.exit_code != '0'
         run: exit 1
