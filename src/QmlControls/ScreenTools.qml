@@ -106,7 +106,7 @@ Item {
     property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * 1.6)
     property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * 1.0)
     property real implicitRadioButtonHeight:        implicitCheckBoxHeight
-    property real implicitTextFieldWidth:           defaultFontPixelWidth * 13
+    property real implicitTextFieldWidth:           defaultFontPixelWidth * 10
     property real implicitTextFieldHeight:          implicitButtonHeight
     property real implicitComboBoxHeight:           implicitButtonHeight
     property real implicitComboBoxWidth:            implicitButtonWidth

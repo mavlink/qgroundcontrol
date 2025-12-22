@@ -39,20 +39,23 @@
                 "decimalPlaces":    0,
                 "min":              0,
                 "userMin":          0,
-                "userMax":          600
+                "userMax":          600,
+                "advanced":        true
             },
             "param2": {
                 "label":            "Acceptance",
                 "units":            "m",
                 "default":          0,
                 "decimalPlaces":    2,
-                "min":              0
+                "min":              0,
+                "advanced":        true
             },
             "param3": {
                 "label":            "Pass Radius",
                 "units":            "m",
                 "default":          0,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "advanced":        true
             },
             "param4": {
                 "label":            "Yaw",
@@ -61,7 +64,8 @@
                 "default":          null,
                 "decimalPlaces":    1,
                 "userMin":          -180,
-                "userMax":          180
+                "userMax":          180,
+                "advanced":        true
             }
         },
         {
@@ -88,7 +92,8 @@
                 "default":          null,
                 "decimalPlaces":    2,
                 "userMin":          -180,
-                "userMax":          180
+                "userMax":          180,
+                "advanced":        true
             }
         },
         {
@@ -210,7 +215,8 @@
                 "default":          null,
                 "decimalPlaces":    1,
                 "userMin":          -180,
-                "userMax":          180
+                "userMax":          180,
+                "advanced":        true
             }
         },
         {
@@ -323,7 +329,8 @@
                 "decimalPlaces":    0,
                 "min":              0,
                 "userMin":          0,
-                "userMax":          600
+                "userMax":          600,
+                "advanced":        true
             }
         },
         { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
@@ -351,7 +358,8 @@
                 "default":          null,
                 "decimalPlaces":    2,
                 "userMin":          -180,
-                "userMax":          180
+                "userMax":          180,
+                "advanced":        true
             }
         },
         {
@@ -368,7 +376,8 @@
                 "units":            "m",
                 "nanUnchanged":     true,
                 "default":          null,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "advanced":        true
             },
             "param4": {
                 "label":            "Yaw",
@@ -793,19 +802,22 @@
                 "label":            "Pitch offset",
                 "default":          0,
                 "units":            "deg",
-                "decimalPlaces":    0
+                "decimalPlaces":    0,
+                "advanced":        true
             },
             "param6": {
                 "label":            "Roll offset",
                 "default":          0,
                 "units":            "deg",
-                "decimalPlaces":    0
+                "decimalPlaces":    0,
+                "advanced":        true
             },
             "param7": {
                 "label":            "Yaw offset",
                 "default":          0,
                 "units":            "deg",
-                "decimalPlaces":    0
+                "decimalPlaces":    0,
+                "advanced":        true
             }
         },
         {
@@ -1251,7 +1263,8 @@
                 "default":          0.2,
                 "units":            "Hz",
                 "decimalPlaces":    2,
-                "min":              0
+                "min":              0,
+                "advanced":        true
             }
         },
         {

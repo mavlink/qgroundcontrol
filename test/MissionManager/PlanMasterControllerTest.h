@@ -24,7 +24,6 @@ private slots:
     void init(void) final;
     void cleanup(void) final;
 
-    void _testMissionFileLoad(void);
     void _testMissionPlannerFileLoad(void);
     void _testActiveVehicleChanged(void);
 

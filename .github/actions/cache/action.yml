@@ -31,7 +31,7 @@ runs:
     - name: Cache ccache binary (Linux)
       if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
       id: ccache-binary
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
         key: ccache-binary-${{ inputs.ccache-version }}-linux-x86_64
@@ -41,7 +41,7 @@ runs:
       shell: bash
       run: |
         set -e
-        wget --quiet https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
+        wget --quiet --tries=3 --waitretry=5 https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
         tar -xf ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
         sudo make -C ccache-${{ inputs.ccache-version }}-linux-x86_64 install
 
@@ -73,7 +73,7 @@ runs:
 
     - name: Cache CPM Modules
       if: inputs.cpm-modules != ''
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ inputs.cpm-modules }}
         key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}

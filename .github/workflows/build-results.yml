@@ -1,0 +1,268 @@
+name: Build Results
+
+on:
+  workflow_run:
+    workflows: [Linux, Windows, MacOS, Android]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  collect-sizes:
+    name: Collect Artifact Sizes
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 15
+
+    outputs:
+      sizes-json: ${{ steps.sizes.outputs.json }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/check-sizes.py
+          sparse-checkout-cone-mode: false
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      - name: Collect sizes
+        id: sizes
+        run: |
+          python tools/check-sizes.py artifacts/ \
+            --json \
+            --output sizes.json \
+            --summary "$GITHUB_STEP_SUMMARY"
+          echo "json=$(jq -c . sizes.json)" >> $GITHUB_OUTPUT
+
+      - name: Upload size report
+        uses: actions/upload-artifact@v6
+        with:
+          name: size-report-${{ github.event.workflow_run.id }}
+          path: sizes.json
+          retention-days: 90
+
+      - name: Save baseline sizes (master only)
+        if: github.event.workflow_run.head_branch == 'master'
+        uses: actions/cache/save@v5
+        with:
+          path: sizes.json
+          key: artifact-sizes-baseline-${{ github.run_id }}
+
+      - name: Save baseline sizes as latest
+        if: github.event.workflow_run.head_branch == 'master'
+        uses: actions/cache/save@v5
+        with:
+          path: sizes.json
+          key: artifact-sizes-baseline-latest
+
+  post-pr-comment:
+    name: Post Build Results
+    runs-on: ubuntu-latest
+    needs: collect-sizes
+    if: github.event.workflow_run.event == 'pull_request'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/check-sizes.py
+          sparse-checkout-cone-mode: false
+
+      - name: Get PR number
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            if (run.pull_requests && run.pull_requests.length > 0) {
+              return run.pull_requests[0].number;
+            }
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${run.head_branch}`
+            });
+            return prs.data.length > 0 ? prs.data[0].number : null;
+
+      - name: Collect build status
+        if: steps.pr.outputs.result != 'null'
+        id: builds
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const headSha = context.payload.workflow_run.head_sha;
+
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: headSha,
+              per_page: 100
+            });
+
+            const platforms = {
+              'Linux': { status: '⏳', conclusion: 'pending', url: '' },
+              'Windows': { status: '⏳', conclusion: 'pending', url: '' },
+              'MacOS': { status: '⏳', conclusion: 'pending', url: '' },
+              'Android': { status: '⏳', conclusion: 'pending', url: '' }
+            };
+
+            for (const run of runs.data.workflow_runs) {
+              if (platforms[run.name]) {
+                if (run.status === 'completed') {
+                  platforms[run.name].status = run.conclusion === 'success' ? '✅' : '❌';
+                  platforms[run.name].conclusion = run.conclusion;
+                  platforms[run.name].url = run.html_url;
+                } else if (run.status === 'in_progress') {
+                  platforms[run.name].status = '🔄';
+                  platforms[run.name].conclusion = 'in_progress';
+                  platforms[run.name].url = run.html_url;
+                }
+              }
+            }
+
+            let table = '| Platform | Status | Details |\n|----------|--------|--------|\n';
+            for (const [name, info] of Object.entries(platforms)) {
+              const link = info.url ? `[View](${info.url})` : '-';
+              table += `| ${name} | ${info.status} | ${link} |\n`;
+            }
+
+            const allComplete = Object.values(platforms).every(p =>
+              ['success', 'failure', 'cancelled'].includes(p.conclusion)
+            );
+            const allSuccess = Object.values(platforms).every(p => p.conclusion === 'success');
+
+            let summary = '';
+            if (allComplete) {
+              summary = allSuccess
+                ? '✅ All builds passed!'
+                : '❌ Some builds failed.';
+            } else {
+              summary = '⏳ Some builds still in progress...';
+            }
+
+            core.setOutput('table', table);
+            core.setOutput('summary', summary);
+            core.setOutput('all_complete', allComplete);
+
+      - name: Download PR artifacts for size comparison
+        if: steps.pr.outputs.result != 'null'
+        uses: actions/download-artifact@v7
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts-pr
+
+      - name: Restore baseline sizes
+        if: steps.pr.outputs.result != 'null'
+        id: baseline
+        uses: actions/cache/restore@v5
+        with:
+          path: baseline-sizes.json
+          key: artifact-sizes-baseline-latest
+
+      - name: Generate combined report
+        if: steps.pr.outputs.result != 'null'
+        run: |
+          cat > comment.md << 'HEADER'
+          ## 🏗️ Build Results
+
+          ### Platform Status
+
+          ${{ steps.builds.outputs.table }}
+          **${{ steps.builds.outputs.summary }}**
+
+          HEADER
+
+          # Generate size report
+          python tools/check-sizes.py artifacts-pr/ --json --output pr-sizes.json 2>/dev/null || true
+
+          if [[ -f "pr-sizes.json" ]]; then
+            echo "### 📦 Artifact Sizes" >> comment.md
+            echo "" >> comment.md
+
+            python3 << 'EOF'
+          import json
+          import os
+
+          with open('pr-sizes.json') as f:
+              pr_data = json.load(f)
+
+          baseline = {}
+          if os.path.exists('baseline-sizes.json'):
+              with open('baseline-sizes.json') as f:
+                  baseline_data = json.load(f)
+                  baseline = {a['name']: a for a in baseline_data.get('artifacts', [])}
+
+          lines = []
+
+          if baseline:
+              lines.extend([
+                  '| Artifact | Size | Δ from master |',
+                  '|----------|------|---------------|'
+              ])
+          else:
+              lines.extend([
+                  '| Artifact | Size |',
+                  '|----------|------|'
+              ])
+
+          total_delta = 0
+          for a in pr_data.get('artifacts', []):
+              name = a['name']
+              size = a['size_human']
+
+              if baseline and name in baseline:
+                  old_size = baseline[name]['size_bytes']
+                  new_size = a['size_bytes']
+                  delta = new_size - old_size
+                  total_delta += delta
+
+                  if delta > 0:
+                      delta_str = f'+{delta / 1024 / 1024:.2f} MB 📈'
+                  elif delta < 0:
+                      delta_str = f'{delta / 1024 / 1024:.2f} MB 📉'
+                  else:
+                      delta_str = 'No change'
+
+                  lines.append(f'| {name} | {size} | {delta_str} |')
+              else:
+                  lines.append(f'| {name} | {size} |')
+
+          lines.append('')
+          if baseline and total_delta != 0:
+              direction = 'increased' if total_delta > 0 else 'decreased'
+              lines.append(f'**Total size {direction} by {abs(total_delta) / 1024 / 1024:.2f} MB**')
+          elif not baseline:
+              lines.append('*No baseline available for comparison*')
+
+          with open('sizes-section.md', 'w') as f:
+              f.write('\n'.join(lines))
+          EOF
+
+            cat sizes-section.md >> comment.md
+          fi
+
+          echo "" >> comment.md
+          echo "---" >> comment.md
+          echo "<sub>Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')</sub>" >> comment.md
+
+          cat comment.md
+
+      - name: Post combined comment
+        if: steps.pr.outputs.result != 'null'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          pr-number: ${{ steps.pr.outputs.result }}
+          comment-tag: build-results
+          file-path: comment.md

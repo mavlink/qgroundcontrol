@@ -30,6 +30,7 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -80,8 +81,15 @@ jobs:
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+      HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
+      - name: Harden Runner
+        if: runner.os == 'Linux'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -96,14 +104,6 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/common
 
-      - name: Free Disk Space
-        if: matrix.host == 'linux'
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: false
-          android: false
-          large-packages: false
-
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
         with:
@@ -117,6 +117,8 @@ jobs:
           ndk-version: ${{ steps.config.outputs.ndk_version }}
           java-version: ${{ steps.config.outputs.java_version }}
           android-platform: ${{ steps.config.outputs.android_platform }}
+          android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
+          android-build-tools: ${{ steps.config.outputs.android_build_tools }}
           ccache-version: ${{ steps.config.outputs.ccache_version }}
           save-cache: ${{ github.event_name != 'pull_request' }}
 
@@ -132,7 +134,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
             -DCMAKE_WARN_DEPRECATED=FALSE \
             -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
-            -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
             -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
             -DQT_ANDROID_SIGN_APK=${{ matrix.primary && env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }} \
             -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
@@ -148,27 +149,25 @@ jobs:
           TEMP_DIR="${RUNNER_TEMP//\\//}"  # Convert backslashes for Windows
           cp "${TEMP_DIR}/build/android-build/"*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
 
+      - name: Attest Build Provenance
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
+
       - name: Upload Build File
-        if: matrix.primary
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.PACKAGE }}.apk
-          package_name: ${{ env.PACKAGE }}
+          package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload_aws: true
+          upload_aws: ${{ matrix.primary }}
 
-      - name: Save APK
-        if: ${{ !matrix.primary }}
-        uses: actions/upload-artifact@v5
+      - name: Deploy to Play Store
+        if: matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true'
+        uses: ./.github/actions/playstore
         with:
-          name: ${{ env.PACKAGE }}-${{ matrix.host }}.apk
-          path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-
-      # - name: Deploy to Play Store
-      #   if: matrix.primary
-      #   uses: ./.github/actions/playstore
-      #   with:
-      #     artifact_name: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-      #     service_account_json: ${{ secrets.SERVICE_ACCOUNT }}
+          artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}

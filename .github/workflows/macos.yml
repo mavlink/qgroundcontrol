@@ -28,6 +28,7 @@ on:
         options:
           - Release
           - Debug
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -73,7 +74,7 @@ jobs:
 
       - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
-        run: sh install-dependencies-osx.sh
+        run: sh install-dependencies-macos.sh
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -85,16 +86,12 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: mac
-          target: desktop
           arch: clang_64
-          dir: ${{ runner.temp }}
           modules: ${{ steps.config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
 
       - name: CMake configure
         working-directory: ${{ runner.temp }}/build
@@ -113,7 +110,7 @@ jobs:
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
-        uses: apple-actions/import-codesign-certs@v5
+        uses: apple-actions/import-codesign-certs@v6
         with:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
@@ -134,6 +131,12 @@ jobs:
       - name: Sanity check DMG executable
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
+
+      - name: Attest Build Provenance
+        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: '${{ runner.temp }}/build/QGroundControl.dmg'
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

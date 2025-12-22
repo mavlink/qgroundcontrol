@@ -4,19 +4,73 @@ if [ -z "$APPDIR" ]; then
     APPDIR="$(dirname "$(readlink -f "$0")")"
 fi
 
-export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/gstreamer-1.0:${LD_LIBRARY_PATH}"
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)  MULTIARCH="x86_64-linux-gnu" ;;
+    aarch64) MULTIARCH="aarch64-linux-gnu" ;;
+    *)       MULTIARCH="" ;;
+esac
+
+SYSTEM_GLIB=""
+SYSTEM_GIO=""
+for LIB_PATH in \
+    "/usr/lib/${MULTIARCH}" \
+    "/usr/lib64" \
+    "/usr/lib"; do
+    if [ -f "${LIB_PATH}/libglib-2.0.so.0" ]; then
+        SYSTEM_GLIB="${LIB_PATH}/libglib-2.0.so.0"
+        SYSTEM_GIO="${LIB_PATH}/libgio-2.0.so.0"
+        break
+    fi
+done
+
+# Preload system GLib 2.76+ for TTS compatibility (libspeechd.so.2 dependency)
+if [ -n "$SYSTEM_GLIB" ]; then
+    if nm -D "$SYSTEM_GLIB" 2>/dev/null | grep -q g_string_free_and_steal; then
+        export LD_PRELOAD="${SYSTEM_GLIB}${LD_PRELOAD:+:$LD_PRELOAD}"
+    fi
+fi
+
+# Use system OpenGL libraries to avoid conflicts with bundled libGLESv2
+# Bundled GLES can conflict with system desktop OpenGL causing "Unrecognized OpenGL version"
+SYSTEM_LIBDIR="${LIB_PATH:-/usr/lib/${MULTIARCH}}"
+if [ -f "${SYSTEM_LIBDIR}/libEGL.so.1" ]; then
+    export LD_PRELOAD="${SYSTEM_LIBDIR}/libEGL.so.1:${SYSTEM_LIBDIR}/libGLESv2.so.2${LD_PRELOAD:+:$LD_PRELOAD}"
+fi
+
+if [ -n "$MULTIARCH" ]; then
+    export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/gstreamer-1.0:/usr/lib/${MULTIARCH}:/lib/${MULTIARCH}:/usr/lib64:/usr/lib:${LD_LIBRARY_PATH}"
+else
+    echo "Warning: Unsupported architecture '${ARCH}'; using generic library paths." >&2
+    export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${APPDIR}/usr/lib/gstreamer-1.0:/usr/lib64:/usr/lib:${LD_LIBRARY_PATH}"
+fi
+
+unset QT_PLUGIN_PATH
+unset QML2_IMPORT_PATH
+
+export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    echo "QGroundControl AppImage: Forcing xcb platform (Wayland support incomplete)" >&2
+    export QT_QPA_PLATFORM=xcb
+fi
 
 export GST_REGISTRY_REUSE_PLUGIN_SCANNER="no"
-export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
-export GST_PTP_HELPER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
-export GST_PTP_HELPER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
+
+# GIO 2.76+ system modules require symbols missing from bundled GIO - use bundled modules only
+if [ -n "$SYSTEM_GIO" ] && nm -D "$SYSTEM_GIO" 2>/dev/null | grep -q g_task_set_static_name; then
+    export GIO_MODULE_DIR="${APPDIR}/usr/lib/gio/modules"
+    export GIO_USE_VFS="local"
+else
+    export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
+fi
 export GST_PLUGIN_SCANNER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
 export GST_PLUGIN_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+export GST_PTP_HELPER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
+export GST_PTP_HELPER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
 export GST_PLUGIN_SYSTEM_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
 export GST_PLUGIN_SYSTEM_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
 export GST_PLUGIN_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
 export GST_PLUGIN_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
-
-# export QT_QPA_PLATFORM="wayland;xcb"
 
 exec "${APPDIR}/usr/bin/QGroundControl" "$@"

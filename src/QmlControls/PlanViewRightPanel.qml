@@ -94,8 +94,7 @@ Item {
     //-------------------------------------------------------
     // Right Panel Controls
     Item {
-        anchors.fill:           rightPanelBackground
-        anchors.topMargin:      _toolsMargin
+        anchors.fill: rightPanelBackground
 
         DeadMouseArea {
             anchors.fill:   parent
@@ -137,68 +136,6 @@ Item {
 
             ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                GridLayout {
-                    Layout.margins: _toolsMargin
-                    Layout.fillWidth: true
-                    columns: 2
-                    columnSpacing: _toolsMargin
-                    rowSpacing: _toolsMargin
-                    visible: !planMasterController.containsItems
-
-                    QGCLabel {
-                        Layout.columnSpan: 2
-                        text: qsTr("Create from template")
-                    }
-
-                    Repeater {
-                        model: planMasterController.planCreators
-
-                        Rectangle {
-                            id: planCreatorButton
-                            Layout.fillWidth: true
-                            implicitHeight: planCreatorLayout.implicitHeight
-                            color: planCreatorButtonMouseArea.pressed || planCreatorButtonMouseArea.containsMouse ? qgcPal.buttonHighlight : qgcPal.button
-
-                            ColumnLayout {
-                                id: planCreatorLayout
-                                width: parent.width
-                                spacing: 0
-
-                                Image {
-                                    id: planCreatorImage
-                                    Layout.fillWidth: true
-                                    source: object.imageResource
-                                    sourceSize.width: width
-                                    fillMode: Image.PreserveAspectFit
-                                    mipmap: true
-                                }
-
-                                QGCLabel {
-                                    id: planCreatorNameLabel
-                                    Layout.fillWidth: true
-                                    Layout.maximumWidth: parent.width
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: object.name
-                                    color: planCreatorButtonMouseArea.pressed || planCreatorButtonMouseArea.containsMouse ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                                }
-                            }
-
-                            QGCMouseArea {
-                                id: planCreatorButtonMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                preventStealing: true
-                                onClicked: object.createPlan(_mapCenter())
-
-                                function _mapCenter() {
-                                    var centerPoint = Qt.point(editorMap.centerViewport.left + (editorMap.centerViewport.width / 2), editorMap.centerViewport.top + (editorMap.centerViewport.height / 2))
-                                    return editorMap.toCoordinate(centerPoint, false /* clipToViewPort */)
-                                }
-                            }
-                        }
-                    }
-                }
 
                 QGCListView {
                     id:                 missionItemEditorListView

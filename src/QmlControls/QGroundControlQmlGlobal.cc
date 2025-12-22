@@ -277,9 +277,9 @@ QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltMode altMode)
     case AltitudeModeAbsolute:
         return tr("(AMSL)");
     case AltitudeModeCalcAboveTerrain:
-        return tr("(CalcT)");
+        return tr("(TerrC)");
     case AltitudeModeTerrainFrame:
-        return tr("(TerrF)");
+        return tr("(Terr)");
     case AltitudeModeMixed:
         qWarning() << "Internal Error: QGroundControlQmlGlobal::altitudeModeExtraUnits called with altMode == AltitudeModeMixed";
         return QString();
@@ -295,15 +295,15 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
     case AltitudeModeNone:
         return QString();
     case AltitudeModeRelative:
-        return tr("Relative To Launch");
+        return tr("Relative");
     case AltitudeModeAbsolute:
-        return tr("AMSL");
+        return tr("Absolute");
     case AltitudeModeCalcAboveTerrain:
-        return tr("Calc Above Terrain");
+        return tr("TerrainC");
     case AltitudeModeTerrainFrame:
-        return tr("Terrain Frame");
+        return tr("Terrain");
     case AltitudeModeMixed:
-        return tr("Mixed Modes");
+        return tr("Waypoint");
     }
 
     // Should never get here but makes some compilers happy
@@ -323,11 +323,6 @@ QString QGroundControlQmlGlobal::elevationProviderNotice()
 QString QGroundControlQmlGlobal::parameterFileExtension() const
 {
     return AppSettings::parameterFileExtension;
-}
-
-QString QGroundControlQmlGlobal::missionFileExtension() const
-{
-    return AppSettings::missionFileExtension;
 }
 
 QString QGroundControlQmlGlobal::telemetryFileExtension() const

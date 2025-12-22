@@ -1,0 +1,1424 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (C) 2025 The Qt Company Ltd.
+Copyright (C) 2025 Klarälvdalens Datakonsult AB, a KDAB Group company
+Copyright (C) 2025 Johannes Grunenberg
+Copyright (C) 2024 Nic Holthaus
+Copyright (C) 2020 Aleksey Nikolaev
+SPDX-License-Identifier: MIT
+-->
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1"
+            MenuName="Add to Image Watch"/>
+
+    <Type Name="QPropertyData&lt;*&gt;">
+        <DisplayString>{val}</DisplayString>
+        <Expand>
+            <Item Name="[value]">val</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QQuickItemPrivate">
+        <Intrinsic Name="_hasExtraData" Expression="extra.d.d != 0" />
+        <Intrinsic Name="_extraData" Expression="(*(ExtraData*)extra.d.d)" />
+        <Intrinsic Name="_objectName" Expression="(extraData-&gt;objectName).val.d.ptr" />
+        <DisplayString Condition="_hasExtraData()">{{ x = {x,g}, y = {y,g}, z = {_extraData().z,g}, width = {width,g}, height = {height,g} }}</DisplayString>
+        <DisplayString>{{ x = {x,g}, y = {y,g}, width = {width,g}, height = {height,g} }}</DisplayString>
+        <Expand>
+            <Item Name="x">x</Item>
+            <Item Name="y">y</Item>
+            <Item Name="z" Condition="_hasExtraData()">_extraData().z</Item>
+            <Item Name="scale" Condition="_hasExtraData()">_extraData().scale</Item>
+            <Item Name="rotation" Condition="_hasExtraData()">_extraData().rotation</Item>
+            <Item Name="opacity" Condition="_hasExtraData()">_extraData().opacity</Item>
+            <Item Name="width">width</Item>
+            <Item Name="height">height</Item>
+            <Item Name="implicitWidth">implicitWidth</Item>
+            <Item Name="implicitHeight">implicitHeight</Item>
+            <Item Name="visible">effectiveVisible</Item>
+            <Item Name="enabled">explicitEnable</Item>
+            <Item Name="objectName" Condition="_objectName() != 0">_objectName(),na</Item>
+            <Item Name="parentItem">parentItem</Item>
+            <Item Name="childItems">childItems, nr</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QQuickItem">
+      <DisplayString>{d_ptr.d,na}</DisplayString>
+      <Expand>
+        <ExpandedItem>d_ptr.d</ExpandedItem>
+      </Expand>
+    </Type>
+
+    <Type Name="QUuid">
+      <DisplayString>{{{data1,Xb}-{data2,Xb}-{data3,Xb}-{(data4[0]),nvoXb}{(data4[1]),nvoXb}-{(data4[2]),nvoXb}{(data4[3]),nvoXb}{(data4[4]),nvoXb}{(data4[5]),nvoXb}{(data4[6]),nvoXb}{(data4[7]),nvoXb}}}</DisplayString>
+      <Expand>
+        <Item Name="[Time-low]">data1,Xb</Item>
+        <Item Name="[Time-mid]">data2,Xb</Item>
+        <Item Name="[Time-high-and-version]">data3,Xb</Item>
+        <Synthetic Name="[Clock-seq]">
+          <DisplayString>{(data4[0]),nvoXb}{(data4[1]),nvoXb}</DisplayString>
+        </Synthetic>
+        <Synthetic Name="[Node]">
+          <DisplayString>{(data4[2]),nvoXb}{(data4[3]),nvoXb}{(data4[4]),nvoXb}{(data4[5]),nvoXb}{(data4[6]),nvoXb}{(data4[7]),nvoXb}</DisplayString>
+        </Synthetic>
+      </Expand>
+    </Type>
+
+   <Type Name="QSpecialInteger&lt;*&gt;">
+        <DisplayString>{val}</DisplayString>
+        <Expand>
+            <Item Name="[value]">val</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QBasicAtomicInteger&lt;*&gt;">
+        <DisplayString>{_q_value}</DisplayString>
+        <Expand>
+            <Item Name="[value]">_q_value</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QBasicAtomicPointer&lt;*&gt;">
+        <Intrinsic Name="isNull" Expression="value()==0" />
+        <Intrinsic Name="value" Expression="_q_value.value()" />
+        <DisplayString Condition="isNull()">empty</DisplayString>
+        <DisplayString Condition="!isNull()">{_q_value}</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="!isNull()">*value()</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QBasicAtomicPointer&lt;void&gt;">
+        <Intrinsic Name="isNull" Expression="value()==0" />
+        <Intrinsic Name="value" Expression="_q_value.value()" />
+        <DisplayString Condition="isNull()">empty</DisplayString>
+        <DisplayString Condition="!isNull()">{_q_value}</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="!isNull()">value()</ExpandedItem>
+        </Expand>
+    </Type>
+
+   <Type Name="QPoint">
+        <AlternativeType Name="QPointF"/>
+        <DisplayString>{{ x = {xp}, y = {yp} }}</DisplayString>
+        <Expand>
+            <Item Name="[x]">xp</Item>
+            <Item Name="[y]">yp</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QRect">
+        <DisplayString>{{ x = {x1}, y = {y1}, width = {x2 - x1 + 1}, height = {y2 - y1 + 1} }}</DisplayString>
+        <Expand>
+            <Item Name="[x]">x1</Item>
+            <Item Name="[y]">y1</Item>
+            <Item Name="[width]">x2 - x1 + 1</Item>
+            <Item Name="[height]">y2 - y1 + 1</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QRectF">
+        <DisplayString>{{ x = {xp}, y = {yp}, width = {w}, height = {h} }}</DisplayString>
+        <Expand>
+            <Item Name="[x]">xp</Item>
+            <Item Name="[y]">yp</Item>
+            <Item Name="[width]">w</Item>
+            <Item Name="[height]">h</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QSize">
+        <AlternativeType Name="QSizeF"/>
+        <DisplayString>{{ width = {wd}, height = {ht} }}</DisplayString>
+        <Expand>
+            <Item Name="[width]">wd</Item>
+            <Item Name="[height]">ht</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QLine">
+        <AlternativeType Name="QLineF"/>
+        <DisplayString>{{ start point = {pt1}, end point = {pt2} }}</DisplayString>
+        <Expand>
+            <Synthetic Name="[start point]">
+                <DisplayString>{pt1}</DisplayString>
+                <Expand>
+                    <ExpandedItem>pt1</ExpandedItem>
+                </Expand>
+            </Synthetic>
+            <Synthetic Name="[end point]">
+                <DisplayString>{pt2}</DisplayString>
+                <Expand>
+                    <ExpandedItem>pt2</ExpandedItem>
+                </Expand>
+            </Synthetic>
+
+        </Expand>
+    </Type>
+
+   <Type Name="QPolygon">
+        <DisplayString>{{ size={d.size} }}</DisplayString>
+        <Expand>
+            <ArrayItems>
+                <Size>d.size</Size>
+                <ValuePointer>d.ptr</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QPolygonF">
+        <DisplayString>{{ size={d.size} }}</DisplayString>
+        <Expand>
+            <Item Name="[closed]">
+                d.size &gt; 0
+                    &amp;&amp; d.ptr[0].xp == d.ptr[d.size - 1].xp
+                    &amp;&amp; d.ptr[0].yp == d.ptr[d.size - 1].yp
+            </Item>
+            <ArrayItems>
+                <Size>d.size</Size>
+                <ValuePointer>d.ptr</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="QVector2D">
+        <DisplayString>{{ x = {v[0]}, y = {v[1]} }}</DisplayString>
+        <Expand>
+            <Item Name="[x]">v[0]</Item>
+            <Item Name="[y]">v[1]</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QVector3D">
+        <DisplayString>{{ x = {v[0]}, y = {v[1]}, z = {v[2]} }}</DisplayString>
+        <Expand>
+            <Item Name="[x]">v[0]</Item>
+            <Item Name="[y]">v[1]</Item>
+            <Item Name="[z]">v[2]</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QVector4D">
+        <DisplayString>{{ x = {v[0]}, y = {v[1]}, z = {v[2]}, w = {v[3]} }}</DisplayString>
+        <Expand>
+            <Item Name="[x]">v[0]</Item>
+            <Item Name="[y]">v[1]</Item>
+            <Item Name="[z]">v[2]</Item>
+            <Item Name="[w]">v[3]</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QGenericMatrix&lt;*,*,*&gt;">
+        <AlternativeType Name="QMatrix2x2"/>
+        <AlternativeType Name="QMatrix2x3"/>
+        <AlternativeType Name="QMatrix2x4"/>
+        <AlternativeType Name="QMatrix3x2"/>
+        <AlternativeType Name="QMatrix3x3"/>
+        <AlternativeType Name="QMatrix3x4"/>
+        <AlternativeType Name="QMatrix4x2"/>
+        <AlternativeType Name="QMatrix4x3"/>
+        <DisplayString>Columns: [{$T1}], Rows: [{$T2}]</DisplayString>
+        <Expand>
+            <ArrayItems>
+                <Size>$T1*$T2</Size>
+                <ValuePointer>*m</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="QMatrix4x4">
+        <DisplayString>
+            {{ m11 = {m[0][0]}, m12 = {m[1][0]}, m13 = {m[2][0]}, m14 = {m[3][0]}, ... }}
+        </DisplayString>
+        <Expand>
+            <Item Name="[m11]">m[0][0]</Item>
+            <Item Name="[m12]">m[1][0]</Item>
+            <Item Name="[m13]">m[2][0]</Item>
+            <Item Name="[m14]">m[3][0]</Item>
+            <Item Name="[m21]">m[0][1]</Item>
+            <Item Name="[m22]">m[1][1]</Item>
+            <Item Name="[m23]">m[2][1]</Item>
+            <Item Name="[m24]">m[3][1]</Item>
+            <Item Name="[m31]">m[0][2]</Item>
+            <Item Name="[m32]">m[1][2]</Item>
+            <Item Name="[m33]">m[2][2]</Item>
+            <Item Name="[m34]">m[3][2]</Item>
+            <Item Name="[m41]">m[0][3]</Item>
+            <Item Name="[m42]">m[1][3]</Item>
+            <Item Name="[m43]">m[2][3]</Item>
+            <Item Name="[m44]">m[3][3]</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QSizePolicy">
+        <DisplayString>
+            {{ horizontal = {static_cast&lt;Policy&gt;(bits.horPolicy)}, vertical = {static_cast&lt;Policy&gt;(bits.verPolicy)}, type = {ControlType(1 &lt;&lt; bits.ctype)} }}
+        </DisplayString>
+        <Expand>
+            <Synthetic Name="[vertical policy]">
+                <DisplayString>QSizePolicy::Policy::{static_cast&lt;Policy&gt;(bits.verPolicy)}</DisplayString>
+            </Synthetic>
+            <Synthetic Name="[horizontal policy]">
+                <DisplayString>QSizePolicy::Policy::{static_cast&lt;Policy&gt;(bits.horPolicy)}</DisplayString>
+            </Synthetic>
+            <Synthetic Name="[control type]">
+                <DisplayString>QSizePolicy::ControlType::{ControlType(1 &lt;&lt; bits.ctype)}</DisplayString>
+            </Synthetic>
+            <Synthetic Name="[expanding directions]">
+                <DisplayString
+                    Condition="(static_cast&lt;Policy&gt;(bits.verPolicy) &amp; ExpandFlag)">
+                    Qt::Vertical (2)
+                </DisplayString>
+                <DisplayString
+                    Condition="(static_cast&lt;Policy&gt;(bits.horPolicy) &amp; ExpandFlag)">
+                    Qt::Horizontal (1)
+                </DisplayString>
+            </Synthetic>
+            <Item Name="[vertical stretch]">static_cast&lt;int&gt;(bits.verStretch)</Item>
+            <Item Name="[horizontal stretch]">static_cast&lt;int&gt;(bits.horStretch)</Item>
+            <Item Name="[has height for width]">bits.hfw == 1</Item>
+            <Item Name="[has width for height]">bits.wfh == 1</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QChar">
+        <DisplayString>{ucs,c}</DisplayString>
+        <StringView>ucs,c</StringView>
+        <Expand>
+            <Item Name="[latin 1]">ucs > 0xff ? 0 : ucs,c</Item>
+            <Item Name="[unicode]">ucs,c</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QString">
+        <DisplayString>{(reinterpret_cast&lt;unsigned short*&gt;(d.ptr)),sub}</DisplayString>
+        <StringView>(reinterpret_cast&lt;unsigned short*&gt;(d.ptr)),sub</StringView>
+        <Expand>
+            <Item Name="[size]">d.size</Item>
+            <ArrayItems>
+                <Size>d.size</Size>
+                <ValuePointer>d.ptr</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="QStringRef">
+        <DisplayString Condition="m_string == nullptr">{m_string,[m_size]} u""</DisplayString>
+        <DisplayString Condition="m_string != nullptr">{m_string-&gt;d.ptr+m_position,[m_size]}</DisplayString>
+        <StringView Condition="m_string == nullptr">""</StringView>
+        <StringView Condition="m_string != nullptr">m_string,[m_position+m_size]</StringView>
+        <Expand>
+            <Item Name="[position]" ExcludeView="simple">m_position</Item>
+            <Item Name="[size]" ExcludeView="simple">m_size</Item>
+            <ArrayItems Condition="m_string != nullptr">
+                <Size>m_size</Size>
+                <ValuePointer>m_string-&gt;d.ptr+m_position</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="QStringView">
+        <DisplayString>{m_data,[m_size]}</DisplayString>
+        <StringView>m_data,[m_size]</StringView>
+        <Expand>
+            <Item Name="[size]" ExcludeView="simple">m_size</Item>
+            <ArrayItems>
+                <Size>m_size</Size>
+                <ValuePointer>m_data</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="QByteArray">
+        <DisplayString>&quot;{((reinterpret_cast&lt;char*&gt;(d.ptr))),sb}&quot;</DisplayString>
+        <StringView>((reinterpret_cast&lt;char*&gt;(d.ptr))),sb</StringView>
+        <Expand>
+            <Item Name="[size]">d.size</Item>
+            <ArrayItems>
+                <Size>d.size</Size>
+                <ValuePointer>d.ptr</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="QUrl">
+        <Intrinsic Name="isEmpty" Expression="size==0">
+            <Parameter Name="size" Type="int"/>
+        </Intrinsic>
+        <Intrinsic Name="memberOffset" Expression="sizeof(QAtomicInt) + sizeof(int) + (sizeof(QString) * count)">
+            <Parameter Name="count" Type="int"/>
+        </Intrinsic>
+        <Intrinsic Name="scheme" Expression="*((QString*)(((char*)(d) + memberOffset(0))))" />
+        <Intrinsic Name="username" Expression="*((QString*)(((char*)(d) + memberOffset(1))))" />
+        <Intrinsic Name="password" Expression="*((QString*)(((char*)(d) + memberOffset(2))))" />
+        <Intrinsic Name="host" Expression="*((QString*)(((char*)(d) + memberOffset(3))))" />
+        <Intrinsic Name="path" Expression="*((QString*)(((char*)(d) + memberOffset(4))))" />
+        <Intrinsic Name="query" Expression="*((QString*)(((char*)(d) + memberOffset(5))))" />
+        <Intrinsic Name="fragment" Expression="*((QString*)(((char*)(d) + memberOffset(6))))" />
+
+        <!-- Full URL with everything -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)
+                           &amp;&amp; !isEmpty(host().d.size)
+                           &amp;&amp; !isEmpty(path().d.size)
+                           &amp;&amp; !isEmpty(query().d.size)
+                           &amp;&amp; !isEmpty(fragment().d.size)">
+            {scheme()}://{host()}{path()}?{query()}#{fragment()}
+        </DisplayString>
+
+        <!-- With query -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)
+                           &amp;&amp; !isEmpty(host().d.size)
+                           &amp;&amp; !isEmpty(path().d.size)
+                           &amp;&amp; !isEmpty(query().d.size)">
+            {scheme()}://{host()}{path()}?{query()}
+        </DisplayString>
+
+        <!-- With fragment -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)
+                           &amp;&amp; !isEmpty(host().d.size)
+                           &amp;&amp; !isEmpty(path().d.size)
+                           &amp;&amp; !isEmpty(fragment().d.size)">
+            {scheme()}://{host()}{path()}#{fragment()}
+        </DisplayString>
+
+        <!-- Host + path -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)
+                           &amp;&amp; !isEmpty(host().d.size)
+                           &amp;&amp; !isEmpty(path().d.size)">
+            {scheme()}://{host()}{path()}
+        </DisplayString>
+
+        <!-- Scheme + path, for example QUrl::fromLocalFile -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)
+                           &amp;&amp; isEmpty(host().d.size)
+                           &amp;&amp; !isEmpty(path().d.size)">
+            {scheme()}://{path()}
+        </DisplayString>
+
+        <!-- Host only -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)
+                           &amp;&amp; !isEmpty(host().d.size)">
+            {scheme()}://{host()}
+        </DisplayString>
+
+        <!-- Scheme only -->
+        <DisplayString Condition="!isEmpty(scheme().d.size)">
+            {scheme()}
+        </DisplayString>
+
+        <DisplayString Condition="d == 0">
+            [default-constructed QUrl]
+        </DisplayString>
+
+        <Expand>
+            <Item Name="[scheme]">scheme()</Item>
+            <Item Name="[username]">username()</Item>
+            <Item Name="[password]">password()</Item>
+            <Item Name="[host]">host()</Item>
+            <Item Name="[path]">path()</Item>
+            <Item Name="[query]">query()</Item>
+            <Item Name="[fragment]">fragment()</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QDate">
+        <!-- formula from https://aa.usno.navy.mil/faq/JD_formula -->
+        <Intrinsic Name="L1" Expression="jd + 68569" />
+        <Intrinsic Name="N" Expression="4 * L1() / 146097" />
+        <Intrinsic Name="L2" Expression="L1() - (146097 * N() + 3) / 4" />
+        <Intrinsic Name="I1" Expression="4000 * (L2() + 1) / 1461001" />
+        <Intrinsic Name="L3" Expression="L2() - 1461 * I1() / 4 + 31" />
+        <Intrinsic Name="J1" Expression="80 * L3() / 2447" />
+        <Intrinsic Name="day" Expression="L3() - 2447 * J1() / 80" />
+        <Intrinsic Name="L4" Expression="J1() / 11" />
+        <Intrinsic Name="month" Expression="J1() + 2 - 12 * L4()" />
+        <Intrinsic Name="year" Expression="100 * (N() - 49) + I1() + L4()" />
+        <DisplayString Condition="month()&lt;10 &amp;&amp; day()&lt;10">{year()}-0{month()}-0{day()}</DisplayString>
+        <DisplayString Condition="month()&lt;10">{year()}-0{month()}-{day()}</DisplayString>
+        <DisplayString Condition="day()&lt;10">{year()}-{month()}-0{day()}</DisplayString>
+        <DisplayString>{year()}-{month()}-{day()}</DisplayString>
+        <Expand>
+            <Item Name="[year]">year()</Item>
+            <Item Name="[month]">month()</Item>
+            <Item Name="[day]">day()</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QTime">
+        <Intrinsic Name="hour" Expression="mds / 3600000" />
+        <Intrinsic Name="minute" Expression="(mds % 3600000) / 60000" />
+        <Intrinsic Name="second" Expression="(mds / 1000) % 60" />
+        <Intrinsic Name="millisecond" Expression="mds % 1000" />
+        <DisplayString Condition="mds == 1">{{ millisecond = {mds} }}</DisplayString>
+        <DisplayString Condition="mds != 1">{{ milliseconds = {mds} }}</DisplayString>
+        <Expand>
+            <Item Name="[hour]"
+                  Condition="(mds / 3600000) == 1">hour(), d</Item>
+            <Item Name="[hours]"
+                  Condition="(mds / 3600000) != 1">hour(), d</Item>
+            <Item Name="[minute]"
+                  Condition="((mds % 3600000) / 60000) == 1">minute(), d</Item>
+            <Item Name="[minutes]"
+                  Condition="((mds % 3600000) / 60000) != 1">minute(), d</Item>
+            <Item Name="[second]"
+                  Condition="((mds / 1000) % 60) == 1">second(), d</Item>
+            <Item Name="[seconds]"
+                  Condition="((mds / 1000) % 60) != 1">second(), d</Item>
+            <Item Name="[millisecond]"
+                  Condition="(mds % 1000) == 1">millisecond(), d</Item>
+            <Item Name="[milliseconds]"
+                  Condition="(mds % 1000) != 1">millisecond(), d</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QPair&lt;*,*&gt;">
+        <DisplayString>({first}, {second})</DisplayString>
+        <Expand>
+            <Item Name="[first]">first</Item>
+            <Item Name="[second]">second</Item>
+        </Expand>
+    </Type>
+
+   <Type Name="QList&lt;*&gt;">
+        <AlternativeType Name="QVector&lt;*&gt;"/>
+        <DisplayString>{{ size={d.size} }}</DisplayString>
+        <Expand>
+            <ArrayItems>
+                <Size>d.size</Size>
+                <ValuePointer>reinterpret_cast&lt;$T1*&gt;(d.ptr)</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QSpan&lt;*&gt;">
+        <DisplayString>{{ size={m_size} }}</DisplayString>
+        <Expand>
+            <ArrayItems>
+                <Size>m_size</Size>
+                <ValuePointer>reinterpret_cast&lt;$T1*&gt;(m_data)</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QVarLengthArray&lt;*,*&gt;">
+        <DisplayString>{{ size={s} }}</DisplayString>
+        <Expand>
+            <Item Name="[capacity]">a</Item>
+            <ArrayItems>
+                <Size>s</Size>
+                <ValuePointer>reinterpret_cast&lt;$T1*&gt;(ptr)</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QMap&lt;*,*&gt;">
+        <AlternativeType Name="QMultiMap&lt;*,*&gt;" />
+        <Intrinsic Name="p" Optional="true" Expression="d.d"></Intrinsic> <!-- before 6.9 -->
+        <Intrinsic Name="p" Optional="true" Expression="d.d.ptr"></Intrinsic> <!-- after 6.9 -->
+        <DisplayString>{{ size={p()-&gt;m._Mypair._Myval2._Myval2._Mysize} }}</DisplayString>
+        <Expand>
+            <TreeItems>
+                <Size>p()-&gt;m._Mypair._Myval2._Myval2._Mysize</Size>
+                <HeadPointer>p()-&gt;m._Mypair._Myval2._Myval2._Myhead-&gt;_Parent</HeadPointer>
+                <LeftPointer>_Left</LeftPointer>
+                <RightPointer>_Right</RightPointer>
+                <ValueNode Condition="_Isnil == 0" Name="[{_Myval.first}]">_Myval,view(MapHelper)</ValueNode>
+            </TreeItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QHashPrivate::Node&lt;*,*&gt;">
+        <DisplayString>{value}</DisplayString>
+        <Expand>
+            <Item Name="key">key</Item>
+            <Item Name="value">value</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QHashPrivate::Node&lt;*,QHashDummyValue&gt;">
+        <DisplayString>{key}</DisplayString>
+        <Expand>
+            <ExpandedItem>key</ExpandedItem>
+        </Expand>
+    </Type>
+
+   <Type Name="QHashPrivate::MultiNode&lt;*,*&gt;">
+        <DisplayString Condition="value-&gt;next == 0">{value-&gt;value}</DisplayString>
+        <DisplayString Condition="value-&gt;next != 0 &amp;&amp; value-&gt;next-&gt;next == 0">({value-&gt;value}, {value-&gt;next-&gt;value})</DisplayString>
+        <DisplayString Condition="value-&gt;next != 0 &amp;&amp; value-&gt;next-&gt;next != 0">({value-&gt;value}, {value-&gt;next-&gt;value}, ...)</DisplayString>
+        <Expand>
+            <LinkedListItems>
+                <HeadPointer>value</HeadPointer>
+                <NextPointer>next</NextPointer>
+                <ValueNode>value</ValueNode>
+            </LinkedListItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QHash&lt;*,*&gt;">
+        <AlternativeType Name="QMultiHash&lt;*,*&gt;"/>
+        <Intrinsic Name="getOffset" Category="Method" Expression="d-&gt;spans[span].offsets[offset]">
+            <Parameter Name="span" Type="int" />
+            <Parameter Name="offset" Type="int" />
+        </Intrinsic>
+        <Intrinsic Name="getKey" Category="Method" Expression="((Node*)(char *)&amp;(d-&gt;spans[span].entries[d-&gt;spans[span].offsets[offset]].storage))->key">
+            <Parameter Name="span" Type="int" />
+            <Parameter Name="offset" Type="int" />
+        </Intrinsic>
+        <Intrinsic Name="getNode" Category="Method" Expression="*((Node*)(char *)&amp;(d-&gt;spans[span].entries[d-&gt;spans[span].offsets[offset]].storage))">
+            <Parameter Name="span" Type="int" />
+            <Parameter Name="offset" Type="int" />
+        </Intrinsic>
+
+        <DisplayString>{{ size={d-&gt;size} }}</DisplayString>
+        <Expand>
+            <CustomListItems MaxItemsPerView="5000">
+                <Variable Name="iSpan" InitialValue="0" />
+                <Variable Name="spanCount" InitialValue="d-&gt;numBuckets" />
+                <Size>d-&gt;size</Size>
+                <Loop>
+                    <If Condition="iSpan != spanCount">
+                        <Item Name="[{getKey(iSpan, 0)}]" Condition="getOffset(iSpan, 0) != 255">getNode(iSpan, 0)</Item>
+                        <Item Name="[{getKey(iSpan, 1)}]" Condition="getOffset(iSpan, 1) != 255">getNode(iSpan, 1)</Item>
+                        <Item Name="[{getKey(iSpan, 2)}]" Condition="getOffset(iSpan, 2) != 255">getNode(iSpan, 2)</Item>
+                        <Item Name="[{getKey(iSpan, 3)}]" Condition="getOffset(iSpan, 3) != 255">getNode(iSpan, 3)</Item>
+                        <Item Name="[{getKey(iSpan, 4)}]" Condition="getOffset(iSpan, 4) != 255">getNode(iSpan, 4)</Item>
+                        <Item Name="[{getKey(iSpan, 5)}]" Condition="getOffset(iSpan, 5) != 255">getNode(iSpan, 5)</Item>
+                        <Item Name="[{getKey(iSpan, 6)}]" Condition="getOffset(iSpan, 6) != 255">getNode(iSpan, 6)</Item>
+                        <Item Name="[{getKey(iSpan, 7)}]" Condition="getOffset(iSpan, 7) != 255">getNode(iSpan, 7)</Item>
+                        <Item Name="[{getKey(iSpan, 8)}]" Condition="getOffset(iSpan, 8) != 255">getNode(iSpan, 8)</Item>
+                        <Item Name="[{getKey(iSpan, 9)}]" Condition="getOffset(iSpan, 9) != 255">getNode(iSpan, 9)</Item>
+                        <Item Name="[{getKey(iSpan, 10)}]" Condition="getOffset(iSpan, 10) != 255">getNode(iSpan, 10)</Item>
+                        <Item Name="[{getKey(iSpan, 11)}]" Condition="getOffset(iSpan, 11) != 255">getNode(iSpan, 11)</Item>
+                        <Item Name="[{getKey(iSpan, 12)}]" Condition="getOffset(iSpan, 12) != 255">getNode(iSpan, 12)</Item>
+                        <Item Name="[{getKey(iSpan, 13)}]" Condition="getOffset(iSpan, 13) != 255">getNode(iSpan, 13)</Item>
+                        <Item Name="[{getKey(iSpan, 14)}]" Condition="getOffset(iSpan, 14) != 255">getNode(iSpan, 14)</Item>
+                        <Item Name="[{getKey(iSpan, 15)}]" Condition="getOffset(iSpan, 15) != 255">getNode(iSpan, 15)</Item>
+                        <Item Name="[{getKey(iSpan, 16)}]" Condition="getOffset(iSpan, 16) != 255">getNode(iSpan, 16)</Item>
+                        <Item Name="[{getKey(iSpan, 17)}]" Condition="getOffset(iSpan, 17) != 255">getNode(iSpan, 17)</Item>
+                        <Item Name="[{getKey(iSpan, 18)}]" Condition="getOffset(iSpan, 18) != 255">getNode(iSpan, 18)</Item>
+                        <Item Name="[{getKey(iSpan, 19)}]" Condition="getOffset(iSpan, 19) != 255">getNode(iSpan, 19)</Item>
+                        <Item Name="[{getKey(iSpan, 20)}]" Condition="getOffset(iSpan, 20) != 255">getNode(iSpan, 20)</Item>
+                        <Item Name="[{getKey(iSpan, 21)}]" Condition="getOffset(iSpan, 21) != 255">getNode(iSpan, 21)</Item>
+                        <Item Name="[{getKey(iSpan, 22)}]" Condition="getOffset(iSpan, 22) != 255">getNode(iSpan, 22)</Item>
+                        <Item Name="[{getKey(iSpan, 23)}]" Condition="getOffset(iSpan, 23) != 255">getNode(iSpan, 23)</Item>
+                        <Item Name="[{getKey(iSpan, 24)}]" Condition="getOffset(iSpan, 24) != 255">getNode(iSpan, 24)</Item>
+                        <Item Name="[{getKey(iSpan, 25)}]" Condition="getOffset(iSpan, 25) != 255">getNode(iSpan, 25)</Item>
+                        <Item Name="[{getKey(iSpan, 26)}]" Condition="getOffset(iSpan, 26) != 255">getNode(iSpan, 26)</Item>
+                        <Item Name="[{getKey(iSpan, 27)}]" Condition="getOffset(iSpan, 27) != 255">getNode(iSpan, 27)</Item>
+                        <Item Name="[{getKey(iSpan, 28)}]" Condition="getOffset(iSpan, 28) != 255">getNode(iSpan, 28)</Item>
+                        <Item Name="[{getKey(iSpan, 29)}]" Condition="getOffset(iSpan, 29) != 255">getNode(iSpan, 29)</Item>
+                        <Item Name="[{getKey(iSpan, 30)}]" Condition="getOffset(iSpan, 30) != 255">getNode(iSpan, 30)</Item>
+                        <Item Name="[{getKey(iSpan, 31)}]" Condition="getOffset(iSpan, 31) != 255">getNode(iSpan, 31)</Item>
+                        <Item Name="[{getKey(iSpan, 32)}]" Condition="getOffset(iSpan, 32) != 255">getNode(iSpan, 32)</Item>
+                        <Item Name="[{getKey(iSpan, 33)}]" Condition="getOffset(iSpan, 33) != 255">getNode(iSpan, 33)</Item>
+                        <Item Name="[{getKey(iSpan, 34)}]" Condition="getOffset(iSpan, 34) != 255">getNode(iSpan, 34)</Item>
+                        <Item Name="[{getKey(iSpan, 35)}]" Condition="getOffset(iSpan, 35) != 255">getNode(iSpan, 35)</Item>
+                        <Item Name="[{getKey(iSpan, 36)}]" Condition="getOffset(iSpan, 36) != 255">getNode(iSpan, 36)</Item>
+                        <Item Name="[{getKey(iSpan, 37)}]" Condition="getOffset(iSpan, 37) != 255">getNode(iSpan, 37)</Item>
+                        <Item Name="[{getKey(iSpan, 38)}]" Condition="getOffset(iSpan, 38) != 255">getNode(iSpan, 38)</Item>
+                        <Item Name="[{getKey(iSpan, 39)}]" Condition="getOffset(iSpan, 39) != 255">getNode(iSpan, 39)</Item>
+                        <Item Name="[{getKey(iSpan, 40)}]" Condition="getOffset(iSpan, 40) != 255">getNode(iSpan, 40)</Item>
+                        <Item Name="[{getKey(iSpan, 41)}]" Condition="getOffset(iSpan, 41) != 255">getNode(iSpan, 41)</Item>
+                        <Item Name="[{getKey(iSpan, 42)}]" Condition="getOffset(iSpan, 42) != 255">getNode(iSpan, 42)</Item>
+                        <Item Name="[{getKey(iSpan, 43)}]" Condition="getOffset(iSpan, 43) != 255">getNode(iSpan, 43)</Item>
+                        <Item Name="[{getKey(iSpan, 44)}]" Condition="getOffset(iSpan, 44) != 255">getNode(iSpan, 44)</Item>
+                        <Item Name="[{getKey(iSpan, 45)}]" Condition="getOffset(iSpan, 45) != 255">getNode(iSpan, 45)</Item>
+                        <Item Name="[{getKey(iSpan, 46)}]" Condition="getOffset(iSpan, 46) != 255">getNode(iSpan, 46)</Item>
+                        <Item Name="[{getKey(iSpan, 47)}]" Condition="getOffset(iSpan, 47) != 255">getNode(iSpan, 47)</Item>
+                        <Item Name="[{getKey(iSpan, 48)}]" Condition="getOffset(iSpan, 48) != 255">getNode(iSpan, 48)</Item>
+                        <Item Name="[{getKey(iSpan, 49)}]" Condition="getOffset(iSpan, 49) != 255">getNode(iSpan, 49)</Item>
+                        <Item Name="[{getKey(iSpan, 50)}]" Condition="getOffset(iSpan, 50) != 255">getNode(iSpan, 50)</Item>
+                        <Item Name="[{getKey(iSpan, 51)}]" Condition="getOffset(iSpan, 51) != 255">getNode(iSpan, 51)</Item>
+                        <Item Name="[{getKey(iSpan, 52)}]" Condition="getOffset(iSpan, 52) != 255">getNode(iSpan, 52)</Item>
+                        <Item Name="[{getKey(iSpan, 53)}]" Condition="getOffset(iSpan, 53) != 255">getNode(iSpan, 53)</Item>
+                        <Item Name="[{getKey(iSpan, 54)}]" Condition="getOffset(iSpan, 54) != 255">getNode(iSpan, 54)</Item>
+                        <Item Name="[{getKey(iSpan, 55)}]" Condition="getOffset(iSpan, 55) != 255">getNode(iSpan, 55)</Item>
+                        <Item Name="[{getKey(iSpan, 56)}]" Condition="getOffset(iSpan, 56) != 255">getNode(iSpan, 56)</Item>
+                        <Item Name="[{getKey(iSpan, 57)}]" Condition="getOffset(iSpan, 57) != 255">getNode(iSpan, 57)</Item>
+                        <Item Name="[{getKey(iSpan, 58)}]" Condition="getOffset(iSpan, 58) != 255">getNode(iSpan, 58)</Item>
+                        <Item Name="[{getKey(iSpan, 59)}]" Condition="getOffset(iSpan, 59) != 255">getNode(iSpan, 59)</Item>
+                        <Item Name="[{getKey(iSpan, 60)}]" Condition="getOffset(iSpan, 60) != 255">getNode(iSpan, 60)</Item>
+                        <Item Name="[{getKey(iSpan, 61)}]" Condition="getOffset(iSpan, 61) != 255">getNode(iSpan, 61)</Item>
+                        <Item Name="[{getKey(iSpan, 62)}]" Condition="getOffset(iSpan, 62) != 255">getNode(iSpan, 62)</Item>
+                        <Item Name="[{getKey(iSpan, 63)}]" Condition="getOffset(iSpan, 63) != 255">getNode(iSpan, 63)</Item>
+                        <Item Name="[{getKey(iSpan, 64)}]" Condition="getOffset(iSpan, 64) != 255">getNode(iSpan, 64)</Item>
+                        <Item Name="[{getKey(iSpan, 65)}]" Condition="getOffset(iSpan, 65) != 255">getNode(iSpan, 65)</Item>
+                        <Item Name="[{getKey(iSpan, 66)}]" Condition="getOffset(iSpan, 66) != 255">getNode(iSpan, 66)</Item>
+                        <Item Name="[{getKey(iSpan, 67)}]" Condition="getOffset(iSpan, 67) != 255">getNode(iSpan, 67)</Item>
+                        <Item Name="[{getKey(iSpan, 68)}]" Condition="getOffset(iSpan, 68) != 255">getNode(iSpan, 68)</Item>
+                        <Item Name="[{getKey(iSpan, 69)}]" Condition="getOffset(iSpan, 69) != 255">getNode(iSpan, 69)</Item>
+                        <Item Name="[{getKey(iSpan, 70)}]" Condition="getOffset(iSpan, 70) != 255">getNode(iSpan, 70)</Item>
+                        <Item Name="[{getKey(iSpan, 71)}]" Condition="getOffset(iSpan, 71) != 255">getNode(iSpan, 71)</Item>
+                        <Item Name="[{getKey(iSpan, 72)}]" Condition="getOffset(iSpan, 72) != 255">getNode(iSpan, 72)</Item>
+                        <Item Name="[{getKey(iSpan, 73)}]" Condition="getOffset(iSpan, 73) != 255">getNode(iSpan, 73)</Item>
+                        <Item Name="[{getKey(iSpan, 74)}]" Condition="getOffset(iSpan, 74) != 255">getNode(iSpan, 74)</Item>
+                        <Item Name="[{getKey(iSpan, 75)}]" Condition="getOffset(iSpan, 75) != 255">getNode(iSpan, 75)</Item>
+                        <Item Name="[{getKey(iSpan, 76)}]" Condition="getOffset(iSpan, 76) != 255">getNode(iSpan, 76)</Item>
+                        <Item Name="[{getKey(iSpan, 77)}]" Condition="getOffset(iSpan, 77) != 255">getNode(iSpan, 77)</Item>
+                        <Item Name="[{getKey(iSpan, 78)}]" Condition="getOffset(iSpan, 78) != 255">getNode(iSpan, 78)</Item>
+                        <Item Name="[{getKey(iSpan, 79)}]" Condition="getOffset(iSpan, 79) != 255">getNode(iSpan, 79)</Item>
+                        <Item Name="[{getKey(iSpan, 80)}]" Condition="getOffset(iSpan, 80) != 255">getNode(iSpan, 80)</Item>
+                        <Item Name="[{getKey(iSpan, 81)}]" Condition="getOffset(iSpan, 81) != 255">getNode(iSpan, 81)</Item>
+                        <Item Name="[{getKey(iSpan, 82)}]" Condition="getOffset(iSpan, 82) != 255">getNode(iSpan, 82)</Item>
+                        <Item Name="[{getKey(iSpan, 83)}]" Condition="getOffset(iSpan, 83) != 255">getNode(iSpan, 83)</Item>
+                        <Item Name="[{getKey(iSpan, 84)}]" Condition="getOffset(iSpan, 84) != 255">getNode(iSpan, 84)</Item>
+                        <Item Name="[{getKey(iSpan, 85)}]" Condition="getOffset(iSpan, 85) != 255">getNode(iSpan, 85)</Item>
+                        <Item Name="[{getKey(iSpan, 86)}]" Condition="getOffset(iSpan, 86) != 255">getNode(iSpan, 86)</Item>
+                        <Item Name="[{getKey(iSpan, 87)}]" Condition="getOffset(iSpan, 87) != 255">getNode(iSpan, 87)</Item>
+                        <Item Name="[{getKey(iSpan, 88)}]" Condition="getOffset(iSpan, 88) != 255">getNode(iSpan, 88)</Item>
+                        <Item Name="[{getKey(iSpan, 89)}]" Condition="getOffset(iSpan, 89) != 255">getNode(iSpan, 89)</Item>
+                        <Item Name="[{getKey(iSpan, 90)}]" Condition="getOffset(iSpan, 90) != 255">getNode(iSpan, 90)</Item>
+                        <Item Name="[{getKey(iSpan, 91)}]" Condition="getOffset(iSpan, 91) != 255">getNode(iSpan, 91)</Item>
+                        <Item Name="[{getKey(iSpan, 92)}]" Condition="getOffset(iSpan, 92) != 255">getNode(iSpan, 92)</Item>
+                        <Item Name="[{getKey(iSpan, 93)}]" Condition="getOffset(iSpan, 93) != 255">getNode(iSpan, 93)</Item>
+                        <Item Name="[{getKey(iSpan, 94)}]" Condition="getOffset(iSpan, 94) != 255">getNode(iSpan, 94)</Item>
+                        <Item Name="[{getKey(iSpan, 95)}]" Condition="getOffset(iSpan, 95) != 255">getNode(iSpan, 95)</Item>
+                        <Item Name="[{getKey(iSpan, 96)}]" Condition="getOffset(iSpan, 96) != 255">getNode(iSpan, 96)</Item>
+                        <Item Name="[{getKey(iSpan, 97)}]" Condition="getOffset(iSpan, 97) != 255">getNode(iSpan, 97)</Item>
+                        <Item Name="[{getKey(iSpan, 98)}]" Condition="getOffset(iSpan, 98) != 255">getNode(iSpan, 98)</Item>
+                        <Item Name="[{getKey(iSpan, 99)}]" Condition="getOffset(iSpan, 99) != 255">getNode(iSpan, 99)</Item>
+                        <Item Name="[{getKey(iSpan, 100)}]" Condition="getOffset(iSpan, 100) != 255">getNode(iSpan, 100)</Item>
+                        <Item Name="[{getKey(iSpan, 101)}]" Condition="getOffset(iSpan, 101) != 255">getNode(iSpan, 101)</Item>
+                        <Item Name="[{getKey(iSpan, 102)}]" Condition="getOffset(iSpan, 102) != 255">getNode(iSpan, 102)</Item>
+                        <Item Name="[{getKey(iSpan, 103)}]" Condition="getOffset(iSpan, 103) != 255">getNode(iSpan, 103)</Item>
+                        <Item Name="[{getKey(iSpan, 104)}]" Condition="getOffset(iSpan, 104) != 255">getNode(iSpan, 104)</Item>
+                        <Item Name="[{getKey(iSpan, 105)}]" Condition="getOffset(iSpan, 105) != 255">getNode(iSpan, 105)</Item>
+                        <Item Name="[{getKey(iSpan, 106)}]" Condition="getOffset(iSpan, 106) != 255">getNode(iSpan, 106)</Item>
+                        <Item Name="[{getKey(iSpan, 107)}]" Condition="getOffset(iSpan, 107) != 255">getNode(iSpan, 107)</Item>
+                        <Item Name="[{getKey(iSpan, 108)}]" Condition="getOffset(iSpan, 108) != 255">getNode(iSpan, 108)</Item>
+                        <Item Name="[{getKey(iSpan, 109)}]" Condition="getOffset(iSpan, 109) != 255">getNode(iSpan, 109)</Item>
+                        <Item Name="[{getKey(iSpan, 110)}]" Condition="getOffset(iSpan, 110) != 255">getNode(iSpan, 110)</Item>
+                        <Item Name="[{getKey(iSpan, 111)}]" Condition="getOffset(iSpan, 111) != 255">getNode(iSpan, 111)</Item>
+                        <Item Name="[{getKey(iSpan, 112)}]" Condition="getOffset(iSpan, 112) != 255">getNode(iSpan, 112)</Item>
+                        <Item Name="[{getKey(iSpan, 113)}]" Condition="getOffset(iSpan, 113) != 255">getNode(iSpan, 113)</Item>
+                        <Item Name="[{getKey(iSpan, 114)}]" Condition="getOffset(iSpan, 114) != 255">getNode(iSpan, 114)</Item>
+                        <Item Name="[{getKey(iSpan, 115)}]" Condition="getOffset(iSpan, 115) != 255">getNode(iSpan, 115)</Item>
+                        <Item Name="[{getKey(iSpan, 116)}]" Condition="getOffset(iSpan, 116) != 255">getNode(iSpan, 116)</Item>
+                        <Item Name="[{getKey(iSpan, 117)}]" Condition="getOffset(iSpan, 117) != 255">getNode(iSpan, 117)</Item>
+                        <Item Name="[{getKey(iSpan, 118)}]" Condition="getOffset(iSpan, 118) != 255">getNode(iSpan, 118)</Item>
+                        <Item Name="[{getKey(iSpan, 119)}]" Condition="getOffset(iSpan, 119) != 255">getNode(iSpan, 119)</Item>
+                        <Item Name="[{getKey(iSpan, 120)}]" Condition="getOffset(iSpan, 120) != 255">getNode(iSpan, 120)</Item>
+                        <Item Name="[{getKey(iSpan, 121)}]" Condition="getOffset(iSpan, 121) != 255">getNode(iSpan, 121)</Item>
+                        <Item Name="[{getKey(iSpan, 122)}]" Condition="getOffset(iSpan, 122) != 255">getNode(iSpan, 122)</Item>
+                        <Item Name="[{getKey(iSpan, 123)}]" Condition="getOffset(iSpan, 123) != 255">getNode(iSpan, 123)</Item>
+                        <Item Name="[{getKey(iSpan, 124)}]" Condition="getOffset(iSpan, 124) != 255">getNode(iSpan, 124)</Item>
+                        <Item Name="[{getKey(iSpan, 125)}]" Condition="getOffset(iSpan, 125) != 255">getNode(iSpan, 125)</Item>
+                        <Item Name="[{getKey(iSpan, 126)}]" Condition="getOffset(iSpan, 126) != 255">getNode(iSpan, 126)</Item>
+                        <Item Name="[{getKey(iSpan, 127)}]" Condition="getOffset(iSpan, 127) != 255">getNode(iSpan, 127)</Item>
+                        <Exec>iSpan++</Exec>
+                    </If>
+                </Loop>
+            </CustomListItems>
+        </Expand>
+    </Type>
+
+   <Type Name="QSet&lt;*&gt;">
+        <DisplayString>{{ size={q_hash.d-&gt;size} }}</DisplayString>
+        <Expand>
+            <ExpandedItem>q_hash</ExpandedItem>
+        </Expand>
+    </Type>
+
+   <Type Name="QVariant">
+        <Intrinsic Name="typeId" Expression="*(int*)(&amp;((const QtPrivate::QMetaTypeInterface *)(d.packedType &lt;&lt; 2))->typeId)">
+        </Intrinsic>
+        <Intrinsic Name="dataStar" Expression="(d.is_shared ? reinterpret_cast&lt;const void *&gt;((size_t)(d.data.shared) + d.data.shared-&gt;offset) : (&amp;(d.data.data)))">
+        </Intrinsic>
+
+        <DisplayString Condition="d.is_null">(null)</DisplayString>
+
+        <!-- Static core pointers -->
+        <DisplayString Condition="typeId() == QMetaType::QObjectStar">QObject*</DisplayString>
+
+        <!-- Static core template classes -->
+        <DisplayString Condition="typeId() == QMetaType::QVariantMap">{*(QMap&lt;QString,QVariant&gt;*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QVariantList">{*(QList&lt;QVariant&gt;*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QVariantHash">{*(QHash&lt;QString,QVariant&gt;*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QVariantPair">QVariantPair</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QByteArrayList">{*(QList&lt;QByteArray&gt;*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QStringList">{*(QList&lt;QString&gt;*) dataStar()}</DisplayString>
+
+       <!-- Static primitives-->
+        <DisplayString Condition="typeId() == QMetaType::Bool">{*(bool*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Int">{*(int*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::UInt">{*(unsigned int*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::LongLong">{*(long long*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::ULongLong">{*(unsigned long long*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Double">{*(double*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::VoidStar">{*(void**) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Long">{*(long*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Short">{*(short*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Char">{*(char*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Char16">{*(char16_t*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Char32">{*(char32_t*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::ULong">{*(unsigned long*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::UShort">{*(unsigned short*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::UChar">{*(unsigned char*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::Float">{*(float*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::SChar">{*(signed char*) dataStar()}</DisplayString>
+
+        <!-- Static core classes -->
+        <DisplayString Condition="typeId() == QMetaType::QChar">{*(QChar*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QString">{*(QString*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QByteArray">{*(QByteArray*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QDate">{*(QDate*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QTime">{*(QTime*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QDateTime">{*(QDateTime*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QUrl">{*(QUrl*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QLocale">QLocale</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QRect">{*(QRect*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QRectF">{*(QRectF*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QSize">{*(QSize*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QSizeF">{*(QSizeF*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QLine">{*(QLine*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QLineF">{*(QLineF*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPoint">{*(QPoint*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPointF">{*(QPointF*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QEasingCurve">EasingCurve</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QUuid">{*(QUuid*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QRegularExpression">RegularExpression</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QJsonValue">QJsonValue</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QJsonObject">QJsonObject</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QJsonArray">QJsonArray</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QJsonDocument">QJsonDocument</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QCborValue">QCborValue</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QCborArray">QCborArray</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QCborMap">QCborMap</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QModelIndex">QModelIndex</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPersistentModelIndex">QPersistentModelIndex</DisplayString>
+
+         <!-- Static gui classes -->
+        <DisplayString Condition="typeId() == QMetaType::QFont">QFont</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPixmap">{*(QPixmap*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QBrush">QBrush</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QColor">QColor</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPalette">QPalette</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QIcon">QIcon</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QImage">{*(QImage*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPolygon">{*(QPolygon*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QRegion">QRegion</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QBitmap">{*(QBitmap*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QCursor">QCursor</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QKeySequence">QKeySequence</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPen">QPen</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QTextLength">QTextLength</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QTextFormat">QTextFormat</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QTransform">{*(QTransform*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QMatrix4x4">{*(QMatrix4x4*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QVector2D">{*(QVector2D*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QVector3D">{*(QVector3D*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QVector4D">{*(QVector4D*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QQuaternion">{*(QQuaternion*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QPolygonF">{*(QPolygonF*) dataStar()}</DisplayString>
+        <DisplayString Condition="typeId() == QMetaType::QColorSpace">QColorSpace</DisplayString>
+
+        <!-- Static widget classes -->
+        <DisplayString Condition="typeId() == QMetaType::QSizePolicy">{*(QSizePolicy*) dataStar()}</DisplayString>
+
+        <!-- Unhandled : display the typeId-->
+        <DisplayString>QMetaType::Type ({typeId()})</DisplayString>
+
+        <Expand>
+            <ExpandedItem Condition="typeId() == QMetaType::QString">*(QString*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QByteArray">*(QByteArray*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QDate">*(QDate*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QTime">*(QTime*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QDateTime">*(QDateTime*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QUrl">*(QUrl*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QRect">*(QRect*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QRectF">*(QRectF*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QSize">*(QSize*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QSizeF">*(QSizeF*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QLine">*(QLine*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QLineF">*(QLineF*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QPoint">*(QPoint*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QPointF">*(QPointF*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QUuid">*(QUuid*) dataStar()</ExpandedItem>
+
+            <ExpandedItem Condition="typeId() == QMetaType::QPixmap">*(QPixmap*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QImage">*(QImage*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QPolygon">*(QPolygon*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QBitmap">*(QBitmap*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QTransform">*(QTransform*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QMatrix4x4">*(QMatrix4x4*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QVector2D">*(QVector2D*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QVector3D">*(QVector3D*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QVector4D">*(QVector4D*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QQuaternion">*(QQuaternion*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QPolygonF">*(QPolygonF*) dataStar()</ExpandedItem>
+
+            <ExpandedItem Condition="typeId() == QMetaType::QVariantMap">*(QMap&lt;QString,QVariant&gt;*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QVariantList">*(QList&lt;QVariant&gt;*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QVariantHash">*(QHash&lt;QString,QVariant&gt;*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QByteArrayList">*(QList&lt;QByteArray&gt;*) dataStar()</ExpandedItem>
+            <ExpandedItem Condition="typeId() == QMetaType::QStringList">*(QList&lt;QString&gt;*) dataStar()</ExpandedItem>
+        </Expand>
+   </Type>
+
+    <Type Name="QHostAddress">
+        <Intrinsic Name="a" Expression="(*(quint32**)&amp;d)[12]" />
+        <Intrinsic Name="a6" Expression="(*(unsigned char**)&amp;d)[32+offset]">
+            <Parameter Name="offset" Type="quint8" />
+        </Intrinsic>
+        <Intrinsic Name="protocol" Expression="(*(char**)&amp;d)[52]" />
+        <Intrinsic Name="isIpv4"
+            Expression="protocol()==QAbstractSocket::NetworkLayerProtocol::IPv4Protocol" />
+        <Intrinsic Name="isIpv6"
+            Expression="protocol()==QAbstractSocket::NetworkLayerProtocol::IPv6Protocol" />
+        <Intrinsic Name="rshift" Expression="(value&gt;&gt;by)&amp;0xff">
+            <Parameter Name="value" Type="quint32" />
+            <Parameter Name="by" Type="quint32" />
+        </Intrinsic>
+        <Intrinsic Name="lshift" Expression="(value&lt;&lt;by)">
+            <Parameter Name="value" Type="quint8" />
+            <Parameter Name="by" Type="quint8" />
+        </Intrinsic>
+        <DisplayString Condition="isIpv4()">
+            {rshift(a(),24),d}.{rshift(a(),16),d}.{rshift(a(),8),d}.{rshift(a(),0),d}</DisplayString>
+        <DisplayString Condition="isIpv6()">{(unsigned
+            short)(lshift(0xffff&amp;a6(0),8)|a6(1)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(2),8)|a6(3)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(4),8)|a6(5)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(6),8)|a6(7)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(8),8)|a6(9)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(10),8)|a6(11)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(12),8)|a6(13)),nvoXb}:{(unsigned
+            short)(lshift(0xffff&amp;a6(14),8)|a6(15)),nvoXb}
+        </DisplayString>
+        <Expand>
+            <Item Name="scopeId">*((QString*)((*(char**)&amp;d)+8))</Item>
+            <Item Name="protocol">(QAbstractSocket::NetworkLayerProtocol)protocol()</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QImage" Priority="Low">
+        <UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" />
+    </Type>
+    <Type Name="QImage">
+        <Intrinsic Name="p" Optional="true" Expression="(qwindowsd.dll!QImageData*)d" />
+        <Intrinsic Name="p" Optional="true" Expression="(Qt6Guid.dll!QImageData*)d" />
+        <Intrinsic Name="p" Optional="true" Expression="(Qt6Gui.dll!QImageData*)d" />
+        <DisplayString Condition="d" Optional="true">{{ {p()-&gt;width}x{p()-&gt;height} }}</DisplayString>
+        <DisplayString>empty</DisplayString>
+        <Expand>
+            <Item Optional="true" Name="[width]">p()-&gt;width</Item>
+            <Item Optional="true" Name="[height]">p()-&gt;height</Item>
+            <Item Optional="true" Name="[data]">p()-&gt;data,[p()-&gt;bytes_per_line * p()-&gt;height]</Item>
+            <Item Optional="true" Name="[stride]">p()-&gt;bytes_per_line</Item>
+            <Synthetic Name="[type]">
+                <DisplayString>UINT8</DisplayString>
+            </Synthetic>
+            <Item Optional="true" Name="[channels]">p()-&gt;bytes_per_line / p()-&gt;width</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="QPixmap" Priority="Low">
+        <UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" />
+    </Type>
+    <Type Name="QPixmap">
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Guid.dll!QRasterPlatformPixmap**)&amp;data" />
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Gui.dll!QRasterPlatformPixmap**)&amp;data" />
+        <DisplayString Condition="d()" Optional="true">{{ {d()-&gt;w}x{d()-&gt;h} }}</DisplayString>
+        <DisplayString>empty</DisplayString>
+        <Expand>
+            <ExpandedItem>d()-&gt;image</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QFlags&lt;*&gt;">
+        <DisplayString>{($T1)i}</DisplayString>
+        <Expand>
+            <Item Name="[value]">($T1)i</Item>
+        </Expand>
+    </Type>
+
+    <!-- The following types require debug symbols to be loaded. -->
+    <Type Name="QDir">
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Cored.dll!QDirPrivate**)&amp;d_ptr"></Intrinsic>
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Core.dll!QDirPrivate**)&amp;d_ptr"></Intrinsic>
+        <DisplayString>{d()-&gt;dirEntry.m_filePath}</DisplayString>
+        <Expand>
+            <ExpandedItem>d()</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QFileInfo">
+        <Intrinsic Name="d" Optional="true"
+            Expression="*(Qt6Cored.dll!QFileInfoPrivate**)&amp;d_ptr"></Intrinsic>
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Core.dll!QFileInfoPrivate**)&amp;d_ptr"></Intrinsic>
+        <DisplayString>{d()-&gt;fileEntry.m_filePath}</DisplayString>
+        <Expand>
+            <ExpandedItem>d()</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QFile">
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Cored.dll!QFilePrivate**)&amp;d_ptr"></Intrinsic>
+        <Intrinsic Name="d" Optional="true" Expression="*(Qt6Core.dll!QFilePrivate**)&amp;d_ptr"></Intrinsic>
+        <DisplayString>{d()-&gt;fileName}</DisplayString>
+        <Expand>
+            <ExpandedItem>d()</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QDateTime">
+        <Intrinsic Name="priv" Expression="(Qt6Cored.dll!QDateTimePrivate*)d.d"></Intrinsic>
+        <Intrinsic Name="status" Expression="((uintptr_t)d.d) &amp; 1 ? ((uintptr_t)d.d &amp; 0xff) : priv()-&gt;m_status.i"></Intrinsic>
+        <Intrinsic Name="spec" Expression="(status() &amp; Qt6Cored.dll!QDateTimePrivate::TimeSpecMask) &gt;&gt; Qt6Cored.dll!QDateTimePrivate::TimeSpecShift"></Intrinsic>
+        <Intrinsic Name="msecs" Expression="((uintptr_t)d.d) &amp; 1 ? ((uintptr_t)d.d &gt;&gt; 8) : priv()-&gt;m_msecs"></Intrinsic>
+        <Intrinsic Name="offset" Expression="priv()-&gt;m_offsetFromUtc"></Intrinsic>
+        <Intrinsic Name="absOffset" Expression="offset() &lt; 0 ? -offset() : offset()"></Intrinsic>
+        <Intrinsic Name="isLocalShort" Expression="spec() == Qt::TimeSpec::LocalTime &amp;&amp; status() &amp; 1"></Intrinsic>
+
+        <!-- https://howardhinnant.github.io/date_algorithms.html#civil_from_days -->
+        <Intrinsic Name="z"     Expression="(msecs() / (24 * 60 * 60 * 1000ull)) + 719468"/>
+        <Intrinsic Name="era"   Expression="(z() &gt;= 0 ? z() : z() - 146096) / 146097"/>
+        <Intrinsic Name="doe"   Expression="(unsigned)(z() - era() * 146097)"/>
+        <Intrinsic Name="yoe"   Expression="(doe() - doe()/1460 + doe()/36524 - doe()/146096) / 365"/>
+        <Intrinsic Name="doy"   Expression="doe() - (365*yoe() + yoe()/4 - yoe()/100)"/>
+        <Intrinsic Name="mp"    Expression="(5*doy() + 2)/153"/>
+        <Intrinsic Name="day"   Expression="doy() - (153*mp()+2)/5 + 1"/>
+        <Intrinsic Name="month" Expression="mp() &lt; 10 ? mp()+3 : mp()-9"/>
+        <Intrinsic Name="year"  Expression="((long long)yoe()) + era() * 400 + (month() &lt;= 2)"/>
+
+        <DisplayString ExcludeView="RecZone;RecZoneAbs">
+            {year(),d}-{month()/10,d}{month()%10,d}-{day()/10,d}{day()%10,d} {
+                (msecs() % (24 * 60 * 60 * 1000ull))/(10 * 60 * 60 * 1000ull),d
+            }{
+                ((msecs() % (24 * 60 * 60 * 1000ull))/(60 * 60 * 1000ull)) % 10,d
+            }:{
+                (msecs() % (60 * 60 * 1000ull))/(10 * 60 * 1000ull),d
+            }{
+                (msecs() % (10 * 60 * 1000ull)) / (60 * 1000ull),d
+            }:{
+                (msecs() % (60 * 1000ull)) / (10 * 1000ull),d
+            }{
+                (msecs() % (10 * 1000ull)) / 1000ull,d
+            }.{
+                (msecs() % 1000) / 100,d
+            }{
+                (msecs() % 100) / 10,d
+            }{
+                msecs() % 10,d
+            } {this,view(RecZone)na}
+        </DisplayString>
+        <DisplayString IncludeView="RecZone" Condition="spec() == Qt::TimeSpec::UTC">UTC</DisplayString>
+        <DisplayString IncludeView="RecZone" Condition="isLocalShort()">Local Time</DisplayString>
+        <DisplayString IncludeView="RecZone" Condition="offset() &lt; 0">
+            UTC-{this,view(RecZoneAbs)na}
+        </DisplayString>
+        <DisplayString IncludeView="RecZone">
+            UTC+{this,view(RecZoneAbs)na}
+        </DisplayString>
+        <DisplayString IncludeView="RecZoneAbs" Condition="offset() % 3600 == 0">
+            {absOffset() / (60 * 60 * 10),d}{(absOffset() % (60 * 60 * 10)) / (60 * 60),d}
+        </DisplayString>
+        <DisplayString IncludeView="RecZoneAbs" Condition="offset() % 60 == 0">
+            {
+                absOffset() / (60 * 60 * 10),d}{(absOffset() % (60 * 60 * 10)) / (60 * 60),d
+            }:{
+             (absOffset() % (60 * 60)) / (60 * 10),d}{(absOffset() % (60 * 10)) / 60,d
+            }
+        </DisplayString>
+        <DisplayString IncludeView="RecZoneAbs">
+            {
+                absOffset() / (60 * 60 * 10),d}{(absOffset() % (60 * 60 * 10)) / (60 * 60),d
+            }:{
+                (absOffset() % (60 * 60)) / (60 * 10),d}{(absOffset() % (60 * 10)) / 60,d
+            }:{
+                (absOffset() % 60) / 10,d}{absOffset() % 10,d
+            }
+        </DisplayString>
+
+        <Expand>
+            <Item Name="[ms]">msecs()</Item>
+            <Item Name="[s]">msecs()/1000</Item>
+            <Synthetic Name="[offset]" Condition="spec() == Qt::TimeSpec::UTC">
+                <DisplayString>UTC</DisplayString>
+            </Synthetic>
+            <Synthetic Name="[offset]" Condition="isLocalShort()">
+                <DisplayString>Local Time</DisplayString>
+            </Synthetic>
+            <Item Name="[offset-sec]" Condition="spec() != Qt::TimeSpec::UTC &amp;&amp; !isLocalShort()">absOffset()</Item>
+        </Expand>
+    </Type>
+
+        <Type Name="QJsonDocument">
+        <DisplayString Condition="!d._Mypair._Myval2">empty</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="d._Mypair._Myval2">
+                ((Qt6Cored.dll!QJsonDocumentPrivate*)(d._Mypair._Myval2))-&gt;value
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QJsonArray">
+        <Intrinsic Name="cbor" Expression="*(Qt6Cored.dll!QCborContainerPrivate**)&amp;a"></Intrinsic>
+        <Expand>
+            <ExpandedItem>cbor(),view(arr)</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QCborArray">
+        <Intrinsic Name="cbor" Expression="*(Qt6Cored.dll!QCborContainerPrivate**)&amp;d"></Intrinsic>
+        <Expand>
+            <ExpandedItem>cbor(),view(arr)</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QJsonObject">
+        <Intrinsic Name="cbor" Expression="*(Qt6Cored.dll!QCborContainerPrivate**)&amp;o"></Intrinsic>
+        <DisplayString Condition="!cbor()">empty</DisplayString>
+        <Expand>
+            <ExpandedItem
+                Condition="cbor()">cbor(),view(map)</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QCborMap">
+        <Intrinsic Name="cbor" Expression="*(Qt6Cored.dll!QCborContainerPrivate**)&amp;d"></Intrinsic>
+        <DisplayString Condition="!cbor()">empty</DisplayString>
+        <Expand>
+            <ExpandedItem
+                Condition="cbor()">cbor(),view(map)</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QJsonValue">
+        <DisplayString>{value}</DisplayString>
+        <Expand>
+            <ExpandedItem>value</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QCborValue">
+        <DisplayString Condition="t == QCborValue::Null">null</DisplayString>
+        <DisplayString Condition="t == QCborValue::Invalid">invalid</DisplayString>
+        <DisplayString Condition="t == QCborValue::Undefined">undefined</DisplayString>
+        <DisplayString Condition="t == QCborValue::False">false</DisplayString>
+        <DisplayString Condition="t == QCborValue::True">true</DisplayString>
+        <DisplayString Condition="t == QCborValue::Integer">{n}</DisplayString>
+        <DisplayString Condition="t == QCborValue::Double">{*(double*)&amp;n}</DisplayString>
+
+        <DisplayString Condition="t == QCborValue::String &amp;&amp; container-&gt;flag(n) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+            {container-&gt;byteDataAt(n)-&gt;u16(),[container-&gt;byteDataAt(n)-&gt;len/2]su}
+        </DisplayString>
+        <DisplayString Condition="t == QCborValue::String">
+            {container-&gt;byteDataAt(n)-&gt;str(),[container-&gt;byteDataAt(n)-&gt;len]s8}
+        </DisplayString>
+
+        <DisplayString Condition="(t == QCborValue::DateTime || t == QCborValue::Url || t == QCborValue::RegularExpression) &amp;&amp; container-&gt;flag(1) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+            {container-&gt;byteDataAt(1)-&gt;u16(),[container-&gt;byteDataAt(1)-&gt;len/2]su}
+        </DisplayString>
+        <DisplayString Condition="(t == QCborValue::DateTime || t == QCborValue::Url || t == QCborValue::RegularExpression)">
+            {container-&gt;byteDataAt(1)-&gt;str(),[container-&gt;byteDataAt(1)-&gt;len]s8}
+        </DisplayString>
+
+        <DisplayString Condition="t == QCborValue::Array &amp;&amp; container == nullptr">[]</DisplayString>
+        <DisplayString Condition="t == QCborValue::Map &amp;&amp; container == nullptr">{{}}</DisplayString>
+
+        <Expand>
+            <ExpandedItem Condition="t == QCborValue::Array">container,view(arr)na</ExpandedItem>
+            <ExpandedItem Condition="t == QCborValue::Map">container,view(map)na</ExpandedItem>
+            <ExpandedItem Condition="t == QCborValue::Uuid">container,view(bytesAtOne)na</ExpandedItem>
+            <ExpandedItem Condition="t == QCborValue::ByteArray">
+                container-&gt;byteDataAt(n)-&gt;bytes(),[container-&gt;byteDataAt(n)-&gt;len]hv
+            </ExpandedItem>
+            <ExpandedItem Condition="t == QCborValue::String &amp;&amp; container-&gt;flag(n) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                container-&gt;byteDataAt(n)-&gt;u16(),[container-&gt;byteDataAt(n)-&gt;len/2]su
+            </ExpandedItem>
+            <ExpandedItem Condition="t == QCborValue::String &amp;&amp; !(container-&gt;flag(n) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16)">
+                container-&gt;byteDataAt(n)-&gt;str(),[container-&gt;byteDataAt(n)-&gt;len]s8
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QCborContainerPrivate">
+        <Intrinsic
+                Name="self" Expression="(Qt6Cored.dll!QCborContainerPrivate*)this" />
+        <Intrinsic
+                Name="el" Expression="self()-&gt;elements.d.ptr[n]">
+            <Parameter Name="n" Type="long long" />
+        </Intrinsic>
+        <Intrinsic
+                Name="flag" Expression="*((int*)&amp;self()-&gt;elements.d.ptr[n].flags)">
+            <Parameter Name="n" Type="long long" />
+        </Intrinsic>
+        <Intrinsic
+                Name="byteDataAt"
+                Expression="((Qt6Cored.dll!QtCbor::ByteData*)(self()-&gt;data.d.ptr + el(n).value))">
+            <Parameter Name="n" Type="long long" />
+        </Intrinsic>
+
+        <Expand>
+            <!-- Arrays -->
+            <CustomListItems Condition="self()-&gt;elements.d.size &gt; 0" IncludeView="arr">
+                <Variable Name="i" InitialValue="0" />
+                <Loop Condition="i &lt; self()-&gt;elements.d.size">
+                    <If Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::HasByteData">
+                        <If Condition="el(i).type == QCborValue::Type::String">
+                            <If Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                                <Item Name="[{i}]">byteDataAt(i)-&gt;u16(),[byteDataAt(i)-&gt;len/2]su</Item>
+                            </If>
+                            <Else>
+                                <Item Name="[{i}]">byteDataAt(i)-&gt;str(),[byteDataAt(i)-&gt;len]s8</Item>
+                            </Else>
+                        </If>
+                        <Else>
+                            <Item Name="[{i}]">byteDataAt(i)-&gt;bytes(),[byteDataAt(i)-&gt;len]hv</Item>
+                        </Else>
+                    </If>
+                    <Elseif Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::IsContainer">
+                        <If Condition="el(i).type == QCborValue::Type::Array">
+                            <Item Name="[{i}]">el(i).container,view(arr)na</Item>
+                        </If>
+                        <Else>
+                            <Item Name="[{i}]">el(i).container,view(map)na</Item>
+                        </Else>
+                    </Elseif>
+                    <Else>
+                        <Item Name="[{i}]">el(i)</Item>
+                    </Else>
+                    <Exec>++i</Exec>
+                </Loop>
+            </CustomListItems>
+
+            <!-- Maps/Objects -->
+            <CustomListItems Condition="self()-&gt;elements.d.size &gt; 0" IncludeView="map">
+                <!-- keys can be anything in CBOR. Only strings and simple types are supported as keys (others would bloat the file) -->
+                <Variable Name="key8" InitialValue="(const char *)0" />
+                <Variable Name="key16" InitialValue="(const char16_t *)0" />
+                <!-- key8 and key16 might be nullptr even though the key is a string (we can't use "key8 || key16" to check if the key is a string) -->
+                <Variable Name="strKey" InitialValue="true"/>
+                <Variable Name="len" InitialValue="0" />
+                <Variable Name="i" InitialValue="0" />
+                <Loop Condition="i &lt; self()-&gt;elements.d.size">
+                    <If Condition="(i&amp;1) == 0">
+                        <!-- even elements are keys -->
+                        <If Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                            <!-- utf16 key -->
+                            <Exec>key8 = nullptr</Exec>
+                            <Exec>key16 = byteDataAt(i)-&gt;u16()</Exec>
+                            <Exec>len = byteDataAt(i)-&gt;len/2</Exec>
+                            <Exec>strKey = true</Exec>
+                        </If>
+                        <Elseif Condition="el(i).type == QCborValue::Type::String">
+                            <!-- utf8/ascii key -->
+                            <Exec>key8 = byteDataAt(i)-&gt;str()</Exec>
+                            <Exec>key16 = nullptr</Exec>
+                            <Exec>len = byteDataAt(i)-&gt;len</Exec>
+                            <Exec>strKey = true</Exec>
+                        </Elseif>
+                        <Else>
+                            <!-- non-string key -->
+                            <Exec>key8 = nullptr</Exec>
+                            <Exec>key16 = nullptr</Exec>
+                            <Exec>len = 0</Exec>
+                            <Exec>strKey = false</Exec>
+                        </Else>
+                    </If>
+                    <Else>
+                        <!-- odd elements are values -->
+                        <If Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::HasByteData">
+                            <If Condition="el(i).type == QCborValue::Type::String">
+                                <If Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                                    <!-- utf16 strings -->
+                                    <If Condition="key16">
+                                        <Item Name="[{key16,[len]su}]">byteDataAt(i)-&gt;u16(),[byteDataAt(i)-&gt;len/2]su</Item>
+                                    </If>
+                                    <Elseif Condition="strKey">
+                                        <Item Name="[{key8,[len]s8}]">byteDataAt(i)-&gt;u16(),[byteDataAt(i)-&gt;len/2]su</Item>
+                                    </Elseif>
+                                    <Else>
+                                        <Item Name="[{el(i-1)}]">byteDataAt(i)-&gt;u16(),[byteDataAt(i)-&gt;len/2]su</Item>
+                                    </Else>
+                                </If>
+                                <Else>
+                                    <!-- utf8 or ascii strings (assume it's utf8) -->
+                                    <If Condition="key16">
+                                        <Item Name="[{key16,[len]su}]">byteDataAt(i)-&gt;str(),[byteDataAt(i)-&gt;len]s8</Item>
+                                    </If>
+                                    <Elseif Condition="strKey">
+                                        <Item Name="[{key8,[len]s8}]">byteDataAt(i)-&gt;str(),[byteDataAt(i)-&gt;len]s8</Item>
+                                    </Elseif>
+                                    <Else>
+                                        <Item Name="[{el(i-1)}]">byteDataAt(i)-&gt;str(),[byteDataAt(i)-&gt;len]s8</Item>
+                                    </Else>
+                                </Else>
+                            </If>
+                            <Else>
+                                <!-- elements with byte-data that aren't strings (e.g. byte arrays/uuids) -->
+                                <If Condition="key16">
+                                    <Item Name="[{key16,[len]su}]">byteDataAt(i)-&gt;bytes(),[byteDataAt(i)-&gt;len]hv</Item>
+                                </If>
+                                <Elseif Condition="strKey">
+                                    <Item Name="[{key8,[len]s8}]">byteDataAt(i)-&gt;bytes(),[byteDataAt(i)-&gt;len]hv</Item>
+                                </Elseif>
+                                <Else>
+                                    <Item Name="[{el(i-1)}]">byteDataAt(i)-&gt;bytes(),[byteDataAt(i)-&gt;len]hv</Item>
+                                </Else>
+                            </Else>
+                        </If>
+                        <Elseif Condition="flag(i) &amp; Qt6Cored.dll!QtCbor::Element::IsContainer">
+                            <If Condition="el(i).type == QCborValue::Type::Array">
+                                <!-- arrays -->
+                                <If Condition="key16">
+                                    <Item Name="[{key16,[len]su}]">el(i).container,view(arr)na</Item>
+                                </If>
+                                <Elseif Condition="strKey">
+                                    <Item Name="[{key8,[len]s8}]">el(i).container,view(arr)na</Item>
+                                </Elseif>
+                                <Else>
+                                    <Item Name="[{el(i-1)}]">el(i).container,view(arr)na</Item>
+                                </Else>
+                            </If>
+                            <Else>
+                                <!-- maps/objects -->
+                                <If Condition="key16">
+                                    <Item Name="[{key16,[len]su}]">el(i).container,view(map)na</Item>
+                                </If>
+                                <Elseif Condition="strKey">
+                                    <Item Name="[{key8,[len]s8}]">el(i).container,view(map)na</Item>
+                                </Elseif>
+                                <Else>
+                                    <Item Name="[{el(i-1)}]">el(i).container,view(map)na</Item>
+                                </Else>
+                            </Else>
+                        </Elseif>
+                        <Else>
+                            <!-- simple types (bool/null/undefined/number) -->
+                            <If Condition="key16">
+                                <Item Name="[{key16,[len]su}]">el(i)</Item>
+                            </If>
+                            <Elseif Condition="strKey">
+                                <Item Name="[{key8,[len]s8}]">el(i)</Item>
+                            </Elseif>
+                            <Else>
+                                <Item Name="[{el(i-1)}]">el(i)</Item>
+                            </Else>
+                        </Else>
+                    </Else>
+                    <Exec>++i</Exec>
+                </Loop>
+            </CustomListItems>
+
+            <ExpandedItem IncludeView="stringAtOne" Condition="flag(1) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                byteDataAt(1)-&gt;u16(),[byteDataAt(1)-&gt;len/2]su
+            </ExpandedItem>
+            <ExpandedItem IncludeView="stringAtOne" Condition="!(flag(1) &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16)">
+                byteDataAt(1)-&gt;str(),[byteDataAt(1)-&gt;len]s8
+            </ExpandedItem>
+            <ExpandedItem IncludeView="bytesAtOne">
+                byteDataAt(1)-&gt;bytes(),[byteDataAt(1)-&gt;len]hv
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QtCbor::ByteData">
+        <Intrinsic Name="str" Expression="(const char *)(this + 1)" ModuleName="Qt6Cored.dll"></Intrinsic>
+        <Intrinsic Name="bytes" Expression="(const uint8_t *)(this + 1)" ModuleName="Qt6Cored.dll"></Intrinsic>
+        <Intrinsic Name="u16" Expression="(const char16_t *)(this + 1)" ModuleName="Qt6Cored.dll"></Intrinsic>
+    </Type>
+
+    <Type Name="QtCbor::Element">
+        <DisplayString Condition="type == QCborValue::Null">null</DisplayString>
+        <DisplayString Condition="type == QCborValue::Undefined">undefined</DisplayString>
+        <DisplayString Condition="type == QCborValue::False">false</DisplayString>
+        <DisplayString Condition="type == QCborValue::True">true</DisplayString>
+        <DisplayString Condition="type == QCborValue::Integer">{value}</DisplayString>
+        <DisplayString Condition="type == QCborValue::Double">{*(double*)&amp;value}</DisplayString>
+        <DisplayString Condition="type == QCborValue::Type::Array &amp;&amp; container == nullptr">[]</DisplayString>
+        <DisplayString Condition="type == QCborValue::Type::Map &amp;&amp; container == nullptr">{{}}</DisplayString>
+    </Type>
+
+    <Type Name="QJsonDocumentPrivate">
+        <Intrinsic
+                        Name="self" Expression="(Qt6Cored.dll!QJsonDocumentPrivate*)this" />
+        <Expand>
+            <ExpandedItem>self()-&gt;value</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="QJsonValueRef">
+        <Intrinsic Name="container" Expression="*(Qt6Cored.dll!QCborContainerPrivate**)&amp;o-&gt;o" />
+        <Intrinsic Name="idx" Expression="is_object ? index * 2 + 1 : index" />
+        <Intrinsic Name="el" Expression="container()-&gt;el(idx())"/>
+        <Intrinsic Name="flags" Expression="container()-&gt;flag(idx())"/>
+        <Intrinsic Name="data" Expression="container()-&gt;byteDataAt(idx())" />
+        <Intrinsic Name="ty" Expression="el().type" />
+
+        <DisplayString Condition="ty() == QCborValue::Type::String &amp;&amp; flags() &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+            {data()-&gt;u16(),[data()-&gt;len/2]su}
+        </DisplayString>
+        <DisplayString Condition="ty() == QCborValue::Type::String">
+            {data()-&gt;str(),[data()-&gt;len]s8}
+        </DisplayString>
+        <DisplayString Condition="ty() != QCborValue::Type::Array &amp;&amp; ty() != QCborValue::Type::Map || !el().container">
+            {el()}
+        </DisplayString>
+
+        <Expand>
+            <ExpandedItem Condition="ty() == QCborValue::Type::Array">el().container,view(arr)na</ExpandedItem>
+            <ExpandedItem Condition="ty() == QCborValue::Type::Map">el().container,view(map)na</ExpandedItem>
+            <ExpandedItem Condition="ty() == QCborValue::Type::String &amp;&amp; flags() &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                data()-&gt;u16(),[data()-&gt;len/2]su
+            </ExpandedItem>
+            <ExpandedItem Condition="ty() == QCborValue::Type::String &amp;&amp; !(flags() &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16)">
+                data()-&gt;str(),[data()-&gt;len]s8
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Same as QJsonValueRef -->
+    <Type Name="QJsonValueConstRef">
+        <Intrinsic Name="container" Expression="*(Qt6Cored.dll!QCborContainerPrivate**)&amp;o-&gt;o" />
+        <Intrinsic Name="idx" Expression="is_object ? index * 2 + 1 : index" />
+        <Intrinsic Name="el" Expression="container()-&gt;el(idx())"/>
+        <Intrinsic Name="flags" Expression="container()-&gt;flag(idx())"/>
+        <Intrinsic Name="data" Expression="container()-&gt;byteDataAt(idx())" />
+        <Intrinsic Name="ty" Expression="el().type" />
+
+        <DisplayString Condition="ty() == QCborValue::Type::String &amp;&amp; flags() &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+            {data()-&gt;u16(),[data()-&gt;len/2]su}
+        </DisplayString>
+        <DisplayString Condition="ty() == QCborValue::Type::String">
+            {data()-&gt;str(),[data()-&gt;len]s8}
+        </DisplayString>
+        <DisplayString Condition="ty() != QCborValue::Type::Array &amp;&amp; ty() != QCborValue::Type::Map || !el().container">
+            {el()}
+        </DisplayString>
+
+        <Expand>
+            <ExpandedItem Condition="ty() == QCborValue::Type::Array">el().container,view(arr)na</ExpandedItem>
+            <ExpandedItem Condition="ty() == QCborValue::Type::Map">el().container,view(map)na</ExpandedItem>
+            <ExpandedItem Condition="ty() == QCborValue::Type::String &amp;&amp; flags() &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16">
+                data()-&gt;u16(),[data()-&gt;len/2]su
+            </ExpandedItem>
+            <ExpandedItem Condition="ty() == QCborValue::Type::String &amp;&amp; !(flags() &amp; Qt6Cored.dll!QtCbor::Element::StringIsUtf16)">
+                data()-&gt;str(),[data()-&gt;len]s8
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+
+    <!-- Show the object name for QObject subclasses, if any -->
+    <Type Name="QObject" Inheritable="true">
+        <Intrinsic Name="d_object" Optional="true" Expression="*((Qt6Cored.dll!QObjectPrivate*)d_ptr.d)"></Intrinsic>
+        <Intrinsic Name="d_object" Optional="true" Expression="*((Qt6Core.dll!QObjectPrivate*)d_ptr.d)"></Intrinsic>
+        <DisplayString Condition="d_object().extraData != 0">{d_object().extraData-&gt;objectName}</DisplayString>
+    </Type>
+    <!-- Show the dynamic properties, but only when opening the QObject under the real object -->
+    <Type Name="QObject" Inheritable="false">
+        <Intrinsic Name="d_object" Optional="true" Expression="*((Qt6Cored.dll!QObjectPrivate*)d_ptr.d)"></Intrinsic>
+        <Intrinsic Name="d_object" Optional="true" Expression="*((Qt6Core.dll!QObjectPrivate*)d_ptr.d)"></Intrinsic>
+        <DisplayString Condition="d_object().extraData != 0">{d_object().extraData-&gt;objectName}</DisplayString>
+
+        <Expand>
+            <Item Condition ="d_object().extraData-&gt;propertyNames.d.size != 0" Name="[propertyNames]">d_object().extraData-&gt;propertyNames</Item>
+            <Item Condition ="d_object().extraData-&gt;propertyNames.d.size != 0" Name="[propertyValues]">d_object().extraData-&gt;propertyValues</Item>
+        </Expand>
+    </Type>
+
+</AutoVisualizer>

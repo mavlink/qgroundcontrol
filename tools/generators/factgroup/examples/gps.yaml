@@ -1,0 +1,108 @@
+# Example FactGroup specification for GPS data
+#
+# Usage:
+#   python -m tools.generators.factgroup.cli --spec tools/generators/factgroup/examples/gps.yaml --dry-run
+#
+# This example demonstrates:
+# - Multiple message handlers for the same FactGroup
+# - Common MAVLink scaling patterns (degE7, cm→m, cm/s→m/s)
+# - Transform expressions for computed values
+
+domain: GPS
+update_rate_ms: 1000
+
+facts:
+  - name: lat
+    type: double
+    units: deg
+    short_desc: Latitude
+    decimal_places: 7
+
+  - name: lon
+    type: double
+    units: deg
+    short_desc: Longitude
+    decimal_places: 7
+
+  - name: alt
+    type: double
+    units: m
+    short_desc: Altitude (MSL)
+    decimal_places: 1
+
+  - name: hdop
+    type: double
+    short_desc: HDOP
+    decimal_places: 2
+
+  - name: vdop
+    type: double
+    short_desc: VDOP
+    decimal_places: 2
+
+  - name: courseOverGround
+    type: double
+    units: deg
+    short_desc: Course
+    decimal_places: 1
+    min: 0
+    max: 360
+
+  - name: groundSpeed
+    type: double
+    units: m/s
+    short_desc: Ground Speed
+    decimal_places: 2
+    min: 0
+
+  - name: satellitesVisible
+    type: uint8
+    short_desc: Satellites
+
+  - name: fixType
+    type: uint8
+    short_desc: Fix Type
+
+mavlink_messages:
+  # GPS_RAW_INT: Primary GPS message
+  # lat/lon in degE7, alt in mm, vel in cm/s, cog in cdeg, eph/epv in cm
+  - id: GPS_RAW_INT
+    mappings:
+      - fact: lat
+        field: lat
+        scaling: "* 1e-7"
+      - fact: lon
+        field: lon
+        scaling: "* 1e-7"
+      - fact: alt
+        field: alt
+        scaling: "/ 1000.0"
+      - fact: hdop
+        field: eph
+        scaling: "/ 100.0"
+      - fact: vdop
+        field: epv
+        scaling: "/ 100.0"
+      - fact: courseOverGround
+        field: cog
+        scaling: "/ 100.0"
+      - fact: groundSpeed
+        field: vel
+        scaling: "/ 100.0"
+      - fact: satellitesVisible
+        field: satellites_visible
+      - fact: fixType
+        field: fix_type
+
+  # GLOBAL_POSITION_INT: Fused position (for comparison)
+  - id: GLOBAL_POSITION_INT
+    mappings:
+      - fact: lat
+        field: lat
+        scaling: "* 1e-7"
+      - fact: lon
+        field: lon
+        scaling: "* 1e-7"
+      - fact: alt
+        field: alt
+        scaling: "/ 1000.0"

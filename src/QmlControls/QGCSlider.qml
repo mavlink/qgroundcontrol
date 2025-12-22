@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 
@@ -14,105 +5,81 @@ import QGroundControl
 import QGroundControl.Controls
 
 Slider {
-    id:             control
+    property bool zeroCentered: false ///< Value indicator starts display from zero instead of min value
+    property bool displayValue: false ///< true: Show value on handle
+    property bool showBoundaryValues: false ///< true: Show min/max values at slider ends
+
+    id: control
     implicitHeight: ScreenTools.implicitSliderHeight + (showBoundaryValues ? minLabel.contentHeight : 0)
-    leftPadding:    0
-    rightPadding:   0
-    topPadding:     0
-    bottomPadding:  0
+    leftPadding: 0
+    rightPadding: 0
+    topPadding: 0
+    bottomPadding: 0
+    wheelEnabled: false
 
-    property bool zeroCentered:         false   ///< Value indicator starts display from zero instead of min value
-    property bool displayValue:         false   ///< true: Show value on handle
-    property bool mouseWheelSupport:    true    ///< false: Disable mouse wheel support for adjusting slider value
-    property bool showBoundaryValues:   false   ///< true: Show min/max values at slider ends
-
-    property real _implicitBarLength:   Math.round(ScreenTools.defaultFontPixelWidth * 20)
-    property real _barHeight:           Math.round(ScreenTools.defaultFontPixelHeight / 3)
+    property real _implicitBarLength: Math.round(ScreenTools.defaultFontPixelWidth * 20)
+    property real _barHeight: Math.round(ScreenTools.defaultFontPixelHeight / 3)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
 
     background: Rectangle {
-        x:              control.horizontal ?
-                            control.leftPadding :
-                            control.leftPadding + control.availableWidth / 2 - width / 2
-        y:              control.horizontal ?
-                            control.topPadding + control.availableHeight / 2 - height / 2 :
-                            control.topPadding
-        implicitWidth:  control.horizontal ? control._implicitBarLength : control._barHeight
+        x: control.horizontal ? control.leftPadding : control.leftPadding + control.availableWidth / 2 - width / 2
+        y: control.horizontal ? control.topPadding + control.availableHeight / 2 - height / 2 : control.topPadding
+        implicitWidth: control.horizontal ? control._implicitBarLength : control._barHeight
         implicitHeight: control.horizontal ? control._barHeight : control._implicitBarLength
-        width:          control.horizontal ? control.availableWidth : implicitWidth
-        height:         control.horizontal ? implicitHeight : control.availableHeight
-        radius:         control._barHeight / 2
-        color:          qgcPal.button
-        border.width:   1
-        border.color:   qgcPal.buttonText
+        width: control.horizontal ? control.availableWidth : implicitWidth
+        height: control.horizontal ? implicitHeight : control.availableHeight
+        radius: control._barHeight / 2
+        color: qgcPal.button
+        border.width: 1
+        border.color: qgcPal.buttonText
     }
 
     handle: Rectangle {
-        x:              control.horizontal ?
-                            control.leftPadding + control.visualPosition * (control.availableWidth - width) :
-                            control.leftPadding + control.availableWidth / 2 - width / 2
-        y:              control.horizontal ?
-                            control.topPadding + control.availableHeight / 2 - height / 2 :
-                            control.topPadding + control.visualPosition * (control.availableHeight - height)
-        implicitWidth:  _radius * 2
+        x: control.horizontal ?
+               control.leftPadding + control.visualPosition * (control.availableWidth - width) :
+               control.leftPadding + control.availableWidth / 2 - width / 2
+        y: control.horizontal ?
+               control.topPadding + control.availableHeight / 2 - height / 2 :
+               control.topPadding + control.visualPosition * (control.availableHeight - height)
+        implicitWidth: _radius * 2
         implicitHeight: _radius * 2
-        color:          qgcPal.button
-        border.color:   qgcPal.buttonText
-        border.width:   1
-        radius:         _radius
+        color: qgcPal.button
+        border.color: qgcPal.buttonText
+        border.width: 1
+        radius: _radius
 
         property real _radius: ScreenTools.defaultFontPixelHeight / 2
 
         Label {
-            text:               control.value.toFixed( control.to <= 1 ? 1 : 0)
-            visible:            control.displayValue
-            anchors.centerIn:   parent
-            font.family:        ScreenTools.normalFontFamily
-            font.pointSize:     ScreenTools.smallFontPointSize
-            color:              qgcPal.buttonText
+            text: control.value.toFixed(control.to <= 1 ? 1 : 0)
+            visible: control.displayValue
+            anchors.centerIn: parent
+            font.family: ScreenTools.normalFontFamily
+            font.pointSize: ScreenTools.smallFontPointSize
+            color: qgcPal.buttonText
         }
     }
 
     QGCLabel {
-        id:                 minLabel
-        anchors.left:       parent.left
+        id: minLabel
+        anchors.left: parent.left
         anchors.leftMargin: control.leftPadding
-        anchors.bottom:     parent.bottom
-        text:               control.from.toFixed(1)
-        font.pointSize:     ScreenTools.smallFontPointSize
-        color:              qgcPal.buttonText
-        visible:            control.showBoundaryValues
+        anchors.bottom: parent.bottom
+        text: control.from.toFixed(1)
+        font.pointSize: ScreenTools.smallFontPointSize
+        color: qgcPal.buttonText
+        visible: control.showBoundaryValues
     }
 
     QGCLabel {
-        id:                     maxLabel
-        anchors.right:          parent.right
-        anchors.rightMargin:    control.rightPadding
-        anchors.bottom:     parent.bottom
-        text:                   control.to.toFixed(1)
-        font.pointSize:         ScreenTools.smallFontPointSize
-        color:                  qgcPal.buttonText
-        visible:                control.showBoundaryValues
-    }
-
-    MouseArea {
-        anchors.fill:   parent
-        enabled:        !control.mouseWheelSupport
-
-        onWheel: (wheel) => {
-            // do nothing
-            wheel.accepted = true;
-        }
-
-        onPressed: (mouse) => {
-            // propagate/accept
-            mouse.accepted = false;
-        }
-
-        onReleased: (mouse) => {
-            // propagate/accept
-            mouse.accepted = false;
-        }
+        id: maxLabel
+        anchors.right: parent.right
+        anchors.rightMargin: control.rightPadding
+        anchors.bottom: parent.bottom
+        text: control.to.toFixed(1)
+        font.pointSize: ScreenTools.smallFontPointSize
+        color: qgcPal.buttonText
+        visible: control.showBoundaryValues
     }
 }

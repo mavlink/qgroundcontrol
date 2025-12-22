@@ -41,7 +41,7 @@ Rectangle {
             anchors.right:      parent.right
             wrapMode:           Text.WordWrap
             font.pointSize:     ScreenTools.smallFontPointSize
-            text:               qsTr("Rally Points provide alternate landing points when performing a Return to Launch (RTL).")
+            text:               qsTr("Rally Points provide alternate landing points when performing a Return to Launch (RTL).\n\nClick on the map to add Rally Points.")
         }
     }
 }

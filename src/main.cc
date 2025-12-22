@@ -34,10 +34,10 @@ int main(int argc, char *argv[])
 {
 #if 0
     // Useful for debugging specific unit tests
-    char argument1[] = "--unittest:ParameterManagerTest";
+    char argument1[] = "--unittest:SimpleMissionItemTest";
     char argument2[] = "--logging:FactSystem.ParameterManager,Utilities.QGCStateMachine";
     char *newArgv[] = { argv[0], argument1, argument2 };
-    argc = 3;
+    argc = 2;
     argv = newArgv;
 #endif
 

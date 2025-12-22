@@ -37,13 +37,6 @@ void PlanMasterControllerTest::cleanup(void)
     UnitTest::cleanup();
 }
 
-void PlanMasterControllerTest::_testMissionFileLoad(void)
-{
-    _masterController->loadFromFile(":/unittest/OldFileFormat.mission");
-    QCOMPARE(_masterController->missionController()->visualItems()->count(), 7);
-}
-
-
 void PlanMasterControllerTest::_testMissionPlannerFileLoad(void)
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");

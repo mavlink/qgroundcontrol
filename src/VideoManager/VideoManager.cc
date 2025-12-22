@@ -97,7 +97,7 @@ void VideoManager::init(QQuickWindow *mainWindow)
 
     (void) connect(this, &VideoManager::autoStreamConfiguredChanged, this, &VideoManager::_videoSourceChanged);
 
-    _mainWindow->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::BeforeSynchronizingStage);
+    _mainWindow->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::AfterSynchronizingStage);
 
     _initialized = true;
 }
@@ -827,5 +827,5 @@ FinishVideoInitialization::~FinishVideoInitialization()
 void FinishVideoInitialization::run()
 {
     qCDebug(VideoManagerLog) << "FinishVideoInitialization::run";
-    VideoManager::instance()->_initAfterQmlIsReady();
+    QMetaObject::invokeMethod(VideoManager::instance(), &VideoManager::_initAfterQmlIsReady, Qt::QueuedConnection);
 }

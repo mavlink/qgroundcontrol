@@ -11,6 +11,9 @@ repos:
       - id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
+      - id: pretty-format-json
+        args: ['--indent=2', '--no-ensure-ascii']
+        exclude: ^(translations/|package-lock\.json|src/|test/|resources/|deploy/|cmake/)
       - id: check-xml
         exclude: ^test/
       - id: check-merge-conflict
@@ -22,25 +25,41 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat))$
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ['--fix=no']
         exclude: \.(bat|ps1)$
 
-  # C++ formatting (commented out - uncomment to enable)
-  # - repo: https://github.com/pre-commit/mirrors-clang-format
-  #   rev: v19.1.7
-  #   hooks:
-  #     - id: clang-format
-  #       types_or: [c++, c]
-  #       args: ['-i']
-  #       exclude: ^build/
+  # C++ formatting (check-only, use 'clang-format -i' to fix)
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.7
+    hooks:
+      - id: clang-format
+        args: ['--dry-run', '--Werror']
+        types_or: [c++, c]
+        exclude: ^(build/|libs/)
 
-  # Python formatting
+  # C++ static analysis (requires compile_commands.json - run 'make configure' first)
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.3.5
+    hooks:
+      - id: clang-tidy
+        args: ['-p=build', '--use-color']
+        types_or: [c++, c]
+        exclude: ^(build/|libs/|test/)
+
+  # Python formatting (report-only)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.1
+    rev: v0.14.8
     hooks:
       - id: ruff
-        args: [--fix]
       - id: ruff-format
+        args: [--check]
+
+  # Python type checking
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.407
+    hooks:
+      - id: pyright
+        files: ^(tools|test)/.*\.py$
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -49,6 +68,21 @@ repos:
       - id: shellcheck
         args: ['-e', 'SC1091']  # Don't warn about not following sourced files
 
+  # CMake formatting (report-only)
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        args: [--check]
+      - id: cmake-lint
+        exclude: ^(build/|libs/)
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.9
+    hooks:
+      - id: actionlint
+
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1
@@ -56,50 +90,53 @@ repos:
       - id: yamllint
         args: ['-d', '{extends: default, rules: {line-length: {max: 200}, document-start: disable, truthy: {check-keys: false}, comments: {min-spaces-from-content: 1}}}']
 
+  # Markdown linting (report-only, doesn't auto-fix)
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.47.0
+    hooks:
+      - id: markdownlint
+        exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
+
+  # Prose linting (documentation quality)
+  - repo: https://github.com/errata-ai/vale
+    rev: v3.13.0
+    hooks:
+      - id: vale
+        files: ^docs/
+        args: ['--no-exit']  # Don't fail on warnings, just report
+
+  # Spell checking (report-only, doesn't auto-fix)
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.40.0
+    hooks:
+      - id: typos
+        args: []  # Empty args disables auto-fix mode
+
   # QGC-specific checks
   - repo: local
     hooks:
       - id: qmllint
         name: Lint QML files
-        entry: bash -c 'if command -v qmllint &>/dev/null; then qmllint "$@" || true; else echo "qmllint not found - skipping QML linting (install qt6-declarative-dev-tools or Qt SDK)"; fi' --
+        entry: bash -c 'if command -v qmllint &>/dev/null; then qmllint "$@"; else echo "qmllint not found - skipping (install Qt SDK or qt6-declarative-dev-tools)" >&2; exit 0; fi' --
         language: system
         files: \.qml$
         exclude: ^build/
         pass_filenames: true
 
-      - id: check-fact-metadata
-        name: Validate Fact metadata JSON
-        entry: python3
-        language: system
-        files: '\.FactMetaData\.json$|\.SettingsGroup\.json$'
-        pass_filenames: true
-        args:
-          - -c
-          - |
-            import sys, json
-            for f in sys.argv[1:]:
-                try:
-                    with open(f) as fp:
-                        json.load(fp)
-                except Exception as e:
-                    print(f"Invalid JSON in {f}: {e}")
-                    sys.exit(1)
-
       - id: check-no-qassert
         name: Check for Q_ASSERT in production code
-        entry: bash
+        entry: bash -c 'if grep -n "Q_ASSERT" "$@" 2>/dev/null; then echo "::warning::Q_ASSERT found. Consider defensive checks with early returns instead." >&2; fi; exit 0' --
         language: system
-        files: \.(h|cc|cpp)$
-        exclude: ^(test/|UnitTest\.h|UnitTest\.cc)
-        pass_filenames: false
-        args:
-          - -c
-          - |
-            FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(h|cc|cpp)$' | grep -v '^test/' || true)
-            if [ -n "$FILES" ]; then
-              if echo "$FILES" | xargs grep -n 'Q_ASSERT' 2>/dev/null; then
-                echo "Warning: Q_ASSERT found in production code. Consider using defensive checks with early returns."
-              fi
-            fi
+        types: [c++]
+        exclude: ^test/
+        pass_filenames: true
+
+      - id: vehicle-null-check
+        name: Check vehicle null safety
+        entry: python3 tools/analyzers/vehicle_null_check.py
+        language: python
+        types: [c++]
+        exclude: ^(build/|libs/|test/)
+        pass_filenames: true
 
 exclude: ^build/

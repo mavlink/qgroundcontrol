@@ -58,27 +58,21 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Qt for MacOS
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: mac
-          target: desktop
           arch: clang_64
-          dir: ${{ runner.temp }}
           modules: ${{ steps.config.outputs.qt_modules }}
-          setup-python: false
-          cache: true
 
       - name: Install Qt for iOS
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: mac
           target: ios
           arch: ios
-          dir: ${{ runner.temp }}
           modules: ${{ steps.config.outputs.qt_modules_ios }}
-          cache: true
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -90,6 +84,12 @@ jobs:
       - name: Build
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+
+      - name: Attest Build Provenance
+        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.app'
 
       - name: Upload Build File
         uses: ./.github/actions/upload

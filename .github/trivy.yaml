@@ -1,0 +1,36 @@
+# Trivy vulnerability scanner configuration
+# https://aquasecurity.github.io/trivy/latest/docs/configuration/
+
+# Severity levels to report
+severity:
+  - CRITICAL
+  - HIGH
+
+# Ignore vulnerabilities without fixes
+ignore-unfixed: true
+
+# Output format (overridden in workflow for SARIF upload)
+# format: table
+
+# Exit code when vulnerabilities are found
+# exit-code: 1
+
+# Vulnerability database settings
+db:
+  # Skip database update (use cached)
+  # skip-update: false
+
+# Scanning settings
+scan:
+  # File patterns to skip
+  skip-files:
+    - "**/*_test.go"
+    - "**/test/**"
+    - "**/tests/**"
+
+  # Directory patterns to skip
+  skip-dirs:
+    - ".git"
+    - "node_modules"
+    - "vendor"
+    - ".gradle"
