@@ -7,6 +7,7 @@
   "gstreamer_android_version": "1.22.12",
   "gstreamer_macos_version": "1.24.13",
   "gstreamer_minimum_version": "1.22.12",
+  "gstreamer_version": "1.24.13",
   "gstreamer_windows_version": "1.22.12",
   "java_version": "17",
   "ndk_full_version": "27.2.12479018",

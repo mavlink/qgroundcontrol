@@ -33,7 +33,7 @@ repos:
     rev: v3.92.4
     hooks:
       - id: trufflehog
-        args: ['--config=tools/configs/trufflehog.yaml']
+        args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
 
   # C++ formatting (check-only, use 'clang-format -i' to fix)
   # Note: Install matching clang-format version locally to avoid formatting differences

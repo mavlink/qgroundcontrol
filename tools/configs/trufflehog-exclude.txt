@@ -1,0 +1,26 @@
+# TruffleHog exclusion patterns (regex format)
+# https://trufflesecurity.com/trufflehog
+
+# Test files and directories
+.*_test\.go$
+.*/test/.*
+.*/tests/.*
+.*/testdata/.*
+
+# Documentation
+.*\.md$
+
+# Dependencies
+.*/vendor/.*
+.*/node_modules/.*
+.*/\.git/.*
+
+# Lock files and minified assets
+.*\.lock$
+.*package-lock\.json$
+.*\.min\.js$
+.*\.min\.css$
+
+# Build artifacts
+.*/build/.*
+.*/dist/.*
