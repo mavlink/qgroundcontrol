@@ -74,6 +74,9 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     connect(this, &StructureScanComplexItem::wizardModeChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
+    connect(this,               &StructureScanComplexItem::coordinateChanged,       this, &StructureScanComplexItem::entryCoordinateChanged);
+    connect(this,               &StructureScanComplexItem::coordinateChanged,       this, &StructureScanComplexItem::exitCoordinateChanged);
+
     connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::_amslEntryAltChanged);
     connect(this,               &StructureScanComplexItem::amslEntryAltChanged,     this, &StructureScanComplexItem::amslExitAltChanged);
 
@@ -270,7 +273,6 @@ void StructureScanComplexItem::_flightPathChanged(void)
                          QGeoCoordinate(south - 90.0, east - 180.0, top)));
 
     emit coordinateChanged(coordinate());
-    emit exitCoordinateChanged(exitCoordinate());
     emit greatestDistanceToChanged();
 
     if (_isIncomplete) {
@@ -491,7 +493,6 @@ QGeoCoordinate StructureScanComplexItem::coordinate(void) const
 void StructureScanComplexItem::_updateCoordinateAltitudes(void)
 {
     emit coordinateChanged(coordinate());
-    emit exitCoordinateChanged(exitCoordinate());
 }
 
 void StructureScanComplexItem::rotateEntryPoint(void)
@@ -501,7 +502,6 @@ void StructureScanComplexItem::rotateEntryPoint(void)
         _entryVertex = 0;
     }
     emit coordinateChanged(coordinate());
-    emit exitCoordinateChanged(exitCoordinate());
 }
 
 void StructureScanComplexItem::_rebuildFlightPolygon(void)
@@ -521,7 +521,6 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
     }
 
     emit coordinateChanged(coordinate());
-    emit exitCoordinateChanged(exitCoordinate());
 }
 
 void StructureScanComplexItem::_recalcCameraShots(void)

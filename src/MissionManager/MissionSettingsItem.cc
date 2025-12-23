@@ -41,6 +41,8 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
     connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,              this, &MissionSettingsItem::specifiedGimbalYawChanged);
     connect(&_cameraSection,    &CameraSection::specifiedGimbalPitchChanged,            this, &MissionSettingsItem::specifiedGimbalPitchChanged);
     connect(&_speedSection,     &SpeedSection::specifiedFlightSpeedChanged,             this, &MissionSettingsItem::specifiedFlightSpeedChanged);
+    connect(this,               &MissionSettingsItem::coordinateChanged,                this, &MissionSettingsItem::entryCoordinateChanged);
+    connect(this,               &MissionSettingsItem::coordinateChanged,                this, &MissionSettingsItem::exitCoordinateChanged);
     connect(this,               &MissionSettingsItem::coordinateChanged,                this, &MissionSettingsItem::_amslEntryAltChanged);
     connect(this,               &MissionSettingsItem::amslEntryAltChanged,              this, &MissionSettingsItem::amslExitAltChanged);
     connect(this,               &MissionSettingsItem::amslEntryAltChanged,              this, &MissionSettingsItem::minAMSLAltitudeChanged);
@@ -176,7 +178,6 @@ void MissionSettingsItem::_setCoordinateWorker(const QGeoCoordinate& coordinate)
     if (_plannedHomePositionCoordinate != coordinate) {
         _plannedHomePositionCoordinate = coordinate;
         emit coordinateChanged(coordinate);
-        emit exitCoordinateChanged(coordinate);
         if (_plannedHomePositionFromVehicle) {
             _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
         }
@@ -252,7 +253,6 @@ void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
         qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::_updateAltitudeInCoordinate" << newAltitude;
         _plannedHomePositionCoordinate.setAltitude(newAltitude);
         emit coordinateChanged(_plannedHomePositionCoordinate);
-        emit exitCoordinateChanged(_plannedHomePositionCoordinate);
     }
 }
 

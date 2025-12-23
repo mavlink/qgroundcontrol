@@ -146,6 +146,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
 
     // Exit coordinate is the same as entrance coordinate
+    connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::entryCoordinateChanged);
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::exitCoordinateChanged);
 
     // The following changes may also change friendlyEditAllowed

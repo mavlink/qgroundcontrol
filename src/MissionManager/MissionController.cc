@@ -1104,7 +1104,7 @@ void MissionController::save(QJsonObject& json)
 
 void MissionController::_calcPrevWaypointValues(VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
 {
-    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  currentCoord =  currentItem->entryCoordinate();
     QGeoCoordinate  prevCoord =     prevItem->exitCoordinate();
 
     // Convert to fixed altitudes
@@ -1116,7 +1116,7 @@ void MissionController::_calcPrevWaypointValues(VisualMissionItem* currentItem, 
 
 double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem)
 {
-    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  currentCoord =  currentItem->entryCoordinate();
     QGeoCoordinate  homeCoord =     homeItem->exitCoordinate();
     bool            distanceOk =    false;
 
@@ -1132,7 +1132,7 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     bool                takeoffStraightUp   = pair.second->isTakeoffItem() && !_controllerVehicle->fixedWing();
 
     QGeoCoordinate      coord1              = pair.first->exitCoordinate();
-    QGeoCoordinate      coord2              = pair.second->coordinate();
+    QGeoCoordinate      coord2              = pair.second->entryCoordinate();
     double              coord2AMSLAlt       = pair.second->amslEntryAlt();
     double              coord1AMSLAlt       = takeoffStraightUp ? coord2AMSLAlt : pair.first->amslExitAlt();
 
@@ -1150,9 +1150,9 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     } else {
         connect(pair.first, &VisualMissionItem::amslExitAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
     }
-    connect(pair.first,  &VisualMissionItem::exitCoordinateChanged, segment,    &FlightPathSegment::setCoordinate1);
-    connect(pair.second, &VisualMissionItem::coordinateChanged,     segment,    &FlightPathSegment::setCoordinate2);
-    connect(pair.second, &VisualMissionItem::amslEntryAltChanged,   segment,    &FlightPathSegment::setCoord2AMSLAlt);
+    connect(pair.first,  &VisualMissionItem::exitCoordinateChanged,     segment,    &FlightPathSegment::setCoordinate1);
+    connect(pair.second, &VisualMissionItem::entryCoordinateChanged,    segment,    &FlightPathSegment::setCoordinate2);
+    connect(pair.second, &VisualMissionItem::amslEntryAltChanged,       segment,    &FlightPathSegment::setCoord2AMSLAlt);
 
     connect(pair.second, &VisualMissionItem::coordinateChanged,         this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
 
@@ -1376,9 +1376,9 @@ void MissionController::_recalcFlightPathSegments(void)
             // Create a new segment. Since this is the fly view there is no need to wire change signals or worry about correct SegmentType
             coordVector = new FlightPathSegment(
                         FlightPathSegment::SegmentTypeGeneric,
-                        lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
+                        lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->entryCoordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
                         lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->amslEntryAlt() : lastSegmentVisualItemPair.first->amslExitAlt(),
-                        lastSegmentVisualItemPair.second->coordinate(),
+                        lastSegmentVisualItemPair.second->entryCoordinate(),
                         lastSegmentVisualItemPair.second->amslEntryAlt(),
                         !_flyView /* queryTerrainData */,
                         this);
@@ -1584,7 +1584,7 @@ void MissionController::_recalcMissionFlightStatus()
                         if (qIsNaN(newVehicleYaw)) {
                             // No specific vehicle yaw set. Current vehicle yaw is determined from flight path segment direction.
                             if (simpleItem != lastFlyThroughVI) {
-                                _missionFlightStatus.vehicleYaw = lastFlyThroughVI->exitCoordinate().azimuthTo(simpleItem->coordinate());
+                                _missionFlightStatus.vehicleYaw = lastFlyThroughVI->exitCoordinate().azimuthTo(simpleItem->entryCoordinate());
                             }
                         } else {
                             _missionFlightStatus.vehicleYaw = newVehicleYaw;
@@ -1817,9 +1817,9 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoo
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
-        if (item->specifiesCoordinate() && item->coordinate().isValid()) {
+        if (item->specifiesCoordinate() && item->entryCoordinate().isValid()) {
             foundFirstCoordinate = true;
-            firstCoordinate = item->coordinate();
+            firstCoordinate = item->entryCoordinate();
             break;
         }
     }
@@ -2071,17 +2071,17 @@ void MissionController::_centerHomePositionOnMissionItems(QmlObjectListModel *vi
             VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
             if (item->specifiesCoordinate()) {
                 if (firstCoordSet) {
-                    double lat = _normalizeLat(item->coordinate().latitude());
-                    double lon = _normalizeLon(item->coordinate().longitude());
+                    double lat = _normalizeLat(item->entryCoordinate().latitude());
+                    double lon = _normalizeLon(item->entryCoordinate().longitude());
                     north = fmax(north, lat);
                     south = fmin(south, lat);
                     east  = fmax(east, lon);
                     west  = fmin(west, lon);
                 } else {
                     firstCoordSet = true;
-                    north = _normalizeLat(item->coordinate().latitude());
+                    north = _normalizeLat(item->entryCoordinate().latitude());
                     south = north;
-                    east  = _normalizeLon(item->coordinate().longitude());
+                    east  = _normalizeLon(item->entryCoordinate().longitude());
                     west  = east;
                 }
             }
@@ -2555,8 +2555,8 @@ void MissionController::_updateTimeout()
             if(pComplexItem) {
                 QGCGeoBoundingCube bc = pComplexItem->boundingCube();
                 if(bc.isValid()) {
-                    if(!firstCoordinate.isValid() && pComplexItem->coordinate().isValid()) {
-                        firstCoordinate = pComplexItem->coordinate();
+                    if(!firstCoordinate.isValid() && pComplexItem->entryCoordinate().isValid()) {
+                        firstCoordinate = pComplexItem->entryCoordinate();
                     }
                     north  = fmax(north, bc.pointNW.latitude()  + 90.0);
                     south  = fmin(south, bc.pointSE.latitude()  + 90.0);

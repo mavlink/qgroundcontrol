@@ -202,14 +202,14 @@ void SimpleMissionItemTest::_testSignals()
     // Check that actually changing coordinate signals correctly
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5() + 1, missionItem.param6(), missionItem.param7()));
     QVERIFY(_spyVisualItem->onlyEmittedOnceByMask(
-        _spyVisualItem->mask("coordinateChanged", "exitCoordinateChanged", "dirtyChanged", "amslEntryAltChanged",
-                             "amslExitAltChanged", "terrainAltitudeChanged")));
+        _spyVisualItem->mask("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
+                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged")));
     _spyVisualItem->clearAllSignals();
     _spySimpleItem->clearAllSignals();
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
     QVERIFY(_spyVisualItem->onlyEmittedOnceByMask(
-        _spyVisualItem->mask("coordinateChanged", "exitCoordinateChanged", "dirtyChanged", "amslEntryAltChanged",
-                             "amslExitAltChanged", "terrainAltitudeChanged")));
+        _spyVisualItem->mask("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
+                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged")));
     _spyVisualItem->clearAllSignals();
     _spySimpleItem->clearAllSignals();
     // Altitude in coordinate is not used in setCoordinate
