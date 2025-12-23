@@ -11,11 +11,7 @@ FROM ubuntu:24.04 AS builder
 ENV DEBIAN_FRONTEND=noninteractive \
     #  UTF-8 Localization
     LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    #  Ensure pipx is in PATH
-    PATH=/root/.local/bin:$PATH \
-    #  Build Arguments
-    BUILD_TYPE=Release
+    LANGUAGE=en_US:en
 
 # ---------- Configure APT for reduced verbosity ----------
 RUN echo 'DPkg::Use-Pty "0";\nDPkg::Progress-Fancy "0";\nAPT::Color "0";' \
@@ -25,13 +21,6 @@ RUN echo 'DPkg::Use-Pty "0";\nDPkg::Progress-Fancy "0";\nAPT::Color "0";' \
 COPY --chmod=511 tools/setup/install-dependencies-debian.sh /tmp/qt/
 
 RUN /tmp/qt/install-dependencies-debian.sh
-
-# ---------- Locale Configuration ----------
-RUN <<EOF
-sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen
-locale-gen
-update-locale LANG=en_US.UTF-8
-EOF
 
 # ---------- Qt Installation ----------
 COPY --chmod=511 tools/setup/install-qt-debian.sh /tmp/qt/
@@ -49,6 +38,7 @@ chmod +x /etc/profile.d/qt.sh
 rm -rf /tmp/qt
 EOF
 
+# Check that qt-cmake is available
 RUN /bin/bash -lc "qt-cmake --version"
 
 # ---------- Git Configuration ----------
@@ -59,6 +49,7 @@ RUN mkdir -p /project/source /project/build
 WORKDIR /project/build
 
 # ---------- Build Entrypoint ----------
-COPY --chmod=511 tools/setup/container-entrypoint.sh /usr/local/bin/
+COPY --chmod=511 deploy/docker/entrypoint.sh /usr/local/bin/
 
-ENTRYPOINT [ "/bin/bash", "-lc", "container-entrypoint.sh" ]
+ENTRYPOINT [ "/bin/bash", "-l", "entrypoint.sh" ]
+CMD ["Release"]

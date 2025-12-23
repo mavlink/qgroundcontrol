@@ -31,7 +31,11 @@ BUILD_DIR="${BUILD_DIR:-${SOURCE_DIR}/build}"
 
 [[ -z "${IMAGE_NAME}" ]] && usage
 
-mkdir -p "${BUILD_DIR}"
+
+# Create the build directory if it doesn't exist
+if [[ ! -d "$BUILD_DIR" ]]; then
+    mkdir -p "$BUILD_DIR"
+fi
 
 docker run \
     --rm \

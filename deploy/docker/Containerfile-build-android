@@ -1,12 +1,19 @@
-# QGroundControl Android Build Environment
-FROM ubuntu:24.04
+# =============================================================================
+# QGROUNDCONTROL ANDROID BUILD ENVIRONMENT
+# Base: Ubuntu 24.04
+# =============================================================================
 
-# ========== CONFIGURATION AND METADATA ==========
+# ========== BASE IMAGE AND METADATA ==========
+# Base Image
+FROM ubuntu:24.04 AS builder
+
+# Metadata
 LABEL maintainer="QGroundControl Team"
 LABEL description="Android build environment for QGroundControl"
 LABEL version="1.0"
 
-# ---------- Environment Variables ----------
+# ========== ENVIRONMENT AND ARGUMENTS ==========
+# Variables for the image
     # Reduce APT interactions
 ENV DEBIAN_FRONTEND=noninteractive \
     APT_LISTCHANGES_FRONTEND=none \
@@ -20,23 +27,22 @@ ENV DEBIAN_FRONTEND=noninteractive \
     QT_PATH=/opt/Qt \
     QT_HOST=linux \
     QT_HOST_ARCH=linux_gcc_64 \
-    QT_HOST_ARCH_DIR=gcc_64 \
+    QT_HOST_DIR=gcc_64 \
     QT_TARGET=android \
-    QT_TARGET_ARCH_ARMV7=android_armv7 \
     QT_TARGET_ARCH_ARM64=android_arm64_v8a \
     # Ensure pipx is in PATH
     PATH=/root/.local/bin:$PATH \
     #  Build Type
     BUILD_TYPE=Release
 
-# ---------- Arguments for the Build ----------
+# Arguments for build
 ARG CONFIG_FILE=/tmp/qt/build-config.json \
     ANDROID_SDK_MANAGER=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager
 
 # ========== SYSTEM SETUP ==========
 COPY --chmod=511 tools/setup/install-dependencies-debian.sh /tmp/qt/
 
-# Install required system packages and dependencies
+# Configure system and dependencies
 RUN /tmp/qt/install-dependencies-debian.sh
 
 # ========== BUILD ENVIRONMENT CONFIGURATION ==========
@@ -74,8 +80,7 @@ echo "export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT"/ndk/"$NDK_FULL_VERSION""
 echo "export ANDROID_BUILD_TOOLS_DIR="$ANDROID_SDK_ROOT"/build-tools/"$ANDROID_BUILD_TOOLS""
 
 # Qt paths
-echo "export QT_HOST_PATH="$QT_PATH"/"$QT_VERSION"/"$QT_HOST_ARCH_DIR""
-echo "export QT_ROOT_DIR_ARMV7="$QT_PATH"/"$QT_VERSION"/"$QT_TARGET_ARCH_ARMV7""
+echo "export QT_HOST_PATH="$QT_PATH"/"$QT_VERSION"/"$QT_HOST_DIR""
 echo "export QT_ROOT_DIR_ARM64="$QT_PATH"/"$QT_VERSION"/"$QT_TARGET_ARCH_ARM64""
 
 # Java path
@@ -87,7 +92,6 @@ echo 'export PATH=\
 /usr/lib/ccache:\
 $JAVA_HOME/bin:\
 $QT_HOST_PATH/bin:\
-$QT_ROOT_DIR_ARMV7/bin:\
 $QT_ROOT_DIR_ARM64/bin:\
 $ANDROID_SDK_ROOT/cmdline-tools/latest/bin:\
 $ANDROID_SDK_ROOT/platform-tools:\
@@ -116,7 +120,7 @@ RUN <<EOF
 mkdir -p "$ANDROID_SDK_ROOT"/cmdline-tools
 
 # Download and extract command line tools
-wget -q "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" \
+wget -nv "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" \
     -O /tmp/cmdline-tools.zip
 unzip -qq /tmp/cmdline-tools.zip -d "$ANDROID_SDK_ROOT"/cmdline-tools
 mv "$ANDROID_SDK_ROOT"/cmdline-tools/cmdline-tools \
@@ -138,25 +142,17 @@ yes | "$ANDROID_SDK_MANAGER" --sdk_root="$ANDROID_SDK_ROOT" --licenses > /dev/nu
 EOF
 
 # ========== QT INSTALLATION ==========
-# Install aqtinstall
-RUN pipx install -q aqtinstall
-
 # Create Qt directory
 RUN mkdir -p "$QT_PATH"
 
 # Install Qt for host and target architectures
 RUN . /etc/profile.d/qgc.sh && \
     # Install Qt for host (desktop)
-    aqt install-qt "$QT_HOST" desktop "$QT_VERSION" "$QT_HOST_ARCH" \
+    pipx run aqtinstall install-qt "$QT_HOST" desktop "$QT_VERSION" "$QT_HOST_ARCH" \
             -O "$QT_PATH" \
             -m $QT_MODULES && \
-    # Install Qt for Android (armeabi-v7a)
-    aqt install-qt "$QT_HOST" "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARMV7" \
-        -O "$QT_PATH" \
-        -m $QT_MODULES \
-        --autodesktop && \
     # Install Qt for Android (arm64-v8a)
-    aqt install-qt "$QT_HOST" "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARM64" \
+    pipx run aqtinstall install-qt all_os "$QT_TARGET" "$QT_VERSION" "$QT_TARGET_ARCH_ARM64" \
         -O "$QT_PATH" \
         -m $QT_MODULES \
         --autodesktop
@@ -168,21 +164,10 @@ RUN git config --global --add safe.directory /project/source
 # Set working directory
 WORKDIR /project/build
 
-# ========== DEFAULT CMD ==========
-# Use exec form for better signal handling
-CMD ["/bin/bash", "-lc", "\
-    qt-cmake -S /project/source -B /project/build \
-        -G Ninja \
-        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-        -DQT_HOST_PATH=${QT_HOST_PATH} \
-        -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
-        -DANDROID_PLATFORM=android-${ANDROID_PLATFORM} \
-        -DQT_ANDROID_ABIS=\"armeabi-v7a;arm64-v8a\" \
-        -DANDROID_SDK_ROOT=${ANDROID_SDK_ROOT} \
-        -DQT_ANDROID_SIGN_APK=OFF \
-        -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake && \
-    cmake --build /project/build \
-        --target all \
-        --config ${BUILD_TYPE} \
-        --parallel $(nproc)\
-"]
+# ========== ENTRYPOINT AND DEFAULT BUILD TYPE ==========
+# Copy entrypoint script
+COPY --chmod=511 deploy/docker/entrypoint.sh /usr/local/bin/
+
+# Build Entrypoint and default command
+ENTRYPOINT [ "/bin/bash", "-l", "entrypoint.sh" ]
+CMD ["Release"]

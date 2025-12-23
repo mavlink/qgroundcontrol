@@ -4,30 +4,19 @@
 set -euo pipefail
 
 # Define variables for better maintainability
-PARALLEL_BUILD_AMOUNT=$(nproc --all)
-DOCKERFILE_PATH="./deploy/docker/Containerfile-build-ubuntu"
-IMAGE_NAME="qgc-ubuntu-docker"
-SOURCE_DIR=$(dirname "$(readlink -f "$0")" | rev | cut -f3- -d'/' | rev)
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+SOURCE_DIR=$(echo "$SCRIPT_DIR" | rev | cut -f3- -d'/' | rev)
 BUILD_DIR="$SOURCE_DIR/build"
+PARALLEL_CPUS=$(nproc --all)
+IMAGE_NAME="qgc-ubuntu-docker"
+BUILD_TYPE="${1:-Release}"
 
-# Create the build directory if it doesn't exist
-if [[ ! -d "$BUILD_DIR" ]]; then
-    mkdir -p "$BUILD_DIR"
-fi
-
-# Build the Docker image
+# Build the Docker image for Linux
 podman build \
-    --jobs "${PARALLEL_BUILD_AMOUNT}" \
-    --file "${DOCKERFILE_PATH}" \
+    --file "${SCRIPT_DIR}/Containerfile-build-ubuntu" \
+    --jobs "${PARALLEL_CPUS}" \
     --tag "${IMAGE_NAME}" \
     "${SOURCE_DIR}"
 
 # Run the Docker container with necessary permissions and volume mounts
-podman run \
-    --rm \
-    --cap-add SYS_ADMIN \
-    --device /dev/fuse \
-    --security-opt apparmor:unconfined \
-    -v "${SOURCE_DIR}:/project/source" \
-    -v "${BUILD_DIR}:/project/build" \
-    "${IMAGE_NAME}"
+SOURCE_DIR="${SOURCE_DIR}" "${SCRIPT_DIR}/docker-run.sh" --fuse "${IMAGE_NAME}" "${BUILD_TYPE}"
