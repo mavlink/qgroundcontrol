@@ -70,6 +70,7 @@ public:
     QString             commandName                 (void) const final { return tr("Structure Scan"); }
     QString             abbreviation                (void) const final { return "S"; }
     QGeoCoordinate      coordinate                  (void) const final;
+    QGeoCoordinate      entryCoordinate             (void) const final { return coordinate(); }
     QGeoCoordinate      exitCoordinate              (void) const final { return coordinate(); }
     int                 sequenceNumber              (void) const final { return _sequenceNumber; }
     double              specifiedFlightSpeed        (void) final { return std::numeric_limits<double>::quiet_NaN(); }

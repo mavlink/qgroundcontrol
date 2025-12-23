@@ -24,6 +24,7 @@ void VisualMissionItemTest::init(void)
     rgVisualItemSignals[commandNameChangedIndex] =                          SIGNAL(commandNameChanged());
     rgVisualItemSignals[abbreviationChangedIndex] =                         SIGNAL(abbreviationChanged());
     rgVisualItemSignals[coordinateChangedIndex] =                           SIGNAL(coordinateChanged(const QGeoCoordinate&));
+    rgVisualItemSignals[entryCoordinateChangedIndex] =                      SIGNAL(entryCoordinateChanged(const QGeoCoordinate&));
     rgVisualItemSignals[exitCoordinateChangedIndex] =                       SIGNAL(exitCoordinateChanged(const QGeoCoordinate&));
     rgVisualItemSignals[dirtyChangedIndex] =                                SIGNAL(dirtyChanged(bool));
     rgVisualItemSignals[distanceChangedIndex] =                             SIGNAL(distanceChanged(double));

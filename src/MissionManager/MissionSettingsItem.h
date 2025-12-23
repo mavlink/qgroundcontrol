@@ -67,7 +67,8 @@ public:
     QString         commandName                 (void) const final { return tr("Mission Settings"); }
     QString         abbreviation                (void) const final;
     QGeoCoordinate  coordinate                  (void) const final { return _plannedHomePositionCoordinate; } // Includes altitude
-    QGeoCoordinate  exitCoordinate              (void) const final { return _plannedHomePositionCoordinate; }
+    QGeoCoordinate  entryCoordinate             (void) const final { return coordinate(); }
+    QGeoCoordinate  exitCoordinate              (void) const final { return coordinate(); }
     int             sequenceNumber              (void) const final { return _sequenceNumber; }
     double          specifiedGimbalYaw          (void) final;
     double          specifiedGimbalPitch        (void) final;

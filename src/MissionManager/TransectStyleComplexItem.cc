@@ -87,6 +87,9 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
 
     connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_handleHoverAndCaptureEnabled);
 
+    // The main coordinate is aliased to the entry
+    connect(this,                                       &TransectStyleComplexItem::entryCoordinateChanged,      this, &TransectStyleComplexItem::coordinateChanged);
+
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
     connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
@@ -227,7 +230,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
             return false;
         }
-        _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+        _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
         _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
         _isIncomplete = false;
 
@@ -349,7 +352,7 @@ void TransectStyleComplexItem::_setIfDirty(bool dirty)
 
 void TransectStyleComplexItem::_updateCoordinateAltitudes(void)
 {
-    emit coordinateChanged(coordinate());
+    emit entryCoordinateChanged(entryCoordinate());
     emit exitCoordinateChanged(exitCoordinate());
 }
 
@@ -434,10 +437,9 @@ void TransectStyleComplexItem::_rebuildTransects(void)
                          QGeoCoordinate(south - 90.0, east - 180.0, top)));
     emit visualTransectPointsChanged();
 
-    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+    _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
     _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
-    emit coordinateChanged(_coordinate);
-    emit exitCoordinateChanged(_exitCoordinate);
+    _updateCoordinateAltitudes();
 
     if (_isIncomplete) {
         _isIncomplete = false;
