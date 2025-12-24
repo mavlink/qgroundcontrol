@@ -44,7 +44,7 @@ jobs:
 
       - name: Checkout prompt file
         if: steps.title_check.outcome == 'failure'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/prompts
           sparse-checkout-cone-mode: false
@@ -97,7 +97,7 @@ jobs:
           steps.title_check.outcome == 'failure' &&
           github.event.pull_request.user.type != 'Bot'
         continue-on-error: true
-        uses: actions/ai-inference@v1
+        uses: actions/ai-inference@v2
         with:
           prompt-file: .github/prompts/pr-title-suggestion.prompt.yml
           max-tokens: 100

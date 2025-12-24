@@ -1,8 +1,8 @@
 name: Release
 
+# Disabled: semantic-release blocked by branch protection (can't push CHANGELOG.md)
+# To fix: either remove @semantic-release/git plugin or use a PAT from allowed pusher
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 concurrency:
@@ -36,7 +36,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
 

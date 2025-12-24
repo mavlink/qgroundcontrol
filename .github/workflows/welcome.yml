@@ -21,24 +21,57 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/first-interaction@v3
+      - name: Welcome first-time contributor
+        uses: actions/github-script@v8
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          issue_message: |
-            Thanks for opening your first issue! 👋
+          script: |
+            const isPR = !!context.payload.pull_request;
+            const item = context.payload.pull_request || context.payload.issue;
+            const author = item.user.login;
+            const association = item.author_association;
 
-            A maintainer will review this soon. In the meantime:
-            - 📖 Check our [User Guide](https://docs.qgroundcontrol.com/) and [Dev Guide](https://dev.qgroundcontrol.com/)
-            - 💬 Join [GitHub Discussions](https://github.com/mavlink/qgroundcontrol/discussions) for Q&A
-            - 🔍 Search [existing issues](https://github.com/mavlink/qgroundcontrol/issues) for similar reports
+            // Fast path: author_association tells us immediately (no API call)
+            if (['OWNER', 'MEMBER', 'COLLABORATOR', 'CONTRIBUTOR'].includes(association)) {
+              console.log(`Not first-timer: ${author} is ${association}`);
+              return;
+            }
 
-            Please make sure you've provided all requested information in the template.
-          pr_message: |
-            Thanks for your first pull request! 🎉
+            if (['FIRST_TIME_CONTRIBUTOR', 'FIRST_TIMER'].includes(association)) {
+              console.log(`First-timer detected via author_association: ${author}`);
+            } else if (association === 'NONE') {
+              // NONE can mean first-timer or a bug - verify with search API
+              const type = isPR ? 'pr' : 'issue';
+              const query = `author:${author} repo:${context.repo.owner}/${context.repo.repo} type:${type}`;
+              const { data } = await github.rest.search.issuesAndPullRequests({ q: query, per_page: 1 });
+
+              if (data.total_count > 1) {
+                console.log(`Not first ${type} for ${author} (search found ${data.total_count})`);
+                return;
+              }
+              console.log(`First ${type} for ${author} (verified via search API)`);
+            }
+
+            const prMessage = `Thanks for your first pull request! 🎉
 
             A maintainer will review this soon. Please ensure:
             - [ ] CI checks pass
             - [ ] Code follows [coding standards](https://github.com/mavlink/qgroundcontrol/blob/master/CODING_STYLE.md)
             - [ ] Changes tested on relevant platforms
 
-            We appreciate your contribution to QGroundControl!
+            We appreciate your contribution to QGroundControl!`;
+
+            const issueMessage = `Thanks for opening your first issue! 👋
+
+            A maintainer will review this soon. In the meantime:
+            - 📖 Check our [User Guide](https://docs.qgroundcontrol.com/) and [Dev Guide](https://dev.qgroundcontrol.com/)
+            - 💬 Join [GitHub Discussions](https://github.com/mavlink/qgroundcontrol/discussions) for Q&A
+            - 🔍 Search [existing issues](https://github.com/mavlink/qgroundcontrol/issues) for similar reports
+
+            Please make sure you've provided all requested information in the template.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: item.number,
+              body: isPR ? prMessage : issueMessage
+            });
