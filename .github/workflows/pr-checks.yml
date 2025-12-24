@@ -78,17 +78,17 @@ jobs:
           SAFE_BODY=$(echo "$PR_BODY" | head -c 2000 | tr -d '\r')
           SAFE_FILES=$(echo "$CHANGED_FILES" | head -30)
 
-          # Write to outputs using heredoc for multiline safety
+          # Write to outputs using heredoc with unique delimiters
           {
-            echo "title<<EOF"
+            echo "title<<TITLE_END_7f3a9c2e"
             echo "$SAFE_TITLE"
-            echo "EOF"
-            echo "body<<EOF"
+            echo "TITLE_END_7f3a9c2e"
+            echo "body<<BODY_END_8b4d1e6f"
             echo "$SAFE_BODY"
-            echo "EOF"
-            echo "files<<EOF"
+            echo "BODY_END_8b4d1e6f"
+            echo "files<<FILES_END_2c5a8d9b"
             echo "$SAFE_FILES"
-            echo "EOF"
+            echo "FILES_END_2c5a8d9b"
           } >> "$GITHUB_OUTPUT"
 
       - name: Suggest title with GitHub Models
