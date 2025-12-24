@@ -1,14 +1,13 @@
 # TruffleHog exclusion patterns (regex format)
 # https://trufflesecurity.com/trufflehog
 
-# Test files and directories
-.*_test\.go$
-.*/test/.*
-.*/tests/.*
+# Test fixture data (not test code - secrets in test code should be caught)
 .*/testdata/.*
+.*/fixtures/.*
 
-# Documentation
-.*\.md$
+# Generated documentation (not handwritten - READMEs should still be scanned)
+docs/.*\.md$
+CHANGELOG\.md$
 
 # Dependencies
 .*/vendor/.*

@@ -155,6 +155,12 @@ jobs:
           fi
           cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
 
+      - name: Attest Build Provenance
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
+
       - name: Upload Build File
         uses: ./.github/actions/upload
         with:

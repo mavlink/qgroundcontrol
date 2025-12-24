@@ -19,6 +19,11 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -217,7 +222,7 @@ jobs:
           print(f'{line_rate * 100:.1f}')
           " 2>/dev/null || echo "0")
 
-              DIFF=$(python3 -c "print(f'{float(\"$CURRENT\") - float(\"$BASELINE\"):+.1f}')" 2>/dev/null || echo "+0.0")
+              DIFF=$(python3 -c "import sys; print(f'{float(sys.argv[1]) - float(sys.argv[2]):+.1f}')" "$CURRENT" "$BASELINE" 2>/dev/null || echo "+0.0")
 
               echo "| Coverage | Baseline | Change |" >> comment.md
               echo "|----------|----------|--------|" >> comment.md
