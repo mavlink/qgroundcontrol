@@ -2,10 +2,10 @@
 
 A "resource" in QGC source code terminology is anything found in Qt resources file:
 
-- [qgcimages.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcimages.qrc)
-- [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc)
-- [InstrumentValueIcons.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/resources/InstrumentValueIcons/InstrumentValueIcons.qrc)
-- QML files
+* [qgcresources.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcresources.qrc)
+* [qgcimages.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/qgcimages.qrc)
+* [InstrumentValueIcons.qrc](https://github.com/mavlink/qgroundcontrol/blob/master/resources/InstrumentValueIcons/InstrumentValueIcons.qrc)
+* Qml files
 
 Overriding a resource allows you to replace it with your own version. This could be as simple as a single icon, or as complex as replacing an entire Vehicle Setup page of UI QML code. Note that using resource overrides means you are duplicating regular QGC source code. This can be a good or a bad thing, depending on how you go about it. By using a resource override on a QML file, for example, allows you to avoid dealing with merge conflicts when merging newer versions of the upstream QGC source. However, it also means that you need to pay attention to the latest version of the QGC source code to see if you need to modify your copied code in a similar way.
 

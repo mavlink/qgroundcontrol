@@ -29,7 +29,7 @@
 - ⚙️ *Vehicle Setup*: Tailored configuration for *PX4* and *ArduPilot* platforms.
 - 🔧 *Fully Open Source*: Customize and extend the software to suit your needs.
 
-🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/ChangeLog.md).
+🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/CHANGELOG.md).
 
 ---
 
