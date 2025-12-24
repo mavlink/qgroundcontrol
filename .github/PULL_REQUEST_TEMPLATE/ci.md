@@ -15,7 +15,7 @@
 
 ## Checklist
 
-- [ ] I have read the [Contribution Guidelines](../.github/CONTRIBUTING.md)
+- [ ] I have read the [Contribution Guidelines](../CONTRIBUTING.md)
 - [ ] Workflow permissions follow least-privilege principle
 - [ ] No secrets are exposed in logs
 
