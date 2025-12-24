@@ -6,7 +6,6 @@ set -euo pipefail
 # Define variables for better maintainability
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 SOURCE_DIR=$(echo "$SCRIPT_DIR" | rev | cut -f3- -d'/' | rev)
-BUILD_DIR="$SOURCE_DIR/build"
 PARALLEL_CPUS=$(nproc --all)
 IMAGE_NAME="qgc-ubuntu-docker"
 BUILD_TYPE="${1:-Release}"
