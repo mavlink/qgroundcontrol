@@ -13,14 +13,6 @@ inputs:
   cpm-modules:
     description: Path to CPM Modules
     required: false
-  ccache-version:
-    description: ccache version
-    required: false
-    default: '4.11.3'
-  ccache-max-size:
-    description: Maximum ccache size
-    required: false
-    default: '2G'
   save-cache:
     description: Save cache (set to false for PR builds to save storage)
     required: false
@@ -28,22 +20,54 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Get ccache config
+      id: ccache-config
+      shell: bash
+      run: |
+        # Pin ccache version for reproducibility and to avoid API calls
+        # Update periodically via Dependabot or manually
+        CCACHE_VERSION="4.10.2"
+
+        # Validate version format (defense in depth)
+        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
+          exit 1
+        fi
+        echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
+
+        # Read max_size from tools/ccache.conf (single source of truth)
+        CCACHE_CONF_PATH="${{ github.workspace }}/tools/ccache.conf"
+        CCACHE_MAX_SIZE="2G"  # Default
+        if [[ -f "$CCACHE_CONF_PATH" ]]; then
+          # Single awk pass to extract value (more robust than grep|sed)
+          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
+          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
+        else
+          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
+        fi
+        echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
+
     - name: Cache ccache binary (Linux)
       if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
       id: ccache-binary
       uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
-        key: ccache-binary-${{ inputs.ccache-version }}-linux-x86_64
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-x86_64
 
     - name: Install ccache (Linux)
       if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
       run: |
         set -e
-        wget --quiet --tries=3 --waitretry=5 https://github.com/ccache/ccache/releases/download/v${{ inputs.ccache-version }}/ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
-        tar -xf ccache-${{ inputs.ccache-version }}-linux-x86_64.tar.xz
-        sudo make -C ccache-${{ inputs.ccache-version }}-linux-x86_64 install
+        # Download pre-built binary (not source tarball)
+        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
+        tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
+        # Copy pre-built binary directly (no compilation needed)
+        sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
+        sudo chmod +x /usr/local/bin/ccache
 
     - name: Setup sccache (Windows x64 only)
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
@@ -61,7 +85,7 @@ runs:
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
           ${{ inputs.host }}-
-        max-size: ${{ inputs.ccache-max-size }}
+        max-size: ${{ steps.ccache-config.outputs.max_size }}
         verbose: 2
         evict-old-files: job
         save: ${{ inputs.save-cache == 'true' }}

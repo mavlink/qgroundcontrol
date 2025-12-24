@@ -15,5 +15,6 @@ paths-ignore:
 
 queries:
   - uses: security-extended
+  - uses: security-and-quality
 
 trap-caching: true

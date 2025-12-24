@@ -16,19 +16,4 @@ updates:
       github-actions:
         patterns:
           - "*"
-
-  # Monitor npm dependencies for documentation
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "[Deps] "
-    open-pull-requests-limit: 5
-    groups:
-      npm-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+    # npm dependencies managed by Renovate (see renovate.json)

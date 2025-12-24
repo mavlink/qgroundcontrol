@@ -29,20 +29,6 @@ on:
         options:
           - Release
           - Debug
-      codeql:
-        description: 'Run CodeQL security analysis (disabled by default - conflicts with GitHub default setup)'
-        required: false
-        default: false
-        type: boolean
-      codeql_suite:
-        description: 'CodeQL query suite'
-        required: false
-        default: 'security-extended'
-        type: choice
-        options:
-          - default
-          - security-extended
-          - security-and-quality
   workflow_call:
 
 concurrency:
@@ -65,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: [Debug, Release]
+        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Debug", "Release"]') }}
         os: [ubuntu-24.04-arm, ubuntu-22.04]
         include:
           - os: ubuntu-24.04-arm
@@ -128,13 +114,13 @@ jobs:
           arch: ${{ matrix.arch }}
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      - name: Initialize CodeQL
-        if: inputs.codeql && matrix.build_type == 'Debug'
-        uses: github/codeql-action/init@v4
-        with:
-          languages: c-cpp
-          queries: ${{ inputs.codeql_suite }}
-          config-file: ./.github/codeql/codeql-config.yml
+      # Advanced CodeQL: Uncomment these steps after disabling default setup in repo settings
+      # - name: Initialize CodeQL
+      #   if: matrix.build_type == 'Debug'
+      #   uses: github/codeql-action/init@v4
+      #   with:
+      #     languages: c-cpp
+      #     config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -148,11 +134,58 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      - name: Perform CodeQL Analysis
-        if: inputs.codeql && matrix.build_type == 'Debug'
-        uses: github/codeql-action/analyze@v4
+      # - name: Perform CodeQL Analysis
+      #   if: matrix.build_type == 'Debug'
+      #   uses: github/codeql-action/analyze@v4
+      #   with:
+      #     category: "/language:c-cpp"
+
+      # NOTE: QGC's command line parser doesn't support Qt Test -o options.
+      # The test runner (UnitTest::run) uses hardcoded args via QTest::qExec().
+      # JUnit XML output would require modifying src/Utilities/QGCCommandLineParser.cc
+      # to forward -o options to the test framework.
+      # xvfb-run: Qt GUI apps require a display server; -a auto-selects free display
+      - name: Run Unit Tests
+        if: matrix.build_type == 'Debug'
+        id: tests
+        working-directory: ${{ runner.temp }}/build/Debug
+        run: |
+          set +e
+          # TODO: Add JUnit output when QGC supports Qt Test -o options (see note above)
+          # xvfb-run -a ./QGroundControl --unittest \
+          #   -o ../junit-results.xml,junitxml \
+          #   -o -,txt 2>&1 | tee ../test-output.txt
+          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee ../test-output.txt
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $TEST_EXIT_CODE
+
+      - name: Upload Test Results
+        if: matrix.build_type == 'Debug' && always()
+        uses: actions/upload-artifact@v6
         with:
-          category: "/language:c-cpp"
+          name: test-results-${{ matrix.arch }}
+          # TODO: Add junit-results.xml when QGC supports Qt Test -o options
+          path: |
+            ${{ runner.temp }}/build/test-output.txt
+            # ${{ runner.temp }}/build/junit-results.xml
+          retention-days: 7
+
+      # TODO: Enable when JUnit XML output is supported (see note above)
+      # - name: Upload to Trunk Flaky Tests
+      #   if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
+      #   continue-on-error: true
+      #   uses: trunk-io/analytics-uploader@v1
+      #   with:
+      #     junit-paths: ${{ runner.temp }}/build/junit-results.xml
+      #     org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+      #     token: ${{ secrets.TRUNK_TOKEN }}
+
+      - name: Coverage Report
+        if: matrix.build_type == 'Debug'
+        uses: ./.github/actions/coverage
+        with:
+          build-dir: ${{ runner.temp }}/build
 
       - name: Verify Executable
         if: matrix.build_type == 'Release'
@@ -167,31 +200,6 @@ jobs:
         if: matrix.build_type == 'Release'
         working-directory: ${{ runner.temp }}/build
         run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
-
-      - name: Run Unit Tests
-        if: matrix.build_type == 'Debug'
-        id: tests
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          set +e
-          xvfb-run -a ./${{ matrix.package }}.AppImage --unittest 2>&1 | tee test-output.txt
-          TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-          exit $TEST_EXIT_CODE
-
-      - name: Upload Test Results
-        if: matrix.build_type == 'Debug' && always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-results-${{ matrix.arch }}
-          path: ${{ runner.temp }}/build/test-output.txt
-          retention-days: 7
-
-      - name: Coverage Report
-        if: matrix.build_type == 'Debug'
-        uses: ./.github/actions/coverage
-        with:
-          build-dir: ${{ runner.temp }}/build
 
       - name: Attest Build Provenance
         if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
