@@ -50,6 +50,9 @@ exclude = [
     # Bot protection (403)
     '^https?://www\.npmjs\.com/',
     '^https?://www\.mathworks\.com/',
+
+    # Stale dev docs URLs
+    '^https?://dev\.qgroundcontrol\.com/en/contribute/contribute\.html',
 ]
 
 # Exclude paths (regex patterns)

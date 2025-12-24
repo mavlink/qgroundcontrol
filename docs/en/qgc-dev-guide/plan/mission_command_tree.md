@@ -99,7 +99,7 @@ What this does is remove the editing UI for param4 which is Yaw and not used by 
 
 The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. Once again lets loook at the waypoint overrides:
 
-[ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L6):
+[ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json#L6):
 
 ```
         {
@@ -109,7 +109,7 @@ The next level of the hiearchy are overrides which are specific to a firmware ty
         },
 ```
 
-[PX4](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoCommon.json#L7):
+[PX4](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/PX4/PX4-MavCmdInfoCommon.json#L7):
 
 ```
         {
@@ -127,7 +127,7 @@ You can also see that for PX4 param3/PassThru is removed since it is not support
 
 The last level of the hiearchy is both firmware and vehicle type specific.
 
-[ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MavCmdInfoMultiRotor.json#L7):
+[ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/APM-MavCmdInfoMultiRotor.json#L7):
 
 ```
         {
