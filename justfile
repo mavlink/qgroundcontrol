@@ -69,11 +69,11 @@ lint:
 
 # Check code formatting (no changes)
 format:
-    ./tools/format-check.sh --check
+    ./tools/analyze.sh --tool clang-format
 
 # Format code (apply fixes)
 format-fix:
-    ./tools/format-check.sh
+    ./tools/analyze.sh --tool clang-format --fix
 
 # Run static analysis
 analyze:
