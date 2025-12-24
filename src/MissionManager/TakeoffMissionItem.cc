@@ -48,7 +48,10 @@ void TakeoffMissionItem::_init(bool forLoad)
 {
     _editorQml = QStringLiteral("qrc:/qml/QGroundControl/Controls/SimpleItemEditor.qml");
 
-    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &TakeoffMissionItem::launchCoordinateChanged);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, [=](const QGeoCoordinate& coordinate) {
+        SimpleMissionItem::setCoordinate(coordinate);
+        emit launchCoordinateChanged(coordinate);
+    });
 
     if (_flyView) {
         _initLaunchTakeoffAtSameLocation();
