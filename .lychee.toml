@@ -46,6 +46,7 @@ exclude = [
     '^https?://docs\.zubax\.com/',
     '^https?://visionmedia\.github\.com/',
     '^https?://mavlink\.org/',
+    '^https?://gstreamer\.freedesktop\.org/',
 
     # Bot protection (403)
     '^https?://www\.npmjs\.com/',
