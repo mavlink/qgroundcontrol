@@ -30,6 +30,20 @@
             "type":             "double",
             "decimalPlaces":    2,
             "units":            "rpm"
+        },
+        {
+            "name":             "rpmsensor1",
+            "shortDesc":        "RPM Sensor 1",
+            "type":             "double",
+            "decimalPlaces":    2,
+            "units":            "rpm"
+        },
+        {
+            "name":             "rpmsensor2",
+            "shortDesc":        "RPM Sensor 2",
+            "type":             "double",
+            "decimalPlaces":    2,
+            "units":            "rpm"
         }
     ]
 }
