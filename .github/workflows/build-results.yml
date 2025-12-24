@@ -8,70 +8,22 @@ on:
 permissions:
   contents: read
   actions: read
+  checks: write
   pull-requests: write
 
 jobs:
-  collect-sizes:
-    name: Collect Artifact Sizes
-    runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
-    timeout-minutes: 15
-
-    outputs:
-      sizes-json: ${{ steps.sizes.outputs.json }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: tools/check-sizes.py
-          sparse-checkout-cone-mode: false
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v7
-        with:
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: artifacts
-
-      - name: Collect sizes
-        id: sizes
-        run: |
-          python tools/check-sizes.py artifacts/ \
-            --json \
-            --output sizes.json \
-            --summary "$GITHUB_STEP_SUMMARY"
-          echo "json=$(jq -c . sizes.json)" >> $GITHUB_OUTPUT
-
-      - name: Upload size report
-        uses: actions/upload-artifact@v6
-        with:
-          name: size-report-${{ github.event.workflow_run.id }}
-          path: sizes.json
-          retention-days: 90
-
-      - name: Save baseline sizes (master only)
-        if: github.event.workflow_run.head_branch == 'master'
-        uses: actions/cache/save@v5
-        with:
-          path: sizes.json
-          key: artifact-sizes-baseline-${{ github.run_id }}
-
-      - name: Save baseline sizes as latest
-        if: github.event.workflow_run.head_branch == 'master'
-        uses: actions/cache/save@v5
-        with:
-          path: sizes.json
-          key: artifact-sizes-baseline-latest
-
   post-pr-comment:
     name: Post Build Results
     runs-on: ubuntu-latest
-    needs: collect-sizes
     if: github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 10
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -111,20 +63,20 @@ jobs:
             });
 
             const platforms = {
-              'Linux': { status: '⏳', conclusion: 'pending', url: '' },
-              'Windows': { status: '⏳', conclusion: 'pending', url: '' },
-              'MacOS': { status: '⏳', conclusion: 'pending', url: '' },
-              'Android': { status: '⏳', conclusion: 'pending', url: '' }
+              'Linux': { status: 'Pending', conclusion: 'pending', url: '' },
+              'Windows': { status: 'Pending', conclusion: 'pending', url: '' },
+              'MacOS': { status: 'Pending', conclusion: 'pending', url: '' },
+              'Android': { status: 'Pending', conclusion: 'pending', url: '' }
             };
 
             for (const run of runs.data.workflow_runs) {
               if (platforms[run.name]) {
                 if (run.status === 'completed') {
-                  platforms[run.name].status = run.conclusion === 'success' ? '✅' : '❌';
+                  platforms[run.name].status = run.conclusion === 'success' ? 'Passed' : 'Failed';
                   platforms[run.name].conclusion = run.conclusion;
                   platforms[run.name].url = run.html_url;
                 } else if (run.status === 'in_progress') {
-                  platforms[run.name].status = '🔄';
+                  platforms[run.name].status = 'Running';
                   platforms[run.name].conclusion = 'in_progress';
                   platforms[run.name].url = run.html_url;
                 }
@@ -145,37 +97,48 @@ jobs:
             let summary = '';
             if (allComplete) {
               summary = allSuccess
-                ? '✅ All builds passed!'
-                : '❌ Some builds failed.';
+                ? 'All builds passed.'
+                : 'Some builds failed.';
             } else {
-              summary = '⏳ Some builds still in progress...';
+              summary = 'Some builds still in progress.';
             }
 
             core.setOutput('table', table);
             core.setOutput('summary', summary);
             core.setOutput('all_complete', allComplete);
 
-      - name: Download PR artifacts for size comparison
+      - name: Download artifacts from triggering workflow
         if: steps.pr.outputs.result != 'null'
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: artifacts-pr
+          path: artifacts
 
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != 'null'
-        id: baseline
+        id: baseline-sizes
         uses: actions/cache/restore@v5
+        continue-on-error: true
         with:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-latest
+
+      - name: Restore baseline coverage
+        if: steps.pr.outputs.result != 'null'
+        id: baseline-coverage
+        uses: actions/cache/restore@v5
+        continue-on-error: true
+        with:
+          path: baseline-coverage.xml
+          key: coverage-baseline-latest
 
       - name: Generate combined report
         if: steps.pr.outputs.result != 'null'
         run: |
           cat > comment.md << 'HEADER'
-          ## 🏗️ Build Results
+          ## Build Results
 
           ### Platform Status
 
@@ -184,11 +147,99 @@ jobs:
 
           HEADER
 
-          # Generate size report
-          python tools/check-sizes.py artifacts-pr/ --json --output pr-sizes.json 2>/dev/null || true
+          # === Test Results Section ===
+          if ls artifacts/test-results-*/test-output.txt 1>/dev/null 2>&1; then
+            echo "### Test Results" >> comment.md
+            echo "" >> comment.md
+
+            TOTAL_PASSED=0
+            TOTAL_FAILED=0
+            TOTAL_SKIPPED=0
+            HAS_FAILURES=false
+
+            for file in artifacts/test-results-*/test-output.txt; do
+              ARCH=$(dirname "$file" | xargs basename | sed 's/test-results-//')
+
+              PASSED=$(grep -c "^PASS" "$file" 2>/dev/null) || PASSED=0
+              FAILED=$(grep -c "^FAIL" "$file" 2>/dev/null) || FAILED=0
+              SKIPPED=$(grep -c "^SKIP" "$file" 2>/dev/null) || SKIPPED=0
+
+              TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+              TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+              TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
+
+              if [[ "$FAILED" -gt 0 ]]; then
+                HAS_FAILURES=true
+                echo "**$ARCH**: $PASSED passed, $FAILED failed, $SKIPPED skipped" >> comment.md
+                echo "" >> comment.md
+                echo "<details><summary>Failed tests</summary>" >> comment.md
+                echo "" >> comment.md
+                echo '```' >> comment.md
+                grep "^FAIL" "$file" | head -20 >> comment.md
+                echo '```' >> comment.md
+                echo "</details>" >> comment.md
+              else
+                echo "**$ARCH**: $PASSED passed, $SKIPPED skipped" >> comment.md
+              fi
+              echo "" >> comment.md
+            done
+
+            if [[ "$HAS_FAILURES" == "true" ]]; then
+              echo "**Total: $TOTAL_PASSED passed, $TOTAL_FAILED failed, $TOTAL_SKIPPED skipped**" >> comment.md
+            else
+              echo "**Total: $TOTAL_PASSED passed, $TOTAL_SKIPPED skipped**" >> comment.md
+            fi
+            echo "" >> comment.md
+          fi
+
+          # === Coverage Section ===
+          if [[ -f "artifacts/coverage-report/coverage.xml" ]]; then
+            echo "### Code Coverage" >> comment.md
+            echo "" >> comment.md
+
+            COVERAGE=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('artifacts/coverage-report/coverage.xml')
+          root = tree.getroot()
+          line_rate = float(root.get('line-rate', 0))
+          print(f'{line_rate * 100:.1f}%')
+          " 2>/dev/null || echo "N/A")
+
+            if [[ -f "baseline-coverage.xml" ]]; then
+              BASELINE=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('baseline-coverage.xml')
+          root = tree.getroot()
+          line_rate = float(root.get('line-rate', 0))
+          print(f'{line_rate * 100:.1f}')
+          " 2>/dev/null || echo "0")
+
+              CURRENT=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('artifacts/coverage-report/coverage.xml')
+          root = tree.getroot()
+          line_rate = float(root.get('line-rate', 0))
+          print(f'{line_rate * 100:.1f}')
+          " 2>/dev/null || echo "0")
+
+              DIFF=$(python3 -c "import sys; print(f'{float(sys.argv[1]) - float(sys.argv[2]):+.1f}')" "$CURRENT" "$BASELINE" 2>/dev/null || echo "+0.0")
+
+              echo "| Coverage | Baseline | Change |" >> comment.md
+              echo "|----------|----------|--------|" >> comment.md
+              echo "| $COVERAGE | ${BASELINE}% | ${DIFF}% |" >> comment.md
+            else
+              echo "Coverage: **$COVERAGE**" >> comment.md
+              echo "" >> comment.md
+              echo "*No baseline available for comparison*" >> comment.md
+            fi
+            echo "" >> comment.md
+          fi
+
+          # === Artifact Sizes Section ===
+          python tools/check-sizes.py artifacts/ --json --output pr-sizes.json 2>/dev/null || true
 
           if [[ -f "pr-sizes.json" ]]; then
-            echo "### 📦 Artifact Sizes" >> comment.md
+            echo "### Artifact Sizes" >> comment.md
             echo "" >> comment.md
 
             python3 << 'EOF'
@@ -229,9 +280,9 @@ jobs:
                   total_delta += delta
 
                   if delta > 0:
-                      delta_str = f'+{delta / 1024 / 1024:.2f} MB 📈'
+                      delta_str = f'+{delta / 1024 / 1024:.2f} MB (increase)'
                   elif delta < 0:
-                      delta_str = f'{delta / 1024 / 1024:.2f} MB 📉'
+                      delta_str = f'{delta / 1024 / 1024:.2f} MB (decrease)'
                   else:
                       delta_str = 'No change'
 
@@ -255,7 +306,7 @@ jobs:
 
           echo "" >> comment.md
           echo "---" >> comment.md
-          echo "<sub>Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')</sub>" >> comment.md
+          echo "<sub>Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC') • Triggered by: ${{ github.event.workflow_run.name }}</sub>" >> comment.md
 
           cat comment.md
 
@@ -266,3 +317,55 @@ jobs:
           pr-number: ${{ steps.pr.outputs.result }}
           comment-tag: build-results
           file-path: comment.md
+
+  save-baselines:
+    name: Save Baselines
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.head_branch == 'master' &&
+      github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/check-sizes.py
+          sparse-checkout-cone-mode: false
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      - name: Save artifact sizes baseline
+        run: |
+          python tools/check-sizes.py artifacts/ --json --output sizes.json 2>/dev/null || true
+          if [[ -f "sizes.json" ]]; then
+            echo "Saving artifact sizes baseline"
+            cat sizes.json
+          fi
+
+      - name: Cache artifact sizes
+        if: hashFiles('sizes.json') != ''
+        uses: actions/cache/save@v5
+        with:
+          path: sizes.json
+          key: artifact-sizes-baseline-${{ github.run_id }}
+
+      - name: Cache artifact sizes as latest
+        if: hashFiles('sizes.json') != ''
+        uses: actions/cache/save@v5
+        with:
+          path: sizes.json
+          key: artifact-sizes-baseline-latest
+
+      - name: Save coverage baseline
+        if: hashFiles('artifacts/coverage-report/coverage.xml') != ''
+        uses: actions/cache/save@v5
+        with:
+          path: artifacts/coverage-report/coverage.xml
+          key: coverage-baseline-latest

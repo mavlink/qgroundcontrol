@@ -29,7 +29,7 @@
 
 ## Checklist
 
-- [ ] I have read the [Contribution Guidelines](../.github/CONTRIBUTING.md)
+- [ ] I have read the [Contribution Guidelines](../CONTRIBUTING.md)
 - [ ] My code follows the project's coding standards
 - [ ] I have added tests that prove my feature works
 - [ ] New and existing unit tests pass locally

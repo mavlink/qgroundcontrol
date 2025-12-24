@@ -29,7 +29,7 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+          modules: qttools
 
       - name: Update translation files
         run: ./tools/translations/qgc-lupdate.sh

@@ -2,7 +2,7 @@ name: Build GStreamer
 description: Build GStreamer from source for QGC video streaming
 inputs:
   version:
-    description: GStreamer version (use build-config.outputs.gstreamer_version)
+    description: GStreamer version (use build-config.outputs.gstreamer_*_version)
     required: true
   build-type:
     description: Build type (release or debug)

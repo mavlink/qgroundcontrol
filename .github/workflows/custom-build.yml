@@ -1,0 +1,93 @@
+name: Custom Build
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'custom-example/**'
+      - '.github/workflows/custom-build.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'custom-example/**'
+      - '.github/workflows/custom-build.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    name: Custom Plugin Build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Enable custom build
+        uses: ./.github/actions/custom-build
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Install Dependencies
+        run: |
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+
+      - name: Setup Caching
+        uses: ./.github/actions/cache
+        with:
+          host: linux
+          target: linux_gcc_64
+          build-type: Release
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          save-cache: false
+
+      - name: Install Qt for Linux
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config Release --parallel
+
+      - name: Create AppImage
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config Release
+
+      - name: Verify Custom AppImage
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./Custom-QGroundControl-x86_64.AppImage --simple-boot-test

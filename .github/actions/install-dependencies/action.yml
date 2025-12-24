@@ -25,18 +25,27 @@ runs:
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
+      env:
+        GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
+        INSTALL_GSTREAMER: ${{ inputs.gstreamer }}
+        INSTALL_VULKAN: ${{ inputs.vulkan }}
       run: |
         $params = @{}
-        if ('${{ inputs.gstreamer-version }}') {
-          $params['GStreamerVersion'] = '${{ inputs.gstreamer-version }}'
+        if ($env:GSTREAMER_VERSION) {
+          $params['GStreamerVersion'] = $env:GSTREAMER_VERSION
         }
-        if ('${{ inputs.gstreamer }}' -ne 'true') {
+        if ($env:INSTALL_GSTREAMER -ne 'true') {
           $params['SkipGStreamer'] = $true
         }
-        if ('${{ inputs.vulkan }}' -eq 'true') {
+        if ($env:INSTALL_VULKAN -eq 'true') {
           $params['InstallVulkan'] = $true
         }
-        & "${{ github.workspace }}/tools/setup/install-dependencies-windows.ps1" @params
+        $workspace = $env:GITHUB_WORKSPACE
+        if (-not $workspace) {
+          $workspace = Resolve-Path "$PSScriptRoot/../.."
+        }
+        $scriptPath = Join-Path $workspace 'tools/setup/install-dependencies-windows.ps1'
+        & $scriptPath @params
 
     - name: Install dependencies (Linux)
       if: runner.os == 'Linux'
