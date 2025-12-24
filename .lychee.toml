@@ -1,14 +1,14 @@
 # Lychee link checker configuration
 # https://lychee.cli.rs/configuration/
 
-# Output verbosity
-verbose = true
+# Output verbosity (error, warn, info, debug, trace)
+verbose = "info"
 
 # Disable progress bar (cleaner CI output)
 no_progress = true
 
 # Accept these HTTP status codes as valid
-accept = [200, 204, 301, 302, 403, 429]
+accept = ["200", "204", "301", "302", "403", "429"]
 
 # Exclude patterns (regex)
 exclude = [
@@ -20,6 +20,47 @@ exclude = [
     # Private network ranges
     '192\.168\.',
     '10\.\d+\.',
+
+    # Flaky/slow external sites (timeouts)
+    '^https?://www\.gnu\.org/',
+    '^https?://logs\.px4\.io',
+
+    # Dead/restructured external sites
+    '^https?://www\.cplusplus\.com/',
+    '^https?://gaming\.logitech\.com/',
+    '^https?://dev\.px4\.io/',
+
+    # Sites with aggressive bot protection
+    '^https?://jstest-gtk\.gitlab\.io/',
+
+    # Old PX4/ArduPilot doc URLs (structure changed, too many to fix)
+    '^https?://docs\.px4\.io/en/',
+    '^https?://docs\.px4\.io/main/en/',
+    '^http://docs\.px4\.io/',
+    '^https?://ardupilot\.org/copter/docs/',
+
+    # Dead external documentation
+    '^https?://developer\.gnome\.org/',
+
+    # SSL/network issues
+    '^https?://docs\.zubax\.com/',
+    '^https?://visionmedia\.github\.com/',
+    '^https?://mavlink\.org/',
+
+    # Bot protection (403)
+    '^https?://www\.npmjs\.com/',
+    '^https?://www\.mathworks\.com/',
+]
+
+# Exclude paths (regex patterns)
+exclude_path = [
+    # Translated docs (stale links, maintained separately)
+    "^docs/ko/",
+    "^docs/tr/",
+    "^docs/zh/",
+    "^docs/\\.vitepress/",
+    # Build artifacts
+    "^build/",
 ]
 
 # Files to check are passed as CLI args in the workflow:
