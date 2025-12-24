@@ -11,26 +11,21 @@
   "labels": [
     "dependencies"
   ],
+  "ignorePaths": [
+    ".github/workflows/**"
+  ],
+  "enabledManagers": [
+    "npm",
+    "git-submodules",
+    "pip_requirements",
+    "pip_setup",
+    "pre-commit"
+  ],
   "packageRules": [
     {
-      "description": "Group all GitHub Actions updates",
-      "groupName": "GitHub Actions",
-      "matchManagers": [
-        "github-actions"
-      ],
-      "schedule": [
-        "before 6am on monday"
-      ]
-    },
-    {
-      "automerge": false,
-      "description": "GitHub Actions patch updates (auto-merge disabled)",
-      "matchManagers": [
-        "github-actions"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ]
+      "description": "Auto-merge patch updates after CI passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
     },
     {
       "description": "Group all git submodule updates",

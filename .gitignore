@@ -153,12 +153,12 @@ Qt*-linux*.tar.*
 # Local Development Tools
 # ------------------------------------------------------------------------------
 
-# Claude Code
+# AI Assistants
 .claude/
-
-# cc-sessions - personal AI development workflow
-sessions/
-CLAUDE.md
+.claudeignore
+.geminiignore
+.cursorignore
+**/CLAUDE.md
 
 # Pre-commit hooks
 .ruff_cache/

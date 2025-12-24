@@ -140,7 +140,7 @@ void MockLink::disconnect()
 
 void MockLink::run1HzTasks()
 {
-    if (!_mavlinkStarted || !_connected) {
+    if (!_mavlinkStarted || !_connected || !mavlinkChannelIsSet()) {
         return;
     }
 
@@ -191,7 +191,7 @@ void MockLink::run10HzTasks()
         return;
     }
 
-    if (_mavlinkStarted && _connected) {
+    if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
         _sendHeartBeat();
         if (_sendGPSPositionDelayCount > 0) {
             // We delay gps position for better testing
@@ -212,7 +212,7 @@ void MockLink::run500HzTasks()
         return;
     }
 
-    if (_mavlinkStarted && _connected) {
+    if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
         _paramRequestListWorker();
         _logDownloadWorker();
         _availableModesWorker();
