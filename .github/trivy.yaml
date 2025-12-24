@@ -5,9 +5,15 @@
 severity:
   - CRITICAL
   - HIGH
+  - MEDIUM
 
 # Ignore vulnerabilities without fixes
 ignore-unfixed: true
+
+# Scanners to use
+scanners:
+  - vuln
+  - secret
 
 # Output format (overridden in workflow for SARIF upload)
 # format: table

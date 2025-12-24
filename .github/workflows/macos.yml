@@ -38,21 +38,27 @@ permissions:
   contents: read
   id-token: write
   attestations: write
+  actions: read
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 120
 
     strategy:
       matrix:
-        build_type: [Release]
+        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
 
     defaults:
       run:
         shell: bash
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -74,6 +80,8 @@ jobs:
 
       - name: Install Dependencies (include GStreamer)
         working-directory: ${{ github.workspace }}/tools/setup
+        env:
+          GSTREAMER_VERSION: ${{ steps.config.outputs.gstreamer_macos_version }}
         run: sh install-dependencies-macos.sh
 
       - name: Setup Caching
@@ -126,7 +134,12 @@ jobs:
 
       - name: Mount DMG
         working-directory: ${{ runner.temp }}/build
-        run: hdiutil attach QGroundControl.dmg
+        run: |
+          if ! hdiutil attach QGroundControl.dmg; then
+            echo "::error::Failed to mount DMG"
+            ls -la QGroundControl.dmg 2>/dev/null || echo "DMG file not found"
+            exit 1
+          fi
 
       - name: Sanity check DMG executable
         working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS

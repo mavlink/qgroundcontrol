@@ -1,0 +1,16 @@
+# Generated
+CHANGELOG.md
+
+# Build
+build/
+out/
+
+# Dependencies
+node_modules/
+
+# Docs build output
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# CPM modules (fetched at build time)
+cpm_modules/

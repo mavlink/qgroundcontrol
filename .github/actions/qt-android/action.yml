@@ -36,10 +36,6 @@ inputs:
     description: Android platform/API level (use build-config.outputs.android_platform)
     required: false
     default: '35'
-  ccache-version:
-    description: ccache version (use build-config.outputs.ccache_version)
-    required: false
-    default: '4.11.3'
   android-cmdline-tools:
     description: Android cmdline-tools version (use build-config.outputs.android_cmdline_tools)
     required: false
@@ -102,7 +98,6 @@ runs:
         target: android
         build-type: ${{ inputs.build-type }}
         cpm-modules: ${{ inputs.cpm-modules }}
-        ccache-version: ${{ inputs.ccache-version }}
         save-cache: ${{ inputs.save-cache }}
 
     - name: Install Qt for ${{ runner.os }}

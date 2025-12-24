@@ -60,9 +60,17 @@ def find_artifacts(directory: Path) -> list[dict]:
 
         size_bytes = path.stat().st_size
 
+        # Use parent directory name if it differs from filename (for disambiguation)
+        # e.g., "QGroundControl-mac/QGroundControl.apk" -> "QGroundControl-mac.apk"
+        parent_name = path.parent.name
+        if parent_name and parent_name != directory.name and parent_name != path.stem:
+            display_name = f"{parent_name}{ext}"
+        else:
+            display_name = path.name
+
         artifacts.append(
             {
-                "name": path.name,
+                "name": display_name,
                 "path": str(path),
                 "extension": ext,
                 "size_bytes": size_bytes,
