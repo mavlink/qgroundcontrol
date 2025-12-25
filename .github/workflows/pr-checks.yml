@@ -43,15 +43,19 @@ jobs:
           validateSingleCommit: false
 
       - name: Checkout prompt file
-        if: steps.title_check.outcome == 'failure'
-        uses: actions/checkout@v4
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/prompts
           sparse-checkout-cone-mode: false
 
       - name: Get changed files
         id: files
-        if: steps.title_check.outcome == 'failure'
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
         uses: actions/github-script@v8
         with:
           result-encoding: string
@@ -66,7 +70,9 @@ jobs:
 
       - name: Sanitize inputs for AI
         id: sanitize
-        if: steps.title_check.outcome == 'failure'
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
         shell: bash
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
@@ -97,7 +103,7 @@ jobs:
           steps.title_check.outcome == 'failure' &&
           github.event.pull_request.user.type != 'Bot'
         continue-on-error: true
-        uses: actions/ai-inference@v1
+        uses: actions/ai-inference@v2
         with:
           prompt-file: .github/prompts/pr-title-suggestion.prompt.yml
           max-tokens: 100
@@ -293,35 +299,3 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
 
-  cache-cleanup:
-    name: Cleanup PR Caches
-    runs-on: ubuntu-latest
-    if: github.event.action == 'closed'
-    timeout-minutes: 15
-    permissions:
-      actions: write
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Delete PR caches
-        run: |
-          gh extension install actions/gh-actions-cache
-
-          REPO="${{ github.repository }}"
-          BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
-
-          echo "Fetching list of cache keys"
-          cacheKeysForPR=$(gh actions-cache list -R "$REPO" -B "$BRANCH" | cut -f 1 )
-
-          set +e
-          echo "Deleting caches..."
-          for cacheKey in $cacheKeysForPR
-          do
-            gh actions-cache delete "$cacheKey" -R "$REPO" -B "$BRANCH" --confirm
-          done
-          echo "Done"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
