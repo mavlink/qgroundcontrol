@@ -1,0 +1,18 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "actionName",
+            "shortDesc": "Action name for joystick button",
+            "type": "string",
+            "default": ""
+        },
+        {
+            "name": "repeat",
+            "shortDesc": "Enable repeat for joystick button",
+            "type": "bool",
+            "default": false
+        }
+    ]
+}

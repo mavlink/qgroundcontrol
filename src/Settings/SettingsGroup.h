@@ -9,8 +9,9 @@
 
 #pragma once
 
-
 #include "SettingsFact.h"
+
+// The best way to understand these macros is to look at their use in SettingsGroup subclasses
 
 #define DEFINE_SETTING_NAME_GROUP() \
     static const char* name; \
@@ -44,6 +45,25 @@
     Fact* NAME(); \
     static const char* NAME ## Name;
 
+#define DECLARE_SETTINGS_GROUP_ARRAY(ROOT_SETTINGS_GROUP, SETTINGS_GROUP_CLASS, SETTINGS_GROUP_ARRAY_CLASS, SIZE) \
+    SETTINGS_GROUP_ARRAY_CLASS *SETTINGS_GROUP_CLASS::get ## SETTINGS_GROUP_ARRAY_CLASS ## ByIndex(int index) \
+    { \
+        if (index < 0 || index >= SIZE) { \
+            qWarning() << "Invalid index requested for array" << #SETTINGS_GROUP_ARRAY_CLASS << ":" << index; \
+            return nullptr; \
+        } \
+        if (!_map ## SETTINGS_GROUP_ARRAY_CLASS.contains(index)) { \
+            _map ## SETTINGS_GROUP_ARRAY_CLASS[index] = new SETTINGS_GROUP_ARRAY_CLASS(#SETTINGS_GROUP_ARRAY_CLASS, QString("%1/#%2%3").arg(_settingsGroup).arg(#SETTINGS_GROUP_ARRAY_CLASS).arg(index), this); \
+        } \
+        return _map ## SETTINGS_GROUP_ARRAY_CLASS[index]; \
+    }
+
+#define DEFINE_SETTINGS_GROUP_ARRAY(SETTINGS_GROUP_ARRAY_CLASS) \
+    private: \
+        QMap<int, SETTINGS_GROUP_ARRAY_CLASS*> _map ## SETTINGS_GROUP_ARRAY_CLASS; \
+    public: \
+        SETTINGS_GROUP_ARRAY_CLASS *get ## SETTINGS_GROUP_ARRAY_CLASS ## ByIndex(int index);
+
 /// Provides access to group of settings. The group is named and has a visible property associated with which can control whether the group
 /// is shows in the ui.
 class SettingsGroup : public QObject
@@ -64,10 +84,10 @@ signals:
     void            visibleChanged      ();
 
 protected:
-    SettingsFact*   _createSettingsFact(const QString& factName);
-    bool            _visible;
-    QString         _name;
-    QString         _settingsGroup;
+    SettingsFact* _createSettingsFact(const QString& factName);
+    bool _visible;
+    QString _name;
+    QString _settingsGroup;
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;
 

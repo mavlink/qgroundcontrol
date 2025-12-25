@@ -76,18 +76,19 @@ void JoystickConfigController::_saveStoredCalibrationValues()
 
     _validateAndAdjustCalibrationValues();
 
-    _joystick->setTransmitterMode(transmitterMode());
+    _joystick->settings()->calibrated()->setRawValue(true);
+    _joystick->settings()->transmitterMode()->setRawValue(transmitterMode());
 
     for (int chan = 0; chan < _joystick->axisCount(); chan++) {
         ChannelInfo *const info = &_rgChannelInfo[chan];
-        Joystick::Calibration_t joystickAxisInfo;
+        Joystick::AxisCalibration_t joystickAxisInfo;
 
         joystickAxisInfo.center = info->channelTrim;
         joystickAxisInfo.min = info->channelMin;
         joystickAxisInfo.max = info->channelMax;
         joystickAxisInfo.reversed = info->channelReversed;
         joystickAxisInfo.deadband = info->deadband;
-        _joystick->setCalibration(chan, joystickAxisInfo);
+        _joystick->setAxisCalibration(chan, joystickAxisInfo);
     }
 
     // Write function mapping parameters
@@ -103,7 +104,7 @@ void JoystickConfigController::_readStoredCalibrationValues()
         return;
     }
 
-    setTransmitterMode(_joystick->transmitterMode());
+    setTransmitterMode(_joystick->settings()->transmitterMode()->rawValue().toInt());
 
     // Initialize all function mappings to not set
     for (int i = 0; i < _chanMax; i++) {
@@ -116,7 +117,7 @@ void JoystickConfigController::_readStoredCalibrationValues()
 
     for (int i = 0; i < _joystick->axisCount(); ++i) {
         ChannelInfo *const info = &_rgChannelInfo[i];
-        Joystick::Calibration_t calibration = _joystick->getCalibration(i);
+        Joystick::AxisCalibration_t calibration = _joystick->getAxisCalibration(i);
 
         info->channelTrim  = calibration.center;
         info->channelMin   = calibration.min;

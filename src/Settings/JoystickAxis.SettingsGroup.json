@@ -1,0 +1,44 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "reversed",
+            "shortDesc": "Reversed axis",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "function",
+            "shortDesc": "Assigned function",
+            "type": "int",
+            "min": 0,
+            "max": 6,
+            "default": 6
+        }
+        {
+            "name": "min",
+            "shortDesc": "Minimum axis value",
+            "type": "int",
+            "default": 0
+        },
+        {
+            "name": "max",
+            "shortDesc": "Maximum axis value",
+            "type": "int",
+            "default": 0
+        },
+        {
+            "name": "center",
+            "shortDesc": "Center axis value",
+            "type": "int",
+            "default": 0
+        },
+        {
+            "name": "deadband",
+            "shortDesc": "Deadband percentage",
+            "type": "int",
+            "default": 0
+        }
+    ]
+}
