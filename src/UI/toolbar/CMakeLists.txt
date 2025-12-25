@@ -10,7 +10,7 @@ qt_add_qml_module(ToolbarModule
         EscIndicatorPage.qml
         GCSControlIndicator.qml
         GimbalIndicator.qml
-        GPSResilienceIndicator.qml  
+        GPSResilienceIndicator.qml
         JoystickIndicator.qml
         ModeIndicator.qml
         MultiVehicleSelector.qml

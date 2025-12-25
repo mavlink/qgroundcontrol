@@ -23,13 +23,13 @@ void VehicleGPS2FactGroup::handleMessage(Vehicle *vehicle, const mavlink_message
         _handleGps2Raw(message);
         break;
     case MAVLINK_MSG_ID_GNSS_INTEGRITY:
-        _handleGnssIntegrity(message); 
+        _handleGnssIntegrity(message);
         break;
     default:
         break;
     }
 }
- 
+
 void VehicleGPS2FactGroup::_handleGps2Raw(const mavlink_message_t &message)
 {
     mavlink_gps2_raw_t gps2Raw{};

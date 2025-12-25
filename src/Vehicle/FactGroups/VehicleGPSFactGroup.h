@@ -83,5 +83,5 @@ protected:
     Fact _postProcessingQualityFact = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
 
     uint8_t _gnssIntegrityId;
-    QString _gnssLogPrefix; 
+    QString _gnssLogPrefix;
 };
