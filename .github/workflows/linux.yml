@@ -19,6 +19,7 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*debian*'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:

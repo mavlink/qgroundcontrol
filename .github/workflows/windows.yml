@@ -19,6 +19,7 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*windows*'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:

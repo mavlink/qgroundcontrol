@@ -18,6 +18,7 @@ on:
       - 'test/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
