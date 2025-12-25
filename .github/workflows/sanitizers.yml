@@ -1,0 +1,108 @@
+name: Sanitizers
+
+on:
+  workflow_dispatch:
+    inputs:
+      sanitizer:
+        description: 'Sanitizer to run'
+        required: true
+        default: 'asan'
+        type: choice
+        options:
+          - asan
+          - ubsan
+          - tsan
+          - asan+ubsan
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.sanitizer }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sanitize:
+    name: ${{ matrix.sanitizer }} Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: ${{ inputs.sanitizer == 'asan+ubsan' && fromJSON('["asan", "ubsan"]') || fromJSON(format('["{0}"]', inputs.sanitizer)) }}
+
+    env:
+      SANITIZER_FLAGS: >-
+        ${{ matrix.sanitizer == 'asan' && '-fsanitize=address -fno-omit-frame-pointer' ||
+            matrix.sanitizer == 'ubsan' && '-fsanitize=undefined -fno-omit-frame-pointer' ||
+            matrix.sanitizer == 'tsan' && '-fsanitize=thread' || '' }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Install Dependencies
+        run: |
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+
+      - name: Install Qt
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Configure
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="${{ env.SANITIZER_FLAGS }}" \
+            -DCMAKE_CXX_FLAGS="${{ env.SANITIZER_FLAGS }}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${{ env.SANITIZER_FLAGS }}" \
+            -DQGC_BUILD_TESTING=ON
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config Debug --parallel
+
+      - name: Run Tests with ${{ matrix.sanitizer }}
+        working-directory: ${{ runner.temp }}/build/Debug
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=0:print_stats=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=0
+          TSAN_OPTIONS: second_deadlock_stack=1:halt_on_error=0
+        run: |
+          echo "::group::Running unit tests with ${{ matrix.sanitizer }}"
+          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee sanitizer-output.txt
+          echo "::endgroup::"
+
+          # Check for sanitizer errors in output
+          if grep -qE "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" sanitizer-output.txt; then
+            echo "::error::Sanitizer detected issues"
+            grep -E "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" sanitizer-output.txt
+            exit 1
+          fi
+
+      - name: Upload Sanitizer Output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: sanitizer-${{ matrix.sanitizer }}-output
+          path: ${{ runner.temp }}/build/Debug/sanitizer-output.txt
+          retention-days: 7
