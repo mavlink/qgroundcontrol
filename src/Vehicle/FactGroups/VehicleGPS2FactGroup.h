@@ -19,7 +19,7 @@ public:
     explicit VehicleGPS2FactGroup(QObject *parent = nullptr)
         : VehicleGPSFactGroup(parent)
     {
-        _setGnssIntegrityContext(1, QStringLiteral("GPS2"));
+        _setGnssIntegrityContext(1);
     }
 
     // Overrides from VehicleGPSFactGroup

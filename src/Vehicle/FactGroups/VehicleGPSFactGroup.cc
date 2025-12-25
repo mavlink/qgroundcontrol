@@ -51,13 +51,12 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _gnssSignalQualityFact.setRawValue(255);
     _postProcessingQualityFact.setRawValue(255);
 
-    _setGnssIntegrityContext(0, QStringLiteral("GPS1"));
+    _setGnssIntegrityContext(0);
 }
 
-void VehicleGPSFactGroup::_setGnssIntegrityContext(uint8_t id, const QString& logPrefix)
+void VehicleGPSFactGroup::_setGnssIntegrityContext(uint8_t id)
 {
     _gnssIntegrityId = id;
-    _gnssLogPrefix = logPrefix;
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)

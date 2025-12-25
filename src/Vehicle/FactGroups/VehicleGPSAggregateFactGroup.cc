@@ -56,22 +56,21 @@ void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleG
     _gps1 = gps1;
     _gps2 = gps2;
 
-    auto connectFact = [this](Fact* fact, const QString& name) {
+    auto connectFact = [this](Fact* fact) {
         if (fact) {
-            Q_UNUSED(name);
             _connections << connect(fact, &Fact::valueChanged, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
         }
     };
 
     if (_gps1) {
-        connectFact(_gps1->spoofingState(), "GPS1 spoofingState");
-        connectFact(_gps1->jammingState(), "GPS1 jammingState");
-        connectFact(_gps1->authenticationState(), "GPS1 authenticationState");
+        connectFact(_gps1->spoofingState());
+        connectFact(_gps1->jammingState());
+        connectFact(_gps1->authenticationState());
     }
     if (_gps2) {
-        connectFact(_gps2->spoofingState(), "GPS2 spoofingState");
-        connectFact(_gps2->jammingState(), "GPS2 jammingState");
-        connectFact(_gps2->authenticationState(), "GPS2 authenticationState");
+        connectFact(_gps2->spoofingState());
+        connectFact(_gps2->jammingState());
+        connectFact(_gps2->authenticationState());
     }
     _updateAggregates();
 }
@@ -94,7 +93,6 @@ void VehicleGPSAggregateFactGroup::_onStaleTimeout()
     _jammingStateFact.setRawValue(255);
     _authenticationStateFact.setRawValue(255);
     _isStaleFact.setRawValue(true);
-    _updateAggregates();
 }
 
 void VehicleGPSAggregateFactGroup::_clearConnections()

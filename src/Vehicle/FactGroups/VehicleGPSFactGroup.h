@@ -55,8 +55,7 @@ public:
 
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
-    
-    void _setGnssIntegrityContext(uint8_t id, const QString& logPrefix);
+    void _setGnssIntegrityContext(uint8_t id);
 
 protected:
     void _handleGpsRawInt(const mavlink_message_t &message);
@@ -83,5 +82,4 @@ protected:
     Fact _postProcessingQualityFact = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
 
     uint8_t _gnssIntegrityId;
-    QString _gnssLogPrefix;
 };
