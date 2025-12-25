@@ -57,6 +57,9 @@ public:
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
     void _setGnssIntegrityContext(uint8_t id);
 
+signals:
+    void gnssIntegrityReceived();
+
 protected:
     void _handleGpsRawInt(const mavlink_message_t &message);
     void _handleHighLatency(const mavlink_message_t &message);

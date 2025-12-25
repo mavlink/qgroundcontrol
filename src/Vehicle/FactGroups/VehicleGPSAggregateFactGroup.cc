@@ -66,11 +66,13 @@ void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleG
         connectFact(_gps1->spoofingState());
         connectFact(_gps1->jammingState());
         connectFact(_gps1->authenticationState());
+        _connections << connect(_gps1, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
     if (_gps2) {
         connectFact(_gps2->spoofingState());
         connectFact(_gps2->jammingState());
         connectFact(_gps2->authenticationState());
+        _connections << connect(_gps2, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
     _updateAggregates();
 }
