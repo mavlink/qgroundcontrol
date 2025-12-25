@@ -81,49 +81,23 @@ jobs:
         shell: cmd
 
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
+      - name: Build Setup
+        id: setup
+        uses: ./.github/actions/build-setup
         with:
-          egress-policy: audit
-
-      - name: Checkout repo
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Common setup
-        uses: ./.github/actions/common
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          qt-version: ${{ matrix.qt_version || '' }}
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
         shell: pwsh
         run: |
           ./tools/setup/install-dependencies-windows.ps1 `
-            -GStreamerVersion ${{ steps.config.outputs.gstreamer_windows_version }} `
+            -GStreamerVersion ${{ steps.setup.outputs.gstreamer_windows_version }} `
             -SkipVulkan
-
-      - name: Setup cache
-        uses: ./.github/actions/cache
-        with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}\build\cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4

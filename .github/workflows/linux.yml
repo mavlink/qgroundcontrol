@@ -79,46 +79,19 @@ jobs:
         shell: bash
 
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
+      - name: Build Setup
+        id: setup
+        uses: ./.github/actions/build-setup
         with:
-          egress-policy: audit
-
-      - name: Checkout repo
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Initialize CodeQL
         if: matrix.build_type == 'Debug'
@@ -154,8 +127,8 @@ jobs:
           set +e
           xvfb-run -a ./QGroundControl --unittest --unittest-output ../junit-results.xml 2>&1 | tee ../test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-          exit $TEST_EXIT_CODE
+          echo "exit_code=$TEST_EXIT_CODE" >> "$GITHUB_OUTPUT"
+          exit "$TEST_EXIT_CODE"
 
       - name: Publish Test Results
         if: matrix.build_type == 'Debug' && always()
