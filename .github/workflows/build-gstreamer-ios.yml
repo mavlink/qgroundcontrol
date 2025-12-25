@@ -1,0 +1,149 @@
+name: Build GStreamer iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'GStreamer version (tag)'
+        required: false
+        default: ''
+        type: string
+      arch:
+        description: 'Target architecture'
+        required: true
+        default: 'universal'
+        type: choice
+        options:
+          - universal
+          - arm64
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+      simulator:
+        description: 'Build for iOS Simulator'
+        required: false
+        default: false
+        type: boolean
+      upload_s3:
+        description: 'Upload to S3'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.arch }}-${{ inputs.simulator }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build GStreamer iOS ${{ inputs.arch }}${{ inputs.simulator && ' (Simulator)' || '' }}
+    runs-on: macos-15
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/build-config.json
+            tools/setup/gstreamer/build-gstreamer-ios.sh
+            tools/setup/read-config.sh
+
+      - name: Read build config
+        id: config
+        run: |
+          version='${{ inputs.version }}'
+          if [[ -z "$version" ]]; then
+              version=$(jq -r '.gstreamer_version' .github/build-config.json)
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          # Determine archive suffix
+          arch='${{ inputs.arch }}'
+          suffix="$arch"
+          if [[ '${{ inputs.simulator }}' == 'true' ]]; then
+              suffix="$arch-simulator"
+          fi
+          echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
+
+      - name: Build GStreamer
+        id: build
+        run: |
+          chmod +x tools/setup/gstreamer/build-gstreamer-ios.sh
+
+          args=(
+            --version '${{ steps.config.outputs.version }}'
+            --arch '${{ inputs.arch }}'
+            --type '${{ inputs.build_type }}'
+            --output '${{ runner.temp }}/output'
+            --clean
+          )
+
+          if [[ '${{ inputs.simulator }}' == 'true' ]]; then
+              args+=(--simulator)
+          fi
+
+          ./tools/setup/gstreamer/build-gstreamer-ios.sh "${args[@]}"
+
+      - name: Create archive
+        id: archive
+        run: |
+          version='${{ steps.config.outputs.version }}'
+          suffix='${{ steps.config.outputs.suffix }}'
+          name="gstreamer-1.0-ios-$suffix-$version"
+
+          cd '${{ runner.temp }}/output'
+
+          # Find Cerbero output archive
+          archive=$(find . -maxdepth 1 -type f \( -name "*.tar.xz" -o -name "*.tar.gz" -o -name "*.tar.bz2" \) | head -1)
+
+          if [[ -z "$archive" ]]; then
+            echo "::error::No archive found in output directory"
+            ls -la
+            exit 1
+          fi
+
+          # Rename to consistent format
+          mv "$archive" "$name.tar.xz"
+
+          echo "archive_name=$name" >> "$GITHUB_OUTPUT"
+          echo "archive_path=${{ runner.temp }}/output/$name.tar.xz" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.archive_name }}
+          path: ${{ steps.archive.outputs.archive_path }}
+          retention-days: 30
+
+      - name: Upload to S3
+        if: inputs.upload_s3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-west-2
+        run: |
+          version='${{ steps.config.outputs.version }}'
+          s3_path="s3://qgroundcontrol/dependencies/gstreamer/ios/$version"
+          aws s3 cp '${{ steps.archive.outputs.archive_path }}' "$s3_path/${{ steps.archive.outputs.archive_name }}.tar.xz" --acl public-read
+
+      - name: Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## GStreamer iOS Build Complete
+
+          | Property | Value |
+          |----------|-------|
+          | Version | ${{ steps.config.outputs.version }} |
+          | Architecture | ${{ steps.config.outputs.suffix }} |
+          | Simulator | ${{ inputs.simulator }} |
+          | S3 Path | dependencies/gstreamer/ios/${{ steps.config.outputs.version }}/ |
+          EOF

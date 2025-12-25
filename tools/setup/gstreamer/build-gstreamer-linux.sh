@@ -28,7 +28,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source centralized config (sets GST_VERSION if not already set)
 # shellcheck source=read-config.sh
-source "$SCRIPT_DIR/read-config.sh"
+source "$SCRIPT_DIR/../read-config.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -250,3 +250,13 @@ echo "To use with QGroundControl, set:"
 echo "  export PKG_CONFIG_PATH=\"$INSTALL_PREFIX/lib/$ARCH/pkgconfig:\$PKG_CONFIG_PATH\""
 echo "  export GST_PLUGIN_PATH=\"$INSTALL_PREFIX/lib/$ARCH/gstreamer-1.0\""
 echo ""
+
+# Output for CI
+# Archive naming: gstreamer-1.0-linux-{arch}-{version}.tar.xz
+ARCHIVE_NAME="gstreamer-1.0-linux-$(uname -m)-$GST_VERSION"
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    echo "gstreamer_prefix=$INSTALL_PREFIX" >> "$GITHUB_OUTPUT"
+    echo "gstreamer_version=$GST_VERSION" >> "$GITHUB_OUTPUT"
+    echo "gstreamer_arch=$(uname -m)" >> "$GITHUB_OUTPUT"
+    echo "archive_name=$ARCHIVE_NAME" >> "$GITHUB_OUTPUT"
+fi

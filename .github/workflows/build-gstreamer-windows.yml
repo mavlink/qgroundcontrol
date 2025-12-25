@@ -1,0 +1,248 @@
+name: Build GStreamer Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'GStreamer version (tag)'
+        required: false
+        default: ''
+        type: string
+      arch:
+        description: 'Target architecture'
+        required: true
+        default: 'arm64'
+        type: choice
+        options:
+          - x64
+          - arm64
+      build_method:
+        description: 'Build method'
+        required: true
+        default: 'native'
+        type: choice
+        options:
+          - native
+          - cross-compile
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      upload_s3:
+        description: 'Upload to S3'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.arch }}-${{ inputs.build_method }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build GStreamer ${{ inputs.arch }} (${{ inputs.build_method }})
+    runs-on: ${{ inputs.build_method == 'native' && inputs.arch == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/build-config.json
+            tools/setup/gstreamer/build-gstreamer-windows.ps1
+            tools/setup/read-config.ps1
+
+      - name: Read build config
+        id: config
+        shell: pwsh
+        run: |
+          $config = Get-Content .github/build-config.json | ConvertFrom-Json
+          $version = '${{ inputs.version }}'
+          if (-not $version) {
+              $version = $config.gstreamer_version
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "qt_version=$($config.qt_version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Install Qt (for qml6 plugin)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: ${{ inputs.build_method == 'cross-compile' && 'windows' || (inputs.arch == 'arm64' && 'windows_arm64' || 'windows') }}
+          target: desktop
+          arch: ${{ inputs.arch == 'arm64' && 'win64_msvc2022_arm64' || 'win64_msvc2022_64' }}
+          cache: true
+          cache-key-prefix: qt-gstreamer
+
+      - name: Build GStreamer
+        id: build
+        shell: pwsh
+        run: |
+          $args = @{
+              Version = '${{ steps.config.outputs.version }}'
+              BuildType = '${{ inputs.build_type }}'
+              Arch = '${{ inputs.arch }}'
+              Prefix = 'C:\gstreamer-${{ inputs.arch }}'
+              WorkDir = '${{ runner.temp }}'
+              QtPrefix = $env:QT_ROOT_DIR
+              Clean = $true
+          }
+
+          if ('${{ inputs.build_method }}' -eq 'cross-compile') {
+              $args.CrossCompile = $true
+          }
+
+          # Convert hashtable to parameters
+          $params = @()
+          foreach ($key in $args.Keys) {
+              $value = $args[$key]
+              if ($value -is [bool]) {
+                  if ($value) { $params += "-$key" }
+              } else {
+                  $params += "-$key"
+                  $params += $value
+              }
+          }
+
+          Write-Host "Running: .\tools\setup\gstreamer\build-gstreamer-windows.ps1 $($params -join ' ')"
+          & .\tools\setup\gstreamer\build-gstreamer-windows.ps1 @args
+
+      - name: Verify build
+        shell: pwsh
+        run: |
+          $prefix = 'C:\gstreamer-${{ inputs.arch }}'
+          $binDir = Join-Path $prefix 'bin'
+          $libDir = Join-Path $prefix 'lib'
+          $pluginDir = Join-Path $libDir 'gstreamer-1.0'
+
+          Write-Host "=== Checking installation ==="
+          Write-Host "Bin directory:"
+          Get-ChildItem $binDir -Filter '*.exe' | Select-Object Name, Length | Format-Table
+
+          Write-Host "`nLibraries:"
+          Get-ChildItem $libDir -Filter '*.lib' | Measure-Object | Select-Object -ExpandProperty Count
+          Write-Host "library files found"
+
+          Write-Host "`nPlugins:"
+          if (Test-Path $pluginDir) {
+              Get-ChildItem $pluginDir -Filter '*.dll' | Measure-Object | Select-Object -ExpandProperty Count
+              Write-Host "plugin files found"
+          } else {
+              Write-Host "Plugin directory not found!"
+          }
+
+          # Test gst-launch if native build
+          if ('${{ inputs.build_method }}' -eq 'native') {
+              $env:PATH = "$binDir;$env:PATH"
+              $env:GST_PLUGIN_PATH = $pluginDir
+              Write-Host "`n=== Testing gst-launch ==="
+              & gst-launch-1.0 --version
+          }
+
+      - name: Create archive
+        id: archive
+        shell: pwsh
+        run: |
+          $prefix = 'C:\gstreamer-${{ inputs.arch }}'
+          $version = '${{ steps.config.outputs.version }}'
+          $arch = '${{ inputs.arch }}'
+          $archiveName = "gstreamer-1.0-msvc-$arch-$version"
+
+          Write-Host "Creating archive: $archiveName.zip"
+          Compress-Archive -Path $prefix -DestinationPath "${{ runner.temp }}\$archiveName.zip" -CompressionLevel Optimal
+
+          # Also create runtime-only archive (just bin + lib/gstreamer-1.0)
+          $runtimeDir = "${{ runner.temp }}\runtime"
+          New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
+          Copy-Item -Recurse "$prefix\bin" "$runtimeDir\bin"
+          Copy-Item -Recurse "$prefix\lib\gstreamer-1.0" "$runtimeDir\lib\gstreamer-1.0"
+
+          $runtimeArchive = "gstreamer-1.0-runtime-msvc-$arch-$version"
+          Compress-Archive -Path "$runtimeDir\*" -DestinationPath "${{ runner.temp }}\$runtimeArchive.zip" -CompressionLevel Optimal
+
+          "archive_name=$archiveName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "runtime_archive_name=$runtimeArchive" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "archive_path=${{ runner.temp }}\$archiveName.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "runtime_archive_path=${{ runner.temp }}\$runtimeArchive.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Upload artifact (full SDK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.archive_name }}
+          path: ${{ steps.archive.outputs.archive_path }}
+          retention-days: 30
+
+      - name: Upload artifact (runtime only)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.runtime_archive_name }}
+          path: ${{ steps.archive.outputs.runtime_archive_path }}
+          retention-days: 30
+
+      - name: Upload to S3
+        if: inputs.upload_s3
+        shell: pwsh
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-west-2
+        run: |
+          $version = '${{ steps.config.outputs.version }}'
+          $arch = '${{ inputs.arch }}'
+          $s3Path = "s3://qgroundcontrol/dependencies/gstreamer/windows/$version"
+
+          # Install AWS CLI if not present
+          if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+              Write-Host "Installing AWS CLI..."
+              Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile "${{ runner.temp }}\AWSCLIV2.msi"
+              Start-Process msiexec.exe -ArgumentList "/i `"${{ runner.temp }}\AWSCLIV2.msi`" /quiet" -Wait
+              $env:PATH = "C:\Program Files\Amazon\AWSCLIV2;$env:PATH"
+          }
+
+          Write-Host "Uploading to $s3Path ..."
+
+          # Upload full SDK
+          aws s3 cp "${{ steps.archive.outputs.archive_path }}" "$s3Path/${{ steps.archive.outputs.archive_name }}.zip" --acl public-read
+
+          # Upload runtime
+          aws s3 cp "${{ steps.archive.outputs.runtime_archive_path }}" "$s3Path/${{ steps.archive.outputs.runtime_archive_name }}.zip" --acl public-read
+
+          Write-Host "Upload complete!"
+          Write-Host "Full SDK: $s3Path/${{ steps.archive.outputs.archive_name }}.zip"
+          Write-Host "Runtime:  $s3Path/${{ steps.archive.outputs.runtime_archive_name }}.zip"
+
+      - name: Summary
+        shell: pwsh
+        run: |
+          $version = '${{ steps.config.outputs.version }}'
+          $arch = '${{ inputs.arch }}'
+          $method = '${{ inputs.build_method }}'
+
+          $summary = @"
+          ## GStreamer Build Complete
+
+          | Property | Value |
+          |----------|-------|
+          | Version | $version |
+          | Architecture | $arch |
+          | Build Method | $method |
+          | Build Type | ${{ inputs.build_type }} |
+          | S3 Upload | ${{ inputs.upload_s3 }} |
+
+          ### Artifacts
+          - **Full SDK**: gstreamer-1.0-msvc-$arch-$version.zip (includes headers, libs, plugins)
+          - **Runtime**: gstreamer-1.0-runtime-msvc-$arch-$version.zip (bin + plugins only)
+
+          ### Usage
+          To use in install-dependencies-windows.ps1, update the S3 download URL for ARM64.
+          "@
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

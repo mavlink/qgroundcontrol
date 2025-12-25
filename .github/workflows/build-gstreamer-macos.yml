@@ -1,0 +1,140 @@
+name: Build GStreamer macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'GStreamer version (tag)'
+        required: false
+        default: ''
+        type: string
+      arch:
+        description: 'Target architecture'
+        required: true
+        default: 'universal'
+        type: choice
+        options:
+          - universal
+          - arm64
+          - x86_64
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+      upload_s3:
+        description: 'Upload to S3'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.arch }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build GStreamer macOS ${{ inputs.arch }}
+    runs-on: macos-15
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/build-config.json
+            tools/setup/gstreamer/build-gstreamer-macos.sh
+            tools/setup/read-config.sh
+
+      - name: Read build config
+        id: config
+        run: |
+          version='${{ inputs.version }}'
+          if [[ -z "$version" ]]; then
+              version=$(jq -r '.gstreamer_version' .github/build-config.json)
+          fi
+          qt_version=$(jq -r '.qt_version' .github/build-config.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "qt_version=$qt_version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Qt (for qml6 plugin)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: mac
+          target: desktop
+          arch: clang_64
+          cache: true
+          cache-key-prefix: qt-gstreamer-macos
+
+      - name: Install dependencies
+        run: brew install pkg-config gettext
+
+      - name: Build GStreamer
+        id: build
+        run: |
+          chmod +x tools/setup/gstreamer/build-gstreamer-macos.sh
+          ./tools/setup/gstreamer/build-gstreamer-macos.sh \
+            --version '${{ steps.config.outputs.version }}' \
+            --arch '${{ inputs.arch }}' \
+            --type '${{ inputs.build_type }}' \
+            --prefix '${{ runner.temp }}/gstreamer' \
+            --qt-prefix "$QT_ROOT_DIR" \
+            --clean
+
+      - name: Verify and test
+        run: |
+          prefix='${{ runner.temp }}/gstreamer'
+          export DYLD_LIBRARY_PATH="$prefix/lib"
+          export GST_PLUGIN_PATH="$prefix/lib/gstreamer-1.0"
+          "$prefix/bin/gst-launch-1.0" --version
+
+      - name: Create archive
+        id: archive
+        run: |
+          version='${{ steps.config.outputs.version }}'
+          arch='${{ inputs.arch }}'
+          name="gstreamer-1.0-macos-$arch-$version"
+
+          cd '${{ runner.temp }}'
+          tar -cJf "$name.tar.xz" gstreamer
+
+          echo "archive_name=$name" >> "$GITHUB_OUTPUT"
+          echo "archive_path=${{ runner.temp }}/$name.tar.xz" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.archive_name }}
+          path: ${{ steps.archive.outputs.archive_path }}
+          retention-days: 30
+
+      - name: Upload to S3
+        if: inputs.upload_s3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-west-2
+        run: |
+          version='${{ steps.config.outputs.version }}'
+          s3_path="s3://qgroundcontrol/dependencies/gstreamer/macos/$version"
+          aws s3 cp '${{ steps.archive.outputs.archive_path }}' "$s3_path/${{ steps.archive.outputs.archive_name }}.tar.xz" --acl public-read
+
+      - name: Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## GStreamer macOS Build Complete
+
+          | Property | Value |
+          |----------|-------|
+          | Version | ${{ steps.config.outputs.version }} |
+          | Architecture | ${{ inputs.arch }} |
+          | S3 Path | dependencies/gstreamer/macos/${{ steps.config.outputs.version }}/ |
+          EOF
