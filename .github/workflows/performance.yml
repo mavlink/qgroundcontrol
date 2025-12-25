@@ -1,0 +1,290 @@
+name: Performance Metrics
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  workflow_dispatch:
+    inputs:
+      run_benchmarks:
+        description: 'Run time-based benchmarks (noisy on shared runners)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  size-metrics:
+    name: Size Metrics
+    runs-on: ubuntu-24.04
+    outputs:
+      binary_size: ${{ steps.metrics.outputs.binary_size }}
+      stripped_size: ${{ steps.metrics.outputs.stripped_size }}
+      symbol_count: ${{ steps.metrics.outputs.symbol_count }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Read build config
+        id: config
+        run: |
+          qt_version=$(jq -r '.qt_version' .github/build-config.json)
+          echo "qt_version=$qt_version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          cache: true
+          cache-key-prefix: qt-perf
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libsdl2-dev libxkbcommon-dev \
+            libvulkan-dev libglvnd-dev \
+            libzstd-dev libspeechd-dev \
+            bloaty
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQGC_STABLE_BUILD=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Collect size metrics
+        id: metrics
+        run: |
+          binary="build/QGroundControl"
+
+          # Binary size
+          binary_size=$(stat -c%s "$binary")
+          echo "binary_size=$binary_size" >> "$GITHUB_OUTPUT"
+
+          # Stripped size
+          cp "$binary" "${binary}.stripped"
+          strip "${binary}.stripped"
+          stripped_size=$(stat -c%s "${binary}.stripped")
+          echo "stripped_size=$stripped_size" >> "$GITHUB_OUTPUT"
+
+          # Symbol count
+          symbol_count=$(nm "$binary" 2>/dev/null | wc -l)
+          echo "symbol_count=$symbol_count" >> "$GITHUB_OUTPUT"
+
+          # Section sizes
+          echo "=== Section sizes ===" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          size -A "$binary" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bloaty analysis
+        run: |
+          echo "=== Top 20 largest symbols ===" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          bloaty -d symbols -n 20 build/QGroundControl >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "=== Size by compilation unit ===" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          bloaty -d compileunits -n 20 build/QGroundControl >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate metrics JSON
+        run: |
+          cat > metrics.json << EOF
+          [
+            {
+              "name": "Binary Size",
+              "unit": "bytes",
+              "value": ${{ steps.metrics.outputs.binary_size }}
+            },
+            {
+              "name": "Stripped Size",
+              "unit": "bytes",
+              "value": ${{ steps.metrics.outputs.stripped_size }}
+            },
+            {
+              "name": "Symbol Count",
+              "unit": "symbols",
+              "value": ${{ steps.metrics.outputs.symbol_count }}
+            }
+          ]
+          EOF
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-metrics
+          path: metrics.json
+          retention-days: 90
+
+      - name: Store size metrics
+        uses: benchmark-action/github-action-benchmark@v1
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: metrics.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: dev/size
+          alert-threshold: '110%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Compare with base (PR only)
+        if: github.event_name == 'pull_request'
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: metrics.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          benchmark-data-dir-path: dev/size
+          alert-threshold: '105%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Summary
+        run: |
+          binary_mb=$(echo "scale=2; ${{ steps.metrics.outputs.binary_size }} / 1048576" | bc)
+          stripped_mb=$(echo "scale=2; ${{ steps.metrics.outputs.stripped_size }} / 1048576" | bc)
+
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+
+          ## Size Metrics
+
+          | Metric | Value |
+          |--------|-------|
+          | Binary Size | ${binary_mb} MB (${{ steps.metrics.outputs.binary_size }} bytes) |
+          | Stripped Size | ${stripped_mb} MB (${{ steps.metrics.outputs.stripped_size }} bytes) |
+          | Symbol Count | ${{ steps.metrics.outputs.symbol_count }} |
+          EOF
+
+  benchmarks:
+    name: Runtime Benchmarks
+    runs-on: ubuntu-24.04
+    if: github.event.inputs.run_benchmarks == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    needs: size-metrics
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Read build config
+        id: config
+        run: |
+          qt_version=$(jq -r '.qt_version' .github/build-config.json)
+          echo "qt_version=$qt_version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          cache: true
+          cache-key-prefix: qt-perf
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libsdl2-dev libxkbcommon-dev \
+            libvulkan-dev libglvnd-dev \
+            libzstd-dev libspeechd-dev
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQGC_STABLE_BUILD=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run benchmarks
+        id: bench
+        run: |
+          # Run Catch2 benchmarks with JSON output
+          # Note: Adjust path and tags based on actual test setup
+          if ./build/QGroundControl --unittest "[benchmark]" --reporter=json > benchmark-raw.json 2>/dev/null; then
+            echo "has_benchmarks=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_benchmarks=false" >> "$GITHUB_OUTPUT"
+            echo "No Catch2 benchmarks found, creating placeholder"
+            # Create placeholder with startup time measurement
+            start_time=$(date +%s%N)
+            timeout 10 ./build/QGroundControl --unittest --list-tests > /dev/null 2>&1 || true
+            end_time=$(date +%s%N)
+            duration_ms=$(( (end_time - start_time) / 1000000 ))
+
+            cat > benchmark-raw.json << EOF
+          [
+            {
+              "name": "Startup (list tests)",
+              "unit": "ms",
+              "value": $duration_ms
+            }
+          ]
+          EOF
+          fi
+
+      - name: Store benchmark results
+        if: steps.bench.outputs.has_benchmarks == 'true'
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: catch2
+          output-file-path: benchmark-raw.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.event_name == 'push' }}
+          benchmark-data-dir-path: dev/bench
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Store fallback metrics
+        if: steps.bench.outputs.has_benchmarks == 'false'
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: benchmark-raw.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.event_name == 'push' }}
+          benchmark-data-dir-path: dev/bench
+          alert-threshold: '200%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Summary
+        run: |
+          echo "## Runtime Benchmarks" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "⚠️ **Note**: Runtime benchmarks on shared runners have ~3x variance." >> "$GITHUB_STEP_SUMMARY"
+          echo "Only significant regressions (>50%) trigger alerts." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-raw.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
