@@ -40,6 +40,8 @@ private slots:
     void _onStaleTimeout();
 
 private:
+    static constexpr int GNSS_INTEGRITY_STALE_TIMEOUT_MS = 5000;
+
     static int  _mergeWorst(int a, int b);
     static int  _mergeAuthentication(int a, int b);
     static int  _valueOrInvalid(Fact* fact);

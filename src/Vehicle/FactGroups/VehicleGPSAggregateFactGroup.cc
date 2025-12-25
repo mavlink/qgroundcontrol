@@ -46,7 +46,7 @@ VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject *parent)
     _isStaleFact.setRawValue(true);
 
     _staleTimer.setSingleShot(true);
-    _staleTimer.setInterval(5000);
+    _staleTimer.setInterval(GNSS_INTEGRITY_STALE_TIMEOUT_MS);
     connect(&_staleTimer, &QTimer::timeout, this, &VehicleGPSAggregateFactGroup::_onStaleTimeout);
 }
 
