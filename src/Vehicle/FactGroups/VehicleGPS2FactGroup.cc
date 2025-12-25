@@ -10,6 +10,7 @@
 #include "VehicleGPS2FactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
 
@@ -21,11 +22,14 @@ void VehicleGPS2FactGroup::handleMessage(Vehicle *vehicle, const mavlink_message
     case MAVLINK_MSG_ID_GPS2_RAW:
         _handleGps2Raw(message);
         break;
+    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+        _handleGnssIntegrity(message); 
+        break;
     default:
         break;
     }
 }
-
+ 
 void VehicleGPS2FactGroup::_handleGps2Raw(const mavlink_message_t &message)
 {
     mavlink_gps2_raw_t gps2Raw{};
