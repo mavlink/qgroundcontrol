@@ -1,0 +1,111 @@
+name: Include-What-You-Use
+
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: 'Path to analyze (e.g., src/Vehicle/ or leave empty for all)'
+        required: false
+        default: ''
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  iwyu:
+    name: IWYU Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iwyu clang ninja-build
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+
+      - name: Install Qt
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Configure with IWYU
+        working-directory: ${{ runner.temp }}/build
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run IWYU
+        working-directory: ${{ runner.temp }}/build
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+        run: |
+          # IWYU outputs to stderr, capture it
+          set +e
+
+          if [[ -n "$INPUT_PATH" ]]; then
+            # Validate path
+            if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
+              echo "::error::Invalid path: must be relative, no '..'"
+              exit 1
+            fi
+
+            # Find source files in the specified path
+            FILES=$(find "${{ github.workspace }}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
+            if [[ -z "$FILES" ]]; then
+              echo "::error::No source files found in $INPUT_PATH"
+              exit 1
+            fi
+
+            echo "Analyzing files in: $INPUT_PATH"
+            echo "$FILES" | while read -r file; do
+              echo "::group::$(basename "$file")"
+              iwyu_tool.py -p . "$file" 2>&1 || true
+              echo "::endgroup::"
+            done | tee iwyu-output.txt
+          else
+            echo "Analyzing all source files (this may take a while)..."
+            # Run on full build, IWYU outputs during compilation
+            cmake --build . --target all 2>&1 | tee iwyu-output.txt || true
+          fi
+
+          # Extract IWYU suggestions
+          echo ""
+          echo "=== IWYU Summary ==="
+          grep -E "^(${{ github.workspace }}/src/.*should (add|remove)|The full include-list)" iwyu-output.txt | head -200 || echo "No suggestions found"
+
+      - name: Upload IWYU Output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: iwyu-output
+          path: ${{ runner.temp }}/build/iwyu-output.txt
+          retention-days: 7
