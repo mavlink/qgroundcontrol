@@ -45,6 +45,7 @@ struct CommandLineParseResult
     QStringList unitTests;
     bool stressUnitTests = false;
     uint stressUnitTestsCount = 0;
+    std::optional<QString> unittestOutputFile;
 
     bool fakeMobile = false;
     bool allowMultiple = false;

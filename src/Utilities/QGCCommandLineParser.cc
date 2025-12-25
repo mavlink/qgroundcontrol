@@ -24,6 +24,7 @@ static const QString kOptFakeMobile      = QStringLiteral("fake-mobile");
 static const QString kOptAllowMultiple   = QStringLiteral("allow-multiple");
 static const QString kOptUnittest        = QStringLiteral("unittest");
 static const QString kOptUnittestStress  = QStringLiteral("unittest-stress");
+static const QString kOptUnittestOutput  = QStringLiteral("unittest-output");
 static const QString kOptDesktop         = QStringLiteral("desktop");
 static const QString kOptSwrast          = QStringLiteral("swrast");
 static const QString kOptNoWinAssertUI   = QStringLiteral("no-windows-assert-ui");
@@ -112,6 +113,12 @@ CommandLineParseResult parseCommandLine()
         QCoreApplication::translate("main", "Stress unit tests."),
         QCoreApplication::translate("main", "count"));
     (void) parser.addOption(unittestStressOpt);
+
+    const QCommandLineOption unittestOutputOpt(
+        kOptUnittestOutput,
+        QCoreApplication::translate("main", "Write unit test results to file (JUnit XML format)."),
+        QCoreApplication::translate("main", "file"));
+    (void) parser.addOption(unittestOutputOpt);
 #endif
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
@@ -244,6 +251,10 @@ CommandLineParseResult parseCommandLine()
             }
             out.stressUnitTestsCount = count;
         }
+    }
+
+    if (parser.isSet(unittestOutputOpt)) {
+        out.unittestOutputFile = parser.value(unittestOutputOpt);
     }
 #endif
 

@@ -36,7 +36,8 @@ public:
 
     /// @brief Called to run all the registered unit tests
     ///     @param singleTest Name of test to just run a single test
-    static int run(QStringView singleTest);
+    ///     @param outputFile Optional path to write JUnit XML results
+    static int run(QStringView singleTest, const QString& outputFile = QString());
 
     bool standalone() const { return _standalone; }
     void setStandalone(bool standalone) { _standalone = standalone; }
