@@ -29,6 +29,11 @@ on:
         options:
           - Release
           - Debug
+      unity_build:
+        description: 'Enable CMake Unity Build (experimental, faster builds)'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
 
 concurrency:
@@ -128,6 +133,7 @@ jobs:
               -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_ENABLE_COVERAGE=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              ${{ inputs.unity_build && '-DCMAKE_UNITY_BUILD=ON -DCMAKE_UNITY_BUILD_BATCH_SIZE=16' || '' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
@@ -167,7 +173,7 @@ jobs:
           path: |
             ${{ runner.temp }}/build/test-output.txt
             ${{ runner.temp }}/build/junit-results.xml
-          retention-days: 7
+          retention-days: ${{ github.event_name == 'pull_request' && 3 || 14 }}
 
       - name: Upload to Trunk Flaky Tests
         if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
