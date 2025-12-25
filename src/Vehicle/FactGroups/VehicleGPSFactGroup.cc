@@ -10,6 +10,8 @@
 #include "VehicleGPSFactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
 
@@ -25,6 +27,14 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _addFact(&_yawFact);
     _addFact(&_lockFact);
     _addFact(&_countFact);
+    _addFact(&_systemErrorsFact);
+    _addFact(&_spoofingStateFact);
+    _addFact(&_jammingStateFact);
+    _addFact(&_authenticationStateFact);
+    _addFact(&_correctionsQualityFact);
+    _addFact(&_systemQualityFact);
+    _addFact(&_gnssSignalQualityFact);
+    _addFact(&_postProcessingQualityFact);
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -33,6 +43,21 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _yawFact.setRawValue(std::numeric_limits<int16_t>::quiet_NaN());
+    _spoofingStateFact.setRawValue(255);
+    _jammingStateFact.setRawValue(255);
+    _authenticationStateFact.setRawValue(255);
+    _correctionsQualityFact.setRawValue(255);
+    _systemQualityFact.setRawValue(255);
+    _gnssSignalQualityFact.setRawValue(255);
+    _postProcessingQualityFact.setRawValue(255);
+
+    _setGnssIntegrityContext(0, QStringLiteral("GPS1"));
+}
+
+void VehicleGPSFactGroup::_setGnssIntegrityContext(uint8_t id, const QString& logPrefix)
+{
+    _gnssIntegrityId = id;
+    _gnssLogPrefix = logPrefix;
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -48,6 +73,9 @@ void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
+        break;
+    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+        _handleGnssIntegrity(message);
         break;
     default:
         break;
@@ -98,4 +126,23 @@ void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t &message)
     vdop()->setRawValue((highLatency2.epv == UINT8_MAX) ? qQNaN() : (highLatency2.epv / 10.0));
 
     _setTelemetryAvailable(true);
+}
+
+void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
+{
+    mavlink_gnss_integrity_t gnssIntegrity;
+    mavlink_msg_gnss_integrity_decode(&message, &gnssIntegrity);
+
+    if (gnssIntegrity.id != _gnssIntegrityId) {
+        return;
+    }
+
+    systemErrors()->setRawValue         (gnssIntegrity.system_errors);
+    spoofingState()->setRawValue        (gnssIntegrity.spoofing_state);
+    jammingState()->setRawValue         (gnssIntegrity.jamming_state);
+    authenticationState()->setRawValue  (gnssIntegrity.authentication_state);
+    correctionsQuality()->setRawValue   (gnssIntegrity.corrections_quality);
+    systemQuality()->setRawValue        (gnssIntegrity.system_status_summary);
+    gnssSignalQuality()->setRawValue    (gnssIntegrity.gnss_signal_quality);
+    postProcessingQuality()->setRawValue(gnssIntegrity.post_processing_quality);
 }
