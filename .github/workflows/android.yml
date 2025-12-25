@@ -83,6 +83,7 @@ jobs:
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
+      GRADLE_OPTS: -Dorg.gradle.configuration-cache=true -Dorg.gradle.caching=true
 
     steps:
       - name: Harden Runner
