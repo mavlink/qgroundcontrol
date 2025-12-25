@@ -228,36 +228,73 @@ jobs:
       - name: Run benchmarks
         id: bench
         run: |
-          # Run Catch2 benchmarks with JSON output
-          # Note: Adjust path and tags based on actual test setup
-          if ./build/QGroundControl --unittest "[benchmark]" --reporter=json > benchmark-raw.json 2>/dev/null; then
+          # Run Qt Test MAVLink benchmarks
+          # Output format: RESULT : MAVLinkBenchmark::benchmarkHeartbeatPack():
+          #     0.00015 msecs per iteration (total: 78, iterations: 524288)
+
+          export QT_QPA_PLATFORM=offscreen
+          ./build/QGroundControl --unittest:MAVLinkBenchmark 2>&1 | tee benchmark-output.txt || true
+
+          # Parse Qt Test benchmark output to JSON
+          python3 << 'PARSE_SCRIPT'
+          import re
+          import json
+
+          results = []
+          with open('benchmark-output.txt', 'r') as f:
+              for line in f:
+                  # Match: RESULT : TestClass::testFunc(): X.XXX msecs per iteration
+                  match = re.search(
+                      r'RESULT\s*:\s*\w+::(\w+)\(\):\s*([\d.]+)\s*(\w+)\s*per iteration',
+                      line
+                  )
+                  if match:
+                      name = match.group(1)
+                      value = float(match.group(2))
+                      unit = match.group(3)
+
+                      # Normalize to microseconds for consistency
+                      if unit == 'msecs':
+                          value *= 1000
+                          unit = 'usecs'
+                      elif unit == 'secs':
+                          value *= 1000000
+                          unit = 'usecs'
+
+                      results.append({
+                          'name': name,
+                          'unit': unit,
+                          'value': value
+                      })
+
+          if not results:
+              # Fallback: measure startup time
+              import subprocess
+              import time
+              start = time.time()
+              subprocess.run(['./build/QGroundControl', '--unittest', '--list-tests'],
+                           capture_output=True, timeout=30, env={'QT_QPA_PLATFORM': 'offscreen'})
+              elapsed_ms = (time.time() - start) * 1000
+              results = [{'name': 'Startup (list tests)', 'unit': 'ms', 'value': elapsed_ms}]
+
+          with open('benchmark.json', 'w') as f:
+              json.dump(results, f, indent=2)
+
+          print(f"Parsed {len(results)} benchmark results")
+          PARSE_SCRIPT
+
+          if [[ -s benchmark.json ]]; then
             echo "has_benchmarks=true" >> "$GITHUB_OUTPUT"
+            cat benchmark.json
           else
             echo "has_benchmarks=false" >> "$GITHUB_OUTPUT"
-            echo "No Catch2 benchmarks found, creating placeholder"
-            # Create placeholder with startup time measurement
-            start_time=$(date +%s%N)
-            timeout 10 ./build/QGroundControl --unittest --list-tests > /dev/null 2>&1 || true
-            end_time=$(date +%s%N)
-            duration_ms=$(( (end_time - start_time) / 1000000 ))
-
-            cat > benchmark-raw.json << EOF
-          [
-            {
-              "name": "Startup (list tests)",
-              "unit": "ms",
-              "value": $duration_ms
-            }
-          ]
-          EOF
           fi
 
       - name: Store benchmark results
-        if: steps.bench.outputs.has_benchmarks == 'true'
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          tool: catch2
-          output-file-path: benchmark-raw.json
+          tool: customSmallerIsBetter
+          output-file-path: benchmark.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: ${{ github.event_name == 'push' }}
           benchmark-data-dir-path: dev/bench
@@ -265,26 +302,21 @@ jobs:
           comment-on-alert: true
           fail-on-alert: false
 
-      - name: Store fallback metrics
-        if: steps.bench.outputs.has_benchmarks == 'false'
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: customSmallerIsBetter
-          output-file-path: benchmark-raw.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: ${{ github.event_name == 'push' }}
-          benchmark-data-dir-path: dev/bench
-          alert-threshold: '200%'
-          comment-on-alert: true
-          fail-on-alert: false
-
       - name: Summary
         run: |
-          echo "## Runtime Benchmarks" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "⚠️ **Note**: Runtime benchmarks on shared runners have ~3x variance." >> "$GITHUB_STEP_SUMMARY"
-          echo "Only significant regressions (>50%) trigger alerts." >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-raw.json >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## Runtime Benchmarks
+
+          ⚠️ **Note**: Runtime benchmarks on shared runners have ~3x variance.
+          Only significant regressions (>50%) trigger alerts.
+
+          ### MAVLink Benchmarks
+          EOF
+
+          if [[ -f benchmark.json ]]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat benchmark.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No benchmark results available" >> "$GITHUB_STEP_SUMMARY"
+          fi
