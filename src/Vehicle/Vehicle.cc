@@ -101,6 +101,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _vehicleFactGroup             (this)
     , _gpsFactGroup                 (this)
     , _gps2FactGroup                (this)
+    , _gpsAggregateFactGroup        (this)
     , _windFactGroup                (this)
     , _vibrationFactGroup           (this)
     , _temperatureFactGroup         (this)
@@ -205,6 +206,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _vehicleFactGroup                 (this)
     , _gpsFactGroup                     (this)
     , _gps2FactGroup                    (this)
+    , _gpsAggregateFactGroup            (this)
     , _windFactGroup                    (this)
     , _vibrationFactGroup               (this)
     , _clockFactGroup                   (this)
@@ -314,6 +316,8 @@ void Vehicle::_commonInit(LinkInterface* link)
     // Flight modes can differ based on advanced mode
     connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
+    _gpsAggregateFactGroup.bindToGps(&_gpsFactGroup, &_gps2FactGroup);
+
     _createImageProtocolManager();
     _createStatusTextHandler();
     _createMAVLinkLogManager();
@@ -321,6 +325,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     // _addFactGroup(_vehicleFactGroup,            _vehicleFactGroupName);
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
     _addFactGroup(&_gps2FactGroup,              _gps2FactGroupName);
+    _addFactGroup(&_gpsAggregateFactGroup,      _gpsAggregateFactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
