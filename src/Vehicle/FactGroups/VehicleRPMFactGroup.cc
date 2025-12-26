@@ -18,7 +18,7 @@ VehicleRPMFactGroup::VehicleRPMFactGroup(QObject *parent)
     _addFact(&_rpm3Fact);
     _addFact(&_rpm4Fact);
     _addFact(&_rpmSensor1Fact);
-    _addFact(&_rpmS     ensor2Fact);
+    _addFact(&_rpmSensor2Fact);
 
     _rpm1Fact.setRawValue(qQNaN());
     _rpm2Fact.setRawValue(qQNaN());
