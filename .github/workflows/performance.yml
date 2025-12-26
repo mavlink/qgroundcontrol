@@ -33,29 +33,34 @@ jobs:
   size-metrics:
     name: Size Metrics
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     outputs:
       binary_size: ${{ steps.metrics.outputs.binary_size }}
       stripped_size: ${{ steps.metrics.outputs.stripped_size }}
       symbol_count: ${{ steps.metrics.outputs.symbol_count }}
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Read build config
+      - name: Get build config
         id: config
-        run: |
-          qt_version=$(jq -r '.qt_version' .github/build-config.json)
-          echo "qt_version=$qt_version" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/build-config
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
-          cache: true
-          cache-key-prefix: qt-perf
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Install dependencies
         run: |
@@ -186,27 +191,32 @@ jobs:
   benchmarks:
     name: Runtime Benchmarks
     runs-on: ubuntu-24.04
+    timeout-minutes: 90
     if: github.event.inputs.run_benchmarks == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     needs: size-metrics
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Read build config
+      - name: Get build config
         id: config
-        run: |
-          qt_version=$(jq -r '.qt_version' .github/build-config.json)
-          echo "qt_version=$qt_version" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/build-config
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
-          cache: true
-          cache-key-prefix: qt-perf
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Install dependencies
         run: |

@@ -1,8 +1,26 @@
 name: iOS
 
-# iOS builds are experimental - manual trigger only until stable
 on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - '.github/workflows/ios.yml'
+      - '.github/actions/**'
+      - 'deploy/ios/**'
+      - 'src/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  merge_group:
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,6 +34,7 @@ permissions:
 
 jobs:
   build:
+    name: iOS
     runs-on: macos-15
     timeout-minutes: 120
 
