@@ -27,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          sparse-checkout: tools/check-sizes.py
+          sparse-checkout: .github/scripts/check-sizes.py
           sparse-checkout-cone-mode: false
 
       - name: Get PR number
@@ -236,7 +236,7 @@ jobs:
           fi
 
           # === Artifact Sizes Section ===
-          python tools/check-sizes.py artifacts/ --json --output pr-sizes.json 2>/dev/null || true
+          python .github/scripts/check-sizes.py artifacts/ --json --output pr-sizes.json 2>/dev/null || true
 
           if [[ -f "pr-sizes.json" ]]; then
             echo "### Artifact Sizes" >> comment.md
@@ -330,7 +330,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          sparse-checkout: tools/check-sizes.py
+          sparse-checkout: .github/scripts/check-sizes.py
           sparse-checkout-cone-mode: false
 
       - name: Download artifacts
@@ -343,7 +343,7 @@ jobs:
 
       - name: Save artifact sizes baseline
         run: |
-          python tools/check-sizes.py artifacts/ --json --output sizes.json 2>/dev/null || true
+          python .github/scripts/check-sizes.py artifacts/ --json --output sizes.json 2>/dev/null || true
           if [[ -f "sizes.json" ]]; then
             echo "Saving artifact sizes baseline"
             cat sizes.json

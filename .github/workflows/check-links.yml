@@ -46,7 +46,7 @@ jobs:
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: '--cache --max-cache-age 3d --no-progress **/*.md docs/en/**'
+          args: '--config .lychee.toml --cache --max-cache-age 3d --no-progress **/*.md docs/en/**'
           lycheeVersion: v0.22.0
           failIfEmpty: false
           fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}

@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Generate repository metrics
-        uses: lowlighter/metrics@v3.34
+        uses: lowlighter/metrics@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 

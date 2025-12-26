@@ -1,0 +1,100 @@
+name: Cache Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to clean (leave empty for all branches)'
+        required: false
+        type: string
+      dry-run:
+        description: 'List caches without deleting'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Cleanup Caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Install gh-actions-cache
+        run: gh extension install actions/gh-actions-cache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List caches
+        id: list
+        run: |
+          echo "## Cache Summary" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -n "${{ inputs.branch }}" ]]; then
+            echo "Branch filter: \`${{ inputs.branch }}\`" >> "$GITHUB_STEP_SUMMARY"
+            CACHES=$(gh actions-cache list -R "${{ github.repository }}" -B "${{ inputs.branch }}" --order desc --limit 100)
+          else
+            CACHES=$(gh actions-cache list -R "${{ github.repository }}" --order desc --limit 100)
+          fi
+
+          if [[ -z "$CACHES" ]]; then
+            echo "No caches found" >> "$GITHUB_STEP_SUMMARY"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COUNT=$(echo "$CACHES" | wc -l)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Size | Branch |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "$CACHES" | while read -r KEY SIZE BRANCH; do
+            echo "| \`${KEY:0:50}\` | $SIZE | $BRANCH |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Total: $COUNT caches**" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete caches
+        if: inputs.dry-run == false && steps.list.outputs.count != '0'
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Deletion Results" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -n "${{ inputs.branch }}" ]]; then
+            KEYS=$(gh actions-cache list -R "${{ github.repository }}" -B "${{ inputs.branch }}" --limit 100 | cut -f1)
+            BRANCH_ARG="-B ${{ inputs.branch }}"
+          else
+            KEYS=$(gh actions-cache list -R "${{ github.repository }}" --limit 100 | cut -f1)
+            BRANCH_ARG=""
+          fi
+
+          DELETED=0
+          FAILED=0
+
+          for KEY in $KEYS; do
+            if gh actions-cache delete "$KEY" -R "${{ github.repository }}" $BRANCH_ARG --confirm 2>/dev/null; then
+              ((DELETED++))
+            else
+              ((FAILED++))
+            fi
+          done
+
+          echo "Deleted: $DELETED" >> "$GITHUB_STEP_SUMMARY"
+          if [[ $FAILED -gt 0 ]]; then
+            echo "Failed: $FAILED" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dry run notice
+        if: inputs.dry-run == true
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> **Dry run** - no caches were deleted. Uncheck 'dry-run' to delete." >> "$GITHUB_STEP_SUMMARY"

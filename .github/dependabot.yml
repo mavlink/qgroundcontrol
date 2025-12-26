@@ -10,7 +10,8 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "[CI] "
+      prefix: "ci"
+      include: "scope"
     open-pull-requests-limit: 10
     groups:
       github-actions:
