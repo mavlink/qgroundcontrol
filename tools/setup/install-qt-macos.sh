@@ -35,8 +35,13 @@ echo "QT_MODULES: ${QT_MODULES_ARR[*]}"
 brew update
 brew install python3
 
-# Install required Python packages, including aqtinstall.
-pip3 install --upgrade setuptools wheel py7zr ninja cmake aqtinstall
+# Install required Python packages (skip if aqtinstall already available, e.g., from venv)
+if ! command -v aqt &> /dev/null; then
+    echo "Installing aqtinstall and dependencies..."
+    pip3 install --upgrade setuptools wheel py7zr ninja cmake aqtinstall
+else
+    echo "Using existing aqtinstall: $(command -v aqt)"
+fi
 
 # Use aqtinstall to download and install Qt.
 aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"

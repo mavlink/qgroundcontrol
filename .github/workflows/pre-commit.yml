@@ -42,15 +42,10 @@ jobs:
         id: config
         uses: ./.github/actions/build-config
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Setup Python with CI tools
+        uses: ./.github/actions/setup-python
         with:
-          python-version: '3.x'
-
-      - name: Install pre-commit
-        run: |
-          python -m pip install pre-commit
-          python -m pip freeze --local
+          groups: ci
 
       - name: Cache pre-commit hooks
         uses: actions/cache@v5

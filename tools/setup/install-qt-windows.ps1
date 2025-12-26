@@ -52,10 +52,15 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-Write-Host "`nInstalling helper Python packages..."
-# The PyPI “ninja” wheels provide the Ninja build system executable :contentReference[oaicite:1]{index=1}
-python -m pip install --upgrade pip
-python -m pip install setuptools wheel py7zr ninja cmake aqtinstall
+# Install helper packages (skip if aqtinstall already available, e.g., from venv)
+$aqtPath = Get-Command aqt -ErrorAction SilentlyContinue
+if (-not $aqtPath) {
+    Write-Host "`nInstalling helper Python packages..."
+    python -m pip install --upgrade pip
+    python -m pip install setuptools wheel py7zr ninja cmake aqtinstall
+} else {
+    Write-Host "`nUsing existing aqtinstall: $($aqtPath.Source)"
+}
 
 # ————————————————————————————————
 # 3) Run the aqt Qt installer

@@ -184,18 +184,22 @@ if (-not $vsPath) {
 Write-Ok "All dependencies found"
 
 # ────────────────────────────────
-# Install Python build tools
+# Install Python build tools (skip if already available, e.g., from CI venv)
 # ────────────────────────────────
-Write-Info "Installing meson and ninja..."
-python -m pip install --quiet --upgrade pip
-python -m pip install --quiet meson ninja
-
-# Verify meson is available
-$mesonPath = python -c "import shutil; print(shutil.which('meson') or '')" 2>$null
+$mesonPath = Get-Command meson -ErrorAction SilentlyContinue
 if (-not $mesonPath) {
-    # Add Python Scripts to PATH
-    $pythonScripts = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-    $env:PATH = "$pythonScripts;$env:PATH"
+    Write-Info "Installing meson and ninja..."
+    python -m pip install --quiet --upgrade pip
+    python -m pip install --quiet meson ninja
+
+    # Add Python Scripts to PATH if meson not found
+    $mesonPath = python -c "import shutil; print(shutil.which('meson') or '')" 2>$null
+    if (-not $mesonPath) {
+        $pythonScripts = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+        $env:PATH = "$pythonScripts;$env:PATH"
+    }
+} else {
+    Write-Info "Using existing meson: $($mesonPath.Source)"
 }
 
 # ────────────────────────────────

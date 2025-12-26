@@ -6,9 +6,10 @@
 # Source this script to get the variables, or call with --get <key> to retrieve a single value.
 #
 # Usage:
-#   source read-config.sh              # Export all variables
-#   ./read-config.sh                   # Print all config values
-#   ./read-config.sh --get qt_version  # Get single value
+#   source read-config.sh                    # Export all variables
+#   ./read-config.sh                         # Print all config values
+#   ./read-config.sh --get qt_version        # Get single value
+#   ./read-config.sh --github-output         # Output for GitHub Actions
 #
 # Exports:
 #   QT_VERSION, QT_MINIMUM_VERSION, QT_MODULES,
@@ -78,6 +79,58 @@ if [[ "${1:-}" == "--get" ]]; then
         exit 1
     fi
     get_config_value "$2" "$CONFIG_FILE"
+    exit 0
+fi
+
+# If called with --github-output, output in GitHub Actions format
+if [[ "${1:-}" == "--github-output" ]]; then
+    if [[ -z "${GITHUB_OUTPUT:-}" ]]; then
+        echo "Error: GITHUB_OUTPUT not set (not running in GitHub Actions?)" >&2
+        exit 1
+    fi
+
+    QT_VERSION=$(get_config_value qt_version "$CONFIG_FILE")
+    QT_MINIMUM_VERSION=$(get_config_value qt_minimum_version "$CONFIG_FILE")
+    QT_MODULES=$(get_config_value qt_modules "$CONFIG_FILE")
+    QT_MODULES_IOS=$(echo "$QT_MODULES" | sed 's/qtserialport//g; s/qtscxml//g; s/  */ /g; s/^ *//; s/ *$//')
+    GST_MINIMUM_VERSION=$(get_config_value gstreamer_minimum_version "$CONFIG_FILE")
+    GST_MACOS_VERSION=$(get_config_value gstreamer_macos_version "$CONFIG_FILE")
+    GST_ANDROID_VERSION=$(get_config_value gstreamer_android_version "$CONFIG_FILE")
+    GST_WINDOWS_VERSION=$(get_config_value gstreamer_windows_version "$CONFIG_FILE")
+    NDK_VERSION=$(get_config_value ndk_version "$CONFIG_FILE")
+    NDK_FULL_VERSION=$(get_config_value ndk_full_version "$CONFIG_FILE")
+    JAVA_VERSION=$(get_config_value java_version "$CONFIG_FILE")
+    ANDROID_PLATFORM=$(get_config_value android_platform "$CONFIG_FILE")
+    ANDROID_MIN_SDK=$(get_config_value android_min_sdk "$CONFIG_FILE")
+    ANDROID_BUILD_TOOLS=$(get_config_value android_build_tools "$CONFIG_FILE")
+    ANDROID_CMDLINE_TOOLS=$(get_config_value android_cmdline_tools "$CONFIG_FILE")
+    XCODE_VERSION=$(get_config_value xcode_version "$CONFIG_FILE")
+    XCODE_IOS_VERSION=$(get_config_value xcode_ios_version "$CONFIG_FILE")
+    CMAKE_MINIMUM_VERSION=$(get_config_value cmake_minimum_version "$CONFIG_FILE")
+
+    {
+        echo "qt_version=$QT_VERSION"
+        echo "qt_minimum_version=$QT_MINIMUM_VERSION"
+        echo "qt_modules=$QT_MODULES"
+        echo "qt_modules_ios=$QT_MODULES_IOS"
+        echo "gstreamer_minimum_version=$GST_MINIMUM_VERSION"
+        echo "gstreamer_macos_version=$GST_MACOS_VERSION"
+        echo "gstreamer_android_version=$GST_ANDROID_VERSION"
+        echo "gstreamer_windows_version=$GST_WINDOWS_VERSION"
+        echo "ndk_version=$NDK_VERSION"
+        echo "ndk_full_version=$NDK_FULL_VERSION"
+        echo "java_version=$JAVA_VERSION"
+        echo "android_platform=$ANDROID_PLATFORM"
+        echo "android_min_sdk=$ANDROID_MIN_SDK"
+        echo "android_build_tools=$ANDROID_BUILD_TOOLS"
+        echo "android_cmdline_tools=$ANDROID_CMDLINE_TOOLS"
+        echo "xcode_version=$XCODE_VERSION"
+        echo "xcode_ios_version=$XCODE_IOS_VERSION"
+        echo "cmake_minimum_version=$CMAKE_MINIMUM_VERSION"
+    } >> "$GITHUB_OUTPUT"
+
+    # Also set QT_VERSION as env var (commonly needed)
+    echo "QT_VERSION=$QT_VERSION" >> "$GITHUB_ENV"
     exit 0
 fi
 

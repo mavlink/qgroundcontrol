@@ -35,7 +35,11 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: npm ci
 
       - name: Build with VitePress
         run: |

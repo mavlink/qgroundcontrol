@@ -170,13 +170,15 @@ log_info "Checking dependencies..."
 check_dependencies
 log_ok "All dependencies found"
 
-# Install Python build tools
-log_info "Installing meson and ninja..."
-python3 -m pip install --user --quiet --upgrade pip
-python3 -m pip install --user --quiet ninja meson
-
-# Ensure meson/ninja are in PATH
-export PATH="$HOME/Library/Python/$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')/bin:$PATH"
+# Install Python build tools (skip if already available, e.g., from CI venv)
+if ! command -v meson &> /dev/null; then
+    log_info "Installing meson and ninja..."
+    python3 -m pip install --user --quiet --upgrade pip
+    python3 -m pip install --user --quiet ninja meson
+    export PATH="$HOME/Library/Python/$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')/bin:$PATH"
+else
+    log_info "Using existing meson: $(command -v meson)"
+fi
 
 # Clean if requested
 if [[ "$CLEAN" == true && -d "$SOURCE_DIR" ]]; then
