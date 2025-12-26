@@ -1,13 +1,12 @@
 {
-  "version": 6,
+  "version": 5,
   "include": ["common.json"],
   "configurePresets": [
     {
-      "name": "Windows",
-      "displayName": "Windows",
+      "name": "windows-base",
+      "hidden": true,
       "generator": "Ninja Multi-Config",
       "inherits": ["sccache"],
-      "binaryDir": "${sourceParentDir}/build/Windows",
       "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Release;Debug"
@@ -17,18 +16,37 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
+    },
+    {
+      "name": "Windows",
+      "displayName": "Windows x64",
+      "inherits": ["windows-base"],
+      "binaryDir": "${sourceParentDir}/build/Windows"
+    },
+    {
+      "name": "Windows-arm64",
+      "displayName": "Windows ARM64",
+      "inherits": ["windows-base"],
+      "binaryDir": "${sourceParentDir}/build/Windows-arm64",
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
+        "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
+      }
     }
   ],
   "buildPresets": [
     { "name": "Windows", "configurePreset": "Windows", "configuration": "Release", "inherits": ["default"] },
-    { "name": "Windows-debug", "configurePreset": "Windows", "configuration": "Debug", "inherits": ["default"] }
+    { "name": "Windows-debug", "configurePreset": "Windows", "configuration": "Debug", "inherits": ["default"] },
+    { "name": "Windows-arm64", "configurePreset": "Windows-arm64", "configuration": "Release", "inherits": ["default"] },
+    { "name": "Windows-arm64-debug", "configurePreset": "Windows-arm64", "configuration": "Debug", "inherits": ["default"] }
   ],
   "testPresets": [
     { "name": "Windows", "configurePreset": "Windows", "configuration": "Release", "inherits": ["default"] },
     { "name": "Windows-debug", "configurePreset": "Windows", "configuration": "Debug", "inherits": ["default"] }
   ],
   "packagePresets": [
-    { "name": "Windows", "configurePreset": "Windows", "configurations": ["Release"] }
+    { "name": "Windows", "configurePreset": "Windows", "configurations": ["Release"] },
+    { "name": "Windows-arm64", "configurePreset": "Windows-arm64", "configurations": ["Release"] }
   ],
   "workflowPresets": [
     {

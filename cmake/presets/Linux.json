@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 5,
   "include": ["common.json"],
   "configurePresets": [
     {
@@ -31,12 +31,32 @@
       "displayName": "Linux Coverage",
       "inherits": ["coverage", "linux-base"],
       "binaryDir": "${sourceParentDir}/build/Linux-coverage"
+    },
+    {
+      "name": "Linux-arm64",
+      "displayName": "Linux ARM64 Release",
+      "inherits": ["release", "linux-base"],
+      "binaryDir": "${sourceParentDir}/build/Linux-arm64",
+      "cacheVariables": {
+        "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
+      }
+    },
+    {
+      "name": "Linux-arm64-debug",
+      "displayName": "Linux ARM64 Debug",
+      "inherits": ["debug", "linux-base"],
+      "binaryDir": "${sourceParentDir}/build/Linux-arm64-debug",
+      "cacheVariables": {
+        "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
+      }
     }
   ],
   "buildPresets": [
     { "name": "Linux", "configurePreset": "Linux", "inherits": ["default"] },
     { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["default"] },
-    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["default"] }
+    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["default"] },
+    { "name": "Linux-arm64", "configurePreset": "Linux-arm64", "inherits": ["default"] },
+    { "name": "Linux-arm64-debug", "configurePreset": "Linux-arm64-debug", "inherits": ["default"] }
   ],
   "testPresets": [
     { "name": "Linux", "configurePreset": "Linux", "inherits": ["default"] },
@@ -44,7 +64,8 @@
     { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["default"] }
   ],
   "packagePresets": [
-    { "name": "Linux", "configurePreset": "Linux" }
+    { "name": "Linux", "configurePreset": "Linux" },
+    { "name": "Linux-arm64", "configurePreset": "Linux-arm64" }
   ],
   "workflowPresets": [
     {

@@ -21,7 +21,7 @@
     "For local customizations, create CMakeUserPresets.json (not tracked in git)",
     "See: https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html"
   ],
-  "version": 6,
+  "version": 5,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 25,
