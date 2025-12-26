@@ -17,15 +17,15 @@ VehicleRPMFactGroup::VehicleRPMFactGroup(QObject *parent)
     _addFact(&_rpm2Fact);
     _addFact(&_rpm3Fact);
     _addFact(&_rpm4Fact);
-    _addFact(&_rpmsensor1Fact);
-    _addFact(&_rpmsensor2Fact);
+    _addFact(&_rpmSensor1Fact);
+    _addFact(&_rpmS     ensor2Fact);
 
     _rpm1Fact.setRawValue(qQNaN());
     _rpm2Fact.setRawValue(qQNaN());
     _rpm3Fact.setRawValue(qQNaN());
     _rpm4Fact.setRawValue(qQNaN());
-    _rpmsensor1Fact.setRawValue(qQNaN());
-    _rpmsensor2Fact.setRawValue(qQNaN());
+    _rpmSensor1Fact.setRawValue(qQNaN());
+    _rpmSensor2Fact.setRawValue(qQNaN());
 }
 
 void VehicleRPMFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -73,8 +73,8 @@ void VehicleRPMFactGroup::_handleRPMSensor(const mavlink_message_t &message)
     mavlink_rpm_t rpm{};
     mavlink_msg_rpm_decode(&message, &rpm);
 
-    _rpmsensor1Fact.setRawValue(rpm.rpm1);
-    _rpmsensor2Fact.setRawValue(rpm.rpm2);
+    _rpmSensor1Fact.setRawValue(rpm.rpm1);
+    _rpmSensor2Fact.setRawValue(rpm.rpm2);
 
     _setTelemetryAvailable(true);
 }
