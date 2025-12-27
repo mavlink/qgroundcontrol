@@ -112,7 +112,7 @@
 // #include "SendMavCommandTest.h"
 // #include "TCPLinkTest.h"
 
-int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
+int QGCUnitTest::runTests(bool stress, const QStringList& unitTests, const QString& outputFile)
 {
     // ADSB
     UT_REGISTER_TEST(ADSBTest)
@@ -217,8 +217,7 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     for (int i=0; i < (stress ? 20 : 1); i++) {
         int failures = 0;
         for (const QString& test: unitTests) {
-            // Run the test
-            failures += UnitTest::run(test);
+            failures += UnitTest::run(test, outputFile);
         }
 
         if (failures == 0) {

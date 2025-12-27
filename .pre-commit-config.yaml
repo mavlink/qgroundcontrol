@@ -91,6 +91,17 @@ repos:
     hooks:
       - id: actionlint
 
+  # GitHub Actions security scanning
+  - repo: local
+    hooks:
+      - id: zizmor
+        name: zizmor (GitHub Actions security)
+        entry: zizmor
+        language: python
+        additional_dependencies: ['zizmor>=1.19.0']
+        files: ^\.github/(workflows|actions)/.*\.ya?ml$
+        types: [yaml]
+
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1

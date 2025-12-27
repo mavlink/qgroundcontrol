@@ -1,0 +1,98 @@
+name: Build GStreamer
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform'
+        required: true
+        default: 'linux'
+        type: choice
+        options:
+          - linux
+          - macos
+          - windows
+          - android
+          - ios
+      version:
+        description: 'GStreamer version (empty for default)'
+        required: false
+        default: ''
+        type: string
+      arch:
+        description: 'Architecture'
+        required: true
+        default: 'x86_64'
+        type: choice
+        options:
+          - x86_64
+          - arm64
+          - aarch64
+          - universal
+          - armv7
+          - x86
+          - x64
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+      simulator:
+        description: 'iOS Simulator build'
+        required: false
+        default: false
+        type: boolean
+      upload_s3:
+        description: 'Upload to S3'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: gstreamer-${{ inputs.platform }}-${{ inputs.arch }}-${{ inputs.simulator }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ inputs.platform }} ${{ inputs.arch }}${{ inputs.simulator && ' (Simulator)' || '' }}
+    runs-on: >-
+      ${{
+        inputs.platform == 'linux' && (inputs.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04') ||
+        inputs.platform == 'macos' && 'macos-15' ||
+        inputs.platform == 'windows' && (inputs.arch == 'arm64' && 'windows-11-arm' || 'windows-2022') ||
+        inputs.platform == 'android' && 'ubuntu-24.04' ||
+        inputs.platform == 'ios' && 'macos-15' ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 120
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github
+            tools
+
+      - name: Build GStreamer
+        uses: ./.github/actions/gstreamer
+        with:
+          platform: ${{ inputs.platform }}
+          arch: ${{ inputs.arch }}
+          version: ${{ inputs.version }}
+          build-type: ${{ inputs.build_type }}
+          simulator: ${{ inputs.simulator }}
+          upload-s3: ${{ inputs.upload_s3 }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

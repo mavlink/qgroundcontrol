@@ -14,6 +14,6 @@
 
 namespace QGCUnitTest {
 
-int runTests(bool stress, const QStringList& unitTests);
+int runTests(bool stress, const QStringList& unitTests, const QString& outputFile = QString());
 
 }

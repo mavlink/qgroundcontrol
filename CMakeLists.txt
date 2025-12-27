@@ -108,6 +108,7 @@ include(CPM)
 if(NOT CPM_SOURCE_CACHE)
     set(CPM_SOURCE_CACHE "${CMAKE_BINARY_DIR}/cpm_modules")
 endif()
+CPMUsePackageLock(package-lock.cmake)
 
 # ----------------------------------------------------------------------------
 # Toolchain Configuration (Compiler, Linker, Build Settings)

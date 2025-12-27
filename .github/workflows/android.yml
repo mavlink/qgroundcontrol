@@ -20,6 +20,7 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'translations/*'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -83,6 +84,7 @@ jobs:
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
+      GRADLE_OPTS: -Dorg.gradle.configuration-cache=true -Dorg.gradle.caching=true
 
     steps:
       - name: Harden Runner
@@ -166,6 +168,7 @@ jobs:
         with:
           artifact_name: ${{ env.PACKAGE }}.apk
           package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}

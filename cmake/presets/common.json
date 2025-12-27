@@ -1,36 +1,24 @@
 {
-  "version": 6,
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "default",
       "displayName": "Default (Debug)",
-      "description": "Cross-platform debug build with Ninja",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
-      "inherits": ["dev", "debug"]
+      "inherits": ["debug"]
     },
     {
       "name": "default-release",
       "displayName": "Default (Release)",
-      "description": "Cross-platform release build with Ninja",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "inherits": ["release"]
-    },
-    {
-      "name": "dev",
-      "hidden": true,
-      "warnings": {
-        "dev": true,
-        "deprecated": true,
-        "uninitialized": false,
-        "unusedCli": true,
-        "systemVars": true
-      },
-      "errors": {
-        "dev": true,
-        "deprecated": true
-      }
     },
     {
       "name": "ccache",
@@ -63,8 +51,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "QGC_BUILD_TESTING": "OFF",
-        "QGC_DEBUG_QML": "OFF",
-        "QGC_BUILD_INSTALLER": "ON"
+        "QGC_DEBUG_QML": "OFF"
       }
     },
     {
@@ -75,16 +62,13 @@
         "QGC_BUILD_TESTING": "ON",
         "QGC_ENABLE_COVERAGE": "ON"
       }
-    },
+    }
+  ],
+  "buildPresets": [
     {
-      "name": "minimal",
+      "name": "default",
       "hidden": true,
-      "cacheVariables": {
-        "QGC_VIEWER3D": "OFF",
-        "QGC_ENABLE_BLUETOOTH": "OFF",
-        "QGC_ENABLE_GST_VIDEOSTREAMING": "OFF",
-        "QGC_ENABLE_UVC": "OFF"
-      }
+      "jobs": 0
     }
   ],
   "testPresets": [

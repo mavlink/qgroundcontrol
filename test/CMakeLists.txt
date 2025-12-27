@@ -86,8 +86,9 @@ add_subdirectory(GPS)
 add_qgc_test(GpsTest)
 
 add_subdirectory(MAVLink)
-add_qgc_test(StatusTextHandlerTest)
+add_qgc_test(MAVLinkBenchmark)
 add_qgc_test(SigningTest)
+add_qgc_test(StatusTextHandlerTest)
 
 add_subdirectory(MissionManager)
 add_qgc_test(CameraCalcTest)

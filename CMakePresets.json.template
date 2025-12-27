@@ -1,5 +1,27 @@
 {
-  "version": 6,
+  "$comment": [
+    "CMake Presets for QGroundControl",
+    "",
+    "To activate: Copy this file to CMakePresets.json (or rename it)",
+    "  cp CMakePresets.json.template CMakePresets.json",
+    "",
+    "Prerequisites:",
+    "  - Set QT_ROOT_DIR environment variable to your Qt installation",
+    "    Example: export QT_ROOT_DIR=~/Qt/6.8.0/gcc_64",
+    "  - For Android: Set ANDROID_NDK, ANDROID_PLATFORM, QT_HOST_PATH",
+    "  - For iOS: Set QT_HOST_PATH to macOS Qt installation",
+    "",
+    "Usage examples:",
+    "  cmake --list-presets                    # List available presets",
+    "  cmake --preset Linux-debug              # Configure Linux debug build",
+    "  cmake --build --preset Linux-debug      # Build",
+    "  ctest --preset Linux-debug              # Run tests",
+    "  cmake --workflow --preset Linux-debug   # Full workflow",
+    "",
+    "For local customizations, create CMakeUserPresets.json (not tracked in git)",
+    "See: https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html"
+  ],
+  "version": 5,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 25,

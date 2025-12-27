@@ -19,6 +19,7 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*debian*'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -29,6 +30,11 @@ on:
         options:
           - Release
           - Debug
+      unity_build:
+        description: 'Enable CMake Unity Build (experimental, faster builds)'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
 
 concurrency:
@@ -73,54 +79,26 @@ jobs:
         shell: bash
 
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
+      - name: Build Setup
+        id: setup
+        uses: ./.github/actions/build-setup
         with:
-          egress-policy: audit
-
-      - name: Checkout repo
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
         run: |
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
 
-      - name: Setup Caching
-        uses: ./.github/actions/cache
+      - name: Initialize CodeQL
+        if: matrix.build_type == 'Debug'
+        uses: github/codeql-action/init@v4
         with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
-
-      # Advanced CodeQL: Uncomment these steps after disabling default setup in repo settings
-      # - name: Initialize CodeQL
-      #   if: matrix.build_type == 'Debug'
-      #   uses: github/codeql-action/init@v4
-      #   with:
-      #     languages: c-cpp
-      #     config-file: ./.github/codeql/codeql-config.yml
+          languages: c-cpp
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -129,57 +107,56 @@ jobs:
               -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_ENABLE_COVERAGE=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              ${{ inputs.unity_build && '-DCMAKE_UNITY_BUILD=ON -DCMAKE_UNITY_BUILD_BATCH_SIZE=16' || '' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      # - name: Perform CodeQL Analysis
-      #   if: matrix.build_type == 'Debug'
-      #   uses: github/codeql-action/analyze@v4
-      #   with:
-      #     category: "/language:c-cpp"
+      - name: Perform CodeQL Analysis
+        if: matrix.build_type == 'Debug'
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:c-cpp"
 
-      # NOTE: QGC's command line parser doesn't support Qt Test -o options.
-      # The test runner (UnitTest::run) uses hardcoded args via QTest::qExec().
-      # JUnit XML output would require modifying src/Utilities/QGCCommandLineParser.cc
-      # to forward -o options to the test framework.
-      # xvfb-run: Qt GUI apps require a display server; -a auto-selects free display
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
         id: tests
         working-directory: ${{ runner.temp }}/build/Debug
         run: |
           set +e
-          # TODO: Add JUnit output when QGC supports Qt Test -o options (see note above)
-          # xvfb-run -a ./QGroundControl --unittest \
-          #   -o ../junit-results.xml,junitxml \
-          #   -o -,txt 2>&1 | tee ../test-output.txt
-          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee ../test-output.txt
+          xvfb-run -a ./QGroundControl --unittest --unittest-output ../junit-results.xml 2>&1 | tee ../test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-          exit $TEST_EXIT_CODE
+          echo "exit_code=$TEST_EXIT_CODE" >> "$GITHUB_OUTPUT"
+          exit "$TEST_EXIT_CODE"
+
+      - name: Publish Test Results
+        if: matrix.build_type == 'Debug' && always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: Unit Tests (${{ matrix.arch }})
+          path: ${{ runner.temp }}/build/junit-results.xml
+          reporter: java-junit
+          fail-on-error: false
 
       - name: Upload Test Results
         if: matrix.build_type == 'Debug' && always()
         uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.arch }}
-          # TODO: Add junit-results.xml when QGC supports Qt Test -o options
           path: |
             ${{ runner.temp }}/build/test-output.txt
-            # ${{ runner.temp }}/build/junit-results.xml
-          retention-days: 7
+            ${{ runner.temp }}/build/junit-results.xml
+          retention-days: ${{ github.event_name == 'pull_request' && 3 || 14 }}
 
-      # TODO: Enable when JUnit XML output is supported (see note above)
-      # - name: Upload to Trunk Flaky Tests
-      #   if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-      #   continue-on-error: true
-      #   uses: trunk-io/analytics-uploader@v1
-      #   with:
-      #     junit-paths: ${{ runner.temp }}/build/junit-results.xml
-      #     org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-      #     token: ${{ secrets.TRUNK_TOKEN }}
+      - name: Upload to Trunk Flaky Tests
+        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: trunk-io/analytics-uploader@v2
+        with:
+          junit-paths: ${{ runner.temp }}/build/junit-results.xml
+          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
@@ -213,6 +190,7 @@ jobs:
         with:
           artifact_name: ${{ matrix.package }}.AppImage
           package_name: ${{ matrix.package }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}

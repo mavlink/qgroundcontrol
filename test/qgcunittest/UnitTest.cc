@@ -56,7 +56,7 @@ QList<UnitTest*> &UnitTest::_testList()
     return tests;
 }
 
-int UnitTest::run(QStringView singleTest)
+int UnitTest::run(QStringView singleTest, const QString& outputFile)
 {
     int ret = 0;
 
@@ -67,6 +67,9 @@ int UnitTest::run(QStringView singleTest)
             }
             QStringList args;
             args << "*" << "-maxwarnings" << "0";
+            if (!outputFile.isEmpty()) {
+                args << "-o" << QStringLiteral("%1,junitxml").arg(outputFile);
+            }
             ret += QTest::qExec(test, args);
         }
     }

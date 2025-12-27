@@ -33,3 +33,4 @@ jobs:
         with:
           name: QGroundControl-flatpak
           path: QGroundControl.flatpak
+          retention-days: 14

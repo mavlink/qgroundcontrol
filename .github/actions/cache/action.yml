@@ -47,40 +47,58 @@ runs:
         fi
         echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
 
-    - name: Cache ccache binary (Linux)
+    - name: Cache ccache binary (Linux x86_64)
       if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
-      id: ccache-binary
+      id: ccache-binary-x64
       uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
         key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-x86_64
 
-    - name: Install ccache (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary.outputs.cache-hit != 'true'
+    - name: Install ccache (Linux x86_64)
+      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary-x64.outputs.cache-hit != 'true'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
       run: |
         set -e
-        # Download pre-built binary (not source tarball)
         wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
         tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        # Copy pre-built binary directly (no compilation needed)
         sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
         sudo chmod +x /usr/local/bin/ccache
 
-    - name: Setup sccache (Windows x64 only)
-      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
+    - name: Cache ccache binary (Linux ARM64)
+      if: runner.os == 'Linux' && inputs.target == 'linux_gcc_arm64'
+      id: ccache-binary-arm64
+      uses: actions/cache@v5
+      with:
+        path: /usr/local/bin/ccache
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-aarch64
+
+    - name: Install ccache (Linux ARM64)
+      if: runner.os == 'Linux' && inputs.target == 'linux_gcc_arm64' && steps.ccache-binary-arm64.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+      run: |
+        set -e
+        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-aarch64.tar.xz"
+        tar -xf "ccache-${CCACHE_VERSION}-linux-aarch64.tar.xz"
+        sudo cp "ccache-${CCACHE_VERSION}-linux-aarch64/ccache" /usr/local/bin/ccache
+        sudo chmod +x /usr/local/bin/ccache
+
+    - name: Setup sccache (Windows)
+      if: runner.os == 'Windows' && inputs.target != 'android'
       uses: mozilla-actions/sccache-action@v0.0.9
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
+      if: runner.os == 'Windows' && inputs.target != 'android'
       shell: bash
 
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64' && 'sccache' || 'ccache' }}
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
@@ -100,5 +118,5 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: ${{ github.workflow }}-cpm-modules-
+        key: ${{ github.workflow }}-cpm-${{ hashFiles('package-lock.cmake') }}
+        restore-keys: ${{ github.workflow }}-cpm-

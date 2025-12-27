@@ -1,8 +1,26 @@
 name: iOS
 
-# iOS builds are experimental - manual trigger only until stable
 on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - '.github/workflows/ios.yml'
+      - '.github/actions/**'
+      - 'deploy/ios/**'
+      - 'src/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  merge_group:
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,6 +34,7 @@ permissions:
 
 jobs:
   build:
+    name: iOS
     runs-on: macos-15
     timeout-minutes: 120
 
@@ -40,8 +59,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          fetch-depth: 1
+          fetch-depth: 0
           fetch-tags: true
+
+      - name: Restore file timestamps
+        uses: chetan/git-restore-mtime-action@v2
 
       - name: Get build config
         id: config
