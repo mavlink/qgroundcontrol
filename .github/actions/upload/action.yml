@@ -8,6 +8,9 @@ inputs:
   package_name:
     description: Package name (for GitHub artifact)
     required: true
+  aws_role_arn:
+    description: AWS IAM role ARN for OIDC authentication (preferred)
+    required: false
   aws_key_id:
     description: AWS access key ID
     required: false
@@ -52,12 +55,12 @@ runs:
         fromJSON(inputs.upload_aws) &&
         github.event_name == 'push' &&
         github.repository_owner == 'mavlink' &&
-        inputs.aws_key_id != '' &&
-        inputs.aws_secret_access_key != ''
+        (inputs.aws_role_arn != '' || (inputs.aws_key_id != '' && inputs.aws_secret_access_key != ''))
       uses: ./.github/actions/aws-upload
       with:
         artifact_name: ${{ inputs.artifact_name }}
         artifact_path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
+        aws_role_arn: ${{ inputs.aws_role_arn }}
         aws_key_id: ${{ inputs.aws_key_id }}
         aws_secret_access_key: ${{ inputs.aws_secret_access_key }}
         aws_distribution_id: ${{ inputs.aws_distribution_id }}

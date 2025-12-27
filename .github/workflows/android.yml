@@ -168,6 +168,7 @@ jobs:
         with:
           artifact_name: ${{ env.PACKAGE }}.apk
           package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
