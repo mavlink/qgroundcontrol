@@ -49,6 +49,9 @@ AM32Setting::AM32Setting(const AM32FieldDef& fieldDef, QObject* parent)
     if (!fieldDef.unit.isEmpty()) {
         metaData->setRawUnits(fieldDef.unit);
     }
+
+    // Initialize with a default value (0 in raw units, converted to display units)
+    _fact->setRawValue(_fromRaw(0));
 }
 
 void AM32Setting::updateFromEeprom(uint8_t value)

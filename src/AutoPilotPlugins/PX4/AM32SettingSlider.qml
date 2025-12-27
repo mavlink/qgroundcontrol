@@ -12,7 +12,8 @@ Column {
 
     property real from: fact ? fact.min : 0
     property real to: fact ? fact.max : 100
-    property real stepSize: fact ? fact.increment : 1
+    // fact.increment may be NaN if not set - default to 1
+    property real stepSize: (fact && !isNaN(fact.increment)) ? fact.increment : 1
     property int decimalPlaces: fact ? fact.decimalPlaces : 0
     property var onValueChange: null
     property bool enabled: true
