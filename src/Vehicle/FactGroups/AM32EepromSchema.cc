@@ -280,6 +280,24 @@ void AM32EepromSchema::setupConversionFunctions(AM32FieldDef& field)
     double factor = field.displayFactor;
     double offset = field.displayOffset;
 
+    // For EEPROM fields, default raw range is 0-255 (uint8)
+    double rawMinVal = field.rawMin.isValid() ? field.rawMin.toDouble() : 0.0;
+    double rawMaxVal = field.rawMax.isValid() ? field.rawMax.toDouble() : 255.0;
+
+    // Compute displayMin/displayMax from rawMin/rawMax if not explicitly set
+    // Formula: display = raw * factor + offset
+    if (!field.displayMin.isValid()) {
+        // Handle potential flip if factor is negative
+        double dispMin = rawMinVal * factor + offset;
+        double dispMax = rawMaxVal * factor + offset;
+        field.displayMin = QVariant(qMin(dispMin, dispMax));
+    }
+    if (!field.displayMax.isValid()) {
+        double dispMin = rawMinVal * factor + offset;
+        double dispMax = rawMaxVal * factor + offset;
+        field.displayMax = QVariant(qMax(dispMin, dispMax));
+    }
+
     // Identity conversion
     if (factor == 1.0 && offset == 0.0) {
         field.fromRaw = [](uint8_t v) { return QVariant(v); };
