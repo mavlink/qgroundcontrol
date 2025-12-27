@@ -58,6 +58,55 @@
     "name":             "count",
     "shortDesc": "Sat Count",
     "type":             "uint32"
+},
+{
+    "name":             "systemErrors",
+    "shortDesc": "General System Errors",
+    "type":             "uint32"
+},
+{
+    "name":             "spoofingState",
+    "shortDesc": "Signal Spoofing State",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,Not spoofed,Mitigated,Ongoing",
+    "enumValues":       "0,1,2,3",
+    "decimalPlaces":    0
+},
+{
+    "name":             "jammingState",
+    "shortDesc": "Signal Jamming State",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,Not jammed,Mitigated,Ongoing",
+    "enumValues":       "0,1,2,3",
+    "decimalPlaces":    0
+},
+{
+    "name":             "authenticationState",
+    "shortDesc": "Signal Authentication State",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,Initializing,Error,Ok,Disabled",
+    "enumValues":       "0,1,2,3,4",
+    "decimalPlaces":    0
+},
+{
+    "name":             "correctionsQuality",
+    "shortDesc": "Corrections Quality",
+    "type":             "uint8"
+},
+{
+    "name":             "systemQuality",
+    "shortDesc": "System Status Quality",
+    "type":             "uint8"
+},
+{
+    "name":             "gnssSignalQuality",
+    "shortDesc": "Gnss Signal Quality",
+    "type":             "uint8"
+},
+{
+    "name":             "postProcessingQuality",
+    "shortDesc": "Post Processing Quality",
+    "type":             "uint8"
 }
 ]
 }
