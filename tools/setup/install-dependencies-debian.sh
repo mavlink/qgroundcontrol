@@ -2,33 +2,41 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get update -y -qq
-apt-get install -y -qq --no-install-recommends \
-    software-properties-common \
+apt-get update -qq
+apt-get install -qq --no-install-recommends \
+    ca-certificates \
     gnupg2 \
-    ca-certificates
+    locales \
+    software-properties-common
 
 # Enable the “universe” component (needed for several dev packages)
 add-apt-repository -y universe
-apt-get update -y -qq
+apt-get update -qq
+
+# --------------------------------------------------------------------
+# Configure language environment
+# --------------------------------------------------------------------
+locale-gen en_US.UTF-8 && \
+update-locale LANG=en_US.UTF-8
 
 # --------------------------------------------------------------------
 # Core build tools
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     appstream \
     binutils \
     build-essential \
     ccache \
     cmake \
     cppcheck \
+    curl \
     file \
+    fuse3 \
     gdb \
     git \
+    jq \
     libfuse2 \
-    fuse3 \
     libtool \
-    locales \
     mold \
     ninja-build \
     patchelf \
@@ -41,16 +49,17 @@ apt-get install -y -qq --no-install-recommends \
     wget \
     zsync
 
-pipx ensurepath
-pipx install cmake
-pipx install ninja
-pipx install gcovr
+# Install cmake and ninja via pipx to get more recent versions
+pipx ensurepath -q
+pipx install -q cmake
+pipx install -q ninja
+pipx install -q gcovr
 
 # --------------------------------------------------------------------
 # Qt6 compile/runtime dependencies
 # See: https://doc.qt.io/qt-6/linux-requirements.html
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libatspi2.0-dev \
     libfontconfig1-dev \
     libfreetype-dev \
@@ -86,7 +95,7 @@ apt-get install -y -qq --no-install-recommends \
 # --------------------------------------------------------------------
 # GStreamer (video/telemetry streaming)
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libgstreamer1.0-dev \
     libgstreamer-plugins-bad1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -104,19 +113,19 @@ apt-get install -y -qq --no-install-recommends \
 
 # Optional – only present on Ubuntu 22.04+; skip gracefully otherwise
 if apt-cache show gstreamer1.0-qt6 >/dev/null 2>&1; then
-    apt-get install -y -qq --no-install-recommends gstreamer1.0-qt6
+    apt-get install -qq --no-install-recommends gstreamer1.0-qt6
 fi
 
 # --------------------------------------------------------------------
 # SDL
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libusb-1.0-0-dev
 
 # --------------------------------------------------------------------
 # Miscellaneous
 # --------------------------------------------------------------------
-apt-get install -y -qq --no-install-recommends \
+apt-get install -qq --no-install-recommends \
     libvulkan-dev \
     libpipewire-0.3-dev
 
