@@ -1,6 +1,8 @@
 #include <QApplicationStatic>
 #include <QDebug>
 #include "KamikazeLocManager.h"
+#include "Vehicle.h"
+#include <mavlink.h>
 
 Q_APPLICATION_STATIC(KamikazeLocManager, _kamikazeLocManager)
 
@@ -11,7 +13,7 @@ KamikazeLocManager* KamikazeLocManager::instance()
 
 void KamikazeLocManager::setCoordinate(QGeoCoordinate coord) {
     if (coord.isValid()) {
-        _Coordinate = coord;
+        _coordinate = coord;
         emit coordinateChanged();
         return;
     }
