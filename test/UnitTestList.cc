@@ -86,7 +86,7 @@
 // Audio
 #include "AudioOutputTest.h"
 // Compression
-#include "DecompressionTest.h"
+#include "QGCCompressionTest.h"
 // FileSystem
 #include "QGCFileDownloadTest.h"
 // Geo
@@ -187,7 +187,7 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     // Audio
     UT_REGISTER_TEST(AudioOutputTest)
     // Compression
-    UT_REGISTER_TEST(DecompressionTest)
+    UT_REGISTER_TEST(QGCCompressionTest)
     // FileSystem
     UT_REGISTER_TEST(QGCFileDownloadTest)
     // Geo

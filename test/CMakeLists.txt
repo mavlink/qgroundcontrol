@@ -126,7 +126,7 @@ add_subdirectory(Utilities)
 # Audio
 add_qgc_test(AudioOutputTest)
 # Compression
-add_qgc_test(DecompressionTest)
+add_qgc_test(QGCCompressionTest)
 # FileSystem
 add_qgc_test(QGCFileDownloadTest)
 # Geo
