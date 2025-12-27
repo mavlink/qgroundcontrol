@@ -1,3 +1,7 @@
+# Dependabot configuration
+# To merge dependabot PRs, comment "@dependabot merge" after CI passes
+# See: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-pull-requests-for-dependency-updates
+
 version: 2
 updates:
   # Monitor GitHub Actions in workflows and all custom actions
@@ -6,25 +10,11 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "[CI] "
+      prefix: "ci"
+      include: "scope"
     open-pull-requests-limit: 10
     groups:
       github-actions:
         patterns:
           - "*"
-
-  # Monitor npm dependencies for documentation
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "[Deps] "
-    open-pull-requests-limit: 5
-    groups:
-      npm-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+    # npm dependencies managed by Renovate (see renovate.json)

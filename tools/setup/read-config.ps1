@@ -71,8 +71,9 @@ if ($Get) {
 if (-not $env:QT_VERSION)                { $env:QT_VERSION = $config.qt_version }
 if (-not $env:QT_MODULES)                { $env:QT_MODULES = $config.qt_modules }
 if (-not $env:QT_MINIMUM_VERSION)        { $env:QT_MINIMUM_VERSION = $config.qt_minimum_version }
-if (-not $env:GSTREAMER_VERSION)         { $env:GSTREAMER_VERSION = $config.gstreamer_version }
+if (-not $env:GSTREAMER_MINIMUM_VERSION) { $env:GSTREAMER_MINIMUM_VERSION = $config.gstreamer_minimum_version }
 if (-not $env:GSTREAMER_WINDOWS_VERSION) { $env:GSTREAMER_WINDOWS_VERSION = $config.gstreamer_windows_version }
+if (-not $env:GSTREAMER_ANDROID_VERSION) { $env:GSTREAMER_ANDROID_VERSION = $config.gstreamer_android_version }
 if (-not $env:NDK_VERSION)               { $env:NDK_VERSION = $config.ndk_version }
 if (-not $env:NDK_FULL_VERSION)          { $env:NDK_FULL_VERSION = $config.ndk_full_version }
 if (-not $env:JAVA_VERSION)              { $env:JAVA_VERSION = $config.java_version }
@@ -80,18 +81,15 @@ if (-not $env:ANDROID_PLATFORM)          { $env:ANDROID_PLATFORM = $config.andro
 if (-not $env:ANDROID_MIN_SDK)           { $env:ANDROID_MIN_SDK = $config.android_min_sdk }
 if (-not $env:ANDROID_BUILD_TOOLS)       { $env:ANDROID_BUILD_TOOLS = $config.android_build_tools }
 if (-not $env:ANDROID_CMDLINE_TOOLS)     { $env:ANDROID_CMDLINE_TOOLS = $config.android_cmdline_tools }
-if (-not $env:XCODE_VERSION)             { $env:XCODE_VERSION = $config.xcode_version }
-if (-not $env:CCACHE_VERSION)            { $env:CCACHE_VERSION = $config.ccache_version }
-if (-not $env:CCACHE_MAX_SIZE)           { $env:CCACHE_MAX_SIZE = $config.ccache_max_size }
-if (-not $env:CLANG_FORMAT_VERSION)      { $env:CLANG_FORMAT_VERSION = $config.clang_format_version }
-if (-not $env:NODE_VERSION)              { $env:NODE_VERSION = $config.node_version }
+if (-not $env:CMAKE_MINIMUM_VERSION)     { $env:CMAKE_MINIMUM_VERSION = $config.cmake_minimum_version }
 
 # Also set script-scope variables for dot-sourcing
 $script:QT_VERSION = $env:QT_VERSION
 $script:QT_MODULES = $env:QT_MODULES
 $script:QT_MINIMUM_VERSION = $env:QT_MINIMUM_VERSION
-$script:GSTREAMER_VERSION = $env:GSTREAMER_VERSION
+$script:GSTREAMER_MINIMUM_VERSION = $env:GSTREAMER_MINIMUM_VERSION
 $script:GSTREAMER_WINDOWS_VERSION = $env:GSTREAMER_WINDOWS_VERSION
+$script:GSTREAMER_ANDROID_VERSION = $env:GSTREAMER_ANDROID_VERSION
 $script:NDK_VERSION = $env:NDK_VERSION
 $script:NDK_FULL_VERSION = $env:NDK_FULL_VERSION
 $script:JAVA_VERSION = $env:JAVA_VERSION
@@ -99,11 +97,7 @@ $script:ANDROID_PLATFORM = $env:ANDROID_PLATFORM
 $script:ANDROID_MIN_SDK = $env:ANDROID_MIN_SDK
 $script:ANDROID_BUILD_TOOLS = $env:ANDROID_BUILD_TOOLS
 $script:ANDROID_CMDLINE_TOOLS = $env:ANDROID_CMDLINE_TOOLS
-$script:XCODE_VERSION = $env:XCODE_VERSION
-$script:CCACHE_VERSION = $env:CCACHE_VERSION
-$script:CCACHE_MAX_SIZE = $env:CCACHE_MAX_SIZE
-$script:CLANG_FORMAT_VERSION = $env:CLANG_FORMAT_VERSION
-$script:NODE_VERSION = $env:NODE_VERSION
+$script:CMAKE_MINIMUM_VERSION = $env:CMAKE_MINIMUM_VERSION
 
 # Print config if running directly
 if ($MyInvocation.InvocationName -ne '.') {
@@ -111,8 +105,9 @@ if ($MyInvocation.InvocationName -ne '.') {
     Write-Host "  QT_VERSION                = $env:QT_VERSION"
     Write-Host "  QT_MODULES                = $env:QT_MODULES"
     Write-Host "  QT_MINIMUM_VERSION        = $env:QT_MINIMUM_VERSION"
-    Write-Host "  GSTREAMER_VERSION         = $env:GSTREAMER_VERSION"
+    Write-Host "  GSTREAMER_MINIMUM_VERSION = $env:GSTREAMER_MINIMUM_VERSION"
     Write-Host "  GSTREAMER_WINDOWS_VERSION = $env:GSTREAMER_WINDOWS_VERSION"
+    Write-Host "  GSTREAMER_ANDROID_VERSION = $env:GSTREAMER_ANDROID_VERSION"
     Write-Host "  NDK_VERSION               = $env:NDK_VERSION"
     Write-Host "  NDK_FULL_VERSION          = $env:NDK_FULL_VERSION"
     Write-Host "  JAVA_VERSION              = $env:JAVA_VERSION"
@@ -120,9 +115,5 @@ if ($MyInvocation.InvocationName -ne '.') {
     Write-Host "  ANDROID_MIN_SDK           = $env:ANDROID_MIN_SDK"
     Write-Host "  ANDROID_BUILD_TOOLS       = $env:ANDROID_BUILD_TOOLS"
     Write-Host "  ANDROID_CMDLINE_TOOLS     = $env:ANDROID_CMDLINE_TOOLS"
-    Write-Host "  XCODE_VERSION             = $env:XCODE_VERSION"
-    Write-Host "  CCACHE_VERSION            = $env:CCACHE_VERSION"
-    Write-Host "  CCACHE_MAX_SIZE           = $env:CCACHE_MAX_SIZE"
-    Write-Host "  CLANG_FORMAT_VERSION      = $env:CLANG_FORMAT_VERSION"
-    Write-Host "  NODE_VERSION              = $env:NODE_VERSION"
+    Write-Host "  CMAKE_MINIMUM_VERSION     = $env:CMAKE_MINIMUM_VERSION"
 }

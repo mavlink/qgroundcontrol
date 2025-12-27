@@ -1,5 +1,6 @@
 name: iOS
 
+# iOS builds are experimental - manual trigger only until stable
 on:
   workflow_dispatch:
 
@@ -11,10 +12,11 @@ permissions:
   contents: read
   id-token: write
   attestations: write
+  actions: read
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 120
 
     strategy:
@@ -29,6 +31,11 @@ jobs:
       PACKAGE: QGroundControl
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:

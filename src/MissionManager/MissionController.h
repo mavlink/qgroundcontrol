@@ -204,7 +204,6 @@ public:
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
 
-    bool loadJsonFile(QFile& file, QString& errorString);
     bool loadTextFile(QFile& file, QString& errorString);
 
     QGCGeoBoundingCube* travelBoundingCube  () { return &_travelBoundingCube; }

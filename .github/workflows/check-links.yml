@@ -5,13 +5,23 @@ on:
     branches:
       - master
     paths:
-      - 'docs/**'
       - '**.md'
+      - '.lychee.toml'
+      - '!docs/ko/**'
+      - '!docs/tr/**'
+      - '!docs/zh/**'
   pull_request:
     paths:
-      - 'docs/**'
       - '**.md'
+      - '.lychee.toml'
+      - '!docs/ko/**'
+      - '!docs/tr/**'
+      - '!docs/zh/**'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -26,23 +36,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Restore lychee cache
+        uses: actions/cache@v5
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
-          # Config in .lychee.toml, files to check passed as args
-          args: '**/*.md' 'docs/**'
+          args: '--config .lychee.toml --cache --max-cache-age 3d --no-progress **/*.md docs/en/**'
+          lycheeVersion: v0.22.0
+          failIfEmpty: false
           fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-
-      - name: Add to step summary
-        if: always()
-        run: |
-          echo "## 🔗 Link Check Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [[ -f ./lychee/out.md ]]; then
-            cat ./lychee/out.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "No report generated" >> "$GITHUB_STEP_SUMMARY"
-          fi
 
       - name: Upload report
         uses: actions/upload-artifact@v6
@@ -50,4 +57,5 @@ jobs:
         with:
           name: link-check-report
           path: ./lychee/out.md
+          if-no-files-found: ignore
           retention-days: 7

@@ -5,9 +5,9 @@ on:
     types: [opened, edited, synchronize, reopened, closed]
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
-  actions: write
+  models: read
 
 jobs:
   title:
@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - name: Check PR title format
+        id: title_check
         continue-on-error: true
         uses: amannn/action-semantic-pull-request@v6
         env:
@@ -41,6 +42,180 @@ jobs:
           wip: true
           validateSingleCommit: false
 
+      - name: Checkout prompt file
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/prompts
+          sparse-checkout-cone-mode: false
+
+      - name: Get changed files
+        id: files
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
+        uses: actions/github-script@v8
+        with:
+          result-encoding: string
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 50
+            });
+            return files.map(f => `${f.filename} (+${f.additions}/-${f.deletions})`).join('\n');
+
+      - name: Sanitize inputs for AI
+        id: sanitize
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
+        shell: bash
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          CHANGED_FILES: ${{ steps.files.outputs.result }}
+        run: |
+          # Truncate inputs to prevent token flooding
+          SAFE_TITLE=$(echo "$PR_TITLE" | head -c 200 | tr -d '\r')
+          SAFE_BODY=$(echo "$PR_BODY" | head -c 2000 | tr -d '\r')
+          SAFE_FILES=$(echo "$CHANGED_FILES" | head -30)
+
+          # Write to outputs using heredoc with unique delimiters
+          {
+            echo "title<<TITLE_END_7f3a9c2e"
+            echo "$SAFE_TITLE"
+            echo "TITLE_END_7f3a9c2e"
+            echo "body<<BODY_END_8b4d1e6f"
+            echo "$SAFE_BODY"
+            echo "BODY_END_8b4d1e6f"
+            echo "files<<FILES_END_2c5a8d9b"
+            echo "$SAFE_FILES"
+            echo "FILES_END_2c5a8d9b"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Suggest title with GitHub Models
+        id: suggest
+        if: |
+          steps.title_check.outcome == 'failure' &&
+          github.event.pull_request.user.type != 'Bot'
+        continue-on-error: true
+        uses: actions/ai-inference@v2
+        with:
+          prompt-file: .github/prompts/pr-title-suggestion.prompt.yml
+          max-tokens: 100
+          input: |
+            current_title: ${{ steps.sanitize.outputs.title }}
+            pr_body: ${{ steps.sanitize.outputs.body }}
+            changed_files: ${{ steps.sanitize.outputs.files }}
+
+      - name: Comment title suggestion
+        if: steps.title_check.outcome == 'failure' && steps.suggest.outputs.response
+        uses: actions/github-script@v8
+        env:
+          SUGGESTED_TITLE: ${{ steps.suggest.outputs.response }}
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            let suggestedTitle = process.env.SUGGESTED_TITLE.trim();
+
+            // Validate AI output format - must be conventional commit
+            const validFormat = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9\-\/]+\))?:\s.{1,80}$/;
+            if (!validFormat.test(suggestedTitle)) {
+              console.log('AI response did not match conventional commit format, skipping');
+              return;
+            }
+
+            // Escape HTML entities for safety
+            const escapeHtml = (str) => str
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/`/g, '&#96;');
+
+            const currentTitle = escapeHtml(pr.title);
+            suggestedTitle = escapeHtml(suggestedTitle);
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100
+            });
+
+            const botComment = comments.find(c =>
+              c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
+            );
+
+            const commentBody = `<!-- pr-title-suggestion -->
+            ## PR Title Suggestion
+
+            Your PR title doesn't follow the [conventional commit](https://www.conventionalcommits.org/) format.
+
+            | Current Title | Suggested Title |
+            |---------------|-----------------|
+            | \`${currentTitle}\` | \`${suggestedTitle}\` |
+
+            ### Format
+            \`<type>(<scope>): <description>\`
+
+            **Types:** \`feat\` \`fix\` \`docs\` \`refactor\` \`perf\` \`test\` \`ci\` \`chore\` \`build\` \`style\` \`revert\`
+
+            *Suggested by GitHub Models. Update your title to dismiss this suggestion.*`;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: commentBody
+              });
+            }
+
+      - name: Minimize suggestion if title valid
+        if: steps.title_check.outcome == 'success'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100
+            });
+
+            const botComment = comments.find(c =>
+              c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
+            );
+
+            if (botComment && !botComment.body.includes('(resolved)')) {
+              const minimizedBody = `<!-- pr-title-suggestion -->
+            <details>
+            <summary>PR Title Suggestion (resolved)</summary>
+
+            ${botComment.body.replace('<!-- pr-title-suggestion -->', '')}
+            </details>`;
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: minimizedBody
+              });
+            }
+
   size:
     name: Label PR Size
     runs-on: ubuntu-latest
@@ -48,13 +223,13 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Remove old size labels
+      - name: Get current size label
+        id: current
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          for label in size%2FXS size%2FS size%2FM size%2FL size%2FXL; do
-            gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/${label}" \
-              -X DELETE 2>/dev/null || true
-          done
+          CURRENT_LABEL=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels" \
+            --jq '.[] | select(.name | startswith("size/")) | .name' | head -1)
+          echo "label=${CURRENT_LABEL}" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -74,7 +249,7 @@ jobs:
           xl_label: 'size/XL'
           fail_if_xl: false
           message_if_xl: |
-            ## ⚠️ Large PR Warning
+            ## Large PR Warning
 
             This PR has **more than 1500 lines** changed, which can be difficult to review thoroughly.
 
@@ -89,6 +264,28 @@ jobs:
             *.lock
             translations/*
 
+      - name: Remove outdated size labels
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          OLD_LABEL="${{ steps.current.outputs.label }}"
+
+          # Get all current size labels
+          CURRENT_LABELS=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels" \
+            --jq '.[] | select(.name | startswith("size/")) | .name')
+
+          # Count size labels - if more than one, remove the old one
+          LABEL_COUNT=$(echo "$CURRENT_LABELS" | grep -c . || echo 0)
+
+          if [[ "$LABEL_COUNT" -gt 1 && -n "$OLD_LABEL" ]]; then
+            # Multiple size labels exist - remove the old one
+            ENCODED_LABEL=$(echo "$OLD_LABEL" | sed 's|/|%2F|g')
+            gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
+              -X DELETE 2>/dev/null || true
+          fi
+          # If only one label exists, size didn't change - nothing to remove
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   label:
     name: Label PR by Files
     runs-on: ubuntu-latest
@@ -102,52 +299,3 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
 
-  auto-merge:
-    name: Auto-merge Dependabot
-    runs-on: ubuntu-latest
-    if: github.event.action != 'closed' && github.event.pull_request.user.login == 'dependabot[bot]'
-    timeout-minutes: 5
-
-    steps:
-      - name: Fetch Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Enable auto-merge for patch/minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  cache-cleanup:
-    name: Cleanup PR Caches
-    runs-on: ubuntu-latest
-    if: github.event.action == 'closed'
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Delete PR caches
-        run: |
-          gh extension install actions/gh-actions-cache
-
-          REPO="${{ github.repository }}"
-          BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
-
-          echo "Fetching list of cache keys"
-          cacheKeysForPR=$(gh actions-cache list -R "$REPO" -B "$BRANCH" | cut -f 1 )
-
-          set +e
-          echo "Deleting caches..."
-          for cacheKey in $cacheKeysForPR
-          do
-            gh actions-cache delete "$cacheKey" -R "$REPO" -B "$BRANCH" --confirm
-          done
-          echo "Done"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

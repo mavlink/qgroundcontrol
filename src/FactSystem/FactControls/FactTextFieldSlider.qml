@@ -99,7 +99,6 @@ Rectangle {
                 Layout.fillWidth:   true
                 from:               control.fact.userMin
                 to:                 control.fact.userMax
-                mouseWheelSupport:  false
                 showBoundaryValues: true
 
                 onMoved: {
