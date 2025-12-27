@@ -62,9 +62,6 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Restore file timestamps
-        uses: chetan/git-restore-mtime-action@v2
-
       - name: Get build config
         id: config
         uses: ./.github/actions/build-config
@@ -72,36 +69,16 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/common
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Install Qt for iOS
+        uses: ./.github/actions/qt-ios
         with:
+          version: ${{ steps.config.outputs.qt_version }}
+          modules: ${{ steps.config.outputs.qt_modules }}
+          ios-modules: ${{ steps.config.outputs.qt_modules_ios }}
           xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: mac
-          target: ios
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
           save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for MacOS
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          arch: clang_64
-          modules: ${{ steps.config.outputs.qt_modules }}
-
-      - name: Install Qt for iOS
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          target: ios
-          arch: ios
-          modules: ${{ steps.config.outputs.qt_modules_ios }}
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build

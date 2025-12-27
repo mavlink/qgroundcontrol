@@ -91,13 +91,12 @@ jobs:
           build-type: ${{ matrix.build_type }}
           save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install GStreamer
+      - name: Install Dependencies
         if: matrix.arch == 'win64_msvc2022_64'
-        shell: pwsh
-        run: |
-          ./tools/setup/install-dependencies-windows.ps1 `
-            -GStreamerVersion ${{ steps.setup.outputs.gstreamer_windows_version }} `
-            -SkipVulkan
+        uses: ./.github/actions/install-dependencies
+        with:
+          gstreamer: 'true'
+          gstreamer-version: ${{ steps.setup.outputs.gstreamer_windows_version }}
 
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4

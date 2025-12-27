@@ -44,7 +44,8 @@ else
 fi
 
 # Use aqtinstall to download and install Qt.
-aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"
+# --autodesktop: For cross-compile targets (android/ios/wasm), automatically install parallel desktop Qt
+aqt install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}" --autodesktop
 
 # macOS does not support GNU readlink -e.
 # We use realpath instead (or substitute with greadlink -f if needed).

@@ -26,7 +26,7 @@ runs:
       run: |
         # Pin ccache version for reproducibility and to avoid API calls
         # Update periodically via Dependabot or manually
-        CCACHE_VERSION="4.10.2"
+        CCACHE_VERSION="4.12.2"
 
         # Validate version format (defense in depth)
         if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
@@ -34,6 +34,13 @@ runs:
           exit 1
         fi
         echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
+
+        # Determine architecture
+        if [[ "${{ inputs.target }}" == "linux_gcc_arm64" ]]; then
+          echo "arch=aarch64" >> "$GITHUB_OUTPUT"
+        else
+          echo "arch=x86_64" >> "$GITHUB_OUTPUT"
+        fi
 
         # Read max_size from tools/ccache.conf (single source of truth)
         CCACHE_CONF_PATH="${{ github.workspace }}/tools/ccache.conf"
@@ -47,44 +54,31 @@ runs:
         fi
         echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
 
-    - name: Cache ccache binary (Linux x86_64)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
-      id: ccache-binary-x64
+    - name: Cache ccache binary (Linux)
+      if: runner.os == 'Linux'
+      id: ccache-binary
       uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-x86_64
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-${{ steps.ccache-config.outputs.arch }}
 
-    - name: Install ccache (Linux x86_64)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary-x64.outputs.cache-hit != 'true'
+    - name: Install ccache (Linux)
+      if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_ARCH: ${{ steps.ccache-config.outputs.arch }}
+        # Public key from https://ccache.dev/download.html (v4.12+)
+        CCACHE_MINISIGN_KEY: "RWQX7yXbBedVfI4PNx6FLdFXu9GHUFsr28s4BVGxm4BeybtnX3P06saF"
       run: |
         set -e
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
-        sudo chmod +x /usr/local/bin/ccache
-
-    - name: Cache ccache binary (Linux ARM64)
-      if: runner.os == 'Linux' && inputs.target == 'linux_gcc_arm64'
-      id: ccache-binary-arm64
-      uses: actions/cache@v5
-      with:
-        path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-aarch64
-
-    - name: Install ccache (Linux ARM64)
-      if: runner.os == 'Linux' && inputs.target == 'linux_gcc_arm64' && steps.ccache-binary-arm64.outputs.cache-hit != 'true'
-      shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
-      run: |
-        set -e
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-aarch64.tar.xz"
-        tar -xf "ccache-${CCACHE_VERSION}-linux-aarch64.tar.xz"
-        sudo cp "ccache-${CCACHE_VERSION}-linux-aarch64/ccache" /usr/local/bin/ccache
+        ARCHIVE="ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}.tar.xz"
+        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${ARCHIVE}"
+        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${ARCHIVE}.minisig"
+        sudo apt-get install -y -qq minisign >/dev/null
+        minisign -Vm "$ARCHIVE" -P "$CCACHE_MINISIGN_KEY"
+        tar -xf "$ARCHIVE"
+        sudo cp "ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}/ccache" /usr/local/bin/ccache
         sudo chmod +x /usr/local/bin/ccache
 
     - name: Setup sccache (Windows)
@@ -118,5 +112,5 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-${{ hashFiles('package-lock.cmake') }}
+        key: ${{ github.workflow }}-cpm-${{ hashFiles('package-lock.cmake', 'CMakeLists.txt') }}
         restore-keys: ${{ github.workflow }}-cpm-

@@ -89,9 +89,7 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
-        run: |
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
+        uses: ./.github/actions/install-dependencies
 
       - name: Initialize CodeQL
         if: matrix.build_type == 'Debug'
@@ -130,33 +128,16 @@ jobs:
           echo "exit_code=$TEST_EXIT_CODE" >> "$GITHUB_OUTPUT"
           exit "$TEST_EXIT_CODE"
 
-      - name: Publish Test Results
+      - name: Report Test Results
         if: matrix.build_type == 'Debug' && always()
-        uses: dorny/test-reporter@v2
+        uses: ./.github/actions/test-report
         with:
           name: Unit Tests (${{ matrix.arch }})
-          path: ${{ runner.temp }}/build/junit-results.xml
-          reporter: java-junit
-          fail-on-error: false
-
-      - name: Upload Test Results
-        if: matrix.build_type == 'Debug' && always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-results-${{ matrix.arch }}
-          path: |
-            ${{ runner.temp }}/build/test-output.txt
-            ${{ runner.temp }}/build/junit-results.xml
+          build-dir: ${{ runner.temp }}/build
+          artifact-name: test-results-${{ matrix.arch }}
           retention-days: ${{ github.event_name == 'pull_request' && 3 || 14 }}
-
-      - name: Upload to Trunk Flaky Tests
-        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-        continue-on-error: true
-        uses: trunk-io/analytics-uploader@v2
-        with:
-          junit-paths: ${{ runner.temp }}/build/junit-results.xml
-          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-          token: ${{ secrets.TRUNK_TOKEN }}
+          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'

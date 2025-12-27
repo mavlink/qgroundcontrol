@@ -69,7 +69,8 @@ Write-Host "`nDownloading & installing Qt..."
 # Split modules into an array so we can pass them all to -m
 $modules = $QT_MODULES -split '\s+'
 # Build the argument list for aqt
-$aqtArgs = @('install-qt', $QT_HOST, $QT_TARGET, $QT_VERSION, $QT_ARCH, '-O', $QT_PATH, '-m') + $modules
+# --autodesktop: For cross-compile targets (android/ios/wasm), automatically install parallel desktop Qt
+$aqtArgs = @('install-qt', $QT_HOST, $QT_TARGET, $QT_VERSION, $QT_ARCH, '-O', $QT_PATH, '-m') + $modules + @('--autodesktop')
 
 # Invoke either the script entrypoint or via python -m aqt
 if (Get-Command aqt -ErrorAction SilentlyContinue) {

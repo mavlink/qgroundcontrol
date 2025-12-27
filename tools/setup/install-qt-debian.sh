@@ -37,7 +37,8 @@ echo "QT_MODULES ${QT_MODULES_ARR[*]}"
 
 apt-get update -y --quiet
 apt-get install -y python3 python3-pip pipx
-pipx run aqtinstall install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}"
+# --autodesktop: For cross-compile targets (android/ios/wasm), automatically install parallel desktop Qt
+pipx run aqtinstall install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}" --autodesktop
 
 QT_ROOT_DIR=$(readlink -e "${QT_ROOT_DIR}")
 export QT_ROOT_DIR

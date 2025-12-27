@@ -48,14 +48,18 @@ runs:
     - name: Read build config
       id: config
       shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_PLATFORM: ${{ inputs.platform }}
+        INPUT_ARCH: ${{ inputs.arch }}
       run: |
-        version='${{ inputs.version }}'
+        version="${INPUT_VERSION}"
         if [[ -z "$version" ]]; then
           version=$(./tools/setup/read-config.sh --get gstreamer_version)
         fi
         echo "version=$version" >> "$GITHUB_OUTPUT"
         echo "qt_version=$(./tools/setup/read-config.sh --get qt_version)" >> "$GITHUB_OUTPUT"
-        echo "Building GStreamer $version for ${{ inputs.platform }} (${{ inputs.arch }})"
+        echo "Building GStreamer $version for ${INPUT_PLATFORM} (${INPUT_ARCH})"
 
     # ===== DEPENDENCIES =====
 
@@ -94,36 +98,30 @@ runs:
 
     - name: Install Qt (Linux)
       if: inputs.platform == 'linux'
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ steps.config.outputs.qt_version }}
         host: linux
         target: desktop
         arch: ${{ inputs.arch == 'aarch64' && 'linux_gcc_arm64' || 'linux_gcc_64' }}
-        cache: true
-        cache-key-prefix: qt-gstreamer-linux
 
     - name: Install Qt (macOS)
       if: inputs.platform == 'macos'
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ steps.config.outputs.qt_version }}
         host: mac
         target: desktop
         arch: clang_64
-        cache: true
-        cache-key-prefix: qt-gstreamer-macos
 
     - name: Install Qt (Windows)
       if: inputs.platform == 'windows'
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ steps.config.outputs.qt_version }}
         host: windows
         target: desktop
         arch: ${{ inputs.arch == 'arm64' && 'win64_msvc2022_arm64' || 'win64_msvc2022_64' }}
-        cache: true
-        cache-key-prefix: qt-gstreamer-windows
 
     # ===== PYTHON (for meson) =====
 

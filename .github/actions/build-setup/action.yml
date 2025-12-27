@@ -8,6 +8,9 @@ inputs:
   fetch-depth:
     description: 'Number of commits to fetch (0 for full history)'
     default: '1'
+  restore-timestamps:
+    description: 'Restore file timestamps from git (for ccache, requires fetch-depth 0)'
+    default: 'false'
   qt-host:
     description: 'Qt host platform (linux, linux_arm64, windows, windows_arm64, mac)'
     required: true
@@ -61,6 +64,10 @@ runs:
         submodules: ${{ inputs.submodules }}
         fetch-depth: ${{ inputs.fetch-depth }}
         fetch-tags: true
+
+    - name: Restore file timestamps
+      if: inputs.restore-timestamps == 'true'
+      uses: chetan/git-restore-mtime-action@v2
 
     - name: Get build config
       id: config

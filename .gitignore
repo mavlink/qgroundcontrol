@@ -164,5 +164,8 @@ Qt*-linux*.tar.*
 # Pre-commit hooks
 .ruff_cache/
 
+# Puppeteer (browser automation)
+logs/
+
 # Vale prose linter (downloaded via `vale sync`)
 .github/styles/
