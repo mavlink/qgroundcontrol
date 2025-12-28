@@ -2,7 +2,7 @@
 
 本主题包含自上次[稳定版本](../releases/release_notes.md)以来添加到_QGroundControl_的新功能的高级且_不详尽_列表。
 这些功能可在 [每日构建](../releases/daily_builds.md)中查阅。
-还有一个[更改日志](https://github.com/mavlink/qgroundcontrol/blob/master/ChangeLog.md)可供查看。
+There is also a [Change Log](https://github.com/mavlink/qgroundcontrol/blob/master/CHANGELOG.md) available for viewing.
 
 - 飞行视图
   - 工具栏

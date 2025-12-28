@@ -39,7 +39,7 @@
   - 按下元素切换到 _视频_ 和 _地图_ 到前台。
   - _QGroundControl_ 支持您的载具通过UDP连接上的RTP和RTSP视频流媒体。
     它还支持直接连接的通用视频类（UVC）设备。
-    QGC 视频支持将在 [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md)中进一步讨论。
+    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md).
   - [遥测叠加](../fly_view/video_overlay.md) 将自动生成为字幕文件
 - **确认滑块:** 上下文敏感滑块以确认请求的操作。 滑动以确认操作。 您也可以按住空格键确认。 按 **X** 可取消。
 
