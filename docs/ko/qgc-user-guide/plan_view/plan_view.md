@@ -84,7 +84,7 @@ _파일 도구_는 다음과 같은 기능을 제공합니다.
 
 ### 패턴
 
-[패턴](Pattern.md) 도구는 [설문조사](../plan_view/pattern_survey.md) 및 [구조 스캔](../plan_view/pattern_structure_scan_v2.md)을 포함하여 복잡한 형상을 비행하기 위한 임무 생성을 단순화합니다.
+The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
 
 ## 임무 명령 목록 {#mission_command_list}
 
@@ -199,5 +199,5 @@ _차량에 연결_한 상태에서 임무를 계획하고 있다면 차량에 �
 
 ## 추가 정보
 
-- New Plan View features for [QGC release v3.2](../qgc-user-guide/releases/release_note_stable_v3.md#plan_view)
-- New Plan View features for [QGC release v3.3](../qgc-user-guide/releases/release_note_stable_v3.md#plan-view-1)
+- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan_view)
+- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-1)

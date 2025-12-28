@@ -28,7 +28,7 @@ The set of options shown and the contents of each option may differ based on whe
 
 **[Motors](motors.md)** <br />Motors testing and setup.
 
-**[Safety](Safety.md)** <br />Specify settings for options related to Safety such as Return to Home or Failsafes.
+**[Safety](safety.md)** <br>Specify settings for options related to Safety such as Return to Home or Failsafes.
 
 **[Tuning](tuning.md)** <br />Tune flight characteristics of the vehicle.
 

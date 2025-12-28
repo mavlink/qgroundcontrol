@@ -36,22 +36,26 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 2. USB 포트에 조이스틱이나 게임패드를 연결합니다.
 
 3. 상단 도구 모음에서 **톱니 바퀴** 아이콘(기체 설정)을 선택한 다음 가장자리 표시줄에서 **조이스틱**을 선택하십시오.
-  아래의 화면이 표시됩니다.
+   아래의 화면이 표시됩니다.
 
-  ![조이스틱 설정 - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
+   ![조이스틱 설정 - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
 
 4. **활성화된 조이스틱** 드롭다운에서 조이스틱이 선택 여부를 확인합니다.
 
 5. **교정** 탭으로 이동하여 **시작** 버튼을 클릭하여 다음 화면의 지시에 따라 스틱을 교정하고 이동합니다.
 
-  ![조이스틱 설정 - 보정](../../../assets/setup/joystick_calibration.jpg)
+   ![조이스틱 설정 - 보정](../../../assets/setup/joystick_calibration.jpg)
 
-  조이스틱은 보정 프로세스의 마지막 단계에서 _활성화_됩니다.
+   조이스틱은 보정 프로세스의 마지막 단계에서 _활성화_됩니다.
+
+   ::: warning
+   On some controllers the calibration process does not work because of incorrect channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
+   :::
 
 6. 버튼과 스틱이 의도한 대로 작동하는지 테스트하고 **일반** 탭의 축과 버튼 모니터에서 결과를 확인합니다.
 
 7. 각 조이스틱 버튼으로 활성화되는 비행 모드와 차량의 기능을 선택합니다.![조이스틱 설정 - 버튼](../../../assets/setup/joystick_buttons.jpg)
-  ![조이스틱 설정 - 고급 설정](../../../assets/setup/joystick_advanced.jpg)
+   ![조이스틱 설정 - 고급 설정](../../../assets/setup/joystick_advanced.jpg)
 
 ## Advanced Options
 
@@ -146,19 +150,19 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 과정은 다음과 같습니다:
 
 1. _QGroundControl_을 실행후, 기체를 연결합니다.
-  ```
-  _jstest-gtk_ 설치: `sudo apt install jstest-gtk`
-  ```
+   ```
+   _jstest-gtk_ 설치: `sudo apt install jstest-gtk`
+   ```
 2. 매개변수의 검색 및 설정 방법은 [매개변수](../setup_view/parameters.md)를 참고하십시오.
-  ```
-  _ds4drv_ 설치: `sudo pip install ds4drv`
-  ```
+   ```
+   _ds4drv_ 설치: `sudo pip install ds4drv`
+   ```
 3. ds4drv 실행 `sudo ds4drv`
-  ```
-  엑스포
-  ```
+   ```
+   엑스포
+   ```
 4. 컨트롤러 LED가 빠르게 깜박이기 시작할 때까지 **공유** 버튼을 누른 다음 **PS** 버튼을 길게 누릅니다.
-  그다음에는 _ds4drv_가 새 기기를 감지하여야 합니다.
+   그다음에는 _ds4drv_가 새 기기를 감지하여야 합니다.
 5. 마지막으로 _jstest-gtk_ 유틸리티를 실행하여 컨트롤러 설정을 확인합니다.
 
 ### FrSky 타라니스 XD9 플러스
@@ -172,6 +176,23 @@ Taranis는 버튼 옵션을 사용하는 것을 허용되지 않습니다(정확
 Taranis는 공개적으로 작업 중인 개방형 시스템입니다.
 작성 시점에 조이스틱으로 효과적으로 작동할 수 있는 펌웨어나 설정이 있을 수 있습니다.
 :::
+
+### TBS Tango 2
+
+The TBS Tango 2 can also be used as a joystick controlled via QGroundControl. In order to make it work, you need to remap the channels by using the following commands:
+
+```bash
+export SDL_GAMECONTROLLERCONFIG="03002de7d80400001057000011010000,Team-BlackSheep TBS Joystick,a:b0,b:b1,x:b3,y:b4,back:b10,guide:b12,start:b11,leftstick:b13,rightstick:b14,leftshoulder:b6,rightshoulder:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,crc:e72d,platform:Linux"
+./QGroundControl-x86_64.AppImage
+```
+
+For another radio, the first command above can be found by using the [jstest software tool](http://github.com/meleu/jstest-sdl) and run:
+
+```bash
+jstest-sdl -l
+```
+
+**Take care of the channels remapping you need to do between a2, a3 and other if needed**
 
 ### 로지텍 게임패드 F310
 
