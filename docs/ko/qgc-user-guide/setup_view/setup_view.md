@@ -28,7 +28,7 @@
 
 **[모터](motors.md)** <br />모터를 테스트하고 설정합니다.
 
-**[안전](Safety.md)** <br />원위치 복귀 또는 안전 장치와 같은 안전과 관련된 옵션을 설정합니다.
+**[Safety](safety.md)** <br>Specify settings for options related to Safety such as Return to Home or Failsafes.
 
 **[조정](tuning.md)** <br />차량의 비행 특성을 조정합니다.
 

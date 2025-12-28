@@ -1,6 +1,6 @@
 # Video Overlay
 
-When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Telemetri [değerleri widget](FlyView.md#values-telemetry)ında gösterilmesi için hangi telemetri değerleri seçilirse seçilsin, onlar da overlaye aktarılacaktır. Overlay değerleri 1Hz hızla güncellenecektir.
+When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Whichever telemetry values are selected for display in the telemetry [values widget](fly_view.md#values-telemetry) will also be exported to the overlay. Overlay değerleri 1Hz hızla güncellenecektir.
 
 ![Değerler Widgetı](../../../assets/fly/overlay_widget.png)
 

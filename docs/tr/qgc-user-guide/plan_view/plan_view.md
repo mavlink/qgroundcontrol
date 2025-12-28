@@ -84,7 +84,7 @@ _Dosya araçları_ aşağıdaki fonksiyonları sağlar:
 
 ### Şablon
 
-[Pattern](Pattern.md) aracı, [gözlem](../plan_view/pattern_survey.md) ve [yapı taramaları](../plan_view/pattern_structure_scan_v2.md) da dahil olmak üzere karmaşık şekillerin uçulması için görevlerin oluşturulmasını basitleştirir.
+The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
 
 ## Görev Komutları Listesi {#mission_command_list}
 
@@ -199,5 +199,5 @@ Bu olasılığı analiz etmek için, Plan yükleme/indirme için [ Console Loggi
 
 ## Daha Fazla Bilgi
 
-- New Plan View features for [QGC release v3.2](../qgc-user-guide/releases/release_note_stable_v3.md#plan_view)
-- New Plan View features for [QGC release v3.3](../qgc-user-guide/releases/release_note_stable_v3.md#plan-view-1)
+- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan_view)
+- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-1)

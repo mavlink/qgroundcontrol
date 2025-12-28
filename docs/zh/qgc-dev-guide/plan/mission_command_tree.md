@@ -99,7 +99,7 @@ The leaf nodes then provides metadata which can override values for the command 
 
 下一层厚此薄彼会覆盖固件类型特定但适用于所有载具类型。 让我们再次看看航点重写功能：
 
-[ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6):
+[ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json#L6):
 
 ```
         {
@@ -109,7 +109,7 @@ The leaf nodes then provides metadata which can override values for the command 
         },
 ```
 
-[PX4](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/PX4/MavCmdInfoCommon.json#L7):
+[PX4](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/PX4/PX4-MavCmdInfoCommon.json#L7):
 
 ```
         {
@@ -127,7 +127,7 @@ The leaf nodes then provides metadata which can override values for the command 
 
 层次结构的最后一个级别既针对固件又针对载具类型。
 
-[ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoMultiRotor.json#L7)：
+[ArduPilot/MR](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/APM-MavCmdInfoMultiRotor.json#L7):
 
 ```
         {
