@@ -14,27 +14,8 @@
 #include <QtMath>
 
 VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject *parent)
-    : FactGroup(0, parent)
-    , _spoofingStateFact      (0, "spoofingState",       FactMetaData::valueTypeUint8, this)
-    , _jammingStateFact       (0, "jammingState",        FactMetaData::valueTypeUint8, this)
-    , _authenticationStateFact(0, "authenticationState", FactMetaData::valueTypeUint8, this)
-    , _isStaleFact            (0, "isStale",             FactMetaData::valueTypeBool, this)
+    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
 {
-    _spoofingStateFact.setEnumInfo(
-        QStringList({ "Unknown", "Not spoofed", "Mitigated", "Ongoing" }),
-        QVariantList({ 0, 1, 2, 3 })
-    );
-
-    _jammingStateFact.setEnumInfo(
-        QStringList({ "Unknown", "Not jammed", "Mitigated", "Ongoing" }),
-        QVariantList({ 0, 1, 2, 3 })
-    );
-
-    _authenticationStateFact.setEnumInfo(
-        QStringList({ "Unknown", "Initializing", "Error", "Ok", "Disabled" }),
-        QVariantList({ 0, 1, 2, 3, 4 })
-    );
-
     _addFact(&_spoofingStateFact);
     _addFact(&_jammingStateFact);
     _addFact(&_authenticationStateFact);
