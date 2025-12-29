@@ -50,13 +50,6 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _systemQualityFact.setRawValue(255);
     _gnssSignalQualityFact.setRawValue(255);
     _postProcessingQualityFact.setRawValue(255);
-
-    _setGnssIntegrityContext(0);
-}
-
-void VehicleGPSFactGroup::_setGnssIntegrityContext(uint8_t id)
-{
-    _gnssIntegrityId = id;
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
