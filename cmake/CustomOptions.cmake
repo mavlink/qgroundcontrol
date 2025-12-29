@@ -58,6 +58,9 @@ option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 option(QGC_ENABLE_UVC "Enable UVC (USB Video Class) device support" ON)
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer video backend" ON)
 cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Use QGC-provided GStreamer packages" OFF "QGC_ENABLE_GST_VIDEOSTREAMING" OFF)
+if(ANDROID AND CMAKE_HOST_WIN32)
+    set(QGC_CUSTOM_GST_PACKAGE ON CACHE BOOL "Use QGC-provided GStreamer packages" FORCE)
+endif()
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 
 # ============================================================================

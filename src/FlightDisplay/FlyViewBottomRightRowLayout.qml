@@ -16,6 +16,7 @@ import QGroundControl.FlightDisplay
 
 RowLayout {
     TelemetryValuesBar {
+        width:                  Math.min(implicitWidth, parent.width - (instrumentPanel.visible ? instrumentPanel.width : 0))
         Layout.alignment:       Qt.AlignBottom
         extraWidth:             instrumentPanel.extraValuesWidth
         settingsGroup:          factValueGrid.telemetryBarSettingsGroup

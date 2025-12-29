@@ -18,6 +18,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
 #include <QtTextToSpeech/QVoice>
+#include <QtMultimedia/QSoundEffect>
 
 QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
@@ -97,9 +98,7 @@ void AudioOutput::init(Fact *mutedFact)
         setMuted(value.toBool());
     });
 
-    (void) connect(SettingsManager::instance()->appSettings()->audioSpeechLanguage(), &Fact::rawValueChanged, this, [this](QVariant) {
-        _applySpeechLocaleFromSettings();
-    });
+    
 
     if (AudioOutputLog().isDebugEnabled()) {
         (void) connect(_engine, &QTextToSpeech::stateChanged, this, [this](QTextToSpeech::State state) {
@@ -125,6 +124,11 @@ void AudioOutput::init(Fact *mutedFact)
     qCDebug(AudioOutputLog) << "AudioOutput initialized with muted state:" << _muted;
 
     _applySpeechLocaleFromSettings();
+
+    if (!_soundEffect) {
+        _soundEffect = new QSoundEffect(this);
+        _soundEffect->setLoopCount(1);
+    }
 }
 
 void AudioOutput::setMuted(bool muted)
@@ -190,6 +194,10 @@ void AudioOutput::say(const QString &text, TextMods textMods)
         return;
     }
 
+    if (_ttsDisabled) {
+        return;
+    }
+
     if (_muted) {
         return;
     }
@@ -220,6 +228,29 @@ void AudioOutput::say(const QString &text, TextMods textMods)
     } else {
         qCWarning(AudioOutputLog) << "Failed to invoke Enqueue method.";
     }
+}
+
+void AudioOutput::playWav(const QString &alias)
+{
+    if (!_initialized) {
+        if (!qgcApp()->runningUnitTests()) {
+            qCWarning(AudioOutputLog) << "AudioOutput not initialized. Call init() before using playWav().";
+        }
+        return;
+    }
+
+    if (_muted) {
+        return;
+    }
+
+    if (!_soundEffect) {
+        _soundEffect = new QSoundEffect(this);
+        _soundEffect->setLoopCount(1);
+    }
+
+    _soundEffect->setVolume(1.0);
+    _soundEffect->setSource(QUrl(QStringLiteral("qrc:/res/audio/%1").arg(alias)));
+    _soundEffect->play();
 }
 
 QString AudioOutput::_fixTextMessageForAudio(const QString &string)

@@ -3,6 +3,11 @@
 # Qt6 integration for GStreamer video rendering
 # ============================================================================
 
+if(NOT MACOS AND NOT TARGET GStreamer::Core)
+    message(WARNING "Skipping gstqml6gl: GStreamer not available")
+    return()
+endif()
+
 qt_add_library(gstqml6gl STATIC)
 
 # ----------------------------------------------------------------------------
@@ -20,7 +25,14 @@ if(MACOS)
     target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
     target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
 else()
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+    target_link_libraries(gstqml6gl PUBLIC
+        GStreamer::Core
+        GStreamer::Base
+        GStreamer::Video
+        GStreamer::Gl
+        GStreamer::GlPrototypes
+        GStreamer::Rtsp
+    )
 endif()
 
 # TODO: Skip custom build if system gstreamer1.0-qt6 plugin is found

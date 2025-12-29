@@ -84,7 +84,7 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface *link)
     }
 
     if (!commRegainedMessage.isEmpty()) {
-        AudioOutput::instance()->say(commRegainedMessage.toLower());
+        AudioOutput::instance()->playWav(QStringLiteral("CommunicationRegained"));
     }
 
     if (!primarySwitchMessage.isEmpty()) {
@@ -163,7 +163,8 @@ void VehicleLinkManager::_commLostCheck()
             return;
         }
 
-        AudioOutput::instance()->say(tr("%1Communication lost").arg(_vehicle->_vehicleIdSpeech()).toLower());
+        AudioOutput::instance()->playWav(QStringLiteral("CommunicationLost"));
+        AudioOutput::instance()->playWav(QStringLiteral("CommunicationLost"));
 
         _communicationLost = true;
         emit communicationLostChanged(_communicationLost);

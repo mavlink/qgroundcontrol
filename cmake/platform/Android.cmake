@@ -101,6 +101,9 @@ endif()
 # ----------------------------------------------------------------------------
 # Android Permissions
 # ----------------------------------------------------------------------------
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.INTERNET
+)
 
 if(QGC_ENABLE_BLUETOOTH)
     qt_add_android_permission(${CMAKE_PROJECT_NAME}

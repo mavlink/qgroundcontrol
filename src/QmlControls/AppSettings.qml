@@ -33,7 +33,7 @@ Rectangle {
 
     property bool _commingFromRIDSettings:  false
 
-    property bool _isVideoPage: rightPanel.source === "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml" || mainWindow.activeFlySidebarTool === "video"
+    property bool _isVideoPage: mainWindow.activeFlySidebarTool === "video"
 
     function showSettingsPage(settingsPage) {
         for (var i=0; i<buttonRepeater.count; i++) {

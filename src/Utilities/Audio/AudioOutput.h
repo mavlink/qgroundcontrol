@@ -13,6 +13,7 @@
 #include <QtCore/QObject>
 
 class QTextToSpeech;
+class QSoundEffect;
 class Fact;
 class AudioOutputTest;
 
@@ -61,11 +62,17 @@ public:
     ///     @param textMods The text modifications to apply.
     void say(const QString &text, TextMods textMods = TextMod::None);
 
+    /// Plays a wav sound from Qt resources under /res/audio.
+    ///     @param alias The resource alias to play (e.g. "Armed").
+    void playWav(const QString &alias);
+
 private:
     QTextToSpeech *_engine = nullptr;
+    QSoundEffect *_soundEffect = nullptr;
     QAtomicInteger<qsizetype> _textQueueSize = 0;
     bool _initialized = false;
     std::atomic_bool _muted = false;
+    bool _ttsDisabled = true;
 
     static const QHash<QString, QString> _textHash;
 

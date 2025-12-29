@@ -116,6 +116,37 @@
     </qresource>
     <qresource prefix="/res/audio">
         <file alias="Alert">resources/audio/alert.wav</file>
+        <file alias="Armed">resources/audio/armed.wav</file>
+        <file alias="Disarmed">resources/audio/disarmed.wav</file>
+        <file alias="CommunicationLost">resources/audio/communication_lost.wav</file>
+        <file alias="CommunicationRegained">resources/audio/Communication_regained.wav</file>
+        <file alias="PreArmModeRequiresMission">resources/audio/PreArm  Mode requires mission.wav</file>
+        <file alias="ArmAccelsInconsistent">resources/audio/Arm Accels inconsinstent.wav</file>
+        <file alias="ArmLandModeNotArmable">resources/audio/Arm Land mode not armable.wav</file>
+        <file alias="ModeAcro">resources/audio/Mode/Acro.wav</file>
+        <file alias="ModeAltHold">resources/audio/Mode/Alt_Hold.wav</file>
+        <file alias="ModeAutoRTL">resources/audio/Mode/Auto_RTL.wav</file>
+        <file alias="ModeAuto">resources/audio/Mode/Auto.wav</file>
+        <file alias="ModeAutotune">resources/audio/Mode/Autotune.wav</file>
+        <file alias="ModeAvoidADSB">resources/audio/Mode/Avoid_ADSB.wav</file>
+        <file alias="ModeBrake">resources/audio/Mode/Brake.wav</file>
+        <file alias="ModeCircle">resources/audio/Mode/Circle.wav</file>
+        <file alias="ModeDrift">resources/audio/Mode/Drift.wav</file>
+        <file alias="ModeFlip">resources/audio/Mode/Flip.wav</file>
+        <file alias="ModeFlowHold">resources/audio/Mode/Flow_Hold.wav</file>
+        <file alias="ModeFollow">resources/audio/Mode/Follow.wav</file>
+        <file alias="ModeGuidedNoGps">resources/audio/Mode/Guided_no_gps.wav</file>
+        <file alias="ModeGuided">resources/audio/Mode/Guided.wav</file>
+        <file alias="ModeLand">resources/audio/Mode/Land.wav</file>
+        <file alias="ModeLoiter">resources/audio/Mode/Loiter.wav</file>
+        <file alias="ModePoshold">resources/audio/Mode/Poshold.wav</file>
+        <file alias="ModeRTL">resources/audio/Mode/RTL.wav</file>
+        <file alias="ModeSmartRTL">resources/audio/Mode/Smart_RTL.wav</file>
+        <file alias="ModeStabilize">resources/audio/Mode/Stabilize.wav</file>
+        <file alias="ModeSystemID">resources/audio/Mode/System_ID.wav</file>
+        <file alias="ModeThrow">resources/audio/Mode/Throw.wav</file>
+        <file alias="ModeTurtle">resources/audio/Mode/Turtle.wav</file>
+        <file alias="ModeZigzag">resources/audio/Mode/Zigzag.wav</file>
     </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>

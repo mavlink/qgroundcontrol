@@ -143,6 +143,11 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         VehicleSetupModule
 )
 
+if(ANDROID)
+    find_library(CXX_SHARED c++_shared REQUIRED)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CXX_SHARED})
+endif()
+
 # ----------------------------------------------------------------------------
 # Optional/Conditional Modules
 # ----------------------------------------------------------------------------

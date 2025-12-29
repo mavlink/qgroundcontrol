@@ -13,6 +13,7 @@
 
     <!-- %%INSERT_PERMISSIONS -->
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USB_PERMISSION" />
     <!-- Need MulticastLock to receive broadcast UDP packets -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />

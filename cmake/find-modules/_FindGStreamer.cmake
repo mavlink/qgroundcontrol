@@ -252,8 +252,12 @@ find_path(GStreamer_INCLUDE_DIR
     PATH_SUFFIXES gstreamer-1.0
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
-    REQUIRED
 )
+if(NOT GStreamer_INCLUDE_DIR)
+    if(DEFINED GSTREAMER_INCLUDE_PATH AND EXISTS "${GSTREAMER_INCLUDE_PATH}/gstreamer-1.0/gst/gstversion.h")
+        set(GStreamer_INCLUDE_DIR "${GSTREAMER_INCLUDE_PATH}/gstreamer-1.0")
+    endif()
+endif()
 
 find_library(GStreamer_LIBRARY
     NAMES gstreamer-1.0
@@ -450,6 +454,7 @@ find_package_handle_standard_args(GStreamer
     REQUIRED_VARS
         GStreamer_LIBRARY
         GStreamer_INCLUDE_DIR
+        GStreamer_VERSION
     VERSION_VAR GStreamer_VERSION
     ${_gst_handle_version_range}
     HANDLE_COMPONENTS

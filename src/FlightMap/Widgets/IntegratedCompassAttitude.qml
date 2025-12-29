@@ -24,8 +24,8 @@ Item {
     property alias attitudeSpacing:             rollIndicator.attitudeSpacing
     property real extraInset:                   attitudeSize + attitudeSpacing
     property real extraValuesWidth:             compassRadius
-    property real defaultCompassRadius:         (mainWindow.width * 0.15) / 2
-    property real maxCompassRadius:             ScreenTools.defaultFontPixelHeight * 7 / 2
+    property real defaultCompassRadius:         (mainWindow.width * (Qt.platform.os === "android" ? 0.12 : 0.15)) / 2
+    property real maxCompassRadius:             ScreenTools.defaultFontPixelHeight * (Qt.platform.os === "android" ? 5.5 : 7) / 2
     property real compassRadius:                Math.min(defaultCompassRadius, maxCompassRadius)
     property real compassBorder:                ScreenTools.defaultFontPixelHeight / 2
     property var  vehicle:                      globals.activeVehicle

@@ -496,7 +496,7 @@ Item {
                     coordinate:     object.coordinate
                     map:            editorMap
                     size:           ScreenTools.defaultFontPixelHeight * 3
-                    z:              QGroundControl.zOrderMapItems - 1
+                    z:              QGroundControl.zOrderMapItems + 1
                 }
             }
 

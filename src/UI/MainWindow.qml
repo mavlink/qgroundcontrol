@@ -43,10 +43,11 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        ensureAuthTables()
+        loadSession()
         if (loggedIn) {
             firstRunPromptManager.nextPrompt()
         }
-        ensureAuthTables()
         QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
     }
 
@@ -58,6 +59,18 @@ ApplicationWindow {
         var d = db()
         d.transaction(function(tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY NOT NULL, password_hash TEXT NOT NULL, salt TEXT NOT NULL, created_at INTEGER NOT NULL)')
+            tx.executeSql('CREATE TABLE IF NOT EXISTS session (email TEXT PRIMARY KEY NOT NULL, created_at INTEGER NOT NULL)')
+        })
+    }
+
+    function loadSession() {
+        var d = db()
+        d.transaction(function(tx) {
+            var rs = tx.executeSql('SELECT email FROM session LIMIT 1')
+            if (rs.rows.length === 1) {
+                loggedIn = true
+                currentUserEmail = rs.rows.item(0).email
+            }
         })
     }
 
@@ -93,6 +106,10 @@ ApplicationWindow {
         errorLabel.visible = false
         loggedIn = true
         currentUserEmail = email
+        d.transaction(function(tx) {
+            tx.executeSql('DELETE FROM session')
+            tx.executeSql('INSERT INTO session (email, created_at) VALUES (?,?)', [email, Date.now()])
+        })
         QGroundControl.linkManager.enableAutoConnect()
         QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(true)
         firstRunPromptManager.nextPrompt()
@@ -257,6 +274,17 @@ ApplicationWindow {
         activeFlySidebarTool = "analyze"
     }
 
+    function showProfileTool() {
+        closeTransientPopups()
+        toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
+        toolDrawer.toolTitle    = qsTr("Profile")
+        toolDrawer.toolIcon     = "/res/Sidebar_Profile.svg"
+        toolDrawer.toolSource   = ""
+        toolDrawer.toolSourceComponent = profileToolComponent
+        toolDrawer.visible      = true
+        activeFlySidebarTool    = "profile"
+    }
+
     function showVehicleConfig() {
         closeTransientPopups()
         showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/SetupView.qml", "/qmlimages/Gears.svg")
@@ -323,6 +351,68 @@ ApplicationWindow {
     }
 
     property bool _forceClose: false
+
+    Component {
+        id: profileToolComponent
+        Item {
+            anchors.fill: parent
+            Flickable {
+                anchors.fill: parent
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+
+                contentWidth: parent.width
+                contentHeight: contentColumn.implicitHeight
+
+                ColumnLayout {
+                    id: contentColumn
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.min(parent.width * 0.9, ScreenTools.defaultFontPixelWidth * 60)
+                    spacing: ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: mainWindow.loggedIn && mainWindow.currentUserEmail.length > 0
+                              ? qsTr("User: ") + mainWindow.currentUserEmail
+                              : qsTr("User: Guest")
+                        wrapMode: Text.WrapAnywhere
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: ScreenTools.defaultFontPixelWidth
+                        QGCButton {
+                            text: qsTr("Change Password")
+                            enabled: mainWindow.loggedIn
+                            onClicked: {
+                                changePasswordLoader.source = "qrc:/qml/QGroundControl/AppSettings/ChangePassword.qml"
+                                changePasswordLoader.active = true
+                            }
+                        }
+                        QGCButton {
+                            text: qsTr("Sign out")
+                            onClicked: {
+                                mainWindow.loggedIn = false
+                                mainWindow.currentUserEmail = ""
+                                mainWindow.authMode = "login"
+                                var d = mainWindow.db()
+                                d.transaction(function(tx) { tx.executeSql('DELETE FROM session') })
+                                QGroundControl.linkManager.disableAutoConnect()
+                                QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
+                                toolDrawer.visible = false
+                            }
+                        }
+                    }
+
+                    Loader {
+                        id: changePasswordLoader
+                        Layout.fillWidth: true
+                        active: false
+                    }
+                }
+            }
+        }
+    }
 
     function finishCloseProcess() {
         _forceClose = true
@@ -426,6 +516,10 @@ ApplicationWindow {
         height:                 sidebarColumn.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.6)
         property color _cyan: "#00F0FF"
         property color _panelBg: Qt.rgba(0.02, 0.10, 0.16, 0.7)
+        property real _btnHeight:       ScreenTools.defaultFontPixelHeight * (Qt.platform.os === "android" ? 1.3 : 1.6)
+        property real _iconSizeH:       ScreenTools.defaultFontPixelHeight * (Qt.platform.os === "android" ? 0.95 : 1.15)
+        property real _panelMarginH:    ScreenTools.defaultFontPixelHeight * (Qt.platform.os === "android" ? 0.10 : 0.15)
+        property real _panelSpacingW:   ScreenTools.defaultFontPixelWidth  * (Qt.platform.os === "android" ? 0.15 : 0.2)
         color:                  _panelBg
         radius:                 4
         border.color:           _cyan
@@ -437,57 +531,32 @@ ApplicationWindow {
         ColumnLayout {
             id:                     sidebarColumn
             anchors.centerIn:       parent
-            anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.15
-            spacing:                ScreenTools.defaultFontPixelWidth * 0.2
+            anchors.margins:        permanentSidebar._panelMarginH
+            spacing:                permanentSidebar._panelSpacingW
 
             SubMenuButton {
                 id:                 profileButton
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                height:             permanentSidebar._btnHeight
                 Layout.fillWidth:   true
                 text:               ""
                 imageResource:      "/res/Sidebar_Profile.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                sourceSize:         Qt.size(permanentSidebar._iconSizeH, permanentSidebar._iconSizeH)
                 borderWidth:        0
                 checked:            false
                 onClicked: {
-                    if (profilePopup.visible) {
-                        profilePopup.close()
-                    } else {
-                        var pt = profileButton.mapToItem(Overlay.overlay, 0, 0)
-                        profilePopup.x = pt.x + profileButton.width + ScreenTools.defaultFontPixelWidth
-                        profilePopup.y = pt.y
-                        profilePopup.open()
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.showProfileTool()
                     }
                 }
             }
             QGCLabel { text: qsTr("Profile"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
 
             SubMenuButton {
-                id:                 videoButton
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
-                Layout.fillWidth:   true
-                text:               ""
-                imageResource:      "/res/Sidebar_Video.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
-                // borderColor:        permanentSidebar._cyan
-                borderWidth:        0
-                checked:            mainWindow.activeFlySidebarTool === "video"
-                visible:            QGroundControl.settingsManager.videoSettings.visible
-                onClicked: {
-                    if (mainWindow.allowViewSwitch()) {
-                        mainWindow.activeFlySidebarTool = "video"
-                        mainWindow.showSettingsTool("Video")
-                    }
-                }
-            }
-            QGCLabel { text: qsTr("video"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize; visible: QGroundControl.settingsManager.videoSettings.visible }
-
-            SubMenuButton {
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                height:             permanentSidebar._btnHeight
                 Layout.fillWidth:   true
                 text:               ""
                 imageResource:      "/res/Sidebar_Plan.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                sourceSize:         Qt.size(permanentSidebar._iconSizeH, permanentSidebar._iconSizeH)
                 // borderColor:        permanentSidebar._cyan
                 borderWidth:        0
                 checked:            mainWindow.activeFlySidebarTool === "plan"
@@ -501,51 +570,12 @@ ApplicationWindow {
             QGCLabel { text: qsTr("plan"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
 
             SubMenuButton {
-                id:                 analyzeButton
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
-                Layout.fillWidth:   true
-                text:               ""
-                imageResource:      "/res/Sidebar_Analyze.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
-                // borderColor:        permanentSidebar._cyan
-                borderWidth:        0
-                visible:            QGroundControl.corePlugin.showAdvancedUI
-                checked:            mainWindow.activeFlySidebarTool === "analyze"
-                onClicked: {
-                    if (mainWindow.allowViewSwitch()) {
-                        mainWindow.activeFlySidebarTool = "analyze"
-                        mainWindow.showAnalyzeTool()
-                    }
-                }
-            }
-            QGCLabel { text: qsTr("Analyze"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize; visible: QGroundControl.corePlugin.showAdvancedUI }
-
-            SubMenuButton {
-                id:                 setupButton
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
-                Layout.fillWidth:   true
-                text:               ""
-                imageResource:      "/res/Sidebar_VehicleConfig.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
-                // borderColor:        permanentSidebar._cyan
-                borderWidth:        0
-                checked:            mainWindow.activeFlySidebarTool === "setup"
-                onClicked: {
-                    if (mainWindow.allowViewSwitch()) {
-                        mainWindow.activeFlySidebarTool = "setup"
-                        mainWindow.showVehicleConfig()
-                    }
-                }
-            }
-            QGCLabel { text: qsTr("Configuration"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
-
-            SubMenuButton {
                 id:                 aboutButton
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                height:             permanentSidebar._btnHeight
                 Layout.fillWidth:   true
                 text:               ""
                 imageResource:      "/res/Sidebar_About.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                sourceSize:         Qt.size(permanentSidebar._iconSizeH, permanentSidebar._iconSizeH)
                 borderWidth:        0
                 checked:            mainWindow.activeFlySidebarTool === "about"
                 onClicked: {
@@ -559,11 +589,11 @@ ApplicationWindow {
 
             SubMenuButton {
                 id:                 settingsButton
-                height:             ScreenTools.defaultFontPixelHeight * 1.6
+                height:             permanentSidebar._btnHeight
                 Layout.fillWidth:   true
                 text:               ""
                 imageResource:      "/res/Sidebar_ApplicationSettings.svg"
-                sourceSize:         Qt.size(ScreenTools.defaultFontPixelHeight * 1.15, ScreenTools.defaultFontPixelHeight * 1.15)
+                sourceSize:         Qt.size(permanentSidebar._iconSizeH, permanentSidebar._iconSizeH)
                 imageColor:         undefined
                 // borderColor:        permanentSidebar._cyan
                 borderWidth:        0
@@ -586,30 +616,53 @@ ApplicationWindow {
         focus:              true
         parent:             Overlay.overlay
         closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        width:              Math.min(mainWindow.width * 0.4, Math.max(ScreenTools.defaultFontPixelWidth * 20, contentItem.implicitWidth + ScreenTools.defaultFontPixelWidth * 2))
-        background: Rectangle { color: qgcPal.window; radius: ScreenTools.defaultFontPixelHeight * 0.3; border.width: 1; border.color: qgcPal.text }
-        contentItem: Column {
-            spacing: ScreenTools.defaultFontPixelHeight * 0.5
-            width: profilePopup.width - ScreenTools.defaultFontPixelWidth * 2
-            padding: ScreenTools.defaultFontPixelWidth
+        property real _popupWidthFactor:      Qt.platform.os === "android" ? 0.5 : 0.4
+        property real _minTextWidth:          ScreenTools.defaultFontPixelWidth * (Qt.platform.os === "android" ? 26 : 20)
+        property real _buttonHeight:          ScreenTools.defaultFontPixelHeight * (Qt.platform.os === "android" ? 2.2 : 2.0)
+        property real _contentPadding:        ScreenTools.defaultFontPixelWidth
+        width:              Math.min(mainWindow.width * _popupWidthFactor, Math.max(_minTextWidth, contentItem.implicitWidth + _contentPadding * 2))
+        background: Rectangle {
+            color: qgcPal.window
+            radius: ScreenTools.defaultFontPixelHeight * 0.35
+            border.width: 1
+            border.color: qgcPal.text
+        }
+        contentItem: ColumnLayout {
+            spacing: ScreenTools.defaultFontPixelHeight * 0.8
+            width: profilePopup.width - _contentPadding * 2
+            anchors.margins: _contentPadding
 
             QGCLabel {
+                Layout.fillWidth: true
                 text: mainWindow.loggedIn && mainWindow.currentUserEmail.length > 0
                       ? qsTr("User: ") + mainWindow.currentUserEmail
                       : qsTr("User: Guest")
                 wrapMode: Text.WrapAnywhere
+                font.pointSize: ScreenTools.defaultFontPointSize
+                color: qgcPal.buttonText
             }
             QGCButton {
+                Layout.fillWidth: true
+                Layout.preferredHeight: profilePopup._buttonHeight
                 text: qsTr("Change Password")
                 enabled: mainWindow.loggedIn
-                onClicked: changePasswordDialogComponent.createObject(mainWindow).open()
+                onClicked: {
+                    profilePopup.close()
+                    mainWindow.showTool(qsTr("Change Password"), "qrc:/qml/QGroundControl/AppSettings/ChangePassword.qml", "/res/QGCLogoWhite")
+                }
             }
             QGCButton {
+                Layout.fillWidth: true
+                Layout.preferredHeight: profilePopup._buttonHeight
                 text: qsTr("Sign out")
                 onClicked: {
                     mainWindow.loggedIn = false
                     mainWindow.currentUserEmail = ""
                     mainWindow.authMode = "login"
+                    var d = mainWindow.db()
+                    d.transaction(function(tx) {
+                        tx.executeSql('DELETE FROM session')
+                    })
                     QGroundControl.linkManager.disableAutoConnect()
                     QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
                     profilePopup.close()
@@ -627,21 +680,66 @@ ApplicationWindow {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: ScreenTools.defaultFontPixelHeight / 2
+                Layout.preferredWidth: Math.max(ScreenTools.defaultFontPixelWidth * 36, headerMinWidth)
+                Layout.maximumWidth: Math.min(maxContentAvailableWidth, ScreenTools.defaultFontPixelWidth * 44)
+                spacing: ScreenTools.defaultFontPixelHeight
 
                 QGCLabel { text: qsTr("Email") }
-                QGCTextField { Layout.fillWidth: true; text: mainWindow.currentUserEmail; enabled: false }
+                QGCTextField {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.2
+                    text: mainWindow.currentUserEmail
+                    enabled: false
+                }
 
                 QGCLabel { text: qsTr("Current Password") }
-                QGCTextField { id: curPass; Layout.fillWidth: true; echoMode: TextInput.Password }
+                QGCTextField {
+                    id: curPass
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.2
+                    echoMode: TextInput.Password
+                    placeholderText: qsTr("Enter current password")
+                }
 
                 QGCLabel { text: qsTr("New Password") }
-                QGCTextField { id: newPass; Layout.fillWidth: true; echoMode: TextInput.Password }
+                QGCTextField {
+                    id: newPass
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.2
+                    echoMode: TextInput.Password
+                    placeholderText: qsTr("Enter new password")
+                }
 
                 QGCLabel { text: qsTr("Confirm Password") }
-                QGCTextField { id: confPass; Layout.fillWidth: true; echoMode: TextInput.Password }
+                QGCTextField {
+                    id: confPass
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.2
+                    echoMode: TextInput.Password
+                    placeholderText: qsTr("Re-enter new password")
+                }
 
                 QGCLabel { id: changePassError; Layout.fillWidth: true; color: QGroundControl.globalPalette.alertText; visible: false }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignRight
+                    spacing: ScreenTools.defaultFontPixelWidth
+                    QGCButton {
+                        text: qsTr("Sign out")
+                        visible: mainWindow.loggedIn
+                        onClicked: {
+                            mainWindow.loggedIn = false
+                            mainWindow.currentUserEmail = ""
+                            mainWindow.authMode = "login"
+                            var d = mainWindow.db()
+                            d.transaction(function(tx) { tx.executeSql('DELETE FROM session') })
+                            QGroundControl.linkManager.disableAutoConnect()
+                            QGroundControl.settingsManager.adsbVehicleManagerSettings.adsbServerConnectEnabled.setRawValue(false)
+                            close()
+                        }
+                    }
+                }
             }
 
             onAccepted: {
@@ -765,7 +863,7 @@ ApplicationWindow {
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
                                 mainWindow.closeIndicatorDrawer()
-                                mainWindow.showAnalyzeTool()
+                                mainWindow.showSettingsTool("Analyze Tools")
                             }
                         }
                     }
@@ -779,7 +877,7 @@ ApplicationWindow {
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
                                 mainWindow.closeIndicatorDrawer()
-                                mainWindow.showVehicleConfig()
+                                mainWindow.showSettingsTool("Vehicle Configuration")
                             }
                         }
                     }

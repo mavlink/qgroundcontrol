@@ -38,7 +38,7 @@ ListModel {
         name: qsTr("Video")
         url: "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/camera.svg"
-        pageVisible: function() { return false }
+        pageVisible: function() { return true }
     }
 
     ListElement {
@@ -92,6 +92,20 @@ ListModel {
         name: qsTr("Logging")
         url: "qrc:/qml/QGroundControl/Controls/AppLogging.qml"
         iconUrl: "qrc:/qmlimages/AppSettings_Logging.svg"
+        pageVisible: function() { return true }
+    }
+
+    ListElement {
+        name: qsTr("Analyze Tools")
+        url: "qrc:/qml/QGroundControl/AnalyzeView/AnalyzeView.qml"
+        iconUrl: "qrc:/qmlimages/Analyze.svg"
+        pageVisible: function() { return true }
+    }
+
+    ListElement {
+        name: qsTr("Vehicle Configuration")
+        url: "qrc:/qml/QGroundControl/VehicleSetup/SetupView.qml"
+        iconUrl: "qrc:/qmlimages/Gears.svg"
         pageVisible: function() { return true }
     }
 

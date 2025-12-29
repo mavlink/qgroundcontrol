@@ -41,12 +41,7 @@ SettingsPage {
             visible:    _appSettings.qLocaleLanguage.visible
         }
 
-        LabelledFactComboBox {
-            label:      qsTr("Audio Speech Language")
-            fact:       _appSettings.audioSpeechLanguage
-            indexModel: false
-            visible:    _appSettings.audioSpeechLanguage.visible
-        }
+        
 
         LabelledFactComboBox {
             label:      qsTr("Color Scheme")

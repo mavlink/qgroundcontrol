@@ -34,8 +34,8 @@ Popup {
     property var  dropViewPort:     Qt.rect(0, 0, parent.width, parent.height)  // Available viewport for dropdown
 
     property var  _qgcPal:              QGroundControl.globalPalette
-    property real _innerMargin:         ScreenTools.defaultFontPixelWidth * 0.5 // Margin between content and rectanglular portion of background
-    property real _arrowPointWidth:     ScreenTools.defaultFontPixelWidth * 2   // Distance from vertical side to point
+    property real _innerMargin:         ScreenTools.defaultFontPixelWidth * (Qt.platform.os === "android" ? 0.35 : 0.5) // Margin between content and rectanglular portion of background
+    property real _arrowPointWidth:     ScreenTools.defaultFontPixelWidth * (Qt.platform.os === "android" ? 1.4 : 2)   // Distance from vertical side to point
     property real _arrowPointPositionY: height / 2
     property bool _dropRight:           true
 

@@ -22,6 +22,7 @@ qt_add_qml_module(AppSettingsModule
         PX4LogTransferSettings.qml
         QmlTest.qml
         RemoteIDSettings.qml
+        ChangePassword.qml
         SerialSettings.qml
         SettingsPage.qml
         SettingsPagesModel.qml

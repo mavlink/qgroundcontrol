@@ -123,11 +123,22 @@ void _registerPlugins()
     #endif
 #endif
 
-// #if !defined(GST_PLUGIN_qml6_FOUND) && defined(QGC_GST_STATIC_BUILD)
-    GST_PLUGIN_STATIC_REGISTER(qml6);
-// #endif
-
-    GST_PLUGIN_STATIC_REGISTER(qgc);
+    {
+        GstElementFactory *f = gst_element_factory_find("qml6glsink");
+        if (f) {
+            gst_clear_object(&f);
+        } else {
+            GST_PLUGIN_STATIC_REGISTER(qml6);
+        }
+    }
+    {
+        GstElementFactory *f = gst_element_factory_find("qgcvideosinkbin");
+        if (f) {
+            gst_clear_object(&f);
+        } else {
+            GST_PLUGIN_STATIC_REGISTER(qgc);
+        }
+    }
 }
 
 void _qtGstLog(GstDebugCategory *category,
@@ -228,7 +239,8 @@ void _setGstEnvVars()
             // Common install paths
             QStringLiteral("C:/gstreamer/1.0/msvc_x86_64"),
             QStringLiteral("C:/Program Files/GStreamer/1.0/msvc_x86_64"),
-            QStringLiteral("C:/Program Files (x86)/GStreamer/1.0/msvc_x86_64")
+            QStringLiteral("C:/Program Files (x86)/GStreamer/1.0/msvc_x86_64"),
+            QStringLiteral("D:/gstreamer/1.0/msvc_x86_64")
         };
 
         for (const QString &root : candidates) {
@@ -589,13 +601,14 @@ bool initialize()
     _logDecoderRanks();
     _setCodecPriorities(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
 
-    GstElement *sink = gst_element_factory_make("qml6glsink", nullptr);
-    if (!sink) {
-        qCCritical(GStreamerLog) << "failed to init qml6glsink";
-        return false;
+    {
+        GstElementFactory *factory = gst_element_factory_find("qml6glsink");
+        if (!factory) {
+            qCCritical(GStreamerLog) << "failed to find qml6glsink factory";
+            return false;
+        }
+        gst_clear_object(&factory);
     }
-
-    gst_clear_object(&sink);
     return true;
 }
 

@@ -218,7 +218,7 @@ void GstVideoReceiver::start(uint32_t timeout) {
             }
         }
 
-        
+
         GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
         if (bus) {
             gst_bus_enable_sync_message_emission(bus);

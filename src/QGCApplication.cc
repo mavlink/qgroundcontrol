@@ -323,7 +323,7 @@ void QGCApplication::_initForNormalAppBoot()
                     "Your saved settings have been reset to defaults.").arg(applicationName()));
     }
 
-    // Connect links with flag AutoconnectLink
+    LinkManager::instance()->enableAutoConnect();
     LinkManager::instance()->startAutoConnectedLinks();
 }
 

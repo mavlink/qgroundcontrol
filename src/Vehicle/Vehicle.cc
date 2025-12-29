@@ -292,6 +292,60 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(_standardModes, &StandardModes::modesUpdated, this, [this]() {
         emit flightModeChanged(flightMode());
     });
+    connect(this, &Vehicle::flightModeChanged, this, [this](const QString &mode) {
+        const QString lower = mode.toLower();
+        if (lower == QStringLiteral("acro")) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAcro"));
+        } else if (lower.contains(QStringLiteral("alt")) && lower.contains(QStringLiteral("hold"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAltHold"));
+        } else if (lower.contains(QStringLiteral("altctl")) || lower.contains(QStringLiteral("altitude control"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAltHold"));
+        } else if (lower.contains(QStringLiteral("smart")) && lower.contains(QStringLiteral("rtl"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeSmartRTL"));
+        } else if (lower.contains(QStringLiteral("auto")) && lower.contains(QStringLiteral("rtl"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAutoRTL"));
+        } else if (lower == QStringLiteral("rtl") || (lower.contains(QStringLiteral("return")) && lower.contains(QStringLiteral("launch")))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeRTL"));
+        } else if (lower.contains(QStringLiteral("auto"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAuto"));
+        } else if (lower.contains(QStringLiteral("autotune"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAutotune"));
+        } else if (lower.contains(QStringLiteral("avoid")) && lower.contains(QStringLiteral("adsb"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAvoidADSB"));
+        } else if (lower.contains(QStringLiteral("brake"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeBrake"));
+        } else if (lower.contains(QStringLiteral("circle"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeCircle"));
+        } else if (lower.contains(QStringLiteral("drift"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeDrift"));
+        } else if (lower.contains(QStringLiteral("flip"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeFlip"));
+        } else if (lower.contains(QStringLiteral("flow")) && lower.contains(QStringLiteral("hold"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeFlowHold"));
+        } else if (lower.contains(QStringLiteral("follow"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeFollow"));
+        } else if (lower.contains(QStringLiteral("guided")) && lower.contains(QStringLiteral("no")) && lower.contains(QStringLiteral("gps"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeGuidedNoGps"));
+        } else if (lower.contains(QStringLiteral("guided"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeGuided"));
+        } else if (lower.contains(QStringLiteral("land"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeLand"));
+        } else if (lower.contains(QStringLiteral("loiter"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeLoiter"));
+        } else if (lower.contains(QStringLiteral("poshold")) || (lower.contains(QStringLiteral("position")) && lower.contains(QStringLiteral("hold")))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModePoshold"));
+        } else if (lower.contains(QStringLiteral("stabilize"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeStabilize"));
+        } else if (lower.contains(QStringLiteral("system")) && lower.contains(QStringLiteral("id"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeSystemID"));
+        } else if (lower.contains(QStringLiteral("throw"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeThrow"));
+        } else if (lower.contains(QStringLiteral("turtle"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeTurtle"));
+        } else if (lower.contains(QStringLiteral("zigzag"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeZigzag"));
+        }
+    });
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
@@ -2011,7 +2065,7 @@ void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 
 void Vehicle::_announceArmedChanged(bool armed)
 {
-    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? tr("armed") : tr("disarmed")));
+    AudioOutput::instance()->playWav(armed ? QStringLiteral("Armed") : QStringLiteral("Disarmed"));
     if(armed) {
         //-- Keep track of armed coordinates
         _armedPosition = _coordinate;
@@ -4313,7 +4367,66 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
             skipSpoken = true;
         } else {
             (void) _noisySpokenPrearmMap.insert(text, QTime::currentTime());
+            const QString lowerText = text.toLower();
+            if (lowerText.contains(QStringLiteral("mode requires mission"))) {
+                AudioOutput::instance()->playWav(QStringLiteral("PreArmModeRequiresMission"));
+                skipSpoken = true;
+            } else if (lowerText.contains(QStringLiteral("accel")) && lowerText.contains(QStringLiteral("incons"))) {
+                AudioOutput::instance()->playWav(QStringLiteral("ArmAccelsInconsistent"));
+                skipSpoken = true;
+            } else if (lowerText.contains(QStringLiteral("land mode not armable"))) {
+                AudioOutput::instance()->playWav(QStringLiteral("ArmLandModeNotArmable"));
+                skipSpoken = true;
+            }
             setPrearmError(text);
+        }
+    }
+
+    // Suppress TTS for arming/disarming status text when WAV is already played
+    {
+        const QString lowerText = text.toLower();
+        const bool isArmingMsg =
+                (lowerText.contains(QStringLiteral("armed")) ||
+                 lowerText.contains(QStringLiteral("disarmed")) ||
+                 lowerText.contains(QStringLiteral("arming motors"))) &&
+                !lowerText.contains(QStringLiteral("prearm"));
+        if (isArmingMsg) {
+            skipSpoken = true;
+        }
+    }
+
+    {
+        const QString lowerText = text.toLower();
+        if (lowerText.contains(QStringLiteral("land mode not armable"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ArmLandModeNotArmable"));
+            skipSpoken = true;
+        }
+    }
+
+    {
+        const QString lowerText = text.toLower();
+        if (lowerText.contains(QStringLiteral("acro"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAcro"));
+            skipSpoken = true;
+        }
+    }
+
+    {
+        const QString lowerText = text.toLower();
+        if (lowerText.contains(QStringLiteral("alt_hold")) ||
+            lowerText.contains(QStringLiteral("alt hold")) ||
+            lowerText.contains(QStringLiteral("althold")) ||
+            lowerText.contains(QStringLiteral("altitude control"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ModeAltHold"));
+            skipSpoken = true;
+        }
+    }
+
+    {
+        const QString lowerText = text.toLower();
+        if (!ardupilotPrearm && !px4Prearm && lowerText.contains(QStringLiteral("accel")) && lowerText.contains(QStringLiteral("incons"))) {
+            AudioOutput::instance()->playWav(QStringLiteral("ArmAccelsInconsistent"));
+            skipSpoken = true;
         }
     }
 

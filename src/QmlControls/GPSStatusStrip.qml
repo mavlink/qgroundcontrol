@@ -93,27 +93,6 @@ Item {
         Divider { }
 
         Segment {
-            title: qsTr("HDOP")
-            value: activeVehicle ? infoRow.valueOrNA(activeVehicle.gps.hdop, "--.--") : "--.--"
-        }
-
-        Divider { }
-
-        Segment {
-            title: qsTr("VDOP")
-            value: activeVehicle ? infoRow.valueOrNA(activeVehicle.gps.vdop, "--.--") : "--.--"
-        }
-
-        Divider { }
-
-        Segment {
-            title: qsTr("COG")
-            value: activeVehicle ? infoRow.valueOrNA(activeVehicle.gps.courseOverGround, "--.--") : "--.--"
-        }
-
-        Divider { }
-
-        Segment {
             title: qsTr("MSL")
             value: {
                 if (!activeVehicle || !activeVehicle.altitudeAMSL) {

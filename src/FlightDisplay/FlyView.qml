@@ -133,6 +133,7 @@ Item {
             visible:                !QGroundControl.videoManager.fullScreen
             utmspActTrigger:        utmspSendActTrigger
             isViewer3DOpen:         viewer3DWindow.isOpen
+            leftBottomPanelWidth:   gpsStatusStrip.visible ? gpsStatusStrip.x + gpsStatusStrip.width + _widgetMargin : 0
         }
 
         FlyViewCustomLayer {

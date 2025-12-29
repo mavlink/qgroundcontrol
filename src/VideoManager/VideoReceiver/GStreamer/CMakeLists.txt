@@ -12,13 +12,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
     if(NOT MACOS)
-        # NOTE: Using FindGStreamer.cmake is currently bypassed on macOS
-        # Using hardwired framework path as a workaround until FindGStreamer works on macOS
         find_package(GStreamer
-            REQUIRED
             COMPONENTS Core Base Video Gl GlPrototypes Rtsp
             OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
         )
+        if(NOT GStreamer_FOUND)
+            message(WARNING "GStreamer not found; skipping GStreamer video backend")
+            return()
+        endif()
     endif()
 
     # Build GStreamer Qt6 QML GL plugin
@@ -33,7 +34,9 @@ endif()
 # ============================================================================
 
 if(TARGET gstqml6gl)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+        gstqml6gl
+    )
 
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -128,6 +131,11 @@ if(TARGET gstqml6gl)
                 PATTERN "*/pkgconfig" EXCLUDE
                 PATTERN "*/share" EXCLUDE
             )
+        endif()
+    elseif(ANDROID)
+        find_library(QGC_GST_JPEG jpeg PATHS "${GStreamer_ROOT_DIR}/lib" "${GSTREAMER_LIB_PATH}" NO_DEFAULT_PATH)
+        if(QGC_GST_JPEG)
+            target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_GST_JPEG})
         endif()
     endif()
 endif()

@@ -53,10 +53,10 @@ Item {
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
     property var    _activePmc:             mapControl && mapControl._visualsPlanMasterController ? mapControl._visualsPlanMasterController : _planMasterController
-
-    property bool   _showTakeoffActions:    false
+    
 
     property bool utmspActTrigger
+    property real   leftBottomPanelWidth:   0
 
     QGCToolInsets {
         id:                     _totalToolInsets
@@ -105,6 +105,8 @@ Item {
         anchors.bottom:     parent.bottom
         anchors.right:      parent.right
         spacing:            _layoutSpacing
+        clip:               true
+        width:              Math.min(implicitWidth, _root.width - leftBottomPanelWidth - _layoutMargin * 3)
 
         property real bottomEdgeRightInset:     height + _layoutMargin
         property real bottomEdgeCenterInset:    bottomEdgeRightInset
@@ -288,7 +290,6 @@ Item {
                 onClicked: {
                     _guidedController.closeAll()
                     _guidedController.confirmAction(_guidedController.actionTakeoff)
-                    _showTakeoffActions = true
                 }
             }
         }
@@ -359,42 +360,6 @@ Item {
                 }
             }
         }
-        }
-    }
-
-    // Bottom-center overlay with Arm / Engage / Cancel buttons (frontend only)
-    Rectangle {
-        id:                         takeoffActionsOverlay
-        anchors.bottom:             parent.bottom
-        anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 4.2
-        z:                          QGroundControl.zOrderWidgets
-        visible:                    _showTakeoffActions && !QGroundControl.videoManager.fullScreen
-        color:                      qgcPal.toolbarBackground
-        border.color:               qgcPal.brandingBlue
-        border.width:               1
-        radius:                     6
-        width:                      actionsRow.implicitWidth + ScreenTools.defaultFontPixelWidth * 2
-        height:                     actionsRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.8
-
-        RowLayout {
-            id:                 actionsRow
-            anchors.centerIn:   parent
-            spacing:            ScreenTools.defaultFontPixelWidth
-
-            QGCButton {
-                text:       qsTr("Arm")
-                Layout.fillWidth: true
-            }
-            QGCButton {
-                text:       qsTr("Engage")
-                Layout.fillWidth: true
-            }
-            QGCButton {
-                text:       qsTr("Cancel")
-                Layout.fillWidth: true
-                onClicked:  _showTakeoffActions = false
-            }
         }
     }
 

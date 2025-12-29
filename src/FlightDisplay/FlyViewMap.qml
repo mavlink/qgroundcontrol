@@ -281,7 +281,7 @@ FlightMap {
             coordinate:     object.coordinate
             map:            _root
             size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 3
-            z:              QGroundControl.zOrderVehicles
+            z:              QGroundControl.zOrderMapItems + 1
         }
     }
     // Add distance sensor view
@@ -291,7 +291,7 @@ FlightMap {
             vehicle:        object
             coordinate:     object.coordinate
             map:            _root
-            z:              QGroundControl.zOrderVehicles
+            z:              QGroundControl.zOrderMapItems + 1
         }
     }
     // Add ADSB vehicles to the map
@@ -305,7 +305,7 @@ FlightMap {
             alert:          object.alert
             map:            _root
             size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 2.5
-            z:              QGroundControl.zOrderVehicles
+            z:              QGroundControl.zOrderMapItems + 1
         }
     }
 
@@ -688,15 +688,18 @@ FlightMap {
 
         DropPanel {
             id: mapClickDropPanel
+            // Slightly tighter padding on Android already handled in DropPanel.qml
 
             property var mapClickCoord
 
             sourceComponent: Component {
                 ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth / 2
+                    spacing: ScreenTools.defaultFontPixelWidth * (Qt.platform.os === "android" ? 0.35 : 0.5)
+                    property real _btnHeight: ScreenTools.defaultFontPixelHeight * (Qt.platform.os === "android" ? 2.0 : 2.2)
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Go to location")
                         visible:            globals.guidedControllerFlyView.showGotoLocation
                         onClicked: {
@@ -714,6 +717,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Orbit at location")
                         visible:            globals.guidedControllerFlyView.showOrbit
                         onClicked: {
@@ -725,6 +729,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("ROI at location")
                         visible:            globals.guidedControllerFlyView.showROI
                         onClicked: {
@@ -735,6 +740,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Set home here")
                         visible:            globals.guidedControllerFlyView.showSetHome
                         onClicked: {
@@ -745,6 +751,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Set Estimator Origin")
                         visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
                         onClicked: {
@@ -755,6 +762,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Add Waypoint")
                         onClicked: {
                             mapClickDropPanel.close()
@@ -781,6 +789,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Delete Last Waypoint")
                         onClicked: {
                             mapClickDropPanel.close()
@@ -802,6 +811,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Delete Selected Waypoint")
                         // Provide access to mission controller
                         visible:            {
@@ -859,6 +869,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Delete All Waypoints")
                         visible:            {
                             var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
@@ -875,6 +886,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Upload Required")
                         visible:            {
                             var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
@@ -891,6 +903,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Return")
                         enabled:            {
                             var controller = _root._visualsPlanMasterController ? _root._visualsPlanMasterController : _planMasterController
@@ -907,6 +920,7 @@ FlightMap {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.preferredHeight: _btnHeight
                         text:               qsTr("Set Heading")
                         visible:            globals.guidedControllerFlyView.showChangeHeading
                         onClicked: {
