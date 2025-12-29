@@ -127,25 +127,25 @@ Item {
                 heading: qsTr("GPS 1 Details")
                 showDividers: true
                 visible: _activeVehicle && _activeVehicle.gps && (
-                    _activeVehicle.gps.jammingState.value < 255 ||
-                    _activeVehicle.gps.spoofingState.value < 255 ||
-                    _activeVehicle.gps.authenticationState.value < 255
+                    (_activeVehicle.gps.jammingState.value > 0 && _activeVehicle.gps.jammingState.value < 255) ||
+                    (_activeVehicle.gps.spoofingState.value > 0 && _activeVehicle.gps.spoofingState.value < 255) ||
+                    (_activeVehicle.gps.authenticationState.value > 0 && _activeVehicle.gps.authenticationState.value < 255)
                 )
 
                 LabelledLabel {
                     label: qsTr("Jamming")
                     labelText: (_activeVehicle && _activeVehicle.gps) ? (_activeVehicle.gps.jammingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps.jammingState.value < 255
+                    visible: _activeVehicle.gps.jammingState.value > 0 && _activeVehicle.gps.jammingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Spoofing")
                     labelText: (_activeVehicle && _activeVehicle.gps) ? (_activeVehicle.gps.spoofingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps.spoofingState.value < 255
+                    visible: _activeVehicle.gps.spoofingState.value > 0 && _activeVehicle.gps.spoofingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Authentication")
                     labelText: (_activeVehicle && _activeVehicle.gps) ? (_activeVehicle.gps.authenticationState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps.authenticationState.value < 255
+                    visible: _activeVehicle.gps.authenticationState.value > 0 && _activeVehicle.gps.authenticationState.value < 255
                 }
             }
 
@@ -154,25 +154,25 @@ Item {
                 heading: qsTr("GPS 2 Details")
                 showDividers: true
                 visible: _activeVehicle && _activeVehicle.gps2 && (
-                    _activeVehicle.gps2.jammingState.value < 255 ||
-                    _activeVehicle.gps2.spoofingState.value < 255 ||
-                    _activeVehicle.gps2.authenticationState.value < 255
+                    (_activeVehicle.gps2.jammingState.value > 0 && _activeVehicle.gps2.jammingState.value < 255) ||
+                    (_activeVehicle.gps2.spoofingState.value > 0 && _activeVehicle.gps2.spoofingState.value < 255) ||
+                    (_activeVehicle.gps2.authenticationState.value > 0 && _activeVehicle.gps2.authenticationState.value < 255)
                 )
 
                 LabelledLabel {
                     label: qsTr("Jamming")
                     labelText: (_activeVehicle && _activeVehicle.gps2) ? (_activeVehicle.gps2.jammingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps2.jammingState.value < 255
+                    visible: _activeVehicle.gps2.jammingState.value > 0 && _activeVehicle.gps2.jammingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Spoofing")
                     labelText: (_activeVehicle && _activeVehicle.gps2) ? (_activeVehicle.gps2.spoofingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps2.spoofingState.value < 255
+                    visible: _activeVehicle.gps2.spoofingState.value > 0 && _activeVehicle.gps2.spoofingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Authentication")
                     labelText: (_activeVehicle && _activeVehicle.gps2) ? (_activeVehicle.gps2.authenticationState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps2.authenticationState.value < 255
+                    visible: _activeVehicle.gps2.authenticationState.value > 0 && _activeVehicle.gps2.authenticationState.value < 255
                 }
             }
         }
