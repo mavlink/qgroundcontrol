@@ -362,12 +362,12 @@ SettingsPage {
                         }
 
                         onTextChanged: {
-                            operatorIDFact.value = text
                             if (_activeVehicle) {
                                 _remoteIDManager.checkOperatorID(text)
                             } else {
                                 _offlineVehicle.remoteIDManager.checkOperatorID(text)
                             }
+                            operatorIDFact.value = text
                         }
 
                         onEditingFinished: {
