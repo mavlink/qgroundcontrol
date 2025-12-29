@@ -37,22 +37,10 @@ void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleG
     _gps1 = gps1;
     _gps2 = gps2;
 
-    auto connectFact = [this](Fact* fact) {
-        if (fact) {
-            _connections << connect(fact, &Fact::valueChanged, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
-        }
-    };
-
     if (_gps1) {
-        connectFact(_gps1->spoofingState());
-        connectFact(_gps1->jammingState());
-        connectFact(_gps1->authenticationState());
         _connections << connect(_gps1, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
     if (_gps2) {
-        connectFact(_gps2->spoofingState());
-        connectFact(_gps2->jammingState());
-        connectFact(_gps2->authenticationState());
         _connections << connect(_gps2, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
     _updateAggregates();
