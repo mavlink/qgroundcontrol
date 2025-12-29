@@ -24,6 +24,15 @@ class VehicleGPSAggregateFactGroup : public FactGroup
     Q_PROPERTY(Fact* authenticationState READ authenticationState CONSTANT)
     Q_PROPERTY(Fact* isStale             READ isStale             CONSTANT)
 public:
+    enum AuthState {
+        AUTH_UNKNOWN = 0,
+        AUTH_INITIALIZING = 1,
+        AUTH_ERROR = 2,
+        AUTH_OK = 3,
+        AUTH_DISABLED = 4,
+        AUTH_INVALID = -1
+    };
+
     explicit VehicleGPSAggregateFactGroup(QObject *parent = nullptr);
 
     Fact* spoofingState()       { return &_spoofingStateFact; }

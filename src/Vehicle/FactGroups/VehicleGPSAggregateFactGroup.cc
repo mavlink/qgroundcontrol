@@ -9,7 +9,6 @@
 
 #include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleGPSFactGroup.h"
-#include "VehicleGPS2FactGroup.h"
 #include "QGCLoggingCategory.h"
 #include <QtMath>
 
@@ -98,16 +97,16 @@ int VehicleGPSAggregateFactGroup::_mergeWorst(int a, int b)
 
 int VehicleGPSAggregateFactGroup::_mergeAuthentication(int a, int b)
 {
-    //Priority: 0 (Unknown) < 4 (Disabled) < 1 (Initializing) < 3 (OK) < 2 (Error)
+    // Priority: Unknown < Disabled < Initializing < OK < Error
     auto getWeight = [](int val) {
         switch (val) {
-        case -1: return -1;
-        case 0: return 0;
-        case 4: return 1;
-        case 1: return 2;
-        case 3: return 3;
-        case 2: return 4;
-        default: return -1;
+        case AUTH_INVALID:      return -1;
+        case AUTH_UNKNOWN:      return 0;   // lowest priority)
+        case AUTH_DISABLED:     return 1;
+        case AUTH_INITIALIZING: return 2;
+        case AUTH_OK:           return 3;
+        case AUTH_ERROR:        return 4;   // highest priority
+        default:                return -1;
         }
     };
 
