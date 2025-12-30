@@ -65,17 +65,20 @@ runs:
 
     - name: Install dependencies (Linux)
       if: inputs.platform == 'linux'
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential pkg-config git \
-          libx11-dev libxext-dev libxv-dev \
-          libwayland-dev wayland-protocols \
-          libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
-          libdrm-dev libgbm-dev \
-          libasound2-dev libpulse-dev \
-          libva-dev nasm yasm
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        command: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential pkg-config git \
+            libx11-dev libxext-dev libxv-dev \
+            libwayland-dev wayland-protocols \
+            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
+            libdrm-dev libgbm-dev \
+            libasound2-dev libpulse-dev \
+            libva-dev nasm yasm
 
     - name: Install dependencies (macOS)
       if: inputs.platform == 'macos' || inputs.platform == 'ios'
@@ -87,12 +90,15 @@ runs:
 
     - name: Install dependencies (Android)
       if: inputs.platform == 'android'
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip git autoconf automake libtool \
-          pkg-config gettext bison flex cmake ninja-build
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        command: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip git autoconf automake libtool \
+            pkg-config gettext bison flex cmake ninja-build
 
     # ===== QT (for qml6 plugin) =====
 

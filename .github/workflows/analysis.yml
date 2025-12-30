@@ -60,23 +60,25 @@ jobs:
         id: config
         uses: ./.github/actions/build-config
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          case "${{ inputs.tool }}" in
-            clazy)
-              sudo apt-get install -y clazy ninja-build
-              ;;
-            iwyu)
-              sudo apt-get install -y iwyu clang ninja-build
-              chmod a+x ./tools/setup/install-dependencies-debian.sh
-              sudo ./tools/setup/install-dependencies-debian.sh
-              ;;
-            asan|ubsan|tsan)
-              chmod a+x ./tools/setup/install-dependencies-debian.sh
-              sudo ./tools/setup/install-dependencies-debian.sh
-              ;;
-          esac
+      - name: Install Dependencies (clazy)
+        if: inputs.tool == 'clazy'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y clazy ninja-build
+
+      - name: Install Dependencies (iwyu)
+        if: inputs.tool == 'iwyu'
+        uses: ./.github/actions/install-dependencies
+        with:
+          extra-packages: iwyu clang ninja-build
+
+      - name: Install Dependencies (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/install-dependencies
 
       - name: Install Qt
         uses: ./.github/actions/qt-install

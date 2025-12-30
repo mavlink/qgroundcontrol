@@ -62,14 +62,10 @@ jobs:
           arch: linux_gcc_64
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libsdl2-dev libxkbcommon-dev \
-            libvulkan-dev libglvnd-dev \
-            libzstd-dev libspeechd-dev \
-            bloaty
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          extra-packages: bloaty
 
       - name: Configure
         run: |
@@ -218,13 +214,8 @@ jobs:
           arch: linux_gcc_64
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libsdl2-dev libxkbcommon-dev \
-            libvulkan-dev libglvnd-dev \
-            libzstd-dev libspeechd-dev
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Configure
         run: |

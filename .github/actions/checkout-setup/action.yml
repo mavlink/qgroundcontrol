@@ -1,0 +1,81 @@
+name: Checkout and Setup
+description: Common checkout, build config, and initial setup for all workflows
+
+inputs:
+  submodules:
+    description: 'Submodule checkout mode'
+    default: 'recursive'
+  fetch-depth:
+    description: 'Number of commits to fetch (0 for full history)'
+    default: '1'
+  fetch-tags:
+    description: 'Fetch git tags'
+    default: 'true'
+  harden-runner:
+    description: 'Enable step-security harden-runner'
+    default: 'true'
+  initial-setup:
+    description: 'Run initial setup (cmake, python, disk cleanup)'
+    default: 'true'
+
+outputs:
+  qt_version:
+    description: 'Qt version from build config'
+    value: ${{ steps.config.outputs.qt_version }}
+  qt_modules:
+    description: 'Qt modules from build config'
+    value: ${{ steps.config.outputs.qt_modules }}
+  qt_modules_ios:
+    description: 'Qt modules for iOS from build config'
+    value: ${{ steps.config.outputs.qt_modules_ios }}
+  gstreamer_macos_version:
+    description: 'GStreamer version for macOS'
+    value: ${{ steps.config.outputs.gstreamer_macos_version }}
+  gstreamer_windows_version:
+    description: 'GStreamer version for Windows'
+    value: ${{ steps.config.outputs.gstreamer_windows_version }}
+  xcode_version:
+    description: 'Xcode version for macOS'
+    value: ${{ steps.config.outputs.xcode_version }}
+  xcode_ios_version:
+    description: 'Xcode version for iOS'
+    value: ${{ steps.config.outputs.xcode_ios_version }}
+  ndk_version:
+    description: 'Android NDK version'
+    value: ${{ steps.config.outputs.ndk_version }}
+  java_version:
+    description: 'Java version for Android'
+    value: ${{ steps.config.outputs.java_version }}
+  android_platform:
+    description: 'Android platform/API level'
+    value: ${{ steps.config.outputs.android_platform }}
+  android_cmdline_tools:
+    description: 'Android cmdline-tools version'
+    value: ${{ steps.config.outputs.android_cmdline_tools }}
+  android_build_tools:
+    description: 'Android build-tools version'
+    value: ${{ steps.config.outputs.android_build_tools }}
+
+runs:
+  using: composite
+  steps:
+    - name: Harden Runner
+      if: inputs.harden-runner == 'true'
+      uses: step-security/harden-runner@v2
+      with:
+        egress-policy: audit
+
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: ${{ inputs.submodules }}
+        fetch-depth: ${{ inputs.fetch-depth }}
+        fetch-tags: ${{ inputs.fetch-tags }}
+
+    - name: Get build config
+      id: config
+      uses: ./.github/actions/build-config
+
+    - name: Initial Setup
+      if: inputs.initial-setup == 'true'
+      uses: ./.github/actions/common
