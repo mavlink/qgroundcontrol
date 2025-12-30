@@ -79,6 +79,14 @@ jobs:
         shell: bash
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Build Setup
         id: setup
         uses: ./.github/actions/build-setup
