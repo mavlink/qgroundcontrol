@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+import QGroundControl.Controls
+
 
 ColumnLayout {
     id:                 control    
@@ -17,6 +17,9 @@ ColumnLayout {
 
     property string defaultBorderColor  : QGroundControl.globalPalette.groupBorder
     property string outerBorderColor    : defaultBorderColor
+
+    property string defaultHeadingPointSize:    ScreenTools.defaultFontPointSize + 1
+    property string headingPointSize:           defaultHeadingPointSize
 
     property string heading
     property string headingDescription
@@ -33,7 +36,7 @@ ColumnLayout {
 
         QGCLabel { 
             text:           heading
-            font.pointSize: ScreenTools.defaultFontPointSize + 1
+            font.pointSize: headingPointSize
             font.bold:      true
         }
 
@@ -57,7 +60,7 @@ ColumnLayout {
         radius:             ScreenTools.defaultFontPixelHeight / 2
 
         Repeater {
-            model: showDividers? _contentLayout.children.length : 0
+            model: showDividers ? Math.max(0, _contentLayout.visibleChildren.length - 1) : 0
 
             Rectangle {
                 x:                  showBorder ? _margins : 0
@@ -65,11 +68,8 @@ ColumnLayout {
                 width:              parent.width - (showBorder ? _margins * 2 : 0)
                 height:             1
                 color:              QGroundControl.globalPalette.groupBorder
-                visible:            _contentItem.visible && 
-                                        _contentItem.width !== 0 && _contentItem.height !== 0 &&
-                                        index < _contentLayout.children.length - 1
 
-                property var _contentItem: _contentLayout.children[index]
+                property var _contentItem: _contentLayout.visibleChildren[index]
             }
         }
  
@@ -78,7 +78,7 @@ ColumnLayout {
             x:                  showBorder ? _margins : 0
             y:                  showBorder ? _margins : 0
             width:              parent.width - (showBorder ? _margins * 2 : 0)
-            spacing:            _margins * 2
+            spacing:            _margins * (showDividers ? 2 : 1)
         }
     }
 }

@@ -9,34 +9,53 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
-class QSocketNotifier;
+#ifdef Q_OS_WIN
+    class QWinEventNotifier;
+#else
+    class QSocketNotifier;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(SignalHandlerLog)
 
-class SignalHandler : public QObject
+class SignalHandler final : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SignalHandler(QObject *parent = nullptr);
+    explicit SignalHandler(QObject* parent = nullptr);
+    ~SignalHandler() override;
 
-    static SignalHandler *instance();
+    int setupSignalHandlers();
 
-    static int setupSignalHandlers();
-    static void intSignalHandler(int signum);
-    static void termSignalHandler(int signum);
+    static SignalHandler* current() { return s_current.load(std::memory_order_acquire); }
 
+#ifdef Q_OS_WIN
+    static int consoleCtrlHandler(unsigned long evt);
+#else
 private slots:
     void _onSigInt();
     void _onSigTerm();
+#endif
 
 private:
-    static int sigIntFd[2];
-    static int sigTermFd[2];
+#ifdef Q_OS_WIN
+    QWinEventNotifier* _notifier{nullptr};
+    Qt::HANDLE _signalEvent{nullptr};
+#else
+    static void _intSignalHandler(int signum);
+    static void _termSignalHandler(int signum);
 
-    QSocketNotifier *_notifierInt = nullptr;
-    QSocketNotifier *_notifierTerm = nullptr;
+    int _sigIntFd[2] = {-1, -1};   // socketpair read=0, write=1
+    int _sigTermFd[2] = {-1, -1};
+    QSocketNotifier* _notifierInt{nullptr};
+    QSocketNotifier* _notifierTerm{nullptr};
+#endif
+
+    bool _sigIntTriggered{false};
+    static std::atomic<SignalHandler*> s_current;
 };

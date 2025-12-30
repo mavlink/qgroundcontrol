@@ -12,20 +12,22 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.AutoPilotPlugin
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
+
+
 
 Rectangle {
     id:     setupView
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+    // This need to block click event leakage to underlying map.
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
-    ButtonGroup { id: setupButtonGroup }
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     readonly property real      _defaultTextHeight: ScreenTools.defaultFontPixelHeight
     readonly property real      _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
@@ -50,7 +52,7 @@ Rectangle {
             if (QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents.length === 0) {
                 panelLoader.setSourceComponent(noComponentsVehicleSummaryComponent)
             } else {
-                panelLoader.setSource("VehicleSummary.qml")
+                panelLoader.setSource("qrc:/qml/QGroundControl/VehicleSetup/VehicleSummary.qml")
             }
         } else if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
             panelLoader.setSourceComponent(missingParametersVehicleSummaryComponent)
@@ -77,7 +79,7 @@ Rectangle {
                 panelLoader.setSourceComponent(messagePanelComponent)
             } else {
                 panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
-                for (var i = 0; i < componentRepeater.count; i++) {
+                for(var i = 0; i < componentRepeater.count; i++) {
                     var obj = componentRepeater.itemAt(i);
                     if (obj.text === vehicleComponent.name) {
                         obj.checked = true
@@ -88,15 +90,10 @@ Rectangle {
         }
     }
 
-    function showParametersPanelComponent(comp = "")
-    {
-        showParametersPanel()
-        panelLoader.item.selectComponent(comp)
-    }
     function showParametersPanel() {
         if (mainWindow.allowViewSwitch()) {
             parametersButton.checked = true
-            panelLoader.setSource("SetupParameterEditor.qml")
+            panelLoader.setSource("qrc:/qml/QGroundControl/VehicleSetup/SetupParameterEditor.qml")
         }
     }
 
@@ -104,8 +101,8 @@ Rectangle {
 
     Connections {
         target: QGroundControl.corePlugin
-        onShowAdvancedUIChanged: {
-            if(!QGroundControl.corePlugin.showAdvancedUI) {
+        function onShowAdvancedUIChanged(showAdvancedUI) {
+            if (!showAdvancedUI) {
                 _showSummaryPanel()
             }
         }
@@ -113,8 +110,8 @@ Rectangle {
 
     Connections {
         target: QGroundControl.multiVehicleManager
-        onParameterReadyVehicleAvailableChanged: {
-            if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable || summaryButton.checked || setupButtonGroup.current != firmwareButton) {
+        function onParameterReadyVehicleAvailableChanged(parametersReady) {
+            if (parametersReady || summaryButton.checked || !firmwareButton.checked) {
                 // Show/Reload the Summary panel when:
                 //      A new vehicle shows up
                 //      The summary panel is already showing and the active vehicle goes away
@@ -229,7 +226,7 @@ Rectangle {
                 visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.flowImageIndex > 0 : false
                 text:               qsTr("Optical Flow")
                 Layout.fillWidth:   true
-                onClicked:          showPanel(this, "OpticalFlowSensor.qml")
+                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/OpticalFlowSensor.qml");
             }
 
             ConfigButton {
@@ -239,9 +236,9 @@ Rectangle {
                 visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
                 text:               _forcedToButtonsOnly ? qsTr("Buttons") : qsTr("Joystick")
                 Layout.fillWidth:   true
-                onClicked:          showPanel(this, "JoystickConfig.qml")
+                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfig.qml")
 
-                property var    _activeJoystick:        joystickManager.activeJoystick
+                property Joystick _activeJoystick: joystickManager.activeJoystick
                 property bool   _buttonsOnly:           _activeJoystick ? _activeJoystick.axisCount == 0 : false
                 property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }
@@ -265,22 +262,12 @@ Rectangle {
             ConfigButton {
                 id:                 parametersButton
                 visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
-                                    !QGroundControl.multiVehicleManager.activeVehicle.usingHighLatencyLink &&
-                                    _corePlugin.showAdvancedUI
+                                    !QGroundControl.multiVehicleManager.activeVehicle.usingHighLatencyLink
+                                    && _corePlugin.showAdvancedUI
                 text:               qsTr("Parameters")
                 Layout.fillWidth:   true
                 icon.source:        "/qmlimages/subMenuButtonImage.png"
-                onClicked:          showPanel(this, "SetupParameterEditor.qml")
-            }
-
-            ConfigButton {
-                property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
-                property var ocMngr : vehicle ? vehicle.onboardComputersManager : 0
-                id:                 vgmInfo
-                visible:            ocMngr && checkForVGM(ocMngr.computersInfo)
-                text:               qsTr("Onboard Computers Info")
-                Layout.fillWidth:   true
-                onClicked:          showPanel(this,"OnboardComputersInfo.qml")
+                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/SetupParameterEditor.qml")
             }
 
             ConfigButton {
@@ -290,7 +277,7 @@ Rectangle {
                 text:               qsTr("Firmware")
                 Layout.fillWidth:   true
 
-                onClicked: showPanel(this, "FirmwareUpgrade.qml")
+                onClicked: showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/FirmwareUpgrade.qml")
             }
         }
     }

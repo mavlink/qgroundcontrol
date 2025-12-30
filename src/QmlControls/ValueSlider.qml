@@ -14,10 +14,10 @@ import Qt.labs.animation
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Vehicle
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
+
+
+
 
 Control {
     id: control
@@ -52,11 +52,11 @@ Control {
 
     // Add additional major ticks above/below min/max to ensure we can display the full visual range of the slider
     property int    _majorTicksVisibleBeyondIndicator:  Math.ceil(_indicatorCenterPos / _majorTickSpacing)
-    property int    _majorTicksExtentsAdjustment:       _majorTicksVisibleBeyondIndicator * majorTickStepSize
+    property real   _majorTicksExtentsAdjustment:       _majorTicksVisibleBeyondIndicator * majorTickStepSize
 
     // Calculate the min/max for the full slider range
-    property int    _majorTickMinValue: Math.floor((from - _majorTicksExtentsAdjustment) / majorTickStepSize) * majorTickStepSize
-    property int    _majorTickMaxValue: Math.floor((to + _majorTicksExtentsAdjustment) / majorTickStepSize) * majorTickStepSize
+    property real   _majorTickMinValue: Math.floor((from - _majorTicksExtentsAdjustment) / majorTickStepSize) * majorTickStepSize
+    property real   _majorTickMaxValue: Math.floor((to + _majorTicksExtentsAdjustment) / majorTickStepSize) * majorTickStepSize
 
     // Now calculate the position we draw the first tick mark such that we are not allowed to flick above the max value
     property real   _firstTickPixelOffset:  _indicatorCenterPos - ((from - _majorTickMinValue) / _sliderValuePerPixel)
@@ -77,16 +77,36 @@ Control {
             control.value = value
             _recalcSliderPos(false)
         }
-    }    
+    }
+
+    function _outputInternalValues() {
+        console.log("ValueSlider: width", width)
+        console.log("ValueSlider: _indicatorCenterPos", _indicatorCenterPos)
+        console.log("ValueSlider: _firstPixelValue", _firstPixelValue)
+        console.log("ValueSlider: _firstTickPixelOffset", _firstTickPixelOffset)
+        console.log("ValueSlider: _sliderValuePerPixel", _sliderValuePerPixel)
+        console.log("ValueSlider: _indicatorCenterPos", _indicatorCenterPos)
+        console.log("ValueSlider: _majorTickSpacing", _majorTickSpacing)
+        console.log("ValueSlider: _majorTickSize", _majorTickSize)
+        console.log("ValueSlider: _minorTickSize", _minorTickSize)
+        console.log("ValueSlider: _majorTicksVisibleBeyondIndicator", _majorTicksVisibleBeyondIndicator)
+        console.log("ValueSlider: _majorTicksExtentsAdjustment", _majorTicksExtentsAdjustment)
+        console.log("ValueSlider: _majorTickMinValue", _majorTickMinValue)
+        console.log("ValueSlider: _majorTickMaxValue", _majorTickMaxValue)
+        console.log("ValueSlider: _cMajorTicks", _cMajorTicks)
+        console.log("ValueSlider: _sliderContentSize", _sliderContentSize)
+    }
 
     Component.onCompleted: {
         _recalcSliderPos(false)
+        //_outputInternalValues()
         _loadComplete = true
     }
 
     onWidthChanged: {
         if (_loadComplete) {
             _recalcSliderPos()
+            //_outputInternalValues()
         }
     }
 
@@ -304,7 +324,7 @@ Control {
 
                 Connections {
                     target: control
-                    onValueChanged: sliderValueTextField.visible = false
+                    function onValueChanged() { sliderValueTextField.visible = false }
                 }
             }
         }

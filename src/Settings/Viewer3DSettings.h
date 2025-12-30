@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
@@ -16,6 +18,8 @@
 class Viewer3DSettings : public SettingsGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     Viewer3DSettings(QObject* parent = nullptr);
 

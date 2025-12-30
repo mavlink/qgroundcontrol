@@ -12,10 +12,9 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
 
 GPSIndicator {
-    property bool showIndicator: true
+    property bool showIndicator: _activeVehicle.gps.telemetryAvailable
+
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 }

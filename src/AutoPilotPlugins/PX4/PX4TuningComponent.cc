@@ -54,7 +54,7 @@ QUrl PX4TuningComponent::setupSource(void) const
 
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
-            qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
+            qmlFile = "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml";
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
@@ -62,7 +62,7 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:
         case MAV_TYPE_TRICOPTER:
-            qmlFile = "qrc:/qml/PX4TuningComponentCopter.qml";
+            qmlFile = "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml";
             break;
         case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
         case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
@@ -71,7 +71,11 @@ QUrl PX4TuningComponent::setupSource(void) const
         case MAV_TYPE_VTOL_TAILSITTER:
         case MAV_TYPE_VTOL_TILTWING:
         case MAV_TYPE_VTOL_RESERVED5:
-            qmlFile = "qrc:/qml/PX4TuningComponentVTOL.qml";
+            qmlFile = "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml";
+            break;
+        case MAV_TYPE_SPACECRAFT_ORBITER:
+            // Spacecraft Type
+            qmlFile = "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4TuningComponentSpacecraft.qml";
             break;
         default:
             break;

@@ -21,7 +21,6 @@
 #include <gst/gstpad.h>
 
 #include "VideoReceiver.h"
-#include "KLVMetadata.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 
@@ -74,7 +73,7 @@ private slots:
     void _watchdog();
     void _handleEOS();
 
-private:
+protected:
     GstElement *_makeSource(const QString &input);
     GstElement *_makeDecoder(GstCaps *caps = nullptr, GstElement *videoSink = nullptr);
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
@@ -91,6 +90,7 @@ private:
     bool _unlinkBranch(GstElement *from);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
+    void _logDecodebin3SelectedCodec(GstElement *decodebin3);
 
     bool _needDispatch();
     void _dispatchSignal(Task emitter);
@@ -98,16 +98,13 @@ private:
     static gboolean _onBusMessage(GstBus *bus, GstMessage *message, gpointer user_data);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
     static void _wrapWithGhostPad(GstElement *element, GstPad *pad, gpointer data);
-    static void _linkVideoPad(GstElement* element, GstPad* pad, gpointer data);
-    static void _linkMedatadaPad(GstElement* element, GstPad* pad, gpointer data);
+    static void _linkPad(GstElement *element, GstPad *pad, gpointer data);
     static gboolean _padProbe(GstElement *element, GstPad *pad, gpointer user_data);
     static gboolean _filterParserCaps(GstElement *bin, GstPad *pad, GstElement *element, GstQuery *query, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-    static gboolean _padHasMetadataCaps(GstPad* pad);
-    static GstFlowReturn _onNewMedatada(GstElement *sink, gpointer user_data);
 
     GstElement *_decoder = nullptr;
     GstElement *_decoderValve = nullptr;

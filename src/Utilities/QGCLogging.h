@@ -22,6 +22,7 @@ class QGCLogging : public QStringListModel
 
 public:
     explicit QGCLogging(QObject *parent = nullptr);
+    ~QGCLogging();
 
     /// Get the singleton instance
     static QGCLogging *instance();

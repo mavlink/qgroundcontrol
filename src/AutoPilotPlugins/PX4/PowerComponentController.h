@@ -13,13 +13,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactPanelController.h"
 
 /// Power Component MVC Controller for PowerComponent.qml.
 class PowerComponentController : public FactPanelController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
     PowerComponentController(void);
     
@@ -38,7 +40,7 @@ signals:
     void calibrationSuccess(const QStringList& warningMessages);
     
 private slots:
-    void _handleVehicleTextMessage(int vehicleId, int compId, int severity, QString text);
+    void _handleVehicleTextMessage(int vehicleId, int compId, int severity, QString text, const QString &description);
     
 private:
     void _stopCalibration(void);

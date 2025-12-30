@@ -21,7 +21,7 @@ Q_DECLARE_LOGGING_CATEGORY(RCChannelMonitorControllerLog)
 class RCChannelMonitorController : public FactPanelController
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
 
 public:

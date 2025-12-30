@@ -23,7 +23,7 @@ const char* SimpleLandingComplexItem::jsonComplexItemTypeValue  = "utSimpleLandi
 LandingComplexItemTest::LandingComplexItemTest(void)
 {    
     rgSignals[finalApproachCoordinateChangedIndex]  = SIGNAL(finalApproachCoordinateChanged(QGeoCoordinate));
-    rgSignals[loiterTangentCoordinateChangedIndex]  = SIGNAL(loiterTangentCoordinateChanged(QGeoCoordinate));
+    rgSignals[slopeStartCoordinateChangedIndex]     = SIGNAL(slopeStartCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordSetChangedIndex]          = SIGNAL(landingCoordSetChanged(bool));
     rgSignals[altitudesAreRelativeChangedIndex]     = SIGNAL(altitudesAreRelativeChanged(bool));
@@ -333,7 +333,7 @@ void LandingComplexItemTest::_validateItem(LandingComplexItem* actualItem, Landi
     QVERIFY(fuzzyCompareLatLon(actualItem->finalApproachCoordinate(),   expectedItem->finalApproachCoordinate()));
     QVERIFY(fuzzyCompareLatLon(actualItem->landingCoordinate(),         expectedItem->landingCoordinate()));
     if (actualItem->useLoiterToAlt()->rawValue().toBool()) {
-        QVERIFY(fuzzyCompareLatLon(actualItem->loiterTangentCoordinate(), expectedItem->loiterTangentCoordinate()));
+        QVERIFY(fuzzyCompareLatLon(actualItem->slopeStartCoordinate(),  expectedItem->slopeStartCoordinate()));
         QCOMPARE(actualItem->loiterRadius()->rawValue().toInt(),        expectedItem->loiterRadius()->rawValue().toInt());
         QCOMPARE(actualItem->loiterClockwise()->rawValue().toBool(),    expectedItem->loiterClockwise()->rawValue().toBool());
     }
@@ -395,15 +395,15 @@ void SimpleLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         emit terrainCollisionChanged(false);
     }
 
-    _flightPathSegments.beginReset();
+    _flightPathSegments.beginResetModel();
     _flightPathSegments.clearAndDeleteContents();
     if (useLoiterToAlt()->rawValue().toBool()) {
-        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
-        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), slopeStartCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, slopeStartCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     } else {
         _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     }
-    _flightPathSegments.endReset();
+    _flightPathSegments.endResetModel();
 
     if (_cTerrainCollisionSegments != 0) {
         emit terrainCollisionChanged(true);

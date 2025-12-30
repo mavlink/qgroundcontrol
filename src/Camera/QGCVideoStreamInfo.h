@@ -12,6 +12,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
 
@@ -21,6 +22,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCVideoStreamInfoLog)
 class QGCVideoStreamInfo : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QString  uri         READ uri            NOTIFY infoChanged)
     Q_PROPERTY(QString  name        READ name           NOTIFY infoChanged)
     Q_PROPERTY(quint8   streamID    READ streamID       NOTIFY infoChanged)
@@ -40,6 +43,7 @@ class QGCVideoStreamInfo : public QObject
 
 public:
     explicit QGCVideoStreamInfo(const mavlink_video_stream_information_t &info, QObject *parent = nullptr);
+    ~QGCVideoStreamInfo();
 
     Q_DECLARE_FLAGS(QVIDEO_STREAM_STATUS_FLAGS, VIDEO_STREAM_STATUS_FLAGS)
 

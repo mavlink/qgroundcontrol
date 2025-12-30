@@ -29,10 +29,8 @@ class GPSRtk : public QObject
     Q_OBJECT
 
 public:
-    GPSRtk(QObject *parent = nullptr);
+    explicit GPSRtk(QObject *parent = nullptr);
     ~GPSRtk();
-
-    static void registerQmlTypes();
 
     void connectGPS(const QString &device, QStringView gps_type);
     void disconnectGPS();

@@ -42,6 +42,8 @@ VehicleFactGroup::VehicleFactGroup(QObject *parent)
     _addFact(&_headingToNextWPFact);
     _addFact(&_distanceToNextWPFact);
     _addFact(&_headingToHomeFact);
+    _addFact(&_headingFromHomeFact);
+    _addFact(&_headingFromGCSFact);
     _addFact(&_distanceToGCSFact);
     _addFact(&_hobbsFact);
     _addFact(&_throttlePctFact);

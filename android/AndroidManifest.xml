@@ -1,23 +1,10 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.mavlink.qgroundcontrol"
     android:installLocation="auto"
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">
 
-    <supports-screens
-        android:anyDensity="true"
-        android:largeScreens="true"
-        android:normalScreens="true"
-        android:smallScreens="true" />
-
     <!-- %%INSERT_PERMISSIONS -->
-
-    <uses-permission android:name="android.permission.USB_PERMISSION" />
-    <!-- Need MulticastLock to receive broadcast UDP packets -->
-    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-    <!-- Needed to keep working while 'asleep' -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- %%INSERT_FEATURES -->
 
@@ -30,6 +17,12 @@
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
 
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true" />
+
     <application
         android:name="org.qtproject.qt.android.bindings.QtApplication"
         android:hardwareAccelerated="true"
@@ -37,12 +30,10 @@
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:fullBackupOnly="false"
-        android:icon="@drawable/icon"
+        android:icon="-- %%INSERT_APP_ICON%% --"
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
         <!-- android:theme="@style/AppTheme" -->
-
-        <!-- <meta-data android:name="android.app.system_libs_prefix" android:value="/system/lib/" /> -->
 
         <activity
             android:name="org.mavlink.qgroundcontrol.QGCActivity"
@@ -61,11 +52,8 @@
                 <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
-                <!-- TODO: CMake configure xml file -->
-                <!-- %%QGC_INSERT_ACTIVITY_INTENT_FILTER -->
             </intent-filter>
 
-            <!-- %%QGC_INSERT_ACTIVITY_META_DATA -->
             <meta-data
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />

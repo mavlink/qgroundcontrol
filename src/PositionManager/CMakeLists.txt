@@ -1,3 +1,8 @@
+# ============================================================================
+# Position Manager Module
+# Manages GPS/GNSS position sources and simulated position data
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         PositionManager.cpp

@@ -12,6 +12,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCPalette.h"
 
@@ -35,6 +36,7 @@ Q_DECLARE_LOGGING_CATEGORY(QGCCorePluginLog)
 class QGCCorePlugin : public QObject
 {
     Q_OBJECT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QGCOptions.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(bool showAdvancedUI                      READ showAdvancedUI                     WRITE _setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
@@ -55,7 +57,6 @@ public:
     virtual ~QGCCorePlugin();
 
     static QGCCorePlugin *instance();
-    static void registerQmlTypes();
 
     virtual void init() { }
     virtual void cleanup() { }
@@ -77,11 +78,12 @@ public:
     /// @return true: Show settings ui, false: Hide settings ui
     virtual bool overrideSettingsGroupVisibility(const QString &name) { Q_UNUSED(name); return true; }
 
-    /// Allows the core plugin to override the setting meta data before the setting fact is created.
+    /// Allows the core plugin to override the meta data before the fact is created.
     ///     @param settingsGroup - QSettings group which contains this item
     ///     @param metaData - MetaData for setting fact
-    /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
-    virtual bool adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData);
+    ///     @param visible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
+    /// If not overridden, metaData and visible are left unchanged.
+    virtual void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible);
 
     /// Return the resource file which contains the brand image for for Indoor theme.
     virtual QString brandImageIndoor() const { return QString(); }

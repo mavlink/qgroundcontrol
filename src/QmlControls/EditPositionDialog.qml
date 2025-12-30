@@ -13,11 +13,11 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
+
 
 QGCPopupDialog {
     id:         root

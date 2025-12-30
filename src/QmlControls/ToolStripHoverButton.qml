@@ -10,8 +10,8 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+import QGroundControl
+import QGroundControl.Controls
 
 Button {
     id:             control
@@ -36,8 +36,8 @@ Button {
     property real imageScale:        forceImageScale11 && (text == "") ? 0.8 : 0.6
     property real contentMargins:    innerText.height * 0.1
 
-    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
-    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.buttonText : qgcPal.buttonHighlight
+    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.windowTransparentText
+    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.windowTransparentText : qgcPal.buttonHighlight
 
     signal dropped(int index)
 
@@ -68,7 +68,7 @@ Button {
 
         Column {
             anchors.centerIn:   parent
-            spacing:        contentMargins * 2
+            spacing:            0
 
             Image {
                 id:                         innerImageColorful
@@ -128,10 +128,9 @@ Button {
     }
 
     background: Rectangle {
-        id:             buttonBkRect
-        color:          (control.checked || control.pressed) ?
-                            qgcPal.buttonHighlight :
-                            ((control.enabled && control.hovered) ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
-        anchors.fill:   parent
+        id:     buttonBkRect
+        color:  (control.checked || control.pressed) ?
+                    qgcPal.buttonHighlight :
+                    ((control.enabled && control.hovered) ? qgcPal.toolStripHoverColor : "transparent")
     }
 }

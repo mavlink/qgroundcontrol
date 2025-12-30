@@ -21,26 +21,6 @@
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
 #include "MissionCommandTree.h"
-#include "HorizontalFactValueGrid.h"
-#include "FlightPathSegment.h"
-#include "InstrumentValueData.h"
-#include "QGCGeoBoundingCube.h"
-#include "QGCMapPolygon.h"
-#include "QGCMapCircle.h"
-#include "MavlinkAction.h"
-#include "MavlinkActionManager.h"
-#include "EditPositionDialogController.h"
-#include "ParameterEditorController.h"
-#include "QGCFileDialogController.h"
-#include "RCChannelMonitorController.h"
-#include "ScreenToolsController.h"
-#include "QGCMapPalette.h"
-#include "QGCPalette.h"
-#include "QmlObjectListModel.h"
-#include "RCToParamDialogController.h"
-#include "TerrainProfile.h"
-#include "ToolStripAction.h"
-#include "ToolStripActionList.h"
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
@@ -61,51 +41,10 @@
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
 
-QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "GuidedActionsControllerLog")
+QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
 
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
-
-static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    ScreenToolsController* screenToolsController = new ScreenToolsController();
-    return screenToolsController;
-}
-
-static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    QGroundControlQmlGlobal *const qmlGlobal = new QGroundControlQmlGlobal();
-    return qmlGlobal;
-}
-
-void QGroundControlQmlGlobal::registerQmlTypes()
-{
-    qmlRegisterUncreatableType<FactValueGrid>           ("QGroundControl.Templates",             1, 0, "FactValueGrid",       "Reference only");
-    qmlRegisterUncreatableType<FlightPathSegment>       ("QGroundControl",                       1, 0, "FlightPathSegment",   "Reference only");
-    qmlRegisterUncreatableType<InstrumentValueData>     ("QGroundControl",                       1, 0, "InstrumentValueData", "Reference only");
-    qmlRegisterUncreatableType<QGCGeoBoundingCube>      ("QGroundControl.FlightMap",             1, 0, "QGCGeoBoundingCube",  "Reference only");
-    qmlRegisterUncreatableType<QGCMapPolygon>           ("QGroundControl.FlightMap",             1, 0, "QGCMapPolygon",       "Reference only");
-    qmlRegisterUncreatableType<QmlObjectListModel>      ("QGroundControl",                       1, 0, "QmlObjectListModel",  "Reference only");
-
-    qmlRegisterType<MavlinkAction>                      ("QGroundControl.Controllers",           1, 0, "MavlinkAction");
-    qmlRegisterType<MavlinkActionManager>               ("QGroundControl.Controllers",           1, 0, "MavlinkActionManager");
-    qmlRegisterType<EditPositionDialogController>       ("QGroundControl.Controllers",           1, 0, "EditPositionDialogController");
-    qmlRegisterType<HorizontalFactValueGrid>            ("QGroundControl.Templates",             1, 0, "HorizontalFactValueGrid");
-    qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers",           1, 0, "ParameterEditorController");
-    qmlRegisterType<QGCFileDialogController>            ("QGroundControl.Controllers",           1, 0, "QGCFileDialogController");
-    qmlRegisterType<QGCMapCircle>                       ("QGroundControl.FlightMap",             1, 0, "QGCMapCircle");
-    qmlRegisterType<QGCMapPalette>                      ("QGroundControl.Palette",               1, 0, "QGCMapPalette");
-    qmlRegisterType<QGCPalette>                         ("QGroundControl.Palette",               1, 0, "QGCPalette");
-    qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers",           1, 0, "RCChannelMonitorController");
-    qmlRegisterType<RCToParamDialogController>          ("QGroundControl.Controllers",           1, 0, "RCToParamDialogController");
-    qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers",           1, 0, "ScreenToolsController");
-    qmlRegisterType<TerrainProfile>                     ("QGroundControl.Controls",              1, 0, "TerrainProfile");
-    qmlRegisterType<ToolStripAction>                    ("QGroundControl.Controls",              1, 0, "ToolStripAction");
-    qmlRegisterType<ToolStripActionList>                ("QGroundControl.Controls",              1, 0, "ToolStripActionList");
-
-    qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                       1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
-    qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
-}
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     : QObject(parent)
@@ -411,22 +350,27 @@ void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
     QGCApplication::clearDeleteAllSettingsNextBoot();
 }
 
-QStringList QGroundControlQmlGlobal::loggingCategories()
+QmlObjectListModel *QGroundControlQmlGlobal::treeLoggingCategoriesModel()
 {
-    return QGCLoggingCategoryRegister::instance()->registeredCategories();
+    return QGCLoggingCategoryManager::instance()->treeCategoryModel();
+}
+
+QmlObjectListModel *QGroundControlQmlGlobal::flatLoggingCategoriesModel()
+{
+    return QGCLoggingCategoryManager::instance()->flatCategoryModel();
 }
 
 void QGroundControlQmlGlobal::setCategoryLoggingOn(const QString &category, bool enable)
 {
-    QGCLoggingCategoryRegister::setCategoryLoggingOn(category, enable);
+    QGCLoggingCategoryManager::instance()->setCategoryLoggingOn(category, enable);
 }
 
 bool QGroundControlQmlGlobal::categoryLoggingOn(const QString &category)
 {
-    return QGCLoggingCategoryRegister::categoryLoggingOn(category);
+    return QGCLoggingCategoryManager::categoryLoggingOn(category);
 }
 
-void QGroundControlQmlGlobal::updateLoggingFilterRules()
+void QGroundControlQmlGlobal::disableAllLoggingCategories()
 {
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString());
+    QGCLoggingCategoryManager::instance()->disableAllCategories();
 }

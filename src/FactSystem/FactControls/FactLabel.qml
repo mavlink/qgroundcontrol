@@ -1,8 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.FactSystem
-import QGroundControl.Palette
+import QGroundControl
+
+
 import QGroundControl.Controls
 
 QGCLabel {

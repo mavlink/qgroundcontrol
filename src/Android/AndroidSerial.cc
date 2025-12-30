@@ -201,13 +201,13 @@ QList<QSerialPortInfo> availableDevices()
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "availableDevicesInfo", "()[Ljava/lang/String;");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: availableDevicesInfo";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return serialPortInfoList;
     }
 
     jobjectArray objArray = static_cast<jobjectArray>(env->CallStaticObjectMethod(javaClass, methodId));
     if (!objArray) {
-        qCWarning(AndroidSerialLog) << "availableDevicesInfo returned null";
+        qCDebug(AndroidSerialLog) << "availableDevicesInfo returned null";
         (void) env.checkAndClearExceptions();
         return serialPortInfoList;
     }
@@ -286,7 +286,7 @@ int getDeviceId(const QString &portName)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDeviceId", "(Ljava/lang/String;)I");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getDeviceId";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return -1;
     }
 
@@ -316,7 +316,7 @@ int getDeviceHandle(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDeviceHandle", "(I)I");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getDeviceHandle";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return -1;
     }
 
@@ -357,7 +357,7 @@ int open(const QString &portName, QSerialPortPrivate *classPtr)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "open", "(Ljava/lang/String;J)I");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: open";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return -1;
     }
 
@@ -387,7 +387,7 @@ bool close(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "close", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: close";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -423,7 +423,7 @@ bool isOpen(const QString &portName)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "isDeviceNameOpen", "(Ljava/lang/String;)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: isDeviceNameOpen";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -453,7 +453,7 @@ QByteArray read(int deviceId, int length, int timeout)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "read", "(III)[B");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: read";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return QByteArray();
     }
 
@@ -526,7 +526,7 @@ int write(int deviceId, const char *data, int length, int timeout, bool async)
         const jmethodID methodId = env->GetStaticMethodID(javaClass, "writeAsync", "(I[BI)I");
         if (!methodId) {
             qCWarning(AndroidSerialLog) << "Method Not Found: writeAsync";
-            env.checkAndClearExceptions();
+            (void) env.checkAndClearExceptions();
             env->DeleteLocalRef(jarray);
             return -1;
         }
@@ -539,7 +539,7 @@ int write(int deviceId, const char *data, int length, int timeout, bool async)
         const jmethodID methodId = env->GetStaticMethodID(javaClass, "write", "(I[BII)I");
         if (!methodId) {
             qCWarning(AndroidSerialLog) << "Method Not Found: write";
-            env.checkAndClearExceptions();
+            (void) env.checkAndClearExceptions();
             env->DeleteLocalRef(jarray);
             return -1;
         }
@@ -579,7 +579,7 @@ bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int p
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "setParameters", "(IIIII)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: setParameters";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -615,7 +615,7 @@ bool getCarrierDetect(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getCarrierDetect", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getCarrierDetect";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -645,7 +645,7 @@ bool getClearToSend(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getClearToSend", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getClearToSend";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -675,7 +675,7 @@ bool getDataSetReady(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDataSetReady", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getDataSetReady";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -705,7 +705,7 @@ bool getDataTerminalReady(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getDataTerminalReady", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getDataTerminalReady";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -735,7 +735,7 @@ bool setDataTerminalReady(int deviceId, bool set)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "setDataTerminalReady", "(IZ)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: setDataTerminalReady";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -766,7 +766,7 @@ bool getRingIndicator(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getRingIndicator", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getRingIndicator";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -796,7 +796,7 @@ bool getRequestToSend(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getRequestToSend", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getRequestToSend";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -826,7 +826,7 @@ bool setRequestToSend(int deviceId, bool set)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "setRequestToSend", "(IZ)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: setRequestToSend";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -857,7 +857,7 @@ QSerialPort::PinoutSignals getControlLines(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getControlLines", "(I)[I");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getControlLines";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return QSerialPort::PinoutSignals();
     }
 
@@ -913,7 +913,7 @@ QSerialPort::PinoutSignals getControlLines(int deviceId)
 
     env->ReleaseIntArrayElements(jarray, ints, JNI_ABORT);
     env->DeleteLocalRef(jarray);
-    env.checkAndClearExceptions();
+    (void) env.checkAndClearExceptions();
 
     return data;
 }
@@ -935,7 +935,7 @@ int getFlowControl(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "getFlowControl", "(I)I");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: getFlowControl";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return QSerialPort::NoFlowControl;
     }
 
@@ -965,7 +965,7 @@ bool setFlowControl(int deviceId, int flowControl)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "setFlowControl", "(II)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: setFlowControl";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -998,7 +998,7 @@ bool purgeBuffers(int deviceId, bool input, bool output)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "purgeBuffers", "(IZZ)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: purgeBuffers";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -1035,7 +1035,7 @@ bool setBreak(int deviceId, bool set)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "setBreak", "(IZ)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: setBreak";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -1068,7 +1068,7 @@ bool startReadThread(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "startIoManager", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: startIoManager";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -1099,7 +1099,7 @@ bool stopReadThread(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "stopIoManager", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: stopIoManager";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 
@@ -1130,7 +1130,7 @@ bool readThreadRunning(int deviceId)
     const jmethodID methodId = env->GetStaticMethodID(javaClass, "ioManagerRunning", "(I)Z");
     if (!methodId) {
         qCWarning(AndroidSerialLog) << "Method Not Found: ioManagerRunning";
-        env.checkAndClearExceptions();
+        (void) env.checkAndClearExceptions();
         return false;
     }
 

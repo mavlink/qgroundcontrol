@@ -9,13 +9,16 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 /// Application Settings
 class MavlinkSettings : public SettingsGroup
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     MavlinkSettings(QObject* parent = nullptr);
 

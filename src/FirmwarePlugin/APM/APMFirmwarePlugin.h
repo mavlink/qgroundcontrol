@@ -77,8 +77,8 @@ public:
     double minimumEquivalentAirspeed(Vehicle *vehicle) const override;
     bool fixedWingAirSpeedLimitsAvailable(Vehicle *vehicle) const override;
     void guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* vehicle, double airspeed_equiv) const override;
-    QVariant mainStatusIndicatorContentItem(const Vehicle* vehicle) const override;
     void sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) const override;
+    QVariant expandedToolbarIndicatorSource  (const Vehicle* vehicle, const QString& indicatorName) const override;
 
     // support for changing speed in Copter guide mode:
     bool mulirotorSpeedLimitsAvailable(Vehicle *vehicle) const override;
@@ -139,6 +139,15 @@ private:
 
     static uint8_t _reencodeMavlinkChannel();
     static QMutex &_reencodeMavlinkChannelMutex();
+
+    struct FirmwareParameterHeader {
+        MAV_AUTOPILOT firmwareType = MAV_AUTOPILOT_GENERIC;
+        MAV_TYPE vehicleType = MAV_TYPE_GENERIC;
+        QVersionNumber versionNumber;
+        FIRMWARE_VERSION_TYPE versionType;
+        QString gitRevision;
+    };
+    static FirmwareParameterHeader _parseParamsHeader(const QString &filePath);
 };
 
 /*===========================================================================*/

@@ -13,8 +13,7 @@
 
 #include "services/dispatcher.h"
 #include "Vehicle.h"
-#include <QtQml/qqml.h>
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 
 Q_APPLICATION_STATIC(UTMSPManager, _UTMSPManagerInstance);
 
@@ -23,9 +22,7 @@ UTMSPManager::UTMSPManager(QObject *parent)
     , _utmspAuthorization(new UTMSPAuthorization(this))
     , _dispatcher(std::make_shared<Dispatcher>())
 {
-    (void) qmlRegisterUncreatableType<UTMSPManager>("QGroundControl.UTMSP", 1, 0, "UTMSPManager", "Reference only");
-    (void) qmlRegisterUncreatableType<UTMSPVehicle>("QGroundControl.UTMSP", 1, 0, "UTMSPVehicle", "Reference only");
-    (void) qmlRegisterUncreatableType<UTMSPAuthorization>("QGroundControl.UTMSP", 1, 0, "UTMSPAuthorization", "Reference only");
+
 }
 
 UTMSPManager::~UTMSPManager()

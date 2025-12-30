@@ -15,17 +15,17 @@
 
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "qgc.qmlcontrols.qgcfiledialogcontroller")
+QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QMLControls.QGCFileDialogController")
 
 QGCFileDialogController::QGCFileDialogController(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(QGCFileDialogControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCFileDialogControllerLog) << this;
 }
 
 QGCFileDialogController::~QGCFileDialogController()
 {
-    // qCDebug(QGCFileDialogControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCFileDialogControllerLog) << this;
 }
 
 QStringList QGCFileDialogController::getFiles(const QString &directoryPath, const QStringList &nameFilters)

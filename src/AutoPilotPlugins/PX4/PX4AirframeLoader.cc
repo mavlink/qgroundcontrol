@@ -24,7 +24,7 @@
 #include <QtCore/QXmlStreamReader>
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "PX4AirframeLoaderLog")
+QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "AutoPilotPlugins.PX4AirframeLoader")
 
 bool PX4AirframeLoader::_airframeMetaDataLoaded = false;
 

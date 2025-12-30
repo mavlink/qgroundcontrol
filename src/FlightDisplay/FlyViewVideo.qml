@@ -11,8 +11,8 @@ import QtQuick
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Controllers
-import QGroundControl.ScreenTools
+
+
 
 Item {
     id: _root
@@ -65,7 +65,7 @@ Item {
         id:             cameraLoader
         anchors.fill:   parent
         visible:        QGroundControl.videoManager.isUvc
-        source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
+        source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/QGroundControl/FlightDisplay/FlightDisplayViewUVC.qml" : "qrc:/qml/QGroundControl/FlightDisplay//FlightDisplayViewDummy.qml"
     }
 
     QGCLabel {
@@ -97,30 +97,11 @@ Item {
         cameraTrackingEnabled:   videoStreaming._camera && videoStreaming._camera.trackingEnabled
     }
 
-    // Define the selectable rectangle (initially hidden)
-
-
-    Rectangle {
-        id: selectionRect
-        color: "transparent"
-        border.color: "blue"
-        border.width: 3
-        visible: false // Initially hidden
-
-        // Make sure selection rectangle doesn't go negative in size
-        x: Math.min(startX, mouseArea.mouseX)
-        y: Math.min(startY, mouseArea.mouseY)
-        width: Math.abs(mouseArea.mouseX - startX)
-        height: Math.abs(mouseArea.mouseY - startY)
-    }
-
     MouseArea {
         id:                         flyViewVideoMouseArea
         anchors.fill:               parent
         enabled:                    pipState.state === pipState.fullState
         hoverEnabled:               true
-        scrollGestureEnabled:       true
-        acceptedButtons:            Qt.LeftButton | Qt.RightButton
 
         property double x0:         0
         property double x1:         0
@@ -129,192 +110,100 @@ Item {
         property double offset_x:   0
         property double offset_y:   0
         property double radius:     20
-         property real startX: 0
-         property real startY: 0
+        property var trackingROI:   null
         property var trackingStatus: trackingStatusComponent.createObject(flyViewVideoMouseArea, {})
 
-        // Define constants representing rectangle scaling modes
-        readonly property int scaleModeHorizontal: 0
-        readonly property int scaleModeVertical: 1
-        readonly property int scaleModeBoth: 2
-        readonly property int numScaleModes: 3
-
-
-        property int currentScaleMode: scaleModeBoth
-
-        onPressed: {
-                        // Set starting point and make the selection rectangle visible
-                        startX = mouse.x
-                        startY = mouse.y
-                        selectionRect.visible = true
-                        selectionRect.x = Math.min(mouse.x, startX);
-                        selectionRect.y = Math.min(mouse.y, startY);
-                        selectionRect.width = Math.abs(mouse.x - startX)
-                        selectionRect.height = Math.abs(mouse.y - startY)
-                    }
-
-        onReleased: (mouse) => {
-            selectionRect.visible = false;
-
-            let x0 = Math.floor(Math.max(0, selectionRect.x));
-            let y0 = Math.floor(Math.max(0, selectionRect.y));
-            let x1 = Math.floor(Math.min(width, selectionRect.x + selectionRect.width));
-            let y1 = Math.floor(Math.min(height, selectionRect.y + selectionRect.height));
-
-            if (selectionRect.width < 15 || selectionRect.height < 15) {
-                handleClick(mouse);
-                return;
-            }
-
-            //calculate offset between video stream rect and background (black stripes)
-            let offset_x = (parent.width - videoStreaming.getWidth()) / 2
-            let offset_y = (parent.height - videoStreaming.getHeight()) / 2
-
-            //calculate offset between video stream rect and background (black stripes)
-            x0 -= offset_x
-            x1 -= offset_x
-            y0 -= offset_y
-            y1 -= offset_y
-
-            //convert absolute to relative coordinates and limit range to 0...1
-            x0 = Math.max(Math.min(x0 / videoStreaming.getWidth(), 1.0), 0.0)
-            x1 = Math.max(Math.min(x1 / videoStreaming.getWidth(), 1.0), 0.0)
-            y0 = Math.max(Math.min(y0 / videoStreaming.getHeight(), 1.0), 0.0)
-            y1 = Math.max(Math.min(y1 / videoStreaming.getHeight(), 1.0), 0.0)
-
-            let rec = Qt.rect(x0, y0, x1 - x0, y1 - y0);
-            if (rec.width === 0 || rec.height === 0) {
-                return;
-            }
-            console.log(videoStreaming._camera.zoomEnabled)
-            let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
-            videoStreaming._camera.startTracking(rec, latestFrameTimestamp, true);
-            //videoStreaming._camera.zoomLevel = Math.min(1.0/(x1-x0), 1.0/(y1-y0))
-            videoStreaming._camera.zoomEnabled = true
-        }
-
+        onClicked:       onScreenGimbalController.clickControl()
         onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
 
-        onClicked: (mouse) => handleClick(mouse)
+        onPressed:(mouse) => {
+            onScreenGimbalController.pressControl()
 
-        function handleClick(mouse) {
-            // If right button is clicked, change the selection mode
-            if (mouse.button == Qt.RightButton) {
-                // If mode reached the highest value, put it back to zero
-                // currentScaleMode = (currentScaleMode + 1) % numScaleModes;
-                return;
+            _track_rec_x = mouse.x
+            _track_rec_y = mouse.y
+
+            //create a new rectangle at the wanted position
+            if(videoStreaming._camera) {
+                if (videoStreaming._camera.trackingEnabled) {
+                    trackingROI = trackingROIComponent.createObject(flyViewVideoMouseArea, {
+                        "x": mouse.x,
+                        "y": mouse.y
+                    });
+                }
             }
-
-
-            if (!videoStreaming._camera || !videoStreaming._camera.trackingEnabled) {
-                return;
-            }
-
-            let x0 = Math.floor(Math.max(0, targetCanvas.rectCenterX - targetCanvas.rectWidth / 2));
-            let y0 = Math.floor(Math.max(0, targetCanvas.rectCenterY - targetCanvas.rectHeight / 2));
-            let x1 = Math.floor(Math.min(width, targetCanvas.rectCenterX + targetCanvas.rectWidth / 2));
-            let y1 = Math.floor(Math.min(height, targetCanvas.rectCenterY + targetCanvas.rectHeight / 2));
-
-            //calculate offset between video stream rect and background (black stripes)
-            let offset_x = (parent.width - videoStreaming.getWidth()) / 2
-            let offset_y = (parent.height - videoStreaming.getHeight()) / 2
-
-            //calculate offset between video stream rect and background (black stripes)
-            x0 -= offset_x
-            x1 -= offset_x
-            y0 -= offset_y
-            y1 -= offset_y
-
-            //convert absolute to relative coordinates and limit range to 0...1
-            x0 = Math.max(Math.min(x0 / videoStreaming.getWidth(), 1.0), 0.0)
-            x1 = Math.max(Math.min(x1 / videoStreaming.getWidth(), 1.0), 0.0)
-            y0 = Math.max(Math.min(y0 / videoStreaming.getHeight(), 1.0), 0.0)
-            y1 = Math.max(Math.min(y1 / videoStreaming.getHeight(), 1.0), 0.0)
-
-
-            //use point message if rectangle is very small
-            if (targetCanvas.rectWidth < 2 && targetCanvas.rectHeight < 2) {
-                let pt  = Qt.point(targetCanvas.rectCenterX, targetCanvas.rectCenterY)
-                videoStreaming._camera.startTracking(pt,  targetCanvas.rectWidth / 2)
-            } else {
-                let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
-                console.log("Latest timestamp in js: " + latestFrameTimestamp);;
-                let rec = Qt.rect(x0, y0, x1 - x0, y1 - y0)
-                videoStreaming._camera.startTracking(rec, latestFrameTimestamp)
-            }
-            // videoStreaming._camera._requestTrackingStatus()
         }
-
-        onWheel: (wheel) => {
-            const WHEEL_DIVIDER = 19;
-
-            console.log(wheel)
-            console.log(wheel.angleDelta)
-            if (currentScaleMode == scaleModeHorizontal || currentScaleMode == scaleModeBoth) {
-                targetCanvas.rectWidth = Math.max(0, targetCanvas.rectWidth + Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER));
-            }
-            if (currentScaleMode == scaleModeVertical || currentScaleMode == scaleModeBoth) {
-                targetCanvas.rectHeight = Math.max(0, targetCanvas.rectHeight + Math.floor(Number( wheel.angleDelta.y) / WHEEL_DIVIDER));
-            }
-
-            targetCanvas.requestPaint();
-        }
-
-
         onPositionChanged: (mouse) => {
-            targetCanvas.rectCenterX = mouse.x;
-            targetCanvas.rectCenterY = mouse.y;
-            targetCanvas.requestPaint();
-            // Redraw selection rectangle as mouse moves
-            if (flyViewVideoMouseArea.pressed) {
-                selectionRect.x = Math.min(mouse.x, startX);
-                selectionRect.y = Math.min(mouse.y, startY);
-                selectionRect.width = Math.abs(mouse.x - startX)
-                selectionRect.height = Math.abs(mouse.y - startY)
-           }
+            //on move, update the width of rectangle
+            if (trackingROI !== null) {
+                if (mouse.x < trackingROI.x) {
+                    trackingROI.x = mouse.x
+                    trackingROI.width = Math.abs(mouse.x - _track_rec_x)
+                } else {
+                    trackingROI.width = Math.abs(mouse.x - trackingROI.x)
+                }
+                if (mouse.y < trackingROI.y) {
+                    trackingROI.y = mouse.y
+                    trackingROI.height = Math.abs(mouse.y - _track_rec_y)
+                } else {
+                    trackingROI.height = Math.abs(mouse.y - trackingROI.y)
+                }
+            }
         }
+        onReleased: (mouse) => {
+            onScreenGimbalController.releaseControl()
+            
+            //if there is already a selection, delete it
+            if (trackingROI !== null) {
+                trackingROI.destroy();
+            }
 
-        Canvas {
-            property int rectCenterX
-            property int rectCenterY
+            if(videoStreaming._camera) {
+                if (videoStreaming._camera.trackingEnabled) {
+                    // order coordinates --> top/left and bottom/right
+                    x0 = Math.min(_track_rec_x, mouse.x)
+                    x1 = Math.max(_track_rec_x, mouse.x)
+                    y0 = Math.min(_track_rec_y, mouse.y)
+                    y1 = Math.max(_track_rec_y, mouse.y)
 
-            property int rectWidth: 100
-            property int rectHeight: 100
+                    //calculate offset between video stream rect and background (black stripes)
+                    offset_x = (parent.width - videoStreaming.getWidth()) / 2
+                    offset_y = (parent.height - videoStreaming.getHeight()) / 2
 
-            anchors.fill: parent
+                    //convert absolute coords in background to absolute video stream coords
+                    x0 = x0 - offset_x
+                    x1 = x1 - offset_x
+                    y0 = y0 - offset_y
+                    y1 = y1 - offset_y
 
-            id: targetCanvas
-            onPaint: {
-                const BORDER_WIDTH = 3;
-                const BORDER_COLOR = '#11BB11';
+                    //convert absolute to relative coordinates and limit range to 0...1
+                    x0 = Math.max(Math.min(x0 / videoStreaming.getWidth(), 1.0), 0.0)
+                    x1 = Math.max(Math.min(x1 / videoStreaming.getWidth(), 1.0), 0.0)
+                    y0 = Math.max(Math.min(y0 / videoStreaming.getHeight(), 1.0), 0.0)
+                    y1 = Math.max(Math.min(y1 / videoStreaming.getHeight(), 1.0), 0.0)
 
-                var ctx = getContext("2d");
-                ctx.reset();
-
-               if (!videoStreaming._camera || !videoStreaming._camera.trackingEnabled) {
-                   return;
-               }
-
-                let rect_start_x = Math.floor(Math.max(0, rectCenterX - rectWidth / 2));
-                let rect_start_y = Math.floor(Math.max(0, rectCenterY - rectHeight / 2));
-                let rect_end_x = Math.floor(Math.min(width, rectCenterX + rectWidth / 2));
-                let rect_end_y = Math.floor(Math.min(height, rectCenterY + rectHeight / 2));
-
-                ctx.strokeStyle = BORDER_COLOR;
-                ctx.lineWidth = BORDER_WIDTH;
-                ctx.beginPath();
-                ctx.moveTo(rect_start_x, rect_start_y);
-                ctx.lineTo(rect_start_x, rect_end_y);
-                ctx.lineTo(rect_end_x, rect_end_y);
-                ctx.lineTo(rect_end_x, rect_start_y);
-                ctx.lineTo(rect_start_x, rect_start_y);
-                ctx.stroke();
-
+                    //use point message if rectangle is very small
+                    if (Math.abs(_track_rec_x - mouse.x) < 10 && Math.abs(_track_rec_y - mouse.y) < 10) {
+                        var pt  = Qt.point(x0, y0)
+                        videoStreaming._camera.startTracking(pt, radius / videoStreaming.getWidth())
+                    } else {
+                        var rec = Qt.rect(x0, y0, x1 - x0, y1 - y0)
+                        videoStreaming._camera.startTracking(rec)
+                    }
+                    _track_rec_x = 0
+                    _track_rec_y = 0
+                }
             }
         }
 
+        Component {
+            id: trackingROIComponent
 
-
+            Rectangle {
+                color:              Qt.rgba(0.1,0.85,0.1,0.25)
+                border.color:       "green"
+                border.width:       1
+            }
+        }
 
         Component {
             id: trackingStatusComponent

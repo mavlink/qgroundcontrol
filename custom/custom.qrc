@@ -1,0 +1,29 @@
+<RCC>
+    <qresource prefix="/custom/img">
+        <file alias="FoxFourTextLogo_light.svg">res/Images/FoxFourTextLogo_light.svg</file>
+        <file alias="FoxFourTextLogo_dark.svg">res/Images/FoxFourTextLogo_dark.svg</file>
+        <file alias="keyboard.svg">res/Images/keyboard.svg</file>
+    </qresource>
+    <qresource prefix="/Custom/qmlimages">
+        <file alias="PaperPlane.svg">res/Images/CustomVehicleIcon.svg</file>
+    </qresource>
+    <qresource prefix="/Custom/qml">
+        <file alias="QGroundControl/AppSettings/VideoSettings.qml">override/qml/QGroundControl/AppSettings/VideoSettings.qml</file>
+        <file alias="QGroundControl/Controls/AppSettings.qml">override/qml/QGroundControl/Controls/AppSettings.qml</file>
+        <file alias="QGroundControl/Controls/FlyViewToolBar.qml">override/qml/QGroundControl/Controls/FlyViewToolBar.qml</file>
+        <file alias="QGroundControl/MainWindow.qml">override/qml/MainWindow.qml</file>
+        <file alias="QGroundControl/Controls/ParameterEditor.qml">override/qml/QGroundControl/Controls/ParameterEditor.qml</file>
+        <file alias="QGroundControl/VehicleSetup/SetupView.qml">override/qml/QGroundControl/VehicleSetup/SetupView.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewVideo.qml">override/qml/QGroundControl/FlightDisplay/FlyViewVideo.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewMap.qml">override/qml/QGroundControl/FlightDisplay/FlyViewMap.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">override/qml/QGroundControl/FlightDisplay/FlyViewCustomLayer.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">override/qml/QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml</file>
+        <file alias="QGroundControl/FlightMap/Widgets/PhotoVideoControl.qml">override/qml/QGroundControl/FlightMap/Widgets/PhotoVideoControl.qml</file>
+        <file alias="QGroundControl/AppSettings/FlyViewSettings.qml">override/qml/QGroundControl/AppSettings/FlyViewSettings.qml</file>
+        <file alias="QGroundControl/AppSettings/SettingsPage.qml">override/qml/QGroundControl/AppSettings/SettingsPage.qml</file>
+        <file alias="QGroundControl/AppSettings/SettingsPagesModel.qml">override/qml/QGroundControl/AppSettings/SettingsPagesModel.qml</file>
+        <file alias="OnboardComputers/OnboardComputersInfo.qml">res/Custom/OnboardComputers/OnboardComputersInfo.qml</file>
+
+        <file alias="QGroundControl/AppSettings/ShortcutSettings.qml">override/qml/QGroundControl/AppSettings/ShortcutSettings.qml</file>
+    </qresource>
+</RCC>

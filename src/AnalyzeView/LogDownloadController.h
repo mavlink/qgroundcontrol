@@ -26,8 +26,8 @@ class LogDownloadTest;
 class LogDownloadController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_SINGLETON
+    QML_ELEMENT
+    QML_SINGLETON
     Q_MOC_INCLUDE("Vehicle.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QmlObjectListModel *model          READ _getModel            CONSTANT)
@@ -39,8 +39,6 @@ class LogDownloadController : public QObject
 public:
     explicit LogDownloadController(QObject *parent = nullptr);
     ~LogDownloadController();
-
-    static LogDownloadController *instance();
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void download(const QString &path = QString());

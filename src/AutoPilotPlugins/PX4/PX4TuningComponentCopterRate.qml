@@ -13,10 +13,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
 
 ColumnLayout {
     property real _availableHeight:     availableHeight
@@ -29,7 +29,7 @@ ColumnLayout {
 
         QGCLabel {
             textFormat:         Text.RichText
-            text:               qsTr("Airmode (disable during tuning) <b><a href=\"https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation\">?</a></b>")
+            text:               qsTr("Airmode (disable during tuning) <b><a href=\"https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation\">?</a></b>")
             onLinkActivated:    (link) => Qt.openUrlExternally(link)
             visible:            _airmode
         }
@@ -46,7 +46,7 @@ ColumnLayout {
 
         QGCLabel {
             textFormat:         Text.RichText
-            text:               qsTr("Thrust curve <b><a href=\"https://docs.px4.io/master/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve\">?</a></b>")
+            text:               qsTr("Thrust curve <b><a href=\"https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve\">?</a></b>")
             onLinkActivated:    (link) => Qt.openUrlExternally(link)
             visible:            _thrustModelFactor
         }

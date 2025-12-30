@@ -12,7 +12,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QSize>
 #include <QtCore/QTimer>
-#include "KLVMetadata.h"
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCVideoStreamInfo;
 class QQuickItem;
@@ -20,7 +20,8 @@ class QQuickItem;
 class VideoReceiver : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     explicit VideoReceiver(QObject *parent = nullptr)
         : QObject(parent)
@@ -75,7 +76,6 @@ signals:
     void recordingChanged(bool active);
     void recordingStarted(const QString &filename);
     void videoSizeChanged(QSize size);
-    void klvMetadataReceived(KLVMetadata metadata);
 
     void sinkChanged(void *sink);
     void nameChanged(const QString &name);

@@ -9,19 +9,22 @@
 
 #pragma once
 
-#include "QGCMAVLink.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QVector>
 #include <QtCore/QPointF>
+#include <QtQmlIntegration/QtQmlIntegration>
+
+#include "MAVLinkLib.h"
 
 class Vehicle;
 
 class VehicleObjectAvoidance : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
-    VehicleObjectAvoidance(Vehicle* vehicle, QObject* parent = nullptr);
+    explicit VehicleObjectAvoidance(Vehicle* vehicle, QObject* parent = nullptr);
 
     Q_PROPERTY(bool             available   READ available      NOTIFY objectAvoidanceChanged)
     Q_PROPERTY(bool             enabled     READ enabled        NOTIFY objectAvoidanceChanged)

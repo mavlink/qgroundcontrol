@@ -75,7 +75,7 @@
         <file alias="accel_right.png">resources/calibration/accel_right.png</file>
         <file alias="accel_up.png">resources/calibration/accel_up.png</file>
     </qresource>
-    <qresource prefix="/qml/calibration/mode1">
+    <qresource prefix="/qml/QGroundControl/AutoPilotPlugins/Common/calibration/mode1">
         <file alias="radioCenter.png">resources/calibration/mode1/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode1/radioHome.png</file>
         <file alias="radioPitchDown.png">resources/calibration/mode1/radioPitchDown.png</file>
@@ -88,7 +88,7 @@
         <file alias="radioYawLeft.png">resources/calibration/mode1/radioYawLeft.png</file>
         <file alias="radioYawRight.png">resources/calibration/mode1/radioYawRight.png</file>
     </qresource>
-    <qresource prefix="/qml/calibration/mode2">
+    <qresource prefix="/qml/QGroundControl/AutoPilotPlugins/Common/calibration/mode2">
         <file alias="radioCenter.png">resources/calibration/mode2/radioCenter.png</file>
         <file alias="radioHome.png">resources/calibration/mode2/radioHome.png</file>
         <file alias="radioPitchDown.png">resources/calibration/mode2/radioPitchDown.png</file>
@@ -108,11 +108,18 @@
         <file>resources/opengl/buglist.json</file>
     </qresource>
     <qresource prefix="/gimbal">
-        <file alias="payload.svg">resources/gimbal/payload.svg</file>
+        <file alias="payload.png">resources/gimbal/payload.png</file>
     </qresource>
     <qresource prefix="/gcscontrolIndicator">
         <file alias="gcscontrol_device.svg">resources/gcscontrolIndicator/gcscontrol_device.svg</file>
         <file alias="gcscontrol_gcs.svg">resources/gcscontrolIndicator/gcscontrol_gcs.svg</file>
         <file alias="gcscontrol_line.svg">resources/gcscontrolIndicator/gcscontrol_line.svg</file>
+    </qresource>
+        <qresource prefix="/qml">
+        <file alias="QGroundControl/AppSettings/NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
+        <file alias="NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
+    </qresource>  
+    <qresource prefix="/json">
+        <file alias="NTRIP.SettingsGroup.json">src/Settings/NTRIP.SettingsGroup.json</file>
     </qresource>
 </RCC>

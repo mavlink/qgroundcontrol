@@ -16,16 +16,15 @@ import QtLocation
 
 import QGroundControl
 import QGroundControl.FlightMap
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
-import QGroundControl.Controllers
-import QGroundControl.ShapeFileHelper
+
+
 import QGroundControl.UTMSP
 import QGroundControl.FlightDisplay
-import QGroundControl.MultiVehicleManager
+
 
 
 Rectangle {

@@ -75,32 +75,9 @@ public:
     bool                supportsNegativeThrust          (Vehicle* vehicle) const override;
     QString             getHobbsMeter                   (Vehicle* vehicle) const override;
     bool                hasGripper                      (const Vehicle* vehicle) const override;
-    QVariant            mainStatusIndicatorContentItem  (const Vehicle* vehicle) const override;
-    const QVariantList& toolIndicators                  (const Vehicle* vehicle) override;
+    QVariant            expandedToolbarIndicatorSource  (const Vehicle* vehicle, const QString& indicatorName) const override;
 
     void                updateAvailableFlightModes      (FlightModeList &modeList) override;
-
-protected:
-
-    // If plugin superclass wants to change a mode name, then set a new name for the flight mode in the superclass constructor
-    QString _manualFlightMode;
-    QString _acroFlightMode;
-    QString _stabilizedFlightMode;
-    QString _rattitudeFlightMode;
-    QString _altCtlFlightMode;
-    QString _posCtlFlightMode;
-    QString _offboardFlightMode;
-    QString _readyFlightMode;
-    QString _takeoffFlightMode;
-    QString _holdFlightMode;
-    QString _missionFlightMode;
-    QString _rtlFlightMode;
-    QString _landingFlightMode;
-    QString _preclandFlightMode;
-    QString _rtgsFlightMode;
-    QString _followMeFlightMode;
-    QString _simpleFlightMode;
-    QString _orbitFlightMode;
 
 private slots:
     void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);

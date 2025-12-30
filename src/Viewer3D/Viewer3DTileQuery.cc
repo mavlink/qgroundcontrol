@@ -9,12 +9,9 @@
 
 #include "Viewer3DTileQuery.h"
 
-#define PI                  acos(-1.0f)
-#define DEG_TO_RAD          PI/180.0f
-#define RAD_TO_DEG          180.0f/PI
 #define MAX_TILE_COUNTS     200
 #define MAX_ZOOM_LEVEL      23
-
+#define MAX_LATITUDE       85.05112878
 
 enum RequestStat{
     STARTED,
@@ -124,8 +121,8 @@ double MapTileQuery::valueClip(double n, double _minValue, double _maxValue)
 
 QPoint MapTileQuery::latLonToPixelXY(QGeoCoordinate pointCoordinate, int zoomLevel)
 {
-    double MinLatitude = -85.05112878;
-    double MaxLatitude = 85.05112878;
+    double MinLatitude = -MAX_LATITUDE;
+    double MaxLatitude = MAX_LATITUDE;
     double MinLongitude = -180.0f;
     double MaxLongitude = 180.0f;
 
@@ -135,8 +132,8 @@ QPoint MapTileQuery::latLonToPixelXY(QGeoCoordinate pointCoordinate, int zoomLev
     double x = (longitude + 180) / (360);
     double y = 0;
     if(fabs(latitude) < MaxLatitude){
-        double sinLatitude = sin(latitude * DEG_TO_RAD);
-        y = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * PI);
+        double sinLatitude = sin(qDegreesToRadians(latitude));
+        y = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * M_PI);
     }else{
         y = (90 - latitude) / 180;
     }
@@ -169,7 +166,7 @@ QGeoCoordinate MapTileQuery::pixelXYToLatLong(QPoint pixel, int zoomLevel)
         y = (pixel.y() >= mapSize - 1)?(-1):(1);
     }
 
-    double latitude = 90.0f - 360.0f * atan(exp(-y * 2 * PI)) / PI;
+    double latitude = 90.0f - 360.0f * atan(exp(-y * 2 * M_PI)) / M_PI;
     double longitude = 360 * x;
     return QGeoCoordinate(latitude, longitude, 0);
 }

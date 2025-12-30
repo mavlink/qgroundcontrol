@@ -13,12 +13,13 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
-import QGroundControl.ScreenTools
+
+
 
 /// PX4 Flight Mode configuration. This control will load either the Simple or Advanced Flight Mode config
 /// based on current parameter settings.
@@ -29,7 +30,7 @@ SetupPage {
         Loader {
             width:  availableWidth
             height: availableHeight
-            source: "qrc:/qml/PX4SimpleFlightModes.qml"
+            source: "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml"
 
             property Fact _nullFact
             property bool _rcMapFltmodeExists:  controller.parameterExists(-1, "RC_MAP_FLTMODE")

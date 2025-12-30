@@ -13,12 +13,12 @@ import QtQuick.Controls
 import QtCore
 
 import QGroundControl
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 Item {
     property Window window
 
-    property bool _enabled: !ScreenTools.isMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
+    property bool _enabled: !ScreenTools.isMobile && !ScreenTools.fakeMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
 
     Settings {
         id:         s
@@ -31,13 +31,31 @@ Item {
         property int visibility
     }
 
+    function _setDefaultDesktopWindowSize() {
+        window.width = Math.min(250 * Screen.pixelDensity, Screen.width);
+        window.height = Math.min(150 * Screen.pixelDensity, Screen.height);
+    }
+
     Component.onCompleted: {
-        if (_enabled && s.width && s.height) {
-            window.x = s.x;
-            window.y = s.y;
-            window.width = s.width;
-            window.height = s.height;
-            window.visibility = s.visibility;
+        if (ScreenTools.fakeMobile) {
+            window.width = ScreenTools.screenWidth
+            window.height = ScreenTools.screenHeight
+        } else if (ScreenTools.isMobile) {
+            window.showFullScreen();
+        } else if (QGroundControl.corePlugin.options.enableSaveMainWindowPosition) {
+            window.minimumWidth = Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
+            window.minimumHeight = Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
+            if (s.width && s.height) {
+                window.x = s.x;
+                window.y = s.y;
+                window.width = s.width;
+                window.height = s.height;
+                window.visibility = s.visibility;
+            } else {
+                _setDefaultDesktopWindowSize()
+            }
+        } else {
+            _setDefaultDesktopWindowSize()
         }
     }
 
@@ -52,13 +70,13 @@ Item {
 
     Timer {
         id:             saveSettingsTimer
-        interval:       1000
+        interval:       500
         repeat:         false
         onTriggered:    saveSettings()
     }
 
     function saveSettings() {
-        if(_enabled) {
+        if (_enabled) {
             switch(window.visibility) {
             case ApplicationWindow.Windowed:
                 s.x = window.x;

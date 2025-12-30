@@ -11,8 +11,9 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+import QGroundControl
+import QGroundControl.Controls
+
 
 Rectangle {
     // Indicates whether calibration is valid for this control

@@ -79,17 +79,3 @@ LIBVA_DRIVER_NAME=fakedriver ./QGroundControl
 ```
 
 다른 대안은 VGA 중 하나를 비활성화하거나 VA API 구성 요소를 제거하거나 GStreamer 1.16으로 업그레이드하는 것입니다(Ubuntu 18.04에서는 이를 수행하는 쉬운 방법이 없습니다.
-
-## Ubuntu 16.04: GLIBC_2.27을 찾을 수 없음 {#glibc_2_27}
-
-사전 빌드된 QGroundControl 4.0(이상)용 AppImages는 Ubuntu 18.04 LTS(이상)에서만 실행 가능합니다.
-Ubuntu 16.04에서는 실행되지 않습니다.
-
-실행시 다음과 같은 에러가 발생합니다.
-
-```sh
-$ ./QGroundControl.AppImage
-/tmp/.mount_i4hPuB/QGroundControl: /lib/x86_64-linux-gnu/libm.so.6: version `GLIBC_2.27' not found (required by /tmp/.mount_i4hPuB/QGroundControl)
-```
-
-Ubuntu 16.04를 사용해야 하는 경우의 한 가지 해결 방법은 비디오 라이브러리 없이 소스에서 빌드하는 것입니다.

@@ -15,14 +15,13 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
-import QGroundControl.MultiVehicleManager
+
+
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 import QGroundControl.UTMSP
 
 QGCFlickable {
@@ -203,7 +202,7 @@ QGCFlickable {
                         Image {
                             width:  ScreenTools.defaultFontPixelWidth * 5
                             height: ScreenTools.defaultFontPixelHeight * 1.667
-                            source: UTMSPStateStorage.loginState? "qrc:/utmsp/red.png" : "qrc:/utmsp/green.png"
+                            source: UTMSPStateStorage.loginState? "qrc:/qml/QGroundControl/UTMSP/images/red.png" : "qrc:/qml/QGroundControl/UTMSP/images/green.png"
                             PropertyAnimation on opacity {
                                 easing.type:    Easing.OutQuart
                                 from:           0.5
@@ -282,7 +281,7 @@ QGCFlickable {
                                 id:      loading
                                 width:   ScreenTools.defaultFontPixelWidth * 4.5
                                 height:  ScreenTools.defaultFontPixelHeight * 1.5
-                                source:  "qrc:/utmsp/load.gif"
+                                source:  "qrc:/qml/QGroundControl/UTMSP/images/load.gif"
                                 visible: false
                             }
                             onClicked:{
@@ -625,7 +624,7 @@ QGCFlickable {
                         Image {
                             width:                          ScreenTools.defaultFontPixelWidth * 5
                             height:                         ScreenTools.defaultFontPixelHeight * 1.667
-                            source:                         "qrc:/utmsp/date.svg"
+                            source:                         "qrc:/qml/QGroundControl/UTMSP/images/date.svg"
                             anchors.horizontalCenter:       dateButton.horizontalCenter
                             anchors.verticalCenter:         dateButton.verticalCenter
                             anchors.horizontalCenterOffset: -40
@@ -640,7 +639,7 @@ QGCFlickable {
                         Image {
                             width:                          ScreenTools.defaultFontPixelWidth * 5
                             height:                         ScreenTools.defaultFontPixelHeight * 1.667
-                            source:                         "qrc:/utmsp/time.svg"
+                            source:                         "qrc:/qml/QGroundControl/UTMSP/images/time.svg"
                             anchors.horizontalCenter:       timeButton.horizontalCenter
                             anchors.verticalCenter:         timeButton.verticalCenter
                             anchors.horizontalCenterOffset: -40

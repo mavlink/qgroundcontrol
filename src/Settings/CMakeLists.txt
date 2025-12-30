@@ -1,3 +1,8 @@
+# ============================================================================
+# Settings Module
+# Application, vehicle, and user preference settings management
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ADSBVehicleManagerSettings.cc
@@ -32,6 +37,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         RemoteIDSettings.h
         RTKSettings.cc
         RTKSettings.h
+        NTRIPSettings.cc
+        NTRIPSettings.h
         SettingsGroup.cc
         SettingsGroup.h
         SettingsManager.cc
@@ -46,6 +53,9 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DSettings.h
 )
 
+# ----------------------------------------------------------------------------
+# APM-Specific Settings
+# ----------------------------------------------------------------------------
 if(NOT QGC_DISABLE_APM_MAVLINK)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -53,5 +63,14 @@ if(NOT QGC_DISABLE_APM_MAVLINK)
             APMMavlinkStreamRateSettings.h
     )
 endif()
+
+# ----------------------------------------------------------------------------
+# Settings Definition Resources
+# ----------------------------------------------------------------------------
+file(GLOB_RECURSE JSON_SETTINGS_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_app_settings
+    PREFIX "/json"
+    FILES ${JSON_SETTINGS_FILES}
+)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

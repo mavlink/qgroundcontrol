@@ -7,27 +7,27 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QmlObjectListModel.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDebug>
 #include <QtQml/QQmlEngine>
+
+QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : QAbstractListModel        (parent)
     , _dirty                    (false)
     , _skipDirtyFirstItem       (false)
-    , _externalBeginResetModel  (false)
 {
-
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 QmlObjectListModel::~QmlObjectListModel()
 {
-    
+    if (_resetModelNestingCount > 0) {
+        qCWarning(QmlObjectListModelLog) << "QmlObjectListModel destroyed with unbalanced nesting of begin/endResetModel calls - _resetModelNestingCount:" << _resetModelNestingCount << this;
+    }
 }
 
 QObject* QmlObjectListModel::get(int index)
@@ -90,13 +90,13 @@ bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& p
     Q_UNUSED(parent);
     
     if (position < 0 || position > _objectList.count() + 1) {
-        qWarning() << "Invalid position position:count" << position << _objectList.count();
+        qCWarning(QmlObjectListModelLog) << "Invalid position - position:count" << position << _objectList.count() << this;
     }
     
     beginInsertRows(QModelIndex(), position, position + rows - 1);
     endInsertRows();
-    
-    emit countChanged(count());
+
+    _signalCountChangedIfNotNested();
     
     return true;
 }
@@ -106,9 +106,9 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     Q_UNUSED(parent);
     
     if (position < 0 || position >= _objectList.count()) {
-        qWarning() << "Invalid position position:count" << position << _objectList.count();
+        qCWarning(QmlObjectListModelLog) << "Invalid position - position:count" << position << _objectList.count() << this;
     } else if (position + rows > _objectList.count()) {
-        qWarning() << "Invalid rows position:rows:count" << position << rows << _objectList.count();
+        qCWarning(QmlObjectListModelLog) << "Invalid rows - position:rows:count" << position << rows << _objectList.count() << this;
     }
     
     beginRemoveRows(QModelIndex(), position, position + rows - 1);
@@ -117,7 +117,7 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     }
     endRemoveRows();
     
-    emit countChanged(count());
+    _signalCountChangedIfNotNested();
     
     return true;
 }
@@ -156,14 +156,9 @@ const QObject* QmlObjectListModel::operator[](int index) const
 
 void QmlObjectListModel::clear()
 {
-    if (!_externalBeginResetModel) {
-        beginResetModel();
-    }
+    beginResetModel();
     _objectList.clear();
-    if (!_externalBeginResetModel) {
-        endResetModel();
-        emit countChanged(count());
-    }
+    endResetModel();
 }
 
 QObject* QmlObjectListModel::removeAt(int i)
@@ -185,7 +180,7 @@ QObject* QmlObjectListModel::removeAt(int i)
 void QmlObjectListModel::insert(int i, QObject* object)
 {
     if (i < 0 || i > _objectList.count()) {
-        qWarning() << "Invalid index index:count" << i << _objectList.count();
+        qCWarning(QmlObjectListModelLog) << "Invalid index - index:count" << i << _objectList.count() << this;
     }
     if(object) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
@@ -204,7 +199,7 @@ void QmlObjectListModel::insert(int i, QObject* object)
 void QmlObjectListModel::insert(int i, QList<QObject*> objects)
 {
     if (i < 0 || i > _objectList.count()) {
-        qWarning() << "Invalid index index:count" << i << _objectList.count();
+        qCWarning(QmlObjectListModelLog) << "Invalid index - index:count" << i << _objectList.count() << this;
     }
 
     int j = i;
@@ -240,14 +235,9 @@ void QmlObjectListModel::append(QList<QObject*> objects)
 QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
     QObjectList oldlist(_objectList);
-    if (!_externalBeginResetModel) {
-        beginResetModel();
-    }
+    beginResetModel();
     _objectList = newlist;
-    if (!_externalBeginResetModel) {
-        endResetModel();
-        emit countChanged(count());
-    }
+    endResetModel();
     return oldlist;
 }
 
@@ -296,20 +286,34 @@ void QmlObjectListModel::clearAndDeleteContents()
     clear();
 }
 
-void QmlObjectListModel::beginReset()
+void QmlObjectListModel::beginResetModel()
 {
-    if (_externalBeginResetModel) {
-        qWarning() << "QmlObjectListModel::beginReset already set";
+    if (_resetModelNestingCount == 0) {
+        qCDebug(QmlObjectListModelLog) << "First call to begindResetModel - calling QAbstractListModel::beginResetModel" << this;
+        QAbstractListModel::beginResetModel();
     }
-    _externalBeginResetModel = true;
-    beginResetModel();
+    _resetModelNestingCount++;
+    qCDebug(QmlObjectListModelLog) << "_resetModelNestingCount:" << _resetModelNestingCount << this;
 }
 
-void QmlObjectListModel::endReset()
+void QmlObjectListModel::endResetModel()
 {
-    if (!_externalBeginResetModel) {
-        qWarning() << "QmlObjectListModel::endReset begin not set";
+    if (_resetModelNestingCount == 0) {
+        qCWarning(QmlObjectListModelLog) << "QmlObjectListModel::endResetModel called without prior beginResetModel";
+        return;
     }
-    _externalBeginResetModel = false;
-    endResetModel();
+    _resetModelNestingCount--;
+    qCDebug(QmlObjectListModelLog) << "_resetModelNestingCount:" << _resetModelNestingCount << this;
+    if (_resetModelNestingCount == 0) {
+        qCDebug(QmlObjectListModelLog) << "Last call to endResetModel - calling QAbstractListModel::endResetModel" << this;
+        QAbstractListModel::endResetModel();
+        emit countChanged(count());
+    }
+}
+
+void QmlObjectListModel::_signalCountChangedIfNotNested()
+{
+    if (_resetModelNestingCount == 0) {
+        emit countChanged(count());
+    }
 }

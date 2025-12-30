@@ -40,8 +40,6 @@ public:
     explicit ArduRoverFirmwarePlugin(QObject *parent = nullptr);
     ~ArduRoverFirmwarePlugin();
 
-    QString pauseFlightMode() const override { return QStringLiteral("Hold"); }
-    QString followFlightMode() const override { return QStringLiteral("Follow"); }
     void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle) override;
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const override { return _remapParamName; }
@@ -49,6 +47,8 @@ public:
     bool supportsSmartRTL() const override { return true; }
     QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
 
+    QString pauseFlightMode() const override;
+    QString followFlightMode() const override;
     QString stabilizedFlightMode() const override;
     void updateAvailableFlightModes(FlightModeList &modeList) override;
 

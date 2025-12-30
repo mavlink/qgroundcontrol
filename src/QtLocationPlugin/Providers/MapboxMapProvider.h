@@ -50,7 +50,7 @@ public:
         : MapboxMapProvider(
             QStringLiteral("Mapbox Light"),
             QStringLiteral("light-v9"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::CustomMap) {}
 };
 
@@ -61,7 +61,7 @@ public:
         : MapboxMapProvider(
             QStringLiteral("Mapbox Dark"),
             QStringLiteral("dark-v9"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::CustomMap) {}
 };
 
@@ -94,7 +94,7 @@ public:
         : MapboxMapProvider(
             QStringLiteral("Mapbox Bright"),
             QStringLiteral("bright-v9"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::CustomMap) {}
 };
 
@@ -105,7 +105,7 @@ public:
         : MapboxMapProvider(
             QStringLiteral("Mapbox StreetsBasic"),
             QStringLiteral("basic-v9"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::StreetMap) {}
 };
 
@@ -116,7 +116,7 @@ public:
         : MapboxMapProvider(
             QStringLiteral("Mapbox Outdoors"),
             QStringLiteral("outdoors-v10"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::CustomMap) {}
 };
 
@@ -127,6 +127,6 @@ public:
         : MapboxMapProvider(
             QStringLiteral("Mapbox Custom"),
             QStringLiteral("mapbox.custom"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::CustomMap) {}
 };

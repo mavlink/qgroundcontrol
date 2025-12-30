@@ -89,7 +89,7 @@ public:
             QStringLiteral("lyrs"),
             QStringLiteral("h"),
             QStringLiteral("png"),
-            AVERAGE_TILE_SIZE,
+            QGC_AVERAGE_TILE_SIZE,
             QGeoMapType::CustomMap) {}
 };
 

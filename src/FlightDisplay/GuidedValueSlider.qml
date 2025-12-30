@@ -13,10 +13,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Vehicle
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.SettingsManager
+
+
+
+
 
 Item {
     id:     control
@@ -250,6 +250,14 @@ Item {
             ctx.stroke()
         }
 
+        // Repaint when palette changes
+        Connections {
+            target: _qgcPal
+            function onPaletteChanged() {
+                indicatorCanvas.requestPaint()
+            }
+        }
+
         QGCLabel {
             id:                     valueLabel
             anchors.margins:        indicatorCanvas.indicatorValueMargins
@@ -291,7 +299,7 @@ Item {
 
             Connections {
                 target: control
-                on_SliderValueChanged: sliderValueTextField.visible = false
+                function on_SliderValueChanged() { sliderValueTextField.visible = false }
             }
         }
     }

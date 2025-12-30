@@ -3,7 +3,7 @@
 QGC提供了一组用于构建用户界面的基本控件。 一般来说，它们往往是Qt支持的基本QML控件上方的薄层，Qt控件支持QGC调色板。 In general they tend to be thin layers above the base QML Controls supported by Qt which respect the QGC color palette.
 
 ```
-import QGroundControl.Controls 1.0
+import QGroundControl.Controls
 ```
 
 ## Qt控件

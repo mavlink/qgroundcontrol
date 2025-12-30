@@ -7,15 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Implementation of class QGCApplication
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
 #include "QGCApplication.h"
 
 #include <QtCore/QEvent>
@@ -36,94 +27,49 @@
 
 #include "QGCLogging.h"
 #include "AudioOutput.h"
-#include "AutoPilotPlugin.h"
-#include "CmdLineOptParser.h"
-#include "ESP8266ComponentController.h"
 #include "FollowMe.h"
-#include "GeoTagController.h"
-#include "GimbalController.h"
-#include "GPSRtk.h"
-#include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
-#include "LogDownloadController.h"
-#include "MAVLinkChartController.h"
-#include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
-#include "MissionManager.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
-#include "QGCCameraManager.h"
-#include "OnboardComputersManager.h"
+#include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "MavlinkSettings.h"
 #include "AppSettings.h"
-#include "ShapeFileHelper.h"
-#include "SyslinkComponentController.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 #include "VideoManager.h"
 
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-#include "MAVLinkInspectorController.h"
-#endif
-#ifdef QGC_VIEWER3D
-#include "Viewer3DManager.h"
-#endif
 #ifndef QGC_NO_SERIAL_LINK
-#include "FirmwareUpgradeController.h"
 #include "SerialLink.h"
 #endif
 
-#ifdef Q_OS_LINUX
-#ifndef Q_OS_ANDROID
-#include <unistd.h>
-#include <sys/types.h>
-#endif
-#endif
+QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
 
-QGC_LOGGING_CATEGORY(QGCApplicationLog, "qgc.qgcapplication")
-
-// Qml Singleton factories
-
-static QObject *mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    return new QGCMAVLink();
-}
-
-QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool simpleBootTest)
+QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QApplication(argc, argv)
-    , _runningUnitTests(unitTesting)
-    , _simpleBootTest(simpleBootTest)
+    , _runningUnitTests(cli.runningUnitTests)
+    , _simpleBootTest(cli.simpleBootTest)
+    , _fakeMobile(cli.fakeMobile)
+    , _logOutput(cli.logOutput)
+    , _systemId(cli.systemId.value_or(0))
 {
     _msecsElapsedTime.start();
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    // Parse command line options
-    bool fClearSettingsOptions = false; // Clear stored settings
-    bool fClearCache = false;           // Clear parameter/airframe caches
-    bool logging = false;               // Turn on logging
-    QString loggingOptions;
-
-    CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, nullptr },
-        { "--clear-cache",      &fClearCache,           nullptr },
-        { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           nullptr },
-        { "--log-output",       &_logOutput,            nullptr },
-        // Add additional command line option flags here
-    };
-
-    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
+    bool fClearSettingsOptions = cli.clearSettingsOptions;  // Clear stored settings
+    const bool fClearCache = cli.clearCache;                // Clear parameter/airframe caches
+    const QString loggingOptions = cli.loggingOptions.value_or(QString(""));
 
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
@@ -132,7 +78,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
 
     // Set application information
     QString applicationName;
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
@@ -149,9 +95,6 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
-#ifdef Q_OS_LINUX
-    setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
-#endif
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -165,7 +108,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
 
-    if (_runningUnitTests || simpleBootTest) {
+    if (_runningUnitTests || _simpleBootTest) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
@@ -200,7 +143,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
     }
 
     // Set up our logging filters
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
+    QGCLoggingCategoryManager::instance()->setFilterRulesFromSettings(loggingOptions);
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
@@ -267,55 +210,17 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     SettingsManager::instance()->init();
-
-    LinkManager::registerQmlTypes();
-    ParameterManager::registerQmlTypes();
-    QGroundControlQmlGlobal::registerQmlTypes();
-    MissionManager::registerQmlTypes();
-    QGCCameraManager::registerQmlTypes();
-    MultiVehicleManager::registerQmlTypes();
-    QGCPositionManager::registerQmlTypes();
-    SettingsManager::registerQmlTypes();
-    VideoManager::registerQmlTypes();
-    QGCCorePlugin::registerQmlTypes();
-    GPSRtk::registerQmlTypes();
-    JoystickManager::registerQmlTypes();
-#ifdef QGC_VIEWER3D
-    Viewer3DManager::registerQmlTypes();
-#endif
-
-    qmlRegisterUncreatableType<GimbalController>("QGroundControl.Vehicle", 1, 0, "GimbalController", "Reference only");
-
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
-    qmlRegisterUncreatableType<MAVLinkChartController>("QGroundControl", 1, 0, "MAVLinkChart", "Reference only");
-    qmlRegisterType<MAVLinkInspectorController>("QGroundControl.Controllers", 1, 0, "MAVLinkInspectorController");
-#endif
-    qmlRegisterType<GeoTagController>("QGroundControl.Controllers", 1, 0, "GeoTagController");
-    qmlRegisterType<LogDownloadController>("QGroundControl.Controllers", 1, 0, "LogDownloadController");
-    qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
-
-
-    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Reference only");
-    qmlRegisterType<ESP8266ComponentController>("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
-    qmlRegisterType<SyslinkComponentController>("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
-
-
-    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Reference only");
-#ifndef QGC_NO_SERIAL_LINK
-    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
-#endif
-    qmlRegisterType<JoystickConfigController>("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
-
-    (void) qmlRegisterSingletonType<ShapeFileHelper>("QGroundControl.ShapeFileHelper", 1, 0, "ShapeFileHelper", [](QQmlEngine *, QJSEngine *) { return new ShapeFileHelper(); });
-
-    qmlRegisterSingletonType<QGCMAVLink>("MAVLink", 1, 0, "MAVLink", mavlinkSingletonFactory);
+    if (_systemId > 0) {
+        qCDebug(QGCApplicationLog) << "Setting MAVLink System ID to:" << _systemId;
+        SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);
+    }
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
-    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+    if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
     }
 
-    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+    if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
     }
 
@@ -360,6 +265,14 @@ void QGCApplication::_initForNormalAppBoot()
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(_qgcImageProviderId, new QGCImageProvider());
+
+    // Set the window icon now that custom plugin has a chance to override it
+#ifdef Q_OS_LINUX
+    QUrl windowIcon = QUrl("qrc:/res/qgroundcontrol.ico");
+    windowIcon = _qmlAppEngine->interceptUrl(windowIcon, QQmlAbstractUrlInterceptor::UrlString);
+    // The interceptor needs "qrc:/path" but QIcon expects ":/path"
+    setWindowIcon(QIcon(":" + windowIcon.path()));
+#endif
 
     // Safe to show popup error messages now that main window is created
     _showErrorsInToolbar = true;
@@ -492,7 +405,8 @@ void QGCApplication::showAppMessage(const QString &message, const QString &title
         QMetaObject::invokeMethod(rootQmlObject, "_showMessageDialog", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
     } else if (runningUnitTests()) {
         // Unit tests can run without UI
-        qCDebug(QGCApplicationLog) << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
+        // We don't use a logging category to make it easier to debug unit tests
+        qDebug() << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
     } else {
         // UI isn't ready yet
         _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));

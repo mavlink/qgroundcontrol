@@ -1,19 +1,36 @@
+# ============================================================================
+# GStreamer Video Receiver Backend
+# GStreamer-based video streaming and decoding
+# ============================================================================
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
 
+# ============================================================================
+# GStreamer Detection and Configuration
+# ============================================================================
+
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
     if(NOT MACOS)
-        # Using FindGStreamer.cmake is currently bypassed on MACOS since it doesn't work
-        # So for now we hack in a simple hardwired setup which does work
+        # NOTE: Using FindGStreamer.cmake is currently bypassed on macOS
+        # Using hardwired framework path as a workaround until FindGStreamer works on macOS
         find_package(GStreamer
             REQUIRED
             COMPONENTS Core Base Video Gl GlPrototypes Rtsp
-            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11)
+            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
+        )
     endif()
 
+    # Build GStreamer Qt6 QML GL plugin
     add_subdirectory(gstqml6gl)
-    # TODO: https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
+
+    # TODO: Add Qt6 Direct3D11 plugin support
+    # https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
 endif()
+
+# ============================================================================
+# GStreamer Video Receiver Sources
+# ============================================================================
 
 if(TARGET gstqml6gl)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
@@ -28,11 +45,19 @@ if(TARGET gstqml6gl)
             GstVideoReceiver.h
     )
 
+    # Build custom GStreamer QGC plugin
     add_subdirectory(gstqgc)
 
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
 
+    # ============================================================================
+    # Platform-Specific GStreamer Installation
+    # ============================================================================
+
     if(LINUX)
+        # ----------------------------------------------------------------------------
+        # Linux: Install GStreamer Plugins and Libraries
+        # ----------------------------------------------------------------------------
         install(
             DIRECTORY
                 "${GSTREAMER_PLUGIN_PATH}"
@@ -54,6 +79,9 @@ if(TARGET gstqml6gl)
                 PATTERN "gst-*"
         )
     elseif(WIN32)
+        # ----------------------------------------------------------------------------
+        # Windows: Install GStreamer DLLs and Plugins
+        # ----------------------------------------------------------------------------
         install(
             DIRECTORY "${GStreamer_ROOT_DIR}/bin/"
             DESTINATION "${CMAKE_INSTALL_BINDIR}"
@@ -83,6 +111,9 @@ if(TARGET gstqml6gl)
                 PATTERN "*.exe"
         )
     elseif(MACOS)
+        # ----------------------------------------------------------------------------
+        # macOS: Install GStreamer Framework
+        # ----------------------------------------------------------------------------
         if(GSTREAMER_FRAMEWORK)
             install(
                 DIRECTORY "${GSTREAMER_FRAMEWORK}"

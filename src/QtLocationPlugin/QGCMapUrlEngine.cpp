@@ -7,23 +7,20 @@
  *
  ****************************************************************************/
 
-/**
- *  @file
- *  @author Gus Grubba <gus@auterion.com>
- *  Original work: The OpenPilot Team, http://www.openpilot.org Copyright (C)
- * 2012.
- */
-
 #include "QGCMapUrlEngine.h"
-#include "GoogleMapProvider.h"
-#include "BingMapProvider.h"
-#include "GenericMapProvider.h"
-#include "EsriMapProvider.h"
-#include "MapboxMapProvider.h"
-#include "ElevationMapProvider.h"
-#include <QGCLoggingCategory.h>
 
-QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "qgc.qtlocationplugin.qgcmapurlengine")
+#include <QtCore/QtMinMax>
+
+#include "BingMapProvider.h"
+#include "ElevationMapProvider.h"
+#include "EsriMapProvider.h"
+#include "GenericMapProvider.h"
+#include "GoogleMapProvider.h"
+#include "MapboxMapProvider.h"
+#include "TianDiTuProvider.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QtLocationPlugin.QGCMapUrlEngine")
 
 const QList<SharedMapProvider> UrlFactory::_providers = {
 #ifndef QGC_NO_GOOGLE_MAPS
@@ -37,6 +34,8 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
     std::make_shared<BingSatelliteMapProvider>(),
     std::make_shared<BingHybridMapProvider>(),
 
+    std::make_shared<TianDiTuRoadProvider>(),
+    std::make_shared<TianDiTuSatelliteProvider>(),
     std::make_shared<StatkartTopoMapProvider>(),
     std::make_shared<StatkartBaseMapProvider>(),
     std::make_shared<SvalbardMapProvider>(),
@@ -73,6 +72,8 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
 
     std::make_shared<OpenStreetMapProvider>(),
 
+    std::make_shared<OpenAIPMapProvider>(),
+
     std::make_shared<CustomURLMapProvider>(),
 
     std::make_shared<CopernicusElevationProvider>()
@@ -85,17 +86,17 @@ QString UrlFactory::getImageFormat(int qtMapId, QByteArrayView image)
         return provider->getImageFormat(image);
     }
 
-    return QStringLiteral("");
+    return QString("");
 }
 
 QString UrlFactory::getImageFormat(QStringView type, QByteArrayView image)
 {
-    const SharedMapProvider provider =  getMapProviderFromProviderType(type);
+    const SharedMapProvider provider = getMapProviderFromProviderType(type);
     if (provider) {
         return provider->getImageFormat(image);
     }
 
-    return QStringLiteral("");
+    return QString("");
 }
 
 QUrl UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom)
@@ -125,7 +126,7 @@ quint32 UrlFactory::averageSizeForType(QStringView type)
         return provider->getAverageSize();
     }
 
-    return AVERAGE_TILE_SIZE;
+    return QGC_AVERAGE_TILE_SIZE;
 }
 
 bool UrlFactory::isElevation(int qtMapId)
@@ -162,12 +163,8 @@ QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftL
 {
     const SharedMapProvider provider = getMapProviderFromProviderType(mapType);
     if (provider) {
-        // TODO: Check QGeoCameraCapabilities.maximumZoomLevel() and QGeoCameraCapabilities.minimumZoomLevel()
-        if(zoom < 1) {
-            zoom = 1;
-        } else if(zoom > MAX_MAP_ZOOM) {
-            zoom = MAX_MAP_ZOOM;
-        }
+        // TODO: zoom = qBound(QGeoCameraCapabilities.minimumZoomLevel(), zoom, QGeoCameraCapabilities.maximumZoomLevel());
+        zoom = qBound(1, zoom, QGC_MAX_MAP_ZOOM);
         return provider->getTileCount(zoom, topleftLon, topleftLat, bottomRightLon, bottomRightLat);
     }
 
@@ -177,7 +174,7 @@ QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftL
 QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
 {
     // Default Set
-    if(qtMapId == -1) {
+    if (qtMapId == -1) {
         return nullptr;
     }
 
@@ -187,14 +184,14 @@ QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << Q_FUNC_INFO << "map id not found:" << qtMapId;
-    return QStringLiteral("");
+    qCWarning(QGCMapUrlEngineLog) << "map id not found:" << qtMapId;
+    return QString("");
 }
 
 SharedMapProvider UrlFactory::getMapProviderFromQtMapId(int qtMapId)
 {
     // Default Set
-    if(qtMapId == -1) {
+    if (qtMapId == -1) {
         return nullptr;
     }
 
@@ -204,7 +201,7 @@ SharedMapProvider UrlFactory::getMapProviderFromQtMapId(int qtMapId)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << Q_FUNC_INFO << "provider not found from id:" << qtMapId;
+    qCWarning(QGCMapUrlEngineLog) << "provider not found from id:" << qtMapId;
     return nullptr;
 }
 
@@ -216,7 +213,7 @@ SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << Q_FUNC_INFO << "type not found:" << type;
+    qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
     return nullptr;
 }
 
@@ -228,7 +225,7 @@ int UrlFactory::getQtMapIdFromProviderType(QStringView type)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << Q_FUNC_INFO << "type not found:" << type;
+    qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
     return -1;
 }
 
@@ -237,7 +234,7 @@ QStringList UrlFactory::getElevationProviderTypes()
     QStringList types;
     for (const SharedMapProvider &provider : _providers) {
         if (provider->isElevationProvider()) {
-            (void) types.append(provider->getMapName());
+            types.append(provider->getMapName());
         }
     }
 
@@ -248,7 +245,7 @@ QStringList UrlFactory::getProviderTypes()
 {
     QStringList types;
     for (const SharedMapProvider &provider : _providers) {
-        (void) types.append(provider->getMapName());
+        types.append(provider->getMapName());
     }
 
     return types;
@@ -263,8 +260,8 @@ QString UrlFactory::providerTypeFromHash(int hash)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << Q_FUNC_INFO << "provider not found from hash:" << hash;
-    return QStringLiteral("");
+    qCWarning(QGCMapUrlEngineLog) << "provider not found from hash:" << hash;
+    return QString("");
 }
 
 // This seems to limit provider name length to less than ~25 chars due to downcasting to int

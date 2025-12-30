@@ -15,7 +15,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CameraSectionLog, "CameraSectionLog")
+QGC_LOGGING_CATEGORY(CameraSectionLog, "Plan.CameraSection")
 
 QMap<QString, FactMetaData*> CameraSection::_metaDataMap;
 

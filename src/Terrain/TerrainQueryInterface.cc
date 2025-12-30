@@ -15,7 +15,7 @@
 #include <QtNetwork/QNetworkProxy>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "qgc.terrain.terrainqueryinterface")
+QGC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "Terrain.TerrainQueryInterface")
 
 TerrainQueryInterface::TerrainQueryInterface(QObject *parent)
     : QObject(parent)

@@ -1,20 +1,28 @@
+# ============================================================================
+# QGroundControl Unit Tests
+# ============================================================================
+
 if(NOT QGC_BUILD_TESTING)
     return()
 endif()
 
+# TODO: Android test utilities
 # if(ANDROID)
-    # include(AndroidTestUtilities)
+#     include(AndroidTestUtilities)
 # endif()
 
-# set(UNIT_TESTING_RESOURCES)
-# qt_add_resources(UNIT_TESTING_RESOURCES UnitTest.qrc)
-
+# ----------------------------------------------------------------------------
+# Test Framework Sources
+# ----------------------------------------------------------------------------
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         UnitTestList.cc
         UnitTestList.h
 )
 
+# ----------------------------------------------------------------------------
+# Test Dependencies
+# ----------------------------------------------------------------------------
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
@@ -22,12 +30,21 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
 
+# ----------------------------------------------------------------------------
+# CTest Integration
+# ----------------------------------------------------------------------------
 include(CTest)
+
+# Custom target for running all tests
 add_custom_target(check
-    COMMAND ctest --output-on-failure .
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure .
     USES_TERMINAL
+    COMMENT "Running all QGroundControl unit tests"
 )
 
+# ----------------------------------------------------------------------------
+# Helper Function for Adding Tests
+# ----------------------------------------------------------------------------
 function(add_qgc_test test_name)
     add_test(
         NAME ${test_name}
@@ -35,6 +52,10 @@ function(add_qgc_test test_name)
     )
     add_dependencies(check ${PROJECT_NAME})
 endfunction()
+
+# ============================================================================
+# Test Subdirectories & Registration
+# ============================================================================
 
 add_subdirectory(ADSB)
 add_qgc_test(ADSBTest)
@@ -100,13 +121,9 @@ add_subdirectory(qgcunittest)
 # add_qgc_test(MainWindowTest)
 # add_qgc_test(MessageBoxTest)
 
-add_subdirectory(QmlControls)
-
 add_subdirectory(Terrain)
 add_qgc_test(TerrainQueryTest)
 add_qgc_test(TerrainTileTest)
-
-add_subdirectory(UI)
 
 add_subdirectory(Utilities)
 # Audio

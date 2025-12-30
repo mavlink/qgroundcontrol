@@ -10,36 +10,16 @@
 #include "RunGuard.h"
 
 #include <QtCore/QCryptographicHash>
+#include <QtCore/QDir>
+#include <QtCore/QStandardPaths>
 
-namespace
+RunGuard::RunGuard(const QString &key)
+    : _key(key)
+    , _lockFilePath(lockDir() + QLatin1String("/qgc-") + generateKeyHash(key, QLatin1String("_lock")) + QLatin1String(".lock"))
+    , _lockFile(_lockFilePath)
 {
-
-QString generateKeyHash( const QString& key, const QString& salt )
-{
-    QByteArray data;
-
-    data.append( key.toUtf8() );
-    data.append( salt.toUtf8() );
-    data = QCryptographicHash::hash( data, QCryptographicHash::Sha1 ).toHex();
-
-    return data;
-}
-
-}
-
-RunGuard::RunGuard( const QString& key )
-    : key( key )
-    , memLockKey( generateKeyHash( key, "_memLockKey" ) )
-    , sharedmemKey( generateKeyHash( key, "_sharedmemKey" ) )
-    , sharedMem( sharedmemKey )
-    , memLock( memLockKey, 1 )
-{
-    memLock.acquire();
-    {
-        QSharedMemory fix( sharedmemKey );    // Fix for *nix: http://habrahabr.ru/post/173281/
-        fix.attach();
-    }
-    memLock.release();
+    // Recover instantly from stale locks after crashes.
+    _lockFile.setStaleLockTime(0);
 }
 
 RunGuard::~RunGuard()
@@ -49,39 +29,65 @@ RunGuard::~RunGuard()
 
 bool RunGuard::isAnotherRunning()
 {
-    if ( sharedMem.isAttached() )
+    if (_lockFile.isLocked()) {
         return false;
+    }
 
-    memLock.acquire();
-    const bool isRunning = sharedMem.attach();
-    if ( isRunning )
-        sharedMem.detach();
-    memLock.release();
-
-    return isRunning;
-}
-
-bool RunGuard::tryToRun()
-{
-    if ( isAnotherRunning() )   // Extra check
+    if (_lockFile.tryLock(0)) {
+        _lockFile.unlock();
         return false;
+    }
 
-    memLock.acquire();
-    const bool result = sharedMem.create( sizeof( quint64 ) );
-    memLock.release();
-    if ( !result )
-    {
-        release();
+    switch (_lockFile.error()) {
+    case QLockFile::NoError:
         return false;
+    case QLockFile::LockFailedError:
+        return true;
+    case QLockFile::PermissionError:
+        qWarning() << "QLockFile PermissionError: Unable to access lock file at" << _lockFile.fileName();
+        break;
+    case QLockFile::UnknownError:
+        qWarning() << "QLockFile UnknownError: An unknown error occurred with lock file at" << _lockFile.fileName();
+        break;
+    default:
+        break;
     }
 
     return true;
 }
 
+bool RunGuard::tryToRun()
+{
+    return (_lockFile.isLocked() ? true : _lockFile.tryLock(0));
+}
+
 void RunGuard::release()
 {
-    memLock.acquire();
-    if ( sharedMem.isAttached() )
-        sharedMem.detach();
-    memLock.release();
+    if (_lockFile.isLocked()) {
+        _lockFile.unlock();
+    }
+}
+
+QString RunGuard::generateKeyHash(const QString &key, const QString &salt)
+{
+    QByteArray data;
+    (void) data.append(key.toUtf8());
+    (void) data.append(salt.toUtf8());
+    const QByteArray hex = QCryptographicHash::hash(data, QCryptographicHash::Sha1).toHex();
+    return QString::fromLatin1(hex);
+}
+
+QString RunGuard::lockDir()
+{
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    if (dir.isEmpty()) {
+        dir = QDir::tempPath();
+    }
+
+    if (!QDir().mkpath(dir)) {
+        qWarning() << "RunGuard: Failed to create lock directory:" << dir;
+        return QString();
+    }
+
+    return dir;
 }

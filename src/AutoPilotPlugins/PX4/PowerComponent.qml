@@ -13,16 +13,15 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.PX4
 
-// Note: This setup supports back compat on battery parameter naming
-//  Older firmware: Single battery setup using BAT_* naming
-//  Newer firmware: Multiple battery setup using BAT#_* naming, with indices starting at 1
+
+import QGroundControl.AutoPilotPlugins.PX4
+
+// Note: Only the _SOURCE parameter can be assumed to be always available. The remainder of the parameters
+// may or may not be available depending on the _SOURCE setting.
 SetupPage {
     id:             powerPage
     pageComponent:  pageComponent
@@ -36,17 +35,15 @@ SetupPage {
 
             readonly property string    _highlightPrefix:           "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string    _highlightSuffix:           "</font>"
-            readonly property string    _batNCellsIndexedParamName: "BAT#_N_CELLS"
 
-            property int    _textEditWidth:                 ScreenTools.defaultFontPixelWidth * 8
-            property Fact   _uavcanEnable:                  controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
-            property bool   _indexedBatteryParamsAvailable: controller.parameterExists(-1, _batNCellsIndexedParamName.replace("#", 1))
-            property int    _indexedBatteryParamCount:      getIndexedBatteryParamCount()
+            property int    _textEditWidth:             ScreenTools.defaultFontPixelWidth * 8
+            property Fact   _uavcanEnable:              controller.getParameterFact(-1, "UAVCAN_ENABLE", false)
+            property int    _indexedBatteryParamCount:  getIndexedBatteryParamCount()
 
             function getIndexedBatteryParamCount() {
                 var batteryIndex = 1
                 do {
-                    if (!controller.parameterExists(-1, _batNCellsIndexedParamName.replace("#", batteryIndex))) {
+                    if (!controller.parameterExists(-1, "BAT#_SOURCE".replace("#", batteryIndex))) {
                         return batteryIndex - 1
                     }
                     batteryIndex++
@@ -54,7 +51,7 @@ SetupPage {
             }
 
             PowerComponentController {
-                id: controller
+                id:                     controller
                 onOldFirmware:          mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName))
                 onNewerFirmware:        mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName))
                 onDisconnectBattery:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"),    qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."))
@@ -93,14 +90,13 @@ SetupPage {
 
                 Repeater {
                     id:     batterySetupRepeater
-                    model:  _indexedBatteryParamsAvailable ? _indexedBatteryParamCount : 1
+                    model:  _indexedBatteryParamCount
 
                     Loader {
                         sourceComponent: batterySetupComponent
 
                         property int    batteryIndex:           index + 1
                         property bool   showBatteryIndex:       batterySetupRepeater.count > 1
-                        property bool   useIndexedParamNames:   _indexedBatteryParamsAvailable
                     }
                 }
 
@@ -223,6 +219,9 @@ SetupPage {
                         batteryIndex:   _batteryIndex
                     }
 
+                    property bool battNumCellsAvailable:        batParams.battNumCellsAvailable
+                    property bool battHighVoltAvailable:        batParams.battHighVoltAvailable
+                    property bool battLowVoltAvailable:         batParams.battLowVoltAvailable
                     property bool battVoltLoadDropAvailable:    batParams.battVoltLoadDropAvailable
                     property bool battVoltageDividerAvailable:  batParams.battVoltageDividerAvailable
                     property bool battAmpsPerVoltAvailable:     batParams.battAmpsPerVoltAvailable
@@ -277,6 +276,7 @@ SetupPage {
                             }
 
                             QGCColoredImage {
+                                id:                     battImage
                                 Layout.rowSpan:         4
                                 width:                  height * 0.75
                                 height:                 100
@@ -286,36 +286,81 @@ SetupPage {
                                 color:                  qgcPal.text
                                 cache:                  false
                                 source:                 getBatteryImage(batteryIndex)
+                                visible:                battNumCellsAvailable && battLowVoltAvailable && battHighVoltAvailable
                             }
 
-                            Item { width: 1; height: 1; Layout.columnSpan: 2 }
+                            Item { 
+                                width:              1
+                                height:             1
+                                Layout.columnSpan:  battImage.visible ? 2 : 3
+                            }
 
-                            QGCLabel { text:  qsTr("Number of Cells (in Series)") }
+                            QGCLabel { 
+                                text:  qsTr("Number of Cells (in Series)") 
+                                visible: battNumCellsAvailable
+                            }
                             FactTextField {
                                 width:      _textEditWidth
                                 fact:       battNumCells
                                 showUnits:  true
+                                visible:    battNumCellsAvailable
                             }
-                            QGCLabel { text: qsTr("Battery Max:") }
-                            QGCLabel { text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V' }
+                            QGCLabel { 
+                                text:       qsTr("Battery Max:")
+                                visible:    battImage.visible 
+                            }
+                            QGCLabel { 
+                                text:       visible ? (battNumCells.value * battHighVolt.value).toFixed(1) + ' V' : ""
+                                visible:    battImage.visible 
+                            }
+                            Item { 
+                                width:              1
+                                height:             1
+                                Layout.columnSpan:  3
+                                visible:            !battImage.visible
+                            }
 
-                            QGCLabel { text: qsTr("Empty Voltage (per cell)") }
+                            QGCLabel { 
+                                text:       qsTr("Empty Voltage (per cell)") 
+                                visible:    battLowVoltAvailable
+                            }
                             FactTextField {
                                 width:      _textEditWidth
                                 fact:       battLowVolt
                                 showUnits:  true
+                                visible:    battLowVoltAvailable
                             }
-                            QGCLabel { text: qsTr("Battery Min:") }
-                            QGCLabel { text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V' }
+                            QGCLabel { 
+                                text:       qsTr("Battery Min:") 
+                                visible:    battImage.visible
+                            }
+                            QGCLabel { 
+                                text:       visible ? (battNumCells.value * battLowVolt.value).toFixed(1) + ' V' : ""
+                                visible:    battImage.visible
+                            }
+                            Item { 
+                                width:              1
+                                height:             1
+                                Layout.columnSpan:  3
+                                visible:            battLowVoltAvailable && !battImage.visible
+                            }
 
-
-                            QGCLabel { text: qsTr("Full Voltage (per cell)") }
+                            QGCLabel { 
+                                text:       qsTr("Full Voltage (per cell)") 
+                                visible:    battHighVoltAvailable
+                            }
                             FactTextField {
                                 width:      _textEditWidth
                                 fact:       battHighVolt
                                 showUnits:  true
+                                visible:    battHighVoltAvailable
                             }
-                            Item { width: 1; height: 1; Layout.columnSpan: 2 }
+                            Item { 
+                                width:              1
+                                height:             1
+                                Layout.columnSpan:  battImage.visible ? 2 : 3
+                                visible:            battHighVoltAvailable
+                            }
 
                             QGCLabel {
                                 text:       qsTr("Voltage divider")
@@ -401,7 +446,7 @@ SetupPage {
                                 visible:    showAdvanced.checked
                             }
                             QGCLabel {
-                                text:       ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + qsTr(" V")
+                                text:       visible ? ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + qsTr(" V") : ""
                                 visible:    showAdvanced.checked
                             }
                             Item { width: 1; height: 1; Layout.columnSpan: 3; visible: showAdvanced.checked }

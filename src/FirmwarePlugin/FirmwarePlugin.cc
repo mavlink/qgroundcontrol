@@ -14,31 +14,27 @@
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
-#include "OnboardComputersManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
-#include "RadioComponentController.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginLog, "qgc.firmwareplugin.firmwareplugin")
+QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
 
 static const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 FirmwarePlugin::FirmwarePlugin(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 FirmwarePlugin::~FirmwarePlugin()
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 AutoPilotPlugin *FirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
@@ -207,34 +203,23 @@ const QVariantList &FirmwarePlugin::toolIndicators(const Vehicle*)
     //-- Default list of indicators for all vehicles.
     if (_toolIndicatorList.isEmpty()) {
         _toolIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VehicleGPSIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/VehicleGPSIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/TelemetryRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GimbalIndicator.qml")),
-// ControlIndicator is only available in debug builds for the moment
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RemoteIDIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GimbalIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/EscIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/JoystickIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
 #ifdef QT_DEBUG
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GCSControlIndicator.qml")),
+            // ControlIndicator is only available in debug builds for the moment
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GCSControlIndicator.qml")),
 #endif
         });
     }
 
     return _toolIndicatorList;
-}
-
-const QVariantList &FirmwarePlugin::modeIndicators(const Vehicle*)
-{
-    //-- Default list of indicators for all vehicles.
-    if (_modeIndicatorList.isEmpty()) {
-        _modeIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
-        });
-    }
-
-    return _modeIndicatorList;
 }
 
 bool FirmwarePlugin::_armVehicleAndValidate(Vehicle *vehicle) const
@@ -312,11 +297,6 @@ bool FirmwarePlugin::hasGimbal(Vehicle *vehicle, bool &rollSupported, bool &pitc
 QGCCameraManager *FirmwarePlugin::createCameraManager(Vehicle *vehicle) const
 {
     return new QGCCameraManager(vehicle);
-}
-
-OnboardComputersManager *FirmwarePlugin::createOnboardComputersManager(Vehicle *vehicle) const
-{
-    return new OnboardComputersManager(vehicle);
 }
 
 MavlinkCameraControl *FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent) const
@@ -460,15 +440,10 @@ Autotune *FirmwarePlugin::createAutotune(Vehicle *vehicle) const
 void FirmwarePlugin::_updateFlightModeList(FlightModeList &flightModeList)
 {
     _flightModeList.clear();
+    _modeEnumToString.clear();
 
-    for (FirmwareFlightMode &flightMode : flightModeList){
-        if (_modeEnumToString.contains(flightMode.custom_mode)) {
-            // Flight mode already exists in initial mapping, use that name which provides for localizations
-            flightMode.mode_name = _modeEnumToString[flightMode.custom_mode];
-        } else{
-            // This is a custom flight mode that is not already known. Best we can do is used the provided name
-            _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
-        }
+    for (FirmwareFlightMode &flightMode : flightModeList) {
+        _modeEnumToString[flightMode.custom_mode] = flightMode.mode_name;
         _addNewFlightMode(flightMode);
     }
 
@@ -481,7 +456,8 @@ void FirmwarePlugin::_addNewFlightMode(FirmwareFlightMode &newFlightMode)
 {
     for (const FirmwareFlightMode &existingFlightMode : _flightModeList) {
         if (existingFlightMode.custom_mode == newFlightMode.custom_mode) {
-            // Already exists
+            qCDebug(FirmwarePluginLog) << "Flight Mode:" << newFlightMode.mode_name << " Custom Mode:" << newFlightMode.custom_mode
+                                       << " already exists, not adding again.";
             return;
         }
     }

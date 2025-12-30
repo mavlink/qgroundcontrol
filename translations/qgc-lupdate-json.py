@@ -122,6 +122,8 @@ def writeJsonTSFile(multiFileLocArray):
                 extraCommentStr += "%s, " % jsonHierachy
             locStr = escapeXmlString(locStr)
             jsonTSFile.write("        <extracomment>%s</extracomment>\n" % extraCommentStr)
+            if (extraCommentStr.endswith(".enumStrings, ")):
+                jsonTSFile.write("        <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>\n")
             jsonTSFile.write("        <location filename=\"%s\"/>\n" % entry[1])
             jsonTSFile.write("        <source>%s</source>\n" % locStr)
             jsonTSFile.write("        <translation type=\"unfinished\"></translation>\n")

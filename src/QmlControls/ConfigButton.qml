@@ -7,6 +7,7 @@
  *
  ****************************************************************************/
 
+import QGroundControl
 import QGroundControl.Controls
 
 SettingsButton {

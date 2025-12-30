@@ -12,9 +12,9 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
+
 
 //-------------------------------------------------------------------------
 //-- Remote ID Indicator
@@ -95,6 +95,8 @@ Item {
             mainWindow.showSettingsTool()
         }
     }
+
+    QGCPalette { id: qgcPal }
 
     QGCColoredImage {
         id:                 remoteIDIcon

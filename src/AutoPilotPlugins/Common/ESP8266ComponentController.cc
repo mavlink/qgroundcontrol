@@ -14,7 +14,7 @@
 
 #include <QtNetwork/QHostAddress>
 
-QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "qgc.autopilotplugins.common.esp8266componentcontroller")
+QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "AutoPilotPlugins.ESP8266ComponentController")
 
 #define MAX_RETRIES 5
 

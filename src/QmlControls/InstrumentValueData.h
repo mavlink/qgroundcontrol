@@ -9,10 +9,11 @@
 
 #pragma once
 
+#include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "Fact.h"
 #include "FactValueGrid.h"
-
-#include <QtCore/QObject>
 
 class Vehicle;
 class QmlObjectListModel;
@@ -20,7 +21,8 @@ class QmlObjectListModel;
 class InstrumentValueData : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     enum RangeType {
         NoRangeInfo = 0,

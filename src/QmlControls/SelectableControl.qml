@@ -11,9 +11,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+import QGroundControl
+import QGroundControl.Controls
+
+
 import QGroundControl.FactControls
 
 /// Controt that allows the user to select from a list of controls to display.

@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "FactPanelController.h"
-#include "QmlObjectListModel.h"
-#include "FactMetaData.h"
-
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include "FactPanelController.h"
+#include "QmlObjectListModel.h"
+#include "FactMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterEditorControllerLog)
 
@@ -26,7 +26,7 @@ class ParameterTableModel : public QAbstractTableModel
     Q_OBJECT
     
 public:
-    ParameterTableModel(QObject* parent = nullptr);
+    explicit ParameterTableModel(QObject* parent = nullptr);
     ~ParameterTableModel() override;
 
     typedef QVector<QVariant> ColumnData;
@@ -49,14 +49,13 @@ public:
     void beginReset  ();
     void endReset    ();
     Fact*            factAt(int row) const;
-    void             setShowComponent(bool show);
+    void setShowComponent(bool show);
 
     // Overrides from QAbstractTableModel
     int         rowCount    (const QModelIndex & parent = QModelIndex()) const override;
     int         columnCount (const QModelIndex &parent = QModelIndex()) const override;
     QVariant    data        (const QModelIndex & index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames(void) const override;
-
 
     signals:
     void rowCountChanged(int count);
@@ -134,7 +133,7 @@ signals:
 class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_PROPERTY(QString              searchText              MEMBER _searchText                                          NOTIFY searchTextChanged)
     Q_PROPERTY(QmlObjectListModel*  categories              READ categories                                             CONSTANT)
     Q_PROPERTY(QObject*             currentCategory         READ currentCategory            WRITE setCurrentCategory    NOTIFY currentCategoryChanged)

@@ -1,112 +1,141 @@
-# output chosen build options
-macro( OptionOutput _outputstring )
-    if( ${ARGN} )
-        set( _var "YES" )
-    else( ${ARGN} )
-        set( _var "NO" )
-    endif( ${ARGN} )
-    message( STATUS "${_outputstring}${_var}" )
-endmacro( OptionOutput _outputstring )
+# ============================================================================
+# QGroundControl Build Configuration Summary
+# Prints a comprehensive summary of the build configuration
+# ============================================================================
 
-include(CMakePrintHelpers)
-# cmake_print_properties
-# cmake_host_system_information
+# ----------------------------------------------------------------------------
+# Configuration Timestamp
+# ----------------------------------------------------------------------------
+string(TIMESTAMP QGC_CONFIGURE_TIME "%Y-%m-%d %H:%M:%S %Z")
+message(STATUS "")
+message(STATUS "==================================================================")
+message(STATUS "QGroundControl Configuration Summary")
+message(STATUS "Generated at: ${QGC_CONFIGURE_TIME}")
+message(STATUS "==================================================================")
 
-# message( STATUS "------------------------------------------------------------------" )
-# message( STATUS "" )
-# include(CMakePrintSystemInformation)
-# message( STATUS "" )
-message( STATUS "------------------------------------------------------------------" )
-message( STATUS "" )
-message( STATUS "CMAKE_INSTALL_PREFIX:        ${CMAKE_INSTALL_PREFIX}" )
-message( STATUS "CMAKE_GENERATOR:             ${CMAKE_GENERATOR}" )
-message( STATUS "CMAKE_GENERATOR_INSTANCE:    ${CMAKE_GENERATOR_INSTANCE}" )
-message( STATUS "CMAKE_GENERATOR_PLATFORM:    ${CMAKE_GENERATOR_PLATFORM}" )
-message( STATUS "CMAKE_GENERATOR_TOOLSET:     ${CMAKE_GENERATOR_TOOLSET}" )
-message( STATUS "CMAKE_BUILD_TYPE:            ${CMAKE_BUILD_TYPE}" )
-message( STATUS "CMAKE_CXX_COMPILER:          ${CMAKE_CXX_COMPILER_ID} (${CMAKE_CXX_COMPILER}) ; version: ${CMAKE_CXX_COMPILER_VERSION}" )
-message( STATUS "CMAKE_CXX_STANDARD:          ${CMAKE_CXX_STANDARD}" )
-message( STATUS "CMAKE_CXX_COMPILER_LAUNCHER: ${CMAKE_CXX_COMPILER_LAUNCHER}" )
-message( STATUS "CMAKE_C_COMPILER_LAUNCHER:   ${CMAKE_C_COMPILER_LAUNCHER}" )
-if(IOS)
-message( STATUS "CMAKE_OBJC_COMPILER_LAUNCHER:${CMAKE_OBJC_COMPILER_LAUNCHER}" )
+# ----------------------------------------------------------------------------
+# Helper Macro for ON/OFF Options
+# ----------------------------------------------------------------------------
+macro(OptionOutput _label)
+    if(${ARGN})
+        set(_val "ON")
+    else()
+        set(_val "OFF")
+    endif()
+    message(STATUS "  ${_label}: ${_val}")
+endmacro()
+
+# ----------------------------------------------------------------------------
+# CMake System Information
+# ----------------------------------------------------------------------------
+message(STATUS "")
+message(STATUS "CMake System:")
+message(STATUS "  CMake version:      ${CMAKE_VERSION}")
+message(STATUS "  Generator:          ${CMAKE_GENERATOR}")
+message(STATUS "  Build type:         ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Source directory:   ${CMAKE_SOURCE_DIR}")
+message(STATUS "  Install prefix:     ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "  Host system:        ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION}")
+message(STATUS "  Target system:      ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION}")
+if(CMAKE_TOOLCHAIN_FILE)
+    message(STATUS "  Toolchain file:     ${CMAKE_TOOLCHAIN_FILE}")
 endif()
-message( STATUS "CMAKE_VERSION:               ${CMAKE_VERSION}" )
-message( STATUS "CMAKE_PREFIX_PATH:           ${CMAKE_PREFIX_PATH}" )
-message( STATUS "CMAKE_HOST_SYSTEM_NAME:      ${CMAKE_HOST_SYSTEM_NAME}" )
-message( STATUS "CMAKE_HOST_SYSTEM_VERSION:   ${CMAKE_HOST_SYSTEM_VERSION}" )
-message( STATUS "CMAKE_SYSTEM_NAME:           ${CMAKE_SYSTEM_NAME}" )
-message( STATUS "CMAKE_SYSTEM_VERSION:        ${CMAKE_SYSTEM_VERSION}" )
-message( STATUS "CMAKE_SOURCE_DIR:            ${CMAKE_SOURCE_DIR}" )
-message( STATUS "CMAKE_TOOLCHAIN_FILE:        ${CMAKE_TOOLCHAIN_FILE}" )
-message( STATUS "" )
-message( STATUS " --- Compiler flags --- ")
-message( STATUS "General:                     ${CMAKE_CXX_FLAGS}" )
-message( STATUS "Extra:                       ${EXTRA_COMPILE_FLAGS}" )
-message( STATUS "Debug:                       ${CMAKE_CXX_FLAGS_DEBUG}" )
-message( STATUS "Release:                     ${CMAKE_CXX_FLAGS_RELEASE}" )
-message( STATUS "RelWithDebInfo:              ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-message( STATUS "MinSizeRel:                  ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
-message( STATUS "" )
-message( STATUS " --- Linker flags --- ")
-message( STATUS "General:                     ${CMAKE_EXE_LINKER_FLAGS}" )
-message( STATUS "Debug:                       ${CMAKE_EXE_LINKER_FLAGS_DEBUG}" )
-message( STATUS "Release:                     ${CMAKE_EXE_LINKER_FLAGS_RELEASE}" )
-message( STATUS "RelWithDebInfo:              ${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}" )
-message( STATUS "MinSizeRel:                  ${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL}" )
-message( STATUS "" )
-message( STATUS "------------------------------------------------------------------" )
-message( STATUS "" )
-message( STATUS "App Name:                    ${QGC_APP_NAME}" )
-message( STATUS "App Copyright:               ${QGC_APP_COPYRIGHT}" )
-message( STATUS "App Description:             ${QGC_APP_DESCRIPTION}" )
-message( STATUS "Org Name:                    ${QGC_ORG_NAME}" )
-message( STATUS "App Domain:                  ${QGC_ORG_DOMAIN}" )
-message( STATUS "App Version:                 ${QGC_APP_VERSION_STR}" )
-if(MACOS)
-message( STATUS "MacOS Bundle ID:             ${QGC_BUNDLE_ID}" )
-message( STATUS "MacOS Icon Path:             ${QGC_MACOS_ICON_PATH}" )
+if(CMAKE_PREFIX_PATH)
+    message(STATUS "  Prefix path:        ${CMAKE_PREFIX_PATH}")
 endif()
+
+message(STATUS "")
+message(STATUS "Compiler & Linker:")
+message(STATUS "  C++ compiler:       ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "  C++ standard:       C++${CMAKE_CXX_STANDARD}")
+if(CMAKE_CXX_FLAGS)
+    message(STATUS "  Compiler flags:     ${CMAKE_CXX_FLAGS}")
+endif()
+if(CMAKE_EXE_LINKER_FLAGS)
+    message(STATUS "  Linker flags:       ${CMAKE_EXE_LINKER_FLAGS}")
+endif()
+
+# ----------------------------------------------------------------------------
+# Application Metadata
+# ----------------------------------------------------------------------------
+message(STATUS "")
+message(STATUS "Application:")
+message(STATUS "  Name:               ${QGC_APP_NAME}")
+message(STATUS "  Version:            ${QGC_APP_VERSION_STR}")
+message(STATUS "  Description:        ${QGC_APP_DESCRIPTION}")
+message(STATUS "  Organization:       ${QGC_ORG_NAME} (${QGC_ORG_DOMAIN})")
+message(STATUS "  Package name:       ${QGC_PACKAGE_NAME}")
+message(STATUS "  Settings version:   ${QGC_SETTINGS_VERSION}")
+
+# ----------------------------------------------------------------------------
+# Build & Feature Flags
+# ----------------------------------------------------------------------------
+message(STATUS "")
+message(STATUS "Build & Feature Flags:")
+OptionOutput("Stable build                          " QGC_STABLE_BUILD)
+OptionOutput("Use build caching                     " QGC_USE_CACHE)
+OptionOutput("Enable testing                        " QGC_BUILD_TESTING)
+OptionOutput("Enable QML debugging                  " QGC_DEBUG_QML)
+OptionOutput("Enable 3D Viewer                      " QGC_VIEWER3D)
+OptionOutput("Enable Bluetooth links                " QGC_ENABLE_BLUETOOTH)
+OptionOutput("Enable ZeroConf compatibility         " QGC_ZEROCONF_ENABLED)
+OptionOutput("Disable AIRLink                       " QGC_AIRLINK_DISABLED)
+OptionOutput("Disable serial links                  " QGC_NO_SERIAL_LINK)
+OptionOutput("Enable UVC devices                    " QGC_ENABLE_UVC)
+OptionOutput("Enable GStreamer video                " QGC_ENABLE_GST_VIDEOSTREAMING)
+OptionOutput("Enable Qt video backend               " QGC_ENABLE_QT_VIDEOSTREAMING)
+OptionOutput("Disable APM MAVLink dialect           " QGC_DISABLE_APM_MAVLINK)
+OptionOutput("Disable APM plugin                    " QGC_DISABLE_APM_PLUGIN)
+OptionOutput("Disable PX4 plugin                    " QGC_DISABLE_PX4_PLUGIN)
+
+# ----------------------------------------------------------------------------
+# External Dependencies
+# ----------------------------------------------------------------------------
+message(STATUS "")
+message(STATUS "External Dependencies:")
+message(STATUS "  MAVLink repo:       ${QGC_MAVLINK_GIT_REPO}")
+message(STATUS "  MAVLink tag:        ${QGC_MAVLINK_GIT_TAG}")
+message(STATUS "  CPM cache:          ${CPM_SOURCE_CACHE}")
+message(STATUS "  QML output dir:     ${QT_QML_OUTPUT_DIRECTORY}")
+
+# ----------------------------------------------------------------------------
+# Platform-Specific Settings
+# ----------------------------------------------------------------------------
 if(ANDROID)
-message( STATUS "Android NDK Host System      ${ANDROID_NDK_HOST_SYSTEM_NAME}" )
-message( STATUS "Android SDK Root             ${ANDROID_SDK_ROOT}" )
+  message(STATUS "")
+  message(STATUS "Android Platform:")
+  message(STATUS "  Target SDK:         ${QGC_QT_ANDROID_TARGET_SDK_VERSION}")
+  message(STATUS "  Min SDK:            ${QGC_QT_ANDROID_MIN_SDK_VERSION}")
+  message(STATUS "  Package:            ${QGC_ANDROID_PACKAGE_NAME}")
+  message(STATUS "  APK signing:        ${QT_ANDROID_SIGN_APK}")
+  message(STATUS "  AAB signing:        ${QT_ANDROID_SIGN_AAB}")
 endif()
-OptionOutput( "Stable Build:                " QGC_STABLE_BUILD )
-OptionOutput( "Building Tests:              " QGC_BUILD_TESTING AND BUILD_TESTING )
-OptionOutput( "Debug QML:                   " QGC_DEBUG_QML )
-OptionOutput( "Disable APM Dialect:         " QGC_DISABLE_APM_MAVLINK )
-OptionOutput( "Disable APM Plugin:          " QGC_DISABLE_APM_PLUGIN )
-OptionOutput( "Disable APM Plugin Factory:  " QGC_DISABLE_APM_PLUGIN_FACTORY )
-OptionOutput( "Disable PX4 Plugin:          " QGC_DISABLE_PX4_PLUGIN )
-OptionOutput( "Disable PX4 Plugin Factory:  " QGC_DISABLE_PX4_PLUGIN_FACTORY )
-OptionOutput( "Enable Bluetooth Links:      " QGC_ENABLE_BLUETOOTH )
-OptionOutput( "Enable ZeroConf:             " QGC_ZEROCONF_ENABLED )
-OptionOutput( "Disable AIRLink:             " QGC_AIRLINK_DISABLED )
-OptionOutput( "Disable Serial Links:        " QGC_NO_SERIAL_LINK )
-OptionOutput( "Enable UTM Adapter:          " QGC_UTM_ADAPTER )
-OptionOutput( "Enable Viewer3D:             " QGC_VIEWER3D )
-OptionOutput( "Enable UVC Devices:          " QGC_ENABLE_UVC )
-OptionOutput( "Enable GStreamer:            " QGC_ENABLE_GST_VIDEOSTREAMING )
-OptionOutput( "Enable QtMultimedia:         " QGC_ENABLE_QT_VIDEOSTREAMING )
-message( STATUS "MAVLink Git Repo:            ${QGC_MAVLINK_GIT_REPO}" )
-message( STATUS "MAVLink Git Tag:             ${QGC_MAVLINK_GIT_TAG}" )
-message( STATUS "" )
-message( STATUS "------------------------------------------------------------------" )
-message( STATUS "" )
 
-# QT_ANDROID_MULTI_ABI_FORWARD_VARS
-# QT_ANDROID_APPLICATION_ARGUMENTS
-# QT_HOST_PATH
-# QT_ANDROID_SIGN_AAB
-# QT_ANDROID_SIGN_APK
-# message(STATUS "QT_ANDROID_KEYSTORE_PATH $ENV{QT_ANDROID_KEYSTORE_PATH}")
-# message(STATUS "QT_ANDROID_KEYSTORE_ALIAS $ENV{QT_ANDROID_KEYSTORE_ALIAS}")
-# QT_ANDROID_KEYSTORE_STORE_PASS, QT_ANDROID_KEYSTORE_KEY_PASS
-# QT_ANDROID_DEPLOY_RELEASE
-# QT_USE_TARGET_ANDROID_BUILD_DIR
-# QT_ANDROID_DEPLOYMENT_TYPE
-# QT_ENABLE_VERBOSE_DEPLOYMENT
+if(MACOS)
+  message(STATUS "")
+  message(STATUS "macOS Platform:")
+  message(STATUS "  Bundle ID:          ${QGC_MACOS_BUNDLE_ID}")
+  message(STATUS "  Deployment target:  ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  if(QGC_MACOS_UNIVERSAL_BUILD)
+    message(STATUS "  Architectures:      ${CMAKE_OSX_ARCHITECTURES}")
+  endif()
+endif()
 
-# QGC_QT_MINIMUM_VERSION
-# QGC_QT_MAXIMUM_VERSION
-# QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING
+if(WIN32 AND NOT ANDROID)
+  message(STATUS "")
+  message(STATUS "Windows Platform:")
+  message(STATUS "  Icon:               ${QGC_WINDOWS_ICON_PATH}")
+  message(STATUS "  Resource file:      ${QGC_WINDOWS_RESOURCE_FILE_PATH}")
+endif()
+
+if(LINUX AND NOT ANDROID)
+  message(STATUS "")
+  message(STATUS "Linux Platform:")
+  if(QGC_CREATE_APPIMAGE)
+    message(STATUS "  AppImage:           Enabled")
+  endif()
+endif()
+
+message(STATUS "")
+message(STATUS "==================================================================")
+message(STATUS "")

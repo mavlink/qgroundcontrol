@@ -13,56 +13,42 @@
 TrajectoryPoints::TrajectoryPoints(Vehicle* vehicle, QObject* parent)
     : QObject       (parent)
     , _vehicle      (vehicle)
-    , _lastAzimuth  (qQNaN())
 {
+
 }
 
-void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate, PositionSrc src)
+void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate,uint8_t src)
 {
     // The goal of this algorithm is to limit the number of trajectory points whic represent the vehicle path.
     // Fewer points means higher performance of map display.
-    QGeoCoordinate &lastPoint = (src == PositionSrc::eSrc_GlobalPosition) ? _lastPoint   : _gpsLastPoit   ;
-    QVariantList   &pointList = (src == PositionSrc::eSrc_GlobalPosition) ? _points      : _gpsPoints     ;
-    double         &athimuth  = (src == PositionSrc::eSrc_GlobalPosition) ? _lastAzimuth : _gpsLastAzimuth;
-
-    if (lastPoint.isValid()) {
-        double distance = lastPoint.distanceTo(coordinate);
+    qDebug()<<"handle "<<src<<"trajectory";
+    auto &trajectory =_trajectories[src];
+    if ( trajectory.lastPoint.isValid()) {
+        double distance =  trajectory.lastPoint.distanceTo(coordinate);
         if (distance > _distanceTolerance) {
             //-- Update flight distance
             _vehicle->updateFlightDistance(distance);
             // Vehicle has moved far enough from previous point for an update
-            double newAzimuth = lastPoint.azimuthTo(coordinate);
-            if (qIsNaN(athimuth) || qAbs(newAzimuth - athimuth) > _azimuthTolerance) {
+            double newAzimuth =  trajectory.lastPoint.azimuthTo(coordinate);
+            if (qIsNaN(trajectory.lastAzimuth) || qAbs(newAzimuth - trajectory.lastAzimuth) > _azimuthTolerance) {
                 // The new position IS NOT colinear with the last segment. Append the new position to the list.
-                athimuth = lastPoint.azimuthTo(coordinate);
-                lastPoint = coordinate;
-                pointList.append(QVariant::fromValue(coordinate));
-                if (src == PositionSrc::eSrc_GlobalPosition){
-                    emit pointAdded(coordinate);
-                } else {
-                    emit gpsPointAdded(coordinate);
-                }
+                trajectory.lastAzimuth = trajectory.lastPoint.azimuthTo(coordinate);
+                trajectory.lastPoint = coordinate;
+                trajectory.points.append(QVariant::fromValue(coordinate));
+                emit pointAdded(coordinate, src);
             } else {
                 // The new position IS colinear with the last segment. Don't add a new point, just update
                 // the last point to be the new position.
-                lastPoint = coordinate;
-                pointList[pointList.count() - 1] = QVariant::fromValue(coordinate);
-                if (src == PositionSrc::eSrc_GlobalPosition){
-                    emit updateLastPoint(coordinate);
-                } else {
-                    emit gpsUpdateLastPoint(coordinate);
-                }
+                trajectory.lastPoint = coordinate;
+                trajectory.points.last() = QVariant::fromValue(coordinate);
+                emit updateLastPoint(coordinate, src);
             }
         }
     } else {
         // Add the very first trajectory point to the list
-        lastPoint = coordinate;
-        pointList.append(QVariant::fromValue(coordinate));
-        if (src == PositionSrc::eSrc_GlobalPosition){
-            emit pointAdded(coordinate);
-        } else {
-            emit gpsPointAdded(coordinate);
-        }
+        trajectory.lastPoint = coordinate;
+        trajectory.points.append(QVariant::fromValue(coordinate));
+        emit pointAdded(coordinate, src);
     }
 }
 
@@ -79,11 +65,6 @@ void TrajectoryPoints::stop(void)
 
 void TrajectoryPoints::clear(void)
 {
-    _points.clear();
-    _gpsPoints.clear();
-    _lastPoint = QGeoCoordinate();
-    _gpsLastPoit = QGeoCoordinate();
-    _gpsLastAzimuth = qQNaN();
-    _lastAzimuth = qQNaN();
+    _trajectories.clear();
     emit pointsCleared();
 }

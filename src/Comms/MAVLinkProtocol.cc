@@ -18,14 +18,14 @@
 #include "AppSettings.h"
 #include "QmlObjectListModel.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>
 #include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "qgc.comms.mavlinkprotocol")
+QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "Comms.MAVLinkProtocol")
 
 Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
@@ -33,14 +33,14 @@ MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
     , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
 {
-    // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkProtocolLog) << this;
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
 {
     _closeLogFile();
 
-    // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkProtocolLog) << this;
 }
 
 MAVLinkProtocol *MAVLinkProtocol::instance()
@@ -349,8 +349,8 @@ void MAVLinkProtocol::_stopLogging()
     if (_tempLogFile->isOpen() && _closeLogFile()) {
         auto appSettings = SettingsManager::instance()->appSettings();
         auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
-        if ((_vehicleWasArmed || mavlinkSettings->telemetrySaveNotArmed()->rawValue().toBool()) && 
-                mavlinkSettings->telemetrySave()->rawValue().toBool() && 
+        if ((_vehicleWasArmed || mavlinkSettings->telemetrySaveNotArmed()->rawValue().toBool()) &&
+                mavlinkSettings->telemetrySave()->rawValue().toBool() &&
                 !appSettings->disableAllPersistence()->rawValue().toBool()) {
             _saveTelemetryLog(_tempLogFile->fileName());
         } else {
@@ -404,17 +404,68 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
         const QString dtFormat("yyyy-MM-dd hh-mm-ss");
 
         int tryIndex = 1;
-        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat), QStringLiteral(""), AppSettings::telemetryFileExtension);
+        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat), QString(), AppSettings::telemetryFileExtension);
         while (saveDir.exists(saveFileName)) {
             saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat), QStringLiteral(".%1").arg(tryIndex++), AppSettings::telemetryFileExtension);
         }
 
         const QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
-        QFile tempFile(tempLogfile);
-        if (!tempFile.copy(saveFilePath)) {
-            const QString error = tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath, tempFile.errorString());
+
+        QFile in(tempLogfile);
+        if (!in.open(QIODevice::ReadOnly)) {
+            const QString error = tr("Unable to save telemetry log. Error opening source '%1': '%2'.").arg(tempLogfile, in.errorString());
             qgcApp()->showAppMessage(error);
+            (void) QFile::remove(tempLogfile);
+            return;
         }
+
+        QSaveFile out(saveFilePath);
+        out.setDirectWriteFallback(true); // allows non-atomic fallback where rename isn’t possible
+
+        if (!out.open(QIODevice::WriteOnly)) {
+            const QString error = tr("Unable to save telemetry log. Error opening destination '%1': '%2'.").arg(saveFilePath, out.errorString());
+            qgcApp()->showAppMessage(error);
+            (void) QFile::remove(tempLogfile);
+            return;
+        }
+
+        // Stream copy to avoid large allocations.
+        QByteArray buffer;
+        constexpr int bufferSize = 256 * 1024; // 256 KiB
+        buffer.resize(bufferSize);
+        while (true) {
+            const qint64 n = in.read(buffer.data(), buffer.size());
+            if (n == 0) {
+                break;
+            }
+            if (n < 0) {
+                const QString error = tr("Unable to save telemetry log. Error reading source '%1': '%2'.").arg(tempLogfile, in.errorString());
+                qgcApp()->showAppMessage(error);
+                out.cancelWriting();
+                (void) QFile::remove(tempLogfile);
+                return;
+            }
+            if (out.write(buffer.constData(), n) != n) {
+                const QString error = tr("Unable to save telemetry log. Error writing destination '%1': '%2'.").arg(saveFilePath, out.errorString());
+                qgcApp()->showAppMessage(error);
+                out.cancelWriting();
+                (void) QFile::remove(tempLogfile);
+                return;
+            }
+        }
+
+        if (!out.commit()) {
+            const QString error = tr("Unable to finalize telemetry log '%1': '%2'.").arg(saveFilePath, out.errorString());
+            qgcApp()->showAppMessage(error);
+            (void) QFile::remove(tempLogfile);
+            return;
+        }
+
+        constexpr QFileDevice::Permissions perms =
+            QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+            QFileDevice::ReadGroup |
+            QFileDevice::ReadOther;
+        (void) out.setPermissions(perms);
     }
 
     (void) QFile::remove(tempLogfile);
@@ -446,7 +497,7 @@ void MAVLinkProtocol::_vehicleCountChanged()
     }
 }
 
-int MAVLinkProtocol::getSystemId() const 
-{ 
-    return SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->rawValue().toInt(); 
+int MAVLinkProtocol::getSystemId() const
+{
+    return SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->rawValue().toInt();
 }

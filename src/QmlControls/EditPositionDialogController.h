@@ -9,19 +9,19 @@
 
 #pragma once
 
-#include "Fact.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include "Fact.h"
 
 Q_DECLARE_LOGGING_CATEGORY(EditPositionDialogControllerLog)
 
 class EditPositionDialogController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_PROPERTY(QGeoCoordinate   coordinate  READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
     Q_PROPERTY(Fact             *latitude   READ latitude                       CONSTANT)
     Q_PROPERTY(Fact             *longitude  READ longitude                      CONSTANT)

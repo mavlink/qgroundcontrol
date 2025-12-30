@@ -11,6 +11,7 @@
 #pragma once
 
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"
@@ -19,7 +20,7 @@
 class PX4SimpleFlightModesController : public FactPanelController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
     PX4SimpleFlightModesController(void);
     

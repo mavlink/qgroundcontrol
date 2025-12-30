@@ -42,7 +42,7 @@ public:
     Q_PROPERTY(Fact*            stopTakingPhotos        READ    stopTakingPhotos                                                CONSTANT)
     Q_PROPERTY(Fact*            stopTakingVideo         READ    stopTakingVideo                                                 CONSTANT)
     Q_PROPERTY(QGeoCoordinate   finalApproachCoordinate READ    finalApproachCoordinate     WRITE setFinalApproachCoordinate    NOTIFY finalApproachCoordinateChanged)
-    Q_PROPERTY(QGeoCoordinate   loiterTangentCoordinate READ    loiterTangentCoordinate                                         NOTIFY loiterTangentCoordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   slopeStartCoordinate    READ    slopeStartCoordinate                                            NOTIFY slopeStartCoordinateChanged)
     Q_PROPERTY(QGeoCoordinate   landingCoordinate       READ    landingCoordinate           WRITE setLandingCoordinate          NOTIFY landingCoordinateChanged)
     Q_PROPERTY(bool             altitudesAreRelative    READ    altitudesAreRelative        WRITE setAltitudesAreRelative       NOTIFY altitudesAreRelativeChanged)
     Q_PROPERTY(bool             landingCoordSet         READ    landingCoordSet                                                 NOTIFY landingCoordSetChanged)
@@ -77,7 +77,7 @@ public:
     bool            landingCoordSet         (void) const { return _landingCoordSet; }
     QGeoCoordinate  landingCoordinate       (void) const { return _landingCoordinate; }
     QGeoCoordinate  finalApproachCoordinate (void) const { return _finalApproachCoordinate; }
-    QGeoCoordinate  loiterTangentCoordinate (void) const { return _loiterTangentCoordinate; }
+    QGeoCoordinate  slopeStartCoordinate    (void) const { return _slopeStartCoordinate; }
 
     void setLandingCoordinate       (const QGeoCoordinate& coordinate);
     void setFinalApproachCoordinate (const QGeoCoordinate& coordinate);
@@ -131,7 +131,7 @@ public:
 
 signals:
     void finalApproachCoordinateChanged (QGeoCoordinate coordinate);
-    void loiterTangentCoordinateChanged (QGeoCoordinate coordinate);
+    void slopeStartCoordinateChanged    (QGeoCoordinate coordinate);
     void landingCoordinateChanged       (QGeoCoordinate coordinate);
     void landingCoordSetChanged         (bool landingCoordSet);
     void altitudesAreRelativeChanged    (bool altitudesAreRelative);
@@ -176,7 +176,7 @@ protected:
     int             _sequenceNumber             = 0;
     bool            _dirty                      = false;
     QGeoCoordinate  _finalApproachCoordinate;
-    QGeoCoordinate  _loiterTangentCoordinate;
+    QGeoCoordinate  _slopeStartCoordinate;
     QGeoCoordinate  _landingCoordinate;
     bool            _landingCoordSet            = false;
     bool            _ignoreRecalcSignals        = false;
@@ -204,9 +204,10 @@ protected:
 
 private slots:
     void    _recalcFromRadiusChange                         (void);
+    void    _recalcFromApproachModeChange                   (void);
     void    _signalLastSequenceNumberChanged                (void);
     void    _updateFinalApproachCoodinateAltitudeFromFact   (void);
-    void    _updateLandingCoodinateAltitudeFromFact     (void);
+    void    _updateLandingCoodinateAltitudeFromFact         (void);
 
     friend class LandingComplexItemTest;
 };

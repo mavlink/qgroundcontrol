@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkConfiguration.h"
 
@@ -21,13 +22,14 @@ Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
 class LinkInterface : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     friend class LinkManager;
 
 public:
     virtual ~LinkInterface();
 
-    Q_INVOKABLE virtual void disconnect() = 0; // FIXME: This gets called 3x when closing link
+    Q_INVOKABLE virtual void disconnect() = 0; // Implementations should guard against multiple calls
 
     virtual bool isConnected() const = 0;
     virtual bool isLogReplay() const { return false; }

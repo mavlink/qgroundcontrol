@@ -1,6 +1,6 @@
 # 参数
 
-_参数_ 屏幕（Screen）允许您找到并修改与车辆相关的任何参数。
+_参数_ 屏幕（Screen）允许您找到并修改与载具相关的任何参数。
 
 ![参数屏幕（Parameters Screen）](../../../assets/setup/parameters_px4.jpg)
 
@@ -40,4 +40,4 @@ PX4 Pro 和 ArduPilot 使用不同的参数集，但它们都是按照本节描�
 
 **清除遥控器（RC）与参数关联** <br> 这将清除遥控器（RC）控制与参数之间的所有关联。 更多信息见：[无线电配置 > 参数调谐通道](../setup_view/radio.md#param-tuning-channels-px4)。
 
-**重启车辆** <br>重启车辆(更改一些参数后需要)
+**重启载具** <br>重启载具(更改一些参数后需要)。

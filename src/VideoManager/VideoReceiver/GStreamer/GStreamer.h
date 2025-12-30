@@ -28,7 +28,8 @@ enum VideoDecoderOptions {
     ForceVideoDecoderDirectX3D,
     ForceVideoDecoderVideoToolbox,
     ForceVideoDecoderIntel,
-    ForceVideoDecoderVulkan
+    ForceVideoDecoderVulkan,
+    ForceVideoDecoderHardware
 };
 
 bool initialize();

@@ -22,8 +22,6 @@
 #include "PX4LogParserTest.h"
 // #include "ULogParserTest.h"
 
-
-
 // AutoPilotPlugins
 // #include "RadioConfigTest.h"
 
@@ -114,9 +112,7 @@
 // #include "SendMavCommandTest.h"
 // #include "TCPLinkTest.h"
 
-QGC_LOGGING_CATEGORY(UnitTestsLog, "qgc.test.unittestlist")
-
-int runTests(bool stress, QStringView unitTestOptions)
+int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
 {
     // ADSB
     UT_REGISTER_TEST(ADSBTest)
@@ -218,15 +214,18 @@ int runTests(bool stress, QStringView unitTestOptions)
     // UT_REGISTER_TEST(TCPLinkTest)
 
     int result = 0;
-
     for (int i=0; i < (stress ? 20 : 1); i++) {
-        // Run the test
-        const int failures = UnitTest::run(unitTestOptions);
+        int failures = 0;
+        for (const QString& test: unitTests) {
+            // Run the test
+            failures += UnitTest::run(test);
+        }
+
         if (failures == 0) {
             qDebug() << "ALL TESTS PASSED";
             result = 0;
         } else {
-            qDebug() << failures << " TESTS FAILED!";
+            qWarning() << failures << "TESTS FAILED!";
             result = -failures;
             break;
         }

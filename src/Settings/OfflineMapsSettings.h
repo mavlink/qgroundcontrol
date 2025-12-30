@@ -9,12 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class OfflineMapsSettings : public SettingsGroup
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     OfflineMapsSettings(QObject* parent = nullptr);
 

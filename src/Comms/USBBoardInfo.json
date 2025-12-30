@@ -1,4 +1,4 @@
-﻿{
+{
     "comment":  "AutoConnect usb board info",
     "version":  1,
     "fileType": "USBBoardInfo",
@@ -24,6 +24,7 @@
         { "vendorID": 9900, "productID": 1,         "boardClass": "Pixhawk",    "name": "Omnibus F4 SD" },
         { "vendorID": 8137, "productID": 28,        "boardClass": "Pixhawk",    "name": "PX4 FMUK66 v3.x" },
         { "vendorID": 8137, "productID": 36,        "boardClass": "Pixhawk",    "name": "Tropic-Community VMU" },
+        { "vendorID": 8137, "productID": 37,        "boardClass": "Pixhawk",    "name": "MR-TROPIC" },
         { "vendorID": 1155, "productID": 41775,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv1" },
         { "vendorID": 1155, "productID": 41776,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv2" },
         { "vendorID":12642, "productID": 75,        "boardClass": "Pixhawk",    "name": "PX4 DurandalV1" },
@@ -54,8 +55,11 @@
         { "vendorID": 9900, "productID": 4132,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7 OEM" },
         { "vendorID": 9900, "productID": 4388,      "boardClass": "Pixhawk",    "name": "3DR Control Zero H7 OEM Rev G" },
 
+        { "vendorID": 2106, "productID": 7120,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GA1" },
+
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
+        { "vendorID": 12346, "productID": 4097,     "boardClass": "SiK Radio",  "name": "DroneBridge Radio",    "comment": "ESP32-based telemetry radio" },
 
         { "vendorID": 5446, "productID": 424,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (M8P)" },
         { "vendorID": 5446, "productID": 425,       "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",       "comment": "U-blox RTK GPS (F9P)" },
@@ -65,12 +69,15 @@
         { "vendorID": 8352, "productID": 16733,     "boardClass": "OpenPilot",  "name": "OpenPilot CC3D" },
         { "vendorID": 8352, "productID": 16734,     "boardClass": "OpenPilot",  "name": "OpenPilot Revolution" },
         { "vendorID": 8352, "productID": 16848,     "boardClass": "OpenPilot",  "name": "Taulabs Sparky2" },
-        { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" }
+        { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" },
+        { "vendorID": 8355, "productID": 16888,     "boardClass": "Pixhawk",    "name": "Svehicle e2" }
     ],
 
     "boardDescriptionFallback": [
         { "regExp": "^ZeroOne x6.x$",       "boardClass": "Pixhawk" },
         { "regExp": "^ZeroOne BL x6.x$",    "boardClass": "Pixhawk" },
+        { "regExp": "^Svehicle e2.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^Svehicle BL e2.x$",   "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v6U.x$",      "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL FMU v6U.x$",   "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v6X.x$",      "boardClass": "Pixhawk" },
@@ -110,6 +117,8 @@
         { "regExp": "^ARK Pi6X.x$",         "boardClass": "Pixhawk" },
         { "regExp": "^ARK BL Pi6X.x$",      "boardClass": "Pixhawk" },
         { "regExp": "^PX4 TROPIC Community","boardClass": "Pixhawk" },
+        { "regExp": "^PX4 MR-TROPIC",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL MR-TROPIC",    "boardClass": "Pixhawk" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
     ],

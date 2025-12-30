@@ -17,7 +17,7 @@
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(LinkInterfaceLog, "qgc.comms.linkinterface")
+QGC_LOGGING_CATEGORY(LinkInterfaceLog, "Comms.LinkInterface")
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
     : QObject(parent)
@@ -29,7 +29,7 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent
 LinkInterface::~LinkInterface()
 {
     if (_vehicleReferenceCount != 0) {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "still have vehicle references:" << _vehicleReferenceCount;
+        qCWarning(LinkInterfaceLog) << "still have vehicle references:" << _vehicleReferenceCount;
     }
 
     _config.reset();
@@ -38,7 +38,7 @@ LinkInterface::~LinkInterface()
 uint8_t LinkInterface::mavlinkChannel() const
 {
     if (!mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "mavlinkChannelIsSet() == false";
+        qCWarning(LinkInterfaceLog) << "mavlinkChannelIsSet() == false";
     }
 
     return _mavlinkChannel;
@@ -61,7 +61,7 @@ bool LinkInterface::initMavlinkSigning()
                 qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << _mavlinkChannel;
             }
         } else {
-            qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "Failed To enable Signing on channel" << _mavlinkChannel;
+            qCWarning(LinkInterfaceLog) << "Failed To enable Signing on channel" << _mavlinkChannel;
             // FIXME: What should we do here?
             return false;
         }
@@ -75,14 +75,14 @@ bool LinkInterface::_allocateMavlinkChannel()
     Q_ASSERT(!mavlinkChannelIsSet());
 
     if (mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "already have" << _mavlinkChannel;
+        qCWarning(LinkInterfaceLog) << "already have" << _mavlinkChannel;
         return true;
     }
 
     _mavlinkChannel = LinkManager::instance()->allocateMavlinkChannel();
 
     if (!mavlinkChannelIsSet()) {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "failed";
+        qCWarning(LinkInterfaceLog) << "failed";
         return false;
     }
 
@@ -95,7 +95,7 @@ bool LinkInterface::_allocateMavlinkChannel()
 
 void LinkInterface::_freeMavlinkChannel()
 {
-    qCDebug(LinkInterfaceLog) << Q_FUNC_INFO << _mavlinkChannel;
+    qCDebug(LinkInterfaceLog) << _mavlinkChannel;
 
     if (!mavlinkChannelIsSet()) {
         return;
@@ -117,7 +117,7 @@ void LinkInterface::removeVehicleReference()
         _vehicleReferenceCount--;
         _connectionRemoved();
     } else {
-        qCWarning(LinkInterfaceLog) << Q_FUNC_INFO << "called with no vehicle references";
+        qCWarning(LinkInterfaceLog) << "called with no vehicle references";
     }
 }
 

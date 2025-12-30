@@ -23,6 +23,8 @@ public:
     QGCMapPolyline(QObject* parent = nullptr);
     QGCMapPolyline(const QGCMapPolyline& other, QObject* parent = nullptr);
 
+    ~QGCMapPolyline() override;
+
     const QGCMapPolyline& operator=(const QGCMapPolyline& other);
 
     Q_PROPERTY(int                  count       READ count                                  NOTIFY countChanged)
@@ -123,14 +125,12 @@ private:
     void            _init                   (void);
     QGeoCoordinate  _coordFromPointF        (const QPointF& point) const;
     QPointF         _pointFFromCoord        (const QGeoCoordinate& coordinate) const;
-    void            _beginResetIfNotActive  (void);
-    void            _endResetIfNotActive    (void);
 
     QVariantList        _polylinePath;
     QmlObjectListModel  _polylineModel;
+    bool                _deferredPathChanged = false;
     bool                _dirty;
     bool                _interactive;
-    bool                _resetActive;
     bool                _traceMode = false;
     int                 _selectedVertexIndex = -1;
 };

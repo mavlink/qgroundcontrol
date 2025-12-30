@@ -1,39 +1,39 @@
-# Motor Setup
+# 电机设置
 
-Motor Setup is used to test individual motors/servos (for example, to verify that motors spin in the correct direction).
+电机设置用于测试单个电机/舵机（例如，验证电机是否按正确方向旋转）。
 
 :::tip
-These instructions apply to PX4 and to most vehicle types on ArduPilot.
-Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../setup_view/motors_ardusub.md)).
+这些指示适用于PX4和ArduPilot上的大多数载具类型。
+针对特定飞行器的说明作为子主题提供（例如[电机设置（ArduSub）](../setup_view/motors_ardusub.md)）。
 :::
 
-![Motors Test](../../../assets/setup/Motors.png)
+![电机测试](../../../assets/setup/Motors.png)
 
-## Test Steps
+## 测试步骤
 
-To test the motors:
+要测试的电机：
 
-1. Remove all propellers.
+1. 卸下所有螺旋桨。
 
    ::: warning
-   You must remove props before activating the motors!
+   在启动电机前，必须取下螺旋桨！
    :::
 
-2. (_PX4-only_) Enable safety switch - if used.
+2. (_PX4-only_) 启用安全开关 - 如果使用该开关的话。
 
-3. Slide the switch to enable motor slider and buttons (labeled: _Propellers are removed - Enable slider and motors_).
+3. 滑动开关以启用电机滑块和按钮（标签为：_已移除螺旋桨 - 启用滑块和电机_）。
 
-4. Adjust the slider to select the power for the motors.
+4. 调节滑块以选择电机功率。
 
-5. Press the button corresponding to the motor and confirm it spin in the correct direction.
+5. 按下对应的电源按钮，然后确认它朝正确方向旋转。
 
    ::: info
-   The motors will automatically stop spinning after 3 seconds.
-   You can also stop the motor by pressing the 'Stop' button.
-   If no motors turn, raise the “Throttle %” and try again.
+   3秒后发动机将自动停止旋转。
+   您也可以按“停止”按钮来阻止发动机。
+   如果没有电机转动，调高 “油门百分比” 后再试。
    :::
 
-## Additional Information
+## 附加信息
 
-- [Basic Configuration > Motor Setup](http://docs.px4.io/master/en/config/motors.html) (_PX4 User Guide_) - This contains additional PX4-specific information.
-- [ESCS and Motors](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams) - This is the Motor order diagrams for all frames
+- [Basic Configuration > Motor Setup](http://docs.px4.io/main/en/config/motors.html) (_PX4 User Guide_) - This contains additional PX4-specific information.
+- [电调与电机](https://ardupilot.org/copter/docs/connect-escs-and-motors.html#motor-order-diagrams) - 这是所有机架的电机顺序图

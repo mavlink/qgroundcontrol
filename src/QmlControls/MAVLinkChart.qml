@@ -4,10 +4,8 @@ import QtQuick.Layouts
 import QtCharts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.Controllers
-import QGroundControl.ScreenTools
 
 ChartView {
     id:                 chartView
@@ -19,19 +17,19 @@ ChartView {
     backgroundRoundness: 0
     margins.bottom:     ScreenTools.defaultFontPixelHeight * 1.5
     margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
+    visible:            chartController.chartFields.length > 0
 
-    property var chartController:   null
-    property var seriesColors:      ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
+    required property var inspectorController
+    required property int chartIndex
+
+    property var _seriesColors: ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
 
     function addDimension(field) {
-        if(!chartController) {
-            chartController = controller.createChart()
-        }
-        var color   = chartView.seriesColors[chartView.count]
+        var color   = _seriesColors[chartView.count]
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
         serie.axisX = axisX
         serie.axisY = axisY
-        serie.useOpenGL = true
+        serie.useOpenGL = QGroundControl.videoManager.gstreamerEnabled // Details on why here: https://github.com/mavlink/qgroundcontrol/issues/13068
         serie.color = color
         serie.width = 1
         chartController.addSeries(field, serie)
@@ -41,11 +39,17 @@ ChartView {
         if(chartController) {
             chartView.removeSeries(field.series)
             chartController.delSeries(field)
-            if(chartView.count === 0) {
-                controller.deleteChart(chartController)
-                chartController = null
-            }
         }
+    }
+
+    function roomForNewDimension() {
+        return chartController.chartFields.length < _seriesColors.length
+    }
+
+    MAVLinkChartController {
+        id:                     chartController
+        inspectorController:    chartView.inspectorController
+        chartIndex:             chartView.chartIndex
     }
 
     DateTimeAxis {

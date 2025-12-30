@@ -20,7 +20,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
+QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
 const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
 
@@ -29,7 +29,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
     , _entryVertex              (0)
-    , _ignoreRecalc             (false)
+, _ignoreRecalc             (false)
     , _scanDistance             (0.0)
     , _cameraShots              (0)
     , _cameraCalc               (masterController, settingsGroup)
@@ -40,7 +40,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     , _startFromTopFact         (settingsGroup, _metaDataMap[startFromTopName])
     , _entranceAltFact          (settingsGroup, _metaDataMap[_entranceAltName])
 {
-    _editorQml = "qrc:/qml/StructureScanEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/Controls/StructureScanEditor.qml";
 
     _entranceAltFact.setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
@@ -674,7 +674,7 @@ void StructureScanComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         _structurePolygon.setShowAltColor(false);
     }
 
-    _flightPathSegments.beginReset();
+    _flightPathSegments.beginResetModel();
     _flightPathSegments.clearAndDeleteContents();
 
     if (_flightPolygon.count() > 2) {
@@ -728,7 +728,7 @@ void StructureScanComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, layerEntranceCoord, prevLayerAltitude, layerEntranceCoord, entranceAlt);
     }
 
-    _flightPathSegments.endReset();
+    _flightPathSegments.endResetModel();
 
     if (_cTerrainCollisionSegments != 0) {
         emit terrainCollisionChanged(true);

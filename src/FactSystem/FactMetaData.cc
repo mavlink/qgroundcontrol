@@ -16,7 +16,7 @@
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactMetaDataLog, "qgc.factsystem.factmetadata")
+QGC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -25,6 +25,7 @@ const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] 
     { "rad",            "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
     { "gimbal-degrees", "deg",  FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees, FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees },
     { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
+    { "centi-celsius",  "C",    FactMetaData::_centiCelsiusToCelsius,                   FactMetaData::_celsiusToCentiCelsius },
 };
 
 // Translations driven by app settings
@@ -624,6 +625,16 @@ QVariant FactMetaData::_degreesToCentiDegrees(const QVariant &degrees)
     return QVariant(qRound(degrees.toReal() * 100.0));
 }
 
+QVariant FactMetaData::_centiCelsiusToCelsius(const QVariant &centiCelsius)
+{
+    return QVariant(centiCelsius.toReal() / 100.0);
+}
+
+QVariant FactMetaData::_celsiusToCentiCelsius(const QVariant &celsius)
+{
+    return QVariant(qRound(celsius.toReal() * 100.0));
+}
+
 QVariant FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees(const QVariant &userGimbalDegrees)
 {
     // User facing gimbal degree values are from 0 (level) to 90 (straight down)
@@ -1185,7 +1196,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
         foundBitmask = rgDescriptions.count() != 0;
     }
     if (rgDescriptions.isEmpty()) {
-        if (!_parseEnum(json, defineMap, rgDescriptions, rgStringValues, errorString)) {
+        if (!_parseEnum(metaData->_name, json, defineMap, rgDescriptions, rgStringValues, errorString)) {
             qWarning(FactMetaDataLog) << QStringLiteral("FactMetaData::createFromJsonObject _parseEnum for '%1' failed. %2").arg(metaData->name(), errorString);
         }
     }
@@ -1405,7 +1416,17 @@ void FactMetaData::setVolatileValue(bool bValue)
     }
 }
 
-bool FactMetaData::_parseEnum(const QJsonObject &jsonObject, const DefineMap_t &defineMap, QStringList &rgDescriptions, QStringList &rgValues, QString &errorString)
+QStringList FactMetaData::splitTranslatedList(const QString &translatedList)
+{
+    const QRegularExpression splitRegex("[,，、]"); // Note chinese commas for translations which have modified the english comma
+    QStringList valueList = translatedList.split(splitRegex, Qt::SkipEmptyParts);
+    for (QString &value: valueList) {
+        value = value.trimmed();
+    }
+    return valueList;
+}
+
+bool FactMetaData::_parseEnum(const QString& name, const QJsonObject &jsonObject, const DefineMap_t &defineMap, QStringList &rgDescriptions, QStringList &rgValues, QString &errorString)
 {
     rgDescriptions.clear();
     rgValues.clear();
@@ -1417,20 +1438,14 @@ bool FactMetaData::_parseEnum(const QJsonObject &jsonObject, const DefineMap_t &
 
     const QString jsonStrings = jsonObject.value(_enumStringsJsonKey).toString();
     const QString defineMapStrings = defineMap.value(jsonStrings, jsonStrings);
-    rgDescriptions = defineMapStrings.split(",", Qt::SkipEmptyParts);
-    for (QString &desc: rgDescriptions) {
-        desc = desc.trimmed();
-    }
+    rgDescriptions = splitTranslatedList(defineMapStrings);
 
     const QString jsonValues = jsonObject.value(_enumValuesJsonKey).toString();
     const QString defineMapValues = defineMap.value(jsonValues, jsonValues);
-    rgValues = defineMapValues.split(",", Qt::SkipEmptyParts);
-    for (QString &value: rgValues) {
-        value = value.trimmed();
-    }
+    rgValues = splitTranslatedList(defineMapValues); // Never translated but still useful to use common string splitting code
 
     if (rgDescriptions.count() != rgValues.count()) {
-        errorString = QStringLiteral("Enum strings/values count mismatch - strings: '%1'[%2,%3] values: '%4'[%5,%6]").arg(defineMapStrings).arg(rgDescriptions.count()).arg(defineMapStrings.contains(",")).arg(defineMapValues).arg(rgValues.count()).arg(defineMapValues.contains(","));
+        errorString = QStringLiteral("Enum strings/values count mismatch - name: '%1' strings: '%2'[%3] values: '%4'[%5]").arg(name).arg(defineMapStrings).arg(rgDescriptions.count()).arg(defineMapValues).arg(rgValues.count());
         return false;
     }
 

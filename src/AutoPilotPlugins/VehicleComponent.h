@@ -14,6 +14,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "AutoPilotPlugin.h"
 
@@ -28,7 +29,8 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleComponentLog)
 class VehicleComponent : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QString  name                                                READ name                   CONSTANT)
     Q_PROPERTY(QString  description                                         READ description            CONSTANT)
     Q_PROPERTY(bool     requiresSetup                                       READ requiresSetup          CONSTANT)

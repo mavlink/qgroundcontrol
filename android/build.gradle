@@ -5,7 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.8.0'
+        //noinspection AndroidGradlePluginVersion
+        classpath 'com.android.tools.build:gradle:8.11.1'
     }
 }
 
@@ -15,23 +16,16 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-if (project.plugins.findPlugin("qtGradlePluginType") != null) {
-    apply plugin: qtGradlePluginType
-} else {
-    // Fall back to the default Android application plugin if qtGradlePluginType
-    // is not available
-    apply plugin: 'com.android.application'
-}
+apply plugin: qtGradlePluginType
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     //noinspection GradleDependency
-    implementation 'androidx.core:core:1.13.1'
-    implementation 'com.github.mik3y:usb-serial-for-android:3.8.1'
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'com.github.mik3y:usb-serial-for-android:3.9.0'
 }
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
-def timestampInt = (int)(new Date().getTime() / 1000 / 1)
 
 android {
     /*******************************************************
@@ -55,7 +49,7 @@ android {
     ndkVersion = androidNdkVersion
 
     // Extract native libraries from the APK
-    packagingOptions.jniLibs.useLegacyPackaging = true
+    // packagingOptions.jniLibs.useLegacyPackaging = true
 
     sourceSets {
         main {
@@ -72,7 +66,7 @@ android {
 
     tasks.withType(JavaCompile) {
         options.incremental = true
-        // options.compilerArgs += ['-Xlint:deprecation']
+        options.compilerArgs += ['-Xlint:all'] // deprecation
     }
 
     buildFeatures {
@@ -99,6 +93,7 @@ android {
         targetSdkVersion qtTargetSdkVersion
         ndk.abiFilters = qtTargetAbiList.split(",")
 
+        println "timestamp: " + getTimestampStr()
         // println "applicationId: ${applicationId}"
         println "minSdkVersion: ${minSdkVersion}"
         println "targetSdkVersion: ${targetSdkVersion}"
@@ -107,11 +102,21 @@ android {
         println "versionName: ${versionName}"
     }
 
-    println "timestamp: " + getTimestampStr()
     println "androidPackageName: ${namespace}"
     println "androidCompileSdkVersion: ${compileSdkVersion}"
     println "androidBuildToolsVersion: ${buildToolsVersion}"
     println "androidNdkVersion: ${ndkVersion}"
     println "project.name: ${project.name}"
+    println "buildDir: ${buildDir}"
     println "qtAndroidDir: ${qtAndroidDir}"
+    println "Java Version: " + JavaVersion.current()
+
+    packagingOptions {
+        // exclude 'lib/*/*_qmltooling_*'
+        exclude 'lib/*/*_Controls_FluentWinUI3_*'
+        exclude 'lib/*/*_Controls_Fusion_*'
+        exclude 'lib/*/*_Controls_Imagine_*'
+        exclude 'lib/*/*_Controls_Material_*'
+        exclude 'lib/*/*_Controls_Universal_*'
+    }
 }

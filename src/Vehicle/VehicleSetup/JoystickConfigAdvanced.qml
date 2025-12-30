@@ -13,11 +13,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
+
+
+
 import QGroundControl.FactControls
 
 Item {
@@ -87,6 +87,14 @@ Item {
                 text:   expoSlider.value.toFixed(2)
             }
         }
+
+        QGCCheckBox {
+            Layout.columnSpan:  2
+            text: qsTr("Allow additional axes to be used for manual control extensions")
+            checked: _activeJoystick ? _activeJoystick.enableManualControlExtensions : false
+            onClicked: _activeJoystick.enableManualControlExtensions = checked
+        }
+
         //-----------------------------------------------------------------
         //-- Enable Advanced Mode
         QGCLabel {

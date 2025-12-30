@@ -19,9 +19,10 @@
 #include <QtCore/QDebug>
 #include <QtCore/QXmlStreamReader>
 
-QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
+QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "FirmwarePlugin.PX4ParameterMetaData")
 
-PX4ParameterMetaData::PX4ParameterMetaData(void)
+PX4ParameterMetaData::PX4ParameterMetaData(QObject* parent)
+    : QObject(parent)
 {
 
 }
@@ -275,7 +276,10 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             if (metaData->convertAndValidateRaw(text, false /* convertOnly */, varMax, errorString)) {
                                 metaData->setRawMax(varMax);
                             } else {
-                                qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
+                                // PX4 firmware has a metadata generation bug for VTQ_TELEM_IDS_* parameters
+                                if (!metaData->name().startsWith("VTQ_TELEM_IDS_")) {
+                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid max value, name:" << metaData->name() << " type:" << metaData->type() << " max:" << text << " error:" << errorString;
+                                }
                             }
 
                         } else if (elementName == "unit") {
@@ -349,7 +353,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                                 qCDebug(PX4ParameterMetaDataLog) << "parameter value:"
                                                                  << "index:" << bit << "description:" << bitDescription;
 
-                                if (bit < 31) {
+                                if (bit < 32) {
                                     QVariant bitmaskRawValue = 1 << bit;
                                     QVariant bitmaskValue;
                                     QString errorString;
@@ -361,7 +365,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                                                                          << " error:" << errorString;
                                     }
                                 } else {
-                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask, bit:" << bit;
+                                    qCWarning(PX4ParameterMetaDataLog) << "Invalid value for bitmask bit, name:" << metaData->name() << " bit:" << bit;
                                 }
                             }
                         } else {

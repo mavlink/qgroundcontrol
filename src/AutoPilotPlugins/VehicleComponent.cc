@@ -15,7 +15,7 @@
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(VehicleComponentLog, "qgc.autopilotplugin.vehiclecomponent");
+QGC_LOGGING_CATEGORY(VehicleComponentLog, "AutoPilotPlugins.VehicleComponent");
 
 VehicleComponent::VehicleComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent, QObject *parent)
     : QObject(parent)

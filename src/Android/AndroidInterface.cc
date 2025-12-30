@@ -12,7 +12,6 @@
 
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
-#include <QtCore/private/qandroidextras_p.h>
 
 QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.src.androidinterface")
 
@@ -107,23 +106,20 @@ void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
 
 bool checkStoragePermissions()
 {
-    const QString readPermission("android.permission.READ_EXTERNAL_STORAGE");
-    const QString writePermission("android.permission.WRITE_EXTERNAL_STORAGE");
-
-    const QStringList permissions = { readPermission, writePermission };
-    for (const auto& permission: permissions) {
-        QFuture<QtAndroidPrivate::PermissionResult> futurePermissionResult = QtAndroidPrivate::checkPermission(permission);
-        QtAndroidPrivate::PermissionResult permissionResult = futurePermissionResult.result();
-        if (permissionResult == QtAndroidPrivate::PermissionResult::Denied) {
-            futurePermissionResult = QtAndroidPrivate::requestPermission(permission);
-            permissionResult = futurePermissionResult.result();
-            if (permissionResult == QtAndroidPrivate::PermissionResult::Denied) {
-                return false;
-            }
-        }
+    // Call the Java method to check and request storage permissions
+    const bool hasPermission = QJniObject::callStaticMethod<jboolean>(
+        kJniQGCActivityClassName, 
+        "checkStoragePermissions", 
+        "()Z"
+    );
+    
+    if (hasPermission) {
+        qCDebug(AndroidInterfaceLog) << "Storage permissions granted";
+    } else {
+        qCWarning(AndroidInterfaceLog) << "Storage permissions not granted";
     }
-
-    return true;
+    
+    return hasPermission;
 }
 
 QString getSDCardPath()

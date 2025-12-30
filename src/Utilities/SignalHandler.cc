@@ -8,111 +8,241 @@
  ****************************************************************************/
 
 #include "SignalHandler.h"
-#include "QGCApplication.h"
+
+#include <QtCore/QCoreApplication>
+#ifdef Q_OS_WIN
+#include <QtCore/QWinEventNotifier>
+#else
+#include <QtCore/QSocketNotifier>
+#endif
+
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QGlobalStatic>
-#include <QtCore/QSocketNotifier>
-#include <QtQuick/QQuickWindow>
+QGC_LOGGING_CATEGORY(SignalHandlerLog, "Utilities.SignalHandler")
 
-#include <sys/signal.h>
-#include <sys/socket.h>
+std::atomic<SignalHandler*> SignalHandler::s_current{nullptr};
 
-QGC_LOGGING_CATEGORY(SignalHandlerLog, "qgc.utilities.signalhandler")
-
-int SignalHandler::sigIntFd[2] = {0, 0};
-int SignalHandler::sigTermFd[2] = {0, 0};
-
-Q_GLOBAL_STATIC(SignalHandler, _signalHandlerInstance);
-
-SignalHandler *SignalHandler::instance()
-{
-    return _signalHandlerInstance();
-}
-
-SignalHandler::SignalHandler(QObject *parent)
+SignalHandler::SignalHandler(QObject* parent)
     : QObject(parent)
 {
-    if (::socketpair(AF_UNIX, SOCK_STREAM, 0, sigIntFd)) {
-       qCFatal(SignalHandlerLog) << "Couldn't create INT socketpair";
-    }
-    _notifierInt = new QSocketNotifier(sigIntFd[1], QSocketNotifier::Read, this);
-    (void) connect(_notifierInt, &QSocketNotifier::activated, this, &SignalHandler::_onSigInt);
-
-    if (::socketpair(AF_UNIX, SOCK_STREAM, 0, sigTermFd)) {
-       qCFatal(SignalHandlerLog) << "Couldn't create TERM socketpair";
-    }
-    _notifierTerm = new QSocketNotifier(sigTermFd[1], QSocketNotifier::Read, this);
-    (void) connect(_notifierTerm, &QSocketNotifier::activated, this, &SignalHandler::_onSigTerm);
+    s_current.store(this, std::memory_order_release);
+    qCDebug(SignalHandlerLog) << this;
 }
 
-void SignalHandler::_onSigInt()
-{
-    _notifierInt->setEnabled(false);
-    char b;
-    ::read(sigIntFd[1], &b, sizeof(b));
-    qCDebug(SignalHandlerLog) << "Caught SIGINT—shutting down gracefully";
+#ifdef Q_OS_WIN
 
-    if (qgcApp() && qgcApp()->mainRootWindow()) {
-        (void) qgcApp()->mainRootWindow()->close();
-        QEvent ev(QEvent::Quit);
-        (void) qgcApp()->event(&ev);
+#include <QtCore/QWinEventNotifier>
+#include <qt_windows.h>
+
+/// Plain C thunk with Windows signature. Delegates to class static.
+static BOOL WINAPI _consoleCtrlHandler(DWORD evt)
+{
+    return SignalHandler::consoleCtrlHandler(static_cast<unsigned long>(evt)) ? TRUE : FALSE;
+}
+
+int SignalHandler::consoleCtrlHandler(unsigned long evt)
+{
+    switch (evt) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT: {
+        SignalHandler* self = SignalHandler::current();
+        if (!self || !self->_signalEvent || (self->_signalEvent == reinterpret_cast<Qt::HANDLE>(INVALID_HANDLE_VALUE))) {
+            return 0;
+        }
+        (void) SetEvent(static_cast<HANDLE>(self->_signalEvent)); // non-blocking
+        return 1;
+    }
+    default:
+        return 0;
+    }
+}
+
+SignalHandler::~SignalHandler()
+{
+    if (_notifier) {
+        _notifier->setEnabled(false);
     }
 
-    _notifierInt->setEnabled(true);
-}
-
-void SignalHandler::_onSigTerm()
-{
-    _notifierTerm->setEnabled(false);
-    char b;
-    ::read(sigTermFd[1], &b, sizeof(b));
-
-    qCDebug(SignalHandlerLog) << "Caught SIGTERM—shutting down gracefully";
-    if (qgcApp() && qgcApp()->mainRootWindow()) {
-        (void) qgcApp()->mainRootWindow()->close();
-        QEvent ev(QEvent::Quit);
-        (void) qgcApp()->event(&ev);
+    if (_signalEvent && (_signalEvent != reinterpret_cast<Qt::HANDLE>(INVALID_HANDLE_VALUE))) {
+        (void) CloseHandle(static_cast<HANDLE>(_signalEvent));
+        _signalEvent = reinterpret_cast<Qt::HANDLE>(INVALID_HANDLE_VALUE);
     }
 
-    _notifierTerm->setEnabled(true);
-}
+    (void) SetConsoleCtrlHandler(&_consoleCtrlHandler, FALSE);
+    s_current.store(nullptr, std::memory_order_release);
 
-void SignalHandler::intSignalHandler(int signum)
-{
-    Q_ASSERT(signum == SIGINT);
-
-    char b = 1;
-    (void) ::write(sigIntFd[0], &b, sizeof(b));
-}
-
-void SignalHandler::termSignalHandler(int signum)
-{
-    Q_ASSERT(signum == SIGTERM);
-
-    char b = 1;
-    (void) ::write(sigTermFd[0], &b, sizeof(b));
+    qCDebug(SignalHandlerLog) << this;
 }
 
 int SignalHandler::setupSignalHandlers()
 {
-    struct sigaction sa_int{};
-    sa_int.sa_handler = SignalHandler::intSignalHandler;
-    (void) sigemptyset(&sa_int.sa_mask);
-    sa_int.sa_flags = 0;
-    sa_int.sa_flags |= SA_RESTART;
-    if (sigaction(SIGINT, &sa_int, nullptr)) {
+    // Create auto-reset event. Initial state = non-signaled.
+    _signalEvent = reinterpret_cast<Qt::HANDLE>(CreateEventW(/*lpEventAttributes*/ nullptr, /*bManualReset*/ FALSE, /*bInitialState*/ FALSE, /*lpName*/ nullptr));
+    if (!_signalEvent || (_signalEvent == reinterpret_cast<Qt::HANDLE>(INVALID_HANDLE_VALUE))) {
         return 1;
     }
 
-    struct sigaction sa_term{};
-    sa_term.sa_handler = SignalHandler::termSignalHandler;
-    (void) sigemptyset(&sa_term.sa_mask);
-    sa_term.sa_flags = 0;
-    sa_term.sa_flags |= SA_RESTART;
-    if (sigaction(SIGTERM, &sa_term, nullptr)) {
+    _notifier = new QWinEventNotifier(static_cast<HANDLE>(_signalEvent), this);
+    (void) connect(_notifier, &QWinEventNotifier::activated, this, [this]([[maybe_unused]] HANDLE handle) {
+        // Auto-reset event already consumed. No drain needed.
+        if (!std::exchange(_sigIntTriggered, true)) {
+            qCDebug(SignalHandlerLog) << "Console event—press Ctrl+C again to exit immediately";
+            QCoreApplication::quit();
+        } else {
+            qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
+            _exit(0);
+        }
+    });
+
+    if (!SetConsoleCtrlHandler(&_consoleCtrlHandler, TRUE)) {
         return 2;
     }
 
     return 0;
 }
+
+#else // POSIX
+
+#include <signal.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+
+#include <QtCore/QSocketNotifier>
+
+SignalHandler::~SignalHandler()
+{
+    struct sigaction sa{};
+    sa.sa_handler = SIG_DFL;
+    (void) sigaction(SIGINT, &sa, nullptr);
+    (void) sigaction(SIGTERM, &sa, nullptr);
+
+    if (_notifierInt) {
+        _notifierInt->setEnabled(false);
+    }
+    if (_notifierTerm) {
+        _notifierTerm->setEnabled(false);
+    }
+
+    if (_sigIntFd[0] >= 0) {
+        (void) ::close(_sigIntFd[0]);
+        _sigIntFd[0] = -1;
+    }
+    if (_sigIntFd[1] >= 0) {
+        (void) ::close(_sigIntFd[1]);
+        _sigIntFd[1] = -1;
+    }
+    if (_sigTermFd[0] >= 0) {
+        (void) ::close(_sigTermFd[0]);
+        _sigTermFd[0] = -1;
+    }
+    if (_sigTermFd[1] >= 0) {
+        (void) ::close(_sigTermFd[1]);
+        _sigTermFd[1] = -1;
+    }
+
+    s_current.store(nullptr, std::memory_order_release);
+    qCDebug(SignalHandlerLog) << this;
+}
+
+int SignalHandler::setupSignalHandlers()
+{
+    // Datagram socketpairs: read end = [0], write end = [1]
+    if (::socketpair(AF_UNIX, SOCK_DGRAM, 0, _sigIntFd)) {
+        qCCritical(SignalHandlerLog) << "Failed to create SIGINT socketpair:" << strerror(errno);
+        return 1;
+    }
+    if (::socketpair(AF_UNIX, SOCK_DGRAM, 0, _sigTermFd)) {
+        qCCritical(SignalHandlerLog) << "Failed to create SIGTERM socketpair:" << strerror(errno);
+        return 2;
+    }
+
+    // Close-on-exec to prevent fd leaks into children
+    (void) fcntl(_sigIntFd[0],  F_SETFD, fcntl(_sigIntFd[0],  F_GETFD, 0) | FD_CLOEXEC);
+    (void) fcntl(_sigIntFd[1],  F_SETFD, fcntl(_sigIntFd[1],  F_GETFD, 0) | FD_CLOEXEC);
+    (void) fcntl(_sigTermFd[0], F_SETFD, fcntl(_sigTermFd[0], F_GETFD, 0) | FD_CLOEXEC);
+    (void) fcntl(_sigTermFd[1], F_SETFD, fcntl(_sigTermFd[1], F_GETFD, 0) | FD_CLOEXEC);
+
+    // Non-blocking read ends
+    (void) fcntl(_sigIntFd[0],  F_SETFL, fcntl(_sigIntFd[0],  F_GETFL, 0) | O_NONBLOCK);
+    (void) fcntl(_sigTermFd[0], F_SETFL, fcntl(_sigTermFd[0], F_GETFL, 0) | O_NONBLOCK);
+
+    _notifierInt  = new QSocketNotifier(_sigIntFd[0],  QSocketNotifier::Read, this);
+    _notifierTerm = new QSocketNotifier(_sigTermFd[0], QSocketNotifier::Read, this);
+    (void) connect(_notifierInt,  &QSocketNotifier::activated, this, &SignalHandler::_onSigInt);
+    (void) connect(_notifierTerm, &QSocketNotifier::activated, this, &SignalHandler::_onSigTerm);
+
+    struct sigaction sa_int{};
+    sigemptyset(&sa_int.sa_mask);
+    sa_int.sa_flags = 0;
+    sa_int.sa_handler = SignalHandler::_intSignalHandler;
+    if (sigaction(SIGINT, &sa_int, nullptr)) {
+        return 3;
+    }
+
+    struct sigaction sa_term{};
+    sigemptyset(&sa_term.sa_mask);
+    sa_term.sa_flags = 0;
+    sa_term.sa_handler = SignalHandler::_termSignalHandler;
+    if (sigaction(SIGTERM, &sa_term, nullptr)) {
+        return 4;
+    }
+
+    return 0;
+}
+
+void SignalHandler::_onSigInt()
+{
+    char b;
+    [[maybe_unused]] const ssize_t n = ::read(_sigIntFd[0], &b, 1); // single-byte drain
+
+    if (!std::exchange(_sigIntTriggered, true)) {
+        qCInfo(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
+        QCoreApplication::quit();
+    } else {
+        qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
+        _exit(0);
+    }
+}
+
+void SignalHandler::_onSigTerm()
+{
+    char b;
+    [[maybe_unused]] const ssize_t n = ::read(_sigTermFd[0], &b, 1); // single-byte drain
+
+    qCDebug(SignalHandlerLog) << "Caught SIGTERM—shutting down gracefully";
+    QCoreApplication::quit();
+}
+
+void SignalHandler::_intSignalHandler(int signum)
+{
+    if (signum != SIGINT) {
+        return;
+    }
+    const SignalHandler* self = current();
+    if (!self) {
+        return;
+    }
+    const char b = 1;
+    [[maybe_unused]] const ssize_t n = ::write(self->_sigIntFd[1], &b, sizeof(b)); // no logging from signal handler
+}
+
+void SignalHandler::_termSignalHandler(int signum)
+{
+    if (signum != SIGTERM) {
+        return;
+    }
+    const SignalHandler* self = current();
+    if (!self) {
+        return;
+    }
+    const char b = 1;
+    [[maybe_unused]] const ssize_t n = ::write(self->_sigTermFd[1], &b, sizeof(b)); // no logging from signal handler
+}
+
+#endif // POSIX

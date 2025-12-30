@@ -1,3 +1,8 @@
+# ============================================================================
+# Communications Unit Tests
+# Tests for serial port detection and communication links
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCSerialPortInfoTest.cc

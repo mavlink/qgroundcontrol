@@ -18,7 +18,7 @@
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
 
-QGC_LOGGING_CATEGORY(QGCLoggingLog, "QGCLoggingLog")
+QGC_LOGGING_CATEGORY(QGCLoggingLog, "Utilities.QGCLogging")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
@@ -26,16 +26,11 @@ static QtMessageHandler defaultHandler = nullptr;
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    // Filter via QLoggingCategory rules early
-    if (!QLoggingCategory(context.category).isDebugEnabled()) {
-        return;
-    }
-
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);
 
     // Filter out Qt Quick internals
-    if (!QString(context.category).startsWith("qt.quick")) {
+    if (QGCLogging::instance() && !QString(context.category).startsWith("qt.quick")) {
         QGCLogging::instance()->log(message);
     }
 
@@ -53,7 +48,7 @@ QGCLogging *QGCLogging::instance()
 QGCLogging::QGCLogging(QObject *parent)
     : QStringListModel(parent)
 {
-    // qCDebug(QGCLoggingLog) << this;
+    qCDebug(QGCLoggingLog) << this;
 
     _flushTimer.setInterval(kFlushIntervalMSecs);
     _flushTimer.setSingleShot(false);
@@ -69,10 +64,15 @@ QGCLogging::QGCLogging(QObject *parent)
     (void) connect(this, &QGCLogging::emitLog, this, &QGCLogging::_threadsafeLog, conntype);
 }
 
+QGCLogging::~QGCLogging()
+{
+    qCDebug(QGCLoggingLog) << this;
+}
+
 void QGCLogging::installHandler()
 {
     // Define the format for qDebug/qWarning/etc output
-    qSetMessagePattern(QStringLiteral("%{time process} - %{type}: %{message} (%{category}:%{function}:%{line})"));
+    qSetMessagePattern(QStringLiteral("%{time process}%{if-warning} Warning:%{endif}%{if-critical} Critical:%{endif} %{message} - %{category} - (%{function}:%{line})"));
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);
@@ -90,10 +90,8 @@ void QGCLogging::_threadsafeLog(const QString &message)
 {
     // Notify view of new row
     const int line = rowCount();
-    beginInsertRows(QModelIndex(), line, line);
     (void) QStringListModel::insertRows(line, 1);
     (void) setData(index(line, 0), message, Qt::DisplayRole);
-    endInsertRows();
 
     // Trim old entries to cap memory usage
     static constexpr const int kMaxLogRows = kMaxLogFileSize / 100;

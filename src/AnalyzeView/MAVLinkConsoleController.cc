@@ -17,13 +17,13 @@
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 
-QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "qgc.analyzeview.mavlinkconsolecontroller")
+QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "AnalyzeView.MAVLinkConsoleController")
 
 MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
     : QStringListModel(parent)
     , _palette(new QGCPalette(this))
 {
-    // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkConsoleControllerLog) << this;
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkConsoleController::_setActiveVehicle);
 
@@ -37,7 +37,7 @@ MAVLinkConsoleController::~MAVLinkConsoleController()
         _sendSerialData(msg, true);
     }
 
-    // qCDebug(MAVLinkConsoleControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkConsoleControllerLog) << this;
 }
 
 void MAVLinkConsoleController::sendCommand(const QString &command)
@@ -148,7 +148,7 @@ void MAVLinkConsoleController::_sendSerialData(const QByteArray &data, bool clos
     // Send maximum sized chunks until the complete buffer is transmitted
     QByteArray output(data);
     while (output.size()) {
-        QByteArray chunk(data.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN));
+        QByteArray chunk(output.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN));
         const int dataSize = chunk.size();
 
         // Ensure the buffer is large enough, as the MAVLink parser expects MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN bytes

@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QtLocation/private/qgeofiletilecache_p.h>
 #include <QtCore/QLoggingCategory>
+#include <QtLocation/private/qgeofiletilecache_p.h>
 
 Q_DECLARE_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog)
 
@@ -42,9 +42,9 @@ private:
     static QString _getCachePath(const QVariantMap &parameters);
     static uint32_t _getMemLimit(const QVariantMap &Parameters);
 
-    static uint32_t _getDefaultMaxMemLimit() { return (3 * pow(1024, 2)); }
+    static uint32_t _getDefaultMaxMemLimit() { return (3 * qPow(1024, 2)); }
     static uint32_t _getDefaultMaxDiskCache() { return 0; } // (50 * pow(1024, 2));
-    static uint32_t _getDefaultExtraTexture() { return (6 * pow(1024, 2)); }
+    static uint32_t _getDefaultExtraTexture() { return (6 * qPow(1024, 2)); }
     static uint32_t _getDefaultMinTexture() { return 0; }
 
     static quint32 _getMaxMemCacheSetting();

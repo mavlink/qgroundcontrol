@@ -16,19 +16,19 @@
 
 #include <QtCore/QCoreApplication>
 
-QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "qgc.autopilotplugin.autopilotplugin");
+QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "AutoPilotPlugins.AutoPilotPlugin");
 
 AutoPilotPlugin::AutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     : QObject(parent)
     , _vehicle(vehicle)
     , _firmwarePlugin(vehicle->firmwarePlugin())
 {
-    // qCDebug(AutoPilotPluginLog) << Q_FUNC_INFO << this;
+    qCDebug(AutoPilotPluginLog) << this;
 }
 
 AutoPilotPlugin::~AutoPilotPlugin()
 {
-    // qCDebug(AutoPilotPluginLog) << Q_FUNC_INFO << this;
+    qCDebug(AutoPilotPluginLog) << this;
 }
 
 void AutoPilotPlugin::_recalcSetupComplete()

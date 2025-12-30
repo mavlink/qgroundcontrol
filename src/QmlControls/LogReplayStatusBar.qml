@@ -4,8 +4,8 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
+
 
 Rectangle {
     height: visible ? (rowLayout.height + (_margins * 2)) : 0

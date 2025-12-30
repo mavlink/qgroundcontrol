@@ -57,7 +57,6 @@ namespace JsonHelper
     /// Validates the standard parts of a internal QGC json file (FactMetaData, ...):
     ///     jsonFileTypeKey - Required and checked to be equal to expectedFileType
     ///     jsonVersionKey - Required and checked to be below supportedMajorVersion, supportedMinorVersion
-    ///     jsonGroundStationKey - Required and checked to be string type
     /// @return false: validation failed, errorString set
     bool validateInternalQGCJsonFile(const QJsonObject &jsonObject,      ///< json object to validate
                                      const QString &expectedFileType,    ///< correct file type for file
@@ -109,27 +108,8 @@ namespace JsonHelper
     ///     Stored as array [ lat, lon, alt ]
     void saveGeoCoordinate(const QGeoCoordinate &coordinate,    ///< QGeoCoordinate to save
                            bool writeAltitude,                  ///< true: write altitude to json
-                           QJsonValue &jsonValue);              ///< json value to save to
-
-    /// Loads a QGeoCoordinate
-    ///     Stored as array [ lon, lat, alt ]
-    /// @return false: validation failed
-    bool loadGeoJsonCoordinate(const QJsonValue &jsonValue, ///< json value to load from
-                               bool altitudeRequired,       ///< true: altitude must be specified
-                               QGeoCoordinate &coordinate,  ///< returned QGeoCordinate
-                               QString &errorString);       ///< returned error string if load failure
-
-    /// Saves a QGeoCoordinate
-    ///     Stored as array [ lon, lat, alt ]
-    void saveGeoJsonCoordinate(const QGeoCoordinate &coordinate,    ///< QGeoCoordinate to save
-                               bool writeAltitude,                  ///< true: write altitude to json
-                               QJsonValue &jsonValue);              ///< json value to save to
-
-    /// Loads a polygon from an array
-    bool loadPolygon(const QJsonArray &polygonArray,    ///< Array of coordinates
-                     QmlObjectListModel &list,          ///< Empty list to add vertices to
-                     QObject *parent,                   ///< parent for newly allocated QGCQGeoCoordinates
-                     QString &errorString);             ///< returned error string if load failure
+                           QJsonValue &jsonValue,               ///< json value to save to
+                           bool geoJsonFormat = false);
 
     /// Loads a list of QGeoCoordinates from a json array
     /// @return false: validation failed
@@ -149,6 +129,12 @@ namespace JsonHelper
     void saveGeoCoordinateArray(const QList<QGeoCoordinate> &rgPoints,  ///< points to save
                                 bool writeAltitude,                     ///< true: write altitide value
                                 QJsonValue &jsonValue);                 ///< json value to save to
+
+    /// Loads a polygon from an array
+    bool loadPolygon(const QJsonArray &polygonArray,    ///< Array of coordinates
+                     QmlObjectListModel &list,          ///< Empty list to add vertices to
+                     QObject *parent,                   ///< parent for newly allocated QGCQGeoCoordinates
+                     QString &errorString);             ///< returned error string if load failure
 
     /// Saves a polygon to a json array
     void savePolygon(const QmlObjectListModel &list, ///< List which contains vertices

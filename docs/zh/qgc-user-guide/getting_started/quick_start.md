@@ -2,7 +2,7 @@
 
 让 _QGroundControl_ 轻松入门上手使用：
 
-1. [下载并安装 (Daily 5.0)](../releases/daily_builds.md) 应用程序.
+1. [下载并安装 (Daily 5.0)](../releases/daily_builds.md) 应用程序。
 2. 启动 _QGroundControl_。
 3. 通过 USB、遥测电台或 WiFi 将你的飞行器连接到地面站设备。 _QGroundControl_ 应检测你的载具并自动连接。
 
@@ -16,7 +16,7 @@
   - 计划飞行
   - 分析工具
   - 载具配置
-  - 应用设置
+  - 应用程序设置
 - 点击工具栏上的 _Status Indicators_ 来查找已连接的载具的状态。
 
 虽然界面相当直观，但也可以引用这些文件来了解更多信息。

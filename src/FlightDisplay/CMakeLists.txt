@@ -1,30 +1,72 @@
-# qt_add_library(FlightDisplay STATIC)
+# ============================================================================
+# Flight Display Module
+# In-flight view, telemetry displays, and vehicle control UI
+# ============================================================================
 
-# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-# qt_add_qml_module(FlightDisplay
-#     URI QGroundControl.FlightDisplay
-#     VERSION 1.0
-#     QML_FILES ${QML_SOURCES}
-#     OUTPUT_TARGETS FlightDisplay_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtQuick.Dialogs
-#         QtQuick.Layouts
+qt_add_library(FlightDisplayModule STATIC)
 
-#         QtLocation
-#         QtPositioning
-#         QtQuick.Window
-#         QtQml.Models
-
-#         QGroundControl
-#         QGroundControl.Controllers
-#         QGroundControl.Controls
-#         QGroundControl.FactSystem
-#         QGroundControl.FlightDisplay
-#         QGroundControl.FlightMap
-#         QGroundControl.Palette
-#         QGroundControl.ScreenTools
-#         QGroundControl.Vehicle
-# )
+qt_add_qml_module(FlightDisplayModule
+    URI QGroundControl.FlightDisplay
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        CustomGuidedActionsController.qml
+        DefaultChecklist.qml
+        FixedWingChecklist.qml
+        FlightDisplayViewDummy.qml
+        FlightDisplayViewGStreamer.qml
+        FlightDisplayViewQtMultimedia.qml
+        FlightDisplayViewUVC.qml
+        FlightDisplayViewVideo.qml
+        FlyView.qml
+        FlyViewAdditionalActionsButton.qml
+        FlyViewAdditionalActionsList.qml
+        FlyViewAdditionalActionsPanel.qml
+        FlyViewAdditionalCustomActionsList.qml
+        FlyViewBottomRightRowLayout.qml
+        FlyViewCustomLayer.qml
+        FlyViewInsetViewer.qml
+        FlyViewInstrumentPanel.qml
+        FlyViewGripperButton.qml
+        FlyViewGripperDropPanel.qml
+        FlyViewMap.qml
+        FlyViewMissionCompleteDialog.qml
+        FlyViewPreFlightChecklistPopup.qml
+        FlyViewToolStrip.qml
+        FlyViewToolStripActionList.qml
+        FlyViewTopRightColumnLayout.qml
+        FlyViewTopRightPanel.qml
+        FlyViewVideo.qml
+        FlyViewWidgetLayer.qml
+        GuidedActionConfirm.qml
+        GuidedActionLand.qml
+        GuidedActionPause.qml
+        GuidedActionRTL.qml
+        GuidedActionsController.qml
+        GuidedActionTakeoff.qml
+        GuidedToolStripAction.qml
+        GuidedValueSlider.qml
+        MultiRotorChecklist.qml
+        MultiVehicleList.qml
+        ObstacleDistanceOverlay.qml
+        ObstacleDistanceOverlayMap.qml
+        ObstacleDistanceOverlayVideo.qml
+        OnScreenGimbalController.qml
+        PreFlightBatteryCheck.qml
+        PreFlightCheckList.qml
+        PreFlightCheckListShowAction.qml
+        PreFlightGPSCheck.qml
+        PreFlightRCCheck.qml
+        PreFlightSensorsHealthCheck.qml
+        PreFlightSoundCheck.qml
+        ProximityRadarValues.qml
+        ProximityRadarVideoView.qml
+        QGCVideoBackground.qml
+        RoverChecklist.qml
+        SubChecklist.qml
+        TelemetryValuesBar.qml
+        TerrainProgress.qml
+        VehicleWarnings.qml
+        VirtualJoystick.qml
+    NO_PLUGIN
+)

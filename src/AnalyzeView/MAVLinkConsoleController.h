@@ -24,7 +24,7 @@ class Vehicle;
 class MAVLinkConsoleController : public QStringListModel
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(QString text READ _getText CONSTANT)
 

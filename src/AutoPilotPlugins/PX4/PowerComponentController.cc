@@ -45,12 +45,14 @@ void PowerComponentController::_stopBusConfig(void)
     _stopCalibration();
 }
 
-void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text)
+void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
 {
+    Q_UNUSED(description);
+
     if (vehicleId != _vehicle->id()) {
         return;
     }
-    
+
     // All calibration messages start with [cal]
     QString calPrefix("[cal] ");
     if (!text.startsWith(calPrefix)) {

@@ -14,11 +14,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
+
 
 Item {
     id:     _root
@@ -107,7 +107,7 @@ Item {
         Connections {
             target: controller
 
-            onChannelRCValueChanged: (channel, rcValue) => {
+            function onChannelRCValueChanged(channel, rcValue) {
                 if (channelMonitorRepeater.itemAt(channel)) {
                     channelMonitorRepeater.itemAt(channel).loader.item.rcValue = rcValue
                 }

@@ -13,6 +13,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactMetaData.h"
 
@@ -24,6 +25,8 @@ Q_DECLARE_LOGGING_CATEGORY(FactLog)
 class Fact : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    Q_MOC_INCLUDE("FactValueSliderListModel.h")
     Q_PROPERTY(int          componentId             READ componentId                                            CONSTANT)
     Q_PROPERTY(QStringList  bitmaskStrings          READ bitmaskStrings                                         NOTIFY bitmaskStringsChanged)
     Q_PROPERTY(QVariantList bitmaskValues           READ bitmaskValues                                          NOTIFY bitmaskValuesChanged)
@@ -68,7 +71,7 @@ public:
     explicit Fact(int componentId, const QString &name, FactMetaData::ValueType_t type, QObject *parent = nullptr);
     explicit Fact(const Fact &other, QObject *parent = nullptr);
 
-    /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
+    /// Creates a Fact using the name and type from metaData. Also calls SettingsManager::adjustSettingMetaData allowing
     /// custom builds to override the metadata.
     explicit Fact(const QString &settingsGroup, FactMetaData *metaData, QObject *parent = nullptr);
     virtual ~Fact();

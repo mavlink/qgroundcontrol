@@ -16,7 +16,7 @@ This type of release is synchronized with the release of an upstream stable. Onc
 
 ### Out-Of-Band Stable
 
-This a subsequent release of your custom build after you have released a synchronized stable but prior to upstream releasing a new stable. It only includes new features from your own custom build and include no new features from upstream. Work on this type of release would occur on a branch which is either based on your latest synchronized stable or your last out of band release if it exists. You can release out of band stable releases at any time past your first synchronized stable release.
+This a subsequent release of your custom build after you have released a synchronized stable but prior to upstream releasing a new stable. 它只包含您自己自定义构建的新功能，没有上游的新功能。 Work on this type of release would occur on a branch which is either based on your latest synchronized stable or your last out of band release if it exists. You can release out of band stable releases at any time past your first synchronized stable release.
 
 ### Daily
 
@@ -31,7 +31,7 @@ It is suggested that you start with releasing a Synchronized Stable. This isn't 
 
 ### Starting with Daily builds
 
-The reason why you may consider this as your starting point is because you need features which are only in upstream master for your own custom builds. In this case you will have to live with releasing custom Daily builds until the next upstream stable. At which point you would release you first Synchronized Stable. For this setup you use your master branch and keep it in sync with upstream master as you develop.
+您可以将此视为您的起点的原因是您需要的功能仅为您自己的自定义构建而在上游大师中。 In this case you will have to live with releasing custom Daily builds until the next upstream stable. At which point you would release you first Synchronized Stable. For this setup you use your master branch and keep it in sync with upstream master as you develop.
 
 ## After you release your first Synchronized Stable
 

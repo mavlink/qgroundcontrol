@@ -38,6 +38,8 @@ class VehicleFactGroup : public FactGroup
     Q_PROPERTY(Fact *headingToNextWP        READ headingToNextWP        CONSTANT)
     Q_PROPERTY(Fact *distanceToNextWP       READ distanceToNextWP       CONSTANT)
     Q_PROPERTY(Fact *headingToHome          READ headingToHome          CONSTANT)
+    Q_PROPERTY(Fact *headingFromHome        READ headingFromHome        CONSTANT)
+    Q_PROPERTY(Fact *headingFromGCS         READ headingFromGCS         CONSTANT)
     Q_PROPERTY(Fact *distanceToGCS          READ distanceToGCS          CONSTANT)
     Q_PROPERTY(Fact *hobbs                  READ hobbs                  CONSTANT)
     Q_PROPERTY(Fact *throttlePct            READ throttlePct            CONSTANT)
@@ -70,6 +72,8 @@ public:
     Fact *headingToNextWP() { return &_headingToNextWPFact; }
     Fact *distanceToNextWP() { return &_distanceToNextWPFact; }
     Fact *headingToHome() { return &_headingToHomeFact; }
+    Fact *headingFromHome() { return &_headingFromHomeFact; }
+    Fact *headingFromGCS() { return &_headingFromGCSFact; }
     Fact *distanceToGCS() { return &_distanceToGCSFact; }
     Fact *hobbs() { return &_hobbsFact; }
     Fact *throttlePct() { return &_throttlePctFact; }
@@ -113,6 +117,8 @@ protected:
     Fact _headingToNextWPFact = Fact(0, QStringLiteral("headingToNextWP"), FactMetaData::valueTypeDouble);
     Fact _distanceToNextWPFact = Fact(0, QStringLiteral("distanceToNextWP"), FactMetaData::valueTypeDouble);
     Fact _headingToHomeFact = Fact(0, QStringLiteral("headingToHome"), FactMetaData::valueTypeDouble);
+    Fact _headingFromHomeFact = Fact(0, QStringLiteral("headingFromHome"),FactMetaData::valueTypeDouble);
+    Fact _headingFromGCSFact = Fact(0, QStringLiteral("headingFromGCS"),FactMetaData::valueTypeDouble);
     Fact _distanceToGCSFact = Fact(0, QStringLiteral("distanceToGCS"), FactMetaData::valueTypeDouble);
     Fact _hobbsFact = Fact(0, QStringLiteral("hobbs"), FactMetaData::valueTypeString);
     Fact _throttlePctFact = Fact(0, QStringLiteral("throttlePct"), FactMetaData::valueTypeUint16);

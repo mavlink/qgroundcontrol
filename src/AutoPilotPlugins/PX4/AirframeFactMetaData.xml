@@ -372,4 +372,9 @@
       <type>VTOL Tiltrotor</type>
     </airframe>
   </airframe_group>
+  <airframe_group name="Spacecraft" image="FreeFlyer">
+    <airframe name="KTH ATMOS Free-flyer" id="70000" maintainer="DISCOWER">
+      <class>Spacecraft</class>
+      <type>Free-Flyer</type>
+    </airframe>
 </airframes>

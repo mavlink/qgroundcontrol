@@ -14,7 +14,7 @@
 
 #include <zlib.h>
 
-QGC_LOGGING_CATEGORY(QGCZlibLog, "qgc.compression.qgczlib")
+QGC_LOGGING_CATEGORY(QGCZlibLog, "Utilities.Compression.QGCZlib")
 
 namespace QGCZlib
 {

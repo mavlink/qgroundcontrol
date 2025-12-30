@@ -16,9 +16,7 @@
 
 #include <xz.h>
 
-QGC_LOGGING_CATEGORY(QGCLZMALog, "qgc.compression.qgclzma")
-
-static std::once_flag crc_init;
+QGC_LOGGING_CATEGORY(QGCLZMALog, "Utilities.Compression.QGCLZMA")
 
 namespace QGCLZMA {
 
@@ -36,7 +34,8 @@ bool inflateLZMAFile(const QString &lzmaFilename, const QString &decompressedFil
         return false;
     }
 
-    std::call_once(crc_init, []() {
+    static std::once_flag crc_init_flag;
+    std::call_once(crc_init_flag, []() {
         xz_crc32_init();
         xz_crc64_init();
     });

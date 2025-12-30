@@ -8,42 +8,47 @@
  ****************************************************************************/
 
 #include "QGeoTiledMappingManagerEngineQGC.h"
-#include "QGCApplication.h"
-#include "QGCMapEngine.h"
-#include "QGeoTileFetcherQGC.h"
-#include "QGeoFileTileCacheQGC.h"
-#include "QGeoTiledMapQGC.h"
-#include "QGCMapUrlEngine.h"
-#include "MapProvider.h"
-#include "QGCMapEngineManager.h"
-#include "QGCLoggingCategory.h"
 
 #include <mutex>
 
 #include <QtCore/QDir>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkDiskCache>
+#include <QtNetwork/QNetworkInformation>
 #include <QtNetwork/QNetworkProxy>
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtLocation/private/qgeotiledmap_p.h>
 #include <QtLocation/private/qgeofiletilecache_p.h>
 
-QGC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "qgc.qtlocationplugin.qgeotiledmappingmanagerengineqgc")
+#include "DeviceInfo.h"
+#include "MapProvider.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMapEngine.h"
+#include "QGCMapEngineManager.h"
+#include "QGCMapUrlEngine.h"
+#include "QGeoFileTileCacheQGC.h"
+#include "QGeoTiledMapQGC.h"
+#include "QGeoTileFetcherQGC.h"
+
+QGC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "QtLocationPlugin.QGeoTiledMappingManagerEngineQGC")
 
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString, QNetworkAccessManager *networkManager, QObject *parent)
     : QGeoTiledMappingManagerEngine(parent)
     , m_networkManager(networkManager)
 {
-    // qCDebug(QGeoTiledMappingManagerEngineQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTiledMappingManagerEngineQGCLog) << this;
 
-    // TODO: Better way to get current language without qgcApp()?
     setLocale(qgcApp()->getCurrentLanguage());
+    (void) connect(qgcApp(), &QGCApplication::languageChanged, this, [this](const QLocale &locale) {
+        setLocale(locale);
+    });
 
-    QGeoCameraCapabilities cameraCaps;
+    QGeoCameraCapabilities cameraCaps{};
     cameraCaps.setTileSize(256);
     cameraCaps.setMinimumZoomLevel(2.0);
-    cameraCaps.setMaximumZoomLevel(MAX_MAP_ZOOM);
+    cameraCaps.setMaximumZoomLevel(QGC_MAX_MAP_ZOOM);
     cameraCaps.setSupportsBearing(true);
     cameraCaps.setSupportsRolling(false);
     cameraCaps.setSupportsTilting(false);
@@ -70,12 +75,12 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
             QByteArrayLiteral("QGroundControl"),
             cameraCapabilities()
         );
-        (void) mapList.append(map);
+        mapList.append(map);
     }
     setSupportedMapTypes(mapList);
 
     setCacheHint(QAbstractGeoTileCache::CacheArea::AllCaches);
-    QGeoFileTileCacheQGC* const fileTileCache = new QGeoFileTileCacheQGC(parameters);
+    QGeoFileTileCacheQGC *fileTileCache = new QGeoFileTileCacheQGC(parameters, this);
     setTileCache(fileTileCache);
 
     // MapEngine must be init after fileTileCache
@@ -84,25 +89,17 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
         getQGCMapEngine()->init(fileTileCache->getDatabaseFilePath());
     });
 
-    m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
+    m_prefetchStyle = QGCDeviceInfo::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers : QGeoTiledMap::NoPrefetching;
+    (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this, [this](QNetworkInformation::Reachability newReachability) {
+        if (newReachability == QNetworkInformation::Reachability::Online) {
+            m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
+        } else {
+            m_prefetchStyle = QGeoTiledMap::NoPrefetching;
+        }
+    });
 
-    if (!m_networkManager) {
-        m_networkManager = new QNetworkAccessManager(this);
-        #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-            QNetworkProxy proxy = m_networkManager->proxy();
-            proxy.setType(QNetworkProxy::DefaultProxy);
-            m_networkManager->setProxy(proxy);
-        #endif
-        m_networkManager->setTransferTimeout(10000);
-        // m_networkManager->setAutoDeleteReplies(true);
-        QNetworkDiskCache *const diskCache = new QNetworkDiskCache(this);
-        diskCache->setCacheDirectory(fileTileCache->getCachePath() + "/Downloads");
-        const qint64 maxCacheSize = (50 * pow(1024, 2)); // fileTileCache->getMaxDiskCache()
-        diskCache->setMaximumCacheSize(maxCacheSize);
-        m_networkManager->setCache(diskCache);
-    }
-
-    QGeoTileFetcherQGC* const tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
+    Q_ASSERT(m_networkManager);
+    QGeoTileFetcherQGC *tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();
@@ -111,12 +108,12 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
 QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
 {
-    // qCDebug(QGeoTiledMappingManagerEngineQGCLog) << Q_FUNC_INFO << this;
+    qCDebug(QGeoTiledMappingManagerEngineQGCLog) << this;
 }
 
 QGeoMap *QGeoTiledMappingManagerEngineQGC::createMap()
 {
-    QGeoTiledMapQGC* const map = new QGeoTiledMapQGC(this, this);
+    QGeoTiledMapQGC *map = new QGeoTiledMapQGC(this, this);
     map->setPrefetchStyle(m_prefetchStyle);
     return map;
 }

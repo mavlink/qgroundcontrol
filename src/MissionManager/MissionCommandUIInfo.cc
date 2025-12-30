@@ -12,7 +12,7 @@
 #include "FactMetaData.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MissionCommandsLog, "MissionCommandsLog")
+QGC_LOGGING_CATEGORY(MissionCommandsLog, "Plan.MissionCommands")
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)
@@ -379,7 +379,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             paramInfo->_param =         i;
             paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();
             paramInfo->_nanUnchanged =  paramObject.value(_nanUnchangedJsonKey).toBool(false);
-            paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", Qt::SkipEmptyParts);
+            paramInfo->_enumStrings =   FactMetaData::splitTranslatedList(paramObject.value(_enumStringsJsonKey).toString());
 
             // The min and max values are defaulted correctly already, so only set them if a value is present in the JSON.
             if (paramObject.value(_minJsonKey).isDouble()) {
@@ -403,7 +403,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                 paramInfo->_defaultValue = paramInfo->_nanUnchanged ? std::numeric_limits<double>::quiet_NaN() : 0;
             }
 
-            QStringList enumValues = paramObject.value(_enumValuesJsonKey).toString().split(",", Qt::SkipEmptyParts);
+            QStringList enumValues = FactMetaData::splitTranslatedList(paramObject.value(_enumValuesJsonKey).toString()); //Never translated but still useful to use common string splitting code
             for (const QString &enumValue: enumValues) {
                 bool    convertOk;
                 double  value = enumValue.toDouble(&convertOk);
@@ -417,7 +417,9 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                 paramInfo->_enumValues << QVariant(value);
             }
             if (paramInfo->_enumValues.count() != paramInfo->_enumStrings.count()) {
-                internalError = QString("enum strings/values count mismatch, label:'%1' enumStrings:'%2'").arg(paramInfo->_label).arg(paramInfo->_enumStrings.join(","));
+                internalError = QStringLiteral("Enum strings/values count mismatch - label: '%1' strings: '%2'[%3] values: '%4'[%5]")
+                                    .arg(paramInfo->_label).arg(paramObject.value(_enumStringsJsonKey).toString()).arg(paramInfo->_enumStrings.count())
+                                    .arg(paramObject.value(_enumValuesJsonKey).toString()).arg(paramInfo->_enumValues.count());
                 errorString = _loadErrorString(internalError);
                 return false;
             }

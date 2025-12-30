@@ -12,8 +12,9 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(FactLog, "qgc.factsystem.fact")
+QGC_LOGGING_CATEGORY(FactLog, "FactSystem.Fact")
 
 Fact::Fact(QObject *parent)
     : QObject(parent)
@@ -48,8 +49,16 @@ Fact::Fact(const QString& settingsGroup, FactMetaData *metaData, QObject *parent
 {
     // qCDebug(FactLog) << Q_FUNC_INFO << this;
 
-    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, *metaData);
+    bool visible = true;
+    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, visible);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
+
+    if (!qgcApp()->runningUnitTests()) {
+        if (metaData->defaultValueAvailable() && !visible) {
+            // If setting is not visible, we force to default value
+            _rawValue = metaData->rawDefaultValue();
+        }
+    }
 
     _init();
 }

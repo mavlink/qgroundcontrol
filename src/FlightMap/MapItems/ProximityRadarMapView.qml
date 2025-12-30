@@ -12,8 +12,8 @@ import QtLocation
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 
@@ -47,9 +47,9 @@ MapQuickItem {
 
     Connections {
         target:             map
-        onWidthChanged:     scaleTimer.restart()
-        onHeightChanged:    scaleTimer.restart()
-        onZoomLevelChanged: scaleTimer.restart()
+        function onWidthChanged() { scaleTimer.restart() }
+        function onHeightChanged() { scaleTimer.restart() }
+        function onZoomLevelChanged() { scaleTimer.restart() }
     }
 
     Timer {

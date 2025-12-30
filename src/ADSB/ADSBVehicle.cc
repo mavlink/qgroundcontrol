@@ -13,7 +13,7 @@
 
 #include <QtCore/QtNumeric>
 
-QGC_LOGGING_CATEGORY(ADSBVehicleLog, "qgc.adsb.adsbvehicle")
+QGC_LOGGING_CATEGORY(ADSBVehicleLog, "ADSB.ADSBVehicle")
 
 ADSBVehicle::ADSBVehicle(const ADSB::VehicleInfo_t &vehicleInfo, QObject *parent)
     : QObject(parent)

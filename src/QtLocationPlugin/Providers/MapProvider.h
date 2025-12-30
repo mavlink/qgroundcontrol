@@ -34,14 +34,14 @@ Q_DECLARE_LOGGING_CATEGORY(MapProviderLog)
     CustomMap = 100
 };*/
 
-#define MAX_MAP_ZOOM 23.0
-static constexpr const quint32 AVERAGE_TILE_SIZE = 13652;
+#define QGC_MAX_MAP_ZOOM 23
+static constexpr const quint32 QGC_AVERAGE_TILE_SIZE = 13652;
 
 // TODO: Inherit from QGeoMapType
 class MapProvider
 {
 public:
-    MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = AVERAGE_TILE_SIZE,
+    MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = QGC_AVERAGE_TILE_SIZE,
                 QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap);
     virtual ~MapProvider();
 

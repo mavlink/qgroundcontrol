@@ -15,10 +15,10 @@ import QtPositioning
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Vehicle
+
+
 import QGroundControl.FlightMap
 
 /// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
@@ -40,7 +40,6 @@ Item {
     readonly property string mvDisarmTitle:                 qsTr("Disarm (MV)")
     readonly property string rtlTitle:                      qsTr("Return")
     readonly property string takeoffTitle:                  qsTr("Takeoff")
-    readonly property string gripperTitle:                  qsTr("Gripper Function")
     readonly property string landTitle:                     qsTr("Land")
     readonly property string startMissionTitle:             qsTr("Start Mission")
     readonly property string mvStartMissionTitle:           qsTr("Start Mission (MV)")
@@ -56,11 +55,9 @@ Item {
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
     readonly property string gotoTitle:                     qsTr("Go To Location")
-    readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
-    readonly property string setEstimatedUAVPositionTitle:  qsTr("Set estimated UAV position")
     readonly property string setFlightMode:                 qsTr("Set Flight Mode")
     readonly property string changeHeadingTitle:            qsTr("Change Heading")
 
@@ -71,7 +68,6 @@ Item {
     readonly property string mvDisarmMessage:                   qsTr("Disarm selected vehicles.")
     readonly property string emergencyStopMessage:              qsTr("WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.")
     readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
-    readonly property string gripperMessage:                    qsTr("Grab or Release the cargo")
     readonly property string startMissionMessage:               qsTr("Takeoff from ground and start the current mission.")
     readonly property string mvStartMissionMessage:             qsTr("Takeoff from ground and start the current mission for selected vehicles.")
     readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint.")
@@ -88,12 +84,9 @@ Item {
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position, adjusting altitude up or down as needed.")
     readonly property string mvPauseMessage:                    qsTr("Pause selected vehicles at their current position.")
-    readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
-    readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
-    readonly property string setEstimatedUAVPositionMessage:    qsTr("Send position to VIO")
     readonly property string setFlightModeMessage:              qsTr("Set the vehicle flight mode to %1").arg(_actionData)
     readonly property string changeHeadingMessage:              qsTr("Set the vehicle heading towards the specified location.")
 
@@ -116,23 +109,16 @@ Item {
     readonly property int actionPause:                      17
     readonly property int actionMVPause:                    18
     readonly property int actionMVStartMission:             19
-    readonly property int actionVtolTransitionToFwdFlight:  20
-    readonly property int actionVtolTransitionToMRFlight:   21
-    readonly property int actionROI:                        22
-    readonly property int actionForceArm:                   24
-    readonly property int actionChangeSpeed:                25
-    readonly property int actionGripper:                    26
-    readonly property int actionSetHome:                    27
-    readonly property int actionSetEstimatorOrigin:         28
-    readonly property int actionSetFlightMode:              29
-    readonly property int actionChangeHeading:              30
-    readonly property int actionMVArm:                      31
-    readonly property int actionMVDisarm:                   32
-    readonly property int actionChangeLoiterRadius:         33
-    readonly property int actionSetEstimatedUAVPosition:    34
-
-
-
+    readonly property int actionROI:                        20
+    readonly property int actionForceArm:                   21
+    readonly property int actionChangeSpeed:                22
+    readonly property int actionSetHome:                    24
+    readonly property int actionSetEstimatorOrigin:         25
+    readonly property int actionSetFlightMode:              26
+    readonly property int actionChangeHeading:              27
+    readonly property int actionMVArm:                      28
+    readonly property int actionMVDisarm:                   29
+    readonly property int actionChangeLoiterRadius:         30
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -165,7 +151,6 @@ Item {
     property bool showLandAbort:            _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:         _guidedActionsEnabled && _vehicleFlying
     property bool showSetHome:              _guidedActionsEnabled
-    property bool showGripper:              _initialConnectComplete ? _activeVehicle.hasGripper : false
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
     property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying
 
@@ -201,7 +186,6 @@ Item {
     property bool   _fixedWingOnApproach:   _activeVehicle ? _activeVehicle.fixedWing && _vehicleLanding : false
     property bool   _vehicleInFwdFlight:    _activeVehicle ? _activeVehicle.inFwdFlight : false
     property bool  _speedLimitsAvailable:   _activeVehicle && ((_vehicleInFwdFlight && _activeVehicle.haveFWSpeedLimits) || (!_vehicleInFwdFlight && _activeVehicle.haveMRSpeedLimits))
-    property var   _gripperFunction:        undefined
 
     // You can turn on log output for GuidedActionsController by turning on GuidedActionsControllerLog category
     property bool __guidedModeSupported:    _activeVehicle ? _activeVehicle.guidedModeSupported : false
@@ -374,8 +358,6 @@ Item {
         function onArmVehicleRequest() { armVehicleRequest() }
         function onForceArmVehicleRequest() { forceArmVehicleRequest() }
         function onDisarmVehicleRequest() { disarmVehicleRequest() }
-        function onVtolTransitionToFwdFlightRequest() { vtolTransitionToFwdFlightRequest() }
-        function onVtolTransitionToMRFlightRequest() { vtolTransitionToMRFlightRequest() }
     }
 
     function armVehicleRequest() {
@@ -393,14 +375,6 @@ Item {
             confirmAction(actionDisarm)
         }
 
-    }
-
-    function vtolTransitionToFwdFlightRequest() {
-        confirmAction(actionVtolTransitionToFwdFlight)
-    }
-
-    function vtolTransitionToMRFlightRequest() {
-        confirmAction(actionVtolTransitionToMRFlight)
     }
 
     function closeAll() {
@@ -547,16 +521,6 @@ Item {
             confirmDialog.message = mvPauseMessage
             confirmDialog.hideTrigger = true
             break;
-        case actionVtolTransitionToFwdFlight:
-            confirmDialog.title = vtolTransitionTitle
-            confirmDialog.message = vtolTransitionFwdMessage
-            confirmDialog.hideTrigger = true
-            break
-        case actionVtolTransitionToMRFlight:
-            confirmDialog.title = vtolTransitionTitle
-            confirmDialog.message = vtolTransitionMRMessage
-            confirmDialog.hideTrigger = true
-            break
         case actionROI:
             confirmDialog.title = roiTitle
             confirmDialog.message = roiMessage
@@ -568,12 +532,6 @@ Item {
             confirmDialog.message = changeSpeedMessage
             guidedValueSlider.visible = true
             break
-        case actionGripper:
-            confirmDialog.hideTrigger = true
-            confirmDialog.title = gripperTitle
-            confirmDialog.message = gripperMessage
-            _widgetLayer._gripperMenu.createObject(mainWindow).open()
-            break
         case actionSetHome:
             confirmDialog.title = setHomeTitle
             confirmDialog.message = setHomeMessage
@@ -582,10 +540,6 @@ Item {
         case actionSetEstimatorOrigin:
             confirmDialog.title = setEstimatorOriginTitle
             confirmDialog.message = setEstimatorOriginMessage
-            break
-        case actionSetEstimatedUAVPosition:
-            confirmDialog.title = setEstimatedUAVPositionTitle
-            confirmDialog.message = setEstimatedUAVPositionMessage
             break
         case actionSetFlightMode:
             confirmDialog.title = setFlightMode
@@ -672,7 +626,8 @@ Item {
         case actionChangeLoiterRadius:
             _activeVehicle.guidedModeGotoLocation(
                 fwdFlightGotoMapCircle.coordinate,
-                fwdFlightGotoMapCircle.radius.rawValue
+                (fwdFlightGotoMapCircle.clockwiseRotation ? 1 : -1) *
+                        Math.abs(fwdFlightGotoMapCircle.radius.rawValue)
             )
             break
         case actionGoto:
@@ -704,12 +659,6 @@ Item {
                 selectedVehicles.get(i).pauseVehicle()
             }
             break
-        case actionVtolTransitionToFwdFlight:
-            _activeVehicle.vtolInFwdFlight = true
-            break
-        case actionVtolTransitionToMRFlight:
-            _activeVehicle.vtolInFwdFlight = false
-            break
         case actionROI:
             _activeVehicle.guidedModeROI(actionData)
             break
@@ -724,20 +673,11 @@ Item {
                 }
             }
             break
-        case actionGripper:           
-            _gripperFunction === undefined ? _activeVehicle.sendGripperAction(Vehicle.Invalid_option) : _activeVehicle.sendGripperAction(_gripperFunction)
-            break
         case actionSetHome:
             _activeVehicle.doSetHome(actionData)
             break
         case actionSetEstimatorOrigin:
             _activeVehicle.setEstimatorOrigin(actionData)
-            break
-        case actionSetEstimatedUAVPosition:
-            let currentCompManager = _activeVehicle.onboardComputersManager;
-            let currentComp = currentCompManager.currentComputerComponent;
-            console.warn("Current COMP", currentComp);
-            currentCompManager.sendExternalPositionEstimate(actionData)
             break
         case actionSetFlightMode:
             _activeVehicle.flightMode = actionData

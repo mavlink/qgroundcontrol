@@ -66,6 +66,7 @@ void CorridorScanComplexItemTest::_testDirty(void)
     QGeoCoordinate coord = _corridorItem->corridorPolyline()->vertexCoordinate(0);
     coord.setLatitude(coord.latitude() + 1);
     _corridorItem->corridorPolyline()->adjustVertex(1, coord);
+    QTest::qWait(100); // Let event loop process so queued signals flow through
     QVERIFY(_corridorItem->dirty());
     _corridorItem->setDirty(false);
 }
@@ -176,7 +177,7 @@ void CorridorScanComplexItemTest::_testPathChanges(void)
      QGeoCoordinate vertex = _corridorItem->corridorPolyline()->vertexCoordinate(1);
      vertex.setLatitude(vertex.latitude() + 0.01);
      _corridorItem->corridorPolyline()->adjustVertex(1, vertex);
-
+    QTest::qWait(100); // Let event loop process so queued signals flow through
      QVERIFY(_multiSpyCorridorPolygon->checkSignalsByMask(corridorPolygonPathChangedMask));
 }
 

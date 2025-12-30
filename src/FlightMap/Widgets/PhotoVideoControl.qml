@@ -14,20 +14,15 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.ScreenTools
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.Vehicle
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Rectangle {
-    width:      mainLayout.width + (_margins * 2)
-    height:     mainLayout.height + (_margins * 2)
+    width:      mainLayout.width + (_smallMargins * 2)
+    height:     mainLayout.height + (_smallMargins * 2)
     color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
     radius:     _margins
-    visible:    true
+    visible:    _camera.capturesVideo || _camera.capturesPhotos || _camera.hasTracking || _camera.hasVideoStream
 
     property real   _margins:                   ScreenTools.defaultFontPixelHeight / 2
     property real   _smallMargins:              ScreenTools.defaultFontPixelWidth / 2
@@ -41,20 +36,61 @@ Rectangle {
     property bool   _photoCaptureIntervalIdle:  _camera.photoCaptureStatus === MavlinkCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE
     property bool   _photoCaptureIdle:          _photoCaptureSingleIdle || _photoCaptureIntervalIdle
 
+/*
+    // Used for testing camera ui options. Set _camera to testCamera to use.
+    QtObject {
+        id: testCamera
+
+        property bool capturesVideo: false
+        property bool capturesPhotos: true
+        property bool hasModes: true
+        property bool hasZoom: true
+        property bool hasTracking: true
+        property string modelName: "Test Camera"
+        property int cameraMode: MavlinkCameraControl.CAM_MODE_PHOTO
+        property int videoCaptureStatus: MavlinkCameraControl.VIDEO_CAPTURE_STATUS_STOPPED
+        property int photoCaptureStatus: MavlinkCameraControl.PHOTO_CAPTURE_IDLE
+        property int zoomLevel: 0
+        property int photoCaptureMode: MavlinkCameraControl.PHOTO_CAPTURE_SINGLE
+        property int photoLapse: 5
+        property int thermalMode: MavlinkCameraControl.THERMAL_OFF
+        property int thermalOpacity: 50
+        property int storageStatus: MavlinkCameraControl.STORAGE_READY
+        property int batteryRemaining: 75
+        property int recordTime: 0
+        property string storageFreeStr: "32 GB"
+        property string batteryRemainingStr: "75 %"
+        property string recordTimeStr: "00:00:00"
+        property bool trackingEnabled: false
+
+        function setCameraModeVideo() {
+            cameraMode = MavlinkCameraControl.CAM_MODE_VIDEO;
+            videoCaptureStatus = MavlinkCameraControl.VIDEO_CAPTURE_STATUS_STOPPED;
+            photoCaptureStatus = MavlinkCameraControl.PHOTO_CAPTURE_IDLE;
+        }
+
+        function setCameraModePhoto() {
+            cameraMode = MavlinkCameraControl.CAM_MODE_PHOTO;
+            videoCaptureStatus = MavlinkCameraControl.VIDEO_CAPTURE_STATUS_STOPPED;
+            photoCaptureStatus = MavlinkCameraControl.PHOTO_CAPTURE_IDLE;
+        }
+    }
+*/
+
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     DeadMouseArea { anchors.fill: parent }
 
     RowLayout {
         id:                 mainLayout
-        anchors.margins:    _margins
+        anchors.margins:    _smallMargins
         anchors.top:        parent.top
         anchors.left:       parent.left
         spacing:            _margins
 
         ColumnLayout {
             Layout.fillHeight:  true
-            spacing:            _margins
+            spacing:            0
             visible:            _camera.hasZoom
 
             QGCLabel {
@@ -64,130 +100,97 @@ Rectangle {
             }
 
             QGCSlider {
-                id: zoomSlider
                 Layout.alignment:   Qt.AlignHCenter
                 Layout.fillHeight:  true
                 orientation:        Qt.Vertical
-                to:                 32
+                to:                 100
                 from:               0
-                live:               true
                 value:              _camera.zoomLevel
-                onValueChanged:     () => {_camera.zoomLevel = value; _camera.zoomEnabled = value > 1}
+                live:               true
+                onValueChanged:     _camera.zoomLevel = value
             }
-
-
-            // Zoom button
-            Rectangle {
-                Layout.alignment:   Qt.AlignHCenter
-                color:              _camera && _camera.zoomEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
-                width:              ScreenTools.defaultFontPixelWidth * 6
-                height:             width
-                radius:             width * 0.5
-                border.color:       qgcPal.buttonText
-                border.width:       3
-                visible:            _camera && _camera.hasZoom
-                QGCColoredImage {
-                    height:             parent.height * 0.5
-                    width:              height
-                    anchors.centerIn:   parent
-                    source:             "/qmlimages/ZoomIcon.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    color:              qgcPal.text
-                    MouseArea {
-                        anchors.fill:   parent
-                        onClicked: {
-                            console.log(_camera.photoCaptureStatus);
-                            console.log("camera mode: ", _camera.cameraMode);
-                            _camera.zoomLevel = 1
-                            _camera.zoomEnabled = false;
-                            zoomSlider.value = 0;
-                        }
-                    }
-                }
-            }
-
-
         }
         
         ColumnLayout {
-            spacing: _margins * 2
+            spacing: _margins
+
+            // Camera name
+            QGCLabel {
+                Layout.alignment:   Qt.AlignHCenter
+                text:               _camera.modelName
+                visible:            _cameraManager.cameras.length > 1
+            }
+
+            // Photo/Video Mode Selector
+            Rectangle {
+                Layout.alignment:   Qt.AlignHCenter
+                width:              ScreenTools.defaultFontPixelWidth * 10
+                height:             width / 2
+                color:              qgcPal.windowShadeLight
+                radius:             height * 0.5
+                visible:            _camera.hasModes
+
+                //-- Video Mode
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width:                  parent.height
+                    height:                 parent.height
+                    color:                  _cameraInVideoMode ? qgcPal.window : qgcPal.windowShadeLight
+                    radius:                 height * 0.5
+                    anchors.left:           parent.left
+                    border.color:           qgcPal.text
+                    border.width:           _cameraInPhotoMode ? 0 : 1
+
+                    QGCColoredImage {
+                        height:             parent.height * 0.5
+                        width:              height
+                        anchors.centerIn:   parent
+                        source:             "/qmlimages/camera_video.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.height:  height
+                        color:              _cameraInVideoMode ? qgcPal.colorGreen : qgcPal.text
+
+                        MouseArea {
+                            anchors.fill:   parent
+                            enabled:        _cameraInPhotoMode ? _photoCaptureIdle : true
+                            onClicked:      _camera.setCameraModeVideo()
+                        }
+                    }
+                }
+                
+                //-- Photo Mode
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width:                  parent.height
+                    height:                 parent.height
+                    color:                  _cameraInPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
+                    radius:                 height * 0.5
+                    anchors.right:          parent.right
+                    border.color:           qgcPal.text
+                    border.width:           _cameraInPhotoMode ? 1 : 0
+
+                    QGCColoredImage {
+                        height:             parent.height * 0.5
+                        width:              height
+                        anchors.centerIn:   parent
+                        source:             "/qmlimages/camera_photo.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.height:  height
+                        color:              _cameraInPhotoMode ? qgcPal.colorGreen : qgcPal.text
+
+                        MouseArea {
+                            anchors.fill:   parent
+                            enabled:        _cameraInVideoMode ? _videoCaptureIdle : true
+                            onClicked:      _camera.setCameraModePhoto()
+                        }
+                    }
+                }
+            }
 
             ColumnLayout {
-                spacing: _margins
-
-                // Camera name
-                QGCLabel {
-                    Layout.alignment:   Qt.AlignHCenter
-                    text:               _camera.modelName
-                    visible:            _cameraManager.cameras.length > 1
-                }
-
-                // Photo/Video Mode Selector
-                Rectangle {
-                    Layout.alignment:   Qt.AlignHCenter
-                    width:              ScreenTools.defaultFontPixelWidth * 10
-                    height:             width / 2
-                    color:              qgcPal.windowShadeLight
-                    radius:             height * 0.5
-                    visible:            true
-
-                    //-- Video Mode
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width:                  parent.height
-                        height:                 parent.height
-                        color:                  _cameraInVideoMode ? qgcPal.window : qgcPal.windowShadeLight
-                        radius:                 height * 0.5
-                        anchors.left:           parent.left
-                        border.color:           qgcPal.text
-                        border.width:           _cameraInPhotoMode ? 0 : 1
-
-                        QGCColoredImage {
-                            height:             parent.height * 0.5
-                            width:              height
-                            anchors.centerIn:   parent
-                            source:             "/qmlimages/camera_video.svg"
-                            fillMode:           Image.PreserveAspectFit
-                            sourceSize.height:  height
-                            color:              _cameraInVideoMode ? qgcPal.colorGreen : qgcPal.text
-
-                            MouseArea {
-                                anchors.fill:   parent
-                                enabled:        true
-                                onClicked:      () => {console.log("SETTING VIDEO MODE"); _camera.setCameraModeVideo()}
-                            }
-                        }
-                    }
-                    
-                    //-- Photo Mode
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width:                  parent.height
-                        height:                 parent.height
-                        color:                  _cameraInPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
-                        radius:                 height * 0.5
-                        anchors.right:          parent.right
-                        border.color:           qgcPal.text
-                        border.width:           _cameraInPhotoMode ? 1 : 0
-
-                        QGCColoredImage {
-                            height:             parent.height * 0.5
-                            width:              height
-                            anchors.centerIn:   parent
-                            source:             "/qmlimages/camera_photo.svg"
-                            fillMode:           Image.PreserveAspectFit
-                            sourceSize.height:  height
-                            color:              _cameraInPhotoMode ? qgcPal.colorGreen : qgcPal.text
-
-                            MouseArea {
-                                anchors.fill:   parent
-                                enabled:        _cameraInVideoMode ? _videoCaptureIdle : true
-                                onClicked:      _camera.setCameraModePhoto()
-                            }
-                        }
-                    }
-                }
+                Layout.alignment:   Qt.AlignHCenter
+                spacing:            _smallMargins
+                visible:            _camera.capturesVideo || _camera.capturesPhotos
 
                 // Take Photo, Start/Stop Video button
                 Rectangle {
@@ -200,7 +203,13 @@ Rectangle {
                     border.width:       3
 
                     Rectangle {
-                        anchors.centerIn:   parent
+                        // anchors.centerIn snaps to integer coordinates, which
+                        // depending on DPI can throw the centering off.
+                        // Setting alignWhenCentered to false avoids this issue.
+                        anchors {
+                            centerIn:           parent
+                            alignWhenCentered:  false
+                        }
                         width:              parent.width * (_isShootingInCurrentMode ? 0.5 : 0.75)
                         height:             width
                         radius:             _isShootingInCurrentMode ? 0 : width * 0.5
@@ -227,10 +236,7 @@ Rectangle {
                                     _camera.takePhoto()
                                 }
                             } else {
-                                console.log( _camera.videoCaptureStatus)
-;
                                 _camera.toggleVideoRecording()
-                                console.log( _camera.videoCaptureStatus)
                             }
                         }
                     }
@@ -239,10 +245,10 @@ Rectangle {
                 // Record time / Capture count
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  !_videoCaptureIdle && !_photoCaptureIdle ? "transparent" : qgcPal.colorRed
+                    color:                  _videoCaptureIdle && _photoCaptureIdle ? "transparent" : qgcPal.colorRed
                     Layout.preferredWidth:  (_cameraInVideoMode ? videoRecordTime.width : photoCaptureCount.width) + (_smallMargins * 2)
                     Layout.preferredHeight: (_cameraInVideoMode ? videoRecordTime.height : photoCaptureCount.height)
-                    radius:                 _margins / 2
+                    radius:                 _smallMargins
 
                     // Video record time
                     QGCLabel {
@@ -251,7 +257,6 @@ Rectangle {
                         anchors.left:       parent.left
                         anchors.top:        parent.top
                         text:               _videoCaptureIdle ? "00:00:00" : _camera.recordTimeStr
-                        font.pointSize:     ScreenTools.largeFontPointSize
                         visible:            _cameraInVideoMode
                     }
 
@@ -262,38 +267,39 @@ Rectangle {
                         anchors.left:       parent.left
                         anchors.top:        parent.top
                         text:               _activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-                        font.pointSize:     ScreenTools.largeFontPointSize
                         visible:            _cameraInPhotoMode
-                    }
-                }
-
-                //-- Status Information
-                ColumnLayout {
-                    Layout.alignment:   Qt.AlignHCenter
-                    spacing:            0
-
-                    QGCLabel {
-                        Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Free Space: ") + _camera.storageFreeStr
-                        font.pointSize:     ScreenTools.defaultFontPointSize
-                        visible:            _camera.storageStatus === MavlinkCameraControl.STORAGE_READY
-                    }
-
-                    QGCLabel {
-                        Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Battery: ") + _camera.batteryRemainingStr
-                        font.pointSize:     ScreenTools.defaultFontPointSize
-                        visible:            _camera.batteryRemaining >= 0
                     }
                 }
             }
 
+            //-- Status Information
             ColumnLayout {
-                width: ScreenTools.defaultFontPixelWidth * 10
+                Layout.alignment:   Qt.AlignHCenter
+                spacing:            0
+                visible:            storageStatus.visible || batteryStatus.visible
+
+                QGCLabel {
+                    id:                 storageStatus
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               qsTr("Free: ") + _camera.storageFreeStr
+                    font.pointSize:     ScreenTools.defaultFontPointSize
+                    visible:            _camera.storageStatus === MavlinkCameraControl.STORAGE_READY
+                }
+
+                QGCLabel {
+                    id:                 batteryStatus
+                    Layout.alignment:   Qt.AlignHCenter
+                    text:               qsTr("Battery: ") + _camera.batteryRemainingStr
+                    font.pointSize:     ScreenTools.defaultFontPointSize
+                    visible:            _camera.batteryRemaining >= 0
+                }
+            }
+
+            ColumnLayout {
                 id:                 trackingControls
                 Layout.alignment:   Qt.AlignHCenter
-                // spacing:            _margins
-                visible:            _camera && _camera.hasTracking
+                spacing:            0
+                visible:            _camera.hasTracking
 
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
@@ -317,8 +323,7 @@ Rectangle {
                             onClicked: {
                                 _camera.trackingEnabled = !_camera.trackingEnabled;
                                 if (!_camera.trackingEnabled) {
-                                    let latestFrameTimestamp = QGroundControl.videoManager.lastKlvTimestamp;
-                                    !_camera.stopTracking(latestFrameTimestamp)
+                                    _camera.stopTracking()
                                 }
                             }
                         }
@@ -328,14 +333,9 @@ Rectangle {
                 QGCLabel {
                     Layout.alignment:   Qt.AlignHCenter
                     text:               qsTr("Camera Tracking")
-                    font.pointSize:     ScreenTools.defaultFontPointSize
-                    visible:            _camera && _camera.hasTracking
+                    font.pointSize:     ScreenTools.smallFontPointSize
                 }
             }
-
-
-
-
 
             QGCColoredImage {
                 Layout.alignment:       Qt.AlignHCenter

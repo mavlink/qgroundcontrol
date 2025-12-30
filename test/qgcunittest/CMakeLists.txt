@@ -1,3 +1,8 @@
+# ============================================================================
+# QGC Unit Test Framework
+# Core testing utilities and helpers
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         MultiSignalSpy.cc

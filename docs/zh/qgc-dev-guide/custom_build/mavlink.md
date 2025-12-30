@@ -9,7 +9,15 @@ In order to add support for a new set of messages you should add them to [develo
 
 To modify the version of MAVLink used by QGC:
 
-- Replace the pre-build C library at [/qgroundcontrol/libs/mavlink/include/mavlink](https://github.com/mavlink/qgroundcontrol/tree/master/libs/mavlink/include/mavlink).
-  - By default this is a submodule importing https://github.com/mavlink/c_library_v2
-  - You can change the submodule, or [build your own libraries](https://mavlink.io/en/getting_started/generate_libraries.html) using the MAVLink toolchain.
-- You can change the whole dialect used by setting it in [`MAVLINK_CONF`](https://github.com/mavlink/qgroundcontrol/blob/master/QGCExternalLibs.pri#L52) when running _qmake_.
+- Update the CMake MAVLink Options in [/qgroundcontrol/cmake/CustomOptions.cmake](https://github.com/mavlink/qgroundcontrol/tree/master/cmake/CustomOptions.cmake)
+  or when using the built-in custom build support you can override these options in [/qgroundcontrol/custom/cmake/CustomOverrides.cmake](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example/cmake/CustomOverrides.cmake).
+  - QGC_MAVLINK_GIT_REPO - This is a link to the git repo to use, by default this is a link to https://github.com/mavlink/c_library_v2.
+    You can also [build your own libraries](https://mavlink.io/en/getting_started/generate_libraries.html) using the MAVLink toolchain and upload to your own git repo.
+
+  - QGC_MAVLINK_GIT_TAG - This points to the git tag you would like to use in the chosen repo. This should likely be updated on occasion to use the latest version of MAVLink.
+
+  - You can also set the mavlink directory to a local path by using the CMake variable CPM_mavlink_SOURCE.
+    Just add to [/qgroundcontrol/cmake/CustomOptions.cmake](../../../../cmake/CustomOptions.cmake):
+  ```cmake
+  set(CPM_mavlink_SOURCE "/path/to/your/custom/mavlink")
+  ```

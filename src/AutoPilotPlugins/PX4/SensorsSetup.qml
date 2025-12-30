@@ -13,12 +13,12 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
+
+
 
 /// Page for sensor calibration. This control is used within the SensorsComponent control and can also be used
 /// standalone for custom uis. When using standadalone you can use the various show* bools to show/hide what you want.
@@ -55,50 +55,6 @@ Item {
     // Used to pass help text to the preCalibrationDialog dialog
     property string preCalibrationDialogHelp
 
-    readonly property var rotations: [
-        "ROTATION_NONE",
-        "ROTATION_YAW_45",
-        "ROTATION_YAW_90",
-        "ROTATION_YAW_135",
-        "ROTATION_YAW_180",
-        "ROTATION_YAW_225",
-        "ROTATION_YAW_270",
-        "ROTATION_YAW_315",
-        "ROTATION_ROLL_180",
-        "ROTATION_ROLL_180_YAW_45",
-        "ROTATION_ROLL_180_YAW_90",
-        "ROTATION_ROLL_180_YAW_135",
-        "ROTATION_PITCH_180",
-        "ROTATION_ROLL_180_YAW_225",
-        "ROTATION_ROLL_180_YAW_270",
-        "ROTATION_ROLL_180_YAW_315",
-        "ROTATION_ROLL_90",
-        "ROTATION_ROLL_90_YAW_45",
-        "ROTATION_ROLL_90_YAW_90",
-        "ROTATION_ROLL_90_YAW_135",
-        "ROTATION_ROLL_270",
-        "ROTATION_ROLL_270_YAW_45",
-        "ROTATION_ROLL_270_YAW_90",
-        "ROTATION_ROLL_270_YAW_135",
-        "ROTATION_PITCH_90",
-        "ROTATION_PITCH_270",
-        "ROTATION_PITCH_180_YAW_90",
-        "ROTATION_PITCH_180_YAW_270",
-        "ROTATION_ROLL_90_PITCH_90",
-        "ROTATION_ROLL_180_PITCH_90",
-        "ROTATION_ROLL_270_PITCH_90",
-        "ROTATION_ROLL_90_PITCH_180",
-        "ROTATION_ROLL_270_PITCH_180",
-        "ROTATION_ROLL_90_PITCH_270",
-        "ROTATION_ROLL_180_PITCH_270",
-        "ROTATION_ROLL_270_PITCH_270",
-        "ROTATION_ROLL_90_PITCH_180_YAW_90",
-        "ROTATION_ROLL_90_YAW_270",
-        "ROTATION_ROLL_90_PITCH_68_YAW_293",
-        "ROTATION_PITCH_315",
-        "ROTATION_ROLL_90_PITCH_315"
-    ]
-
     property Fact cal_mag0_id:      controller.getParameterFact(-1, "CAL_MAG0_ID")
     property Fact cal_mag1_id:      controller.getParameterFact(-1, "CAL_MAG1_ID")
     property Fact cal_mag2_id:      controller.getParameterFact(-1, "CAL_MAG2_ID")
@@ -118,7 +74,6 @@ Item {
     property bool showCompass2Rot: cal_mag2_id.value > 0 && cal_mag2_rot.value >= 0
 
     property bool   _sensorsHaveFixedOrientation:       QGroundControl.corePlugin.options.sensorsHaveFixedOrientation
-    property bool   _wifiReliableForCalibration:        QGroundControl.corePlugin.options.wifiReliableForCalibration
     property int    _buttonWidth:                       ScreenTools.defaultFontPixelWidth * 15
     property string _calMagIdParamFormat:               "CAL_MAG#_ID"
     property string _calMagRotParamFormat:              "CAL_MAG#_ROT"
@@ -217,13 +172,6 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        var usingUDP = controller.usingUDPLink()
-        if (usingUDP && !_wifiReliableForCalibration) {
-            mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead."))
-        }
-    }
-
     Component {
         id: waitForCancelDialogComponent
 
@@ -291,7 +239,6 @@ Item {
 
                         FactComboBox {
                             sizeToContents: true
-                            model:          rotations
                             fact:           sens_board_rot
                         }
 
@@ -348,7 +295,6 @@ Item {
 
                     FactComboBox {
                         sizeToContents: true
-                        model:          rotations
                         fact:           sens_board_rot
                     }
                 }
@@ -369,7 +315,6 @@ Item {
 
                         FactComboBox {
                             sizeToContents: true
-                            model:          rotations
                             fact:           parent.calMagRotFact
                         }
                     }

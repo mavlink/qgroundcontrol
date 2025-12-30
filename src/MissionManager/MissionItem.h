@@ -15,9 +15,10 @@
 #include <QtCore/QTextStream>
 #include <QtCore/QJsonObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QGCMAVLink.h"
 #include "Fact.h"
+#include "QGCMAVLink.h"
 
 class SurveyComplexItem;
 class SimpleMissionItem;
@@ -30,7 +31,8 @@ class MissionController;
 class MissionItem : public QObject
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     MissionItem(QObject* parent = nullptr);
 

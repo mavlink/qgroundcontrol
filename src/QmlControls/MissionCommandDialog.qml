@@ -15,8 +15,8 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 
 QGCPopupDialog {
     id:         root

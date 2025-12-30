@@ -12,7 +12,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(RCChannelMonitorControllerLog, "qgc.qmlcontrols.rcchannelmonitorcontroller")
+QGC_LOGGING_CATEGORY(RCChannelMonitorControllerLog, "QMLControls.RCChannelMonitorController")
 
 RCChannelMonitorController::RCChannelMonitorController(QObject *parent)
     : FactPanelController(parent)

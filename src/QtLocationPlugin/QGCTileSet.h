@@ -9,15 +9,11 @@
 
 #pragma once
 
-#include <QtCore/QtTypes>
 #include <QtCore/QMetaType>
+#include <QtCore/QtTypes>
 
-class QGCTileSet
+struct QGCTileSet
 {
-public:
-    QGCTileSet() = default;
-    ~QGCTileSet() = default;
-
     QGCTileSet &operator+=(const QGCTileSet &other)
     {
         tileX0 += other.tileX0;
@@ -47,3 +43,4 @@ public:
     quint64 tileSize = 0;
 };
 Q_DECLARE_METATYPE(QGCTileSet)
+Q_DECLARE_METATYPE(QGCTileSet*)

@@ -109,8 +109,6 @@ public:
     QString brandImageOutdoor(const Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap() const override { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const override;
-    const QVariantList &toolIndicators(const Vehicle *vehicle) override;
-    const QVariantList &modeIndicators(const Vehicle *vehicle) override;
     bool adjustIncomingMavlinkMessage(Vehicle *vehicle, mavlink_message_t *message) override;
     QMap<QString, FactGroup*> *factGroups() override;
     void adjustMetaData(MAV_TYPE vehicleType, FactMetaData *metaData) override;
@@ -118,6 +116,8 @@ public:
     QString stabilizedFlightMode() const override;
     QString motorDetectionFlightMode() const override;
     void updateAvailableFlightModes(FlightModeList &modeList) override;
+
+    QString offlineEditingParamFile(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Sub.OfflineEditing.params"); }
 
 protected:
     uint32_t _convertToCustomFlightModeEnum(uint32_t val) const override;
@@ -136,7 +136,6 @@ protected:
 
 private:
     QVariantList _toolIndicators;
-    QVariantList _modeIndicators;
     static bool _remapParamNameIntialized;
     QMap<QString, QString> _factRenameMap;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t _remapParamName;

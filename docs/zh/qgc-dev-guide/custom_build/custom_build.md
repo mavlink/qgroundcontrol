@@ -1,26 +1,26 @@
 # 自定义构建
 
-自定义构建允许第三方创建自己的QGC版本，使其能够轻松跟上常规QGC中所做的更改。 QGC has an architecture built into it which allows custom builds to modify and add to the feature set of regular QGC. custom-example](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example) source code including the
+自定义构建允许第三方创建他们自己版本的QGC，且能让他们轻松跟上常规QGC所做的更改。 QGC 有一个内置架构，允许自定义构建来修改和添加常规QGC 的特性集。
 
-Some possibilities with a custom build
+一些自定义构建的可能性
 
-- Fully brand your build
-- Define a single flight stack to avoid carrying over unnecessary code
-- Implement your own, autopilot and firmware plugin overrides
-- Implement your own camera manager and plugin overrides
-- Implement your own QtQuick interface module
-- Implement your own toolbar, toolbar indicators and UI navigation
-- Implement your own Fly View overlay (and how to hide elements from QGC such as the flight widget)
-- Implement your own, custom QtQuick camera control
-- Implement your own, custom Pre-flight Checklist
-- Define your own resources for all of the above
+- 全面打造你构建版本的品牌形象
+- 定义单个飞行堆栈以避免携带不必要的代码
+- 实现您自己的自动化和固件插件覆盖
+- 实现您自己的相机管理器和插件覆盖
+- 实现您自己的 QtQuick 界面模块
+- 实现您自己的工具栏、工具栏指示器和界面导航
+- 实现您自己的 Fly 视图叠加层(和如何隐藏QGC 中的元素，如飞行部件)
+- 实现您自己的 QtQuick 相机控制
+- 实现您自己的自定义飞行前清单
+- 为以上所有定义您自己的资源
 
-One of the downsides of QGC providing both generic support for any vehicle which supports mavlink as well as providing firmware specific support for both PX4 Pro and ArduPilot is complexity of the user interface. Since QGC doesn't know any information about your vehicle ahead of time it requires UI bits which can get in the way if the vehicle you fly only uses PX4 Pro firmware and is a multi-rotor vehicle. If that is a known thing then the UI can be simplified in various places. Also QGC targets both DIY users who are building their own vehicles from scratch as well as commercial users of off the shelf vehicles. Setting up a DIY drone from scratch requires all sort of functionality which is not needed for users of off the shelf vehicles. So for off the shelf vehicle users all the DIY specific stuff is just extra noise they need to look past. Creating a custom build allows you to specify exact details for your vehicle and hide things which are irrelevant thus creating an even simple user experience for your users than regular generic QGC.
+QGC 既为任何支持 Mavlink 的飞行器提供通用支持，又为 PX4 Pro 和 ArduPilot 提供特定固件支持，其缺点之一是用户界面的复杂性。 由于QGC事先对您的无人机一无所知，因此它需要一些用户界面元素，但如果您所使用的飞行器仅采用PX4 Pro固件且为多旋翼飞行器，这些元素可能会造成不便。 如果这是一件已知的事，那么用户界面就可以在不同地方简化。 此外，QGC的目标用户既包括那些从零开始打造无人机的DIY用户，也包括使用现成飞行器的商业用户。 从零开始设置DIY无人机需要所有类型的功能，而这种功能对于架外车辆的使用者来说是不需要的。 所以对于使用现成飞行器的用户来说，所有针对 DIY 的特定内容只是他们需要忽略的额外干扰信息。 创建自定义构建允许您为您的载具指定准确的详细信息并隐藏不相关的东西，从而为您的用户创建一个甚至简单的用户体验，而不是普通的 QGC。
 
-There is a plugin architecture in QGC which allows for this custom build creation. They can be found in QGCCorePlugin.h, FirmwarePlugin.h and AutoPilotPlugin.h associated classes. To create a custom build you create subclasses of the standard plugins overriding the set of methods which are appropriate for you usage.
+QGC 中有一个插件架构允许创建此自定义构建。 它们可以在 QGCCorePlugin.h, FirmwarePlugin.h 和 AutoPilotPlugin.h 关联的类中找到。 要创建一个自定义构建，您要创建标准插件的子类，覆盖适合您使用的一组方法。
 
-There is also a mechanism which allows you to override resources so you can change the smaller visual elements in QGC.
+还有一个允许您覆盖资源的机制，以便您可以更改QGC 中较小的视觉元素。
 
-Also internal to QGC is the concept of an "Advanced Mode". Whereas a standard QGC builds always runs in advanced mode. A custom build always starts out in regular/not advanced mode. There is an easier mechanism in the build to turn on advanced mode which is to click the fly view button 5 times in a row fairly quickly. If you do this in a custom build you will be warned about entering advanced mode. The concept here is to hide things which normal users should not have access to behind advanced mode. For example a commercial vehicle will not need access to most setup pages which are oriented to DIY setup. So a custom build can hide this. The custom example code shows how to do this.
+“高级模式”的概念也是QGC的内部概念。 标准的 QGC 构建总是在高级模式下运行。 自定义构建总是以常规/非高级模式开始。 在构建版本中有一个更简便的开启高级模式的方法，即快速连续点击飞行视图按钮5次。 如果您在自定义构建中进行此操作，您将被警告进入高级模式。 这里的理念是将普通用户不应接触到的内容隐藏在高级模式之后。 例如，商业载具不需要进入面向DIY安装的大多数安装页面。 所以自定义构建可以隐藏它。 自定义示例代码显示了如何做到这一点。
 
-If you want to understand the possibilities, the first step is to read through those files which document what is possible. [README](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md).
+如果你想要理解这种可能性，第一步是通过那些文件读取可能的文件。 接下来浏览[`custom - example`](https://github.com/mavlink/qgroundcontrol/tree/master/custom-example)的源代码，包括[README](https://github.com/mavlink/qgroundcontrol/blob/master/custom-example/README.md)。

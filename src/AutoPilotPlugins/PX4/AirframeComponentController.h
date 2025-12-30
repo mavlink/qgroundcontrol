@@ -15,6 +15,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
@@ -22,6 +23,7 @@
 class AirframeComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     
 public:
     AirframeComponentController(void);
@@ -65,6 +67,8 @@ private:
 class Airframe : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     Airframe(const QString& name, int autostartId, QObject* parent = nullptr);
@@ -81,6 +85,8 @@ private:
 class AirframeType : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     
 public:
     AirframeType(const QString& name, const QString& imageResource, QObject* parent = nullptr);

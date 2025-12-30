@@ -1,27 +1,43 @@
-# qt_add_library(FlightMap STATIC)
+# ============================================================================
+# Flight Map Module
+# Map widgets, vehicle indicators, and mission visualization
+# ============================================================================
 
-# file(GLOB_RECURSE QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*)
-# qt_add_qml_module(FlightMap
-#     URI QGroundControl.FlightMap
-#     VERSION 1.0
-#     RESOURCES ${QML_RESOURCES}
-#     QML_FILES ${QML_SOURCES}
-#     OUTPUT_TARGETS FlightMap_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtLocation
-#         QtPositioning
-#         QtQuick.Dialogs
+qt_add_library(FlightMapModule STATIC)
 
-#         QGroundControl
-#         QGroundControl.FactSystem
-#         QGroundControl.Controls
-#         QGroundControl.FlightMap
-#         QGroundControl.ScreenTools
-#         QGroundControl.MultiVehicleManager
-#         QGroundControl.Vehicle
-#         QGroundControl.QGCPositionManager
-# )
+qt_add_qml_module(FlightMapModule
+    URI QGroundControl.FlightMap
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        MapItems/CameraTriggerIndicator.qml
+        MapItems/CustomMapItems.qml
+        MapItems/MapLineArrow.qml
+        MapItems/MissionItemIndicator.qml
+        MapItems/MissionItemIndicatorDrag.qml
+        MapItems/MissionLineView.qml
+        MapItems/PlanMapItems.qml
+        MapItems/ProximityRadarMapView.qml
+        MapItems/QGCMapCircleVisuals.qml
+        MapItems/QGCMapPolygonVisuals.qml
+        MapItems/QGCMapPolylineVisuals.qml
+        MapItems/SplitIndicator.qml
+        MapItems/VehicleMapItem.qml
+        Widgets/CenterMapDropButton.qml
+        Widgets/CenterMapDropPanel.qml
+        Widgets/CompassDial.qml
+        Widgets/CompassHeadingIndicator.qml
+        Widgets/HorizontalCompassAttitude.qml
+        Widgets/IntegratedAttitudeIndicator.qml
+        Widgets/IntegratedCompassAttitude.qml
+        Widgets/MapFitFunctions.qml
+        Widgets/PhotoVideoControl.qml
+        Widgets/QGCArtificialHorizon.qml
+        Widgets/QGCAttitudeWidget.qml
+        Widgets/QGCCompassWidget.qml
+        Widgets/QGCPitchIndicator.qml
+        Widgets/VerticalCompassAttitude.qml
+        FlightMap.qml
+        MapScale.qml
+    NO_PLUGIN
+)

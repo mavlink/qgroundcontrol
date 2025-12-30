@@ -7,9 +7,6 @@ if(NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
 endif()
 
 if(NOT QGC_DISABLE_APM_PLUGIN)
-    # set(APM_RESOURCES)
-    # qt_add_resources(APM_RESOURCES APMResources.qrc)
-
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             APM.h
@@ -25,41 +22,105 @@ if(NOT QGC_DISABLE_APM_PLUGIN)
             ArduRoverFirmwarePlugin.h
             ArduSubFirmwarePlugin.cc
             ArduSubFirmwarePlugin.h
-            # ${APM_RESOURCES}
     )
 endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-if(QGC_DISABLE_APM_MAVLINK)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_ARDUPILOT_DIALECT)
-endif()
+# Add JSON files
+file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
+qt_add_resources(${CMAKE_PROJECT_NAME} json_firmaware_plugin_apm
+    PREFIX "/json"
+    FILES
+    ${JSON_FILES}
+)
 
-# CPMAddPackage(
-#     NAME ArduPilotParams
-#     GITHUB_REPOSITORY ArduPilot/ParameterRepository
-#     GIT_TAG main
-# )
+# Add other resource
+qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
+    PREFIX "/FirmwarePlugin/APM"
+    FILES
+        Copter.OfflineEditing.params
+        Plane.OfflineEditing.params
+        Rover.OfflineEditing.params
+        Sub.OfflineEditing.params
+)
 
-# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-# # file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/res/*/*.*)
-# qt_add_qml_module(QGC
-#     URI QGroundControl.APMFirmwarePlugin
-#     VERSION 1.0
-#     # RESOURCES ${QML_RESOURCES}
-#     QML_FILES ${QML_SOURCES}
-#     OUTPUT_TARGETS APMFirmwarePlugin_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Layouts
+#===========================================================================#
 
-#         QGroundControl
-#         QGroundControl.Controls
-#         QGroundControl.MultiVehicleManager
-#         QGroundControl.ScreenTools
-#         QGroundControl.Palette
-#         QGroundControl.FactSystem
-#         QGroundControl.FactControls
-#         MAVLink
-# )
+CPMAddPackage(
+    NAME ArduPilotParams
+    GITHUB_REPOSITORY ArduPilot/ParameterRepository
+    GIT_TAG main
+)
+
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.0.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.1.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.2/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.2.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.3/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.3.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.4/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.4.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.5.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.6/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.6.xml")
+
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.0.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.1.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.2/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.2.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.3/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.3.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.4/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.4.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.5.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.6/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.6.xml")
+
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.0.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.1.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.2/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.2.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.4/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.4.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.5.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.6/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.6.xml")
+
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.0.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.1.xml")
+set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.5.xml")
+
+qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
+    PREFIX "/"
+    FILES
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.0/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.1/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.2/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.3/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.4/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.5/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Plane-4.6/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.0/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.1/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.2/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.3/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.4/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.5/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Copter-4.6/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Rover-4.0/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Rover-4.1/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Rover-4.2/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Rover-4.4/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Rover-4.5/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Rover-4.6/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Sub-4.0/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Sub-4.1/apm.pdef.xml"
+        "${ArduPilotParams_SOURCE_DIR}/Sub-4.5/apm.pdef.xml"
+)
+
+# Add qml module
+qt_add_library(APMFirmwareModule STATIC)
+
+qt_add_qml_module(APMFirmwareModule
+    URI QGroundControl.FirmwarePlugin.APM
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        APMBatteryIndicator.qml
+        APMFlightModeIndicator.qml
+        APMMainStatusIndicator.qml
+        APMSupportForwardingIndicator.qml
+    NO_PLUGIN
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE APMFirmwareModule)

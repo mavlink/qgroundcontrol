@@ -14,11 +14,11 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
+
+
+
 import QGroundControl.FactControls
 
 /// Joystick Config
@@ -49,7 +49,7 @@ SetupPage {
 
             readonly property real  labelToMonitorMargin:   ScreenTools.defaultFontPixelWidth * 3
 
-            property var  _activeJoystick:          joystickManager.activeJoystick
+            property Joystick _activeJoystick: joystickManager.activeJoystick
             property bool _allowJoystickSelection:  QGroundControl.corePlugin.options.allowJoystickSelection
 
             function setupPageCompleted() {
@@ -80,7 +80,7 @@ SetupPage {
                     visible:    _allowJoystickSelection
                 }
                 QGCTabButton {
-                    text:       qsTr("Button Assigment")
+                    text:       qsTr("Button Assignment")
                 }
                 QGCTabButton {
                     text:       qsTr("Calibration")
@@ -92,7 +92,7 @@ SetupPage {
                 }
             }
 
-            property var pages:  ["JoystickConfigGeneral.qml", "JoystickConfigButtons.qml", "JoystickConfigCalibration.qml", "JoystickConfigAdvanced.qml"]
+            property var pages:  ["qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigGeneral.qml", "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigButtons.qml", "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigCalibration.qml", "qrc:/qml/QGroundControl/VehicleSetup/JoystickConfigAdvanced.qml"]
 
             Loader {
                 id:             joyLoader

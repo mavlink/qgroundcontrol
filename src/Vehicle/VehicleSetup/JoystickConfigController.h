@@ -15,6 +15,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "Joystick.h"
@@ -24,7 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
 class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
-
+    QML_ELEMENT
     //friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
 
 public:
@@ -145,7 +146,7 @@ private:
 
     /// @brief A set of information associated with a radio axis.
     struct AxisInfo {
-        Joystick::AxisFunction_t    function;   ///< Function mapped to this axis, Joystick::maxFunction for none
+        Joystick::AxisFunction_t    function;   ///< Function mapped to this axis, Joystick::maxAxisFunction for none
         bool                        reversed;   ///< true: axis is reverse, false: not reversed
         int                         axisMin;    ///< Minimum axis value
         int                         axisMax;    ///< Maximum axis value
@@ -186,13 +187,15 @@ private:
     void _startCalibration      ();
     void _stopCalibration       ();
 
-    void _calSaveCurrentValues  ();
+    void _saveCurrentAxisValues  ();
 
     void _setStickPositions     ();
 
     void _signalAllAttitudeValueChanges();
 
     void _setStatusText         (const QString& text);
+
+    void _logJoystickInfo(const QString &methodName, Joystick::AxisFunction_t function, int axis, int value);
 
     stateStickPositions _sticksCentered;
     stateStickPositions _sticksThrottleUp;
@@ -206,7 +209,7 @@ private:
 
     QList<qreal> _currentStickPositions;
 
-    int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
+    int _rgFunctionAxisMapping[Joystick::maxAxisFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 
     static const int _attitudeControls  = 5;
 
@@ -229,6 +232,7 @@ private:
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
     QElapsedTimer   _stickDetectSettleElapsed;
+    QMap<int, int> _loggingLastValuesMap;
 
     QString             _statusText;
 
@@ -237,7 +241,7 @@ private:
     static constexpr int _calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
     static constexpr int _calDefaultMinValue =   -32768;     ///< Default value for Min if not set
     static constexpr int _calDefaultMaxValue =   32767;      ///< Default value for Max if not set
-    static constexpr int _calRoughCenterDelta =  500;        ///< Delta around center point which is considered to be roughly centered
+    static constexpr int _calRoughCenterDelta =  700;        ///< Delta around center point which is considered to be roughly centered (Note: PS5 controller has very noisy center, hence 700)
     static constexpr int _calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
     static constexpr int _calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
     static constexpr int _calMinDelta =          1000;       ///< Amount of delta allowed around min value to consider channel at min

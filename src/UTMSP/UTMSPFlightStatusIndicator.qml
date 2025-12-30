@@ -16,16 +16,15 @@ import QtLocation
 
 import QGroundControl
 import QGroundControl.FlightMap
-import QGroundControl.ScreenTools
+
 import QGroundControl.Controls
-import QGroundControl.FactSystem
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
-import QGroundControl.Controllers
-import QGroundControl.ShapeFileHelper
+
+
 import QGroundControl.UTMSP
 import QGroundControl.FlightDisplay
-import QGroundControl.MultiVehicleManager
+
 
 //Indicator
 
@@ -41,11 +40,11 @@ Rectangle {
     anchors.leftMargin: ScreenTools.defaultFontPixelHeight * 1.25
     visible: true
 
-    property var ledImages: ["qrc:/utmsp/yellow_led.png",
-                             "qrc:/utmsp/orange_led.png",
-                             "qrc:/utmsp/pale_green.png",
-                             "qrc:/utmsp/parrot_green.png",
-                             "qrc:/utmsp/green_led.png"]
+    property var ledImages: ["qrc:/qml/QGroundControl/UTMSP/images/yellow_led.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/orange_led.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/pale_green.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/parrot_green.png",
+                             "qrc:/qml/QGroundControl/UTMSP/images/green_led.png"]
 
     property var statusBarColor: ["#bcc21b",
                                   "#f0a351",

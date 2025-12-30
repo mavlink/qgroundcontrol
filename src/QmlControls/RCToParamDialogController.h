@@ -21,7 +21,7 @@ class FactMetaData;
 class RCToParamDialogController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Fact.h")
     Q_PROPERTY(Fact *tuningFact READ tuningFact WRITE setTuningFact NOTIFY tuningFactChanged)
     Q_PROPERTY(Fact *scale      READ scale                          CONSTANT)

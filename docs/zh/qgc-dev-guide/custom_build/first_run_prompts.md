@@ -1,9 +1,9 @@
-# First Run Prompts
+# 首次运行提示
 
 When QGC is started for the first time it prompts the user to specify some initial settings. At the time of writing this documentation those are:
 
 - Unit Settings - What units does the user want to use for display.
-- Offline Vehicle Settings - Vehicle information for creating Plans while not connected to a vehicle.
+- 离线载具设置 - 未连接车辆时用于创建计划的车辆信息。
 
 The custom build architecure includes mechanisms for a custom build to both override the display of these prompts and/or create your own first run prompts.
 
@@ -11,12 +11,12 @@ The custom build architecure includes mechanisms for a custom build to both over
 
 Each first run prompt is a simple dialog which can display ui to the user. Whether the specific dialog has already been show to the user or not is stored in a setting. Here is the code for the upstream first run prompt dialogs:
 
-- [Units Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml)
-- [Offline Vehicle Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml)
+- [Units Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/UI/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml)
+- [Offline Vehicle Settings](https://github.com/mavlink/qgroundcontrol/blob/master/src/UI/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml)
 
 ## Standard First Run Prompt Dialogs
 
-Each dialog has a unique ID associated with it. When that dialog is shown to the user that ID is registered as having already been displayed so it only happens once (unless you clear settings). The set of first run prompt which are included with upstream QGC are considered the "Standard" set. QGC gets the list of standard prompts to display from the `QGCCorePlugin::firstRunPromptStdIds` call.
+Each dialog has a unique ID associated with it. 当该对话框向用户显示ID已经被注册，所以它只会发生一次(除非您清除设置)。 The set of first run prompt which are included with upstream QGC are considered the "Standard" set. QGC gets the list of standard prompts to display from the `QGCCorePlugin::firstRunPromptStdIds` call.
 
 ```
     /// Returns the standard list of first run prompt ids for possible display. Actual display is based on the
@@ -47,7 +47,7 @@ Your QGCCorePlugin should override these two methods as well as provide static c
 
 ## Order Of Display
 
-The set of first run prompts shown to the user are in the order returned by the `QGCCorePlugin::firstRunPromptStdIds` and `QGCCorePlugin::firstRunPromptCustomIds` with standard prompts shown before the custom prompts. Only the prompts which have not been previously shown to the user are shown.
+The set of first run prompts shown to the user are in the order returned by the `QGCCorePlugin::firstRunPromptStdIds` and `QGCCorePlugin::firstRunPromptCustomIds` with standard prompts shown before the custom prompts. 仅显示以前未显示给用户的提示。
 
 ## Always On Prompts
 

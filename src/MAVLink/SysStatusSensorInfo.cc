@@ -11,7 +11,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 
-QGC_LOGGING_CATEGORY(SysStatusSensorInfoLog, "qgc.mavlink.sysstatussensorinfo")
+QGC_LOGGING_CATEGORY(SysStatusSensorInfoLog, "MAVLink.SysStatusSensorInfo")
 
 SysStatusSensorInfo::SysStatusSensorInfo(QObject *parent)
     : QObject(parent)

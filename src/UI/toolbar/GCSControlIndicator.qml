@@ -3,10 +3,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+
+
+
+
 import QGroundControl.FactControls
 
 Item {
@@ -43,7 +43,7 @@ Item {
     Connections {
         target: activeVehicle
         // Popup prompting user to accept control from other GCS
-        onRequestOperatorControlReceived: (sysIdRequestingControl, allowTakeover, requestTimeoutSecs) => {
+        function onRequestOperatorControlReceived(sysIdRequestingControl, allowTakeover, requestTimeoutSecs) {
             // If we don't have the indicator visible ( not receiving CONTROL_STATUS ) don't proceed
             if (!control.showIndicator) {
                 return
@@ -58,7 +58,7 @@ Item {
             mainWindow.showIndicatorDrawer(controlRequestPopup, control)
         }
         // Animation to blink indicator when any related info changes
-        onGcsControlStatusChanged: {
+        function onGcsControlStatusChanged() {
             backgroundRectangle.doOpacityAnimation()
             triggerAnimations() // Needed for animation inside the popup component
         }

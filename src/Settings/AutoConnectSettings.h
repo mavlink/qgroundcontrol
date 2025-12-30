@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 /// Auto connect settings
@@ -19,7 +21,8 @@
 class AutoConnectSettings : public SettingsGroup
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     AutoConnectSettings(QObject* parent = nullptr);
 

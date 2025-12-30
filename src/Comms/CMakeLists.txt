@@ -1,3 +1,11 @@
+# ============================================================================
+# Communications Module
+# Handles all communication links (TCP, UDP, Serial, Bluetooth, etc.)
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Core Communication Sources
+# ----------------------------------------------------------------------------
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         LinkConfiguration.cc
@@ -18,11 +26,24 @@ target_sources(${CMAKE_PROJECT_NAME}
         UDPLink.h
 )
 
+# USB board information JSON data
+qt_add_resources(${CMAKE_PROJECT_NAME} json_comm
+    PREFIX "/json"
+    FILES USBBoardInfo.json
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Uncomment to enable Qt socket debugging
 # target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QABSTRACTSOCKET_DEBUG)
 
-#===========================================================================#
+# ============================================================================
+# Optional Communication Features
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Serial Port Communication
+# ----------------------------------------------------------------------------
 
 if(QGC_NO_SERIAL_LINK)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_NO_SERIAL_LINK)
@@ -37,13 +58,15 @@ else()
             UdpIODevice.h
     )
 
+    # Qt SerialPort not available on mobile platforms
     if(NOT ANDROID AND NOT IOS)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::SerialPort)
     endif()
 endif()
 
-#===========================================================================#
-
+# ----------------------------------------------------------------------------
+# Bluetooth Communication
+# ----------------------------------------------------------------------------
 if(QGC_ENABLE_BLUETOOTH)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Bluetooth)
     target_sources(${CMAKE_PROJECT_NAME}
@@ -54,8 +77,9 @@ if(QGC_ENABLE_BLUETOOTH)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BLUETOOTH)
 endif()
 
-#===========================================================================#
-
+# ----------------------------------------------------------------------------
+# ZeroConf/mDNS Service Discovery
+# ----------------------------------------------------------------------------
 if(QGC_ZEROCONF_ENABLED)
     CPMAddPackage(
         NAME qmdnsengine
@@ -70,10 +94,14 @@ if(QGC_ZEROCONF_ENABLED)
     if(TARGET qmdnsengine)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
         target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
+    else()
+        message(WARNING "QGC: qmdnsengine target not created, ZeroConf will be disabled")
     endif()
 endif()
 
-#===========================================================================#
+# ============================================================================
+# Communication Link Subdirectories
+# ============================================================================
 
 add_subdirectory(AirLink)
 add_subdirectory(MockLink)

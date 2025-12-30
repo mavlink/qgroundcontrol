@@ -23,8 +23,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCFlyViewOptionsLog)
 class QGCFlyViewOptions : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(bool showMultiVehicleList        READ showMultiVehicleList       CONSTANT)
     Q_PROPERTY(bool showInstrumentPanel         READ showInstrumentPanel        CONSTANT)
     Q_PROPERTY(bool showMapScale                READ showMapScale               CONSTANT)
@@ -59,8 +59,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCOptionsLog)
 class QGCOptions : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(bool allowJoystickSelection          READ allowJoystickSelection         NOTIFY allowJoystickSelectionChanged)
     Q_PROPERTY(bool checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
     Q_PROPERTY(bool combineSettingsAndSetup         READ combineSettingsAndSetup        CONSTANT)
@@ -84,7 +84,6 @@ class QGCOptions : public QObject
     Q_PROPERTY(bool showSensorCalibrationLevel      READ showSensorCalibrationLevel     NOTIFY showSensorCalibrationLevelChanged)
     Q_PROPERTY(bool showSimpleMissionStart          READ showSimpleMissionStart         NOTIFY showSimpleMissionStartChanged)
     Q_PROPERTY(bool useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
-    Q_PROPERTY(bool wifiReliableForCalibration      READ wifiReliableForCalibration     CONSTANT)
     Q_PROPERTY(double toolbarHeightMultiplier       READ toolbarHeightMultiplier        CONSTANT)
     Q_PROPERTY(float devicePixelDensity             READ devicePixelDensity             NOTIFY devicePixelDensityChanged)
     Q_PROPERTY(float devicePixelRatio               READ devicePixelRatio               NOTIFY devicePixelRatioChanged)
@@ -114,7 +113,7 @@ public:
     virtual bool showMissionStatus() const { return true; }
 
     /// Provides an optional, custom preflight checklist
-    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/PreFlightCheckList.qml")); }
+    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/FlightDisplay/PreFlightCheckList.qml")); }
 
     /// Allows replacing the toolbar Light Theme color
     virtual QColor toolbarBackgroundLight() const { return QColorConstants::White; }
@@ -154,8 +153,6 @@ public:
     virtual bool showOfflineMapImport() const { return true; }
     virtual bool showPX4LogTransferOptions() const { return true; }
     virtual bool showSimpleMissionStart() const { return false; }
-
-    virtual bool wifiReliableForCalibration() const { return false; }
 
     /// Desktop builds save the main application size and position on close (and restore it on open)
     virtual bool enableSaveMainWindowPosition() const { return true; }

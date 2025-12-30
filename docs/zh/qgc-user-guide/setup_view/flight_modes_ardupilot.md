@@ -6,7 +6,7 @@ _飞行模式_ 部分允许您配置由遥控发射器上特定 开关 / 扳机�
 In order to set up flight modes you must already have
 
 > - [配置您的无线电](../setup_view/radio.md)以设置飞行模式。
-> - [设置RC 发射机](../setup_view/FlightModes.md#transmitter-setup) (飞行模式 > 发射器设置)> ::
+> - [设置遥控发射机](../setup_view/FlightModes.md#transmitter-setup) (飞行模式 > 发射器设置)> ::
 
 若要访问本部分，请在顶部工具栏中选择**齿轮** 图标(载具设置)，然后在侧边栏中选择**飞行模式**。
 
@@ -43,7 +43,7 @@ ArduCopter还允许您为第 7-12 频道指定额外的 _频道选项_。
 所有值都在被更改时自动保存。
 
 :::info
-上面的ArduCopter屏幕截图显示了一个三个位置飞行模式开关的典型设置，另外一个选项是RTL在通道7开关上。
+上面的ArduCopter屏幕截图显示了一个三位置飞行模式开关的典型设置，另外一个选项是RTL在通道7开关上。
 你还可以利用发射机上的两个开关以及混合设置来设定6种飞行模式。 向下滚动到这个[页面](http://ardupilot.org/copter/docs/common-rc-transmitter-flight-mode-configuration.html#common-rc-transmitter-flight-mode-configuration)的中间部分，获取有关如何操作的教程。
 :::
 

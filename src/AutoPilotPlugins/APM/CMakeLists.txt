@@ -1,3 +1,8 @@
+# ============================================================================
+# APM AutoPilot Plugin
+# ArduPilot-specific vehicle configuration and setup
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         APMAirframeComponent.cc
@@ -44,27 +49,60 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)
-# qt_add_qml_module(QGC
-#     URI QGroundControl.APMAutoPilotPlugin
-#     VERSION 1.0
-#     QML_FILES ${QML_SOURCES}
-#     RESOURCES ${QML_RESOURCES}
-#     OUTPUT_TARGETS APMAutoPilotPlugin_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtQuick.Dialogs
-#         QtQuick.Layouts
+# ----------------------------------------------------------------------------
+# APM QML Module
+# ----------------------------------------------------------------------------
+qt_add_library(AutoPilotPluginsAPMModule STATIC)
 
-#         QGroundControl
-#         QGroundControl.FactSystem
-#         QGroundControl.FactControls
-#         QGroundControl.Controls
-#         QGroundControl.ScreenTools
-#         QGroundControl.Controllers
-#         QGroundControl.Palette
-#         QGroundControl.Vehicle
-# )
+qt_add_qml_module(AutoPilotPluginsAPMModule
+    URI QGroundControl.AutoPilotPlugins.APM
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        APMAirframeComponent.qml
+        APMAirframeComponentSummary.qml
+        APMCameraComponent.qml
+        APMCameraComponentSummary.qml
+        APMCameraSubComponent.qml
+        APMFlightModesComponent.qml
+        APMFlightModesComponentSummary.qml
+        APMFollowComponent.qml
+        APMFollowComponentSummary.qml
+        APMHeliComponent.qml
+        APMLightsComponent.qml
+        APMLightsComponentSummary.qml
+        APMMotorComponent.qml
+        APMNotSupported.qml
+        APMPowerComponent.qml
+        APMPowerComponentSummary.qml
+        APMRadioComponentSummary.qml
+        APMRemoteSupportComponent.qml
+        APMSafetyComponent.qml
+        APMSafetyComponentCopter.qml
+        APMSafetyComponentPlane.qml
+        APMSafetyComponentRover.qml
+        APMSafetyComponentSub.qml
+        APMSafetyComponentSummary.qml
+        APMSafetyComponentSummaryCopter.qml
+        APMSafetyComponentSummaryPlane.qml
+        APMSafetyComponentSummaryRover.qml
+        APMSafetyComponentSummarySub.qml
+        APMSensorsComponent.qml
+        APMSensorsComponentSummary.qml
+        APMSensorIdDecoder.qml
+        APMSensorParams.qml
+        APMSubFrameComponent.qml
+        APMSubFrameComponentSummary.qml
+        APMSubMotorComponent.qml
+        APMTuningComponentCopter.qml
+        APMTuningComponentSub.qml
+    NO_PLUGIN
+)
+
+# ----------------------------------------------------------------------------
+# APM Component Metadata
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
+    PREFIX "/json"
+    FILES APMFollowComponent.FactMetaData.json
+)

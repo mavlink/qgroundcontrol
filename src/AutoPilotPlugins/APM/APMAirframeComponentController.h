@@ -11,6 +11,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
@@ -24,6 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(APMAirframeComponentControllerLog)
 class APMAirframeComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QmlObjectListModel *frameClassModel MEMBER _frameClassModel CONSTANT)
 

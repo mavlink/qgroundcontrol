@@ -12,6 +12,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
@@ -41,6 +42,8 @@ typedef QHash<VisualItemPair, FlightPathSegment*> FlightPathSegmentHashTable;
 class MissionController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("FlightPathSegment.h")
     Q_MOC_INCLUDE("VisualMissionItem.h")
     Q_MOC_INCLUDE("TakeoffMissionItem.h")

@@ -52,10 +52,10 @@ QStringList SafetyComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl SafetyComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SafetyComponent.qml");
+    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SafetyComponent.qml");
 }
 
 QUrl SafetyComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/SafetyComponentSummary.qml");
+    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SafetyComponentSummary.qml");
 }

@@ -11,9 +11,10 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QDateTime>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfo>
-#include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
 
@@ -26,7 +27,8 @@ class Vehicle;
 class RemoteIDManager : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     RemoteIDManager(Vehicle* vehicle);
 

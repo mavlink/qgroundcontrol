@@ -8,33 +8,33 @@
  ****************************************************************************/
 
 #include "MavlinkCameraControl.h"
-#include "QmlObjectListModel.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CameraControlLog, "CameraControlLog")
-QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "CameraControlVerboseLog")
+QGC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControl")
+QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "Camera.MavlinkCameraControl:verbose")
 
-MavlinkCameraControl::MavlinkCameraControl(QObject *parent)
+MavlinkCameraControl::MavlinkCameraControl(Vehicle *vehicle, QObject *parent)
     : FactGroup(0, parent, true /* ignore camel case */)
+    , _vehicle(vehicle)
 {
-    // qCDebug(CameraControlLog) << Q_FUNC_INFO << this;
+    qCDebug(CameraControlLog) << this;
 }
 
 MavlinkCameraControl::~MavlinkCameraControl()
 {
-    // qCDebug(CameraControlLog) << Q_FUNC_INFO << this;
+    qCDebug(CameraControlLog) << this;
 }
 
 QString MavlinkCameraControl::captureImageStatusToStr(uint8_t image_status)
 {
     switch (image_status) {
-        case 0:
+        case PHOTO_CAPTURE_IDLE:
             return QStringLiteral("Idle");
-        case 1:
+        case PHOTO_CAPTURE_IN_PROGRESS:
             return QStringLiteral("Capturing");
-        case 2:
+        case PHOTO_CAPTURE_INTERVAL_IDLE:
             return QStringLiteral("Idle: Interval set");
-        case 3:
+        case PHOTO_CAPTURE_INTERVAL_IN_PROGRESS:
             return QStringLiteral("Capturing: Interval set");
         default:
             return QStringLiteral("Unknown");
@@ -44,9 +44,9 @@ QString MavlinkCameraControl::captureImageStatusToStr(uint8_t image_status)
 QString MavlinkCameraControl::captureVideoStatusToStr(uint8_t video_status)
 {
     switch (video_status) {
-        case 0:
+        case VIDEO_CAPTURE_STATUS_STOPPED:
             return QStringLiteral("Idle");
-        case 1:
+        case VIDEO_CAPTURE_STATUS_RUNNING:
             return QStringLiteral("Capturing");
         default:
             return QStringLiteral("Unknown");
@@ -72,10 +72,15 @@ QString MavlinkCameraControl::storageStatusToStr(uint8_t status)
 QString MavlinkCameraControl::cameraModeToStr(CameraMode mode)
 {
     switch (mode) {
-        case CAM_MODE_UNDEFINED:    return QStringLiteral("CAM_MODE_UNDEFINED");
-        case CAM_MODE_PHOTO:        return QStringLiteral("CAM_MODE_PHOTO");
-        case CAM_MODE_VIDEO:        return QStringLiteral("CAM_MODE_VIDEO");
-        case CAM_MODE_SURVEY:       return QStringLiteral("CAM_MODE_SURVEY");
-        default:                    return QStringLiteral("Unknown");
+        case CAM_MODE_UNDEFINED:
+            return QStringLiteral("CAM_MODE_UNDEFINED");
+        case CAM_MODE_PHOTO:
+            return QStringLiteral("CAM_MODE_PHOTO");
+        case CAM_MODE_VIDEO:
+            return QStringLiteral("CAM_MODE_VIDEO");
+        case CAM_MODE_SURVEY:
+            return QStringLiteral("CAM_MODE_SURVEY");
+        default:
+            return QStringLiteral("Unknown");
     }
 }

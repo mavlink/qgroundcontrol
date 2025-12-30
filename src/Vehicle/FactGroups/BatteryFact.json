@@ -6,7 +6,7 @@
 {
     "name":             "id",
     "shortDesc":        "Battery Id",
-    "type":             "uint8"
+    "type":             "uint32"
 },
 {
     "name":             "batteryFunction",

@@ -14,11 +14,10 @@ import QtPositioning
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.ShapeFileHelper
 
 /// QGCMapPolyline map visuals
 Item {
@@ -97,8 +96,8 @@ Item {
 
     Connections {
         target: mapPolyline
-        onTraceModeChanged: {
-            if (mapPolyline.traceMode) {
+        function onTraceModeChanged(traceMode) {
+            if (traceMode) {
                 _instructionText = _traceText
                 _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
             } else {

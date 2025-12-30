@@ -12,11 +12,11 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.FactSystem
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Palette
+
+
+
 
 Rectangle {
     id:             _summaryRoot

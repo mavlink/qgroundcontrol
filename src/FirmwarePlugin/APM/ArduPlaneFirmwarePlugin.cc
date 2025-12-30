@@ -78,11 +78,6 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t &remapV3_10 = _remapParamName[3][10];
-
-        remapV3_10["BATT_ARM_VOLT"] = QStringLiteral("ARMING_VOLT_MIN");
-        remapV3_10["BATT2_ARM_VOLT"] = QStringLiteral("ARMING_VOLT2_MIN");
-
         FirmwarePlugin::remapParamNameMap_t &remapV4_5 = _remapParamName[4][5];
 
         remapV4_5["AIRSPEED_MIN"] = QStringLiteral("ARSPD_FBW_MIN");
@@ -111,6 +106,11 @@ QString ArduPlaneFirmwarePlugin::takeOffFlightMode() const
 QString ArduPlaneFirmwarePlugin::stabilizedFlightMode() const
 {
     return _modeEnumToString.value(APMPlaneMode::STABILIZE, _stabilizeFlightMode);
+}
+
+QString ArduPlaneFirmwarePlugin::pauseFlightMode() const
+{
+    return _modeEnumToString.value(APMPlaneMode::LOITER, _loiterFlightMode);
 }
 
 void ArduPlaneFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)

@@ -26,7 +26,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 
-QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
+QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "PlanManager.GeoFenceController")
 
 QMap<QString, FactMetaData*> GeoFenceController::_metaDataMap;
 

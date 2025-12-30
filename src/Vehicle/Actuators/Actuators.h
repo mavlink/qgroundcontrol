@@ -40,7 +40,7 @@ public:
     Q_PROPERTY(Mixer::Mixers* mixer                                             READ mixer                     CONSTANT)
     Q_PROPERTY(ActuatorOutputs::ActuatorOutput* selectedActuatorOutput          READ selectedActuatorOutput    NOTIFY selectedActuatorOutputChanged)
 
-    Q_INVOKABLE void imageClicked(float x, float y);
+    Q_INVOKABLE void imageClicked(QSizeF displaySize, float x, float y);
 
     Q_INVOKABLE void selectActuatorOutput(int index);
 

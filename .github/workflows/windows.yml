@@ -4,18 +4,20 @@ on:
   push:
     branches:
       - master
-      - 'Stable*'
+      - Stable*
     tags:
-      - 'v*'
+      - v*
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - docs/**
   pull_request:
     paths:
-      - '.github/workflows/windows.yml'
-      - 'deploy/windows/**'
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+      - .github/workflows/windows.yml
+      - deploy/windows/**
+      - src/**
+      - CMakeLists.txt
+      - cmake/**
+      - tools/setup/*windows*
+      - custom/**
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,116 +25,121 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        BuildType: [Release]
-        Arch: [x64] # Arm64
+        include:
+          - os: windows-2022
+            host: windows
+            arch: win64_msvc2022_64
+            build_type: Release
+            package: QGroundControl-*-installer-AMD64
+
+#          - os: windows-11-arm
+#            host: windows_arm64
+#            arch: win64_msvc2022_arm64
+#            build_type: Release
+#            package: QGroundControl-installer-ARM64
+#
+#          - os: windows-2022
+#            host: windows
+#            arch: win64_msvc2022_arm64_cross_compiled
+#            build_type: Release
+#            package: QGroundControl-installer-AMD64-ARM64
 
     defaults:
       run:
         shell: cmd
 
     env:
-      ARTIFACT: QGroundControl-installer.exe
-      PACKAGE: QGroundControl-installer
-      QT_VERSION: 6.8.3
-      GST_VERSION: 1.22.12
+      QT_VERSION: 6.10.0
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
+          fetch-tags: true
 
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
-
-      - name: Initial Setup
+      - name: Common setup
         uses: ./.github/actions/common
 
-      - name: Install Vulkan
-        working-directory: ${{ runner.temp }}
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile vulkan-sdk.exe
-          .\vulkan-sdk.exe --root C:\VulkanSDK\latest --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.glm com.lunarg.vulkan.volk com.lunarg.vulkan.vma com.lunarg.vulkan.debug
-          echo "VULKAN_SDK=C:\VulkanSDK\latest" >> $env:GITHUB_ENV
+      # - name: Install dependencies
+      #   shell: pwsh
+      #   run: ./tools/setup/install-dependencies-windows.ps1 -Force
 
       - name: Install GStreamer
+        if: matrix.arch == 'win64_msvc2022_64'
         uses: blinemedical/setup-gstreamer@v1
         with:
-          version: ${{ env.GST_VERSION }}
+          version: 1.22.12
 
-      - name: Setup Caching
+      - name: Setup cache
         uses: ./.github/actions/cache
         with:
-          host: windows
-          target: win64_msvc2022_64
-          build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ runner.temp }}\shadow_build_dir\cpm_modules
+          host: ${{ matrix.host }}
+          target: ${{ matrix.arch }}
+          build-type: ${{ matrix.build_type }}
+          cpm-modules: ${{ runner.temp }}\build\cpm_modules
 
-      - name: Install NSIS
-        run: choco install nsis -y
-
-      - name: Install Qt for Windows (x64)
+      - name: Install Qt ${{ env.QT_VERSION }}
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: windows
+          host: ${{ matrix.host }}
           target: desktop
-          arch: win64_msvc2022_64
+          arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          setup-python: false
           cache: true
 
-      # Note: Must Use QtMultimedia VideoReceiver or build GStreamer manually
-      - name: Install Qt for Windows (Arm64)
-        if: matrix.Arch == 'Arm64'
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          aqtversion: ==3.1.19
-          host: windows
-          target: desktop
-          arch: win64_msvc2022_arm64_cross_compiled
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
-
-      - name: Set up Visual Studio shell
+      - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.Arch == 'Arm64' && 'amd64_arm64' || 'x64' }}
+          arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
       - name: Configure
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../msvc2022_64"
-              -DQT_DEBUG_FIND_PACKAGE=ON
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+        working-directory: ${{ runner.temp }}\build
+        run: |
+          ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
+            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} ^
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }} ^
+            -DQT_HOST_PATH=${{ (matrix.arch == 'win64_msvc2022_arm64_cross_compiled') && format('{0}\\..\\msvc2022_64', env.QT_ROOT_DIR) || '' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}\build
+        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      - name: Sanity check release excecutable
-        if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}\shadow_build_dir\Release
+      - name: Verify Executable
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
         run: QGroundControl.exe --simple-boot-test
 
-      - name: Install
-        working-directory: ${{ runner.temp }}\shadow_build_dir
-        run: cmake --install . --config ${{ matrix.BuildType }}
+      - name: Create Installer
+        working-directory: ${{ runner.temp }}\build
+        run: cmake --install . --config ${{ matrix.build_type }}
 
-      - name: Upload Build File
-        if: matrix.BuildType == 'Release'
+      - name: Find Installer
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path "${{ runner.temp }}\build" -Recurse -Filter "QGroundControl-*-installer-AMD64.exe" | Select-Object -First 1
+          if ($null -eq $installer) {
+            Write-Error "Installer not found!"
+            exit 1
+          }
+          echo "INSTALLER_FILE=$($installer.Name)" >> $env:GITHUB_ENV
+          echo "INSTALLER_NAME=$($installer.BaseName)" >> $env:GITHUB_ENV
+          echo "Found installer: $($installer.Name)"
+
+      - name: Upload artifact (installer)
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
-          package_name: ${{ env.PACKAGE }}
+          artifact_name: ${{ env.INSTALLER_FILE }}
+          package_name: ${{ env.INSTALLER_NAME }}

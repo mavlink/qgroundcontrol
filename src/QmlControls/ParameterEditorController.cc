@@ -14,7 +14,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "qgc.qmlcontrols.parametereditorcontroller")
+QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "QMLControls.ParameterEditorController")
 
 ParameterTableModel::ParameterTableModel(QObject* parent)
     : QAbstractTableModel(parent)
@@ -24,7 +24,7 @@ ParameterTableModel::ParameterTableModel(QObject* parent)
 
 ParameterTableModel::~ParameterTableModel()
 {
-    
+
 }
 
 int ParameterTableModel::rowCount(const QModelIndex& /*parent*/) const
@@ -42,14 +42,14 @@ QVariant ParameterTableModel::data(const QModelIndex &index, int role) const
     if (!index.isValid()) {
         return QVariant();
     }
-    
+
     if (index.row() < 0 || index.row() >= _tableData.count()) {
         return QVariant();
     }
     if (index.column() < 0 || index.column() >= _tableViewColCount) {
         return QVariant();
     }
-    
+
     switch (role) {
         case Qt::DisplayRole:
             return QVariant::fromValue(_tableData[index.row()][index.column()]);
@@ -62,15 +62,10 @@ QVariant ParameterTableModel::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> ParameterTableModel::roleNames() const
 {
-    return { 
+    return {
         {Qt::DisplayRole, "display"},
         {FactRole, "fact"}
     };
-}
-
-void ParameterTableModel::setShowComponent(bool showComponent)
-{
-  _showComponent = showComponent;
 }
 
 void ParameterTableModel::clear()
@@ -99,9 +94,9 @@ void ParameterTableModel::insert(int row, Fact* fact)
 
     ColumnData colData(_tableViewColCount, QString());
     QString name = fact->name();
-    if(_showComponent)
-      name = QString::number(fact->componentId()).rightJustified(3,'0')+" : "+name;
-
+    if( _showComponent ){
+        name = QString::number(fact->componentId()).rightJustified(3,'0')+" : "+name;
+    }
     colData[NameColumn] = name;
     colData[ValueColumn] = QVariant::fromValue(fact);
     colData[DescriptionColumn] = fact->shortDescription();
@@ -141,10 +136,15 @@ Fact* ParameterTableModel::factAt(int row) const
     return _tableData[row][ValueColumn].value<Fact*>();
 }
 
+void ParameterTableModel::setShowComponent(bool show)
+{
+    _showComponent = show;
+}
 
-ParameterEditorGroup::ParameterEditorGroup(QObject* parent) 
-    : QObject(parent) 
-{ 
+
+ParameterEditorGroup::ParameterEditorGroup(QObject* parent)
+    : QObject(parent)
+{
 
 }
 
@@ -320,12 +320,14 @@ void ParameterEditorController::_factAdded(int compId, Fact* fact)
 
 void ParameterEditorController::_removeCategory(QString categoryName)
 {
-  auto *cat = _mapCategoryName2Category[categoryName];
-  QString catName = cat->name;
-  _categories.removeOne(cat);
-  delete _mapCategoryName2Category.take(categoryName);
-  setCurrentCategory(_mapCategoryName2Category.first());
-
+    auto *cat = _mapCategoryName2Category[categoryName];
+    if(cat == nullptr){
+        return;
+    }
+    QString catName = cat->name;
+    _categories.removeOne(cat);
+    delete _mapCategoryName2Category.take(categoryName);
+    setCurrentCategory(_mapCategoryName2Category.first());
 }
 
 void ParameterEditorController::saveToFile(const QString& filename)
@@ -366,7 +368,7 @@ void ParameterEditorController::sendDiff(void)
 
         if (paramDiff->load) {
             if (paramDiff->noVehicleValue) {
-                _parameterMgr->_factRawValueUpdateWorker(paramDiff->componentId, paramDiff->name, paramDiff->valueType, paramDiff->fileValueVar);
+                _parameterMgr->_mavlinkParamSet(paramDiff->componentId, paramDiff->name, paramDiff->valueType, paramDiff->fileValueVar);
             } else {
                 Fact* fact = _parameterMgr->getParameter(paramDiff->componentId, paramDiff->name);
                 fact->setRawValue(paramDiff->fileValueVar);
@@ -516,32 +518,33 @@ void ParameterEditorController::_performSearch(void)
         _searchParameters.beginReset();
         _searchParameters.clear();
 
-        for (const uint8_t components: _parameterMgr->componentIds())
-          for (const QString &paraName: _parameterMgr->parameterNames(components)) {
-            Fact* fact = _parameterMgr->getParameter(components, paraName);
-            bool matched = _shouldShow(fact);
-            // All of the search items must match in order for the parameter to be added to the list
-            if (matched) {
-                for (int i = 0; i < rgSearchStrings.size(); ++i) {
-                    const QRegularExpression &re = regexList.at(i);
-                    if (re.isValid()) {
-                        if (!fact->name().contains(re) &&
-                                !fact->shortDescription().contains(re) &&
-                                !fact->longDescription().contains(re)) {
-                            matched = false;
+        for (const uint8_t component: _parameterMgr->componentIds()) {
+            for(const QString &paraName : _parameterMgr->parameterNames(component)){
+                Fact* fact = _parameterMgr->getParameter(component, paraName);
+                bool matched = _shouldShow(fact);
+                // All of the search items must match in order for the parameter to be added to the list
+                if (matched) {
+                    for (int i = 0; i < rgSearchStrings.size(); ++i) {
+                        const QRegularExpression &re = regexList.at(i);
+                        if (re.isValid()) {
+                            if (!fact->name().contains(re) &&
+                                    !fact->shortDescription().contains(re) &&
+                                    !fact->longDescription().contains(re)) {
+                                matched = false;
+                            }
+                        } else {
+                            const QString &searchItem = rgSearchStrings.at(i);
+                            if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+                                    !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
+                                    !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
+                                matched = false;
+                            }
                         }
-                    } else {
-                        const QString &searchItem = rgSearchStrings.at(i);
-                        if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                            matched = false;
-                        }                    
                     }
                 }
-            }
-            if (matched) {
-                _searchParameters.append(fact);
+                if (matched) {
+                    _searchParameters.append(fact);
+                }
             }
         }
 

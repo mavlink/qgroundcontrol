@@ -1,24 +1,17 @@
-import QtQuick3D
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Window
-import QtPositioning
-
-import Viewer3D
-import Viewer3D.Models3D.Drones
-import Viewer3D.Models3D
-import QGroundControl.Viewer3D
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
 import QGroundControl
-import QGroundControl.Controllers
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
-
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
+import QGroundControl.Viewer3D
 
 View3D {
     id: topView
@@ -163,8 +156,8 @@ View3D {
                 }
 
                 materials: CustomMaterial {
-                    vertexShader: "/ShaderVertex/earthMaterial.vert"
-                    fragmentShader: "/ShaderFragment/earthMaterial.frag"
+                    vertexShader: "/qml/QGroundControl/Viewer3D/ShaderVertex/earthMaterial.vert"
+                    fragmentShader: "/qml/QGroundControl/Viewer3D/ShaderFragment/earthMaterial.frag"
                     property TextureInput someTextureMap: TextureInput {
                         texture: Texture {
                             textureData: _terrainTextureManager

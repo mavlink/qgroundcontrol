@@ -15,13 +15,13 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.Controllers
+
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 import QGroundControl.FlightMap
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+
+
+
 
 FlightMap {
     id:                         _root
@@ -47,7 +47,6 @@ FlightMap {
     property real   _toolsMargin:               ScreenTools.defaultFontPixelWidth * 0.75
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
-    property bool   _showGPSrawTrajectory:      _flyViewSettings.showGPSrawTrajectory.rawValue
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       pipMode ? true : false
@@ -249,34 +248,11 @@ FlightMap {
         showText: !pipMode
     }
 
-    // Add GPS trajectory lines to the map
-    MapPolyline{
-        id:         gpsTrajectoryPolyline
-        line.width: 3
-        line.color: "#8000FF00"
-        z:          QGroundControl.zOrderTrajectoryLines
-        visible:    !pipMode && _showGPSrawTrajectory
-
-        Connections {
-            target:                 QGroundControl.multiVehicleManager
-            function onActiveVehicleChanged(activeVehicle) {
-                gpsTrajectoryPolyline.path = _activeVehicle ? _activeVehicle.trajectoryPoints.gpsList() : []
-            }
-        }
-
-        Connections {
-            target:                                 _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            onGpsPointAdded: (coordinate) =>        gpsTrajectoryPolyline.addCoordinate(coordinate)
-            onGpsUpdateLastPoint: (coordinate) =>   gpsTrajectoryPolyline.replaceCoordinate(gpsTrajectoryPolyline.pathLength() - 1, coordinate)
-            onPointsCleared:                        gpsTrajectoryPolyline.path = []
-        }
-    }
-
     // Add trajectory lines to the map
     MapPolyline {
         id:         trajectoryPolyline
         line.width: 3
-        line.color: "#80FF0000"
+        line.color: "red"
         z:          QGroundControl.zOrderTrajectoryLines
         visible:    !pipMode
 
@@ -289,9 +265,9 @@ FlightMap {
 
         Connections {
             target:                             _activeVehicle ? _activeVehicle.trajectoryPoints : null
-            onPointAdded: (coordinate) =>       trajectoryPolyline.addCoordinate(coordinate)
-            onUpdateLastPoint: (coordinate) =>  trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
-            onPointsCleared:                    trajectoryPolyline.path = []
+            function onPointAdded(coordinate) { trajectoryPolyline.addCoordinate(coordinate) }
+            function onUpdateLastPoint(coordinate) { trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate) }
+            function onPointsCleared() { trajectoryPolyline.path = [] }
         }
     }
 
@@ -404,6 +380,7 @@ FlightMap {
 
         property alias coordinate: _fwdFlightGotoMapCircle.center
         property alias radius: _fwdFlightGotoMapCircle.radius
+        property alias clockwiseRotation: _fwdFlightGotoMapCircle.clockwiseRotation
 
         Component.onCompleted: {
             // Only allow editing the radius, not the position
@@ -593,7 +570,7 @@ FlightMap {
 
         Connections {
             target: _activeVehicle
-            onRoiCoordChanged: (centerCoord) => {
+            function onRoiCoordChanged(centerCoord) {
                 roiLocationItem.show(centerCoord)
             }
         }
@@ -756,16 +733,6 @@ FlightMap {
                         onClicked: {
                             mapClickDropPanel.close()
                             globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
-                        }
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Set estimated UAV position to VIO")
-                        visible:            true // TODO: make visible only on onboard_computer present
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatedUAVPosition, mapClickCoord)
                         }
                     }
 

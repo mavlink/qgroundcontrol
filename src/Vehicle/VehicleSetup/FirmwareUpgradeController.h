@@ -12,6 +12,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
+#include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick/QQuickItem>
 
 #include "QGCSerialPortInfo.h"
@@ -27,7 +28,7 @@ class Fact;
 class FirmwareUpgradeController : public QObject
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
         typedef enum {
             AutoPilotStackPX4 = 0,

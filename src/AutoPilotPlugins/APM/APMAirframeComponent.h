@@ -27,8 +27,8 @@ public:
     QString iconResource() const final { return QStringLiteral("/qmlimages/AirframeComponentIcon.png"); }
     bool requiresSetup() const final { return _requiresFrameSetup; }
     bool setupComplete() const final;
-    QUrl setupSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponent.qml")) : QUrl()); }
-    QUrl summaryQmlSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponentSummary.qml")) : QUrl()); }
+    QUrl setupSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMAirframeComponent.qml")) : QUrl()); }
+    QUrl summaryQmlSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml")) : QUrl()); }
 
 private:
     bool _requiresFrameSetup = false; ///< true: FRAME parameter must be set

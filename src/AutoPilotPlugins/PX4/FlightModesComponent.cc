@@ -43,10 +43,10 @@ QString FlightModesComponent::iconResource(void) const
 
 QUrl FlightModesComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/PX4FlightModes.qml");
+    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4FlightModes.qml");
 }
 
 QUrl FlightModesComponent::summaryQmlSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/FlightModesComponentSummary.qml");
+    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml");
 }

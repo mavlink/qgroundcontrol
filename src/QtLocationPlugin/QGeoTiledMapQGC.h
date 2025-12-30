@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <QtLocation/private/qgeotiledmap_p.h>
 #include <QtCore/QLoggingCategory>
+#include <QtLocation/private/qgeotiledmap_p.h>
 
 Q_DECLARE_LOGGING_CATEGORY(QGeoTiledMapQGCLog)
 

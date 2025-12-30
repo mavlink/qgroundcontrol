@@ -15,7 +15,7 @@
 #include "MissionCommandTree.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
+QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManager.PlanManager")
 
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     : QObject                   (vehicle)

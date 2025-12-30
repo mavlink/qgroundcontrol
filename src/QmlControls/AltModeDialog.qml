@@ -14,7 +14,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 QGCPopupDialog {
     title:   qsTr("Select Altitude Mode")

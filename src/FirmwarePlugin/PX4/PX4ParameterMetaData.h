@@ -29,7 +29,7 @@ class PX4ParameterMetaData : public QObject
     Q_OBJECT
 
 public:
-    PX4ParameterMetaData(void);
+    PX4ParameterMetaData(QObject* parent = nullptr);
 
     void            loadParameterFactMetaDataFile   (const QString& metaDataFile);
     FactMetaData*   getMetaDataForFact              (const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type);

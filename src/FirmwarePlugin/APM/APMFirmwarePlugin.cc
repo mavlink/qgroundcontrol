@@ -11,11 +11,6 @@
 #include "APMAutoPilotPlugin.h"
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
-#include "APMFlightModesComponentController.h"
-#include "APMAirframeComponentController.h"
-#include "APMSensorsComponentController.h"
-#include "APMFollowComponentController.h"
-#include "APMSubMotorComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
@@ -39,7 +34,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
+QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "FirmwarePlugin.APMFirmwarePlugin")
 
 APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
     : FirmwarePlugin(parent)
@@ -60,12 +55,6 @@ APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
     };
 
     updateAvailableFlightModes(modeList);
-
-    (void) qmlRegisterType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
-    (void) qmlRegisterType<APMAirframeComponentController>("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
-    (void) qmlRegisterType<APMSensorsComponentController>("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
-    (void) qmlRegisterType<APMFollowComponentController>("QGroundControl.Controllers", 1, 0, "APMFollowComponentController");
-    (void) qmlRegisterType<APMSubMotorComponentController>("QGroundControl.Controllers", 1, 0, "APMSubMotorComponentController");
 }
 
 APMFirmwarePlugin::~APMFirmwarePlugin()
@@ -452,39 +441,77 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle *vehicle)
     instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
 }
 
+APMFirmwarePlugin::FirmwareParameterHeader APMFirmwarePlugin::_parseParamsHeader(const QString &filePath)
+{
+    APMFirmwarePlugin::FirmwareParameterHeader data{};
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return data;
+    }
+
+    QTextStream stream(&file);
+    while (!stream.atEnd()) {
+        const QString line = stream.readLine();
+
+        // Stop once non-comment parameter rows begin and we already saw some header
+        if (!line.startsWith('#')) {
+            break;
+        }
+
+        using namespace Qt::StringLiterals;
+
+        static const QRegularExpression reStack(uR"(^#\s*Stack:\s*(.+)\s*$)"_s);
+        auto match = reStack.match(line);
+        if (match.hasMatch()) {
+            const QString firmwareTypeStr = match.captured(1).trimmed();
+            const MAV_AUTOPILOT firmwareType = QGCMAVLink::firmwareTypeFromString(firmwareTypeStr);
+            data.firmwareType = firmwareType;
+            continue;
+        }
+
+        static const QRegularExpression reVehicle(uR"(^#\s*Vehicle:\s*(.+)\s*$)"_s);
+        match = reVehicle.match(line);
+        if (match.hasMatch()) {
+            const QString vehicleTypeStr = match.captured(1).trimmed();
+            const MAV_TYPE vehicleType = QGCMAVLink::vehicleTypeFromString(vehicleTypeStr);
+            data.vehicleType = vehicleType;
+            continue;
+        }
+
+        static const QRegularExpression reVersion(uR"(^#\s*Version:\s*([0-9]+(?:\.[0-9]+){0,2})(?:\s+([A-Za-z0-9]+))?\s*$)"_s);
+        match = reVersion.match(line);
+        if (match.hasMatch()) {
+            const QString versionNumber = match.captured(1).trimmed();
+            data.versionNumber = QVersionNumber::fromString(versionNumber);
+
+            const QString versionType = match.captured(2).trimmed();
+            if (versionType.isEmpty()) {
+                data.versionType = FIRMWARE_VERSION_TYPE_OFFICIAL;
+            } else {
+                data.versionType = QGCMAVLink::firmwareVersionTypeFromString(versionType);
+            }
+            continue;
+        }
+
+        static const QRegularExpression reGit(uR"(^#\s*Git Revision:\s*([0-9a-fA-F]+)\s*$)"_s);
+        match = reGit.match(line);
+        if (match.hasMatch()) {
+            data.gitRevision = match.captured(1).trimmed();
+            continue;
+        }
+    }
+
+    return data;
+}
 
 void APMFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
 {
     if (vehicle->isOfflineEditingVehicle()) {
-        switch (vehicle->vehicleType()) {
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-            vehicle->setFirmwareVersion(3, 6, 0);
-            break;
-        case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
-        case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_FIXEDROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_TILTWING:
-        case MAV_TYPE_VTOL_RESERVED5:
-        case MAV_TYPE_FIXED_WING:
-            vehicle->setFirmwareVersion(3, 9, 0);
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-        case MAV_TYPE_SURFACE_BOAT:
-            vehicle->setFirmwareVersion(3, 5, 0);
-            break;
-        case MAV_TYPE_SUBMARINE:
-            vehicle->setFirmwareVersion(3, 4, 0);
-            break;
-        default:
-            // No version set
-            break;
+        const QString offlineParameterFile = offlineEditingParamFile(vehicle);
+        const APMFirmwarePlugin::FirmwareParameterHeader offlineParameterHeader = _parseParamsHeader(offlineParameterFile);
+        if (offlineParameterHeader.vehicleType != MAV_TYPE_GENERIC) {
+            vehicle->setFirmwareVersion(offlineParameterHeader.versionNumber.majorVersion(), offlineParameterHeader.versionNumber.minorVersion(), offlineParameterHeader.versionNumber.microVersion());
         }
     } else {
         initializeStreamRates(vehicle);
@@ -596,7 +623,7 @@ QObject *APMFirmwarePlugin::_loadParameterMetaData(const QString &metaDataFile)
 {
     Q_UNUSED(metaDataFile);
 
-    APMParameterMetaData *const metaData = new APMParameterMetaData();
+    APMParameterMetaData *const metaData = new APMParameterMetaData(this);
     metaData->loadParameterFactMetaDataFile(metaDataFile);
     return metaData;
 }
@@ -634,24 +661,8 @@ const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
         // First call the base class to get the standard QGC list
         _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
 
-        // Find the generic flight mode indicator and replace with the custom one
-        for (int i = 0; i < _toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMFlightModeIndicator.qml"));
-                break;
-            }
-        }
-
-        // Find the generic battery indicator and replace with the custom one
-        for (int i = 0; i < _toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMBatteryIndicator.qml"));
-                break;
-            }
-        }
-
-        // Then add the forwarding support indicator
-        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/APMSupportForwardingIndicator.qml")));
+        // Add the forwarding support indicator
+        _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMSupportForwardingIndicator.qml")));
     }
 
     return _toolIndicatorList;
@@ -728,7 +739,7 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle *vehicle
     int currMinor = vehicle->firmwareMinorVersion();
 
     // Find next newest version available
-    while ((currMajor >= 3) && (currMinor > 0)) {
+    while ((currMajor >= 4) && (currMinor > 0)) {
         const QString tempFileName = fileNameFormat.arg(vehicleName).arg(currMajor).arg(currMinor);
         if (QFileInfo::exists(tempFileName)) {
             return tempFileName;
@@ -743,7 +754,7 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle *vehicle
 
     // Use oldest version available which should be equivalent to offline params
     for (int i = 0; i < 10; i++) {
-        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(3).arg(i);
+        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(4).arg(i);
         if (QFileInfo::exists(tempFileName)) {
             return tempFileName;
         }
@@ -814,6 +825,19 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
             handlerInfo.resultHandler = _MAV_CMD_DO_REPOSITION_ResultHandler;
             handlerInfo.resultHandlerData = result_handler_data;
 
+            // For copters, this parameter specifies a yaw heading (heading
+            // reference defined in Bitmask field). NaN to use the current
+            // system yaw heading mode (e.g. yaw towards next waypoint, yaw to
+            // home, etc.).
+            // For planes it indicates loiter direction (0: clockwise, 1:
+            // counter clockwise)
+            float yawParam = NAN;
+            if (forwardFlightLoiterRadius > 0) {
+                yawParam = 0.0f;
+            } else if (forwardFlightLoiterRadius < 0) {
+                yawParam = 1.0f;
+            }
+
             vehicle->sendMavCommandIntWithHandler(
                 &handlerInfo,
                 vehicle->defaultComponentId(),
@@ -821,8 +845,8 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
                 MAV_FRAME_GLOBAL,
                 -1.0f,
                 MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                static_cast<float>(forwardFlightLoiterRadius),
-                NAN,
+                static_cast<float>(abs(forwardFlightLoiterRadius)),
+                yawParam,
                 gotoCoord.latitude(),
                 gotoCoord.longitude(),
                 vehicle->altitudeAMSL()->rawValue().toFloat()
@@ -1253,11 +1277,6 @@ void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle *
     );                                        // param 5-7 unused
 }
 
-QVariant APMFirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
-{
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMMainStatusIndicatorContentItem.qml"));
-}
-
 void APMFirmwarePlugin::_setBaroGndTemp(Vehicle* vehicle, qreal temp)
 {
     if (!vehicle) {
@@ -1371,4 +1390,17 @@ bool APMFirmwarePlugin::stopCompensatingBaro(const Vehicle *vehicle, QPair<QMeta
     }
 
     return result;
+}
+
+QVariant APMFirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* vehicle, const QString& indicatorName) const
+{
+    if (indicatorName == "Battery") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMBatteryIndicator.qml"));
+    } else if (indicatorName == "FlightMode" && vehicle->multiRotor()) {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMFlightModeIndicator.qml"));
+    } else if (indicatorName == "MainStatus") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/APM/APMMainStatusIndicator.qml"));
+    }
+
+    return QVariant();
 }

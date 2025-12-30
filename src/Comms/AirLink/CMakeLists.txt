@@ -13,26 +13,13 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# qt_add_qml_module(QGC
-#     URI QGroundControl.AirLink
-#     VERSION 1.0
-#     QML_FILES
-#         AirLinkSettings.qml
-#     OUTPUT_TARGETS AirLink_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtQuick.Layouts
+qt_add_library(AirLinkModule STATIC)
 
-#         QGroundControl
-#         QGroundControl.Controllers
-#         QGroundControl.Controls
-#         QGroundControl.FactControls
-#         QGroundControl.FactSystem
-#         QGroundControl.ScreenTools
-#         QGroundControl.SettingsManager
-# )
-
-# cmake_print_variables(AirLink_targets)
-# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkplugin)
+qt_add_qml_module(AirLinkModule
+    URI QGroundControl.AirLink
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        AirLinkSettings.qml
+    NO_PLUGIN
+)

@@ -11,7 +11,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(StandardModesLog, "StandardModesLog")
+QGC_LOGGING_CATEGORY(StandardModesLog, "Vehicle.StandardModes")
 
 static void requestMessageResultHandler(void *resultHandlerData, MAV_RESULT result,
                                         [[maybe_unused]] Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
@@ -48,6 +48,7 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
                 break;
             case MAV_STANDARD_MODE_ORBIT:
                 name = "Orbit";
+                cannotBeSet = true; // These are exposed in the UI as separate buttons
                 break;
             case MAV_STANDARD_MODE_CRUISE:
                 name = "Cruise";
@@ -67,10 +68,6 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
             case MAV_STANDARD_MODE_TAKEOFF:
                 name = "Takeoff";
                 break;
-        }
-
-        if (name == "Takeoff" || name == "VTOL Takeoff" || name == "Orbit" || name == "Land" || name == "Return") { // These are exposed in the UI as separate buttons
-            cannotBeSet = true;
         }
 
         qCDebug(StandardModesLog) << "Available mode received - name:" << name <<
@@ -100,7 +97,7 @@ void StandardModes::gotMessage(MAV_RESULT result, const mavlink_message_t &messa
             requestMode(availableModes.mode_index + 1);
         }
     } else {
-        qCDebug(StandardModesLog) << "Failed to retrieve available modes" << result;
+        qCDebug(StandardModesLog) << "Failed to retrieve available modes - REQUEST_MESSAGE:MAV_RESULT" << result;
         emit requestCompleted();
     }
 }
@@ -130,6 +127,7 @@ void StandardModes::request()
 
     qCDebug(StandardModesLog) << "Requesting available modes";
     // Request one at a time. This could be improved by requesting all, but we can't use Vehicle::requestMessage for that
+    _modeList.clear();
     StandardModes::requestMode(1);
 }
 

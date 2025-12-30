@@ -1,17 +1,26 @@
 package org.mavlink.qgroundcontrol;
 
+import java.io.File;
 import java.util.List;
 import java.lang.reflect.Method;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.PowerManager;
 import android.net.wifi.WifiManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.WindowManager;
 import android.app.Activity;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.qtproject.qt.android.bindings.QtActivity;
 
@@ -119,30 +128,100 @@ public class QGCActivity extends QtActivity {
     public static String getSDCardPath() {
         StorageManager storageManager = (StorageManager)m_instance.getSystemService(Activity.STORAGE_SERVICE);
         List<StorageVolume> volumes = storageManager.getStorageVolumes();
-        Method mMethodGetPath;
-        String path = "";
+        
         for (StorageVolume vol : volumes) {
-            try {
-                mMethodGetPath = vol.getClass().getMethod("getPath");
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+            if (!vol.isRemovable()) {
                 continue;
             }
-            try {
-                path = (String) mMethodGetPath.invoke(vol);
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
-
-            if (vol.isRemovable() == true) {
-                Log.i(TAG, "removable sd card mounted " + path);
-                return path;
+            
+            String path = null;
+            
+            // For Android 11+ (API 30+), use the proper getDirectory() method
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                File directory = vol.getDirectory();
+                if (directory != null) {
+                    path = directory.getAbsolutePath();
+                }
             } else {
-                Log.i(TAG, "storage mounted " + path);
+                // For older versions, use reflection to get the path
+                try {
+                    Method mMethodGetPath = vol.getClass().getMethod("getPath");
+                    path = (String) mMethodGetPath.invoke(vol);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to get path via reflection", e);
+                    continue;
+                }
+            }
+            
+            if (path != null && !path.isEmpty()) {
+                Log.i(TAG, "removable sd card mounted at " + path);
+                return path;
             }
         }
+        
+        Log.w(TAG, "No removable SD card found");
         return "";
+    }
+
+    /**
+     * Checks and requests storage permissions for SD card access.
+     * For Android 11+ (API 30+), this requires MANAGE_EXTERNAL_STORAGE permission.
+     *
+     * @return true if permissions are granted, false otherwise
+     */
+    public static boolean checkStoragePermissions() {
+        if (m_instance == null) {
+            Log.e(TAG, "Activity instance is null");
+            return false;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ (API 30+) requires MANAGE_EXTERNAL_STORAGE for full SD card access
+            if (!Environment.isExternalStorageManager()) {
+                Log.i(TAG, "MANAGE_EXTERNAL_STORAGE not granted, requesting...");
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.setData(Uri.parse("package:" + m_instance.getPackageName()));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    m_instance.startActivity(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to open storage permission settings", e);
+                    // Fallback to general settings
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    m_instance.startActivity(intent);
+                }
+                return false;
+            }
+            Log.i(TAG, "MANAGE_EXTERNAL_STORAGE already granted");
+            return true;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android 6.0+ (API 23+) requires runtime permissions
+            String[] permissions = {
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            };
+
+            boolean allGranted = true;
+            for (String permission : permissions) {
+                if (ContextCompat.checkSelfPermission(m_instance, permission) != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+
+            if (!allGranted) {
+                Log.i(TAG, "Storage permissions not granted, requesting...");
+                ActivityCompat.requestPermissions(m_instance, permissions, 1);
+                return false;
+            }
+
+            Log.i(TAG, "Storage permissions already granted");
+            return true;
+        } else {
+            // Below Android 6.0, permissions are granted at install time
+            return true;
+        }
     }
 
     // Native C++ functions

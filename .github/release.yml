@@ -1,0 +1,20 @@
+changelog:
+  categories:
+    - title: Features
+      labels:
+        - "RN: MAJOR FEATURE"
+        - "RN: MINOR FEATURE"
+        - "RN: MAJOR FEATURE - CUSTOM BUILD"
+        - "RN: MINOR FEATURE - CUSTOM BUILD"
+    - title: Improvements
+      labels:
+        - "RN: IMPROVEMENT"
+        - "RN: IMPROVEMENT - CUSTOM BUILD"
+        - "RN: REFACTORING"
+    - title: Fixes
+      labels: 
+        - "RN: BUGFIX"
+        - "RN: BUGFIX - CUSTOM BUILD"
+    - title: Targets
+      labels:
+        - "RN: NEW BOARD SUPPORT"

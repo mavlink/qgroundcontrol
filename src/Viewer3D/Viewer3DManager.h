@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -21,6 +22,7 @@ class Viewer3DQmlBackend;
 class Viewer3DManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("OsmParser.h")
     Q_MOC_INCLUDE("Viewer3DQmlBackend.h")
 
@@ -31,8 +33,6 @@ public:
     explicit Viewer3DManager();
 
     ~Viewer3DManager();
-
-    static void registerQmlTypes();
 
 protected:
     OsmParser *_osmParser = nullptr;

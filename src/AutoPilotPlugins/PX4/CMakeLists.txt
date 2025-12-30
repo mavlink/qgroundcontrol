@@ -1,3 +1,8 @@
+# ============================================================================
+# PX4 AutoPilot Plugin
+# PX4-specific vehicle configuration and setup
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ActuatorComponent.cc
@@ -34,35 +39,68 @@ target_sources(${CMAKE_PROJECT_NAME}
         SensorsComponentController.h
 )
 
+# ----------------------------------------------------------------------------
+# PX4 Airframe Metadata
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_resource
+    PREFIX "/AutoPilotPlugins/PX4"
+    FILES AirframeFactMetaData.xml
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# qt_add_resources(${CMAKE_PROJECT_NAME} "PX4AutoPilotPlugin_res"
-#     PREFIX "/"
-#     FILES
-#         AirframeFactMetaData.xml
-# )
+# ----------------------------------------------------------------------------
+# PX4 QML Module
+# ----------------------------------------------------------------------------
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
-# file(GLOB QML_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.qml)
-# file(GLOB QML_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Images/*.*)
-# qt_add_qml_module(${CMAKE_PROJECT_NAME}
-#     URI QGroundControl.PX4AutoPilotPlugin
-#     VERSION 1.0
-#     QML_FILES ${QML_SOURCES}
-#     RESOURCES ${QML_RESOURCES}
-#     OUTPUT_TARGETS PX4AutoPilotPlugin_targets
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Controls
-#         QtQuick.Dialogs
-#         QtQuick.Layouts
+qt_add_library(AutoPilotPluginsPX4Module STATIC)
 
-#         QGroundControl
-#         QGroundControl.FactSystem
-#         QGroundControl.FactControls
-#         QGroundControl.Controls
-#         QGroundControl.ScreenTools
-#         QGroundControl.Controllers
-#         QGroundControl.Palette
-#         QGroundControl.Vehicle
-# )
+target_link_libraries(AutoPilotPluginsPX4Module PRIVATE Qt6::Core)
+
+qt_add_qml_module(AutoPilotPluginsPX4Module
+    URI QGroundControl.AutoPilotPlugins.PX4
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        ActuatorComponent.qml
+        ActuatorFact.qml
+        ActuatorSlider.qml
+        AirframeComponent.qml
+        AirframeComponentSummary.qml
+        BatteryParams.qml
+        FlightModesComponentSummary.qml
+        PowerComponent.qml
+        PowerComponentSummary.qml
+        PX4FlightBehaviorCopter.qml
+        PX4FlightModes.qml
+        PX4RadioComponentSummary.qml
+        PX4SimpleFlightModes.qml
+        PX4TuningComponent.qml
+        PX4TuningComponentCopter.qml
+        PX4TuningComponentCopterAll.qml
+        PX4TuningComponentCopterAttitude.qml
+        PX4TuningComponentCopterPosition.qml
+        PX4TuningComponentCopterRate.qml
+        PX4TuningComponentCopterVelocity.qml
+        PX4TuningComponentPlane.qml
+        PX4TuningComponentPlaneAll.qml
+        PX4TuningComponentPlaneAttitude.qml
+        PX4TuningComponentPlaneRate.qml
+        PX4TuningComponentPlaneTECS.qml
+        PX4TuningComponentSpacecraft.qml
+        PX4TuningComponentSpacecraftAll.qml
+        PX4TuningComponentSpacecraftAttitude.qml
+        PX4TuningComponentSpacecraftPosition.qml
+        PX4TuningComponentSpacecraftRate.qml
+        PX4TuningComponentSpacecraftVelocity.qml
+        PX4TuningComponentVTOL.qml
+        SafetyComponent.qml
+        SafetyComponentSummary.qml
+        SensorsComponent.qml
+        SensorsComponentSummary.qml
+        SensorsComponentSummaryFixedWing.qml
+        SensorsSetup.qml
+    NO_PLUGIN
+    SOURCES
+)

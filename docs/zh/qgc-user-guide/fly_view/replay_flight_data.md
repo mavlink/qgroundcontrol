@@ -1,39 +1,39 @@
-# Replay Flight Data
+# 重放飞行数据
 
 :::warning
-This feature is intended primarily for **autopilot developers**/**vehicle creators**.
-It is only supported on desktop builds (Windows, Linux, Mac OS).
+此功能主要适用于 **autopilot 开发者**/**载具制造者**。
+它仅在桌面版本上支持 (Windows, Linux, Mac OS)。
 :::
 
-The _Replay Flight Data_ feature allows users to replay a telemetry log, enabling review of past or problematic flights.
-The flight can be started, paused, stopped, restarted etc.
+_重播飞行数据_ 的功能允许用户重新播放遥测日志，从而能够对过去的飞行或有问题的飞行进行审查。
+飞行可以启动、暂停、停止、重新启动等。
 
 :::info
-_QGroundControl_ treats flight replay like an active connection.
-When you pause/stop playing, the ground station will report "Communication Lost" and wait for disconnection or for more messages.
+_QGroundControl_ 将飞行重放视为活动连接。
+当您暂停/停止播放时，地面站将报告“通信损失”并等待断开连接或更多消息。
 :::
 
-To replay a flight:
+重放飞行：
 
-1. Disconnect any active connections.
+1. 断开任何活动连接.
 
-2. Select **Application Settings > General > Fly View**
+2. 选择 **应用程序设置 > 常规 > 飞行视图**
 
-3. Check **Show Telemetry Log Replay Status Bar** to toggle the flight replay bar at the bottom of the screen.
+3. 检查 **显示 Telemetry 日志重播状态栏** 以切换屏幕底部的飞行重播栏。
 
-   ![Toggle Flight Replay](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
+   ![切换飞行重播](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
 
-4. Select the **Load Telemetry Log** button in the bar to display a _file selection_ dialog.
-   - Choose a log file to replay from the available telemetry logs.
-   - _QGroundControl_ will immediately start playing the log.
+4. 选择 **Load Telemetry 日志** 按钮来显示一个 _file 选择对话框。
+   - 从可用的遥测日志中选择要重播的日志文件。
+   - _QGroundControl_ 将立即开始播放日志。
 
-5. When a log is loaded you can use the:
-   - **Pause/Play** button to pause and restart playing.
-   - _Slider_ to drag to a new position in the log.
-   - _Rate_ selector to choose the playback speed.
+5. 当加载日志时，您可以使用：
+   - **暂停/播放** 按钮以暂停和重启播放。
+   - _滑块_ 拖动到日志中的一个新位置。
+   - 选择播放速度的 _速度_ 选择器。
 
-6. To stop replay (i.e. to load a new file to replay), first pause the flight, and then select **Disconnect** (when it appears).
-   After disconnecting, the **Load Telemetry Log** button will be displayed.
+6. 要停止重播(即加载新文件重播)，首先暂停飞行，然后选择 **断开连接** (当它出现时)。
+   断开连接后，将显示 **Load Telemetry 日志** 按钮。
 
 :::tip
 您可以使用 [MAVLink 检查器](../analyze_view/mavlink_inspector.md)更详细地检查正在运行的回放。

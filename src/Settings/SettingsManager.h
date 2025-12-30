@@ -12,6 +12,8 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <QtCore/QJsonObject>
+#include <QtCore/QMap>
 
 class ADSBVehicleManagerSettings;
 class APMMavlinkStreamRateSettings;
@@ -31,9 +33,11 @@ class PlanViewSettings;
 class RemoteIDSettings;
 class RTKSettings;
 class UnitsSettings;
+class NTRIPSettings;
 class VideoSettings;
 class Viewer3DSettings;
 class MavlinkSettings;
+class FactMetaData;
 
 Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog)
 
@@ -41,8 +45,8 @@ Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog)
 class SettingsManager : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("ADSBVehicleManagerSettings.h")
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     Q_MOC_INCLUDE("APMMavlinkStreamRateSettings.h")
@@ -63,6 +67,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("RemoteIDSettings.h")
     Q_MOC_INCLUDE("RTKSettings.h")
     Q_MOC_INCLUDE("UnitsSettings.h")
+    Q_MOC_INCLUDE("NTRIPSettings.h")
     Q_MOC_INCLUDE("VideoSettings.h")
     Q_MOC_INCLUDE("MavlinkSettings.h")
 #ifdef QGC_VIEWER3D
@@ -88,6 +93,7 @@ class SettingsManager : public QObject
     Q_PROPERTY(QObject *remoteIDSettings                READ remoteIDSettings               CONSTANT)
     Q_PROPERTY(QObject *rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject *unitsSettings                   READ unitsSettings                  CONSTANT)
+    Q_PROPERTY(QObject *ntripSettings                   READ ntripSettings                  CONSTANT)
     Q_PROPERTY(QObject *videoSettings                   READ videoSettings                  CONSTANT)
     Q_PROPERTY(QObject *mavlinkSettings                 READ mavlinkSettings                CONSTANT)
 #ifdef QGC_VIEWER3D
@@ -101,6 +107,12 @@ public:
     static void registerQmlTypes();
 
     void init();
+
+    /// Allows for overriding the meta data before the fact is created.
+    ///     @param settingsGroup - QSettings group which contains this item
+    ///     @param metaData - MetaData for setting fact
+    ///     @param visible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
+    static void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible);
 
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -122,6 +134,7 @@ public:
     RemoteIDSettings *remoteIDSettings() const;
     RTKSettings *rtkSettings() const;
     UnitsSettings *unitsSettings() const;
+    NTRIPSettings *ntripSettings() const;
     VideoSettings *videoSettings() const;
     MavlinkSettings *mavlinkSettings() const;
 #ifdef QGC_VIEWER3D
@@ -129,6 +142,8 @@ public:
 #endif
 
 private:
+    void _loadSettingsFiles();
+
     ADSBVehicleManagerSettings *_adsbVehicleManagerSettings = nullptr;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *_apmMavlinkStreamRateSettings = nullptr;
@@ -149,9 +164,18 @@ private:
     RemoteIDSettings *_remoteIDSettings = nullptr;
     RTKSettings *_rtkSettings = nullptr;
     UnitsSettings *_unitsSettings = nullptr;
+    NTRIPSettings *_ntripSettings = nullptr;
     VideoSettings *_videoSettings = nullptr;
     MavlinkSettings *_mavlinkSettings = nullptr;
 #ifdef QGC_VIEWER3D
     Viewer3DSettings *_viewer3DSettings = nullptr;
 #endif
+
+    QMap<QString, QMap<QString, QJsonObject>> _settingsFileOverrides;   // groupName:settingName:metaDataObject
+
+    static constexpr int kSettingsFileVersion = 1;
+    static constexpr const char* kSettingsFileType = "Settings";
+    static constexpr const char* kJsonGroupsObjectKey = "groups";
+    static constexpr const char* kJsonVisibleKey = "visible";
+    static constexpr const char* kJsonForceRawValueKey = "forceRawValue";
 };

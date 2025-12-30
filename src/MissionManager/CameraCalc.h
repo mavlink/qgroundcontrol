@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "CameraSpec.h"
 #include "SettingsFact.h"
 #include "QGroundControlQmlGlobal.h"
@@ -18,7 +20,8 @@ class PlanMasterController;
 class CameraCalc : public CameraSpec
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent = nullptr);
 

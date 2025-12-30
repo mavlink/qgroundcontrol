@@ -21,6 +21,8 @@
 #include <QtCore/QMutex>
 #include <QtPositioning/QGeoCoordinate>
 
+#include <atomic>
+
 class MockLinkFTP;
 class MockLinkWorker;
 class QThread;
@@ -92,6 +94,26 @@ public:
     };
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
 
+    enum ParamSetFailureMode_t {
+        FailParamSetNone,               ///< Normal behavior
+        FailParamSetNoAck,              ///< Do not send PARAM_VALUE ack
+        FailParamSetFirstAttemptNoAck,  ///< Skip ack on first attempt, respond to retry
+    };
+    void setParamSetFailureMode(ParamSetFailureMode_t mode) {
+        _paramSetFailureMode = mode;
+        _paramSetFailureFirstAttemptPending = (mode == FailParamSetFirstAttemptNoAck);
+    }
+
+    enum ParamRequestReadFailureMode_t {
+        FailParamRequestReadNone,               ///< Normal behavior
+        FailParamRequestReadNoResponse,         ///< Do not respond to PARAM_REQUEST_READ
+        FailParamRequestReadFirstAttemptNoResponse, ///< Skip response on first attempt, respond to retry
+    };
+    void setParamRequestReadFailureMode(ParamRequestReadFailureMode_t mode) {
+        _paramRequestReadFailureMode = mode;
+        _paramRequestReadFailureFirstAttemptPending = (mode == FailParamRequestReadFirstAttemptNoResponse);
+    }
+
     static MockLink *startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startNoInitialConnectMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -121,6 +143,14 @@ private slots:
     void _writeBytesQueued(const QByteArray &bytes);
 
 private:
+    typedef struct {
+        const char *name;
+        uint8_t standard_mode;
+        uint32_t custom_mode;
+        bool canBeSet;
+        bool advanced;
+    } FlightMode_t;
+
     bool _connect() final;
     bool _allocateMavlinkChannel() final;
     void _freeMavlinkChannel() final;
@@ -147,13 +177,19 @@ private:
     void _handleFTP(const mavlink_message_t &msg);
     void _handleCommandLong(const mavlink_message_t &msg);
     void _handleInProgressCommandLong(const mavlink_command_long_t &request);
+    void _handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &acccepted);
     void _handleManualControl(const mavlink_message_t &msg);
     void _handlePreFlightCalibration(const mavlink_command_long_t &request);
     void _handleTakeoff(const mavlink_command_long_t &request);
     void _handleLogRequestList(const mavlink_message_t &msg);
     void _handleLogRequestData(const mavlink_message_t &msg);
     void _handleParamMapRC(const mavlink_message_t &msg);
-    bool _handleRequestMessage(const mavlink_command_long_t &request, bool &noAck);
+    void _handleRequestMessage(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
+    void _handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted);
+    void _handleRequestMessageProtocolVersion(const mavlink_command_long_t &request, bool &accepted);
+    void _handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
+    void _handleRequestMessageAvailableModes(const mavlink_command_long_t &request, bool &accepted);
+    void _handleRequestMessageGimbalManagerInformation(const mavlink_command_long_t &request, bool &accepted);
 
     void _sendHeartBeat();
     void _sendHighLatency2();
@@ -164,6 +200,8 @@ private:
     void _sendVibration();
     void _sendSysStatus();
     void _sendBatteryStatus();
+    void _sendGimbalManagerStatus();
+    void _sendGimbalDeviceAttitudeStatus();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
@@ -172,10 +210,13 @@ private:
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
     void _sendVideoInfo();
+    void _sendAvailableModesMonitor();
 
-    /// Sends the next parameter to the vehicle
     void _paramRequestListWorker();
     void _logDownloadWorker();
+    void _availableModesWorker();
+    void _sendAvailableMode(uint8_t modeIndexOneBased);
+    int  _availableModesCount() const;
     void _moveADSBVehicle(int vehicleIndex);
 
     static MockLink *_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
@@ -233,11 +274,22 @@ private:
     int _currentParamRequestListComponentIndex = -1;    ///< Current component index for param request list workflow, -1 for no request in progress
     int _currentParamRequestListParamIndex = -1;        ///< Current parameter index for param request list workflow
 
+    // Mavlink standard modes worker information
+    int _availableModesWorkerNextModeIndex = 0;         ///< 0: not active, +index: next mode the send in sequence, -index: send a single mode (indices are 1-based)
+    uint8_t _availableModesMonitorSeqNumber = 0;        ///< Sequence number for the next available mode message to send
+
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
 
+    bool _sendGimbalManagerStatusNow = false;
+    bool _sendGimbalDeviceAttitudeStatusNow = false;
+
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
+    ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
+    bool _paramSetFailureFirstAttemptPending = false;
+    ParamRequestReadFailureMode_t _paramRequestReadFailureMode = FailParamRequestReadNone;
+    bool _paramRequestReadFailureFirstAttemptPending = false;
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<int, QMap<QString, QVariant>> _mapParamName2Value;
@@ -269,4 +321,8 @@ private:
     static constexpr uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file
 
     static constexpr bool _mavlinkStarted = true;
+
+    static QList<FlightMode_t> _availableFlightModes;
+
+    std::atomic<bool> _disconnectedEmitted{false};
 };

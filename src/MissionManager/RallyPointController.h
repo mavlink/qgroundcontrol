@@ -9,11 +9,12 @@
 
 #pragma once
 
+#include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
-
-#include <QtPositioning/QGeoCoordinate>
-#include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(RallyPointControllerLog)
 
@@ -24,9 +25,10 @@ class Vehicle;
 class RallyPointController : public PlanElementController
 {
     Q_OBJECT
-    
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
-    RallyPointController(PlanMasterController* masterController, QObject* parent = nullptr);
+    explicit RallyPointController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~RallyPointController();
     
     Q_PROPERTY(QmlObjectListModel*  points                  READ points                                             CONSTANT)

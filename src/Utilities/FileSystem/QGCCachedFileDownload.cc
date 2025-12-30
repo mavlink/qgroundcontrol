@@ -14,7 +14,7 @@
 #include <QtCore/QDateTime>
 #include <QtNetwork/QNetworkDiskCache>
 
-QGC_LOGGING_CATEGORY(QGCCachedFileDownloadLog, "qgc.utilities.qgccachedfiledownload");
+QGC_LOGGING_CATEGORY(QGCCachedFileDownloadLog, "Utilities.QGCCachedFileDownload");
 
 QGCCachedFileDownload::QGCCachedFileDownload(const QString &cacheDirectory, QObject *parent)
     : QObject(parent)

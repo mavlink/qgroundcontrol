@@ -4,7 +4,7 @@ QGC 创建用户界面，动态地从json 元数据层次编辑特定的任务�
 
 ## 为什么是树型结构？
 
-不同的固件支持不同的命令，以及/或者不同类型的车辆以不同的方式支持不同的命令，因此需要使用树形结构来处理这些问题。 最简单的例子是 mavlink 规范可能包含了并非所有固件都支持的命令参数。 或仅适用于某些类型载具的命令参数。 此外，在某些情况下，地面控制站可能会决定将某些命令参数在视图中对最终用户进行隐藏，因为它们过于复杂或导致可用性问题。
+不同的固件支持不同的命令，以及/或者不同类型的载具以不同的方式支持不同的命令，因此需要使用树形结构来处理这些问题。 最简单的例子是 mavlink 规范可能包含了并非所有固件都支持的命令参数。 或仅适用于某些类型载具的命令参数。 此外，在某些情况下，地面控制站可能会决定将某些命令参数在视图中对最终用户进行隐藏，因为它们过于复杂或导致可用性问题。
 
 该树是 MissionCommandTree 类：[MissionCommandTree.cc](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.cc), [MissionCommandTree.h](https://github.com/mavlink/qgroundcontrol/blob/master/src/MissionManager/MissionCommandTree.h)
 
@@ -97,7 +97,7 @@ The leaf nodes then provides metadata which can override values for the command 
 
 ### 根－载具类型的特定叶节点
 
-The next level of the hiearchy are overrides which are specific to a firmware type but apply to all vehicle types. 让我们再次看看航点重写功能：
+下一层厚此薄彼会覆盖固件类型特定但适用于所有载具类型。 让我们再次看看航点重写功能：
 
 [ArduPilot](https://github.com/mavlink/qgroundcontrol/blob/master/src/FirmwarePlugin/APM/MavCmdInfoCommon.json#L6):
 

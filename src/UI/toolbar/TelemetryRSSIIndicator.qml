@@ -12,9 +12,9 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
+
+
+
 
 //-------------------------------------------------------------------------
 //-- Telemetry RSSI

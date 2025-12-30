@@ -13,7 +13,7 @@
 #include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(TerrainTileLog, "qgc.terrain.terraintile");
+QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
 
 TerrainTile::TerrainTile(const QByteArray &byteArray)
     : _tileInfo(*reinterpret_cast<const TileInfo_t*>(byteArray.constData()))

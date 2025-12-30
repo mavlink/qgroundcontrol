@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(CameraMetaDataLog)
 
@@ -43,6 +44,9 @@ public:
                    bool fixedOrientation,
                    double minTriggerInterval,
                    const QString &deprecatedTranslatedName);
+    ~CameraMetaData();
+
+    static QList<CameraMetaData*> parseCameraMetaData();
 
     const QString canonicalName;        ///< Canonical name saved in plan files. Not translated.
     const QString brand;                ///< Camera brand. Used for grouping.
@@ -62,4 +66,4 @@ public:
     /// Newly added CameraMetaData entries should leave this value empty.
     const QString deprecatedTranslatedName;
 };
-Q_DECLARE_METATYPE(CameraMetaData)
+Q_DECLARE_METATYPE(CameraMetaData*)

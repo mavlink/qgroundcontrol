@@ -173,7 +173,7 @@ void MissionControllerTest::_testGimbalRecalc(void)
     item->cameraSection()->setSpecifyGimbal(true);
     item->cameraSection()->gimbalYaw()->setRawValue(0.0);
     SettingsManager::instance()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
-    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    QTest::qWait(500); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
         //qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
@@ -202,7 +202,7 @@ void MissionControllerTest::_testVehicleYawRecalc(void)
         _missionController->insertSimpleMissionItem(currentCoord, i);
     }
 
-    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    QTest::qWait(500); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
 
     // No specific vehicle yaw set yet. Vehicle yaw should track flight path.
     double expectedVehicleYaw = wpAngleInc;
@@ -218,7 +218,7 @@ void MissionControllerTest::_testVehicleYawRecalc(void)
     SimpleMissionItem* simpleItem = _missionController->visualItems()->value<SimpleMissionItem*>(3);
     simpleItem->missionItem().setParam4(66);
 
-    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    QTest::qWait(500); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
 
     // All item should track vehicle path except for the one changed
     expectedVehicleYaw = wpAngleInc;

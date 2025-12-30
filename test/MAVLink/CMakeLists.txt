@@ -1,3 +1,8 @@
+# ============================================================================
+# MAVLink Unit Tests
+# Tests for MAVLink protocol, status text handling, and message signing
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         StatusTextHandlerTest.cc

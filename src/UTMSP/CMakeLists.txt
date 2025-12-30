@@ -1,30 +1,41 @@
-set(UTMSP_RESOURCES)
+# ============================================================================
+# UTMSP Module
+# Unmanned Traffic Management Service Provider integration
+# ============================================================================
 
+qt_add_library(UTMSPModule STATIC)
+
+# ----------------------------------------------------------------------------
+# Dummy UTMSP Module (when adapter is disabled)
+# ----------------------------------------------------------------------------
 if(NOT QGC_UTM_ADAPTER)
-    # qt_add_resources(UTMSP_RESOURCES dummy/utmsp_dummy.qrc)
+    set_source_files_properties(dummy/UTMSPStateStorage.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
-    # qt_add_qml_module(QGC
-    #     URI QGroundControl.UTMSP
-    #     VERSION 1.0
-    #     QML_FILES
-    #         dummy/UTMSPActivationStatusBar.qml
-    #         dummy/UTMSPAdapterEditor.qml
-    #         dummy/UTMSPMapPolygonVisuals.qml
-    #         dummy/UTMSPMapVisuals.qml
-    #         dummy/UTMSPStateStorage.qml
-    #     OUTPUT_TARGETS UTMSP_targets
-    #     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-    #     IMPORTS
-    #         QtQuick
-    #         QGroundControl.UTMSP
-    # )
+    qt_add_qml_module(UTMSPModule
+        URI QGroundControl.UTMSP
+        VERSION 1.0
+        RESOURCE_PREFIX /qml
+        QML_FILES
+            dummy/UTMSPActivationStatusBar.qml
+            dummy/UTMSPAdapterEditor.qml
+            dummy/UTMSPFlightStatusIndicator.qml
+            dummy/UTMSPMapPolygonVisuals.qml
+            dummy/UTMSPMapVisuals.qml
+            dummy/UTMSPNotificationSlider.qml
+            dummy/UTMSPStateStorage.qml
+        NO_PLUGIN
+    )
+
     return()
 endif()
 
-# qt_add_resources(UTMSP_RESOURCES utmsp.qrc)
+# ----------------------------------------------------------------------------
+# Full UTMSP Adapter Implementation
+# ----------------------------------------------------------------------------
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        services/dispatcher.h
         UTMSPAircraft.cpp
         UTMSPAircraft.h
         UTMSPAuthorization.cpp
@@ -50,6 +61,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         UTMSPVehicle.h
 )
 
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
+# TODO: Enable nlohmann_json when needed
 # CPMFindPackage(
 #     NAME nlohmann_json
 #     VERSION 3.11.3
@@ -71,42 +86,35 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UTM_ADAPTER)
 
-# qt_add_qml_module(QGC
-#     URI QGroundControl.UTMSP
-#     VERSION 1.0
-#     QML_FILES
-#         UTMSPActivationStatusBar.qml
-#         UTMSPAdapterEditor.qml
-#         UTMSPMapPolygonVisuals.qml
-#         UTMSPMapVisuals.qml
-#         UTMSPStateStorage.qml
-#     OUTPUT_TARGETS UTMSP_targets
-#     RESOURCES
-#         images/date.svg
-#         images/green.png
-#         images/load.gif
-#         images/red.png
-#         images/time.svg
-#         images/timer.gif
-#     IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-#     IMPORTS
-#         QtQuick
-#         QtQuick.Layouts
-#         QtQuick.Dialogs
-#         QtQuick.Controls
-#         QtPositioning
-#         QtLocation
+# ----------------------------------------------------------------------------
+# UTMSP QML Module
+# ----------------------------------------------------------------------------
+set_source_files_properties(UTMSPStateStorage.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
-#         QGroundControl
-#         QGroundControl.FlightMap
-#         QGroundControl.ScreenTools
-#         QGroundControl.Controls
-#         QGroundControl.FactSystem
-#         QGroundControl.FactControls
-#         QGroundControl.Palette
-#         QGroundControl.Controllers
-#         QGroundControl.ShapeFileHelper
-#         QGroundControl.UTMSP
-#         QGroundControl.FlightDisplay
-#         QGroundControl.MultiVehicleManager
-# )
+qt_add_qml_module(UTMSPModule
+    URI QGroundControl.UTMSP
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        UTMSPActivationStatusBar.qml
+        UTMSPAdapterEditor.qml
+        UTMSPFlightStatusIndicator.qml
+        UTMSPMapPolygonVisuals.qml
+        UTMSPMapVisuals.qml
+        UTMSPNotificationSlider.qml
+        UTMSPStateStorage.qml
+    RESOURCES
+        images/date.svg
+        images/green.png
+        images/green_led.png
+        images/load.gif
+        images/orange_led.png
+        images/pale_green.png
+        images/parrot_green.png
+        images/red.png
+        images/red_led.png
+        images/time.svg
+        images/timer.gif
+        images/yellow_led.png
+    NO_PLUGIN
+)

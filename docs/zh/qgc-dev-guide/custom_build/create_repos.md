@@ -1,15 +1,15 @@
-# Initial Repository Setup For Custom Build
+# 自定义构建的初始仓库设置
 
-The suggested mechanism for working on QGC and a custom build version of QGC is to have two separate repositories. The first repo is your main QGC fork. The second repo is your custom build repo.
+所建议的处理QGC 和自定义的 QGC 版本的机制是有两个单独的仓库。 第一个仓库是你主要的 QGC 分支。 第二个仓库是你的自定义构建仓库。
 
-## Main QGC Respository
+## 主要的 QGC 存储库
 
-This repo is used to work on changes to mainline QGC. When creating your own custom build it is not uncommon to discover that you may need a tweak/addition to the custom build to achieve what you want. By discussing those needed changes firsthand with QGC devs and submitting pulls to make the custom build architecture better you make QGC more powerful for everyone and give back to the community.
+此插件用于处理主QGC的更改。 在创建自己的自定义构建时，发现可能需要对自定义构建进行调整或添加内容以实现所需功能，这种情况并不少见。 通过与QGC开发人员直接讨论这些必要的更改，并提交拉取请求以使自定义构建架构更完善，你能让QGC对所有人来说都更强大，同时也为社区做出了贡献。
 
-The best way to create this repo is to fork the regular QGC repo to your own GitHub account.
+创建此仓库的最佳方式是将常规的 QGC 仓库 fork 到您自己的 GitHub 帐户。
 
-## Custom Build Repository
+## 自定义构建仓库
 
-This is where you will do your main custom build development. All changes here should be within the custom directory as opposed to bleeding out into the regular QGC codebase.
+这是您的主要自定义构建开发领域。 此处所有更改都应在自定义目录内进行，而不应扩散到常规的QGC代码库中。
 
-Since you can only fork a repo once, the way to create this repo is to "Create a new repository" in your GitHub account. Do not add any additional files to it like gitignore, readme's and so forth. Once it is created you will be given the option to setup up the Repo. Now you can select to "import code from another repository". Just import the regular QGC repo using the "Import Code" button.
+由于你只能对一个代码仓库fork一次，创建此代码仓库的方法是在你的GitHub账户中 “创建一个新的代码仓库”。 不要向它添加任何其他文件，如gitignore, readme等。 一旦创建，您将被赋予设置仓库的选项。 现在您可以选择“从另一个仓库导入代码”。 只需使用"导入代码"按钮导入常规的 QGC 仓库 。

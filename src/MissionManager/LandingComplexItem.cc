@@ -22,7 +22,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(LandingComplexItemLog, "LandingComplexItemLog")
+QGC_LOGGING_CATEGORY(LandingComplexItemLog, "Plan.LandingComplexItem")
 
 LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
     : ComplexMissionItem        (masterController, flyView)
@@ -48,9 +48,10 @@ void LandingComplexItem::_init(void)
     connect(loiterRadius(),             &Fact::valueChanged,                                this, &LandingComplexItem::_recalcFromRadiusChange);
     connect(loiterClockwise(),          &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromRadiusChange);
 
+    connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromApproachModeChange);
+
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_recalcFromCoordinateChange);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_recalcFromCoordinateChange);
-    connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromCoordinateChange);
 
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
     connect(useDoChangeSpeed(),         &Fact::valueChanged,                                this, &LandingComplexItem::_setDirty);
@@ -81,10 +82,10 @@ void LandingComplexItem::_init(void)
     connect(this,                       &LandingComplexItem::wizardModeChanged,             this, &LandingComplexItem::readyForSaveStateChanged);
 
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::complexDistanceChanged);
-    connect(this,                       &LandingComplexItem::loiterTangentCoordinateChanged,this, &LandingComplexItem::complexDistanceChanged);
+    connect(this,                       &LandingComplexItem::slopeStartCoordinateChanged,   this, &LandingComplexItem::complexDistanceChanged);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::complexDistanceChanged);
 
-    connect(this,                       &LandingComplexItem::loiterTangentCoordinateChanged,this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(this,                       &LandingComplexItem::slopeStartCoordinateChanged,   this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_updateFlightPathSegmentsSignal);
@@ -109,7 +110,7 @@ void LandingComplexItem::setLandingHeadingToTakeoffHeading()
 
 double LandingComplexItem::complexDistance(void) const
 {
-    return finalApproachCoordinate().distanceTo(loiterTangentCoordinate()) + loiterTangentCoordinate().distanceTo(landingCoordinate());
+    return finalApproachCoordinate().distanceTo(slopeStartCoordinate()) + slopeStartCoordinate().distanceTo(landingCoordinate());
 }
 
 void LandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
@@ -159,25 +160,30 @@ void LandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
     //      distance
     //      radius
     // Adjusted:
-    //      loiter
-    //      loiter tangent
-    //      glide slope
+    //      final approach
+    //      slope start
 
     if (!_ignoreRecalcSignals && _landingCoordSet) {
         // These are our known values
-        double radius = loiterRadius()->rawValue().toDouble();
-        double landToTangentDistance = landingDistance()->rawValue().toDouble();
+        double distance = landingDistance()->rawValue().toDouble();
         double heading = landingHeading()->rawValue().toDouble();
 
-        // Heading is from loiter to land, hence +180
-        _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
+        // Heading is from slope start to land, hence +180
+        _slopeStartCoordinate = _landingCoordinate.atDistanceAndAzimuth(distance, heading + 180);
 
-        // Loiter coord is 90 degrees counter clockwise from tangent coord
-        _finalApproachCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 + (_loiterClockwise()->rawValue().toBool() ? -90 : 90));
+        if (useLoiterToAlt()->rawValue().toBool()) {
+            double radius = loiterRadius()->rawValue().toDouble();
+
+            // Loiter coord is 90 degrees counter clockwise from tangent coord
+            _finalApproachCoordinate = _slopeStartCoordinate.atDistanceAndAzimuth(radius, heading - 180 + (_loiterClockwise()->rawValue().toBool() ? -90 : 90));
+        } else {
+            _finalApproachCoordinate = _slopeStartCoordinate;
+        }
+
         _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
 
         _ignoreRecalcSignals = true;
-        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+        emit slopeStartCoordinateChanged(_slopeStartCoordinate);
         emit finalApproachCoordinateChanged(_finalApproachCoordinate);
         emit coordinateChanged(_finalApproachCoordinate);
         _calcGlideSlope();
@@ -189,7 +195,7 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
 {
     // Fixed:
     //      land
-    //      loiter tangent
+    //      slope start
     //      distance
     //      radius
     //      heading
@@ -199,22 +205,22 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
     if (!_ignoreRecalcSignals) {
         // These are our known values
         double radius  = loiterRadius()->rawValue().toDouble();
-        double landToTangentDistance = landingDistance()->rawValue().toDouble();
+        double distance = landingDistance()->rawValue().toDouble();
         double heading = landingHeading()->rawValue().toDouble();
 
         double landToLoiterDistance = _landingCoordinate.distanceTo(_finalApproachCoordinate);
         if (landToLoiterDistance < radius) {
             // Degnenerate case: Move tangent to loiter point
-            _loiterTangentCoordinate = _finalApproachCoordinate;
+            _slopeStartCoordinate = _finalApproachCoordinate;
 
-            double heading = _landingCoordinate.azimuthTo(_loiterTangentCoordinate);
+            double heading = _landingCoordinate.azimuthTo(_slopeStartCoordinate);
 
             _ignoreRecalcSignals = true;
             landingHeading()->setRawValue(heading);
-            emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+            emit slopeStartCoordinateChanged(_slopeStartCoordinate);
             _ignoreRecalcSignals = false;
         } else {
-            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(landToTangentDistance, 2));
+            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(distance, 2));
             double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? -1 : 1);
 
             _finalApproachCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToLoiterDistance, heading + 180 + angleLoiterToTangent);
@@ -228,43 +234,80 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
     }
 }
 
+void LandingComplexItem::_recalcFromApproachModeChange(void)
+{
+    // Fixed:
+    //      land
+    //      slope start
+    //      heading
+    //      distance
+    // Adjusted:
+    //      final approach
+
+    if (!_ignoreRecalcSignals && _landingCoordSet) {
+        if (useLoiterToAlt()->rawValue().toBool()) {
+            double radius = loiterRadius()->rawValue().toDouble();
+            double offsetAngle =
+                landingHeading()->rawValue().toDouble() - 180 +
+                (_loiterClockwise()->rawValue().toBool() ? -90 : 90);
+
+            _finalApproachCoordinate =
+                _slopeStartCoordinate.atDistanceAndAzimuth(radius, offsetAngle);
+        } else {
+            _finalApproachCoordinate = _slopeStartCoordinate;
+        }
+
+        _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
+
+        _ignoreRecalcSignals = true;
+        emit finalApproachCoordinateChanged(_finalApproachCoordinate);
+        emit coordinateChanged(_finalApproachCoordinate);
+        _calcGlideSlope();
+        _ignoreRecalcSignals = false;
+    }
+}
+
 void LandingComplexItem::_recalcFromCoordinateChange(void)
 {
     // Fixed:
     //      land
-    //      loiter
+    //      final approach
     //      radius
     // Adjusted:
-    //      loiter tangent
     //      heading
     //      distance
-    //      glide slope
+    //      slope start
 
     if (!_ignoreRecalcSignals && _landingCoordSet) {
-        // These are our known values
-        double radius = loiterRadius()->rawValue().toDouble();
-        double landToLoiterDistance = _landingCoordinate.distanceTo(_finalApproachCoordinate);
-        double landToLoiterHeading = _landingCoordinate.azimuthTo(_finalApproachCoordinate);
+        double distance;
 
-        double landToTangentDistance;
-        if (landToLoiterDistance < radius) {
-            // Degenerate case, set tangent to loiter coordinate
-            _loiterTangentCoordinate = _finalApproachCoordinate;
-            landToTangentDistance = _landingCoordinate.distanceTo(_loiterTangentCoordinate);
+        if (useLoiterToAlt()->rawValue().toBool()) {
+            // These are our known values
+            double radius = loiterRadius()->rawValue().toDouble();
+            double landToLoiterDistance = _landingCoordinate.distanceTo(_finalApproachCoordinate);
+            double landToLoiterHeading = _landingCoordinate.azimuthTo(_finalApproachCoordinate);
+
+            if (landToLoiterDistance < radius) {
+                // Degenerate case: tangent at loiter coordinate
+                _slopeStartCoordinate = _finalApproachCoordinate;
+                distance = _landingCoordinate.distanceTo(_slopeStartCoordinate);
+            } else {
+                // Calculate tangent point using circle geometry
+                double loiterToTangentAngle = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? 1 : -1);
+                distance = qSqrt(qPow(landToLoiterDistance, 2) - qPow(radius, 2));
+                _slopeStartCoordinate = _landingCoordinate.atDistanceAndAzimuth(distance, landToLoiterHeading + loiterToTangentAngle);
+            }
         } else {
-            double loiterToTangentAngle = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? 1 : -1);
-            landToTangentDistance = qSqrt(qPow(landToLoiterDistance, 2) - qPow(radius, 2));
-
-            _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, landToLoiterHeading + loiterToTangentAngle);
-
+            _slopeStartCoordinate = _finalApproachCoordinate;
+            distance = _landingCoordinate.distanceTo(_slopeStartCoordinate);
         }
 
-        double heading = _loiterTangentCoordinate.azimuthTo(_landingCoordinate);
+        double heading = _slopeStartCoordinate.azimuthTo(_landingCoordinate);
 
         _ignoreRecalcSignals = true;
         landingHeading()->setRawValue(heading);
-        landingDistance()->setRawValue(landToTangentDistance);
-        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
+        landingDistance()->setRawValue(distance);
+        emit slopeStartCoordinateChanged(_slopeStartCoordinate);
         _calcGlideSlope();
         _ignoreRecalcSignals = false;
     }

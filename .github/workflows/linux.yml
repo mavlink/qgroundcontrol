@@ -4,20 +4,22 @@ on:
   push:
     branches:
       - master
-      - 'Stable*'
+      - Stable*
     tags:
-      - 'v*'
+      - v*
     paths-ignore:
-      - 'docs/**' # Do not trigger for any changes under docs
+      - docs/** # Do not trigger for any changes under docs
   pull_request:
     paths:
-      - '.github/workflows/linux.yml'
-      - '.github/actions/**'
-      - 'deploy/linux/**'
-      - 'src/**'
-      - 'test/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+      - .github/workflows/linux.yml
+      - .github/actions/**
+      - deploy/linux/**
+      - src/**
+      - test/**
+      - CMakeLists.txt
+      - cmake/**
+      - tools/setup/*debian*
+      - custom/**
 
 # concurrency:
 #   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,34 +27,38 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        BuildType: [Debug, Release]
-        # Arch: [x64] # Arm64
+        build_type: [Release] #Debug,
+        os: [ubuntu-22.04]
+        include:
+          - os: ubuntu-22.04
+            package: QGroundControl
+            host: linux
+            arch: linux_gcc_64
+
+        exclude:
+          - os: ubuntu-24.04-arm
+            build_type: Debug
 
     defaults:
       run:
         shell: bash
 
     env:
-      ARTIFACT: QGroundControl-x86_64.AppImage
-      PACKAGE: QGroundControl-x86_64
-      QT_VERSION: 6.8.3
+      QT_VERSION: 6.10.0
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 1
-          fetch-tags: false
-
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f --depth 1
+          fetch-tags: true
 
       - name: Initial Setup
         uses: ./.github/actions/common
@@ -62,64 +68,66 @@ jobs:
           chmod a+x ./tools/setup/install-dependencies-debian.sh
           sudo ./tools/setup/install-dependencies-debian.sh
 
-      - name: Install Vulkan
-        run: |
-          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
-          sudo apt update
-          sudo apt install vulkan-sdk
-
       - name: Setup Caching
         uses: ./.github/actions/cache
         with:
-          host: linux
-          target: linux_gcc_64
-          build-type: ${{ matrix.BuildType }}
-          cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
+          host: ${{ matrix.host }}
+          target: ${{ matrix.arch }}
+          build-type: ${{ matrix.build_type }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
-      - name: Install Qt for Linux (x64)
+      - name: Install Qt for Linux
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: linux
+          host: ${{ matrix.host }}
           target: desktop
-          arch: linux_gcc_64
+          arch: ${{ matrix.arch }}
           dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
+          setup-python: false
           cache: true
 
       # - name: Build GStreamer
       #   uses: ./.github/actions/gstreamer
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/shadow_build_dir
+        working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.BuildType }}
-              -DQGC_BUILD_TESTING=${{ matrix.BuildType == 'Debug' && 'ON' || 'OFF' }}
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+              -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --build . --target all --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+
+      - name: Verify Executable
+        if: matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
+        run: xvfb-run -a ./${{ matrix.package }} --simple-boot-test
 
       - name: Create AppImage
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: cmake --install . --config ${{ matrix.BuildType }}
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config ${{ matrix.build_type }}
 
-      - name: Sanity check release excecutable
-        if: matrix.BuildType == 'Release'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --simple-boot-test
+      - name: Verify AppImage
+        if: matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./${{ matrix.package }}-*-x86_64.AppImage --simple-boot-test
 
-      - name: Run unit tests
-        if: matrix.BuildType == 'Debug'
-        working-directory: ${{ runner.temp }}/shadow_build_dir
-        run: xvfb-run -a ./${{ env.ARTIFACT }} --unittest
-
+      - name: Run Unit Tests
+        if: matrix.build_type == 'Debug'
+        working-directory: ${{ runner.temp }}/build
+        run: xvfb-run -a ./${{ matrix.package }}-*-x86_64.AppImage --unittest
 
       - name: Upload Build File
-        if: matrix.BuildType == 'Release'
+        if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
         with:
-          artifact_name: ${{ env.ARTIFACT }}
-          package_name: ${{ env.PACKAGE }}
+          artifact_name: ${{ matrix.package }}-*-x86_64.AppImage
+          package_name: ${{ matrix.package }}
+#          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+#          github_token: ${{ secrets.GITHUB_TOKEN }}

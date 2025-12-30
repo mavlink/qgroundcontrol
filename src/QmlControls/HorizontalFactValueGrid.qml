@@ -12,15 +12,14 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import QtQml
 
-import QGroundControl.Templates as T
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.Palette
+
+
+
 import QGroundControl.FlightMap
 import QGroundControl
 
-T.HorizontalFactValueGrid {
+HorizontalFactValueGridTemplate {
     id:                     _root
     Layout.preferredWidth:  topLayout.width
     Layout.preferredHeight: topLayout.height

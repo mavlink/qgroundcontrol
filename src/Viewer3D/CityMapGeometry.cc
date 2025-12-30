@@ -12,7 +12,6 @@
 #include "Viewer3DSettings.h"
 #include "OsmParser.h"
 
-
 CityMapGeometry::CityMapGeometry()
 {
     _osmParser = nullptr;

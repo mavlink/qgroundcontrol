@@ -17,7 +17,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
-QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "qgc.comms.qgcserialportinfo")
+QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "Comms.QGCSerialPortInfo")
 
 bool QGCSerialPortInfo::_jsonLoaded = false;
 bool QGCSerialPortInfo::_jsonDataValid = false;
@@ -28,18 +28,18 @@ QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardManufac
 QGCSerialPortInfo::QGCSerialPortInfo()
     : QSerialPortInfo()
 {
-    // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
 QGCSerialPortInfo::QGCSerialPortInfo(const QSerialPort &port)
     : QSerialPortInfo(port)
 {
-    // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
 QGCSerialPortInfo::~QGCSerialPortInfo()
 {
-    // qCDebug(QGCSerialPortInfoLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
 bool QGCSerialPortInfo::_loadJsonData()

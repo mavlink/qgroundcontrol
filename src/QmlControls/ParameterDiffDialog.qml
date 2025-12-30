@@ -14,10 +14,10 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
+
+
 import QGroundControl.FactControls
-import QGroundControl.Controllers
+
 
 QGCPopupDialog {
     title:      qsTr("Load Parameters")

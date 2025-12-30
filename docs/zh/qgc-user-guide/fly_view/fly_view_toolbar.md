@@ -1,78 +1,78 @@
-# Fly View Toolbar
+# 飞行视图工具栏
 
-![Fly View](../../../assets/fly/toolbar/fly_view_toolbar.jpg)
+![飞行视图](../../../assets/fly/toolbar/fly_view_toolbar.jpg)
 
-## Views
+## 视图
 
-The "Q" icon on the left of the toolbar allows you to select between additional top level views:
+工具栏左边的“Q”图标允许您在其他顶级视图中选择：
 
-- **[Plan Flight](../plan_view/plan_view.md):** Used to create missions, geo-fences and rally points
-- **Analyze Tools:** A set of tools for things like log download, geo-tagging images, or viewing telemetry.
-- **Vehicle Configuration:** The various options for the initial configuration of a new vehicle.
-- **Application Settings:** Settings for the QGroundControl application itself.
+- **[Plan Flight](../plan_view/plan_view.md)：** 用于创建任务、地理栅栏和集结点
+- **分析工具：** 用于日志下载、地理标记图像或查看遥测等事项的一组工具。
+- **车辆配置：** 新车初始配置的各种选项。
+- **应用程序设置：** QGroundControl应用程序本身的设置。
 
-## Toolbar Indicators
+## 工具栏指示器
 
-Next are a multiple toolbar indicators for vehicle status. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
+接下来是关于车辆状况的多个工具栏指标。 每个工具栏指示器的下拉功能提供了关于状态的更多细节。 您也可以展开指示器以显示与指示器相关联的其他应用程序和载具设置。 按">"按钮来扩展。
 
-![Toolbar Indicator - expand button](../../../assets/fly/toolbar_indicator_expand.png)
+![工具栏指示器 - 展开按钮](../../../assets/fly/toolbar_indicator_expand.png)
 
-### Flight Status
+### 飞行状态
 
-The Flight Status indicator shows you whether the vehicle is ready to fly or not. It can be in one of the following states:
+飞行状态指示器显示载具是否可以飞行。 它可以是下列状态之一：
 
-- **Ready To Fly** (_green background_) - Vehicle is ready to fly
-- **Ready To Fly** (_yellow background_) - Vehicle is ready to fly in the current flight mode. But there are warnings which may cause problems.
-- **Not Ready** - Vehicle is not ready to fly and will not takeoff.
-- **Armed** - Vehicle is armed and ready to Takeoff.
-- **Flying** - Vehicle is in the air and flying.
-- **Landing** - Vehicle is in the process of landing.
-- **Communication Lost** - QGroundControl has lost communication with the vehicle.
+- **准备好飞速** (_绿色背景) - 载具已准备就绪。
+- **准备好飞行** (_黄色背景) - 载具已准备好在当前飞行模式下飞行。 但有些警告可能造成问题。
+- **尚未准备好** - 载具没有准备好飞行，也不会起飞。
+- **解锁** - 载具已解锁并准备起飞。
+- **飞行** - 载具在空中飞行和飞行中。
+- **着陆** - 载具正在着陆。
+- **通信丢失** - QGroundControl已失去与载具的通信。
 
-The Flight Status Indicator dropdown also gives you acess to:
+飞行状态指示器下拉也让您可以：
 
-- **Arm** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
-- **Disarm** - Disarming a vehicle is only availble when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
-- **Emergency Stop** - Emergency stop is used to disarm the vehicle while it is flying. For emergency use only, your vehicle will crash!
+- **解锁** - 解锁一辆载具开启发动机以准备起飞。 你只有在载具安全和准备飞行时才能解锁载具。 通常你不需要手动解锁载具。 你可以简单地起飞或开始执行任务，载具将解锁自己。
+- **锁定** - 只有当载具在地面时才能锁定载具。 它会关停电机。 一般来说，你无需明确进行锁定操作，因为飞行器会在着陆后自动锁定，或者如果在解锁后若未起飞，不久后也会自动锁定。
+- **紧急停机** - 在载具飞行时用紧急停机锁定载具。 仅供紧急情况使用，你的飞行器会坠毁！
 
-In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
+在警告或尚未准备好状态的情况下，您可以点击指示器来显示下拉菜单，显示原因(s)。 右侧的切换按钮会展开每个错误，并显示更多信息及可能的解决方案。
 
-![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
+![用于检查解锁警告的用户界面](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
 
-Once each issue is resolved it will disappear from the UI. When all issues blocking arming have been removed you should now be ready to fly.
+每个问题解决后，将从用户界面中消失。 当所有阻止解锁的问题被移除时，你现在应该可以准备飞行了。
 
-## Flight Mode
+## 飞行模式
 
-The Flight Mode indicator shows you the current flight mode. The dropdown allows you to switch between flight modes. The expanded page allows you to:
+飞行模式指示器显示您当前的飞行模式。 下拉菜单允许您在飞行模式之间切换。 扩展页面允许您：
 
-- Configure vehicle land settings
-- Set global geo-fence settings
-- Add/Remove flight modes from the displayed list
+- 配置载具降落设置
+- 设置全局地理栅栏设置
+- 从显示列表中添加/删除飞行模式
 
-## Vehicle Messages
+## 载具信息
 
-The Vehicle Messages indicator dropdown shows you messages which come from the vehicle. The indicator will turn red if there are important messages available.
+车辆消息指示器下拉显示来自车辆的消息。 如果有重要信息，指示器将会变红。
 
 ## GPS
 
-The GPS indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings.
+GPS指示器在工具栏图标中向您显示卫星计数和HDOP。 下拉菜单显示您额外的 GPS 状态。 扩展页面允许您访问RTK设置。
 
-## Battery
+## 电池
 
-The Battery indicator shows you a configurable colored battery icon for remaining charge. It can also be configured to show percent remaining, voltage or both. The expanded page allows you to:
+电池指示器向您展示了一个可配置的充电图标。 它也可以配置为显示剩余的电压或两种电压。 扩展页面允许您：
 
-- Set what value(s) you want displayed in the battery icon
-- Configure the icon coloring
-- Set up the low battery failsafe
+- 设定电池图标中显示的值 (s)
+- 配置图标着色
+- 设置低电量故障安全
 
-## Remote ID
+## 远程 ID
 
-## Other Indicators
+## 其他指标
 
-There are other indicators which only show in certain situations:
+还有其他指标只能在某些情况下显示：
 
-- Telemetry RSSI
-- RC RSSI
-- Gimbal
-- VTOL transitions
-- Select from multiple connected vehicles
+- 遥测信号强度指示
+- 遥控信号强度指示
+- Gimbal - Only displayed if the vehicle supports the [Mavlink Gimbal Protocol](https://mavlink.io/en/services/gimbal_v2.html)
+- 垂直起降转换
+- 从多个连接的载具中选择

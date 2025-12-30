@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class UTMSPVehicle;
 class Vehicle;
@@ -19,6 +20,8 @@ class UTMSPAuthorization;
 class UTMSPManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("UTMSPVehicle.h")
     Q_MOC_INCLUDE("UTMSPAuthorization.h")
     Q_PROPERTY(UTMSPVehicle *utmspVehicle READ utmspVehicle CONSTANT)

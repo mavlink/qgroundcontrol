@@ -10,14 +10,13 @@
 #include "BatteryIndicatorSettings.h"
 
 #include <QSettings>
-#include <QtQml/QQmlEngine>
 
 DECLARE_SETTINGGROUP(BatteryIndicator, "BatteryIndicator")
 {
-    qmlRegisterUncreatableType<BatteryIndicatorSettings>("QGroundControl.SettingsManager", 1, 0, "BatteryIndicatorSettings", "Reference only");
 }
 
 DECLARE_SETTINGSFACT(BatteryIndicatorSettings, valueDisplay)
+DECLARE_SETTINGSFACT(BatteryIndicatorSettings, consolidateMultipleBatteries)
 
 DECLARE_SETTINGSFACT_NO_FUNC(BatteryIndicatorSettings, threshold1)
 {

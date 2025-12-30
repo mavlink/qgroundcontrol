@@ -5,7 +5,6 @@ import QtQuick.Controls
 import QtQuick.Window
 
 import QGroundControl
-import QGroundControl.ScreenToolsController
 
 /*!
  The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
@@ -17,7 +16,7 @@ import QGroundControl.ScreenToolsController
 
  Usage:
 
-        import QGroundControl.ScreenTools
+        import QGroundControl.Controls
 
         Rectangle {
             anchors.fill:       parent

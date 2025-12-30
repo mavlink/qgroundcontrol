@@ -9,15 +9,17 @@
 
 #pragma once
 
+#include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "Vehicle.h"
 #include "MAVLinkLib.h"
-
-#include <QtCore/QTimer>
 
 class Autotune : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     explicit Autotune(Vehicle *vehicle);

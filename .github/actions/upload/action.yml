@@ -7,12 +7,60 @@ inputs:
   package_name:
     description: Package name
     required: true
+  aws_key_id:
+    description: AWS access key ID
+    required: false
+  aws_secret_access_key:
+    description: AWS secret access key
+    required: false
+  aws_distribution_id:
+    description: AWS distribution ID
+    required: false
+  github_token:
+    description: GitHub Token
+    required: false
+  upload_aws:
+    description: Upload artifact to AWS
+    required: true
+    default: 'true'
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Save artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.package_name }}
-        path: ${{ runner.temp }}/shadow_build_dir/${{ inputs.artifact_name }}
+        path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
+
+    - name: Configure AWS Credentials
+      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: us-west-2
+
+    - name: Upload all push builds to S3 Bucket
+      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      working-directory: ${{ runner.temp }}/build
+      run: aws s3 cp "${{ inputs.artifact_name }}" "s3://qgroundcontrol/builds/${{ github.ref_name }}/${{ inputs.artifact_name }}" --acl public-read
+      shell: bash
+
+    - name: Upload tagged stable push build to S3 latest Bucket
+      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && github.ref_type == 'tag' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' }}
+      working-directory: ${{ runner.temp }}/build
+      run: aws s3 cp "${{ inputs.artifact_name }}" "s3://qgroundcontrol/latest/${{ inputs.artifact_name }}" --acl public-read
+      shell: bash
+
+    - name: Invalidate tagged stable push build CloudFront Cache
+      if: ${{ fromJSON(inputs.upload_aws) && github.event_name == 'push' && github.repository_owner == 'mavlink' && github.ref_type == 'tag' && inputs.aws_key_id != '' && inputs.aws_secret_access_key != '' && inputs.aws_distribution_id != '' }}
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id "${{ inputs.aws_distribution_id }}" \
+          --paths "/latest/${{ inputs.artifact_name }}"
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_REGION: us-west-2

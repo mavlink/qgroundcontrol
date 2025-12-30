@@ -28,8 +28,8 @@ public:
     QString iconResource() const final { return QStringLiteral("/qmlimages/SensorsComponentIcon.png"); }
     bool requiresSetup() const final { return true; }
     bool setupComplete() const final { return (!compassSetupNeeded() && !accelSetupNeeded()); }
-    QUrl setupSource() const final { return QUrl::fromUserInput("qrc:/qml/APMSensorsComponent.qml"); }
-    QUrl summaryQmlSource() const final { return QUrl::fromUserInput("qrc:/qml/APMSensorsComponentSummary.qml"); }
+    QUrl setupSource() const final { return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSensorsComponent.qml"); }
+    QUrl summaryQmlSource() const final { return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml"); }
 
 private:
     const QString _name = tr("Sensors");

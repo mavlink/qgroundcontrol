@@ -12,7 +12,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.Vehicle
+
 import QGroundControl.Controls
 
 /// Popup container for preflight checklists

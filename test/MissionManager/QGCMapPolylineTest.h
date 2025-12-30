@@ -22,6 +22,7 @@ class QGCMapPolylineTest : public UnitTest
 
 protected:
     void init() final;
+    void cleanup() final;
 
 private slots:
     void _testDirty();

@@ -11,6 +11,7 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 ///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
@@ -21,7 +22,8 @@ class OsmParser;
 class Viewer3DQmlBackend : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(QGeoCoordinate gpsRef READ gpsRef NOTIFY gpsRefChanged)
 
 public:
@@ -35,12 +37,19 @@ signals:
     void gpsRefChanged();
 
 private:
-    OsmParser *_osmParserThread;
+    OsmParser *_osmParserThread = nullptr;
 
     QGeoCoordinate _gpsRef;
-    uint8_t _gpsRefSet;
 
-    Vehicle *_activeVehicle;
+    enum GpsRefType {
+        GPS_REF_NOT_SET = 0,
+        GPS_REF_SET_BY_MAP = 1,
+        GPS_REF_SET_BY_VEHICLE = 2
+    };
+
+    GpsRefType _gpsRefSet = GPS_REF_NOT_SET;
+
+    Vehicle *_activeVehicle = nullptr;
     Viewer3DSettings* _viewer3DSettings = nullptr;
 
 

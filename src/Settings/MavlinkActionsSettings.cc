@@ -10,14 +10,11 @@
 #include "MavlinkActionsSettings.h"
 #include "QGCApplication.h"
 
-#include <QtQml/QQmlEngine>
 #include <QtCore/QFile>
 #include <QtCore/QSettings>
 
 DECLARE_SETTINGGROUP(MavlinkActions, "MavlinkActions")
 {
-    qmlRegisterUncreatableType<MavlinkActionsSettings>("QGroundControl.SettingsManager", 1, 0, "MavlinkActionsSettings", "Reference only");
-
     // Notify the user of new Fly View mavlink actions support
     QSettings deprecatedSettings;
     static constexpr const char* deprecatedKey1 = "enableCustomActions";

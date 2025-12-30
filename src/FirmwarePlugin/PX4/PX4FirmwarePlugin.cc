@@ -11,16 +11,13 @@
 #include "PX4ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "PX4AutoPilotPlugin.h"
-#include "PX4SimpleFlightModesController.h"
-#include "AirframeComponentController.h"
-#include "SensorsComponentController.h"
-#include "PowerComponentController.h"
 #include "SettingsManager.h"
 #include "PlanViewSettings.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
 #include <QDebug>
+#include <QString>
 
 #include "px4_custom_mode.h"
 
@@ -32,70 +29,67 @@ PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
 }
 
 PX4FirmwarePlugin::PX4FirmwarePlugin()
-    : _manualFlightMode     (tr("Manual"))
-    , _acroFlightMode       (tr("Acro"))
-    , _stabilizedFlightMode (tr("Stabilized"))
-    , _rattitudeFlightMode  (tr("Rattitude"))
-    , _altCtlFlightMode     (tr("Altitude"))
-    , _posCtlFlightMode     (tr("Position"))
-    , _offboardFlightMode   (tr("Offboard"))
-    , _readyFlightMode      (tr("Ready"))
-    , _takeoffFlightMode    (tr("Takeoff"))
-    , _holdFlightMode       (tr("Hold"))
-    , _missionFlightMode    (tr("Mission"))
-    , _rtlFlightMode        (tr("Return"))
-    , _landingFlightMode    (tr("Land"))
-    , _preclandFlightMode   (tr("Precision Land"))
-    , _rtgsFlightMode       (tr("Return to Groundstation"))
-    , _followMeFlightMode   (tr("Follow Me"))
-    , _simpleFlightMode     (tr("Simple"))
-    , _orbitFlightMode      (tr("Orbit"))
 {
-    qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
-    qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
-    qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
-    qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
+    const QString manualFlightModeName = tr("Manual");
+    const QString acroFlightModeName = tr("Acro");
+    const QString stabilizedFlightModeName = tr("Stabilized");
+    const QString rattitudeFlightModeName = tr("Rattitude");
+    const QString altCtlFlightModeName = tr("Altitude");
+    const QString posCtlFlightModeName = tr("Position");
+    const QString offboardFlightModeName = tr("Offboard");
+    const QString readyFlightModeName = tr("Ready");
+    const QString takeoffFlightModeName = tr("Takeoff");
+    const QString holdFlightModeName = tr("Hold");
+    const QString missionFlightModeName = tr("Mission");
+    const QString rtlFlightModeName = tr("Return");
+    const QString landingFlightModeName = tr("Land");
+    const QString preclandFlightModeName = tr("Precision Land");
+    const QString rtgsFlightModeName = tr("Return to Groundstation");
+    const QString followMeFlightModeName = tr("Follow Me");
+    const QString simpleFlightModeName = tr("Simple");
+    const QString orbitFlightModeName = tr("Orbit");
 
     _setModeEnumToModeStringMapping({
-        { PX4CustomMode::MANUAL             ,    _manualFlightMode      },
-        { PX4CustomMode::STABILIZED         ,    _stabilizedFlightMode  },
-        { PX4CustomMode::ACRO               ,    _acroFlightMode        },
-        { PX4CustomMode::RATTITUDE          ,    _rattitudeFlightMode   },
-        { PX4CustomMode::ALTCTL             ,    _altCtlFlightMode      },
-        { PX4CustomMode::OFFBOARD           ,    _offboardFlightMode    },
-        { PX4CustomMode::SIMPLE             ,    _simpleFlightMode      },
-        { PX4CustomMode::POSCTL_POSCTL      ,    _posCtlFlightMode      },
-        { PX4CustomMode::POSCTL_ORBIT       ,    _orbitFlightMode       },
-        { PX4CustomMode::AUTO_LOITER        ,    _holdFlightMode        },
-        { PX4CustomMode::AUTO_MISSION       ,    _missionFlightMode     },
-        { PX4CustomMode::AUTO_RTL           ,    _rtlFlightMode         },
-        { PX4CustomMode::AUTO_LAND          ,    _landingFlightMode     },
-        { PX4CustomMode::AUTO_PRECLAND      ,    _preclandFlightMode    },
-        { PX4CustomMode::AUTO_READY         ,    _readyFlightMode       },
-        { PX4CustomMode::AUTO_RTGS          ,    _rtgsFlightMode        },
-        { PX4CustomMode::AUTO_TAKEOFF       ,    _takeoffFlightMode     },
+        { PX4CustomMode::MANUAL,        manualFlightModeName      },
+        { PX4CustomMode::STABILIZED,    stabilizedFlightModeName  },
+        { PX4CustomMode::ACRO,          acroFlightModeName        },
+        { PX4CustomMode::RATTITUDE,     rattitudeFlightModeName   },
+        { PX4CustomMode::ALTCTL,        altCtlFlightModeName      },
+        { PX4CustomMode::OFFBOARD,      offboardFlightModeName    },
+        { PX4CustomMode::SIMPLE,        simpleFlightModeName      },
+        { PX4CustomMode::POSCTL_POSCTL, posCtlFlightModeName      },
+        { PX4CustomMode::POSCTL_ORBIT,  orbitFlightModeName       },
+        { PX4CustomMode::AUTO_LOITER,   holdFlightModeName        },
+        { PX4CustomMode::AUTO_MISSION,  missionFlightModeName     },
+        { PX4CustomMode::AUTO_RTL,      rtlFlightModeName         },
+        { PX4CustomMode::AUTO_LAND,     landingFlightModeName     },
+        { PX4CustomMode::AUTO_PRECLAND, preclandFlightModeName    },
+        { PX4CustomMode::AUTO_READY,    readyFlightModeName       },
+        { PX4CustomMode::AUTO_RTGS,     rtgsFlightModeName        },
+        { PX4CustomMode::AUTO_TAKEOFF,  takeoffFlightModeName     },
     });
 
     static FlightModeList availableFlightModes = {
-        // Mode Name            , Custom Mode                      CanBeSet  adv
-        { _manualFlightMode     , PX4CustomMode::MANUAL            , true ,  true },
-        { _stabilizedFlightMode , PX4CustomMode::STABILIZED        , true ,  true },
-        { _acroFlightMode       , PX4CustomMode::ACRO              , true ,  true },
-        { _rattitudeFlightMode  , PX4CustomMode::RATTITUDE         , true ,  false},
-        { _altCtlFlightMode     , PX4CustomMode::ALTCTL            , true ,  false},
-        { _offboardFlightMode   , PX4CustomMode::OFFBOARD          , true ,  true },
-        { _simpleFlightMode     , PX4CustomMode::SIMPLE            , false,  false},
-        { _posCtlFlightMode     , PX4CustomMode::POSCTL_POSCTL     , true ,  false},
-        { _orbitFlightMode      , PX4CustomMode::POSCTL_ORBIT      , false,  true },
-        { _holdFlightMode       , PX4CustomMode::AUTO_LOITER       , true ,  true },
-        { _missionFlightMode    , PX4CustomMode::AUTO_MISSION      , true ,  true },
-        { _rtlFlightMode        , PX4CustomMode::AUTO_RTL          , true ,  true },
-        { _landingFlightMode    , PX4CustomMode::AUTO_LAND         , false,  true },
-        { _preclandFlightMode   , PX4CustomMode::AUTO_PRECLAND     , true ,  true },
-        { _readyFlightMode      , PX4CustomMode::AUTO_READY        , false,  false},
-        { _rtgsFlightMode       , PX4CustomMode::AUTO_RTGS         , false,  false},
-        { _takeoffFlightMode    , PX4CustomMode::AUTO_TAKEOFF      , false,  false},
+        // Mode Name                Custom Mode                     CanBeSet  adv
+        { manualFlightModeName,     PX4CustomMode::MANUAL,          true,   true },
+        { stabilizedFlightModeName, PX4CustomMode::STABILIZED,      true,   true },
+        { acroFlightModeName,       PX4CustomMode::ACRO,            true,   true },
+        { rattitudeFlightModeName,  PX4CustomMode::RATTITUDE,       true,   false},
+        { altCtlFlightModeName,     PX4CustomMode::ALTCTL,          true,   false},
+        { offboardFlightModeName,   PX4CustomMode::OFFBOARD,        true,   true },
+        { simpleFlightModeName,     PX4CustomMode::SIMPLE,          false,  false},
+        { posCtlFlightModeName,     PX4CustomMode::POSCTL_POSCTL,   true,   false},
+        { orbitFlightModeName,      PX4CustomMode::POSCTL_ORBIT,    false,  true },
+        { holdFlightModeName,       PX4CustomMode::AUTO_LOITER,     true,   true },
+        { missionFlightModeName,    PX4CustomMode::AUTO_MISSION,    true,   true },
+        { rtlFlightModeName,        PX4CustomMode::AUTO_RTL,        true,   true },
+        { landingFlightModeName,    PX4CustomMode::AUTO_LAND,       false,  true },
+        { preclandFlightModeName,   PX4CustomMode::AUTO_PRECLAND,   true,   true },
+        { readyFlightModeName,      PX4CustomMode::AUTO_READY,      false,  false},
+        { rtgsFlightModeName,       PX4CustomMode::AUTO_RTGS,       false,  false},
+        { takeoffFlightModeName,    PX4CustomMode::AUTO_TAKEOFF,    false,  false},
     };
+
     updateAvailableFlightModes(availableFlightModes);
 }
 
@@ -282,7 +276,7 @@ QString PX4FirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t ve
 
 QObject* PX4FirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
 {
-    PX4ParameterMetaData* metaData = new PX4ParameterMetaData;
+    PX4ParameterMetaData* metaData = new PX4ParameterMetaData(this);
     if (!metaDataFile.isEmpty()) {
         metaData->loadParameterFactMetaDataFile(metaDataFile);
     }
@@ -306,12 +300,12 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle) const
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL) const
 {
     Q_UNUSED(smartRTL);
-    _setFlightModeAndValidate(vehicle, _rtlFlightMode);
+    _setFlightModeAndValidate(vehicle, rtlFlightMode());
 }
 
 void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle) const
 {
-    _setFlightModeAndValidate(vehicle, _landingFlightMode);
+    _setFlightModeAndValidate(vehicle, landFlightMode());
 }
 
 void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
@@ -605,54 +599,53 @@ void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode) const
 
 QString PX4FirmwarePlugin::pauseFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_LOITER, _holdFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_LOITER);
 }
 
 QString PX4FirmwarePlugin::missionFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_MISSION, _missionFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_MISSION);
 }
 
 QString PX4FirmwarePlugin::rtlFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_RTL, _rtlFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_RTL);
 }
 
 QString PX4FirmwarePlugin::landFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_LAND, _landingFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_LAND);
 }
 
 QString PX4FirmwarePlugin::takeControlFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::MANUAL, _manualFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::MANUAL);
 }
 
 QString PX4FirmwarePlugin::gotoFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_LOITER, _holdFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_LOITER);
 }
 
 QString PX4FirmwarePlugin::followFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_FOLLOW_TARGET, _followMeFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_FOLLOW_TARGET);
 }
 
 QString PX4FirmwarePlugin::takeOffFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::AUTO_TAKEOFF, _takeoffFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::AUTO_TAKEOFF);
 }
 
 QString PX4FirmwarePlugin::stabilizedFlightMode() const
 {
-    return _modeEnumToString.value(PX4CustomMode::STABILIZED, _stabilizedFlightMode);
+    return _modeEnumToString.value(PX4CustomMode::STABILIZED);
 }
 
 bool PX4FirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
     // Not supported by generic vehicle
-    return (vehicle->flightMode() == _holdFlightMode || vehicle->flightMode() == _takeoffFlightMode
-            || vehicle->flightMode() == _landingFlightMode);
+    return (vehicle->flightMode() == pauseFlightMode() || vehicle->flightMode() == takeOffFlightMode() || vehicle->flightMode() == landFlightMode());
 }
 
 bool PX4FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
@@ -768,37 +761,6 @@ bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
     return false;
 }
 
-QVariant PX4FirmwarePlugin::mainStatusIndicatorContentItem(const Vehicle*) const
-{
-    return QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4MainStatusIndicatorContentItem.qml"));
-}
-
-const QVariantList& PX4FirmwarePlugin::toolIndicators(const Vehicle* vehicle)
-{
-    if (_toolIndicatorList.size() == 0) {
-        // First call the base class to get the standard QGC list
-        _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
-
-        // Find the generic flight mode indicator and replace with the custom one
-        for (int i=0; i<_toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4FlightModeIndicator.qml"));
-                break;
-            }
-        }
-
-        // Find the generic battery indicator and replace with the custom one
-        for (int i=0; i<_toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
-                _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/PX4/Indicators/PX4BatteryIndicator.qml"));
-                break;
-            }
-        }
-    }
-
-    return _toolIndicatorList;
-}
-
 void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
     for(auto &mode: modeList){
@@ -857,4 +819,17 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
         }
     }
     _updateFlightModeList(modeList);
+}
+
+QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* vehicle, const QString& indicatorName) const
+{
+    if (indicatorName == "Battery") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4BatteryIndicator.qml"));
+    } else if (indicatorName == "FlightMode") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4FlightModeIndicator.qml"));
+    } else if (indicatorName == "MainStatus") {
+        return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml"));
+    }
+
+    return QVariant();
 }

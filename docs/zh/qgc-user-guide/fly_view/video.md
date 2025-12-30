@@ -1,58 +1,58 @@
-# Video
+# 视频
 
-When video streaming is enabled (Application Settings - Video), _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
-You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
+当视频流启用时(应用程序设置-视频)， _QGroundControl_ 将在地图底部的“视频切换窗口”中显示当前选中载具的视频流。
+您可以在任何地方按切换器来切换_视频_ 和 _地图_ 到前台(在下面的图像中，视频会显示在前台)。
 
-![Video Stream Record](../../../assets/fly/video_record.jpg)
+![视频流录制](../../../assets/fly/video_record.jpg)
 
 :::info
-Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
+视频流已配置/启用在 [应用程序设置 > 常规 > 视频](../settings_view/general.md#video)。
 :::
 
-You can further configure video display using controls on the switcher:
+您可以在开关上使用控件来进一步配置视频显示：
 
-![Video Pop](../../../assets/fly/video_pop.jpg)
+![视频窗口](../../../assets/fly/video_pop.jpg)
 
-- Resize the switcher by dragging the icon in the top right corner.
-- Hide the switcher by pressing the toggle icon in the lower left.
-- Detach the video switcher window by pressing on the icon in its top left corner
-  (once detached, you can move and resize the window just like any other in your OS).
-  If you close the detached window the switcher will re-lock to the QGC Fly view.
+- 通过拖动右上角的图标来调整切换器的大小。
+- 点击左下方的切换图标来隐藏切换器。
+- 按下视频切换器窗口左上角的图标，将其分离
+  （分离后，你可以像操作操作系统中的其他窗口一样移动和调整该窗口的大小）。
+  如果您关闭分离的窗口，切换器将重新锁定到 QGC 飞行视图。
 
-### Record Video
+### 录像
 
-If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.
+如果相机和载具支持，_QGroundControl_ 可以在相机上开始和停止视频录制。 _QGroundControl_ 也可以录制视频流并在本地保存。
 
 :::tip
-Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
+相机上存储的视频质量可能更高，但很可能你的地面站会有大得多的录制容量。
 :::
 
-#### Record Video Stream (on GCS)
+#### 录制视频流 (GCS)
 
-Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
-Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
+视频流录制在 [视频流仪表页面](#video_instrument_page) 上进行控制。
+按下红色圆圈开始录制新视频(每次按下圆圈时创建新视频文件)； 正在录制时，圆圈将会变成红色正方形。
 
-![Video Stream Record](../../../assets/fly/video_record.jpg)
+![视频流录制](../../../assets/fly/video_record.jpg)
 
-Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
+视频流录制已配置在 [应用程序设置 > 常规](../settings_view/general.md)：
 
-- [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
+- [视频录制](../settings_view/general.md#video-recording) - 指定录制文件格式和存储限制。
 
-  ::: info
-  Videos are saved in Matroska format (.mkv) by default.
-  This format is relatively robust against corruption in case of errors.
+  ::: 信息
+  视频默认保存为 Matroska 格式 (.mkv) 。
+  这种格式在出现错误的情况下，相对不容易损坏。
   :::
 
-- [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
+- [杂项](../settings_view/general.md#miscellaneous) - 流视频保存在**应用程序加载/保存路径**下。
 
 :::tip
-The stored video includes just the video stream itself.
-To record video with QGroundControl application elements displayed, you should use separate screen recording software.
+存储的视频仅包括视频流本身。
+要使用显示的 QGroundControl 应用程序元素录制视频，您应该使用单独的屏幕录制软件。
 :::
 
-#### Record Video on Camera
+#### 在相机上录制视频
 
-Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
-First toggle to video mode, then select the red button to start recording.
+使用[相机仪表页面](#camera_instrument_page)来 _在相机自身上_ 开始/停止视频录制。
+先切换到视频模式，然后选择红色按钮开始录制。
 
-![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)
+![仪表页面 - 相机MAVLink设置](../../../assets/fly/instrument_page_camera_mavlink.jpg)

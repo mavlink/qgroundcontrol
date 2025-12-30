@@ -13,7 +13,7 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
+QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "AutoPilotPlugins.SensorsComponentController")
 
 SensorsComponentController::SensorsComponentController(void)
     : _statusLog                                (nullptr)
@@ -221,10 +221,11 @@ void SensorsComponentController::calibrateAirspeed(void)
     _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Airspeed);
 }
 
-void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
+void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description)
 {
     Q_UNUSED(compId);
     Q_UNUSED(severity);
+    Q_UNUSED(description);
     
     if (uasId != _vehicle->id()) {
         return;

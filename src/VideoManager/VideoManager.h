@@ -13,11 +13,9 @@
 #include <QtCore/QObject>
 #include <QtCore/QRunnable>
 #include <QtCore/QSize>
-// #include <QtQmlIntegration/QtQmlIntegration>
-#include "KLVMetadata.h"
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
-Q_DECLARE_METATYPE(KLVMetadata)
 
 class QQuickWindow;
 class FinishVideoInitialization;
@@ -29,9 +27,10 @@ class VideoSettings;
 class VideoManager : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
+
     Q_PROPERTY(bool     gstreamerEnabled        READ gstreamerEnabled                           CONSTANT)
     Q_PROPERTY(bool     qtmultimediaEnabled     READ qtmultimediaEnabled                        CONSTANT)
     Q_PROPERTY(bool     uvcEnabled              READ uvcEnabled                                 CONSTANT)
@@ -51,15 +50,14 @@ class VideoManager : public QObject
     Q_PROPERTY(QSize    videoSize               READ videoSize                                  NOTIFY videoSizeChanged)
     Q_PROPERTY(QString  imageFile               READ imageFile                                  NOTIFY imageFileChanged)
     Q_PROPERTY(QString  uvcVideoSourceID        READ uvcVideoSourceID                           NOTIFY uvcVideoSourceIDChanged)
-    // KLV timestamp is atually a uint64. However, JS number cannot correctly handle such big numbers, so we use strings to keep the precision
-    Q_PROPERTY(QString  lastKlvTimestamp        READ lastKlvTimestamp                           NOTIFY klvTimestampChanged)
 
 public:
     explicit VideoManager(QObject *parent = nullptr);
     ~VideoManager();
 
+    friend class FinishVideoInitialization;
+
     static VideoManager *instance();
-    static void registerQmlTypes();
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
     Q_INVOKABLE void startRecording(const QString &videoFile = QString());
@@ -67,7 +65,7 @@ public:
     Q_INVOKABLE void stopRecording();
     Q_INVOKABLE void stopVideo();
 
-    void init(QQuickWindow *rootWindow);
+    void init(QQuickWindow *mainWindow);
     void cleanup();
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
@@ -90,11 +88,6 @@ public:
     static bool qtmultimediaEnabled();
     static bool uvcEnabled();
 
-
-    QString lastKlvTimestamp(void) {
-        return QString::number(static_cast<qulonglong>(_lastKlvTimestamp));
-    }
-
 signals:
     void aspectRatioChanged();
     void autoStreamConfiguredChanged();
@@ -105,12 +98,11 @@ signals:
     void isAutoStreamChanged();
     void isStreamSourceChanged();
     void isUvcChanged();
-    void recordingChanged();
+    void recordingChanged(bool recording);
     void recordingStarted(const QString &filename);
     void streamingChanged();
     void uvcVideoSourceIDChanged();
     void videoSizeChanged();
-    void klvTimestampChanged();
 
 private slots:
     void _communicationLostChanged(bool communicationLost);
@@ -118,6 +110,7 @@ private slots:
     void _videoSourceChanged();
 
 private:
+    void _initAfterQmlIsReady();
     void _initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window);
     bool _updateAutoStream(VideoReceiver *receiver);
     bool _updateUVC(VideoReceiver *receiver);
@@ -135,15 +128,16 @@ private:
     VideoSettings *_videoSettings = nullptr;
 
     bool _initialized = false;
+    bool _initAfterQmlIsReadyDone = false;
     bool _fullScreen = false;
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
-    uint64_t _lastKlvTimestamp = 0;
     QAtomicInteger<bool> _streaming = false;
     QSize _videoSize;
     QString _imageFile;
     QString _uvcVideoSourceID;
     Vehicle *_activeVehicle = nullptr;
+    QQuickWindow *_mainWindow = nullptr;
 };
 
 /*===========================================================================*/

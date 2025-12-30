@@ -9,11 +9,15 @@
 
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "SettingsGroup.h"
 
 class MavlinkActionsSettings : public SettingsGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     MavlinkActionsSettings(QObject* parent = nullptr);
 

@@ -38,7 +38,7 @@
 
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
-QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
+QGC_LOGGING_CATEGORY(MissionControllerLog, "PlanManager.MissionController")
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController (masterController, parent)
@@ -1281,9 +1281,9 @@ void MissionController::_recalcFlightPathSegments(void)
     // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
     // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
 
-    _simpleFlightPathSegments.beginReset();
-    _directionArrows.beginReset();
-    _incompleteComplexItemLines.beginReset();
+    _simpleFlightPathSegments.beginResetModel();
+    _directionArrows.beginResetModel();
+    _incompleteComplexItemLines.beginResetModel();
 
     _simpleFlightPathSegments.clear();
     _directionArrows.clear();
@@ -1435,9 +1435,9 @@ void MissionController::_recalcFlightPathSegments(void)
         _directionArrows.append(coordVector);
     }
 
-    _simpleFlightPathSegments.endReset();
-    _directionArrows.endReset();
-    _incompleteComplexItemLines.endReset();
+    _simpleFlightPathSegments.endResetModel();
+    _directionArrows.endResetModel();
+    _incompleteComplexItemLines.endResetModel();
 
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(oldSegmentTable);
@@ -2385,13 +2385,18 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _currentPlanViewItem  =         nullptr;
         _currentPlanViewSeqNum =        -1;
         _currentPlanViewVIIndex =       -1;
-        _onlyInsertTakeoffValid =       !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && _visualItems->count() == 1; // First item must be takeoff
+        _onlyInsertTakeoffValid =       false;
         _isInsertTakeoffValid =         true;
         _isInsertLandValid =            true;
         _isROIActive =                  false;
         _isROIBeginCurrentItem =        false;
         _flyThroughCommandsAllowed =    true;
         _previousCoordinate =           QGeoCoordinate();
+
+        bool noItemsAddedYet = _visualItems->count() == 1;
+        if (_masterController->controllerVehicle()->takeoffVehicleSupported() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
+            _onlyInsertTakeoffValid = true;
+        }
 
         for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
             VisualMissionItem*  pVI =        qobject_cast<VisualMissionItem*>(_visualItems->get(viIndex));

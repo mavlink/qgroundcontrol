@@ -24,7 +24,7 @@ class QmlObjectListModel;
 class MavlinkActionManager : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Fact.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(Fact* actionFileNameFact READ actionFileNameFact WRITE setActionFileNameFact NOTIFY actionFileNameFactChanged)

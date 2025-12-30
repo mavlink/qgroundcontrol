@@ -10,33 +10,28 @@
 #include "JoystickManager.h"
 #include "Joystick.h"
 #if defined(QGC_SDL_JOYSTICK)
+    #include <SDL3/SDL.h>
     #include "JoystickSDL.h"
-    #include <SDL.h>
 #elif defined(Q_OS_ANDROID)
     #include "JoystickAndroid.h"
 #endif
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QSettings>
-#include <QtCore/QTimer>
-#include <QtQml/QQmlEngine>
-#include <QtQml/qqml.h>
 
-QGC_LOGGING_CATEGORY(JoystickManagerLog, "qgc.joystick.joystickmanager")
+QGC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.joystickmanager")
 
 Q_APPLICATION_STATIC(JoystickManager, _joystickManager);
 
 JoystickManager::JoystickManager(QObject *parent)
     : QObject(parent)
-    , _joystickCheckTimer(new QTimer(this))
 {
-    // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickManagerLog) << this;
 
-
-
-    _joystickCheckTimer->setInterval(kTimerInterval);
-    _joystickCheckTimer->setSingleShot(false);
+    _joystickCheckTimer.setInterval(1000);
+    _joystickCheckTimer.setSingleShot(false);
+    (void) connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
 }
 
 JoystickManager::~JoystickManager()
@@ -47,18 +42,12 @@ JoystickManager::~JoystickManager()
         delete it->second;
     }
 
-    // qCDebug(JoystickManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickManagerLog) << this;
 }
 
 JoystickManager *JoystickManager::instance()
 {
     return _joystickManager();
-}
-
-void JoystickManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<JoystickManager>("QGroundControl.JoystickManager", 1, 0, "JoystickManager", "Reference only");
-    (void) qmlRegisterUncreatableType<Joystick>("QGroundControl.JoystickManager", 1, 0, "Joystick", "Reference only");
 }
 
 void JoystickManager::init()
@@ -74,13 +63,12 @@ void JoystickManager::init()
     }
     (void) connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, [this]() {
         _joystickCheckTimerCounter = 5;
-        _joystickCheckTimer->start();
+        _joystickCheckTimer.start();
     });
 #endif
 
-    (void) connect(_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
     _joystickCheckTimerCounter = 5;
-    _joystickCheckTimer->start();
+    _joystickCheckTimer.start();
 }
 
 void JoystickManager::_setActiveJoystickFromSettings()
@@ -198,16 +186,22 @@ void JoystickManager::_updateAvailableJoysticks()
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch(event.type) {
-        case SDL_QUIT:
+        case SDL_EVENT_QUIT:
             qCDebug(JoystickManagerLog) << "SDL ERROR:" << SDL_GetError();
             break;
-        case SDL_CONTROLLERDEVICEADDED:
-        case SDL_JOYDEVICEADDED:
+        case SDL_EVENT_GAMEPAD_ADDED:
+            qCDebug(JoystickManagerLog) << "Gamepad added:" << event.gdevice.which;
+            _setActiveJoystickFromSettings();
+            break;
+        case SDL_EVENT_JOYSTICK_ADDED:
             qCDebug(JoystickManagerLog) << "Joystick added:" << event.jdevice.which;
             _setActiveJoystickFromSettings();
             break;
-        case SDL_CONTROLLERDEVICEREMOVED:
-        case SDL_JOYDEVICEREMOVED:
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            qCDebug(JoystickManagerLog) << "Gamepad removed:" << event.gdevice.which;
+            _setActiveJoystickFromSettings();
+            break;
+        case SDL_EVENT_JOYSTICK_REMOVED:
             qCDebug(JoystickManagerLog) << "Joystick removed:" << event.jdevice.which;
             _setActiveJoystickFromSettings();
             break;
@@ -219,7 +213,7 @@ void JoystickManager::_updateAvailableJoysticks()
     _joystickCheckTimerCounter--;
     _setActiveJoystickFromSettings();
     if (_joystickCheckTimerCounter <= 0) {
-        _joystickCheckTimer->stop();
+        _joystickCheckTimer.stop();
     }
 #endif
 }

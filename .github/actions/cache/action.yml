@@ -10,20 +10,22 @@ inputs:
   build-type:
     description: Build Type
     required: true
+    type: choice
+    options:
+      - Debug
+      - Release
   cpm-modules:
     description: Path to CPM Modules
     required: false
   ccache-version:
     description: ccache Version to Install
     required: false
-    default: 4.11.1
-    # windows-x86_64.zip, darwin.tar.gz, linux-x86_64.tar.xz
-    # https://github.com/ccache/ccache/releases/download/${version}/ccache-${version}-${host}.${zip}
+    default: 4.11.3
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Install ccache (Linux)
-      if: runner.os == 'Linux'
+      if: inputs.host == 'linux' && inputs.target != 'linux_gcc_arm64'
       shell: bash
       run: |
         set -e
@@ -35,9 +37,16 @@ runs:
         echo "Installing ccache..."
         sudo make install
 
+    # - name: Setup sccache (Windows)
+    #   if: runner.os == 'Windows' && inputs.target != 'android'
+    #   uses: mozilla-actions/sccache-action@v0.0.9
+
     - name: Setup sccache (Windows)
       if: runner.os == 'Windows' && inputs.target != 'android'
-      uses: mozilla-actions/sccache-action@v0.0.7
+      uses: ./.github/actions/build-action
+      with:
+        repo: mozilla-actions/sccache-action
+        ref: main
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
       if: runner.os == 'Windows' && inputs.target != 'android'
@@ -46,7 +55,6 @@ runs:
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@main
       with:
-        create-symlink: ${{ runner.os != 'Windows' }}
         variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
@@ -56,7 +64,7 @@ runs:
         verbose: 1
         evict-old-files: job
 
-    - name: Ensure cpm-modules directory exists (Linux/macOS)
+    - name: Ensure cpm-modules directory exists
       run: mkdir -p "${{ inputs.cpm-modules }}"
       shell: bash
 
@@ -67,4 +75,4 @@ runs:
         path: ${{ inputs.cpm-modules }}
         key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
         restore-keys: ${{ github.workflow }}-cpm-modules-
-        enableCrossOsArchive: true
+        # enableCrossOsArchive: true

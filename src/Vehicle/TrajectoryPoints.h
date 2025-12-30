@@ -9,25 +9,23 @@
 
 #pragma once
 
-#include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
+
 class Vehicle;
 
-enum class PositionSrc{
-  eSrc_GlobalPosition = 0,
-  eSrc_GPSRaw
-};
 
 class TrajectoryPoints : public QObject
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     TrajectoryPoints(Vehicle* vehicle, QObject* parent = nullptr);
 
-    Q_INVOKABLE QVariantList list(void) const { return _points; }
-    Q_INVOKABLE QVariantList gpsList(void) const {return _gpsPoints;}
+    Q_INVOKABLE QVariantList list(int src) const { return _trajectories[src].points; }
 
     void start  (void);
     void stop   (void);
@@ -36,23 +34,24 @@ public slots:
     void clear  (void);
 
 signals:
-    void pointAdded     (QGeoCoordinate coordinate);
-    void gpsPointAdded  (QGeoCoordinate coordinate);
-    void updateLastPoint(QGeoCoordinate coordinate);
-    void gpsUpdateLastPoint(QGeoCoordinate coordinate);
+    void pointAdded     (QGeoCoordinate coordinate, int src);
+    void updateLastPoint(QGeoCoordinate coordinate, int src);
     void pointsCleared  (void);
 
 private slots:
-    void _vehicleCoordinateChanged(QGeoCoordinate coordinate, PositionSrc src);
+    void _vehicleCoordinateChanged(QGeoCoordinate coordinate,uint8_t src);
+
+private:
+
+    struct Trajectory{
+      QVariantList points;
+      QGeoCoordinate lastPoint;
+      double lastAzimuth = qQNaN();
+    };
 
 private:
     Vehicle*        _vehicle;
-    QVariantList    _points,
-                    _gpsPoints;
-    QGeoCoordinate  _lastPoint,
-                    _gpsLastPoit;
-    double          _lastAzimuth,
-                    _gpsLastAzimuth;
+    QMap<uint8_t,Trajectory> _trajectories;
 
     static constexpr double _distanceTolerance = 2.0;
     static constexpr double _azimuthTolerance = 1.5;

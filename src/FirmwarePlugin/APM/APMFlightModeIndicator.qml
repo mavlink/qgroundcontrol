@@ -13,73 +13,60 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
-FlightModeIndicator {
-    waitForParameters:      true
-    expandedPageComponent:  activeVehicle.multiRotor ? copterComponent : undefined
+SettingsGroupLayout {
+    Layout.fillWidth:       true
+    heading:                qsTr("Return to Launch")
+    visible:                activeVehicle.multiRotor
 
-    property var  activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property Fact rtlAltFact: controller.getParameterFact(-1, "RTL_ALT")
 
-    Component {
-        id: copterComponent
+    FactPanelController { id: controller }
 
-        SettingsGroupLayout {
+    RowLayout {
+        Layout.fillWidth:   true
+        spacing:            ScreenTools.defaultFontPixelWidth * 2
+
+        QGCLabel {
+            id:                 label  
             Layout.fillWidth:   true
-            heading:            qsTr("Return to Launch")
+            text:               qsTr("Return At")
+        }
 
-            property Fact rtlAltFact: controller.getParameterFact(-1, "RTL_ALT")
+        QGCComboBox {
+            id:             returnAtCombo
+            sizeToContents: true
+            model:          [ qsTr("Current altitude"), qsTr("Specified altitude") ]
 
-            FactPanelController { id: controller }
-
-            RowLayout {
-                Layout.fillWidth:   true
-                spacing:            ScreenTools.defaultFontPixelWidth * 2
-
-                QGCLabel {
-                    id:                 label  
-                    Layout.fillWidth:   true
-                    text:               qsTr("Return At")
-                }
-
-                QGCComboBox {
-                    id:             returnAtCombo
-                    sizeToContents: true
-                    model:          [ qsTr("Current alttiude"), qsTr("Specified altitude") ]
-
-                    function setCurrentIndex() {
-                        if (rtlAltFact.value === 0) {
-                            returnAtCombo.currentIndex = 0
-                        } else {
-                            returnAtCombo.currentIndex = 1
-                        }
-                    }
-
-                    Component.onCompleted: setCurrentIndex()
-
-                    onActivated: (index) => {
-                        if (index === 0) {
-                            rtlAltFact.rawValue = 0
-                        } else {
-                            rtlAltFact.rawValue = 1500
-                        }
-                    }
-
-                    Connections {
-                        target:             rtlAltFact
-                        onRawValueChanged:  returnAtCombo.setCurrentIndex()
-                    }
-                }
-
-                FactTextField {
-                    fact:       rtlAltFact
-                    enabled:    rtlAltFact.rawValue !== 0
+            function setCurrentIndex() {
+                if (rtlAltFact.value === 0) {
+                    returnAtCombo.currentIndex = 0
+                } else {
+                    returnAtCombo.currentIndex = 1
                 }
             }
+
+            Component.onCompleted: setCurrentIndex()
+
+            onActivated: (index) => {
+                if (index === 0) {
+                    rtlAltFact.rawValue = 0
+                } else {
+                    rtlAltFact.rawValue = 1500
+                }
+            }
+
+            Connections {
+                target:             rtlAltFact
+                onRawValueChanged:  returnAtCombo.setCurrentIndex()
+            }
+        }
+
+        FactTextField {
+            fact:       rtlAltFact
+            enabled:    rtlAltFact.rawValue !== 0
         }
     }
 }

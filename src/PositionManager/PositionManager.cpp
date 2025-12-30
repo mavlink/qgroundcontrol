@@ -14,36 +14,30 @@
 // #include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QPermissions>
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtPositioning/private/qgeopositioninfosource_p.h>
 #include <QtPositioning/QNmeaPositionInfoSource>
-#include <QtQml/qqml.h>
 
-QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "qgc.positionmanager.positionmanager")
+QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "PositionManager.QGCPositionManager")
 
 Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
 QGCPositionManager::QGCPositionManager(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCPositionManagerLog) << this;
 }
 
 QGCPositionManager::~QGCPositionManager()
 {
-    // qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCPositionManagerLog) << this;
 }
 
 QGCPositionManager *QGCPositionManager::instance()
 {
     return _positionManager();
-}
-
-void QGCPositionManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<QGCPositionManager>("QGroundControl.QGCPositionManager", 1, 0, "QGCPositionManager", "Reference only");
 }
 
 void QGCPositionManager::init()

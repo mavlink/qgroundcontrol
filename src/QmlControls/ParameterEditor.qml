@@ -14,10 +14,10 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
+
+
+
+
 import QGroundControl.FactControls
 
 Item {
@@ -37,27 +37,6 @@ Item {
         id: controller
     }
 
-
-    function selectComponent(comp = "")
-    {
-        if (comp === "")
-        {
-            controller.currentCategory=controller.categories.get(0)
-        }
-        else
-        {
-            for (let i = 0; i < controller.categories.count; i++)
-            {
-                let cat = controller.categories.get(i)
-                if (cat.name === comp)
-                {
-                     controller.currentCategory = cat;
-                    break;
-                }
-            }
-        }
-
-    }
     Timer {
         id:         clearTimer
         interval:   100;
@@ -118,14 +97,6 @@ Item {
                                                          qsTr("Select Ok to reboot vehicle."),
                                                          Dialog.Cancel | Dialog.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
-        }
-        QGCMenuSeparator { }
-        QGCMenuItem {
-            text:           qsTr("Reboot Onboard Computers")
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reboot Onboard Computers"),
-                                                         qsTr("Select Ok to reboot all the onboard computers"),
-                                                         Dialog.Cancel | Dialog.Ok,
-                                                         function() { _activeVehicle.rebootOnboardComputers() })
         }
     }
 

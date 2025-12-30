@@ -8,15 +8,14 @@
  ****************************************************************************/
 
 #include "Viewer3DTerrainGeometry.h"
-#include "Viewer3DUtils.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
+#include "QGCGeo.h"
 
 #include "math.h"
 
-#define PI                  acos(-1.0f)
-#define MaxLatitude         85.05112878
-#define EarthRadius         6378137
+#define MaxLatitude 85.05112878
+#define EarthRadius 6378137
 
 Viewer3DTerrainGeometry::Viewer3DTerrainGeometry()
 {
@@ -238,16 +237,16 @@ void Viewer3DTerrainGeometry::buildTerrain(QGeoCoordinate roiMinCoordinate, QGeo
     float sectorAngle, stackAngle;
 
     QVector3D refLocalPosition;
-    float refXY = _radius * cosf(refCoordinate.latitude() * DEG_TO_RAD);
-    refLocalPosition.setX(refXY * cosf(refCoordinate.longitude() * DEG_TO_RAD));
-    refLocalPosition.setY(refXY * sinf(refCoordinate.longitude() * DEG_TO_RAD));
-    refLocalPosition.setZ(_radius * sinf(refCoordinate.latitude() * DEG_TO_RAD));
+    float refXY = _radius * cosf(qDegreesToRadians(refCoordinate.latitude()));
+    refLocalPosition.setX(refXY * cosf(qDegreesToRadians(refCoordinate.longitude())));
+    refLocalPosition.setY(refXY * sinf(qDegreesToRadians(refCoordinate.longitude())));
+    refLocalPosition.setZ(_radius * sinf(qDegreesToRadians(refCoordinate.latitude())));
 
     // compute all vertices first, each vertex contains (x,y,z,s,t) except normal
     for(int i = 0; i <= _stackCount; ++i){
         stackAngle = stackRef - i * stackStep;        // starting from 90 to -90
-        float xy = _radius * cosf(stackAngle * DEG_TO_RAD);       // r * cos(u)
-        // float z = _radius * sinf(stackAngle * DEG_TO_RAD);        // r * sin(u)
+        float xy = _radius * cosf(qDegreesToRadians(stackAngle));       // r * cos(u)
+        // float z = _radius * sinf(qDegreesToRadians(stackAngle));        // r * sin(u)
 
         // add (sectorCount+1) vertices per stack
         // the first and last vertices have same position and normal, but different tex coords
@@ -255,8 +254,8 @@ void Viewer3DTerrainGeometry::buildTerrain(QGeoCoordinate roiMinCoordinate, QGeo
             sectorAngle = sectorRef + j * sectorStep;           // starting from -180 to 180
 
             Vertex vertex;
-            vertex.x = xy * cosf(sectorAngle * DEG_TO_RAD) - refLocalPosition.x();      // x = r * cos(u) * cos(v)
-            vertex.y = xy * sinf(sectorAngle * DEG_TO_RAD) - refLocalPosition.y();      // y = r * cos(u) * sin(v)
+            vertex.x = xy * cosf(qDegreesToRadians(sectorAngle)) - refLocalPosition.x();      // x = r * cos(u) * cos(v)
+            vertex.y = xy * sinf(qDegreesToRadians(sectorAngle)) - refLocalPosition.y();      // y = r * cos(u) * sin(v)
             // vertex.z = z - refLocalPosition.z();                           // z = r * sin(u)
             vertex.z = 0;                           // z = r * sin(u)
 
@@ -265,8 +264,8 @@ void Viewer3DTerrainGeometry::buildTerrain(QGeoCoordinate roiMinCoordinate, QGeo
             minS = fmin(minS, vertex.s);
             maxS = fmax(maxS, vertex.s);
             if(abs(stackAngle) < MaxLatitude){
-                double sinLatitude = sin(stackAngle * DEG_TO_RAD);
-                vertex.t = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * PI);
+                double sinLatitude = sin(qDegreesToRadians(stackAngle));
+                vertex.t = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * M_PI);
 
             }else{
                 vertex.t = (stackRef - stackAngle) / 180;
@@ -387,10 +386,10 @@ bool Viewer3DTerrainGeometry::buildTerrain_2(QGeoCoordinate roiMinCoordinate, QG
 
     QVector3D refLocalPosition;
     QVector3D localPoint;
-    float refXY = _radius * cosf(refCoordinate.latitude() * DEG_TO_RAD);
-    refLocalPosition.setX(refXY * cosf(refCoordinate.longitude() * DEG_TO_RAD));
-    refLocalPosition.setY(refXY * sinf(refCoordinate.longitude() * DEG_TO_RAD));
-    refLocalPosition.setZ(_radius * sinf(refCoordinate.latitude() * DEG_TO_RAD));
+    float refXY = _radius * cosf(qDegreesToRadians(refCoordinate.latitude()));
+    refLocalPosition.setX(refXY * cosf(qDegreesToRadians(refCoordinate.longitude())));
+    refLocalPosition.setY(refXY * sinf(qDegreesToRadians(refCoordinate.longitude())));
+    refLocalPosition.setZ(_radius * sinf(qDegreesToRadians(refCoordinate.latitude())));
 
     for(int i = 0; i <= _stackCount; ++i){
         stackAngle = stackRef - i * stackStep;        // starting from 90 to -90
@@ -399,7 +398,7 @@ bool Viewer3DTerrainGeometry::buildTerrain_2(QGeoCoordinate roiMinCoordinate, QG
             sectorAngle = sectorRef + j * sectorStep;           // starting from -180 to 180
 
             Vertex vertex;
-            localPoint = mapGpsToLocalPoint(QGeoCoordinate(stackAngle, sectorAngle, 0), refCoordinate);
+            localPoint = QGCGeo::convertGpsToEnu(QGeoCoordinate(stackAngle, sectorAngle, 0), refCoordinate);
             vertex.x = localPoint.x();
             vertex.y = localPoint.y();
             vertex.z = 0;
@@ -408,8 +407,8 @@ bool Viewer3DTerrainGeometry::buildTerrain_2(QGeoCoordinate roiMinCoordinate, QG
             minS = fmin(minS, vertex.s);
             maxS = fmax(maxS, vertex.s);
             if(abs(stackAngle) < MaxLatitude){
-                double sinLatitude = sin(stackAngle * DEG_TO_RAD);
-                vertex.t = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * PI);
+                double sinLatitude = sin(qDegreesToRadians(stackAngle));
+                vertex.t = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * M_PI);
 
             }else{
                 vertex.t = (stackRef - stackAngle) / 180;

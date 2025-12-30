@@ -18,12 +18,10 @@
 
 Q_DECLARE_METATYPE(QAbstractSeries*)
 
-QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "qgc.analyzeview.mavlinkchartcontroller")
+QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "AnalyzeView.MAVLinkChartController")
 
-MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *controller, int index, QObject *parent)
+MAVLinkChartController::MAVLinkChartController(QObject *parent)
     : QObject(parent)
-    , _index(index)
-    , _controller(controller)
     , _updateSeriesTimer(new QTimer(this))
 {
     // qCDebug(MAVLinkChartControllerLog) << Q_FUNC_INFO << this;
@@ -31,13 +29,21 @@ MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *contr
     (void) qRegisterMetaType<QAbstractSeries*>("QAbstractSeries*");
 
     (void) connect(_updateSeriesTimer, &QTimer::timeout, this, &MAVLinkChartController::_refreshSeries);
-
-    updateXRange();
 }
 
 MAVLinkChartController::~MAVLinkChartController()
 {
     // qCDebug(MAVLinkChartControllerLog) << Q_FUNC_INFO << this;
+}
+
+void MAVLinkChartController::setInspectorController(MAVLinkInspectorController *controller)
+{
+    if (_inspectorController == controller) {
+        return;
+    }
+
+    _inspectorController = controller;
+    updateXRange();
 }
 
 void MAVLinkChartController::setRangeYIndex(quint32 index)
@@ -46,7 +52,7 @@ void MAVLinkChartController::setRangeYIndex(quint32 index)
         return;
     }
 
-    if (index >= static_cast<quint32>(_controller->rangeSt().count())) {
+    if (index >= static_cast<quint32>(_inspectorController->rangeSt().count())) {
         return;
     }
 
@@ -54,7 +60,7 @@ void MAVLinkChartController::setRangeYIndex(quint32 index)
     emit rangeYIndexChanged();
 
     // If not Auto, use defined range
-    const qreal range = _controller->rangeSt()[static_cast<int>(index)]->range;
+    const qreal range = _inspectorController->rangeSt()[static_cast<int>(index)]->range;
     if (_rangeYIndex > 0) {
         _rangeYMin = -range;
         emit rangeYMinChanged();
@@ -78,7 +84,7 @@ void MAVLinkChartController::setRangeXIndex(quint32 index)
 
 void MAVLinkChartController::updateXRange()
 {
-    if (_rangeXIndex >= static_cast<quint32>(_controller->timeScaleSt().count())) {
+    if (_rangeXIndex >= static_cast<quint32>(_inspectorController->timeScaleSt().count())) {
         return;
     }
 
@@ -86,7 +92,7 @@ void MAVLinkChartController::updateXRange()
     _rangeXMax = QDateTime::fromMSecsSinceEpoch(bootTime);
     emit rangeXMaxChanged();
 
-    _rangeXMin = QDateTime::fromMSecsSinceEpoch(bootTime - _controller->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
+    _rangeXMin = QDateTime::fromMSecsSinceEpoch(bootTime - _inspectorController->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
     emit rangeXMinChanged();
 }
 

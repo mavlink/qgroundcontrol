@@ -13,11 +13,12 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
+
 import QGroundControl.FactControls
-import QGroundControl.Palette
+
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
+
 
 SetupPage {
     id:             powerPage

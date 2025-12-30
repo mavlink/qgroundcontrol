@@ -37,7 +37,7 @@
 #include "SerialLink.h"
 #endif
 
-QGC_LOGGING_CATEGORY(APMAutoPilotPluginLog, "qgc.autopilotplugins.apm.apmautopilotplugin")
+QGC_LOGGING_CATEGORY(APMAutoPilotPluginLog, "AutoPilotPlugins.APM.apmautopilotplugin")
 
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     : AutoPilotPlugin(vehicle, parent)

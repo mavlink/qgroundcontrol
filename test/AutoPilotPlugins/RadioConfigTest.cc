@@ -228,7 +228,7 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
     Q_CHECK_PTR(vehicleComponent);
 
     _calWidget->setContextPropertyObject("vehicleComponent", vehicleComponent);
-    _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/RadioComponent.qml"));
+    _calWidget->setSource(QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/Common/RadioComponent.qml"));
     
     // Nasty hack to get to controller
     _controller = RadioComponentController::_unitTestController;

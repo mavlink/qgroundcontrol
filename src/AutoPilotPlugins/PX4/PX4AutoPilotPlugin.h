@@ -60,6 +60,7 @@ protected:
     PX4FlightBehavior*      _flightBehavior;
     SyslinkComponent*       _syslinkComponent;
 
+
 private:
     QVariantList            _components;
 };
