@@ -81,10 +81,10 @@ lint:
 	pre-commit run --all-files
 
 format:
-	./tools/format-check.sh --check
+	./tools/analyze.sh --tool clang-format
 
 format-fix:
-	./tools/format-check.sh
+	./tools/analyze.sh --tool clang-format --fix
 
 analyze:
 	./tools/analyze.sh
