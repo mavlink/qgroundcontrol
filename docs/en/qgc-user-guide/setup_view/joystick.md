@@ -13,7 +13,7 @@ A [number of common joysticks and gamepads](#supported-joysticks) are known to w
 :::
 
 ::: info
-The joystick is _enabled_ as the last step of the calibration process.
+The joystick is _enabled_ as the last step of the calibration process. You can also toggle it later using the **Enable** checkbox at the top of the joystick setup page.
 :::
 
 ## Enabling PX4 Joystick Support
@@ -32,97 +32,72 @@ All ArduPilot vehicles are supported. No parameter configuration is necessary.
 To configure a joystick:
 
 1. Start _QGroundControl_ and connect to a vehicle.
-1. Connect the Joystick or Gamepad to a USB port.
+1. Connect the joystick or gamepad to a USB port.
 1. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Joystick** in the sidebar.
    The screen below will appear.
 
    ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
 
-1. Make sure your joystick is selected in the **Active joystick** dropdown.
-1. Go to the **Calibrate** Tab, press the **Start** button and then follow the on-screen instructions to calibrate/move the sticks.
+1. Make sure your joystick is selected in the **Active joystick** dropdown and, if required, enable it for the current vehicle using the **Enable** checkbox.
+1. Press **Calibrate** and follow the on-screen instructions. During the first step, gently move each stick just enough to define the deadband that is highlighted on the range bars.
 
    ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
 
-   The joystick is _enabled_ as the last step of the calibration process.
+   When calibration finishes, _QGroundControl_ prompts you to enable the joystick if it is not already active.
 
     ::: warning
     On some controllers the calibration process does not work because of incorrect channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
     :::
 
-1. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
-1. Select the flight modes/vehicle functions activated by each joystick button.
+1. Use the live channel monitor at the bottom of the page to verify stick ranges. The colored bar shows the current value and the shaded region indicates the configured deadband.
+1. Assign flight modes and vehicle functions in the **Buttons** tab. Actions marked as **Repeat** keep firing while you hold the button.
    ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
+1. Fine-tune throttle behaviour, expo, deadbands, and other options in the **Settings** tab.
 
-## Advanced Options
+### Buttons Tab
 
-Some additional Options are available at the **Advanced** tab.
-These options may be useful for specific, unsual setups, for increasing sensibility, and for handling noisy joysticks.
+The **Buttons** tab lists every button that currently has an action. Select a button index on the left and choose an action from the list. When the same action is assigned to multiple buttons, they must be pressed together to trigger it. You can also enable **Repeat** on supported actions to keep firing while the button stays pressed.
 
-### Throttle Options
+### Settings Tab
+
+The **Settings** tab collects the throttle, expo, and advanced controls for the joystick. Use the **Advanced Settings** toggle to reveal less common options.
+
+#### Throttle Options
 
 ![Joystick setup - Throttle Modes](../../../assets/setup/joystick_throttle_modes.jpg)
 
 - **Center stick is zero throttle**: Centered or lowered stick sends 0 in [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), raised stick sends 1000.
-  - **Spring loaded throttle smoothing**: In this mode you control not the throttle itself, but the rate at which it increases/decreases.
-    This is useful for setups where the throttle stick is spring loaded, as the user can hold the desired throttle while releasing the stick.
-- **Full down stick is zero throttle**: In this mode, lowered stick sends 0 in [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), centered stick 500, and raised 1000.
-- **Allow negative thrust**: When in **Center stick is zero throttle** mode, this allows the user to send negative values by lowering the stick.
-  So that lowered stick sends -1000 in [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), centered sends zero, and raised stick sends 1000.
-  This mode is only enabled for vehicles that support negative thrust, such as [Rover](http://ardupilot.org/rover/index.html).
+  - **Spring loaded throttle smoothing**: In this mode you control the rate of change instead of the absolute throttle. This is useful for spring-loaded sticks where you want the throttle to hold its value when you release the stick.
+- **Full down stick is zero throttle**: Lowered stick sends 0 in [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), centered stick 500, and raised stick 1000.
+- **Negative thrust**: When **Center stick is zero throttle** is enabled, this allows you to send negative values by lowering the stick. Lowered stick sends -1000, centered sends zero, and raised stick sends 1000. This is only available on vehicles that support negative thrust, such as [Rover](http://ardupilot.org/rover/index.html).
 
-### Expo
+#### Expo
 
-The expo slider allows you to make the sticks less sensitive in the center, allowing finer control in this zone.
+The expo slider allows you to make the sticks less sensitive near the center for finer control. The right-hand graph shows how the curve changes as you adjust the percentage.
 
 ![Joystick setup - Expo](../../../assets/setup/joystick_throttle_expo.jpg)
 
-The slider adjusts the curvature of the exponential curve.
-
 ![Joystick setup - Expo Curve](../../../assets/setup/joystick_throttle_expo_curve.jpg)
 
-The higher the Expo value, the flatter the curve is at the center, and steeper it is at the edges.
+#### Advanced Settings
 
-### Advanced Settings
-
-The advanced settings are not recommended for everyday users.
-They can cause unpredicted results if used incorrectly.
+The advanced settings are available when the **Advanced Settings** toggle is enabled. They can cause unexpected results if misconfigured.
 
 ![Joystick setup - Advanced Settings](../../../assets/setup/joystick_advanced.jpg)
 
-The following settings are available:
-
-- **Enable Gimbal Control**: Enabled two additional channels for controlling a gimbal.
-
-- **Joystick Mode**: Changes what the joystick actually controls, and the MAVLink messages sent to the vehicle.
-
-  - **Normal**: User controls as if using a regular RC radio, MAVLink [MANUAL_CONTROL](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL) messages are used.
-  - **Attitude**: User controls the vehicle attitude, MAVLink [SET_ATTITUDE_TARGET](https://mavlink.io/en/messages/common.html#SET_ATTITUDE_TARGET) messages are used.
-  - **Position**: User controls the vehicle position, MAVLink [SET_POSITION_TARGET_LOCAL_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) messages with bitmask for **position** only are used.
-  - **Force**: User controls the forces applied to the vehicle, MAVLink [SET_POSITION_TARGET_LOCAL_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) messages with bitmask for **force** only are used.
-  - **Velocity**: User controls the forces applied to the vehicle, MAVLink [SET_POSITION_TARGET_LOCAL_NED](https://mavlink.io/en/messages/common.html#SET_POSITION_TARGET_LOCAL_NED) messages with bitmask for **velocity** only are used.
-
-- **Axis Frequency**: When the joystick is idle (inputs are not changing), the joystick commands are sent to the vehicle at 5Hz. When the joystick is in use (input values are changing), the joystick commands are sent to the vehicle at the (higher) frequency configured by this setting. The default is 25Hz.
-
-- **Button Frequency**: Controls the frequency at which repeated button actions are sent.
-
-- **Enable Circle Correction**: RC controllers sticks describe a square, while joysticks usually describe a circle.
-  When this option is enabled a square is inscribed inside the joystick movement area to make it more like an RC controller (so it is possible to reach all four corners). The cost is decreased resolution, as the effective stick travel is reduced.
-
-  - **Disabled:** When this is **disabled** the joystick position is sent to the vehicle unchanged (the way that it is read from the joystick device).
-    On some joysticks, the (roll, pitch) values are confined to the space of a circle inscribed inside of a square.
-    In this figure, point B would command full pitch forward and full roll right, but the joystick is not able to reach point B because the retainer is circular.
-    This means that you will not be able to achieve full roll and pitch deflection simultaneously.
-
+- **Circle correction**: Adjusts circular stick travel to map to the full square range used by RC radios.
+  - **Disabled:** The joystick position is sent to the vehicle unchanged. Because many joysticks move within a circle, you might not reach the extreme corners (full roll and full pitch simultaneously).
     ![](../../../assets/setup/joystick_circle_correction.jpg)
-
-  - **Enabled:** The joystick values are adjusted in software to ensure full range of commands.
-    The usable area of travel and resolution is decreased, however, because the area highlighted grey in the figure is no longer used.
-
+  - **Enabled:** The joystick values are adjusted in software to ensure the full range of commands can be reached. The usable area shrinks slightly because the grey region is no longer used.
     ![Circle correction enabled](../../../assets/setup/joystick_circle_correction2.jpg)
+- **MANUAL_CONTROL extensions (pitch/roll)**: Enables the extra MAVLink fields used for gimbal pitch and yaw on supported vehicles.
+- **Axis frequency**: Sets the maximum rate (Hz) at which axis updates are transmitted while you are actively flying. Commands idle at 5 Hz and scale up to this value as inputs change (default 25 Hz).
+- **Button frequency**: Controls how often repeated button actions are sent when **Repeat** is enabled.
+- **Deadband**: Toggles deadband support. Adjust the values during the first step of [calibration](#configure), by dragging vertically on the axis monitor, or by editing the numeric fields directly. The shaded region on each channel bar indicates the current deadband.
 
-- **Deadbands:** Deadbands allow input changes to be ignored when the sticks are near their neutral positions.
-  This helps to avoid noise or small oscillations on sensitive sticks which may be interpreted as commands, or small offsets when sticks do not re-center well.
-  They can be adjusted during the first step of the [calibration](#configure), or by dragging vertically on the corresponding axis monitor.
+### Migrated Settings
+
+Existing joystick calibrations and preferences from older _QGroundControl_ releases are migrated automatically the first time you connect the device. If calibration data cannot be found, the new setup workflow guides you through creating it.
 
 ## Supported Joysticks
 
@@ -220,3 +195,5 @@ If it is detected as a "Logitech Wireless 710", perform these steps:
 1. Hit the Logitech button (its silver with the Logitech Logo on it in the center of the pad)
 1. Quickly connect the USB receiver to your Mac
 1. The pad should now be detected in the system report as "Logitech Cordless RumblePad 2". If not, retry the above steps.
+
+```
