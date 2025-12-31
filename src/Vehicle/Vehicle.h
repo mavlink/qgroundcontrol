@@ -1093,6 +1093,7 @@ private:
     TrajectoryPoints*               _trajectoryPoints = nullptr;
     GpsPathPoints*                  _gpsPathPoints = nullptr;
     OdometryPathPoints*             _odometryPathPoints = nullptr;
+    QElapsedTimer                   _lastOdometry255Time; ///< Tracks when we last received ODOMETRY from system 255
     QmlObjectListModel              _cameraTriggerPoints;
     //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
 

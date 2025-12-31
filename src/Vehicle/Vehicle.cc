@@ -444,9 +444,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 {
     if (message.sysid != _id && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
-        // We also allow ODOMETRY messages from system ID 255 (sensor) to pass through
+        // We also allow ODOMETRY messages from system ID 255 (sensor) or system ID 1 (fallback) to pass through
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link)) &&
-            !(message.msgid == MAVLINK_MSG_ID_ODOMETRY && message.sysid == 255)) {
+            !(message.msgid == MAVLINK_MSG_ID_ODOMETRY && (message.sysid == 255 || message.sysid == 1))) {
             return;
         }
     }
@@ -780,10 +780,22 @@ void Vehicle::_handleOdometry(mavlink_message_t& message)
                         << "quality:" << odom.quality
                         << "x:" << odom.x << "y:" << odom.y << "z:" << odom.z;
     
-    // Filter: Only process ODOMETRY from system ID 255 (sensor)
-    // Ignore ODOMETRY from EKF or other sources
-    if (message.sysid != 255) {
-        qCDebug(VehicleLog) << "ODOMETRY ignored - not from system 255";
+    // Filter: Process ODOMETRY from system ID 255 (sensor) or system ID 1 (fallback)
+    // Prefer system 255, but fall back to system 1 if 255 is not available
+    constexpr qint64 odometry255TimeoutMs = 5000; // 5 second timeout before falling back to system 1
+    
+    if (message.sysid == 255) {
+        // Always accept from system 255 and reset the timer
+        _lastOdometry255Time.restart();
+    } else if (message.sysid == 1) {
+        // Only accept from system 1 if we haven't received from system 255 recently
+        if (_lastOdometry255Time.isValid() && _lastOdometry255Time.elapsed() < odometry255TimeoutMs) {
+            qCDebug(VehicleLog) << "ODOMETRY ignored from system 1 - still receiving from system 255";
+            return;
+        }
+        qCDebug(VehicleLog) << "ODOMETRY using fallback from system 1";
+    } else {
+        qCDebug(VehicleLog) << "ODOMETRY ignored - not from system 255 or 1";
         return;
     }
     
