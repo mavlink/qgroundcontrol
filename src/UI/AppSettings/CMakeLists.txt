@@ -12,6 +12,7 @@ qt_add_qml_module(AppSettingsModule
         GeneralSettings.qml
         AboutSettings.qml
         HelpSettings.qml
+        GuideSettings.qml
         AboutTool.qml
         LinkSettings.qml
         LogReplaySettings.qml

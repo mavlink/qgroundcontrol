@@ -52,8 +52,14 @@ VideoManager::VideoManager(QObject* parent)
     (void)qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
 #ifdef QGC_GST_STREAMING
-    if (!GStreamer::initialize()) {
-        qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
+    {
+        const QString vsrc = _videoSettings->videoSource()->rawValue().toString();
+        const bool needGst = (vsrc != VideoSettings::videoDisabled) && (vsrc != VideoSettings::videoSourceNoVideo);
+        if (needGst) {
+            if (!GStreamer::initialize()) {
+                qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
+            }
+        }
     }
 #else
     (void)qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
@@ -790,6 +796,12 @@ void VideoManager::startVideo() {
         return;
     }
 
+#ifdef QGC_GST_STREAMING
+    if (!GStreamer::initialize()) {
+        qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
+        return;
+    }
+#endif
     _restartAllVideos();
 }
 

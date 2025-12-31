@@ -306,7 +306,7 @@ ApplicationWindow {
 
     function showAboutTool() {
         closeTransientPopups()
-        showTool(qsTr("About"), "qrc:/qml/QGroundControl/AppSettings/AboutTool.qml", "/InstrumentValueIcons/question.svg")
+        showTool(qsTr("About Us"), "qrc:/qml/QGroundControl/AppSettings/AboutTool.qml", "/InstrumentValueIcons/question.svg")
         activeFlySidebarTool = "about"
     }
 
@@ -585,7 +585,7 @@ ApplicationWindow {
                     }
                 }
             }
-            QGCLabel { text: qsTr("About"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
+            QGCLabel { text: qsTr("About Us"); Layout.alignment: Qt.AlignHCenter; color: qgcPal.buttonText; font.pointSize: ScreenTools.smallFontPointSize }
 
             SubMenuButton {
                 id:                 settingsButton

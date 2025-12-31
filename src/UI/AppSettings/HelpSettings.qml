@@ -34,12 +34,6 @@ Rectangle {
             id:         grid
             width:      parent.width
             columns:    2
-            QGCLabel { text: qsTr("Application") }
-            QGCLabel { text: qsTr("IG GCS FLY") }
-            QGCLabel { text: qsTr("Version") }
-            QGCLabel { text: QGroundControl.qgcVersion.replace(/^v[^ ]+/, "v2.0.3") }
-            QGCLabel { text: qsTr("Organization") }
-            QGCLabel { text: qsTr("IG Drones") }
             QGCLabel { text: qsTr("Website") }
             QGCLabel {
                 linkColor:          qgcPal.text

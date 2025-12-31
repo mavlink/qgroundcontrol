@@ -191,6 +191,8 @@ void _setGstEnvVars()
     const QString appDir = QCoreApplication::applicationDirPath();
     qCDebug(GStreamerLog) << "App Directory:" << appDir;
 
+    qputenv("GST_DISABLE_SEGTRAP", "1");
+
 #if defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)
     const QString frameworkDir = QDir(appDir).filePath("../Frameworks/GStreamer.framework");
     const QString rootDir = QDir(frameworkDir).filePath("Versions/1.0");

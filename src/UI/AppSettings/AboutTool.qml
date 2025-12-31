@@ -16,7 +16,7 @@ Item {
         QGCTabBar {
             id: tabBar
             width: parent.width
-            QGCTabButton { text: qsTr("About") }
+            QGCTabButton { text: qsTr("About Us") }
             QGCTabButton { text: qsTr("Help") }
             QGCTabButton { text: qsTr("Guide") }
         }

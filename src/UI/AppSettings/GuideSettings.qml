@@ -5,15 +5,34 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-SettingsPage {
-    SettingsGroupLayout {
-        Layout.fillWidth: true
-        heading: qsTr("Guide")
-        headingDescription: qsTr("User guidance and documentation")
+Rectangle {
+    color:          qgcPal.toolbarBackground
+    anchors.fill:   parent
 
-        Label {
-            text: qsTr("See Help Settings for documentation and onboarding.")
-            wrapMode: Text.WordWrap
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
+    QGCFlickable {
+        anchors.margins:    0
+        anchors.fill:       parent
+        contentWidth:       parent.width
+        contentHeight:      grid.height
+        clip:               true
+
+        GridLayout {
+            id:         grid
+            width:      parent.width
+            columns:    2
+            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+            rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.5
+
+            QGCLabel { text: qsTr("Application"); color: qgcPal.text }
+            QGCLabel { text: qsTr("IG GCS FLY"); color: qgcPal.text }
+
+            QGCLabel { text: qsTr("Version"); color: qgcPal.text }
+            QGCLabel { text: qsTr("v2.0.2 Release"); color: qgcPal.text }
+
+            QGCLabel { text: qsTr("Organization"); color: qgcPal.text }
+            QGCLabel { text: qsTr("IG Drones"); color: qgcPal.text }
         }
     }
 }

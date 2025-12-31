@@ -82,7 +82,7 @@ Rectangle {
                 QGCToolBarButton {
                     id:                 qgcButton
                     Layout.fillHeight:  true
-                    icon.source:        "/res/QGCLogoFull.svg"
+                    icon.source:        "/res/IGCSFly.svg"
                     logo:               true
                     // onClicked handler removed - permanent sidebar is now always visible
                 }
