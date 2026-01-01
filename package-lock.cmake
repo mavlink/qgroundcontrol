@@ -131,10 +131,10 @@ CPMDeclarePackage(Shapelib
     "BUILD_APPS OFF"
     "BUILD_TESTING OFF"
 )
-# gstreamer_good_plugins
-CPMDeclarePackage(gstreamer_good_plugins
-  NAME gstreamer_good_plugins
-  VERSION 1.24.13
-  URL
-    "https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.24.13.tar.xz"
-)
+# gstreamer_good_plugins (DO NOT LOCK - version must match platform GStreamer)
+# Android uses 1.22.12, macOS uses 1.24.13, etc. Locking causes header mismatches.
+# CPMDeclarePackage(gstreamer_good_plugins
+#   NAME gstreamer_good_plugins
+#   VERSION 1.24.13
+#   URL "https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.24.13.tar.xz"
+# )

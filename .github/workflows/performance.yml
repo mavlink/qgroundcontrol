@@ -64,8 +64,19 @@ jobs:
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
-        with:
-          extra-packages: bloaty
+
+      - name: Install bloaty (binary size analyzer)
+        run: |
+          # bloaty is not in Ubuntu repos - build from source
+          # Skip if it takes too long (timeout after 2 min)
+          timeout 120 bash -c '
+            sudo apt-get install -y libprotobuf-dev protobuf-compiler libre2-dev libcapstone-dev || true
+            git clone --depth 1 https://github.com/google/bloaty.git /tmp/bloaty
+            cd /tmp/bloaty
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DBLOATY_ENABLE_RE2=ON
+            cmake --build build --parallel
+            sudo cmake --install build
+          ' || echo "::warning::bloaty installation timed out, size analysis will be limited"
 
       - name: Configure
         run: |
