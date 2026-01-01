@@ -12,8 +12,8 @@ else
 fi
 
 # Verify required variables are set
-if [[ -z "${GSTREAMER_VERSION:-}" ]]; then
-    echo "Error: GSTREAMER_VERSION must be set (check build-config.json)" >&2
+if [[ -z "${GSTREAMER_MACOS_VERSION:-}" ]]; then
+    echo "Error: GSTREAMER_MACOS_VERSION must be set (check build-config.json)" >&2
     exit 1
 fi
 
@@ -29,7 +29,7 @@ brew install cmake ninja ccache git pkgconf create-dmg mold
 
 # Install GStreamer
 GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx
-GST_VERSION="$GSTREAMER_VERSION"
+GST_VERSION="$GSTREAMER_MACOS_VERSION"
 GST_PKG=gstreamer-1.0-$GST_VERSION-universal.pkg
 GST_DEV_PKG=gstreamer-1.0-devel-$GST_VERSION-universal.pkg
 pushd "$TMPDIR" || exit
