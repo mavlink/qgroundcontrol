@@ -34,5 +34,5 @@ runs:
         arch: ${{ inputs.arch }}
         dir: ${{ inputs.dir }}
         modules: ${{ inputs.modules }}
-        setup-python: false
+        setup-python: true
         cache: true

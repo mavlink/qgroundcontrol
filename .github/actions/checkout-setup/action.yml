@@ -11,9 +11,6 @@ inputs:
   fetch-tags:
     description: 'Fetch git tags'
     default: 'true'
-  harden-runner:
-    description: 'Enable step-security harden-runner'
-    default: 'true'
   initial-setup:
     description: 'Run initial setup (cmake, python, disk cleanup)'
     default: 'true'
@@ -59,12 +56,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Harden Runner
-      if: inputs.harden-runner == 'true'
-      uses: step-security/harden-runner@v2
-      with:
-        egress-policy: audit
-
     - name: Checkout
       uses: actions/checkout@v6
       with:
