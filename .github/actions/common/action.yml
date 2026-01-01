@@ -12,10 +12,6 @@ runs:
         large-packages: false
 
     - uses: lukka/get-cmake@v4.2.1
-      with:
-        # Pin to CMake 3.31.x - CMake 4.x has breaking changes for Apple platforms
-        # that cause x86_64h architecture detection issues on ARM runners
-        cmakeVersion: 3.31.6
 
     - uses: actions/setup-python@v6
       with:
