@@ -29,6 +29,10 @@ inputs:
     description: Path to baseline coverage XML for comparison (optional)
     required: false
     default: ''
+  comment-tag:
+    description: Tag for updating existing PR comment
+    required: false
+    default: coverage-report
 
 runs:
   using: composite
@@ -90,5 +94,5 @@ runs:
       uses: thollander/actions-comment-pull-request@v3
       with:
         pr-number: ${{ inputs.pr-number }}
-        comment-tag: coverage-report
+        comment-tag: ${{ inputs.comment-tag }}
         file-path: coverage-comment.md
