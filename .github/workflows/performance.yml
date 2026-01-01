@@ -90,7 +90,11 @@ jobs:
       - name: Collect size metrics
         id: metrics
         run: |
-          binary="build/QGroundControl"
+          # Binary location depends on build type (Release builds go into Release/)
+          binary="build/Release/QGroundControl"
+          if [[ ! -f "$binary" ]]; then
+            binary="build/QGroundControl"
+          fi
 
           # Binary size
           binary_size=$(stat -c%s "$binary")
@@ -114,14 +118,18 @@ jobs:
 
       - name: Bloaty analysis
         run: |
+          # Find binary (Release builds go into Release/)
+          binary="build/Release/QGroundControl"
+          [[ ! -f "$binary" ]] && binary="build/QGroundControl"
+
           echo "=== Top 20 largest symbols ===" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          bloaty -d symbols -n 20 build/QGroundControl >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
+          bloaty -d symbols -n 20 "$binary" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
           echo "=== Size by compilation unit ===" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          bloaty -d compileunits -n 20 build/QGroundControl >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
+          bloaty -d compileunits -n 20 "$binary" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Generate metrics JSON
@@ -240,17 +248,25 @@ jobs:
       - name: Run benchmarks
         id: bench
         run: |
+          # Find binary (Release builds go into Release/)
+          binary="./build/Release/QGroundControl"
+          [[ ! -f "$binary" ]] && binary="./build/QGroundControl"
+
           # Run Qt Test MAVLink benchmarks
           # Output format: RESULT : MAVLinkBenchmark::benchmarkHeartbeatPack():
           #     0.00015 msecs per iteration (total: 78, iterations: 524288)
 
           export QT_QPA_PLATFORM=offscreen
-          ./build/QGroundControl --unittest:MAVLinkBenchmark 2>&1 | tee benchmark-output.txt || true
+          export BINARY_PATH="$binary"
+          "$binary" --unittest:MAVLinkBenchmark 2>&1 | tee benchmark-output.txt || true
 
           # Parse Qt Test benchmark output to JSON
           python3 << 'PARSE_SCRIPT'
           import re
           import json
+          import os
+
+          binary = os.environ.get('BINARY_PATH', './build/Release/QGroundControl')
 
           results = []
           with open('benchmark-output.txt', 'r') as f:
@@ -284,7 +300,7 @@ jobs:
               import subprocess
               import time
               start = time.time()
-              subprocess.run(['./build/QGroundControl', '--unittest', '--list-tests'],
+              subprocess.run([binary, '--unittest', '--list-tests'],
                            capture_output=True, timeout=30, env={'QT_QPA_PLATFORM': 'offscreen'})
               elapsed_ms = (time.time() - start) * 1000
               results = [{'name': 'Startup (list tests)', 'unit': 'ms', 'value': elapsed_ms}]
