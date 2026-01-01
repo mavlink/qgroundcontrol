@@ -161,6 +161,16 @@ jobs:
           path: metrics.json
           retention-days: 90
 
+      - name: Upload binary for benchmarks
+        uses: actions/upload-artifact@v6
+        with:
+          name: qgc-binary
+          path: |
+            build/QGroundControl
+            build/Release/QGroundControl
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Store size metrics
         uses: benchmark-action/github-action-benchmark@v1
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -208,7 +218,7 @@ jobs:
   benchmarks:
     name: Runtime Benchmarks
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 30
     if: github.event.inputs.run_benchmarks == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     needs: size-metrics
 
@@ -235,17 +245,14 @@ jobs:
           arch: linux_gcc_64
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      - name: Install Dependencies
-        uses: ./.github/actions/install-dependencies
+      - name: Download binary from size-metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: qgc-binary
+          path: build
 
-      - name: Configure
-        run: |
-          cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DQGC_STABLE_BUILD=ON
-
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Make binary executable
+        run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
 
       - name: Run benchmarks
         id: bench
