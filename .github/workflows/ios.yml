@@ -84,6 +84,7 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+              -DCMAKE_OSX_ARCHITECTURES=arm64
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 

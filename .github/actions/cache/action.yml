@@ -75,24 +75,35 @@ runs:
         ARCHIVE="ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}.tar.xz"
         wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${ARCHIVE}"
         wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${ARCHIVE}.minisig"
-        sudo apt-get install -y -qq minisign >/dev/null
-        minisign -Vm "$ARCHIVE" -P "$CCACHE_MINISIGN_KEY"
+        # Install minisign from GitHub releases (not available in Ubuntu repos)
+        MINISIGN_VERSION="0.11"
+        wget --quiet --tries=3 --waitretry=5 "https://github.com/jedisct1/minisign/releases/download/${MINISIGN_VERSION}/minisign-${MINISIGN_VERSION}-linux.tar.gz"
+        tar -xzf "minisign-${MINISIGN_VERSION}-linux.tar.gz"
+        # Use appropriate minisign binary for architecture
+        if [[ "${CCACHE_ARCH}" == "aarch64" ]]; then
+          MINISIGN_BIN="./minisign-linux/aarch64/minisign"
+        else
+          MINISIGN_BIN="./minisign-linux/x86_64/minisign"
+        fi
+        "$MINISIGN_BIN" -Vm "$ARCHIVE" -P "$CCACHE_MINISIGN_KEY"
         tar -xf "$ARCHIVE"
         sudo cp "ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}/ccache" /usr/local/bin/ccache
         sudo chmod +x /usr/local/bin/ccache
 
-    - name: Setup sccache (Windows)
-      if: runner.os == 'Windows' && inputs.target != 'android'
+    # Note: sccache doesn't have ARM64 Windows binaries, skip for native ARM64 builds
+    - name: Setup sccache (Windows x64)
+      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.target != 'win64_msvc2022_arm64'
       uses: mozilla-actions/sccache-action@v0.0.9
 
     - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows' && inputs.target != 'android'
+      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.target != 'win64_msvc2022_arm64'
       shell: bash
 
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && 'sccache' || 'ccache' }}
+        # Use sccache for Windows x64, ccache for everything else (including Windows ARM64)
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.target != 'win64_msvc2022_arm64' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
