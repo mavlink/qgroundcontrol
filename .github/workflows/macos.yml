@@ -62,12 +62,15 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Build Setup
         id: setup
         uses: ./.github/actions/build-setup
         with:
-          fetch-depth: '0'
           restore-timestamps: 'true'
           qt-host: mac
           qt-arch: clang_64

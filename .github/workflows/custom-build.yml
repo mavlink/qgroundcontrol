@@ -46,32 +46,17 @@ jobs:
       - name: Enable custom build
         uses: ./.github/actions/custom-build
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: linux
-          target: linux_gcc_64
-          build-type: Release
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: false
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build

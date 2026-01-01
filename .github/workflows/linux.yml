@@ -86,6 +86,10 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
 
       - name: Build Setup
         id: setup
