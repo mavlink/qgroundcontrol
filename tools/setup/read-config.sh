@@ -19,6 +19,20 @@
 
 set -euo pipefail
 
+# Resolve the physical path to this script for both bash and zsh shells
+_script_source_path() {
+    if [[ -n "${BASH_VERSION:-}" ]]; then
+        printf '%s\n' "${BASH_SOURCE[0]}"
+    elif [[ -n "${ZSH_VERSION:-}" ]]; then
+        eval 'printf "%s\\n" "${(%):-%x}"'
+    else
+        printf '%s\n' "$0"
+    fi
+}
+
+SCRIPT_SOURCE="$(_script_source_path)"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+
 # Find the repo root (location of .github/build-config.json)
 find_repo_root() {
     local dir="$1"
@@ -37,7 +51,6 @@ find_repo_root() {
 get_config_value() {
     local key="$1"
     local config_file="$2"
-
     if command -v jq &> /dev/null; then
         jq -r ".$key // empty" "$config_file"
     elif command -v python3 &> /dev/null; then
@@ -47,9 +60,6 @@ get_config_value() {
         exit 1
     fi
 }
-
-# Main logic
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check for config file in multiple locations:
 # 1. Same directory as this script (for Docker builds where config is copied)
@@ -100,7 +110,7 @@ export ANDROID_CMDLINE_TOOLS="${ANDROID_CMDLINE_TOOLS:-$(get_config_value androi
 export CMAKE_MINIMUM_VERSION="${CMAKE_MINIMUM_VERSION:-$(get_config_value cmake_minimum_version "$CONFIG_FILE")}"
 
 # Print config if running directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "$SCRIPT_SOURCE" == "$0" ]]; then
     echo "Build Configuration (from $CONFIG_FILE):"
     echo "  QT_VERSION=$QT_VERSION"
     echo "  QT_MINIMUM_VERSION=$QT_MINIMUM_VERSION"
