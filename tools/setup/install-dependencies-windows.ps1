@@ -160,7 +160,7 @@ if ($installGst) {
             Invoke-WebRequest $gstZipUrl -OutFile $gstArchive
         } catch {
             Write-Warning "GStreamer ARM64 not found at $gstZipUrl"
-            Write-Warning "ARM64 GStreamer must be built first using: tools/setup/gstreamer/build-gstreamer-windows.ps1"
+            Write-Warning "ARM64 GStreamer must be built first using: tools/setup/gstreamer/build-gstreamer.py --platform windows"
             Write-Warning "Skipping GStreamer installation."
             $installGst = $false
         }

@@ -39,4 +39,4 @@ runs:
         )
         [[ "${{ inputs.install-bloaty }}" == "true" ]] && args+=(--install-bloaty)
 
-        "${{ github.workspace }}/.github/scripts/size-analysis.sh" "${args[@]}"
+        python3 "${{ github.workspace }}/.github/scripts/size_analysis.py" "${args[@]}"

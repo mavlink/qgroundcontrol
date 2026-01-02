@@ -63,6 +63,17 @@ all = [
     "qgc-tools[ci,qt,coverage,dev,lsp,test]",
 ]
 
+[project.scripts]
+# Main tools (available after: pip install -e ./tools)
+qgc-analyze = "analyze:main"
+qgc-check-deps = "check_deps:main"
+qgc-coverage = "coverage:main"
+qgc-docs = "generate_docs:main"
+qgc-lint-fix = "lint_fix:main"
+qgc-pre-commit = "pre_commit:main"
+qgc-run-tests = "run_tests:main"
+qgc-smoke-test = "smoke_test:main"
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"

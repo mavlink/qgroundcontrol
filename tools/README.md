@@ -46,25 +46,36 @@ See `pyproject.toml` for dependency groups: `ci`, `qt`, `coverage`, `dev`, `lsp`
 
 ## Root Scripts
 
+### Python Tools (Primary)
+
 | Script | Description |
 |--------|-------------|
-| `analyze.sh` | Run clang-tidy/cppcheck on source files |
-| `check-deps.sh` | Check for outdated dependencies |
+| `analyze.py` | Run clang-tidy, cppcheck, clazy, qmllint analysis |
+| `check_deps.py` | Check/update dependencies and submodules |
+| `coverage.py` | Generate code coverage reports with gcovr |
+| `generate_docs.py` | Generate Doxygen API documentation |
+| `lint_fix.py` | Auto-apply pre-commit formatting fixes |
+| `param_docs.py` | Generate parameter documentation from JSON |
+| `pre_commit.py` | Run pre-commit hooks with formatted output |
+| `run_tests.py` | Execute unit tests with headless display support |
+| `smoke_test.py` | Smoke tests for tool functionality |
+| `update_headers.py` | License header management |
+
+### Shell Scripts
+
+| Script | Description |
+|--------|-------------|
+| `analyze.sh` | Wrapper for `analyze.py` |
 | `clean.sh` | Clean build artifacts and caches |
 | `common.sh` | Shared shell utilities (sourced by other scripts) |
 | `configure.sh` | Configure CMake build with Qt auto-detection |
-| `coverage.sh` | Generate code coverage reports |
-| `generate-docs.sh` | Generate Doxygen API docs |
-| `param-docs.py` | Generate parameter documentation |
-| `pre-commit.sh` | Run pre-commit hooks (install with `--install`) |
-| `run-tests.sh` | Run unit tests with headless display support |
-| `update-headers.py` | License header management |
+| `pre-commit.sh` | Wrapper for `pre_commit.py` |
 
 ## Configuration Files
 
 | File | Purpose |
 |------|---------|
-| `ccache.conf` | ccache settings (auto-used by CMake) |
+| [configs/ccache.conf](configs/ccache.conf) | ccache settings (auto-used by CMake) |
 | `pyproject.toml` | Python dependencies |
 
 ## Centralized Config

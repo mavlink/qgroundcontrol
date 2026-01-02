@@ -115,7 +115,7 @@ info:
 
 # Update copyright headers
 update-headers:
-    python3 ./tools/update-headers.py
+    python3 ./tools/update_headers.py
 
 # Check dependency versions
 check-deps:

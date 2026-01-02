@@ -31,9 +31,9 @@ runs:
           arch="x86_64"
         fi
 
-        "${{ github.workspace }}/.github/scripts/install-ccache.sh" \
+        python3 "${{ github.workspace }}/.github/scripts/install_ccache.py" \
           --arch "$arch" \
-          --config-path "${{ github.workspace }}/tools/configs/ccache.conf" \
+          --config "${{ github.workspace }}/tools/configs/ccache.conf" \
           --output-only
 
     - name: Cache ccache binary (Linux)
@@ -48,7 +48,7 @@ runs:
       if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        "${{ github.workspace }}/.github/scripts/install-ccache.sh" \
+        python3 "${{ github.workspace }}/.github/scripts/install_ccache.py" \
           --arch "${{ steps.ccache-config.outputs.arch }}" \
           --install
 

@@ -147,7 +147,8 @@ runs:
         BUILD_TYPE: ${{ inputs.build-type }}
         PREFIX: ${{ runner.temp }}/gstreamer
       run: |
-        ./tools/setup/gstreamer/build-gstreamer-linux.sh \
+        python3 ./tools/setup/gstreamer/build-gstreamer.py \
+          --platform linux \
           --version "$VERSION" \
           --type "$BUILD_TYPE" \
           --prefix "$PREFIX" \
@@ -162,7 +163,8 @@ runs:
         BUILD_TYPE: ${{ inputs.build-type }}
         PREFIX: ${{ runner.temp }}/gstreamer
       run: |
-        ./tools/setup/gstreamer/build-gstreamer-macos.sh \
+        python3 ./tools/setup/gstreamer/build-gstreamer.py \
+          --platform macos \
           --version "$VERSION" \
           --arch "$ARCH" \
           --type "$BUILD_TYPE" \
@@ -172,23 +174,24 @@ runs:
 
     - name: Build GStreamer (Windows)
       if: inputs.platform == 'windows'
-      shell: pwsh
+      shell: bash
       env:
         VERSION: ${{ steps.config.outputs.version }}
         ARCH: ${{ inputs.arch }}
         BUILD_TYPE: ${{ inputs.build-type }}
       run: |
-        $arch = $env:ARCH
-        if ($arch -eq 'x86_64') { $arch = 'x64' }
+        arch="$ARCH"
+        [[ "$arch" == 'x86_64' ]] && arch='x64'
 
-        .\tools\setup\gstreamer\build-gstreamer-windows.ps1 `
-          -Version $env:VERSION `
-          -BuildType $env:BUILD_TYPE `
-          -Arch $arch `
-          -Prefix "C:\gstreamer-$arch" `
-          -WorkDir '${{ runner.temp }}' `
-          -QtPrefix $env:QT_ROOT_DIR `
-          -Clean
+        python3 ./tools/setup/gstreamer/build-gstreamer.py \
+          --platform windows \
+          --version "$VERSION" \
+          --arch "$arch" \
+          --type "$BUILD_TYPE" \
+          --prefix "C:\gstreamer-$arch" \
+          --work-dir "${{ runner.temp }}" \
+          --qt-prefix "$QT_ROOT_DIR" \
+          --clean
 
     - name: Build GStreamer (Android)
       if: inputs.platform == 'android'
@@ -199,7 +202,8 @@ runs:
         BUILD_TYPE: ${{ inputs.build-type }}
         OUTPUT: ${{ runner.temp }}/gstreamer
       run: |
-        ./tools/setup/gstreamer/build-gstreamer-android.sh \
+        python3 ./tools/setup/gstreamer/build-gstreamer.py \
+          --platform android \
           --version "$VERSION" \
           --arch "$ARCH" \
           --type "$BUILD_TYPE" \
@@ -217,6 +221,7 @@ runs:
         SIMULATOR: ${{ inputs.simulator }}
       run: |
         args=(
+          --platform ios
           --version "$VERSION"
           --arch "$ARCH"
           --type "$BUILD_TYPE"
@@ -225,7 +230,7 @@ runs:
         )
         [[ "$SIMULATOR" == 'true' ]] && args+=(--simulator)
 
-        ./tools/setup/gstreamer/build-gstreamer-ios.sh "${args[@]}"
+        python3 ./tools/setup/gstreamer/build-gstreamer.py "${args[@]}"
 
     # ===== VERIFY =====
 
@@ -282,7 +287,7 @@ runs:
         [[ "${{ inputs.simulator }}" == "true" ]] && args+=(--simulator)
         [[ "${{ inputs.upload-s3 }}" == "true" && -n "$AWS_ACCESS_KEY_ID" ]] && args+=(--upload-s3)
 
-        "${{ github.workspace }}/.github/scripts/gstreamer-archive.sh" "${args[@]}"
+        python3 "${{ github.workspace }}/.github/scripts/gstreamer_archive.py" "${args[@]}"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v6

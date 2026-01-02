@@ -1,0 +1,375 @@
+#!/usr/bin/env python3
+"""
+Run QGroundControl unit tests.
+
+Usage:
+    ./tools/run_tests.py                          # Run all tests
+    ./tools/run_tests.py --filter "Vehicle*"      # Filter tests
+    ./tools/run_tests.py --timeout 600            # Custom timeout
+    ./tools/run_tests.py --xml                    # JUnit XML output
+    ./tools/run_tests.py --headless               # Force offscreen mode
+
+Environment:
+    QT_QPA_PLATFORM - Qt platform plugin (default: auto-detect)
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Sequence
+
+
+@dataclass
+class TestResult:
+    """Result of a test run."""
+
+    passed: int = 0
+    failed: int = 0
+    skipped: int = 0
+    duration: float = 0.0
+    output: str = ""
+    xml_path: Path | None = None
+    exit_code: int = 0
+
+
+class Logger:
+    """Colored logging for terminal output."""
+
+    def __init__(self, no_color: bool = False) -> None:
+        self.use_color = sys.stdout.isatty() and not no_color and not os.environ.get("NO_COLOR")
+
+    def _color(self, code: str, text: str) -> str:
+        if not self.use_color:
+            return text
+        return f"\033[{code}m{text}\033[0m"
+
+    def info(self, msg: str) -> None:
+        print(f"{self._color('0;34', '[INFO]')} {msg}")
+
+    def ok(self, msg: str) -> None:
+        print(f"{self._color('0;32', '[OK]')} {msg}")
+
+    def warn(self, msg: str) -> None:
+        print(f"{self._color('1;33', '[WARN]')} {msg}")
+
+    def error(self, msg: str) -> None:
+        print(f"{self._color('0;31', '[ERROR]')} {msg}", file=sys.stderr)
+
+
+class QtTestRunner:
+    """Runs QGroundControl Qt unit tests."""
+
+    BINARY_NAME = "QGroundControl"
+    BUILD_TYPES = ("Debug", "Release", "RelWithDebInfo", "MinSizeRel")
+
+    def __init__(
+        self,
+        build_dir: Path,
+        timeout: int = 300,
+        verbose: bool = False,
+        headless: bool = False,
+    ) -> None:
+        self.build_dir = build_dir.resolve()
+        self.timeout = timeout
+        self.verbose = verbose
+        self.headless = headless
+        self.repo_root = self._find_repo_root()
+        self.log = Logger()
+
+    def _find_repo_root(self) -> Path:
+        """Find the repository root directory."""
+        current = Path(__file__).resolve().parent
+        while current != current.parent:
+            if (current / ".git").is_dir():
+                return current
+            current = current.parent
+        return Path(__file__).resolve().parent.parent
+
+    def detect_platform(self) -> str:
+        """Detect the current platform."""
+        system = platform.system().lower()
+        if system == "linux":
+            return "linux"
+        elif system == "darwin":
+            return "macos"
+        elif system == "windows" or system.startswith("mingw") or system.startswith("msys"):
+            return "windows"
+        return "linux"
+
+    def needs_virtual_display(self) -> bool:
+        """Check if we need a virtual display (Linux without DISPLAY)."""
+        if self.headless:
+            return False
+        if self.detect_platform() != "linux":
+            return False
+        return not os.environ.get("DISPLAY")
+
+    def find_binary(self, build_type: str | None = None) -> Path | None:
+        """Find the QGroundControl binary in build directory."""
+        plat = self.detect_platform()
+        binary_name = f"{self.BINARY_NAME}.exe" if plat == "windows" else self.BINARY_NAME
+
+        # Try find-binary.sh if available
+        find_script = self.repo_root / ".github" / "scripts" / "find-binary.sh"
+        if find_script.is_file() and os.access(find_script, os.X_OK):
+            binary = self._run_find_script(find_script, build_type)
+            if binary and binary.is_file():
+                return binary
+
+        # Build search locations
+        locations: list[Path] = []
+
+        if build_type:
+            locations.append(self.build_dir / build_type / binary_name)
+
+        locations.append(self.build_dir / binary_name)
+
+        for bt in self.BUILD_TYPES:
+            locations.append(self.build_dir / bt / binary_name)
+
+        for loc in locations:
+            if loc.is_file():
+                return loc
+
+        return None
+
+    def _run_find_script(self, script: Path, build_type: str | None) -> Path | None:
+        """Run find-binary.sh and parse result."""
+        args = [str(script), "--build-dir", str(self.build_dir)]
+        if build_type:
+            args.extend(["--build-type", build_type])
+
+        try:
+            result = subprocess.run(
+                args,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            for line in result.stdout.splitlines():
+                if line.startswith("binary_path="):
+                    path = Path(line.split("=", 1)[1])
+                    if path.is_file():
+                        return path
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            pass
+
+        return None
+
+    def run_tests(
+        self,
+        filter_pattern: str | None = None,
+        xml_output: bool = False,
+        output_file: Path | None = None,
+        binary_path: Path | None = None,
+        build_type: str | None = None,
+    ) -> TestResult:
+        """Run the unit tests and return results."""
+        result = TestResult()
+
+        # Find binary
+        binary = binary_path or self.find_binary(build_type)
+        if not binary or not binary.is_file():
+            self.log.error(f"Binary not found in {self.build_dir}")
+            result.exit_code = 1
+            return result
+
+        # Make executable on Unix
+        if self.detect_platform() != "windows":
+            try:
+                binary.chmod(binary.stat().st_mode | 0o111)
+            except OSError:
+                pass
+
+        self.log.info(f"Binary: {binary}")
+        self.log.info(f"Timeout: {self.timeout}s")
+
+        # Build test arguments
+        test_args: list[str] = []
+        if filter_pattern:
+            test_args.append(f"--unittest:{filter_pattern}")
+            self.log.info(f"Filter: {filter_pattern}")
+        else:
+            test_args.append("--unittest")
+
+        # XML output
+        if xml_output:
+            if output_file is None:
+                output_file = binary.parent / "junit-results.xml"
+            result.xml_path = output_file
+            test_args.extend(["--unittest-output", str(output_file)])
+            self.log.info(f"Output: {output_file}")
+
+        # Build command
+        cmd = self._build_command(binary, test_args)
+
+        # Set environment
+        env = os.environ.copy()
+        if self.headless:
+            env.setdefault("QT_QPA_PLATFORM", "offscreen")
+            self.log.info("Platform: offscreen (forced)")
+
+        # Run tests
+        import time
+
+        start_time = time.monotonic()
+
+        try:
+            proc = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+            )
+            result.exit_code = proc.returncode
+            result.output = proc.stdout + proc.stderr
+
+            if self.verbose:
+                print(result.output)
+
+        except subprocess.TimeoutExpired as e:
+            self.log.error(f"Tests timed out after {self.timeout}s")
+            result.exit_code = 124
+            result.output = (e.stdout or b"").decode() + (e.stderr or b"").decode()
+
+        result.duration = time.monotonic() - start_time
+
+        # Log result
+        if result.exit_code == 0:
+            self.log.ok("Tests passed")
+        else:
+            self.log.error(f"Tests failed (exit code: {result.exit_code})")
+
+        return result
+
+    def _build_command(self, binary: Path, test_args: list[str]) -> list[str]:
+        """Build the command to run tests, handling virtual display if needed."""
+        base_cmd = [str(binary)] + test_args
+
+        if self.needs_virtual_display():
+            xvfb = shutil.which("xvfb-run")
+            if xvfb:
+                self.log.info("Running with xvfb-run (no DISPLAY)")
+                return [xvfb, "-a"] + base_cmd
+            else:
+                self.log.warn("xvfb-run not found, using offscreen platform")
+                os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+        return base_cmd
+
+    def write_github_output(self, result: TestResult) -> None:
+        """Write results to GITHUB_OUTPUT for CI integration."""
+        github_output = os.environ.get("GITHUB_OUTPUT")
+        if not github_output:
+            return
+
+        try:
+            with open(github_output, "a") as f:
+                f.write(f"exit_code={result.exit_code}\n")
+                f.write(f"passed={'true' if result.exit_code == 0 else 'false'}\n")
+                if result.xml_path:
+                    f.write(f"output_file={result.xml_path}\n")
+        except OSError as e:
+            self.log.warn(f"Failed to write GITHUB_OUTPUT: {e}")
+
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Run QGroundControl unit tests.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s                              Run all tests
+  %(prog)s --filter "MAVLink*"          Filter tests
+  %(prog)s -B build-debug --xml         Debug build with XML output
+""",
+    )
+
+    parser.add_argument(
+        "-B",
+        "--build-dir",
+        type=Path,
+        default=Path("build"),
+        help="Build directory (default: build)",
+    )
+    parser.add_argument(
+        "-t",
+        "--build-type",
+        help="Build type to find binary in (auto-detect)",
+    )
+    parser.add_argument(
+        "--binary",
+        type=Path,
+        help="Explicit path to QGroundControl binary",
+    )
+    parser.add_argument(
+        "--filter",
+        dest="filter_pattern",
+        help="Test filter pattern",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=300,
+        help="Timeout in seconds (default: 300)",
+    )
+    parser.add_argument(
+        "--xml",
+        action="store_true",
+        help="Generate JUnit XML output",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output file for XML results",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Force headless/offscreen mode",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show test output",
+    )
+
+    return parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Main entry point."""
+    args = parse_args(argv)
+
+    runner = QtTestRunner(
+        build_dir=args.build_dir,
+        timeout=args.timeout,
+        verbose=args.verbose,
+        headless=args.headless,
+    )
+
+    result = runner.run_tests(
+        filter_pattern=args.filter_pattern,
+        xml_output=args.xml,
+        output_file=args.output,
+        binary_path=args.binary,
+        build_type=args.build_type,
+    )
+
+    runner.write_github_output(result)
+
+    return result.exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -30,9 +30,6 @@ This directory contains scripts to install system dependencies, Qt SDK, Python t
 | **install-dependencies-windows.ps1** | Windows system dependencies (Visual Studio, CMake) | Windows |
 | **install-python.sh** | Python venv + pip dependencies for development | All |
 | **install-qt.py** | Qt SDK via aqtinstall (auto-detects platform) | All |
-| **install-qt-debian.sh** | Legacy: Qt installation wrapper for Debian | Debian/Ubuntu |
-| **install-qt-ios.sh** | Qt iOS cross-compilation setup | macOS only |
-| **install-qt-android.sh** | Qt Android cross-compilation setup | All |
 | **read-config.sh** | Read build configuration (bash) | Linux/macOS |
 | **read-config.py** | Read build configuration (Python) | All |
 | **read-config.ps1** | Read build configuration (PowerShell) | Windows |
@@ -122,14 +119,14 @@ export QT_ARCH=android_arm64_v8a
 
 ### Cross-Platform Support
 
-For platform-specific builds (iOS, Android), use the dedicated wrappers:
+For platform-specific builds (iOS, Android), use install-qt.py with appropriate flags:
 
 ```bash
 # iOS (requires macOS + Xcode)
-./tools/setup/install-qt-ios.sh
+./tools/setup/install-qt.py --target ios
 
 # Android (requires Android NDK)
-./tools/setup/install-qt-android.sh
+./tools/setup/install-qt.py --target android --arch android_arm64_v8a
 ```
 
 ## GStreamer Plugins
@@ -147,7 +144,7 @@ cd ./tools/setup/gstreamer
 ./build-gstreamer-macos.sh      # macOS
 ./build-gstreamer-ios.sh        # iOS
 ./build-gstreamer-android.sh    # Android
-./build-gstreamer-windows.ps1   # Windows
+./build-gstreamer.py --platform windows  # Windows
 ```
 
 Results are installed to the Qt SDK location.
