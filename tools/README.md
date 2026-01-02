@@ -15,7 +15,6 @@ tools/
 ├── format-check.sh          # Check/apply clang-format
 ├── generate-docs.sh         # Generate API docs (Doxygen)
 ├── param-docs.py            # Generate parameter documentation
-├── update-headers.py        # License header management
 ├── ccache.conf              # ccache configuration
 ├── analyzers/               # Static analysis scripts
 │   └── vehicle_null_check.py
@@ -389,16 +388,6 @@ python3 tools/translations/qgc-lupdate-json.py --verbose
 See [translations/README.md](translations/README.md) for Crowdin integration.
 
 ## Code Quality Tools
-
-### update-headers.py
-
-Updates or validates license headers in source files.
-
-```bash
-python3 tools/update-headers.py              # Update headers
-python3 tools/update-headers.py --check      # Check only (for CI)
-python3 tools/update-headers.py --check src/ # Check specific directory
-```
 
 ### ccache.conf
 

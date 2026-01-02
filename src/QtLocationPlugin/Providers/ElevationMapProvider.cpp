@@ -1,17 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- * License for the COPERNICUS dataset hosted on https://terrain-ce.suite.auterion.com/:
- *
- * © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under
- * COPERNICUS by the European Union and ESA; all rights reserved.
- *
- ****************************************************************************/
-
 #include "ElevationMapProvider.h"
 #include "TerrainTileCopernicus.h"
 

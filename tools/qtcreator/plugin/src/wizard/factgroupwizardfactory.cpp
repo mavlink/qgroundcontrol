@@ -101,16 +101,7 @@ QString generateHeader(const QString &className, const QString &domain, const QS
     QString content;
     QTextStream out(&content);
 
-    out << R"(/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-#pragma once
+    out << R"(#pragma once
 
 #include "FactGroup.h"
 
@@ -169,16 +160,7 @@ QString generateSource(const QString &className, const QString &domain, const QS
     QString content;
     QTextStream out(&content);
 
-    out << R"(/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-#include ")" << className << R"(.h"
+    out << R"(#include ")" << className << R"(.h"
 #include "Vehicle.h"
 
 )" << className << "::" << className << R"((QObject *parent)
