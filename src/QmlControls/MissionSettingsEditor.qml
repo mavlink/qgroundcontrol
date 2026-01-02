@@ -17,6 +17,7 @@ Rectangle {
     property var _masterController: masterController
     property var _missionController: _masterController.missionController
     property var _controllerVehicle: _masterController.controllerVehicle
+    property var _visualItems: _missionController.visualItems
     property bool _vehicleHasHomePosition: _controllerVehicle.homePosition.isValid
     property bool _showCruiseSpeed: !_controllerVehicle.multiRotor
     property bool _showHoverSpeed: _controllerVehicle.multiRotor || _controllerVehicle.vtol
@@ -90,6 +91,36 @@ Rectangle {
             label: qsTr("Waypoints Altitude")
             fact: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
         }
+
+        QGCButton {
+            id: applyDefaultAltitudeButton
+            Layout.fillWidth: true
+            text: qsTr("Apply New Altitude")
+            visible: false
+
+            onClicked: mainWindow.showMessageDialog(qsTr("Apply New Altitude"),
+                            qsTr("You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?"),
+                            Dialog.Yes | Dialog.No,
+                            function() { applyDefaultAltitudeButton.visible = false; _missionController.applyDefaultMissionAltitude() })
+
+            Connections {
+                target: _appSettings.defaultMissionItemAltitude
+                function onRawValueChanged() {
+                    if (_visualItems.count > 1) {
+                        applyDefaultAltitudeButton.visible = true
+                    }
+                }
+            }
+
+            Connections {
+                target: _visualItems
+                function onCountChanged() {
+                    if (_visualItems.count <= 1) {
+                        applyDefaultAltitudeButton.visible = false
+                    }
+                }
+            }
+    }
 
         FactTextFieldSlider {
             Layout.fillWidth: true
