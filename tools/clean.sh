@@ -6,37 +6,40 @@
 #   ./tools/clean.sh              # Clean build directory
 #   ./tools/clean.sh --all        # Clean everything (build, caches, generated files)
 #   ./tools/clean.sh --cache      # Clean only caches (ccache, pip, etc.)
+#   ./tools/clean.sh --dry-run    # Show what would be deleted without removing
 #
 # This script removes:
 #   - build/           CMake build directory
 #   - .cache/          Local caches (ccache, clangd index)
 #   - *.user           Qt Creator user files
 #   - CMakeUserPresets.json
+#
+# Options:
+#   -h, --help         Show this help message
+#   -a, --all          Clean everything (build, caches, generated)
+#   -c, --cache        Clean only caches
+#   -n, --dry-run      Show what would be deleted without removing
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
+# Source shared utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 # Defaults
 CLEAN_ALL=false
 CLEAN_CACHE_ONLY=false
 DRY_RUN=false
 
+# Dry-run tracking
+DRY_RUN_FILES=()
+DRY_RUN_DIRS=()
+DRY_RUN_SIZES=()
+
 show_help() {
-    head -14 "$0" | tail -12
+    head -21 "$0" | tail -19
     exit 0
 }
 
@@ -73,7 +76,16 @@ remove_if_exists() {
 
     if [[ -e "$path" ]]; then
         if [[ "$DRY_RUN" == true ]]; then
-            log_info "Would remove: $desc"
+            local size=$(du -sh "$path" 2>/dev/null | cut -f1)
+            log_warn "Would delete: $desc ($size)"
+
+            # Track statistics
+            DRY_RUN_SIZES+=("$size")
+            if [[ -d "$path" ]]; then
+                DRY_RUN_DIRS+=("$path")
+            else
+                DRY_RUN_FILES+=("$path")
+            fi
         else
             log_info "Removing: $desc"
             rm -rf "$path"
@@ -105,7 +117,7 @@ clean_cache() {
     # ccache stats (not the cache itself, just local stats)
     if command -v ccache &> /dev/null; then
         if [[ "$DRY_RUN" == true ]]; then
-            log_info "Would clear ccache statistics"
+            log_warn "Would clear: ccache statistics"
         else
             log_info "Clearing ccache statistics"
             ccache --zero-stats 2>/dev/null || true
@@ -127,9 +139,38 @@ clean_generated() {
     # remove_if_exists "translations/*.qm" "compiled translation files"
 }
 
+print_dry_run_summary() {
+    if [[ "$DRY_RUN" != true ]] || [[ ${#DRY_RUN_FILES[@]} -eq 0 && ${#DRY_RUN_DIRS[@]} -eq 0 ]]; then
+        return
+    fi
+
+    echo ""
+    log_ok "Dry run complete. Would delete:"
+    log_info "  - ${#DRY_RUN_FILES[@]} files"
+    log_info "  - ${#DRY_RUN_DIRS[@]} directories"
+
+    # Calculate approximate total size
+    local total_size=0
+    for size_str in "${DRY_RUN_SIZES[@]}"; do
+        # Convert size strings like "1.2G", "500M", "123K" to a simple display
+        # For now, just list them individually (more accurate than trying to sum)
+        :
+    done
+
+    # Show cumulative disk savings (approximate)
+    if [[ ${#DRY_RUN_SIZES[@]} -gt 0 ]]; then
+        log_info "  - Sizes: ${DRY_RUN_SIZES[*]}"
+    fi
+
+    echo ""
+    log_warn "Run without --dry-run to actually delete these items:"
+    log_info "  ${BASH_SOURCE[0]} [options]"
+}
+
 # Main
 if [[ "$DRY_RUN" == true ]]; then
-    log_warn "Dry run mode - no files will be removed"
+    log_warn "DRY RUN MODE - No files will be removed"
+    echo ""
 fi
 
 if [[ "$CLEAN_CACHE_ONLY" == true ]]; then
@@ -142,10 +183,10 @@ else
     clean_build
 fi
 
-log_ok "Clean complete"
-
-# Show disk space recovered
-if [[ "$DRY_RUN" != true ]]; then
+if [[ "$DRY_RUN" == true ]]; then
+    print_dry_run_summary
+else
+    log_ok "Clean complete"
     echo ""
     log_info "Disk usage: $(du -sh "$REPO_ROOT" 2>/dev/null | cut -f1)"
 fi

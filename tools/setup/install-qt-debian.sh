@@ -1,61 +1,51 @@
 #!/usr/bin/env bash
+#
+# Install Qt on Linux via aqtinstall
+#
+# DEPRECATION NOTICE: This script is a thin wrapper around install-qt.py.
+# For new development, use install-qt.py directly:
+#   python3 tools/setup/install-qt.py --host linux --target desktop
+#
+# Environment variables (all optional, defaults from build-config.json):
+#   QT_VERSION      - Qt version to install
+#   QT_PATH         - Installation prefix (default: /opt/Qt)
+#   QT_HOST         - Host platform (default: linux)
+#   QT_TARGET       - Target platform (default: desktop, or: android, wasm)
+#   QT_ARCH         - Architecture (default: linux_gcc_64)
+#   QT_TOOLS        - Space-separated tools to install (e.g., "tools_ifw")
+#   QT_MODULES      - Space-separated Qt modules to install
+#
 
-set -e
+set -euo pipefail
 
-# Source build config (required - no fallbacks)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/read-config.sh" ]]; then
-    source "$SCRIPT_DIR/read-config.sh"
-else
-    echo "Error: read-config.sh not found" >&2
-    exit 1
+PYTHON_SCRIPT="$SCRIPT_DIR/install-qt.py"
+
+# Ensure Python 3 is available
+if ! command -v python3 &> /dev/null; then
+    echo "Installing Python 3..."
+    if command -v apt-get &> /dev/null; then
+        apt-get update -y --quiet
+        apt-get install -y python3 python3-pip
+    elif command -v dnf &> /dev/null; then
+        dnf install -y python3 python3-pip
+    else
+        echo "Error: Python 3 required but could not install" >&2
+        exit 1
+    fi
 fi
 
-# Verify required variables are set
-if [[ -z "${QT_VERSION:-}" ]] || [[ -z "${QT_MODULES:-}" ]]; then
-    echo "Error: QT_VERSION and QT_MODULES must be set (check build-config.json)" >&2
-    exit 1
-fi
+# Build arguments for Python script
+ARGS=()
+ARGS+=(--host "${QT_HOST:-linux}")
+ARGS+=(--target "${QT_TARGET:-desktop}")
+ARGS+=(--install-aqt)
 
-# Platform defaults (can be overridden via environment)
-QT_PATH="${QT_PATH:-/opt/Qt}"
-QT_HOST="${QT_HOST:-linux}"
-QT_TARGET="${QT_TARGET:-desktop}"
-QT_ARCH="${QT_ARCH:-linux_gcc_64}"
-QT_ARCH_DIR="${QT_ARCH_DIR:-gcc_64}"
-QT_ROOT_DIR="${QT_ROOT_DIR:-${QT_PATH}/${QT_VERSION}/${QT_ARCH_DIR}}"
-IFS=' ' read -r -a QT_MODULES_ARR <<< "$QT_MODULES"
+[[ -n "${QT_VERSION:-}" ]] && ARGS+=(--version "$QT_VERSION")
+[[ -n "${QT_PATH:-}" ]] && ARGS+=(--path "$QT_PATH")
+[[ -n "${QT_ARCH:-}" ]] && ARGS+=(--arch "$QT_ARCH")
+[[ -n "${QT_MODULES:-}" ]] && ARGS+=(--modules "$QT_MODULES")
+[[ -n "${QT_TOOLS:-}" ]] && ARGS+=(--tools "$QT_TOOLS")
 
-echo "QT_VERSION $QT_VERSION"
-echo "QT_PATH $QT_PATH"
-echo "QT_HOST $QT_HOST"
-echo "QT_TARGET $QT_TARGET"
-echo "QT_ARCH $QT_ARCH"
-echo "QT_ARCH_DIR $QT_ARCH_DIR"
-echo "QT_ROOT_DIR $QT_ROOT_DIR"
-echo "QT_MODULES ${QT_MODULES_ARR[*]}"
-
-apt-get update -y --quiet
-apt-get install -y python3 python3-pip pipx
-# --autodesktop: For cross-compile targets (android/ios/wasm), automatically install parallel desktop Qt
-pipx run aqtinstall install-qt "${QT_HOST}" "${QT_TARGET}" "${QT_VERSION}" "${QT_ARCH}" -O "${QT_PATH}" -m "${QT_MODULES_ARR[@]}" --autodesktop
-
-QT_ROOT_DIR=$(readlink -e "${QT_ROOT_DIR}")
-export QT_ROOT_DIR
-PATH=$(readlink -e "${QT_ROOT_DIR}/bin/"):$PATH
-export PATH
-PKG_CONFIG_PATH=$(readlink -e "${QT_ROOT_DIR}/lib/pkgconfig"):${PKG_CONFIG_PATH:-}
-export PKG_CONFIG_PATH
-LD_LIBRARY_PATH=$(readlink -e "${QT_ROOT_DIR}/lib"):${LD_LIBRARY_PATH:-}
-export LD_LIBRARY_PATH
-QT_PLUGIN_PATH=$(readlink -e "${QT_ROOT_DIR}/plugins")
-export QT_PLUGIN_PATH
-QML2_IMPORT_PATH=$(readlink -e "${QT_ROOT_DIR}/qml")
-export QML2_IMPORT_PATH
-
-echo "QT_ROOT_DIR $QT_ROOT_DIR"
-echo "PATH $PATH"
-echo "PKG_CONFIG_PATH $PKG_CONFIG_PATH"
-echo "LD_LIBRARY_PATH $LD_LIBRARY_PATH"
-echo "QT_PLUGIN_PATH $QT_PLUGIN_PATH"
-echo "QML2_IMPORT_PATH $QML2_IMPORT_PATH"
+# Run Python script
+exec python3 "$PYTHON_SCRIPT" "${ARGS[@]}"

@@ -13,6 +13,11 @@ jobs:
     timeout-minutes: 120
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      # SECURITY: --privileged is required for flatpak-builder which uses bubblewrap
+      # to create sandboxed build environments. Bubblewrap needs to create Linux
+      # namespaces, which requires --privileged in Docker containers.
+      # See: https://github.com/flatpak/flatpak/issues/3027
+      # Mitigations: workflow_dispatch only (manual trigger), harden-runner enabled
       options: --privileged
 
     steps:
@@ -39,3 +44,4 @@ jobs:
           name: QGroundControl-flatpak
           path: QGroundControl.flatpak
           retention-days: 14
+          compression-level: 0  # Flatpak already compressed

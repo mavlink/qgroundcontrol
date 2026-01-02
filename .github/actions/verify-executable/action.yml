@@ -1,0 +1,117 @@
+name: Verify Executable
+description: Run simple boot test on QGroundControl binary or package
+
+inputs:
+  binary-path:
+    description: 'Path to executable or package to verify'
+    required: true
+  type:
+    description: 'Type of executable (binary, appimage, dmg, exe)'
+    required: false
+    default: 'binary'
+  working-dir:
+    description: 'Working directory (defaults to binary parent directory)'
+    required: false
+    default: ''
+  timeout:
+    description: 'Timeout in seconds'
+    required: false
+    default: '60'
+
+outputs:
+  success:
+    description: 'Whether the boot test passed'
+    value: ${{ steps.verify.outputs.success }}
+
+runs:
+  using: composite
+  steps:
+    - name: Verify executable
+      id: verify
+      shell: bash
+      env:
+        BINARY_PATH: ${{ inputs.binary-path }}
+        EXEC_TYPE: ${{ inputs.type }}
+        WORK_DIR: ${{ inputs.working-dir }}
+        TIMEOUT: ${{ inputs.timeout }}
+      run: |
+        set -euo pipefail
+
+        # Determine working directory
+        if [[ -n "$WORK_DIR" ]]; then
+          cd "$WORK_DIR"
+        else
+          cd "$(dirname "$BINARY_PATH")"
+          BINARY_PATH="$(basename "$BINARY_PATH")"
+        fi
+
+        # Detect platform
+        case "$RUNNER_OS" in
+          Linux)   platform="linux" ;;
+          macOS)   platform="macos" ;;
+          Windows) platform="windows" ;;
+          *)       platform="linux" ;;
+        esac
+
+        echo "Platform: $platform"
+        echo "Binary: $BINARY_PATH"
+        echo "Type: $EXEC_TYPE"
+
+        # Build command based on type
+        case "$EXEC_TYPE" in
+          binary)
+            if [[ "$platform" == "windows" ]]; then
+              cmd=("./$BINARY_PATH")
+            else
+              chmod +x "$BINARY_PATH"
+              cmd=("./$BINARY_PATH")
+            fi
+            ;;
+          appimage)
+            chmod +x "$BINARY_PATH"
+            cmd=("./$BINARY_PATH")
+            ;;
+          dmg)
+            # For DMG, binary-path should be the .app path inside mounted volume
+            cmd=("./$BINARY_PATH")
+            ;;
+          exe)
+            cmd=("$BINARY_PATH")
+            ;;
+          *)
+            echo "::error::Unknown executable type: $EXEC_TYPE"
+            exit 1
+            ;;
+        esac
+
+        # Run with platform-appropriate display handling
+        run_test() {
+          timeout "$TIMEOUT" "${cmd[@]}" --simple-boot-test
+        }
+
+        set +e
+        if [[ "$platform" == "linux" ]]; then
+          # Linux requires xvfb for headless X display
+          if command -v xvfb-run &>/dev/null; then
+            echo "Running with xvfb-run"
+            xvfb-run -a timeout "$TIMEOUT" "${cmd[@]}" --simple-boot-test
+          else
+            echo "::warning::xvfb-run not found, using offscreen platform"
+            export QT_QPA_PLATFORM=offscreen
+            run_test
+          fi
+        else
+          # macOS and Windows can run directly
+          run_test
+        fi
+        exit_code=$?
+        set -e
+
+        if [[ $exit_code -eq 0 ]]; then
+          echo "✓ Boot test passed"
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::error::Boot test failed with exit code $exit_code"
+          echo "success=false" >> "$GITHUB_OUTPUT"
+          exit $exit_code
+        fi

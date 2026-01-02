@@ -44,6 +44,14 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Validate credentials
+      shell: bash
+      run: |
+        if [[ -z "${{ inputs.aws_role_arn }}" && -z "${{ inputs.aws_key_id }}" ]]; then
+          echo "::error::Either aws_role_arn (OIDC) or aws_key_id (static credentials) must be provided"
+          exit 1
+        fi
+
     - name: Configure AWS Credentials (OIDC)
       if: inputs.aws_role_arn != ''
       uses: aws-actions/configure-aws-credentials@v4

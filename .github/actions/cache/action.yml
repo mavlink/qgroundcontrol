@@ -24,35 +24,17 @@ runs:
       id: ccache-config
       shell: bash
       run: |
-        # Pin ccache version for reproducibility and to avoid API calls
-        # Update periodically via Dependabot or manually
-        CCACHE_VERSION="4.12.2"
-
-        # Validate version format (defense in depth)
-        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
-          exit 1
-        fi
-        echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
-
         # Determine architecture
         if [[ "${{ inputs.target }}" == "linux_gcc_arm64" ]]; then
-          echo "arch=aarch64" >> "$GITHUB_OUTPUT"
+          arch="aarch64"
         else
-          echo "arch=x86_64" >> "$GITHUB_OUTPUT"
+          arch="x86_64"
         fi
 
-        # Read max_size from tools/ccache.conf (single source of truth)
-        CCACHE_CONF_PATH="${{ github.workspace }}/tools/ccache.conf"
-        CCACHE_MAX_SIZE="2G"  # Default
-        if [[ -f "$CCACHE_CONF_PATH" ]]; then
-          # Single awk pass to extract value (more robust than grep|sed)
-          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
-          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
-        else
-          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
-        fi
-        echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
+        "${{ github.workspace }}/.github/scripts/install-ccache.sh" \
+          --arch "$arch" \
+          --config-path "${{ github.workspace }}/tools/configs/ccache.conf" \
+          --output-only
 
     - name: Cache ccache binary (Linux)
       if: runner.os == 'Linux'
@@ -65,30 +47,10 @@ runs:
     - name: Install ccache (Linux)
       if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
-        CCACHE_ARCH: ${{ steps.ccache-config.outputs.arch }}
-        # Public key from https://ccache.dev/download.html (v4.12+)
-        CCACHE_MINISIGN_KEY: "RWQX7yXbBedVfI4PNx6FLdFXu9GHUFsr28s4BVGxm4BeybtnX3P06saF"
       run: |
-        set -e
-        ARCHIVE="ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}.tar.xz"
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${ARCHIVE}"
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/${ARCHIVE}.minisig"
-        # Install minisign from GitHub releases (not available in Ubuntu repos)
-        MINISIGN_VERSION="0.11"
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/jedisct1/minisign/releases/download/${MINISIGN_VERSION}/minisign-${MINISIGN_VERSION}-linux.tar.gz"
-        tar -xzf "minisign-${MINISIGN_VERSION}-linux.tar.gz"
-        # Use appropriate minisign binary for architecture
-        if [[ "${CCACHE_ARCH}" == "aarch64" ]]; then
-          MINISIGN_BIN="./minisign-linux/aarch64/minisign"
-        else
-          MINISIGN_BIN="./minisign-linux/x86_64/minisign"
-        fi
-        "$MINISIGN_BIN" -Vm "$ARCHIVE" -P "$CCACHE_MINISIGN_KEY"
-        tar -xf "$ARCHIVE"
-        sudo cp "ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}/ccache" /usr/local/bin/ccache
-        sudo chmod +x /usr/local/bin/ccache
+        "${{ github.workspace }}/.github/scripts/install-ccache.sh" \
+          --arch "${{ steps.ccache-config.outputs.arch }}" \
+          --install
 
     # Note: sccache doesn't have ARM64 Windows binaries, skip for native ARM64 builds
     - name: Setup sccache (Windows x64)
@@ -123,5 +85,7 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-${{ hashFiles('package-lock.cmake', 'CMakeLists.txt') }}
-        restore-keys: ${{ github.workflow }}-cpm-
+        key: ${{ github.workflow }}-cpm-${{ runner.os }}-${{ hashFiles('package-lock.cmake', 'CMakeLists.txt') }}
+        restore-keys: |
+          ${{ github.workflow }}-cpm-${{ runner.os }}-
+          ${{ github.workflow }}-cpm-

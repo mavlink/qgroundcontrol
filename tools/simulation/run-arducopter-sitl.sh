@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ArduCopter SITL Test Environment
 # Runs ArduCopter in Docker for testing QGC without hardware
 #
@@ -7,7 +7,7 @@
 # Options:
 #   --with-latency  Simulate 100ms round-trip latency (Herelink-like conditions)
 
-set -e
+set -euo pipefail
 
 COPTER_VERSION="Copter-4.5.6"
 IMAGE_NAME="ardupilot-sitl-4.5.6"

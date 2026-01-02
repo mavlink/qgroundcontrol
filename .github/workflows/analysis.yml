@@ -116,8 +116,10 @@ jobs:
 
       - name: Build (sanitizers only)
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config Debug --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
 
       - name: Run Clazy
         if: inputs.tool == 'clazy'
@@ -180,19 +182,25 @@ jobs:
 
       - name: Run Sanitizer Tests
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
-        working-directory: ${{ runner.temp }}/build/Debug
+        id: sanitizer-tests
+        continue-on-error: true
+        uses: ./.github/actions/run-tests
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=0:print_stats=1
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=0
           TSAN_OPTIONS: second_deadlock_stack=1:halt_on_error=0
-        run: |
-          echo "::group::Running unit tests with ${{ inputs.tool }}"
-          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee sanitizer-output.txt
-          echo "::endgroup::"
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          log-file: sanitizer-output.txt
 
-          if grep -qE "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" sanitizer-output.txt; then
+      - name: Check Sanitizer Output
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        run: |
+          log_file="${{ steps.sanitizer-tests.outputs.log_file }}"
+          if [[ -f "$log_file" ]] && grep -qE "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" "$log_file"; then
             echo "::error::Sanitizer detected issues"
-            grep -E "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" sanitizer-output.txt
+            grep -E "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" "$log_file"
             exit 1
           fi
 

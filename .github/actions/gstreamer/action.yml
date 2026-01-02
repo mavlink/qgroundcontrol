@@ -269,57 +269,20 @@ runs:
       id: archive
       shell: bash
       env:
-        PLATFORM: ${{ inputs.platform }}
-        ARCH: ${{ inputs.arch }}
-        VERSION: ${{ steps.config.outputs.version }}
-        SIMULATOR: ${{ inputs.simulator }}
-        RUNNER_TEMP: ${{ runner.temp }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+        AWS_DEFAULT_REGION: us-west-2
       run: |
-        # Determine prefix path
-        if [[ "$PLATFORM" == "windows" ]]; then
-          arch="$ARCH"
-          [[ "$arch" == "x86_64" ]] && arch="x64"
-          prefix="C:/gstreamer-$arch"
-        else
-          prefix="$RUNNER_TEMP/gstreamer"
-        fi
+        args=(
+          --platform "${{ inputs.platform }}"
+          --arch "${{ inputs.arch }}"
+          --version "${{ steps.config.outputs.version }}"
+          --output-dir "${{ runner.temp }}"
+        )
+        [[ "${{ inputs.simulator }}" == "true" ]] && args+=(--simulator)
+        [[ "${{ inputs.upload-s3 }}" == "true" && -n "$AWS_ACCESS_KEY_ID" ]] && args+=(--upload-s3)
 
-        # Normalize arch for naming
-        arch="$ARCH"
-        [[ "$PLATFORM" == "windows" && "$arch" == "x86_64" ]] && arch="x64"
-
-        # Build archive name
-        case "$PLATFORM" in
-          linux)   name="gstreamer-1.0-linux-$arch-$VERSION" ;;
-          macos)   name="gstreamer-1.0-macos-$arch-$VERSION" ;;
-          windows) name="gstreamer-1.0-msvc-$arch-$VERSION" ;;
-          android) name="gstreamer-1.0-android-$arch-$VERSION" ;;
-          ios)
-            suffix="$arch"
-            [[ "$SIMULATOR" == "true" ]] && suffix="$arch-simulator"
-            name="gstreamer-1.0-ios-$suffix-$VERSION"
-            ;;
-        esac
-
-        echo "name=$name" >> "$GITHUB_OUTPUT"
-
-        # Create archive
-        if [[ "$PLATFORM" == "windows" ]]; then
-          archive_path="$RUNNER_TEMP/$name.zip"
-          powershell -Command "Compress-Archive -Path '$prefix' -DestinationPath '$archive_path' -CompressionLevel Optimal"
-          echo "path=$archive_path" >> "$GITHUB_OUTPUT"
-          echo "ext=zip" >> "$GITHUB_OUTPUT"
-        else
-          archive_path="$RUNNER_TEMP/$name.tar.xz"
-          parent_dir=$(dirname "$prefix")
-          folder_name=$(basename "$prefix")
-          tar -C "$parent_dir" -cJf "$archive_path" "$folder_name"
-          echo "path=$archive_path" >> "$GITHUB_OUTPUT"
-          echo "ext=tar.xz" >> "$GITHUB_OUTPUT"
-        fi
-
-        echo "Created archive: $archive_path"
-        ls -lh "$archive_path"
+        "${{ github.workspace }}/.github/scripts/gstreamer-archive.sh" "${args[@]}"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v6
@@ -327,52 +290,4 @@ runs:
         name: ${{ steps.archive.outputs.name }}
         path: ${{ steps.archive.outputs.path }}
         retention-days: 30
-
-    - name: Upload to S3
-      if: inputs.upload-s3 == 'true' && inputs.aws-access-key-id != ''
-      shell: bash
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-        AWS_DEFAULT_REGION: us-west-2
-        PLATFORM: ${{ inputs.platform }}
-        VERSION: ${{ steps.config.outputs.version }}
-        ARCHIVE_PATH: ${{ steps.archive.outputs.path }}
-        ARCHIVE_NAME: ${{ steps.archive.outputs.name }}
-        ARCHIVE_EXT: ${{ steps.archive.outputs.ext }}
-      run: |
-        s3_path="s3://qgroundcontrol/dependencies/gstreamer/$PLATFORM/$VERSION"
-
-        # Install AWS CLI if needed (Windows)
-        if ! command -v aws &> /dev/null; then
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            curl -o "$RUNNER_TEMP/AWSCLIV2.msi" "https://awscli.amazonaws.com/AWSCLIV2.msi"
-            msiexec.exe /i "$RUNNER_TEMP/AWSCLIV2.msi" /quiet
-            export PATH="/c/Program Files/Amazon/AWSCLIV2:$PATH"
-          fi
-        fi
-
-        aws s3 cp "$ARCHIVE_PATH" "$s3_path/$ARCHIVE_NAME.$ARCHIVE_EXT" --acl public-read
-        echo "Uploaded to: $s3_path/$ARCHIVE_NAME.$ARCHIVE_EXT"
-
-    - name: Write summary
-      shell: bash
-      env:
-        PLATFORM: ${{ inputs.platform }}
-        VERSION: ${{ steps.config.outputs.version }}
-        ARCH: ${{ inputs.arch }}
-        SIMULATOR: ${{ inputs.simulator }}
-      run: |
-        arch="$ARCH"
-        [[ "$PLATFORM" == "windows" && "$arch" == "x86_64" ]] && arch="x64"
-        [[ "$PLATFORM" == "ios" && "$SIMULATOR" == "true" ]] && arch="$arch-simulator"
-
-        cat >> "$GITHUB_STEP_SUMMARY" << EOF
-        ## GStreamer ${PLATFORM^} Build Complete
-
-        | Property | Value |
-        |----------|-------|
-        | Version | $VERSION |
-        | Architecture | $arch |
-        | S3 Path | dependencies/gstreamer/$PLATFORM/$VERSION/ |
-        EOF
+        compression-level: 0  # Archive already compressed

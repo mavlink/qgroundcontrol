@@ -50,12 +50,14 @@ See `pyproject.toml` for dependency groups: `ci`, `qt`, `coverage`, `dev`, `lsp`
 |--------|-------------|
 | `analyze.sh` | Run clang-tidy/cppcheck on source files |
 | `check-deps.sh` | Check for outdated dependencies |
-| `check-sizes.py` | Report artifact sizes (CI) |
 | `clean.sh` | Clean build artifacts and caches |
+| `common.sh` | Shared shell utilities (sourced by other scripts) |
+| `configure.sh` | Configure CMake build with Qt auto-detection |
 | `coverage.sh` | Generate code coverage reports |
-| `format-check.sh` | Check/apply clang-format |
 | `generate-docs.sh` | Generate Doxygen API docs |
 | `param-docs.py` | Generate parameter documentation |
+| `pre-commit.sh` | Run pre-commit hooks (install with `--install`) |
+| `run-tests.sh` | Run unit tests with headless display support |
 | `update-headers.py` | License header management |
 
 ## Configuration Files

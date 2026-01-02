@@ -13,6 +13,7 @@
 #   ./tools/profile.sh --heaptrack         # Heap profiling (heaptrack)
 #   ./tools/profile.sh --perf              # CPU profiling (perf)
 #   ./tools/profile.sh --sanitize          # Build with sanitizers
+#   ./tools/profile.sh --timeout SECONDS   # Set profiling timeout (default: 300)
 #
 # Requirements:
 #   - valgrind (for memcheck, callgrind, massif)
@@ -22,20 +23,10 @@
 
 set -euo pipefail
 
+source "$(dirname "$0")/../common.sh"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Defaults
 BUILD_DIR="$REPO_ROOT/build"
@@ -43,6 +34,7 @@ OUTPUT_DIR="$REPO_ROOT/profile"
 MODE="perf"
 EXECUTABLE="$BUILD_DIR/QGroundControl"
 EXTRA_ARGS=""
+TIMEOUT=300
 
 show_help() {
     head -18 "$0" | tail -16
@@ -78,6 +70,14 @@ while [[ $# -gt 0 ]]; do
         --sanitize)
             MODE="sanitize"
             shift
+            ;;
+        --timeout)
+            TIMEOUT="$2"
+            if ! [[ "$TIMEOUT" =~ ^[0-9]+$ ]] || [[ "$TIMEOUT" -lt 1 ]]; then
+                log_error "Timeout must be a positive integer (seconds)"
+                exit 1
+            fi
+            shift 2
             ;;
         -b|--build-dir)
             BUILD_DIR="$2"
@@ -115,15 +115,23 @@ run_memcheck() {
 
     log_info "Running memory leak check..."
     log_info "Output: $output"
+    log_info "Timeout: ${TIMEOUT}s"
 
-    valgrind \
+    timeout "$TIMEOUT" valgrind \
         --leak-check=full \
         --show-leak-kinds=all \
         --track-origins=yes \
         --verbose \
         --log-file="$output" \
-        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" 2>/dev/null || true \
-        "$EXECUTABLE" $EXTRA_ARGS
+        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" 2>/dev/null \
+        "$EXECUTABLE" $EXTRA_ARGS || {
+        local exit_code=$?
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Memcheck timed out after ${TIMEOUT}s"
+            exit 124
+        fi
+        true
+    }
 
     log_ok "Memcheck complete. Results: $output"
 
@@ -144,13 +152,21 @@ run_callgrind() {
     log_info "Running CPU profiling with callgrind..."
     log_info "Output: $output"
     log_warn "This will be SLOW. Use for targeted profiling."
+    log_info "Timeout: ${TIMEOUT}s"
 
-    valgrind \
+    timeout "$TIMEOUT" valgrind \
         --tool=callgrind \
         --callgrind-out-file="$output" \
         --collect-jumps=yes \
         --collect-systime=yes \
-        "$EXECUTABLE" $EXTRA_ARGS
+        "$EXECUTABLE" $EXTRA_ARGS || {
+        local exit_code=$?
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Callgrind timed out after ${TIMEOUT}s"
+            exit 124
+        fi
+        true
+    }
 
     log_ok "Callgrind complete. Results: $output"
 
@@ -173,12 +189,20 @@ run_massif() {
 
     log_info "Running heap profiling with massif..."
     log_info "Output: $output"
+    log_info "Timeout: ${TIMEOUT}s"
 
-    valgrind \
+    timeout "$TIMEOUT" valgrind \
         --tool=massif \
         --massif-out-file="$output" \
         --detailed-freq=1 \
-        "$EXECUTABLE" $EXTRA_ARGS
+        "$EXECUTABLE" $EXTRA_ARGS || {
+        local exit_code=$?
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Massif timed out after ${TIMEOUT}s"
+            exit 124
+        fi
+        true
+    }
 
     log_ok "Massif complete. Results: $output"
 
@@ -197,8 +221,16 @@ run_heaptrack() {
     mkdir -p "$OUTPUT_DIR"
 
     log_info "Running heap profiling with heaptrack..."
+    log_info "Timeout: ${TIMEOUT}s"
 
-    heaptrack -o "$OUTPUT_DIR/heaptrack" "$EXECUTABLE" $EXTRA_ARGS
+    timeout "$TIMEOUT" heaptrack -o "$OUTPUT_DIR/heaptrack" "$EXECUTABLE" $EXTRA_ARGS || {
+        local exit_code=$?
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Heaptrack timed out after ${TIMEOUT}s"
+            exit 124
+        fi
+        true
+    }
 
     local latest=$(ls -t "$OUTPUT_DIR"/heaptrack.*.gz 2>/dev/null | head -1)
     if [[ -n "$latest" ]]; then
@@ -224,17 +256,25 @@ run_perf() {
 
     log_info "Running CPU profiling with perf..."
     log_info "Output: $output"
+    log_info "Timeout: ${TIMEOUT}s"
 
     # Check if we have permissions
     if [[ ! -w /proc/sys/kernel/perf_event_paranoid ]]; then
         log_warn "May need root or: sudo sysctl kernel.perf_event_paranoid=-1"
     fi
 
-    perf record \
+    timeout "$TIMEOUT" perf record \
         -g \
         --call-graph dwarf \
         -o "$output" \
-        "$EXECUTABLE" $EXTRA_ARGS || true
+        "$EXECUTABLE" $EXTRA_ARGS || {
+        local exit_code=$?
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Perf timed out after ${TIMEOUT}s"
+            exit 124
+        fi
+        true
+    }
 
     log_ok "Perf recording complete. Results: $output"
 
@@ -264,12 +304,20 @@ run_sanitize() {
     log_ok "Sanitizer build complete"
     log_info "Run: $sanitize_build/QGroundControl"
     log_info "Errors will be reported at runtime"
+    log_info "Timeout: ${TIMEOUT}s"
 
     # Set sanitizer options
     export ASAN_OPTIONS="detect_leaks=1:halt_on_error=0:print_stats=1"
     export UBSAN_OPTIONS="print_stacktrace=1"
 
-    "$sanitize_build/QGroundControl" $EXTRA_ARGS
+    timeout "$TIMEOUT" "$sanitize_build/QGroundControl" $EXTRA_ARGS || {
+        local exit_code=$?
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Sanitizer run timed out after ${TIMEOUT}s"
+            exit 124
+        fi
+        true
+    }
 }
 
 # Main

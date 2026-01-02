@@ -25,19 +25,23 @@ runs:
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       uses: nick-fields/retry@v3
+      env:
+        INPUT_GSTREAMER: ${{ inputs.gstreamer }}
+        INPUT_GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
+        INPUT_VULKAN: ${{ inputs.vulkan }}
       with:
         timeout_minutes: 10
         max_attempts: 3
         shell: pwsh
         command: |
           $params = @{}
-          if ('${{ inputs.gstreamer-version }}') {
-            $params['GStreamerVersion'] = '${{ inputs.gstreamer-version }}'
+          if ($env:INPUT_GSTREAMER_VERSION) {
+            $params['GStreamerVersion'] = $env:INPUT_GSTREAMER_VERSION
           }
-          if ('${{ inputs.gstreamer }}' -ne 'true') {
+          if ($env:INPUT_GSTREAMER -ne 'true') {
             $params['SkipGStreamer'] = $true
           }
-          if ('${{ inputs.vulkan }}' -eq 'true') {
+          if ($env:INPUT_VULKAN -eq 'true') {
             $params['InstallVulkan'] = $true
           }
           & ./tools/setup/install-dependencies-windows.ps1 @params

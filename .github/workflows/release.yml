@@ -33,7 +33,7 @@ jobs:
             MacOS
             Android
           timeout-minutes: 170
-          poll-interval-minutes: 1
+          poll-interval-minutes: 5
 
   upload-artifacts:
     name: Upload Release Artifacts

@@ -5,6 +5,7 @@
 #   pip install -e ./tools[coverage]     # Code coverage
 #   pip install -e ./tools[dev]          # Local development
 #   pip install -e ./tools[lsp]          # LSP server
+#   pip install -e ./tools[test]         # Testing
 #   uv pip install -e ./tools[ci]        # Faster with uv
 #
 # Groups can be combined:
@@ -46,6 +47,11 @@ dev = [
     "pymavlink>=2.4",
 ]
 
+# Testing
+test = [
+    "pytest>=7.0",
+]
+
 # QGC LSP server
 lsp = [
     "pygls>=1.0",
@@ -54,7 +60,7 @@ lsp = [
 
 # All dependencies
 all = [
-    "qgc-tools[ci,qt,coverage,dev,lsp]",
+    "qgc-tools[ci,qt,coverage,dev,lsp,test]",
 ]
 
 [build-system]

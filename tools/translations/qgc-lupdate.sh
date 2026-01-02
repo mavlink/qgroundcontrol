@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Update Qt and JSON translation files
 # Run from repository root: ./tools/translations/qgc-lupdate.sh
 
@@ -18,9 +18,15 @@ if [[ ! -x "$LUPDATE" ]]; then
 fi
 
 echo "Using lupdate: $LUPDATE"
-"$LUPDATE" src -ts translations/qgc.ts -no-obsolete
+if ! "$LUPDATE" src -ts translations/qgc.ts -no-obsolete; then
+    echo "Error: lupdate failed" >&2
+    exit 1
+fi
 
 echo "Extracting JSON strings..."
-python3 tools/translations/qgc-lupdate-json.py
+if ! python3 tools/translations/qgc-lupdate-json.py; then
+    echo "Error: JSON translation extraction failed" >&2
+    exit 1
+fi
 
 echo "Translation files updated"

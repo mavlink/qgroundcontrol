@@ -30,14 +30,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  size-metrics:
-    name: Size Metrics
+  build:
+    name: Build
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 45
     outputs:
-      binary_size: ${{ steps.metrics.outputs.binary_size }}
-      stripped_size: ${{ steps.metrics.outputs.stripped_size }}
-      symbol_count: ${{ steps.metrics.outputs.symbol_count }}
+      binary_path: ${{ steps.find.outputs.binary_path }}
 
     steps:
       - name: Harden Runner
@@ -50,118 +48,35 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Install Qt
-        uses: ./.github/actions/qt-install
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
         with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: ${{ github.event_name == 'push' }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Install bloaty (binary size analyzer)
-        run: |
-          # bloaty is not in Ubuntu repos - build from source
-          # Skip if it takes too long (timeout after 2 min)
-          timeout 120 bash -c '
-            sudo apt-get install -y libprotobuf-dev protobuf-compiler libre2-dev libcapstone-dev || true
-            git clone --depth 1 https://github.com/google/bloaty.git /tmp/bloaty
-            cd /tmp/bloaty
-            cmake -B build -DCMAKE_BUILD_TYPE=Release -DBLOATY_ENABLE_RE2=ON
-            cmake --build build --parallel
-            sudo cmake --install build
-          ' || echo "::warning::bloaty installation timed out, size analysis will be limited"
-
       - name: Configure
-        run: |
-          cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DQGC_STABLE_BUILD=ON
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: build
+          build-type: Release
+          stable: true
 
       - name: Build
-        run: cmake --build build --parallel
-
-      - name: Collect size metrics
-        id: metrics
-        run: |
-          # Binary location depends on build type (Release builds go into Release/)
-          binary="build/Release/QGroundControl"
-          if [[ ! -f "$binary" ]]; then
-            binary="build/QGroundControl"
-          fi
-
-          # Binary size
-          binary_size=$(stat -c%s "$binary")
-          echo "binary_size=$binary_size" >> "$GITHUB_OUTPUT"
-
-          # Stripped size
-          cp "$binary" "${binary}.stripped"
-          strip "${binary}.stripped"
-          stripped_size=$(stat -c%s "${binary}.stripped")
-          echo "stripped_size=$stripped_size" >> "$GITHUB_OUTPUT"
-
-          # Symbol count
-          symbol_count=$(nm "$binary" 2>/dev/null | wc -l)
-          echo "symbol_count=$symbol_count" >> "$GITHUB_OUTPUT"
-
-          # Section sizes
-          echo "=== Section sizes ===" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          size -A "$binary" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Bloaty analysis
-        run: |
-          # Find binary (Release builds go into Release/)
-          binary="build/Release/QGroundControl"
-          [[ ! -f "$binary" ]] && binary="build/QGroundControl"
-
-          echo "=== Top 20 largest symbols ===" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          bloaty -d symbols -n 20 "$binary" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-          echo "=== Size by compilation unit ===" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          bloaty -d compileunits -n 20 "$binary" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Bloaty analysis skipped"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Generate metrics JSON
-        run: |
-          cat > metrics.json << EOF
-          [
-            {
-              "name": "Binary Size",
-              "unit": "bytes",
-              "value": ${{ steps.metrics.outputs.binary_size }}
-            },
-            {
-              "name": "Stripped Size",
-              "unit": "bytes",
-              "value": ${{ steps.metrics.outputs.stripped_size }}
-            },
-            {
-              "name": "Symbol Count",
-              "unit": "symbols",
-              "value": ${{ steps.metrics.outputs.symbol_count }}
-            }
-          ]
-          EOF
-
-      - name: Upload metrics artifact
-        uses: actions/upload-artifact@v6
+        uses: ./.github/actions/cmake-build
         with:
-          name: size-metrics
-          path: metrics.json
-          retention-days: 90
+          build-dir: build
+          build-type: Release
 
-      - name: Upload binary for benchmarks
+      - name: Find binary
+        id: find
+        run: ./.github/scripts/find-binary.sh --build-dir build --build-type Release
+
+      - name: Upload binary
         uses: actions/upload-artifact@v6
         with:
           name: qgc-binary
@@ -170,6 +85,49 @@ jobs:
             build/Release/QGroundControl
           if-no-files-found: error
           retention-days: 1
+          compression-level: 0  # Binary already compressed
+
+  size-metrics:
+    name: Size Metrics
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: build
+    outputs:
+      binary_size: ${{ steps.analyze.outputs.binary_size }}
+      stripped_size: ${{ steps.analyze.outputs.stripped_size }}
+      symbol_count: ${{ steps.analyze.outputs.symbol_count }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download binary
+        uses: actions/download-artifact@v7
+        with:
+          name: qgc-binary
+          path: build
+
+      - name: Make binary executable
+        run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
+
+      - name: Analyze binary size
+        id: analyze
+        uses: ./.github/actions/size-analysis
+        with:
+          binary-path: ${{ needs.build.outputs.binary_path }}
+          output-file: metrics.json
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: size-metrics
+          path: metrics.json
+          retention-days: 90
 
       - name: Store size metrics
         uses: benchmark-action/github-action-benchmark@v1
@@ -186,7 +144,6 @@ jobs:
 
       - name: Compare with base (PR only)
         if: github.event_name == 'pull_request'
-        # Don't fail if gh-pages branch doesn't exist yet (first run)
         continue-on-error: true
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -199,28 +156,12 @@ jobs:
           comment-on-alert: true
           fail-on-alert: false
 
-      - name: Summary
-        run: |
-          binary_mb=$(echo "scale=2; ${{ steps.metrics.outputs.binary_size }} / 1048576" | bc)
-          stripped_mb=$(echo "scale=2; ${{ steps.metrics.outputs.stripped_size }} / 1048576" | bc)
-
-          cat >> "$GITHUB_STEP_SUMMARY" << EOF
-
-          ## Size Metrics
-
-          | Metric | Value |
-          |--------|-------|
-          | Binary Size | ${binary_mb} MB (${{ steps.metrics.outputs.binary_size }} bytes) |
-          | Stripped Size | ${stripped_mb} MB (${{ steps.metrics.outputs.stripped_size }} bytes) |
-          | Symbol Count | ${{ steps.metrics.outputs.symbol_count }} |
-          EOF
-
   benchmarks:
     name: Runtime Benchmarks
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     if: github.event.inputs.run_benchmarks == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    needs: size-metrics
+    needs: build
 
     steps:
       - name: Harden Runner
@@ -230,23 +171,27 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
         with:
-          submodules: recursive
+          python-version: '>=3.9'
 
       - name: Get build config
         id: config
         uses: ./.github/actions/build-config
 
-      - name: Install Qt
+      - name: Install Qt (runtime only)
         uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
           modules: ${{ steps.config.outputs.qt_modules }}
+          cache: 'true'
 
-      - name: Download binary from size-metrics
-        uses: actions/download-artifact@v4
+      - name: Download binary
+        uses: actions/download-artifact@v7
         with:
           name: qgc-binary
           path: build
@@ -256,76 +201,11 @@ jobs:
 
       - name: Run benchmarks
         id: bench
-        run: |
-          # Find binary (Release builds go into Release/)
-          binary="./build/Release/QGroundControl"
-          [[ ! -f "$binary" ]] && binary="./build/QGroundControl"
-
-          # Run Qt Test MAVLink benchmarks
-          # Output format: RESULT : MAVLinkBenchmark::benchmarkHeartbeatPack():
-          #     0.00015 msecs per iteration (total: 78, iterations: 524288)
-
-          export QT_QPA_PLATFORM=offscreen
-          export BINARY_PATH="$binary"
-          "$binary" --unittest:MAVLinkBenchmark 2>&1 | tee benchmark-output.txt || true
-
-          # Parse Qt Test benchmark output to JSON
-          python3 << 'PARSE_SCRIPT'
-          import re
-          import json
-          import os
-
-          binary = os.environ.get('BINARY_PATH', './build/Release/QGroundControl')
-
-          results = []
-          with open('benchmark-output.txt', 'r') as f:
-              for line in f:
-                  # Match: RESULT : TestClass::testFunc(): X.XXX msecs per iteration
-                  match = re.search(
-                      r'RESULT\s*:\s*\w+::(\w+)\(\):\s*([\d.]+)\s*(\w+)\s*per iteration',
-                      line
-                  )
-                  if match:
-                      name = match.group(1)
-                      value = float(match.group(2))
-                      unit = match.group(3)
-
-                      # Normalize to microseconds for consistency
-                      if unit == 'msecs':
-                          value *= 1000
-                          unit = 'usecs'
-                      elif unit == 'secs':
-                          value *= 1000000
-                          unit = 'usecs'
-
-                      results.append({
-                          'name': name,
-                          'unit': unit,
-                          'value': value
-                      })
-
-          if not results:
-              # Fallback: measure startup time
-              import subprocess
-              import time
-              start = time.time()
-              subprocess.run([binary, '--unittest', '--list-tests'],
-                           capture_output=True, timeout=30, env={'QT_QPA_PLATFORM': 'offscreen'})
-              elapsed_ms = (time.time() - start) * 1000
-              results = [{'name': 'Startup (list tests)', 'unit': 'ms', 'value': elapsed_ms}]
-
-          with open('benchmark.json', 'w') as f:
-              json.dump(results, f, indent=2)
-
-          print(f"Parsed {len(results)} benchmark results")
-          PARSE_SCRIPT
-
-          if [[ -s benchmark.json ]]; then
-            echo "has_benchmarks=true" >> "$GITHUB_OUTPUT"
-            cat benchmark.json
-          else
-            echo "has_benchmarks=false" >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/benchmark-runner
+        with:
+          binary-path: ${{ needs.build.outputs.binary_path }}
+          test-filter: MAVLinkBenchmark
+          output-file: benchmark.json
 
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
@@ -338,22 +218,3 @@ jobs:
           alert-threshold: '150%'
           comment-on-alert: true
           fail-on-alert: false
-
-      - name: Summary
-        run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
-          ## Runtime Benchmarks
-
-          ⚠️ **Note**: Runtime benchmarks on shared runners have ~3x variance.
-          Only significant regressions (>50%) trigger alerts.
-
-          ### MAVLink Benchmarks
-          EOF
-
-          if [[ -f benchmark.json ]]; then
-            echo '```json' >> "$GITHUB_STEP_SUMMARY"
-            cat benchmark.json >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "No benchmark results available" >> "$GITHUB_STEP_SUMMARY"
-          fi

@@ -126,3 +126,9 @@ get_script_dir() {
     local source="$1"
     cd "$(dirname "$source")" && pwd
 }
+
+# Get default branch from remote origin
+# Usage: DEFAULT_BRANCH=$(get_default_branch)
+get_default_branch() {
+    git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "master"
+}

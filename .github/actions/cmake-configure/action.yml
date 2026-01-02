@@ -1,0 +1,118 @@
+name: CMake Configure
+description: Configure QGroundControl build with common options
+
+inputs:
+  build-dir:
+    description: 'Build directory'
+    required: false
+    default: 'build'
+  source-dir:
+    description: 'Source directory'
+    required: false
+    default: ${{ github.workspace }}
+  build-type:
+    description: 'Build type (Debug, Release, RelWithDebInfo, MinSizeRel)'
+    required: false
+    default: 'Release'
+  generator:
+    description: 'CMake generator (Ninja, Unix Makefiles, etc.)'
+    required: false
+    default: 'Ninja'
+  testing:
+    description: 'Enable testing (QGC_BUILD_TESTING)'
+    required: false
+    default: 'false'
+  coverage:
+    description: 'Enable coverage (QGC_ENABLE_COVERAGE)'
+    required: false
+    default: 'false'
+  stable:
+    description: 'Stable build (QGC_STABLE_BUILD)'
+    required: false
+    default: 'false'
+  unity-build:
+    description: 'Enable unity build for faster compilation'
+    required: false
+    default: 'false'
+  unity-batch-size:
+    description: 'Unity build batch size'
+    required: false
+    default: '16'
+  extra-args:
+    description: 'Additional CMake arguments'
+    required: false
+    default: ''
+  use-qt-cmake:
+    description: 'Use qt-cmake instead of cmake'
+    required: false
+    default: 'true'
+
+outputs:
+  build-dir:
+    description: 'Absolute path to build directory'
+    value: ${{ steps.configure.outputs.build_dir }}
+
+runs:
+  using: composite
+  steps:
+    - name: Create build directory
+      shell: bash
+      run: mkdir -p "${{ inputs.build-dir }}"
+
+    - name: Configure
+      id: configure
+      shell: bash
+      env:
+        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+      run: |
+        BUILD_DIR="${{ inputs.build-dir }}"
+        SOURCE_DIR="${{ inputs.source-dir }}"
+
+        # Determine cmake command
+        if [[ "${{ inputs.use-qt-cmake }}" == "true" && -n "${QT_ROOT_DIR:-}" ]]; then
+          CMAKE_CMD="${QT_ROOT_DIR}/bin/qt-cmake"
+        else
+          CMAKE_CMD="cmake"
+        fi
+
+        # Build arguments
+        args=(
+          -S "$SOURCE_DIR"
+          -B "$BUILD_DIR"
+          -G "${{ inputs.generator }}"
+          -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+        )
+
+        # Optional flags
+        if [[ "${{ inputs.testing }}" == "true" ]]; then
+          args+=(-DQGC_BUILD_TESTING=ON)
+        else
+          args+=(-DQGC_BUILD_TESTING=OFF)
+        fi
+
+        if [[ "${{ inputs.coverage }}" == "true" ]]; then
+          args+=(-DQGC_ENABLE_COVERAGE=ON)
+        fi
+
+        if [[ "${{ inputs.stable }}" == "true" ]]; then
+          args+=(-DQGC_STABLE_BUILD=ON)
+        fi
+
+        if [[ "${{ inputs.unity-build }}" == "true" ]]; then
+          args+=(
+            -DCMAKE_UNITY_BUILD=ON
+            -DCMAKE_UNITY_BUILD_BATCH_SIZE=${{ inputs.unity-batch-size }}
+          )
+        fi
+
+        # Extra arguments (split by whitespace via environment variable)
+        if [[ -n "$INPUT_EXTRA_ARGS" ]]; then
+          read -ra extra_args <<< "$INPUT_EXTRA_ARGS"
+          args+=("${extra_args[@]}")
+        fi
+
+        echo "Running: $CMAKE_CMD ${args[*]}"
+        "$CMAKE_CMD" "${args[@]}"
+
+        # Output absolute build directory
+        echo "build_dir=$(realpath "$BUILD_DIR")" >> "$GITHUB_OUTPUT"

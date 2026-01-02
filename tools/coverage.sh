@@ -19,17 +19,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+# Source shared utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 # Defaults
 BUILD_DIR="$REPO_ROOT/build-coverage"
@@ -126,14 +117,18 @@ generate_report() {
     log_info "Generating coverage report..."
 
     if [[ "$XML_ONLY" == true ]]; then
-        cmake --build "$BUILD_DIR" --target coverage-report
+        # Generate XML only (for CI tools)
+        gcovr -r "$REPO_ROOT" -o "$BUILD_DIR/coverage.xml" --xml-pretty --filter="src/"
     else
+        # Generate both HTML and XML reports
         cmake --build "$BUILD_DIR" --target coverage-report
     fi
 
     echo ""
     log_ok "Coverage report generated:"
-    log_info "  HTML: $BUILD_DIR/coverage.html"
+    if [[ "$XML_ONLY" != true ]]; then
+        log_info "  HTML: $BUILD_DIR/coverage.html"
+    fi
     log_info "  XML:  $BUILD_DIR/coverage.xml"
 }
 
