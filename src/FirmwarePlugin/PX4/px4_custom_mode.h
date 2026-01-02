@@ -1,5 +1,4 @@
-#ifndef PX4_CUSTOM_MODE_H_
-#define PX4_CUSTOM_MODE_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -68,5 +67,3 @@ struct PX4CustomMode{
         AUTO_TAKEOFF        = PX4_CUSTOM_MAIN_MODE_AUTO         <<16 | (PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF       << 24 ),
     };
 };
-
-#endif /* PX4_CUSTOM_MODE_H_ */
