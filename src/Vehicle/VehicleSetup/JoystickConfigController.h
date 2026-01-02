@@ -1,7 +1,3 @@
-/// @file
-///     @brief Joystick Config Qml Controller
-///     @author Don Gagne <don@thegagnes.com
-
 #pragma once
 
 #include <QtCore/QElapsedTimer>

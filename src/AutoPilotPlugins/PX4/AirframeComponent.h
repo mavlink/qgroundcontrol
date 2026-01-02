@@ -2,10 +2,6 @@
 
 #include "VehicleComponent.h"
 
-/// @file
-///     @brief The Airframe VehicleComponent is used to set the SYS_AUTOSTART airframe id.
-///     @author Don Gagne <don@thegagnes.com>
-
 class AirframeComponent : public VehicleComponent
 {
     Q_OBJECT

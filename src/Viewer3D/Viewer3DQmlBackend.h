@@ -4,8 +4,6 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class Viewer3DSettings;
 class Vehicle;
 class OsmParser;

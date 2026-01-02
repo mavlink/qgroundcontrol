@@ -1,6 +1,3 @@
-/// @file
-/// @brief Branding settings
-
 #pragma once
 
 #include <QtQmlIntegration/QtQmlIntegration>

@@ -1,6 +1,3 @@
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "FlightModesComponent.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"

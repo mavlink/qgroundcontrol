@@ -1,9 +1,3 @@
-/**
- * @file
- *   @brief QGC Pitch Indicator
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
 import QGroundControl
 import QGroundControl.Controls

@@ -1,10 +1,3 @@
-/*!
- * @file
- *   @brief Camera Controller
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include "VehicleCameraControl.h"
 #include "QGCCameraIO.h"
 #include "QGCApplication.h"

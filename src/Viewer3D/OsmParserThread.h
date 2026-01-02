@@ -8,9 +8,6 @@
 #include <QtGui/QVector2D>
 #include <QtPositioning/QGeoCoordinate>
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
-
 class OsmParserThread : public QThread
 {
 

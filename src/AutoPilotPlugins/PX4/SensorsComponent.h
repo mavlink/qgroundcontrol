@@ -2,10 +2,6 @@
 
 #include "VehicleComponent.h"
 
-/// @file
-///     @brief The Sensors VehicleComponent is used to calibrate the the various sensors associated with the board.
-///     @author Don Gagne <don@thegagnes.com>
-
 class SensorsComponent : public VehicleComponent
 {
     Q_OBJECT

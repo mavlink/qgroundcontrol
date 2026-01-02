@@ -6,8 +6,6 @@ class QNetworkReply;
 class QNetworkAccessManager;
 class QTimer;
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class Viewer3DTileReply : public QObject
 {
 public:

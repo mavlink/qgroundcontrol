@@ -17,10 +17,6 @@
 
 class Vehicle;
 
-/// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
-///     @author Don Gagne <don@thegagnes.com>
-
 class PX4AutoPilotPlugin : public AutoPilotPlugin
 {
     Q_OBJECT

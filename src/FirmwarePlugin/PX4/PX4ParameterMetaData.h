@@ -7,9 +7,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 Q_DECLARE_LOGGING_CATEGORY(PX4ParameterMetaDataLog)
 
 //#define GENERATE_PARAMETER_JSON

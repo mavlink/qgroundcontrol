@@ -1,7 +1,3 @@
-/// @file
-///     @brief PX4 Firmware Upgrade operations which occur on a separate thread.
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PX4FirmwareUpgradeThread.h"
 #include "Bootloader.h"
 #include "FirmwareImage.h"

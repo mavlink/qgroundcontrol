@@ -12,10 +12,6 @@
 #include "Actuators.h"
 #include "ActuatorComponent.h"
 
-/// @file
-///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
-///     @author Don Gagne <don@thegagnes.com>
-
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)

@@ -1,7 +1,3 @@
-/// @file
-///     @brief PX4 Firmware Upgrade operations which occur on a separate thread.
-///     @author Don Gagne <don@thegagnes.com>
-
 #pragma once
 
 

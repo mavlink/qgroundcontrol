@@ -1,6 +1,3 @@
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QGCPalette.h"
 #include "QGCCorePlugin.h"
 

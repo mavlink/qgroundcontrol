@@ -2,11 +2,6 @@
 
 #include "VehicleComponent.h"
 
-/// @file
-///     @brief The Radio VehicleComponent is used to calibrate the trasmitter and assign function mapping
-///             to channels.
-///     @author Don Gagne <don@thegagnes.com>
-
 class SafetyComponent : public VehicleComponent
 {
     Q_OBJECT

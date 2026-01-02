@@ -4,8 +4,6 @@
 #include <QtQuick3D/QQuick3DGeometry>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class Viewer3DSettings;
 class OsmParser;
 

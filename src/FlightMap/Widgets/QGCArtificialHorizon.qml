@@ -1,9 +1,3 @@
-/**
- * @file
- *   @brief QGC Artificial Horizon
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
 
 Item {

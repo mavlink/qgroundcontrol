@@ -6,8 +6,6 @@
 
 #include "QGCGeo.h"
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class GeoCoordinateType: public QObject
 {
     Q_OBJECT

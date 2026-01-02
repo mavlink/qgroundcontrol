@@ -10,9 +10,6 @@
 #include "Viewer3DTileReply.h"
 
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
-
 class MapTileQuery : public QObject
 {
 

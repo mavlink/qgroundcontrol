@@ -1,6 +1,3 @@
-/// @file
-/// @author Gus Grubba <gus@auterion.com>
-
 #include "ScreenToolsController.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"

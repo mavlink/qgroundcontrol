@@ -8,9 +8,6 @@
 class FlightMapSettings;
 class OsmParser;
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
-
 class Viewer3DTerrainTexture : public QQuick3DTextureData
 {
     Q_OBJECT

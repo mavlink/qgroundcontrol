@@ -4,8 +4,6 @@
 
 #include "SettingsGroup.h"
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class Viewer3DSettings : public SettingsGroup
 {
     Q_OBJECT

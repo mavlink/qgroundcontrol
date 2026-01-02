@@ -1,6 +1,3 @@
-/// @file
-///     @author Gus Grubba <gus@auterion.com>
-
 #include "PowerComponent.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"

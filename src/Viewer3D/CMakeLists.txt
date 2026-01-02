@@ -1,7 +1,6 @@
 # ============================================================================
 # Viewer3D Module
 # 3D visualization with terrain and city geometry
-# @author Omid Esrafilian <esrafilian.omid@gmail.com>
 # ============================================================================
 
 # Only build when 3D viewer is enabled

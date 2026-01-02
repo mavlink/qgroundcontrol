@@ -1,6 +1,3 @@
-/// @file
-/// @brief Auto connect settings
-
 #pragma once
 
 #include <QtQmlIntegration/QtQmlIntegration>

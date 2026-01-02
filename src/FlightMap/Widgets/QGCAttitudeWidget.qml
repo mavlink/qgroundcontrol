@@ -1,9 +1,3 @@
-/**
- * @file
- *   @brief QGC Attitude Instrument
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
 import QtQuick.Effects
 

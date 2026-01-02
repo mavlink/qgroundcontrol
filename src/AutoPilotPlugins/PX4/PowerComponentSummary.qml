@@ -1,7 +1,3 @@
-/// @file
-///     @brief Battery, propeller and magnetometer summary
-///     @author Gus Grubba <gus@auterion.com>
-
 import QtQuick
 import QtQuick.Controls
 
