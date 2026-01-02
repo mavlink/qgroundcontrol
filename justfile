@@ -113,10 +113,6 @@ info:
     @echo "Build type:  {{build_type}}"
     @echo "Build dir:   {{build_dir}}"
 
-# Update copyright headers
-update-headers:
-    python3 ./tools/update-headers.py
-
 # Check dependency versions
 check-deps:
     ./tools/check-deps.sh

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2025 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 /// Qt6 Import Style: Use unversioned imports (QtQuick not QtQuick 2.15)
 /// Import order: Qt modules, blank line, QGroundControl modules
 
