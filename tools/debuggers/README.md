@@ -10,21 +10,21 @@ This directory provides debugging aids including profiling scripts, debugger vis
 
 ```bash
 # CPU profiling with perf (fastest, modern Linux)
-./tools/debuggers/profile.sh
+./tools/debuggers/profile.py
 
 # Memory leak checking
-./tools/debuggers/profile.sh --memcheck
+./tools/debuggers/profile.py --memcheck
 
 # Detailed heap profiling
-./tools/debuggers/profile.sh --heaptrack
+./tools/debuggers/profile.py --heaptrack
 
 # Call graph analysis (slow but comprehensive)
-./tools/debuggers/profile.sh --callgrind
+./tools/debuggers/profile.py --callgrind
 ```
 
 ## Scripts
 
-### profile.sh
+### profile.py
 
 Comprehensive profiling tool supporting multiple backends for CPU, memory, and call graph analysis.
 
@@ -32,28 +32,28 @@ Comprehensive profiling tool supporting multiple backends for CPU, memory, and c
 
 ```bash
 # CPU profiling (default - perf, modern Linux)
-./tools/debuggers/profile.sh
+./tools/debuggers/profile.py
 
 # Memory leak checking (full report)
-./tools/debuggers/profile.sh --memcheck
+./tools/debuggers/profile.py --memcheck
 
 # CPU profiling with call graph (valgrind, slow)
-./tools/debuggers/profile.sh --callgrind
+./tools/debuggers/profile.py --callgrind
 
 # Heap memory profiling (peak usage, allocations)
-./tools/debuggers/profile.sh --massif
+./tools/debuggers/profile.py --massif
 
 # Heap profiling with GUI (heaptrack)
-./tools/debuggers/profile.sh --heaptrack
+./tools/debuggers/profile.py --heaptrack
 
 # Build with sanitizers (ASAN/UBSAN)
-./tools/debuggers/profile.sh --sanitize
+./tools/debuggers/profile.py --sanitize
 
 # Specify build directory
-./tools/debuggers/profile.sh --build-dir /path/to/build
+./tools/debuggers/profile.py --build-dir /path/to/build
 
 # Pass arguments to QGroundControl
-./tools/debuggers/profile.sh -- --unittest
+./tools/debuggers/profile.py -- --unittest
 ```
 
 **Backends:**
@@ -95,10 +95,10 @@ brew install kcachegrind               # macOS
 
 ```bash
 # Check for memory leaks in specific scenario
-./tools/debuggers/profile.sh --memcheck -- --unittest
+./tools/debuggers/profile.py --memcheck -- --unittest
 
 # Find CPU hotspots
-./tools/debuggers/profile.sh
+./tools/debuggers/profile.py
 perf report -i profile/perf-*.data
 
 # Generate flamegraph
@@ -107,11 +107,11 @@ perf script -i profile/perf-*.data | \
   flamegraph.pl > flame.svg
 
 # Analyze heap usage patterns
-./tools/debuggers/profile.sh --massif
+./tools/debuggers/profile.py --massif
 ms_print profile/massif-*.out | head -100
 
 # Interactive call graph (if kcachegrind installed)
-./tools/debuggers/profile.sh --callgrind
+./tools/debuggers/profile.py --callgrind
 kcachegrind profile/callgrind-*.out
 ```
 
@@ -193,7 +193,7 @@ Suppressions for known false positives and third-party library leaks:
 - OpenGL driver false positives
 - System library false positives
 
-Used automatically by `profile.sh --memcheck`.
+Used automatically by `profile.py --memcheck`.
 
 **Adding Suppressions:**
 
@@ -250,7 +250,7 @@ lldb ./build/QGroundControl
 
 2. **Run Memory Check**:
    ```bash
-   ./tools/debuggers/profile.sh --memcheck
+   ./tools/debuggers/profile.py --memcheck
    ```
 
 3. **Review Results**:
@@ -267,7 +267,7 @@ lldb ./build/QGroundControl
 
 1. **Run perf**:
    ```bash
-   ./tools/debuggers/profile.sh
+   ./tools/debuggers/profile.py
    ```
 
 2. **View Interactive Report**:
@@ -294,7 +294,7 @@ lldb ./build/QGroundControl
 Build with AddressSanitizer and UndefinedBehaviorSanitizer:
 
 ```bash
-./tools/debuggers/profile.sh --sanitize
+./tools/debuggers/profile.py --sanitize
 
 # Or manually
 cmake -B build-san -S . \

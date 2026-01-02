@@ -53,10 +53,7 @@ runs:
         timeout_minutes: 10
         max_attempts: 3
         command: |
-          if [ -f "./tools/setup/install-dependencies-debian.sh" ]; then
-            chmod a+x ./tools/setup/install-dependencies-debian.sh
-            sudo ./tools/setup/install-dependencies-debian.sh
-          fi
+          sudo python3 tools/setup/install_dependencies.py --platform debian
 
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''
@@ -82,7 +79,4 @@ runs:
         timeout_minutes: 10
         max_attempts: 3
         command: |
-          if [ -f "./tools/setup/install-dependencies-macos.sh" ]; then
-            chmod a+x ./tools/setup/install-dependencies-macos.sh
-            ./tools/setup/install-dependencies-macos.sh
-          fi
+          python3 tools/setup/install_dependencies.py --platform macos

@@ -6,14 +6,16 @@ Python scripts for CI/CD workflows.
 
 | Script | Description |
 |--------|-------------|
-| `generate-matrix.py` | Generate build matrix from `build-config.json` |
-| `install_ccache.py` | Install ccache with signature verification |
+| `benchmark_runner.py` | Run Qt test benchmarks |
+| `build_action.py` | Build GitHub Actions from source (for unreleased fixes) |
+| `build_results.py` | Generate combined PR comment with test/coverage/size results |
+| `check_sizes.py` | Report artifact sizes |
+| `coverage_comment.py` | Post coverage comments on PRs |
+| `find_binary.py` | Locate QGroundControl binary in build dir |
+| `generate_matrix.py` | Generate build matrix from `build-config.json` |
 | `gstreamer_archive.py` | Create GStreamer archives and upload to S3 |
+| `install_ccache.py` | Install ccache with signature verification |
 | `size_analysis.py` | Analyze binary size with bloaty |
-| `benchmark-runner.py` | Run Qt test benchmarks |
-| `coverage-comment.py` | Post coverage comments on PRs |
-| `check-sizes.py` | Report artifact sizes |
-| `find-binary.sh` | Locate QGroundControl binary in build dir |
 
 ## Usage
 
@@ -21,13 +23,16 @@ Scripts are called from composite actions in `.github/actions/`.
 
 ```bash
 # Generate matrix for Linux
-python3 .github/scripts/generate-matrix.py --platform linux
+python3 .github/scripts/generate_matrix.py --platform linux
 
 # Install ccache 4.12.2
 python3 .github/scripts/install_ccache.py --version 4.12.2 --install
 
 # Create GStreamer archive
 python3 .github/scripts/gstreamer_archive.py --platform linux --arch x86_64 --version 1.24.0
+
+# Build action from unreleased commit
+python3 .github/scripts/build_action.py actions/checkout --ref fix-branch --output ./local-action
 ```
 
 ## Environment Variables

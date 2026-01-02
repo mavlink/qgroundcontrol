@@ -5,7 +5,7 @@
 #
 # Usage:
 #   valgrind --suppressions=tools/valgrind.supp ./build/QGroundControl
-#   ./tools/profile.sh --memcheck
+#   python3 ./tools/debuggers/profile.py --memcheck
 
 # ============================================================================
 # Qt 6 Suppressions

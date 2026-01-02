@@ -33,7 +33,7 @@ runs:
       id: parse
       shell: bash
       run: |
-        python3 "${{ github.workspace }}/.github/scripts/benchmark-runner.py" \
+        python3 "${{ github.workspace }}/.github/scripts/benchmark_runner.py" \
           --binary "${{ inputs.binary-path }}" \
           --filter "${{ inputs.test-filter }}" \
           --output "${{ inputs.output-file }}" \

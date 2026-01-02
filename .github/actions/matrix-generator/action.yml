@@ -61,4 +61,4 @@ runs:
           args+=(--variant "$VARIANT")
         fi
 
-        python3 "${{ github.workspace }}/.github/scripts/generate-matrix.py" "${args[@]}"
+        python3 "${{ github.workspace }}/.github/scripts/generate_matrix.py" "${args[@]}"

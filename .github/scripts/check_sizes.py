@@ -3,9 +3,9 @@
 Report artifact sizes.
 
 Usage:
-    ./tools/check-sizes.py build/                    # Check local build artifacts
-    ./tools/check-sizes.py artifacts/ --json         # Output JSON (for CI)
-    ./tools/check-sizes.py artifacts/ --markdown     # Output markdown table
+    ./check_sizes.py build/                    # Check local build artifacts
+    ./check_sizes.py artifacts/ --json         # Output JSON (for CI)
+    ./check_sizes.py artifacts/ --markdown     # Output markdown table
 
 Exit codes:
     0 - Success
@@ -151,12 +151,6 @@ def main():
         "--summary",
         type=Path,
         help="Append markdown summary to file (for GITHUB_STEP_SUMMARY)",
-    )
-    # Keep --no-fail for backwards compatibility (now a no-op)
-    parser.add_argument(
-        "--no-fail",
-        action="store_true",
-        help=argparse.SUPPRESS,
     )
 
     args = parser.parse_args()

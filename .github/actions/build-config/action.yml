@@ -63,4 +63,4 @@ runs:
     - name: Read build config
       id: read
       shell: bash
-      run: ./tools/setup/read-config.sh --github-output
+      run: python3 ./tools/setup/read_config.py --github-output

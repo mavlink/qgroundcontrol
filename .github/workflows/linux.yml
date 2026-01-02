@@ -55,36 +55,15 @@ jobs:
     # Skip path filtering for tags, manual triggers, and workflow_call
     if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'merge_group'
     outputs:
-      src: ${{ steps.filter.outputs.src }}
-      tests: ${{ steps.filter.outputs.tests }}
-      ci: ${{ steps.filter.outputs.ci }}
-      docs: ${{ steps.filter.outputs.docs }}
+      src: ${{ steps.detect.outputs.src }}
+      tests: ${{ steps.detect.outputs.tests }}
+      ci: ${{ steps.detect.outputs.ci }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Filter Paths
-        id: filter
-        uses: dorny/paths-filter@v3
+      - name: Detect Changes
+        id: detect
+        uses: ./.github/actions/detect-changes
         with:
-          filters: |
-            src:
-              - 'src/**'
-              - 'CMakeLists.txt'
-              - 'cmake/**'
-              - 'deploy/linux/**'
-              - 'libs/**'
-            tests:
-              - 'test/**'
-            ci:
-              - '.github/workflows/linux.yml'
-              - '.github/actions/**'
-              - '.github/scripts/**'
-              - 'tools/setup/*debian*'
-            docs:
-              - 'docs/**'
-              - '*.md'
-              - 'doc/**'
+          platform: linux
 
   setup:
     name: Setup Matrix
@@ -98,21 +77,12 @@ jobs:
        needs.changes.outputs.tests == 'true' ||
        needs.changes.outputs.ci == 'true')
     outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-      timeout_minutes: ${{ steps.matrix.outputs.timeout_minutes }}
+      matrix: ${{ steps.generate.outputs.matrix }}
+      timeout_minutes: ${{ steps.generate.outputs.timeout_minutes }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            .github/actions
-            .github/scripts
-            .github/build-config.json
-          sparse-checkout-cone-mode: false
-
       - name: Generate Matrix
-        id: matrix
-        uses: ./.github/actions/matrix-generator
+        id: generate
+        uses: ./.github/actions/generate-matrix
         with:
           platform: linux
           build-type: ${{ inputs.build_type }}

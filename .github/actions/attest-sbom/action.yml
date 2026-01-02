@@ -27,26 +27,9 @@ runs:
   steps:
     - name: Check attestation conditions
       id: check
-      shell: bash
-      run: |
-        # Skip for external PRs (can't attest without repo permissions)
-        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping attestation for external PR"
-            exit 0
-          fi
-        fi
-
-        # Check if artifact exists
-        if [[ ! -e "${{ inputs.subject-path }}" ]]; then
-          echo "skip=true" >> "$GITHUB_OUTPUT"
-          echo "::warning::Artifact not found: ${{ inputs.subject-path }}"
-          exit 0
-        fi
-
-        echo "skip=false" >> "$GITHUB_OUTPUT"
-        echo "Will attest: ${{ inputs.subject-path }}"
+      uses: ./.github/actions/attest-condition
+      with:
+        subject-path: ${{ inputs.subject-path }}
 
     - name: Determine scan path
       id: paths

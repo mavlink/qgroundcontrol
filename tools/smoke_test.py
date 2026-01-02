@@ -3,7 +3,6 @@
 Smoke tests for QGroundControl tools.
 
 Verifies all tools work end-to-end:
-- Script sourcing (common.sh)
 - Help texts for all major scripts
 - Python tool imports
 - Config file reading
@@ -36,67 +35,16 @@ def tools_dir() -> Path:
     return Path(__file__).parent.resolve()
 
 
-class TestScriptSourcing:
-    """Tests for shell script sourcing."""
-
-    def test_common_sh_sources_without_error(self, tools_dir: Path) -> None:
-        """Verify common.sh can be sourced and defines expected functions."""
-        common_sh = tools_dir / "common.sh"
-        result = subprocess.run(
-            [
-                "bash",
-                "-c",
-                f"source '{common_sh}'; type log_info > /dev/null 2>&1",
-            ],
-            capture_output=True,
-            timeout=5,
-        )
-        assert result.returncode == 0, f"Failed to source common.sh: {result.stderr.decode()}"
-
-    def test_common_sh_defines_logging_functions(self, tools_dir: Path) -> None:
-        """Verify common.sh defines all logging functions."""
-        common_sh = tools_dir / "common.sh"
-        functions = ["log_info", "log_ok", "log_warn", "log_error", "log_debug"]
-        for func in functions:
-            result = subprocess.run(
-                [
-                    "bash",
-                    "-c",
-                    f"source '{common_sh}'; type {func} > /dev/null 2>&1",
-                ],
-                capture_output=True,
-                timeout=5,
-            )
-            assert result.returncode == 0, f"common.sh does not define {func}"
-
-    def test_common_sh_defines_utility_functions(self, tools_dir: Path) -> None:
-        """Verify common.sh defines utility functions."""
-        common_sh = tools_dir / "common.sh"
-        functions = ["find_repo_root", "require_command", "has_command", "print_header"]
-        for func in functions:
-            result = subprocess.run(
-                [
-                    "bash",
-                    "-c",
-                    f"source '{common_sh}'; type {func} > /dev/null 2>&1",
-                ],
-                capture_output=True,
-                timeout=5,
-            )
-            assert result.returncode == 0, f"common.sh does not define {func}"
-
-
 class TestHelpTexts:
     """Tests for script help text functionality."""
 
     SCRIPTS_WITH_HELP = [
-        "configure.sh",
-        "run-tests.sh",
-        "analyze.sh",
-        "coverage.sh",
-        "clean.sh",
-        "check-deps.sh",
-        "pre-commit.sh",
+        "analyze.py",
+        "clean.py",
+        "configure.py",
+        "coverage.py",
+        "pre_commit.py",
+        "run_tests.py",
     ]
 
     @pytest.mark.parametrize("script", SCRIPTS_WITH_HELP)
@@ -107,7 +55,7 @@ class TestHelpTexts:
             pytest.skip(f"Script {script} does not exist")
 
         result = subprocess.run(
-            [str(script_path), "--help"],
+            [sys.executable, str(script_path), "--help"],
             capture_output=True,
             timeout=5,
         )
@@ -124,7 +72,7 @@ class TestHelpTexts:
             pytest.skip(f"Script {script} does not exist")
 
         result = subprocess.run(
-            [str(script_path), "--help"],
+            [sys.executable, str(script_path), "--help"],
             capture_output=True,
             timeout=5,
         )
@@ -136,10 +84,10 @@ class TestPythonTools:
     """Tests for Python tool scripts."""
 
     PYTHON_SCRIPTS_WITH_HELP = [
-        "setup/install-qt.py",
-        "setup/read-config.py",
+        "setup/install_qt.py",
+        "setup/read_config.py",
         "setup/gstreamer/build-gstreamer.py",
-        "translations/qgc-lupdate-json.py",
+        "translations/qgc_lupdate.py",
     ]
 
     @pytest.mark.parametrize("script", PYTHON_SCRIPTS_WITH_HELP)
@@ -250,10 +198,6 @@ class TestDirectoryStructure:
         subdir_path = tools_dir / subdir
         assert subdir_path.is_dir(), f"Directory not found: {subdir_path}"
 
-    def test_common_sh_exists(self, tools_dir: Path) -> None:
-        """Verify common.sh exists."""
-        assert (tools_dir / "common.sh").is_file()
-
     def test_readme_exists(self, tools_dir: Path) -> None:
         """Verify README.md exists."""
         assert (tools_dir / "README.md").is_file()
@@ -261,33 +205,6 @@ class TestDirectoryStructure:
 
 class TestSyntax:
     """Tests for script syntax validation."""
-
-    SHELL_SCRIPTS = [
-        "configure.sh",
-        "run-tests.sh",
-        "analyze.sh",
-        "common.sh",
-        "coverage.sh",
-        "clean.sh",
-        "check-deps.sh",
-        "pre-commit.sh",
-    ]
-
-    @pytest.mark.parametrize("script", SHELL_SCRIPTS)
-    def test_shell_script_syntax(self, tools_dir: Path, script: str) -> None:
-        """Verify shell script has valid syntax (bash -n)."""
-        script_path = tools_dir / script
-        if not script_path.exists():
-            pytest.skip(f"Script {script} does not exist")
-
-        result = subprocess.run(
-            ["bash", "-n", str(script_path)],
-            capture_output=True,
-            timeout=5,
-        )
-        assert result.returncode == 0, (
-            f"{script} has syntax errors: {result.stderr.decode()}"
-        )
 
     def test_python_scripts_compile(self, tools_dir: Path) -> None:
         """Verify Python scripts in tools/ compile without errors."""
@@ -309,12 +226,12 @@ class TestIntegration:
     """Integration tests combining multiple components."""
 
     def test_read_config_returns_qt_version(self, tools_dir: Path, repo_root: Path) -> None:
-        """Verify read-config.py can read qt_version from build-config.json."""
-        read_config = tools_dir / "setup" / "read-config.py"
+        """Verify read_config.py can read qt_version from build-config.json."""
+        read_config = tools_dir / "setup" / "read_config.py"
         config_path = repo_root / ".github" / "build-config.json"
 
         if not read_config.exists():
-            pytest.skip("read-config.py does not exist")
+            pytest.skip("read_config.py does not exist")
         if not config_path.exists():
             pytest.skip("build-config.json does not exist")
 
@@ -326,15 +243,15 @@ class TestIntegration:
         )
 
         if result.returncode != 0:
-            pytest.skip(f"read-config.py failed: {result.stderr.decode()}")
+            pytest.skip(f"read_config.py failed: {result.stderr.decode()}")
 
         qt_version = result.stdout.decode().strip()
-        assert qt_version, "read-config.py returned empty qt_version"
+        assert qt_version, "read_config.py returned empty qt_version"
 
         with open(config_path) as f:
             expected = json.load(f)["qt_version"]
         assert qt_version == expected, (
-            f"read-config.py returned '{qt_version}', expected '{expected}'"
+            f"read_config.py returned '{qt_version}', expected '{expected}'"
         )
 
 

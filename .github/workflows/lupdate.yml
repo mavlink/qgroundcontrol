@@ -37,7 +37,7 @@ jobs:
           modules: qttools
 
       - name: Update translation files
-        run: ./tools/translations/qgc-lupdate.sh
+        run: python3 tools/translations/qgc_lupdate.py
 
       - name: Configure Git
         run: |

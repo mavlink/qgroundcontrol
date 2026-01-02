@@ -36,6 +36,7 @@ class TestResult:
     duration: float = 0.0
     output: str = ""
     xml_path: Path | None = None
+    log_path: Path | None = None
     exit_code: int = 0
 
 
@@ -75,11 +76,13 @@ class QtTestRunner:
         timeout: int = 300,
         verbose: bool = False,
         headless: bool = False,
+        verify_only: bool = False,
     ) -> None:
         self.build_dir = build_dir.resolve()
         self.timeout = timeout
         self.verbose = verbose
         self.headless = headless
+        self.verify_only = verify_only
         self.repo_root = self._find_repo_root()
         self.log = Logger()
 
@@ -168,6 +171,7 @@ class QtTestRunner:
         filter_pattern: str | None = None,
         xml_output: bool = False,
         output_file: Path | None = None,
+        log_file: Path | None = None,
         binary_path: Path | None = None,
         build_type: str | None = None,
     ) -> TestResult:
@@ -193,14 +197,19 @@ class QtTestRunner:
 
         # Build test arguments
         test_args: list[str] = []
-        if filter_pattern:
+
+        if self.verify_only:
+            # Boot test mode - just verify the binary starts
+            test_args.append("--simple-boot-test")
+            self.log.info("Mode: verify-only (boot test)")
+        elif filter_pattern:
             test_args.append(f"--unittest:{filter_pattern}")
             self.log.info(f"Filter: {filter_pattern}")
         else:
             test_args.append("--unittest")
 
-        # XML output
-        if xml_output:
+        # XML output (not applicable for verify-only)
+        if xml_output and not self.verify_only:
             if output_file is None:
                 output_file = binary.parent / "junit-results.xml"
             result.xml_path = output_file
@@ -242,6 +251,16 @@ class QtTestRunner:
 
         result.duration = time.monotonic() - start_time
 
+        # Write log file if requested
+        if log_file:
+            try:
+                log_file.parent.mkdir(parents=True, exist_ok=True)
+                log_file.write_text(result.output)
+                result.log_path = log_file
+                self.log.info(f"Log: {log_file}")
+            except OSError as e:
+                self.log.warn(f"Failed to write log file: {e}")
+
         # Log result
         if result.exit_code == 0:
             self.log.ok("Tests passed")
@@ -277,6 +296,8 @@ class QtTestRunner:
                 f.write(f"passed={'true' if result.exit_code == 0 else 'false'}\n")
                 if result.xml_path:
                     f.write(f"output_file={result.xml_path}\n")
+                if result.log_path:
+                    f.write(f"log_file={result.log_path}\n")
         except OSError as e:
             self.log.warn(f"Failed to write GITHUB_OUTPUT: {e}")
 
@@ -333,9 +354,19 @@ Examples:
         help="Output file for XML results",
     )
     parser.add_argument(
+        "--log-file",
+        type=Path,
+        help="Write test output to log file",
+    )
+    parser.add_argument(
         "--headless",
         action="store_true",
         help="Force headless/offscreen mode",
+    )
+    parser.add_argument(
+        "--verify-only",
+        action="store_true",
+        help="Run boot test only (--simple-boot-test), skip unit tests",
     )
     parser.add_argument(
         "-v",
@@ -356,12 +387,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         timeout=args.timeout,
         verbose=args.verbose,
         headless=args.headless,
+        verify_only=args.verify_only,
     )
 
     result = runner.run_tests(
         filter_pattern=args.filter_pattern,
         xml_output=args.xml,
         output_file=args.output,
+        log_file=args.log_file,
         binary_path=args.binary,
         build_type=args.build_type,
     )

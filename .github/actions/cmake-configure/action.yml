@@ -65,54 +65,26 @@ runs:
       env:
         INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
       run: |
-        BUILD_DIR="${{ inputs.build-dir }}"
-        SOURCE_DIR="${{ inputs.source-dir }}"
-
-        # Determine cmake command
-        if [[ "${{ inputs.use-qt-cmake }}" == "true" && -n "${QT_ROOT_DIR:-}" ]]; then
-          CMAKE_CMD="${QT_ROOT_DIR}/bin/qt-cmake"
-        else
-          CMAKE_CMD="cmake"
-        fi
-
-        # Build arguments
         args=(
-          -S "$SOURCE_DIR"
-          -B "$BUILD_DIR"
+          -S "${{ inputs.source-dir }}"
+          -B "${{ inputs.build-dir }}"
           -G "${{ inputs.generator }}"
-          -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+          -t "${{ inputs.build-type }}"
         )
 
-        # Optional flags
-        if [[ "${{ inputs.testing }}" == "true" ]]; then
-          args+=(-DQGC_BUILD_TESTING=ON)
-        else
-          args+=(-DQGC_BUILD_TESTING=OFF)
-        fi
-
-        if [[ "${{ inputs.coverage }}" == "true" ]]; then
-          args+=(-DQGC_ENABLE_COVERAGE=ON)
-        fi
-
-        if [[ "${{ inputs.stable }}" == "true" ]]; then
-          args+=(-DQGC_STABLE_BUILD=ON)
-        fi
+        [[ "${{ inputs.testing }}" == "true" ]] && args+=(--testing)
+        [[ "${{ inputs.coverage }}" == "true" ]] && args+=(--coverage)
+        [[ "${{ inputs.stable }}" == "true" ]] && args+=(--stable)
+        [[ "${{ inputs.use-qt-cmake }}" != "true" ]] && args+=(--no-qt-cmake)
 
         if [[ "${{ inputs.unity-build }}" == "true" ]]; then
-          args+=(
-            -DCMAKE_UNITY_BUILD=ON
-            -DCMAKE_UNITY_BUILD_BATCH_SIZE=${{ inputs.unity-batch-size }}
-          )
+          args+=(--unity --unity-batch "${{ inputs.unity-batch-size }}")
         fi
 
-        # Extra arguments (split by whitespace via environment variable)
+        # Add extra args if provided
         if [[ -n "$INPUT_EXTRA_ARGS" ]]; then
-          read -ra extra_args <<< "$INPUT_EXTRA_ARGS"
-          args+=("${extra_args[@]}")
+          read -ra extra <<< "$INPUT_EXTRA_ARGS"
+          args+=("${extra[@]}")
         fi
 
-        echo "Running: $CMAKE_CMD ${args[*]}"
-        "$CMAKE_CMD" "${args[@]}"
-
-        # Output absolute build directory
-        echo "build_dir=$(realpath "$BUILD_DIR")" >> "$GITHUB_OUTPUT"
+        python3 "${{ github.workspace }}/tools/configure.py" "${args[@]}"

@@ -94,18 +94,12 @@ runs:
         path: ${{ inputs.dir }}/${{ inputs.version }}/${{ steps.paths.outputs.arch-dir }}
         key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ hashFiles('tools/setup/aqt-settings.ini') }}
 
-    - name: Setup Python
-      if: steps.cache-qt.outputs.cache-hit != 'true'
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.12'
-
     - name: Install Qt ${{ inputs.version }} (${{ inputs.arch }})
       if: steps.cache-qt.outputs.cache-hit != 'true'
       shell: bash
       run: |
         # Use unified Python install script
-        python3 "${{ github.workspace }}/tools/setup/install-qt.py" \
+        python3 "${{ github.workspace }}/tools/setup/install_qt.py" \
           --version "${{ inputs.version }}" \
           --host "${{ inputs.host }}" \
           --target "${{ inputs.target }}" \

@@ -3,7 +3,7 @@
 Run Qt Test benchmarks and parse output to JSON.
 
 Usage:
-    benchmark-runner.py --binary PATH [--filter FILTER] [--output FILE]
+    benchmark_runner.py --binary PATH [--filter FILTER] [--output FILE]
 
 Outputs (for GitHub Actions):
     has_results, result_count

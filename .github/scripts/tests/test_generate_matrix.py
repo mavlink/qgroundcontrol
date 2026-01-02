@@ -1,4 +1,4 @@
-"""Tests for generate-matrix.py."""
+"""Tests for generate_matrix.py."""
 
 from __future__ import annotations
 
@@ -9,16 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Import the module with hyphen by using importlib
-import importlib.util
-spec = importlib.util.spec_from_file_location(
-    "generate_matrix",
-    Path(__file__).parent.parent / "generate-matrix.py"
-)
-generate_matrix_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(generate_matrix_module)
-
-generate_matrix = generate_matrix_module.generate_matrix
+from generate_matrix import generate_matrix
 
 
 class TestGenerateMatrix:

@@ -29,7 +29,7 @@ runs:
       shell: bash
       env:
         GROUPS: ${{ inputs.groups }}
-      run: ./tools/setup/install-python.sh "$GROUPS"
+      run: python3 tools/setup/install_python.py "$GROUPS"
 
     - name: Add venv to PATH
       shell: bash

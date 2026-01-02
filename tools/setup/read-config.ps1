@@ -3,7 +3,7 @@
     Read build configuration from .github/build-config.json
 
 .DESCRIPTION
-    Thin delegation script that calls read-config.py for all functionality.
+    Thin delegation script that calls read_config.py for all functionality.
     Dot-source this script to export variables, or call with -Get/-Json to query config.
 
 .PARAMETER Get
@@ -17,7 +17,7 @@
     .\read-config.ps1 -Get qt_version  # Get single value
 
 .NOTES
-    See read-config.py for full documentation.
+    See read_config.py for full documentation.
 #>
 
 param(
@@ -27,7 +27,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$pythonScript = Join-Path $scriptDir "read-config.py"
+$pythonScript = Join-Path $scriptDir "read_config.py"
 
 # Find Python 3
 function Find-Python {

@@ -55,10 +55,10 @@ runs:
       run: |
         version="${INPUT_VERSION}"
         if [[ -z "$version" ]]; then
-          version=$(./tools/setup/read-config.sh --get gstreamer_version)
+          version=$(python3 ./tools/setup/read_config.py --get gstreamer_version)
         fi
         echo "version=$version" >> "$GITHUB_OUTPUT"
-        echo "qt_version=$(./tools/setup/read-config.sh --get qt_version)" >> "$GITHUB_OUTPUT"
+        echo "qt_version=$(python3 ./tools/setup/read_config.py --get qt_version)" >> "$GITHUB_OUTPUT"
         echo "Building GStreamer $version for ${INPUT_PLATFORM} (${INPUT_ARCH})"
 
     # ===== DEPENDENCIES =====

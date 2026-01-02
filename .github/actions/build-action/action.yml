@@ -1,31 +1,37 @@
-name: Build action
-description: Build action whose dist hasn't been updated from source
+name: Build Action
+description: Build a GitHub Action from source when dist hasn't been updated
+
 inputs:
   repo:
-    description: Target repo to build
+    description: 'Repository in owner/repo format (e.g., actions/checkout)'
     required: true
   ref:
-    description: The branch, tag or SHA to checkout
+    description: 'Branch, tag, or commit SHA to build'
     required: false
-    default: master
+    default: 'HEAD'
+  output-dir:
+    description: 'Output directory for built action'
+    required: false
+    default: 'build-action'
+
+outputs:
+  action-path:
+    description: 'Path to the built action directory'
+    value: ${{ steps.build.outputs.action_path }}
+
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
       with:
-        repository: ${{ inputs.repo }}
-        ref: ${{ inputs.ref }}
-        path: build-action
+        node-version: '22'
 
-    - uses: actions/setup-node@v6
-      with:
-        node-version: 22
-        cache: npm
-        cache-dependency-path: build-action/package-lock.json
-
-    - name: Build ${{ inputs.repo }}
-      run: |
-        cd build-action
-        npm ci || npm install
-        npm run build
+    - name: Build action from source
+      id: build
       shell: bash
+      run: |
+        python3 "${{ github.workspace }}/.github/scripts/build_action.py" \
+          "${{ inputs.repo }}" \
+          --ref "${{ inputs.ref }}" \
+          --output "${{ github.workspace }}/${{ inputs.output-dir }}"

@@ -51,71 +51,31 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Find binary
-      id: find
-      if: inputs.binary-path == ''
-      shell: bash
-      run: |
-        "${{ github.workspace }}/.github/scripts/find-binary.sh" \
-          --build-dir "${{ inputs.build-dir }}" \
-          --build-type "${{ inputs.build-type }}"
-
     - name: Run tests
       id: run
       shell: bash
-      env:
-        INPUT_TEST_FILTER: ${{ inputs.test-filter }}
       run: |
-        # Determine binary path
-        if [[ -n "${{ inputs.binary-path }}" ]]; then
-          binary="${{ inputs.binary-path }}"
-        else
-          binary="${{ steps.find.outputs.binary_path }}"
-        fi
+        args=(
+          -B "${{ inputs.build-dir }}"
+          -t "${{ inputs.build-type }}"
+          --timeout "${{ inputs.timeout }}"
+          --xml
+          --output "${{ inputs.build-dir }}/${{ inputs.output-file }}"
+          --log-file "${{ inputs.build-dir }}/${{ inputs.log-file }}"
+          -v
+        )
 
-        if [[ ! -f "$binary" ]]; then
-          echo "::error::Binary not found: $binary"
-          exit 1
-        fi
+        # Add binary path if specified
+        [[ -n "${{ inputs.binary-path }}" ]] && args+=(--binary "${{ inputs.binary-path }}")
 
-        chmod +x "$binary"
+        # Add test filter if specified
+        [[ -n "${{ inputs.test-filter }}" ]] && args+=(--filter "${{ inputs.test-filter }}")
 
-        # Determine output directory
-        output_dir=$(dirname "$binary")
-        output_file="$output_dir/${{ inputs.output-file }}"
-        log_file="$output_dir/${{ inputs.log-file }}"
+        # Add headless mode if platform is offscreen
+        [[ "${{ inputs.platform }}" == "offscreen" ]] && args+=(--headless)
 
-        echo "output_file=$output_file" >> "$GITHUB_OUTPUT"
-        echo "log_file=$log_file" >> "$GITHUB_OUTPUT"
+        # Run tests (exit code handled by the script)
+        python3 "${{ github.workspace }}/tools/run_tests.py" "${args[@]}" || exit_code=$?
 
-        # Build test command
-        test_args=(--unittest)
-        [[ -n "$INPUT_TEST_FILTER" ]] && test_args=("--unittest:${INPUT_TEST_FILTER}")
-        test_args+=(--unittest-output "$output_file")
-
-        # Set Qt platform
-        export QT_QPA_PLATFORM="${{ inputs.platform }}"
-
-        # Run tests with display handling
-        set +e
-        if [[ "$RUNNER_OS" == "Linux" ]]; then
-          # Use xvfb-run for virtual framebuffer on Linux
-          timeout ${{ inputs.timeout }} xvfb-run -a "$binary" "${test_args[@]}" 2>&1 | tee "$log_file"
-        else
-          # Direct execution on other platforms
-          timeout ${{ inputs.timeout }} "$binary" "${test_args[@]}" 2>&1 | tee "$log_file"
-        fi
-        TEST_EXIT_CODE=${PIPESTATUS[0]}
-        set -e
-
-        echo "exit_code=$TEST_EXIT_CODE" >> "$GITHUB_OUTPUT"
-
-        if [[ "$TEST_EXIT_CODE" -eq 0 ]]; then
-          echo "passed=true" >> "$GITHUB_OUTPUT"
-          echo "✅ Tests passed"
-        else
-          echo "passed=false" >> "$GITHUB_OUTPUT"
-          echo "❌ Tests failed with exit code $TEST_EXIT_CODE"
-        fi
-
-        exit "$TEST_EXIT_CODE"
+        # Script writes to GITHUB_OUTPUT, propagate exit code
+        exit ${exit_code:-0}

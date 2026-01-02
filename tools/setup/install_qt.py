@@ -7,13 +7,13 @@ install-qt-windows.ps1, install-qt-android.sh, and install-qt-ios.sh scripts
 with a single Python implementation.
 
 Usage:
-    install-qt.py                           # Auto-detect platform, use defaults from config
-    install-qt.py --version 6.10.1          # Specific Qt version
-    install-qt.py --target android --android-abis "arm64-v8a armeabi-v7a"  # Android build
-    install-qt.py --target ios              # iOS build (macOS only)
-    install-qt.py --tools "tools_ifw"       # Install additional Qt tools
-    install-qt.py --export bash             # Output env vars as bash exports
-    install-qt.py --export powershell       # Output env vars as PowerShell
+    install_qt.py                           # Auto-detect platform, use defaults from config
+    install_qt.py --version 6.10.1          # Specific Qt version
+    install_qt.py --target android --android-abis "arm64-v8a armeabi-v7a"  # Android build
+    install_qt.py --target ios              # iOS build (macOS only)
+    install_qt.py --tools "tools_ifw"       # Install additional Qt tools
+    install_qt.py --export bash             # Output env vars as bash exports
+    install_qt.py --export powershell       # Output env vars as PowerShell
 
 Environment variables (optional, defaults from build-config.json):
     QT_VERSION, QT_PATH, QT_HOST, QT_TARGET, QT_ARCH, QT_MODULES, QT_TOOLS

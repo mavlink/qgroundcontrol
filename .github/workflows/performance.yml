@@ -74,7 +74,7 @@ jobs:
 
       - name: Find binary
         id: find
-        run: ./.github/scripts/find-binary.sh --build-dir build --build-type Release
+        run: python3 ./.github/scripts/find_binary.py --build-dir build --build-type Release
 
       - name: Upload binary
         uses: actions/upload-artifact@v6
@@ -175,7 +175,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '>=3.9'
+          python-version: '3.12'
 
       - name: Get build config
         id: config

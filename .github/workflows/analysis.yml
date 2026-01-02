@@ -142,8 +142,8 @@ jobs:
             ARGS="$ARGS --all"
           fi
 
-          echo "Running: ./tools/analyze.sh $ARGS"
-          ./tools/analyze.sh $ARGS
+          echo "Running: python3 ./tools/analyze.py $ARGS"
+          python3 ./tools/analyze.py $ARGS
 
       - name: Run IWYU
         if: inputs.tool == 'iwyu'

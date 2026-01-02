@@ -6,12 +6,12 @@ This script provides cross-platform access to the centralized build config.
 It can be used directly or called by shell wrappers for environment export.
 
 Usage:
-    read-config.py                      # Print all config as KEY=VALUE
-    read-config.py --get qt_version     # Get single value
-    read-config.py --json               # Output as JSON
-    read-config.py --export bash        # Output as bash export statements
-    read-config.py --export powershell  # Output as PowerShell $env: statements
-    read-config.py --github-output      # Write to GITHUB_OUTPUT (CI only)
+    read_config.py                      # Print all config as KEY=VALUE
+    read_config.py --get qt_version     # Get single value
+    read_config.py --json               # Output as JSON
+    read_config.py --export bash        # Output as bash export statements
+    read_config.py --export powershell  # Output as PowerShell $env: statements
+    read_config.py --github-output      # Write to GITHUB_OUTPUT (CI only)
 
 Environment:
     CONFIG_FILE: Override config file path (default: auto-detect)

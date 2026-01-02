@@ -3,10 +3,10 @@
 Generate GitHub Actions matrix from build-config.json.
 
 Usage:
-    ./generate-matrix.py --platform linux
-    ./generate-matrix.py --platform windows --build-type Release
-    ./generate-matrix.py --platform linux --event-name pull_request
-    ./generate-matrix.py --platform android --pr-minimal
+    ./generate_matrix.py --platform linux
+    ./generate_matrix.py --platform windows --build-type Release
+    ./generate_matrix.py --platform linux --event-name pull_request
+    ./generate_matrix.py --platform android --pr-minimal
 
 Outputs JSON matrix for GitHub Actions.
 """

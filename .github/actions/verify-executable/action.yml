@@ -6,7 +6,7 @@ inputs:
     description: 'Path to executable or package to verify'
     required: true
   type:
-    description: 'Type of executable (binary, appimage, dmg, exe)'
+    description: 'Type of executable (binary, appimage, dmg, exe) - currently informational'
     required: false
     default: 'binary'
   working-dir:
@@ -21,7 +21,7 @@ inputs:
 outputs:
   success:
     description: 'Whether the boot test passed'
-    value: ${{ steps.verify.outputs.success }}
+    value: ${{ steps.verify.outputs.passed }}
 
 runs:
   using: composite
@@ -29,89 +29,27 @@ runs:
     - name: Verify executable
       id: verify
       shell: bash
-      env:
-        BINARY_PATH: ${{ inputs.binary-path }}
-        EXEC_TYPE: ${{ inputs.type }}
-        WORK_DIR: ${{ inputs.working-dir }}
-        TIMEOUT: ${{ inputs.timeout }}
       run: |
-        set -euo pipefail
+        BINARY_PATH="${{ inputs.binary-path }}"
 
         # Determine working directory
-        if [[ -n "$WORK_DIR" ]]; then
-          cd "$WORK_DIR"
+        if [[ -n "${{ inputs.working-dir }}" ]]; then
+          WORK_DIR="${{ inputs.working-dir }}"
         else
-          cd "$(dirname "$BINARY_PATH")"
-          BINARY_PATH="$(basename "$BINARY_PATH")"
+          WORK_DIR="$(dirname "$BINARY_PATH")"
         fi
 
-        # Detect platform
-        case "$RUNNER_OS" in
-          Linux)   platform="linux" ;;
-          macOS)   platform="macos" ;;
-          Windows) platform="windows" ;;
-          *)       platform="linux" ;;
-        esac
-
-        echo "Platform: $platform"
-        echo "Binary: $BINARY_PATH"
-        echo "Type: $EXEC_TYPE"
-
-        # Build command based on type
-        case "$EXEC_TYPE" in
-          binary)
-            if [[ "$platform" == "windows" ]]; then
-              cmd=("./$BINARY_PATH")
-            else
-              chmod +x "$BINARY_PATH"
-              cmd=("./$BINARY_PATH")
-            fi
-            ;;
-          appimage)
-            chmod +x "$BINARY_PATH"
-            cmd=("./$BINARY_PATH")
-            ;;
-          dmg)
-            # For DMG, binary-path should be the .app path inside mounted volume
-            cmd=("./$BINARY_PATH")
-            ;;
-          exe)
-            cmd=("$BINARY_PATH")
-            ;;
-          *)
-            echo "::error::Unknown executable type: $EXEC_TYPE"
-            exit 1
-            ;;
-        esac
-
-        # Run with platform-appropriate display handling
-        run_test() {
-          timeout "$TIMEOUT" "${cmd[@]}" --simple-boot-test
-        }
-
-        set +e
-        if [[ "$platform" == "linux" ]]; then
-          # Linux requires xvfb for headless X display
-          if command -v xvfb-run &>/dev/null; then
-            echo "Running with xvfb-run"
-            xvfb-run -a timeout "$TIMEOUT" "${cmd[@]}" --simple-boot-test
-          else
-            echo "::warning::xvfb-run not found, using offscreen platform"
-            export QT_QPA_PLATFORM=offscreen
-            run_test
-          fi
-        else
-          # macOS and Windows can run directly
-          run_test
+        # Make binary executable on Unix
+        if [[ "$RUNNER_OS" != "Windows" ]]; then
+          chmod +x "$BINARY_PATH" 2>/dev/null || true
         fi
-        exit_code=$?
-        set -e
 
-        if [[ $exit_code -eq 0 ]]; then
-          echo "✓ Boot test passed"
-          echo "success=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "::error::Boot test failed with exit code $exit_code"
-          echo "success=false" >> "$GITHUB_OUTPUT"
-          exit $exit_code
-        fi
+        # Run boot test using run_tests.py with --verify-only
+        python3 "${{ github.workspace }}/tools/run_tests.py" \
+          --binary "$BINARY_PATH" \
+          --timeout "${{ inputs.timeout }}" \
+          --verify-only \
+          --headless \
+          -v || exit_code=$?
+
+        exit ${exit_code:-0}

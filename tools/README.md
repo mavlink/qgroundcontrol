@@ -18,8 +18,8 @@ just setup       # Full setup: deps, submodules, configure, build
 ## Python Setup
 
 ```bash
-./tools/setup/install-python.sh           # Install CI tools
-./tools/setup/install-python.sh all       # Install everything
+python tools/setup/install_python.py           # Install CI tools
+python tools/setup/install_python.py all       # Install everything
 source .venv/bin/activate
 ```
 
@@ -52,6 +52,8 @@ See `pyproject.toml` for dependency groups: `ci`, `qt`, `coverage`, `dev`, `lsp`
 |--------|-------------|
 | `analyze.py` | Run clang-tidy, cppcheck, clazy, qmllint analysis |
 | `check_deps.py` | Check/update dependencies and submodules |
+| `clean.py` | Clean build artifacts and caches |
+| `configure.py` | Configure CMake build with Qt auto-detection |
 | `coverage.py` | Generate code coverage reports with gcovr |
 | `generate_docs.py` | Generate Doxygen API documentation |
 | `lint_fix.py` | Auto-apply pre-commit formatting fixes |
@@ -60,16 +62,7 @@ See `pyproject.toml` for dependency groups: `ci`, `qt`, `coverage`, `dev`, `lsp`
 | `run_tests.py` | Execute unit tests with headless display support |
 | `smoke_test.py` | Smoke tests for tool functionality |
 | `update_headers.py` | License header management |
-
-### Shell Scripts
-
-| Script | Description |
-|--------|-------------|
-| `analyze.sh` | Wrapper for `analyze.py` |
-| `clean.sh` | Clean build artifacts and caches |
-| `common.sh` | Shared shell utilities (sourced by other scripts) |
-| `configure.sh` | Configure CMake build with Qt auto-detection |
-| `pre-commit.sh` | Wrapper for `pre_commit.py` |
+| `debuggers/profile.py` | Multi-tool profiler (perf, valgrind, heaptrack, sanitizers) |
 
 ## Configuration Files
 
@@ -80,4 +73,4 @@ See `pyproject.toml` for dependency groups: `ci`, `qt`, `coverage`, `dev`, `lsp`
 
 ## Centralized Config
 
-Version numbers are in `.github/build-config.json`. Scripts use `setup/read-config.sh` to read values.
+Version numbers are in `.github/build-config.json`. Scripts use `setup/read_config.py` to read values.

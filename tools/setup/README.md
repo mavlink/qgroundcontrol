@@ -9,29 +9,30 @@ This directory contains scripts to install system dependencies, Qt SDK, Python t
 ## Quick Start
 
 ```bash
-# Install system dependencies for your platform
-./tools/setup/install-dependencies-debian.sh    # Debian/Ubuntu
-./tools/setup/install-dependencies-macos.sh     # macOS
-./tools/setup/install-dependencies-windows.ps1  # Windows (PowerShell)
+# Install system dependencies (auto-detects platform)
+python3 tools/setup/install_dependencies.py
+
+# Or specify platform explicitly
+python3 tools/setup/install_dependencies.py --platform debian   # Debian/Ubuntu
+python3 tools/setup/install_dependencies.py --platform macos    # macOS
+./tools/setup/install-dependencies-windows.ps1                   # Windows (PowerShell)
 
 # Install Python development tools
-./tools/setup/install-python.sh
+python tools/setup/install_python.py
 
 # Install Qt SDK
-./tools/setup/install-qt.py
+./tools/setup/install_qt.py
 ```
 
 ## Scripts Reference
 
 | Script | Purpose | Platforms |
 |--------|---------|-----------|
-| **install-dependencies-debian.sh** | System packages (cmake, ninja, git, etc.) | Debian/Ubuntu |
-| **install-dependencies-macos.sh** | Homebrew packages (xcode, cmake, ninja) | macOS |
+| **install_dependencies.py** | System packages (cmake, ninja, git, GStreamer, etc.) | Debian/Ubuntu, macOS |
 | **install-dependencies-windows.ps1** | Windows system dependencies (Visual Studio, CMake) | Windows |
-| **install-python.sh** | Python venv + pip dependencies for development | All |
-| **install-qt.py** | Qt SDK via aqtinstall (auto-detects platform) | All |
-| **read-config.sh** | Read build configuration (bash) | Linux/macOS |
-| **read-config.py** | Read build configuration (Python) | All |
+| **install_python.py** | Python venv + pip dependencies for development | All |
+| **install_qt.py** | Qt SDK via aqtinstall (auto-detects platform) | All |
+| **read_config.py** | Read build configuration (Python) | All |
 | **read-config.ps1** | Read build configuration (PowerShell) | Windows |
 | **aqt-settings.ini** | Configuration for aqtinstall (mirrors, paths) | All |
 
@@ -42,11 +43,20 @@ This directory contains scripts to install system dependencies, Qt SDK, Python t
 Install system packages required for building QGroundControl:
 
 ```bash
-# Debian/Ubuntu
-./tools/setup/install-dependencies-debian.sh
+# Auto-detect platform (Debian/Ubuntu or macOS)
+python3 tools/setup/install_dependencies.py
 
-# macOS
-./tools/setup/install-dependencies-macos.sh
+# Debian/Ubuntu explicitly
+sudo python3 tools/setup/install_dependencies.py --platform debian
+
+# macOS explicitly
+python3 tools/setup/install_dependencies.py --platform macos
+
+# List all packages by category
+python3 tools/setup/install_dependencies.py --list
+
+# Install only Qt dependencies
+python3 tools/setup/install_dependencies.py --category qt
 
 # Windows (PowerShell, admin required)
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
@@ -59,19 +69,19 @@ Install Python development tools and create virtual environment:
 
 ```bash
 # Install CI tools (pre-commit, meson, ninja)
-./tools/setup/install-python.sh
+python tools/setup/install_python.py
 
 # Install Qt installation tools
-./tools/setup/install-python.sh qt
+python tools/setup/install_python.py qt
 
 # Install code coverage tools
-./tools/setup/install-python.sh coverage
+python tools/setup/install_python.py coverage
 
 # Install all development dependencies
-./tools/setup/install-python.sh all
+python tools/setup/install_python.py all
 
 # Multiple groups can be combined
-./tools/setup/install-python.sh ci,coverage
+python tools/setup/install_python.py ci,coverage
 ```
 
 **Tip**: Install `uv` for 10-100x faster package installation:
@@ -87,25 +97,25 @@ Install Qt SDK via aqtinstall (unified cross-platform approach):
 
 ```bash
 # Auto-detect platform, use defaults from .github/build-config.json
-./tools/setup/install-qt.py
+./tools/setup/install_qt.py
 
 # Install specific Qt version
-./tools/setup/install-qt.py --version 6.10.1
+./tools/setup/install_qt.py --version 6.10.1
 
 # Install for Android
-./tools/setup/install-qt.py --target android --arch android_arm64_v8a
+./tools/setup/install_qt.py --target android --arch android_arm64_v8a
 
 # Install for iOS (macOS only)
-./tools/setup/install-qt.py --target ios
+./tools/setup/install_qt.py --target ios
 
 # Install additional Qt tools (e.g., installer framework)
-./tools/setup/install-qt.py --tools "tools_ifw"
+./tools/setup/install_qt.py --tools "tools_ifw"
 
 # Export environment variables as bash
-./tools/setup/install-qt.py --export bash
+./tools/setup/install_qt.py --export bash
 
 # Export environment variables as PowerShell
-./tools/setup/install-qt.py --export powershell
+./tools/setup/install_qt.py --export powershell
 ```
 
 **Configuration**: Qt version, path, modules, and architecture are read from `.github/build-config.json`. Defaults can be overridden via environment variables:
@@ -114,19 +124,19 @@ Install Qt SDK via aqtinstall (unified cross-platform approach):
 export QT_VERSION=6.10.1
 export QT_TARGET=android
 export QT_ARCH=android_arm64_v8a
-./tools/setup/install-qt.py
+./tools/setup/install_qt.py
 ```
 
 ### Cross-Platform Support
 
-For platform-specific builds (iOS, Android), use install-qt.py with appropriate flags:
+For platform-specific builds (iOS, Android), use install_qt.py with appropriate flags:
 
 ```bash
 # iOS (requires macOS + Xcode)
-./tools/setup/install-qt.py --target ios
+./tools/setup/install_qt.py --target ios
 
 # Android (requires Android NDK)
-./tools/setup/install-qt.py --target android --arch android_arm64_v8a
+./tools/setup/install_qt.py --target android --arch android_arm64_v8a
 ```
 
 ## GStreamer Plugins
@@ -159,19 +169,11 @@ The primary configuration file (`.github/build-config.json`) defines:
 - Architecture settings
 - Tool paths
 
-Python scripts read this via `read-config.py`:
+Python scripts read this via `read_config.py`:
 
 ```bash
-./tools/setup/read-config.py --key qt.version
-./tools/setup/read-config.py --key cmake.version
-```
-
-Bash scripts use `read-config.sh`:
-
-```bash
-source ./tools/setup/read-config.sh
-echo "$QT_VERSION"
-echo "$CMAKE_VERSION"
+./tools/setup/read_config.py --key qt.version
+./tools/setup/read_config.py --key cmake.version
 ```
 
 PowerShell scripts use `read-config.ps1`:
@@ -190,18 +192,18 @@ These scripts are used in GitHub Actions workflows (`.github/workflows/`):
 
 ### Example Workflow Usage
 
-```bash
+```yaml
 # In GitHub Actions
-- name: Install dependencies
-  run: ./tools/setup/install-dependencies-${{ runner.os }}.sh
+- name: Install dependencies (Linux/macOS)
+  run: python3 tools/setup/install_dependencies.py
 
 - name: Install Qt
-  run: ./tools/setup/install-qt.py --version 6.10.1
+  run: ./tools/setup/install_qt.py --version 6.10.1
 
 - name: Configure build
   run: |
-    source ./tools/setup/read-config.sh
-    cmake -B build -DCMAKE_PREFIX_PATH="$QT_PATH" ...
+    QT_VERSION=$(python3 ./tools/setup/read_config.py --key qt.version)
+    cmake -B build -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" ...
 ```
 
 ## Troubleshooting
@@ -218,7 +220,7 @@ These scripts are used in GitHub Actions workflows (`.github/workflows/`):
 ```bash
 # Remove and recreate venv
 rm -rf .venv
-./tools/setup/install-python.sh all
+python tools/setup/install_python.py all
 source .venv/bin/activate
 ```
 
@@ -246,11 +248,11 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 
 | Tool | Installed By | Used For |
 |------|--------------|----------|
-| **CMake** ≥3.21 | `install-dependencies-*.sh` | Build system |
-| **Ninja** ≥1.11 | `install-dependencies-*.sh` | Build backend |
-| **Qt 6.x** | `install-qt.py` | GUI framework |
-| **Python** ≥3.9 | System or `install-python.sh` | Dev tools |
-| **Git** | `install-dependencies-*.sh` | Version control |
+| **CMake** ≥3.21 | `install_dependencies.py` | Build system |
+| **Ninja** ≥1.11 | `install_dependencies.py` | Build backend |
+| **Qt 6.x** | `install_qt.py` | GUI framework |
+| **Python** ≥3.9 | System or `install_python.py` | Dev tools |
+| **Git** | `install_dependencies.py` | Version control |
 
 ## See Also
 

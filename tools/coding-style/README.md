@@ -10,4 +10,4 @@ Example files demonstrating QGroundControl coding conventions.
 
 **Full guide:** [CODING_STYLE.md](../../CODING_STYLE.md)
 
-**Auto-formatting:** `clang-format -i <file>` or `./tools/pre-commit.sh` (uses [.clang-format](../../.clang-format))
+**Auto-formatting:** `clang-format -i <file>` or `python3 ./tools/pre_commit.py` (uses [.clang-format](../../.clang-format))

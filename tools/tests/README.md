@@ -199,8 +199,8 @@ Located in `tools/tests/fixtures/`:
 Install pytest and dependencies:
 
 ```bash
-# Via install-python.sh
-./tools/setup/install-python.sh test
+# Via install_python.py
+python tools/setup/install_python.py test
 
 # Or manually
 pip install pytest
