@@ -26,7 +26,6 @@ Rectangle {
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
-    property bool   _showCameraSection:         !_missionVehicle.apmFirmware
     property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
 
 
@@ -164,14 +163,13 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             text:           qsTr("Camera")
-            visible:        _showCameraSection
         }
 
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            _showCameraSection && cameraSection.checked
+            visible:            cameraSection.checked
 
             Item { width: 1; height: _spacer }
 
