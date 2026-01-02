@@ -32,92 +32,12 @@ from typing import Any, Optional
 from urllib.error import URLError
 from urllib.request import urlopen
 
-
-# =============================================================================
-# Color Output
-# =============================================================================
-
-
-@dataclass
-class Colors:
-    """Terminal colors with NO_COLOR support."""
-
-    red: str = ""
-    green: str = ""
-    yellow: str = ""
-    blue: str = ""
-    bold: str = ""
-    reset: str = ""
-
-    @classmethod
-    def create(cls) -> "Colors":
-        """Create Colors instance respecting NO_COLOR and terminal detection."""
-        if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
-            return cls()
-        return cls(
-            red="\033[0;31m",
-            green="\033[0;32m",
-            yellow="\033[1;33m",
-            blue="\033[0;34m",
-            bold="\033[1m",
-            reset="\033[0m",
-        )
-
-
-colors = Colors.create()
-
-# Global quiet mode flag (set when --json or --github-output is used)
-_quiet_mode = False
-
-
-def set_quiet_mode(quiet: bool) -> None:
-    """Enable or disable quiet mode (suppresses verbose output)."""
-    global _quiet_mode
-    _quiet_mode = quiet
-
-
-def log_info(msg: str) -> None:
-    """Print info message."""
-    if not _quiet_mode:
-        print(f"{colors.blue}[INFO]{colors.reset} {msg}")
-
-
-def log_ok(msg: str) -> None:
-    """Print success message."""
-    if not _quiet_mode:
-        print(f"{colors.green}[OK]{colors.reset} {msg}")
-
-
-def log_warn(msg: str) -> None:
-    """Print warning message."""
-    if not _quiet_mode:
-        print(f"{colors.yellow}[WARN]{colors.reset} {msg}")
-
-
-def log_error(msg: str) -> None:
-    """Print error message (always shown)."""
-    print(f"{colors.red}[ERROR]{colors.reset} {msg}", file=sys.stderr)
-
-
-def log_verbose(msg: str) -> None:
-    """Print message only in verbose mode."""
-    if not _quiet_mode:
-        print(msg)
+from common import find_repo_root, Logger, log_info, log_ok, log_warn, log_error, log_verbose
 
 
 # =============================================================================
 # Repository and Config
 # =============================================================================
-
-
-def find_repo_root() -> Path:
-    """Find repository root by searching for .git directory."""
-    current = Path(__file__).resolve().parent
-    while current != current.parent:
-        if (current / ".git").exists():
-            return current
-        current = current.parent
-    raise FileNotFoundError("Could not find repository root (.git directory)")
 
 
 def load_config(repo_root: Path) -> dict[str, Any]:
@@ -283,7 +203,7 @@ def check_submodules(repo_root: Path, update: bool = False) -> list[SubmoduleSta
             log_warn(f"{path}: {behind_count} commits behind upstream")
             outdated += 1
         else:
-            log_verbose(f"  {colors.green}+{colors.reset} {path} (up to date)")
+            log_verbose(f"  + {path} (up to date)")
 
     if outdated == 0:
         log_ok("All submodules up to date")
@@ -494,9 +414,9 @@ def check_build_tools() -> list[ToolStatus]:
         results.append(ToolStatus(name=tool, installed=installed, version=version))
 
         if installed:
-            log_verbose(f"  {colors.green}+{colors.reset} {tool}: {version}")
+            log_verbose(f"  + {tool}: {version}")
         else:
-            log_verbose(f"  {colors.yellow}-{colors.reset} {tool}: not installed")
+            log_verbose(f"  - {tool}: not installed")
 
     return results
 
@@ -572,10 +492,6 @@ def main() -> int:
     )
 
     args = parser.parse_args()
-
-    # Enable quiet mode for structured output
-    if args.json or args.github_output:
-        set_quiet_mode(True)
 
     # Determine what to check
     check_all = not (args.submodules or args.qt or args.gstreamer or args.tools)

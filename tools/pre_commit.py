@@ -27,6 +27,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from common import find_repo_root, log_info, log_ok, log_warn, log_error
+
 
 @dataclass
 class PreCommitResult:
@@ -38,53 +40,6 @@ class PreCommitResult:
     output: str = ""
     exit_code: int = 0
     modified_files: list[str] = field(default_factory=list)
-
-
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    def __init__(self, enabled: bool = True) -> None:
-        if enabled and sys.stdout.isatty() and not os.environ.get("NO_COLOR"):
-            self.red = "\033[0;31m"
-            self.green = "\033[0;32m"
-            self.yellow = "\033[1;33m"
-            self.blue = "\033[0;34m"
-            self.nc = "\033[0m"
-        else:
-            self.red = self.green = self.yellow = self.blue = self.nc = ""
-
-
-COLORS = Colors()
-
-
-def log_info(message: str) -> None:
-    """Print an info message."""
-    print(f"{COLORS.blue}[INFO]{COLORS.nc} {message}")
-
-
-def log_ok(message: str) -> None:
-    """Print a success message."""
-    print(f"{COLORS.green}[OK]{COLORS.nc} {message}")
-
-
-def log_warn(message: str) -> None:
-    """Print a warning message."""
-    print(f"{COLORS.yellow}[WARN]{COLORS.nc} {message}")
-
-
-def log_error(message: str) -> None:
-    """Print an error message to stderr."""
-    print(f"{COLORS.red}[ERROR]{COLORS.nc} {message}", file=sys.stderr)
-
-
-def find_repo_root() -> Path:
-    """Find the repository root directory."""
-    current = Path(__file__).resolve().parent
-    while current != current.parent:
-        if (current / ".git").exists():
-            return current
-        current = current.parent
-    return Path(__file__).resolve().parent.parent
 
 
 def check_pre_commit() -> bool:

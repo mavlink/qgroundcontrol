@@ -22,7 +22,8 @@ import subprocess
 import sys
 import webbrowser
 from pathlib import Path
-from typing import ClassVar
+
+from common import find_repo_root, Logger, log_info, log_ok, log_warn, log_error
 
 DOXYFILE_TEMPLATE = """\
 # Doxyfile for QGroundControl
@@ -104,48 +105,6 @@ SHOW_NAMESPACES        = YES
 """
 
 
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    YELLOW = "\033[1;33m"
-    BLUE = "\033[0;34m"
-    NC = "\033[0m"
-
-    @classmethod
-    def disable(cls) -> None:
-        cls.RED = ""
-        cls.GREEN = ""
-        cls.YELLOW = ""
-        cls.BLUE = ""
-        cls.NC = ""
-
-
-class Logger:
-    """Simple logger with colored output."""
-
-    quiet: ClassVar[bool] = False
-
-    @classmethod
-    def info(cls, message: str) -> None:
-        if not cls.quiet:
-            print(f"{Colors.BLUE}[INFO]{Colors.NC} {message}")
-
-    @classmethod
-    def ok(cls, message: str) -> None:
-        if not cls.quiet:
-            print(f"{Colors.GREEN}[OK]{Colors.NC} {message}")
-
-    @classmethod
-    def warn(cls, message: str) -> None:
-        print(f"{Colors.YELLOW}[WARN]{Colors.NC} {message}")
-
-    @classmethod
-    def error(cls, message: str) -> None:
-        print(f"{Colors.RED}[ERROR]{Colors.NC} {message}", file=sys.stderr)
-
-
 class DoxygenGenerator:
     """Generate Doxygen documentation for QGroundControl."""
 
@@ -167,18 +126,18 @@ class DoxygenGenerator:
     def check_dependencies(self) -> bool:
         """Check required dependencies, return True if all present."""
         if not shutil.which("doxygen"):
-            Logger.error("doxygen not found. Install with: sudo apt install doxygen")
+            log_error("doxygen not found. Install with: sudo apt install doxygen")
             return False
 
         if not shutil.which("dot"):
-            Logger.warn("graphviz not found. Diagrams will be disabled.")
-            Logger.info("Install with: sudo apt install graphviz")
+            log_warn("graphviz not found. Diagrams will be disabled.")
+            log_info("Install with: sudo apt install graphviz")
             self._has_graphviz = False
         else:
             self._has_graphviz = True
 
         if self.generate_pdf and not shutil.which("pdflatex"):
-            Logger.error(
+            log_error(
                 "pdflatex not found. Install with: sudo apt install texlive-latex-base"
             )
             return False
@@ -187,7 +146,7 @@ class DoxygenGenerator:
 
     def generate_doxyfile(self) -> Path:
         """Generate Doxyfile from template, return path to generated file."""
-        Logger.info("Generating Doxyfile...")
+        log_info("Generating Doxyfile...")
 
         relative_output = self.output_dir.relative_to(self.repo_root)
 
@@ -199,12 +158,12 @@ class DoxygenGenerator:
         )
 
         self.doxyfile.write_text(content)
-        Logger.ok("Doxyfile generated")
+        log_ok("Doxyfile generated")
         return self.doxyfile
 
     def run_doxygen(self) -> bool:
         """Run doxygen to generate documentation, return True on success."""
-        Logger.info("Generating documentation...")
+        log_info("Generating documentation...")
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -219,10 +178,10 @@ class DoxygenGenerator:
                 capture_output=self.quiet,
             )
             index_path = self.output_dir / "html" / "index.html"
-            Logger.ok(f"Documentation generated: {index_path}")
+            log_ok(f"Documentation generated: {index_path}")
             return result.returncode == 0
         except subprocess.CalledProcessError as e:
-            Logger.error(f"Doxygen failed with exit code {e.returncode}")
+            log_error(f"Doxygen failed with exit code {e.returncode}")
             return False
 
     def generate_pdf(self) -> bool:
@@ -230,11 +189,11 @@ class DoxygenGenerator:
         if not self.generate_pdf:
             return True
 
-        Logger.info("Generating PDF...")
+        log_info("Generating PDF...")
         latex_dir = self.output_dir / "latex"
 
         if not latex_dir.exists():
-            Logger.error("LaTeX output not found. Run doxygen with --pdf first.")
+            log_error("LaTeX output not found. Run doxygen with --pdf first.")
             return False
 
         try:
@@ -245,10 +204,10 @@ class DoxygenGenerator:
                 capture_output=self.quiet,
             )
             pdf_path = latex_dir / "refman.pdf"
-            Logger.ok(f"PDF generated: {pdf_path}")
+            log_ok(f"PDF generated: {pdf_path}")
             return True
         except subprocess.CalledProcessError as e:
-            Logger.error(f"PDF generation failed with exit code {e.returncode}")
+            log_error(f"PDF generation failed with exit code {e.returncode}")
             return False
 
     def open_docs(self) -> None:
@@ -256,15 +215,15 @@ class DoxygenGenerator:
         index_path = self.output_dir / "html" / "index.html"
 
         if not index_path.exists():
-            Logger.error("Documentation not found. Generate first.")
+            log_error("Documentation not found. Generate first.")
             sys.exit(1)
 
-        Logger.info("Opening documentation...")
+        log_info("Opening documentation...")
         webbrowser.open(index_path.as_uri())
 
     def clean(self) -> None:
         """Remove generated documentation and Doxyfile."""
-        Logger.info("Cleaning generated documentation...")
+        log_info("Cleaning generated documentation...")
 
         if self.output_dir.exists():
             shutil.rmtree(self.output_dir)
@@ -272,17 +231,7 @@ class DoxygenGenerator:
         if self.doxyfile.exists():
             self.doxyfile.unlink()
 
-        Logger.ok("Documentation cleaned")
-
-
-def find_repo_root(start: Path | None = None) -> Path:
-    """Find repository root by looking for .git directory."""
-    current = (start or Path.cwd()).resolve()
-    while current != current.parent:
-        if (current / ".git").exists():
-            return current
-        current = current.parent
-    raise RuntimeError("Not in a git repository")
+        log_ok("Documentation cleaned")
 
 
 def main() -> int:
@@ -336,16 +285,10 @@ Examples:
 
     args = parser.parse_args()
 
-    if args.no_color or not sys.stdout.isatty():
-        Colors.disable()
-
-    if args.quiet:
-        Logger.quiet = True
-
     try:
         repo_root = find_repo_root(Path(__file__).parent)
     except RuntimeError as e:
-        Logger.error(str(e))
+        log_error(str(e))
         return 1
 
     output_dir = args.output or (repo_root / "docs" / "api")

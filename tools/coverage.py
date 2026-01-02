@@ -28,6 +28,8 @@ import webbrowser
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from common import Logger
+
 
 @dataclass
 class CoverageResult:
@@ -39,45 +41,6 @@ class CoverageResult:
     xml_path: Path | None = None
     success: bool = True
     error_message: str = ""
-
-
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    def __init__(self, enabled: bool = True) -> None:
-        if enabled and sys.stdout.isatty():
-            self.red = "\033[0;31m"
-            self.green = "\033[0;32m"
-            self.yellow = "\033[1;33m"
-            self.blue = "\033[0;34m"
-            self.bold = "\033[1m"
-            self.reset = "\033[0m"
-        else:
-            self.red = ""
-            self.green = ""
-            self.yellow = ""
-            self.blue = ""
-            self.bold = ""
-            self.reset = ""
-
-
-class Logger:
-    """Logging utilities with color support."""
-
-    def __init__(self, colors: Colors | None = None) -> None:
-        self.colors = colors or Colors()
-
-    def info(self, message: str) -> None:
-        print(f"{self.colors.blue}[INFO]{self.colors.reset} {message}")
-
-    def ok(self, message: str) -> None:
-        print(f"{self.colors.green}[OK]{self.colors.reset} {message}")
-
-    def warn(self, message: str) -> None:
-        print(f"{self.colors.yellow}[WARN]{self.colors.reset} {message}")
-
-    def error(self, message: str) -> None:
-        print(f"{self.colors.red}[ERROR]{self.colors.reset} {message}", file=sys.stderr)
 
 
 @dataclass
@@ -393,8 +356,7 @@ def main() -> int:
     """Main entry point."""
     args = parse_args()
 
-    colors = Colors(enabled=not args.no_color)
-    logger = Logger(colors)
+    logger = Logger(color=not args.no_color)
 
     output_dir = args.output or args.build_dir
 

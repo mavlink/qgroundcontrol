@@ -25,6 +25,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
+from common import find_repo_root, Logger
+
 
 @dataclass
 class TestResult:
@@ -38,30 +40,6 @@ class TestResult:
     xml_path: Path | None = None
     log_path: Path | None = None
     exit_code: int = 0
-
-
-class Logger:
-    """Colored logging for terminal output."""
-
-    def __init__(self, no_color: bool = False) -> None:
-        self.use_color = sys.stdout.isatty() and not no_color and not os.environ.get("NO_COLOR")
-
-    def _color(self, code: str, text: str) -> str:
-        if not self.use_color:
-            return text
-        return f"\033[{code}m{text}\033[0m"
-
-    def info(self, msg: str) -> None:
-        print(f"{self._color('0;34', '[INFO]')} {msg}")
-
-    def ok(self, msg: str) -> None:
-        print(f"{self._color('0;32', '[OK]')} {msg}")
-
-    def warn(self, msg: str) -> None:
-        print(f"{self._color('1;33', '[WARN]')} {msg}")
-
-    def error(self, msg: str) -> None:
-        print(f"{self._color('0;31', '[ERROR]')} {msg}", file=sys.stderr)
 
 
 class QtTestRunner:
@@ -83,17 +61,8 @@ class QtTestRunner:
         self.verbose = verbose
         self.headless = headless
         self.verify_only = verify_only
-        self.repo_root = self._find_repo_root()
+        self.repo_root = find_repo_root(Path(__file__).parent)
         self.log = Logger()
-
-    def _find_repo_root(self) -> Path:
-        """Find the repository root directory."""
-        current = Path(__file__).resolve().parent
-        while current != current.parent:
-            if (current / ".git").is_dir():
-                return current
-            current = current.parent
-        return Path(__file__).resolve().parent.parent
 
     def detect_platform(self) -> str:
         """Detect the current platform."""

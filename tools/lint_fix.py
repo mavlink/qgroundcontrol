@@ -26,52 +26,15 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
+
+from common import find_repo_root, Logger, log_info, log_ok, log_warn, log_error
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-class Color(Enum):
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    YELLOW = "\033[1;33m"
-    BLUE = "\033[0;34m"
-    BOLD = "\033[1m"
-    NC = "\033[0m"
-
-
-def _use_color() -> bool:
-    return sys.stdout.isatty() and not os.environ.get("NO_COLOR")
-
-
-def _colorize(text: str, color: Color) -> str:
-    if _use_color():
-        return f"{color.value}{text}{Color.NC.value}"
-    return text
-
-
-def log_info(msg: str) -> None:
-    print(f"{_colorize('[INFO]', Color.BLUE)} {msg}")
-
-
-def log_ok(msg: str) -> None:
-    print(f"{_colorize('[OK]', Color.GREEN)} {msg}")
-
-
-def log_warn(msg: str) -> None:
-    print(f"{_colorize('[WARN]', Color.YELLOW)} {msg}")
-
-
-def log_error(msg: str) -> None:
-    print(f"{_colorize('[ERROR]', Color.RED)} {msg}", file=sys.stderr)
-
-
-def log_debug(msg: str) -> None:
-    if os.environ.get("DEBUG"):
-        print(f"{_colorize('[DEBUG]', Color.BLUE)} {msg}", file=sys.stderr)
 
 
 @dataclass
@@ -132,7 +95,8 @@ class LintFixer:
         cwd: Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
         """Run a command and return the result."""
-        log_debug(f"Running: {' '.join(cmd)}")
+        if os.environ.get("DEBUG"):
+            log_info(f"Running: {' '.join(cmd)}")
         return subprocess.run(
             cmd,
             cwd=cwd or self.repo_root,
@@ -198,7 +162,8 @@ class LintFixer:
         result = FixResult(formatter="ruff-format")
 
         if not shutil.which("ruff"):
-            log_debug("ruff not found (skipping)")
+            if os.environ.get("DEBUG"):
+                log_info("ruff not found (skipping)")
             result.skipped = True
             return result
 
@@ -225,7 +190,8 @@ class LintFixer:
         result = FixResult(formatter="clang-format")
 
         if not shutil.which("clang-format"):
-            log_debug("clang-format not found (skipping)")
+            if os.environ.get("DEBUG"):
+                log_info("clang-format not found (skipping)")
             result.skipped = True
             return result
 
@@ -251,7 +217,8 @@ class LintFixer:
         result = FixResult(formatter="cmake-format")
 
         if not shutil.which("cmake-format"):
-            log_debug("cmake-format not found (skipping)")
+            if os.environ.get("DEBUG"):
+                log_info("cmake-format not found (skipping)")
             result.skipped = True
             return result
 
@@ -387,16 +354,6 @@ class LintFixer:
         print("  ./tools/lint_fix.py --stage")
 
 
-def find_repo_root(start: Path) -> Path | None:
-    """Find the repository root (directory containing .git)."""
-    current = start.resolve()
-    while current != current.parent:
-        if (current / ".git").is_dir():
-            return current
-        current = current.parent
-    return None
-
-
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -462,11 +419,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Main entry point."""
     args = parse_args(argv)
 
-    script_dir = Path(__file__).resolve().parent
-    repo_root = find_repo_root(script_dir)
-
-    if repo_root is None:
-        log_error("Could not find repository root")
+    try:
+        repo_root = find_repo_root()
+    except RuntimeError as e:
+        log_error(str(e))
         return 1
 
     os.chdir(repo_root)

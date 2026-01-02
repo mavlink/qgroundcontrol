@@ -29,6 +29,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
+from common import find_repo_root, Logger, log_info, log_ok, log_warn, log_error
+
 
 @dataclass
 class AnalysisResult:
@@ -42,43 +44,6 @@ class AnalysisResult:
     files_with_issues: list[str] = field(default_factory=list)
 
 
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    def __init__(self, enabled: bool = True) -> None:
-        if enabled and sys.stdout.isatty():
-            self.red = "\033[0;31m"
-            self.green = "\033[0;32m"
-            self.yellow = "\033[1;33m"
-            self.blue = "\033[0;34m"
-            self.bold = "\033[1m"
-            self.nc = "\033[0m"
-        else:
-            self.red = ""
-            self.green = ""
-            self.yellow = ""
-            self.blue = ""
-            self.bold = ""
-            self.nc = ""
-
-
-class Logger:
-    """Logging utilities with colored output."""
-
-    def __init__(self, colors: Colors) -> None:
-        self.colors = colors
-
-    def info(self, msg: str) -> None:
-        print(f"{self.colors.blue}[INFO]{self.colors.nc} {msg}")
-
-    def ok(self, msg: str) -> None:
-        print(f"{self.colors.green}[OK]{self.colors.nc} {msg}")
-
-    def warn(self, msg: str) -> None:
-        print(f"{self.colors.yellow}[WARN]{self.colors.nc} {msg}")
-
-    def error(self, msg: str) -> None:
-        print(f"{self.colors.red}[ERROR]{self.colors.nc} {msg}", file=sys.stderr)
 
 
 class FileCollector:
@@ -87,9 +52,8 @@ class FileCollector:
     CPP_EXTENSIONS: ClassVar[tuple[str, ...]] = (".cc", ".cpp", ".h", ".hpp")
     QML_EXTENSIONS: ClassVar[tuple[str, ...]] = (".qml",)
 
-    def __init__(self, repo_root: Path, logger: Logger) -> None:
+    def __init__(self, repo_root: Path) -> None:
         self.repo_root = repo_root
-        self.logger = logger
 
     def can_compare_master(self) -> bool:
         """Check if we can compare against master branch."""
@@ -134,7 +98,7 @@ class FileCollector:
         if self.can_compare_master():
             return self._get_changed_files(extensions)
 
-        self.logger.warn("master branch not available, analyzing all files")
+        log_warn("master branch not available, analyzing all files")
         return self._find_files(self.repo_root / "src", extensions)
 
     def _find_files(self, search_path: Path, extensions: tuple[str, ...]) -> list[Path]:
@@ -181,14 +145,10 @@ class AnalyzerBase(ABC):
         self,
         repo_root: Path,
         build_dir: Path,
-        logger: Logger,
-        colors: Colors,
     ) -> None:
         self.repo_root = repo_root
         self.build_dir = build_dir
         self.compile_commands = build_dir / "compile_commands.json"
-        self.logger = logger
-        self.colors = colors
 
     @abstractmethod
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
@@ -201,17 +161,17 @@ class AnalyzerBase(ABC):
     def require_tool(self, tool_name: str) -> bool:
         """Require a tool, logging error if not found."""
         if not self.check_tool(tool_name):
-            self.logger.error(f"{tool_name} not found. {self.install_hint}")
+            log_error(f"{tool_name} not found. {self.install_hint}")
             return False
         return True
 
     def require_compile_commands(self) -> bool:
         """Require compile_commands.json, logging error if not found."""
         if not self.compile_commands.exists():
-            self.logger.error(
+            log_error(
                 f"compile_commands.json not found at {self.compile_commands}"
             )
-            self.logger.info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+            log_info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
             return False
         return True
 
@@ -239,13 +199,13 @@ class ClangFormatAnalyzer(AnalyzerBase):
             text=True,
         )
         version_match = version_result.stdout.split()[2] if version_result.stdout else "unknown"
-        self.logger.info(f"Using clang-format version {version_match}")
+        log_info(f"Using clang-format version {version_match}")
 
         if not files:
-            self.logger.info("No files to check")
+            log_info("No files to check")
             return AnalysisResult(tool=self.name, passed=True)
 
-        self.logger.info(f"{'Formatting' if fix else 'Checking'} {len(files)} files...")
+        log_info(f"{'Formatting' if fix else 'Checking'} {len(files)} files...")
 
         if fix:
             return self._run_fix(files)
@@ -261,7 +221,7 @@ class ClangFormatAnalyzer(AnalyzerBase):
             if result.returncode == 0:
                 formatted += 1
 
-        self.logger.ok(f"Formatted {formatted} files")
+        log_ok(f"Formatted {formatted} files")
 
         diff_result = subprocess.run(
             ["git", "-C", str(self.repo_root), "diff", "--quiet"],
@@ -269,9 +229,9 @@ class ClangFormatAnalyzer(AnalyzerBase):
         )
 
         if diff_result.returncode == 0:
-            self.logger.info("No formatting changes needed")
+            log_info("No formatting changes needed")
         else:
-            self.logger.info("Files modified:")
+            log_info("Files modified:")
             modified = subprocess.run(
                 ["git", "-C", str(self.repo_root), "diff", "--name-only"],
                 capture_output=True,
@@ -297,11 +257,11 @@ class ClangFormatAnalyzer(AnalyzerBase):
                 needs_format.append(self.relative_path(file))
 
         if needs_format:
-            self.logger.error("The following files need formatting:")
+            log_error("The following files need formatting:")
             for f in needs_format:
                 print(f"  {f}")
             print()
-            self.logger.info("Run: ./tools/analyze.py --tool clang-format --fix")
+            log_info("Run: ./tools/analyze.py --tool clang-format --fix")
             return AnalysisResult(
                 tool=self.name,
                 passed=False,
@@ -310,7 +270,7 @@ class ClangFormatAnalyzer(AnalyzerBase):
                 files_with_issues=needs_format,
             )
 
-        self.logger.ok("All files properly formatted")
+        log_ok("All files properly formatted")
         return AnalysisResult(
             tool=self.name,
             passed=True,
@@ -336,10 +296,10 @@ class ClangTidyAnalyzer(AnalyzerBase):
             return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
 
         if not files:
-            self.logger.info("No files to analyze")
+            log_info("No files to analyze")
             return AnalysisResult(tool=self.name, passed=True)
 
-        self.logger.info(f"Running clang-tidy on {len(files)} files...")
+        log_info(f"Running clang-tidy on {len(files)} files...")
 
         issues_found = False
         files_with_issues: list[str] = []
@@ -354,9 +314,9 @@ class ClangTidyAnalyzer(AnalyzerBase):
             )
 
             if result.returncode == 0:
-                print(f"{self.colors.green}OK{self.colors.nc}")
+                print("OK")
             else:
-                print(f"{self.colors.red}ISSUES{self.colors.nc}")
+                print("ISSUES")
                 issues_found = True
                 files_with_issues.append(rel_path)
 
@@ -380,10 +340,10 @@ class CppcheckAnalyzer(AnalyzerBase):
             return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
 
         if not files:
-            self.logger.info("No files to analyze")
+            log_info("No files to analyze")
             return AnalysisResult(tool=self.name, passed=True)
 
-        self.logger.info(f"Running cppcheck on {len(files)} files...")
+        log_info(f"Running cppcheck on {len(files)} files...")
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             for file in files:
@@ -430,20 +390,20 @@ class ClazyAnalyzer(AnalyzerBase):
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not self.compile_commands.exists():
-            self.logger.warn("compile_commands.json not found - skipping clazy")
-            self.logger.info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+            log_warn("compile_commands.json not found - skipping clazy")
+            log_info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
             return AnalysisResult(tool=self.name, passed=True, output="Skipped")
 
         if not self.check_tool("clazy-standalone"):
-            self.logger.warn("clazy-standalone not found - skipping")
-            self.logger.info(self.install_hint)
+            log_warn("clazy-standalone not found - skipping")
+            log_info(self.install_hint)
             return AnalysisResult(tool=self.name, passed=True, output="Skipped")
 
         if not files:
-            self.logger.info("No files to analyze")
+            log_info("No files to analyze")
             return AnalysisResult(tool=self.name, passed=True)
 
-        self.logger.info(f"Running clazy on {len(files)} files...")
+        log_info(f"Running clazy on {len(files)} files...")
 
         issues_found = False
         files_with_issues: list[str] = []
@@ -464,14 +424,14 @@ class ClazyAnalyzer(AnalyzerBase):
             )
 
             if result.returncode != 0 and result.stderr.strip():
-                self.logger.warn(f"Issues in {rel_path}:")
+                log_warn(f"Issues in {rel_path}:")
                 print(result.stderr)
                 all_output.append(result.stderr)
                 issues_found = True
                 files_with_issues.append(rel_path)
 
         if issues_found:
-            self.logger.warn("Clazy found Qt-specific issues")
+            log_warn("Clazy found Qt-specific issues")
 
         return AnalysisResult(
             tool=self.name,
@@ -493,15 +453,15 @@ class QmlLintAnalyzer(AnalyzerBase):
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not self.check_tool("qmllint"):
-            self.logger.warn("qmllint not found - skipping")
-            self.logger.info(self.install_hint)
+            log_warn("qmllint not found - skipping")
+            log_info(self.install_hint)
             return AnalysisResult(tool=self.name, passed=True, output="Skipped")
 
         if not files:
-            self.logger.info("No QML files to lint")
+            log_info("No QML files to lint")
             return AnalysisResult(tool=self.name, passed=True)
 
-        self.logger.info(f"Running qmllint on {len(files)} files...")
+        log_info(f"Running qmllint on {len(files)} files...")
 
         issues_found = False
         files_with_issues: list[str] = []
@@ -524,7 +484,7 @@ class QmlLintAnalyzer(AnalyzerBase):
                 files_with_issues.append(self.relative_path(file))
 
         if issues_found:
-            self.logger.warn("QML lint issues found")
+            log_warn("QML lint issues found")
 
         return AnalysisResult(
             tool=self.name,
@@ -556,22 +516,10 @@ def validate_path(path_str: str, repo_root: Path) -> Path:
     return target
 
 
-def find_repo_root() -> Path:
-    """Find the repository root directory."""
-    current = Path(__file__).resolve().parent
-    while current != current.parent:
-        if (current / ".git").is_dir():
-            return current
-        current = current.parent
-    raise RuntimeError("Could not find repository root")
-
-
 def get_analyzer(
     tool: str,
     repo_root: Path,
     build_dir: Path,
-    logger: Logger,
-    colors: Colors,
 ) -> AnalyzerBase:
     """Get the appropriate analyzer for the given tool."""
     analyzers: dict[str, type[AnalyzerBase]] = {
@@ -586,7 +534,7 @@ def get_analyzer(
         available = ", ".join(analyzers.keys())
         raise ValueError(f"Unknown tool: {tool}. Available tools: {available}")
 
-    return analyzers[tool](repo_root, build_dir, logger, colors)
+    return analyzers[tool](repo_root, build_dir)
 
 
 def parse_args() -> argparse.Namespace:
@@ -661,13 +609,12 @@ def main() -> int:
     """Main entry point."""
     args = parse_args()
 
-    colors = Colors(enabled=not args.no_color)
-    logger = Logger(colors)
+    logger = Logger(color=not args.no_color)
 
     try:
         repo_root = find_repo_root()
     except RuntimeError as e:
-        logger.error(str(e))
+        log_error(str(e))
         return 1
 
     build_dir = repo_root / args.build_dir
@@ -677,16 +624,16 @@ def main() -> int:
         try:
             target_path = validate_path(args.path, repo_root)
         except ValueError as e:
-            logger.error(str(e))
+            log_error(str(e))
             return 1
 
     try:
-        analyzer = get_analyzer(args.tool, repo_root, build_dir, logger, colors)
+        analyzer = get_analyzer(args.tool, repo_root, build_dir)
     except ValueError as e:
-        logger.error(str(e))
+        log_error(str(e))
         return 1
 
-    collector = FileCollector(repo_root, logger)
+    collector = FileCollector(repo_root)
 
     if args.tool == "qmllint":
         files = collector.get_qml_files(target_path, args.all)
@@ -696,7 +643,7 @@ def main() -> int:
     result = analyzer.run(files, fix=args.fix)
 
     if result.passed:
-        logger.ok("Analysis complete")
+        log_ok("Analysis complete")
         return 0
     else:
         return 1
