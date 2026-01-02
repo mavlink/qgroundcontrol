@@ -6,9 +6,6 @@
 
 class AutoPilotPlugin;
 
-/// @file PX4AirframeLoader.h
-///     @author Lorenz Meier <lm@qgroundcontrol.org>
-
 Q_DECLARE_LOGGING_CATEGORY(PX4AirframeLoaderLog)
 
 class FactMetaData;

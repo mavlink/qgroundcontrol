@@ -1,6 +1,3 @@
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "GeoFenceController.h"
 #include "Vehicle.h"
 #include "ParameterManager.h"

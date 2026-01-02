@@ -1,6 +1,3 @@
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PX4ParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 

@@ -3,8 +3,6 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class SettingsManager;
 class OsmParser;
 class Viewer3DQmlBackend;

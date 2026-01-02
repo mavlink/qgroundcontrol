@@ -2,10 +2,6 @@
 
 #include "VehicleComponent.h"
 
-/// @file
-///     @brief Battery, propeller and magnetometer settings
-///     @author Gus Grubba <gus@auterion.com>
-
 class PowerComponent : public VehicleComponent
 {
     Q_OBJECT

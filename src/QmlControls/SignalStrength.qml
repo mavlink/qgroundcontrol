@@ -1,9 +1,3 @@
-/**
- * @file
- *   @brief QGC Main Tool Signal Strength
- *   @author Gus Grubba <gus@auterion.com>
- */
-
 import QtQuick
 
 import QGroundControl

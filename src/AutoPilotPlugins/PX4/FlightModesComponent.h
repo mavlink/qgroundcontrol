@@ -2,10 +2,6 @@
 
 #include "VehicleComponent.h"
 
-/// @file
-///     @brief The FlightModes VehicleComponent is used to set the associated Flight Mode switches.
-///     @author Don Gagne <don@thegagnes.com>
-
 class FlightModesComponent : public VehicleComponent
 {
     Q_OBJECT

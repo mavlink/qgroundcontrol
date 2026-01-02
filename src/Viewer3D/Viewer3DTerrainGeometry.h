@@ -8,8 +8,6 @@
 
 class Viewer3DSettings;
 
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {
     Q_OBJECT

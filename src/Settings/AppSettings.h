@@ -1,6 +1,3 @@
-/// @file
-/// @brief Application Settings
-
 #pragma once
 
 #include <QtQmlIntegration/QtQmlIntegration>

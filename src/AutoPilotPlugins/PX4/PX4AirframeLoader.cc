@@ -1,6 +1,3 @@
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PX4AirframeLoader.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
