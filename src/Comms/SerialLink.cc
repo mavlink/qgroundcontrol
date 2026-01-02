@@ -358,16 +358,15 @@ void SerialWorker::_onPortBytesWritten(qint64 bytes) const
 
 void SerialWorker::_onPortErrorOccurred(QSerialPort::SerialPortError portError)
 {
-    const QString errorString = _port->errorString();
-    qCWarning(SerialLinkLog) << "Port error:" << portError << errorString;
-
     switch (portError) {
     case QSerialPort::NoError:
         qCDebug(SerialLinkLog) << "About to open port" << _port->portName();
         return;
     case QSerialPort::ResourceError:
-        // We get this when a usb cable is unplugged
-        // Fallthrough
+        // We get this when a usb cable is unplugged - close port to allow reconnection
+        qCDebug(SerialLinkLog) << "Resource error (likely USB disconnect):" << _port->errorString();
+        _port->close();
+        return;
     case QSerialPort::PermissionError:
         if (_serialConfig->isAutoConnect()) {
             return;
@@ -376,6 +375,9 @@ void SerialWorker::_onPortErrorOccurred(QSerialPort::SerialPortError portError)
     default:
         break;
     }
+
+    const QString errorString = _port->errorString();
+    qCWarning(SerialLinkLog) << "Port error:" << portError << errorString;
 
     if (!_errorEmitted) {
         emit errorOccurred(errorString);
