@@ -27,7 +27,7 @@ Rectangle {
     property var _savePath: QGroundControl.settingsManager.appSettings.missionSavePath
     property var _appSettings: QGroundControl.settingsManager.appSettings
     property bool _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
-    property bool _showCameraSection: (_waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI) && !_controllerVehicle.apmFirmware
+    property bool _showCameraSection: _waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI
     property bool _simpleMissionStart: QGroundControl.corePlugin.options.showSimpleMissionStart
     property bool _showFlightSpeed: !_controllerVehicle.vtol && !_simpleMissionStart && !_controllerVehicle.apmFirmware
     property bool _allowFWVehicleTypeSelection: _noMissionItemsAdded && !globals.activeVehicle
@@ -182,6 +182,8 @@ Rectangle {
 
             CameraSection {
                 id: cameraSection
+                anchors.left: parent.left
+                anchors.right: parent.right
                 visible: _showCameraSection
 
                 Component.onCompleted: checked = !_waypointsOnlyMode && missionItem.cameraSection.settingsSpecified
