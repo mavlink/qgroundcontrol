@@ -8,7 +8,7 @@ The tuning UI also supports manual tuning of all controllers.
 ![Tuning Setup > Autotune](../../../assets/setup/tuning/px4_autotune_hero.png)
 
 :::info
-During [Airframe Setup](../config/airframe.md) you should have selected the frame that most closely matches your vehicle.
+During [Airframe Setup](airframe.md) you should have selected the frame that most closely matches your vehicle.
 This will usually be tuned well enough to fly, and it _may_ also be sufficiently well tuned to run autotuning.
 :::
 
@@ -60,9 +60,9 @@ The test steps are:
 
 2. Takeoff using RC control and prepare for test:
    - **Multicopters:** Takeoff using the remote controller in **Altitude mode**.
-      Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
+     Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
    - **VTOL in Fixed-wing mode:** Once flying at cruise speed, activate **Hold Mode**.
-      This will guide the plane to fly in circle at constant altitude and speed.
+     This will guide the plane to fly in circle at constant altitude and speed.
 
 3. In QGroundControl, open the menu: **Vehicle setup > PID Tuning**
 
@@ -79,9 +79,9 @@ The test steps are:
 
 7. Apply the tuning:
    - **Fixed Wing:** The tuning will be immediately/automatically be applied and tested in flight (by default).
-      PX4 will then run a 4 second test and revert the new tuning if a problem is detected.
+     PX4 will then run a 4 second test and revert the new tuning if a problem is detected.
    - **Multicopters:** Manually land and disarm to apply the new tuning parameters.
-      Takeoff carefully and manually test that the vehicle is stable.
+     Takeoff carefully and manually test that the vehicle is stable.
 
 8. If any strong oscillations occur, land immediately and follow the instructions in [PX4 User Guide > Autotuning > Troubleshooting](http://docs.px4.io/main/en/config/autotune.html#troubleshooting).
 
@@ -107,9 +107,9 @@ In overview:
 
 1. Takeoff using RC control and prepare for test:
    - **Multicopters:** Takeoff using the remote controller in **Altitude mode**.
-      Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
+     Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
    - **Fixed-wing:** Once flying at cruise speed, activate **Hold Mode**.
-      This will guide the plane to fly in circle at constant altitude and speed.
+     This will guide the plane to fly in circle at constant altitude and speed.
 
 2. In QGroundControl, open the menu: **Vehicle setup > PID Tuning**
 

@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2022 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 // Based on https://github.com/ArduPilot/MAVProxy/blob/9bf8b00fbc355650b060e546110877c7898baa81/MAVProxy/modules/lib/mp_util.py#L384
 
 import QtQuick

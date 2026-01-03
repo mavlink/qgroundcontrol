@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "PX4AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
 #include "QGCApplication.h"
@@ -21,10 +11,6 @@
 #include "Vehicle.h"
 #include "Actuators.h"
 #include "ActuatorComponent.h"
-
-/// @file
-///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
-///     @author Don Gagne <don@thegagnes.com>
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)

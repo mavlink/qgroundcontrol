@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #pragma once
 
 #include "AutoPilotPlugin.h"
@@ -26,10 +16,6 @@
 #include "SyslinkComponent.h"
 
 class Vehicle;
-
-/// @file
-///     @brief This is the PX4 specific implementation of the AutoPilot class.
-///     @author Don Gagne <don@thegagnes.com>
 
 class PX4AutoPilotPlugin : public AutoPilotPlugin
 {

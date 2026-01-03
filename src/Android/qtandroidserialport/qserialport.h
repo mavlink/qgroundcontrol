@@ -2,8 +2,7 @@
 // Copyright (C) 2013 Laszlo Papp <lpapp@kde.org>
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#ifndef QSERIALPORT_H
-#define QSERIALPORT_H
+#pragma once
 
 #include <QtCore/qiodevice.h>
 
@@ -207,5 +206,3 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(QSerialPort::Directions)
 Q_DECLARE_OPERATORS_FOR_FLAGS(QSerialPort::PinoutSignals)
 
 QT_END_NAMESPACE
-
-#endif // QSERIALPORT_H

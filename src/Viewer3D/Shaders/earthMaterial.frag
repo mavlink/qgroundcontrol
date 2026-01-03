@@ -1,6 +1,3 @@
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
-
-
 VARYING vec2 uv;
 
 // Ref:https://github.com/minus34/cesium1/blob/master/Cesium/Shaders/Builtin/Functions/saturation.glsl

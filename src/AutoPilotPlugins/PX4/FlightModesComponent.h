@@ -1,20 +1,6 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #pragma once
 
 #include "VehicleComponent.h"
-
-/// @file
-///     @brief The FlightModes VehicleComponent is used to set the associated Flight Mode switches.
-///     @author Don Gagne <don@thegagnes.com>
 
 class FlightModesComponent : public VehicleComponent
 {

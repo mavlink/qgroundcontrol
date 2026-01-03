@@ -36,22 +36,26 @@ To configure a joystick:
 2. Connect the Joystick or Gamepad to a USB port.
 
 3. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Joystick** in the sidebar.
-  The screen below will appear.
+   The screen below will appear.
 
-  ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
+   ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
 
 4. Make sure your joystick is selected in the **Active joystick** dropdown.
 
 5. Go to the **Calibrate** Tab, press the **Start** button and then follow the on-screen instructions to calibrate/move the sticks.
 
-  ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
+   ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
 
-  The joystick is _enabled_ as the last step of the calibration process.
+   The joystick is _enabled_ as the last step of the calibration process.
+
+   ::: warning
+   On some controllers the calibration process does not work because of incorrect channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
+   :::
 
 6. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
 
 7. Select the flight modes/vehicle functions activated by each joystick button.
-  ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
+   ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
 
 ## Advanced Options
 
@@ -146,19 +150,19 @@ To make the controller work wirelessly under Linux the [jstest-gtk](https://jste
 The steps are:
 
 1. 安装 _jst-gtk_：
-  ```
-  Install _jstest-gtk_: `sudo apt install jstest-gtk`
-  ```
+   ```
+   Install _jstest-gtk_: `sudo apt install jstest-gtk`
+   ```
 2. 安装 _ds4drv_:：
-  ```
-  Install _ds4drv_: `sudo pip install ds4drv`
-  ```
+   ```
+   Install _ds4drv_: `sudo pip install ds4drv`
+   ```
 3. Run ds4drv `sudo ds4drv`
-  ```
-  sudo ds4drv
-  ```
+   ```
+   sudo ds4drv
+   ```
 4. Hold **Share** button and then **PS** button until controller LED starts blinking rapidly.
-  The _ds4drv_ should then detect a new device.
+   The _ds4drv_ should then detect a new device.
 5. Last of all, you should check the controller setup by running the _jstest-gtk_ utility.
 
 ### FrSky Taranis XD9 plus
@@ -172,6 +176,23 @@ The Taranis does not allow you to use button options (to be precise, you can set
 The Taranis is an open system that is openly being worked on.
 It is possible that at time of writing there is a firmware or configuration that allows it to work effectively as a joystick.
 :::
+
+### TBS Tango 2
+
+The TBS Tango 2 can also be used as a joystick controlled via QGroundControl. In order to make it work, you need to remap the channels by using the following commands:
+
+```bash
+export SDL_GAMECONTROLLERCONFIG="03002de7d80400001057000011010000,Team-BlackSheep TBS Joystick,a:b0,b:b1,x:b3,y:b4,back:b10,guide:b12,start:b11,leftstick:b13,rightstick:b14,leftshoulder:b6,rightshoulder:b7,leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5,crc:e72d,platform:Linux"
+./QGroundControl-x86_64.AppImage
+```
+
+For another radio, the first command above can be found by using the [jstest software tool](http://github.com/meleu/jstest-sdl) and run:
+
+```bash
+jstest-sdl -l
+```
+
+**Take care of the channels remapping you need to do between a2, a3 and other if needed**
 
 ### Logitech Gamepad F310
 

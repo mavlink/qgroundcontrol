@@ -6,7 +6,7 @@ _비행 모드_ 섹션에서는 RC 송신기의 특정 스위치/스위치 위�
 In order to set up flight modes you must already have
 
 > - 비행 모드를 설정하려면 비행 모드를 설정하기 위해 [무전기를 구성](../setup_view/radio.md)해야 합니다.
-> - - [RC 송신기 설정](../setup_view/FlightModes.md#transmitter-setup)(비행 모드 & 송신기 설정)
+> - [Setup the RC transmitter](flight_modes.md#transmitter-setup) (Flight Modes > Transmitter Setup)> :::
 
 이 섹션에 액세스하려면, 상단 툴바에서 **기어** 아이콘(차량 설정)을 선택한 다음 사이드바에서 **비행 모드**를 선택하세요.
 

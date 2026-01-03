@@ -1,17 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/// @file
-///     @brief PX4 Firmware Upgrade operations which occur on a separate thread.
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PX4FirmwareUpgradeThread.h"
 #include "Bootloader.h"
 #include "FirmwareImage.h"
