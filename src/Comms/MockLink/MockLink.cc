@@ -1296,28 +1296,38 @@ void MockLink::sendUnexpectedCommandAck(MAV_CMD command, MAV_RESULT ackResult)
 
 void MockLink::_respondWithAutopilotVersion()
 {
-    uint32_t flightVersion = 0;
+    union FlightVersion {
+        uint32_t raw;
+
+        struct {
+            uint8_t type;   // bits 0–7
+            uint8_t patch;  // bits 8–15
+            uint8_t minor;  // bits 16–23
+            uint8_t major;  // bits 24–31
+        } parts;
+
+        FlightVersion(uint32_t version = 0) : raw(version) {}
+    };
+    FlightVersion flightVersion;
 
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            flightVersion |= 9 << (8*2);
-        } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
-            flightVersion |= 5 << (8*2);
-        } else if (_vehicleType == MAV_TYPE_GROUND_ROVER ) {
-            flightVersion |= 5 << (8*2);
+        if (_vehicleType == MAV_TYPE_SUBMARINE ) {
+            flightVersion.parts.major = 4;
+            flightVersion.parts.minor = 5;
+            flightVersion.parts.patch = 7;
         } else {
-            flightVersion |= 6 << (8*2);
+            flightVersion.parts.major = 4;
+            flightVersion.parts.minor = 6;
+            flightVersion.parts.patch = 3;
         }
-        flightVersion |= 3 << (8*3);    // Major
-        flightVersion |= 0 << (8*1);    // Patch
-        flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
+        flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
 #endif
-        flightVersion |= 1 << (8*3);
-        flightVersion |= 4 << (8*2);
-        flightVersion |= 1 << (8*1);
-        flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
+        flightVersion.parts.major = 1;
+        flightVersion.parts.minor = 4;
+        flightVersion.parts.patch = 1;
+        flightVersion.parts.type = FIRMWARE_VERSION_TYPE_DEV;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     }
 #endif
@@ -1332,18 +1342,18 @@ void MockLink::_respondWithAutopilotVersion()
         mavlinkChannel(),
         &msg,
         capabilities,
-        flightVersion,                          // flight_sw_version,
-        0,                                      // middleware_sw_version,
-        0,                                      // os_sw_version,
-        0,                                      // board_version,
-        reinterpret_cast<const uint8_t*>(&customVersion),    // flight_custom_version,
-        reinterpret_cast<const uint8_t*>(&customVersion),    // middleware_custom_version,
-        reinterpret_cast<const uint8_t*>(&customVersion),    // os_custom_version,
+        flightVersion.raw,                                  // flight_sw_version,
+        0,                                                  // middleware_sw_version,
+        0,                                                  // os_sw_version,
+        0,                                                  // board_version,
+        reinterpret_cast<const uint8_t*>(&customVersion),   // flight_custom_version,
+        reinterpret_cast<const uint8_t*>(&customVersion),   // middleware_custom_version,
+        reinterpret_cast<const uint8_t*>(&customVersion),   // os_custom_version,
         _boardVendorId,
         _boardProductId,
-        0,                                      // uid
-        0
-    );                                          // uid2
+        0,                                                  // uid
+        0                                                   // uid2
+    );
     respondWithMavlinkMessage(msg);
 }
 
