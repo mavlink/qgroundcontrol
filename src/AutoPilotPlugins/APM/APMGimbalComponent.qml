@@ -6,8 +6,7 @@ import QGroundControl.Controls
 import QGroundControl.AutoPilotPlugins.APM
 
 SetupPage {
-    id:             cameraPage
-    pageComponent:  cameraPageComponent
+    pageComponent: mainComponent
 
     property real _verticalSpacing: ScreenTools.defaultFontPixelHeight / 2
     property real _horizontalSpacing: ScreenTools.defaultFontPixelWidth * 2
@@ -15,10 +14,9 @@ SetupPage {
     APMGimbalParams { id: gimbalParams; instance: 1 }
 
     Component {
-        id: cameraPageComponent
+        id: mainComponent
 
         Loader {
-            id: cameraPageLoader
             sourceComponent: gimbalParams.instanceCount > 0 ? baseComponent : notSupportedComponent
         }
     }
