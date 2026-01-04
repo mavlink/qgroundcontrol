@@ -11,7 +11,7 @@ class APMSafetyComponent;
 class APMSensorsComponent;
 class APMPowerComponent;
 class APMMotorComponent;
-class APMCameraComponent;
+class APMGimbalComponent;
 class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
@@ -37,7 +37,7 @@ public:
 protected:
     bool _incorrectParameterVersion = false; ///< true: parameter version incorrect, setup not allowed
     APMAirframeComponent *_airframeComponent = nullptr;
-    APMCameraComponent *_cameraComponent = nullptr;
+    APMGimbalComponent *_gimbalComponent = nullptr;
     APMLightsComponent *_lightsComponent = nullptr;
     APMSubFrameComponent *_subFrameComponent = nullptr;
     APMFlightModesComponent *_flightModesComponent = nullptr;
