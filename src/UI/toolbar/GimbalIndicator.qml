@@ -49,7 +49,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width:                   height
                 height:                  multiGimbalSetup ? parent.height - gimbalIdLabel.contentHeight : parent.height
-                source:                  "/gimbal/payload.png"
+                source:                  "/res/CameraGimbal.png"
                 fillMode:                Image.PreserveAspectFit
                 sourceSize.height:       height
                 color:                   qgcPal.windowTransparentText

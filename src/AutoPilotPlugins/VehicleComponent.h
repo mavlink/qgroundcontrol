@@ -38,7 +38,7 @@ public:
     virtual ~VehicleComponent();
 
     virtual QString name() const = 0;
-    virtual QString description() const = 0;
+    virtual QString description() const { return QString(); }
     virtual QString iconResource() const = 0;
     virtual bool requiresSetup() const = 0;
     virtual bool setupComplete() const = 0;
