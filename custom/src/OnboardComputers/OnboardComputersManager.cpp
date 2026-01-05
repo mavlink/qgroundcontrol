@@ -194,9 +194,9 @@ void OnboardComputersManager::_handleHeartbeat(const mavlink_message_t& message)
                 qCDebug(OnboardComputersManagerLog) << "CompId:" << computerId << "Stop COMPANION_VERSION request due to retry limit";
                 emit onboardComputerInfoRecieveError(computerId);
                 if(computer.osVersion.toUint32() == 0){
-                    qgcApp()->showAppMessage(tr("WARNING:\nCan't receive VGM firmaware version from dialect! Try to restart VGM."));
+                    qgcApp()->showAppMessage(tr("WARNING:\nCan't receive VGM firmware version from dialect! Try to restart VGM."));
                 } else {
-                    qgcApp()->showAppMessage(tr("INFO:\nCan't receive VGM firmaware version from dialect! Using version from boot message."));
+                    qgcApp()->showAppMessage(tr("INFO:\nCan't receive VGM firmware version from dialect! Using version from boot message."));
                     computer.info.vendor_id = 0xf4;
                     computer.info.os_sw_version = computer.osVersion.toUint32();
                 }

@@ -201,7 +201,7 @@ ApplicationWindow {
         }
 
         ListElement{
-            description:"Expousure Up"
+            description:"Exposure Up"
             sequence:"Ctrl+E"
             action:function(){
                 let compId = globalShortcuts.currentComputerId
@@ -218,7 +218,7 @@ ApplicationWindow {
         }
 
         ListElement{
-            description:"Expousure Down"
+            description:"Exposure Down"
             sequence:"Ctrl+Shift+E"
             action:function(){
                 let compId = globalShortcuts.currentComputerId
@@ -230,7 +230,6 @@ ApplicationWindow {
                 }
                 paramSetter.setParameter(compId, "CAM_EXPOSURE", newExposure)
                 return exposure + " -> " + newExposure
-                // let expousure = globalShortcuts.parameterSetter.getParameter(globalShortcuts.currentComputerId,
             }
         }
 
