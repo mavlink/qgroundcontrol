@@ -22,6 +22,7 @@
         <file alias="chevron-double-left.svg">resources/chevron-double-left.svg</file>
         <file alias="chevron-double-right.svg">resources/chevron-double-right.svg</file>
         <file alias="chevron-up.svg">resources/chevron-up.svg</file>
+        <file alias="Download.svg">resources/Download.svg</file>
         <file alias="DropArrow.svg">resources/DropArrow.svg</file>
         <file alias="FlyingPaperPlane.svg">resources/FlyingPaperPlane.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
@@ -60,6 +61,7 @@
         <file alias="terrain.svg">resources/terrain.svg</file>
         <file alias="TrashCan.svg">resources/TrashCan.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
+        <file alias="Upload.svg">resources/Upload.svg</file>
         <file alias="UploadToVehicle.svg">resources/UploadToVehicle.svg</file>
         <file alias="VehicleMessages.png">resources/VehicleMessages.png</file>
         <file alias="waves.svg">resources/waves.svg</file>

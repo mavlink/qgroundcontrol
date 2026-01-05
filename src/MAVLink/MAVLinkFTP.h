@@ -36,9 +36,6 @@ public:
 
                     // File length returned by Open command
                     uint32_t openFileLength;
-
-                    // Length of file chunk written by write command
-                    uint32_t writeFileLength;
                 };
             }) Request;
 
