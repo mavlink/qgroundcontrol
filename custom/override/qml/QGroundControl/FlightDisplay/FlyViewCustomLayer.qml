@@ -57,12 +57,15 @@ Item {
         property real   _smallMargins: ScreenTools.defaultFontPixelWidth / 2
         property real   _spacing:      ScreenTools.defaultFontPixelWidth * 5
         id:shortcutIndicator
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.right: parent.right
+        anchors.rightMargin: 150
         anchors.top: parent.top
         width: parent.width * 0.1
         height: ScreenTools.defaultFontPixelHeight + 4
         color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
         radius:     _margins
+        opacity: 0
+        visible: infoLabel.label != ""
 
         LabelledLabel{
             anchors.leftMargin: _margins * 2
@@ -78,9 +81,24 @@ Item {
                 infoLabel.labelText = value
                 console.log(description.length * ScreenTools.defaultFontPixelWidth)
                 shortcutIndicator.width = description.length * ScreenTools.defaultFontPixelWidth + value.length * ScreenTools.defaultFontPixelWidth + shortcutIndicator._spacing
+                shortcutIndicator.opacity = 1
+                fadeOutTimer.restart()
             }
         }
 
+        Timer{
+            id: fadeOutTimer
+            interval: 9000
+            repeat: false
+            onTriggered: fadeAnimation.start()
+        }
+
+        NumberAnimation on opacity{
+            id: fadeAnimation
+            from: 1
+            to: 0
+            duration: 1000
+        }
     }
 
 }
