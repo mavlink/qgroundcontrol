@@ -1,0 +1,50 @@
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="11 8 42 56"
+    width="64"
+    height="64"
+>
+    <!-- Arrow shaft (pointing up) -->
+    <line
+        x1="32"
+        y1="44"
+        x2="32"
+        y2="14"
+        stroke="black"
+        stroke-width="6"
+        stroke-linecap="round"
+    />
+
+    <!-- Arrow head (pointing up) -->
+    <line
+        x1="22"
+        y1="24"
+        x2="32"
+        y2="14"
+        stroke="black"
+        stroke-width="6"
+        stroke-linecap="round"
+    />
+    <line
+        x1="42"
+        y1="24"
+        x2="32"
+        y2="14"
+        stroke="black"
+        stroke-width="6"
+        stroke-linecap="round"
+    />
+
+    <!-- Tray (open top, unchanged) -->
+    <path
+        d="M14 48
+           v12
+           h36
+           v-12"
+        fill="none"
+        stroke="black"
+        stroke-width="6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
+</svg>

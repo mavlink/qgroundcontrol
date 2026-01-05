@@ -15,6 +15,8 @@ private slots:
     void _testListDirectoryNoSecondResponseAllowRetry   (void);
     void _testListDirectoryNakSecondResponse            (void);
     void _testListDirectoryBadSequence                  (void);
+    void _testListDirectoryCancel                       (void);
+    void _testUpload                                     (void);
 
     // Overrides from UnitTest
     void cleanup(void) override;

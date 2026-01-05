@@ -4,6 +4,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QTimer>
 #include <QtCore/QLoggingCategory>
 
@@ -35,6 +36,14 @@ public:
     /// Signals downloadComplete, commandProgress
     bool download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName="", bool checksize = true);
 
+    /// Uploads a local file to the specified URI on the vehicle.
+    ///     @param toCompId Component id of the component to upload to. If toCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
+    ///     @param toURI    Destination file path on the vehicle, fully qualified. May include mftp:// scheme and optional component id selector.
+    ///     @param fromFile Local filesystem path of the file to upload.
+    /// @return true: upload started, false: error, no upload
+    /// Signals uploadComplete, commandProgress
+    bool upload(uint8_t toCompId, const QString& toURI, const QString& fromFile);
+
 	/// Get the directory listing of the specified directory.
     ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param fromURI    Directory path to list from component. May be in the format "mftp://[;comp=<id>]..." where the component id
@@ -43,15 +52,36 @@ public:
     /// Signals listDirectoryComplete
     bool listDirectory(uint8_t fromCompId, const QString& fromURI);
 
+    /// Deletes a file on the vehicle.
+    ///     @param fromCompId Component id of the component to delete from. If fromCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
+    ///     @param fromURI    File path to delete on the component. May include mftp:// scheme and optional component id selector.
+    /// @return true: process has started, false: error
+    /// Signals deleteComplete
+    bool deleteFile(uint8_t fromCompId, const QString& fromURI);
+
     /// Cancel the download operation
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
     void cancelDownload();
+
+    /// Cancel the list directory operation if running.
+    /// This will emit listDirectoryComplete() with an error string when finished.
+    void cancelListDirectory();
+
+    /// Cancel the delete operation if running.
+    /// This will emit deleteComplete() with an error string when finished.
+    void cancelDelete();
+
+    /// Cancel the upload operation
+    /// This will emit uploadComplete() when done, and if there's currently an upload in progress
+    void cancelUpload();
 
     static constexpr const char* mavlinkFTPScheme = "mftp";
 
 signals:
     void downloadComplete       (const QString& file, const QString& errorMsg);
+    void uploadComplete         (const QString& file, const QString& errorMsg);
     void listDirectoryComplete  (const QStringList& dirList, const QString& errorMsg);
+    void deleteComplete         (const QString& file, const QString& errorMsg);
 
     /// Signalled during a lengthy command to show progress
     ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
@@ -111,7 +141,7 @@ private:
         QStringList rgDirectoryList;
         int         retryCount;
 
-        bool inProgress() const { return rgDirectoryList.count() > 0; }
+        bool inProgress() const { return !fullPathOnVehicle.isEmpty(); }
 
         void reset() {
             sessionId       = 0;
@@ -119,6 +149,44 @@ private:
             fullPathOnVehicle.clear();
             rgDirectoryList.clear();
             retryCount      = 0;
+        }
+    };
+
+    struct DeleteFileState_t {
+        QString fullPathOnVehicle;      ///< Fully qualified path to file on vehicle
+        int     retryCount = 0;
+
+        bool inProgress() const { return !fullPathOnVehicle.isEmpty(); }
+
+        void reset() {
+            fullPathOnVehicle.clear();
+            retryCount = 0;
+        }
+    };
+
+    struct UploadState_t {
+        uint8_t     sessionId;
+        uint32_t    totalBytesSent;
+        uint32_t    fileSize;
+        uint32_t    lastChunkSize;
+        QFile       file;
+        QString     fullPathOnVehicle;      ///< Fully qualified destination path on vehicle
+        QString     localFilePath;          ///< Local file path being uploaded
+        int         retryCount;
+        bool        cancelled;
+
+        bool inProgress() const { return file.isOpen(); }
+
+        void reset() {
+            sessionId       = 0;
+            totalBytesSent  = 0;
+            fileSize        = 0;
+            lastChunkSize   = 0;
+            retryCount      = 0;
+            cancelled       = false;
+            fullPathOnVehicle.clear();
+            localFilePath.clear();
+            file.close();
         }
     };
 
@@ -149,9 +217,26 @@ private:
     void    _burstReadFileWorker        (bool firstRequest);
     void    _listDirectoryWorker        (bool firstRequest);
     bool    _parseURI                   (uint8_t fromCompId, const QString& uri, QString& parsedURI, uint8_t& compId);
-    bool    _isListDirectoryStateMachine(void);
     void    _listDirectoryCompleteNoError(void) { _listDirectoryComplete(QString()); }
     void    _listDirectoryComplete      (const QString& errorMsg);
+    void    _deleteFileBegin            (void);
+    void    _deleteFileAckOrNak         (const MavlinkFTP::Request* ackOrNak);
+    void    _deleteFileTimeout          (void);
+    void    _deleteCompleteNoError      (void) { _deleteComplete(QString()); }
+    void    _deleteComplete             (const QString& errorMsg);
+
+    void    _createFileBegin            (void);
+    void    _createFileAckOrNak         (const MavlinkFTP::Request* ackOrNak);
+    void    _createFileTimeout          (void);
+    void    _writeFileBegin             (void);
+    void    _writeFileAckOrNak          (const MavlinkFTP::Request* ackOrNak);
+    void    _writeFileTimeout           (void);
+    void    _writeFileWorker            (bool firstRequest);
+    void    _uploadFinalize             (void);
+    void    _uploadComplete             (const QString& errorMsg);
+    void    _terminateUploadSessionBegin(void);
+    void    _terminateUploadSessionAckOrNak(const MavlinkFTP::Request* ackOrNak);
+    void    _terminateUploadSessionTimeout(void);
 
     void    _terminateSessionBegin      (void);
     void    _terminateSessionAckOrNak   (const MavlinkFTP::Request* ackOrNak);
@@ -163,6 +248,8 @@ private:
     QList<StateFunctions_t> _rgStateMachine;
     DownloadState_t         _downloadState;
     ListDirectoryState_t    _listDirectoryState;
+    DeleteFileState_t       _deleteState;
+    UploadState_t           _uploadState;
     QTimer                  _ackOrNakTimeoutTimer;
     int                     _currentStateMachineIndex   = -1;
     uint16_t                _expectedIncomingSeqNumber  = 0;
