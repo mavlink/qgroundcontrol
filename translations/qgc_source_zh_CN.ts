@@ -498,7 +498,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="95"/>
       <source>Avoid ADSB</source>
-      <translation>关闭ADSB</translation>
+      <translation>ADS-B 避让</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="96"/>
