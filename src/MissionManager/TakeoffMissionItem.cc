@@ -9,23 +9,23 @@
 #include "Vehicle.h"
 
 TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
-    : SimpleMissionItem (masterController, flyView, forLoad)
-    , _settingsItem     (settingsItem)
+    : SimpleMissionItem(masterController, flyView, forLoad)
+    , _settingsItem(settingsItem)
 {
     _init(forLoad);
 }
 
 TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
-    : SimpleMissionItem (masterController, flyView, false /* forLoad */)
-    , _settingsItem     (settingsItem)
+    : SimpleMissionItem(masterController, flyView, false /* forLoad */)
+    , _settingsItem(settingsItem)
 {
     setCommand(takeoffCmd);
     _init(forLoad);
 }
 
 TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
-    : SimpleMissionItem (masterController, flyView, missionItem)
-    , _settingsItem     (settingsItem)
+    : SimpleMissionItem(masterController, flyView, missionItem)
+    , _settingsItem(settingsItem)
 {
     _init(forLoad);
 }
