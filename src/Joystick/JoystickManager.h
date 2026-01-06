@@ -9,6 +9,8 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class Joystick;
+class JoystickManagerSettings;
+class Vehicle;
 
 class JoystickManager : public QObject
 {
@@ -16,10 +18,13 @@ class JoystickManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Joystick.h")
-    Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
-    Q_PROPERTY(QStringList joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
-    Q_PROPERTY(Joystick *activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
-    Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
+
+    /// List of available joystick names
+    ///     Note: The active joystick name may be not in this list if the joystick is not currently connected
+    Q_PROPERTY(QStringList  availableJoystickNames READ availableJoystickNames NOTIFY availableJoystickNamesChanged)
+
+    /// Currently active joystick
+    Q_PROPERTY(Joystick *activeJoystick READ activeJoystick NOTIFY activeJoystickChanged)
 
 public:
     explicit JoystickManager(QObject *parent = nullptr);
@@ -27,38 +32,41 @@ public:
 
     static JoystickManager *instance();
 
-    QVariantList joysticks();
-    QStringList joystickNames() const { return _name2JoystickMap.keys(); }
+    QStringList availableJoystickNames() const { return _name2JoystickMap.keys(); }
 
     Joystick *activeJoystick();
-    void setActiveJoystick(Joystick *joystick);
 
-    QString activeJoystickName() const;
-    bool setActiveJoystickName(const QString &name);
+    Q_INVOKABLE bool joystickEnabledForVehicle(Vehicle *vehicle) const;
+    Q_INVOKABLE void setJoystickEnabledForVehicle(Vehicle *vehicle, bool enabled);
 
 signals:
     void activeJoystickChanged(Joystick *joystick);
-    void activeJoystickNameChanged(const QString &name);
-    void availableJoysticksChanged();
-    void updateAvailableJoysticksSignal();
+    void availableJoystickNamesChanged();
+#if defined(Q_OS_ANDROID)
+    void _updateAvailableJoysticksSignal();
+#endif
 
 public slots:
     void init();
 
 private slots:
-    // TODO: move this to the right place: JoystickSDL.cc and JoystickAndroid.cc respectively and call through Joystick.cc
     void _updateAvailableJoysticks();
+    void _activeVehicleChanged(Vehicle *activeVehicle);
+    void _setActiveJoystickByName(const QString &name);
 
 private:
+    void _checkForAddedOrRemovedJoysticks();
     void _setActiveJoystickFromSettings();
+    void _setActiveJoystick(Joystick *joystick);
 
+    JoystickManagerSettings *_joystickManagerSettings = nullptr;
     Joystick *_activeJoystick = nullptr;
     QMap<QString, Joystick*> _name2JoystickMap;
 
-    int _joystickCheckTimerCounter = 0;
-    QTimer _joystickCheckTimer;
+    int _checkForAddedOrRemovedJoysticksTimerCounter = 0;
+    QTimer _checkForAddedOrRemovedJoysticksTimer;
 
     static constexpr int kTimeout = 1000;
     static constexpr const char *_settingsGroup = "JoystickManager";
-    static constexpr const char *_settingsKeyActiveJoystick = "ActiveJoystick";
+    static constexpr const char *_settingsKeyActiveNameJoystick = "ActiveJoystickName";
 };

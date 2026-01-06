@@ -356,19 +356,6 @@ Item {
                 }
             }
 
-            // Incomplete segment lines
-            MapItemView {
-                model: _missionController.incompleteComplexItemLines
-
-                delegate: MapPolyline {
-                    path: [ object.coordinate1, object.coordinate2 ]
-                    line.width: 1
-                    line.color: "red"
-                    z: QGroundControl.zOrderWaypointLines
-                    opacity: _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
-                }
-            }
-
             // UI for splitting the current segment
             MapQuickItem {
                 id: splitSegmentItem

@@ -45,8 +45,6 @@ public:
     int vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
 
-    void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
-
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
 

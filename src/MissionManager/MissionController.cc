@@ -1236,17 +1236,11 @@ void MissionController::_recalcFlightPathSegments(void)
     _missionContainsVTOLTakeoff = false;
     _flightPathSegmentHashTable.clear();
 
-    // Note: Although visual support for _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
-    // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
-    // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
-
     _simpleFlightPathSegments.beginResetModel();
     _directionArrows.beginResetModel();
-    _incompleteComplexItemLines.beginResetModel();
 
     _simpleFlightPathSegments.clear();
     _directionArrows.clear();
-    _incompleteComplexItemLines.clearAndDeleteContents();
 
     // Mission Settings item needs to start with no segment
     lastFlyThroughVI->clearSimpleFlighPathSegment();
@@ -1396,7 +1390,6 @@ void MissionController::_recalcFlightPathSegments(void)
 
     _simpleFlightPathSegments.endResetModel();
     _directionArrows.endResetModel();
-    _incompleteComplexItemLines.endResetModel();
 
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(oldSegmentTable);

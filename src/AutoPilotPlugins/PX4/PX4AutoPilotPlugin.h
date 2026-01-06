@@ -14,6 +14,7 @@
 #include "PX4TuningComponent.h"
 #include "PX4FlightBehavior.h"
 #include "SyslinkComponent.h"
+#include "JoystickComponent.h"
 
 class Vehicle;
 
@@ -45,6 +46,7 @@ protected:
     PX4TuningComponent*     _tuningComponent;
     PX4FlightBehavior*      _flightBehavior;
     SyslinkComponent*       _syslinkComponent;
+    JoystickComponent*      _joystickComponent;
 
 private:
     QVariantList            _components;

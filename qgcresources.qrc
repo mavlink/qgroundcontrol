@@ -14,6 +14,7 @@
         <file alias="buttonLeft.svg">resources/buttonLeft.svg</file>
         <file alias="buttonRight.svg">resources/buttonRight.svg</file>
         <file alias="BingNoTileBytes.dat">resources/BingNoTileBytes.dat</file>
+        <file alias="CameraGimbal.png">resources/CameraGimbal.png</file>
         <file alias="cancel.svg">resources/cancel.svg</file>
         <file alias="clockwise-arrow.svg">resources/clockwise-arrow.svg</file>
         <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
@@ -92,9 +93,6 @@
     </qresource>
     <qresource prefix="/opengl">
         <file>resources/opengl/buglist.json</file>
-    </qresource>
-    <qresource prefix="/gimbal">
-        <file alias="payload.png">resources/gimbal/payload.png</file>
     </qresource>
     <qresource prefix="/gcscontrolIndicator">
         <file alias="gcscontrol_device.svg">resources/gcscontrolIndicator/gcscontrol_device.svg</file>

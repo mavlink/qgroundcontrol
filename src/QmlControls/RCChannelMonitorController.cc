@@ -17,18 +17,16 @@ RCChannelMonitorController::~RCChannelMonitorController()
     // qCDebug(RCChannelMonitorControllerLog) << Q_FUNC_INFO << this;
 }
 
-void RCChannelMonitorController::channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
+void RCChannelMonitorController::channelValuesChanged(QVector<int> pwmValues)
 {
+    int channelCount = pwmValues.size();
+
+    if (_chanCount != channelCount) {
+        _chanCount = channelCount;
+        emit channelCountChanged(_chanCount);
+    }
+
     for (int channel = 0; channel < channelCount; channel++) {
-        const int channelValue = pwmValues[channel];
-
-        if (_chanCount != channelCount) {
-            _chanCount = channelCount;
-            emit channelCountChanged(_chanCount);
-        }
-
-        if (channelValue != -1) {
-            emit channelValueChanged(channel, channelValue);
-        }
+        emit channelValueChanged(channel, pwmValues[channel]);
     }
 }

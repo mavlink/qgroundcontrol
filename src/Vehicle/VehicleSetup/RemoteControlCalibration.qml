@@ -8,316 +8,311 @@ import QGroundControl.FactControls
 import QGroundControl.Controls
 
 /// Base class for Remote Control Calibration (supports both RC and Joystick)
-RowLayout {
+ColumnLayout {
+    required property var controller
     property Component additionalSetupComponent
+    property Component additionalMonitorComponent
+
+    // Controllers need access to these UI elements
+    property alias statusText: statusText
+    property alias cancelButton: cancelButton
+    property alias nextButton: nextButton
 
     id: root
-    spacing: ScreenTools.defaultFontPixelWidth
+    spacing: ScreenTools.defaultFontPixelHeight
 
-    property var _controller: controller
+    property bool useDeadband: false
 
-    ListModel {
-        id: attitudeControlsModel
-
-        Component.onCompleted: {
-            attitudeControlsModel.append(
-                {
-                    name: qsTr("Roll"),
-                    mapped: controller.rollChannelMapped,
-                    reversed: controller.rollChannelReversed,
-                    value: controller.rollChannelValue
-                })
-            attitudeControlsModel.append(
-                {
-                    name: qsTr("Pitch"),
-                    mapped: controller.pitchChannelMapped,
-                    reversed: controller.pitchChannelReversed,
-                    value: controller.pitchChannelValue
-                })
-            attitudeControlsModel.append(
-                {
-                    name: qsTr("Yaw"),
-                    mapped: controller.yawChannelMapped,
-                    reversed: controller.yawChannelReversed,
-                    value: controller.yawChannelValue
-                })
-            attitudeControlsModel.append(
-                {
-                    name: qsTr("Throttle"),
-                    mapped: controller.throttleChannelMapped,
-                    reversed: controller.throttleChannelReversed,
-                    value: controller.throttleChannelValue
-                })
-        }
-    }
-
-    function setupPageCompleted() {
-        controller.start()
-    }
+    property real _channelValueDisplayWidth: ScreenTools.defaultFontPixelWidth * 30
+    property bool _deadbandActive: useDeadband
 
     QGCPalette { id: qgcPal; colorGroupEnabled: root.enabled }
 
-    RadioComponentController {
-        id: controller
-        statusText: statusText
-        cancelButton: cancelButton
-        nextButton: nextButton
-        skipButton: skipButton
-        onThrottleReversedCalFailure: mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
-    }
-
-    ColumnLayout {
-        id: leftColumnLayout
-        Layout.alignment: Qt.AlignTop
-        spacing: 10
-
+    RowLayout {
+        // Left Column - Attitude Controls display
         ColumnLayout {
-            id: attitudeControlsLayout
-            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
             spacing: ScreenTools.defaultFontPixelHeight
 
-            QGCLabel { text: qsTr("Attitude Controls") }
+            ColumnLayout {
+                id: attitudeControlsLayout
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelHeight
 
-            Repeater {
-                model: attitudeControlsModel
+                QGCLabel { text: qsTr("Attitude Controls") }
 
                 RowLayout {
                     Layout.fillWidth: true
 
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: name
+                        text: qsTr("Roll")
                     }
 
-                    Loader {
-                        id: channelMonitorLoader
-                        width: ScreenTools.defaultFontPixelWidth * 20
-                        sourceComponent: attitudeChannelDisplayComponent
-
-                        property var channelMapped: mapped
-                        property var channelReversed: reversed
-                        property var channelValue: value
-                    }
-                }
-            }
-        }
-
-        // Command Buttons
-        RowLayout {
-            spacing: ScreenTools.defaultFontPixelWidth
-
-            QGCButton {
-                id: skipButton
-                text: qsTr("Skip")
-                onClicked: controller.skipButtonClicked()
-            }
-
-            QGCButton {
-                id: cancelButton
-                text: qsTr("Cancel")
-                onClicked: controller.cancelButtonClicked()
-            }
-
-            QGCButton {
-                id: nextButton
-                primary: true
-                text: qsTr("Calibrate")
-
-                onClicked: {
-                    if (text === qsTr("Calibrate")) {
-                        if (controller.channelCount < controller.minChannelCount) {
-                            mainWindow.showMessageDialog(qsTr("Radio Not Ready"),
-                                                            controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
-                                                                                        (controller.channelCount < controller.minChannelCount ?
-                                                                                                qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
-                                                                                                qsTr("Ready to calibrate.")))
-                        } else {
-                            mainWindow.showMessageDialog(qsTr("Zero Trims"),
-                                                            qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
-                                                                (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
-                                                            Dialog.Ok,
-                                                            function() { controller.nextButtonClicked() })
-                        }
-                    } else {
-                        controller.nextButtonClicked()
-                    }
-                }
-            }
-        }
-
-        // Status Text
-        QGCLabel {
-            id: statusText
-            Layout.fillWidth: true
-            Layout.maximumWidth: parent.width
-            wrapMode: Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 1
-            color: qgcPal.text
-        }
-
-        Loader {
-            id: additionalSetupLoader
-            Layout.fillWidth: true
-            sourceComponent: additionalSetupComponent
-        }
-    }
-
-    ColumnLayout {
-        id: rightColumnLayout
-        Layout.alignment: Qt.AlignTop
-        spacing: ScreenTools.defaultFontPixelHeight / 2
-
-        Rectangle {
-            id: stickDisplayContainer
-            implicitWidth: stickDisplayLayout.width + _margins * 2
-            implicitHeight: stickDisplayLayout.height + _margins * 2
-            border.color: qgcPal.text
-            border.width: 1
-            color: qgcPal.window
-            radius: ScreenTools.defaultBorderRadius
-
-            property real _margins: ScreenTools.defaultFontPixelHeight / 2
-            property real _stickAdjust: leftStickDisplay.width / 2 - _margins * 1.25
-
-            ColumnLayout {
-                id: stickDisplayLayout
-                anchors.leftMargin: stickDisplayContainer._margins
-                anchors.topMargin: stickDisplayContainer._margins
-                anchors.left: parent.left
-                anchors.top: parent.top
-                spacing: stickDisplayContainer._margins
-
-                RowLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth * 2
-
-                    QGCComboBox {
-                        id: transmitterModeComboBox
-                        model: [ qsTr("Mode 1"), qsTr("Mode 2"), qsTr("Mode 3"), qsTr("Mode 4") ]
-                        onActivated: (index) => controller.transmitterMode = index + 1
-
-                        Component.onCompleted: currentIndex = controller.transmitterMode - 1
-                    }
-
-                    QGCCheckBox {
-                        id: centeredThrottleCheckBox
-                        text: qsTr("Centered Throttle")
-                        checked: controller.centeredThrottle
-                        onClicked: controller.centeredThrottle = checked
+                    RemoteControlChannelValueDisplay {
+                        Layout.preferredWidth: root._channelValueDisplayWidth
+                        mode: RemoteControlChannelValueDisplay.MappedValue
+                        channelValueMin: controller.channelValueMin
+                        channelValueMax: controller.channelValueMax
+                        channelMapped: controller.rollChannelMapped
+                        channelValue: controller.adjustedRollChannelValue
+                        deadbandValue: controller.rollDeadband
+                        deadbandEnabled: root._deadbandActive
                     }
                 }
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: stickDisplayContainer._margins * 2
 
-                    Rectangle {
-                        id: leftStickDisplay
-                        Layout.alignment: Qt.AlignLeft
-                        implicitWidth: ScreenTools.defaultFontPixelHeight * 5
-                        implicitHeight: implicitWidth
-                        radius: implicitWidth / 2
-                        border.color: qgcPal.buttonHighlight
-                        border.width: 1
-                        color: qgcPal.window
-
-                        Rectangle {
-                            x: parent.width / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[0] - width / 2
-                            y: parent.height / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[1] - height / 2
-                            width: ScreenTools.defaultFontPixelHeight
-                            height: width
-                            radius: width / 2
-                            color: qgcPal.buttonHighlight
-                        }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("Pitch")
                     }
 
-                    Rectangle {
-                        Layout.alignment: Qt.AlignRight
-                        implicitWidth: leftStickDisplay.implicitWidth
-                        implicitHeight: implicitWidth
-                        radius: implicitWidth / 2
-                        border.color: qgcPal.buttonHighlight
-                        border.width: 1
-                        color: qgcPal.window
+                    RemoteControlChannelValueDisplay {
+                        Layout.preferredWidth: root._channelValueDisplayWidth
+                        mode: RemoteControlChannelValueDisplay.MappedValue
+                        channelValueMin: controller.channelValueMin
+                        channelValueMax: controller.channelValueMax
+                        channelMapped: controller.pitchChannelMapped
+                        channelValue: controller.adjustedPitchChannelValue
+                        deadbandValue: controller.pitchDeadband
+                        deadbandEnabled: root._deadbandActive
+                    }
+                }
 
-                        Rectangle {
-                            x: parent.width / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[2] - width / 2
-                            y: parent.height / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[3] - height / 2
-                            width: ScreenTools.defaultFontPixelHeight
-                            height: width
-                            radius: width / 2
-                            color: qgcPal.buttonHighlight
-                        }
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("Yaw")
+                    }
+
+                    RemoteControlChannelValueDisplay {
+                        Layout.preferredWidth: root._channelValueDisplayWidth
+                        mode: RemoteControlChannelValueDisplay.MappedValue
+                        channelValueMin: controller.channelValueMin
+                        channelValueMax: controller.channelValueMax
+                        channelMapped: controller.yawChannelMapped
+                        channelValue: controller.adjustedYawChannelValue
+                        deadbandValue: controller.yawDeadband
+                        deadbandEnabled: root._deadbandActive
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("Throttle")
+                    }
+
+                    RemoteControlChannelValueDisplay {
+                        Layout.preferredWidth: root._channelValueDisplayWidth
+                        mode: RemoteControlChannelValueDisplay.MappedValue
+                        channelValueMin: controller.channelValueMin
+                        channelValueMax: controller.channelValueMax
+                        channelMapped: controller.throttleChannelMapped
+                        channelValue: controller.adjustedThrottleChannelValue
+                        deadbandValue: controller.throttleDeadband
+                        deadbandEnabled: root._deadbandActive
                     }
                 }
             }
         }
 
-        RCChannelMonitor {
-            Layout.fillWidth: true
-            twoColumn: true
+        // Right Column - Stick Display
+        ColumnLayout {
+            Layout.alignment: Qt.AlignTop
+            spacing: ScreenTools.defaultFontPixelHeight / 2
+
+            Rectangle {
+                id: stickDisplayContainer
+                implicitWidth: stickDisplayLayout.width + _margins * 2
+                implicitHeight: stickDisplayLayout.height + _margins * 2
+                border.color: qgcPal.text
+                border.width: 1
+                color: qgcPal.window
+                radius: ScreenTools.defaultBorderRadius
+
+                property real _margins: ScreenTools.defaultFontPixelHeight / 2
+                property real _stickAdjust: leftStickDisplay.width / 2 - _margins * 1.25
+
+                ColumnLayout {
+                    id: stickDisplayLayout
+                    anchors.leftMargin: stickDisplayContainer._margins
+                    anchors.topMargin: stickDisplayContainer._margins
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    spacing: stickDisplayContainer._margins
+
+                    RowLayout {
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                        QGCComboBox {
+                            id: transmitterModeComboBox
+                            model: [ qsTr("Mode 1"), qsTr("Mode 2"), qsTr("Mode 3"), qsTr("Mode 4") ]
+                            enabled: !controller.calibrating
+
+                            onActivated: (index) => controller.transmitterMode = index + 1
+
+                            Component.onCompleted: currentIndex = controller.transmitterMode - 1
+                        }
+
+                        QGCCheckBox {
+                            id: centeredThrottleCheckBox
+                            text: qsTr("Centered Throttle")
+                            checked: controller.centeredThrottle
+                            enabled: !controller.calibrating
+                            visible: !controller.joystickMode
+
+                            onClicked: controller.centeredThrottle = checked
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: stickDisplayContainer._margins * 2
+
+                        Rectangle {
+                            id: leftStickDisplay
+                            Layout.alignment: Qt.AlignLeft
+                            implicitWidth: ScreenTools.defaultFontPixelHeight * 5
+                            implicitHeight: implicitWidth
+                            radius: implicitWidth / 2
+                            border.color: qgcPal.buttonHighlight
+                            border.width: 1
+                            color: qgcPal.window
+
+                            Rectangle {
+                                x: parent.width / 2 + stickDisplayContainer._stickAdjust * controller.stickDisplayPositions[0] - width / 2
+                                y: parent.height / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[1] - height / 2
+                                width: ScreenTools.defaultFontPixelHeight
+                                height: width
+                                radius: width / 2
+                                color: qgcPal.buttonHighlight
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignRight
+                            implicitWidth: leftStickDisplay.implicitWidth
+                            implicitHeight: implicitWidth
+                            radius: implicitWidth / 2
+                            border.color: qgcPal.buttonHighlight
+                            border.width: 1
+                            color: qgcPal.window
+
+                            Rectangle {
+                                x: parent.width / 2 + stickDisplayContainer._stickAdjust * controller.stickDisplayPositions[2] - width / 2
+                                y: parent.height / 2 + stickDisplayContainer._stickAdjust * -controller.stickDisplayPositions[3] - height / 2
+                                width: ScreenTools.defaultFontPixelHeight
+                                height: width
+                                radius: width / 2
+                                color: qgcPal.buttonHighlight
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
-    Component {
-        id: attitudeChannelDisplayComponent
+    // Command Buttons and Status Text
+    RowLayout {
+        Layout.preferredWidth: parent.width
+        spacing: ScreenTools.defaultFontPixelWidth
+
+        QGCButton {
+            id: cancelButton
+            text: qsTr("Cancel")
+            onClicked: controller.cancelButtonClicked()
+        }
+
+        QGCButton {
+            id: nextButton
+            primary: true
+            text: qsTr("Calibrate")
+
+            onClicked: {
+                if (text === qsTr("Calibrate")) {
+                    if (controller.channelCount < controller.minChannelCount) {
+                        mainWindow.showMessageDialog(qsTr("Remote Not Ready"),
+                                                        controller.channelCount == 0 ? qsTr("Please turn on remote.") :
+                                                                                    (controller.channelCount < controller.minChannelCount ?
+                                                                                            qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
+                                                                                            qsTr("Ready to calibrate.")))
+                        return
+                    } else if (!controller.joystickMode) {
+                        mainWindow.showMessageDialog(qsTr("Zero Trims"),
+                                                        qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
+                                                            (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
+                                                        Dialog.Ok,
+                                                        function() { controller.nextButtonClicked() })
+                        return
+                    }
+                }
+                controller.nextButtonClicked()
+            }
+        }
+
+        QGCLabel {
+            id: statusText
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    Rectangle {
+        id: separator
+        Layout.fillWidth: true
+        implicitHeight: 1
+        color: qgcPal.text
+    }
+
+    // Additional Setup + Channel Monitor
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: ScreenTools.defaultFontPixelHeight
+
 
         Item {
-            implicitHeight: ScreenTools.defaultFontPixelHeight
+            Layout.fillWidth: true
+            implicitHeight: 1
+            visible: additionalSetupComponent === undefined
+        }
 
-            readonly property int _channelMin: 800
-            readonly property int _channelMax: 2200
-            readonly property int _channelRange: _channelMax - _channelMin
+        Loader {
+            id: additionalSetupLoader
+            Layout.alignment: Qt.AlignTop
+            sourceComponent: additionalSetupComponent
+        }
 
-            property int _lastChannelValue: (_channelMax - _channelMin) / 2 + _channelMin
-            property color _barColor: qgcPal.windowShade
+        ColumnLayout {
+            Layout.alignment: Qt.AlignTop
+            Layout.fillWidth: true
+            spacing: ScreenTools.defaultFontPixelHeight
 
-            // Bar
-            Rectangle {
-                id: bar
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width
-                height: ScreenTools.defaultFontPixelHeight / 2
-                color: _barColor
+            RemoteControlChannelMonitor {
+                id: channelMonitor
+                Layout.fillWidth: true
+                twoColumn: false
+                channelCount: controller.channelCount
+                channelValueMin: controller.channelValueMin
+                channelValueMax: controller.channelValueMax
+
+                Connections {
+                    target: controller
+                    onRawChannelValueChanged: (channel, channelValue) => channelMonitor.rawChannelValueChanged(channel, channelValue)
+                }
             }
 
-            // Center point
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: globals.defaultTextWidth / 2
-                height: bar.height
-                color: qgcPal.window
-            }
-
-            // Indicator
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.height
-                height: width
-                radius: width / 2
-                color: qgcPal.text
-                visible: channelMapped
-                x: (((channelReversed ? _channelMax - channelValue : channelValue - _channelMin) / _channelRange) * parent.width) - (width / 2)
-            }
-
-            QGCLabel {
-                id: notMappedLabel
-                anchors.centerIn: parent
-                text: qsTr("Not Mapped")
-                visible: !channelMapped
-            }
-
-            ColorAnimation {
-                id: barAnimation
-                target: bar
-                property: "color"
-                from: "yellow"
-                to: _barColor
-                duration: 1500
+            Loader {
+                id: additionalMonitorLoader
+                Layout.preferredWidth: parent.width
+                sourceComponent: additionalMonitorComponent
             }
         }
     }

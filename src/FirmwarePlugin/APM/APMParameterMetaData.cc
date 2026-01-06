@@ -487,6 +487,11 @@ FactMetaData *APMParameterMetaData::getMetaDataForFact(const QString &name, MAV_
         }
     }
 
+    if (!rawMetaData->min.isEmpty() && !rawMetaData->max.isEmpty()) {
+        metaData->setRawUserMin(metaData->rawMin());
+        metaData->setRawUserMax(metaData->rawMax());
+    }
+
     if (!rawMetaData->values.isEmpty()) {
         QStringList enumStrings;
         QVariantList enumValues;

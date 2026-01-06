@@ -19,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MavlinkAction.h
         MavlinkActionManager.cc
         MavlinkActionManager.h
+        ObjectListModelBase.cc
+        ObjectListModelBase.h
         ParameterEditorController.cc
         ParameterEditorController.h
         QGCFenceCircle.cc

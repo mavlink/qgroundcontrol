@@ -11,8 +11,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMAirframeComponentController.h
         APMAutoPilotPlugin.cc
         APMAutoPilotPlugin.h
-        APMCameraComponent.cc
-        APMCameraComponent.h
         APMFlightModesComponent.cc
         APMFlightModesComponent.h
         APMFlightModesComponentController.cc
@@ -21,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMFollowComponent.h
         APMFollowComponentController.cc
         APMFollowComponentController.h
+        APMGimbalComponent.cc
+        APMGimbalComponent.h
         APMHeliComponent.cc
         APMHeliComponent.h
         APMLightsComponent.cc
@@ -61,13 +61,13 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
     QML_FILES
         APMAirframeComponent.qml
         APMAirframeComponentSummary.qml
-        APMCameraComponent.qml
-        APMCameraComponentSummary.qml
-        APMCameraSubComponent.qml
         APMFlightModesComponent.qml
         APMFlightModesComponentSummary.qml
         APMFollowComponent.qml
         APMFollowComponentSummary.qml
+        APMGimbalComponent.qml
+        APMGimbalInstance.qml
+        APMGimbalParams.qml
         APMHeliComponent.qml
         APMLightsComponent.qml
         APMLightsComponentSummary.qml

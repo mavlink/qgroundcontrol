@@ -48,7 +48,7 @@ signals:
     void superSimpleModeEnabledChanged();
 
 private slots:
-    void channelValuesChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
+    void channelValuesChanged(QVector<int> pwmValues);
     void _updateSimpleParamsFromSimpleMode();
     void _setupSimpleModeEnabled();
 
