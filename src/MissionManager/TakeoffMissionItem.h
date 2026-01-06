@@ -17,14 +17,11 @@ public:
     TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
     TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
 
-    Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE setLaunchCoordinate               NOTIFY launchCoordinateChanged)
-    Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE setLaunchTakeoffAtSameLocation    NOTIFY launchTakeoffAtSameLocationChanged)
+    Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE _setLaunchCoordinate              NOTIFY launchCoordinateChanged)
+    Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE _setLaunchTakeoffAtSameLocation   NOTIFY launchTakeoffAtSameLocationChanged)
 
     QGeoCoordinate launchCoordinate(void) const;
     bool launchTakeoffAtSameLocation(void) const { return _launchTakeoffAtSameLocation; }
-
-    void setLaunchCoordinate(const QGeoCoordinate& launchCoordinate);
-    void setLaunchTakeoffAtSameLocation(bool launchTakeoffAtSameLocation);
 
     static bool isTakeoffCommand(MAV_CMD command);
 
@@ -51,6 +48,9 @@ signals:
 private:
     void _init(bool forLoad);
     void _initLaunchTakeoffAtSameLocation(void);
+    void _setLaunchCoordinate(const QGeoCoordinate& launchCoordinate);
+    void _setLaunchTakeoffAtSameLocation(bool launchTakeoffAtSameLocation);
+
 
     MissionSettingsItem* _settingsItem;
     bool _launchTakeoffAtSameLocation = true;
