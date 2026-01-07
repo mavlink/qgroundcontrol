@@ -4,12 +4,11 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactControls
 
 Column {
     property var channel
-    property Fact rpm:               null
-    property alias value:            channelSlider.value
+    property alias value:             channelSlider.value
+
     // If the default value is NaN, we add a small range
     // below, which snaps into place
     property var snap:                isNaN(channel.defaultValue)
@@ -17,8 +16,11 @@ Column {
     property var snapRange:           span * 0.15
     property var defaultVal:          snap ? channel.min - snapRange : channel.defaultValue
     property var blockUpdates:        true // avoid slider changes on startup
+
     id:                               root
+
     Layout.alignment:                 Qt.AlignTop
+
     readonly property int _sliderHeight: 6
 
     function stopTimer() {
@@ -31,12 +33,6 @@ Column {
     }
 
     signal actuatorValueChanged(real value, real sliderValue)
-
-   // RPM value positioned above the slider
-    QGCLabel {
-        text: rpm ? rpm.valueString : " "
-        anchors.horizontalCenter:   parent.horizontalCenter
-    }
 
     QGCSlider {
         id:                         channelSlider
