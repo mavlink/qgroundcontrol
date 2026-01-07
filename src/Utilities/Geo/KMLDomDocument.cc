@@ -12,7 +12,10 @@ KMLDomDocument::KMLDomDocument(const QString &name)
     (void) appendChild(header);
 
     QDomElement kmlElement = createElement(QStringLiteral("kml"));
-    kmlElement.setAttribute(QStringLiteral("xmlns"), "http://www.opengis.net/kml/2.2");
+    kmlElement.setAttribute(QStringLiteral("xmlns"), kmlNamespace);
+    kmlElement.setAttribute(QStringLiteral("xmlns:xsi"), xsiNamespace);
+    kmlElement.setAttribute(QStringLiteral("xsi:schemaLocation"),
+                            QStringLiteral("%1 %2").arg(kmlNamespace, kmlSchemaLocation));
 
     _rootDocumentElement = createElement(QStringLiteral("Document"));
     (void) kmlElement.appendChild(_rootDocumentElement);
@@ -26,7 +29,7 @@ KMLDomDocument::KMLDomDocument(const QString &name)
 
 QString KMLDomDocument::kmlCoordString(const QGeoCoordinate &coord)
 {
-    const double altitude = qIsNaN(coord.altitude() ) ? 0 : coord.altitude();
+    const double altitude = qIsNaN(coord.altitude()) ? 0 : coord.altitude();
     return QStringLiteral("%1,%2,%3").arg(QString::number(coord.longitude(), 'f', 7), QString::number(coord.latitude(), 'f', 7), QString::number(altitude, 'f', 2));
 }
 
@@ -57,7 +60,8 @@ void KMLDomDocument::addLookAt(QDomElement &parentElement, const QGeoCoordinate 
     QDomElement lookAtElement = createElement("LookAt");
     addTextElement(lookAtElement, "latitude", QString::number(coord.latitude(), 'f', 7));
     addTextElement(lookAtElement, "longitude", QString::number(coord.longitude(), 'f', 7));
-    addTextElement(lookAtElement, "altitude", QString::number(coord.longitude(), 'f', 2));
+    const double altitude = qIsNaN(coord.altitude()) ? 0 : coord.altitude();
+    addTextElement(lookAtElement, "altitude", QString::number(altitude, 'f', 2));
     addTextElement(lookAtElement, "heading", "-100");
     addTextElement(lookAtElement, "tilt", "45");
     addTextElement(lookAtElement, "range", "2500");
@@ -78,4 +82,97 @@ QDomElement KMLDomDocument::addPlacemark(const QString &name, bool visible)
 void KMLDomDocument::appendChildToRoot(const QDomNode &child)
 {
     (void) _rootDocumentElement.appendChild(child);
+}
+
+QDomElement KMLDomDocument::addFolder(const QString &name)
+{
+    QDomElement folderElement = createElement("Folder");
+    addTextElement(folderElement, "name", name);
+    (void) _rootDocumentElement.appendChild(folderElement);
+    return folderElement;
+}
+
+void KMLDomDocument::addDescription(QDomElement &parent, const QString &content)
+{
+    QDomElement descriptionElement = createElement("description");
+    QDomCDATASection cdataSection = createCDATASection(content);
+    (void) descriptionElement.appendChild(cdataSection);
+    (void) parent.appendChild(descriptionElement);
+}
+
+QDomElement KMLDomDocument::addStyle(const QString &id)
+{
+    QDomElement styleElement = createElement("Style");
+    styleElement.setAttribute("id", id);
+    (void) _rootDocumentElement.appendChild(styleElement);
+    return styleElement;
+}
+
+void KMLDomDocument::addLineStyle(QDomElement &styleElement, const QColor &color, int width, double opacity)
+{
+    QDomElement lineStyleElement = createElement("LineStyle");
+    addTextElement(lineStyleElement, "color", kmlColorString(color, opacity));
+    addTextElement(lineStyleElement, "width", QString::number(width));
+    (void) styleElement.appendChild(lineStyleElement);
+}
+
+void KMLDomDocument::addPolyStyle(QDomElement &styleElement, const QColor &color, double opacity)
+{
+    QDomElement polyStyleElement = createElement("PolyStyle");
+    addTextElement(polyStyleElement, "color", kmlColorString(color, opacity));
+    (void) styleElement.appendChild(polyStyleElement);
+}
+
+QDomElement KMLDomDocument::addPoint(QDomElement &parent, const QGeoCoordinate &coord,
+                                     const QString &altitudeMode, bool extrude)
+{
+    QDomElement pointElement = createElement("Point");
+    addTextElement(pointElement, "altitudeMode", altitudeMode);
+    addTextElement(pointElement, "coordinates", kmlCoordString(coord));
+    addTextElement(pointElement, "extrude", extrude ? "1" : "0");
+    (void) parent.appendChild(pointElement);
+    return pointElement;
+}
+
+QDomElement KMLDomDocument::addLineString(QDomElement &parent, const QList<QGeoCoordinate> &coords,
+                                          const QString &altitudeMode, bool extrude, bool tessellate)
+{
+    QDomElement lineStringElement = createElement("LineString");
+    addTextElement(lineStringElement, "extrude", extrude ? "1" : "0");
+    addTextElement(lineStringElement, "tessellate", tessellate ? "1" : "0");
+    addTextElement(lineStringElement, "altitudeMode", altitudeMode);
+
+    QString coordString;
+    for (const QGeoCoordinate &coord : coords) {
+        coordString += QStringLiteral("%1\n").arg(kmlCoordString(coord));
+    }
+    addTextElement(lineStringElement, "coordinates", coordString);
+
+    (void) parent.appendChild(lineStringElement);
+    return lineStringElement;
+}
+
+QDomElement KMLDomDocument::addPolygon(QDomElement &parent, const QList<QGeoCoordinate> &coords,
+                                       const QString &altitudeMode)
+{
+    QDomElement polygonElement = createElement("Polygon");
+    addTextElement(polygonElement, "altitudeMode", altitudeMode);
+
+    QDomElement outerBoundaryIs = createElement("outerBoundaryIs");
+    QDomElement linearRing = createElement("LinearRing");
+
+    QString coordString;
+    for (const QGeoCoordinate &coord : coords) {
+        coordString += QStringLiteral("%1\n").arg(kmlCoordString(coord));
+    }
+    // Close the ring by repeating the first coordinate
+    if (!coords.isEmpty()) {
+        coordString += QStringLiteral("%1\n").arg(kmlCoordString(coords.first()));
+    }
+    addTextElement(linearRing, "coordinates", coordString);
+
+    (void) outerBoundaryIs.appendChild(linearRing);
+    (void) polygonElement.appendChild(outerBoundaryIs);
+    (void) parent.appendChild(polygonElement);
+    return polygonElement;
 }

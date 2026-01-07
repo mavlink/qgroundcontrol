@@ -284,6 +284,8 @@ double polygonArea(const QList<QGeoCoordinate> &polygon)
 
     double perimeter, area;
     poly.Compute(false, true, perimeter, area);
+    // Area sign indicates winding order (positive = counter-clockwise, negative = clockwise).
+    // Return absolute value since we only care about magnitude.
     return qAbs(area);
 }
 
@@ -307,8 +309,13 @@ QList<QGeoCoordinate> interpolatePath(const QGeoCoordinate &from, const QGeoCoor
 {
     QList<QGeoCoordinate> result;
 
+    // Clamp to reasonable bounds to prevent excessive memory allocation
+    constexpr int kMaxPoints = 10000;
     if (numPoints < 2) {
         numPoints = 2;
+    } else if (numPoints > kMaxPoints) {
+        qCWarning(QGCGeoLog) << "interpolatePath: numPoints" << numPoints << "exceeds maximum, clamping to" << kMaxPoints;
+        numPoints = kMaxPoints;
     }
 
     if (from == to) {

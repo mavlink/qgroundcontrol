@@ -11,6 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         KMLDomDocument.h
         KMLHelper.cc
         KMLHelper.h
+        KMLSchemaValidator.cc
+        KMLSchemaValidator.h
         QGCGeo.cc
         QGCGeo.h
         ShapeFileHelper.cc
@@ -20,6 +22,13 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# KML Schema Resources (OGC KML 2.2 XSD for validation)
+qt_add_resources(${CMAKE_PROJECT_NAME} "kml_schema"
+    PREFIX "/kml"
+    FILES
+        ogckml22.xsd
+)
 
 # ============================================================================
 # GeographicLib Integration

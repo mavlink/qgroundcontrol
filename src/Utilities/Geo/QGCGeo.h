@@ -41,6 +41,7 @@ namespace QGCGeo
 /// @param[out] x North component in meters.
 /// @param[out] y East component in meters.
 /// @param[out] z Down component in meters (positive = below origin).
+/// @note NaN altitudes are treated as 0.0 (sea level).
 void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, double &x, double &y, double &z);
 
 /// Convert NED (North-East-Down) coordinate to geodetic.

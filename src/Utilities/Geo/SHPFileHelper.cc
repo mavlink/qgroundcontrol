@@ -345,6 +345,7 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
             qCWarning(SHPFileHelperLog) << "Failed to read polygon entity" << entityIdx;
             continue;
         }
+        auto shpObjectCleanup = qScopeGuard([shpObject]() { SHPDestroyObject(shpObject); });
 
         // Ensure clockwise winding for outer rings (QGC requirement)
         SHPRewindObject(shpHandle, shpObject);
@@ -386,18 +387,29 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
 
         // Filter nearby vertices if enabled
         if (filterMeters > 0) {
-            const QGeoCoordinate firstVertex = vertices[0];
-            while ((vertices.count() > 3) && (vertices.last().distanceTo(firstVertex) < filterMeters)) {
-                vertices.removeLast();
-            }
+            const QGeoCoordinate firstVertex = vertices.first();
 
+            // Detect explicit closure vertex (shapefile rings often repeat first vertex as last).
+            // Use a very small threshold (0.01m) so we only treat truly identical points as closure.
+            constexpr double kClosureThreshold = 0.01;
+            const bool hadExplicitClosure = vertices.last().distanceTo(firstVertex) < kClosureThreshold;
+
+            // Filter consecutive vertices that are too close together
             int i = 0;
-            while (i < (vertices.count() - 2)) {
-                if ((vertices.count() > 3) && (vertices[i].distanceTo(vertices[i+1]) < filterMeters)) {
-                    vertices.removeAt(i+1);
+            while (i < (vertices.count() - 1)) {
+                if ((vertices.count() > 3) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
+                    vertices.removeAt(i + 1);
                 } else {
                     i++;
                 }
+            }
+
+            // If the original polygon had an explicit closure vertex, remove a single trailing
+            // duplicate after filtering, but do not strip distinct vertices that merely happen
+            // to be within filterMeters of the first.
+            if (hadExplicitClosure && vertices.count() > 3 &&
+                vertices.last().distanceTo(firstVertex) < kClosureThreshold) {
+                vertices.removeLast();
             }
         }
 
@@ -446,6 +458,7 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
             qCWarning(SHPFileHelperLog) << "Failed to read polyline entity" << entityIdx;
             continue;
         }
+        auto shpObjectCleanup = qScopeGuard([shpObject]() { SHPDestroyObject(shpObject); });
 
         // For multi-part polylines (disconnected segments), we extract only the first part.
         // This maintains consistency with polygon handling and provides the primary path.
@@ -538,6 +551,7 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
             qCWarning(SHPFileHelperLog) << "Failed to read point entity" << entityIdx;
             continue;
         }
+        auto shpObjectCleanup = qScopeGuard([shpObject]() { SHPDestroyObject(shpObject); });
 
         // Point shapes have exactly one vertex per entity
         if (shpObject->nVertices != 1) {

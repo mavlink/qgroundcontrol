@@ -33,30 +33,30 @@ public:
 
     static ShapeType determineShapeType(const QString &file, QString &errorString);
 
-    /// Get entity count (SHP only, returns 1 for KML)
+    /// Get the number of geometry entities in the file
     static int getEntityCount(const QString &file, QString &errorString);
 
     /// Load first polygon entity (convenience wrapper)
-    /// @param filterMeters Filter vertices closer than this distance (0 to disable, SHP only)
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
     static bool loadPolygonFromFile(const QString &file, QList<QGeoCoordinate> &vertices, QString &errorString,
                                     double filterMeters = kDefaultVertexFilterMeters);
 
-    /// Load all polygon entities (SHP only, KML returns single polygon in list)
-    /// @param filterMeters Filter vertices closer than this distance (0 to disable, SHP only)
+    /// Load all polygon entities
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
     static bool loadPolygonsFromFile(const QString &file, QList<QList<QGeoCoordinate>> &polygons, QString &errorString,
                                      double filterMeters = kDefaultVertexFilterMeters);
 
     /// Load first polyline entity (convenience wrapper)
-    /// @param filterMeters Filter vertices closer than this distance (0 to disable, SHP only)
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
     static bool loadPolylineFromFile(const QString &file, QList<QGeoCoordinate> &coords, QString &errorString,
                                      double filterMeters = kDefaultVertexFilterMeters);
 
-    /// Load all polyline entities (SHP only, KML returns single polyline in list)
-    /// @param filterMeters Filter vertices closer than this distance (0 to disable, SHP only)
+    /// Load all polyline entities
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
     static bool loadPolylinesFromFile(const QString &file, QList<QList<QGeoCoordinate>> &polylines, QString &errorString,
                                       double filterMeters = kDefaultVertexFilterMeters);
 
-    /// Load point entities (SHP only, not supported for KML)
+    /// Load point entities
     static bool loadPointsFromFile(const QString &file, QList<QGeoCoordinate> &points, QString &errorString);
 
     static constexpr const char *kmlFileExtension = ".kml";
