@@ -7,11 +7,11 @@
 
 // AnalyzeView
 #include "ExifParserTest.h"
-// #include "GeoTagControllerTest.h"
+#include "GeoTagControllerTest.h"
 // #include "MavlinkLogTest.h"
 #include "LogDownloadTest.h"
 #include "PX4LogParserTest.h"
-// #include "ULogParserTest.h"
+#include "ULogParserTest.h"
 
 // AutoPilotPlugins
 // #include "RadioConfigTest.h"
@@ -110,11 +110,11 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
 
     // AnalyzeView
     UT_REGISTER_TEST(ExifParserTest)
-    // UT_REGISTER_TEST(GeoTagControllerTest)
+    UT_REGISTER_TEST(GeoTagControllerTest)
     // UT_REGISTER_TEST(MavlinkLogTest)
     UT_REGISTER_TEST(LogDownloadTest)
     UT_REGISTER_TEST(PX4LogParserTest)
-    // UT_REGISTER_TEST(ULogParserTest)
+    UT_REGISTER_TEST(ULogParserTest)
 
     // AutoPilotPlugins
     // UT_REGISTER_TEST(RadioConfigTest)
