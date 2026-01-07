@@ -57,7 +57,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib
 
 CPMAddPackage(
     NAME Shapelib
-    VERSION 1.6.1
+    VERSION 1.6.2
     GITHUB_REPOSITORY OSGeo/shapelib
     OPTIONS
         "BUILD_SHAPELIB_CONTRIB OFF"

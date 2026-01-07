@@ -13,7 +13,15 @@ private slots:
     void _testLoadPolylineFromKML();
     void _testLoadPolygonFromSHP();
     void _testLoadPolygonFromKML();
+    void _testLoadPolygonsFromSHP();
+    void _testLoadPolylinesFromSHP();
+    void _testGetEntityCount();
+    void _testDetermineShapeType();
+    void _testUnsupportedProjectionError();
+    void _testLoadFromQtResource();
+    void _testVertexFiltering();
 
 private:
     static QString _copyRes(const QTemporaryDir &tmpDir, const QString &name);
+    static void _writePrjFile(const QString &path, const QString &content);
 };
