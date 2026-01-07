@@ -1,4 +1,11 @@
 {
+  "$comment": [
+    "Copy to CMakePresets.json to activate: cp CMakePresets.json.template CMakePresets.json",
+    "",
+    "Prerequisites: Set QT_ROOT_DIR to your Qt installation (e.g., ~/Qt/6.8.0/gcc_64)",
+    "",
+    "Usage: cmake --list-presets | cmake --preset Linux-debug | cmake --build --preset Linux-debug"
+  ],
   "version": 5,
   "cmakeMinimumRequired": {
     "major": 3,
