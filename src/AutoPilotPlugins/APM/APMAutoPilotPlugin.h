@@ -19,6 +19,7 @@ class APMHeliComponent;
 class APMRemoteSupportComponent;
 class APMFollowComponent;
 class JoystickComponent;
+class ScriptingComponent;
 class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(APMAutoPilotPluginLog)
@@ -53,6 +54,7 @@ protected:
     APMRemoteSupportComponent *_apmRemoteSupportComponent = nullptr;
     APMFollowComponent *_followComponent = nullptr;
     JoystickComponent *_joystickComponent = nullptr;
+    ScriptingComponent *_scriptingComponent = nullptr;
 
 #ifndef QGC_NO_SERIAL_LINK
 private slots:

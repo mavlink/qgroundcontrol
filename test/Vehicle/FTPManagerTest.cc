@@ -6,6 +6,8 @@
 #include "MockLinkFTP.h"
 
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryFile>
+#include <QtCore/QFile>
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
 
@@ -290,6 +292,70 @@ void FTPManagerTest::_testListDirectoryBadSequence(void)
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
     QVERIFY(!arguments[1].toString().isEmpty());
+
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testListDirectoryCancel(void)
+{
+    _connectMockLinkNoInitialConnectSequence();
+
+    MultiVehicleManager*    vehicleMgr  = MultiVehicleManager::instance();
+    Vehicle*                vehicle     = vehicleMgr->activeVehicle();
+    FTPManager*             ftpManager  = vehicle->ftpManager();
+
+    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
+
+    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+
+    ftpManager->cancelListDirectory();
+
+    // listDirectoryComplete is signalled immediately on calling cancelListDirectory so no need to wait
+    QCOMPARE(spyListDirectoryComplete.count(), 1);
+    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
+    QCOMPARE(arguments[0].toStringList().count(), 0);
+    QCOMPARE(arguments[1].toString(), QStringLiteral("Aborted"));
+
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testUpload(void)
+{
+    _connectMockLinkNoInitialConnectSequence();
+
+    _mockLink->mockLinkFTP()->clearUploadedFiles();
+
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    const QString remotePath(QStringLiteral("/mock/upload/test.bin"));
+    const int chunkSize = sizeof(((MavlinkFTP::Request*)nullptr)->data);
+    const int payloadSize = (chunkSize * 2) + 7;
+
+    QByteArray payload(payloadSize, 0);
+    for (int i = 0; i < payloadSize; ++i) {
+        payload[i] = static_cast<char>((i % 251) + 1);
+    }
+
+    QTemporaryFile tempFile;
+    QVERIFY(tempFile.open());
+    QCOMPARE(tempFile.write(payload), static_cast<qint64>(payload.size()));
+    tempFile.close();
+
+    QSignalSpy spyUploadComplete(ftpManager, &FTPManager::uploadComplete);
+
+    QVERIFY(ftpManager->upload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName()));
+
+    QCOMPARE(spyUploadComplete.wait(10000), true);
+    QCOMPARE(spyUploadComplete.count(), 1);
+
+    QList<QVariant> arguments = spyUploadComplete.takeFirst();
+    QCOMPARE(arguments[0].toString(), remotePath);
+    QVERIFY(arguments[1].toString().isEmpty());
+
+    QVERIFY(_mockLink->mockLinkFTP()->uploadedFiles().contains(remotePath));
+    const QByteArray uploadedPayload = _mockLink->mockLinkFTP()->uploadedFileContents(remotePath);
+    QCOMPARE(uploadedPayload, payload);
+
+    _mockLink->mockLinkFTP()->clearUploadedFiles();
 
     _disconnectMockLink();
 }
