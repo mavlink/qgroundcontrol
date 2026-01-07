@@ -131,7 +131,7 @@ bool GeoTagWorker::_parseLogs()
     bool parseComplete = false;
     QString errorString;
     if (_logFile.endsWith(".ulg", Qt::CaseSensitive)) {
-        parseComplete = ULogParser::getTagsFromLog(log, _triggerList, errorString);
+        parseComplete = ULogParser::getTagsFromLogStreamed(log, _triggerList, errorString);
     } else {
         parseComplete = PX4LogParser::getTagsFromLog(log, _triggerList);
     }
