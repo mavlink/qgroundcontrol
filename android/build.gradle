@@ -43,7 +43,7 @@ android {
      *******************************************************/
 
     // namespace = androidPackageName
-    namespace = "org.mavlink.qgroundcontrol"
+    namespace = "org.mavlink.garudxgcs"
     compileSdkVersion androidCompileSdkVersion
     buildToolsVersion androidBuildToolsVersion
     ndkVersion = androidNdkVersion

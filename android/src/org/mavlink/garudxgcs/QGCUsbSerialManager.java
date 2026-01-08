@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.mavlink.garudxgcs;
 
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 
 public class QGCUsbSerialManager {
     private static final String TAG = QGCUsbSerialManager.class.getSimpleName();
-    private static final String ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
+    private static final String ACTION_USB_PERMISSION = "org.mavlink.garudxgcs.action.USB_PERMISSION";
     private static final int BAD_DEVICE_ID = 0;
     private static final int READ_BUF_SIZE = 2048;
 

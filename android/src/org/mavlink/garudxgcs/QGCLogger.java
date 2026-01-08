@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.mavlink.garudxgcs;
 
 import android.util.Log;
 

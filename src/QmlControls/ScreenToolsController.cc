@@ -1,13 +1,14 @@
 #include "ScreenToolsController.h"
-#include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
 
 #include <QtGui/QCursor>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QInputDevice>
+
+#include "AppSettings.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
 #if defined(Q_OS_IOS)
 #include <sys/utsname.h>
@@ -15,8 +16,7 @@
 
 QGC_LOGGING_CATEGORY(ScreenToolsControllerLog, "QMLControls.ScreenToolsController")
 
-ScreenToolsController::ScreenToolsController(QObject *parent)
-    : QObject(parent)
+ScreenToolsController::ScreenToolsController(QObject* parent) : QObject(parent)
 {
     // qCDebug(ScreenToolsControllerLog) << Q_FUNC_INFO << this;
 }
@@ -38,7 +38,7 @@ int ScreenToolsController::mouseY()
 
 bool ScreenToolsController::hasTouch()
 {
-    for (const auto &inputDevice: QInputDevice::devices()) {
+    for (const auto& inputDevice : QInputDevice::devices()) {
         if (inputDevice->type() == QInputDevice::DeviceType::TouchScreen) {
             return true;
         }
@@ -70,7 +70,8 @@ QString ScreenToolsController::normalFontFamily()
         return QStringLiteral("NanumGothic");
     }
 
-    return QStringLiteral("Open Sans");
+    // Prefer JetBrains Mono for a clean, technical monospace look across the UI.
+    return QStringLiteral("JetBrains Mono");
 }
 
 double ScreenToolsController::defaultFontDescent(int pointSize)

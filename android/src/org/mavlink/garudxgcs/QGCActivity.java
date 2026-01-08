@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.mavlink.garudxgcs;
 
 import java.io.File;
 import java.util.List;

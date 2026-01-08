@@ -1,0 +1,276 @@
+-- BuildConfig: Qt 6.10.1, GStreamer 1.24.13, NDK r27c
+-- Found Git: /usr/bin/git (found version "2.43.0") 
+-- QGC: Using ccache (/usr/bin/ccache)
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- QGC: PIE enabled
+-- QGC: Using mold linker
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found WrapAtomic: TRUE  
+-- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so   
+-- Found WrapOpenGL: TRUE  
+-- Found WrapVulkanHeaders: /usr/include  
+-- Found XKB: /usr/lib/x86_64-linux-gnu/libxkbcommon.so (found suitable version "1.6.0", minimum required is "0.9.0") 
+-- Found Wayland_Client: /usr/lib/x86_64-linux-gnu/libwayland-client.so (found version "1.22.0") 
+-- Found Wayland_Server: /usr/lib/x86_64-linux-gnu/libwayland-server.so (found version "1.22.0") 
+-- Found Wayland_Cursor: /usr/lib/x86_64-linux-gnu/libwayland-cursor.so (found version "1.22.0") 
+-- Found Wayland_Egl: /usr/lib/x86_64-linux-gnu/libwayland-egl.so (found version "18.1.0") 
+-- Found Wayland: /usr/lib/x86_64-linux-gnu/libwayland-client.so;/usr/lib/x86_64-linux-gnu/libwayland-server.so;/usr/lib/x86_64-linux-gnu/libwayland-cursor.so;/usr/lib/x86_64-linux-gnu/libwayland-egl.so (found version "1.22.0")  
+-- Found WaylandScanner: /usr/bin/wayland-scanner  
+-- QGC: Linux platform configuration applied
+-- CPM: Adding package ulog_cpp@ (main to /workspaces/qgroundcontrol/build/cpm_modules/ulog_cpp/7a69708ff89747582667f268eeaee7cd22ba9f41)
+-- CPM: Adding package ArduPilotParams@ (main to /workspaces/qgroundcontrol/build/cpm_modules/ardupilotparams/99f31686265f851862b674590cdea924986f3f8b)
+-- CPM: Adding package px4-gpsdrivers@0 (caf5158061bd10e79c9f042abb62c86bc6f3e7a7 to /workspaces/qgroundcontrol/build/cpm_modules/px4-gpsdrivers/d6d7af2e9e2fe1c8f2c14879804871d6ec1549e3)
+-- CPM: Adding package sdl_gamecontrollerdb@ (master to /workspaces/qgroundcontrol/build/cpm_modules/sdl_gamecontrollerdb/df26e45208ba3957c7751b0f686509f2e22f9a5f)
+-- CPM: Adding package SDL3@3.2.20 (release-3.2.20 to /workspaces/qgroundcontrol/build/cpm_modules/sdl3/95f24d82c7ab00e0bb7614663367fd264365dc99)
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1") 
+-- Detecting Target CPU Architecture
+-- Detecting Target CPU Architecture - X64
+-- Linker identification: GNUlike
+-- Performing Test LINKER_SUPPORTS_VERSION_SCRIPT
+-- Performing Test LINKER_SUPPORTS_VERSION_SCRIPT - Success
+-- dynamic libudev -> libudev.so.1
+-- Checking for one of the modules 'liburing-ffi'
+-- Checking for module 'libusb-1.0>=1.0.16'
+--   Found libusb-1.0, version 1.0.27
+-- Found LibUSB: /usr/lib/x86_64-linux-gnu/libusb-1.0.so (found version "1.0.27") 
+-- 
+-- SDL3 was configured with the following options:
+-- 
+-- Platform: Linux-6.8.0-1030-azure
+-- 64-bit:   TRUE
+-- Compiler: /usr/bin/cc
+-- Revision: SDL3-3.2.20-release-3.2.20
+-- Vendor:   
+-- 
+-- Subsystems:
+--   Audio:    OFF
+--   Video:    OFF
+--   GPU:      OFF
+--   Render:   OFF
+--   Camera:   OFF
+--   Joystick: ON
+--   Haptic:   ON
+--   Hidapi:   ON
+--   Power:    ON
+--   Sensor:   OFF
+--   Dialog:   OFF
+-- 
+-- Options:
+--   SDL_ALSA                    (Wanted: OFF): OFF
+--   SDL_ALSA_SHARED             (Wanted: OFF): OFF
+--   SDL_ALTIVEC                 (Wanted: OFF): OFF
+--   SDL_ARMNEON                 (Wanted: OFF): OFF
+--   SDL_ASAN                    (Wanted: OFF): OFF
+--   SDL_ASSEMBLY                (Wanted: ON): ON
+--   SDL_ASSERTIONS              (Wanted: auto): auto
+--   SDL_AVX                     (Wanted: ON): ON
+--   SDL_AVX2                    (Wanted: ON): ON
+--   SDL_AVX512F                 (Wanted: ON): ON
+--   SDL_BACKGROUNDING_SIGNAL    (Wanted: OFF): OFF
+--   SDL_CCACHE                  (Wanted: ON): ON
+--   SDL_CLANG_TIDY              (Wanted: OFF): OFF
+--   SDL_CLOCK_GETTIME           (Wanted: ON): ON
+--   SDL_COCOA                   (Wanted: OFF): OFF
+--   SDL_DBUS                    (Wanted: OFF): OFF
+--   SDL_DEPS_SHARED             (Wanted: ON): OFF
+--   SDL_DIRECTX                 (Wanted: OFF): OFF
+--   SDL_DISKAUDIO               (Wanted: OFF): OFF
+--   SDL_DUMMYAUDIO              (Wanted: OFF): OFF
+--   SDL_DUMMYCAMERA             (Wanted: OFF): OFF
+--   SDL_DUMMYVIDEO              (Wanted: OFF): OFF
+--   SDL_EXAMPLES                (Wanted: OFF): OFF
+--   SDL_EXAMPLES_LINK_SHARED    (Wanted: OFF): OFF
+--   SDL_FOREGROUNDING_SIGNAL    (Wanted: OFF): OFF
+--   SDL_GCC_ATOMICS             (Wanted: ON): ON
+--   SDL_GPU_DXVK                (Wanted: OFF): OFF
+--   SDL_HIDAPI                  (Wanted: ON): ON
+--   SDL_HIDAPI_JOYSTICK         (Wanted: ON): ON
+--   SDL_HIDAPI_LIBUSB           (Wanted: ON): ON
+--   SDL_HIDAPI_LIBUSB_SHARED    (Wanted: ON): ON
+--   SDL_IBUS                    (Wanted: OFF): OFF
+--   SDL_INSTALL                 (Wanted: OFF): OFF
+--   SDL_INSTALL_TESTS           (Wanted: OFF): OFF
+--   SDL_JACK                    (Wanted: OFF): OFF
+--   SDL_JACK_SHARED             (Wanted: OFF): OFF
+--   SDL_KMSDRM                  (Wanted: OFF): OFF
+--   SDL_KMSDRM_SHARED           (Wanted: OFF): OFF
+--   SDL_LASX                    (Wanted: OFF): OFF
+--   SDL_LIBC                    (Wanted: ON): ON
+--   SDL_LIBICONV                (Wanted: OFF): OFF
+--   SDL_LIBUDEV                 (Wanted: ON): ON
+--   SDL_LIBURING                (Wanted: ON): OFF
+--   SDL_LSX                     (Wanted: OFF): OFF
+--   SDL_METAL                   (Wanted: OFF): OFF
+--   SDL_MMX                     (Wanted: OFF): OFF
+--   SDL_OFFSCREEN               (Wanted: ON): OFF
+--   SDL_OPENGL                  (Wanted: OFF): OFF
+--   SDL_OPENGLES                (Wanted: OFF): OFF
+--   SDL_OPENVR                  (Wanted: OFF): OFF
+--   SDL_OSS                     (Wanted: OFF): OFF
+--   SDL_PIPEWIRE                (Wanted: ON): OFF
+--   SDL_PIPEWIRE_SHARED         (Wanted: ON): OFF
+--   SDL_PTHREADS                (Wanted: ON): ON
+--   SDL_PTHREADS_SEM            (Wanted: ON): ON
+--   SDL_PULSEAUDIO              (Wanted: OFF): OFF
+--   SDL_PULSEAUDIO_SHARED       (Wanted: OFF): OFF
+--   SDL_RENDER_D3D              (Wanted: OFF): OFF
+--   SDL_RENDER_D3D11            (Wanted: OFF): OFF
+--   SDL_RENDER_D3D12            (Wanted: OFF): OFF
+--   SDL_RENDER_GPU              (Wanted: OFF): OFF
+--   SDL_RENDER_METAL            (Wanted: OFF): OFF
+--   SDL_RENDER_VULKAN           (Wanted: OFF): OFF
+--   SDL_ROCKCHIP                (Wanted: OFF): OFF
+--   SDL_RPATH                   (Wanted: ON): OFF
+--   SDL_RPI                     (Wanted: OFF): OFF
+--   SDL_SNDIO                   (Wanted: OFF): OFF
+--   SDL_SNDIO_SHARED            (Wanted: OFF): OFF
+--   SDL_SSE                     (Wanted: ON): ON
+--   SDL_SSE2                    (Wanted: ON): ON
+--   SDL_SSE3                    (Wanted: ON): ON
+--   SDL_SSE4_1                  (Wanted: ON): ON
+--   SDL_SSE4_2                  (Wanted: ON): ON
+--   SDL_SYSTEM_ICONV            (Wanted: ON): ON
+--   SDL_TESTS                   (Wanted: OFF): OFF
+--   SDL_TESTS_LINK_SHARED       (Wanted: OFF): OFF
+--   SDL_UNINSTALL               (Wanted: OFF): OFF
+--   SDL_VIRTUAL_JOYSTICK        (Wanted: ON): ON
+--   SDL_VIVANTE                 (Wanted: OFF): OFF
+--   SDL_VULKAN                  (Wanted: OFF): OFF
+--   SDL_WASAPI                  (Wanted: OFF): OFF
+--   SDL_WAYLAND                 (Wanted: OFF): OFF
+--   SDL_WAYLAND_LIBDECOR        (Wanted: OFF): OFF
+--   SDL_WAYLAND_LIBDECOR_SHARED (Wanted: OFF): OFF
+--   SDL_WAYLAND_SHARED          (Wanted: OFF): OFF
+--   SDL_X11                     (Wanted: OFF): OFF
+--   SDL_X11_SHARED              (Wanted: OFF): OFF
+--   SDL_X11_XCURSOR             (Wanted: OFF): OFF
+--   SDL_X11_XDBE                (Wanted: OFF): OFF
+--   SDL_X11_XFIXES              (Wanted: OFF): OFF
+--   SDL_X11_XINPUT              (Wanted: OFF): OFF
+--   SDL_X11_XRANDR              (Wanted: OFF): OFF
+--   SDL_X11_XSCRNSAVER          (Wanted: OFF): OFF
+--   SDL_X11_XSHAPE              (Wanted: OFF): OFF
+--   SDL_X11_XSYNC               (Wanted: OFF): OFF
+--   SDL_XINPUT                  (Wanted: OFF): OFF
+-- 
+--  Build Shared Library: OFF
+--  Build Static Library: ON
+--  Build Static Library with Position Independent Code: 
+-- 
+-- If something was not detected, although the libraries
+-- were installed, then make sure you have set the
+-- CMAKE_C_FLAGS and CMAKE_PREFIX_PATH CMake variables correctly.
+-- 
+-- QGC: Building MAVLink
+-- CPM: Adding package mavlink@0 (dd17c1a65de7b9ad8dd6e3491a8690c0d0b27ba1 to /workspaces/qgroundcontrol/build/cpm_modules/mavlink/cee4ad93f4d7a702c65e6c775afc45561ceb9937)
+-- Found Python: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- MAVLink dialect: all
+-- MAVLink version: 2.0
+-- CPM: Adding package libevents@ (main to /workspaces/qgroundcontrol/build/cpm_modules/libevents/1ea2d34e1cc3658140fb45034b187e87d60c899b)
+-- Not enabling format target (clang-format not found)
+-- CPM: Adding package zlib@ (develop to /workspaces/qgroundcontrol/build/cpm_modules/zlib/b6adfce2bc5987edc7cfab3490c73021e521991f)
+-- CPM: Adding package xz-embedded@2024-12-30 (v2024-12-30 to /workspaces/qgroundcontrol/build/cpm_modules/xz-embedded/89e65918af62198be203b1131c88f91ffdee79cf)
+-- CPM: Adding package geographiclib@2.5 (r2.5 to /workspaces/qgroundcontrol/build/cpm_modules/geographiclib/5b42c2c91a17f88c890737e1b530e31483d1c938)
+-- CPM: Adding package Shapelib@1.6.1 (v1.6.1 to /workspaces/qgroundcontrol/build/cpm_modules/shapelib/a995950de7c483318cb49c46205161ff77220e22)
+-- CMake version = 3.28.3
+-- CMAKE_SYSTEM_NAME = Linux
+-- CMAKE_INSTALL_LIBDIR lib
+-- Checking for module 'gstreamer-1.0>=1.20'
+--   Found gstreamer-1.0, version 1.24.2
+-- Checking for module 'gstreamer-1.0'
+--   Found gstreamer-1.0, version 1.24.2
+-- Checking for module 'gstreamer-base-1.0'
+--   Found gstreamer-base-1.0, version 1.24.2
+-- Checking for module 'gstreamer-video-1.0'
+--   Found gstreamer-video-1.0, version 1.24.2
+-- Checking for module 'gstreamer-gl-1.0'
+--   Found gstreamer-gl-1.0, version 1.24.2
+-- Checking for module 'gstreamer-gl-prototypes-1.0'
+--   Found gstreamer-gl-prototypes-1.0, version 1.24.2
+-- Checking for module 'gstreamer-rtsp-1.0'
+--   Found gstreamer-rtsp-1.0, version 1.24.2
+-- Checking for module 'gstreamer-gl-egl-1.0'
+--   Found gstreamer-gl-egl-1.0, version 1.24.2
+-- Checking for module 'gstreamer-gl-wayland-1.0'
+--   Found gstreamer-gl-wayland-1.0, version 1.24.2
+-- Checking for module 'gstreamer-gl-x11-1.0'
+--   Found gstreamer-gl-x11-1.0, version 1.24.2
+-- Found GStreamer:  (found suitable version "1.24.2", minimum required is "1.20") found components: Core Base Video Gl GlPrototypes Rtsp GlEgl GlWayland GlX11 
+-- CPM: Adding package gstreamer_good_plugins@1.24.13 (1.24.13 to /workspaces/qgroundcontrol/build/cpm_modules/gstreamer_good_plugins/1d0e04081b65e0b09364af56a6f80eec077c2315)
+/workspaces/qgroundcontrol/build/cpm_modules/gstreamer_good_plugins/1d0e04081b65e0b09364af56a6f80eec077c2315/ext/qt6/vertex.vert -> vertex.vert.qsb exposed as :/org/freedesktop/gstreamer/qml6/vertex.vert.qsb
+/workspaces/qgroundcontrol/build/cpm_modules/gstreamer_good_plugins/1d0e04081b65e0b09364af56a6f80eec077c2315/ext/qt6/YUV_TRIPLANAR.frag -> YUV_TRIPLANAR.frag.qsb exposed as :/org/freedesktop/gstreamer/qml6/YUV_TRIPLANAR.frag.qsb
+/workspaces/qgroundcontrol/build/cpm_modules/gstreamer_good_plugins/1d0e04081b65e0b09364af56a6f80eec077c2315/ext/qt6/RGBA.frag -> RGBA.frag.qsb exposed as :/org/freedesktop/gstreamer/qml6/RGBA.frag.qsb
+Warning: plug-in Qt6::QWaylandEglPlatformIntegrationPlugin is not known to the current Qt installation.
+-- QGC: Qt deployment script: /workspaces/qgroundcontrol/build/.qt/deploy_qml_app_garudxgcs_339608260f.cmake
+-- 
+-- ==================================================================
+-- QGroundControl Configuration Summary
+-- Generated at: 2026-01-08 15:15:03 UTC
+-- ==================================================================
+-- 
+-- CMake System:
+--   CMake version:      3.28.3
+--   Generator:          Unix Makefiles
+--   Build type:         Release
+--   Source directory:   /workspaces/qgroundcontrol
+--   Install prefix:     /workspaces/qgroundcontrol/build/AppDir/usr
+--   Host system:        Linux 6.8.0-1030-azure
+--   Target system:      Linux 6.8.0-1030-azure
+-- 
+-- Compiler & Linker:
+--   C++ compiler:       GNU 13.3.0
+--   C++ standard:       C++20
+-- 
+-- Application:
+--   Name:               garudxgcs
+--   Version:            v5.0.3-565-g18f2bfd34
+--   Description:        Open Source Ground Control App
+--   Organization:       garudxgcs (garudxgcs.com)
+--   Package name:       org.mavlink.garudxgcs
+--   Settings version:   9
+-- 
+-- Build & Feature Flags:
+--   Stable build                          : OFF
+--   Use build caching                     : ON
+--   Enable testing                        : OFF
+--   Enable QML debugging                  : OFF
+--   Enable QML linting                    : OFF
+--   Enable 3D Viewer                      : ON
+--   Enable Bluetooth links                : ON
+--   Enable ZeroConf compatibility         : OFF
+--   Disable AIRLink                       : ON
+--   Disable serial links                  : OFF
+--   Enable UVC devices                    : ON
+--   Enable GStreamer video                : ON
+--   Enable Qt video backend               : OFF
+--   Disable APM MAVLink dialect           : OFF
+--   Disable APM plugin                    : OFF
+--   Disable PX4 plugin                    : OFF
+-- 
+-- External Dependencies:
+--   MAVLink repo:       https://github.com/mavlink/mavlink.git
+--   MAVLink tag:        dd17c1a65de7b9ad8dd6e3491a8690c0d0b27ba1
+--   CPM cache:          /workspaces/qgroundcontrol/build/cpm_modules
+--   QML output dir:     /workspaces/qgroundcontrol/build/qml
+-- 
+-- Linux Platform:
+--   AppImage:           Enabled
+-- 
+-- ==================================================================
+-- 
+-- Configuring done (107.8s)
+-- Generating done (2.1s)
+-- Build files have been written to: /workspaces/qgroundcontrol/build

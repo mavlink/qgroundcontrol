@@ -1,0 +1,49 @@
+name: Build Windows Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt (Qt 6.10.1)
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: "6.10.1"
+          host: "windows"
+          target: "msvc"
+
+      - name: Configure CMake (MSVC)
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (Release)
+        run: |
+          cmake --build build --config Release -- /m
+
+      - name: Bundle Qt runtime with windeployqt
+        run: |
+          $exe = 'build\\Release\\garudxgcs.exe'
+          if (-not (Test-Path $exe)) { $exe = 'build\\garudxgcs\\Release\\garudxgcs.exe' }
+          Write-Host "Using exe: $exe"
+          & windeployqt --qmldir src --release $exe
+
+      - name: Package artifact
+        run: |
+          $out = "artifact"
+          Remove-Item -Recurse -Force $out -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $out
+          Copy-Item -Path build\\Release\\* -Destination $out -Recurse -Force
+          Compress-Archive -Path $out\\* -DestinationPath garudxgcs-windows.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: garudxgcs-windows
+          path: garudxgcs-windows.zip

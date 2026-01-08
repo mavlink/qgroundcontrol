@@ -36,7 +36,7 @@
         <!-- android:theme="@style/AppTheme" -->
 
         <activity
-            android:name="org.mavlink.qgroundcontrol.QGCActivity"
+            android:name="org.mavlink.garudxgcs.QGCActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
             android:label="-- %%INSERT_APP_NAME%% --"
             android:launchMode="singleTop"
