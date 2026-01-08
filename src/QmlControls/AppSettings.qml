@@ -1,21 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.AppSettings
 
 Rectangle {
@@ -27,7 +15,6 @@ Rectangle {
     readonly property real _defaultTextWidth:   ScreenTools.defaultFontPixelWidth
     readonly property real _horizontalMargin:   _defaultTextWidth / 2
     readonly property real _verticalMargin:     _defaultTextHeight / 2
-    readonly property real _buttonHeight:       ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 2
 
     property bool _first: true
 
@@ -131,12 +118,22 @@ Rectangle {
 
                 Loader {
                     Layout.fillWidth: true
-                    sourceComponent: name === "Divider" ? dividerComponent : buttonComponent
+                    sourceComponent: _sourceComponent()
 
                     property var modelName: name
                     property var modelIconUrl: iconUrl
                     property var modelUrl: url
                     property var modelPageVisible: pageVisible
+
+                    function _sourceComponent() {
+                        if (name === "Divider") {
+                            return dividerComponent
+                        } else if (pageVisible()) {
+                            return buttonComponent
+                        } else {
+                            return undefined
+                        }
+                    }
                 }
             }
         }

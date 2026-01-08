@@ -1,0 +1,13 @@
+{
+    "Name" : "QGCPlugin",
+    "Version" : "${PROJECT_VERSION}",
+    "CompatVersion" : "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.0",
+    "Vendor" : "QGroundControl",
+    "Copyright" : "(C) 2024 QGroundControl Project",
+    "License" : "Apache-2.0",
+    "Category" : "Code Generation",
+    "Description" : "QGroundControl development tools for Qt Creator: FactGroup wizard, MAVLink completion, and code analysis.",
+    "Url" : "https://github.com/mavlink/qgroundcontrol",
+    "DocumentationUrl" : "https://dev.qgroundcontrol.com/",
+    ${IDE_PLUGIN_DEPENDENCIES}
+}

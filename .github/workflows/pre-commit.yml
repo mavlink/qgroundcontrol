@@ -1,26 +1,173 @@
 name: pre-commit
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.pre-commit-config.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
 
-      - name: Install Qt and qmllint
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Full history needed for diff vs master
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install pre-commit
         run: |
-          sudo apt-get update -y --quiet
-          sudo apt-get install python3 python3-pip pipx -y
-          pipx install aqtinstall
-          pipx ensurepath
-          USER_BASE_BIN="$(python3 -m site --user-base)/bin"
-          export PATH="$USER_BASE_BIN:$PATH"
-          QT_VERSION=6.10.1
-          QT_ARCH=linux_gcc_64
-          QT_PATH=/opt/Qt
-          aqt install-qt linux desktop $QT_VERSION $QT_ARCH -O $QT_PATH
-          echo "$QT_PATH/$QT_VERSION/gcc_64/bin" >> $GITHUB_PATH
+          python -m pip install pre-commit
+          python -m pip freeze --local
 
-      - uses: pre-commit/action@v3.0.1
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install Qt (for qmllint)
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Run pre-commit
+        id: pre-commit
+        continue-on-error: true
+        env:
+          PRE_COMMIT_OUTPUT: pre-commit-output.txt
+        run: ./tools/pre-commit.sh --ci
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        continue-on-error: true  # Fork PRs don't have write permissions
+        uses: actions/github-script@v8
+        env:
+          EXIT_CODE: ${{ steps.pre-commit.outputs.exit_code }}
+          PASSED: ${{ steps.pre-commit.outputs.passed }}
+          FAILED: ${{ steps.pre-commit.outputs.failed }}
+          SKIPPED: ${{ steps.pre-commit.outputs.skipped }}
+          SUMMARY: ${{ steps.pre-commit.outputs.summary }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Use env vars to prevent script injection from user-controlled outputs
+            const exitCode = process.env.EXIT_CODE || '1';
+            const passed = parseInt(process.env.PASSED) || 0;
+            const failed = parseInt(process.env.FAILED) || 0;
+            const skipped = parseInt(process.env.SKIPPED) || 0;
+            const success = exitCode === '0';
+
+            // Build comment body (text labels for accessibility, emoji as decoration)
+            let body = success
+              ? '## Pre-commit Checks Passed\n\n'
+              : '## Pre-commit Checks Failed\n\n';
+
+            body += `| Status | Count |\n|--------|-------|\n`;
+            body += `| Passed | ${passed} |\n`;
+            body += `| Failed | ${failed} |\n`;
+            if (skipped > 0) {
+              body += `| Skipped | ${skipped} |\n`;
+            }
+            body += '\n';
+
+            // Add hook summary
+            const summary = process.env.SUMMARY || '';
+            if (summary && summary.trim() && summary !== 'No results') {
+              body += '<details>\n<summary>Hook Results</summary>\n\n```\n';
+              body += summary;
+              body += '\n```\n</details>\n\n';
+            }
+
+            if (!success) {
+              // Add diff if files were modified
+              let diff = '';
+              try {
+                const { execSync } = require('child_process');
+                diff = execSync('git diff --stat', { encoding: 'utf8', maxBuffer: 50 * 1024 });
+              } catch (e) {
+                diff = '';
+              }
+
+              if (diff.trim()) {
+                body += '<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n';
+                body += diff;
+                body += '```\n</details>\n\n';
+              }
+
+              body += '### How to Fix\n\n';
+              body += '```bash\n';
+              body += './tools/pre-commit.sh\n';
+              body += 'git add -u && git commit --amend --no-edit\n';
+              body += '```\n';
+            }
+
+            body += `\n<sub>Run ID: [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})</sub>`;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = '## Pre-commit Checks';
+            const existing = comments.data.find(c =>
+              c.user?.type === 'Bot' && c.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: Fail if pre-commit failed
+        if: steps.pre-commit.outputs.exit_code != '0'
+        run: exit 1

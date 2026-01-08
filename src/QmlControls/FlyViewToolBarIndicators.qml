@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 
 import QGroundControl
@@ -14,9 +5,7 @@ import QGroundControl.Controls
 import QGroundControl.Toolbar
 
 Item {
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
-    width:          mainLayout.width + _widthMargin
+    implicitWidth: mainLayout.width + _widthMargin
 
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66

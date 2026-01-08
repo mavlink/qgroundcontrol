@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Layouts
 
@@ -20,7 +11,7 @@ ToolIndicatorPage {
 
     property var    activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
     property string na:             qsTr("N/A", "No data to display")
-    property string valueNA:        qsTr("--", "No data to display")
+    property string valueNA:        qsTr("–", "No data to display")
 
     property var    _escs:          activeVehicle ? activeVehicle.escs : null
     property int    _onlineBitmask: _escs ? _escs.get(0).info.rawValue : 0

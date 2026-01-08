@@ -1,16 +1,35 @@
-name: flatpak
-on: [workflow_dispatch]
+name: Flatpak
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  flatpak-builder:
+  flatpak:
     name: Flatpak
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-47
       options: --privileged
+
     steps:
-      - uses: actions/checkout@v6
-      - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          bundle: org.mavlink.qgroundcontrol.flatpak
-          manifest-path: ./deploy/flatpak/org.mavlink.qgroundcontrol.yml
+          submodules: recursive
+
+      - name: Build Flatpak
+        uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: QGroundControl.flatpak
+          manifest-path: deploy/linux/org.mavlink.qgroundcontrol.flatpak.yml
           cache-key: flatpak-builder-${{ github.sha }}
+
+      - name: Upload Flatpak
+        uses: actions/upload-artifact@v6
+        with:
+          name: QGroundControl-flatpak
+          path: QGroundControl.flatpak

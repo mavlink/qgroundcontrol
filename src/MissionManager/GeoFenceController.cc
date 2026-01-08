@@ -1,16 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "GeoFenceController.h"
 #include "Vehicle.h"
 #include "ParameterManager.h"
@@ -44,8 +31,8 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
     _breachReturnAltitudeFact.setMetaData(_metaDataMap[_breachReturnAltitudeFactName]);
     _breachReturnAltitudeFact.setRawValue(_breachReturnDefaultAltitude);
 
-    connect(&_polygons, &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
-    connect(&_circles,  &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
+    connect(&_polygons, &QmlObjectListModel::countChanged, this, &GeoFenceController::containsItemsChanged);
+    connect(&_circles,  &QmlObjectListModel::countChanged, this, &GeoFenceController::containsItemsChanged);
 
     connect(this,                       &GeoFenceController::breachReturnPointChanged,  this, &GeoFenceController::_setDirty);
     connect(&_breachReturnAltitudeFact, &Fact::rawValueChanged,                         this, &GeoFenceController::_setDirty);
@@ -364,11 +351,6 @@ void GeoFenceController::_managerRemoveAllComplete(bool error)
 bool GeoFenceController::containsItems(void) const
 {
     return _polygons.count() > 0 || _circles.count() > 0;
-}
-
-void GeoFenceController::_updateContainsItems(void)
-{
-    emit containsItemsChanged(containsItems());
 }
 
 bool GeoFenceController::showPlanFromManagerVehicle(void)

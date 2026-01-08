@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MissionController.h"
 #include "Vehicle.h"
 #include "MissionManager.h"
@@ -179,7 +170,9 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             i = 1;
         }
 
+        bool weHaveItemsFromVehicle = false;
         for (; i < newMissionItems.count(); i++) {
+            weHaveItemsFromVehicle = true;
             const MissionItem* missionItem = newMissionItems[i];
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, _flyView, *missionItem);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
@@ -196,7 +189,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _settingsItem = settingsItem;
 
         // We set Altitude mode to mixed, otherwise if we need a non relative altitude frame we won't be able to change it
-        setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeMixed);
+        setGlobalAltitudeMode(weHaveItemsFromVehicle ? QGroundControlQmlGlobal::AltitudeModeMixed : QGroundControlQmlGlobal::AltitudeModeRelative);
 
         MissionController::_scanForAdditionalSettings(_visualItems, _masterController);
 
@@ -625,7 +618,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
         { _jsonPlannedHomePositionKey,      QJsonValue::Object, true },
         { _jsonItemsKey,                    QJsonValue::Array,  true },
-        { _jsonMavAutopilotKey,             QJsonValue::Double, true },
+        { _jsonMavAutopilotKey,             QJsonValue::Double, false },
         { _jsonComplexItemsKey,             QJsonValue::Array,  true },
     };
     if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
@@ -914,24 +907,15 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
 bool MissionController::_loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
 {
-    // V1 file format has no file type key and version key is string. Convert to new format.
-    if (!json.contains(JsonHelper::jsonFileTypeKey)) {
-        json[JsonHelper::jsonFileTypeKey] = _jsonFileTypeValue;
-    }
-
     int fileVersion;
     JsonHelper::validateExternalQGCJsonFile(json,
                                             _jsonFileTypeValue,    // expected file type
-                                            1,                     // minimum supported version
+                                            2,                     // minimum supported version
                                             2,                     // maximum supported version
                                             fileVersion,
                                             errorString);
 
-    if (fileVersion == 1) {
-        return _loadJsonMissionFileV1(json, visualItems, errorString);
-    } else {
-        return _loadJsonMissionFileV2(json, visualItems, errorString);
-    }
+    return _loadJsonMissionFileV2(json, visualItems, errorString);
 }
 
 bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString)
@@ -1034,30 +1018,6 @@ bool MissionController::load(const QJsonObject& json, QString& errorString)
         errorString = errorMessage.arg(errorStr);
         return false;
     }
-    _initLoadedVisualItems(loadedVisualItems);
-
-    return true;
-}
-
-bool MissionController::loadJsonFile(QFile& file, QString& errorString)
-{
-    QString         errorStr;
-    QString         errorMessage = tr("Mission: %1");
-    QJsonDocument   jsonDoc;
-    QByteArray      bytes = file.readAll();
-
-    if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
-        return false;
-    }
-
-    QJsonObject json = jsonDoc.object();
-    QmlObjectListModel* loadedVisualItems = new QmlObjectListModel(this);
-    if (!_loadItemsFromJson(json, loadedVisualItems, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
-        return false;
-    }
-
     _initLoadedVisualItems(loadedVisualItems);
 
     return true;
@@ -1276,17 +1236,11 @@ void MissionController::_recalcFlightPathSegments(void)
     _missionContainsVTOLTakeoff = false;
     _flightPathSegmentHashTable.clear();
 
-    // Note: Although visual support for _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
-    // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
-    // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
-
     _simpleFlightPathSegments.beginResetModel();
     _directionArrows.beginResetModel();
-    _incompleteComplexItemLines.beginResetModel();
 
     _simpleFlightPathSegments.clear();
     _directionArrows.clear();
-    _incompleteComplexItemLines.clearAndDeleteContents();
 
     // Mission Settings item needs to start with no segment
     lastFlyThroughVI->clearSimpleFlighPathSegment();
@@ -1436,7 +1390,6 @@ void MissionController::_recalcFlightPathSegments(void)
 
     _simpleFlightPathSegments.endResetModel();
     _directionArrows.endResetModel();
-    _incompleteComplexItemLines.endResetModel();
 
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(oldSegmentTable);
@@ -1932,7 +1885,7 @@ void MissionController::_initAllVisualItems(void)
     connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 
     emit visualItemsChanged();
-    emit containsItemsChanged(containsItems());
+    emit containsItemsChanged();
     emit plannedHomePositionChanged(plannedHomePosition());
 
     if (!_flyView) {
@@ -2239,7 +2192,7 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
 
 void MissionController::_updateContainsItems(void)
 {
-    emit containsItemsChanged(containsItems());
+    emit containsItemsChanged();
 }
 
 bool MissionController::containsItems(void) const

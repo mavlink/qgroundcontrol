@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "PX4SimpleFlightModesController.h"
 #include "Fact.h"
 #include "Vehicle.h"
@@ -15,7 +5,6 @@
 
 PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
     : _activeFlightMode(0)
-    , _channelCount(QGCMAVLink::maxRcChannels)
 
 {
     QStringList usedParams;
@@ -26,17 +15,24 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
         return;
     }
 
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::_rcChannelsChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::channelValuesChanged);
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
-void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
+void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues)
 {
+    int channelCount = pwmValues.size();
+
     _rcChannelValues.clear();
     for (int i=0; i<channelCount; i++) {
         _rcChannelValues.append(pwmValues[i]);
     }
     emit rcChannelValuesChanged();
+
+    if (channelCount != _channelCount) {
+        _channelCount = channelCount;
+        emit channelCountChanged();
+    }
 
     Fact* pFact = getParameterFact(-1, "RC_MAP_FLTMODE");
     if(!pFact) {

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "git-submodules": {
+    "enabled": true
+  },
+  "labels": [
+    "dependencies"
+  ],
+  "ignorePaths": [
+    ".github/workflows/**"
+  ],
+  "enabledManagers": [
+    "npm",
+    "git-submodules",
+    "pip_requirements",
+    "pip_setup",
+    "pre-commit"
+  ],
+  "packageRules": [
+    {
+      "description": "Auto-merge patch updates after CI passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Group all git submodule updates",
+      "groupName": "Git Submodules",
+      "matchManagers": [
+        "git-submodules"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "description": "Group Node.js updates (docs)",
+      "groupName": "Node.js Dependencies",
+      "matchManagers": [
+        "npm"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "description": "Group Python updates (tools)",
+      "groupName": "Python Dependencies",
+      "matchManagers": [
+        "pip_requirements",
+        "pip_setup"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
+      "description": "Group pre-commit hook updates",
+      "groupName": "pre-commit hooks",
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    }
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "timezone": "UTC",
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security",
+      "priority"
+    ],
+    "schedule": [
+      "at any time"
+    ]
+  }
+}

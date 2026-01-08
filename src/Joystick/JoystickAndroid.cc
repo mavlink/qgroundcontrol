@@ -1,15 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "JoystickAndroid.h"
 #include "JoystickManager.h"
 #include "AndroidInterface.h"
+#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJniEnvironment>
@@ -194,7 +186,7 @@ int  JoystickAndroid::_getAndroidHatAxis(int axisHatCode) const
 {
     for (int i = 0; i < _axisCount; i++) {
         if (axisCode[i] == axisHatCode) {
-            return _getAxis(i);
+            return _getAxisValue(i);
         }
     }
 
@@ -267,7 +259,7 @@ static void jniUpdateAvailableJoysticks(JNIEnv *envA, jobject thizA)
 
     qCDebug(JoystickAndroidLog) << "jniUpdateAvailableJoysticks triggered";
 
-    emit JoystickManager::instance()->updateAvailableJoysticksSignal();
+    emit JoystickManager::instance()->_updateAvailableJoysticksSignal();
 }
 
 void JoystickAndroid::setNativeMethods()

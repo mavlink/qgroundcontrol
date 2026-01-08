@@ -2,8 +2,7 @@
 // Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#ifndef QSERIALPORTINFO_H
-#define QSERIALPORTINFO_H
+#pragma once
 
 #include <QtCore/qlist.h>
 #include <QtCore/qscopedpointer.h>
@@ -58,5 +57,3 @@ inline bool QSerialPortInfo::isNull() const
 { return !d_ptr; }
 
 QT_END_NAMESPACE
-
-#endif // QSERIALPORTINFO_H

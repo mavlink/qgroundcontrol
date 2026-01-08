@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -19,7 +10,6 @@ import QtQml.Models
 
 import QGroundControl
 import QGroundControl.Controls
-
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
 
@@ -45,8 +35,6 @@ Item {
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
-
-    property bool utmspActTrigger
 
     QGCToolInsets {
         id:                     _totalToolInsets
@@ -78,7 +66,6 @@ Item {
     FlyViewTopRightColumnLayout {
         id:                 topRightColumnLayout
         anchors.top:        parent.top
-        anchors.bottom:     bottomRightRowLayout.top
         anchors.right:      parent.right
         spacing:            _layoutSpacing
         visible:           !topRightPanel.visible
@@ -103,15 +90,6 @@ Item {
         missionController:      _missionController
         geoFenceController:     _geoFenceController
         rallyPointController:   _rallyPointController
-    }
-
-    GuidedActionConfirm {
-        anchors.top:                parent.top
-        anchors.horizontalCenter:   parent.horizontalCenter
-        z:                          QGroundControl.zOrderTopMost
-        guidedController:           _guidedController
-        guidedValueSlider:          _guidedValueSlider
-        utmspSliderTrigger:         utmspActTrigger
     }
 
     //-- Virtual Joystick
@@ -190,8 +168,6 @@ Item {
         anchors.left:       toolStrip.right
         anchors.top:        parent.top
         mapControl:         _mapControl
-        buttonsOnLeft:      true
-        zoomButtonsVisible: false
         autoHide:           true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && !isViewer3DOpen && mapControl.pipState.state === mapControl.pipState.fullState
 

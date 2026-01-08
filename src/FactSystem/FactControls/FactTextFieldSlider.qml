@@ -6,20 +6,29 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-ColumnLayout {
-    property alias label:                   factTextField.label
+Rectangle {
+    property string label
     property alias fact:                    factTextField.fact
     property alias textFieldPreferredWidth: factTextField.textFieldPreferredWidth
     property alias textFieldUnitsLabel:     factTextField.textFieldUnitsLabel
     property alias textFieldShowUnits:      factTextField.textFieldShowUnits
     property alias textFieldShowHelp:       factTextField.textFieldShowHelp
     property alias textField:               factTextField
+    property alias enableCheckBoxChecked:   enableCheckbox.checked
 
-    id:         control
-    spacing:    0
+    property bool   showEnableCheckbox: false ///< true: show enable/disable checkbox, false: hide
+    property color  backgroundColor:    _ftfsBackgroundColor
 
-    property bool _loadComplete:    false
-    property bool _showSlider:      fact.userMin !== undefined && fact.userMax !== undefined
+    signal enableCheckboxClicked
+
+    id:             control
+    implicitHeight: mainLayout.implicitHeight
+    color:          backgroundColor
+    radius:         ScreenTools.defaultBorderRadius
+
+    property bool _loadComplete:            false
+    property bool _showSlider:              fact.userMin !== undefined && fact.userMax !== undefined
+    property color _ftfsBackgroundColor:    Qt.rgba(qgcPal.windowShadeLight.r, qgcPal.windowShadeLight.g, qgcPal.windowShadeLight.b, 0.2)
 
     function updateSliderToClampedValue() {
         if (_showSlider && sliderLoader.item) {
@@ -35,44 +44,67 @@ ColumnLayout {
 
     Component.onCompleted: {
         _loadComplete = true
-        updateSliderToClampedValue()
     }
 
     Connections {
         target: control.fact
 
         function onValueChanged() {
-            updateSliderToClampedValue()
+            control.updateSliderToClampedValue()
         }
     }
 
-    LabelledFactTextField {
-        id:                 factTextField
-        Layout.fillWidth:   true
-        label:              control.label
-        fact:               control.fact
-    }
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    Loader {
-        id:                 sliderLoader
-        Layout.fillWidth:   true
-        sourceComponent:    control._showSlider ? sliderComponent : null
-    }
+    ColumnLayout {
+        id:         mainLayout
+        width:      parent.width
+        spacing:    0
 
-    Component {
-        id: sliderComponent
+        RowLayout {
+            spacing: ScreenTools.defaultFontPixelWidth
 
-        QGCSlider {
-            id:                 slider
+            QGCCheckBox {
+                id:                 enableCheckbox
+                Layout.fillWidth:   visible
+                text:               control.label
+                visible:            control.showEnableCheckbox
+
+                onClicked: control.enableCheckboxClicked()
+            }
+
+            LabelledFactTextField {
+                id:                 factTextField
+                Layout.fillWidth:   !control.showEnableCheckbox
+                label:              control.showEnableCheckbox ? "" : control.label
+                fact:               control.fact
+                enabled:            !control.showEnableCheckbox || enableCheckbox.checked
+            }
+        }
+
+        Loader {
+            id:                 sliderLoader
             Layout.fillWidth:   true
-            from:               control.fact.userMin
-            to:                 control.fact.userMax
-            mouseWheelSupport:  false
-            showBoundaryValues: true
+            sourceComponent:    control._showSlider ? sliderComponent : null
+            enabled:            !control.showEnableCheckbox || enableCheckbox.checked
 
-            onMoved: {
-                if (control._loadComplete) {
-                    control.fact.value = slider.value
+            onLoaded: control.updateSliderToClampedValue()
+        }
+
+        Component {
+            id: sliderComponent
+
+            QGCSlider {
+                id:                 slider
+                Layout.fillWidth:   true
+                from:               control.fact.userMin
+                to:                 control.fact.userMax
+                showBoundaryValues: true
+
+                onMoved: {
+                    if (control._loadComplete) {
+                        control.fact.value = slider.value
+                    }
                 }
             }
         }

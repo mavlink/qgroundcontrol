@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -18,15 +9,10 @@ import QtQuick.Window
 import QtQml.Models
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-
-
 import QGroundControl.UTMSP
-
 import QGroundControl.Viewer3D
 
 Item {
@@ -130,7 +116,6 @@ Item {
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             visible:                !QGroundControl.videoManager.fullScreen
-            utmspActTrigger:        utmspSendActTrigger
             isViewer3DOpen:         viewer3DWindow.isOpen
         }
 
@@ -167,6 +152,7 @@ Item {
             anchors.right:      parent.right
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
+            anchors.topMargin:  toolbar.height
             z:                  QGroundControl.zOrderTopMost
             visible:            false
         }
@@ -189,7 +175,9 @@ Item {
     }
 
     FlyViewToolBar {
-        id:         toolbar
-        visible:    !QGroundControl.videoManager.fullScreen
+        id:                 toolbar
+        guidedValueSlider:  _guidedValueSlider
+        utmspSliderTrigger: utmspSendActTrigger
+        visible:            !QGroundControl.videoManager.fullScreen
     }
 }

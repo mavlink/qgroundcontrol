@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "APMParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 
@@ -494,6 +485,11 @@ FactMetaData *APMParameterMetaData::getMetaDataForFact(const QString &name, MAV_
                                              << "max:" << rawMetaData->max
                                              << "error:" << errorString;
         }
+    }
+
+    if (!rawMetaData->min.isEmpty() && !rawMetaData->max.isEmpty()) {
+        metaData->setRawUserMin(metaData->rawMin());
+        metaData->setRawUserMax(metaData->rawMax());
     }
 
     if (!rawMetaData->values.isEmpty()) {

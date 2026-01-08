@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include <QtQuick/QQuickWindow>
 #include <QtWidgets/QApplication>
 
@@ -34,8 +25,8 @@ int main(int argc, char *argv[])
 {
 #if 0
     // Useful for debugging specific unit tests
-    char argument1[] = "--unittest:ParameterManagerTest";
-    char argument2[] = "--logging:FactSystem.ParameterManager,Utilities.QGCStateMachine";
+    char argument1[] = "--unittest:FTPManagerTest";
+    char argument2[] = "--logging:Vehicle.FTPManager";
     char *newArgv[] = { argv[0], argument1, argument2 };
     argc = 3;
     argv = newArgv;

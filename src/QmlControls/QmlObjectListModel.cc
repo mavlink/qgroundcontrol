@@ -1,38 +1,18 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "QmlObjectListModel.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtCore/QDebug>
-#include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
-    : QAbstractListModel        (parent)
-    , _dirty                    (false)
-    , _skipDirtyFirstItem       (false)
+    : ObjectListModelBase(parent)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-}
 
-QmlObjectListModel::~QmlObjectListModel()
-{
-    if (_resetModelNestingCount > 0) {
-        qCWarning(QmlObjectListModelLog) << "QmlObjectListModel destroyed with unbalanced nesting of begin/endResetModel calls - _resetModelNestingCount:" << _resetModelNestingCount << this;
-    }
 }
 
 QObject* QmlObjectListModel::get(int index)
 {
     if (index < 0 || index >= _objectList.count()) {
+        qCWarning(QmlObjectListModelLog) << "InternalError: Invalid index - index:count" << index << _objectList.count() << this;
         return nullptr;
     }
     return _objectList[index];
@@ -62,16 +42,6 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
     } else {
         return QVariant();
     }
-}
-
-QHash<int, QByteArray> QmlObjectListModel::roleNames(void) const
-{
-    QHash<int, QByteArray> hash;
-
-    hash[ObjectRole] = "object";
-    hash[TextRole] = "text";
-
-    return hash;
 }
 
 bool QmlObjectListModel::setData(const QModelIndex& index, const QVariant& value, int role)
@@ -262,58 +232,10 @@ void QmlObjectListModel::setDirty(bool dirty)
     }
 }
 
-void QmlObjectListModel::_childDirtyChanged(bool dirty)
-{
-    _dirty |= dirty;
-    // We want to emit dirtyChanged even if the actual value of _dirty didn't change. It can be a useful
-    // signal to know when a child has changed dirty state
-    emit dirtyChanged(_dirty);
-}
-
-void QmlObjectListModel::deleteListAndContents()
-{
-    for (int i=0; i<_objectList.count(); i++) {
-        _objectList[i]->deleteLater();
-    }
-    deleteLater();
-}
-
 void QmlObjectListModel::clearAndDeleteContents()
 {
     for (int i=0; i<_objectList.count(); i++) {
         _objectList[i]->deleteLater();
     }
     clear();
-}
-
-void QmlObjectListModel::beginResetModel()
-{
-    if (_resetModelNestingCount == 0) {
-        qCDebug(QmlObjectListModelLog) << "First call to begindResetModel - calling QAbstractListModel::beginResetModel" << this;
-        QAbstractListModel::beginResetModel();
-    }
-    _resetModelNestingCount++;
-    qCDebug(QmlObjectListModelLog) << "_resetModelNestingCount:" << _resetModelNestingCount << this;
-}
-
-void QmlObjectListModel::endResetModel()
-{
-    if (_resetModelNestingCount == 0) {
-        qCWarning(QmlObjectListModelLog) << "QmlObjectListModel::endResetModel called without prior beginResetModel";
-        return;
-    }
-    _resetModelNestingCount--;
-    qCDebug(QmlObjectListModelLog) << "_resetModelNestingCount:" << _resetModelNestingCount << this;
-    if (_resetModelNestingCount == 0) {
-        qCDebug(QmlObjectListModelLog) << "Last call to endResetModel - calling QAbstractListModel::endResetModel" << this;
-        QAbstractListModel::endResetModel();
-        emit countChanged(count());
-    }
-}
-
-void QmlObjectListModel::_signalCountChangedIfNotNested()
-{
-    if (_resetModelNestingCount == 0) {
-        emit countChanged(count());
-    }
 }

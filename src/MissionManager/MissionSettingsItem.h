@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "ComplexMissionItem.h"
@@ -72,8 +63,8 @@ public:
     bool            isStandaloneCoordinate      (void) const final { return false; }
     bool            specifiesCoordinate         (void) const final;
     bool            specifiesAltitudeOnly       (void) const final { return false; }
-    QString         commandDescription          (void) const final { return tr("Initial Mission Settings"); }
-    QString         commandName                 (void) const final { return tr("Mission Start"); }
+    QString         commandDescription          (void) const final { return tr("Mission Settings"); }
+    QString         commandName                 (void) const final { return tr("Mission Settings"); }
     QString         abbreviation                (void) const final;
     QGeoCoordinate  coordinate                  (void) const final { return _plannedHomePositionCoordinate; } // Includes altitude
     QGeoCoordinate  exitCoordinate              (void) const final { return _plannedHomePositionCoordinate; }

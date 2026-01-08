@@ -17,7 +17,6 @@ import QGroundControl
  Usage:
 
         import QGroundControl.Controls
-
         Rectangle {
             anchors.fill:       parent
             anchors.margins:    ScreenTools.defaultFontPixelWidth
@@ -64,7 +63,6 @@ Item {
 
     property real toolbarHeight:            0
 
-
     property real realPixelDensity: {
         //-- If a plugin defines it, just use what it tells us
         if(QGroundControl.corePlugin.options.devicePixelDensity != 0) {
@@ -104,19 +102,20 @@ Item {
     property real minTouchPixels:                   0   ///< Minimum touch size in pixels (calculatedd from minTouchMillimeters and realPixelDensity)
 
     // The implicit heights/widths for our custom control set
-    property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
-    property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
-    property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 1.2 : 1.0))
+    property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  5.0)
+    property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * 1.6)
+    property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * 1.0)
     property real implicitRadioButtonHeight:        implicitCheckBoxHeight
-    property real implicitTextFieldWidth:           defaultFontPixelWidth * 13
-    property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
-    property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
-    property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
+    property real implicitTextFieldWidth:           defaultFontPixelWidth * 10
+    property real implicitTextFieldHeight:          implicitButtonHeight
+    property real implicitComboBoxHeight:           implicitButtonHeight
+    property real implicitComboBoxWidth:            implicitButtonWidth
     property real comboBoxPadding:                  defaultFontPixelWidth
-    property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
-    property real buttonBorderRadius:               defaultFontPixelWidth / 2
+    property real implicitSliderHeight:             defaultFontPixelHeight
+    property real defaultBorderRadius:              defaultFontPixelWidth / 2
+
     // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
-    property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
+    property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight / 2) + 1
     property real radioButtonIndicatorSize:         checkBoxIndicatorSize
 
     readonly property string normalFontFamily:      ScreenToolsController.normalFontFamily

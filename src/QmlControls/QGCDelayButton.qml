@@ -17,7 +17,7 @@ DelayButton {
     delay:          defaultDelay
 
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
-    property real   backRadius:     ScreenTools.buttonBorderRadius
+    property real   backRadius:     ScreenTools.defaultBorderRadius
     property real   heightFactor:   0.5
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
@@ -67,6 +67,7 @@ DelayButton {
         implicitHeight: ScreenTools.implicitButtonHeight
         border.width:   showBorder ? 1 : 0
         border.color:   qgcPal.buttonBorder
+        color:          control._showHighlight ? qgcPal.buttonHighlight : qgcPal.button
 
         QGCColoredImage {
             anchors.topMargin:      _sliderIndicatorMargin
@@ -79,8 +80,8 @@ DelayButton {
             source:                 "qrc:/res/chevron-double-right.svg"
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  qgcPal.buttonText
-            opacity:                0.2
+            color:                  control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            opacity:                control._showHighlight ? 0.75 : 0.2
 
             property real _sliderIndicatorMargin: ScreenTools.defaultFontPixelWidth * 0.5
         }
@@ -91,6 +92,7 @@ DelayButton {
             anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             font.pointSize:             ScreenTools.smallFontPointSize
+            color:                      control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
             visible:                    control._showHelp
         }
     }
@@ -102,6 +104,6 @@ DelayButton {
         font.pointSize:         control.pointSize
         font.family:            control.font.family
         font.weight:            control.fontWeight
-        color:                  qgcPal.buttonText
+        color:                  control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
     }
 }

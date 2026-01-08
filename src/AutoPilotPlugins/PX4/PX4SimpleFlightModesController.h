@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #pragma once
 
 #include <QtCore/QVariantList>
@@ -25,7 +15,7 @@ public:
     PX4SimpleFlightModesController(void);
 
     Q_PROPERTY(int          activeFlightMode    READ activeFlightMode       NOTIFY activeFlightModeChanged)
-    Q_PROPERTY(int          channelCount        MEMBER _channelCount        CONSTANT)
+    Q_PROPERTY(int          channelCount        MEMBER _channelCount        NOTIFY channelCountChanged)
     Q_PROPERTY(QVariantList rcChannelValues     MEMBER _rcChannelValues     NOTIFY rcChannelValuesChanged)
 
     int activeFlightMode(void) const { return _activeFlightMode; }
@@ -34,12 +24,13 @@ signals:
     void activeFlightModeChanged(int activeFlightMode);
     void channelOptionEnabledChanged(void);
     void rcChannelValuesChanged(void);
+    void channelCountChanged();
 
 private slots:
-    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
+    void channelValuesChanged(QVector<int> pwmValues);
 
 private:
     int             _activeFlightMode;
-    int             _channelCount;
+    int             _channelCount = 0;
     QVariantList    _rcChannelValues;
 };

@@ -84,7 +84,7 @@ _文件工具_ 提供以下功能：
 
 ### Pattern
 
-The [Pattern](Pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
+The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
 
 ## Mission Command List {#mission_command_list}
 
@@ -199,5 +199,5 @@ To analyse this possibility you can turn on [Console Logging](../settings_view/c
 
 ## Further Info
 
-- [QGC v3.2](../qgc-user-guide/releases/release_note_stable_v3.md#plan_view)上新的计划视图功能
-- [QGC v3.3](../qgc-user-guide/releases/release_note_stable_v3.md#plan-view-1)上新的计划视图功能
+- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan_view)
+- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-1)

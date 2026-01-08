@@ -2,81 +2,90 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Copy build config and setup scripts
+COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
+COPY tools/setup/read-config.sh /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && /tmp/qt/install-dependencies-debian.sh
 
-# Set environment variables for Android SDK, NDK, and paths
+# Read all versions from centralized config
+RUN apt-get update && apt-get install -y jq && \
+    CONFIG=/tmp/qt/build-config.json && \
+    echo "export QT_VERSION=$(jq -r '.qt_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+    echo "export QT_MODULES=\"$(jq -r '.qt_modules' $CONFIG)\"" >> /etc/profile.d/qgc.sh && \
+    echo "export JAVA_VERSION=$(jq -r '.java_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+    echo "export NDK_FULL_VERSION=$(jq -r '.ndk_full_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_PLATFORM=$(jq -r '.android_platform' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+    chmod +x /etc/profile.d/qgc.sh
+
+RUN . /etc/profile.d/qgc.sh && apt-get install -y openjdk-${JAVA_VERSION}-jdk
+
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
-ENV ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/26.1.10909125
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
-ENV ANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/35.0.0
-
-RUN apt-get update && apt-get install -y openjdk-17-jdk
-
-# Set JAVA_HOME and update PATH
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Install Android SDK and NDK
-RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
-    wget https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip -O /opt/cmdline-tools.zip && \
+RUN . /etc/profile.d/qgc.sh && \
+    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
+    wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
     unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
     mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
     rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
     rm /opt/cmdline-tools.zip && \
     yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
-    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;26.1.10909125"
+    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+        "platform-tools" \
+        "platforms;android-${ANDROID_PLATFORM}" \
+        "build-tools;${ANDROID_BUILD_TOOLS}" \
+        "ndk;${NDK_FULL_VERSION}" && \
+    echo "export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${NDK_FULL_VERSION}" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_BUILD_TOOLS_DIR=$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}" >> /etc/profile.d/qgc.sh
 
-# Qt setup and environment variables
-ENV QT_VERSION="6.10.1"
+# Qt setup
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
-ENV QT_HOST_ARCH="gcc_64"
-ENV QT_HOST_ARCH_DIR="linux_gcc_64"
+ENV QT_HOST_ARCH="linux_gcc_64"
+ENV QT_HOST_DIR="gcc_64"
 ENV QT_TARGET="android"
-ENV QT_TARGET_ARCH_ARMV7="android_armv7"
+# ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
-ENV QT_MODULES="qtcharts qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtlocation"
 
-# Install aqtinstall and download Qt for both host and target architectures
-RUN python3 -m pip install aqtinstall && \
+# Install Qt for host and target architectures using aqtinstall
+# Note: aqtinstall uses linux_gcc_64 as arch param but creates gcc_64 directory
+RUN . /etc/profile.d/qgc.sh && \
+    apt-get update && apt-get install -y pipx && \
     mkdir -p $QT_PATH && \
-    aqt install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
-    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
-    aqt install-qt $QT_HOST $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop
+    pipx run aqtinstall install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
+    pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
+    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_DIR" >> /etc/profile.d/qgc.sh
 
-# Set Qt-related environment variables for ARMv7 and ARM64 architectures
-ENV QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7
-ENV QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64
-ENV QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_ARCH_DIR
-ENV QT_PLUGIN_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/plugins
-ENV QT_PLUGIN_PATH_ARM64=$QT_ROOT_DIR_ARM64/plugins
-ENV QML2_IMPORT_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/qml
-ENV QML2_IMPORT_PATH_ARM64=$QT_ROOT_DIR_ARM64/qml
-ENV PKG_CONFIG_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/lib/pkgconfig:$PKG_CONFIG_PATH
-ENV PKG_CONFIG_PATH_ARM64=$QT_ROOT_DIR_ARM64/lib/pkgconfig:$PKG_CONFIG_PATH
-ENV LD_LIBRARY_PATH_ARMV7=$QT_ROOT_DIR_ARMV7/lib:$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH_ARM64=$QT_ROOT_DIR_ARM64/lib:$LD_LIBRARY_PATH
+# Optional: Uncomment to enable ARMv7 builds (requires QT_TARGET_ARCH_ARMV7 env var above)
+# RUN . /etc/profile.d/qgc.sh && \
+#     pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+#     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh
+
+RUN . /etc/profile.d/qgc.sh && \
+    echo "export JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64" >> /etc/profile.d/qgc.sh
 
 # Consolidate PATH settings
-ENV PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARMV7/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS:$ANDROID_NDK_ROOT
+# Note: Add $QT_ROOT_DIR_ARMV7 to enable ARMv7
+RUN echo 'export PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS_DIR:$ANDROID_NDK_ROOT' >> /etc/profile.d/qgc.sh
 
 RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
 
 RUN git config --global --add safe.directory /project/source
 
+# Use login shell for profile sourcing
+SHELL ["/bin/bash", "-lc"]
+
 # Set working directory
 WORKDIR /project/build
 
-# Build the project
-CMD mkdir -p /workspace/build/build && \
-    cd /workspace/build/build && \
-    qt-cmake -S /project/source -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DQT_HOST_PATH=$QT_HOST_PATH \
-        -DQT_ANDROID_BUILD_ALL_ABIS=OFF \
-        -DQT_ANDROID_ABIS="armeabi-v7a;arm64-v8a" \
-        -DANDROID_BUILD_TOOLS=$ANDROID_SDK_ROOT/build-tools/35.0.0 \
-        -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
-        -DQT_ANDROID_SIGN_APK=OFF \
-        -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake && \
-        cmake --build . --target all --config Release --parallel
+# Entrypoint
+COPY deploy/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
+CMD ["Release"]

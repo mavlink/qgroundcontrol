@@ -1,13 +1,5 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "JoystickSDL.h"
+#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
@@ -16,7 +8,7 @@
 
 #include <SDL3/SDL.h>
 
-QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.joysticksdl")
+QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
 JoystickSDL::JoystickSDL(const QString &name, QList<int> gamepadAxes, QList<int> nonGamepadAxes, int buttonCount, int hatCount, int instanceId, bool isGamepad, QObject *parent)
     : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length(), buttonCount, hatCount, parent)
@@ -26,10 +18,6 @@ JoystickSDL::JoystickSDL(const QString &name, QList<int> gamepadAxes, QList<int>
     , _instanceId(instanceId)
 {
     qCDebug(JoystickSDLLog) << this;
-
-    if (_isGamepad) {
-        _setDefaultCalibration();
-    }
 }
 
 JoystickSDL::~JoystickSDL()
@@ -47,6 +35,32 @@ bool JoystickSDL::init()
 
     _loadGamepadMappings();
     return true;
+}
+
+bool JoystickSDL::rediscoverNeeded()
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch(event.type) {
+        case SDL_EVENT_QUIT:
+            qCDebug(JoystickSDLLog) << "SDL ERROR:" << SDL_GetError();
+            break;
+        case SDL_EVENT_GAMEPAD_ADDED:
+            qCDebug(JoystickSDLLog) << "Gamepad added:" << event.gdevice.which;
+            return true;
+        case SDL_EVENT_JOYSTICK_ADDED:
+            qCDebug(JoystickSDLLog) << "Joystick added:" << event.jdevice.which;
+            return true;
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            qCDebug(JoystickSDLLog) << "Gamepad removed:" << event.gdevice.which;
+            return true;
+        case SDL_EVENT_JOYSTICK_REMOVED:
+            qCDebug(JoystickSDLLog) << "Joystick removed:" << event.jdevice.which;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 QMap<QString, Joystick*> JoystickSDL::discover()
@@ -222,7 +236,7 @@ bool JoystickSDL::_getButton(int idx) const
     return false;
 }
 
-int JoystickSDL::_getAxis(int idx) const
+int JoystickSDL::_getAxisValue(int idx) const
 {
     int axis = -1;
 

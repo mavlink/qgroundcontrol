@@ -4,51 +4,74 @@ on:
   push:
     branches:
       - master
-      - Stable*
+      - 'Stable*'
     tags:
-      - v*
+      - 'v*'
     paths-ignore:
-      - docs/**
+      - 'docs/**'
   pull_request:
     paths:
-      - .github/workflows/windows.yml
-      - deploy/windows/**
-      - src/**
-      - CMakeLists.txt
-      - cmake/**
-      - tools/setup/*windows*
+      - '.github/workflows/windows.yml'
+      - '.github/actions/**'
+      - 'deploy/windows/**'
+      - 'src/**'
+      - 'test/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'tools/setup/*windows*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+  workflow_call:
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  actions: read
 
 jobs:
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
+        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
+        variant: [amd64, arm64, arm64-cross]
         include:
-          - os: windows-2022
+          - variant: amd64
+            os: windows-2022
             host: windows
             arch: win64_msvc2022_64
-            build_type: Release
             package: QGroundControl-installer-AMD64
 
-          - os: windows-11-arm
+          - variant: arm64
+            os: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
-            build_type: Release
             package: QGroundControl-installer-ARM64
 
-          # Qt 6.10.0 for cross-compiled until aqtinstall fix is released
-          # See: https://github.com/miurahr/aqtinstall/pull/952
-          - os: windows-2022
+          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
+          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
+          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
+          - variant: arm64-cross
+            os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
-            build_type: Release
             package: QGroundControl-installer-AMD64-ARM64
             qt_version: '6.10.0'
 
@@ -56,10 +79,12 @@ jobs:
       run:
         shell: cmd
 
-    env:
-      QT_VERSION: 6.10.1
-
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -67,18 +92,20 @@ jobs:
           fetch-depth: 1
           fetch-tags: true
 
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
       - name: Common setup
         uses: ./.github/actions/common
 
-      # - name: Install dependencies
-      #   shell: pwsh
-      #   run: ./tools/setup/install-dependencies-windows.ps1 -Force
-
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
-        uses: blinemedical/setup-gstreamer@v1
-        with:
-          version: 1.22.12
+        shell: pwsh
+        run: |
+          ./tools/setup/install-dependencies-windows.ps1 `
+            -GStreamerVersion ${{ steps.config.outputs.gstreamer_windows_version }} `
+            -SkipVulkan
 
       - name: Setup cache
         uses: ./.github/actions/cache
@@ -87,21 +114,18 @@ jobs:
           target: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}\build\cpm_modules
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install Qt ${{ matrix.qt_version || env.QT_VERSION }}
-        uses: jurplel/install-qt-action@v4
+      - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
+        uses: ./.github/actions/qt-install
         with:
-          version: ${{ matrix.qt_version || env.QT_VERSION }}
+          version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
           host: ${{ matrix.host }}
-          target: desktop
           arch: ${{ matrix.arch }}
-          dir: ${{ runner.temp }}
-          modules: qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml
-          setup-python: false
-          cache: true
+          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Set up MSVC environment
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
@@ -127,6 +151,12 @@ jobs:
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
+      - name: Attest Build Provenance
+        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: '${{ runner.temp }}\build\${{ matrix.package }}.exe'
+
       - name: Upload artifact (installer)
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/upload
@@ -136,5 +166,4 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           upload_aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}

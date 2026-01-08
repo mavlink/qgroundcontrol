@@ -1,14 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "JoystickManager.h"
 #include "Joystick.h"
+#include "Vehicle.h"
+#include "MultiVehicleManager.h"
+#include "SettingsManager.h"
+#include "JoystickManagerSettings.h"
 #if defined(QGC_SDL_JOYSTICK)
     #include <SDL3/SDL.h>
     #include "JoystickSDL.h"
@@ -20,18 +15,36 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.joystickmanager")
+QGC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.JoystickManager")
 
 Q_APPLICATION_STATIC(JoystickManager, _joystickManager);
 
 JoystickManager::JoystickManager(QObject *parent)
     : QObject(parent)
+    , _joystickManagerSettings(SettingsManager::instance()->joystickManagerSettings())
 {
     qCDebug(JoystickManagerLog) << this;
 
-    _joystickCheckTimer.setInterval(1000);
-    _joystickCheckTimer.setSingleShot(false);
-    (void) connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
+    _checkForAddedOrRemovedJoysticksTimer.setInterval(1000);
+    _checkForAddedOrRemovedJoysticksTimer.setSingleShot(false);
+    (void) connect(&_checkForAddedOrRemovedJoysticksTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
+
+    (void) connect(_joystickManagerSettings->activeJoystickName(), &Fact::rawValueChanged, this, [this](const QVariant &value) {
+        QString joystickName = value.toString();
+        _setActiveJoystickByName(joystickName);
+    });
+
+    (void) connect(_joystickManagerSettings->joystickEnabledVehiclesIds(), &Fact::rawValueChanged, this, [this](const QVariant &value) {
+        auto multiVehicleManager = MultiVehicleManager::instance();
+        auto activeVehicle = multiVehicleManager->activeVehicle();
+        if (activeVehicle && _activeJoystick) {
+            if (joystickEnabledForVehicle(activeVehicle)) {
+                _activeJoystick->_startPollingForVehicle(*activeVehicle);
+            }
+        }
+    });
+
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &JoystickManager::_activeVehicleChanged);
 }
 
 JoystickManager::~JoystickManager()
@@ -61,62 +74,75 @@ void JoystickManager::init()
     if (!JoystickAndroid::init()) {
         return;
     }
-    (void) connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, [this]() {
-        _joystickCheckTimerCounter = 5;
-        _joystickCheckTimer.start();
+    (void) connect(this, &JoystickManager::_updateAvailableJoysticksSignal, this, [this]() {
+        _checkForAddedOrRemovedJoysticksTimerCounter = 5;
+        _checkForAddedOrRemovedJoysticksTimer.start();
     });
 #endif
 
-    _joystickCheckTimerCounter = 5;
-    _joystickCheckTimer.start();
+    _checkForAddedOrRemovedJoysticksTimerCounter = 5;
+    _checkForAddedOrRemovedJoysticksTimer.start();
 }
 
-void JoystickManager::_setActiveJoystickFromSettings()
+/// @brief Checks for added or removed joysticks and updates the internal map accordingly
+void JoystickManager::_checkForAddedOrRemovedJoysticks()
 {
-    QMap<QString, Joystick*> newMap;
+    QMap<QString, Joystick*> newJoystickMap;
 
 #ifdef QGC_SDL_JOYSTICK
-    newMap = JoystickSDL::discover();
+    newJoystickMap = JoystickSDL::discover();
 #elif defined(Q_OS_ANDROID)
-    newMap = JoystickAndroid::discover();
+    newJoystickMap = JoystickAndroid::discover();
 #endif
 
-    if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
+    if (_activeJoystick && !newJoystickMap.contains(_activeJoystick->name())) {
         qCDebug(JoystickManagerLog) << "Active joystick removed";
-        setActiveJoystick(nullptr);
+        _setActiveJoystick(nullptr);
     }
 
     // Check to see if our current mapping contains any joysticks that are not in the new mapping
     // If so, those joysticks have been unplugged, and need to be cleaned up
     for (QMap<QString, Joystick*>::key_value_iterator it = _name2JoystickMap.keyValueBegin(); it != _name2JoystickMap.keyValueEnd(); ++it) {
-        if (!newMap.contains(it->first)) {
-            qCDebug(JoystickManagerLog) << "Releasing joystick:" << it->first;
-            it->second->stopPolling();
-            (void) it->second->wait(kTimeout);
-            it->second->deleteLater();
+        if (!newJoystickMap.contains(it->first)) {
+            auto key = it->first;
+            auto joystick = it->second;
+            qCDebug(JoystickManagerLog) << "Releasing joystick:" << key;
+            joystick->_stopAllPolling();
+            joystick->stop();
+            joystick->deleteLater();
         }
     }
 
-    _name2JoystickMap = newMap;
-    emit availableJoysticksChanged();
-
-    if (_name2JoystickMap.isEmpty()) {
-        setActiveJoystick(nullptr);
-        return;
+    for (const auto &key : newJoystickMap.keys()) {
+        if (!_name2JoystickMap.contains(key)) {
+            qCDebug(JoystickManagerLog) << "New joystick added:" << key;
+        }
     }
 
-    QSettings settings;
-    settings.beginGroup(_settingsGroup);
+    _name2JoystickMap = newJoystickMap;
 
-    QString name = settings.value(_settingsKeyActiveJoystick).toString();
-    if (name.isEmpty()) {
-        name = _name2JoystickMap.first()->name();
+    _setActiveJoystickFromSettings();
+
+    emit availableJoystickNamesChanged();
+}
+
+void JoystickManager::_setActiveJoystickFromSettings()
+{
+    QString activeJoystickName = _joystickManagerSettings->activeJoystickName()->rawValue().toString();
+
+    if (activeJoystickName.isEmpty()) {
+        // Make the first joystick active if none specified
+        if (_name2JoystickMap.isEmpty()) {
+            // No joysticks available
+            return;
+        }
+        // Use first available joystick
+        activeJoystickName = _name2JoystickMap.first()->name();
+        _joystickManagerSettings->activeJoystickName()->setRawValue(activeJoystickName);
+        qCDebug(JoystickManagerLog) << "No active joystick specified, using first available:" << activeJoystickName;
     }
 
-    setActiveJoystick(_name2JoystickMap.value(name, _name2JoystickMap.first()));
-    settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
-
-    settings.endGroup();
+    _setActiveJoystickByName(activeJoystickName);
 }
 
 Joystick *JoystickManager::activeJoystick()
@@ -124,96 +150,94 @@ Joystick *JoystickManager::activeJoystick()
     return _activeJoystick;
 }
 
-void JoystickManager::setActiveJoystick(Joystick *joystick)
+void JoystickManager::_setActiveJoystick(Joystick *newActiveJoystick)
 {
-    if (joystick && !_name2JoystickMap.contains(joystick->name())) {
-        qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
+    if (newActiveJoystick && !_name2JoystickMap.contains(newActiveJoystick->name())) {
+        qCWarning(JoystickManagerLog) << "Set active not in map" << newActiveJoystick->name();
         return;
     }
 
-    if (_activeJoystick == joystick) {
+    if (_activeJoystick == newActiveJoystick) {
         return;
     }
 
     if (_activeJoystick) {
-        _activeJoystick->stopPolling();
+        _activeJoystick->_stopAllPolling();
+        _activeJoystick = nullptr;
+        emit activeJoystickChanged(nullptr);
     }
 
-    _activeJoystick = joystick;
+    if (newActiveJoystick) {
+        qCDebug(JoystickManagerLog) << "Set active:" << newActiveJoystick->name();
 
-    if (_activeJoystick) {
-        qCDebug(JoystickManagerLog) << "Set active:" << _activeJoystick->name();
+        _activeJoystick = newActiveJoystick;
 
-        QSettings settings;
-        settings.beginGroup(_settingsGroup);
-        settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
-        settings.endGroup();
+        auto multiVehicleManager = MultiVehicleManager::instance();
+        auto activeVehicle = multiVehicleManager->activeVehicle();
+
+        if (activeVehicle && joystickEnabledForVehicle(activeVehicle)) {
+            _activeJoystick->_startPollingForVehicle(*activeVehicle);
+        }
+
+        emit activeJoystickChanged(_activeJoystick);
     }
-
-    emit activeJoystickChanged(_activeJoystick);
-    emit activeJoystickNameChanged(_activeJoystick ? _activeJoystick->name() : "");
 }
 
-QVariantList JoystickManager::joysticks()
+void JoystickManager::_setActiveJoystickByName(const QString &name)
 {
-    QVariantList list;
-    for (auto it = _name2JoystickMap.constBegin(); it != _name2JoystickMap.constEnd(); ++it) {
-        list += QVariant::fromValue(it.value());
+    if (name.isEmpty() || !_name2JoystickMap.contains(name)) {
+        _setActiveJoystick(nullptr);
+        return;
     }
 
-    return list;
-}
-
-QString JoystickManager::activeJoystickName() const
-{
-    return (_activeJoystick ? _activeJoystick->name() : QString());
-}
-
-bool JoystickManager::setActiveJoystickName(const QString &name)
-{
-    if (_name2JoystickMap.contains(name)) {
-        setActiveJoystick(_name2JoystickMap[name]);
-        return true;
-    }
-
-    qCWarning(JoystickManagerLog) << "Set active not in map" << name;
-    return false;
+    _setActiveJoystick(_name2JoystickMap[name]);
 }
 
 void JoystickManager::_updateAvailableJoysticks()
 {
 #ifdef QGC_SDL_JOYSTICK
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        switch(event.type) {
-        case SDL_EVENT_QUIT:
-            qCDebug(JoystickManagerLog) << "SDL ERROR:" << SDL_GetError();
-            break;
-        case SDL_EVENT_GAMEPAD_ADDED:
-            qCDebug(JoystickManagerLog) << "Gamepad added:" << event.gdevice.which;
-            _setActiveJoystickFromSettings();
-            break;
-        case SDL_EVENT_JOYSTICK_ADDED:
-            qCDebug(JoystickManagerLog) << "Joystick added:" << event.jdevice.which;
-            _setActiveJoystickFromSettings();
-            break;
-        case SDL_EVENT_GAMEPAD_REMOVED:
-            qCDebug(JoystickManagerLog) << "Gamepad removed:" << event.gdevice.which;
-            _setActiveJoystickFromSettings();
-            break;
-        case SDL_EVENT_JOYSTICK_REMOVED:
-            qCDebug(JoystickManagerLog) << "Joystick removed:" << event.jdevice.which;
-            _setActiveJoystickFromSettings();
-            break;
-        default:
-            break;
-        }
+    if (JoystickSDL::rediscoverNeeded()) {
+        _checkForAddedOrRemovedJoysticks();
     }
 #elif defined(Q_OS_ANDROID)
-    _joystickCheckTimerCounter--;
-    _setActiveJoystickFromSettings();
-    if (_joystickCheckTimerCounter <= 0) {
-        _joystickCheckTimer.stop();
+    _checkForAddedOrRemovedJoysticksTimerCounter--;
+    _checkForAddedOrRemovedJoysticks();
+    if (_checkForAddedOrRemovedJoysticksTimerCounter <= 0) {
+        _checkForAddedOrRemovedJoysticksTimer.stop();
     }
 #endif
+}
+
+void JoystickManager::_activeVehicleChanged(Vehicle *activeVehicle)
+{
+    if (!_activeJoystick) {
+        return;
+    }
+
+    _activeJoystick->_stopAllPolling();
+
+    if (activeVehicle && joystickEnabledForVehicle(activeVehicle)) {
+        _activeJoystick->_startPollingForVehicle(*activeVehicle);
+    }
+}
+
+bool JoystickManager::joystickEnabledForVehicle(Vehicle *vehicle) const
+{
+    return _joystickManagerSettings->joystickEnabledVehiclesIds()->rawValue().toString().contains(QString::number(vehicle->id()));
+}
+
+void JoystickManager::setJoystickEnabledForVehicle(Vehicle *vehicle, bool enabled)
+{
+    QStringList vehicleIds = _joystickManagerSettings->joystickEnabledVehiclesIds()->rawValue().toString().split(",", Qt::SkipEmptyParts);
+    QString vehicleIdStr = QString::number(vehicle->id());
+
+    if (enabled) {
+        if (!vehicleIds.contains(vehicleIdStr)) {
+            vehicleIds.append(vehicleIdStr);
+        }
+    } else {
+        vehicleIds.removeAll(vehicleIdStr);
+    }
+
+    _joystickManagerSettings->joystickEnabledVehiclesIds()->setRawValue(vehicleIds.join(","));
 }

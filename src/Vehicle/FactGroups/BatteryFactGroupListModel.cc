@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "BatteryFactGroupListModel.h"
 
 BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
@@ -156,7 +147,7 @@ void BatteryFactGroup::_handleBatteryStatus(Vehicle *vehicle, const mavlink_mess
 void BatteryFactGroup::_timeRemainingChanged(const QVariant &value)
 {
     if (qIsNaN(value.toDouble())) {
-        _timeRemainingStrFact.setRawValue("--:--:--");
+        _timeRemainingStrFact.setRawValue("––:––:––");
     } else {
         const int totalSeconds = value.toInt();
         const int hours = totalSeconds / 3600;

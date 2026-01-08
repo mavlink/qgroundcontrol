@@ -1,16 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutexLocker>
 #include <QtCore/QObject>
+#include <QtCore/QRecursiveMutex>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -90,7 +83,11 @@ public:
     /// Convert and clamp value
     Q_INVOKABLE QVariant clamp(const QString &cookedValue);
     QVariant cookedValue() const; /// Value after translation
-    QVariant rawValue() const { return _rawValue; }  /// value prior to translation, careful
+    QVariant rawValue() const
+    {
+        QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+        return _rawValue;
+    }
     int componentId() const { return _componentId; }
     int decimalPlaces() const;
     QVariant rawDefaultValue() const;
@@ -205,6 +202,7 @@ protected:
     QString _name;
     int _componentId = -1;
     QVariant _rawValue; // QVariant::Invalid
+    mutable QRecursiveMutex _rawValueMutex;
     FactMetaData::ValueType_t _type = FactMetaData::valueTypeInt32;
     FactMetaData *_metaData = nullptr;
     bool _sendValueChangedSignals = true;

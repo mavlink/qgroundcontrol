@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -32,7 +23,7 @@ private:
     bool _update() final { return true; }
 
     bool _getButton(int i) const final { return btnValue[i]; }
-    int _getAxis(int i) const final { return axisValue[i]; }
+    int _getAxisValue(int i) const final { return axisValue[i]; }
     bool _getHat(int hat, int i) const final;
 
     int _getAndroidHatAxis(int axisHatCode) const;

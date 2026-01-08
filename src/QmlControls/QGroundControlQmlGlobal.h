@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -100,7 +91,6 @@ public:
     Q_PROPERTY(double               flightMapInitialZoom    MEMBER  _flightMapInitialZoom   CONSTANT)   ///< Zoom level to use when either gcs or vehicle shows up for first time
 
     Q_PROPERTY(QString  parameterFileExtension  READ parameterFileExtension CONSTANT)
-    Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
@@ -222,7 +212,6 @@ public:
     void    setFlightMapZoom            (double zoom);
 
     QString parameterFileExtension  (void) const;
-    QString missionFileExtension    (void) const;
     QString telemetryFileExtension  (void) const;
 
     static QString qgcVersion();

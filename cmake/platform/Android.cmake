@@ -9,10 +9,14 @@ endif()
 # ----------------------------------------------------------------------------
 # Android NDK Version Validation
 # ----------------------------------------------------------------------------
-if(Qt6_VERSION VERSION_EQUAL "6.10.1")
-    if(NOT CMAKE_ANDROID_NDK_VERSION VERSION_EQUAL "27.2")
-        message(FATAL_ERROR "QGC: Invalid NDK Version: ${CMAKE_ANDROID_NDK_VERSION}. Qt 6.10.1 requires NDK 27.2")
+# CMAKE_ANDROID_NDK_VERSION format varies: "27.2" or "27.2.12829759"
+# Extract major.minor from ndk_full_version for reliable comparison
+if(DEFINED QGC_CONFIG_NDK_FULL_VERSION AND Qt6_VERSION VERSION_GREATER_EQUAL "${QGC_CONFIG_QT_MINIMUM_VERSION}")
+    string(REGEX MATCH "^([0-9]+\\.[0-9]+)" _ndk_major_minor "${QGC_CONFIG_NDK_FULL_VERSION}")
+    if(_ndk_major_minor AND NOT CMAKE_ANDROID_NDK_VERSION VERSION_GREATER_EQUAL "${_ndk_major_minor}")
+        message(FATAL_ERROR "QGC: NDK ${CMAKE_ANDROID_NDK_VERSION} is too old. Qt ${Qt6_VERSION} requires NDK ${_ndk_major_minor}+ (${QGC_CONFIG_NDK_VERSION})")
     endif()
+    unset(_ndk_major_minor)
 endif()
 
 # ----------------------------------------------------------------------------

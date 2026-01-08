@@ -2,7 +2,7 @@
 
 This topic contains a high level and _non-exhaustive_ list of new features added to _QGroundControl_ since the last [stable release](../releases/release_notes.md).
 These features are available in [daily builds](../releases/daily_builds.md).
-There is also a [Change Log](https://github.com/mavlink/qgroundcontrol/blob/master/ChangeLog.md) available for viewing.
+There is also a [Change Log](https://github.com/mavlink/qgroundcontrol/blob/master/CHANGELOG.md) available for viewing.
 
 - Fly View
   - Toolbar
@@ -39,5 +39,5 @@ There is also a [Change Log](https://github.com/mavlink/qgroundcontrol/blob/mast
 - Developer changes
   - Build system fully converted to cmake
     - qmake no longer supported
-  - Source updated to use Qt 6.10.0
+  - Source updated to use Qt 6.10.1
   - GStreamer support updated to 1.22

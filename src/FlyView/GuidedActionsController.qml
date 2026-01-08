@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -15,10 +6,7 @@ import QtPositioning
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
-
 import QGroundControl.FlightMap
 
 /// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
@@ -57,7 +45,7 @@ Item {
     readonly property string gotoTitle:                     qsTr("Go To Location")
     readonly property string roiTitle:                      qsTr("ROI")
     readonly property string setHomeTitle:                  qsTr("Set Home")
-    readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
+    readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator Origin")
     readonly property string setFlightMode:                 qsTr("Set Flight Mode")
     readonly property string changeHeadingTitle:            qsTr("Change Heading")
 
@@ -67,28 +55,28 @@ Item {
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
     readonly property string mvDisarmMessage:                   qsTr("Disarm selected vehicles.")
     readonly property string emergencyStopMessage:              qsTr("WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.")
-    readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
-    readonly property string startMissionMessage:               qsTr("Takeoff from ground and start the current mission.")
-    readonly property string mvStartMissionMessage:             qsTr("Takeoff from ground and start the current mission for selected vehicles.")
-    readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint.")
+    readonly property string takeoffMessage:                    qsTr("Takeoff and hold position")
+    readonly property string startMissionMessage:               qsTr("Takeoff and start the current mission")
+    readonly property string mvStartMissionMessage:             qsTr("Takeoff and start the current mission for selected vehicles")
+    readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint")
     readonly property string resumeMissionUploadFailMessage:    qsTr("Upload of resume mission failed. Confirm to retry upload")
-    readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
-    readonly property string rtlMessage:                        qsTr("Return to the launch position of the vehicle.")
-    readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
-    readonly property string changeLoiterRadiusMessage:         qsTr("Change the forward flight loiter radius.")
-    readonly property string changeCruiseSpeedMessage:          qsTr("Change the maximum horizontal cruise speed.")
-    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint.")
-    readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
-             property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
-    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location.")
-    readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
-    readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position, adjusting altitude up or down as needed.")
-    readonly property string mvPauseMessage:                    qsTr("Pause selected vehicles at their current position.")
-    readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
+    readonly property string landMessage:                       qsTr("Land the vehicle at the current position")
+    readonly property string rtlMessage:                        qsTr("Return to the launch position of the vehicle")
+    readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down")
+    readonly property string changeLoiterRadiusMessage:         qsTr("Change the forward flight loiter radius")
+    readonly property string changeCruiseSpeedMessage:          qsTr("Change the maximum horizontal cruise speed")
+    readonly property string changeAirspeedMessage:             qsTr("Change the equivalent airspeed setpoint")
+    readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location")
+             property string setWaypointMessage:                qsTr("Adjust current waypoint to %1").arg(_actionData)
+    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location")
+    readonly property string landAbortMessage:                  qsTr("Abort the landing sequence")
+    readonly property string pauseMessage:                      qsTr("Pause at current position")
+    readonly property string mvPauseMessage:                    qsTr("Pause selected vehicles at their current position")
+    readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
-    readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin.")
+    readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin")
     readonly property string setFlightModeMessage:              qsTr("Set the vehicle flight mode to %1").arg(_actionData)
-    readonly property string changeHeadingMessage:              qsTr("Set the vehicle heading towards the specified location.")
+    readonly property string changeHeadingMessage:              qsTr("Set the vehicle heading towards the specified location")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -281,7 +269,8 @@ Item {
             console.log("showStartMission", showStartMission)
         }
         _outputState()
-        if (showStartMission) {
+        if (showStartMission &&
+            _flyViewSettings.enableAutomaticMissionPopups.rawValue) {
             confirmAction(actionStartMission)
         }
     }
@@ -290,7 +279,8 @@ Item {
             console.log("showContinueMission", showContinueMission)
         }
         _outputState()
-        if (showContinueMission) {
+        if (showContinueMission &&
+            _flyViewSettings.enableAutomaticMissionPopups.rawValue) {
             confirmAction(actionContinueMission)
         }
     }

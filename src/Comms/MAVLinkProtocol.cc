@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MAVLinkProtocol.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
@@ -110,7 +101,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
             continue;
         }
 
-        if (status.flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) {
+        // It's ok to get v1 HEARTBEAT messages on a v2 link:
+        //  PX4 defaults to sending V1 then switches to V2 after receiving a V2 message from GCS
+        //  ArduPilot always sends both versions
+        if (message.msgid != MAVLINK_MSG_ID_HEARTBEAT && (status.flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1)) {
             link->reportMavlinkV1Traffic();
             continue;
         }

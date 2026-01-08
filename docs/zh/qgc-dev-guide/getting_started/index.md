@@ -1,5 +1,5 @@
 ---
-qt_version: 6.10.0
+qt_version: 6.10.1
 ---
 
 # 从源码开始并构建
@@ -14,7 +14,7 @@ qt_version: 6.10.0
 
 ## 源代码
 
-_QGroundControl_ 的源代码保存在GitHub 上：https://github.com/mavlink/qgroundcontrol。
+Source code for _QGroundControl_ is kept on [GitHub](https://github.com/mavlink/qgroundcontrol).
 它采用 [Apache 2.0 和 GPLv3 双重授权](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md)。
 
 要获取源文件, 请执行以下操作:
@@ -68,32 +68,31 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
 1. 下载并运行[Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
    - **Ubuntu:**
      - 使用以下命令将下载的文件设置为可执行文件：`chmod + x`
-     - 您可能还需要安装 libxcb-cursor0
+     - It may also be necessary to install _libxcb-cursor0_.
 
 2. 在 _Installation 文件夹页面选择"自定义安装"
 
 3. 在 _选择组件_ 页面：
 
-   - 如果您没有看到 {{ $frontmatter.qt_version }}_ 列出_Qt选中 _Archive_ 复选框并单击 _Filter_。
-
-- 在 Qt -> _Qt {{ $frontmatter.qt_version }}_ 下选择：
-  - **Windows**: MSVC 2022 _arch_ - 其中 “arch” 指的是您机器的架构
-  - **Mac**：桌面
-  - **Linux**: gcc 64-bit 桌面
+- I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
+- Under Qt -> _Qt {{ $frontmatter.qt_version }}_ select:
+  - **Windows**: MSVC 2022 \<_arch_\> - where \<_arch_\> is the architecture of your machine
+  - **Mac**: Desktop
+  - **Linux**: Desktop gcc 64-bit
   - **Android**: Android
-- 选择所有 _Additional Libraries_
-- 取消选择 QT Design Studio
+- Select all _Additional Libraries_
+- Deselect QT Design Studio
 
 1. 安装附加软件包(特殊平台)
 
    - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **Mac** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
-   - **Windows** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
-   - **Android** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Search for "Qt 6.10 android" on the internet to find the correct "Gettting Started with Qt for Android" page. Read it full and carefully! An example of what you are looking for is [here](https://doc.qt.io/qt-6/android-getting-started.html).
+   - **Mac:** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
+   - **Windows:** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
+   - **Android:** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Read [Qt 6 for Android](https://doc.qt.io/qt-6/android.html) carefully to the extend. Continue with [Gettting Started with Qt 6 for Android](https://doc.qt.io/qt-6/android-getting-started.html).
 
-2. 安装可选/特定操作功能
+2. Install OS-Specific Functionalities
 
    ::: info
    依赖操作系统和用户安装的库的可选功能在下面链接/描述。
@@ -101,6 +100,7 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
    :::
 
    - **视频流/Gstream:** - 查看 [视频流](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
+   - **Scripting Install:** - to build the installation file at Windows, install [NSIS](https://nsis.sourceforge.io/Download).
 
 #### 安装 Visual Studio (仅限Windows) {#vs}
 
@@ -110,8 +110,8 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
 
 ![Visual Studio 2019 - 选择基于 C++ 的桌面开发环境](../../../assets/dev_getting_started/visual_studio_select_features.png)
 
-:::info
-Visual Studio 仅用于获取编译器。 构建 _QGroundControl_ 可直接按以下概述，使用 [Qt Creator](#qt-creator) 或 [cmake](#cmake) 完成。
+::: info
+Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is done using [Qt Creator](#qt-creator) or [cmake](#cmake) directly as outlined below.
 :::
 
 #### 使用 Qt Creator {#qt-creator} 进行构建
@@ -120,7 +120,11 @@ Visual Studio 仅用于获取编译器。 构建 _QGroundControl_ 可直接按�
 
 2. 在 _Configure Project_ 页面上，它应该默认您刚刚使用上面的说明安装的 Qt 版本。 如果不从列表中选择该套件，然后点击 _Configure Project_。
 
-3. 使用"hammer" (或"play") 图标或菜单构建：
+   :::tip
+   Don't forget to check boxes in case you want to build a Release instead of Debug, or check the other types. To create the installation file go to the "Deploy Settings" Tab, click in the menu button "Add Deploy Step", select "CMake Install" and as argument you must set at least `--config Release`.
+   :::
+
+3. Build using the "hammer" icon. After that, in order to deploy the build, use the "play" icon. Or use the menu Build on top for a detailed alternative.
 
    ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
 
@@ -137,10 +141,10 @@ Visual Studio 仅用于获取编译器。 构建 _QGroundControl_ 可直接按�
 2. 配置：
 
    ```sh
-   ~/Qt/{{ $frontmatter.qt_version }}/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ~/Qt/{{ qt_version }}/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
    ```
 
-   修改 qt-cmake 的目录，使其与你安装 Qt 的位置以及你想要使用的工具包相匹配。
+   Change the directory for `qt-cmake` to match your install location for Qt and the kit you want to use.
 
    **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
 

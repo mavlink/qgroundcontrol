@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 
 /// Object which exposes vehicle distanceSensors FactGroup information for use in UI
@@ -40,7 +31,7 @@ QtObject {
     property var    rgRotationValueStrings:     [ rotationNoneValueString, rotationYaw45ValueString, rotationYaw90ValueString, rotationYaw135ValueString, rotationYaw180ValueString, rotationYaw225ValueString, rotationYaw270ValueString, rotationYaw315ValueString ]
 
     property var    _distanceSensors:       vehicle ? vehicle.distanceSensors : null
-    property string _noValueStr:            qsTr("--.--")
+    property string _noValueStr:            qsTr("–.––")
 
     onRotationNoneValueChanged:     rotationValueChanged()
     onRotationYaw45ValueChanged:    rotationValueChanged()

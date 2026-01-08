@@ -11,5 +11,5 @@ _QGroundControl_ 提供了一系列主要面向自动驾驶仪开发者的工具
 
 - **[Mock Link](../tools/mock_link.md)** (仅调试版本) - 创建和停止多个模拟载具链接。
 - **[重播飞行数据](../../qgc-user-guide/fly_view/replay_flight_data.md)** - 重播一个遥测日志(用户指南)。
-- **[MAVLink 检查器](../../qgc-user-guide/analyze_view/mavlink_inspector.html)** - 显示已收到的 MAVLink 消息/值和绘图趋势。
-- **[MAVLink 控制台](../../qgc-user-guide/analyze_view/mavlink_console.html)** （仅限PX4） - 连接到 PX4 nsh shell 并发送命令。
+- **[MAVLink Inspector](../../qgc-user-guide/analyze_view/mavlink_inspector.md)** - Display received MAVLink messages/values and plot trends.
+- **[MAVLink Console](../../qgc-user-guide/analyze_view/mavlink_console.md)** (PX4 Only) - Connect to the PX4 nsh shell and send commands.

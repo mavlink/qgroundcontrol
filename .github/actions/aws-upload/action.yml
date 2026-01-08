@@ -1,0 +1,86 @@
+name: AWS Upload
+description: Upload release artifacts to AWS S3 and invalidate CloudFront cache
+
+inputs:
+  artifact_name:
+    description: Artifact filename to upload
+    required: true
+  artifact_path:
+    description: Path to artifact file
+    required: true
+  aws_key_id:
+    description: AWS access key ID
+    required: true
+  aws_secret_access_key:
+    description: AWS secret access key
+    required: true
+  aws_distribution_id:
+    description: AWS CloudFront distribution ID (optional, for cache invalidation)
+    required: false
+  aws_region:
+    description: AWS region
+    required: false
+    default: 'us-west-2'
+  s3_bucket:
+    description: S3 bucket name
+    required: false
+    default: 'qgroundcontrol'
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Upload to S3 builds folder
+      shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.artifact_path }}
+        S3_BUCKET: ${{ inputs.s3_bucket }}
+        REF_NAME: ${{ github.ref_name }}
+        ARTIFACT_NAME: ${{ inputs.artifact_name }}
+      run: |
+        # Validate artifact path exists and is a file
+        if [[ ! -f "$ARTIFACT_PATH" ]]; then
+          echo "Error: Artifact not found: $ARTIFACT_PATH" >&2
+          exit 1
+        fi
+
+        # Validate artifact name contains only safe characters (no path separators)
+        if [[ "$ARTIFACT_NAME" =~ [/\\] ]] || [[ "$ARTIFACT_NAME" =~ \.\. ]]; then
+          echo "Error: Invalid artifact name (contains path separators): $ARTIFACT_NAME" >&2
+          exit 1
+        fi
+
+        # Sanitize ref name - remove path traversal attempts and special chars
+        SAFE_REF_NAME=$(echo "$REF_NAME" | sed 's/\.\.//g' | sed 's/[^a-zA-Z0-9._-]/_/g')
+        aws s3 cp "$ARTIFACT_PATH" \
+          "s3://${S3_BUCKET}/builds/${SAFE_REF_NAME}/${ARTIFACT_NAME}" \
+          --acl public-read
+
+    - name: Upload to S3 latest folder
+      if: github.ref_type == 'tag'
+      shell: bash
+      env:
+        ARTIFACT_PATH: ${{ inputs.artifact_path }}
+        S3_BUCKET: ${{ inputs.s3_bucket }}
+        ARTIFACT_NAME: ${{ inputs.artifact_name }}
+      run: |
+        aws s3 cp "$ARTIFACT_PATH" \
+          "s3://${S3_BUCKET}/latest/${ARTIFACT_NAME}" \
+          --acl public-read
+
+    - name: Invalidate CloudFront cache
+      if: github.ref_type == 'tag' && inputs.aws_distribution_id != ''
+      shell: bash
+      env:
+        DISTRIBUTION_ID: ${{ inputs.aws_distribution_id }}
+        ARTIFACT_NAME: ${{ inputs.artifact_name }}
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id "$DISTRIBUTION_ID" \
+          --paths "/latest/${ARTIFACT_NAME}"

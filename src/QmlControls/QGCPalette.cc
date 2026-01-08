@@ -1,16 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QGCPalette.h"
 #include "QGCCorePlugin.h"
 
@@ -59,8 +46,8 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(button,               "#ffffff", "#ffffff", "#707070", "#626270")
     DECLARE_QGC_COLOR(buttonBorder,         "#9d9d9d", "#3A9BDC", "#707070", "#adadb8")
     DECLARE_QGC_COLOR(buttonText,           "#9d9d9d", "#333333", "#A6A6A6", "#ffffff")
-    DECLARE_QGC_COLOR(buttonHighlight,      "#e4e4e4", "#3A9BDC", "#3a3a3a", "#fff291")
-    DECLARE_QGC_COLOR(buttonHighlightText,  "#2c2c2c", "#ffffff", "#2c2c2c", "#000000")
+    DECLARE_QGC_COLOR(buttonHighlight,      "#e4e4e4", "#3A9BDC", "#3a3a3a", "#3A9BDC")
+    DECLARE_QGC_COLOR(buttonHighlightText,  "#2c2c2c", "#ffffff", "#2c2c2c", "#ffffff")
     DECLARE_QGC_COLOR(primaryButton,        "#585858", "#8cb3be", "#585858", "#8cb3be")
     DECLARE_QGC_COLOR(primaryButtonText,    "#2c2c2c", "#333333", "#2c2c2c", "#000000")
     DECLARE_QGC_COLOR(textField,            "#ffffff", "#ffffff", "#707070", "#ffffff")
@@ -85,7 +72,6 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(toolbarBackground,    "#00ffffff", "#00ffffff", "#00222222", "#00222222")
-    DECLARE_QGC_COLOR(toolbarDivider,       "#00000000", "#00000000", "#00000000", "#00000000")
     DECLARE_QGC_COLOR(groupBorder,          "#bbbbbb", "#3A9BDC", "#707070", "#707070")
 
     // Colors not affecting by theming
@@ -93,8 +79,8 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_NONTHEMED_COLOR(brandingPurple,             "#4A2C6D", "#4A2C6D")
     DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,               "#48D6FF", "#6045c5")
     DECLARE_QGC_NONTHEMED_COLOR(toolStripFGColor,           "#707070", "#ffffff")
-    DECLARE_QGC_NONTHEMED_COLOR(photoCaptureButtonColor,    "#ffffff", "#ffffff")
-    DECLARE_QGC_NONTHEMED_COLOR(videoCaptureButtonColor,    "#f32836", "#f32836")
+    DECLARE_QGC_NONTHEMED_COLOR(photoCaptureButtonColor,    "#707070", "#ffffff")
+    DECLARE_QGC_NONTHEMED_COLOR(videoCaptureButtonColor,    "#f89a9e", "#f32836")
 
     // Colors not affecting by theming or enable/disable
     DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,          "#ffffff")

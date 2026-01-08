@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "SettingsFact.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
@@ -40,19 +31,24 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
 
     if (metaData->defaultValueAvailable()) {
         const QVariant rawDefaultValue = metaData->rawDefaultValue();
+        QVariant resolvedValue;
+
         if (qgcApp()->runningUnitTests()) {
             // Don't use saved settings
-            _rawValue = rawDefaultValue;
+            resolvedValue = rawDefaultValue;
         } else if (_visible) {
             QVariant typedValue;
             QString errorString;
             (void) metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
-            _rawValue = typedValue;
+            resolvedValue = typedValue;
         } else {
             // Setting is not visible, force to default value always
             // Note that we specifically do not save this back to QSettings such that a Settings Override file change is not a permanent change
-            _rawValue = rawDefaultValue;
+            resolvedValue = rawDefaultValue;
         }
+
+        QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+        _rawValue = resolvedValue;
     }
 
     (void) connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);

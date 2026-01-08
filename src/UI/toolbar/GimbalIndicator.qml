@@ -1,19 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
 
 Item {
@@ -59,7 +49,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 width:                   height
                 height:                  multiGimbalSetup ? parent.height - gimbalIdLabel.contentHeight : parent.height
-                source:                  "/gimbal/payload.png"
+                source:                  "/res/CameraGimbal.png"
                 fillMode:                Image.PreserveAspectFit
                 sourceSize.height:       height
                 color:                   qgcPal.windowTransparentText
@@ -271,6 +261,22 @@ Item {
                     fact:       _gimbalControllerSettings.CameraSlideSpeed
                     visible:    enableOnScreenControlCheckbox.checked && _gimbalControllerSettings.ControlType.rawValue === 1
                 }
+            }
+
+            SettingsGroupLayout {
+                heading:        qsTr("Zoom speed")
+                showDividers:   false
+
+                LabelledFactTextField {
+                    label:      qsTr("Max speed (min zoom)")
+                    fact:       _gimbalControllerSettings.zoomMaxSpeed
+                }
+
+                LabelledFactTextField {
+                    label:      qsTr("Min speed (max zoom)")
+                    fact:       _gimbalControllerSettings.zoomMinSpeed
+                }
+
             }
 
             SettingsGroupLayout {

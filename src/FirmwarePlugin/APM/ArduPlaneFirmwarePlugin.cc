@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "ArduPlaneFirmwarePlugin.h"
 #include "Vehicle.h"
 
@@ -82,6 +73,8 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
 
         remapV4_5["AIRSPEED_MIN"] = QStringLiteral("ARSPD_FBW_MIN");
         remapV4_5["AIRSPEED_MAX"] = QStringLiteral("ARSPD_FBW_MAX");
+        remapV4_5["RTL_ALTITUDE"] = QStringLiteral("ALT_HOLD_RTL");
+        // LAND_SPEED is only used in a Copter component
 
         _remapParamNameIntialized = true;
     }

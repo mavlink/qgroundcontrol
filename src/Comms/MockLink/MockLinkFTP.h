@@ -1,15 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QFile>
+#include <QtCore/QHash>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
@@ -38,6 +31,15 @@ public:
 
     void enableRandromDrops(bool enable) { _randomDropsEnabled = enable; }
     void enableBinParamFile(bool enable) { _BinParamFileEnabled = enable; }
+
+    /// Returns the list of remote paths which have been uploaded in this session.
+    QStringList uploadedFiles() const { return _uploadedFiles.keys(); }
+
+    /// Returns the contents of an uploaded file. Empty if the path is unknown.
+    QByteArray uploadedFileContents(const QString& remotePath) const { return _uploadedFiles.value(remotePath); }
+
+    /// Clears the stored uploaded file contents.
+    void clearUploadedFiles() { _uploadedFiles.clear(); }
 
     /// By calling setErrorMode with one of these modes you can cause the server to simulate an error.
     enum ErrorMode_t {
@@ -87,10 +89,14 @@ private:
     /// File list returned is set using the setFileList method.
     void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
+    void _writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _finalizeActiveUpload();
     /// Generates the next sequence number given an incoming sequence number. Handles generating
     /// bad sequence numbers when errModeBadSequence is set.
     uint16_t _nextSeqNumber(uint16_t seqNumber) const;
@@ -109,6 +115,19 @@ private:
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     mavlink_message_t _lastReply{};
     QFile _currentFile;
+    struct UploadSession {
+        bool active = false;
+        QString remotePath;
+        QByteArray buffer;
+
+        void reset() {
+            active = false;
+            remotePath.clear();
+            buffer.clear();
+        }
+    };
+    UploadSession _uploadSession;
+    QHash<QString, QByteArray> _uploadedFiles;
     QStringList _fileList;                      ///< List of files returned by List command
     uint16_t _lastReplySequence = 0;
 

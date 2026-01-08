@@ -1,22 +1,9 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-
 import QGroundControl.FactControls
-
 import QGroundControl.Controls
-
 
 SetupPage {
     id:             safetyPage
@@ -39,14 +26,7 @@ SetupPage {
             property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "THR_FAILSAFE")
             property Fact _failsafeThrValue:    controller.getParameterFact(-1, "THR_FS_VALUE")
             property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABL")
-
-            property Fact _rtlAltFact: {
-                if (controller.firmwareMajorVersion < 4 || (controller.firmwareMajorVersion === 4 && controller.firmwareMinorVersion < 5)) {
-                    return controller.getParameterFact(-1, "ALT_HOLD_RTL")
-                } else {
-                    return controller.getParameterFact(-1, "RTL_ALTITUDE")
-                }
-            }
+            property Fact _rtlAltFact:          controller.getParameterFact(-1, "r.RTL_ALTITUDE")
 
             property real _margins: ScreenTools.defaultFontPixelHeight
 

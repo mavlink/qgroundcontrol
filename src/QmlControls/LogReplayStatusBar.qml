@@ -6,7 +6,6 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 
-
 Rectangle {
     height: visible ? (rowLayout.height + (_margins * 2)) : 0
     color: qgcPal.window

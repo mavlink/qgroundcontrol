@@ -3,20 +3,17 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-
 // Camera section for mission item editors
 Column {
-    anchors.left:   parent.left
-    anchors.right:  parent.right
-    spacing:        _margin
+    property alias buttonGroup: cameraSectionHeader.buttonGroup
+    property alias showSpacer:  cameraSectionHeader.showSpacer
+    property alias checked:     cameraSectionHeader.checked
+    property bool showSectionHeader: true
 
-    property alias buttonGroup:  cameraSectionHeader.buttonGroup
-    property alias showSpacer:      cameraSectionHeader.showSpacer
-    property alias checked:         cameraSectionHeader.checked
+    spacing: _margin
 
     property var    _camera:        missionItem.cameraSection
     property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 16
@@ -24,63 +21,43 @@ Column {
 
     SectionHeader {
         id:             cameraSectionHeader
-        anchors.left:   parent.left
-        anchors.right:  parent.right
+        width:          parent.width
         text:           qsTr("Camera")
         checked:        false
+        visible:        showSectionHeader
     }
 
     Column {
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        spacing:        _margin
-        visible:        cameraSectionHeader.checked
+        width:      parent.width
+        spacing:    _margin
+        visible:    !showSectionHeader || cameraSectionHeader.checked
 
-        FactComboBox {
-            id:             cameraActionCombo
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            fact:           _camera.cameraAction
-            indexModel:     false
+        LabelledFactComboBox {
+            id:         cameraActionCombo
+            width:      parent.width
+            label:      qsTr("Action")
+            fact:       _camera.cameraAction
+            indexModel: false
+        }
+
+        LabelledFactTextField {
+            width:      parent.width
+            label:      qsTr("Time")
+            fact:       _camera.cameraPhotoIntervalTime
+            visible:    _camera.cameraAction.rawValue === 1
+        }
+
+        LabelledFactTextField {
+            width:      parent.width
+            label:      qsTr("Distance")
+            fact:       _camera.cameraPhotoIntervalDistance
+            visible:    _camera.cameraAction.rawValue === 2
         }
 
         RowLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelWidth
-            visible:        _camera.cameraAction.rawValue === 1
-
-            QGCLabel {
-                text:               qsTr("Time")
-                Layout.fillWidth:   true
-            }
-            FactTextField {
-                fact:                   _camera.cameraPhotoIntervalTime
-                Layout.preferredWidth:  _fieldWidth
-            }
-        }
-
-        RowLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelWidth
-            visible:        _camera.cameraAction.rawValue === 2
-
-            QGCLabel {
-                text:               qsTr("Distance")
-                Layout.fillWidth:   true
-            }
-            FactTextField {
-                fact:                   _camera.cameraPhotoIntervalDistance
-                Layout.preferredWidth:  _fieldWidth
-            }
-        }
-
-        RowLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelWidth
-            visible:        _camera.cameraModeSupported
+            width:      parent.width
+            spacing:    ScreenTools.defaultFontPixelWidth
+            visible:    _camera.cameraModeSupported
 
             QGCCheckBox {
                 id:                 modeCheckBox
@@ -88,6 +65,7 @@ Column {
                 checked:            _camera.specifyCameraMode
                 onClicked:          _camera.specifyCameraMode = checked
             }
+
             FactComboBox {
                 fact:               _camera.cameraMode
                 indexModel:         false
@@ -96,34 +74,25 @@ Column {
             }
         }
 
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columnSpacing:  ScreenTools.defaultFontPixelWidth / 2
-            rowSpacing:     0
-            columns:        3
+        QGCCheckBox {
+            id:                 gimbalCheckBox
+            text:               qsTr("Gimbal")
+            checked:            _camera.specifyGimbal
+            onClicked:          _camera.specifyGimbal = checked
+        }
 
-            QGCLabel { text: qsTr("Gimbal") }
-            QGCLabel { text: qsTr("Pitch") }
-            QGCLabel { text: qsTr("Yaw") }
+        FactTextFieldSlider {
+            width:          parent.width
+            label:          qsTr("Pitch")
+            fact:           _camera.gimbalPitch
+            enabled:        gimbalCheckBox.checked
+        }
 
-            QGCCheckBox {
-                id:                 gimbalCheckBox
-                checked:            _camera.specifyGimbal
-                onClicked:          _camera.specifyGimbal = checked
-                Layout.fillWidth:   true
-            }
-            FactTextField {
-                fact:           _camera.gimbalPitch
-                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-                enabled:        gimbalCheckBox.checked
-            }
-
-            FactTextField {
-                fact:           _camera.gimbalYaw
-                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-                enabled:        gimbalCheckBox.checked
-            }
+        FactTextFieldSlider {
+            width:          parent.width
+            label:          qsTr("Yaw")
+            fact:           _camera.gimbalYaw
+            enabled:        gimbalCheckBox.checked
         }
     }
 }

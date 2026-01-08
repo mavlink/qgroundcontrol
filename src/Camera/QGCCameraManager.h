@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QElapsedTimer>
@@ -44,6 +35,7 @@ class QGCCameraManager : public QObject
     Q_PROPERTY(QStringList cameraLabels READ cameraLabels NOTIFY cameraLabelsChanged)
     Q_PROPERTY(MavlinkCameraControl* currentCameraInstance READ currentCameraInstance NOTIFY currentCameraChanged)
     Q_PROPERTY(int currentCamera READ currentCamera WRITE setCurrentCamera NOTIFY currentCameraChanged)
+    Q_PROPERTY(int currentZoomLevel READ currentZoomLevel NOTIFY currentZoomLevelChanged)
 
     friend class QGCCameraManagerTest;
 
@@ -82,11 +74,21 @@ public:
 
     CameraStruct* findCameraStruct(uint8_t compId) const { return _cameraInfoRequest.value(QString::number(compId), nullptr); }
 
+    int currentZoomLevel() const;
+    double aspectForComp(int compId) const;
+    double currentCameraAspect();
+    Q_INVOKABLE void requestCameraFovForComp(int compId);
+
+private:
+    int _zoomValueCurrent = 0;
+
 signals:
     void camerasChanged();
     void cameraLabelsChanged();
     void currentCameraChanged();
     void streamChanged();
+
+    void currentZoomLevelChanged();
 
 protected slots:
     void _vehicleReady(bool ready);
@@ -103,6 +105,9 @@ protected slots:
     void _stopVideoRecording();
     void _toggleVideoRecording();
 
+private slots:
+    void _setCurrentZoomLevel(int level);
+
 private:
     MavlinkCameraControl* _findCamera(int id);
     void _requestCameraInfo(CameraStruct* cameraInfo);
@@ -118,6 +123,7 @@ private:
     void _handleBatteryStatus(const mavlink_message_t& message);
     void _handleTrackingImageStatus(const mavlink_message_t& message);
     void _addCameraControlToLists(MavlinkCameraControl* cameraControl);
+    void _handleCameraFovStatus(const mavlink_message_t& message);
 
     QPointer<Vehicle> _vehicle;
     QPointer<SimulatedCameraControl> _simulatedCameraControl;
@@ -132,4 +138,6 @@ private:
     QTimer _camerasLostHeartbeatTimer;
     QMap<QString, CameraStruct*> _cameraInfoRequest;
     static QVariantList _cameraList;
+
+    QHash<int, double> _aspectByCompId;
 };

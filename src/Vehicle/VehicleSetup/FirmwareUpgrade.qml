@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -15,11 +5,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
 import QGroundControl.FactControls
-
-
-
 
 SetupPage {
     id:             firmwarePage
@@ -37,7 +23,7 @@ SetupPage {
 
             // Those user visible strings are hard to translate because we can't send the
             // HTML strings to translation as this can create a security risk. we need to find
-            // a better way to hightlight them, or use less highlights.
+            // a better way to highlight them, or use less highlights.
 
             // User visible strings
             readonly property string title:             qsTr("Firmware Setup") // Popup dialog title

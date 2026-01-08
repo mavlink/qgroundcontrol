@@ -2,10 +2,15 @@
 # vi: set ft=ruby :
 
 require 'yaml'
+require 'json'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
 configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
 yaml_config    = configfile['configs']['dev']
+
+# Load centralized build config
+build_config_path = File.join(current_dir, '../../.github/build-config.json')
+build_config = JSON.parse(File.read(build_config_path))
 
 env_global = [
   'JOBS=4',
@@ -27,7 +32,7 @@ Vagrant.configure(2) do |config|
   config.vm.provider "virtualbox"
   config.vm.provider "vmware_fusion"
 
-  config.vm.box = "ubuntu/jammy64"
+  config.vm.box = "alvistack/ubuntu-25.10"
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
@@ -75,6 +80,8 @@ Vagrant.configure(2) do |config|
 
      sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs}
 
+     sudo apt-get install -y python3-pip python3-venv python3-dev
+
      # use common package installation:
      /usr/bin/env bash /vagrant/tools/setup/install-dependencies-debian.sh
 
@@ -84,23 +91,35 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
 
      # with reference to https://github.com/jurplel/install-qt-action@v3/blob/master/src/main.ts and .github/workflows/linux_release.yml:
+
+     # create a venv to install packages into:
+     su - vagrant -c 'python3 -m venv --system-site-packages ~vagrant/venv-qgroundcontrol'
+     su - vagrant -c 'echo "VIRTUAL_ENV_DISABLE_PROMPT=1 source /home/vagrant/venv-qgroundcontrol/bin/activate" >>~vagrant/.bashrc'
      echo 'Installing QT'
-     apt-get install -y python3-pip
-     su - vagrant -c "pip3 install --user aqtinstall"
+     sudo apt-get install -y qt6-base-dev-tools
+
+     QT6_FEATURES="charts location positioning speech 5compat multimedia serialport shadertools connectivity quick3d sensors"
+
+     su - vagrant -c "source /home/vagrant/venv-qgroundcontrol/bin/activate; python3 -m pip install --user aqtinstall"
 
      apt-get install -y patchelf
 
      dir="%{qt_deps_unpack_dir}"
-     version="6.10.1"
+     version="%{qt_version}"
      host="linux"
      target="desktop"
-     modules="qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml"
+     modules="%{qt_modules}"
      su - vagrant -c "rm -rf ${dir}"
      su - vagrant -c "mkdir -p ${dir}"
      su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
 
      # appimage requires FUSE, so allow Vagrant to use FUSE:
      perl -pe 's/#user_allow_other/user_allow_other/' -i /etc/fuse.conf
+     # plucky broke fusermount due to apparmor issues
+     # ... so (classily) disable apparmor:
+     systemctl disable apparmor
+     systemctl stop apparmor
+     aa-teardown
 
      # write out a pair of scripts to make rebuilding on the VM easy:
      su - vagrant -c "cat <<CONFIGURE >do-configure.sh
@@ -109,10 +128,12 @@ Vagrant.configure(2) do |config|
 set -e
 set -x
 
-rm -rf /vagrant/shadow_build
-mkdir /vagrant/shadow_build
-cd /vagrant/shadow_build
-time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF  # 34s
+# shadow_build in /home to avoid linking problems on vboxfs
+SHADOW_BUILD=\"\\\$HOME/shadow_build\"
+rm -rf \"\\\$SHADOW_BUILD\"
+mkdir \"\\\$SHADOW_BUILD\"
+cd \"\\\$SHADOW_BUILD\"
+time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF -DCMAKE_PREFIX_PATH=\\\$HOME/Qt/${version}/gcc_64 # 34s
 CONFIGURE
 "
 
@@ -122,11 +143,16 @@ CONFIGURE
 set -e
 set -x
 
-cd /vagrant/shadow_build
+SHADOW_BUILD=\"\\\$HOME/shadow_build\"
+
+cd \"\\\$SHADOW_BUILD\"
 
 time cmake --build . --target all --config Release  # 75m
 rm -rf AppDir
 time cmake --install . --config Release
+
+rsync --delete -aPH \"\\\$SHADOW_BUILD\" /vagrant/shadow_build
+
 MAKE
 "
 
@@ -144,7 +170,6 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
 
   config.vm.provision "dev", type: "shell", inline: $config_shell  % {
     :shadow_build_dir => yaml_config['shadow_build_dir'],
-    :qt_deps_tarball => yaml_config['qt_deps_tarball'],
     :spec => yaml_config['spec'],
     :apt_pkgs => (packages).join(' '),
     :build_env => env_global.select { |item| item.is_a?(String) }.join(' '),
@@ -152,16 +177,15 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
     :project_root_dir => yaml_config['project_root_dir'],
     :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],
     :qt_deps_unpack_dir => yaml_config['qt_deps_unpack_dir'],
-    :qt_deps_bin_unpack_dir => yaml_config['qt_deps_bin_unpack_dir'],
-    :qt_deps_lib_unpack_dir => yaml_config['qt_deps_lib_unpack_dir'],
-    :qt_deps_plugins_unpack_dir => yaml_config['qt_deps_plugins_unpack_dir'],
-    :qt_deps_qml_unpack_dir => yaml_config['qt_deps_qml_unpack_dir'],
 
     :qt_deps_dir => yaml_config['qt_deps_dir'],
     :qt_deps_bin_dir => yaml_config['qt_deps_bin_dir'],
     :qt_deps_lib_dir => yaml_config['qt_deps_lib_dir'],
     :qt_deps_plugins_dir => yaml_config['qt_deps_plugins_dir'],
     :qt_deps_qml_dir => yaml_config['qt_deps_qml_dir'],
+
+    :qt_version => build_config['qt_version'],
+    :qt_modules => build_config['qt_modules'],
   }
 
 

@@ -3,8 +3,7 @@
 // Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#ifndef QSERIALPORT_P_H
-#define QSERIALPORT_P_H
+#pragma once
 
 //
 //  W A R N I N G
@@ -153,5 +152,3 @@ private:
 };
 
 QT_END_NAMESPACE
-
-#endif // QSERIALPORT_P_H

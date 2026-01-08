@@ -1,0 +1,179 @@
+name: Android
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - '.github/workflows/android.yml'
+      - '.github/actions/**'
+      - 'deploy/android/**'
+      - 'src/**'
+      - 'test/**'
+      - 'android/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'translations/*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  actions: read
+
+jobs:
+  build:
+    name: Android (${{ matrix.host }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: linux
+            runner: ubuntu-latest
+            arch: linux_gcc_64
+            qt_host_path: gcc_64
+            shell: bash
+            primary: true
+          - host: mac
+            runner: macos-latest
+            arch: clang_64
+            qt_host_path: macos
+            shell: bash
+            primary: false
+          - host: windows
+            runner: windows-latest
+            arch: win64_msvc2022_64
+            qt_host_path: msvc2022_64
+            shell: pwsh
+            primary: false
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    env:
+      PACKAGE: QGroundControl
+      QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
+      QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
+      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+      HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
+
+    steps:
+      - name: Harden Runner
+        if: runner.os == 'Linux'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Install Qt for Android
+        uses: ./.github/actions/qt-android
+        with:
+          host: ${{ matrix.host }}
+          arch: ${{ matrix.arch }}
+          version: ${{ steps.config.outputs.qt_version }}
+          modules: ${{ steps.config.outputs.qt_modules }}
+          abis: ${{ env.QT_ANDROID_ABIS }}
+          build-type: ${{ inputs.build_type || 'Release' }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          ndk-version: ${{ steps.config.outputs.ndk_version }}
+          java-version: ${{ steps.config.outputs.java_version }}
+          android-platform: ${{ steps.config.outputs.android_platform }}
+          android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
+          android-build-tools: ${{ steps.config.outputs.android_build_tools }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
+
+      - name: Configure
+        shell: bash
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          QT_DIR="${QT_ROOT_DIR//\\//}"        # Convert backslashes for Windows
+          WORKSPACE="${GITHUB_WORKSPACE//\\//}"
+          "${QT_DIR}/bin/qt-cmake" \
+            -S "${WORKSPACE}" \
+            -B . -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
+            -DCMAKE_WARN_DEPRECATED=FALSE \
+            -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
+            -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
+            -DQT_ANDROID_SIGN_APK=${{ matrix.primary && env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }} \
+            -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+
+      - name: Build
+        shell: bash
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config ${{ inputs.build_type || 'Release' }} --parallel
+
+      - name: Prepare Artifact
+        shell: bash
+        run: |
+          TEMP_DIR="${RUNNER_TEMP//\\//}"  # Convert backslashes for Windows
+          APK_DIR="${TEMP_DIR}/build/android-build"
+          if ! ls "${APK_DIR}"/*.apk 1>/dev/null 2>&1; then
+            echo "::error::No APK files found in ${APK_DIR}"
+            ls -la "${APK_DIR}" 2>/dev/null || echo "Build directory does not exist"
+            exit 1
+          fi
+          cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
+
+      - name: Attest Build Provenance
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
+
+      - name: Upload Build File
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ env.PACKAGE }}.apk
+          package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          upload_aws: ${{ matrix.primary }}
+
+      - name: Deploy to Play Store
+        if: matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true'
+        uses: ./.github/actions/playstore
+        with:
+          artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}

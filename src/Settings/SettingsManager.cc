@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "SettingsManager.h"
 #include "QGCLoggingCategory.h"
 #include "ADSBVehicleManagerSettings.h"
@@ -32,6 +23,7 @@
 #include "NTRIPSettings.h"
 #include "VideoSettings.h"
 #include "MavlinkSettings.h"
+#include "JoystickManagerSettings.h"
 #ifdef QGC_VIEWER3D
 #include "Viewer3DSettings.h"
 #endif
@@ -93,6 +85,7 @@ void SettingsManager::init()
     _ntripSettings = new NTRIPSettings(this);
     _videoSettings = new VideoSettings(this);
     _mavlinkSettings = new MavlinkSettings(this);
+    _joystickManagerSettings = new JoystickManagerSettings(this);
 #ifdef QGC_VIEWER3D
     _viewer3DSettings = new Viewer3DSettings(this);
 #endif
@@ -125,6 +118,7 @@ UnitsSettings *SettingsManager::unitsSettings() const { return _unitsSettings; }
 NTRIPSettings *SettingsManager::ntripSettings() const { return _ntripSettings; }
 VideoSettings *SettingsManager::videoSettings() const { return _videoSettings; }
 MavlinkSettings *SettingsManager::mavlinkSettings() const { return _mavlinkSettings; }
+JoystickManagerSettings *SettingsManager::joystickManagerSettings() const { return _joystickManagerSettings; }
 #ifdef QGC_VIEWER3D
 Viewer3DSettings *SettingsManager::viewer3DSettings() const { return _viewer3DSettings; }
 #endif

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "VisualMissionItemTest.h"
@@ -16,25 +7,6 @@
 class SimpleMissionItem;
 
 /// Unit test for SimpleMissionItem
-
-typedef struct {
-    MAV_CMD        command;
-    MAV_FRAME      frame;
-} ItemInfo_t;
-
-typedef struct {
-    const char*                 name;
-    QGCMAVLink::VehicleClass_t  vehicleClass;
-    bool                        nanValue;
-    int                         paramIndex;
-} FactValue_t;
-
-typedef struct {
-    size_t                          cFactValues;
-    const FactValue_t*              rgFactValues;
-    double                          altValue;
-    QGroundControlQmlGlobal::AltMode altMode;
-} ItemExpected_t;
 
 class SimpleMissionItemTest : public VisualMissionItemTest
 {
@@ -81,7 +53,7 @@ private:
     static const size_t cSimpleItemSignals = maxSignalIndex;
     const char*         rgSimpleItemSignals[cSimpleItemSignals];
 
-    void _testEditorFactsWorker (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode, const ItemExpected_t* rgExpected);
+    void _testEditorFactsWorker (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode);
     bool _classMatch            (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
 
     SimpleMissionItem*  _simpleItem = nullptr;

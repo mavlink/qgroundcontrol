@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "PX4/px4_custom_mode.h"
@@ -53,8 +44,6 @@ public:
 
     int vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
-
-    void emitRemoteControlChannelRawChanged(int channel, uint16_t raw);
 
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t &msg);

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
 #include "QGCApplication.h"
@@ -56,7 +47,9 @@ Fact::Fact(const QString& settingsGroup, FactMetaData *metaData, QObject *parent
     if (!qgcApp()->runningUnitTests()) {
         if (metaData->defaultValueAvailable() && !visible) {
             // If setting is not visible, we force to default value
-            _rawValue = metaData->rawDefaultValue();
+            const QVariant defaultValue = metaData->rawDefaultValue();
+            QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+            _rawValue = defaultValue;
         }
     }
 
@@ -85,6 +78,13 @@ void Fact::_init()
 
 const Fact &Fact::operator=(const Fact& other)
 {
+    if (this == &other) {
+        return *this;
+    }
+
+    QMutexLocker<QRecursiveMutex> otherLocker(&other._rawValueMutex);
+    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+
     _name = other._name;
     _componentId = other._componentId;
     _rawValue = other._rawValue;
@@ -108,11 +108,16 @@ void Fact::forceSetRawValue(const QVariant &value)
         QString errorString;
 
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
-            _rawValue.setValue(typedValue);
-            _sendValueChangedSignal(cookedValue());
+            {
+                QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+                _rawValue = typedValue;
+            }
+
+            const QVariant cooked = _metaData->rawTranslator()(typedValue);
+            _sendValueChangedSignal(cooked);
             //-- Must be in this order
-            emit containerRawValueChanged(rawValue());
-            emit rawValueChanged(_rawValue);
+            emit containerRawValueChanged(typedValue);
+            emit rawValueChanged(typedValue);
         }
     } else {
         qCWarning(FactLog) << kMissingMetadata << name();
@@ -126,12 +131,21 @@ void Fact::setRawValue(const QVariant &value)
         QString errorString;
 
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
-            if (typedValue != _rawValue) {
-                _rawValue.setValue(typedValue);
-                _sendValueChangedSignal(cookedValue());
+            bool changed = false;
+            {
+                QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+                if (typedValue != _rawValue) {
+                    _rawValue = typedValue;
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                const QVariant cooked = _metaData->rawTranslator()(typedValue);
+                _sendValueChangedSignal(cooked);
                 //-- Must be in this order
-                emit containerRawValueChanged(rawValue());
-                emit rawValueChanged(_rawValue);
+                emit containerRawValueChanged(typedValue);
+                emit rawValueChanged(typedValue);
             }
         }
     } else {
@@ -176,24 +190,41 @@ void Fact::setEnumIndex(int index)
 
 void Fact::containerSetRawValue(const QVariant &value)
 {
-    if (_rawValue != value) {
-        _rawValue = value;
-        _sendValueChangedSignal(cookedValue());
-        emit rawValueChanged(_rawValue);
+    QVariant cooked;
+    QVariant currentRaw = value;
+    bool changed = false;
+    {
+        QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+        if (_rawValue != value) {
+            _rawValue = value;
+            changed = true;
+        }
+        currentRaw = _rawValue;
+        if (_metaData) {
+            cooked = _metaData->rawTranslator()(_rawValue);
+        } else {
+            cooked = _rawValue;
+        }
+    }
+
+    if (changed) {
+        _sendValueChangedSignal(cooked);
+        emit rawValueChanged(currentRaw);
     }
 
     // This always need to be signalled in order to support forceSetRawValue usage and waiting for vehicleUpdated signal
-    emit vehicleUpdated(_rawValue);
+    emit vehicleUpdated(currentRaw);
 }
 
 QVariant Fact::cookedValue() const
 {
+    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
     if (_metaData) {
         return _metaData->rawTranslator()(_rawValue);
-    } else {
-        qCWarning(FactLog) << kMissingMetadata << name();
-        return _rawValue;
     }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return _rawValue;
 }
 
 QString Fact::enumStringValue()
@@ -386,14 +417,14 @@ QString Fact::invalidValueString(int decimalPlaces) const {
     case FactMetaData::valueTypeFloat:
     case FactMetaData::valueTypeDouble:
         if (decimalPlaces <= 0) {
-            return QStringLiteral("--");
+            return QStringLiteral("–");
         }
-        return QStringLiteral("--.") +
-               QString(decimalPlaces, QLatin1Char('-'));
+        return QStringLiteral("–.") +
+               QString(decimalPlaces, QChar(u'–'));
     case FactMetaData::valueTypeElapsedTimeInSeconds:
-        return QStringLiteral("--:--:--");
+        return QStringLiteral("––:––:––");
     default:
-        return QStringLiteral("--");
+        return QStringLiteral("–");
     }
 }
 

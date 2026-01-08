@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "SurveyComplexItem.h"
 #include "JsonHelper.h"
 #include "QGCGeo.h"
@@ -357,7 +347,7 @@ void SurveyComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& tran
     transects = rgReversedTransects;
 }
 
-/// Reverse the order of all points withing each transect, First point becomes last and so forth.
+/// Reverse the order of all points within each transect, First point becomes last and so forth.
 void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects)
 {
     for (int i=0; i<transects.count(); i++) {

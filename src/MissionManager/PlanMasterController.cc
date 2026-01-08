@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "PlanMasterController.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
@@ -192,7 +183,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
     }
 
     // Vehicle changed so we need to signal everything
-    emit containsItemsChanged(containsItems());
+    emit containsItemsChanged();
     emit syncInProgressChanged();
     emit dirtyChanged(dirty());
 
@@ -347,13 +338,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 
     bool success = false;
-    if (fileInfo.suffix() == AppSettings::missionFileExtension) {
-        if (!_missionController.loadJsonFile(file, errorString)) {
-            qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
-    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
+    if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
         if (!_missionController.loadTextFile(file, errorString)) {
             qgcApp()->showAppMessage(errorMessage.arg(errorString));
         } else {
@@ -509,6 +494,7 @@ void PlanMasterController::removeAll(void)
         _currentPlanFile.clear();
         emit currentPlanFileChanged();
     }
+    setManualCreation(false);
 }
 
 void PlanMasterController::removeAllFromVehicle(void)
@@ -525,6 +511,7 @@ void PlanMasterController::removeAllFromVehicle(void)
     } else {
         qWarning() << "PlanMasterController::removeAllFromVehicle called while offline";
     }
+    setManualCreation(false);
 }
 
 bool PlanMasterController::containsItems(void) const
@@ -558,7 +545,7 @@ QStringList PlanMasterController::loadNameFilters(void) const
 {
     QStringList filters;
 
-    filters << tr("Supported types (*.%1 *.%2 *.%3 *.%4)").arg(AppSettings::planFileExtension).arg(AppSettings::missionFileExtension).arg(AppSettings::waypointsFileExtension).arg("txt") <<
+    filters << tr("Supported types (*.%1 *.%2 *.%3)").arg(AppSettings::planFileExtension).arg(AppSettings::waypointsFileExtension).arg("txt") <<
                tr("All Files (*)");
     return filters;
 }
@@ -651,5 +638,13 @@ void PlanMasterController::showPlanFromManagerVehicle(void)
         // We have a new active vehicle, show the plan from that
         qCDebug(PlanMasterControllerLog) << "showPlanFromManagerVehicle: Plan View - New vehicle available, show plan from new manager vehicle";
         _showPlanFromManagerVehicle();
+    }
+}
+
+void PlanMasterController::setManualCreation(bool manualCreation)
+{
+    if (_manualCreation != manualCreation) {
+        _manualCreation = manualCreation;
+        emit manualCreationChanged();
     }
 }

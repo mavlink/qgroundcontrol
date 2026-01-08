@@ -1,0 +1,76 @@
+{
+  "name": "qgc-lsp",
+  "displayName": "QGroundControl LSP",
+  "description": "Language support for QGroundControl C++ development",
+  "version": "0.1.0",
+  "publisher": "qgroundcontrol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mavlink/qgroundcontrol"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:cpp",
+    "workspaceContains:**/CMakeLists.txt"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "QGC LSP",
+      "properties": {
+        "qgc-lsp.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable QGC language server"
+        },
+        "qgc-lsp.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Path to Python interpreter"
+        },
+        "qgc-lsp.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to QGC LSP server (auto-detected if empty)"
+        },
+        "qgc-lsp.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace communication with the language server"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "qgc-lsp.restart",
+        "title": "QGC LSP: Restart Language Server"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -3,10 +3,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 
 import QGroundControl
-
-
 import QGroundControl.Controls
-
 
 QGCTextField {
     id:                 control

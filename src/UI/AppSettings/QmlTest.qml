@@ -3,9 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 
 Rectangle {
     id: _root

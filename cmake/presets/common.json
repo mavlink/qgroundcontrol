@@ -1,20 +1,24 @@
 {
-  "version": 6,
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
-      "name": "dev",
-      "hidden": true,
-      "warnings": {
-        "dev": true,
-        "deprecated": true,
-        "uninitialized": false,
-        "unusedCli": true,
-        "systemVars": true
-      },
-      "errors": {
-        "dev": true,
-        "deprecated": true
-      }
+      "name": "default",
+      "displayName": "Default (Debug)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["debug"]
+    },
+    {
+      "name": "default-release",
+      "displayName": "Default (Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["release"]
     },
     {
       "name": "ccache",
@@ -23,6 +27,48 @@
         "CMAKE_C_COMPILER_LAUNCHER": "ccache",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
       }
+    },
+    {
+      "name": "sccache",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_LAUNCHER": "sccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache"
+      }
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "QGC_BUILD_TESTING": "ON",
+        "QGC_DEBUG_QML": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "QGC_BUILD_TESTING": "OFF",
+        "QGC_DEBUG_QML": "OFF"
+      }
+    },
+    {
+      "name": "coverage",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "QGC_BUILD_TESTING": "ON",
+        "QGC_ENABLE_COVERAGE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "jobs": 0
     }
   ],
   "testPresets": [

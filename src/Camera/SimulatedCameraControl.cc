@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "SimulatedCameraControl.h"
 #include "FlyViewSettings.h"
 #include "QGCApplication.h"
@@ -28,6 +19,7 @@ SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent
         emit videoCaptureStatusChanged();
     });
     connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
+    connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::infoChanged);
 
     (void) connect(SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
 
@@ -193,7 +185,7 @@ bool SimulatedCameraControl::capturesPhotos() const
 
 bool SimulatedCameraControl::hasVideoStream() const
 {
-    return VideoManager::instance()->hasVideo();
+    return VideoManager::instance()->decoding();
 }
 
 void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControl::PhotoCaptureMode photoCaptureMode)

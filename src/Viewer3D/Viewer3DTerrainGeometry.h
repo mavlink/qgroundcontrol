@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtQuick3D/QQuick3DGeometry>
@@ -16,8 +7,6 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class Viewer3DSettings;
-
-///     @author Omid Esrafilian <esrafilian.omid@gmail.com>
 
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {

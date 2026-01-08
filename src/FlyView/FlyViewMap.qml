@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtLocation
@@ -15,13 +6,9 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-
-
-
 
 FlightMap {
     id:                         _root
@@ -777,7 +764,6 @@ FlightMap {
         anchors.left:       parent.left
         anchors.top:        parent.top
         mapControl:         _root
-        buttonsOnLeft:      true
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state === mapControl.pipState.windowState
 
         property real centerInset: visible ? parent.height - y : 0

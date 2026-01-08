@@ -1,32 +1,19 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
-
 import QGroundControl.Controls
-
 import QGroundControl.UTMSP
 
-Rectangle {
+Item {
     id:         control
-    width:      mainLayout.width + (_margins * 2)
-    height:     mainLayout.height + (_margins * 2)
-    radius:     ScreenTools.defaultFontPixelWidth / 2
-    color:      qgcPal.window
+    width:      mainLayout.width
     visible:    _utmspEnabled === true ? utmspSliderTrigger: false
 
     property var    guidedController
     property var    guidedValueSlider
+    property var    messageDisplay
     property string title
     property string message
     property int    action
@@ -36,7 +23,7 @@ Rectangle {
     property alias  optionText:         optionCheckBox.text
     property alias  optionChecked:      optionCheckBox.checked
 
-    property real _margins:         ScreenTools.defaultFontPixelHeight / 2
+    property real _margins:         2
     property bool _emergencyAction: action === guidedController.actionEmergencyStop
 
     // Properties of UTM adapter
@@ -53,7 +40,7 @@ Rectangle {
 
     function show(immediate) {
         if (immediate) {
-            visible = true
+            _reallyShow()
         } else {
             // We delay showing the confirmation for a small amount in order for any other state
             // changes to propogate through the system. This way only the final state shows up.
@@ -66,44 +53,37 @@ Rectangle {
         visible = false
         hideTrigger = false
         visibleTimer.stop()
+        messageDisplay.opacity = 1.0
+        messageFadeTimer.stop()
+        messageOpacityAnimation.stop()
         if (mapIndicator) {
             mapIndicator.actionCancelled()
             mapIndicator = undefined
         }
     }
 
+    function _reallyShow() {
+        visible = true
+        messageDisplay.opacity = 1.0
+        messageFadeTimer.start()
+    }
+
     Timer {
         id:             visibleTimer
         interval:       1000
         repeat:         false
-        onTriggered:    visible = true
+        onTriggered:    _reallyShow()
     }
 
     QGCPalette { id: qgcPal }
 
-    ColumnLayout {
+    RowLayout {
         id:         mainLayout
-        x:          control._margins
-        y:          control._margins
-        spacing:    control._margins
-
-        QGCLabel {
-            Layout.fillWidth:       true
-            Layout.leftMargin:      closeButton.width + closeButton.anchors.rightMargin
-            Layout.rightMargin:     Layout.leftMargin
-            text:                   control.message
-            horizontalAlignment:    Text.AlignHCenter
-        }
-
-        QGCCheckBox {
-            id:                 optionCheckBox
-            Layout.alignment:   Qt.AlignHCenter
-            text:               ""
-            visible:            text !== ""
-        }
+        y:          2
+        height:     parent.height - 4
+        spacing:    ScreenTools.defaultFontPixelWidth
 
         QGCDelayButton {
-            Layout.fillWidth:   true
             text:               control.title
             enabled:            _utmspEnabled === true? utmspSliderTrigger : true
             opacity:            if(_utmspEnabled){utmspSliderTrigger === true ? 1 : 0.5} else{1}
@@ -127,23 +107,25 @@ Rectangle {
                 UTMSPStateStorage.currentStateIndex = 3
             }
         }
-    }
 
-    QGCColoredImage {
-        id:                     closeButton
-        anchors.topMargin:      _margins / 2
-        anchors.rightMargin:    _margins / 2
-        anchors.top:            parent.top
-        anchors.right:          parent.right
-        height:                 ScreenTools.defaultFontPixelHeight * 0.5
-        width:                  height
-        source:                 "/res/XDelete.svg"
-        fillMode:               Image.PreserveAspectFit
-        color:                  qgcPal.text
+        QGCCheckBox {
+            id:                 optionCheckBox
+            visible:            text !== ""
+        }
 
-        QGCMouseArea {
-            fillItem:   parent
-            onClicked:  confirmCancelled()
+        QGCColoredImage {
+            id:                 closeButton
+            Layout.alignment:   Qt.AlignTop
+            width:              height
+            height:             ScreenTools.defaultFontPixelHeight * 0.5
+            source:             "/res/XDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            color:              qgcPal.text
+
+            QGCMouseArea {
+                fillItem:   parent
+                onClicked:  confirmCancelled()
+            }
         }
     }
 }

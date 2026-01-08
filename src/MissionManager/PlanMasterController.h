@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QObject>
@@ -56,6 +47,7 @@ public:
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
+    Q_PROPERTY(bool                     manualCreation          READ manualCreation WRITE setManualCreation NOTIFY manualCreationChanged)   ///< true: User is not using a template to create the plan
 
     /// Should be called immediately upon Component.onCompleted.
     Q_INVOKABLE void start(void);
@@ -101,8 +93,10 @@ public:
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
+    bool        manualCreation  (void) const { return _manualCreation; }
 
     void        setFlyView(bool flyView) { _flyView = flyView; }
+    void        setManualCreation(bool manualCreation);
 
     QJsonDocument saveToJson    ();
 
@@ -116,7 +110,7 @@ public:
     static constexpr const char* kJsonRallyPointsObjectKey =   "rallyPoints";
 
 signals:
-    void containsItemsChanged               (bool containsItems);
+    void containsItemsChanged               ();
     void syncInProgressChanged              (void);
     void dirtyChanged                       (bool dirty);
     void offlineChanged                     (bool offlineEditing);
@@ -124,6 +118,7 @@ signals:
     void planCreatorsChanged                (QmlObjectListModel* planCreators);
     void managerVehicleChanged              (Vehicle* managerVehicle);
     void promptForPlanUsageOnVehicleChange  (void);
+    void manualCreationChanged              ();
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);
@@ -156,4 +151,5 @@ private:
     bool                    _deleteWhenSendCompleted =  false;
     bool                    _previousOverallDirty =     false;
     QmlObjectListModel*     _planCreators =             nullptr;
+    bool                    _manualCreation =           false;
 };

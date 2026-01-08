@@ -1,15 +1,3 @@
-/***************_qgcTranslatorSourceCode***********************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-/// @file
-/// @brief Application Settings
-
 #pragma once
 
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -73,7 +61,6 @@ public:
     Q_PROPERTY(QString settingsSavePath         READ settingsSavePath           NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
-    Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
     Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
@@ -102,10 +89,7 @@ public:
     // Application wide file extensions
     static constexpr const char* parameterFileExtension =   "params";
     static constexpr const char* planFileExtension =        "plan";
-    static constexpr const char* missionFileExtension =     "mission";
     static constexpr const char* waypointsFileExtension =   "waypoints";
-    static constexpr const char* fenceFileExtension =       "fence";
-    static constexpr const char* rallyPointFileExtension =  "rally";
     static constexpr const char* telemetryFileExtension =   "tlog";
     static constexpr const char* kmlFileExtension =         "kml";
     static constexpr const char* shpFileExtension =         "shp";

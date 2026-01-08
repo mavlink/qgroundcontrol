@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #pragma once
 
 #include <QtCore/QStringList>
@@ -58,7 +48,7 @@ signals:
     void superSimpleModeEnabledChanged();
 
 private slots:
-    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
+    void channelValuesChanged(QVector<int> pwmValues);
     void _updateSimpleParamsFromSimpleMode();
     void _setupSimpleModeEnabled();
 

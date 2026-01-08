@@ -4,7 +4,6 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-
 Canvas {
     id:     root
 
@@ -73,8 +72,6 @@ Canvas {
         context.clearRect(0, 0, width, height)
         paintGimbalYaw(context)
     }
-
-    Behavior on _indicatorRadius { PropertyAnimation {} }
 
     Rectangle {
         id:                     labelControl

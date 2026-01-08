@@ -1,18 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-
-
 import QGroundControl.Controls
 
 Rectangle {
@@ -45,10 +34,7 @@ Rectangle {
     QGCFlickable {
         id:                 flickable
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
-        anchors.top:        parent.top
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        height:             parent.height - anchors.margins * 2
+        anchors.fill:       parent
         contentHeight:      toolStripColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true

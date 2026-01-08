@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -17,10 +8,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
-
-
 import QGroundControl.FlightMap
-
 import QGroundControl.FactControls
 
 FlightMap {
@@ -194,7 +182,6 @@ FlightMap {
         anchors.left:           parent.left
         anchors.bottom:         parent.bottom
         mapControl:             _map
-        buttonsOnLeft:          true
     }
 
     //-----------------------------------------------------------------
@@ -399,7 +386,6 @@ FlightMap {
                         anchors.left:           parent.left
                         anchors.bottom:         parent.bottom
                         mapControl:             parent
-                        zoomButtonsVisible:     false
                     }
 
                     Rectangle {
@@ -438,7 +424,6 @@ FlightMap {
                         anchors.left:           parent.left
                         anchors.bottom:         parent.bottom
                         mapControl:             parent
-                        zoomButtonsVisible:     false
                     }
 
                     Rectangle {

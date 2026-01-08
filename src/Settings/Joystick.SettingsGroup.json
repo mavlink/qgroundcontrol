@@ -1,0 +1,90 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "calibrated",
+            "shortDesc": "Joystick calibrated",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "circleCorrection",
+            "shortDesc": "Enable circle correction for joystick input",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "useDeadband",
+            "shortDesc": "Use deadband for joystick input",
+            "type": "bool",
+            "default": true
+        },
+        {
+            "name": "negativeThrust",
+            "shortDesc": "Enable negative thrust (reverse) on throttle axis",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "throttleSmoothing",
+            "shortDesc": "Enable throttle accumulator mode",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "axisFrequencyHz",
+            "shortDesc": "Axis Update Frequency",
+            "type": "double",
+            "default": 25,
+            "units": "Hz",
+            "min": 0.25,
+            "max": 200,
+            "userMin": 0.25,
+            "userMax": 200,
+            "decimalPlaces": 2
+        },
+        {
+            "name": "buttonFrequencyHz",
+            "shortDesc": "Button Repeat Frequency",
+            "type": "double",
+            "default": 5,
+            "units": "Hz",
+            "min": 0.25,
+            "max": 50,
+            "userMin": 0.25,
+            "userMax": 50,
+            "decimalPlaces": 2
+        },
+        {
+            "name": "throttleModeCenterZero",
+            "shortDesc": "Enable center zero throttle mode",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlExtensions",
+            "shortDesc": "Enable manual control extensions",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "transmitterMode",
+            "shortDesc": "Transmitter mode (1-4)",
+            "type": "uint32",
+            "default": 2
+        },
+        {
+            "name": "exponentialPct",
+            "shortDesc": "Stick Exponential",
+            "type": "double",
+            "default": 0,
+            "units": "%",
+            "decimalPlaces": 1,
+            "min": 0,
+            "max": 50,
+            "userMin": 0,
+            "userMax": 50
+        }
+    ]
+}

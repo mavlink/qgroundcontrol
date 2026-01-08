@@ -14,12 +14,16 @@ on:
       - 'package*.json'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -27,7 +31,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 'lts/*'
           cache: npm
 
       - name: Install dependencies
@@ -39,36 +43,40 @@ jobs:
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: qgc_docs_build
           path: docs/.vitepress/dist/
           retention-days: 1
 
   deploy:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged) }}
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: qgc_docs_build
           path: ~/_book
 
-      - name: Deploy
-        env:
-          GIT_USER: ${{ secrets.PX4BUILDBOT_USER }}
-          GIT_PASS: ${{ secrets.PX4BUILDBOT_PASS }}
+      - name: Checkout docs repo
+        uses: actions/checkout@v6
+        with:
+          repository: mavlink/docs.qgroundcontrol.com
+          token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          path: docs.qgroundcontrol.com
+
+      - name: Deploy docs
         run: |
-          git clone https://${{ secrets.PX4BUILDBOT_USER }}:${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}@github.com/mavlink/docs.qgroundcontrol.com.git
-          rm -rf docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
-          mkdir -p docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}
-          cp -r ~/_book/* docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}/
+          rm -rf "docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}"
+          mkdir -p "docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}"
+          cp -r ~/_book/* "docs.qgroundcontrol.com/${{ env.BRANCH_NAME }}/"
           cd docs.qgroundcontrol.com
           git config user.email "bot@px4.io"
           git config user.name "PX4BuildBot"
-          git add ${{ env.BRANCH_NAME }}
-          git commit -a -m "QGC docs build update `date`"
+          git add "${{ env.BRANCH_NAME }}"
+          git commit -m "QGC docs build update $(date -u +%Y-%m-%d)"
           git push origin master

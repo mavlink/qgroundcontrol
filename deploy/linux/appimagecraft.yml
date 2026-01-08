@@ -8,7 +8,8 @@ build:
   cmake:
     source_dir: src/
     extra_variables:
-      - Qt6_ROOT=/home/runner/work/_temp/Qt/6.10.1/gcc_64
+      # Qt6_ROOT should be set via environment variable from centralized config
+      - Qt6_ROOT=${QT_ROOT_DIR:-/opt/Qt/gcc_64}
   environment:
     BUILD_TYPE: Release
 

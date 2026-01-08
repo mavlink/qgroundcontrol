@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "PlanMasterControllerTest.h"
 #include "MultiSignalSpyV2.h"
 #include "MissionManager.h"
@@ -36,13 +27,6 @@ void PlanMasterControllerTest::cleanup(void)
     _masterController = nullptr;
     UnitTest::cleanup();
 }
-
-void PlanMasterControllerTest::_testMissionFileLoad(void)
-{
-    _masterController->loadFromFile(":/unittest/OldFileFormat.mission");
-    QCOMPARE(_masterController->missionController()->visualItems()->count(), 7);
-}
-
 
 void PlanMasterControllerTest::_testMissionPlannerFileLoad(void)
 {
