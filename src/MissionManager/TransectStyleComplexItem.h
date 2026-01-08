@@ -97,6 +97,7 @@ public:
     void                setDirty                    (bool dirty) final;
     void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
     void                setSequenceNumber           (int sequenceNumber) final;
+    double              editableAlt                 (void) const final;
     double              amslEntryAlt                (void) const final;
     double              amslExitAlt                 (void) const final;
     double              minAMSLAltitude             (void) const final;
