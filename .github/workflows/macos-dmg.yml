@@ -1,0 +1,49 @@
+name: Build macOS DMG
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt (macOS)
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: "6.10.1"
+          host: "mac"
+          target: "clang"
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build -- -j$(sysctl -n hw.logicalcpu)
+
+      - name: Create .app bundle (macOS)
+        run: |
+          APP_DIR=GarudX.app
+          mkdir -p $APP_DIR/Contents/MacOS
+          cp build/Release/garudxgcs $APP_DIR/Contents/MacOS/garudxgcs || cp build/garudxgcs/Release/garudxgcs $APP_DIR/Contents/MacOS/garudxgcs
+
+      - name: Make DMG
+        run: |
+          hdiutil create -volname GarudX -srcfolder GarudX.app -ov -format UDZO garudxgcs-macos.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: garudxgcs-macos-dmg
+          path: garudxgcs-macos.dmg
+
+      - name: Notarize (placeholder)
+        if: false
+        run: |
+          echo "Add notarization steps here using APPLE_ID and APP_PASSWORD secrets"

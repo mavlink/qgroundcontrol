@@ -1,0 +1,95 @@
+name: Build Windows Release + NSIS Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-and-package:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt (Qt 6.10.1)
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: "6.10.1"
+          host: "windows"
+          target: "msvc"
+
+      - name: Configure CMake (MSVC)
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (Release)
+        run: |
+          cmake --build build --config Release -- /m
+
+      - name: Bundle Qt runtime with windeployqt
+        run: |
+          $exe = 'build\\Release\\garudxgcs.exe'
+          if (-not (Test-Path $exe)) { $exe = 'build\\garudxgcs\\Release\\garudxgcs.exe' }
+          Write-Host "Using exe: $exe"
+          & windeployqt --qmldir src --release $exe
+
+      - name: Include JetBrains Mono font in installer output
+        run: |
+          Write-Host "Downloading JetBrains Mono latest release and bundling TTFs into installer_out"
+          $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/JetBrains/JetBrainsMono/releases/latest'
+          $asset = $release.assets | Where-Object { $_.name -match 'JetBrainsMono.*zip' } | Select-Object -First 1
+          $outdir = "$PWD\\installer_out"
+          if ($null -ne $asset) {
+            $url = $asset.browser_download_url
+            Invoke-WebRequest -Uri $url -OutFile jetbrainsmono.zip
+            Expand-Archive -Path jetbrainsmono.zip -DestinationPath fonts -Force
+            $ttfs = Get-ChildItem -Path fonts -Recurse -Include *.ttf
+            $dest = Join-Path $outdir 'fonts'
+            New-Item -ItemType Directory -Path $dest -Force | Out-Null
+            foreach ($f in $ttfs) { Copy-Item $f.FullName -Destination $dest -Force }
+            # create launcher
+            $launcher = Join-Path $outdir 'garudxgcs.bat'
+            $exeName = 'garudxgcs.exe'
+            $bat = "@echo off`r`nset QT_FONTDIR=%~dp0fonts`r`nstart \"\" \"%~dp0$exeName%\""
+            Set-Content -Path $launcher -Value $bat -Encoding ASCII
+          } else {
+            Write-Host "JetBrains Mono asset not found; skipping bundling"
+          }
+
+      - name: Install NSIS
+        run: |
+          choco install nsis -y
+
+      - name: Create installer using NSIS
+        run: |
+          $outdir = "$PWD\\installer_out"
+          Remove-Item -Recurse -Force $outdir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $outdir
+          Copy-Item -Path build\\Release\\* -Destination $outdir -Recurse -Force
+          # Run makensis on our NSI script
+          & "C:\\Program Files (x86)\\NSIS\\makensis.exe" -V2 tools\\packaging\\garudxgcs_installer.nsi /DOUTDIR=$outdir
+
+      - name: Package installer zip
+        run: |
+          Compress-Archive -Path installer_out\* -DestinationPath garudxgcs-windows-installer.zip -Force
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: garudxgcs-windows-installer
+          path: garudxgcs-windows-installer.zip
+
+      - name: Create GitHub Release (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release asset (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: garudxgcs-windows-installer.zip

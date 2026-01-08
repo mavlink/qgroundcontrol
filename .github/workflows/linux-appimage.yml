@@ -1,0 +1,48 @@
+name: Build Linux AppImage
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt (apt) and tools
+        run: |
+          sudo apt update
+          sudo apt install -y qtbase5-dev qtdeclarative5-dev qt6-base-dev build-essential wget patchelf
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build -- -j$(nproc)
+
+      - name: Prepare AppDir
+        run: |
+          set -e
+          rm -rf AppDir || true
+          mkdir -p AppDir/usr/bin
+          cp build/Release/garudxgcs AppDir/usr/bin/ || cp build/garudxgcs/Release/garudxgcs AppDir/usr/bin/
+
+      - name: Download linuxdeployqt
+        run: |
+          wget -q https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage -O linuxdeployqt.AppImage
+          chmod a+x linuxdeployqt.AppImage
+
+      - name: Run linuxdeployqt to create AppImage
+        run: |
+          ./linuxdeployqt.AppImage AppDir/usr/bin/garudxgcs -appimage -qmake $(which qmake || true) || true
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: garudxgcs-linux-appimage
+          path: "*.AppImage"

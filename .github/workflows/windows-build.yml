@@ -34,6 +34,15 @@ jobs:
           Write-Host "Using exe: $exe"
           & windeployqt --qmldir src --release $exe
 
+      - name: Create launcher bat (fonts bundling disabled for now)
+        run: |
+          # TODO: Re-enable JetBrains Mono font bundling after testing core build
+          $launcher = 'build\\Release\\garudxgcs.bat'
+          $exeName = 'garudxgcs.exe'
+          $bat = "@echo off`r`nstart \"\" \"%~dp0$exeName%\""
+          Set-Content -Path $launcher -Value $bat -Encoding ASCII
+          Write-Host "Created launcher: $launcher"
+
       - name: Package artifact
         run: |
           $out = "artifact"
@@ -47,3 +56,17 @@ jobs:
         with:
           name: garudxgcs-windows
           path: garudxgcs-windows.zip
+
+      - name: Create GitHub Release (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release asset (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: garudxgcs-windows.zip
