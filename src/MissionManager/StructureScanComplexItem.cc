@@ -639,6 +639,10 @@ void StructureScanComplexItem::_updateWizardMode(void)
     }
 }
 
+double StructureScanComplexItem::editableAlt() const {
+    return _entranceAltFact.rawValue().toDouble();
+}
+
 double StructureScanComplexItem::amslEntryAlt(void) const
 {
     return _entranceAltFact.rawValue().toDouble() + _missionController->plannedHomePosition().altitude();

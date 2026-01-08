@@ -1322,6 +1322,10 @@ void TransectStyleComplexItem::_recalcComplexDistance(void)
     emit complexDistanceChanged();
 }
 
+double TransectStyleComplexItem::editableAlt() const {
+    return _cameraCalc.distanceToSurface()->rawValue().toDouble();
+}
+
 double TransectStyleComplexItem::amslEntryAlt(void) const
 {
     double alt                  = qQNaN();
