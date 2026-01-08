@@ -29,19 +29,10 @@ jobs:
 
       - name: Bundle Qt runtime with windeployqt
         run: |
-          $exe = 'build\\Release\\garudxgcs.exe'
-          if (-not (Test-Path $exe)) { $exe = 'build\\garudxgcs\\Release\\garudxgcs.exe' }
-          Write-Host "Using exe: $exe"
-          & windeployqt --qmldir src --release $exe
-
-      - name: Create launcher bat (fonts bundling disabled for now)
-        run: |
-          # TODO: Re-enable JetBrains Mono font bundling after testing core build
-          $launcher = 'build\\Release\\garudxgcs.bat'
-          $exeName = 'garudxgcs.exe'
-          $bat = "@echo off`r`nstart \"\" \"%~dp0$exeName%\""
-          Set-Content -Path $launcher -Value $bat -Encoding ASCII
-          Write-Host "Created launcher: $launcher"
+          cd build\Release
+          windeployqt.exe --qmldir ..\..\src --release garudxgcs.exe
+          cd ..\..
+          echo "windeployqt completed"
 
       - name: Package artifact
         run: |
