@@ -182,6 +182,7 @@ Rectangle {
 
         DropPanel {
             id: hamburgerMenuDropPanel
+            onClosed: destroy()
 
             sourceComponent: Component {
                 ColumnLayout {
@@ -259,6 +260,262 @@ Rectangle {
         }
     }
 
+    Component {
+        id: missionStartHamburgerMenuDropPanelComponent
+
+        DropPanel {
+            id: missionStartHamburgerMenuDropPanel
+            onClosed: destroy()
+
+            sourceComponent: Component {
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Offset mission...")
+                        onClicked: {
+                            offsetMissionDialogComponent.createObject(mainWindow).open()
+                            missionStartHamburgerMenuDropPanel.close()
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Rotate mission...")
+                        onClicked: {
+                            rotateMissionDialogComponent.createObject(mainWindow).open()
+                            missionStartHamburgerMenuDropPanel.close()
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Edit mission position...")
+                        onClicked: {
+                            editMissionPositionDialogComponent.createObject(
+                                        mainWindow,
+                                        { coordinate: _missionController.plannedHomePosition }).open()
+                            missionStartHamburgerMenuDropPanel.close()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: offsetMissionDialogComponent
+
+        QGCPopupDialog {
+            id: root
+            title: qsTr("Offset Mission")
+            buttons: Dialog.Cancel | Dialog.Ok
+            modal: true
+
+            property real _margin: ScreenTools.defaultFontPixelWidth / 2
+            property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 20
+            property real _labelWidth: ScreenTools.defaultFontPixelWidth * 14
+
+            ColumnLayout {
+                spacing: _margin
+
+                RowLayout {
+                    spacing: _margin
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        text: qsTr("East (m)")
+                        Layout.preferredWidth: _labelWidth
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    }
+
+                    QGCTextField {
+                        id: eastField
+                        text: "0"
+                        Layout.preferredWidth: _textFieldWidth
+                        Layout.fillWidth: true
+                        inputMethodHints: Qt.ImhPreferNumbers
+                        validator: DoubleValidator {
+                            notation: DoubleValidator.StandardNotation
+                            locale: Qt.locale()
+                        }
+                    }
+                }
+
+                RowLayout {
+                    spacing: _margin
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        text: qsTr("North (m)")
+                        Layout.preferredWidth: _labelWidth
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    }
+
+                    QGCTextField {
+                        id: northField
+                        text: "0"
+                        Layout.preferredWidth: _textFieldWidth
+                        Layout.fillWidth: true
+                        inputMethodHints: Qt.ImhPreferNumbers
+                        validator: DoubleValidator {
+                            notation: DoubleValidator.StandardNotation
+                            locale: Qt.locale()
+                        }
+                    }
+                }
+
+                RowLayout {
+                    spacing: _margin
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        text: qsTr("Up (m)")
+                        Layout.preferredWidth: _labelWidth
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    }
+
+                    QGCTextField {
+                        id: upField
+                        text: "0"
+                        Layout.preferredWidth: _textFieldWidth
+                        Layout.fillWidth: true
+                        inputMethodHints: Qt.ImhPreferNumbers
+                        validator: DoubleValidator {
+                            notation: DoubleValidator.StandardNotation
+                            locale: Qt.locale()
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    QGCCheckBox {
+                        id: offsetTakeoffCheck
+                        text: qsTr("Also move takeoff items")
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    }
+
+                    QGCCheckBox {
+                        id: offsetLandingCheck
+                        text: qsTr("Also move landing items")
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    }
+                }
+            }
+
+            onAccepted: {
+                var east = Number.fromLocaleString(Qt.locale(), eastField.text)
+                var north = Number.fromLocaleString(Qt.locale(), northField.text)
+                var up = Number.fromLocaleString(Qt.locale(), upField.text)
+
+                if (isNaN(east)) east = 0
+                if (isNaN(north)) north = 0
+                if (isNaN(up)) up = 0
+
+                _missionController.offsetMission(
+                    east,
+                    north,
+                    up,
+                    offsetTakeoffCheck.checked,
+                    offsetLandingCheck.checked
+                )
+            }
+        }
+    }
+
+    Component {
+        id: rotateMissionDialogComponent
+
+        QGCPopupDialog {
+            id: root
+            title: qsTr("Rotate Mission")
+            buttons: Dialog.Cancel | Dialog.Ok
+            modal: true
+
+            property real _margin: ScreenTools.defaultFontPixelWidth / 2
+            property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 20
+            property real _labelWidth: ScreenTools.defaultFontPixelWidth * 14
+
+            ColumnLayout {
+                spacing: _margin
+
+                RowLayout {
+                    spacing: _margin
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        text: qsTr("Clockwise (°)")
+                        Layout.preferredWidth: _labelWidth
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                    }
+
+                    QGCTextField {
+                        id: degreesCWField
+                        text: "0"
+                        Layout.preferredWidth: _textFieldWidth
+                        Layout.fillWidth: true
+                        inputMethodHints: Qt.ImhPreferNumbers
+                        validator: DoubleValidator {
+                            notation: DoubleValidator.StandardNotation
+                            locale: Qt.locale()
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    QGCCheckBox {
+                        id: rotateTakeoffCheck
+                        text: qsTr("Also move takeoff items")
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    }
+
+                    QGCCheckBox {
+                        id: rotateLandingCheck
+                        text: qsTr("Also move landing items")
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    }
+                }
+
+                QGCLabel {
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: _labelWidth + _textFieldWidth
+
+                    wrapMode: Text.WordWrap
+                    font.pointSize: ScreenTools.smallFontPointSize
+
+                    text: qsTr("Note: Complex items are rotated by moving their reference coordinate: their geometry and orientation are not changed.")
+                }
+            }
+
+            onAccepted: {
+                var degreesCW = Number.fromLocaleString(Qt.locale(), degreesCWField.text)
+
+                if (isNaN(degreesCW)) degreesCW = 0
+
+                _missionController.rotateMission(
+                    degreesCW,
+                    rotateTakeoffCheck.checked,
+                    rotateLandingCheck.checked
+                )
+            }
+        }
+    }
+
+    Component {
+        id: editMissionPositionDialogComponent
+
+        EditPositionDialog {
+            id: missionEditPositionDialog
+
+            onCoordinateChanged: _missionController.repositionMission(coordinate)
+        }
+    }
+
 
     QGCColoredImage {
         id:                     hamburger
@@ -269,7 +526,7 @@ Rectangle {
         height:                 _hamburgerSize
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
-        visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
+        visible:                missionItem.isCurrentItem
         color:                  qgcPal.buttonHighlightText
 
         QGCMouseArea {
@@ -279,7 +536,11 @@ Rectangle {
                 position = Qt.point(position.x, position.y)
                 // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
                 position = mapToItem(globals.parent, position)
-                var dropPanel = hamburgerMenuDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
+
+                var panelComponent = (missionItem.sequenceNumber === 0)
+                           ? missionStartHamburgerMenuDropPanelComponent
+                           : hamburgerMenuDropPanelComponent
+                var dropPanel = panelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
                 dropPanel.open()
             }
         }
