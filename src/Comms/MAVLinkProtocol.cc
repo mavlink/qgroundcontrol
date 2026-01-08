@@ -1,16 +1,17 @@
 #include "MAVLinkProtocol.h"
+#include "AppSettings.h"
 #include "LinkManager.h"
+#include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
-#include "QGCTemporaryFile.h"
-#include "SettingsManager.h"
-#include "MavlinkSettings.h"
-#include "AppSettings.h"
 #include "QmlObjectListModel.h"
+#include "SettingsManager.h"
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>
 #include <QtCore/QSettings>
@@ -23,7 +24,7 @@ Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
 MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
-    , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
+    , _tempLogFile(new QFile(this))
 {
     qCDebug(MAVLinkProtocolLog) << this;
 }
@@ -300,8 +301,20 @@ void MAVLinkProtocol::_startLogging()
         return;
     }
 
-    if (!_tempLogFile->open()) {
-        const QString message = QStringLiteral("Opening Flight Data file for writing failed. Unable to write to %1. Please choose a different file location.").arg(_tempLogFile->fileName());
+    // Generate unique temp file path for this logging session
+    const QString logPath = QGCFileHelper::uniqueTempPath(
+        QStringLiteral("%1.%2").arg(_tempLogFileTemplate, _logFileExtension));
+    if (logPath.isEmpty()) {
+        qCWarning(MAVLinkProtocolLog) << "Failed to generate temp log path";
+        _logSuspendError = true;
+        return;
+    }
+
+    _tempLogFile->setFileName(logPath);
+    if (!_tempLogFile->open(QIODevice::WriteOnly)) {
+        const QString message = QStringLiteral("Opening Flight Data file for writing failed. "
+            "Unable to write to %1. Please choose a different file location.")
+            .arg(_tempLogFile->fileName());
         qgcApp()->showAppMessage(message, getName());
         _closeLogFile();
         _logSuspendError = true;

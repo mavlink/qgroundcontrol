@@ -13,6 +13,8 @@ Q_DECLARE_LOGGING_CATEGORY(FTPControllerLog)
 
 class FTPManager;
 class Vehicle;
+class QGCArchiveModel;
+class QGCCompressionJob;
 
 /// QML-facing controller for MAVLink FTP operations.
 class FTPController : public QObject
@@ -32,6 +34,10 @@ class FTPController : public QObject
     Q_PROPERTY(QStringList directoryEntries READ directoryEntries NOTIFY directoryEntriesChanged)
     Q_PROPERTY(QString lastDownloadFile READ lastDownloadFile NOTIFY lastDownloadFileChanged)
     Q_PROPERTY(QString lastUploadTarget READ lastUploadTarget NOTIFY lastUploadTargetChanged)
+    Q_PROPERTY(bool lastDownloadIsArchive READ lastDownloadIsArchive NOTIFY lastDownloadFileChanged)
+    Q_PROPERTY(bool extracting READ extracting NOTIFY extractingChanged)
+    Q_PROPERTY(float extractionProgress READ extractionProgress NOTIFY extractionProgressChanged)
+    Q_PROPERTY(QGCArchiveModel* archiveModel READ archiveModel CONSTANT)
 
 public:
     explicit FTPController(QObject *parent = nullptr);
@@ -47,12 +53,30 @@ public:
     QStringList directoryEntries() const { return _directoryEntries; }
     QString lastDownloadFile() const { return _lastDownloadFile; }
     QString lastUploadTarget() const { return _lastUploadTarget; }
+    bool lastDownloadIsArchive() const { return _lastDownloadIsArchive; }
+    bool extracting() const { return _extracting; }
+    float extractionProgress() const { return _extractionProgress; }
+    QGCArchiveModel* archiveModel() const { return _archiveModel; }
 
     Q_INVOKABLE bool listDirectory(const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE bool downloadFile(const QString &uri, const QString &localDir, const QString &fileName = QString(), int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE bool uploadFile(const QString &localFile, const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE bool deleteFile(const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE void cancelActiveOperation();
+
+    /// Browse the contents of a downloaded archive file
+    /// @param archivePath Path to the archive file (use lastDownloadFile after download)
+    /// @return true if archive was opened successfully
+    Q_INVOKABLE bool browseArchive(const QString &archivePath);
+
+    /// Extract a downloaded archive to the specified directory
+    /// @param archivePath Path to the archive file
+    /// @param outputDir Directory to extract to (empty = same as archive location)
+    /// @return true if extraction started successfully
+    Q_INVOKABLE bool extractArchive(const QString &archivePath, const QString &outputDir = QString());
+
+    /// Cancel an in-progress extraction
+    Q_INVOKABLE void cancelExtraction();
 
 signals:
     void busyChanged();
@@ -66,13 +90,18 @@ signals:
     void downloadComplete(const QString &filePath, const QString &error);
     void uploadComplete(const QString &remotePath, const QString &error);
     void deleteComplete(const QString &remotePath, const QString &error);
+    void extractingChanged();
+    void extractionProgressChanged();
+    void extractionComplete(const QString &outputDir, const QString &error);
 
-private:
+private slots:
     void _handleDownloadComplete(const QString &filePath, const QString &error);
     void _handleUploadComplete(const QString &remotePath, const QString &error);
     void _handleDirectoryComplete(const QStringList &entries, const QString &error);
     void _handleDeleteComplete(const QString &remotePath, const QString &error);
     void _handleCommandProgress(float value);
+    void _handleExtractionProgress(qreal progress);
+    void _handleExtractionFinished(bool success);
 
 private:
     enum class Operation {
@@ -100,4 +129,10 @@ private:
     QStringList _directoryEntries;
     QString _lastDownloadFile;
     QString _lastUploadTarget;
+    bool _lastDownloadIsArchive = false;
+    bool _extracting = false;
+    float _extractionProgress = 0.0F;
+    QString _extractionOutputDir;
+    QGCArchiveModel *_archiveModel = nullptr;
+    QGCCompressionJob *_extractionJob = nullptr;
 };

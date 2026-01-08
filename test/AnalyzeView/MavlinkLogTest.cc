@@ -4,12 +4,13 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "MavlinkLogTest.h"
-#include "QGCTemporaryFile.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryFile>
 #include <QtTest/QTest>
 
 const char* MavlinkLogTest::_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
@@ -48,13 +49,17 @@ void MavlinkLogTest::cleanup(void)
 
 void MavlinkLogTest::_createTempLogFile(bool zeroLength)
 {
-    QGCTemporaryFile tempLogFile(QString("%1.%2").arg(_tempLogFileTemplate).arg(_logFileExtension));
+    const QString templatePath = QDir::tempPath() + QStringLiteral("/%1.%2")
+                                     .arg(_tempLogFileTemplate, _logFileExtension);
+    QTemporaryFile tempLogFile(templatePath);
+    tempLogFile.setAutoRemove(false);
 
-    tempLogFile.open();
-    if (!zeroLength) {
-        tempLogFile.write("foo");
+    if (tempLogFile.open()) {
+        if (!zeroLength) {
+            tempLogFile.write("foo");
+        }
+        tempLogFile.close();
     }
-    tempLogFile.close();
 }
 
 void MavlinkLogTest::_bootLogDetectionCancel_test(void)

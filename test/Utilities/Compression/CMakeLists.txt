@@ -1,12 +1,16 @@
 # ============================================================================
 # Compression Utilities Unit Tests
-# Tests for decompression (GZIP, XZ, ZIP)
+# Tests for QGCCompression (format detection, ZIP, GZIP, XZ)
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        DecompressionTest.cc
-        DecompressionTest.h
+        QGCArchiveModelTest.cc
+        QGCArchiveModelTest.h
+        QGCCompressionTest.cc
+        QGCCompressionTest.h
+        QGCStreamingDecompressionTest.cc
+        QGCStreamingDecompressionTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -20,4 +24,8 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_CompressionTest_res"
         manifest.json.gz
         manifest.json.xz
         manifest.json.zip
+        manifest.json.7z
+        manifest.json.zst
+        manifest.json.bz2
+        manifest.json.lz4
 )

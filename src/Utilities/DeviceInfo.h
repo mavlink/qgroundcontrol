@@ -11,10 +11,6 @@ Q_DECLARE_LOGGING_CATEGORY(QGCDeviceInfoLog)
 namespace QGCDeviceInfo
 {
 
-bool isInternetAvailable();
-bool isBluetoothAvailable();
-bool isNetworkEthernet();
-
 ////////////////////////////////////////////////////////////////////
 
 class QGCAmbientTemperatureFilter : public QAmbientTemperatureFilter

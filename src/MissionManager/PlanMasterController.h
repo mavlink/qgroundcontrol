@@ -10,6 +10,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
+class QGCCompressionJob;
 class QmlObjectListModel;
 class MultiVehicleManager;
 class Vehicle;
@@ -72,6 +73,12 @@ public:
     Q_INVOKABLE void loadFromVehicle(void);
     Q_INVOKABLE void sendToVehicle(void);
     Q_INVOKABLE void loadFromFile(const QString& filename);
+
+    /// Load a plan from an archive file (.zip, .tar.gz, etc.)
+    /// Extracts the archive and loads the first .plan file found.
+    /// @param archivePath Path to the archive file
+    Q_INVOKABLE void loadFromArchive(const QString& archivePath);
+
     Q_INVOKABLE void saveToCurrent();
     Q_INVOKABLE void saveToFile(const QString& filename);
     Q_INVOKABLE void saveToKml(const QString& filename);
@@ -130,6 +137,7 @@ private slots:
     void _sendRallyPointsComplete   (void);
     void _updateOverallDirty        (void);
     void _updatePlanCreatorsList    (void);
+    void _handleExtractionFinished  (bool success);
 
 private:
     void _commonInit                (void);
@@ -152,4 +160,6 @@ private:
     bool                    _previousOverallDirty =     false;
     QmlObjectListModel*     _planCreators =             nullptr;
     bool                    _manualCreation =           false;
+    QGCCompressionJob*      _extractionJob =            nullptr;
+    QString                 _extractionOutputDir;
 };

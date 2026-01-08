@@ -1,4 +1,5 @@
 #include "MAVLinkLogManager.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -9,8 +10,9 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSettings>
-#include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkReply>
+
+#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "Vehicle.MAVLinkLogManager")
 
@@ -285,11 +287,7 @@ MAVLinkLogManager::MAVLinkLogManager(Vehicle *vehicle, QObject *parent)
 {
     qCDebug(MAVLinkLogManagerLog) << this;
 
-#if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
-    QNetworkProxy tProxy = _networkManager->proxy();
-    tProxy.setType(QNetworkProxy::DefaultProxy);
-    _networkManager->setProxy(tProxy);
-#endif
+    QGCNetworkHelper::configureProxy(_networkManager);
 
     QSettings settings;
     settings.beginGroup(kMAVLinkLogGroup);
@@ -307,11 +305,9 @@ MAVLinkLogManager::MAVLinkLogManager(Vehicle *vehicle, QObject *parent)
 
     settings.endGroup();
 
-    if (!QDir(_logPath).exists()) {
-        if (!QDir().mkpath(_logPath)) {
-            qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log download path:" << _logPath;
-            _loggingDisabled = true;
-        }
+    if (!QGCFileHelper::ensureDirectoryExists(_logPath)) {
+        qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log download path:" << _logPath;
+        _loggingDisabled = true;
     }
 
     if (!_loggingDisabled) {

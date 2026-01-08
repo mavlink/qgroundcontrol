@@ -12,8 +12,8 @@
 #include <QtLocation/private/qgeotiledmap_p.h>
 #include <QtLocation/private/qgeofiletilecache_p.h>
 
-#include "DeviceInfo.h"
 #include "MapProvider.h"
+#include "QGCNetworkHelper.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
@@ -80,7 +80,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
         getQGCMapEngine()->init(fileTileCache->getDatabaseFilePath());
     });
 
-    m_prefetchStyle = QGCDeviceInfo::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers : QGeoTiledMap::NoPrefetching;
+    m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers : QGeoTiledMap::NoPrefetching;
     (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this, [this](QNetworkInformation::Reachability newReachability) {
         if (newReachability == QNetworkInformation::Reachability::Online) {
             m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;

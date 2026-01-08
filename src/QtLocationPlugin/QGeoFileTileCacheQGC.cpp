@@ -7,6 +7,7 @@
 #include "AppSettings.h"
 #include "MapsSettings.h"
 #include "QGCApplication.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
@@ -116,19 +117,15 @@ QString QGeoFileTileCacheQGC::_getCachePath(const QVariantMap &parameters)
         cacheDir = parameters.value(QStringLiteral("mapping.cache.directory")).toString();
     } else {
         cacheDir = _cachePath + QLatin1String("/providers");
-        if (!QFileInfo::exists(cacheDir)) {
-            if (!QDir::root().mkpath(cacheDir)) {
-                qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
-                cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
-            }
+        if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
+            qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
+            cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
         }
     }
 
-    if (!QFileInfo::exists(cacheDir)) {
-        if (!QDir::root().mkpath(cacheDir)) {
-            qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
-            cacheDir.clear();
-        }
+    if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
+        qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
+        cacheDir.clear();
     }
 
     return cacheDir;
@@ -186,11 +183,11 @@ void QGeoFileTileCacheQGC::_initCache()
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation);
 #endif
     cacheDir += QStringLiteral("/QGCMapCache") + QString(kCachePathVersion);
-    if (!QDir::root().mkpath(cacheDir)) {
+    if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
         qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
 
         cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
-        if (!QDir::root().mkpath(cacheDir)) {
+        if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
             qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
             cacheDir.clear();
         }

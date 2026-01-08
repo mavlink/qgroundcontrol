@@ -8,7 +8,7 @@
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 
-class QGCTemporaryFile;
+class QFile;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
@@ -93,7 +93,7 @@ private:
     void _saveTelemetryLog(const QString &tempLogfile);
     bool _checkTelemetrySavePath();
 
-    QGCTemporaryFile * const _tempLogFile = nullptr;
+    QFile *_tempLogFile = nullptr;
 
     bool _logSuspendError = false;  ///< true: Logging suspended due to error
     bool _logSuspendReplay = false; ///< true: Logging suspended due to replay

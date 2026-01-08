@@ -126,9 +126,14 @@ add_subdirectory(Utilities)
 # Audio
 add_qgc_test(AudioOutputTest)
 # Compression
-add_qgc_test(DecompressionTest)
+add_qgc_test(QGCArchiveModelTest)
+add_qgc_test(QGCCompressionTest)
+add_qgc_test(QGCStreamingDecompressionTest)
 # FileSystem
+add_qgc_test(QGCArchiveWatcherTest)
 add_qgc_test(QGCFileDownloadTest)
+add_qgc_test(QGCFileHelperTest)
+add_qgc_test(QGCFileWatcherTest)
 # Geo
 add_qgc_test(GeoTest)
 # Shape

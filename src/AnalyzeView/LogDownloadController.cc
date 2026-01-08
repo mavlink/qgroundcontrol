@@ -630,3 +630,35 @@ void LogDownloadController::_setListing(bool active)
         emit requestingListChanged();
     }
 }
+
+void LogDownloadController::setCompressLogs(bool compress)
+{
+    if (_compressLogs != compress) {
+        _compressLogs = compress;
+        emit compressLogsChanged();
+    }
+}
+
+bool LogDownloadController::compressLogFile(const QString &logPath)
+{
+    Q_UNUSED(logPath)
+    qCWarning(LogDownloadControllerLog) << "Log compression not yet implemented (decompression-only API)";
+    return false;
+}
+
+void LogDownloadController::cancelCompression()
+{
+    // Not implemented - compression API is decompression-only
+}
+
+void LogDownloadController::_handleCompressionProgress(qreal progress)
+{
+    Q_UNUSED(progress)
+    // Not implemented - compression API is decompression-only
+}
+
+void LogDownloadController::_handleCompressionFinished(bool success)
+{
+    Q_UNUSED(success)
+    // Not implemented - compression API is decompression-only
+}

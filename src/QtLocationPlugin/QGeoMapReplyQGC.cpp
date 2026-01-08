@@ -5,10 +5,9 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QSslError>
 
-#include "DeviceInfo.h"
+#include "QGCNetworkHelper.h"
 #include "ElevationMapProvider.h"
 #include "MapProvider.h"
-#include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
@@ -99,7 +98,7 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     }
 
     const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if ((statusCode < HTTP_Response::SUCCESS_OK) || (statusCode >= HTTP_Response::REDIRECTION_MULTIPLE_CHOICES)) {
+    if (!QGCNetworkHelper::isHttpSuccess(statusCode)) {
         setError(QGeoTiledMapReply::CommunicationError, reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString());
         return;
     }
@@ -188,7 +187,7 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
 
     Q_ASSERT(type == QGCMapTask::TaskType::taskFetchTile);
 
-    if (!QGCDeviceInfo::isInternetAvailable()) {
+    if (!QGCNetworkHelper::isInternetAvailable()) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Network Not Available"));
         return;
     }
@@ -197,7 +196,7 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
 
     QNetworkReply* const reply = _networkManager->get(_request);
     reply->setParent(this);
-    QGCFileDownload::setIgnoreSSLErrorsIfNeeded(*reply);
+    QGCNetworkHelper::ignoreSslErrorsIfNeeded(reply);
 
     (void) connect(reply, &QNetworkReply::finished, this, &QGeoTiledMapReplyQGC::_networkReplyFinished);
     (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGeoTiledMapReplyQGC::_networkReplyError);

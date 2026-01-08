@@ -11,8 +11,9 @@
 
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkRequest>
+
+#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(TerrainTileManagerLog, "Terrain.TerrainTileManager")
 
@@ -29,11 +30,7 @@ TerrainTileManager::TerrainTileManager(QObject *parent)
 {
     qCDebug(TerrainTileManagerLog) << this;
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    QNetworkProxy proxy = _networkManager->proxy();
-    proxy.setType(QNetworkProxy::DefaultProxy);
-    _networkManager->setProxy(proxy);
-#endif
+    QGCNetworkHelper::configureProxy(_networkManager);
 }
 
 TerrainTileManager::~TerrainTileManager()

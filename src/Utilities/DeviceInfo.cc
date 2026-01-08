@@ -2,51 +2,11 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QApplicationStatic>
-#include <QtNetwork/QNetworkInformation>
-#ifdef QGC_ENABLE_BLUETOOTH
-#    include <QtBluetooth/QBluetoothLocalDevice>
-#endif
 
 QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "Utilities.QGCDeviceInfo")
 
 namespace QGCDeviceInfo
 {
-
-//  TODO:
-//    - reachabilityChanged()
-//    - Allow to select by transportMedium()
-
-bool isInternetAvailable()
-{
-    if (QNetworkInformation::availableBackends().isEmpty()) return false;
-
-    if (!QNetworkInformation::loadDefaultBackend()) return false;
-
-    if (!QNetworkInformation::loadBackendByFeatures(QNetworkInformation::Feature::Reachability)) return false;
-
-    const QNetworkInformation::Reachability reachability = QNetworkInformation::instance()->reachability();
-
-    return (reachability == QNetworkInformation::Reachability::Online);
-}
-
-bool isNetworkEthernet()
-{
-    if (QNetworkInformation::availableBackends().isEmpty()) return false;
-
-    if (!QNetworkInformation::loadDefaultBackend()) return false;
-
-    return (QNetworkInformation::instance()->transportMedium() == QNetworkInformation::TransportMedium::Ethernet);
-}
-
-bool isBluetoothAvailable()
-{
-    #ifdef QGC_ENABLE_BLUETOOTH
-        const QList<QBluetoothHostInfo> devices = QBluetoothLocalDevice::allDevices();
-        return !devices.isEmpty();
-    #else
-        return false;
-    #endif
-}
 
 ////////////////////////////////////////////////////////////////////
 
