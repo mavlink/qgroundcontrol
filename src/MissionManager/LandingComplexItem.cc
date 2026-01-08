@@ -656,6 +656,10 @@ void LandingComplexItem::setSequenceNumber(int sequenceNumber)
     }
 }
 
+double LandingComplexItem::editableAlt() const {
+    return finalApproachAltitude()->rawValue().toDouble();
+}
+
 double LandingComplexItem::amslEntryAlt(void) const
 {
     return finalApproachAltitude()->rawValue().toDouble() + (_altitudesAreRelative ? _missionController->plannedHomePosition().altitude() : 0);

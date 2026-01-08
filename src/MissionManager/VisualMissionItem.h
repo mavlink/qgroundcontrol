@@ -143,6 +143,7 @@ public:
     virtual QGeoCoordinate  coordinate              (void) const = 0;
     virtual QGeoCoordinate  entryCoordinate         (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
+    virtual double          editableAlt             (void) const = 0;
     virtual double          amslEntryAlt            (void) const = 0;
     virtual double          amslExitAlt             (void) const = 0;
     virtual int             sequenceNumber          (void) const = 0;
