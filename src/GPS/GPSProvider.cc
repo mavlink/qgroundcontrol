@@ -220,7 +220,23 @@ GPSBaseStationSupport *GPSProvider::_connectGPS()
         baudrate = 0;
         break;
     case GPSType::u_blox:
+
+#ifdef Q_OS_ANDROID
+        // PX4 GPS driver constructor signature has been changed
+        // and these changes aren't a part of desktop ubx.h
+        // package yet.
+        // https://github.com/PX4/PX4-GPSDrivers/commit/b113858be001476e1c055459b1395fe117e7fe19
+
+        GPSDriverUBX::Settings ubx_settings;
+        ubx_settings.dynamic_model = 7;
+        ubx_settings.heading_offset = 0.f;
+        ubx_settings.uart2_baudrate = 57600;
+        ubx_settings.mode = GPSDriverUBX::UBXMode::Normal;
+
+        gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &_callbackEntry, this, &_sensorGps, &_satelliteInfo, ubx_settings);
+#else
         gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &_callbackEntry, this, &_sensorGps, &_satelliteInfo);
+#endif
         baudrate = 0;
         break;
     case GPSType::femto:
