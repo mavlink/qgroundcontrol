@@ -26,6 +26,7 @@
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
+#include <QtMath>
 
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
@@ -2502,6 +2503,139 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         emit flyThroughCommandsAllowedChanged();
         emit previousCoordinateChanged();
     }
+}
+
+void MissionController::repositionMission(const QGeoCoordinate& newHome,
+                                          bool repositionTakeoffItems,
+                                          bool repositionLandingItems)
+{
+    if (!newHome.isValid()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog: repositionMission called with invalid coord";
+        return;
+    }
+
+    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog: repositionMission called while home is invalid";
+        return;
+    }
+
+    const QGeoCoordinate oldHome = _settingsItem->coordinate();
+
+    for (int i = 0; i < _visualItems->count(); ++i) {
+        auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        if (!item || !item->specifiesCoordinate() || item->isStandaloneCoordinate()) {
+            continue;
+        }
+
+        if ((!repositionTakeoffItems && item->isTakeoffItem()) ||
+            (!repositionLandingItems && item->isLandCommand())) {
+            continue;
+        }
+
+        const QGeoCoordinate oldCoord = item->coordinate();
+        if (!oldCoord.isValid()) {
+            continue;
+        }
+
+        double distanceMeters = oldHome.distanceTo(oldCoord);
+        double azimuthDegrees = oldHome.azimuthTo(oldCoord);
+
+        QGeoCoordinate newCoord = newHome.atDistanceAndAzimuth(distanceMeters, azimuthDegrees);
+        item->setCoordinate(newCoord);
+    }
+
+    setDirty(true);
+}
+
+void MissionController::offsetMission(double eastMeters,
+                                      double northMeters,
+                                      double upMeters,
+                                      bool offsetTakeoffItems,
+                                      bool offsetLandingItems)
+{
+    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog: offsetMission called while home is invalid";
+        return;
+    }
+
+    if (!qFuzzyIsNull(eastMeters) || !qFuzzyIsNull(northMeters)) {
+        double distanceMeters = qSqrt(eastMeters * eastMeters + northMeters * northMeters);
+        double azimuthDegrees = 0.0;
+        if (!qFuzzyIsNull(distanceMeters)) {
+            double azimuthRadians = qAtan2(eastMeters, northMeters);
+            azimuthDegrees = qRadiansToDegrees(azimuthRadians);
+        }
+
+        const QGeoCoordinate oldHome = _settingsItem->coordinate();
+        QGeoCoordinate newHome = oldHome.atDistanceAndAzimuth(distanceMeters, azimuthDegrees);
+        repositionMission(newHome, offsetTakeoffItems, offsetLandingItems);
+    }
+
+    if (!qFuzzyIsNull(upMeters)) {
+        for (int i = 0; i < _visualItems->count(); ++i) {
+            auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            if (!item || item == _settingsItem) {
+                continue;
+            }
+
+            if ((!offsetTakeoffItems && item->isTakeoffItem()) ||
+                (!offsetLandingItems && item->isLandCommand())) {
+                continue;
+            }
+
+            if (!item->specifiesCoordinate() && !item->specifiesAltitudeOnly()) {
+                continue;
+            }
+
+            if (!qIsNaN(item->editableAlt())) {
+                item->applyNewAltitude(item->editableAlt() + upMeters);
+            }
+        }
+    }
+}
+
+void MissionController::rotateMission(double degreesCW,
+                                      bool rotateTakeoffItems,
+                                      bool rotateLandingItems)
+{
+    if (qFuzzyIsNull(degreesCW)) {
+        return;
+    }
+
+    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
+        qCWarning(MissionControllerLog) << "MissionControllerLog: rotateMission called while home is invalid";
+        return;
+    }
+
+    const QGeoCoordinate home = _settingsItem->coordinate();
+
+    for (int i = 0; i < _visualItems->count(); ++i) {
+        auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        if (!item || !item->specifiesCoordinate() || item->isStandaloneCoordinate()) {
+            continue;
+        }
+
+        if ((!rotateTakeoffItems && item->isTakeoffItem()) ||
+            (!rotateLandingItems && item->isLandCommand())) {
+            continue;
+        }
+
+        const QGeoCoordinate oldCoord = item->coordinate();
+        if (!oldCoord.isValid()) {
+            continue;
+        }
+
+        double distanceMeters = home.distanceTo(oldCoord);
+        if (qFuzzyIsNull(distanceMeters)) {
+            continue;
+        }
+        double azimuthDegrees = home.azimuthTo(oldCoord);
+
+        QGeoCoordinate newCoord = home.atDistanceAndAzimuth(distanceMeters, azimuthDegrees + degreesCW);
+        item->setCoordinate(newCoord);
+    }
+
+    setDirty(true);
 }
 
 void MissionController::_updateTimeout()
