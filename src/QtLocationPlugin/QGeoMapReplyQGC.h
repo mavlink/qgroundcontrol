@@ -39,9 +39,4 @@ private:
 
     static QByteArray _bingNoTileImage;
     static QByteArray _badTile;
-
-    enum HTTP_Response {
-        SUCCESS_OK = 200,
-        REDIRECTION_MULTIPLE_CHOICES = 300
-    };
 };

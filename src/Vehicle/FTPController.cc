@@ -1,7 +1,11 @@
 #include "FTPController.h"
 
+#include "QGCArchiveModel.h"
+#include "QGCCompression.h"
+#include "QGCCompressionJob.h"
 #include "FTPManager.h"
 #include "MultiVehicleManager.h"
+#include "QGCFileHelper.h"
 #include "Vehicle.h"
 
 #include <QtCore/QDir>
@@ -16,6 +20,7 @@ FTPController::FTPController(QObject *parent)
     : QObject(parent)
     , _vehicle(MultiVehicleManager::instance()->activeVehicle())
     , _ftpManager(_vehicle->ftpManager())
+    , _archiveModel(new QGCArchiveModel(this))
 {
     connect(_ftpManager, &FTPManager::downloadComplete, this, &FTPController::_handleDownloadComplete);
     connect(_ftpManager, &FTPManager::downloadComplete, this, &FTPController::downloadComplete);
@@ -69,15 +74,14 @@ bool FTPController::downloadFile(const QString &uri, const QString &localDir, co
         return false;
     }
 
-    QDir directory(localDir);
-    if (!directory.exists()) {
-        if (!directory.mkpath(QStringLiteral("."))) {
-            const QString error = tr("Directory %1 does not exist").arg(localDir);
-            _setErrorString(error);
-            emit downloadComplete(QString(), error);
-            return false;
-        }
+    if (!QGCFileHelper::ensureDirectoryExists(localDir)) {
+        const QString error = tr("Could not create directory %1").arg(localDir);
+        _setErrorString(error);
+        emit downloadComplete(QString(), error);
+        return false;
     }
+
+    const QString absoluteLocalDir = QDir(localDir).absolutePath();
 
     _lastDownloadFile.clear();
     emit lastDownloadFileChanged();
@@ -89,8 +93,8 @@ bool FTPController::downloadFile(const QString &uri, const QString &localDir, co
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->download(compId, uri, directory.absolutePath(), fileName)) {
-        qCWarning(FTPControllerLog) << "Failed to start download" << uri << directory.absolutePath();
+    if (!_ftpManager->download(compId, uri, absoluteLocalDir, fileName)) {
+        qCWarning(FTPControllerLog) << "Failed to start download" << uri << absoluteLocalDir;
         const QString error = tr("Failed to download %1").arg(uri);
         _setErrorString(error);
         _setBusy(false);
@@ -200,12 +204,14 @@ void FTPController::_handleDownloadComplete(const QString &filePath, const QStri
     if (error.isEmpty()) {
         if (!filePath.isEmpty()) {
             _lastDownloadFile = filePath;
+            _lastDownloadIsArchive = QGCCompression::isArchiveFile(filePath);
             emit lastDownloadFileChanged();
         }
         _setErrorString(QString());
     } else {
         _setErrorString(error);
         _lastDownloadFile.clear();
+        _lastDownloadIsArchive = false;
         emit lastDownloadFileChanged();
     }
 
@@ -338,4 +344,106 @@ uint8_t FTPController::_componentIdForRequest(int componentId) const
     }
 
     return static_cast<uint8_t>(componentId);
+}
+
+bool FTPController::browseArchive(const QString &archivePath)
+{
+    if (archivePath.isEmpty()) {
+        _setErrorString(tr("No archive path specified"));
+        return false;
+    }
+
+    if (!QFile::exists(archivePath)) {
+        _setErrorString(tr("Archive file not found: %1").arg(archivePath));
+        return false;
+    }
+
+    if (!QGCCompression::isArchiveFile(archivePath)) {
+        _setErrorString(tr("Not a supported archive format: %1").arg(archivePath));
+        return false;
+    }
+
+    _archiveModel->setArchivePath(archivePath);
+    _setErrorString(QString());
+    return true;
+}
+
+bool FTPController::extractArchive(const QString &archivePath, const QString &outputDir)
+{
+    if (_extracting) {
+        _setErrorString(tr("Extraction already in progress"));
+        return false;
+    }
+
+    if (archivePath.isEmpty()) {
+        _setErrorString(tr("No archive path specified"));
+        return false;
+    }
+
+    if (!QFile::exists(archivePath)) {
+        _setErrorString(tr("Archive file not found: %1").arg(archivePath));
+        return false;
+    }
+
+    QString targetDir = outputDir;
+    if (targetDir.isEmpty()) {
+        targetDir = QFileInfo(archivePath).absolutePath();
+    }
+
+    if (!QGCFileHelper::ensureDirectoryExists(targetDir)) {
+        _setErrorString(tr("Could not create output directory: %1").arg(targetDir));
+        return false;
+    }
+
+    _extractionOutputDir = targetDir;
+
+    if (_extractionJob == nullptr) {
+        _extractionJob = new QGCCompressionJob(this);
+        connect(_extractionJob, &QGCCompressionJob::progressChanged,
+                this, &FTPController::_handleExtractionProgress);
+        connect(_extractionJob, &QGCCompressionJob::finished,
+                this, &FTPController::_handleExtractionFinished);
+    }
+
+    _extracting = true;
+    _extractionProgress = 0.0F;
+    emit extractingChanged();
+    emit extractionProgressChanged();
+
+    _extractionJob->extractArchive(archivePath, targetDir);
+    return true;
+}
+
+void FTPController::cancelExtraction()
+{
+    if (_extractionJob != nullptr && _extracting) {
+        _extractionJob->cancel();
+    }
+}
+
+void FTPController::_handleExtractionProgress(qreal progress)
+{
+    const auto newProgress = static_cast<float>(progress);
+    if (std::fabs(_extractionProgress - newProgress) > std::numeric_limits<float>::epsilon()) {
+        _extractionProgress = newProgress;
+        emit extractionProgressChanged();
+    }
+}
+
+void FTPController::_handleExtractionFinished(bool success)
+{
+    _extracting = false;
+    emit extractingChanged();
+
+    if (success) {
+        _setErrorString(QString());
+        emit extractionComplete(_extractionOutputDir, QString());
+    } else {
+        const QString error = _extractionJob != nullptr ? _extractionJob->errorString() : tr("Extraction failed");
+        _setErrorString(error);
+        emit extractionComplete(QString(), error);
+    }
+
+    _extractionProgress = 0.0F;
+    emit extractionProgressChanged();
 }

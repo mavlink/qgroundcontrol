@@ -1,15 +1,20 @@
 #include "QGCMapEngineManager.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
+#include <QtCore/QDirIterator>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtCore/QStorageInfo>
+#include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlEngine>
 
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
 #include "QGCApplication.h"
 #include "QGCCachedTileSet.h"
+#include "QGCCompression.h"
+#include "QGCCompressionJob.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
@@ -461,4 +466,101 @@ QStringList QGCMapEngineManager::mapProviderList()
 QStringList QGCMapEngineManager::elevationProviderList()
 {
     return UrlFactory::getElevationProviderTypes();
+}
+
+bool QGCMapEngineManager::importArchive(const QString &archivePath)
+{
+    if (archivePath.isEmpty()) {
+        setErrorMessage(tr("No archive path specified"));
+        return false;
+    }
+
+    if (!QFile::exists(archivePath)) {
+        setErrorMessage(tr("Archive file not found: %1").arg(archivePath));
+        return false;
+    }
+
+    if (!QGCCompression::isArchiveFile(archivePath)) {
+        setErrorMessage(tr("Not a supported archive format: %1").arg(archivePath));
+        return false;
+    }
+
+    if (_importAction == ImportAction::ActionImporting) {
+        setErrorMessage(tr("Import already in progress"));
+        return false;
+    }
+
+    const QString tempPath = QDir::temp().filePath(QStringLiteral("qgc_tiles_") + QString::number(QDateTime::currentMSecsSinceEpoch()));
+    if (!QDir().mkpath(tempPath)) {
+        setErrorMessage(tr("Could not create temporary directory"));
+        return false;
+    }
+
+    _extractionOutputDir = tempPath;
+
+    if (_extractionJob == nullptr) {
+        _extractionJob = new QGCCompressionJob(this);
+        connect(_extractionJob, &QGCCompressionJob::progressChanged,
+                this, &QGCMapEngineManager::_handleExtractionProgress);
+        connect(_extractionJob, &QGCCompressionJob::finished,
+                this, &QGCMapEngineManager::_handleExtractionFinished);
+    }
+
+    setImportAction(ImportAction::ActionImporting);
+    setActionProgress(0);
+
+    _extractionJob->extractArchive(archivePath, tempPath);
+    return true;
+}
+
+void QGCMapEngineManager::_handleExtractionProgress(qreal progress)
+{
+    setActionProgress(static_cast<int>(progress * 50.0));
+}
+
+void QGCMapEngineManager::_handleExtractionFinished(bool success)
+{
+    if (!success) {
+        const QString error = _extractionJob != nullptr ? _extractionJob->errorString() : tr("Extraction failed");
+        setErrorMessage(error);
+        setImportAction(ImportAction::ActionDone);
+        QDir(_extractionOutputDir).removeRecursively();
+        _extractionOutputDir.clear();
+        return;
+    }
+
+    QString dbPath;
+    QDirIterator it(_extractionOutputDir, {QStringLiteral("*.db"), QStringLiteral("*.sqlite")},
+                    QDir::Files, QDirIterator::Subdirectories);
+    if (it.hasNext()) {
+        dbPath = it.next();
+    }
+
+    if (dbPath.isEmpty()) {
+        setErrorMessage(tr("No tile database found in archive"));
+        setImportAction(ImportAction::ActionDone);
+        QDir(_extractionOutputDir).removeRecursively();
+        _extractionOutputDir.clear();
+        return;
+    }
+
+    qCDebug(QGCMapEngineManagerLog) << "Found tile database:" << dbPath;
+
+    QGCImportTileTask *task = new QGCImportTileTask(dbPath, _importReplace);
+    (void) connect(task, &QGCImportTileTask::actionCompleted, this, [this]() {
+        _actionCompleted();
+        QDir(_extractionOutputDir).removeRecursively();
+        _extractionOutputDir.clear();
+    });
+    (void) connect(task, &QGCImportTileTask::actionProgress, this, [this](int percentage) {
+        setActionProgress(50 + (percentage / 2));
+    });
+    (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+        setErrorMessage(tr("Failed to start import task"));
+        setImportAction(ImportAction::ActionDone);
+        QDir(_extractionOutputDir).removeRecursively();
+        _extractionOutputDir.clear();
+    }
 }

@@ -1,7 +1,9 @@
 #include "MockLinkFTP.h"
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
-#include "QGCTemporaryFile.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QTemporaryFile>
 
 QGC_LOGGING_CATEGORY(MockLinkFTPLog, "Comms.MockLink.MockLinkFTP")
 
@@ -553,11 +555,12 @@ uint16_t MockLinkFTP::_nextSeqNumber(uint16_t seqNumber) const
 
 QString MockLinkFTP::_createTestTempFile(int size)
 {
-    QGCTemporaryFile tmpFile("MockLinkFTPTestCase");
+    QTemporaryFile tmpFile(QDir::tempPath() + QStringLiteral("/MockLinkFTPTestCaseXXXXXX"));
+    tmpFile.setAutoRemove(false);
 
-    if (tmpFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    if (tmpFile.open()) {
         for (int i = 0; i < size; i++) {
-            (void) tmpFile.write(QByteArray(1, i % 255));
+            (void) tmpFile.write(QByteArray(1, static_cast<char>(i % 255)));
         }
         tmpFile.close();
     }

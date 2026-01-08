@@ -16,8 +16,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         FileSystem/QGCCachedFileDownload.h
         FileSystem/QGCFileDownload.cc
         FileSystem/QGCFileDownload.h
-        FileSystem/QGCTemporaryFile.cc
-        FileSystem/QGCTemporaryFile.h
+        FileSystem/QGCFileHelper.cc
+        FileSystem/QGCFileHelper.h
+        FileSystem/QGCArchiveWatcher.cc
+        FileSystem/QGCArchiveWatcher.h
+        FileSystem/QGCFileWatcher.cc
+        FileSystem/QGCFileWatcher.h
         Platform.cc
         Platform.h
         QGC.cc
@@ -56,6 +60,7 @@ endif()
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        Compression
         FileSystem
 )
 
@@ -66,4 +71,5 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Geo)
+add_subdirectory(Network)
 add_subdirectory(StateMachine)

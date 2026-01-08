@@ -103,13 +103,14 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Core5Compat
         Qt6::CorePrivate
         Qt6::Gui
+        Qt6::HttpServer
         Qt6::Network
         Qt6::Sensors
+        Qt6::StateMachine
         Qt6::Svg
         Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
-        Qt6::StateMachine
 
         # Qt6 QML/Quick
         Qt6::Qml

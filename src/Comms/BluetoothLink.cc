@@ -1,7 +1,7 @@
 #include "BluetoothLink.h"
 
-#include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPermissions>
@@ -93,7 +93,7 @@ void BluetoothConfiguration::saveSettings(QSettings &settings, const QString &ro
 
 QString BluetoothConfiguration::settingsTitle() const
 {
-    if (QGCDeviceInfo::isBluetoothAvailable()) {
+    if (QGCNetworkHelper::isBluetoothAvailable()) {
         return tr("Bluetooth Link Settings");
     }
 
