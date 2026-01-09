@@ -52,15 +52,9 @@ jobs:
           setup-python: false
 
       - name: Download JOM
-        uses: suisei-cn/actions-download-file@v1.3.0
-        with:
-          url:    http://download.qt.io/official_releases/jom/jom.zip
-          target: ${{ runner.temp }}\
-
-      - name: Unzip JOM
-        working-directory: ${{ runner.temp }}
-        run:  |
-              7z x jom.zip -ojom
+        run: |
+          curl -L -o ${{ runner.temp }}\jom.zip https://download.qt.io/official_releases/jom/jom_1_1_4.zip
+          7z x ${{ runner.temp }}\jom.zip -o${{ runner.temp }}\jom -y
 
       - name: Download Gstreamer
         uses: suisei-cn/actions-download-file@v1.3.0
