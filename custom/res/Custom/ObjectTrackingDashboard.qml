@@ -4,12 +4,15 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightDisplay
 
 
 AnalyzePage {
     id: root
     pageComponent: pageComponent
     pageDescription: qsTr("Al-Bayraq Object Tracking Dashboard - Monitor and control object tracking operations")
+
+    property bool trackingActive: false
 
     Component {
         id: pageComponent
@@ -20,6 +23,13 @@ AnalyzePage {
             spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
             property var qgcPal: QGCPalette { colorGroupEnabled: true }
+
+            Component.onCompleted: {
+                // Auto-start video when dashboard loads
+                if (!QGroundControl.videoManager.streaming) {
+                    QGroundControl.videoManager.startVideo()
+                }
+            }
 
             // Header with Al-Bayraq branding
             Rectangle {
@@ -88,7 +98,7 @@ AnalyzePage {
                         anchors.margins: ScreenTools.defaultFontPixelWidth * 0.5
                         spacing: ScreenTools.defaultFontPixelHeight * 0.3
 
-                        // Camera feed area
+                        // Camera feed area with real GStreamer video
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
@@ -97,10 +107,25 @@ AnalyzePage {
                             border.color: "#333333"
                             border.width: 1
 
-                            // Active feed simulation
+                            // GStreamer Video Background
+                            QGCVideoBackground {
+                                id: videoBackground
+                                anchors.fill: parent
+                                visible: QGroundControl.videoManager.decoding
+
+                                function getWidth() {
+                                    return QGroundControl.videoManager.videoSize.width > 0 ? QGroundControl.videoManager.videoSize.width : parent.width
+                                }
+
+                                function getHeight() {
+                                    return QGroundControl.videoManager.videoSize.height > 0 ? QGroundControl.videoManager.videoSize.height : parent.height
+                                }
+                            }
+
+                            // Video overlay with tracking elements
                             Item {
                                 anchors.fill: parent
-                                visible: QGroundControl.multiVehicleManager.activeVehicle
+                                visible: QGroundControl.videoManager.decoding
 
                                 // Crosshair overlay
                                 Rectangle {
@@ -118,8 +143,9 @@ AnalyzePage {
                                     opacity: 0.8
                                 }
 
-                                // Mock tracking box
+                                // Tracking box (shown when tracking is active)
                                 Rectangle {
+                                    id: trackingBox
                                     x: parent.width * 0.25
                                     y: parent.height * 0.3
                                     width: parent.width * 0.35
@@ -128,6 +154,7 @@ AnalyzePage {
                                     border.color: "#a50605"
                                     border.width: 3
                                     radius: 2
+                                    visible: trackingActive
 
                                     QGCLabel {
                                         anchors.top: parent.bottom
@@ -141,10 +168,10 @@ AnalyzePage {
                                 }
                             }
 
-                            // No signal state
+                            // No video signal state
                             ColumnLayout {
                                 anchors.centerIn: parent
-                                visible: !QGroundControl.multiVehicleManager.activeVehicle
+                                visible: !QGroundControl.videoManager.decoding
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
                                 QGCColoredImage {
@@ -157,18 +184,19 @@ AnalyzePage {
                                 }
 
                                 QGCLabel {
-                                    text: "NO CAMERA SIGNAL"
+                                    text: "NO VIDEO SIGNAL"
                                     font.pointSize: ScreenTools.mediumFontPointSize
                                     font.bold: true
                                     color: "#dc3545"
                                     Layout.alignment: Qt.AlignHCenter
                                 }
 
-                                QGCLabel {
-                                    text: "Connect vehicle to view camera feed"
-                                    font.pointSize: ScreenTools.defaultFontPointSize
-                                    color: "#6c757d"
+                                QGCButton {
+                                    text: "Start Video"
                                     Layout.alignment: Qt.AlignHCenter
+                                    onClicked: {
+                                        QGroundControl.videoManager.startVideo()
+                                    }
                                 }
                             }
                         }
@@ -185,8 +213,10 @@ AnalyzePage {
                                 anchors.margins: ScreenTools.defaultFontPixelWidth * 0.3
 
                                 QGCLabel {
-                                    text: QGroundControl.multiVehicleManager.activeVehicle ? "1920x1080 • 30fps • Tracking: ON" : "Offline"
-                                    color: QGroundControl.multiVehicleManager.activeVehicle ? "#28a745" : "#6c757d"
+                                    text: QGroundControl.videoManager.decoding ?
+                                           `${QGroundControl.videoManager.videoSize.width}x${QGroundControl.videoManager.videoSize.height} • ${QGroundControl.videoManager.streaming ? "STREAMING" : "READY"} • Tracking: ${trackingActive ? "ON" : "OFF"}` :
+                                           "No Video"
+                                    color: QGroundControl.videoManager.decoding ? "#28a745" : "#6c757d"
                                     font.pointSize: ScreenTools.smallFontPointSize
                                     font.bold: true
                                 }
@@ -194,11 +224,11 @@ AnalyzePage {
                                 Item { Layout.fillWidth: true }
 
                                 QGCLabel {
-                                    text: QGroundControl.multiVehicleManager.activeVehicle ? "● REC" : ""
+                                    text: QGroundControl.videoManager.recording ? "● REC" : ""
                                     color: "#dc3545"
                                     font.pointSize: ScreenTools.smallFontPointSize
                                     font.bold: true
-                                    visible: QGroundControl.multiVehicleManager.activeVehicle
+                                    visible: QGroundControl.videoManager.recording
                                 }
                             }
                         }
@@ -229,29 +259,41 @@ AnalyzePage {
 
                             QGCButton {
                                 text: "Start Tracking"
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                enabled: QGroundControl.videoManager.decoding && !trackingActive
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
                                 backgroundColor: "#28a745"
                                 textColor: "white"
+                                onClicked: {
+                                    trackingActive = true
+                                    // Here you would start your actual tracking algorithm
+                                }
                             }
 
                             QGCButton {
                                 text: "Stop Tracking"
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                enabled: trackingActive
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
                                 backgroundColor: "#ffc107"
                                 textColor: "black"
+                                onClicked: {
+                                    trackingActive = false
+                                    // Here you would stop your actual tracking algorithm
+                                }
                             }
 
                             Item { Layout.fillWidth: true }
 
                             QGCButton {
                                 text: "EMERGENCY STOP"
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                enabled: QGroundControl.videoManager.decoding
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 20
                                 fontWeight: Font.Bold
                                 backgroundColor: "#dc3545"
                                 textColor: "white"
+                                onClicked: {
+                                    trackingActive = false
+                                    QGroundControl.videoManager.stopVideo()
+                                }
                             }
                         }
 
@@ -262,22 +304,29 @@ AnalyzePage {
                             QGCCheckBox {
                                 text: "Auto Follow"
                                 checked: true
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                enabled: QGroundControl.videoManager.decoding
                                 textColor: "white"
                             }
 
                             QGCCheckBox {
                                 text: "Record Video"
-                                checked: QGroundControl.multiVehicleManager.activeVehicle
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                checked: QGroundControl.videoManager.recording
+                                enabled: QGroundControl.videoManager.decoding
                                 textColor: "white"
+                                onClicked: {
+                                    if (checked) {
+                                        QGroundControl.videoManager.startRecording()
+                                    } else {
+                                        QGroundControl.videoManager.stopRecording()
+                                    }
+                                }
                             }
 
                             Item { Layout.fillWidth: true }
 
                             QGCLabel {
                                 text: "Follow Distance:"
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                enabled: QGroundControl.videoManager.decoding
                                 color: "white"
                             }
 
@@ -286,7 +335,7 @@ AnalyzePage {
                                 from: 50
                                 to: 500
                                 value: 150
-                                enabled: QGroundControl.multiVehicleManager.activeVehicle
+                                enabled: QGroundControl.videoManager.decoding
                             }
                         }
                     }
@@ -305,15 +354,15 @@ AnalyzePage {
 
                         // Status indicators
                         RowLayout {
-                            QGCLabel { text: "Connection:" }
+                            QGCLabel { text: "Video:" }
                             Rectangle {
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 6
                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.8
-                                color: QGroundControl.multiVehicleManager.activeVehicle ? "#28a745" : "#dc3545"
+                                color: QGroundControl.videoManager.decoding ? "#28a745" : "#dc3545"
                                 radius: 3
                                 QGCLabel {
                                     anchors.centerIn: parent
-                                    text: QGroundControl.multiVehicleManager.activeVehicle ? "ONLINE" : "OFFLINE"
+                                    text: QGroundControl.videoManager.decoding ? "ONLINE" : "OFFLINE"
                                     color: "white"
                                     font.bold: true
                                     font.pointSize: ScreenTools.smallFontPointSize * 0.9
@@ -326,12 +375,12 @@ AnalyzePage {
                             Rectangle {
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 6
                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.8
-                                color: QGroundControl.multiVehicleManager.activeVehicle ? "#ffc107" : "#6c757d"
+                                color: trackingActive ? "#ffc107" : "#6c757d"
                                 radius: 3
                                 QGCLabel {
                                     anchors.centerIn: parent
-                                    text: QGroundControl.multiVehicleManager.activeVehicle ? "READY" : "IDLE"
-                                    color: QGroundControl.multiVehicleManager.activeVehicle ? "black" : "white"
+                                    text: trackingActive ? "ACTIVE" : "IDLE"
+                                    color: trackingActive ? "black" : "white"
                                     font.bold: true
                                     font.pointSize: ScreenTools.smallFontPointSize * 0.9
                                 }
@@ -339,15 +388,15 @@ AnalyzePage {
                         }
 
                         RowLayout {
-                            QGCLabel { text: "Signal:" }
+                            QGCLabel { text: "Streaming:" }
                             Rectangle {
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 4
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 6
                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.8
-                                color: QGroundControl.multiVehicleManager.activeVehicle ? "#28a745" : "#6c757d"
+                                color: QGroundControl.videoManager.streaming ? "#28a745" : "#6c757d"
                                 radius: 3
                                 QGCLabel {
                                     anchors.centerIn: parent
-                                    text: QGroundControl.multiVehicleManager.activeVehicle ? "85%" : "0%"
+                                    text: QGroundControl.videoManager.streaming ? "ON" : "OFF"
                                     color: "white"
                                     font.bold: true
                                     font.pointSize: ScreenTools.smallFontPointSize * 0.9
@@ -356,15 +405,15 @@ AnalyzePage {
                         }
 
                         RowLayout {
-                            QGCLabel { text: "Battery:" }
+                            QGCLabel { text: "Recording:" }
                             Rectangle {
-                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 4
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 6
                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.8
-                                color: QGroundControl.multiVehicleManager.activeVehicle ? "#28a745" : "#6c757d"
+                                color: QGroundControl.videoManager.recording ? "#dc3545" : "#6c757d"
                                 radius: 3
                                 QGCLabel {
                                     anchors.centerIn: parent
-                                    text: QGroundControl.multiVehicleManager.activeVehicle ? "87%" : "---"
+                                    text: QGroundControl.videoManager.recording ? "REC" : "OFF"
                                     color: "white"
                                     font.bold: true
                                     font.pointSize: ScreenTools.smallFontPointSize * 0.9

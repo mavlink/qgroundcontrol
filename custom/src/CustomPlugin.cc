@@ -73,14 +73,14 @@ const QVariantList &CustomPlugin::analyzePages()
 {
     // Get the default analyze pages from the base class
     static QVariantList customAnalyzeList;
-    
+
     if (customAnalyzeList.isEmpty()) {
         // Add the default analyze pages from base class first
         const QVariantList &basePages = QGCCorePlugin::analyzePages();
         for (const QVariant &page : basePages) {
             customAnalyzeList.append(page);
         }
-        
+
         // Add our custom Object Tracking Dashboard after the default pages
         customAnalyzeList.append(QVariant::fromValue(new QmlComponentInfo(
             tr("Object Tracking"),
@@ -88,7 +88,7 @@ const QVariantList &CustomPlugin::analyzePages()
             QUrl::fromUserInput(QStringLiteral("qrc:/custom/img/bay_logo_dark.png")),
             this)));
     }
-    
+
     return customAnalyzeList;
 }
 
@@ -117,23 +117,19 @@ bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
     return true;
 }
 
-bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
+void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool& visible)
 {
-    const bool parentResult = QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData);
+    QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData, visible);
 
     if (settingsGroup == AppSettings::settingsGroup) {
         // This tells QGC than when you are creating Plans while not connected to a vehicle
         // the specific firmware/vehicle the plan is for.
         if (metaData.name() == AppSettings::offlineEditingFirmwareClassName) {
             metaData.setRawDefaultValue(QGCMAVLink::FirmwareClassPX4);
-            return false;
         } else if (metaData.name() == AppSettings::offlineEditingVehicleClassName) {
             metaData.setRawDefaultValue(QGCMAVLink::VehicleClassMultiRotor);
-            return false;
         }
     }
-
-    return parentResult;
 }
 
 void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
@@ -326,16 +322,16 @@ QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterc
     case DataType::UrlString:
         if (url.scheme() == QStringLiteral("qrc")) {
             const QString origPath = url.path();
-            
+
             // Redirect logo requests to Al-Bayraq logos
-            if (origPath == QStringLiteral("/res/QGCLogoFull.svg") || 
+            if (origPath == QStringLiteral("/res/QGCLogoFull.svg") ||
                 origPath == QStringLiteral("/res/QGCLogoArrow.svg")) {
                 QUrl result;
                 result.setScheme(QStringLiteral("qrc"));
                 result.setPath(QStringLiteral("/custom/img/bay_logo_dark.png"));
                 return result;
             }
-            
+
             // Redirect window icon to Al-Bayraq logo (dark logo for white window background)
             if (origPath == QStringLiteral("/res/qgroundcontrol.ico")) {
                 QUrl result;
@@ -343,7 +339,7 @@ QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterc
                 result.setPath(QStringLiteral("/custom/img/bay_logo_light.png"));
                 return result;
             }
-            
+
             const QString overrideRes = QStringLiteral(":/Custom%1").arg(origPath);
             if (QFile::exists(overrideRes)) {
                 const QString relPath = overrideRes.mid(2);
