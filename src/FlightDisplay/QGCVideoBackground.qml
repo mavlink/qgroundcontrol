@@ -8,8 +8,27 @@
  ****************************************************************************/
 
 import QtQuick
-import QtQuick.Controls
+import QGroundControl
 
-FlightDisplayViewGStreamer {
+Item {
     id: videoBackground
+
+    property string streamObjectName: ""
+
+    Rectangle {
+        anchors.fill: parent
+        color: "black"
+    }
+
+    Loader {
+        id: gstViewLoader
+        anchors.fill: parent
+        active: QGroundControl.videoManager.hasVideo && QGroundControl.videoManager.gstreamerEnabled
+        source: "qrc:/qml/QGroundControl/FlightDisplay/FlightDisplayViewGStreamer.qml"
+        onLoaded: {
+            if (item && streamObjectName.length) {
+                item.objectName = streamObjectName
+            }
+        }
+    }
 }

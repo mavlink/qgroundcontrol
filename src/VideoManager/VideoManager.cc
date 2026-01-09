@@ -27,6 +27,7 @@
 #else
 #include "VideoItemStub.h"
 #endif
+#include <fstream>
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QTimer>
@@ -47,23 +48,32 @@ VideoManager::VideoManager(QObject* parent)
     : QObject(parent),
       _subtitleWriter(new SubtitleWriter(this)),
       _videoSettings(SettingsManager::instance()->videoSettings()) {
+    {
+        std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+        log << "VideoManager::ctor: start" << std::endl;
+        log << "VideoManager::ctor: subtitleWriter created" << std::endl;
+        log << "VideoManager::ctor: videoSettings acquired" << std::endl;
+    }
     qCDebug(VideoManagerLog) << this;
 
     (void)qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
+    {
+        std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+        log << "VideoManager::ctor: metaType registered" << std::endl;
+    }
 
 #ifdef QGC_GST_STREAMING
-    {
-        const QString vsrc = _videoSettings->videoSource()->rawValue().toString();
-        const bool needGst = (vsrc != VideoSettings::videoDisabled) && (vsrc != VideoSettings::videoSourceNoVideo);
-        if (needGst) {
-            if (!GStreamer::initialize()) {
-                qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
-            }
-        }
-    }
 #else
     (void)qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    {
+        std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+        log << "VideoManager::ctor: qml type registered" << std::endl;
+    }
 #endif
+    {
+        std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+        log << "VideoManager::ctor: end" << std::endl;
+    }
 }
 
 VideoManager::~VideoManager() { qCDebug(VideoManagerLog) << this; }

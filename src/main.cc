@@ -9,6 +9,7 @@
 
 #include <QtQuick/QQuickWindow>
 #include <QtWidgets/QApplication>
+#include <fstream>
 
 #include "QGCApplication.h"
 #include "QGCCommandLineParser.h"
@@ -31,6 +32,8 @@
 
 int main(int argc, char *argv[])
 {
+    std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+    log << "MAIN: start" << std::endl;
 #if 0
     // Useful for debugging specific unit tests
     char argument1[] = "--unittest:ParameterManagerTest";
@@ -55,6 +58,7 @@ int main(int argc, char *argv[])
 
     QGCCommandLineParser::CommandLineParseResult args;
     {
+        log << "MAIN: parsing args" << std::endl;
         const QCoreApplication pre(argc, argv);
         QCoreApplication::setApplicationName(QStringLiteral(QGC_APP_NAME));
         QCoreApplication::setApplicationVersion(QStringLiteral(QGC_APP_VERSION_STR));
@@ -66,6 +70,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
+    log << "MAIN: args parsed" << std::endl;
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QStringLiteral(QGC_APP_NAME));
@@ -83,16 +88,28 @@ int main(int argc, char *argv[])
 #endif
 
     // Early platform setup before Qt app construction
+    log << "MAIN: setupPreApp" << std::endl;
     Platform::setupPreApp(args);
+    log << "MAIN: setupPreApp done" << std::endl;
 
+    log << "MAIN: QGCApplication ctor" << std::endl;
     QGCApplication app(argc, argv, args);
+    log << "MAIN: QGCApplication ctor done" << std::endl;
 
+    log << "MAIN: installHandler" << std::endl;
     QGCLogging::installHandler();
+    log << "MAIN: installHandler done" << std::endl;
 
     // Late platform setup after app and logging exist
+    log << "MAIN: setupPostApp" << std::endl;
     Platform::setupPostApp();
+    log << "MAIN: setupPostApp done" << std::endl;
+
+    log << "MAIN: init starting" << std::endl;
 
     app.init();
+
+    log << "MAIN: init done" << std::endl;
 
     int exitCode = 0;
     if (args.runningUnitTests) {
@@ -100,11 +117,16 @@ int main(int argc, char *argv[])
         exitCode = QGCUnitTest::runTests(args.stressUnitTests, args.unitTests);
 #endif
     } else if (!args.simpleBootTest) {
+        log << "MAIN: starting exec" << std::endl;
         exitCode = app.exec();
+    } else {
+        log << "MAIN: simple boot test done" << std::endl;
     }
 
+    log << "MAIN: shutting down" << std::endl;
     app.shutdown();
 
     qDebug() << "Exiting main";
+    log << "MAIN: returning " << exitCode << std::endl;
     return exitCode;
 }

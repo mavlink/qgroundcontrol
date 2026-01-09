@@ -616,6 +616,14 @@ bool initialize()
 
 void *createVideoSink(QQuickItem *widget, QObject *parent)
 {
+    Q_UNUSED(parent);
+
+    if (widget && !widget->inherits("Qt6GLVideoItem")) {
+        qCWarning(GStreamerLog) << "Invalid video widget type for qml6glsink:"
+                                << widget->metaObject()->className();
+        widget = nullptr;
+    }
+
     GstElement *videoSinkBin = gst_element_factory_make("qgcvideosinkbin", NULL);
     if (videoSinkBin) {
         if (widget) {

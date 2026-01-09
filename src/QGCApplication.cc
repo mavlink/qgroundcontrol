@@ -25,6 +25,8 @@
 
 #include <QtCore/private/qthread_p.h>
 
+#include <fstream>
+
 #include "QGCLogging.h"
 #include "AudioOutput.h"
 #include "FollowMe.h"
@@ -202,13 +204,19 @@ QGCApplication::~QGCApplication()
 
 void QGCApplication::init()
 {
+    std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+    log << "QGCApplication::init: start" << std::endl;
+
+    log << "QGCApplication::init: SettingsManager::init" << std::endl;
     SettingsManager::instance()->init();
+    log << "QGCApplication::init: SettingsManager::init done" << std::endl;
     if (_systemId > 0) {
         qCDebug(QGCApplicationLog) << "Setting MAVLink System ID to:" << _systemId;
         SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);
     }
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
+    log << "QGCApplication::init: load fonts" << std::endl;
     if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
     }
@@ -216,26 +224,43 @@ void QGCApplication::init()
     if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
     }
+    log << "QGCApplication::init: load fonts done" << std::endl;
 
     if (_simpleBootTest) {
         // Since GStream builds are so problematic we initialize video during the simple boot test
         // to make sure it works and verfies plugin availability.
+        log << "QGCApplication::init: _initVideo" << std::endl;
         _initVideo();
+        log << "QGCApplication::init: _initVideo done" << std::endl;
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
+    log << "QGCApplication::init: end" << std::endl;
 }
 
 void QGCApplication::_initVideo()
 {
+    std::ofstream log("C:\\IGCS\\boot_log.txt", std::ios::app);
+    log << "QGCApplication::_initVideo: start" << std::endl;
 #ifdef QGC_GST_STREAMING
     // Gstreamer video playback requires OpenGL
+    log << "QGCApplication::_initVideo: setGraphicsApi" << std::endl;
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 #endif
 
+    log << "QGCApplication::_initVideo: corePlugin" << std::endl;
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
-    VideoManager::instance();
-    _videoManagerInitialized = true;
+    log << "QGCApplication::_initVideo: corePlugin done" << std::endl;
+    if (!_simpleBootTest) {
+        log << "QGCApplication::_initVideo: videoManager instance" << std::endl;
+        VideoManager::instance();
+        log << "QGCApplication::_initVideo: videoManager instance done" << std::endl;
+        _videoManagerInitialized = true;
+    } else {
+        log << "QGCApplication::_initVideo: skipping VideoManager for simple boot test" << std::endl;
+        _videoManagerInitialized = false;
+    }
+    log << "QGCApplication::_initVideo: end" << std::endl;
 }
 
 void QGCApplication::_initForNormalAppBoot()

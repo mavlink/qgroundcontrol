@@ -37,7 +37,7 @@ ListModel {
     ListElement {
         name: qsTr("Video")
         url: "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/camera.svg"
+        iconUrl: "qrc:/res/Sidebar_Video.svg"
         pageVisible: function() { return true }
     }
 

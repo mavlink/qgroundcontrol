@@ -1001,7 +1001,10 @@ ApplicationWindow {
                 var pt = toolDrawerPanel.mapFromItem(this, mouse.x, mouse.y)
                 if (pt.x < 0 || pt.y < 0 || pt.x > toolDrawerPanel.width || pt.y > toolDrawerPanel.height) {
                     if (mainWindow.allowViewSwitch()) {
-                        toolDrawer.visible = false
+                        if (mainWindow.activeFlySidebarTool === "settings" || mainWindow.activeFlySidebarTool === "about" || mainWindow.activeFlySidebarTool === "profile") {
+                        } else {
+                            toolDrawer.visible = false
+                        }
                     }
                 }
             }
@@ -1050,6 +1053,18 @@ ApplicationWindow {
                         id:             toolbarDrawerText
                         text:           toolDrawer.toolTitle
                         font.pointSize: ScreenTools.largeFontPointSize
+                    }
+                }
+
+                QGCButton {
+                    anchors.right:          parent.right
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+                    anchors.verticalCenter: parent.verticalCenter
+                    text:                   qsTr("Close")
+                    visible:                mainWindow.activeFlySidebarTool === "settings" || mainWindow.activeFlySidebarTool === "about" || mainWindow.activeFlySidebarTool === "profile"
+                    onClicked: {
+                        toolDrawer.visible = false
+                        mainWindow.activeFlySidebarTool = ""
                     }
                 }
             }

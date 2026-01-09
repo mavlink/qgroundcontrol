@@ -178,6 +178,7 @@ SettingsPage {
                     text:       object.link ? qsTr("Disconnect") : qsTr("Connect")
                     onClicked: {
                         if (object.link) {
+                            _linkManager.disableAutoConnect()
                             object.link.disconnect()
                         } else {
                             _linkManager.createConnectedLink(object)

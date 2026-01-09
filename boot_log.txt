@@ -1,0 +1,103 @@
+MAIN: start
+MAIN: parsing args
+MAIN: args parsed
+MAIN: setupPreApp
+MAIN: setupPreApp done
+MAIN: QGCApplication ctor
+MAIN: QGCApplication ctor done
+MAIN: installHandler
+MAIN: installHandler done
+MAIN: setupPostApp
+MAIN: setupPostApp done
+MAIN: init starting
+QGCApplication::init: start
+QGCApplication::init: SettingsManager::init
+QGCApplication::init: SettingsManager::init done
+QGCApplication::init: load fonts
+QGCApplication::init: load fonts done
+QGCApplication::init: _initVideo
+QGCApplication::_initVideo: start
+QGCApplication::_initVideo: setGraphicsApi
+QGCApplication::_initVideo: corePlugin
+QGCApplication::_initVideo: corePlugin done
+QGCApplication::_initVideo: skipping VideoManager for simple boot test
+QGCApplication::_initVideo: end
+QGCApplication::init: _initVideo done
+QGCApplication::init: end
+MAIN: init done
+MAIN: simple boot test done
+MAIN: shutting down
+VideoManager::ctor: start
+VideoManager::ctor: subtitleWriter created
+VideoManager::ctor: videoSettings acquired
+VideoManager::ctor: metaType registered
+VideoManager::ctor: end
+MAIN: returning 0
+MAIN: start
+MAIN: parsing args
+MAIN: args parsed
+MAIN: setupPreApp
+MAIN: setupPreApp done
+MAIN: QGCApplication ctor
+MAIN: QGCApplication ctor done
+MAIN: installHandler
+MAIN: installHandler done
+MAIN: setupPostApp
+MAIN: setupPostApp done
+MAIN: init starting
+QGCApplication::init: start
+QGCApplication::init: SettingsManager::init
+QGCApplication::init: SettingsManager::init done
+QGCApplication::init: load fonts
+QGCApplication::init: load fonts done
+QGCApplication::_initVideo: start
+QGCApplication::_initVideo: setGraphicsApi
+QGCApplication::_initVideo: corePlugin
+QGCApplication::_initVideo: corePlugin done
+QGCApplication::_initVideo: videoManager instance
+VideoManager::ctor: start
+VideoManager::ctor: subtitleWriter created
+VideoManager::ctor: videoSettings acquired
+VideoManager::ctor: metaType registered
+VideoManager::ctor: end
+QGCApplication::_initVideo: videoManager instance done
+QGCApplication::_initVideo: end
+QGCApplication::init: end
+MAIN: init done
+MAIN: starting exec
+MAIN: shutting down
+MAIN: returning 0
+MAIN: start
+MAIN: parsing args
+MAIN: args parsed
+MAIN: setupPreApp
+MAIN: setupPreApp done
+MAIN: QGCApplication ctor
+MAIN: QGCApplication ctor done
+MAIN: installHandler
+MAIN: installHandler done
+MAIN: setupPostApp
+MAIN: setupPostApp done
+MAIN: init starting
+QGCApplication::init: start
+QGCApplication::init: SettingsManager::init
+QGCApplication::init: SettingsManager::init done
+QGCApplication::init: load fonts
+QGCApplication::init: load fonts done
+QGCApplication::_initVideo: start
+QGCApplication::_initVideo: setGraphicsApi
+QGCApplication::_initVideo: corePlugin
+QGCApplication::_initVideo: corePlugin done
+QGCApplication::_initVideo: videoManager instance
+VideoManager::ctor: start
+VideoManager::ctor: subtitleWriter created
+VideoManager::ctor: videoSettings acquired
+VideoManager::ctor: metaType registered
+VideoManager::ctor: end
+QGCApplication::_initVideo: videoManager instance done
+QGCApplication::_initVideo: end
+QGCApplication::init: end
+MAIN: init done
+MAIN: starting exec
+MAIN: shutting down
+MAIN: returning 0

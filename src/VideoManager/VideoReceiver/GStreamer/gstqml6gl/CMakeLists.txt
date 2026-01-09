@@ -156,6 +156,8 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
 
     # Handle additional GLES-specific RGBA shader if present
     if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
+        find_package(Python3 REQUIRED COMPONENTS Interpreter)
+        
         find_program(QSB_PROGRAM
             NAMES qsb
             HINTS ${QT_HOST_PATH} ${QT_ROOT_DIR} ${QTDIR}
@@ -164,10 +166,11 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
             REQUIRED
         )
 
-        find_program(QSB_WRAPPER
+        find_file(QSB_WRAPPER
             NAMES qsb-wrapper.py
             PATHS "${QGC_GST_QT6_PLUGIN_PATH}"
             REQUIRED
+            NO_DEFAULT_PATH
         )
 
         set(RGBA_BASE_QSB "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
@@ -176,7 +179,7 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
 
         add_custom_command(
             OUTPUT ${RGBA_EXTERNAL}
-            COMMAND ${QSB_WRAPPER}
+            COMMAND ${Python3_EXECUTABLE} "${QSB_WRAPPER}"
                 ${QSB_PROGRAM}
                 ${RGBA_EXTERNAL}
                 ${RGBA_GLES_SRC}

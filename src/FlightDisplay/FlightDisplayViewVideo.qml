@@ -116,14 +116,29 @@ Item {
         }
         Component {
             id: videoBackgroundComponent
-            QGCVideoBackground {
-                id:             videoContent
-                objectName:     "videoContent"
+            Item {
+                id:             videoContentContainer
+                anchors.fill:   parent
+
+                Loader {
+                    id:             videoContentLoader
+                    anchors.fill:   parent
+                    active:         QGroundControl.videoManager.hasVideo
+                    source:         "qrc:/qml/QGroundControl/FlightDisplay/QGCVideoBackground.qml"
+                    onLoaded: {
+                        if (item) {
+                            item.streamObjectName = "videoContent"
+                        }
+                    }
+                }
 
                 Connections {
                     target: QGroundControl.videoManager
                     function onImageFileChanged(filename) {
-                        videoContent.grabToImage(function(result) {
+                        if (!videoContentLoader.item) {
+                            return
+                        }
+                        videoContentLoader.item.grabToImage(function(result) {
                             if (!result.saveToFile(filename)) {
                                 console.error('Error capturing video frame');
                             }
@@ -433,11 +448,17 @@ Item {
             onVisibleChanged: {
                 thermalItem.pipOrNot()
             }
-            QGCVideoBackground {
-                id:             thermalVideo
-                objectName:     "thermalVideo"
+            Loader {
+                id:             thermalVideoLoader
                 anchors.fill:   parent
                 opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+                active:         QGroundControl.videoManager.hasVideo
+                source:         "qrc:/qml/QGroundControl/FlightDisplay/QGCVideoBackground.qml"
+                onLoaded: {
+                    if (item) {
+                        item.streamObjectName = "thermalVideo"
+                    }
+                }
             }
         }
         //-- Zoom

@@ -37,8 +37,12 @@ find_program(QGC_NSIS_INSTALLER_CMD makensis
     PATHS "$ENV{Programfiles}" "$ENV{PROGRAMFILES}" "$ENV{${_pf86}}" "$ENV{${_PF86}}" "$ENV{ProgramW6432}" "$ENV{PROGRAMW6432}"
     PATH_SUFFIXES "NSIS"
     DOC "Path to the makensis utility."
-    REQUIRED
 )
+
+if(NOT QGC_NSIS_INSTALLER_CMD)
+    message(STATUS "QGC: NSIS makensis not found; skipping installer creation")
+    return()
+endif()
 
 # ----------------------------------------------------------------------------
 # Build NSIS Command Arguments

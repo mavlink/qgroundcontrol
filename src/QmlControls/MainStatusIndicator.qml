@@ -118,7 +118,9 @@ RowLayout {
         neonColor:          qgcPal.colorGreen
         neonBorderWidth:    1
         visible:            !_activeVehicle
-        onClicked:          dropMainStatusIndicator()
+        onClicked: {
+            QGroundControl.linkManager.enableAutoConnect()
+        }
     }
 
     QGCButton {
@@ -131,7 +133,10 @@ RowLayout {
         neonColor:          qgcPal.colorRed
         neonBorderWidth:    1
         visible:            _activeVehicle
-        onClicked:          _activeVehicle.closeVehicle()
+        onClicked: {
+            QGroundControl.linkManager.disableAutoConnect()
+            _activeVehicle.closeVehicle()
+        }
     }
 
         QGCLabel {
