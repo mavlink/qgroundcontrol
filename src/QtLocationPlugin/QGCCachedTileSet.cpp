@@ -150,6 +150,15 @@ void QGCCachedTileSet::_prepareDownload()
         QGCTile* const tile = _tilesToDownload.dequeue();
         const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type);
         QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x, tile->y, tile->z);
+
+        // Safety check: skip tiles with empty URLs (e.g., Mapbox without token)
+        if (request.url().isEmpty() || !request.url().isValid()) {
+            qCWarning(QGCCachedTileSetLog) << "Skipping tile with invalid URL:" << tile->hash;
+            setErrorCount(_errorCount + 1);
+            delete tile;
+            continue;
+        }
+
         request.setOriginatingObject(this);
         request.setAttribute(QNetworkRequest::User, tile->hash);
 

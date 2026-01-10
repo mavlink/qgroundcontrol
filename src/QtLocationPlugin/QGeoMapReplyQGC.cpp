@@ -193,6 +193,12 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
         return;
     }
 
+    // Safety check: don't attempt network request with empty/invalid URL
+    if (_request.url().isEmpty() || !_request.url().isValid()) {
+        setError(QGeoTiledMapReply::CommunicationError, tr("Invalid tile URL - API token may be required"));
+        return;
+    }
+
     _request.setOriginatingObject(this);
 
     QNetworkReply* const reply = _networkManager->get(_request);

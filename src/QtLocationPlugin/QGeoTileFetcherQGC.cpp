@@ -95,7 +95,20 @@ QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, i
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(mapId);
 
     QNetworkRequest request;
-    request.setUrl(mapProvider->getTileURL(x, y, zoom));
+
+    // Safety check: return empty request if no valid map provider
+    if (!mapProvider) {
+        qCWarning(QGeoTileFetcherQGCLog) << "No map provider found for mapId:" << mapId;
+        return request;
+    }
+
+    const QUrl tileUrl = mapProvider->getTileURL(x, y, zoom);
+    if (tileUrl.isEmpty() || !tileUrl.isValid()) {
+        qCWarning(QGeoTileFetcherQGCLog) << "Empty or invalid tile URL for mapId:" << mapId;
+        return request;
+    }
+
+    request.setUrl(tileUrl);
     request.setPriority(QNetworkRequest::NormalPriority);
     request.setTransferTimeout(10000);
     // request.setOriginatingObject(this);
