@@ -5,6 +5,11 @@ on:
   push:
     tags: ["v*"]
 
+env:
+  QT_VERSION: "6.10.2"
+  QT_ARCH: "win64_msvc2022_64"
+  GSTREAMER_VERSION: "1.22.12"
+
 jobs:
   build-and-package:
     runs-on: windows-latest
@@ -15,77 +20,93 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set up Python 3.10 (global)
+      - name: Set up Python 3.10
         id: setup_python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Set Python 3.10 as default for all steps
-        run: |
-          echo "Prepending Python 3.10 to PATH and setting PYTHONHOME for all steps."
-          echo "PYTHONHOME=${{ steps.setup_python.outputs.python-path }}" >> $GITHUB_ENV
-          echo "${{ steps.setup_python.outputs.python-path }}" | sed 's|/python.exe||' >> $GITHUB_PATH
-
-      - name: Check Python version (strict)
+      - name: Verify Python version
+        shell: pwsh
         run: |
           python --version
-          where python
           python -c "import sys; assert sys.version_info[:2] == (3, 10), 'Python 3.10 is required'"
 
-      - name: Install aqtinstall
+      - name: Install GStreamer
+        shell: pwsh
+        run: |
+          ./tools/setup/install-dependencies-windows.ps1 `
+            -GStreamerVersion ${{ env.GSTREAMER_VERSION }} `
+            -SkipVulkan
+
+      - name: Install aqtinstall and Qt
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
           python -m pip install aqtinstall
+          python -m aqt install-qt windows desktop ${{ env.QT_VERSION }} ${{ env.QT_ARCH }} --outputdir ${{ runner.temp }}/qt
+          python -m aqt install-qt windows desktop ${{ env.QT_VERSION }} ${{ env.QT_ARCH }} --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools qtsensors qtconnectivity qtspeech qtscxml --outputdir ${{ runner.temp }}/qt
 
-      - name: Install Qt with aqtinstall
+      - name: Add Qt to PATH
+        shell: pwsh
         run: |
-          python -m aqt install-qt windows desktop 6.10.2 win64_msvc2022_64 --outputdir ${{ runner.temp }}/qt
-          python -m aqt install-tool windows desktop tools_cmake --outputdir ${{ runner.temp }}/qt
-          python -m aqt install-tool windows desktop tools_ifw --outputdir ${{ runner.temp }}/qt
-          python -m aqt install-qt windows desktop 6.10.2 win64_msvc2022_64 --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools qtsensors qtconnectivity qtspeech qtscxml --outputdir ${{ runner.temp }}/qt
-
-      - name: Add Qt bin to PATH
-        run: echo "${{ runner.temp }}/qt/6.10.2/msvc2022_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Print Python info for CMake
-        run: |
-          echo "Python executable: $(python -c 'import sys; print(sys.executable)')"
-          python --version
-          where python
-      - name: Set Python 3.10 as default for build
-        id: setpy
-        run: |
-          echo "##[group]Python 3.10 paths"
-          $PYTHON_DIR = (python -c "import sys; import os; print(os.path.dirname(sys.executable))")
-          echo "PYTHON_DIR=$PYTHON_DIR" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "PYTHONHOME=$PYTHON_DIR" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "$PYTHON_DIR" | Out-File -FilePath $env:GITHUB_PATH -Append
-          echo "##[endgroup]"
+          echo "${{ runner.temp }}/qt/${{ env.QT_VERSION }}/msvc2022_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Configure CMake (MSVC)
+        shell: pwsh
         run: |
-          $PYTHON_EXE = $(python -c "import sys; print(sys.executable)")
+          $PYTHON_EXE = python -c "import sys; print(sys.executable)"
           $PYTHON_DIR = Split-Path $PYTHON_EXE -Parent
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.10.2/msvc2022_64" -DPython3_EXECUTABLE="$PYTHON_EXE" -DPython3_ROOT_DIR="$PYTHON_DIR" -DPython_EXECUTABLE="$PYTHON_EXE" -DPython_ROOT_DIR="$PYTHON_DIR"
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/${{ env.QT_VERSION }}/msvc2022_64" `
+            -DPython3_EXECUTABLE="$PYTHON_EXE" `
+            -DPython3_ROOT_DIR="$PYTHON_DIR" `
+            -DPython_EXECUTABLE="$PYTHON_EXE" `
+            -DPython_ROOT_DIR="$PYTHON_DIR" `
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=ON
 
       - name: Build (Release)
+        shell: pwsh
         run: |
           cmake --build build --config Release -- /m
 
       - name: Bundle Qt runtime with windeployqt
+        shell: pwsh
         run: |
-          $exe = 'build\Release\garudxgcs.exe'
-          if (-not (Test-Path $exe)) { $exe = 'build\garudxgcs\Release\garudxgcs.exe' }
-          Write-Host "Using exe: $exe"
-          & "${{ runner.temp }}/qt/6.10.2/msvc2022_64/bin/windeployqt.exe" --qmldir src --release $exe
+          $deployDir = "build\Release"
+          $qtBin = "${{ runner.temp }}/qt/${{ env.QT_VERSION }}/msvc2022_64/bin"
+          & "$qtBin\windeployqt.exe" --qmldir src --release "$deployDir\garudxgcs.exe"
+          Write-Host "windeployqt completed"
+
+      - name: Copy GStreamer DLLs
+        shell: pwsh
+        run: |
+          $gstBin = "C:\gstreamer\1.0\msvc_x86_64\bin"
+          $gstPlugins = "C:\gstreamer\1.0\msvc_x86_64\lib\gstreamer-1.0"
+          $deployDir = "build\Release"
+
+          # Copy core GStreamer DLLs
+          if (Test-Path $gstBin) {
+            Copy-Item "$gstBin\*.dll" -Destination $deployDir -Force -ErrorAction SilentlyContinue
+            Write-Host "Copied GStreamer DLLs from $gstBin"
+          }
+
+          # Copy GStreamer plugins
+          $pluginDest = "$deployDir\gstreamer-plugins"
+          New-Item -ItemType Directory -Path $pluginDest -Force | Out-Null
+          if (Test-Path $gstPlugins) {
+            Copy-Item "$gstPlugins\*.dll" -Destination $pluginDest -Force -ErrorAction SilentlyContinue
+            Write-Host "Copied GStreamer plugins to $pluginDest"
+          }
 
       - name: Include JetBrains Mono font in installer output
+        shell: pwsh
         run: |
           Write-Host "Downloading JetBrains Mono latest release and bundling TTFs into installer_out"
           $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/JetBrains/JetBrainsMono/releases/latest'
           $asset = $release.assets | Where-Object { $_.name -match 'JetBrainsMono.*zip' } | Select-Object -First 1
-          $outdir = "$PWD\\installer_out"
+          $outdir = "$PWD\installer_out"
           if ($null -ne $asset) {
             $url = $asset.browser_download_url
             Invoke-WebRequest -Uri $url -OutFile jetbrainsmono.zip
@@ -104,19 +125,22 @@ jobs:
           }
 
       - name: Install NSIS
+        shell: pwsh
         run: |
           choco install nsis -y
 
       - name: Create installer using NSIS
+        shell: pwsh
         run: |
-          $outdir = "$PWD\\installer_out"
+          $outdir = "$PWD\installer_out"
           Remove-Item -Recurse -Force $outdir -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Path $outdir
-          Copy-Item -Path build\\Release\\* -Destination $outdir -Recurse -Force
+          Copy-Item -Path build\Release\* -Destination $outdir -Recurse -Force
           # Run makensis on our NSI script
-          & "C:\\Program Files (x86)\\NSIS\\makensis.exe" -V2 tools\\packaging\\garudxgcs_installer.nsi /DOUTDIR=$outdir
+          & "C:\Program Files (x86)\NSIS\makensis.exe" -V2 tools\packaging\garudxgcs_installer.nsi /DOUTDIR=$outdir
 
       - name: Package installer zip
+        shell: pwsh
         run: |
           Compress-Archive -Path installer_out\* -DestinationPath garudxgcs-windows-installer.zip -Force
 
@@ -128,14 +152,8 @@ jobs:
 
       - name: Create GitHub Release (if tag)
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload release asset (if tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: garudxgcs-windows-installer.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
