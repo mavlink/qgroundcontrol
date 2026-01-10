@@ -68,8 +68,8 @@ jobs:
       - name: Configure CMake (MSVC)
         run: |
           $PYTHON_EXE = $(python -c "import sys; print(sys.executable)")
-          $PYTHON_ROOT = Split-Path (Split-Path $PYTHON_EXE -Parent) -Parent
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.10.2/msvc2022_64" -DPython3_ROOT_DIR="$PYTHON_ROOT" -DPYTHON_EXECUTABLE="$PYTHON_EXE"
+          $PYTHON_DIR = Split-Path $PYTHON_EXE -Parent
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.10.2/msvc2022_64" -DPython3_EXECUTABLE="$PYTHON_EXE" -DPython3_ROOT_DIR="$PYTHON_DIR" -DPython_EXECUTABLE="$PYTHON_EXE" -DPython_ROOT_DIR="$PYTHON_DIR"
 
       - name: Build (Release)
         run: |
