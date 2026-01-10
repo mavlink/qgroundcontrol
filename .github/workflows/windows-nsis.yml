@@ -40,13 +40,13 @@ jobs:
 
       - name: Install Qt with aqtinstall
         run: |
-          python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 --outputdir ${{ runner.temp }}/qt
+          python -m aqt install-qt windows desktop 6.10.2 win64_msvc2022_64 --outputdir ${{ runner.temp }}/qt
           python -m aqt install-tool windows desktop tools_cmake --outputdir ${{ runner.temp }}/qt
           python -m aqt install-tool windows desktop tools_ifw --outputdir ${{ runner.temp }}/qt
-          python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools qtsensors qtconnectivity qtspeech --outputdir ${{ runner.temp }}/qt
+          python -m aqt install-qt windows desktop 6.10.2 win64_msvc2022_64 --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools qtsensors qtconnectivity qtspeech qtscxml --outputdir ${{ runner.temp }}/qt
 
       - name: Add Qt bin to PATH
-        run: echo "${{ runner.temp }}/qt/6.8.3/msvc2022_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        run: echo "${{ runner.temp }}/qt/6.10.2/msvc2022_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Print Python info for CMake
         run: |
@@ -67,7 +67,7 @@ jobs:
         run: |
           $PYTHON_EXE = $(python -c "import sys; print(sys.executable)")
           $PYTHON_ROOT = Split-Path (Split-Path $PYTHON_EXE -Parent) -Parent
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.8.3/msvc2022_64" -DPython3_ROOT_DIR="$PYTHON_ROOT" -DPYTHON_EXECUTABLE="$PYTHON_EXE"
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.10.2/msvc2022_64" -DPython3_ROOT_DIR="$PYTHON_ROOT" -DPYTHON_EXECUTABLE="$PYTHON_EXE"
 
       - name: Build (Release)
         run: |
@@ -78,7 +78,7 @@ jobs:
           $exe = 'build\Release\garudxgcs.exe'
           if (-not (Test-Path $exe)) { $exe = 'build\garudxgcs\Release\garudxgcs.exe' }
           Write-Host "Using exe: $exe"
-          & "${{ runner.temp }}/qt/6.8.3/msvc2022_64/bin/windeployqt.exe" --qmldir src --release $exe
+          & "${{ runner.temp }}/qt/6.10.2/msvc2022_64/bin/windeployqt.exe" --qmldir src --release $exe
 
       - name: Include JetBrains Mono font in installer output
         run: |
