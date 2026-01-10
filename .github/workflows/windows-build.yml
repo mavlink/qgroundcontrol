@@ -75,9 +75,84 @@ jobs:
         shell: pwsh
         run: |
           $deployDir = "build\Release"
-          $qtBin = "${{ runner.temp }}/qt/${{ env.QT_VERSION }}/msvc2022_64/bin"
-          & "$qtBin\windeployqt.exe" --qmldir src --release "$deployDir\garudxgcs.exe"
+          $qtRoot = "${{ runner.temp }}/qt/${{ env.QT_VERSION }}/msvc2022_64"
+          $qtBin = "$qtRoot/bin"
+
+          # Run windeployqt with all necessary flags
+          & "$qtBin\windeployqt.exe" `
+            --qmldir src `
+            --release `
+            --no-translations `
+            "$deployDir\garudxgcs.exe"
           Write-Host "windeployqt completed"
+
+      - name: Copy QtQuick3D and missing Qt plugins
+        shell: pwsh
+        run: |
+          $deployDir = "build\Release"
+          $qtRoot = "${{ runner.temp }}/qt/${{ env.QT_VERSION }}/msvc2022_64"
+
+          # Copy QtQuick3D QML modules
+          $qmlSrc = "$qtRoot\qml\QtQuick3D"
+          $qmlDest = "$deployDir\qml\QtQuick3D"
+          if (Test-Path $qmlSrc) {
+            New-Item -ItemType Directory -Path $qmlDest -Force | Out-Null
+            Copy-Item -Path "$qmlSrc\*" -Destination $qmlDest -Recurse -Force
+            Write-Host "Copied QtQuick3D QML modules"
+          } else {
+            Write-Host "WARNING: QtQuick3D QML not found at $qmlSrc"
+          }
+
+          # Copy QtQuick3D related QML modules
+          $quick3dModules = @("QtQuick3D", "QtQuick3D.AssetUtils", "QtQuick3D.Effects", "QtQuick3D.Helpers", "QtQuick3D.Particles3D")
+          foreach ($mod in $quick3dModules) {
+            $src = "$qtRoot\qml\$mod"
+            $dest = "$deployDir\qml\$mod"
+            if (Test-Path $src) {
+              New-Item -ItemType Directory -Path (Split-Path $dest -Parent) -Force | Out-Null
+              Copy-Item -Path $src -Destination (Split-Path $dest -Parent) -Recurse -Force -ErrorAction SilentlyContinue
+              Write-Host "Copied $mod"
+            }
+          }
+
+          # Copy Quick3D plugins
+          $pluginSrc = "$qtRoot\plugins\quick3d"
+          $pluginDest = "$deployDir\plugins\quick3d"
+          if (Test-Path $pluginSrc) {
+            New-Item -ItemType Directory -Path $pluginDest -Force | Out-Null
+            Copy-Item -Path "$pluginSrc\*" -Destination $pluginDest -Recurse -Force
+            Write-Host "Copied Quick3D plugins"
+          } else {
+            Write-Host "WARNING: Quick3D plugins not found at $pluginSrc"
+          }
+
+          # Copy renderers plugin (needed for 3D)
+          $rendererSrc = "$qtRoot\plugins\renderers"
+          $rendererDest = "$deployDir\plugins\renderers"
+          if (Test-Path $rendererSrc) {
+            New-Item -ItemType Directory -Path $rendererDest -Force | Out-Null
+            Copy-Item -Path "$rendererSrc\*" -Destination $rendererDest -Recurse -Force
+            Write-Host "Copied renderer plugins"
+          }
+
+          # Copy sceneparsers plugin
+          $sceneParsersSrc = "$qtRoot\plugins\sceneparsers"
+          $sceneParsersDest = "$deployDir\plugins\sceneparsers"
+          if (Test-Path $sceneParsersSrc) {
+            New-Item -ItemType Directory -Path $sceneParsersDest -Force | Out-Null
+            Copy-Item -Path "$sceneParsersSrc\*" -Destination $sceneParsersDest -Recurse -Force
+            Write-Host "Copied sceneparsers plugins"
+          }
+
+          # List what was copied for debugging
+          Write-Host "=== Plugins folder contents ==="
+          if (Test-Path "$deployDir\plugins") {
+            Get-ChildItem -Path "$deployDir\plugins" -Recurse -Name | Write-Host
+          }
+          Write-Host "=== QML folder contents ==="
+          if (Test-Path "$deployDir\qml") {
+            Get-ChildItem -Path "$deployDir\qml" -Directory -Name | Write-Host
+          }
 
       - name: Copy GStreamer DLLs
         shell: pwsh
