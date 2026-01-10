@@ -123,6 +123,8 @@ endif()
 # ----------------------------------------------------------------------------
 # Strip 'v' prefix if present (e.g., v1.2.3 -> 1.2.3)
 string(REGEX REPLACE "^v" "" QGC_APP_VERSION_CLEAN "${QGC_APP_VERSION}")
+# Strip any suffix after version (e.g., 1.2.3-test -> 1.2.3)
+string(REGEX REPLACE "^([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1" QGC_APP_VERSION_CLEAN "${QGC_APP_VERSION_CLEAN}")
 
 # Extract version components using regex
 if(QGC_APP_VERSION_CLEAN MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
