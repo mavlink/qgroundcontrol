@@ -12,12 +12,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Qt (macOS)
-        uses: jurplel/install-qt-action@v2
+      - name: Set up Python 3.10 (global)
+        uses: actions/setup-python@v4
         with:
-          version: "6.10.1"
-          host: "mac"
-          target: "clang"
+          python-version: "3.10"
+
+      - name: Check Python version
+        run: |
+          python3 --version
+          which python3
+
+      - name: Install aqtinstall
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install aqtinstall
+
+      - name: Install Qt with aqtinstall
+        run: |
+          python3 -m aqt install-qt mac desktop 6.10.1 clang_64 --outputdir ${{ runner.temp }}/qt
+          python3 -m aqt install-tool mac desktop tools_cmake 6.10.1 --outputdir ${{ runner.temp }}/qt
+          python3 -m aqt install-tool mac desktop tools_ifw 6.10.1 --outputdir ${{ runner.temp }}/qt
+          python3 -m aqt install-qt mac desktop 6.10.1 clang_64 --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools --outputdir ${{ runner.temp }}/qt
+
+      - name: Add Qt bin to PATH
+        run: echo "${{ runner.temp }}/qt/6.10.1/clang_64/bin" >> $GITHUB_PATH
 
       - name: Configure CMake
         run: |

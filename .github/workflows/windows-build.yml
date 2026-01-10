@@ -42,13 +42,13 @@ jobs:
 
       - name: Install Qt with aqtinstall
         run: |
-          python -m aqt install-qt windows desktop 6.8.0 win64_msvc2019_64 --outputdir ${{ runner.temp }}/qt
+          python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 --outputdir ${{ runner.temp }}/qt
           python -m aqt install-tool windows desktop tools_cmake --outputdir ${{ runner.temp }}/qt
           python -m aqt install-tool windows desktop tools_ifw --outputdir ${{ runner.temp }}/qt
-          python -m aqt install-qt windows desktop 6.8.0 win64_msvc2019_64 --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools qtsensors qtsvg qtspeech qtstatemachine qtconnectivity --outputdir ${{ runner.temp }}/qt
+          python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 --modules qtcharts qtlocation qt5compat qtmultimedia qtserialport qtpositioning qtimageformats qtquick3d qtquicktimeline qtshadertools qtsensors qtconnectivity qtspeech --outputdir ${{ runner.temp }}/qt
 
       - name: Add Qt bin to PATH
-        run: echo "${{ runner.temp }}/qt/6.8.0/msvc2019_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        run: echo "${{ runner.temp }}/qt/6.8.3/msvc2022_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Print Python info for CMake
         run: |
@@ -71,7 +71,7 @@ jobs:
           PATH: ${{ env.PYTHON_DIR }};${{ env.PATH }}
         run: |
           $PYTHON_EXE = $(python -c "import sys; print(sys.executable)")
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.8.0/msvc2019_64" -DPython3_ROOT_DIR="$($PYTHON_EXE | Split-Path -Parent -Parent)" -DPYTHON_EXECUTABLE="$PYTHON_EXE"
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ runner.temp }}/qt/6.8.3/msvc2022_64" -DPython3_ROOT_DIR="$($PYTHON_EXE | Split-Path -Parent -Parent)" -DPYTHON_EXECUTABLE="$PYTHON_EXE"
 
       - name: Build (Release)
         env:
@@ -83,7 +83,7 @@ jobs:
       - name: Bundle Qt runtime with windeployqt
         run: |
           cd build\Release
-           & "${{ runner.temp }}/qt/6.8.0/msvc2019_64/bin/windeployqt.exe" --qmldir ..\..\src --release garudxgcs.exe
+           & "${{ runner.temp }}/qt/6.8.3/msvc2022_64/bin/windeployqt.exe" --qmldir ..\..\src --release garudxgcs.exe
           cd ..\..
           echo "windeployqt completed"
 
