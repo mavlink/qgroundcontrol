@@ -215,7 +215,14 @@ void QGCCachedTileSet::_networkReplyFinished()
 
     const QString type = UrlFactory::tileHashToType(hash);
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromProviderType(type);
-    Q_CHECK_PTR(mapProvider);
+
+    // Safety check: skip if map provider not found
+    if (!mapProvider) {
+        qCWarning(QGCCachedTileSetLog) << "Map provider not found for type:" << type;
+        setErrorCount(_errorCount + 1);
+        _prepareDownload();
+        return;
+    }
 
     if (mapProvider->isElevationProvider()) {
         const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);

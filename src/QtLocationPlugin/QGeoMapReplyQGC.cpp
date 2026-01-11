@@ -111,7 +111,12 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     }
 
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(tileSpec().mapId());
-    Q_CHECK_PTR(mapProvider);
+
+    // Safety check: handle missing map provider gracefully
+    if (!mapProvider) {
+        setError(QGeoTiledMapReply::UnknownError, tr("Map provider not found for map ID: %1").arg(tileSpec().mapId()));
+        return;
+    }
 
     if (mapProvider->isBingProvider() && (image == _bingNoTileImage)) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Bing Tile Above Zoom Level"));
