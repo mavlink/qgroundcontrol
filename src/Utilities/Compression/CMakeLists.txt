@@ -65,6 +65,8 @@ CPMAddPackage(
 )
 
 # Export ZLIB paths for libarchive (prevent using system zlib during cross-compile)
+# NOTE: These are set temporarily and unset after libarchive is configured to avoid
+# interfering with Qt's PNG decoder (which has issues with zlib-ng for iCCP profiles)
 set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}" CACHE PATH "" FORCE)
 set(ZLIB_LIBRARY "zlibstatic" CACHE STRING "" FORCE)
 set(ZLIB_LIBRARIES "zlibstatic" CACHE STRING "" FORCE)
@@ -275,4 +277,16 @@ if(TARGET archive_static)
 else()
     message(FATAL_ERROR "libarchive target not found")
 endif()
+
+# ============================================================================
+# Clean up ZLIB cache pollution to prevent Qt PNG decoder issues
+# ============================================================================
+# Unset ZLIB cache variables that were set earlier for libarchive.
+# These interfere with Qt's bundled zlib and cause segfaults when decoding
+# PNG images with iCCP color profiles (e.g., resources/CogWheels.png).
+# The ZLIB::ZLIB target remains available for libarchive via the alias created above.
+unset(ZLIB_INCLUDE_DIR CACHE)
+unset(ZLIB_LIBRARY CACHE)
+unset(ZLIB_LIBRARIES CACHE)
+unset(ZLIB_FOUND CACHE)
 
