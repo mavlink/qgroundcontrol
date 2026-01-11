@@ -55,9 +55,9 @@ jobs:
     env:
       PACKAGE: GarudXGCS
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/garudx_release.keystore
-      QT_ANDROID_KEYSTORE_ALIAS: GarudXKeyStore
-      QT_ANDROID_KEYSTORE_STORE_PASS: GarudX2026!
-      QT_ANDROID_KEYSTORE_KEY_PASS: GarudX2026!
+      QT_ANDROID_KEYSTORE_ALIAS: GARUDXKEYSTORE
+      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_ABIS: "arm64-v8a;armeabi-v7a"
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
