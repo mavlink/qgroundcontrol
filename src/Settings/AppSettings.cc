@@ -1,4 +1,5 @@
 #include "AppSettings.h"
+#include "QGCFileHelper.h"
 #include "QGCPalette.h"
 #include "QGCApplication.h"
 #include "QGCMAVLink.h"
@@ -199,20 +200,18 @@ void AppSettings::_qLocaleLanguageChanged()
 
 void AppSettings::_checkSavePathDirectories(void)
 {
-    QDir savePathDir(savePath()->rawValue().toString());
-    if (!savePathDir.exists()) {
-        QDir().mkpath(savePathDir.absolutePath());
-    }
-    if (savePathDir.exists()) {
-        savePathDir.mkdir(parameterDirectory);
-        savePathDir.mkdir(telemetryDirectory);
-        savePathDir.mkdir(missionDirectory);
-        savePathDir.mkdir(logDirectory);
-        savePathDir.mkdir(videoDirectory);
-        savePathDir.mkdir(photoDirectory);
-        savePathDir.mkdir(crashDirectory);
-        savePathDir.mkdir(mavlinkActionsDirectory);
-        savePathDir.mkdir(settingsDirectory);
+    const QString savePath = this->savePath()->rawValue().toString();
+    if (QGCFileHelper::ensureDirectoryExists(savePath)) {
+        // Create all subdirectories
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, parameterDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, telemetryDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, missionDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, logDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, videoDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, photoDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, crashDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, mavlinkActionsDirectory));
+        QGCFileHelper::ensureDirectoryExists(QGCFileHelper::joinPath(savePath, settingsDirectory));
     }
 }
 

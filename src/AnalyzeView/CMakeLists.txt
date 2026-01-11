@@ -61,7 +61,7 @@ qt_add_qml_module(AnalyzeViewModule
 CPMAddPackage(
     NAME ulog_cpp
     GITHUB_REPOSITORY PX4/ulog_cpp
-    GIT_TAG main
+    GIT_TAG v1.0.1
 )
 
 # Suppress Clang warnings for ulog_cpp

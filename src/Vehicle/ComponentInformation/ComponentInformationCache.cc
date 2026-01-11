@@ -1,4 +1,5 @@
 #include "ComponentInformationCache.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
@@ -106,11 +107,8 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
 
 void ComponentInformationCache::initializeDirectory()
 {
-    if (!_path.exists()) {
-        QDir d;
-        if (!d.mkpath(_path.path())) {
-            qCWarning(ComponentInformationCacheLog) << "Failed to create dir" << _path.path();
-        }
+    if (!QGCFileHelper::ensureDirectoryExists(_path.path())) {
+        qCWarning(ComponentInformationCacheLog) << "Failed to create dir" << _path.path();
     }
 
     QDir::Filters filters = QDir::Files | QDir::NoDotAndDotDot;

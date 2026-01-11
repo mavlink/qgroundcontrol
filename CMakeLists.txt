@@ -161,6 +161,7 @@ find_package(Qt6
         Core
         Core5Compat
         Gui
+        HttpServer
         LinguistTools
         Location
         LocationPrivate

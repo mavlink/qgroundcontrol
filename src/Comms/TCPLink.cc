@@ -1,6 +1,6 @@
 #include "TCPLink.h"
-#include "DeviceInfo.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
@@ -337,5 +337,5 @@ void TCPLink::_writeBytes(const QByteArray& bytes)
 
 bool TCPLink::isSecureConnection() const
 {
-    return QGCDeviceInfo::isNetworkEthernet();
+    return QGCNetworkHelper::isNetworkEthernet();
 }

@@ -7,7 +7,6 @@
 #include "QGCCorePlugin.h"
 #include "FirmwareUpgradeSettings.h"
 #include "SettingsManager.h"
-#include "QGCZlib.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
@@ -643,7 +642,8 @@ void FirmwareUpgradeController::_downloadArduPilotManifest(void)
 
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadComplete, this, &FirmwareUpgradeController::_ardupilotManifestDownloadComplete);
-    downloader->download(QStringLiteral("https://firmware.ardupilot.org/manifest.json.gz"));
+    // Use autoDecompress to stream-decompress directly during download
+    downloader->download(QStringLiteral("https://firmware.ardupilot.org/manifest.json.gz"), {}, true);
 }
 
 void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
@@ -654,15 +654,10 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(QString remot
 
         qCDebug(FirmwareUpgradeLog) << "_ardupilotManifestDownloadFinished" << remoteFile << localFile;
 
-        QString jsonFileName(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath("ArduPilot.Manifest.json"));
-        if (!QGCZlib::inflateGzipFile(localFile, jsonFileName)) {
-            qCWarning(FirmwareUpgradeLog) << "Inflate of compressed manifest failed" << localFile;
-            return;
-        }
-
+        // localFile is already decompressed (autoDecompress=true streams directly to .json)
         QString         errorString;
         QJsonDocument   doc;
-        if (!JsonHelper::isJsonFile(jsonFileName, doc, errorString)) {
+        if (!JsonHelper::isJsonFile(localFile, doc, errorString)) {
             qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
             return;
         }

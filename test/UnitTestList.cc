@@ -7,11 +7,11 @@
 
 // AnalyzeView
 #include "ExifParserTest.h"
-// #include "GeoTagControllerTest.h"
+#include "GeoTagControllerTest.h"
 // #include "MavlinkLogTest.h"
 #include "LogDownloadTest.h"
 #include "PX4LogParserTest.h"
-// #include "ULogParserTest.h"
+#include "ULogParserTest.h"
 
 // AutoPilotPlugins
 // #include "RadioConfigTest.h"
@@ -77,9 +77,14 @@
 // Audio
 #include "AudioOutputTest.h"
 // Compression
-#include "DecompressionTest.h"
+#include "QGCArchiveModelTest.h"
+#include "QGCCompressionTest.h"
+#include "QGCStreamingDecompressionTest.h"
 // FileSystem
+#include "QGCArchiveWatcherTest.h"
 #include "QGCFileDownloadTest.h"
+#include "QGCFileHelperTest.h"
+#include "QGCFileWatcherTest.h"
 // Geo
 #include "GeoTest.h"
 // Shape
@@ -110,11 +115,11 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
 
     // AnalyzeView
     UT_REGISTER_TEST(ExifParserTest)
-    // UT_REGISTER_TEST(GeoTagControllerTest)
+    UT_REGISTER_TEST(GeoTagControllerTest)
     // UT_REGISTER_TEST(MavlinkLogTest)
     UT_REGISTER_TEST(LogDownloadTest)
     UT_REGISTER_TEST(PX4LogParserTest)
-    // UT_REGISTER_TEST(ULogParserTest)
+    UT_REGISTER_TEST(ULogParserTest)
 
     // AutoPilotPlugins
     // UT_REGISTER_TEST(RadioConfigTest)
@@ -178,9 +183,14 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     // Audio
     UT_REGISTER_TEST(AudioOutputTest)
     // Compression
-    UT_REGISTER_TEST(DecompressionTest)
+    UT_REGISTER_TEST(QGCArchiveModelTest)
+    UT_REGISTER_TEST(QGCCompressionTest)
+    UT_REGISTER_TEST(QGCStreamingDecompressionTest)
     // FileSystem
+    UT_REGISTER_TEST(QGCArchiveWatcherTest)
     UT_REGISTER_TEST(QGCFileDownloadTest)
+    UT_REGISTER_TEST(QGCFileHelperTest)
+    UT_REGISTER_TEST(QGCFileWatcherTest)
     // Geo
     UT_REGISTER_TEST(GeoTest)
     // Shape
