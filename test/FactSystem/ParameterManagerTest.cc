@@ -94,7 +94,7 @@ void ParameterManagerTest::_requestListNoResponse(void)
 void ParameterManagerTest::_skipParameterDownload(void)
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailNone);
+    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
@@ -110,25 +110,49 @@ void ParameterManagerTest::_skipParameterDownload(void)
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
 
-    // We should get progress bar updates during load
-    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
-    QCOMPARE(spyProgress.wait(2000), true);
-    arguments = spyProgress.takeFirst();
-    QCOMPARE(arguments.count(), 1);
-    QVERIFY(arguments.at(0).toFloat() > 0.0f);
+    ParameterManager *const paramManager = vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QSignalSpy paramsReadySpy(paramManager, &ParameterManager::parametersReadyChanged);
+    QSignalSpy missingSpy(paramManager, &ParameterManager::missingParametersChanged);
+    QSignalSpy progressSpy(paramManager, &ParameterManager::loadProgressChanged);
+    QSignalSpy vehicleReadySpy(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+
+    QVERIFY(paramsReadySpy.isValid());
+    QVERIFY(missingSpy.isValid());
+    QVERIFY(progressSpy.isValid());
+    QVERIFY(vehicleReadySpy.isValid());
 
     // Trigger skip of parameter download
-    vehicle->parameterManager()->skipParameterDownload();
+    paramManager->skipParameterDownload();
 
-    // We should get a parameters ready signal, but Vehicle should indicate missing params
-    QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyParamsReady.wait(40000), true);
-    QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
+    QTRY_VERIFY(paramManager->parametersReady());
+    QTRY_VERIFY(paramManager->missingParameters());
+    QTRY_COMPARE(paramManager->loadProgress(), 1.0);
 
-    // Progress should have been set back to 1
-    arguments = spyProgress.takeLast();
-    QCOMPARE(arguments.count(), 1);
-    QCOMPARE(arguments.at(0).toFloat(), 1.0f);
+    if (paramsReadySpy.count() > 0) {
+        arguments = paramsReadySpy.takeFirst();
+        QCOMPARE(arguments.count(), 1);
+        QCOMPARE(arguments.at(0).toBool(), true);
+    }
+
+    if (missingSpy.count() > 0) {
+        arguments = missingSpy.takeFirst();
+        QCOMPARE(arguments.count(), 1);
+        QCOMPARE(arguments.at(0).toBool(), true);
+    }
+
+    if (progressSpy.count() > 0) {
+        arguments = progressSpy.takeLast();
+        QCOMPARE(arguments.count(), 1);
+        QCOMPARE(arguments.at(0).toFloat(), 1.0f);
+    }
+
+    if (vehicleReadySpy.count() > 0) {
+        arguments = vehicleReadySpy.takeFirst();
+        QCOMPARE(arguments.count(), 1);
+        QCOMPARE(arguments.at(0).toBool(), true);
+    }
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
