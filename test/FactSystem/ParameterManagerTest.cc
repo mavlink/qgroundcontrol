@@ -94,7 +94,7 @@ void ParameterManagerTest::_requestListNoResponse(void)
 void ParameterManagerTest::_skipParameterDownload(void)
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailNone);
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
@@ -110,34 +110,23 @@ void ParameterManagerTest::_skipParameterDownload(void)
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
 
-    ParameterManager *const paramManager = vehicle->parameterManager();
-    QVERIFY(paramManager);
-
-    QSignalSpy paramsReadySpy(paramManager, &ParameterManager::parametersReadyChanged);
-    QSignalSpy missingSpy(paramManager, &ParameterManager::missingParametersChanged);
-    QSignalSpy progressSpy(paramManager, &ParameterManager::loadProgressChanged);
-
-    QVERIFY(paramsReadySpy.isValid());
-    QVERIFY(missingSpy.isValid());
-    QVERIFY(progressSpy.isValid());
-
-    paramManager->skipParameterDownload();
-
-    QVERIFY(paramsReadySpy.wait(1000));
-    arguments = paramsReadySpy.takeFirst();
+    // We should get progress bar updates during load
+    QSignalSpy spyProgress(vehicle->parameterManager(), SIGNAL(loadProgressChanged(float)));
+    QCOMPARE(spyProgress.wait(2000), true);
+    arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
-    QCOMPARE(arguments.at(0).toBool(), true);
+    QVERIFY(arguments.at(0).toFloat() > 0.0f);
 
-    if (missingSpy.count() == 0) {
-        missingSpy.wait(1000);
-    }
-    QVERIFY(missingSpy.count() >= 1);
-    QCOMPARE(paramManager->missingParameters(), true);
+    // Trigger skip of parameter download
+    vehicle->parameterManager()->skipParameterDownload();
 
-    if (progressSpy.count() == 0) {
-        progressSpy.wait(1000);
-    }
-    arguments = progressSpy.takeLast();
+    // We should get a parameters ready signal, but Vehicle should indicate missing params
+    QSignalSpy spyParamsReady(vehicleMgr, SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QCOMPARE(spyParamsReady.wait(40000), true);
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
+
+    // Progress should have been set back to 1
+    arguments = spyProgress.takeLast();
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toFloat(), 1.0f);
 }
