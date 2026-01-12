@@ -37,47 +37,35 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Platform-specific zlib options
 set(ZLIB_EXTRA_OPTIONS)
 if(WIN32)
-    list(APPEND ZLIB_EXTRA_OPTIONS "ZLIB_INSTALL_COMPAT_DLL OFF")
-endif()
-
-list(APPEND ZLIB_EXTRA_OPTIONS "WITH_NATIVE_INSTRUCTIONS OFF")
-
-# Disable arch-specific optimizations when cross-compiling (x86 asm fails on ARM targets)
-if(APPLE OR ANDROID OR CMAKE_CROSSCOMPILING)
-    list(APPEND ZLIB_EXTRA_OPTIONS "WITH_OPTIM OFF")
+    set(ZLIB_EXTRA_OPTIONS
+        "ZLIB_INSTALL_COMPAT_DLL OFF"
+    )
 endif()
 
 CPMAddPackage(
     NAME zlib
-    GITHUB_REPOSITORY zlib-ng/zlib-ng
-    GIT_TAG 2.3.2
+    GITHUB_REPOSITORY madler/zlib
+    VERSION 1.3.1.2
+    GIT_TAG v1.3.1.2
     OPTIONS
-        "ZLIB_COMPAT ON"
         "ZLIB_BUILD_TESTING OFF"
-        "WITH_GTEST OFF"
         "ZLIB_BUILD_SHARED OFF"
         "ZLIB_BUILD_STATIC ON"
         "ZLIB_BUILD_MINIZIP OFF"
         "ZLIB_INSTALL OFF"
         "ZLIB_PREFIX OFF"
-        "WITH_GZFILEOP OFF"              # QGC uses libarchive API, not gzFile
         "${ZLIB_EXTRA_OPTIONS}"
 )
 
-# Export ZLIB paths for libarchive (prevent using system zlib during cross-compile)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ZLIB::ZLIBSTATIC)
+
+# Export ZLIB paths for libarchive to find
 set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}" CACHE PATH "" FORCE)
 set(ZLIB_LIBRARY "zlibstatic" CACHE STRING "" FORCE)
 set(ZLIB_LIBRARIES "zlibstatic" CACHE STRING "" FORCE)
 set(ZLIB_FOUND TRUE CACHE BOOL "" FORCE)
-# libarchive's FindZLIB may expect ZLIB::ZLIB target
-# zlib-ng with ZLIB_COMPAT creates 'zlib' target, 'zlibstatic' is alias to it
 if(NOT TARGET ZLIB::ZLIB)
-    get_target_property(_zlib_aliased zlibstatic ALIASED_TARGET)
-    if(_zlib_aliased)
-        add_library(ZLIB::ZLIB ALIAS ${_zlib_aliased})
-    else()
-        add_library(ZLIB::ZLIB ALIAS zlibstatic)
-    endif()
+    add_library(ZLIB::ZLIB ALIAS zlibstatic)
 endif()
 
 # ============================================================================
@@ -275,4 +263,5 @@ if(TARGET archive_static)
 else()
     message(FATAL_ERROR "libarchive target not found")
 endif()
+
 
