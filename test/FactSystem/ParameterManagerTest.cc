@@ -91,6 +91,57 @@ void ParameterManagerTest::_requestListNoResponse(void)
     QCOMPARE(spyParamsReady.wait(40000), false);
 }
 
+void ParameterManagerTest::_skipParameterDownload(void)
+{
+    Q_ASSERT(!_mockLink);
+    _mockLink = MockLink::startPX4MockLink(false, MockConfiguration::FailParamNoReponseToRequestList);
+
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QVERIFY(vehicleMgr);
+
+    // Wait for the Vehicle to get created
+    QSignalSpy spyVehicle(vehicleMgr, SIGNAL(activeVehicleAvailableChanged(bool)));
+    QCOMPARE(spyVehicle.wait(5000), true);
+    QCOMPARE(spyVehicle.count(), 1);
+    QList<QVariant> arguments = spyVehicle.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toBool(), true);
+
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+
+    ParameterManager *const paramManager = vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QSignalSpy paramsReadySpy(paramManager, &ParameterManager::parametersReadyChanged);
+    QSignalSpy missingSpy(paramManager, &ParameterManager::missingParametersChanged);
+    QSignalSpy progressSpy(paramManager, &ParameterManager::loadProgressChanged);
+
+    QVERIFY(paramsReadySpy.isValid());
+    QVERIFY(missingSpy.isValid());
+    QVERIFY(progressSpy.isValid());
+
+    paramManager->skipParameterDownload();
+
+    QVERIFY(paramsReadySpy.wait(1000));
+    arguments = paramsReadySpy.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toBool(), true);
+
+    if (missingSpy.count() == 0) {
+        missingSpy.wait(1000);
+    }
+    QVERIFY(missingSpy.count() >= 1);
+    QCOMPARE(paramManager->missingParameters(), true);
+
+    if (progressSpy.count() == 0) {
+        progressSpy.wait(1000);
+    }
+    arguments = progressSpy.takeLast();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.at(0).toFloat(), 1.0f);
+}
+
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
 // param_read requests.
 void ParameterManagerTest::_requestListMissingParamFail(void)

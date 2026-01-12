@@ -20,6 +20,9 @@ Item {
     property color  _mainStatusBGColor: qgcPal.brandingPurple
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
+    property bool   _parameterDownloadInProgress: _activeVehicle && _activeVehicle.parameterManager && !_activeVehicle.parameterManager.parametersReady
+    property bool   _missionDownloadInProgress:   _activeVehicle && _activeVehicle.missionDownloadInProgress
+    property bool   _showStopDownloadButton:      _parameterDownloadInProgress || _missionDownloadInProgress
 
     function dropMainStatusIndicatorTool() {
         mainStatusIndicator.dropMainStatusIndicator();
@@ -99,6 +102,23 @@ Item {
                     FlightModeIndicator {
                         Layout.fillHeight:  true
                         visible:            _activeVehicle
+                    }
+
+                    QGCButton {
+                        Layout.fillHeight:  true
+                        text:               _missionDownloadInProgress ? qsTr("Skip mission download") : qsTr("Skip parameter download")
+                        visible:            _showStopDownloadButton
+
+                        onClicked: {
+                            if (!_activeVehicle) {
+                                return
+                            }
+                            if (_missionDownloadInProgress) {
+                                _activeVehicle.cancelMissionDownload()
+                            } else if (_activeVehicle.parameterManager) {
+                                _activeVehicle.parameterManager.skipParameterDownload()
+                            }
+                        }
                     }
                 }
             }

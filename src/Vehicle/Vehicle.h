@@ -233,6 +233,7 @@ public:
     Q_PROPERTY(bool     haveFWSpeedLimits       READ haveFWSpeedLimits                              NOTIFY haveFWSpeedLimChanged)
 
     Q_PROPERTY(ParameterManager*        parameterManager    READ parameterManager   CONSTANT)
+    Q_PROPERTY(bool                     missionDownloadInProgress READ missionDownloadInProgress NOTIFY missionDownloadInProgressChanged)
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
     Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
     Q_PROPERTY(Autotune*                autotune            READ autotune           CONSTANT)
@@ -598,6 +599,7 @@ public:
     VehicleObjectAvoidance*         objectAvoidance     () { return _objectAvoidance; }
     Autotune*                       autotune            () const { return _autotune; }
     RemoteIDManager*                remoteIDManager     () { return _remoteIDManager; }
+    bool                            missionDownloadInProgress() const;
 
     static void showCommandAckError(const mavlink_command_ack_t& ack);
 
@@ -629,6 +631,7 @@ public:
 
     /// Same as sendMavCommand but available from Qml.
     Q_INVOKABLE void sendCommand(int compId, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
+    Q_INVOKABLE void cancelMissionDownload();
 
     typedef enum {
         MavCmdResultCommandResultOnly,          ///< commandResult specifies full success/fail info
@@ -850,6 +853,7 @@ signals:
     void gitHashChanged                 (QString hash);
     void vehicleUIDChanged              ();
     void loadProgressChanged            (float value);
+    void missionDownloadInProgressChanged();
 
     /// New RC channel values coming from RC_CHANNELS message
     ///     @param channelValues The current values for rc channels

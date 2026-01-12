@@ -46,6 +46,8 @@ public:
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(qLocaleLanguage)
     DEFINE_SETTINGFACT(disableAllPersistence)
+    DEFINE_SETTINGFACT(disableParameterDownload)
+    DEFINE_SETTINGFACT(disableMissionDownload)
     DEFINE_SETTINGFACT(firstRunPromptIdsShown)
     DEFINE_SETTINGFACT(loginAirLink)
     DEFINE_SETTINGFACT(passAirLink)
