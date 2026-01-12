@@ -13,7 +13,7 @@
   "ndk_full_version": "27.2.12479018",
   "ndk_version": "r27c",
   "qt_minimum_version": "6.10.0",
-  "qt_modules": "qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qthttpserver",
+  "qt_modules": "qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver",
   "qt_version": "6.10.2",
   "xcode_ios_version": "latest-stable",
   "xcode_version": "16.x"
