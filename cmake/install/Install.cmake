@@ -23,12 +23,18 @@ install(
 # Qt Deployment Script Generation
 # ----------------------------------------------------------------------------
 set(deploy_tool_options_arg "")
+set(deploy_include_plugins "")
 
 if(MACOS OR WIN32)
     list(APPEND deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
     if(MACOS)
         list(APPEND deploy_tool_options_arg "-appstore-compliant")
     endif()
+endif()
+
+if(LINUX)
+    # Qt 6.10+ renamed wayland platform plugin to libqwayland.so
+    set(deploy_include_plugins INCLUDE_PLUGINS qwayland)
 endif()
 
 qt_generate_deploy_qml_app_script(
@@ -38,6 +44,7 @@ qt_generate_deploy_qml_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
     DEPLOY_TOOL_OPTIONS ${deploy_tool_options_arg}
+    ${deploy_include_plugins}
 )
 
 install(SCRIPT ${deploy_script})
