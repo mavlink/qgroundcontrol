@@ -135,7 +135,7 @@ void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues
             calibrated_value = (channelValue - pwmTrim) / (float)(pwmTrim - pwmMin);
 
         } else {
-            /* in the configured dead zone, output zero */
+            /* at the trim position, output zero */
             calibrated_value = 0.0f;
         }
 
