@@ -18,7 +18,7 @@ appimage:
     plugins:
       - qt
     raw_environment:
-      QML_SOURCES_PATHS: "\"$PROJECT_ROOT\"/src/qmlcomponents/"
+      QML_SOURCES_PATHS: "\"$PROJECT_ROOT\"/src"
     environment:
-      EXTRA_PLATFORM_PLUGINS: "libqwayland-egl.so;libqwayland-generic.so"
-      EXTRA_QT_PLUGINS: "waylandcompositor"
+      # Qt 6.10+ renamed wayland plugins: libqwayland-egl.so/libqwayland-generic.so -> libqwayland.so
+      EXTRA_PLATFORM_PLUGINS: "libqwayland.so"
