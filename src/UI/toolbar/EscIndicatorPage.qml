@@ -63,44 +63,53 @@ ToolIndicatorPage {
                 }
             }
 
-            Repeater  {
-                model: _escs
+            GridLayout {
+                rows:           _escs ? Math.ceil(_escs.count / 2) : 1
+                columns:        _escs && _escs.count > 4 ? 2 : 1
+                flow:           GridLayout.TopToBottom
+                columnSpacing:  ScreenTools.defaultFontPixelWidth
+                rowSpacing:     ScreenTools.defaultFontPixelHeight / 4
 
-                SettingsGroupLayout {
-                    heading:            qsTr("Motor %1 %2").arg(object.id.rawValue + 1).arg( _isThisMotorHealthy ? "" : qsTr("- OFFLINE"))
-                    headingPointSize:   ScreenTools.defaultFontPointSize * ScreenTools.smallFontPointRatio
-                    outerBorderColor:   _isThisMotorHealthy ? QGroundControl.globalPalette.colorGreen : QGroundControl.globalPalette.colorRed
+                Repeater  {
+                    model: _escs
 
-                    property bool _isThisMotorHealthy: _isMotorHealthy(index)
+                    SettingsGroupLayout {
+                        Layout.fillWidth:   true
+                        heading:            qsTr("Motor %1 %2").arg(object.id.rawValue + 1).arg( _isThisMotorHealthy ? "" : qsTr("- OFFLINE"))
+                        headingPointSize:   ScreenTools.defaultFontPointSize * ScreenTools.smallFontPointRatio
+                        outerBorderColor:   _isThisMotorHealthy ? QGroundControl.globalPalette.colorGreen : QGroundControl.globalPalette.colorRed
 
-                    GridLayout {
-                        columns:        2
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth * 2.5
-                        flow:       GridLayout.LeftToRight
+                        property bool _isThisMotorHealthy: _isMotorHealthy(index)
 
-                        LabelledFactLabel {
-                            label:      qsTr("RPM")
-                            fact:       object.rpm
-                        }
+                        GridLayout {
+                            columns:        2
+                            columnSpacing:  ScreenTools.defaultFontPixelWidth * 2.5
+                            flow:       GridLayout.LeftToRight
 
-                        LabelledLabel {
-                            label:      qsTr("Temp")
-                            labelText:  (object.temperature !== 32767 ? object.temperature.valueString : na) + " " + object.temperature.units
-                        }
+                            LabelledFactLabel {
+                                label:      qsTr("RPM")
+                                fact:       object.rpm
+                            }
 
-                        LabelledFactLabel {
-                            label:      qsTr("Voltage")
-                            fact:       object.voltage
-                        }
+                            LabelledLabel {
+                                label:      qsTr("Temp")
+                                labelText:  (object.temperature !== 32767 ? object.temperature.valueString : na) + " " + object.temperature.units
+                            }
 
-                        LabelledFactLabel {
-                            label:      qsTr("Current")
-                            fact:       object.current
-                        }
+                            LabelledFactLabel {
+                                label:      qsTr("Voltage")
+                                fact:       object.voltage
+                            }
 
-                        LabelledFactLabel {
-                            label:      qsTr("Errors")
-                            fact:       object.errorCount
+                            LabelledFactLabel {
+                                label:      qsTr("Current")
+                                fact:       object.current
+                            }
+
+                            LabelledFactLabel {
+                                label:      qsTr("Errors")
+                                fact:       object.errorCount
+                            }
                         }
                     }
                 }
