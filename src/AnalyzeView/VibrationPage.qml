@@ -14,13 +14,13 @@ AnalyzePage {
     allowPopout:        true
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-    property bool   _available:     !isNaN(_activeVehicle.vibration.xAxis.rawValue)
+    property bool   _available:     !isNaN(_activeVehicle?.vibration?.xAxis?.rawValue ?? NaN)
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
     property real   _barWidth:      ScreenTools.defaultFontPixelWidth * 7
     property real   _barHeight:     ScreenTools.defaultFontPixelHeight * 10
-    property real   _xValue:        _activeVehicle.vibration.xAxis.rawValue
-    property real   _yValue:        _activeVehicle.vibration.yAxis.rawValue
-    property real   _zValue:        _activeVehicle.vibration.zAxis.rawValue
+    property real   _xValue:        _activeVehicle?.vibration?.xAxis?.rawValue ?? 0
+    property real   _yValue:        _activeVehicle?.vibration?.yAxis?.rawValue ?? 0
+    property real   _zValue:        _activeVehicle?.vibration?.zAxis?.rawValue ?? 0
 
     readonly property real _barMinimum:     0.0
     readonly property real _barMaximum:     90.0
@@ -186,15 +186,15 @@ AnalyzePage {
                 }
 
                 QGCLabel {
-                    text: qsTr("Accel 1: %1").arg(_activeVehicle.vibration.clipCount1.rawValue)
+                    text: qsTr("Accel 1: %1").arg(_activeVehicle?.vibration?.clipCount1?.rawValue ?? 0)
                 }
 
                 QGCLabel {
-                    text: qsTr("Accel 2: %1").arg(_activeVehicle.vibration.clipCount2.rawValue)
+                    text: qsTr("Accel 2: %1").arg(_activeVehicle?.vibration?.clipCount2?.rawValue ?? 0)
                 }
 
                 QGCLabel {
-                    text: qsTr("Accel 3: %1").arg(_activeVehicle.vibration.clipCount3.rawValue)
+                    text: qsTr("Accel 3: %1").arg(_activeVehicle?.vibration?.clipCount3?.rawValue ?? 0)
                 }
             }
 

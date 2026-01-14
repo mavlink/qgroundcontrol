@@ -65,27 +65,27 @@ ToolIndicatorPage {
 
                 LabelledLabel {
                     label:      qsTr("Satellites")
-                    labelText:  activeVehicle ? activeVehicle.gps.count.valueString : na
+                    labelText:  activeVehicle?.gps?.count?.valueString ?? na
                 }
 
                 LabelledLabel {
                     label:      qsTr("GPS Lock")
-                    labelText:  activeVehicle ? activeVehicle.gps.lock.enumStringValue : na
+                    labelText:  activeVehicle?.gps?.lock?.enumStringValue ?? na
                 }
 
                 LabelledLabel {
                     label:      qsTr("HDOP")
-                    labelText:  activeVehicle ? activeVehicle.gps.hdop.valueString : valueNA
+                    labelText:  activeVehicle?.gps?.hdop?.valueString ?? valueNA
                 }
 
                 LabelledLabel {
                     label:      qsTr("VDOP")
-                    labelText:  activeVehicle ? activeVehicle.gps.vdop.valueString : valueNA
+                    labelText:  activeVehicle?.gps?.vdop?.valueString ?? valueNA
                 }
 
                 LabelledLabel {
                     label:      qsTr("Course Over Ground")
-                    labelText:  activeVehicle ? activeVehicle.gps.courseOverGround.valueString : valueNA
+                    labelText:  activeVehicle?.gps?.courseOverGround?.valueString ?? valueNA
                 }
             }
 

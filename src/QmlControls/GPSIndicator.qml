@@ -45,7 +45,7 @@ Item {
                 source:             "/qmlimages/Gps.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
-                opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+                opacity:            ((_activeVehicle?.gps?.count?.value ?? -1) >= 0) ? 1 : 0.5
                 color:              qgcPal.windowTransparentText
             }
         }
@@ -53,19 +53,19 @@ Item {
         Column {
             id:                     gpsValuesColumn
             anchors.verticalCenter: parent.verticalCenter
-            visible:                _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
+            visible:                _activeVehicle && !isNaN(_activeVehicle?.gps?.hdop?.value ?? NaN)
             spacing:                0
 
             QGCLabel {
                 anchors.horizontalCenter:   hdopValue.horizontalCenter
                 color:              qgcPal.windowTransparentText
-                text:               _activeVehicle ? _activeVehicle.gps.count.valueString : ""
+                text:               _activeVehicle?.gps?.count?.valueString ?? ""
             }
 
             QGCLabel {
                 id:     hdopValue
                 color:  qgcPal.windowTransparentText
-                text:   _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
+                text:   _activeVehicle?.gps?.hdop?.value?.toFixed(1) ?? ""
             }
         }
     }
