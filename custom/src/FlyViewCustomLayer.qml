@@ -95,8 +95,10 @@ Item {
         id:                         compassBar
         height:                     ScreenTools.defaultFontPixelHeight * 1.5
         width:                      ScreenTools.defaultFontPixelWidth  * 50
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       _toolsMargin
+        anchors.top: parent.top
+        anchors.topMargin:_toolsMargin
+        //anchors.bottom:             parent.bottom
+        //anchors.bottomMargin:       _toolsMargin
         color:                      "#DEDEDE"
         radius:                     2
         clip:                       true
@@ -132,6 +134,7 @@ Item {
             }
         }
     }
+    //Compass below
     Rectangle {
         id:                         headingIndicator
         height:                     ScreenTools.defaultFontPixelHeight
@@ -147,6 +150,7 @@ Item {
             anchors.centerIn:       parent
         }
     }
+
     Image {
         id:                         compassArrowIndicator
         height:                     _indicatorsHeight
@@ -236,7 +240,7 @@ Item {
             }
         }
     }
-
+    //Attitude Indicator
     Rectangle {
         id:                     attitudeIndicator
         anchors.bottomMargin:   _toolsMargin + parentToolInsets.bottomEdgeRightInset
