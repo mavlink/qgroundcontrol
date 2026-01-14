@@ -100,18 +100,6 @@ void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues
 
     int pwmTrim = pFact->rawValue().toInt();
 
-    pFact = getParameterFact(-1, QString("RC%1_DZ").arg(flightModeChannel + 1));
-    if(!pFact) {
-#if defined _MSC_VER
-        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
-#else
-        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
-#endif
-        return;
-    }
-
-    int pwmDz = pFact->rawValue().toInt();
-
     if (flightModeChannel < 0 || flightModeChannel > channelCount) {
         return;
     }
@@ -140,13 +128,11 @@ void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues
 
         float calibrated_value;
 
-        if (channelValue > (pwmTrim + pwmDz)) {
-            calibrated_value = (channelValue - pwmTrim - pwmDz) / (float)(
-                          pwmMax - pwmTrim - pwmDz);
+        if (channelValue > pwmTrim) {
+            calibrated_value = (channelValue - pwmTrim) / (float)(pwmMax - pwmTrim);
 
-        } else if (channelValue < (pwmTrim - pwmDz)) {
-            calibrated_value = (channelValue - pwmTrim + pwmDz) / (float)(
-                          pwmTrim - pwmMin - pwmDz);
+        } else if (channelValue < pwmTrim) {
+            calibrated_value = (channelValue - pwmTrim) / (float)(pwmTrim - pwmMin);
 
         } else {
             /* in the configured dead zone, output zero */
