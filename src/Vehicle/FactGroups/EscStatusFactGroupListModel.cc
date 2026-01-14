@@ -112,7 +112,9 @@ void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_
 
     _countFact.setRawValue(escInfo.count);
     _connectionTypeFact.setRawValue(escInfo.connection_type);
-    _infoFact.setRawValue(escInfo.info);
+    // Extract the individual online status bit for this ESC from the bitmask
+    bool isOnline = (escInfo.info >> index) & 1;
+    _infoFact.setRawValue(isOnline ? 1 : 0);
     _failureFlagsFact.setRawValue(escInfo.failure_flags[index]);
     _errorCountFact.setRawValue(escInfo.error_count[index]);
     _temperatureFact.setRawValue(escInfo.temperature[index]);

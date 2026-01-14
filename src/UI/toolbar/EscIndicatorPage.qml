@@ -14,10 +14,10 @@ ToolIndicatorPage {
     property string valueNA:        qsTr("–", "No data to display")
 
     property var    _escs:          activeVehicle ? activeVehicle.escs : null
-    property int    _onlineBitmask: _escs ? _escs.get(0).info.rawValue : 0
 
     function _isMotorOnline(motorIndex) {
-        return (_onlineBitmask & (1 << motorIndex)) !== 0
+        // Each ESC's info fact now contains its individual online status (1=online, 0=offline)
+        return _escs && motorIndex < _escs.count && _escs.get(motorIndex).info.rawValue !== 0
     }
 
     function _isMotorHealthy(motorIndex) {

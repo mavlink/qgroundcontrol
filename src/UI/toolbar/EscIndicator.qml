@@ -17,23 +17,24 @@ Item {
 
     // ESC status properties derived from vehicle data
     property int    _motorCount:        _escs && _escs.count > 0 ? _escs.get(0).count.rawValue : 0
-    property int    _onlineBitmask:       _escs && _escs.count > 0? _escs.get(0).info.rawValue : 0
 
     property int    _onlineMotorCount:  _getOnlineMotorCount()
     property bool   _escHealthy:        _getEscHealthStatus()
 
+    function _isMotorOnline(motorIndex) {
+        // Each ESC's info fact now contains its individual online status (1=online, 0=offline)
+        return _escs && motorIndex < _escs.count && _escs.get(motorIndex).info.rawValue !== 0
+    }
+
     function _getOnlineMotorCount() {
-        if (_motorCount === 0) return 0;
+        if (!_escs || _escs.count === 0) return 0;
 
         let count = 0;
-        let mask = _onlineBitmask;
-
-        // Count all set bits in the bitmask
-        while (mask) {
-            count += mask & 1;
-            mask >>= 1;
+        for (let i = 0; i < _escs.count; i++) {
+            if (_isMotorOnline(i)) {
+                count++;
+            }
         }
-
         return count;
     }
 
@@ -41,10 +42,10 @@ Item {
         // Health is good if all expected motors are online and have no failure flags
         if (_onlineMotorCount !== _motorCount) return false
 
-        // Check failure flags for each motor (4 per group)
-        for (let index = 0; index < 4; index++) {
-            if ((_onlineBitmask & (1 << index)) !== 0) { // Motor is online
-                if (_escs.get(index).failureFlags > 0) { // Any failure flag set means unhealthy
+        // Check failure flags for each motor
+        for (let index = 0; index < _escs.count; index++) {
+            if (_isMotorOnline(index)) { // Motor is online
+                if (_escs.get(index).failureFlags.rawValue > 0) { // Any failure flag set means unhealthy
                     return false
                 }
             }
