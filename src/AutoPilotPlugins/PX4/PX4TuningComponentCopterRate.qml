@@ -12,12 +12,14 @@ ColumnLayout {
     property Fact _airmode:             controller.getParameterFact(-1, "MC_AIRMODE", false)
     property Fact _thrustModelFactor:   controller.getParameterFact(-1, "THR_MDL_FAC", false)
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
     RowLayout {
         spacing: ScreenTools.defaultFontPixelWidth
 
         QGCLabel {
             textFormat:         Text.RichText
-            text:               qsTr("Airmode (disable during tuning) <b><a href=\"https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation\">?</a></b>")
+            text:               qsTr("Airmode (disable during tuning)") + " <b><a style='color: " + qgcPal.textLink + ";' href=\"https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#airmode-mixer-saturation\">?</a></b>"
             onLinkActivated:    (link) => Qt.openUrlExternally(link)
             visible:            _airmode
         }
@@ -34,7 +36,7 @@ ColumnLayout {
 
         QGCLabel {
             textFormat:         Text.RichText
-            text:               qsTr("Thrust curve <b><a href=\"https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve\">?</a></b>")
+            text:               qsTr("Thrust curve") + " <b><a style='color: " + qgcPal.textLink + ";' href=\"https://docs.px4.io/main/en/config_mc/pid_tuning_guide_multicopter.html#thrust-curve\">?</a></b>"
             onLinkActivated:    (link) => Qt.openUrlExternally(link)
             visible:            _thrustModelFactor
         }

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
@@ -16,9 +17,48 @@ RowLayout {
 
     signal activated(int index)
 
-    QGCLabel {
-        id:                 label
+    Row {
         Layout.fillWidth:   true
+        spacing:            0
+
+        property bool _hasHelp: _comboBox.fact && _comboBox.fact.longDescription
+
+        QGCLabel {
+            id:                 label
+        }
+
+        Text {
+            id:                     helpIndicator
+            text:                   " ?"
+            font.pointSize:         ScreenTools.smallFontPointSize
+            font.bold:              true
+            color:                  qgcPal.textLink
+            visible:                parent._hasHelp
+            anchors.bottom:         label.verticalCenter
+            anchors.bottomMargin:   -2
+
+            QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
+            MouseArea {
+                anchors.fill:       parent
+                anchors.margins:    -4
+                hoverEnabled:       true
+                onContainsMouseChanged: {
+                    if (containsMouse) {
+                        toolTip.visible = true
+                    } else {
+                        toolTip.visible = false
+                    }
+                }
+            }
+
+            ToolTip {
+                id:             toolTip
+                text:           _comboBox.fact ? _comboBox.fact.longDescription : ""
+                delay:          300
+                timeout:        10000
+            }
+        }
     }
 
     FactComboBox {
