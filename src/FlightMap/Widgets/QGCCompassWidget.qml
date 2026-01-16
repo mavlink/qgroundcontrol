@@ -20,11 +20,11 @@ Rectangle {
     property real _defaultSize:                 usedByMultipleVehicleList ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 10
     property real _sizeRatio:                   (usedByMultipleVehicleList || ScreenTools.isTinyScreen) ? (size / _defaultSize) * 0.5 : size / _defaultSize
     property int  _fontSize:                    ScreenTools.defaultFontPointSize * _sizeRatio < 8 ? 8 : ScreenTools.defaultFontPointSize * _sizeRatio
-    property real _heading:                     vehicle ? vehicle.heading.rawValue : 0
-    property real _headingToHome:               vehicle ? vehicle.headingToHome.rawValue : 0
-    property real _groundSpeed:                 vehicle ? vehicle.groundSpeed.rawValue : 0
-    property real _headingToNextWP:             vehicle ? vehicle.headingToNextWP.rawValue : 0
-    property real _courseOverGround:            vehicle ? vehicle.gps.courseOverGround.rawValue : 0
+    property real _heading:                     vehicle?.heading?.rawValue ?? 0
+    property real _headingToHome:               vehicle?.headingToHome?.rawValue ?? NaN
+    property real _groundSpeed:                 vehicle?.groundSpeed?.rawValue ?? 0
+    property real _headingToNextWP:             vehicle?.headingToNextWP?.rawValue ?? NaN
+    property real _courseOverGround:            vehicle?.gps?.courseOverGround?.rawValue ?? 0
     property var  _flyViewSettings:             QGroundControl.settingsManager.flyViewSettings
     property bool _showAdditionalIndicators:    _flyViewSettings.showAdditionalIndicatorsCompass.value && !usedByMultipleVehicleList
     property bool _lockNoseUpCompass:           _flyViewSettings.lockNoseUpCompass.value && !usedByMultipleVehicleList
