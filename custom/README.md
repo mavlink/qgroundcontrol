@@ -19,8 +19,16 @@ cmake --build build -- -j2
 ### After Code Changes
 ```bash
 # Quick rebuild
-cmake --build build --config Debug
+cmake --build build -- -j2
 ```
+
+
+## Connecting USb to WSl
+& "C:\Program Files\usbipd-win\usbipd.exe" bind --busid 5-1
+& "C:\Program Files\usbipd-win\usbipd.exe" attach --busid 5-1 --wsl
+
+
+
 
 ## Object Tracking Feature
 

@@ -13,244 +13,197 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-
-
-
-import Custom.Widgets
+import QGroundControl.FlightDisplay
 
 Item {
-    property var parentToolInsets                       // These insets tell you what screen real estate is available for positioning the controls in your overlay
+    id: flyDashboard
+    anchors.fill: parent
+
+    property var parentToolInsets                       // These insets tell you what screen real estate are available for positioning the controls in your overlay
     property var totalToolInsets:   _totalToolInsets    // The insets updated for the custom overlay additions
     property var mapControl
 
-    readonly property string noGPS:         qsTr("NO GPS")
-    readonly property real   indicatorValueWidth:   ScreenTools.defaultFontPixelWidth * 7
+    // ---------------- MAVLINK COMMAND FUNCTION ----------------
+    function sendCommand(commandId, param1=0, param2=0, param3=0, param4=0, param5=0, param6=0, param7=0) {
+        if (!QGroundControl.multiVehicleManager.activeVehicle) {
+            console.log("No active vehicle")
+            return
+        }
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 18
-    property real   _indicatorsHeight:      ScreenTools.defaultFontPixelHeight
-    property var    _sepColor:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-    property color  _indicatorsColor:       qgcPal.text
-    property bool   _isVehicleGps:          _activeVehicle ? _activeVehicle.gps.count.rawValue > 1 && _activeVehicle.gps.hdop.rawValue < 1.4 : false
-    property string _altitude:              _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
-    property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-    property real   _heading:               _activeVehicle   ? _activeVehicle.heading.rawValue : 0
-    property real   _distance:              _activeVehicle ? _activeVehicle.distanceToHome.rawValue : 0
-    property string _messageTitle:          ""
-    property string _messageText:           ""
-    property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
+        var vehicle = QGroundControl.multiVehicleManager.activeVehicle
 
-    function secondsToHHMMSS(timeS) {
-        var sec_num = parseInt(timeS, 10);
-        var hours   = Math.floor(sec_num / 3600);
-        var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-        var seconds = sec_num - (hours * 3600) - (minutes * 60);
-        if (hours   < 10) {hours   = "0"+hours;}
-        if (minutes < 10) {minutes = "0"+minutes;}
-        if (seconds < 10) {seconds = "0"+seconds;}
-        return hours+':'+minutes+':'+seconds;
+        // Send to vehicle - QGC will route to connected MAVLink systems
+        // Your Jetson should be connected as a MAVLink companion computer
+        vehicle.sendCommand(
+            commandId,     // command ID (31100-31105)
+            false,         // showError (false = no error display)
+            param1,         // parameter 1 (track_id or pixel_x)
+            param2,         // parameter 2 (pixel_y or depth_min)
+            param3,         // parameter 3 (depth_max)
+            param4,         // parameter 4 (unused)
+            param5,         // parameter 5 (unused)
+            param6,         // parameter 6 (unused)
+            param7          // parameter 7 (unused)
+        )
+
+        console.log("Sent MAVLink command:", commandId, "params:", param1, param2, param3)
     }
 
+    // ---------------- VIDEO IS HANDLED BY FLY VIEW ----------------
+    // This overlay does NOT create a new video surface
+
+    // ---------------- DASHBOARD PANEL ----------------
+    Rectangle {
+        id: dashboard
+        width: parent.width * 0.175  // Half of previous width (was 0.35)
+        height: parent.height * 0.5
+        anchors.top: parent.top
+        anchors.right: parent.right
+        radius: 6
+        color: "#2c3e5080"  // Standard dark blue with 50% opacity (80 = 50% alpha)
+        border.width: 2
+        border.color: "#3498db"  // Lighter blue border
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 6
+
+            QGCLabel {
+                text: "Al-Bayrak Object Tracking"
+                font.bold: true
+                font.pointSize: ScreenTools.mediumFontPointSize
+                color: "white"
+            }
+
+            // ---------------- TRACKING CONTROLS ----------------
+            RowLayout {
+                spacing: 6
+
+                QGCButton {
+                    text: "Start Tracking"
+                    onClicked: {
+                        // Step 1: Enable tracking mode first
+                        sendCommand(31100) // START_TRACKING
+                    }
+                }
+
+                QGCButton {
+                    text: "Stop Tracking"
+                    onClicked: {
+                        // Step 3: Disable tracking mode
+                        sendCommand(31101) // STOP_TRACKING
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: 6
+
+                QGCButton {
+                    text: "Clear Lock"
+                    onClicked: {
+                        // Clear current lock without stopping tracking mode
+                        sendCommand(31105) // CLEAR_LOCK
+                    }
+                }
+
+                QGCButton {
+                    text: "Set Depth"
+                    onClicked: {
+                        // Set depth filtering range: min 5m, max 20m
+                        sendCommand(31104, 5, 20) // SET_DEPTH_RANGE
+                    }
+                }
+            }
+
+            // ---------------- TARGET SELECTION ----------------
+            QGCLabel {
+                text: "Select Target by ID:"
+                color: "white"
+            }
+
+            RowLayout {
+                spacing: 6
+                QGCTextField {
+                    id: targetIdInput
+                    placeholderText: "Track ID"
+                    width: 80
+                }
+                QGCButton {
+                    text: "Select"
+                    onClicked: {
+                        // Step 2: Select target by track ID (from bounding box #ID)
+                        var trackId = parseInt(targetIdInput.text) || 0
+                        sendCommand(31102, trackId, 0) // SELECT_TARGET_ID
+                    }
+                }
+            }
+
+            QGCLabel {
+                text: "Select Target by Pixel:"
+                color: "white"
+            }
+
+            RowLayout {
+                spacing: 6
+                QGCTextField {
+                    id: pixelX
+                    placeholderText: "U"
+                    width: 50
+                }
+                QGCTextField {
+                    id: pixelY
+                    placeholderText: "V"
+                    width: 50
+                }
+                QGCButton {
+                    text: "Select"
+                    onClicked: {
+                        // Alternative: Select target by pixel coordinates
+                        var x = parseFloat(pixelX.text) || 0
+                        var y = parseFloat(pixelY.text) || 0
+                        sendCommand(31103, x, y) // SELECT_TARGET_PIXEL
+                    }
+                }
+            }
+
+            // ---------------- TELEMETRY DISPLAY ----------------
+            QGCLabel {
+                id: telemetryLabel
+                text: "Feedback: --"
+                color: "#28a745"
+                font.pointSize: ScreenTools.smallFontPointSize
+            }
+        }
+    }
+
+    // ---------------- TOOL INSETS MANAGEMENT ----------------
     QGCToolInsets {
         id:                     _totalToolInsets
         leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
-        leftEdgeCenterInset:    exampleRectangle.leftEdgeCenterInset
+        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
         leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
         rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
-        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
-        rightEdgeBottomInset:   parent.width - compassBackground.x
+        rightEdgeCenterInset:   dashboard.x
+        rightEdgeBottomInset:   parentToolInsets.rightEdgeBottomInset
         topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
-        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
+        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
         topEdgeRightInset:      parentToolInsets.topEdgeRightInset
         bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
         bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
-        bottomEdgeRightInset:   parent.height - attitudeIndicator.y
+        bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
-    // This is an example of how you can use parent tool insets to position an element on the custom fly view layer
-    // - we use parent topEdgeLeftInset to position the widget below the toolstrip
-    // - we use parent bottomEdgeLeftInset to dodge the virtual joystick if enabled
-    // - we use the parent leftEdgeTopInset to size our element to the same width as the ToolStripAction
-    // - we export the width of this element as the leftEdgeCenterInset so that the map will recenter if the vehicle flys behind this element
-    Rectangle {
-        id: exampleRectangle
-        visible: false // to see this example, set this to true. To view insets, enable the insets viewer FlyView.qml
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: parentToolInsets.topEdgeLeftInset + _toolsMargin
-        anchors.bottomMargin: parentToolInsets.bottomEdgeLeftInset + _toolsMargin
-        anchors.leftMargin: _toolsMargin
-        width: parentToolInsets.leftEdgeTopInset - _toolsMargin
-        color: 'red'
+    // ---------------- NAMED_VALUE_INT TELEMETRY ----------------
+    Connections {
+        target: QGroundControl.multiVehicleManager.activeVehicle
+        ignoreUnknownSignals: true
 
-        property real leftEdgeCenterInset: visible ? x + width : 0
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Heading Indicator
-    Rectangle {
-        id:                         compassBar
-        height:                     ScreenTools.defaultFontPixelHeight * 1.5
-        width:                      ScreenTools.defaultFontPixelWidth  * 50
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       _toolsMargin
-        color:                      "#DEDEDE"
-        radius:                     2
-        clip:                       true
-        anchors.horizontalCenter:   parent.horizontalCenter
-        Repeater {
-            model: 720
-            QGCLabel {
-                function _normalize(degrees) {
-                    var a = degrees % 360
-                    if (a < 0) a += 360
-                    return a
-                }
-                property int _startAngle: modelData + 180 + _heading
-                property int _angle: _normalize(_startAngle)
-                anchors.verticalCenter: parent.verticalCenter
-                x:              visible ? ((modelData * (compassBar.width / 360)) - (width * 0.5)) : 0
-                visible:        _angle % 45 == 0
-                color:          "#75505565"
-                font.pointSize: ScreenTools.smallFontPointSize
-                text: {
-                    switch(_angle) {
-                    case 0:     return "N"
-                    case 45:    return "NE"
-                    case 90:    return "E"
-                    case 135:   return "SE"
-                    case 180:   return "S"
-                    case 225:   return "SW"
-                    case 270:   return "W"
-                    case 315:   return "NW"
-                    }
-                    return ""
-                }
+        function onNamedValueIntReceived(vehicleId, componentId, name, value) {
+            if (name.startsWith("TRK")) {
+                telemetryLabel.text = "Feedback: " + name + " = " + value
             }
-        }
-    }
-    Rectangle {
-        id:                         headingIndicator
-        height:                     ScreenTools.defaultFontPixelHeight
-        width:                      ScreenTools.defaultFontPixelWidth * 4
-        color:                      qgcPal.windowShadeDark
-        anchors.top:                compassBar.top
-        anchors.topMargin:          -headingIndicator.height / 2
-        anchors.horizontalCenter:   parent.horizontalCenter
-        QGCLabel {
-            text:                   _heading
-            color:                  qgcPal.text
-            font.pointSize:         ScreenTools.smallFontPointSize
-            anchors.centerIn:       parent
-        }
-    }
-    Image {
-        id:                         compassArrowIndicator
-        height:                     _indicatorsHeight
-        width:                      height
-        source:                     "/custom/img/compass_pointer.svg"
-        fillMode:                   Image.PreserveAspectFit
-        sourceSize.height:          height
-        anchors.top:                compassBar.bottom
-        anchors.topMargin:          -height / 2
-        anchors.horizontalCenter:   parent.horizontalCenter
-    }
-
-    Rectangle {
-        id:                     compassBackground
-        anchors.bottom:         attitudeIndicator.bottom
-        anchors.right:          attitudeIndicator.left
-        anchors.rightMargin:    -attitudeIndicator.width / 2
-        width:                  -anchors.rightMargin + compassBezel.width + (_toolsMargin * 2)
-        height:                 attitudeIndicator.height * 0.75
-        radius:                 2
-        color:                  qgcPal.window
-
-        Rectangle {
-            id:                     compassBezel
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin:     _toolsMargin
-            anchors.left:           parent.left
-            width:                  height
-            height:                 parent.height - (northLabelBackground.height / 2) - (headingLabelBackground.height / 2)
-            radius:                 height / 2
-            border.color:           qgcPal.text
-            border.width:           1
-            color:                  Qt.rgba(0,0,0,0)
-        }
-
-        Rectangle {
-            id:                         northLabelBackground
-            anchors.top:                compassBezel.top
-            anchors.topMargin:          -height / 2
-            anchors.horizontalCenter:   compassBezel.horizontalCenter
-            width:                      northLabel.contentWidth * 1.5
-            height:                     northLabel.contentHeight * 1.5
-            radius:                     ScreenTools.defaultFontPixelWidth  * 0.25
-            color:                      qgcPal.windowShade
-
-            QGCLabel {
-                id:                 northLabel
-                anchors.centerIn:   parent
-                text:               "N"
-                color:              qgcPal.text
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-        }
-
-        Image {
-            id:                 headingNeedle
-            anchors.centerIn:   compassBezel
-            height:             compassBezel.height * 0.75
-            width:              height
-            source:             "/custom/img/compass_needle.svg"
-            fillMode:           Image.PreserveAspectFit
-            sourceSize.height:  height
-            transform: [
-                Rotation {
-                    origin.x:   headingNeedle.width  / 2
-                    origin.y:   headingNeedle.height / 2
-                    angle:      _heading
-                }]
-        }
-
-        Rectangle {
-            id:                         headingLabelBackground
-            anchors.top:                compassBezel.bottom
-            anchors.topMargin:          -height / 2
-            anchors.horizontalCenter:   compassBezel.horizontalCenter
-            width:                      headingLabel.contentWidth * 1.5
-            height:                     headingLabel.contentHeight * 1.5
-            radius:                     ScreenTools.defaultFontPixelWidth  * 0.25
-            color:                      qgcPal.windowShade
-
-            QGCLabel {
-                id:                 headingLabel
-                anchors.centerIn:   parent
-                text:               _heading
-                color:              qgcPal.text
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-        }
-    }
-
-    Rectangle {
-        id:                     attitudeIndicator
-        anchors.bottomMargin:   _toolsMargin + parentToolInsets.bottomEdgeRightInset
-        anchors.rightMargin:    _toolsMargin
-        anchors.bottom:         parent.bottom
-        anchors.right:          parent.right
-        height:                 ScreenTools.defaultFontPixelHeight * 6
-        width:                  height
-        radius:                 height * 0.5
-        color:                  qgcPal.windowShade
-
-        CustomAttitudeWidget {
-            size:               parent.height * 0.95
-            vehicle:            _activeVehicle
-            showHeading:        false
-            anchors.centerIn:   parent
         }
     }
 }
