@@ -27,7 +27,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/scripts/check-sizes.py
+          sparse-checkout: |
+            .github/scripts/check-sizes.py
+            .github/actions/download-all-artifacts
           sparse-checkout-cone-mode: false
 
       - name: Get PR number
@@ -107,14 +109,12 @@ jobs:
             core.setOutput('summary', summary);
             core.setOutput('all_complete', allComplete);
 
-      - name: Download artifacts from triggering workflow
+      - name: Download artifacts from all platform workflows
         if: steps.pr.outputs.result != 'null'
-        uses: actions/download-artifact@v7
         continue-on-error: true
+        uses: ./.github/actions/download-all-artifacts
         with:
-          run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: artifacts
 
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != 'null'
@@ -330,16 +330,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/scripts/check-sizes.py
+          sparse-checkout: |
+            .github/scripts/check-sizes.py
+            .github/actions/download-all-artifacts
           sparse-checkout-cone-mode: false
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v7
+      - name: Download artifacts from all platform workflows
         continue-on-error: true
+        uses: ./.github/actions/download-all-artifacts
         with:
-          run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: artifacts
 
       - name: Save artifact sizes baseline
         run: |
