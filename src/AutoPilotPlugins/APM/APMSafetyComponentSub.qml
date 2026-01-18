@@ -43,7 +43,9 @@ SetupPage {
             property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "r.BATT_LOW_MAH", false)
             property bool _batteryDetected:              controller.parameterExists(-1, "r.BATT_LOW_MAH")
 
-            property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
+            // Older firmwares use ARMING_CHECK. Newer firmwares use ARMING_SKIPCHK.
+            property Fact _armingCheck:     controller.getParameterFact(-1, "ARMING_CHECK", false /* reportMissing */)
+            property Fact _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false /* reportMissing */)
 
             property real _margins:     ScreenTools.defaultFontPixelHeight
             property bool _showIcon:    !ScreenTools.isTinyScreen
@@ -340,7 +342,7 @@ SetupPage {
                 spacing: _margins / 2
 
                 QGCLabel {
-                    text:           qsTr("Arming Checks")
+                    text:           _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
                     font.bold:      true
                 }
 
@@ -361,8 +363,8 @@ SetupPage {
                             id:                 armingCheckBitmask
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            firstEntryIsAll:    true
-                            fact:               _armingCheck
+                            firstEntryIsAll:    _armingCheck ? true : false
+                            fact:               _armingCheck ? _armingCheck : _armingSkipCheck
                         }
 
                         QGCLabel {
@@ -372,7 +374,7 @@ SetupPage {
                             wrapMode:       Text.WordWrap
                             color:          qgcPal.warningText
                             text:            qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
-                            visible:        _armingCheck.value != 1
+                            visible:        _armingCheck ? _armingCheck.value != 1 : _armingSkipCheck.value != 0
                         }
                     }
                 } // Rectangle - Arming checks
