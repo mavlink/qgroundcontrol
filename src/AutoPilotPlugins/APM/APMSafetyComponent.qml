@@ -20,7 +20,7 @@ SetupPage {
 
             FactPanelController { id: controller; }
 
-            QGCPalette { id: ggcPal; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property Fact _batt1Monitor:                    controller.getParameterFact(-1, "BATT_MONITOR")
             property Fact _batt2Monitor:                    controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
@@ -139,7 +139,7 @@ SetupPage {
                 Rectangle {
                     width:  battery1FailsafeLoader.x + battery1FailsafeLoader.width + _margins
                     height: battery1FailsafeLoader.y + battery1FailsafeLoader.height + _margins
-                    color:  ggcPal.windowShade
+                    color:  qgcPal.windowShade
 
                     Loader {
                         id:                 battery1FailsafeLoader
@@ -173,7 +173,7 @@ SetupPage {
                 Rectangle {
                     width:  battery2FailsafeLoader.x + battery2FailsafeLoader.width + _margins
                     height: battery2FailsafeLoader.y + battery2FailsafeLoader.height + _margins
-                    color:  ggcPal.windowShade
+                    color:  qgcPal.windowShade
 
                     Loader {
                         id:                 battery2FailsafeLoader
@@ -272,7 +272,7 @@ SetupPage {
                         id:     failsafeSettings
                         width:  fsGrid.x + fsGrid.width + _margins
                         height: fsGrid.y + fsGrid.height + _margins
-                        color:  ggcPal.windowShade
+                        color:  qgcPal.windowShade
 
                         GridLayout {
                             id:                 fsGrid
@@ -337,7 +337,7 @@ SetupPage {
                     Rectangle {
                         width:  generalFailsafeColumn.x + generalFailsafeColumn.width + _margins
                         height: generalFailsafeColumn.y + generalFailsafeColumn.height + _margins
-                        color:  ggcPal.windowShade
+                        color:  qgcPal.windowShade
 
                         Column {
                             id:                 generalFailsafeColumn
@@ -409,7 +409,7 @@ SetupPage {
                     Rectangle {
                         width:  mainLayout.width + (_margins * 2)
                         height: mainLayout.height + (_margins * 2)
-                        color:  ggcPal.windowShade
+                        color:  qgcPal.windowShade
 
                         ColumnLayout {
                             id:         mainLayout
@@ -537,7 +537,7 @@ SetupPage {
                         id:     rtlSettings
                         width:  landSpeedField.x + landSpeedField.width + _margins
                         height: landSpeedField.y + landSpeedField.height + _margins
-                        color:  ggcPal.windowShade
+                        color:  qgcPal.windowShade
 
                         QGCColoredImage {
                             id:                 icon
@@ -547,7 +547,7 @@ SetupPage {
                             anchors.top:        parent.top
                             height:             ScreenTools.defaultFontPixelWidth * 20
                             width:              ScreenTools.defaultFontPixelWidth * 20
-                            color:              ggcPal.text
+                            color:              qgcPal.text
                             sourceSize.width:   width
                             mipmap:             true
                             fillMode:           Image.PreserveAspectFit
