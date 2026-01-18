@@ -1,0 +1,47 @@
+name: Download All Platform Artifacts
+description: Download artifacts from all completed platform workflow runs for the same commit
+
+inputs:
+  github-token:
+    description: GitHub token for API access
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Download artifacts from all platform workflows
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+        REPO="${{ github.repository }}"
+
+        if [ -z "$HEAD_SHA" ]; then
+          echo "Error: No head SHA available"
+          exit 1
+        fi
+
+        echo "Finding completed workflow runs for commit ${HEAD_SHA:0:7}..."
+
+        # Get run IDs and names in one query
+        RUNS=$(gh api "repos/${REPO}/actions/runs?head_sha=${HEAD_SHA}&per_page=100" \
+          --jq '.workflow_runs[] | select(.name == "Linux" or .name == "Windows" or .name == "MacOS" or .name == "Android") | select(.status == "completed" and .conclusion == "success") | "\(.id) \(.name)"')
+
+        if [ -z "$RUNS" ]; then
+          echo "No completed workflow runs found"
+          exit 0
+        fi
+
+        mkdir -p artifacts
+
+        echo "$RUNS" | while read -r run_id workflow_name; do
+          echo "Downloading artifacts from ${workflow_name} (run ${run_id})..."
+          gh run download "$run_id" --dir artifacts --repo "$REPO" || echo "  Warning: Some artifacts failed to download"
+        done
+
+        echo "Downloaded artifacts:"
+        find artifacts -type f \( -name "*.apk" -o -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" \) 2>/dev/null | while read -r f; do
+          SIZE=$(du -h "$f" | cut -f1)
+          echo "  - $(basename "$f"): $SIZE"
+        done

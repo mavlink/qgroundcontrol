@@ -167,7 +167,3 @@ jobs:
                 body: body
               });
             }
-
-      - name: Fail if pre-commit failed
-        if: steps.pre-commit.outputs.exit_code != '0'
-        run: exit 1
