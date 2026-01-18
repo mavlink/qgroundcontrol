@@ -31,14 +31,23 @@ Item {
     property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "r.BATT_LOW_VOLT", false)
     property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "r.BATT_LOW_MAH", false)
 
-    property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
+    // Older firmwares use ARMING_CHECK. Newer firmwares use ARMING_SKIPCHK.
+    property Fact _armingCheck:     controller.getParameterFact(-1, "ARMING_CHECK", false /* reportMissing */)
+    property Fact _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false /* reportMissing */)
 
     Column {
         anchors.fill:       parent
 
         VehicleSummaryRow {
             labelText: qsTr("Arming Checks:")
-            valueText:  _armingCheck.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
+            valueText: {
+                if (_armingCheck) {
+                    return _armingCheck.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
+                } else if (_armingSkipCheck) {
+                    return _armingSkipCheck.value === 0 ? qsTr("Enabled") : qsTr("Some disabled")
+                }
+                return ""
+            }
         }
         VehicleSummaryRow {
             labelText: qsTr("GCS failsafe:")

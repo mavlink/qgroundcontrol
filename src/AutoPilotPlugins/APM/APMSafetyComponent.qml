@@ -43,7 +43,9 @@ SetupPage {
             property Fact _failsafeBatt1CritVoltage:        controller.getParameterFact(-1, "BATT_CRT_VOLT", false /* reportMissing */)
             property Fact _failsafeBatt2CritVoltage:        controller.getParameterFact(-1, "BATT2_CRT_VOLT", false /* reportMissing */)
 
-            property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
+            // Older firmwares use ARMING_CHECK. Newer firmwares use ARMING_SKIPCHK.
+            property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK", false /* reportMissing */)
+            property Fact _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false /* reportMissing */)
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _innerMargin:     _margins / 2
@@ -704,14 +706,14 @@ SetupPage {
                 spacing: _margins / 2
 
                 QGCLabel {
-                    text:           qsTr("Arming Checks")
+                    text:           _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
                     font.bold:      true
                 }
 
                 Rectangle {
                     width:  flowLayout.width
                     height: armingCheckInnerColumn.height + (_margins * 2)
-                    color:  ggcPal.windowShade
+                    color:  qgcPal.windowShade
 
                     Column {
                         id:                 armingCheckInnerColumn
@@ -725,8 +727,8 @@ SetupPage {
                             id:                 armingCheckBitmask
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            firstEntryIsAll:    true
-                            fact:               _armingCheck
+                            firstEntryIsAll:    _armingCheck ? true : false
+                            fact:               _armingCheck ? _armingCheck : _armingSkipCheck
                         }
 
                         QGCLabel {
@@ -736,7 +738,7 @@ SetupPage {
                             wrapMode:       Text.WordWrap
                             color:          qgcPal.warningText
                             text:            qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
-                            visible:        _armingCheck.value != 1
+                            visible:        _armingCheck ? _armingCheck.value != 1 : _armingSkipCheck.value != 0
                         }
                     }
                 } // Rectangle - Arming checks
