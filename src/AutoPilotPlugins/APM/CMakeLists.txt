@@ -78,14 +78,8 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMRadioComponentSummary.qml
         APMRemoteSupportComponent.qml
         APMSafetyComponent.qml
-        APMSafetyComponentCopter.qml
-        APMSafetyComponentPlane.qml
-        APMSafetyComponentRover.qml
         APMSafetyComponentSub.qml
         APMSafetyComponentSummary.qml
-        APMSafetyComponentSummaryCopter.qml
-        APMSafetyComponentSummaryPlane.qml
-        APMSafetyComponentSummaryRover.qml
         APMSafetyComponentSummarySub.qml
         APMSensorsComponent.qml
         APMSensorsComponentSummary.qml
