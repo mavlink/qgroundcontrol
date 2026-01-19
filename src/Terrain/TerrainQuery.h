@@ -19,7 +19,7 @@ Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
 // complete. The case for using autoDelete=false is where the query has not been "newed" as a standalone object.
 //
 // Another typical use case is to query some terrain data and while you are waiting for it to come back the underlying reason
-// for that query changes and you end up needed to query again for a new set of data. In this case you are no longer intersted
+// for that query changes and you end up needed to query again for a new set of data. In this case you are no longer interested
 // in the results of the previous query. The way to do that is to disconnect the data received signal on the old stale query
 // when you create the new query.
 
@@ -130,6 +130,42 @@ private:
     TerrainQueryInterface *_terrainQuery = nullptr;
 };
 Q_DECLARE_METATYPE(TerrainPathQuery::PathHeightInfo_t)
+Q_DECLARE_METATYPE(QList<TerrainPathQuery::PathHeightInfo_t>)
+
+/*===========================================================================*/
+
+class TerrainAreaQuery : public QObject
+{
+    Q_OBJECT
+
+public:
+    /// @param autoDelete true: object will delete itself after it signals results
+    explicit TerrainAreaQuery(bool autoDelete, QObject *parent = nullptr);
+    ~TerrainAreaQuery();
+
+    /// Async terrain query for terrain heights for the rectangular area specified.
+    /// When the query is done, the terrainDataReceived() signal is emitted.
+    ///     @param swCoord South-West bound of rectangular area to query
+    ///     @param neCoord North-East bound of rectangular area to query
+    void requestData(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord);
+
+    struct CarpetHeightInfo_t {
+        double minHeight;
+        double maxHeight;
+        QList<QList<double>> carpet;
+    };
+
+signals:
+    void terrainDataReceived(bool success, const TerrainAreaQuery::CarpetHeightInfo_t &carpetHeightInfo);
+
+private slots:
+    void _carpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>> &carpet);
+
+private:
+    bool _autoDelete = false;
+    TerrainQueryInterface *_terrainQuery = nullptr;
+};
+Q_DECLARE_METATYPE(TerrainAreaQuery::CarpetHeightInfo_t)
 
 /*===========================================================================*/
 

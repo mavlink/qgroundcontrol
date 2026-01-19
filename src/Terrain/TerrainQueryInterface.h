@@ -78,6 +78,7 @@ public:
 
     void requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates) override;
     void requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord) override;
+    void requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly) override;
 };
 
 /*===========================================================================*/

@@ -79,5 +79,8 @@ private slots:
     void _testRequestCoordinateHeights();
     void _testRequestPathHeights();
     void _testRequestCarpetHeights();
+    void _testRequestCarpetHeightsInvalidBounds();
+    void _testPolyPathQueryEmptyPath();
+    void _testPolyPathQuerySingleCoord();
     // void _testTerrainAtCoordinateQuery();
 };
