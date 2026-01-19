@@ -1,38 +1,122 @@
 name: Install Qt
-description: Install Qt with standard QGroundControl modules
+description: Install Qt using aqtinstall via unified Python script (same as local dev)
 inputs:
   version:
     description: Qt version to install
     required: true
   host:
-    description: Host platform (linux, mac, windows, etc.)
+    description: Host platform (linux, mac, windows)
     required: true
   target:
     description: Target platform (desktop, android, ios)
     required: false
     default: desktop
   arch:
-    description: Architecture (linux_gcc_64, clang_64, win64_msvc2022_64, etc.)
+    description: Architecture (linux_gcc_64, clang_64, win64_msvc2022_64, android_arm64_v8a, ios, etc.)
     required: true
   dir:
     description: Installation directory
     required: false
-    default: ${{ runner.temp }}
+    default: ${{ runner.temp }}/Qt
   modules:
-    description: Qt modules to install (use build-config.outputs.qt_modules)
+    description: Qt modules to install (space-separated)
     required: false
     default: ''
+  tools:
+    description: Qt tools to install (space-separated, e.g., "tools_ifw")
+    required: false
+    default: ''
+  cache:
+    description: Enable caching of Qt installation
+    required: false
+    default: 'true'
+outputs:
+  root-dir:
+    description: Qt root directory
+    value: ${{ steps.paths.outputs.root-dir }}
+  host-path:
+    description: Qt host path (for cross-compilation)
+    value: ${{ steps.paths.outputs.host-path }}
 runs:
   using: composite
   steps:
-    - name: Install Qt ${{ inputs.version }}
-      uses: jurplel/install-qt-action@v4
+    - name: Compute paths
+      id: paths
+      shell: bash
+      run: |
+        # Use Python script to compute paths consistently
+        python3 - <<'EOF'
+        import os
+        import sys
+
+        arch = "${{ inputs.arch }}"
+        host = "${{ inputs.host }}"
+        target = "${{ inputs.target }}"
+        version = "${{ inputs.version }}"
+        install_dir = "${{ inputs.dir }}"
+
+        # Map arch to directory name
+        arch_map = {
+            "linux_gcc_64": "gcc_64",
+            "linux_gcc_arm64": "gcc_arm64",
+            "clang_64": "macos",
+            "win64_msvc2022_64": "msvc2022_64",
+            "win64_msvc2022_arm64": "msvc2022_arm64",
+            "android_arm64_v8a": "android_arm64_v8a",
+            "android_armv7": "android_armv7",
+            "android_x86_64": "android_x86_64",
+            "android_x86": "android_x86",
+            "ios": "ios",
+        }
+        arch_dir = arch_map.get(arch, arch)
+        qt_root = f"{install_dir}/{version}/{arch_dir}"
+
+        # Host arch for cross-compilation
+        host_arch_map = {"linux": "gcc_64", "mac": "macos", "windows": "msvc2022_64"}
+        host_arch_dir = host_arch_map.get(host, "gcc_64")
+
+        if target == "desktop":
+            host_path = qt_root
+        else:
+            host_path = f"{install_dir}/{version}/{host_arch_dir}"
+
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"root-dir={qt_root}\n")
+            f.write(f"arch-dir={arch_dir}\n")
+            f.write(f"host-path={host_path}\n")
+        EOF
+
+    - name: Cache Qt
+      if: inputs.cache == 'true'
+      id: cache-qt
+      uses: actions/cache@v5
       with:
-        version: ${{ inputs.version }}
-        host: ${{ inputs.host }}
-        target: ${{ inputs.target }}
-        arch: ${{ inputs.arch }}
-        dir: ${{ inputs.dir }}
-        modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
+        path: ${{ inputs.dir }}/${{ inputs.version }}/${{ steps.paths.outputs.arch-dir }}
+        key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ hashFiles('tools/setup/aqt-settings.ini') }}
+
+    - name: Install Qt ${{ inputs.version }} (${{ inputs.arch }})
+      if: steps.cache-qt.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        # Use unified Python install script
+        python3 "${{ github.workspace }}/tools/setup/install_qt.py" \
+          --version "${{ inputs.version }}" \
+          --host "${{ inputs.host }}" \
+          --target "${{ inputs.target }}" \
+          --arch "${{ inputs.arch }}" \
+          --path "${{ inputs.dir }}" \
+          --modules "${{ inputs.modules }}" \
+          ${{ inputs.tools && format('--tools "{0}"', inputs.tools) || '' }} \
+          --install-aqt
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        QT_ROOT_DIR="${{ steps.paths.outputs.root-dir }}"
+        echo "QT_ROOT_DIR=${QT_ROOT_DIR}" >> "$GITHUB_ENV"
+        echo "${QT_ROOT_DIR}/bin" >> "$GITHUB_PATH"
+
+        # Set host path for cross-compilation
+        if [[ "${{ inputs.target }}" != "desktop" ]]; then
+          echo "QT_HOST_PATH=${{ steps.paths.outputs.host-path }}" >> "$GITHUB_ENV"
+        fi

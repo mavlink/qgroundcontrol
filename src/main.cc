@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     int exitCode = 0;
     if (args.runningUnitTests) {
 #ifdef QGC_UNITTEST_BUILD
-        exitCode = QGCUnitTest::runTests(args.stressUnitTests, args.unitTests);
+        exitCode = QGCUnitTest::runTests(args.stressUnitTests, args.unitTests, args.unittestOutputFile.value_or(QString()));
 #endif
     } else if (!args.simpleBootTest) {
         exitCode = app.exec();

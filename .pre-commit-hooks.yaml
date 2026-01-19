@@ -9,7 +9,7 @@
 
 - id: qmllint
   name: Lint QML files
-  entry: ./tools/analyze.sh --tool qmllint
+  entry: python3 ./tools/analyze.py --tool qmllint
   language: system
   files: \.qml$
   exclude: ^build/
@@ -17,7 +17,7 @@
 
 - id: clazy
   name: Qt static analysis (clazy)
-  entry: ./tools/analyze.sh --tool clazy
+  entry: python3 ./tools/analyze.py --tool clazy
   language: system
   types: [c++]
   exclude: ^(build/|libs/|test/)

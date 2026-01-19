@@ -1,0 +1,220 @@
+name: Performance Metrics
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+  workflow_dispatch:
+    inputs:
+      run_benchmarks:
+        description: 'Run time-based benchmarks (noisy on shared runners)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      binary_path: ${{ steps.find.outputs.binary_path }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: ${{ github.event_name == 'push' }}
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: build
+          build-type: Release
+          stable: true
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: build
+          build-type: Release
+
+      - name: Find binary
+        id: find
+        run: python3 ./.github/scripts/find_binary.py --build-dir build --build-type Release
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v6
+        with:
+          name: qgc-binary
+          path: |
+            build/QGroundControl
+            build/Release/QGroundControl
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0  # Binary already compressed
+
+  size-metrics:
+    name: Size Metrics
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: build
+    outputs:
+      binary_size: ${{ steps.analyze.outputs.binary_size }}
+      stripped_size: ${{ steps.analyze.outputs.stripped_size }}
+      symbol_count: ${{ steps.analyze.outputs.symbol_count }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download binary
+        uses: actions/download-artifact@v7
+        with:
+          name: qgc-binary
+          path: build
+
+      - name: Make binary executable
+        run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
+
+      - name: Analyze binary size
+        id: analyze
+        uses: ./.github/actions/size-analysis
+        with:
+          binary-path: ${{ needs.build.outputs.binary_path }}
+          output-file: metrics.json
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: size-metrics
+          path: metrics.json
+          retention-days: 90
+
+      - name: Store size metrics
+        uses: benchmark-action/github-action-benchmark@v1
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: metrics.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          benchmark-data-dir-path: dev/size
+          alert-threshold: '110%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+      - name: Compare with base (PR only)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: metrics.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          benchmark-data-dir-path: dev/size
+          alert-threshold: '105%'
+          comment-on-alert: true
+          fail-on-alert: false
+
+  benchmarks:
+    name: Runtime Benchmarks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    if: github.event.inputs.run_benchmarks == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    needs: build
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Install Qt (runtime only)
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+          cache: 'true'
+
+      - name: Download binary
+        uses: actions/download-artifact@v7
+        with:
+          name: qgc-binary
+          path: build
+
+      - name: Make binary executable
+        run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
+
+      - name: Run benchmarks
+        id: bench
+        uses: ./.github/actions/benchmark-runner
+        with:
+          binary-path: ${{ needs.build.outputs.binary_path }}
+          test-filter: MAVLinkBenchmark
+          output-file: benchmark.json
+
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: benchmark.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.event_name == 'push' }}
+          benchmark-data-dir-path: dev/bench
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false

@@ -37,6 +37,9 @@ tools/
 │   └── snippets/            # QtCreator snippets
 ├── schemas/                 # JSON schemas for editor validation
 ├── setup/                   # Environment setup scripts
+│   ├── install-python.sh    # Python venv setup (uv/pip)
+│   ├── install-qt-*.sh      # Qt installation
+│   └── install-dependencies-*.sh  # Platform dependencies
 ├── simulation/              # Vehicle simulators
 │   ├── mock_vehicle.py      # Lightweight MAVLink simulator
 │   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
@@ -64,6 +67,37 @@ just setup       # Full setup: deps, submodules, configure, build
 ```
 
 Both read configuration from `.github/build-config.json` for consistent versioning.
+
+## Python Setup
+
+Python tools (pre-commit, meson, gcovr, etc.) are managed via `pyproject.toml`:
+
+```bash
+# Quick setup (uses uv if available, otherwise pip)
+./tools/setup/install-python.sh           # Install CI tools (pre-commit, meson, ninja)
+./tools/setup/install-python.sh qt        # Install Qt tools (aqtinstall)
+./tools/setup/install-python.sh dev       # Install development tools
+./tools/setup/install-python.sh all       # Install everything
+
+# Then activate the virtual environment
+source .venv/bin/activate
+```
+
+**Dependency groups:**
+| Group | Packages | Use Case |
+|-------|----------|----------|
+| `ci` | pre-commit, meson, ninja | CI/pre-commit hooks |
+| `qt` | aqtinstall, py7zr, cmake, ninja | Qt installation |
+| `coverage` | gcovr | Code coverage reports |
+| `dev` | jinja2, pyyaml, pymavlink | Development tools |
+| `lsp` | pygls, lsprotocol | QGC LSP server |
+| `all` | Everything | Full development setup |
+
+**For faster installs**, use [uv](https://github.com/astral-sh/uv):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+./tools/setup/install-python.sh  # Will automatically use uv
+```
 
 ### Direct Script Usage
 

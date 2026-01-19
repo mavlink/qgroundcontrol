@@ -1,0 +1,64 @@
+name: Generate Build Matrix
+description: Generate dynamic build matrix from build-config.json
+
+inputs:
+  platform:
+    description: 'Target platform (linux, windows, macos, android, ios)'
+    required: true
+  build-type:
+    description: 'Override build type (Debug or Release)'
+    required: false
+    default: ''
+  event-name:
+    description: 'GitHub event name (defaults to github.event_name)'
+    required: false
+    default: ''
+  pr-minimal:
+    description: 'Use minimal configuration for PRs'
+    required: false
+    default: 'false'
+  variant:
+    description: 'Filter to specific variant by name'
+    required: false
+    default: ''
+
+outputs:
+  matrix:
+    description: 'JSON matrix for strategy.matrix.include'
+    value: ${{ steps.generate.outputs.matrix }}
+  timeout_minutes:
+    description: 'Timeout in minutes for the platform'
+    value: ${{ steps.generate.outputs.timeout_minutes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate matrix
+      id: generate
+      shell: bash
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        BUILD_TYPE: ${{ inputs.build-type }}
+        EVENT_NAME: ${{ inputs.event-name || github.event_name }}
+        PR_MINIMAL: ${{ inputs.pr-minimal }}
+        VARIANT: ${{ inputs.variant }}
+      run: |
+        args=(--platform "$PLATFORM" --output github)
+
+        if [[ -n "$BUILD_TYPE" ]]; then
+          args+=(--build-type "$BUILD_TYPE")
+        fi
+
+        if [[ -n "$EVENT_NAME" ]]; then
+          args+=(--event-name "$EVENT_NAME")
+        fi
+
+        if [[ "$PR_MINIMAL" == "true" ]]; then
+          args+=(--pr-minimal)
+        fi
+
+        if [[ -n "$VARIANT" ]]; then
+          args+=(--variant "$VARIANT")
+        fi
+
+        python3 "${{ github.workspace }}/.github/scripts/generate_matrix.py" "${args[@]}"

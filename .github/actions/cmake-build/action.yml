@@ -1,0 +1,91 @@
+name: CMake Build
+description: Build QGroundControl with consistent options
+
+inputs:
+  build-dir:
+    description: 'Build directory'
+    required: false
+    default: 'build'
+  build-type:
+    description: 'Build configuration (Release, Debug, RelWithDebInfo)'
+    required: false
+    default: 'Release'
+  target:
+    description: 'Build target'
+    required: false
+    default: 'all'
+  parallel:
+    description: 'Enable parallel builds'
+    required: false
+    default: 'true'
+  output-file:
+    description: 'File to capture build output (optional)'
+    required: false
+    default: ''
+  continue-on-error:
+    description: 'Continue even if build fails'
+    required: false
+    default: 'false'
+
+outputs:
+  success:
+    description: 'Whether the build succeeded'
+    value: ${{ steps.build.outputs.success }}
+  duration:
+    description: 'Build duration in seconds'
+    value: ${{ steps.build.outputs.duration }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build
+      id: build
+      shell: bash
+      working-directory: ${{ inputs.build-dir }}
+      env:
+        BUILD_TYPE: ${{ inputs.build-type }}
+        TARGET: ${{ inputs.target }}
+        PARALLEL: ${{ inputs.parallel }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
+        CONTINUE: ${{ inputs.continue-on-error }}
+      run: |
+        set -euo pipefail
+
+        # Build command
+        cmd=(cmake --build .)
+
+        # Add target
+        [[ -n "$TARGET" ]] && cmd+=(--target "$TARGET")
+
+        # Add config for multi-config generators
+        [[ -n "$BUILD_TYPE" ]] && cmd+=(--config "$BUILD_TYPE")
+
+        # Add parallel flag
+        [[ "$PARALLEL" == "true" ]] && cmd+=(--parallel)
+
+        echo "Running: ${cmd[*]}"
+        start_time=$(date +%s)
+
+        set +e
+        if [[ -n "$OUTPUT_FILE" ]]; then
+          "${cmd[@]}" 2>&1 | tee "$OUTPUT_FILE"
+          exit_code=${PIPESTATUS[0]}
+        else
+          "${cmd[@]}"
+          exit_code=$?
+        fi
+        set -e
+
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+
+        echo "duration=$duration" >> "$GITHUB_OUTPUT"
+
+        if [[ $exit_code -eq 0 ]]; then
+          echo "✓ Build completed in ${duration}s"
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::error::Build failed after ${duration}s"
+          echo "success=false" >> "$GITHUB_OUTPUT"
+          [[ "$CONTINUE" != "true" ]] && exit $exit_code
+        fi

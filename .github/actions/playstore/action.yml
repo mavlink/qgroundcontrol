@@ -10,6 +10,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate artifact
+      shell: bash
+      run: |
+        if [[ ! -f "${{ inputs.artifact }}" ]]; then
+          echo "::error::Artifact not found: ${{ inputs.artifact }}"
+          exit 1
+        fi
+
     - name: Deploy to Play Store
       if: github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_type == 'tag')
       uses: r0adkll/upload-google-play@v1.1.3

@@ -1,0 +1,55 @@
+name: Verify Executable
+description: Run simple boot test on QGroundControl binary or package
+
+inputs:
+  binary-path:
+    description: 'Path to executable or package to verify'
+    required: true
+  type:
+    description: 'Type of executable (binary, appimage, dmg, exe) - currently informational'
+    required: false
+    default: 'binary'
+  working-dir:
+    description: 'Working directory (defaults to binary parent directory)'
+    required: false
+    default: ''
+  timeout:
+    description: 'Timeout in seconds'
+    required: false
+    default: '60'
+
+outputs:
+  success:
+    description: 'Whether the boot test passed'
+    value: ${{ steps.verify.outputs.passed }}
+
+runs:
+  using: composite
+  steps:
+    - name: Verify executable
+      id: verify
+      shell: bash
+      run: |
+        BINARY_PATH="${{ inputs.binary-path }}"
+
+        # Determine working directory
+        if [[ -n "${{ inputs.working-dir }}" ]]; then
+          WORK_DIR="${{ inputs.working-dir }}"
+        else
+          WORK_DIR="$(dirname "$BINARY_PATH")"
+        fi
+
+        # Make binary executable on Unix
+        if [[ "$RUNNER_OS" != "Windows" ]]; then
+          chmod +x "$BINARY_PATH" 2>/dev/null || true
+        fi
+
+        # Run boot test using run_tests.py with --verify-only
+        python3 "${{ github.workspace }}/tools/run_tests.py" \
+          --binary "$BINARY_PATH" \
+          --timeout "${{ inputs.timeout }}" \
+          --verify-only \
+          --headless \
+          -v || exit_code=$?
+
+        exit ${exit_code:-0}

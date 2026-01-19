@@ -1,8 +1,11 @@
 <#
 .SYNOPSIS
-    Install GStreamer (x64 only) and the latest Vulkan SDK on Windows.
+    Install GStreamer and the latest Vulkan SDK on Windows.
 
 .DESCRIPTION
+    - Supports both AMD64 (x64) and ARM64 architectures.
+    - AMD64: Downloads MSI installers from QGC S3 bucket.
+    - ARM64: Downloads ZIP archive from QGC S3 bucket (built from source).
     - In CI (GitHub Actions): runs without elevation, uses GITHUB_ENV for env vars.
     - Locally: requires elevation, sets machine-level environment variables.
     - Downloads installers to $env:TEMP and removes them afterwards.
@@ -10,11 +13,15 @@
 .PARAMETER SkipVulkan
     Skip Vulkan SDK installation.
 
+.PARAMETER SkipGStreamer
+    Skip GStreamer installation.
+
 .PARAMETER GStreamerVersion
     Override GStreamer version (default: from build-config.json).
 #>
 param(
     [switch]$SkipVulkan,
+    [switch]$SkipGStreamer,
     [string]$GStreamerVersion
 )
 
@@ -63,17 +70,26 @@ $arch      = $env:PROCESSOR_ARCHITECTURE     # AMD64 | ARM64 | x86
 Write-Host "`n==> Detected architecture: $arch"
 
 # ────────────────────────────────
-# 3) GStreamer config (x64 only)
+# 3) GStreamer config
 # ────────────────────────────────
-# Note: Must use QtMultimedia VideoReceiver or build GStreamer manually for Arm64
-$installGst = $arch -eq 'AMD64'
+$installGst = -not $SkipGStreamer -and ($arch -eq 'AMD64' -or $arch -eq 'ARM64')
+$gstBaseUrl = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/$gstVersion"
+
 if ($installGst) {
-    $gstInstallDir = 'C:\gstreamer'  # MSI INSTALLDIR (root)
-    $gstPrefix     = 'C:\gstreamer\1.0\msvc_x86_64'  # Actual path after install
-    # We now download from S3 because the official GStreamer site is unreliable
-    $gstBaseUrl    = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/$gstVersion"
-    $gstRuntime    = Join-Path $tempDir 'gstreamer-runtime.msi'
-    $gstDevel      = Join-Path $tempDir 'gstreamer-devel.msi'
+    if ($arch -eq 'AMD64') {
+        # x64: Use MSI installers
+        $gstInstallDir = 'C:\gstreamer'
+        $gstPrefix     = 'C:\gstreamer\1.0\msvc_x86_64'
+        $gstRuntime    = Join-Path $tempDir 'gstreamer-runtime.msi'
+        $gstDevel      = Join-Path $tempDir 'gstreamer-devel.msi'
+        $gstEnvVar     = 'GSTREAMER_1_0_ROOT_MSVC_X86_64'
+    } elseif ($arch -eq 'ARM64') {
+        # ARM64: Use ZIP archive (built from source)
+        $gstInstallDir = 'C:\gstreamer-arm64'
+        $gstPrefix     = 'C:\gstreamer-arm64'
+        $gstArchive    = Join-Path $tempDir 'gstreamer-arm64.zip'
+        $gstEnvVar     = 'GSTREAMER_1_0_ROOT_MSVC_ARM64'
+    }
 }
 
 # ────────────────────────────────
@@ -116,19 +132,64 @@ function Add-ToPath {
 # 5) Download + install GStreamer
 # ────────────────────────────────
 if ($installGst) {
-    Write-Host "`n==> Downloading GStreamer version $gstVersion from $gstBaseUrl"
-    Invoke-WebRequest "$gstBaseUrl/gstreamer-1.0-msvc-x86_64-$gstVersion.msi" -OutFile $gstRuntime
-    Invoke-WebRequest "$gstBaseUrl/gstreamer-1.0-devel-msvc-x86_64-$gstVersion.msi" -OutFile $gstDevel
+    Write-Host "`n==> Installing GStreamer $gstVersion for $arch"
 
-    Write-Host "==> Installing GStreamer runtime..."
-    Start-Process msiexec.exe -ArgumentList "/i `"$gstRuntime`" /passive INSTALLDIR=`"$gstInstallDir`" ADDLOCAL=ALL" -Wait
-    Write-Host "==> Installing GStreamer devel..."
-    Start-Process msiexec.exe -ArgumentList "/i `"$gstDevel`" /passive INSTALLDIR=`"$gstInstallDir`" ADDLOCAL=ALL" -Wait
+    if ($arch -eq 'AMD64') {
+        # AMD64: Download and install MSI packages
+        Write-Host "==> Downloading GStreamer MSI installers from $gstBaseUrl"
+        Invoke-WebRequest "$gstBaseUrl/gstreamer-1.0-msvc-x86_64-$gstVersion.msi" -OutFile $gstRuntime
+        Invoke-WebRequest "$gstBaseUrl/gstreamer-1.0-devel-msvc-x86_64-$gstVersion.msi" -OutFile $gstDevel
 
-    # Environment
-    Set-EnvVar 'GSTREAMER_1_0_ROOT_MSVC_X86_64' $gstPrefix
-    Set-EnvVar 'GSTREAMER_1_0_ROOT_X86_64' $gstPrefix
-    Add-ToPath "$gstPrefix\bin"
+        Write-Host "==> Installing GStreamer runtime..."
+        Start-Process msiexec.exe -ArgumentList "/i `"$gstRuntime`" /passive INSTALLDIR=`"$gstInstallDir`" ADDLOCAL=ALL" -Wait
+        Write-Host "==> Installing GStreamer devel..."
+        Start-Process msiexec.exe -ArgumentList "/i `"$gstDevel`" /passive INSTALLDIR=`"$gstInstallDir`" ADDLOCAL=ALL" -Wait
+
+        # Cleanup MSI files
+        Remove-Item $gstRuntime, $gstDevel -ErrorAction SilentlyContinue
+
+        # Set legacy environment variable for compatibility
+        Set-EnvVar 'GSTREAMER_1_0_ROOT_X86_64' $gstPrefix
+
+    } elseif ($arch -eq 'ARM64') {
+        # ARM64: Download and extract ZIP archive
+        Write-Host "==> Downloading GStreamer ARM64 archive from $gstBaseUrl"
+        $gstZipUrl = "$gstBaseUrl/gstreamer-1.0-msvc-arm64-$gstVersion.zip"
+
+        try {
+            Invoke-WebRequest $gstZipUrl -OutFile $gstArchive
+        } catch {
+            Write-Warning "GStreamer ARM64 not found at $gstZipUrl"
+            Write-Warning "ARM64 GStreamer must be built first using: tools/setup/gstreamer/build-gstreamer.py --platform windows"
+            Write-Warning "Skipping GStreamer installation."
+            $installGst = $false
+        }
+
+        if ($installGst) {
+            Write-Host "==> Extracting GStreamer to $gstInstallDir..."
+            if (Test-Path $gstInstallDir) {
+                Remove-Item -Recurse -Force $gstInstallDir
+            }
+            Expand-Archive -Path $gstArchive -DestinationPath $gstInstallDir -Force
+
+            # Handle nested directory if archive contains root folder
+            $nested = Get-ChildItem $gstInstallDir -Directory | Select-Object -First 1
+            if ($nested -and (Test-Path "$($nested.FullName)\bin")) {
+                # Move contents up one level
+                Get-ChildItem $nested.FullName | Move-Item -Destination $gstInstallDir -Force
+                Remove-Item $nested.FullName -Force
+            }
+
+            # Cleanup ZIP file
+            Remove-Item $gstArchive -ErrorAction SilentlyContinue
+        }
+    }
+
+    if ($installGst) {
+        # Set environment variables
+        Set-EnvVar $gstEnvVar $gstPrefix
+        Add-ToPath "$gstPrefix\bin"
+    }
 }
 
 # ────────────────────────────────
@@ -145,18 +206,14 @@ if ($installVulkan) {
 
     Set-EnvVar 'VULKAN_SDK' $vulkanInstallDir
     Add-ToPath "$vulkanInstallDir\Bin"
+
+    # Cleanup
+    Remove-Item $vulkanInstaller -ErrorAction SilentlyContinue
 }
 
 # ────────────────────────────────
-# 7) Cleanup
-# ────────────────────────────────
-Write-Host "`n==> Cleaning up installers..."
-if ($installGst) { Remove-Item $gstRuntime, $gstDevel -ErrorAction SilentlyContinue }
-if ($installVulkan) { Remove-Item $vulkanInstaller -ErrorAction SilentlyContinue }
-
-# ────────────────────────────────
-# 8) Done
+# 7) Done
 # ────────────────────────────────
 Write-Host "`nDependencies installed!"
-if ($installGst) { Write-Host "  - GStreamer $gstVersion (verify: gst-launch-1.0 --version)" }
-if ($installVulkan) { Write-Host "  - Vulkan SDK (verify: vulkaninfo)" }
+if ($installGst) { Write-Host "  - GStreamer $gstVersion ($arch) at $gstPrefix" }
+if ($installVulkan) { Write-Host "  - Vulkan SDK at $vulkanInstallDir" }

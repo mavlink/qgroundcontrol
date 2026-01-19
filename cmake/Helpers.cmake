@@ -55,7 +55,7 @@ function(qgc_config_caching)
 
         if(_cache_tool STREQUAL "ccache")
             # Use config file for static settings (max_size, compression, sloppiness)
-            set(ENV{CCACHE_CONFIGPATH} "${CMAKE_SOURCE_DIR}/tools/ccache.conf")
+            set(ENV{CCACHE_CONFIGPATH} "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
             # Dynamic settings that need CMAKE_SOURCE_DIR
             set(ENV{CCACHE_DIR} "${CMAKE_SOURCE_DIR}/.cache/ccache")
             set(ENV{CCACHE_BASEDIR} "${CMAKE_SOURCE_DIR}")

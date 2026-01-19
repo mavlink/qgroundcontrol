@@ -1,6 +1,18 @@
 name: AWS Upload
 description: Upload release artifacts to AWS S3 and invalidate CloudFront cache
 
+# OIDC Migration Guide:
+# ====================
+# This action supports both OIDC (recommended) and static credentials.
+# OIDC is preferred as it uses short-lived tokens instead of long-lived secrets.
+#
+# To enable OIDC:
+#
+# 1. AWS Setup (one-time, requires IAM admin):
+#    - Create OIDC provider: https://token.actions.githubusercontent.com
+#    - Create IAM role with trust policy for repo:mavlink/qgroundcontrol:*
+#    - Attach S3/CloudFront permissions to the role
+
 inputs:
   artifact_name:
     description: Artifact filename to upload
@@ -10,10 +22,13 @@ inputs:
     required: true
   aws_key_id:
     description: AWS access key ID
-    required: true
+    required: false
   aws_secret_access_key:
     description: AWS secret access key
-    required: true
+    required: false
+  aws_role_arn:
+    description: AWS IAM role ARN for OIDC authentication (preferred over static credentials)
+    required: false
   aws_distribution_id:
     description: AWS CloudFront distribution ID (optional, for cache invalidation)
     required: false
@@ -29,7 +44,23 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Configure AWS Credentials
+    - name: Validate credentials
+      shell: bash
+      run: |
+        if [[ -z "${{ inputs.aws_role_arn }}" && -z "${{ inputs.aws_key_id }}" ]]; then
+          echo "::error::Either aws_role_arn (OIDC) or aws_key_id (static credentials) must be provided"
+          exit 1
+        fi
+
+    - name: Configure AWS Credentials (OIDC)
+      if: inputs.aws_role_arn != ''
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Configure AWS Credentials (Static)
+      if: inputs.aws_role_arn == '' && inputs.aws_key_id != ''
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ inputs.aws_key_id }}
