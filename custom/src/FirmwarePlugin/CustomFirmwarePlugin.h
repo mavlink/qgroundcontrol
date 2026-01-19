@@ -13,13 +13,13 @@
 
 #pragma once
 
-#include "PX4FirmwarePlugin.h"
+#include "ArduCopterFirmwarePlugin.h"
 
 class AutoPilotPlugin;
 class CustomCameraManager;
 class Vehicle;
 
-class CustomFirmwarePlugin : public PX4FirmwarePlugin
+class CustomFirmwarePlugin : public ArduCopterFirmwarePlugin
 {
     Q_OBJECT
 public:
@@ -30,6 +30,9 @@ public:
     const QVariantList& toolIndicators  (const Vehicle* vehicle) final;
     bool                hasGimbal       (Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported) const final;
     void                updateAvailableFlightModes      (FlightModeList &modeList) override;
+
+    QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const override;
+    QString missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const override;
 
 private:
     QVariantList _toolIndicatorList;

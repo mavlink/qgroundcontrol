@@ -142,3 +142,31 @@ void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
     }
     _updateFlightModeList(modeList);
 }
+
+QList<MAV_CMD> CustomFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const  
+{  
+    QList<MAV_CMD> supportedCommands = APMFirmwarePlugin::supportedMissionCommands(vehicleClass);  
+    supportedCommands.append(MAV_CMD_DO_SPRAYER);  
+    return supportedCommands;  
+}
+
+QString CustomFirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const
+{
+    switch (vehicleClass) {
+    case QGCMAVLink::VehicleClassGeneric:
+        return QStringLiteral(":/json/Custom-MavCmdInfoCommon.json");
+    case QGCMAVLink::VehicleClassFixedWing:
+        return QStringLiteral(":/json/APM-MavCmdInfoFixedWing.json");
+    case QGCMAVLink::VehicleClassMultiRotor:
+        return QStringLiteral(":/json/APM-MavCmdInfoMultiRotor.json");
+    case QGCMAVLink::VehicleClassVTOL:
+        return QStringLiteral(":/json/APM-MavCmdInfoVTOL.json");
+    case QGCMAVLink::VehicleClassSub:
+        return QStringLiteral(":/json/APM-MavCmdInfoSub.json");
+    case QGCMAVLink::VehicleClassRoverBoat:
+        return QStringLiteral(":/json/APM-MavCmdInfoRover.json");
+    default:
+        qCWarning(APMFirmwarePluginLog) << "APMFirmwarePlugin::missionCommandOverrides called with bad VehicleClass_t:" << vehicleClass;
+        return QString();
+    }
+}

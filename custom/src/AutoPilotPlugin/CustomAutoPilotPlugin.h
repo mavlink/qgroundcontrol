@@ -12,17 +12,16 @@
 
 #pragma once
 
-#include "PX4AutoPilotPlugin.h"
+#include "APMAutoPilotPlugin.h"
 
 class Vehicle;
 
-class CustomAutoPilotPlugin : public PX4AutoPilotPlugin
+class CustomAutoPilotPlugin : public APMAutoPilotPlugin
 {
     Q_OBJECT
 public:
     CustomAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
 
-    const QVariantList& vehicleComponents() final;
 
 private slots:
     void         _advancedChanged        (bool advanced);
