@@ -73,7 +73,7 @@ runs:
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
       uses: mozilla-actions/sccache-action@v0.0.9
 
-    - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+    - run: echo "SCCACHE_GHA_ENABLED=${{ inputs.save-cache == 'true' && 'true' || 'false' }}" >> "$GITHUB_ENV"
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
       shell: bash
 
@@ -95,9 +95,17 @@ runs:
       run: mkdir -p "${{ inputs.cpm-modules }}"
       shell: bash
 
-    - name: Cache CPM Modules
-      if: inputs.cpm-modules != ''
+    - name: Cache CPM Modules (restore and save)
+      if: inputs.cpm-modules != '' && inputs.save-cache == 'true'
       uses: actions/cache@v5
+      with:
+        path: ${{ inputs.cpm-modules }}
+        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+        restore-keys: ${{ github.workflow }}-cpm-modules-
+
+    - name: Cache CPM Modules (restore only)
+      if: inputs.cpm-modules != '' && inputs.save-cache != 'true'
+      uses: actions/cache/restore@v5
       with:
         path: ${{ inputs.cpm-modules }}
         key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
