@@ -41,11 +41,13 @@ jobs:
             if (run.pull_requests && run.pull_requests.length > 0) {
               return run.pull_requests[0].number;
             }
+            // For fork PRs, run.pull_requests is empty. Use head_repository owner.
+            const headOwner = run.head_repository?.owner?.login || context.repo.owner;
             const prs = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              head: `${context.repo.owner}:${run.head_branch}`
+              head: `${headOwner}:${run.head_branch}`
             });
             return prs.data.length > 0 ? prs.data[0].number : null;
 
