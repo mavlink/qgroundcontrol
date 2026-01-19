@@ -686,6 +686,269 @@ Rectangle {
                 }
             }
 
+            Item{
+                height: 20;
+                width:  1;
+            }
+
+            // SettingsGroupLayout Test
+            GroupBox {
+                title: "SettingsGroupLayout Test"
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                background: Rectangle {
+                    color: qgcPal.window
+                    border.color: qgcPal.text
+                    border.width: 1
+                }
+
+                Column {
+                    spacing: ScreenTools.defaultFontPixelHeight
+
+                    // Controls for testing properties
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                        QGCCheckBox {
+                            id: showBorderCheck
+                            text: "showBorder"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: showDividersCheck
+                            text: "showDividers"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: showHeadingCheck
+                            text: "Show Heading"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: showDescriptionCheck
+                            text: "Show Description"
+                            checked: true
+                        }
+                    }
+
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                        QGCLabel { text: "Visibility toggles:"; font.bold: true }
+
+                        QGCCheckBox {
+                            id: item1Visible
+                            text: "Item 1"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: item2Visible
+                            text: "Item 2"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: item3Visible
+                            text: "Item 3"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: item4Visible
+                            text: "Item 4"
+                            checked: true
+                        }
+                    }
+
+                    Row {
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                        QGCLabel { text: "Repeater toggles:"; font.bold: true }
+
+                        QGCCheckBox {
+                            id: repeaterShowDividers
+                            text: "Dividers"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: repeater1Visible
+                            text: "Rep 1"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: repeater2Visible
+                            text: "Rep 2"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: repeater3Visible
+                            text: "Rep 3"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: repeater4Visible
+                            text: "Rep 4"
+                            checked: true
+                        }
+
+                        QGCCheckBox {
+                            id: repeater5Visible
+                            text: "Rep 5"
+                            checked: true
+                        }
+                    }
+
+                    // Test SettingsGroupLayout with various content
+                    SettingsGroupLayout {
+                        width: ScreenTools.defaultFontPixelWidth * 60
+                        heading: showHeadingCheck.checked ? "Test Settings Group" : ""
+                        headingDescription: showDescriptionCheck.checked ? "This is a description of the settings group that explains what these settings are for." : ""
+                        showBorder: showBorderCheck.checked
+                        showDividers: showDividersCheck.checked
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: item1Visible.checked
+
+                            QGCLabel {
+                                text: "Setting 1:"
+                                Layout.fillWidth: true
+                            }
+                            QGCTextField {
+                                text: "Value 1"
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 15
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: item2Visible.checked
+
+                            QGCLabel {
+                                text: "Setting 2:"
+                                Layout.fillWidth: true
+                            }
+                            QGCComboBox {
+                                model: ["Option 1", "Option 2", "Option 3"]
+                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 15
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: item3Visible.checked
+
+                            QGCCheckBox {
+                                text: "Enable feature"
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: item4Visible.checked
+
+                            QGCLabel {
+                                text: "Setting 4:"
+                                Layout.fillWidth: true
+                            }
+                            QGCButton {
+                                text: "Configure"
+                            }
+                        }
+                    }
+
+                    // Nested SettingsGroupLayout test
+                    QGCLabel {
+                        text: "Nested SettingsGroupLayout:"
+                        font.bold: true
+                    }
+
+                    SettingsGroupLayout {
+                        width: ScreenTools.defaultFontPixelWidth * 60
+                        heading: "Outer Group"
+                        showBorder: true
+                        showDividers: true
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            QGCLabel { text: "Outer setting"; Layout.fillWidth: true }
+                            QGCTextField { text: "Value" }
+                        }
+
+                        SettingsGroupLayout {
+                            Layout.fillWidth: true
+                            heading: "Inner Group"
+                            headingDescription: "Nested group inside outer group"
+                            showBorder: true
+                            showDividers: false
+
+                            QGCCheckBox {
+                                text: "Inner checkbox 1"
+                                Layout.fillWidth: true
+                            }
+
+                            QGCCheckBox {
+                                text: "Inner checkbox 2"
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            QGCLabel { text: "Another outer setting"; Layout.fillWidth: true }
+                            QGCComboBox { model: ["A", "B", "C"] }
+                        }
+                    }
+
+                    // Test with Repeater
+                    QGCLabel {
+                        text: "SettingsGroupLayout with Repeater:"
+                        font.bold: true
+                    }
+
+                    SettingsGroupLayout {
+                        width: ScreenTools.defaultFontPixelWidth * 60
+                        heading: "Repeater Test"
+                        showBorder: true
+                        showDividers: repeaterShowDividers.checked
+
+                        Repeater {
+                            model: 5
+                            delegate: RowLayout {
+                                Layout.fillWidth: true
+                                visible: {
+                                    switch(index) {
+                                        case 0: return repeater1Visible.checked
+                                        case 1: return repeater2Visible.checked
+                                        case 2: return repeater3Visible.checked
+                                        case 3: return repeater4Visible.checked
+                                        case 4: return repeater5Visible.checked
+                                        default: return true
+                                    }
+                                }
+                                QGCLabel {
+                                    text: "Repeated Item " + (index + 1) + ":"
+                                    Layout.fillWidth: true
+                                }
+                                QGCTextField {
+                                    text: "Value " + (index + 1)
+                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 15
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
         }
 
     }
