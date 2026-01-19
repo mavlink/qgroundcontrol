@@ -1,0 +1,37 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "Speed",
+    "shortDesc": "Flight speed during spraying.",
+    "type":             "double",
+    "units":            "m/s",
+    "min":              1.0,
+    "max":              20.0,
+    "decimalPlaces":    2,
+    "default":     5.0
+},
+{
+    "name":             "Altitude",
+    "shortDesc": "Flight altitude during spraying.",
+    "type":             "double",
+    "units":            "m",
+    "min":              2.0,
+    "max":              100.0,
+    "decimalPlaces":    2,
+    "default":     10.0
+},
+{
+    "name":             "SprayWidth",
+    "shortDesc": "Width of the spray pattern.",
+    "type":             "double",
+    "units":            "m",
+    "min":              0.1,
+    "max":              50.0,
+    "decimalPlaces":    2,
+    "default":     5.0
+}
+]
+}
