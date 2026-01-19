@@ -52,7 +52,15 @@ jobs:
           python -m pip install pre-commit
           python -m pip freeze --local
 
-      - name: Cache pre-commit hooks
+      - name: Restore pre-commit cache (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Cache pre-commit hooks (push)
+        if: github.event_name != 'pull_request'
         uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
