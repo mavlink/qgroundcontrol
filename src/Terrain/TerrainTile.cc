@@ -7,15 +7,27 @@
 QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
 
 TerrainTile::TerrainTile(const QByteArray &byteArray)
-    : _tileInfo(*reinterpret_cast<const TileInfo_t*>(byteArray.constData()))
 {
-    // qCDebug(TerrainTileLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainTileLog) << this;
 
     constexpr int cTileHeaderBytes = static_cast<int>(sizeof(TileInfo_t));
     const int cTileBytesAvailable = byteArray.size();
 
     if (cTileBytesAvailable < cTileHeaderBytes) {
-        qCWarning(TerrainTileLog) << "Terrain tile binary data too small for TileInfo_s header";
+        qCWarning(TerrainTileLog) << "Terrain tile binary data too small for TileInfo_t header";
+        return;
+    }
+
+    _tileInfo = *reinterpret_cast<const TileInfo_t*>(byteArray.constData());
+
+    if (_tileInfo.gridSizeLat <= 0 || _tileInfo.gridSizeLon <= 0) {
+        qCWarning(TerrainTileLog) << "Invalid grid dimensions:" << _tileInfo.gridSizeLat << _tileInfo.gridSizeLon;
+        return;
+    }
+
+    constexpr int16_t kMaxGridSize = 10000;
+    if (_tileInfo.gridSizeLat > kMaxGridSize || _tileInfo.gridSizeLon > kMaxGridSize) {
+        qCWarning(TerrainTileLog) << "Grid dimensions exceed safety limits:" << _tileInfo.gridSizeLat << _tileInfo.gridSizeLon;
         return;
     }
 
@@ -27,7 +39,6 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
 
     if (((_tileInfo.neLon - _tileInfo.swLon) < 0.0) || ((_tileInfo.neLat - _tileInfo.swLat) < 0.0)) {
         qCWarning(TerrainTileLog) << this << "Tile extent is infeasible";
-        _isValid = false;
         return;
     }
 
@@ -36,7 +47,7 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
 
     qCDebug(TerrainTileLog) << this << "TileInfo: south west:" << _tileInfo.swLat << _tileInfo.swLon;
     qCDebug(TerrainTileLog) << this << "TileInfo: north east:" << _tileInfo.neLat << _tileInfo.neLon;
-    qCDebug(TerrainTileLog) << this << "TileInfo: dimensions:" << _tileInfo.gridSizeLat << "by" << _tileInfo.gridSizeLat;
+    qCDebug(TerrainTileLog) << this << "TileInfo: dimensions:" << _tileInfo.gridSizeLat << "by" << _tileInfo.gridSizeLon;
     qCDebug(TerrainTileLog) << this << "TileInfo: min, max, avg:" << _tileInfo.minElevation << _tileInfo.maxElevation << _tileInfo.avgElevation;
     qCDebug(TerrainTileLog) << this << "TileInfo: cell size:" << _cellSizeLat << _cellSizeLon;
 
@@ -58,7 +69,7 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
 
 TerrainTile::~TerrainTile()
 {
-    // qCDebug(TerrainTileLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainTileLog) << this;
 }
 
 double TerrainTile::elevation(const QGeoCoordinate &coordinate) const
@@ -84,7 +95,7 @@ double TerrainTile::elevation(const QGeoCoordinate &coordinate) const
 
     if ((latIndex >= _elevationData.size()) || (lonIndex >= _elevationData[latIndex].size())) {
         qCWarning(TerrainTileLog).noquote() << this << "Internal error: _elevationData size inconsistent _tileInfo << coordinate" << coordinate
-            << "\n\t_tillIndo.gridSizeLat:" << _tileInfo.gridSizeLat << "_tileInfo.gridSizeLon:" << _tileInfo.gridSizeLon
+            << "\n\t_tileInfo.gridSizeLat:" << _tileInfo.gridSizeLat << "_tileInfo.gridSizeLon:" << _tileInfo.gridSizeLon
             << "\n\t_data.size():" << _elevationData.size() << "_elevationData[latIndex].size():" << _elevationData[latIndex].size();
         return qQNaN();
     }

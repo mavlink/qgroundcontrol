@@ -15,7 +15,7 @@ TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(QObject *parent
     , _batchTimer(new QTimer(this))
     , _terrainQuery(new TerrainOfflineQuery(this))
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 
     _batchTimer->setSingleShot(true);
     _batchTimer->setInterval(_batchTimeout);
@@ -26,7 +26,7 @@ TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(QObject *parent
 
 TerrainAtCoordinateBatchManager::~TerrainAtCoordinateBatchManager()
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 }
 
 TerrainAtCoordinateBatchManager *TerrainAtCoordinateBatchManager::instance()
@@ -129,14 +129,11 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, const QLi
 
     int currentIndex = 0;
     for (const SentRequestInfo_t &sentRequestInfo: _sentRequests) {
-        if (sentRequestInfo.terrainAtCoordinateQuery.isNull()) {
-            // Skip deleted objects
-            continue;
+        if (!sentRequestInfo.terrainAtCoordinateQuery.isNull()) {
+            qCDebug(TerrainQueryVerboseLog) << Q_FUNC_INFO << "returned TerrainCoordinateQuery:count" << sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
+            const QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
+            sentRequestInfo.terrainAtCoordinateQuery->signalTerrainData(true, requestAltitudes);
         }
-
-        qCDebug(TerrainQueryVerboseLog) << Q_FUNC_INFO << "returned TerrainCoordinateQuery:count" << sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
-        const QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
-        sentRequestInfo.terrainAtCoordinateQuery->signalTerrainData(true, requestAltitudes);
         currentIndex += sentRequestInfo.cCoord;
     }
     _sentRequests.clear();
@@ -152,12 +149,12 @@ TerrainAtCoordinateQuery::TerrainAtCoordinateQuery(bool autoDelete, QObject *par
     : QObject(parent)
     , _autoDelete(autoDelete)
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 }
 
 TerrainAtCoordinateQuery::~TerrainAtCoordinateQuery()
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 }
 
 void TerrainAtCoordinateQuery::requestData(const QList<QGeoCoordinate> &coordinates)
@@ -189,14 +186,15 @@ TerrainPathQuery::TerrainPathQuery(bool autoDelete, QObject *parent)
     , _autoDelete(autoDelete)
     , _terrainQuery(new TerrainOfflineQuery(this))
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 
+    qRegisterMetaType<TerrainPathQuery::PathHeightInfo_t>();
     (void) connect(_terrainQuery, &TerrainQueryInterface::pathHeightsReceived, this, &TerrainPathQuery::_pathHeights);
 }
 
 TerrainPathQuery::~TerrainPathQuery()
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 }
 
 void TerrainPathQuery::requestData(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
@@ -218,19 +216,55 @@ void TerrainPathQuery::_pathHeights(bool success, double distanceBetween, double
 
 /*===========================================================================*/
 
+TerrainAreaQuery::TerrainAreaQuery(bool autoDelete, QObject *parent)
+    : QObject(parent)
+    , _autoDelete(autoDelete)
+    , _terrainQuery(new TerrainOfflineQuery(this))
+{
+    qCDebug(TerrainQueryLog) << this;
+
+    qRegisterMetaType<TerrainAreaQuery::CarpetHeightInfo_t>();
+    (void) connect(_terrainQuery, &TerrainQueryInterface::carpetHeightsReceived, this, &TerrainAreaQuery::_carpetHeights);
+}
+
+TerrainAreaQuery::~TerrainAreaQuery()
+{
+    qCDebug(TerrainQueryLog) << this;
+}
+
+void TerrainAreaQuery::requestData(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord)
+{
+    _terrainQuery->requestCarpetHeights(swCoord, neCoord, false /* statsOnly */);
+}
+
+void TerrainAreaQuery::_carpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>> &carpet)
+{
+    CarpetHeightInfo_t carpetHeightInfo;
+    carpetHeightInfo.minHeight = minHeight;
+    carpetHeightInfo.maxHeight = maxHeight;
+    carpetHeightInfo.carpet = carpet;
+    emit terrainDataReceived(success, carpetHeightInfo);
+    if (_autoDelete) {
+        deleteLater();
+    }
+}
+
+/*===========================================================================*/
+
 TerrainPolyPathQuery::TerrainPolyPathQuery(bool autoDelete, QObject *parent)
     : QObject(parent)
     , _autoDelete(autoDelete)
     , _pathQuery(new TerrainPathQuery(false, this))
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 
+    qRegisterMetaType<QList<TerrainPathQuery::PathHeightInfo_t>>();
     (void) connect(_pathQuery, &TerrainPathQuery::terrainDataReceived, this, &TerrainPolyPathQuery::_terrainDataReceived);
 }
 
 TerrainPolyPathQuery::~TerrainPolyPathQuery()
 {
-    // qCDebug(TerrainQueryLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryLog) << this;
 }
 
 void TerrainPolyPathQuery::requestData(const QVariantList &polyPath)
@@ -247,6 +281,15 @@ void TerrainPolyPathQuery::requestData(const QVariantList &polyPath)
 void TerrainPolyPathQuery::requestData(const QList<QGeoCoordinate> &polyPath)
 {
     qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "count" << polyPath.count();
+
+    if (polyPath.count() < 2) {
+        qCWarning(TerrainQueryLog) << Q_FUNC_INFO << "polyPath requires at least 2 coordinates";
+        emit terrainDataReceived(false, _rgPathHeightInfo);
+        if (_autoDelete) {
+            deleteLater();
+        }
+        return;
+    }
 
     _rgCoords = polyPath;
     _curIndex = 0;
