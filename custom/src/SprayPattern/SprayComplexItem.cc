@@ -166,7 +166,7 @@ double SprayComplexItem::minAMSLAltitude(void) const
     for (int i=0; i<_visualTransectPoints.count(); i++) {
         minAlt = qMin(minAlt, _visualTransectPoints[i].altitude());
     }
-    return qQNaN(); //figure out how to calc terrain altitude
+    return 0; //figure out how to calc terrain altitude
 }
 double SprayComplexItem::maxAMSLAltitude(void) const
 {
@@ -174,15 +174,15 @@ double SprayComplexItem::maxAMSLAltitude(void) const
     for (int i=0; i<_visualTransectPoints.count(); i++) {
         maxAlt = qMax(maxAlt, _visualTransectPoints[i].altitude());
     }
-    return qQNaN(); //figure out how to calc terrain altitude
+    return 0; //figure out how to calc terrain altitude
 }
 double SprayComplexItem::amslEntryAlt(void) const
 {
-    return qQNaN(); //figure out how to calc terrain altitude
+    return 0; //figure out how to calc terrain altitude
 }
 double SprayComplexItem::amslExitAlt(void) const
 {
-    return qQNaN(); //figure out how to calc terrain altitude
+    return 0; //figure out how to calc terrain altitude
 }
 
 double SprayComplexItem::complexDistance(void) const
@@ -398,7 +398,7 @@ void SprayComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList,
             for (int i=0; i<intersections.count(); i++) {
                 for (int j=0; j<intersections.count(); j++) {
                     QLineF lineTest(intersections[i], intersections[j]);
-                    \
+                    
                     double newMaxDistance = lineTest.length();
                     if (newMaxDistance > currentMaxDistance) {
                         firstPoint = intersections[i];

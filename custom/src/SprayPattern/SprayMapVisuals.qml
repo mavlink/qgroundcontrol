@@ -22,7 +22,7 @@ Item {
     property var    _mapPolygon:                object.sprayAreaPolygon
     property bool   _currentItem:               object.isCurrentItem
     property var    _transectPoints:            _missionItem.visualTransectPoints
-    property int    _transectCount:             _transectPoints.length / (_hasTurnaround ? 4 : 2)
+    property int    _transectCount:             _transectPoints.length / 2
     property var    _fullTransectsComponent:    null
 
     signal clicked(int sequenceNumber)

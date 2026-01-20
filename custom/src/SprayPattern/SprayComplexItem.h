@@ -72,7 +72,7 @@ public:
     QString         commandDescription  (void) const final { return tr("Spray"); }                                                              //+
     QString         commandName         (void) const final { return tr("Spray"); }                                                              //+
     QString         abbreviation        (void) const final { return tr("SP"); }                                                                 //+
-    QString         mapVisualQML        (void) const final { return QStringLiteral("SprayMapVisuals.qml"); } //+- need to implement QML   
+    QString         mapVisualQML        (void) const final { return QStringLiteral("qrc:/Custom/qml/QGroundControl/Controls/SprayMapVisuals.qml"); }//+   
     
     QGeoCoordinate  coordinate          (void) const final;                                                                                     //+
     QGeoCoordinate  exitCoordinate      (void) const final;                                                                                     //+
