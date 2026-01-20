@@ -21,10 +21,7 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
         return;
     }
 
-    QDomElement itemFolderElement = createElement("Folder");
-    _rootDocumentElement.appendChild(itemFolderElement);
-
-    addTextElement(itemFolderElement, "name", "Items");
+    QDomElement itemFolderElement = addFolder("Items");
 
     QDomElement flightPathElement = createElement("Placemark");
     _rootDocumentElement.appendChild(flightPathElement);
@@ -62,12 +59,6 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
                 addTextElement(wpPlacemarkElement, "name",     QStringLiteral("%1 %2").arg(QString::number(item->sequenceNumber())).arg(item->command() == MAV_CMD_NAV_WAYPOINT ? "" : uiInfo->friendlyName()));
                 addTextElement(wpPlacemarkElement, "styleUrl", QStringLiteral("#%1").arg(balloonStyleName));
 
-                QDomElement wpPointElement = createElement("Point");
-                addTextElement(wpPointElement, "altitudeMode", "absolute");
-                addTextElement(wpPointElement, "coordinates",  kmlCoordString(coord));
-                addTextElement(wpPointElement, "extrude",      "1");
-
-                QDomElement descriptionElement = createElement("description");
                 QString htmlString;
                 htmlString += QStringLiteral("Index: %1\n").arg(item->sequenceNumber());
                 htmlString += uiInfo->friendlyName() + "\n";
@@ -75,30 +66,14 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
                 htmlString += QStringLiteral("Alt Rel: %1 %2\n").arg(QString::number(FactMetaData::metersToAppSettingsVerticalDistanceUnits(coord.altitude() - homeCoord.altitude()).toDouble(), 'f', 2)).arg(FactMetaData::appSettingsVerticalDistanceUnitsString());
                 htmlString += QStringLiteral("Lat: %1\n").arg(QString::number(coord.latitude(), 'f', 7));
                 htmlString += QStringLiteral("Lon: %1\n").arg(QString::number(coord.longitude(), 'f', 7));
-                QDomCDATASection cdataSection = createCDATASection(htmlString);
-                descriptionElement.appendChild(cdataSection);
-
-                wpPlacemarkElement.appendChild(descriptionElement);
-                wpPlacemarkElement.appendChild(wpPointElement);
-                itemFolderElement.appendChild(wpPlacemarkElement);
+                addDescription(wpPlacemarkElement, htmlString);
+                (void) addPoint(wpPlacemarkElement, coord);
+                (void) itemFolderElement.appendChild(wpPlacemarkElement);
             }
         }
     }
 
-    // Create a LineString element from the coords
-
-    QDomElement lineStringElement = createElement("LineString");
-    flightPathElement.appendChild(lineStringElement);
-
-    addTextElement(lineStringElement, "extruder",      "1");
-    addTextElement(lineStringElement, "tessellate",    "1");
-    addTextElement(lineStringElement, "altitudeMode",  "absolute");
-
-    QString coordString;
-    for (const QGeoCoordinate& coord : rgFlightCoords) {
-        coordString += QStringLiteral("%1\n").arg(kmlCoordString(coord));
-    }
-    addTextElement(lineStringElement, "coordinates", coordString);
+    (void) addLineString(flightPathElement, rgFlightCoords);
 }
 
 void KMLPlanDomDocument::_addComplexItems(QmlObjectListModel* visualItems)
@@ -121,23 +96,10 @@ void KMLPlanDomDocument::_addStyles(void)
 {
     QGCPalette palette;
 
-    QDomElement styleElement1 = createElement("Style");
-    styleElement1.setAttribute("id", _missionLineStyleName);
-    QDomElement lineStyleElement = createElement("LineStyle");
-    addTextElement(lineStyleElement, "color", kmlColorString(palette.mapMissionTrajectory()));
-    addTextElement(lineStyleElement, "width", "4");
-    styleElement1.appendChild(lineStyleElement);
+    QDomElement missionLineStyle = addStyle(_missionLineStyleName);
+    addLineStyle(missionLineStyle, palette.mapMissionTrajectory(), 4);
 
-    QString kmlSurveyColorString = kmlColorString(palette.surveyPolygonInterior(), 0.5 /* opacity */);
-    QDomElement styleElement2 = createElement("Style");
-    styleElement2.setAttribute("id", surveyPolygonStyleName);
-    QDomElement polygonStyleElement = createElement("PolyStyle");
-    addTextElement(polygonStyleElement, "color", kmlSurveyColorString);
-    QDomElement polygonLineStyleElement = createElement("LineStyle");
-    addTextElement(polygonLineStyleElement, "color", kmlSurveyColorString);
-    styleElement2.appendChild(polygonStyleElement);
-    styleElement2.appendChild(polygonLineStyleElement);
-
-    _rootDocumentElement.appendChild(styleElement1);
-    _rootDocumentElement.appendChild(styleElement2);
+    QDomElement surveyStyle = addStyle(surveyPolygonStyleName);
+    addPolyStyle(surveyStyle, palette.surveyPolygonInterior(), 0.5);
+    addLineStyle(surveyStyle, palette.surveyPolygonInterior(), 1, 0.5);
 }

@@ -8,6 +8,7 @@
 #include "SettingsManager.h"
 #include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
+#include "QGCGeo.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
@@ -235,31 +236,21 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
 
 QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween)
 {
-    const double lat = fromCoord.latitude();
-    const double lon = fromCoord.longitude();
-    const int steps = qCeil(toCoord.distanceTo(fromCoord) / TerrainTileCopernicus::kTileValueSpacingMeters); // TODO: get spacing from terrainQueryInterface
-    const double latDiff = toCoord.latitude() - lat;
-    const double lonDiff = toCoord.longitude() - lon;
+    const double totalDistance = QGCGeo::geodesicDistance(fromCoord, toCoord);
+    // TODO: get spacing from terrainQueryInterface
+    const int numPoints = qMax(2, qCeil(totalDistance / TerrainTileCopernicus::kTileValueSpacingMeters) + 1);
 
-    QList<QGeoCoordinate> coordinates;
-    if (steps == 0) {
-        (void) coordinates.append(fromCoord);
-        (void) coordinates.append(toCoord);
-        distanceBetween = finalDistanceBetween = coordinates[0].distanceTo(coordinates[1]);
+    QList<QGeoCoordinate> coordinates = QGCGeo::interpolatePath(fromCoord, toCoord, numPoints);
+
+    if (coordinates.size() >= 2) {
+        distanceBetween = QGCGeo::geodesicDistance(coordinates[0], coordinates[1]);
+        finalDistanceBetween = QGCGeo::geodesicDistance(coordinates[coordinates.size() - 2], coordinates.last());
     } else {
-        for (int i = 0; i <= steps; i++) {
-            const double latStep = lat + ((latDiff * static_cast<double>(i)) / static_cast<double>(steps));
-            const double lonStep = lon + ((lonDiff * static_cast<double>(i)) / static_cast<double>(steps));
-            (void) coordinates.append(QGeoCoordinate(latStep, lonStep));
-        }
-
-        // We always have one too many and we always want the last one to be the endpoint
-        coordinates.last() = toCoord;
-        distanceBetween = coordinates[0].distanceTo(coordinates[1]);
-        finalDistanceBetween = coordinates[coordinates.count() - 2].distanceTo(coordinates.last());
+        distanceBetween = finalDistanceBetween = totalDistance;
     }
 
-    qCDebug(TerrainTileManagerLog) << "fromCoord:toCoord:distanceBetween:finalDisanceBetween:coordCount" << fromCoord << toCoord << distanceBetween << finalDistanceBetween << coordinates.count();
+    qCDebug(TerrainTileManagerLog) << "fromCoord:toCoord:distanceBetween:finalDistanceBetween:coordCount"
+                                   << fromCoord << toCoord << distanceBetween << finalDistanceBetween << coordinates.count();
 
     return coordinates;
 }

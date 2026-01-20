@@ -6,6 +6,7 @@
 #include "GeoTest.h"
 #include "QGCGeo.h"
 
+#include <QtGui/QVector3D>
 #include <QtTest/QTest>
 
 static bool compareDoubles(double actual, double expected, double epsilon = 0.00001)
@@ -17,16 +18,20 @@ void GeoTest::_convertGeoToNed_test()
 {
     const QGeoCoordinate coord(47.364869, 8.594398, 0.0);
 
-    const double expectedX = -1282.58731618;
-    const double expectedY = 3490.85591324;
-    const double expectedZ = 0.;
+    // Expected values from WGS84 ellipsoidal model (LocalCartesian)
+    const double expectedX = -1280.954612;
+    const double expectedY = 3497.196961;
+    const double expectedZ = 1.085830;
 
     double x = 0., y = 0., z = 0.;
     QGCGeo::convertGeoToNed(coord, m_origin, x, y, z);
 
-    QVERIFY(compareDoubles(x, expectedX));
-    QVERIFY(compareDoubles(y, expectedY));
-    QVERIFY(compareDoubles(z, expectedZ));
+    // Use 0.01m tolerance (instead of default epsilon) because the WGS84 ellipsoidal
+    // model and reference implementation can differ at the centimeter level due to
+    // numerical precision and model approximations.
+    QVERIFY(compareDoubles(x, expectedX, 0.01));
+    QVERIFY(compareDoubles(y, expectedY, 0.01));
+    QVERIFY(compareDoubles(z, expectedZ, 0.01));
 }
 
 void GeoTest::_convertGeoToNedAtOrigin_test()
@@ -48,17 +53,18 @@ void GeoTest::_convertGeoToNedAtOrigin_test()
 
 void GeoTest::_convertNedToGeo_test()
 {
-    const double x = -1282.58731618;
-    const double y = 3490.85591324;
-    const double z = 0.;
+    // Use values from WGS84 ellipsoidal model
+    const double x = -1280.954612;
+    const double y = 3497.196961;
+    const double z = 1.085830;
 
     QGeoCoordinate coord(0,0,0);
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
 
     QVERIFY(coord.isValid());
-    QVERIFY(compareDoubles(coord.latitude(), 47.364869));
-    QVERIFY(compareDoubles(coord.longitude(), 8.594398));
-    QVERIFY(compareDoubles(coord.altitude(), 0.0));
+    QVERIFY(compareDoubles(coord.latitude(), 47.364869, 0.00001));
+    QVERIFY(compareDoubles(coord.longitude(), 8.594398, 0.00001));
+    QVERIFY(compareDoubles(coord.altitude(), 0.0, 0.01));
 }
 
 void GeoTest::_convertNedToGeoAtOrigin_test()
@@ -127,4 +133,287 @@ void GeoTest::_convertMGRSToGeo_test()
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
     QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+}
+
+void GeoTest::_convertGeodeticToEcef_test()
+{
+    const QGeoCoordinate coord(m_origin.latitude(), m_origin.longitude(), 100.0);
+
+    const QVector3D ecef = QGCGeo::convertGeodeticToEcef(coord);
+
+    // ECEF coordinates for ETH campus at 100m altitude
+    QVERIFY(compareDoubles(ecef.x(), 4278990.18, 1.0));
+    QVERIFY(compareDoubles(ecef.y(), 643172.29, 1.0));
+    QVERIFY(compareDoubles(ecef.z(), 4670276.60, 1.0));
+}
+
+void GeoTest::_convertEcefToGeodetic_test()
+{
+    const QVector3D ecef(4278990.18, 643172.29, 4670276.60);
+
+    const QGeoCoordinate coord = QGCGeo::convertEcefToGeodetic(ecef);
+
+    QVERIFY(coord.isValid());
+    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude(), 0.0001));
+    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude(), 0.0001));
+    QVERIFY(compareDoubles(coord.altitude(), 100.0, 1.0));
+}
+
+void GeoTest::_convertGpsToEnu_test()
+{
+    const QGeoCoordinate coord(47.364869, 8.594398, 50.0);
+
+    const QVector3D enu = QGCGeo::convertGpsToEnu(coord, m_origin);
+
+    // ENU: East, North, Up (WGS84 ellipsoidal)
+    QVERIFY(compareDoubles(enu.x(), 3497.22, 1.0));   // East
+    QVERIFY(compareDoubles(enu.y(), -1280.96, 1.0));  // North
+    QVERIFY(compareDoubles(enu.z(), 48.91, 0.1));     // Up (ellipsoidal height)
+}
+
+void GeoTest::_convertEnuToGps_test()
+{
+    const QVector3D enu(3497.22, -1280.96, 48.91);
+
+    const QGeoCoordinate coord = QGCGeo::convertEnuToGps(enu, m_origin);
+
+    QVERIFY(coord.isValid());
+    QVERIFY(compareDoubles(coord.latitude(), 47.364869, 0.0001));
+    QVERIFY(compareDoubles(coord.longitude(), 8.594398, 0.0001));
+    QVERIFY(compareDoubles(coord.altitude(), 50.0, 0.2));
+}
+
+void GeoTest::_convertEcefToEnu_test()
+{
+    // Convert a known geodetic point to ECEF first
+    const QGeoCoordinate coord(47.364869, 8.594398, 50.0);
+    const QVector3D ecef = QGCGeo::convertGeodeticToEcef(coord);
+
+    // Then convert ECEF to ENU relative to origin
+    const QVector3D enu = QGCGeo::convertEcefToEnu(ecef, m_origin);
+
+    // Note: QVector3D uses float, so ECEF round-trips have reduced precision
+    QVERIFY(compareDoubles(enu.x(), 3497.22, 2.0));   // East
+    QVERIFY(compareDoubles(enu.y(), -1280.96, 2.0));  // North
+    QVERIFY(compareDoubles(enu.z(), 48.91, 1.0));     // Up
+}
+
+void GeoTest::_convertEnuToEcef_test()
+{
+    const QVector3D enu(3497.22, -1280.96, 48.91);
+
+    const QVector3D ecef = QGCGeo::convertEnuToEcef(enu, m_origin);
+
+    // Convert back to geodetic to verify
+    // Note: QVector3D uses float, so ECEF round-trips have reduced precision
+    const QGeoCoordinate coord = QGCGeo::convertEcefToGeodetic(ecef);
+
+    QVERIFY(coord.isValid());
+    QVERIFY(compareDoubles(coord.latitude(), 47.364869, 0.001));
+    QVERIFY(compareDoubles(coord.longitude(), 8.594398, 0.001));
+    QVERIFY(compareDoubles(coord.altitude(), 50.0, 1.0));
+}
+
+void GeoTest::_geodesicDistance_test()
+{
+    // Test distance from ETH Zurich to Eiffel Tower (Paris)
+    const QGeoCoordinate zurich(47.3764, 8.5481, 0.0);
+    const QGeoCoordinate paris(48.8584, 2.2945, 0.0);
+
+    const double distance = QGCGeo::geodesicDistance(zurich, paris);
+
+    // Geodesic distance is approximately 493.7 km
+    QVERIFY(compareDoubles(distance, 493739.0, 100.0));
+
+    // Compare with Qt's spherical approximation to show difference
+    const double qtDistance = zurich.distanceTo(paris);
+    // Qt uses spherical model, should be slightly different
+    QVERIFY(qAbs(distance - qtDistance) < 2000.0); // Within 2km for this distance
+}
+
+void GeoTest::_geodesicAzimuth_test()
+{
+    // Test azimuth from ETH Zurich heading northwest to Paris
+    const QGeoCoordinate zurich(47.3764, 8.5481, 0.0);
+    const QGeoCoordinate paris(48.8584, 2.2945, 0.0);
+
+    const double azimuth = QGCGeo::geodesicAzimuth(zurich, paris);
+
+    // Azimuth is approximately 291.8 degrees (northwest)
+    QVERIFY(compareDoubles(azimuth, 291.8, 1.0));
+
+    // Test due north
+    const QGeoCoordinate north(48.3764, 8.5481, 0.0);
+    const double northAzimuth = QGCGeo::geodesicAzimuth(zurich, north);
+    QVERIFY(compareDoubles(northAzimuth, 0.0, 0.1));
+
+    // Test due east
+    const QGeoCoordinate east(47.3764, 9.5481, 0.0);
+    const double eastAzimuth = QGCGeo::geodesicAzimuth(zurich, east);
+    QVERIFY(compareDoubles(eastAzimuth, 90.0, 1.0));
+}
+
+void GeoTest::_geodesicDestination_test()
+{
+    const QGeoCoordinate start(47.3764, 8.5481, 100.0);
+
+    // Go 1000m north
+    const QGeoCoordinate northDest = QGCGeo::geodesicDestination(start, 0.0, 1000.0);
+    QVERIFY(northDest.isValid());
+    QVERIFY(northDest.latitude() > start.latitude());
+    QVERIFY(compareDoubles(northDest.longitude(), start.longitude(), 0.0001));
+    QVERIFY(compareDoubles(northDest.altitude(), start.altitude(), 0.01));
+
+    // Go 1000m east
+    const QGeoCoordinate eastDest = QGCGeo::geodesicDestination(start, 90.0, 1000.0);
+    QVERIFY(eastDest.isValid());
+    QVERIFY(compareDoubles(eastDest.latitude(), start.latitude(), 0.001));
+    QVERIFY(eastDest.longitude() > start.longitude());
+}
+
+void GeoTest::_geodesicRoundTrip_test()
+{
+    // Verify that destination + inverse gives back original distance/azimuth
+    const QGeoCoordinate start(47.3764, 8.5481, 0.0);
+    const double originalAzimuth = 45.0;
+    const double originalDistance = 5000.0;
+
+    // Calculate destination
+    const QGeoCoordinate dest = QGCGeo::geodesicDestination(start, originalAzimuth, originalDistance);
+
+    // Calculate distance and azimuth back
+    const double calculatedDistance = QGCGeo::geodesicDistance(start, dest);
+    const double calculatedAzimuth = QGCGeo::geodesicAzimuth(start, dest);
+
+    QVERIFY(compareDoubles(calculatedDistance, originalDistance, 0.01));
+    QVERIFY(compareDoubles(calculatedAzimuth, originalAzimuth, 0.0001));
+}
+
+void GeoTest::_pathLength_test()
+{
+    // Empty and single-point paths
+    QCOMPARE(QGCGeo::pathLength({}), 0.0);
+    QCOMPARE(QGCGeo::pathLength({m_origin}), 0.0);
+
+    // Simple path: origin -> 1km north -> 1km east
+    const QGeoCoordinate north = QGCGeo::geodesicDestination(m_origin, 0.0, 1000.0);
+    const QGeoCoordinate northEast = QGCGeo::geodesicDestination(north, 90.0, 1000.0);
+
+    const QList<QGeoCoordinate> path = {m_origin, north, northEast};
+    const double length = QGCGeo::pathLength(path);
+
+    // Should be approximately 2000m
+    QVERIFY(compareDoubles(length, 2000.0, 1.0));
+}
+
+void GeoTest::_polygonArea_test()
+{
+    // Fewer than 3 points
+    QCOMPARE(QGCGeo::polygonArea({}), 0.0);
+    QCOMPARE(QGCGeo::polygonArea({m_origin}), 0.0);
+    QCOMPARE(QGCGeo::polygonArea({m_origin, m_origin}), 0.0);
+
+    // Create a roughly 1km x 1km square
+    const QGeoCoordinate sw = m_origin;
+    const QGeoCoordinate nw = QGCGeo::geodesicDestination(sw, 0.0, 1000.0);
+    const QGeoCoordinate ne = QGCGeo::geodesicDestination(nw, 90.0, 1000.0);
+    const QGeoCoordinate se = QGCGeo::geodesicDestination(sw, 90.0, 1000.0);
+
+    const QList<QGeoCoordinate> square = {sw, nw, ne, se};
+    const double area = QGCGeo::polygonArea(square);
+
+    // Should be approximately 1,000,000 m² (1 km²)
+    QVERIFY(compareDoubles(area, 1000000.0, 1000.0)); // Within 0.1%
+}
+
+void GeoTest::_polygonPerimeter_test()
+{
+    // Fewer than 2 points
+    QCOMPARE(QGCGeo::polygonPerimeter({}), 0.0);
+    QCOMPARE(QGCGeo::polygonPerimeter({m_origin}), 0.0);
+
+    // Create a roughly 1km x 1km square
+    const QGeoCoordinate sw = m_origin;
+    const QGeoCoordinate nw = QGCGeo::geodesicDestination(sw, 0.0, 1000.0);
+    const QGeoCoordinate ne = QGCGeo::geodesicDestination(nw, 90.0, 1000.0);
+    const QGeoCoordinate se = QGCGeo::geodesicDestination(sw, 90.0, 1000.0);
+
+    const QList<QGeoCoordinate> square = {sw, nw, ne, se};
+    const double perimeter = QGCGeo::polygonPerimeter(square);
+
+    // Should be approximately 4000m
+    QVERIFY(compareDoubles(perimeter, 4000.0, 1.0));
+}
+
+void GeoTest::_interpolatePath_test()
+{
+    // Test with same start and end
+    const auto samePoints = QGCGeo::interpolatePath(m_origin, m_origin, 5);
+    QCOMPARE(samePoints.size(), 5);
+    for (const auto &coord : samePoints) {
+        QCOMPARE(coord, m_origin);
+    }
+
+    // Test with 2 points (minimum)
+    const QGeoCoordinate dest = QGCGeo::geodesicDestination(m_origin, 45.0, 10000.0);
+    const auto twoPoints = QGCGeo::interpolatePath(m_origin, dest, 2);
+    QCOMPARE(twoPoints.size(), 2);
+    QVERIFY(compareDoubles(twoPoints.first().latitude(), m_origin.latitude()));
+    QVERIFY(compareDoubles(twoPoints.first().longitude(), m_origin.longitude()));
+    QVERIFY(compareDoubles(twoPoints.last().latitude(), dest.latitude()));
+    QVERIFY(compareDoubles(twoPoints.last().longitude(), dest.longitude()));
+
+    // Test with 11 points (10 segments of 1000m each)
+    const QGeoCoordinate end = QGCGeo::geodesicDestination(m_origin, 0.0, 10000.0);
+    const auto elevenPoints = QGCGeo::interpolatePath(m_origin, end, 11);
+    QCOMPARE(elevenPoints.size(), 11);
+
+    // Each segment should be approximately 1000m
+    for (int i = 1; i < elevenPoints.size(); ++i) {
+        const double segmentDist = QGCGeo::geodesicDistance(elevenPoints[i - 1], elevenPoints[i]);
+        QVERIFY(compareDoubles(segmentDist, 1000.0, 0.1));
+    }
+
+    // Total path length should be 10000m
+    const double totalLen = QGCGeo::pathLength(elevenPoints);
+    QVERIFY(compareDoubles(totalLen, 10000.0, 0.1));
+
+    // Test altitude interpolation
+    const QGeoCoordinate startAlt(m_origin.latitude(), m_origin.longitude(), 100.0);
+    const QGeoCoordinate endAlt(end.latitude(), end.longitude(), 200.0);
+    const auto altPoints = QGCGeo::interpolatePath(startAlt, endAlt, 11);
+    QVERIFY(compareDoubles(altPoints[0].altitude(), 100.0, 0.01));
+    QVERIFY(compareDoubles(altPoints[5].altitude(), 150.0, 0.01));
+    QVERIFY(compareDoubles(altPoints[10].altitude(), 200.0, 0.01));
+}
+
+void GeoTest::_interpolateAtDistance_test()
+{
+    // Test at distance 0
+    const QGeoCoordinate dest = QGCGeo::geodesicDestination(m_origin, 0.0, 5000.0);
+    const auto atZero = QGCGeo::interpolateAtDistance(m_origin, dest, 0.0);
+    QVERIFY(compareDoubles(atZero.latitude(), m_origin.latitude()));
+    QVERIFY(compareDoubles(atZero.longitude(), m_origin.longitude()));
+
+    // Test at distance beyond end (should clamp to end)
+    const auto beyondEnd = QGCGeo::interpolateAtDistance(m_origin, dest, 10000.0);
+    QVERIFY(compareDoubles(beyondEnd.latitude(), dest.latitude()));
+    QVERIFY(compareDoubles(beyondEnd.longitude(), dest.longitude()));
+
+    // Test midpoint
+    const auto midpoint = QGCGeo::interpolateAtDistance(m_origin, dest, 2500.0);
+    const double distToMid = QGCGeo::geodesicDistance(m_origin, midpoint);
+    const double distFromMid = QGCGeo::geodesicDistance(midpoint, dest);
+    QVERIFY(compareDoubles(distToMid, 2500.0, 0.1));
+    QVERIFY(compareDoubles(distFromMid, 2500.0, 0.1));
+
+    // Test altitude interpolation at midpoint
+    const QGeoCoordinate startAlt(m_origin.latitude(), m_origin.longitude(), 0.0);
+    const QGeoCoordinate endAlt(dest.latitude(), dest.longitude(), 100.0);
+    const auto midAlt = QGCGeo::interpolateAtDistance(startAlt, endAlt, 2500.0);
+    QVERIFY(compareDoubles(midAlt.altitude(), 50.0, 0.1));
+
+    // Test same start and end
+    const auto same = QGCGeo::interpolateAtDistance(m_origin, m_origin, 100.0);
+    QCOMPARE(same, m_origin);
 }

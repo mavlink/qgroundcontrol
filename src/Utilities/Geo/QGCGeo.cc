@@ -1,87 +1,149 @@
-// TODO: Use GeoCoords from GeographicLib?
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QString>
-#include <QtCore/QtMath>
 
-#include <GeographicLib/Constants.hpp>
+#include <cmath>
+
 #include <GeographicLib/Geocentric.hpp>
+#include <GeographicLib/Geodesic.hpp>
+#include <GeographicLib/GeodesicLine.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/MGRS.hpp>
+#include <GeographicLib/PolygonArea.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
-#include <limits>
-
 QGC_LOGGING_CATEGORY(QGCGeoLog, "Utilities.QGCGeo")
-
-namespace
-{
-    constexpr double epsilon = std::numeric_limits<double>::epsilon();
-}
 
 namespace QGCGeo
 {
 
+// ============================================================================
+// NED (North-East-Down) Local Tangent Plane
+// ============================================================================
+
 void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, double &x, double &y, double &z)
 {
     if (coord == origin) {
-        // Prevent NaNs in calculation
-        x = y = z = 0;
+        x = y = z = 0.0;
         return;
     }
 
-    const double lat_rad = qDegreesToRadians(coord.latitude());
-    const double lon_rad = qDegreesToRadians(coord.longitude());
+    // Handle NaN altitude (QGeoCoordinate without altitude set)
+    const double originAlt = std::isnan(origin.altitude()) ? 0.0 : origin.altitude();
+    const double coordAlt = std::isnan(coord.altitude()) ? 0.0 : coord.altitude();
 
-    const double ref_lon_rad = qDegreesToRadians(origin.longitude());
-    const double ref_lat_rad = qDegreesToRadians(origin.latitude());
+    double east, north, up;
+    GeographicLib::LocalCartesian ltp(origin.latitude(), origin.longitude(), originAlt,
+                                      GeographicLib::Geocentric::WGS84());
+    ltp.Forward(coord.latitude(), coord.longitude(), coordAlt, east, north, up);
 
-    const double sin_lat = sin(lat_rad);
-    const double cos_lat = cos(lat_rad);
-    const double cos_d_lon = cos(lon_rad - ref_lon_rad);
-
-    const double ref_sin_lat = sin(ref_lat_rad);
-    const double ref_cos_lat = cos(ref_lat_rad);
-
-    const double c = acos(ref_sin_lat * sin_lat + ref_cos_lat * cos_lat * cos_d_lon);
-    const double k = (fabs(c) < epsilon) ? 1.0 : (c / sin(c));
-
-    x = k * (ref_cos_lat * sin_lat - ref_sin_lat * cos_lat * cos_d_lon) * GeographicLib::Constants::WGS84_a();
-    y = k * cos_lat * sin(lon_rad - ref_lon_rad) * GeographicLib::Constants::WGS84_a();
-    z = -(coord.altitude() - origin.altitude());
+    // Convert ENU to NED
+    x = north;
+    y = east;
+    z = -up;
 }
 
 void convertNedToGeo(double x, double y, double z, const QGeoCoordinate &origin, QGeoCoordinate &coord)
 {
-    const double x_rad = x / GeographicLib::Constants::WGS84_a();
-    const double y_rad = y / GeographicLib::Constants::WGS84_a();
-    const double c = sqrt(x_rad * x_rad + y_rad * y_rad);
-    const double sin_c = sin(c);
-    const double cos_c = cos(c);
+    // Convert NED to ENU
+    const double east = y;
+    const double north = x;
+    const double up = -z;
 
-    const double ref_lon_rad = qDegreesToRadians(origin.longitude());
-    const double ref_lat_rad = qDegreesToRadians(origin.latitude());
+    // Handle NaN altitude
+    const double originAlt = std::isnan(origin.altitude()) ? 0.0 : origin.altitude();
 
-    const double ref_sin_lat = sin(ref_lat_rad);
-    const double ref_cos_lat = cos(ref_lat_rad);
+    double lat, lon, alt;
+    GeographicLib::LocalCartesian ltp(origin.latitude(), origin.longitude(), originAlt,
+                                      GeographicLib::Geocentric::WGS84());
+    ltp.Reverse(east, north, up, lat, lon, alt);
 
-    double lat_rad;
-    double lon_rad;
-
-    if (fabs(c) > epsilon) {
-        lat_rad = asin(cos_c * ref_sin_lat + (x_rad * sin_c * ref_cos_lat) / c);
-        lon_rad = (ref_lon_rad + atan2(y_rad * sin_c, c * ref_cos_lat * cos_c - x_rad * ref_sin_lat * sin_c));
-    } else {
-        lat_rad = ref_lat_rad;
-        lon_rad = ref_lon_rad;
-    }
-
-    coord.setLatitude(qRadiansToDegrees(lat_rad));
-    coord.setLongitude(qRadiansToDegrees(lon_rad));
-    coord.setAltitude(-z + origin.altitude());
+    coord.setLatitude(lat);
+    coord.setLongitude(lon);
+    coord.setAltitude(alt);
 }
+
+// ============================================================================
+// ENU (East-North-Up) Local Tangent Plane
+// ============================================================================
+
+QVector3D convertGpsToEnu(const QGeoCoordinate &coord, const QGeoCoordinate &ref)
+{
+    double x, y, z;
+    GeographicLib::LocalCartesian ltp(ref.latitude(), ref.longitude(), ref.altitude(),
+                                      GeographicLib::Geocentric::WGS84());
+    ltp.Forward(coord.latitude(), coord.longitude(), coord.altitude(), x, y, z);
+    return QVector3D(x, y, z);
+}
+
+QGeoCoordinate convertEnuToGps(const QVector3D &enu, const QGeoCoordinate &ref)
+{
+    double lat, lon, alt;
+    GeographicLib::LocalCartesian ltp(ref.latitude(), ref.longitude(), ref.altitude(),
+                                      GeographicLib::Geocentric::WGS84());
+    ltp.Reverse(enu.x(), enu.y(), enu.z(), lat, lon, alt);
+    return QGeoCoordinate(lat, lon, alt);
+}
+
+// ============================================================================
+// ECEF (Earth-Centered Earth-Fixed)
+// ============================================================================
+
+QVector3D convertGeodeticToEcef(const QGeoCoordinate &coord)
+{
+    double x, y, z;
+    GeographicLib::Geocentric::WGS84().Forward(coord.latitude(), coord.longitude(), coord.altitude(), x, y, z);
+    return QVector3D(x, y, z);
+}
+
+QGeoCoordinate convertEcefToGeodetic(const QVector3D &ecef)
+{
+    double lat, lon, alt;
+    GeographicLib::Geocentric::WGS84().Reverse(ecef.x(), ecef.y(), ecef.z(), lat, lon, alt);
+    return QGeoCoordinate(lat, lon, alt);
+}
+
+QVector3D convertEcefToEnu(const QVector3D &ecef, const QGeoCoordinate &ref)
+{
+    // ECEF -> Geodetic
+    double lat, lon, h;
+    GeographicLib::Geocentric::WGS84().Reverse(ecef.x(), ecef.y(), ecef.z(), lat, lon, h);
+
+    // Geodetic -> ENU
+    double x, y, z;
+    GeographicLib::LocalCartesian ltp(ref.latitude(), ref.longitude(), ref.altitude(),
+                                      GeographicLib::Geocentric::WGS84());
+    ltp.Forward(lat, lon, h, x, y, z);
+    return QVector3D(x, y, z);
+}
+
+QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref)
+{
+    // ENU -> Geodetic
+    double lat, lon, h;
+    GeographicLib::LocalCartesian ltp(ref.latitude(), ref.longitude(), ref.altitude(),
+                                      GeographicLib::Geocentric::WGS84());
+    ltp.Reverse(enu.x(), enu.y(), enu.z(), lat, lon, h);
+
+    // Geodetic -> ECEF
+    double x, y, z;
+    GeographicLib::Geocentric::WGS84().Forward(lat, lon, h, x, y, z);
+    return QVector3D(x, y, z);
+}
+
+// ============================================================================
+// UTM (Universal Transverse Mercator)
+// ============================================================================
 
 int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northing)
 {
@@ -90,7 +152,7 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
         bool northp;
         GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
         return zone;
-    } catch(const GeographicLib::GeographicErr &e) {
+    } catch (const GeographicLib::GeographicErr &e) {
         qCDebug(QGCGeoLog) << e.what();
         return 0;
     }
@@ -98,145 +160,215 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
 
 bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate &coord)
 {
-    double lat, lon;
-
     try {
+        double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
-    } catch(const GeographicLib::GeographicErr &e) {
+        coord.setLatitude(lat);
+        coord.setLongitude(lon);
+        return true;
+    } catch (const GeographicLib::GeographicErr &e) {
         qCDebug(QGCGeoLog) << e.what();
         return false;
     }
-
-    coord.setLatitude(lat);
-    coord.setLongitude(lon);
-
-    return true;
 }
+
+// ============================================================================
+// MGRS (Military Grid Reference System)
+// ============================================================================
 
 QString convertGeoToMGRS(const QGeoCoordinate &coord)
 {
-    std::string mgrs;
-
     try {
         int zone;
         bool northp;
         double x, y;
         GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
+
+        std::string mgrs;
         GeographicLib::MGRS::Forward(zone, northp, x, y, coord.latitude(), 5, mgrs);
-    } catch(const GeographicLib::GeographicErr &e) {
-        qCDebug(QGCGeoLog) << e.what();
-        mgrs = "";
-    }
 
-    const QString qstr = QString::fromStdString(mgrs);
-    for (int i = qstr.length() - 1; i >= 0; i--) {
-        if (!qstr.at(i).isDigit()) {
-            const int l = (qstr.length() - i) / 2;
-            return (qstr.left(i + 1) + " " + qstr.mid(i + 1, l) + " " + qstr.mid(i + 1 + l));
+        // Format with spaces: "32TMT6588647092" -> "32TMT 65886 47092"
+        const QString qstr = QString::fromStdString(mgrs);
+        for (int i = qstr.length() - 1; i >= 0; i--) {
+            if (!qstr.at(i).isDigit()) {
+                const int numLen = (qstr.length() - i - 1) / 2;
+                return qstr.left(i + 1) + " " + qstr.mid(i + 1, numLen) + " " + qstr.mid(i + 1 + numLen);
+            }
         }
+        return qstr;
+    } catch (const GeographicLib::GeographicErr &e) {
+        qCDebug(QGCGeoLog) << e.what();
+        return QString();
     }
-
-    return qstr;
 }
 
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
 {
-    double lat, lon;
-
     try {
         int zone, prec;
         bool northp;
         double x, y;
         GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
+
+        double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
-    } catch(const GeographicLib::GeographicErr &e) {
+
+        coord.setLatitude(lat);
+        coord.setLongitude(lon);
+        return true;
+    } catch (const GeographicLib::GeographicErr &e) {
         qCDebug(QGCGeoLog) << e.what();
         return false;
     }
-
-    coord.setLatitude(lat);
-    coord.setLongitude(lon);
-
-    return true;
 }
 
-QVector3D convertGeodeticToEcef(const QGeoCoordinate &llh)
+// ============================================================================
+// Geodesic Calculations (Great Circle on Ellipsoid)
+// ============================================================================
+
+double geodesicDistance(const QGeoCoordinate &from, const QGeoCoordinate &to)
 {
-    double x, y, z;
-    GeographicLib::Geocentric::WGS84().Forward(
-        llh.latitude(), llh.longitude(), llh.altitude(),
-        x, y, z);
-
-    const QVector3D out_point(x, y, z);
-    return out_point;
+    double distance;
+    GeographicLib::Geodesic::WGS84().Inverse(from.latitude(), from.longitude(),
+                                             to.latitude(), to.longitude(), distance);
+    return distance;
 }
 
-QGeoCoordinate convertEcefToGeodetic(const QVector3D &ecef)
+double geodesicAzimuth(const QGeoCoordinate &from, const QGeoCoordinate &to)
 {
-    double lat, lon, alt;
-    GeographicLib::Geocentric::WGS84().Reverse(
-        ecef.x(), ecef.y(), ecef.z(),
-        lat, lon, alt);
+    double distance, azimuth1, azimuth2;
+    GeographicLib::Geodesic::WGS84().Inverse(from.latitude(), from.longitude(),
+                                             to.latitude(), to.longitude(), distance, azimuth1, azimuth2);
 
-    const QGeoCoordinate out_point(lat, lon, alt);
-    return out_point;
+    // Normalize to [0, 360)
+    if (azimuth1 < 0.0) {
+        azimuth1 += 360.0;
+    }
+    return azimuth1;
 }
 
-QVector3D convertEcefToEnu(const QVector3D &ecef, const QGeoCoordinate &ref)
+QGeoCoordinate geodesicDestination(const QGeoCoordinate &from, double azimuth, double distance)
 {
-    double lat, lon, h;
-    GeographicLib::Geocentric::WGS84().Reverse(
-        ecef.x(), ecef.y(), ecef.z(), lat, lon, h);
-
-    double x, y, z;
-    GeographicLib::LocalCartesian(ref.latitude(),
-                                  ref.longitude(),
-                                  ref.altitude(),
-                                  GeographicLib::Geocentric::WGS84())
-        .Forward(lat, lon, h, x, y, z);
-
-    const QVector3D out_point(x, y, z);
-    return out_point;
+    double lat, lon;
+    GeographicLib::Geodesic::WGS84().Direct(from.latitude(), from.longitude(), azimuth, distance, lat, lon);
+    return QGeoCoordinate(lat, lon, from.altitude());
 }
 
-QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref)
+// ============================================================================
+// Path and Polygon Calculations
+// ============================================================================
+
+double pathLength(const QList<QGeoCoordinate> &path)
 {
-    double lat, lon, h;
-    GeographicLib::LocalCartesian(ref.latitude(),
-                                  ref.longitude(),
-                                  ref.altitude(),
-                                  GeographicLib::Geocentric::WGS84())
-        .Reverse(enu.x(), enu.y(), enu.z(), lat, lon, h);
+    if (path.size() < 2) {
+        return 0.0;
+    }
 
-    double x, y, z;
-    GeographicLib::Geocentric::WGS84().Forward(lat, lon, h, x, y, z);
-
-    const QVector3D out_point(x, y, z);
-    return out_point;
+    double totalLength = 0.0;
+    for (int i = 1; i < path.size(); ++i) {
+        totalLength += geodesicDistance(path[i - 1], path[i]);
+    }
+    return totalLength;
 }
 
-QVector3D convertGpsToEnu(const QGeoCoordinate &llh, const QGeoCoordinate &ref)
+double polygonArea(const QList<QGeoCoordinate> &polygon)
 {
-    double x, y, z;
-    GeographicLib::LocalCartesian(
-        ref.latitude(), ref.longitude(), ref.altitude(),
-        GeographicLib::Geocentric::WGS84()
-    ).Forward(llh.latitude(), llh.longitude(), llh.altitude(), x, y, z);
+    if (polygon.size() < 3) {
+        return 0.0;
+    }
 
-    const QVector3D out_point(x, y, z);
-    return out_point;
+    GeographicLib::PolygonArea poly(GeographicLib::Geodesic::WGS84());
+    for (const QGeoCoordinate &coord : polygon) {
+        poly.AddPoint(coord.latitude(), coord.longitude());
+    }
+
+    double perimeter, area;
+    poly.Compute(false, true, perimeter, area);
+    // Area sign indicates winding order (positive = counter-clockwise, negative = clockwise).
+    // Return absolute value since we only care about magnitude.
+    return qAbs(area);
 }
 
-QGeoCoordinate convertEnuToGps(const QVector3D &enu, const QGeoCoordinate &ref)
+double polygonPerimeter(const QList<QGeoCoordinate> &polygon)
 {
-    double lat, lon, alt;
-    GeographicLib::LocalCartesian(
-        ref.latitude(), ref.longitude(), ref.altitude(),
-        GeographicLib::Geocentric::WGS84()
-    ).Reverse(enu.x(), enu.y(), enu.z(), lat, lon, alt);
+    if (polygon.size() < 2) {
+        return 0.0;
+    }
 
-    const QGeoCoordinate out_point(lat, lon, alt);
-    return out_point;
+    GeographicLib::PolygonArea poly(GeographicLib::Geodesic::WGS84());
+    for (const QGeoCoordinate &coord : polygon) {
+        poly.AddPoint(coord.latitude(), coord.longitude());
+    }
+
+    double perimeter, area;
+    poly.Compute(false, true, perimeter, area);
+    return perimeter;
 }
 
+QList<QGeoCoordinate> interpolatePath(const QGeoCoordinate &from, const QGeoCoordinate &to, int numPoints)
+{
+    QList<QGeoCoordinate> result;
+
+    // Clamp to reasonable bounds to prevent excessive memory allocation
+    constexpr int kMaxPoints = 10000;
+    if (numPoints < 2) {
+        numPoints = 2;
+    } else if (numPoints > kMaxPoints) {
+        qCWarning(QGCGeoLog) << "interpolatePath: numPoints" << numPoints << "exceeds maximum, clamping to" << kMaxPoints;
+        numPoints = kMaxPoints;
+    }
+
+    if (from == to) {
+        for (int i = 0; i < numPoints; ++i) {
+            result.append(from);
+        }
+        return result;
+    }
+
+    // Create GeodesicLine for efficient multi-point interpolation
+    const GeographicLib::GeodesicLine line = GeographicLib::Geodesic::WGS84().InverseLine(
+        from.latitude(), from.longitude(), to.latitude(), to.longitude());
+
+    const double totalDistance = line.Distance();
+    const double altDiff = to.altitude() - from.altitude();
+
+    for (int i = 0; i < numPoints; ++i) {
+        const double fraction = static_cast<double>(i) / (numPoints - 1);
+        const double distance = totalDistance * fraction;
+
+        double lat, lon;
+        line.Position(distance, lat, lon);
+
+        const double alt = from.altitude() + altDiff * fraction;
+        result.append(QGeoCoordinate(lat, lon, alt));
+    }
+
+    return result;
 }
+
+QGeoCoordinate interpolateAtDistance(const QGeoCoordinate &from, const QGeoCoordinate &to, double distance)
+{
+    if (from == to || distance <= 0.0) {
+        return from;
+    }
+
+    const GeographicLib::GeodesicLine line = GeographicLib::Geodesic::WGS84().InverseLine(
+        from.latitude(), from.longitude(), to.latitude(), to.longitude());
+
+    const double totalDistance = line.Distance();
+
+    if (distance >= totalDistance) {
+        return to;
+    }
+
+    double lat, lon;
+    line.Position(distance, lat, lon);
+
+    // Linear altitude interpolation
+    const double fraction = distance / totalDistance;
+    const double alt = from.altitude() + (to.altitude() - from.altitude()) * fraction;
+
+    return QGeoCoordinate(lat, lon, alt);
+}
+
+} // namespace QGCGeo
