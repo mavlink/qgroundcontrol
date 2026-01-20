@@ -16,6 +16,7 @@
 #include "QGCMAVLink.h"
 #include "AppSettings.h"
 #include "BrandImageSettings.h"
+#include "SprayComplexItem.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
 #include <QtCore/QApplicationStatic>
@@ -403,4 +404,10 @@ QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterc
     }
 
     return url;
+}
+QStringList CustomPlugin::complexMissionItemNames(Vehicle *vehicle, const QStringList &complexMissionItemNames)
+{
+    QStringList items = complexMissionItemNames;  
+    items.append(SprayComplexItem::name);  
+    return items;
 }

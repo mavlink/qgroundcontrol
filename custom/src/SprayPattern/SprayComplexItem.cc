@@ -78,6 +78,11 @@ void SprayComplexItem::setDirty(bool dirty)
     }
 }
 
+void SprayComplexItem::applyNewAltitude(double newAltitude)
+{
+    _altitudeFact.setRawValue(newAltitude);
+}
+
 void SprayComplexItem::save(QJsonArray&  missionItems)
 {
     QJsonObject saveObject;
@@ -96,7 +101,6 @@ void SprayComplexItem::save(QJsonArray&  missionItems)
 
     missionItems.append(saveObject);
 }
-
 bool SprayComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {

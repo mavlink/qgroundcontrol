@@ -72,7 +72,7 @@ public:
     QString         commandDescription  (void) const final { return tr("Spray"); }                                                              //+
     QString         commandName         (void) const final { return tr("Spray"); }                                                              //+
     QString         abbreviation        (void) const final { return tr("SP"); }                                                                 //+
-    QString         mapVisualQML        (void) const final { return QStringLiteral("SprayMapVisual.qml"); } //+- need to implement QML   
+    QString         mapVisualQML        (void) const final { return QStringLiteral("SprayMapVisuals.qml"); } //+- need to implement QML   
     
     QGeoCoordinate  coordinate          (void) const final;                                                                                     //+
     QGeoCoordinate  exitCoordinate      (void) const final;                                                                                     //+
@@ -85,7 +85,7 @@ public:
     
     double          amslEntryAlt        (void) const final;             //returns alt of first transect point
     double          amslExitAlt         (void) const final;             //returns alt of last transect point
- //   void            applyNewAltitude    (double newAltitude) final;     // watch TrStyle  
+    void            applyNewAltitude    (double newAltitude) final;                                                                             //+  
     
     double          specifiedFlightSpeed(void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
     double          specifiedGimbalYaw  (void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+

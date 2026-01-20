@@ -71,6 +71,7 @@ public:
     bool                    overrideSettingsGroupVisibility (const QString &name) final;
     bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
     void                    paletteOverride                 (const QString &colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
+    QStringList             complexMissionItemNames         (Vehicle *vehicle, const QStringList &complexMissionItemNames) final;
     QQmlApplicationEngine*  createQmlApplicationEngine      (QObject* parent) final;
 
 private slots:
