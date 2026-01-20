@@ -1,0 +1,97 @@
+name: Collect Artifact Sizes
+description: Query artifact sizes from GitHub API for all platform workflow runs
+
+inputs:
+  head-sha:
+    description: The commit SHA to find workflow runs for
+    required: true
+  output-file:
+    description: Output JSON file path
+    required: true
+    default: artifact-sizes.json
+
+outputs:
+  has-artifacts:
+    description: Whether any artifacts were found
+    value: ${{ steps.collect.outputs.has_artifacts }}
+
+runs:
+  using: composite
+  steps:
+    - name: Collect artifact sizes from API
+      id: collect
+      uses: actions/github-script@v8
+      env:
+        HEAD_SHA: ${{ inputs.head-sha }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
+      with:
+        script: |
+          const fs = require('fs');
+          const headSha = process.env.HEAD_SHA;
+          const outputFile = process.env.OUTPUT_FILE;
+
+          const runs = await github.rest.actions.listWorkflowRunsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            head_sha: headSha,
+            per_page: 100
+          });
+
+          const platformRuns = {};
+          const targetPlatforms = ['Linux', 'Windows', 'MacOS', 'Android'];
+
+          for (const run of runs.data.workflow_runs) {
+            if (targetPlatforms.includes(run.name) &&
+                run.status === 'completed' &&
+                run.conclusion === 'success') {
+              platformRuns[run.name] = run.id;
+            }
+          }
+
+          const extensionMap = {
+            'Linux': '.AppImage',
+            'Windows': '.exe',
+            'MacOS': '.dmg',
+            'Android': '.apk'
+          };
+
+          const artifacts = [];
+          for (const [platform, runId] of Object.entries(platformRuns)) {
+            const artifactsResponse = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+
+            for (const artifact of artifactsResponse.data.artifacts) {
+              if (artifact.name.startsWith('test-results') || artifact.name === 'coverage-report') {
+                continue;
+              }
+
+              const ext = extensionMap[platform] || '';
+              const displayName = artifact.name + ext;
+              const sizeBytes = artifact.size_in_bytes;
+              const sizeMB = sizeBytes / 1024 / 1024;
+              const sizeHuman = sizeMB >= 1024
+                ? `${(sizeMB / 1024).toFixed(2)} GB`
+                : `${sizeMB.toFixed(2)} MB`;
+
+              artifacts.push({
+                name: displayName,
+                size_bytes: sizeBytes,
+                size_human: sizeHuman
+              });
+            }
+          }
+
+          artifacts.sort((a, b) => a.name.localeCompare(b.name));
+
+          if (artifacts.length > 0) {
+            fs.writeFileSync(outputFile, JSON.stringify({ artifacts }, null, 2));
+            console.log(`Wrote ${artifacts.length} artifacts to ${outputFile}`);
+            console.log(JSON.stringify({ artifacts }, null, 2));
+            core.setOutput('has_artifacts', 'true');
+          } else {
+            console.log('No artifacts found');
+            core.setOutput('has_artifacts', 'false');
+          }

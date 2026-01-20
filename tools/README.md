@@ -8,7 +8,6 @@ This directory contains development tools, scripts, and configuration files for 
 tools/
 ├── analyze.sh               # Static analysis (clang-tidy, cppcheck)
 ├── check-deps.sh            # Check for outdated dependencies
-├── check-sizes.py           # Report artifact sizes
 ├── clean.sh                 # Clean build artifacts and caches
 ├── common.sh                # Shared shell functions
 ├── coverage.sh              # Code coverage reports
@@ -159,16 +158,6 @@ Check for outdated dependencies and submodules.
 ./tools/check-deps.sh --submodules # Check git submodules only
 ./tools/check-deps.sh --qt         # Check Qt version
 ./tools/check-deps.sh --update     # Update submodules to latest
-```
-
-### check-sizes.py
-
-Report artifact sizes. Used by CI to track build output sizes.
-
-```bash
-./tools/check-sizes.py build/              # Report local build artifacts
-./tools/check-sizes.py artifacts/ --json   # Output JSON (for CI)
-./tools/check-sizes.py --markdown          # Output markdown table
 ```
 
 ### generate-docs.sh
