@@ -36,33 +36,35 @@ public:
     Q_PROPERTY(Fact*            sprayWidth         READ sprayWidth         CONSTANT)
 
 
-    Q_PROPERTY(QVariantList     visualTransectPoints READ visualTransectPoints NOTIFY visualTransectPointsChanged)
-    Q_PROPERTY(QGeoCoordinate   centerCoordinate       READ centerCoordinate       WRITE setCenterCoordinate)
+    Q_PROPERTY(QList<QGeoCoordinate>     visualTransectPoints READ visualTransectPoints NOTIFY visualTransectPointsChanged)
 
     Fact* speed         (void) { return &_speedFact; }
     Fact* altitude      (void) { return &_altitudeFact; }
     Fact* sprayWidth    (void) { return &_sprayWidthFact; }
 
     QGCMapPolygon* sprayAreaPolygon (void) { return &_sprayAreaPolygon; }
-    QVariantList visualTransectPoints(void) { return _visualTransectPoints; }
-
-    void            setCenterCoordinate (const QGeoCoordinate& coordinate) { _sprayAreaPolygon.setCenter(coordinate); }       
+    QList<QGeoCoordinate> visualTransectPoints(void) { return _visualTransectPoints; }
+     
 
 
     // Overrides from ComplexMissionItem  
     QString         patternName         (void) const final { return name; }                                                                     //+
-    double          minAMSLAltitude     (void) const final;                             //CONNECT REBUILD_TRANSECT | dunno, watch TrStyle
-    double          maxAMSLAltitude     (void) const final;                             //CONNECT REBUILD_TRANSECT | dunno, watch TrStyle
-    double          complexDistance     (void) const final { return _complexDistance; }; //CONNECT REBUILD_TRANSECT
-    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;  //WIP
-    double          greatestDistanceTo  (const QGeoCoordinate &other) const final { return _greatestDistance; }; //CONNECT REBUILD_TRANSECT     
-    QString         presetsSettingsGroup(void) { return settingsGroup; };  //+- Need to figure out with settingsgroup
-    void            loadPreset          (const QString& name); //dunno, watch survey
-    void            savePreset          (const QString& name); // dunno, watch survey
-    void            addKMLVisuals       (KMLPlanDomDocument& domDocument) final; //dunno, watch TrStyle  
+    
+    double          minAMSLAltitude     (void) const final;                         //calculate max alt from every transect points
+    double          maxAMSLAltitude     (void) const final;                         //calculate min alt from every transect points
+    
+    double          complexDistance     (void) const final;                                                                                     //+
+    double          greatestDistanceTo  (const QGeoCoordinate &other) const final;                                                              //+     
+    
+    // QString         presetsSettingsGroup(void) { return settingsGroup; }    //+- Need to figure out with settingsgroup
+    // void            loadPreset          (const QString& name);              //dunno, watch survey
+    // void            savePreset          (const QString& name);              //dunno, watch survey
+    
+    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final; //watch TrStyle
+//    void            addKMLVisuals       (KMLPlanDomDocument& domDocument) final;                                            //dunno, watch TrStyle  
     
     // Overrides from VisualMissionItem  
-    bool            dirty               (void) const final { return _dirty; }  //monitor dirty state
+    bool            dirty               (void) const final { return _dirty; }                                                                   //+
     bool            isSimpleItem        (void) const final { return false; }                                                                    //+  
     bool            isStandaloneCoordinate(void) const final { return false; }                                                                  //+
     bool            specifiesCoordinate (void) const final { return true; }                                                                     //+
@@ -70,27 +72,32 @@ public:
     QString         commandDescription  (void) const final { return tr("Spray"); }                                                              //+
     QString         commandName         (void) const final { return tr("Spray"); }                                                              //+
     QString         abbreviation        (void) const final { return tr("SP"); }                                                                 //+
-    QGeoCoordinate  coordinate          (void) const final { return _coordinate; }      //CONNECT REBUILD_TRANSECT | first in visualTransect
-    QGeoCoordinate  exitCoordinate      (void) const final { return _exitCoordinate; }  //CONNECT REBUILD_TRANSECT| last in visualTransect
-    double          amslEntryAlt        (void) const = 0;                               //CONNECT REBUILD_TRANSECT
-    double          amslExitAlt         (void) const = 0;                               //CONNECT REBUILD_TRANSECT
-    int             sequenceNumber      (void) const final { return _sequenceNumber; }  // CONNECT REBUILD_TRANSECT
-    double          specifiedFlightSpeed(void) final;  // implement in .cc || must read from _speedFact and be connected to updates
+    QString         mapVisualQML        (void) const final { return QStringLiteral("SprayMapVisual.qml"); } //+- need to implement QML   
+    
+    QGeoCoordinate  coordinate          (void) const final;                                                                                     //+
+    QGeoCoordinate  exitCoordinate      (void) const final;                                                                                     //+
+    bool            exitCoordinateSameAsEntry(void) const final { return false; }                                                               //+
+    void            setCoordinate       (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }                                      //+  
+    
+    int             sequenceNumber      (void) const final { return _sequenceNumber; }                                                          //+
+    void            setSequenceNumber   (int sequenceNumber) final;                                                                             //+  
+    int             lastSequenceNumber  (void) const final;                                                                                     //+  
+    
+    double          amslEntryAlt        (void) const final;             //returns alt of first transect point
+    double          amslExitAlt         (void) const final;             //returns alt of last transect point
+ //   void            applyNewAltitude    (double newAltitude) final;     // watch TrStyle  
+    
+    double          specifiedFlightSpeed(void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
     double          specifiedGimbalYaw  (void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
     double          specifiedGimbalPitch(void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
-    QString         mapVisualQML        (void) const final { return QStringLiteral("SprayMapVisual.qml"); } //+- need to implement QML   
-    void            save                (QJsonArray& missionItems) final; //need to implement watch StructureScan
-    void            appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final; //need to implement watch TrStyle  
-    void            applyNewAltitude    (double newAltitude) final; // watch TrStyle  
+    
+    void            save                (QJsonArray& missionItems) final;                                                                       //+
+    void            appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;                                         //+  
     double          additionalTimeDelay (void) const final {return 0; }                                                                         //+
-    bool            exitCoordinateSameAsEntry(void) const final { return false; }                                                               //+  
-    void            setDirty            (bool dirty) final; // watch TrStyle  
-    void            setCoordinate       (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }                                      //+
-    void            setSequenceNumber   (int sequenceNumber) final; //watch TrStyle  
-    int             lastSequenceNumber  (void) const final; //watch TrStyle  
-    ReadyForSaveState   readyForSaveState(void) const final; //watch Survey  
-    void            setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus) final; //watch TrStyle  
-
+    void            setDirty            (bool dirty) final;                                                                                     //+  
+    ReadyForSaveState   readyForSaveState(void) const final;                                                                                    //+  
+//    void            setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus) final;    //watch TrStyle  
+//---------------------------------------------
 
     static const QString name;
 
@@ -101,31 +108,33 @@ public:
     static constexpr const char* sprayWidthName =             "SprayWidth";
 
 signals:
-    void sprayParametersChanged(void);
-    void visualTransectPointsChanged(void);
-    void complexDistanceChanged(void);
+    void visualTransectPointsChanged                    (void); //emitted by _rebuildTransects, must call: complexDistanceChanged, greatestDistanceToChanged, coordinateChanged, exitCoordinateChanged
+    void _updateFlightPathSegmentsSignal                (void);
+
+private slots: 
+    void _setDirty                                  (void);                                                                                     //+
+    void _setIfDirty                                (bool dirty);                                                                               //+
+    void _rebuildTransects                          (void);                                                                                     //+
+    void _updateFlightPathSegmentsDontCallDirectly  (void);                                                                                     //+
+
 
 private:
-    void _updateFlightPath(void);
-    void _setDirty(void);
-    void _generateFlightPath(void);
-    void _calculateSprayPattern(void);
-    void _recalcComplexDistance(void);
 
+    void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
+    void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
+    
     QMap<QString, FactMetaData*> _metaDataMap;
+
+    QList<QGeoCoordinate>   _visualTransectPoints;              ///< Used to draw the flight path visuals on the screen
 
     SettingsFact    _speedFact;
     SettingsFact    _altitudeFact;
     SettingsFact    _sprayWidthFact;
     QGCMapPolygon   _sprayAreaPolygon;
-    QVariantList    _visualTransectPoints;  // Points for visualization
-    double          _complexDistance = 0.0;  
+
+    int             _sequenceNumber = 0;
 
     static constexpr const char* _jsonSpeedKey =              "speed";
     static constexpr const char* _jsonAltitudeKey =           "altitude";
     static constexpr const char* _jsonSprayWidthKey =         "sprayWidth";
-
-    static const double _defaultSpeed;
-    static const double _defaultAltitude;
-    static const double _defaultSprayWidth;
 };

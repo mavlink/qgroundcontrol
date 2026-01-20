@@ -7,7 +7,7 @@
             "id":                   216,
             "comment":              "MAV_CMD_DO_SPRAYER",
             "description":          "Toggle sprayer",
-            "paramRemove":          "2,3,4",
+            "paramRemove":          "2,3,4,5,6,7",
             "category":             "Agriculture",
             "param1": {
                 "label":            "Sprayer Enable",
