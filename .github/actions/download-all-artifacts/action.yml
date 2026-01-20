@@ -49,7 +49,12 @@ runs:
         done
 
         echo "Downloaded artifacts:"
-        find artifacts -type f \( -name "*.apk" -o -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.ipa" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" \) 2>/dev/null | while read -r f; do
-          SIZE=$(du -h "$f" | cut -f1)
-          echo "  - $(basename "$f"): $SIZE"
-        done || echo "  (no artifacts found)"
+        ARTIFACT_FILES=$(find artifacts -type f \( -name "*.apk" -o -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.ipa" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" \) 2>/dev/null)
+        if [ -z "$ARTIFACT_FILES" ]; then
+          echo "  (no artifacts found)"
+        else
+          echo "$ARTIFACT_FILES" | while read -r f; do
+            SIZE=$(du -h "$f" | cut -f1)
+            echo "  - $(basename "$f"): $SIZE"
+          done
+        fi
