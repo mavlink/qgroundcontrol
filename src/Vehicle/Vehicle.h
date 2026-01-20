@@ -27,6 +27,7 @@
 #include "VehicleGeneratorFactGroup.h"
 #include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSFactGroup.h"
+#include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleHygrometerFactGroup.h"
 #include "VehicleLocalPositionFactGroup.h"
 #include "VehicleLocalPositionSetpointFactGroup.h"
@@ -243,6 +244,7 @@ public:
     Q_PROPERTY(FactGroup*           vehicle         READ vehicleFactGroup           CONSTANT)
     Q_PROPERTY(FactGroup*           gps             READ gpsFactGroup               CONSTANT)
     Q_PROPERTY(FactGroup*           gps2            READ gps2FactGroup              CONSTANT)
+    Q_PROPERTY(FactGroup*           gpsAggregate    READ gpsAggregateFactGroup      CONSTANT)
     Q_PROPERTY(FactGroup*           wind            READ windFactGroup              CONSTANT)
     Q_PROPERTY(FactGroup*           vibration       READ vibrationFactGroup         CONSTANT)
     Q_PROPERTY(FactGroup*           temperature     READ temperatureFactGroup       CONSTANT)
@@ -569,6 +571,7 @@ public:
     FactGroup* vehicleFactGroup             () { return _vehicleFactGroup; }
     FactGroup* gpsFactGroup                 () { return &_gpsFactGroup; }
     FactGroup* gps2FactGroup                () { return &_gps2FactGroup; }
+    FactGroup* gpsAggregateFactGroup        () { return &_gpsAggregateFactGroup; }
     FactGroup* windFactGroup                () { return &_windFactGroup; }
     FactGroup* vibrationFactGroup           () { return &_vibrationFactGroup; }
     FactGroup* temperatureFactGroup         () { return &_temperatureFactGroup; }
@@ -1196,6 +1199,7 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     const QString _vehicleFactGroupName =            QStringLiteral("vehicle");
     const QString _gpsFactGroupName =                QStringLiteral("gps");
     const QString _gps2FactGroupName =               QStringLiteral("gps2");
+    const QString _gpsAggregateFactGroupName =       QStringLiteral("gpsAggregate");
     const QString _windFactGroupName =               QStringLiteral("wind");
     const QString _vibrationFactGroupName =          QStringLiteral("vibration");
     const QString _temperatureFactGroupName =        QStringLiteral("temperature");
@@ -1214,6 +1218,7 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup             _gpsFactGroup;
     VehicleGPS2FactGroup            _gps2FactGroup;
+    VehicleGPSAggregateFactGroup    _gpsAggregateFactGroup;
     VehicleWindFactGroup            _windFactGroup;
     VehicleVibrationFactGroup       _vibrationFactGroup;
     VehicleTemperatureFactGroup     _temperatureFactGroup;

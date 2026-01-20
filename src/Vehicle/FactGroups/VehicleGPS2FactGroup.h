@@ -8,7 +8,10 @@ class VehicleGPS2FactGroup : public VehicleGPSFactGroup
 
 public:
     explicit VehicleGPS2FactGroup(QObject *parent = nullptr)
-        : VehicleGPSFactGroup(parent) {}
+        : VehicleGPSFactGroup(parent)
+    {
+        _gnssIntegrityId = 1;
+    }
 
     // Overrides from VehicleGPSFactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
