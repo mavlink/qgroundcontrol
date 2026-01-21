@@ -43,6 +43,15 @@ cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation
 option(QGC_UTM_ADAPTER "Enable UTM (Unmanned Traffic Management) Adapter" OFF)
 option(QGC_VIEWER3D "Enable 3D Viewer (requires Qt Quick 3D)" ON)
 
+# ============================================================================
+# Compression Format Options
+# ============================================================================
+# Core formats (gzip, xz, zstd, zip) are always enabled.
+# These optional formats are rarely used in the drone ecosystem.
+
+option(QGC_ENABLE_BZIP2 "Enable BZip2 decompression support" OFF)
+option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
+
 # MAVLink Inspector is disabled by default due to GPL licensing of QtCharts
 # option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable MAVLink Inspector" OFF)
 

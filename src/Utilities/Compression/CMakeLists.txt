@@ -1,7 +1,8 @@
 # ============================================================================
 # Decompression Subsystem
 # Unified decompression using libarchive (decompression-only)
-# Formats: ZIP, GZIP, XZ/LZMA, ZSTD, LZ4, BZip2
+# Core formats: ZIP, GZIP, XZ/LZMA, ZSTD (always enabled)
+# Optional formats: LZ4, BZip2 (controlled by QGC_ENABLE_LZ4, QGC_ENABLE_BZIP2)
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
@@ -78,6 +79,7 @@ CPMAddPackage(
     GITHUB_REPOSITORY tukaani-project/xz
     GIT_TAG v5.8.2
     OPTIONS
+        "BUILD_TESTING OFF"
         "BUILD_SHARED_LIBS OFF"
         "XZ_TOOL_XZ OFF"
         "XZ_TOOL_XZDEC OFF"
@@ -118,6 +120,11 @@ endif()
 # Zstandard (ZSTD) Integration
 # ============================================================================
 
+# Suppress CMake warning about MSVC not being an ASM assembler (CMP0194)
+if(POLICY CMP0194)
+    set(CMAKE_POLICY_DEFAULT_CMP0194 NEW CACHE STRING "" FORCE)
+endif()
+
 CPMAddPackage(
     NAME zstd
     VERSION 1.5.7
@@ -155,38 +162,40 @@ else()
 endif()
 
 # ============================================================================
-# LZ4 Integration (Fast compression)
+# LZ4 Integration (Fast compression) - Optional
 # ============================================================================
 
-CPMAddPackage(
-    NAME lz4
-    VERSION 1.10.0
-    GITHUB_REPOSITORY lz4/lz4
-    GIT_TAG v1.10.0
-    SOURCE_SUBDIR build/cmake
-    OPTIONS
-        "LZ4_BUILD_CLI OFF"
-        "LZ4_BUILD_LEGACY_LZ4C OFF"
-        "BUILD_SHARED_LIBS OFF"
-        "BUILD_STATIC_LIBS ON"
-)
+if(QGC_ENABLE_LZ4)
+    CPMAddPackage(
+        NAME lz4
+        VERSION 1.10.0
+        GITHUB_REPOSITORY lz4/lz4
+        GIT_TAG v1.10.0
+        SOURCE_SUBDIR build/cmake
+        OPTIONS
+            "LZ4_BUILD_CLI OFF"
+            "LZ4_BUILD_LEGACY_LZ4C OFF"
+            "BUILD_SHARED_LIBS OFF"
+            "BUILD_STATIC_LIBS ON"
+    )
 
-if(TARGET lz4_static)
-    # Help libarchive find our LZ4
-    set(LZ4_INCLUDE_DIR "${lz4_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
-    set(LZ4_LIBRARY "lz4_static" CACHE STRING "" FORCE)
-    set(LZ4_LIBRARIES "lz4_static" CACHE STRING "" FORCE)
-    set(LZ4_FOUND TRUE CACHE BOOL "" FORCE)
-    if(NOT TARGET LZ4::LZ4)
-        add_library(LZ4::LZ4 ALIAS lz4_static)
+    if(TARGET lz4_static)
+        # Help libarchive find our LZ4
+        set(LZ4_INCLUDE_DIR "${lz4_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
+        set(LZ4_LIBRARY "lz4_static" CACHE STRING "" FORCE)
+        set(LZ4_LIBRARIES "lz4_static" CACHE STRING "" FORCE)
+        set(LZ4_FOUND TRUE CACHE BOOL "" FORCE)
+        if(NOT TARGET LZ4::LZ4)
+            add_library(LZ4::LZ4 ALIAS lz4_static)
+        endif()
+        message(STATUS "LZ4 support enabled")
+    else()
+        message(FATAL_ERROR "lz4_static target not found")
     endif()
-    message(STATUS "LZ4 support enabled")
-else()
-    message(FATAL_ERROR "lz4_static target not found")
 endif()
 
 # ============================================================================
-# BZip2 Integration (official repo with CMake support)
+# BZip2 Integration (official repo with CMake support) - Optional
 # ============================================================================
 # NOTE: Using commit from master branch because:
 # - Official releases (1.0.8 and earlier) do not include CMakeLists.txt
@@ -194,38 +203,53 @@ endif()
 # - Risk: Commit may become unavailable if repo history is rewritten
 # - TODO: Update to tagged release when bzip2 publishes one with CMake support
 
-CPMAddPackage(
-    NAME bzip2
-    VERSION 1.0.8
-    GIT_REPOSITORY https://gitlab.com/bzip2/bzip2.git
-    GIT_TAG 66c46b8c9436613fd81bc5d03f63a61933a4dcc3
-    OPTIONS
-        "ENABLE_LIB_ONLY ON"
-        "ENABLE_SHARED_LIB OFF"
-        "ENABLE_STATIC_LIB ON"
-        "ENABLE_APP OFF"
-        "ENABLE_DOCS OFF"
-        "ENABLE_EXAMPLES OFF"
-        "ENABLE_TESTS OFF"
-)
+if(QGC_ENABLE_BZIP2)
+    CPMAddPackage(
+        NAME bzip2
+        VERSION 1.0.8
+        GIT_REPOSITORY https://gitlab.com/bzip2/bzip2.git
+        GIT_TAG 66c46b8c9436613fd81bc5d03f63a61933a4dcc3
+        OPTIONS
+            "ENABLE_LIB_ONLY ON"
+            "ENABLE_SHARED_LIB OFF"
+            "ENABLE_STATIC_LIB ON"
+            "ENABLE_APP OFF"
+            "ENABLE_DOCS OFF"
+            "ENABLE_EXAMPLES OFF"
+            "ENABLE_TESTS OFF"
+    )
 
-if(TARGET bz2_static)
-    # Help libarchive/minizip find our BZip2
-    set(BZIP2_INCLUDE_DIR "${bzip2_SOURCE_DIR}" CACHE PATH "" FORCE)
-    set(BZIP2_LIBRARY "bz2_static" CACHE STRING "" FORCE)
-    set(BZIP2_FOUND TRUE CACHE BOOL "" FORCE)
-    set(BZIP2_LIBRARIES "bz2_static" CACHE STRING "" FORCE)
-    if(NOT TARGET BZip2::BZip2)
-        add_library(BZip2::BZip2 ALIAS bz2_static)
+    if(TARGET bz2_static)
+        # Help libarchive/minizip find our BZip2
+        set(BZIP2_INCLUDE_DIR "${bzip2_SOURCE_DIR}" CACHE PATH "" FORCE)
+        set(BZIP2_LIBRARY "bz2_static" CACHE STRING "" FORCE)
+        set(BZIP2_FOUND TRUE CACHE BOOL "" FORCE)
+        set(BZIP2_LIBRARIES "bz2_static" CACHE STRING "" FORCE)
+        if(NOT TARGET BZip2::BZip2)
+            add_library(BZip2::BZip2 ALIAS bz2_static)
+        endif()
+        message(STATUS "BZip2 support enabled")
+    else()
+        message(FATAL_ERROR "bz2_static target not found")
     endif()
-    message(STATUS "BZip2 support enabled")
-else()
-    message(FATAL_ERROR "bz2_static target not found")
 endif()
 
 # ============================================================================
 # libarchive Integration (Full-featured C library)
 # ============================================================================
+
+# Configure optional format support based on QGC options
+if(QGC_ENABLE_BZIP2)
+    set(_LIBARCHIVE_BZIP2 "ON")
+else()
+    set(_LIBARCHIVE_BZIP2 "OFF")
+endif()
+
+if(QGC_ENABLE_LZ4)
+    set(_LIBARCHIVE_LZ4 "ON")
+else()
+    set(_LIBARCHIVE_LZ4 "OFF")
+endif()
 
 CPMAddPackage(
     NAME libarchive
@@ -233,32 +257,52 @@ CPMAddPackage(
     GITHUB_REPOSITORY libarchive/libarchive
     GIT_TAG v3.8.4
     OPTIONS
+        "ENABLE_WERROR OFF"
         "ENABLE_TEST OFF"
         "ENABLE_INSTALL OFF"
+        # Disable CLI tools
         "ENABLE_TAR OFF"
         "ENABLE_CPIO OFF"
         "ENABLE_CAT OFF"
         "ENABLE_UNZIP OFF"
+        # Disable unused features
         "ENABLE_ACL OFF"
         "ENABLE_XATTR OFF"
         "ENABLE_ICONV OFF"
-        "ENABLE_PCRE2POSIX OFF"
-        "ENABLE_LIBXML2 OFF"
-        "ENABLE_EXPAT OFF"
-        "ENABLE_ZLIB ON"
-        "ENABLE_LZMA ON"
-        "ENABLE_BZip2 ON"
-        "ENABLE_ZSTD ON"
-        "ENABLE_LIBB2 OFF"
-        "ENABLE_LZ4 ON"
-        "ENABLE_LIBMD OFF"
+        # Disable crypto (not needed for decompression)
         "ENABLE_OPENSSL OFF"
         "ENABLE_MBEDTLS OFF"
+        "ENABLE_NETTLE OFF"
+        "ENABLE_CNG OFF"
+        "ENABLE_LIBMD OFF"
+        "ENABLE_LIBB2 OFF"
+        # Disable XML/regex (not needed for decompression)
+        "ENABLE_LIBXML2 OFF"
+        "ENABLE_EXPAT OFF"
+        "ENABLE_PCREPOSIX OFF"
+        "ENABLE_PCRE2POSIX OFF"
+        # Skip PCREPOSIX block entirely (has bug: ENABLE_LIBGCC OFF causes fatal error)
+        "POSIX_REGEX_LIB LIBC"
+        # Disable unused compression formats
+        "ENABLE_LZO OFF"
+        "ENABLE_LIBGCC OFF"
+        # Enable required formats
+        "ENABLE_ZLIB ON"
+        "ENABLE_LZMA ON"
+        "ENABLE_ZSTD ON"
+        "ENABLE_BZip2 ${_LIBARCHIVE_BZIP2}"
+        "ENABLE_LZ4 ${_LIBARCHIVE_LZ4}"
 )
 
 if(TARGET archive_static)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE archive_static)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE LIBARCHIVE_STATIC)
+    if(QGC_ENABLE_BZIP2)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BZIP2)
+    endif()
+    if(QGC_ENABLE_LZ4)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_LZ4)
+    endif()
     message(STATUS "libarchive support enabled")
 else()
     message(FATAL_ERROR "libarchive target not found")
