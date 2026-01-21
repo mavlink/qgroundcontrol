@@ -109,12 +109,16 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceWithQJsonDocument()
 void QGCStreamingDecompressionTest::_testDecompressDeviceFormats()
 {
     // Test all supported compression formats
-    const QStringList formats = {
+    QStringList formats = {
         ":/unittest/manifest.json.gz",
         ":/unittest/manifest.json.xz",
         ":/unittest/manifest.json.zst",
+#ifdef QGC_ENABLE_BZIP2
         ":/unittest/manifest.json.bz2",
-        ":/unittest/manifest.json.lz4"
+#endif
+#ifdef QGC_ENABLE_LZ4
+        ":/unittest/manifest.json.lz4",
+#endif
     };
 
     for (const QString &format : formats) {
