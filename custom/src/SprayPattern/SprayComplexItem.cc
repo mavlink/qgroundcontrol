@@ -39,15 +39,21 @@ SprayComplexItem::SprayComplexItem(PlanMasterController* masterController, bool 
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&SprayComplexItem::_updateFlightPathSegmentsSignal));
 
     _editorQml = "qrc:/qml/QGroundControl/Controls/SprayItemEditor.qml";
-    connect(&_altitudeFact,         &Fact::valueChanged,         this,       &SprayComplexItem::_rebuildTransects);
-    connect(&_sprayWidthFact,       &Fact::valueChanged,         this,       &SprayComplexItem::_rebuildTransects);
-    connect(&_sprayAreaPolygon,     &QGCMapPolygon::pathChanged, this,       &SprayComplexItem::_rebuildTransects);
+    connect(&_altitudeFact,         &Fact::valueChanged,                    this,   &SprayComplexItem::_rebuildTransects);
+    connect(&_sprayWidthFact,       &Fact::valueChanged,                    this,   &SprayComplexItem::_rebuildTransects);
+    connect(&_sprayAreaPolygon,     &QGCMapPolygon::pathChanged,            this,   &SprayComplexItem::_rebuildTransects);
 
 
-    connect(&_altitudeFact,         &Fact::valueChanged,         this,       &SprayComplexItem::_setDirty);
-    connect(&_sprayWidthFact,       &Fact::valueChanged,         this,       &SprayComplexItem::_setDirty);
-    connect(&_speedFact,            &Fact::valueChanged,         this,       &SprayComplexItem::_setDirty);
-    connect(&_sprayAreaPolygon,     &QGCMapPolygon::dirtyChanged,this,       &SprayComplexItem::_setIfDirty);
+    connect(&_altitudeFact,         &Fact::valueChanged,                    this,   &SprayComplexItem::_setDirty);
+    connect(&_sprayWidthFact,       &Fact::valueChanged,                    this,   &SprayComplexItem::_setDirty);
+    connect(&_speedFact,            &Fact::valueChanged,                    this,   &SprayComplexItem::_setDirty);
+    connect(&_sprayAreaPolygon,     &QGCMapPolygon::dirtyChanged,           this,   &SprayComplexItem::_setIfDirty);
+
+    connect(&_sprayAreaPolygon,     &QGCMapPolygon::isValidChanged,         this,   &SprayComplexItem::_updateWizardMode);
+    connect(&_sprayAreaPolygon,     &QGCMapPolygon::traceModeChanged,       this,   &SprayComplexItem::_updateWizardMode);
+
+    connect(&_sprayAreaPolygon,     &QGCMapPolygon::isValidChanged,         this,   &SprayComplexItem::readyForSaveStateChanged);
+    connect(this,                   &SprayComplexItem::wizardModeChanged,   this,   &SprayComplexItem::readyForSaveStateChanged);
 
     connect(this, &SprayComplexItem::visualTransectPointsChanged, this, &SprayComplexItem::minAMSLAltitudeChanged);
     connect(this, &SprayComplexItem::visualTransectPointsChanged, this, &SprayComplexItem::maxAMSLAltitudeChanged);
@@ -77,6 +83,13 @@ void SprayComplexItem::setDirty(bool dirty)
         emit dirtyChanged(_dirty);
     }
 }
+void SprayComplexItem::_updateWizardMode(void)
+{
+    if (_sprayAreaPolygon.isValid() && !_sprayAreaPolygon.traceMode()) {
+        setWizardMode(false);
+    }
+}
+
 
 void SprayComplexItem::applyNewAltitude(double newAltitude)
 {
@@ -162,27 +175,39 @@ int SprayComplexItem::lastSequenceNumber(void) const
 
 double SprayComplexItem::minAMSLAltitude(void) const
 {
-    double minAlt = 9999.0;
-    for (int i=0; i<_visualTransectPoints.count(); i++) {
+    if (_visualTransectPoints.isEmpty()) {
+        return qQNaN();
+    }
+    double minAlt = _visualTransectPoints[0].altitude();
+    for (int i=1; i<_visualTransectPoints.count(); i++) {
         minAlt = qMin(minAlt, _visualTransectPoints[i].altitude());
     }
-    return 0; //figure out how to calc terrain altitude
+    return minAlt;
 }
 double SprayComplexItem::maxAMSLAltitude(void) const
 {
-    double maxAlt = -9999.0;
-    for (int i=0; i<_visualTransectPoints.count(); i++) {
+    if (_visualTransectPoints.isEmpty()) {
+        return qQNaN();
+    }
+    double maxAlt = _visualTransectPoints[0].altitude();
+    for (int i=1; i<_visualTransectPoints.count(); i++) {
         maxAlt = qMax(maxAlt, _visualTransectPoints[i].altitude());
     }
-    return 0; //figure out how to calc terrain altitude
+    return maxAlt;
 }
 double SprayComplexItem::amslEntryAlt(void) const
 {
-    return 0; //figure out how to calc terrain altitude
+    if (_visualTransectPoints.isEmpty()) {
+        return qQNaN();
+    }
+    return _visualTransectPoints[0].altitude();
 }
 double SprayComplexItem::amslExitAlt(void) const
 {
-    return 0; //figure out how to calc terrain altitude
+    if (_visualTransectPoints.isEmpty()) {
+        return qQNaN();
+    }
+    return _visualTransectPoints[_visualTransectPoints.size()-1].altitude();
 }
 
 double SprayComplexItem::complexDistance(void) const
@@ -216,9 +241,15 @@ QGeoCoordinate SprayComplexItem::exitCoordinate(void) const
 
 void SprayComplexItem::_rebuildTransects(void)
 {
+    if (_ignoreRecalc) {
+        return;
+    }
+
     if (_sprayAreaPolygon.count() < 3){
         return;
     }
+
+    _ignoreRecalc = true;
 
     //Convert polygon to NED
     QList<QPointF> polygonPoints;
@@ -366,6 +397,7 @@ void SprayComplexItem::_rebuildTransects(void)
 
     emit _updateFlightPathSegmentsSignal();
 
+    _ignoreRecalc = false;
 }
 void SprayComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
 {

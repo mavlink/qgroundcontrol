@@ -12,8 +12,6 @@
 #include "ComplexMissionItem.h"
 #include "SettingsFact.h"
 #include "QGCMapPolygon.h"
-#include "CameraCalc.h"
-#include "TerrainQuery.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -115,7 +113,8 @@ private slots:
     void _setDirty                                  (void);                                                                                     //+
     void _setIfDirty                                (bool dirty);                                                                               //+
     void _rebuildTransects                          (void);                                                                                     //+
-    void _updateFlightPathSegmentsDontCallDirectly  (void);                                                                                     //+
+    void _updateFlightPathSegmentsDontCallDirectly  (void);
+    void _updateWizardMode                          (void);                                                                                     //+
 
 
 private:
@@ -133,6 +132,7 @@ private:
     QGCMapPolygon   _sprayAreaPolygon;
 
     int             _sequenceNumber = 0;
+    bool            _ignoreRecalc = false;
 
     static constexpr const char* _jsonSpeedKey =              "speed";
     static constexpr const char* _jsonAltitudeKey =           "altitude";

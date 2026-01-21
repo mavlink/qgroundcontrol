@@ -32,5 +32,6 @@
   </qresource>
   <qresource prefix="/json">
     <file alias="Custom-MavCmdInfoCommon.json">src/json/Custom-MavCmdInfoCommon.json</file>
+    <file alias="Spray.SettingsGroup.json">src/SprayPattern/Spray.SettingsGroup.json</file>
   </qresource>
 </RCC>
