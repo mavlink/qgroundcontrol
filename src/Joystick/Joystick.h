@@ -93,6 +93,8 @@ public:
     Q_PROPERTY(QStringList              assignableActionTitles  READ    assignableActionTitles                              NOTIFY assignableActionsChanged)
     Q_PROPERTY(QStringList              buttonActions           READ    buttonActions                                       NOTIFY buttonActionsChanged)
     Q_PROPERTY(QString                  buttonActionNone        READ    buttonActionNone                                    CONSTANT)
+    Q_PROPERTY(QString                  linkedGroupId           READ    linkedGroupId           WRITE setLinkedGroupId      NOTIFY linkedGroupChanged)
+    Q_PROPERTY(QString                  linkedGroupRole         READ    linkedGroupRole         WRITE setLinkedGroupRole    NOTIFY linkedGroupChanged)
 
     Joystick(const QString &name, int axisCount, int buttonCount, int hatCount, QObject *parent = nullptr);
     virtual ~Joystick();
@@ -232,10 +234,6 @@ public:
     // PS5 adaptive trigger effects
     Q_INVOKABLE virtual bool sendEffect(const QByteArray &data) { Q_UNUSED(data); return false; }
 
-    // Apple SF Symbols (macOS/iOS)
-    Q_INVOKABLE virtual QString axisSFSymbol(int axis) const { Q_UNUSED(axis); return QString(); }
-    Q_INVOKABLE virtual QString buttonSFSymbol(int button) const { Q_UNUSED(button); return QString(); }
-
     // Binding queries (debug/UI)
     Q_INVOKABLE virtual QVariantMap getAxisBinding(int axis) const { Q_UNUSED(axis); return QVariantMap(); }
     Q_INVOKABLE virtual QVariantMap getButtonBinding(int button) const { Q_UNUSED(button); return QVariantMap(); }
@@ -247,9 +245,8 @@ public:
     // Real gamepad type (actual hardware vs mapped type)
     Q_INVOKABLE virtual QString realGamepadType() const { return QString(); }
 
-    // Type-specific labels (shows correct names for controller type, e.g., "Cross" vs "A")
+    // Type-specific button labels (shows correct names for controller type, e.g., "Cross" vs "A")
     Q_INVOKABLE virtual QString buttonLabelForType(int button) const { Q_UNUSED(button); return QString(); }
-    Q_INVOKABLE virtual QString axisLabelForType(int axis) const { Q_UNUSED(axis); return QString(); }
 
     // Haptic/Force Feedback support
     Q_INVOKABLE virtual bool hasHaptic() const { return false; }
@@ -294,6 +291,12 @@ public:
     const QmlObjectListModel *assignableActions() const { return _availableButtonActions; }
     QStringList assignableActionTitles() const { return _availableActionTitles; }
 
+    /// HOTAS/Multi-device linking (devices with same groupId act as single joystick)
+    QString linkedGroupId() const { return _linkedGroupId; }
+    void setLinkedGroupId(const QString &groupId);
+    QString linkedGroupRole() const { return _linkedGroupRole; }
+    void setLinkedGroupRole(const QString &role);
+
     void setFunctionAxis(AxisFunction_t function, int axis);
     int getFunctionAxis(AxisFunction_t function) const;
     void setAxisCalibration(int axis, const AxisCalibration_t &calibration);
@@ -315,6 +318,8 @@ signals:
     void assignableActionsChanged();
     void playerIndexChanged();
     void batteryStateChanged();
+    void connectionStateChanged(const QString &newState);
+    void linkedGroupChanged();
     void axisValues(float roll, float pitch, float yaw, float throttle);
     void startContinuousZoom(int direction);
     void stopContinuousZoom();
@@ -425,6 +430,10 @@ private:
     QElapsedTimer _axisElapsedTimer;
     QStringList _availableActionTitles;
     std::atomic<bool> _exitThread = false;    ///< true: signal thread to exit
+
+    // HOTAS/Multi-device linking
+    QString _linkedGroupId;
+    QString _linkedGroupRole;
 
     static constexpr const char *_rgFunctionSettingsKey[maxAxisFunction] = {
         "RollAxis",

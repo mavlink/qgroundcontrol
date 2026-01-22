@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QVector3D>
 
@@ -67,8 +69,6 @@ public:
     // Control labels
     QString axisLabel(int axis) const override;
     QString buttonLabel(int button) const override;
-    QString axisSFSymbol(int axis) const override;
-    QString buttonSFSymbol(int button) const override;
 
     // Mapping management
     QString getMapping() const override;
@@ -102,15 +102,14 @@ public:
     // Real gamepad type (actual hardware vs mapped type)
     QString realGamepadType() const override;
 
-    // Type-specific labels
+    // Type-specific button labels
     QString buttonLabelForType(int button) const override;
-    QString axisLabelForType(int axis) const override;
 
     // Haptic/Force Feedback support
     bool hasHaptic() const override;
     int hapticEffectsCount() const override;
     bool hapticRumbleSupported() const override;
-    bool hapticRumbleInit() override;
+    [[nodiscard]] bool hapticRumbleInit() override;
     bool hapticRumblePlay(float strength, quint32 durationMs) override;
     void hapticRumbleStop() override;
 
@@ -139,18 +138,12 @@ public:
     // Per-device custom mapping
     bool setMapping(const QString &mapping) override;
 
-    // Static methods for virtual joystick creation/destruction (used by tests)
-    static int createVirtualJoystick(const QString &name, int axisCount, int buttonCount, int hatCount);
-    static bool destroyVirtualJoystick(int instanceId);
-
-    static bool init();
-    static bool reloadMappings();
+    [[nodiscard]] static bool init();
     static void shutdown();
-    static void pumpEvents();
     static QMap<QString, Joystick*> discover();
 
 private:
-    bool _open() final;
+    [[nodiscard]] bool _open() final;
     void _close() final;
     bool _update() final;
 
@@ -161,45 +154,6 @@ private:
     quint64 _getProperties() const;
     bool _checkVirtualJoystick(const char *methodName) const;
     bool _hasGamepadCapability(const char *propertyName) const;
-    static QString _connectionStateToString(int state);
-    static QString _gamepadTypeEnumToString(int type);
-    static void _loadGamepadMappings();
-
-    // Static pre-open device queries
-    static QString _getNameForInstanceId(int instanceId);
-    static QString _getPathForInstanceId(int instanceId);
-    static QString _getGUIDForInstanceId(int instanceId);
-    static int _getVendorForInstanceId(int instanceId);
-    static int _getProductForInstanceId(int instanceId);
-    static int _getProductVersionForInstanceId(int instanceId);
-    static QString _getTypeForInstanceId(int instanceId);
-    static QString _getRealTypeForInstanceId(int instanceId);
-    static int _getPlayerIndexForInstanceId(int instanceId);
-
-    // Static type/string conversions
-    static QString _gamepadTypeToString(int type);
-    static int _gamepadTypeFromString(const QString &str);
-    static QString _gamepadAxisToString(int axis);
-    static int _gamepadAxisFromString(const QString &str);
-    static QString _gamepadButtonToString(int button);
-    static int _gamepadButtonFromString(const QString &str);
-
-    // Static thread safety
-    static void _lockJoysticks();
-    static void _unlockJoysticks();
-
-    // Static event/polling control
-    static void _setJoystickEventsEnabled(bool enabled);
-    static bool _joystickEventsEnabled();
-    static void _setGamepadEventsEnabled(bool enabled);
-    static bool _gamepadEventsEnabled();
-    static void _updateJoysticks();
-    static void _updateGamepads();
-
-    // Static utilities
-    static int _getInstanceIdFromPlayerIndex(int playerIndex);
-    static QVariantMap _getGUIDInfo(const QString &guid);
-    static int _addMappingsFromFile(const QString &filePath);
 
     QList<int> _gamepadAxes;
     QList<int> _nonGamepadAxes;
@@ -208,4 +162,33 @@ private:
     SDL_Joystick *_sdlJoystick = nullptr;
     SDL_Gamepad *_sdlGamepad = nullptr;
     SDL_Haptic *_sdlHaptic = nullptr;
+
+    // Cached sensor data (updated from events)
+    // Note: These are accessed from main thread only (via Qt::QueuedConnection)
+    // but marked atomic for defensive thread safety
+    QVector3D _cachedGyroData;
+    QVector3D _cachedAccelData;
+    std::atomic<bool> _gyroDataCached{false};
+    std::atomic<bool> _accelDataCached{false};
+
+    // Connection state tracking
+    QString _lastConnectionState;
+
+    // Axis drift detection
+    QVector<int> _initialAxisValues;
+    bool _driftWarningEmitted = false;
+
+public:
+    // Called by JoystickManager when sensor events are received
+    void updateCachedGyroData(const QVector3D &data);
+    void updateCachedAccelData(const QVector3D &data);
+    void checkConnectionStateChanged();
+
+    /// Check for axis drift (significant deviation from center at rest)
+    /// Returns list of axes with detected drift and their values
+    Q_INVOKABLE QVariantList detectAxisDrift(int threshold = 8000) const;
+
+signals:
+    /// Emitted when significant axis drift is detected on open
+    void axisDriftDetected(const QVariantList &driftingAxes);
 };

@@ -7,7 +7,7 @@
 #include <qserialport_p.h>
 #include <qserialportinfo_p.h>
 
-QGC_LOGGING_CATEGORY(AndroidSerialLog, "qgc.android.androidserial");
+QGC_LOGGING_CATEGORY(AndroidSerialLog, "Android.AndroidSerial");
 
 // TODO: Save Method Lookups
 

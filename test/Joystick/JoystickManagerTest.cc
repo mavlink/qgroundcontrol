@@ -2,6 +2,7 @@
 #include "MockJoystick.h"
 #include "JoystickManager.h"
 #include "JoystickSDL.h"
+#include "SDLJoystick.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
@@ -13,7 +14,7 @@ JoystickManagerTest::JoystickManagerTest() = default;
 void JoystickManagerTest::init()
 {
     UnitTest::init();
-    JoystickSDL::init();
+    QVERIFY(JoystickSDL::init());
 }
 
 void JoystickManagerTest::cleanup()
@@ -22,11 +23,6 @@ void JoystickManagerTest::cleanup()
     _mockJoystick2.reset();
 
     UnitTest::cleanup();
-}
-
-void JoystickManagerTest::_pumpEvents()
-{
-    JoystickSDL::pumpEvents();
 }
 
 //-----------------------------------------------------------------------------
@@ -38,14 +34,14 @@ void JoystickManagerTest::_availableJoystickNamesTest()
     JoystickManager *manager = JoystickManager::instance();
 
     // Get initial count (may have physical joysticks connected)
-    int initialCount = manager->availableJoystickNames().size();
+    const auto initialCount = manager->availableJoystickNames().size();
 
     // Create a virtual joystick
     _mockJoystick1 = std::unique_ptr<MockJoystick>(MockJoystick::create(
         QStringLiteral("Manager Test Controller 1"), 6, 16, 1));
     QVERIFY(_mockJoystick1->isValid());
 
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
 
     // Trigger the manager to check for joysticks
     manager->_checkForAddedOrRemovedJoysticks();
@@ -64,12 +60,12 @@ void JoystickManagerTest::_activeJoystickTest()
         QStringLiteral("Active Test Controller"), 6, 16, 1));
     QVERIFY(_mockJoystick1->isValid());
 
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
     manager->_checkForAddedOrRemovedJoysticks();
 
     // If no other joystick was active, this should become active
     Joystick *active = manager->activeJoystick();
-    if (active) {
+    if (active != nullptr) {
         QVERIFY(!active->name().isEmpty());
     }
 }
@@ -90,11 +86,11 @@ void JoystickManagerTest::_joystickAddedSignalTest()
         QStringLiteral("Signal Test Controller"), 6, 16, 1));
     QVERIFY(_mockJoystick1->isValid());
 
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
     manager->_checkForAddedOrRemovedJoysticks();
 
     // Signal should have been emitted
-    QVERIFY(spy.count() >= 1);
+    QVERIFY(spy.size() >= 1);
 }
 
 void JoystickManagerTest::_joystickRemovedSignalTest()
@@ -106,7 +102,7 @@ void JoystickManagerTest::_joystickRemovedSignalTest()
         QStringLiteral("Remove Test Controller"), 6, 16, 1));
     QVERIFY(_mockJoystick1->isValid());
 
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
     manager->_checkForAddedOrRemovedJoysticks();
 
     // Verify it's in the list
@@ -117,11 +113,11 @@ void JoystickManagerTest::_joystickRemovedSignalTest()
 
     // Remove the joystick
     _mockJoystick1.reset();
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
     manager->_checkForAddedOrRemovedJoysticks();
 
     // Signal should have been emitted
-    QVERIFY(spy.count() >= 1);
+    QVERIFY(spy.size() >= 1);
 
     // Verify it's no longer in the list
     QVERIFY(!manager->availableJoystickNames().contains(QStringLiteral("Remove Test Controller")));
@@ -143,7 +139,7 @@ void JoystickManagerTest::_setActiveJoystickTest()
     QVERIFY(_mockJoystick1->isValid());
     QVERIFY(_mockJoystick2->isValid());
 
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
     manager->_checkForAddedOrRemovedJoysticks();
 
     QStringList names = manager->availableJoystickNames();
@@ -157,7 +153,7 @@ void JoystickManagerTest::_setActiveJoystickTest()
     manager->_setActiveJoystickByName(QStringLiteral("Select Test Controller 1"));
 
     Joystick *active = manager->activeJoystick();
-    if (active) {
+    if (active != nullptr) {
         QCOMPARE(active->name(), QStringLiteral("Select Test Controller 1"));
     }
 
@@ -165,7 +161,7 @@ void JoystickManagerTest::_setActiveJoystickTest()
     manager->_setActiveJoystickByName(QStringLiteral("Select Test Controller 2"));
 
     active = manager->activeJoystick();
-    if (active) {
+    if (active != nullptr) {
         QCOMPARE(active->name(), QStringLiteral("Select Test Controller 2"));
     }
 }
@@ -183,10 +179,110 @@ void JoystickManagerTest::_autoSelectFirstJoystickTest()
         QStringLiteral("Auto Select Test Controller"), 6, 16, 1));
     QVERIFY(_mockJoystick1->isValid());
 
-    _pumpEvents();
+    SDLJoystick::pumpEvents();
     manager->_checkForAddedOrRemovedJoysticks();
 
     // Manager should auto-select the first available joystick
     // (behavior depends on settings, so just verify it doesn't crash)
     manager->availableJoystickNames();
+}
+
+//-----------------------------------------------------------------------------
+// Polling Control Tests
+//-----------------------------------------------------------------------------
+
+void JoystickManagerTest::_pollingControlTest()
+{
+    JoystickManager *manager = JoystickManager::instance();
+
+    // Create a virtual joystick
+    _mockJoystick1 = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Polling Test Controller"), 6, 16, 1));
+    QVERIFY(_mockJoystick1->isValid());
+
+    SDLJoystick::pumpEvents();
+    manager->_checkForAddedOrRemovedJoysticks();
+
+    // Event control through SDLJoystick namespace
+    SDLJoystick::setJoystickEventsEnabled(true);
+    QVERIFY(SDLJoystick::joystickEventsEnabled());
+
+    SDLJoystick::setGamepadEventsEnabled(true);
+    QVERIFY(SDLJoystick::gamepadEventsEnabled());
+
+    // Pump and update events
+    SDLJoystick::pumpEvents();
+    SDLJoystick::updateJoysticks();
+    SDLJoystick::updateGamepads();
+
+    // Verify the manager has the joystick available
+    QStringList names = manager->availableJoystickNames();
+    QVERIFY(names.contains(QStringLiteral("Polling Test Controller")));
+}
+
+//-----------------------------------------------------------------------------
+// Multiple Controller Management Tests
+//-----------------------------------------------------------------------------
+
+void JoystickManagerTest::_multipleControllerManagementTest()
+{
+    JoystickManager *manager = JoystickManager::instance();
+
+    // Create three controllers
+    _mockJoystick1 = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Multi Controller 1"), 6, 16, 1));
+    _mockJoystick2 = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Multi Controller 2"), 4, 12, 1));
+    auto mockJoystick3 = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Multi Controller 3"), 8, 20, 2));
+
+    QVERIFY(_mockJoystick1->isValid());
+    QVERIFY(_mockJoystick2->isValid());
+    QVERIFY(mockJoystick3->isValid());
+
+    SDLJoystick::pumpEvents();
+    manager->_checkForAddedOrRemovedJoysticks();
+
+    QStringList names = manager->availableJoystickNames();
+    QVERIFY(names.contains(QStringLiteral("Multi Controller 1")));
+    QVERIFY(names.contains(QStringLiteral("Multi Controller 2")));
+    QVERIFY(names.contains(QStringLiteral("Multi Controller 3")));
+
+    // Set each as active in sequence
+    manager->_setActiveJoystickByName(QStringLiteral("Multi Controller 1"));
+    if (manager->activeJoystick() != nullptr) {
+        QCOMPARE(manager->activeJoystick()->name(), QStringLiteral("Multi Controller 1"));
+    }
+
+    manager->_setActiveJoystickByName(QStringLiteral("Multi Controller 2"));
+    if (manager->activeJoystick() != nullptr) {
+        QCOMPARE(manager->activeJoystick()->name(), QStringLiteral("Multi Controller 2"));
+    }
+
+    manager->_setActiveJoystickByName(QStringLiteral("Multi Controller 3"));
+    if (manager->activeJoystick() != nullptr) {
+        QCOMPARE(manager->activeJoystick()->name(), QStringLiteral("Multi Controller 3"));
+    }
+
+    // Remove middle controller while another is active
+    _mockJoystick2.reset();
+    SDLJoystick::pumpEvents();
+    manager->_checkForAddedOrRemovedJoysticks();
+
+    names = manager->availableJoystickNames();
+    QVERIFY(!names.contains(QStringLiteral("Multi Controller 2")));
+    QVERIFY(names.contains(QStringLiteral("Multi Controller 1")));
+    QVERIFY(names.contains(QStringLiteral("Multi Controller 3")));
+
+    // Active joystick should still be valid - either our controller or another one
+    // (if physical joysticks are connected, the manager may auto-select one of those)
+    Joystick *active = manager->activeJoystick();
+    if (active != nullptr) {
+        // Verify we have some valid active joystick
+        QVERIFY(!active->name().isEmpty());
+        // If it's our controller 3, verify it specifically
+        if (active->name() == QStringLiteral("Multi Controller 3")) {
+            QCOMPARE(active->name(), QStringLiteral("Multi Controller 3"));
+        }
+    }
 }

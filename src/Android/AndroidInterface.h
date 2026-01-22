@@ -17,7 +17,6 @@ namespace AndroidInterface
     bool checkStoragePermissions();
     QString getSDCardPath();
     void setKeepScreenOn(bool on);
-    int getApiLevel();
 
     constexpr const char *kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 };

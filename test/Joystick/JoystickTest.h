@@ -66,6 +66,15 @@ private slots:
     // Button action tests
     void _buttonActionAssignmentTest();
 
+    // Connection state tests
+    void _connectionStateTest();
+
+    // Player index tests
+    void _playerIndexTest();
+
+    // Gamepad binding query tests
+    void _gamepadBindingQueryTest();
+
 private:
     JoystickSDL *_findJoystickByInstanceId(int instanceId);
     void _pumpEvents();

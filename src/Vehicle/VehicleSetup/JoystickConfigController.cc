@@ -21,12 +21,15 @@ JoystickConfigController::JoystickConfigController(QObject *parent)
     _calDefaultMaxValue =   32767;      ///< Default value for Max if not set
     _calRoughCenterDelta =  700;        ///< Delta around center point which is considered to be roughly centered (Note: PS5 controller has very noisy center, hence 700)
     _calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
-    _calSettleDelta =       600;        ///< Amount of delta which is considered no stick movement
+    _calSettleDelta =       1000;       ///< Amount of delta which is considered no stick movement (increased for noisy joysticks at extreme positions)
+    _stickDetectSettleMSecs = 300;      ///< Reduced settle time for joysticks (faster response than RC transmitters)
 }
 
 JoystickConfigController::~JoystickConfigController()
 {
-    _joystick->_stopPollingForConfiguration();
+    if (_joystick) {
+        _joystick->_stopPollingForConfiguration();
+    }
 }
 
 void JoystickConfigController::start(void)

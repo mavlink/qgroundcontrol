@@ -33,9 +33,13 @@ private slots:
     void _setActiveJoystickTest();
     void _autoSelectFirstJoystickTest();
 
-private:
-    void _pumpEvents();
+    // Polling control tests
+    void _pollingControlTest();
 
+    // Multiple controller handling tests
+    void _multipleControllerManagementTest();
+
+private:
     std::unique_ptr<MockJoystick> _mockJoystick1;
     std::unique_ptr<MockJoystick> _mockJoystick2;
 };

@@ -1,12 +1,10 @@
 #include "JoystickSDL.h"
 #include "JoystickManager.h"
+#include "SDLJoystick.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QIODevice>
 #include <QtCore/QMetaObject>
-#include <QtCore/QStandardPaths>
-#include <QtCore/QTextStream>
+#include <QtCore/QThread>
 
 #include <array>
 
@@ -14,14 +12,14 @@
 
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
-// Static discovery cache - persists between discover() calls to track joystick lifecycle
+/// Discovery cache - main thread only, cleared in shutdown()
 static QMap<QString, Joystick*> s_discoveryCache;
 
+/// SDL event watcher - uses Qt::QueuedConnection for thread safety
 static bool sdlEventWatcher(void *userdata, SDL_Event *event)
 {
     Q_UNUSED(userdata);
 
-    // Get manager instance once - may be null during shutdown
     JoystickManager *manager = JoystickManager::instance();
     if (!manager) {
         return true;
@@ -29,11 +27,19 @@ static bool sdlEventWatcher(void *userdata, SDL_Event *event)
 
     switch (event->type) {
     case SDL_EVENT_JOYSTICK_ADDED:
-    case SDL_EVENT_JOYSTICK_REMOVED:
-    case SDL_EVENT_GAMEPAD_ADDED:
-    case SDL_EVENT_GAMEPAD_REMOVED:
-        qCDebug(JoystickSDLLog) << "SDL device event:" << event->type;
+        qCInfo(JoystickSDLLog) << "SDL event: Joystick added, instance ID:" << event->jdevice.which;
         QMetaObject::invokeMethod(manager, "_checkForAddedOrRemovedJoysticks", Qt::QueuedConnection);
+        break;
+    case SDL_EVENT_JOYSTICK_REMOVED:
+        qCInfo(JoystickSDLLog) << "SDL event: Joystick removed, instance ID:" << event->jdevice.which;
+        QMetaObject::invokeMethod(manager, "_checkForAddedOrRemovedJoysticks", Qt::QueuedConnection);
+        break;
+    // Gamepad events ignored - SDL fires both joystick and gamepad events for gamepads
+    case SDL_EVENT_GAMEPAD_ADDED:
+        qCDebug(JoystickSDLLog) << "SDL event: Gamepad added (ignored, handled via joystick event), instance ID:" << event->gdevice.which;
+        break;
+    case SDL_EVENT_GAMEPAD_REMOVED:
+        qCDebug(JoystickSDLLog) << "SDL event: Gamepad removed (ignored, handled via joystick event), instance ID:" << event->gdevice.which;
         break;
 
     case SDL_EVENT_JOYSTICK_BATTERY_UPDATED:
@@ -138,201 +144,85 @@ bool JoystickSDL::_hasGamepadCapability(const char *propertyName) const
     return false;
 }
 
-QString JoystickSDL::_connectionStateToString(int state)
-{
-    switch (static_cast<SDL_JoystickConnectionState>(state)) {
-    case SDL_JOYSTICK_CONNECTION_INVALID:
-        return QStringLiteral("Invalid");
-    case SDL_JOYSTICK_CONNECTION_UNKNOWN:
-        return QStringLiteral("Unknown");
-    case SDL_JOYSTICK_CONNECTION_WIRED:
-        return QStringLiteral("Wired");
-    case SDL_JOYSTICK_CONNECTION_WIRELESS:
-        return QStringLiteral("Wireless");
-    default:
-        return QString();
-    }
-}
-
-// Returns user-friendly display names for gamepad types (e.g., "Xbox 360", "PlayStation 5").
-// For SDL's internal technical names (e.g., "xbox360", "ps5"), use _gamepadTypeToString().
-QString JoystickSDL::_gamepadTypeEnumToString(int type)
-{
-    switch (static_cast<SDL_GamepadType>(type)) {
-    case SDL_GAMEPAD_TYPE_STANDARD:
-        return QStringLiteral("Standard");
-    case SDL_GAMEPAD_TYPE_XBOX360:
-        return QStringLiteral("Xbox 360");
-    case SDL_GAMEPAD_TYPE_XBOXONE:
-        return QStringLiteral("Xbox One");
-    case SDL_GAMEPAD_TYPE_PS3:
-        return QStringLiteral("PlayStation 3");
-    case SDL_GAMEPAD_TYPE_PS4:
-        return QStringLiteral("PlayStation 4");
-    case SDL_GAMEPAD_TYPE_PS5:
-        return QStringLiteral("PlayStation 5");
-    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO:
-        return QStringLiteral("Nintendo Switch Pro");
-    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
-        return QStringLiteral("Nintendo Joy-Con (L)");
-    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
-        return QStringLiteral("Nintendo Joy-Con (R)");
-    case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
-        return QStringLiteral("Nintendo Joy-Con Pair");
-    default:
-        return QStringLiteral("Unknown");
-    }
-}
-
 bool JoystickSDL::init()
 {
-    // Allow joystick events when app is in background (critical for ground stations)
-    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-
-    // Enable Steam controller support (Steam Input virtual controllers)
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAM, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAMDECK, "1");
-
-    // Enable HIDAPI driver for better PS4/PS5/Xbox controller support
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX_360, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX_360_WIRELESS, "1");
-
-    // Enable HIDAPI for Nintendo controllers
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED, "1");
-
-    // Enable HIDAPI for other controllers
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_WII, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_WII_PLAYER_LED, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_GAMECUBE, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_8BITDO, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_FLYDIGI, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_LUNA, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STADIA, "1");
-
-    // Enable sensor fusion (use device accelerometer/gyro as gamepad sensors)
-    SDL_SetHint(SDL_HINT_GAMECONTROLLER_SENSOR_FUSION, "1");
-
-#ifdef Q_OS_WIN
-    // Enable Windows raw input for better device support
-    SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "1");
-#endif
-
-#ifdef Q_OS_LINUX
-    // Linux-specific hints
-    SDL_SetHint(SDL_HINT_JOYSTICK_LINUX_DEADZONES, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_LINUX_DIGITAL_HATS, "1");
-#endif
-
-    // Enable threaded joystick processing for smoother updates
-    SDL_SetHint(SDL_HINT_JOYSTICK_THREAD, "1");
-
-    // Enable enhanced reports for gyro/accel data on supported controllers
-    SDL_SetHint(SDL_HINT_JOYSTICK_ENHANCED_REPORTS, "1");
-
-    if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK)) {
-        qCWarning(JoystickSDLLog) << "Failed to initialize SDL:" << SDL_GetError();
+    if (!SDLJoystick::init()) {
         return false;
     }
 
     SDL_AddEventWatch(sdlEventWatcher, nullptr);
-
-    _loadGamepadMappings();
     return true;
 }
 
 void JoystickSDL::shutdown()
 {
     SDL_RemoveEventWatch(sdlEventWatcher, nullptr);
-    SDL_QuitSubSystem(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK);
+    SDLJoystick::shutdown();
 
-    // Clear discovery cache to avoid stale pointers after shutdown
     s_discoveryCache.clear();
-}
-
-void JoystickSDL::pumpEvents()
-{
-    SDL_PumpEvents();
-    SDL_UpdateJoysticks();
-}
-
-void JoystickSDL::_loadGamepadMappings()
-{
-    const auto loadMappingsFromFile = [](const QString &path, const char *description) {
-        QFile file(path);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            return false;
-        }
-
-        qCDebug(JoystickSDLLog) << "Loading gamepad mappings from" << description;
-        int count = 0;
-        QTextStream stream(&file);
-        while (!stream.atEnd()) {
-            const QString line = stream.readLine();
-            if (line.startsWith('#') || line.isEmpty()) {
-                continue;
-            }
-            if (SDL_AddGamepadMapping(qPrintable(line)) == -1) {
-                qCWarning(JoystickSDLLog) << "Couldn't add Gamepad mapping:" << SDL_GetError();
-            } else {
-                ++count;
-            }
-        }
-        qCDebug(JoystickSDLLog) << "Loaded" << count << "mappings from" << description;
-        return true;
-    };
-
-    // Load bundled database
-    if (!loadMappingsFromFile(QStringLiteral(":/gamecontrollerdb.txt"), "bundled database")) {
-        qCWarning(JoystickSDLLog) << "Couldn't load bundled Gamepad mapping database.";
-    }
-
-    // Load user custom mappings from <AppConfigLocation>/gamecontrollerdb.txt
-    // This allows users to add controller support without recompiling.
-    // Format: https://github.com/mdqinc/SDL_GameControllerDB
-    const QString userMappingsPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
-                                   + QStringLiteral("/gamecontrollerdb.txt");
-    if (loadMappingsFromFile(userMappingsPath, "user config")) {
-        qCInfo(JoystickSDLLog) << "Loaded user gamepad mappings from" << userMappingsPath;
-    }
 }
 
 QMap<QString, Joystick*> JoystickSDL::discover()
 {
+    Q_ASSERT(QThread::isMainThread());
+
     QMap<QString, Joystick*> current;
 
     qCDebug(JoystickSDLLog) << "Discovering joysticks";
 
-    // Lock to ensure device list doesn't change during enumeration
-    SDL_LockJoysticks();
+    // Required on Android before SDL_GetJoysticks() returns devices
+    SDLJoystick::pumpEvents();
+
+    SDLJoystick::JoystickLock lock;
 
     int count = 0;
     SDL_JoystickID *ids = SDL_GetJoysticks(&count);
     if (!ids) {
-        SDL_UnlockJoysticks();
         qCWarning(JoystickSDLLog) << "SDL_GetJoysticks failed:" << SDL_GetError();
         return current;
     }
 
+    qCDebug(JoystickSDLLog) << "SDL_GetJoysticks returned" << count << "joysticks";
+    for (int n = 0; n < count; ++n) {
+        qCDebug(JoystickSDLLog) << "  [" << n << "] ID:" << ids[n]
+                                << "Name:" << SDL_GetJoystickNameForID(ids[n])
+                                << "IsGamepad:" << SDL_IsGamepad(ids[n]);
+    }
+
     for (int n = 0; n < count; ++n) {
         const SDL_JoystickID jid = ids[n];
-        QString name = QString::fromUtf8(SDL_GetJoystickNameForID(jid));
+        QString baseName = QString::fromUtf8(SDL_GetJoystickNameForID(jid));
+        QString name = baseName;
 
-        if (s_discoveryCache.contains(name)) {
-            current[name] = s_discoveryCache[name];
-            // Safe: all objects in s_discoveryCache are JoystickSDL instances created by this function
-            auto *js = static_cast<JoystickSDL*>(current[name]);
-            if (js->instanceId() != jid) {
-                js->setInstanceId(jid);
+        // Check cache by instance ID (reconnection of same device)
+        bool foundInCache = false;
+        for (auto it = s_discoveryCache.begin(); it != s_discoveryCache.end(); ++it) {
+            auto *cachedJs = static_cast<JoystickSDL*>(it.value());
+            if (cachedJs->instanceId() == jid) {
+                name = it.key();
+                current[name] = cachedJs;
+                s_discoveryCache.erase(it);
+                foundInCache = true;
+                break;
             }
+        }
+        if (foundInCache) {
+            continue;
+        }
+
+        // Check cache by name (for joysticks that were disconnected and reconnected)
+        if (s_discoveryCache.contains(name) && !current.contains(name)) {
+            current[name] = s_discoveryCache[name];
+            auto *js = static_cast<JoystickSDL*>(current[name]);
+            js->setInstanceId(jid);
             (void) s_discoveryCache.remove(name);
             continue;
+        }
+
+        // Handle duplicate names by appending a number
+        int duplicateIndex = 2;
+        while (current.contains(name) || s_discoveryCache.contains(name)) {
+            name = QStringLiteral("%1 #%2").arg(baseName).arg(duplicateIndex++);
         }
 
         QList<int> gamepadAxes;
@@ -390,11 +280,7 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         const int hatCount = SDL_GetNumJoystickHats(tmpJoy);
         SDL_CloseJoystick(tmpJoy);
 
-        const QString baseName = name;
-        int dupIdx = 1;
-        while (current.contains(name)) {
-            name = QString("%1 %2").arg(baseName).arg(dupIdx++);
-        }
+        qCDebug(JoystickSDLLog) << "Creating JoystickSDL for" << name << "jid:" << jid;
 
         current[name] = new JoystickSDL(name,
                                         gamepadAxes,
@@ -405,7 +291,12 @@ QMap<QString, Joystick*> JoystickSDL::discover()
     }
 
     SDL_free(ids);
-    SDL_UnlockJoysticks();
+
+    qCDebug(JoystickSDLLog) << "Discovered" << current.size() << "joysticks:";
+    for (auto it = current.begin(); it != current.end(); ++it) {
+        auto *js = static_cast<JoystickSDL*>(it.value());
+        qCDebug(JoystickSDLLog) << "  " << it.key() << "instanceId:" << js->instanceId();
+    }
 
     for (auto *joystick : std::as_const(s_discoveryCache)) {
         joystick->deleteLater();
@@ -703,10 +594,13 @@ quint16 JoystickSDL::firmwareVersion() const
 
 QString JoystickSDL::connectionType() const
 {
-    if (!_sdlJoystick) {
-        return QString();
+    if (_sdlGamepad) {
+        return SDLJoystick::connectionStateToString(SDL_GetGamepadConnectionState(_sdlGamepad));
     }
-    return _connectionStateToString(SDL_GetJoystickConnectionState(_sdlJoystick));
+    if (_sdlJoystick) {
+        return SDLJoystick::connectionStateToString(SDL_GetJoystickConnectionState(_sdlJoystick));
+    }
+    return QString();
 }
 
 //-----------------------------------------------------------------------------
@@ -790,7 +684,7 @@ bool JoystickSDL::isGamepad() const
 QString JoystickSDL::gamepadType() const
 {
     if (_sdlGamepad) {
-        return _gamepadTypeEnumToString(SDL_GetGamepadType(_sdlGamepad));
+        return SDLJoystick::gamepadTypeDisplayName(SDL_GetGamepadType(_sdlGamepad));
     }
     return QString();
 }
@@ -801,12 +695,25 @@ QString JoystickSDL::gamepadType() const
 
 QString JoystickSDL::axisLabel(int axis) const
 {
-    if (_sdlGamepad && axis >= 0 && axis < _gamepadAxes.length()) {
+    if (axis < 0) {
+        return tr("Axis %1").arg(axis);
+    }
+
+    // Check gamepad axes first
+    if (_sdlGamepad && axis < _gamepadAxes.length()) {
         const char *label = SDL_GetGamepadStringForAxis(static_cast<SDL_GamepadAxis>(_gamepadAxes[axis]));
         if (label) {
             return QString::fromUtf8(label);
         }
     }
+
+    // Check non-gamepad axes
+    const int nonGamepadIdx = axis - _gamepadAxes.length();
+    if (nonGamepadIdx >= 0 && nonGamepadIdx < _nonGamepadAxes.length()) {
+        // Non-gamepad axes don't have standard labels, use raw joystick axis number
+        return tr("Axis %1").arg(_nonGamepadAxes[nonGamepadIdx]);
+    }
+
     return tr("Axis %1").arg(axis);
 }
 
@@ -819,36 +726,6 @@ QString JoystickSDL::buttonLabel(int button) const
         }
     }
     return tr("Button %1").arg(button);
-}
-
-QString JoystickSDL::axisSFSymbol(int axis) const
-{
-#ifdef Q_OS_DARWIN
-    if (_sdlGamepad && axis >= 0 && axis < _gamepadAxes.length()) {
-        const char *symbol = SDL_GetGamepadAppleSFSymbolsNameForAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[axis]));
-        if (symbol) {
-            return QString::fromUtf8(symbol);
-        }
-    }
-#else
-    Q_UNUSED(axis);
-#endif
-    return QString();
-}
-
-QString JoystickSDL::buttonSFSymbol(int button) const
-{
-#ifdef Q_OS_DARWIN
-    if (_sdlGamepad && button >= 0 && button < SDL_GAMEPAD_BUTTON_COUNT) {
-        const char *symbol = SDL_GetGamepadAppleSFSymbolsNameForButton(_sdlGamepad, static_cast<SDL_GamepadButton>(button));
-        if (symbol) {
-            return QString::fromUtf8(symbol);
-        }
-    }
-#else
-    Q_UNUSED(button);
-#endif
-    return QString();
 }
 
 //-----------------------------------------------------------------------------
@@ -884,77 +761,37 @@ bool JoystickSDL::addMapping(const QString &mapping)
     return true;
 }
 
-bool JoystickSDL::reloadMappings()
-{
-    if (!SDL_ReloadGamepadMappings()) {
-        qCWarning(JoystickSDLLog) << "Failed to reload gamepad mappings:" << SDL_GetError();
-        return false;
-    }
-
-    _loadGamepadMappings();
-
-    qCDebug(JoystickSDLLog) << "Reloaded gamepad mappings";
-    return true;
-}
-
-static void populateBindingResult(QVariantMap &result, const SDL_GamepadBinding *binding)
-{
-    result[QStringLiteral("valid")] = true;
-    result[QStringLiteral("inputType")] = static_cast<int>(binding->input_type);
-    if (binding->input_type == SDL_GAMEPAD_BINDTYPE_AXIS) {
-        result[QStringLiteral("inputAxis")] = binding->input.axis.axis;
-        result[QStringLiteral("inputAxisMin")] = binding->input.axis.axis_min;
-        result[QStringLiteral("inputAxisMax")] = binding->input.axis.axis_max;
-    } else if (binding->input_type == SDL_GAMEPAD_BINDTYPE_BUTTON) {
-        result[QStringLiteral("inputButton")] = binding->input.button;
-    } else if (binding->input_type == SDL_GAMEPAD_BINDTYPE_HAT) {
-        result[QStringLiteral("inputHat")] = binding->input.hat.hat;
-        result[QStringLiteral("inputHatMask")] = binding->input.hat.hat_mask;
-    }
-}
-
-template<typename MatchFunc>
-static QVariantMap findBinding(SDL_Gamepad *gamepad, MatchFunc matchFunc)
+QVariantMap JoystickSDL::getAxisBinding(int axis) const
 {
     QVariantMap result;
     result[QStringLiteral("valid")] = false;
 
-    if (!gamepad) {
+    if (axis < 0) {
         return result;
     }
 
-    int bindingCount = 0;
-    SDL_GamepadBinding **bindings = SDL_GetGamepadBindings(gamepad, &bindingCount);
-    if (!bindings) {
+    // Gamepad axes have bindings
+    if (_sdlGamepad && axis < _gamepadAxes.length()) {
+        const SDL_GamepadAxis gamepadAxis = static_cast<SDL_GamepadAxis>(_gamepadAxes[axis]);
+        return SDLJoystick::findBinding(_sdlGamepad, [gamepadAxis](const SDL_GamepadBinding *binding) {
+            return binding->output_type == SDL_GAMEPAD_BINDTYPE_AXIS &&
+                   binding->output.axis.axis == gamepadAxis;
+        });
+    }
+
+    // Non-gamepad axes map directly to joystick axes (no binding indirection)
+    const int nonGamepadIdx = axis - _gamepadAxes.length();
+    if (nonGamepadIdx >= 0 && nonGamepadIdx < _nonGamepadAxes.length()) {
+        result[QStringLiteral("valid")] = true;
+        result[QStringLiteral("inputType")] = static_cast<int>(SDL_GAMEPAD_BINDTYPE_AXIS);
+        result[QStringLiteral("inputAxis")] = _nonGamepadAxes[nonGamepadIdx];
+        result[QStringLiteral("inputAxisMin")] = -32768;
+        result[QStringLiteral("inputAxisMax")] = 32767;
+        result[QStringLiteral("direct")] = true;  // Indicates no gamepad mapping, direct joystick access
         return result;
     }
 
-    for (int i = 0; i < bindingCount; ++i) {
-        SDL_GamepadBinding *binding = bindings[i];
-        if (binding && matchFunc(binding)) {
-            populateBindingResult(result, binding);
-            SDL_free(bindings);
-            return result;
-        }
-    }
-
-    SDL_free(bindings);
     return result;
-}
-
-QVariantMap JoystickSDL::getAxisBinding(int axis) const
-{
-    if (!_sdlGamepad || axis < 0 || axis >= _gamepadAxes.length()) {
-        QVariantMap result;
-        result[QStringLiteral("valid")] = false;
-        return result;
-    }
-
-    const SDL_GamepadAxis gamepadAxis = static_cast<SDL_GamepadAxis>(_gamepadAxes[axis]);
-    return findBinding(_sdlGamepad, [gamepadAxis](const SDL_GamepadBinding *binding) {
-        return binding->output_type == SDL_GAMEPAD_BINDTYPE_AXIS &&
-               binding->output.axis.axis == gamepadAxis;
-    });
 }
 
 QVariantMap JoystickSDL::getButtonBinding(int button) const
@@ -966,7 +803,7 @@ QVariantMap JoystickSDL::getButtonBinding(int button) const
     }
 
     const SDL_GamepadButton gamepadButton = static_cast<SDL_GamepadButton>(button);
-    return findBinding(_sdlGamepad, [gamepadButton](const SDL_GamepadBinding *binding) {
+    return SDLJoystick::findBinding(_sdlGamepad, [gamepadButton](const SDL_GamepadBinding *binding) {
         return binding->output_type == SDL_GAMEPAD_BINDTYPE_BUTTON &&
                binding->output.button == gamepadButton;
     });
@@ -1018,6 +855,11 @@ bool JoystickSDL::setAccelerometerEnabled(bool enabled)
 
 QVector3D JoystickSDL::gyroscopeData() const
 {
+    // Use cached data from events if available (more efficient than polling)
+    if (_gyroDataCached) {
+        return _cachedGyroData;
+    }
+
     if (!_sdlGamepad) {
         return QVector3D();
     }
@@ -1034,6 +876,11 @@ QVector3D JoystickSDL::gyroscopeData() const
 
 QVector3D JoystickSDL::accelerometerData() const
 {
+    // Use cached data from events if available (more efficient than polling)
+    if (_accelDataCached) {
+        return _cachedAccelData;
+    }
+
     if (!_sdlGamepad) {
         return QVector3D();
     }
@@ -1161,7 +1008,7 @@ bool JoystickSDL::hasAxis(int axis) const
 QString JoystickSDL::realGamepadType() const
 {
     if (_sdlGamepad) {
-        return _gamepadTypeEnumToString(SDL_GetRealGamepadType(_sdlGamepad));
+        return SDLJoystick::gamepadTypeDisplayName(SDL_GetRealGamepadType(_sdlGamepad));
     }
     return QString();
 }
@@ -1197,13 +1044,6 @@ QString JoystickSDL::buttonLabelForType(int button) const
         }
     }
     return buttonLabel(button);
-}
-
-QString JoystickSDL::axisLabelForType(int axis) const
-{
-    // SDL doesn't have a specific axis label for type function,
-    // so we fall back to the standard axis label
-    return axisLabel(axis);
 }
 
 //-----------------------------------------------------------------------------
@@ -1247,12 +1087,12 @@ bool JoystickSDL::hapticRumbleInit()
 
     _sdlHaptic = SDL_OpenHapticFromJoystick(_sdlJoystick);
     if (!_sdlHaptic) {
-        qCDebug(JoystickSDLLog) << "Failed to open haptic device:" << SDL_GetError();
+        qCWarning(JoystickSDLLog) << "Failed to open haptic device:" << SDL_GetError();
         return false;
     }
 
     if (!SDL_InitHapticRumble(_sdlHaptic)) {
-        qCDebug(JoystickSDLLog) << "Failed to init haptic rumble:" << SDL_GetError();
+        qCWarning(JoystickSDLLog) << "Failed to init haptic rumble:" << SDL_GetError();
         SDL_CloseHaptic(_sdlHaptic);
         _sdlHaptic = nullptr;
         return false;
@@ -1271,7 +1111,7 @@ bool JoystickSDL::hapticRumblePlay(float strength, quint32 durationMs)
     }
 
     if (!SDL_PlayHapticRumble(_sdlHaptic, strength, durationMs)) {
-        qCDebug(JoystickSDLLog) << "Failed to play haptic rumble:" << SDL_GetError();
+        qCWarning(JoystickSDLLog) << "Failed to play haptic rumble:" << SDL_GetError();
         return false;
     }
     return true;
@@ -1307,41 +1147,6 @@ QString JoystickSDL::getMappingForGUID(const QString &guid) const
 //-----------------------------------------------------------------------------
 // Virtual Joystick Support
 //-----------------------------------------------------------------------------
-
-int JoystickSDL::createVirtualJoystick(const QString &name, int axisCount, int buttonCount, int hatCount)
-{
-    SDL_VirtualJoystickDesc desc;
-    SDL_INIT_INTERFACE(&desc);
-    desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
-    desc.naxes = static_cast<Uint16>(axisCount);
-    desc.nbuttons = static_cast<Uint16>(buttonCount);
-    desc.nhats = static_cast<Uint16>(hatCount);
-    desc.name = qPrintable(name);
-
-    SDL_JoystickID instanceId = SDL_AttachVirtualJoystick(&desc);
-    if (instanceId == 0) {
-        qCWarning(JoystickSDLLog) << "Failed to create virtual joystick:" << SDL_GetError();
-        return -1;
-    }
-
-    qCDebug(JoystickSDLLog) << "Created virtual joystick" << name << "with instance ID" << instanceId;
-    return static_cast<int>(instanceId);
-}
-
-bool JoystickSDL::destroyVirtualJoystick(int instanceId)
-{
-    if (instanceId <= 0) {
-        return false;
-    }
-
-    if (!SDL_DetachVirtualJoystick(static_cast<SDL_JoystickID>(instanceId))) {
-        qCWarning(JoystickSDLLog) << "Failed to destroy virtual joystick" << instanceId << ":" << SDL_GetError();
-        return false;
-    }
-
-    qCDebug(JoystickSDLLog) << "Destroyed virtual joystick" << instanceId;
-    return true;
-}
 
 bool JoystickSDL::setVirtualAxis(int axis, int value)
 {
@@ -1407,13 +1212,7 @@ bool JoystickSDL::hasPlayerLED() const
 
 QString JoystickSDL::connectionState() const
 {
-    if (_sdlGamepad) {
-        return _connectionStateToString(SDL_GetGamepadConnectionState(_sdlGamepad));
-    }
-    if (_sdlJoystick) {
-        return _connectionStateToString(SDL_GetJoystickConnectionState(_sdlJoystick));
-    }
-    return QString();
+    return connectionType();
 }
 
 //-----------------------------------------------------------------------------
@@ -1456,148 +1255,6 @@ bool JoystickSDL::setMapping(const QString &mapping)
 }
 
 //-----------------------------------------------------------------------------
-// Static Pre-Open Device Queries
-//-----------------------------------------------------------------------------
-
-QString JoystickSDL::_getNameForInstanceId(int instanceId)
-{
-    const char *name = SDL_GetGamepadNameForID(static_cast<SDL_JoystickID>(instanceId));
-    if (name) {
-        return QString::fromUtf8(name);
-    }
-    name = SDL_GetJoystickNameForID(static_cast<SDL_JoystickID>(instanceId));
-    return name ? QString::fromUtf8(name) : QString();
-}
-
-QString JoystickSDL::_getPathForInstanceId(int instanceId)
-{
-    const char *path = SDL_GetGamepadPathForID(static_cast<SDL_JoystickID>(instanceId));
-    if (path) {
-        return QString::fromUtf8(path);
-    }
-    path = SDL_GetJoystickPathForID(static_cast<SDL_JoystickID>(instanceId));
-    return path ? QString::fromUtf8(path) : QString();
-}
-
-QString JoystickSDL::_getGUIDForInstanceId(int instanceId)
-{
-    SDL_GUID guid = SDL_GetJoystickGUIDForID(static_cast<SDL_JoystickID>(instanceId));
-    char guidStr[33];
-    SDL_GUIDToString(guid, guidStr, sizeof(guidStr));
-    return QString::fromUtf8(guidStr);
-}
-
-int JoystickSDL::_getVendorForInstanceId(int instanceId)
-{
-    Uint16 vendor = SDL_GetGamepadVendorForID(static_cast<SDL_JoystickID>(instanceId));
-    if (vendor != 0) {
-        return vendor;
-    }
-    return SDL_GetJoystickVendorForID(static_cast<SDL_JoystickID>(instanceId));
-}
-
-int JoystickSDL::_getProductForInstanceId(int instanceId)
-{
-    Uint16 product = SDL_GetGamepadProductForID(static_cast<SDL_JoystickID>(instanceId));
-    if (product != 0) {
-        return product;
-    }
-    return SDL_GetJoystickProductForID(static_cast<SDL_JoystickID>(instanceId));
-}
-
-int JoystickSDL::_getProductVersionForInstanceId(int instanceId)
-{
-    Uint16 version = SDL_GetGamepadProductVersionForID(static_cast<SDL_JoystickID>(instanceId));
-    if (version != 0) {
-        return version;
-    }
-    return SDL_GetJoystickProductVersionForID(static_cast<SDL_JoystickID>(instanceId));
-}
-
-QString JoystickSDL::_getTypeForInstanceId(int instanceId)
-{
-    SDL_GamepadType type = SDL_GetGamepadTypeForID(static_cast<SDL_JoystickID>(instanceId));
-    return _gamepadTypeToString(type);
-}
-
-QString JoystickSDL::_getRealTypeForInstanceId(int instanceId)
-{
-    SDL_GamepadType type = SDL_GetRealGamepadTypeForID(static_cast<SDL_JoystickID>(instanceId));
-    return _gamepadTypeToString(type);
-}
-
-int JoystickSDL::_getPlayerIndexForInstanceId(int instanceId)
-{
-    int index = SDL_GetGamepadPlayerIndexForID(static_cast<SDL_JoystickID>(instanceId));
-    if (index >= 0) {
-        return index;
-    }
-    return SDL_GetJoystickPlayerIndexForID(static_cast<SDL_JoystickID>(instanceId));
-}
-
-//-----------------------------------------------------------------------------
-// Static Type/String Conversions
-//-----------------------------------------------------------------------------
-
-// Returns SDL's internal technical names (e.g., "xbox360", "ps5").
-// For user-friendly display names (e.g., "Xbox 360", "PlayStation 5"), use _gamepadTypeEnumToString().
-QString JoystickSDL::_gamepadTypeToString(int type)
-{
-    const char *str = SDL_GetGamepadStringForType(static_cast<SDL_GamepadType>(type));
-    return str ? QString::fromUtf8(str) : QString();
-}
-
-int JoystickSDL::_gamepadTypeFromString(const QString &str)
-{
-    if (str.isEmpty()) {
-        return SDL_GAMEPAD_TYPE_UNKNOWN;
-    }
-    return SDL_GetGamepadTypeFromString(qPrintable(str));
-}
-
-QString JoystickSDL::_gamepadAxisToString(int axis)
-{
-    const char *str = SDL_GetGamepadStringForAxis(static_cast<SDL_GamepadAxis>(axis));
-    return str ? QString::fromUtf8(str) : QString();
-}
-
-int JoystickSDL::_gamepadAxisFromString(const QString &str)
-{
-    if (str.isEmpty()) {
-        return SDL_GAMEPAD_AXIS_INVALID;
-    }
-    return SDL_GetGamepadAxisFromString(qPrintable(str));
-}
-
-QString JoystickSDL::_gamepadButtonToString(int button)
-{
-    const char *str = SDL_GetGamepadStringForButton(static_cast<SDL_GamepadButton>(button));
-    return str ? QString::fromUtf8(str) : QString();
-}
-
-int JoystickSDL::_gamepadButtonFromString(const QString &str)
-{
-    if (str.isEmpty()) {
-        return SDL_GAMEPAD_BUTTON_INVALID;
-    }
-    return SDL_GetGamepadButtonFromString(qPrintable(str));
-}
-
-//-----------------------------------------------------------------------------
-// Static Thread Safety
-//-----------------------------------------------------------------------------
-
-void JoystickSDL::_lockJoysticks()
-{
-    SDL_LockJoysticks();
-}
-
-void JoystickSDL::_unlockJoysticks()
-{
-    SDL_UnlockJoysticks();
-}
-
-//-----------------------------------------------------------------------------
 // Virtual Joystick Enhancements
 //-----------------------------------------------------------------------------
 
@@ -1620,7 +1277,18 @@ bool JoystickSDL::setVirtualTouchpad(int touchpad, int finger, bool down, float 
         return false;
     }
 
-    if (!SDL_SetJoystickVirtualTouchpad(_sdlJoystick, touchpad, finger, down, x, y, pressure)) {
+    // Validate and clamp touchpad coordinates to valid range [0.0, 1.0]
+    const float clampedX = qBound(0.0f, x, 1.0f);
+    const float clampedY = qBound(0.0f, y, 1.0f);
+    const float clampedPressure = qBound(0.0f, pressure, 1.0f);
+
+    if (x != clampedX || y != clampedY || pressure != clampedPressure) {
+        qCDebug(JoystickSDLLog) << "Virtual touchpad coordinates clamped: x" << x << "->" << clampedX
+                                << "y" << y << "->" << clampedY
+                                << "pressure" << pressure << "->" << clampedPressure;
+    }
+
+    if (!SDL_SetJoystickVirtualTouchpad(_sdlJoystick, touchpad, finger, down, clampedX, clampedY, clampedPressure)) {
         qCDebug(JoystickSDLLog) << "Failed to set virtual touchpad" << touchpad << "finger" << finger << ":" << SDL_GetError();
         return false;
     }
@@ -1642,105 +1310,52 @@ bool JoystickSDL::sendVirtualSensorData(int sensorType, float x, float y, float 
 }
 
 //-----------------------------------------------------------------------------
-// Static Event/Polling Control
+// Cached Sensor Data (Event-Driven Updates)
 //-----------------------------------------------------------------------------
 
-void JoystickSDL::_setJoystickEventsEnabled(bool enabled)
+void JoystickSDL::updateCachedGyroData(const QVector3D &data)
 {
-    SDL_SetJoystickEventsEnabled(enabled);
+    _cachedGyroData = data;
+    _gyroDataCached = true;
+    emit gyroscopeDataUpdated(data);
 }
 
-bool JoystickSDL::_joystickEventsEnabled()
+void JoystickSDL::updateCachedAccelData(const QVector3D &data)
 {
-    return SDL_JoystickEventsEnabled();
+    _cachedAccelData = data;
+    _accelDataCached = true;
+    emit accelerometerDataUpdated(data);
 }
 
-void JoystickSDL::_setGamepadEventsEnabled(bool enabled)
+void JoystickSDL::checkConnectionStateChanged()
 {
-    SDL_SetGamepadEventsEnabled(enabled);
+    const QString currentState = connectionState();
+    if (currentState != _lastConnectionState && !currentState.isEmpty()) {
+        qCDebug(JoystickSDLLog) << "Connection state changed:" << _lastConnectionState << "->" << currentState;
+        _lastConnectionState = currentState;
+        emit connectionStateChanged(currentState);
+    }
 }
 
-bool JoystickSDL::_gamepadEventsEnabled()
+QVariantList JoystickSDL::detectAxisDrift(int threshold) const
 {
-    return SDL_GamepadEventsEnabled();
-}
+    QVariantList driftingAxes;
 
-void JoystickSDL::_updateJoysticks()
-{
-    SDL_UpdateJoysticks();
-}
+    const int totalAxes = _gamepadAxes.length() + _nonGamepadAxes.length();
+    for (int i = 0; i < totalAxes; ++i) {
+        const int currentValue = _getAxisValue(i);
 
-void JoystickSDL::_updateGamepads()
-{
-    SDL_UpdateGamepads();
-}
-
-//-----------------------------------------------------------------------------
-// Static Utility
-//-----------------------------------------------------------------------------
-
-int JoystickSDL::_getInstanceIdFromPlayerIndex(int playerIndex)
-{
-    SDL_Gamepad *gamepad = SDL_GetGamepadFromPlayerIndex(playerIndex);
-    if (gamepad) {
-        SDL_JoystickID id = SDL_GetGamepadID(gamepad);
-        return static_cast<int>(id);
+        // Check if axis is significantly off-center (not near 0)
+        // Threshold default of 8000 is ~25% of full range
+        if (qAbs(currentValue) > threshold) {
+            QVariantMap axisInfo;
+            axisInfo[QStringLiteral("axis")] = i;
+            axisInfo[QStringLiteral("label")] = axisLabel(i);
+            axisInfo[QStringLiteral("value")] = currentValue;
+            axisInfo[QStringLiteral("percentage")] = qRound(qAbs(currentValue) * 100.0 / 32767.0);
+            driftingAxes.append(axisInfo);
+        }
     }
 
-    SDL_Joystick *joystick = SDL_GetJoystickFromPlayerIndex(playerIndex);
-    if (joystick) {
-        SDL_JoystickID id = SDL_GetJoystickID(joystick);
-        return static_cast<int>(id);
-    }
-
-    return -1;
-}
-
-//-----------------------------------------------------------------------------
-// GUID Info Decoding
-//-----------------------------------------------------------------------------
-
-QVariantMap JoystickSDL::_getGUIDInfo(const QString &guid)
-{
-    QVariantMap result;
-    result[QStringLiteral("valid")] = false;
-    result[QStringLiteral("vendor")] = 0;
-    result[QStringLiteral("product")] = 0;
-    result[QStringLiteral("version")] = 0;
-    result[QStringLiteral("crc16")] = 0;
-
-    if (guid.isEmpty()) {
-        return result;
-    }
-
-    SDL_GUID sdlGuid = SDL_StringToGUID(qPrintable(guid));
-    Uint16 vendor = 0, product = 0, version = 0, crc16 = 0;
-    SDL_GetJoystickGUIDInfo(sdlGuid, &vendor, &product, &version, &crc16);
-
-    result[QStringLiteral("valid")] = true;
-    result[QStringLiteral("vendor")] = static_cast<int>(vendor);
-    result[QStringLiteral("product")] = static_cast<int>(product);
-    result[QStringLiteral("version")] = static_cast<int>(version);
-    result[QStringLiteral("crc16")] = static_cast<int>(crc16);
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-// Bulk Mapping Loading
-//-----------------------------------------------------------------------------
-
-int JoystickSDL::_addMappingsFromFile(const QString &filePath)
-{
-    if (filePath.isEmpty()) {
-        return -1;
-    }
-
-    int count = SDL_AddGamepadMappingsFromFile(qPrintable(filePath));
-    if (count < 0) {
-        qCDebug(JoystickSDLLog) << "Failed to load mappings from" << filePath << ":" << SDL_GetError();
-    } else {
-        qCDebug(JoystickSDLLog) << "Loaded" << count << "mappings from" << filePath;
-    }
-    return count;
+    return driftingAxes;
 }

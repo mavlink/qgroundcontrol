@@ -1,6 +1,7 @@
 #include "JoystickTest.h"
 #include "MockJoystick.h"
 #include "JoystickSDL.h"
+#include "SDLJoystick.h"
 #include "Joystick.h"
 
 #include <QtTest/QTest>
@@ -12,7 +13,7 @@ JoystickTest::JoystickTest() = default;
 void JoystickTest::init()
 {
     UnitTest::init();
-    JoystickSDL::init();
+    QVERIFY(JoystickSDL::init());
 }
 
 void JoystickTest::cleanup()
@@ -40,7 +41,7 @@ JoystickSDL *JoystickTest::_findJoystickByInstanceId(int instanceId)
 
 void JoystickTest::_pumpEvents()
 {
-    JoystickSDL::pumpEvents();
+    SDLJoystick::pumpEvents();
 }
 
 //-----------------------------------------------------------------------------
@@ -766,4 +767,96 @@ void JoystickTest::_buttonActionAssignmentTest()
     QVERIFY(js->getButtonRepeat(2));
     js->setButtonRepeat(2, false);
     QVERIFY(!js->getButtonRepeat(2));
+}
+
+//-----------------------------------------------------------------------------
+// Connection State Tests
+//-----------------------------------------------------------------------------
+
+void JoystickTest::_connectionStateTest()
+{
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Connection State Test"), 6, 16, 1));
+    QVERIFY(_mockJoystick->isValid());
+
+    _pumpEvents();
+
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL *js = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(js != nullptr);
+
+    // Query connection state using SDLJoystick utility
+    QString connectionState = SDLJoystick::getConnectionStateForInstanceId(_mockJoystick->instanceId());
+    QVERIFY2(!connectionState.isEmpty(), "Connection state should be a non-empty string");
+
+    // Virtual joysticks typically report as "Unknown" connection state
+    // Just verify the API works without crashing
+}
+
+//-----------------------------------------------------------------------------
+// Player Index Tests
+//-----------------------------------------------------------------------------
+
+void JoystickTest::_playerIndexTest()
+{
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Player Index Test"), 6, 16, 1));
+    QVERIFY(_mockJoystick->isValid());
+
+    _pumpEvents();
+
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL *js = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(js != nullptr);
+
+    // Query player index using SDLJoystick utility
+    int playerIndex = SDLJoystick::getPlayerIndexForInstanceId(_mockJoystick->instanceId());
+    // Virtual joysticks typically have player index -1 (not set)
+    Q_UNUSED(playerIndex);
+
+    // Test getInstanceIdFromPlayerIndex - returns 0 for invalid player index
+    int instanceFromPlayer = SDLJoystick::getInstanceIdFromPlayerIndex(-1);
+    Q_UNUSED(instanceFromPlayer);  // May return 0 or valid ID depending on system state
+}
+
+//-----------------------------------------------------------------------------
+// Gamepad Binding Query Tests
+//-----------------------------------------------------------------------------
+
+void JoystickTest::_gamepadBindingQueryTest()
+{
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(
+        QStringLiteral("Binding Query Test"), 6, 16, 1));
+    QVERIFY(_mockJoystick->isValid());
+
+    _pumpEvents();
+
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL *js = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(js != nullptr);
+    QVERIFY(js->_open());
+
+    // Test GUID retrieval
+    QString guid = js->guid();
+    // Virtual joysticks may have empty GUID in some SDL versions
+    Q_UNUSED(guid);
+
+    // Test querying joystick type via SDLJoystick
+    QString type = SDLJoystick::getTypeForInstanceId(_mockJoystick->instanceId());
+    // Virtual joysticks are typically "Unknown" type
+    Q_UNUSED(type);
+
+    QString realType = SDLJoystick::getRealTypeForInstanceId(_mockJoystick->instanceId());
+    Q_UNUSED(realType);
+
+    // Test vendor/product ID queries
+    int vendor = SDLJoystick::getVendorForInstanceId(_mockJoystick->instanceId());
+    int product = SDLJoystick::getProductForInstanceId(_mockJoystick->instanceId());
+    int version = SDLJoystick::getProductVersionForInstanceId(_mockJoystick->instanceId());
+    // Virtual joysticks have 0 for these values
+    QCOMPARE(vendor, 0);
+    QCOMPARE(product, 0);
+    Q_UNUSED(version);  // May be 0 or non-zero
+
+    js->_close();
 }

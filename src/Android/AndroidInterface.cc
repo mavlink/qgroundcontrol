@@ -4,7 +4,7 @@
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
 
-QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.src.androidinterface")
+QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
 
 namespace AndroidInterface
 {
@@ -134,15 +134,6 @@ void setKeepScreenOn(bool on)
     Q_UNUSED(on);
 
     //-- Screen is locked on while QGC is running on Android
-}
-
-int getApiLevel()
-{
-    static int apiLevel = -1;
-    if (apiLevel < 0) {
-        apiLevel = QJniObject::getStaticField<jint>("android/os/Build$VERSION", "SDK_INT");
-    }
-    return apiLevel;
 }
 
 } // namespace AndroidInterface
