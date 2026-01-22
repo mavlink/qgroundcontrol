@@ -18,8 +18,8 @@ public:
 
     void handleResume() override;
     void handlePause() override;
-    bool handleActivityResult(int requestCode, int resultCode, const QJniObject &data) override;
-    bool handleNewIntent(const QJniObject &intent) override;
+    bool handleActivityResult(jint requestCode, jint resultCode, jobject data) override;
+    bool handleNewIntent(JNIEnv *env, jobject intent) override;
 
 signals:
     void resumed();
@@ -27,7 +27,7 @@ signals:
     void activityResult(int requestCode, int resultCode, QJniObject data);
     void newIntent(QJniObject intent);
 
-private:
+public:
     explicit AndroidEvents(QObject *parent = nullptr);
-    ~AndroidEvents();
+    ~AndroidEvents() override;
 };

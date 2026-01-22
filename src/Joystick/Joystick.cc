@@ -1467,3 +1467,45 @@ void Joystick::stop()
         }
     }
 }
+
+void Joystick::setLinkedGroupId(const QString &groupId)
+{
+    if (_linkedGroupId != groupId) {
+        _linkedGroupId = groupId;
+
+        // Persist to settings
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Joystick"));
+        settings.beginGroup(_name);
+        if (groupId.isEmpty()) {
+            settings.remove(QStringLiteral("LinkedGroupId"));
+        } else {
+            settings.setValue(QStringLiteral("LinkedGroupId"), groupId);
+        }
+        settings.endGroup();
+        settings.endGroup();
+
+        emit linkedGroupChanged();
+    }
+}
+
+void Joystick::setLinkedGroupRole(const QString &role)
+{
+    if (_linkedGroupRole != role) {
+        _linkedGroupRole = role;
+
+        // Persist to settings
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Joystick"));
+        settings.beginGroup(_name);
+        if (role.isEmpty()) {
+            settings.remove(QStringLiteral("LinkedGroupRole"));
+        } else {
+            settings.setValue(QStringLiteral("LinkedGroupRole"), role);
+        }
+        settings.endGroup();
+        settings.endGroup();
+
+        emit linkedGroupChanged();
+    }
+}

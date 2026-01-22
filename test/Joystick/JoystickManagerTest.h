@@ -33,6 +33,12 @@ private slots:
     void _setActiveJoystickTest();
     void _autoSelectFirstJoystickTest();
 
+    // Polling control tests
+    void _pollingControlTest();
+
+    // Multiple controller handling tests
+    void _multipleControllerManagementTest();
+
 private:
     void _pumpEvents();
 

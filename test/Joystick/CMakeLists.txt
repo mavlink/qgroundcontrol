@@ -11,6 +11,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         JoystickManagerTest.h
         MockJoystick.cc
         MockJoystick.h
+        MockJoystickTest.cc
+        MockJoystickTest.h
+        SDLTest.cc
+        SDLTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
