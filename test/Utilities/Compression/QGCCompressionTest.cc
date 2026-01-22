@@ -312,7 +312,7 @@ void QGCCompressionTest::_testListArchiveNaturalSort()
     QStringList expected = {"dir/file3.txt", "dir/file11.txt", "file1.txt", "file2.txt", "file10.txt", "file20.txt"};
 
     // Simulate the sorting done by listArchive (using English locale for cross-platform consistency)
-    QCollator collator(QLocale(QLocale::English));
+    QCollator collator(QLocale(QLocale::English, QLocale::AnyCountry));
     collator.setNumericMode(true);
     collator.setCaseSensitivity(Qt::CaseInsensitive);
     std::sort(unsorted.begin(), unsorted.end(), collator);
