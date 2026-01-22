@@ -45,6 +45,7 @@ Item {
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
+    property bool   _fleetPanelVisible: false
 
     property bool utmspActTrigger
 
@@ -174,6 +175,9 @@ Item {
             }
             preFlightChecklistLoader.item.open()
         }
+        onShowFleetPanel: {
+                _fleetPanelVisible = !_fleetPanelVisible
+            }
 
         property real topEdgeLeftInset:     visible ? y + height : 0
         property real leftEdgeTopInset:     visible ? x + width : 0
@@ -184,6 +188,54 @@ Item {
         anchors.centerIn:   parent
         z:                  QGroundControl.zOrderTopMost
     }
+    // =======================================================
+    // Fleet Control Panel Overlay
+    // =======================================================
+    Loader {
+        id: fleetControlLoader
+        active: _fleetPanelVisible
+        visible: _fleetPanelVisible
+        z: QGroundControl.zOrderTopMost + 5
+        anchors.fill: parent
+
+        sourceComponent: Component {
+            Item {
+                anchors.fill: parent
+
+                // -------------------------------
+                // Dim background (click-to-close)
+                // -------------------------------
+                Rectangle {
+                    anchors.fill: parent
+                    color: Qt.rgba(0, 0, 0, 0.45)
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: _fleetPanelVisible = false
+                    }
+                }
+
+                // -------------------------------
+                // Fleet Panel (fully interactive)
+                // -------------------------------
+                FleetControlPanel {
+                    id: fleetPanel
+                    anchors.centerIn: parent
+
+                    guidedActionsController: _guidedController
+                    missionController:       _missionController
+
+                    width:  Math.min(parent.width  * 0.95, implicitWidth)
+                    height: Math.min(parent.height * 0.90, implicitHeight)
+
+                    // IMPORTANT: prevent click-through
+                    focus: true
+                    z: 10
+                }
+            }
+        }
+    }
+
 
     MapScale {
         id:                 mapScale

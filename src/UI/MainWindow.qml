@@ -81,7 +81,7 @@ ApplicationWindow {
         readonly property var       guidedControllerFlyView:        flyView.guidedController
 
         // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.
-        property int                validationErrorCount:           0 
+        property int                validationErrorCount:           0
 
         // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
@@ -260,7 +260,7 @@ ApplicationWindow {
         color:          QGroundControl.globalPalette.window
     }
 
-    FlyView { 
+    FlyView {
         id:                     flyView
         anchors.fill:           parent
     }
@@ -715,7 +715,7 @@ ApplicationWindow {
                     anchors.centerIn:   parent
                     text:               ">"
                     color:              QGroundControl.globalPalette.buttonText
-                }  
+                }
 
                 QGCMouseArea {
                     fillItem: parent

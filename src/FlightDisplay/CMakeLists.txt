@@ -68,5 +68,8 @@ qt_add_qml_module(FlightDisplayModule
         TerrainProgress.qml
         VehicleWarnings.qml
         VirtualJoystick.qml
+        FleetControlPanel.qml
+        VehicleStatusCard.qml
+        QuickActionsPanel.qml
     NO_PLUGIN
 )

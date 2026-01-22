@@ -17,11 +17,14 @@ ToolStrip {
     id: _root
 
     signal displayPreFlightChecklist
+    signal showFleetPanel
+
 
     FlyViewToolStripActionList {
         id: flyViewToolStripActionList
 
         onDisplayPreFlightChecklist: _root.displayPreFlightChecklist()
+        onShowFleetPanel:            _root.showFleetPanel()
     }
 
     model: flyViewToolStripActionList.model

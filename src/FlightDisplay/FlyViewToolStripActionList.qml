@@ -16,8 +16,16 @@ ToolStripActionList {
     id: _root
 
     signal displayPreFlightChecklist
+    signal showFleetPanel
+
 
     model: [
+        ToolStripAction {
+            text: qsTr("Fleet")
+            //iconSource: "/qmlimages/Fleet.svg" // optional
+            onTriggered: showFleetPanel()
+        },
+
         ToolStripAction {
             property bool _is3DViewOpen:            viewer3DWindow.isOpen
             property bool   _viewer3DEnabled:       QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
