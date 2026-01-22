@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QTimer>
-#include <QtCore/QVariantList>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
@@ -26,9 +25,11 @@ class JoystickManager : public QObject
     /// Currently active joystick
     Q_PROPERTY(Joystick *activeJoystick READ activeJoystick NOTIFY activeJoystickChanged)
 
+    friend class JoystickManagerTest;
+
 public:
     explicit JoystickManager(QObject *parent = nullptr);
-    ~JoystickManager();
+    ~JoystickManager() override;
 
     static JoystickManager *instance();
 
@@ -43,30 +44,24 @@ signals:
     void activeJoystickChanged(Joystick *joystick);
     void availableJoystickNamesChanged();
 #if defined(Q_OS_ANDROID)
-    void _updateAvailableJoysticksSignal();
+    void updateAvailableJoysticks();
 #endif
 
 public slots:
     void init();
 
 private slots:
-    void _updateAvailableJoysticks();
+    /// Checks for added or removed joysticks and updates the internal map accordingly
+    void _checkForAddedOrRemovedJoysticks();
     void _activeVehicleChanged(Vehicle *activeVehicle);
     void _setActiveJoystickByName(const QString &name);
+    void _handleUpdateComplete(int instanceId);
 
 private:
-    void _checkForAddedOrRemovedJoysticks();
     void _setActiveJoystickFromSettings();
     void _setActiveJoystick(Joystick *joystick);
 
     JoystickManagerSettings *_joystickManagerSettings = nullptr;
     Joystick *_activeJoystick = nullptr;
     QMap<QString, Joystick*> _name2JoystickMap;
-
-    int _checkForAddedOrRemovedJoysticksTimerCounter = 0;
-    QTimer _checkForAddedOrRemovedJoysticksTimer;
-
-    static constexpr int kTimeout = 1000;
-    static constexpr const char *_settingsGroup = "JoystickManager";
-    static constexpr const char *_settingsKeyActiveNameJoystick = "ActiveJoystickName";
 };

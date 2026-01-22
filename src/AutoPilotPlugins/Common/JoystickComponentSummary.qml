@@ -13,7 +13,12 @@ ColumnLayout {
 
     VehicleSummaryRow {
         labelText: qsTr("Status")
-        valueText: !_activeJoystick ? qsTr("No joystick detected") : (_activeJoystick.axisCount === 0 ? qsTr("Buttons only") : (_activeJoystick.calibrated ? qsTr("Calibrated") : qsTr("Needs calibration")))
+        valueText: {
+            if (!_activeJoystick) return qsTr("No joystick detected")
+            if (_activeJoystick.axisCount === 0) return qsTr("Buttons only")
+            if (!_activeJoystick.requiresCalibration) return qsTr("Ready")
+            return _activeJoystick.settings.calibrated.rawValue ? qsTr("Calibrated") : qsTr("Needs calibration")
+        }
     }
 
     VehicleSummaryRow {

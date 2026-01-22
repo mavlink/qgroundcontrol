@@ -13,7 +13,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-    # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Android Joystick Implementation
 # ----------------------------------------------------------------------------
 if(ANDROID)
@@ -35,10 +35,6 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK)
-
-if(SDL_GAMECONTROLLERCONFIG)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE SDL_GAMECONTROLLERCONFIG=\"${SDL_GAMECONTROLLERCONFIG}\")
-endif()
 
 # ============================================================================
 # SDL Game Controller Database
@@ -90,9 +86,9 @@ endif()
 
 CPMAddPackage(
     NAME SDL3
-    VERSION 3.2.20
+    VERSION 3.4.0
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG release-3.2.20
+    GIT_TAG release-3.4.0
     OPTIONS
         "SDL_INSTALL OFF"
         "SDL_UNINSTALL OFF"
@@ -111,7 +107,7 @@ CPMAddPackage(
         "SDL_HAPTIC ON"
         "SDL_HIDAPI ON"
         "SDL_POWER ON"
-        "SDL_SENSOR OFF"
+        "SDL_SENSOR ON"
         "SDL_DIALOG OFF"
 
         "SDL_CCACHE ON"

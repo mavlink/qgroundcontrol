@@ -85,6 +85,10 @@ add_qgc_test(FollowMeTest)
 add_subdirectory(GPS)
 add_qgc_test(GpsTest)
 
+add_subdirectory(Joystick)
+add_qgc_test(JoystickTest)
+add_qgc_test(JoystickManagerTest)
+
 add_subdirectory(MAVLink)
 add_qgc_test(StatusTextHandlerTest)
 add_qgc_test(SigningTest)
