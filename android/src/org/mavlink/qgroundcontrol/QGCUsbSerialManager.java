@@ -32,7 +32,6 @@ public class QGCUsbSerialManager {
     private static native void nativeDeviceHasDisconnected(final long classPtr);
     public static native void nativeDeviceException(final long classPtr, final String message);
     public static native void nativeDeviceNewData(final long classPtr, final byte[] data);
-    private static native void nativeUpdateAvailableJoysticks();
 
     /**
      * Encapsulates all resources associated with a USB device.
@@ -149,12 +148,6 @@ public class QGCUsbSerialManager {
             }
 
             updateCurrentDrivers();
-
-            try {
-                nativeUpdateAvailableJoysticks();
-            } catch (final Exception ex) {
-                QGCLogger.e(TAG, "Exception nativeUpdateAvailableJoysticks()", ex);
-            }
         }
     };
 

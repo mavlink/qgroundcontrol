@@ -4,21 +4,22 @@ import java.io.File;
 import java.util.List;
 import java.lang.reflect.Method;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
-import android.net.wifi.WifiManager;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.WindowManager;
-import android.app.Activity;
-import android.os.storage.StorageManager;
-import android.os.storage.StorageVolume;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -57,11 +58,13 @@ public class QGCActivity extends QtActivity {
         setupMulticastLock();
 
         QGCUsbSerialManager.initialize(this);
+        QGCJoystickManager.initialize(this);
     }
 
     @Override
     protected void onDestroy() {
         try {
+            QGCJoystickManager.cleanup();
             releaseMulticastLock();
             releaseWakeLock();
             QGCUsbSerialManager.cleanup(this);

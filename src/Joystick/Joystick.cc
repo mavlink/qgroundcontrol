@@ -66,7 +66,7 @@ AssignedButtonAction::AssignedButtonAction(const QString &actionName_, bool repe
     : actionName(actionName_)
     , repeat(repeat_)
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 AvailableButtonAction::AvailableButtonAction(const QString &actionName_, bool canRepeat_, QObject *parent)
@@ -74,7 +74,7 @@ AvailableButtonAction::AvailableButtonAction(const QString &actionName_, bool ca
     , _actionName(actionName_)
     , _repeat(canRepeat_)
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 /*===========================================================================*/
@@ -146,7 +146,7 @@ Joystick::~Joystick()
     _availableButtonActions->clearAndDeleteContents();
     qDeleteAll(_assignedButtonActions);
 
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 void Joystick::_migrateLegacySettings()

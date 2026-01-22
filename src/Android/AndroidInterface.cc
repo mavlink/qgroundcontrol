@@ -136,4 +136,13 @@ void setKeepScreenOn(bool on)
     //-- Screen is locked on while QGC is running on Android
 }
 
+int getApiLevel()
+{
+    static int apiLevel = -1;
+    if (apiLevel < 0) {
+        apiLevel = QJniObject::getStaticField<jint>("android/os/Build$VERSION", "SDK_INT");
+    }
+    return apiLevel;
+}
+
 } // namespace AndroidInterface
