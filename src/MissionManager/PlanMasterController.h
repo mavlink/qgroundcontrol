@@ -43,7 +43,7 @@ public:
     Q_PROPERTY(bool                     syncInProgress          READ syncInProgress                         NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
     Q_PROPERTY(bool                     dirty                   READ dirty                  WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
-    Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
+    Q_PROPERTY(QStringList              exportFilters           READ exportFilters                          CONSTANT)                       ///< File filters for export formats
     Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
@@ -81,7 +81,7 @@ public:
 
     Q_INVOKABLE void saveToCurrent();
     Q_INVOKABLE void saveToFile(const QString& filename);
-    Q_INVOKABLE void saveToKml(const QString& filename);
+    Q_INVOKABLE void exportToFile(const QString& filename); ///< Export to KML, GeoJSON, etc. based on file extension
     Q_INVOKABLE void removeAll(void);                       ///< Removes all from controller only, synce required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void);            ///< Removes all from vehicle and controller
 
@@ -95,7 +95,7 @@ public:
     bool        dirty           (void) const;
     void        setDirty        (bool dirty);
     QString     fileExtension   (void) const;
-    QString     kmlFileExtension(void) const;
+    QStringList exportFilters   (void) const;
     QString     currentPlanFile (void) const { return _currentPlanFile; }
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;

@@ -18,7 +18,7 @@ QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
 const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
 
-SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
+SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& shapeFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
@@ -51,8 +51,8 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::isValidChanged,             this, &SurveyComplexItem::_updateWizardMode);
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::traceModeChanged,           this, &SurveyComplexItem::_updateWizardMode);
 
-    if (!kmlOrShpFile.isEmpty()) {
-        _surveyAreaPolygon.loadKMLOrSHPFile(kmlOrShpFile);
+    if (!shapeFile.isEmpty()) {
+        _surveyAreaPolygon.loadShapeFile(shapeFile);
         _surveyAreaPolygon.setDirty(false);
     }
     setDirty(false);

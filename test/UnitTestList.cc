@@ -50,6 +50,8 @@
 #include "MissionItemTest.h"
 #include "MissionManagerTest.h"
 #include "MissionSettingsTest.h"
+#include "PlanExporterTest.h"
+#include "PlanImporterTest.h"
 #include "PlanMasterControllerTest.h"
 #include "QGCMapPolygonTest.h"
 #include "QGCMapPolylineTest.h"
@@ -87,6 +89,7 @@
 #include "QGCFileWatcherTest.h"
 // Geo
 #include "GeoTest.h"
+#include "GeoUtilitiesTest.h"
 // Shape
 #include "ShapeTest.h"
 
@@ -158,6 +161,8 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(MissionItemTest)
     UT_REGISTER_TEST(MissionManagerTest)
     UT_REGISTER_TEST(MissionSettingsTest)
+    UT_REGISTER_TEST(PlanExporterTest)
+    UT_REGISTER_TEST(PlanImporterTest)
     UT_REGISTER_TEST(PlanMasterControllerTest)
     UT_REGISTER_TEST(QGCMapPolygonTest)
     UT_REGISTER_TEST(QGCMapPolylineTest)
@@ -193,6 +198,7 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(QGCFileWatcherTest)
     // Geo
     UT_REGISTER_TEST(GeoTest)
+    UT_REGISTER_TEST(GeoUtilitiesTest)
     // Shape
     UT_REGISTER_TEST(ShapeTest)
 

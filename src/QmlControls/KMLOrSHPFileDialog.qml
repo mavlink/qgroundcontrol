@@ -7,5 +7,5 @@ QGCFileDialog {
     id:             kmlOrSHPLoadDialog
     folder:         QGroundControl.settingsManager.appSettings.missionSavePath
     title:          qsTr("Select File")
-    nameFilters:    ShapeFileHelper.fileDialogKMLOrSHPFilters
+    nameFilters:    GeoFormatRegistryQml.fileDialogFilters
 }

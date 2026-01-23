@@ -110,12 +110,12 @@ Item {
 
     QGCPalette { id: qgcPal }
 
-    KMLOrSHPFileDialog {
-        id:             kmlOrSHPLoadDialog
+    ShapeFileDialog {
+        id:             shapeFileLoadDialog
         title:          qsTr("Select Polyline File")
 
         onAcceptedForLoad: (file) => {
-            mapPolyline.loadKMLOrSHPFile(file)
+            mapPolyline.loadShapeFile(file)
             mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
@@ -341,8 +341,8 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Load KML/SHP...")
-                onClicked:          kmlOrSHPLoadDialog.openForLoad()
+                text:               qsTr("Load Shape File...")
+                onClicked:          shapeFileLoadDialog.openForLoad()
                 visible:            !mapPolyline.traceMode
             }
         }

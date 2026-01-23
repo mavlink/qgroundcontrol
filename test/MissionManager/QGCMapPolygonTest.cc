@@ -207,13 +207,13 @@ void QGCMapPolygonTest::_testVertexManipulation(void)
 
 void QGCMapPolygonTest::_testKMLLoad(void)
 {
-    QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonGood.kml")));
+    QVERIFY(_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonGood.kml")));
 
-    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
+    QVERIFY(!_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
 
-    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
+    QVERIFY(!_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
 
-    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
+    QVERIFY(!_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
 }
 
 void QGCMapPolygonTest::_testSelectVertex(void)

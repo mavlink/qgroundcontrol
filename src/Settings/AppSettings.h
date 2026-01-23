@@ -64,8 +64,6 @@ public:
     Q_PROPERTY(QString waypointsFileExtension   MEMBER waypointsFileExtension   CONSTANT)
     Q_PROPERTY(QString parameterFileExtension   MEMBER parameterFileExtension   CONSTANT)
     Q_PROPERTY(QString telemetryFileExtension   MEMBER telemetryFileExtension   CONSTANT)
-    Q_PROPERTY(QString kmlFileExtension         MEMBER kmlFileExtension         CONSTANT)
-    Q_PROPERTY(QString shpFileExtension         MEMBER shpFileExtension         CONSTANT)
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
     Q_PROPERTY(QString tilesetFileExtension     MEMBER tilesetFileExtension     CONSTANT)
     Q_PROPERTY(QString settingsFileExtension    MEMBER settingsFileExtension    CONSTANT)
@@ -91,8 +89,6 @@ public:
     static constexpr const char* planFileExtension =        "plan";
     static constexpr const char* waypointsFileExtension =   "waypoints";
     static constexpr const char* telemetryFileExtension =   "tlog";
-    static constexpr const char* kmlFileExtension =         "kml";
-    static constexpr const char* shpFileExtension =         "shp";
     static constexpr const char* logFileExtension =         "ulg";
     static constexpr const char* tilesetFileExtension =     "qgctiledb";
     static constexpr const char* settingsFileExtension =    "settings";

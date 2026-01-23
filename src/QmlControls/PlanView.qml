@@ -159,7 +159,7 @@ Item {
             }
             fileDialog.title =          qsTr("Save KML")
             fileDialog.planFiles =      false
-            fileDialog.nameFilters =    ShapeFileHelper.fileDialogKMLFilters
+            fileDialog.nameFilters =    GeoFormatRegistryQml.fileDialogKMLFilters
             fileDialog.openForSave()
         }
     }
