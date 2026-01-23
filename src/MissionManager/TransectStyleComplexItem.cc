@@ -8,7 +8,6 @@
 #include "MissionCommandUIInfo.h"
 #include "QGC.h"
 #include "FirmwarePlugin.h"
-#include "KMLPlanDomDocument.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
@@ -1297,18 +1296,6 @@ void TransectStyleComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& it
         item->setSequenceNumber(seqNum++);
         items.append(item);
     }
-}
-
-void TransectStyleComplexItem::addKMLVisuals(KMLPlanDomDocument& domDocument)
-{
-    // We add the survey area polygon as a Placemark
-
-    QDomElement placemarkElement = domDocument.addPlacemark(QStringLiteral("Survey Area"), true);
-    QDomElement polygonElement = _surveyAreaPolygon.kmlPolygonElement(domDocument);
-
-    placemarkElement.appendChild(polygonElement);
-    domDocument.addTextElement(placemarkElement, "styleUrl", QStringLiteral("#%1").arg(domDocument.surveyPolygonStyleName));
-    domDocument.appendChildToRoot(placemarkElement);
 }
 
 void TransectStyleComplexItem::_recalcComplexDistance(void)

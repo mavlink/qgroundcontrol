@@ -18,8 +18,8 @@ class StructureScanComplexItem : public ComplexMissionItem
 
 public:
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
-    /// @param kmlOrSHPFile Polygon comes from this file, empty for default polygon
-    StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrSHPFile);
+    /// @param shapeFile Polygon comes from this file, empty for default polygon
+    StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& shapeFile);
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
     Q_PROPERTY(Fact*            entranceAlt                 READ entranceAlt                                                CONSTANT)

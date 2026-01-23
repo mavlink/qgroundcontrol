@@ -133,6 +133,8 @@ add_qgc_test(SpeedSectionTest LABELS Unit MissionManager)
 add_qgc_test(StructureScanComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
 add_qgc_test(SurveyComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
 add_qgc_test(TransectStyleComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
+add_qgc_test(PlanExporterTest LABELS Unit MissionManager)
+add_qgc_test(PlanImporterTest LABELS Unit MissionManager)
 # add_qgc_test(VisualMissionItemTest LABELS Unit MissionManager)
 
 # add_qgc_test(FileDialogTest LABELS Unit)
@@ -191,6 +193,7 @@ if(NOT ANDROID AND NOT IOS)
 endif()
 # Shape
 add_qgc_test(ShapeTest LABELS Unit Utilities)
+add_qgc_test(GeoUtilitiesTest LABELS Unit Utilities)
 
 # ----------------------------------------------------------------------------
 # Viewer3D

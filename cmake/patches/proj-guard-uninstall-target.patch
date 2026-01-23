@@ -1,0 +1,12 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -522,6 +522,8 @@ if(NOT _is_multi_config_generator)
+ endif()
+ 
+ configure_file(cmake/uninstall.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/proj_uninstall.cmake @ONLY)
+-add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/proj_uninstall.cmake)
++if(NOT TARGET uninstall)
++  add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/proj_uninstall.cmake)
++endif()
+ 
+ message(STATUS "EMBED_RESOURCE_FILES=${EMBED_RESOURCE_FILES}")

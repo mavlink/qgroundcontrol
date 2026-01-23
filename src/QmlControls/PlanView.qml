@@ -18,20 +18,15 @@ Item {
     readonly property int   _decimalPlaces: 8
     readonly property real  _margin: ScreenTools.defaultFontPixelHeight * 0.5
     readonly property real  _toolsMargin: ScreenTools.defaultFontPixelWidth * 0.75
-    readonly property real  _radius: ScreenTools.defaultFontPixelWidth  * 0.5
     readonly property real  _rightPanelWidth: Math.min(width / 3, ScreenTools.defaultFontPixelWidth * 30)
-    readonly property var   _defaultVehicleCoordinate: QtPositioning.coordinate(37.803784, -122.462276)
-    readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     property var    _planMasterController: planMasterController
     property var    _missionController: _planMasterController.missionController
     property var    _geoFenceController: _planMasterController.geoFenceController
     property var    _rallyPointController: _planMasterController.rallyPointController
     property var    _visualItems: _missionController.visualItems
-    property bool   _lightWidgetBorders: editorMap.isSatelliteMap
     property bool   _singleComplexItem: _missionController.complexMissionItemNames.length === 1
     property int    _editingLayer: _layerMission
-    property int    _toolStripBottom: toolStrip.height + toolStrip.y
     property var    _appSettings: QGroundControl.settingsManager.appSettings
     property var    _planViewSettings: QGroundControl.settingsManager.planViewSettings
     property bool   _promptForPlanUsageShowing: false
@@ -39,8 +34,6 @@ Item {
     readonly property int _layerMission: 1
     readonly property int _layerFence: 2
     readonly property int _layerRally: 3
-
-    readonly property string _armedVehicleUploadPrompt: qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
     onVisibleChanged: {
         if(visible) {
@@ -56,11 +49,6 @@ Item {
         coordinate.altitude  = coordinate.altitude.toFixed(_decimalPlaces)
         return coordinate
     }
-
-    property bool _firstMissionLoadComplete: false
-    property bool _firstFenceLoadComplete: false
-    property bool _firstRallyLoadComplete: false
-    property bool _firstLoadComplete: false
 
     MapFitFunctions {
         id: mapFitFunctions  // The name for this id cannot be changed without breaking references outside of this code. Beware!
@@ -128,7 +116,7 @@ Item {
 
         function loadFromSelectedFile() {
             fileDialog.title =          qsTr("Select Plan File")
-            fileDialog.planFiles =      true
+            fileDialog.isPlanFileSaveMode = true
             fileDialog.nameFilters =    _planMasterController.loadNameFilters
             fileDialog.openForLoad()
         }
@@ -138,7 +126,7 @@ Item {
                 return
             }
             fileDialog.title =          qsTr("Save Plan")
-            fileDialog.planFiles =      true
+            fileDialog.isPlanFileSaveMode = true
             fileDialog.nameFilters =    _planMasterController.saveNameFilters
             fileDialog.openForSave()
         }
@@ -147,13 +135,13 @@ Item {
             mapFitFunctions.fitMapViewportToMissionItems()
         }
 
-        function saveKmlToSelectedFile() {
+        function exportToSelectedFile() {
             if (!checkReadyForSaveUpload(true /* save */)) {
                 return
             }
-            fileDialog.title =          qsTr("Save KML")
-            fileDialog.planFiles =      false
-            fileDialog.nameFilters =    ShapeFileHelper.fileDialogKMLFilters
+            fileDialog.title =          qsTr("Export Plan")
+            fileDialog.isPlanFileSaveMode = false
+            fileDialog.nameFilters =    _planMasterController.exportFilters
             fileDialog.openForSave()
         }
     }
@@ -203,13 +191,13 @@ Item {
         id: fileDialog
         folder: _appSettings ? _appSettings.missionSavePath : ""
 
-        property bool planFiles: true    ///< true: working with plan files, false: working with kml file
+        property bool isPlanFileSaveMode: true    ///< true: save .plan, false: export by extension
 
         onAcceptedForSave: (file) => {
-            if (planFiles) {
+            if (isPlanFileSaveMode) {
                 _planMasterController.saveToFile(file)
             } else {
-                _planMasterController.saveToKml(file)
+                _planMasterController.exportToFile(file)
             }
             close()
         }

@@ -15,7 +15,7 @@ QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem
 
 const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
 
-StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
+StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& shapeFile)
     : ComplexMissionItem        (masterController, flyView)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
@@ -99,8 +99,8 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     _recalcLayerInfo();
 
-    if (!kmlOrShpFile.isEmpty()) {
-        _structurePolygon.loadKMLOrSHPFile(kmlOrShpFile);
+    if (!shapeFile.isEmpty()) {
+        _structurePolygon.loadShapeFile(shapeFile);
         _structurePolygon.setDirty(false);
     }
 
