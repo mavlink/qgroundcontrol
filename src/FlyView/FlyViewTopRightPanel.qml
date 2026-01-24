@@ -28,7 +28,7 @@ Rectangle {
                                                 maximumHeight,
                                                 topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.spacing * ( topRightPanelColumnLayout.children.length - 1)
                                             )
-    property real  minimumHeight:           selectedVehiclesLabel.height + swipeViewContainer.height
+    property real  minimumHeight:           swipeViewContainer.height
     property real  maximumHeight
 
     QGCPalette { id: qgcPal }
@@ -42,17 +42,6 @@ Rectangle {
         anchors.fill:       parent
         anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
         spacing:            ScreenTools.defaultFontPixelHeight / 2
-
-        QGCLabel {
-            id: selectedVehiclesLabel
-            text: {
-                let ids = Array.from({length: selectedVehicles.count}, (_, i) =>
-                    selectedVehicles.get(i).id
-                ).sort((a, b) => a - b)
-                .join(", ")
-                return qsTr("Selected: ") + ids
-            }
-        }
 
         MultiVehicleList {
             id:                    multiVehicleList
@@ -122,7 +111,13 @@ Rectangle {
                         implicitWidth:          Math.max(selectionRowLayout.width, actionRowLayout.width) + ScreenTools.defaultFontPixelHeight * 4
 
                         QGCLabel {
-                            text:               qsTr("Multi Vehicle Selection")
+                            text: {
+                                let ids = Array.from({length: selectedVehicles.count}, (_, i) =>
+                                    selectedVehicles.get(i).id
+                                ).sort((a, b) => a - b)
+                                .join(", ")
+                                return qsTr("Vehicles Selected: ") + (ids ? ids : "-")
+                            }
                             Layout.alignment:   Qt.AlignHCenter
                         }
 
