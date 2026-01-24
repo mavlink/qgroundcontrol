@@ -9,7 +9,7 @@ Rectangle {
     property real contentMargin:            ScreenTools.defaultFontPixelHeight
     default property alias contentChildren: contentContainer.data
 
-    color:              "transparent"
+    color:              qgcPal.windowTransparent
     border.color:       QGroundControl.globalPalette.groupBorder
     border.width:       showBorder ? 1 : 0
     radius:             ScreenTools.defaultFontPixelHeight / 3
