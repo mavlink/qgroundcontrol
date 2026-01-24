@@ -26,7 +26,7 @@ Rectangle {
                                             ) + ScreenTools.defaultFontPixelHeight
     property real  contentHeight:           Math.min(
                                                 maximumHeight,
-                                                topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.spacing * ( topRightPanelColumnLayout.children.length - 1)
+                                                topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.anchors.margins * 2
                                             )
     property real  minimumHeight:           swipeViewContainer.height
     property real  maximumHeight
@@ -40,8 +40,8 @@ Rectangle {
     ColumnLayout {
         id:                 topRightPanelColumnLayout
         anchors.fill:       parent
-        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-        spacing:            ScreenTools.defaultFontPixelHeight / 2
+        anchors.margins:    topRightPanel.color.a ? ScreenTools.defaultFontPixelHeight / 2 : 0
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.75 // _layoutMargin
 
         MultiVehicleList {
             id:                    multiVehicleList
