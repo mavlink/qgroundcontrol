@@ -6,20 +6,9 @@
 
 #include <QtTest/QTest>
 
-SectionTest::SectionTest(void)
-    : _simpleItem(nullptr)
-{
-
-}
-
-void SectionTest::init(void)
+void SectionTest::init()
 {
     VisualMissionItemTest::init();
-
-    rgSectionSignals[availableChangedIndex] =           SIGNAL(availableChanged(bool));
-    rgSectionSignals[settingsSpecifiedChangedIndex] =   SIGNAL(settingsSpecifiedChanged(bool));
-    rgSectionSignals[dirtyChangedIndex] =               SIGNAL(dirtyChanged(bool));
-    rgSectionSignals[itemCountChangedIndex] =           SIGNAL(itemCountChanged(int));
 
     MissionItem missionItem(1,              // sequence number
                             MAV_CMD_NAV_WAYPOINT,
@@ -36,7 +25,7 @@ void SectionTest::init(void)
     _simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, missionItem);
 }
 
-void SectionTest::cleanup(void)
+void SectionTest::cleanup()
 {
     _simpleItem->deleteLater();
     VisualMissionItemTest::cleanup();
@@ -46,13 +35,13 @@ void SectionTest::_createSpy(Section* section, MultiSignalSpy** sectionSpy)
 {
     *sectionSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(section, rgSectionSignals, cSectionSignals), true);
+    QVERIFY(spy->init(section));
     *sectionSpy = spy;
 }
 
 void SectionTest::_commonScanTest(Section* section)
 {
-    QCOMPARE(section->available(), true);
+    QVERIFY(section->available());
 
     QmlObjectListModel emptyVisualItems;
 
@@ -70,14 +59,14 @@ void SectionTest::_commonScanTest(Section* section)
     // This tests the common cases which should not lead to scan succeess
 
     int scanIndex = 0;
-    QCOMPARE(section->scanForSection(&emptyVisualItems, scanIndex), false);
-    QCOMPARE(scanIndex, 0);
+    QVERIFY(!section->scanForSection(&emptyVisualItems, scanIndex));
+    QCOMPARE_EQ(scanIndex, 0);
 
     scanIndex = 0;
-    QCOMPARE(section->scanForSection(&waypointVisualItems, scanIndex), false);
-    QCOMPARE(scanIndex, 0);
+    QVERIFY(!section->scanForSection(&waypointVisualItems, scanIndex));
+    QCOMPARE_EQ(scanIndex, 0);
 
     scanIndex = 0;
-    QCOMPARE(section->scanForSection(&complexVisualItems, scanIndex), false);
-    QCOMPARE(scanIndex, 0);
+    QVERIFY(!section->scanForSection(&complexVisualItems, scanIndex));
+    QCOMPARE_EQ(scanIndex, 0);
 }

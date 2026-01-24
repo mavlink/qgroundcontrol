@@ -14,9 +14,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         MissionCommandTreeTest.cc MissionCommandTreeTest.h
         MissionControllerManagerTest.cc MissionControllerManagerTest.h
         MissionControllerTest.cc MissionControllerTest.h
+        MissionErrorHandlingTest.cc MissionErrorHandlingTest.h
         MissionItemTest.cc MissionItemTest.h
         MissionManagerTest.cc MissionManagerTest.h
         MissionSettingsTest.cc MissionSettingsTest.h
+        MissionWorkflowTest.cc MissionWorkflowTest.h
+        PlanFileRoundtripTest.cc PlanFileRoundtripTest.h
         PlanMasterControllerTest.cc PlanMasterControllerTest.h
         QGCMapPolygonTest.cc QGCMapPolygonTest.h
         QGCMapPolylineTest.cc QGCMapPolylineTest.h

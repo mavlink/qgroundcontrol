@@ -6,12 +6,7 @@
 #include <QtTest/QTest>
 #include <QtCore/QJsonArray>
 
-FWLandingPatternTest::FWLandingPatternTest(void)
-{
-
-}
-
-void FWLandingPatternTest::init(void)
+void FWLandingPatternTest::init()
 {
     VisualMissionItemTest::init();
 
@@ -30,7 +25,7 @@ void FWLandingPatternTest::init(void)
     _validStopTimeItem =        CameraSectionTest::createValidStopTimeItem(_masterController);
 }
 
-void FWLandingPatternTest::cleanup(void)
+void FWLandingPatternTest::cleanup()
 {
     delete _viSpy;
     _viSpy = nullptr;
@@ -45,18 +40,18 @@ void FWLandingPatternTest::cleanup(void)
 }
 
 
-void FWLandingPatternTest::_testDefaults(void)
+void FWLandingPatternTest::_testDefaults()
 {
     QCOMPARE(_fwItem->stopTakingPhotos()->rawValue().toBool(), true);
     QCOMPARE(_fwItem->stopTakingVideo()->rawValue().toBool(), true);
 }
 
-void FWLandingPatternTest::_testDirty(void)
+void FWLandingPatternTest::_testDirty()
 {
     _fwItem->setDirty(true);
     QVERIFY(_fwItem->dirty());
-    QVERIFY(_viSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(_viSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_viSpy->checkOnlySignalByMask(_viSpy->mask("dirtyChanged")));
+    QVERIFY(_viSpy->pullBoolFromSignal("dirtyChanged"));
     _fwItem->setDirty(false);
     _viSpy->clearAllSignals();
 
@@ -68,15 +63,15 @@ void FWLandingPatternTest::_testDirty(void)
         qDebug() << fact->name();
         QVERIFY(!_fwItem->dirty());
         changeFactValue(fact);
-        QVERIFY(_viSpy->checkSignalByMask(dirtyChangedMask));
-        QVERIFY(_viSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+        QVERIFY(_viSpy->checkSignalByMask(_viSpy->mask("dirtyChanged")));
+        QVERIFY(_viSpy->pullBoolFromSignal("dirtyChanged"));
         _fwItem->setDirty(false);
         _viSpy->clearAllSignals();
     }
     rgFacts.clear();
 }
 
-void FWLandingPatternTest::_testSaveLoad(void)
+void FWLandingPatternTest::_testSaveLoad()
 {
     QJsonArray items;
 
@@ -89,14 +84,14 @@ void FWLandingPatternTest::_testSaveLoad(void)
         qDebug() << errorString;
     }
     QVERIFY(success);
-    QVERIFY(errorString.isEmpty());
+    QGC_VERIFY_EMPTY(errorString);
     _validateItem(newItem);
     newItem->deleteLater();
 }
 
 void FWLandingPatternTest::_validateItem(FixedWingLandingComplexItem* newItem)
 {
-    QVERIFY(newItem);
+    VERIFY_NOT_NULL(newItem);
 
     QCOMPARE(newItem->glideSlope()->rawValue().toInt(),             _fwItem->glideSlope()->rawValue().toInt());
     QCOMPARE(newItem->valueSetIsDistance()->rawValue().toBool(),    _fwItem->valueSetIsDistance()->rawValue().toBool());

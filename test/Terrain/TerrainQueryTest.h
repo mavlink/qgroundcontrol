@@ -71,9 +71,14 @@ private:
 
 /*===========================================================================*/
 
+/// Unit test for TerrainQuery.
 class TerrainQueryTest : public UnitTest
 {
     Q_OBJECT
+
+    friend UnitTestTerrainQuery;
+public:
+    TerrainQueryTest() = default;
 
 private slots:
     void _testRequestCoordinateHeights();
@@ -82,5 +87,11 @@ private slots:
     void _testRequestCarpetHeightsInvalidBounds();
     void _testPolyPathQueryEmptyPath();
     void _testPolyPathQuerySingleCoord();
-    // void _testTerrainAtCoordinateQuery();
+
+private:
+    /// Creates a new UnitTestTerrainQuery owned by this test
+    UnitTestTerrainQuery* _createQuery();
+
+    /// Point Nemo reference location for tests
+    static const QGeoCoordinate kPointNemo;
 };

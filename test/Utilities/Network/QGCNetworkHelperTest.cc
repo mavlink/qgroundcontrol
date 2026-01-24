@@ -126,8 +126,8 @@ void QGCNetworkHelperTest::_testHttpStatusText()
     QCOMPARE(QGCNetworkHelper::httpStatusText(502), QStringLiteral("Bad Gateway"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(503), QStringLiteral("Service Unavailable"));
 
-    // Unknown status should return formatted message
-    QVERIFY(QGCNetworkHelper::httpStatusText(999).contains("999"));
+    // Unknown status should return "Unknown Status"
+    QCOMPARE(QGCNetworkHelper::httpStatusText(999), QStringLiteral("Unknown Status"));
 }
 
 void QGCNetworkHelperTest::_testHttpStatusTextFromEnum()
@@ -404,10 +404,11 @@ void QGCNetworkHelperTest::_testRequestConfigDefaults()
 
 void QGCNetworkHelperTest::_testIsNetworkAvailable()
 {
-    // Just verify it returns without crashing
-    // Result depends on actual network state
-    (void)QGCNetworkHelper::isNetworkAvailable();
-    QVERIFY(true);
+    // Verify the function executes without crashing
+    // Actual result depends on system network state - we just verify it returns a bool
+    const bool available = QGCNetworkHelper::isNetworkAvailable();
+    Q_UNUSED(available)
+    // If we reach here, the function executed successfully
 }
 
 void QGCNetworkHelperTest::_testConnectionTypeName()
@@ -432,16 +433,18 @@ void QGCNetworkHelperTest::_testConnectionTypeName()
 
 void QGCNetworkHelperTest::_testIsSslAvailable()
 {
-    // Just verify it returns without crashing
+    // Verify the function executes without crashing
     // SSL availability depends on system configuration
-    (void)QGCNetworkHelper::isSslAvailable();
-    QVERIFY(true);
+    const bool available = QGCNetworkHelper::isSslAvailable();
+    Q_UNUSED(available)
+    // If we reach here, the function executed successfully
 }
 
 void QGCNetworkHelperTest::_testSslVersion()
 {
-    QString version = QGCNetworkHelper::sslVersion();
-    // Version string might be empty if SSL not available, but shouldn't crash
-    (void)version;
-    QVERIFY(true);
+    // Verify the function executes without crashing
+    // Version string may be empty if SSL not available
+    const QString version = QGCNetworkHelper::sslVersion();
+    Q_UNUSED(version)
+    // If we reach here, the function executed successfully
 }

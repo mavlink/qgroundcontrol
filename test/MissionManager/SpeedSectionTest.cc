@@ -6,28 +6,19 @@
 
 #include <QtTest/QTest>
 
-SpeedSectionTest::SpeedSectionTest(void)
-    : _spySpeed(nullptr)
-    , _spySection(nullptr)
-    , _speedSection(nullptr)
-{
-
-}
-
-void SpeedSectionTest::init(void)
+void SpeedSectionTest::init()
 {
     SectionTest::init();
 
-    rgSpeedSignals[specifyFlightSpeedChangedIndex] = SIGNAL(specifyFlightSpeedChanged(bool));
-
     _speedSection = _simpleItem->speedSection();
+    VERIFY_NOT_NULL(_speedSection);
     _createSpy(_speedSection, &_spySpeed);
-    QVERIFY(_spySpeed);
+    VERIFY_NOT_NULL(_spySpeed);
     SectionTest::_createSpy(_speedSection, &_spySection);
-    QVERIFY(_spySection);
+    VERIFY_NOT_NULL(_spySection);
 }
 
-void SpeedSectionTest::cleanup(void)
+void SpeedSectionTest::cleanup()
 {
     delete _spySpeed;
     delete _spySection;
@@ -38,36 +29,36 @@ void SpeedSectionTest::_createSpy(SpeedSection* speedSection, MultiSignalSpy** s
 {
     *speedSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(speedSection, rgSpeedSignals, cSpeedSignals), true);
+    QVERIFY(spy->init(speedSection));
     *speedSpy = spy;
 }
 
-void SpeedSectionTest::_testDirty(void)
+void SpeedSectionTest::_testDirty()
 {
     // Check for dirty not signalled if same value
     _speedSection->setSpecifyFlightSpeed(_speedSection->specifyFlightSpeed());
-    QVERIFY(_spySection->checkNoSignals());
-    QCOMPARE(_speedSection->dirty(), false);
+    QVERIFY_NO_SIGNALS(*_spySection);
+    QVERIFY(!_speedSection->dirty());
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue());
-    QVERIFY(_spySection->checkNoSignals());
-    QCOMPARE(_speedSection->dirty(), false);
+    QVERIFY_NO_SIGNALS(*_spySection);
+    QVERIFY(!_speedSection->dirty());
 
     // Check for no duplicate dirty signalling on change
     _speedSection->setSpecifyFlightSpeed(!_speedSection->specifyFlightSpeed());
-    QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), true);
-    QCOMPARE(_speedSection->dirty(), true);
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("dirtyChanged")));
+    QVERIFY(_spySection->pullBoolFromSignal("dirtyChanged"));
+    QVERIFY(_speedSection->dirty());
     _spySection->clearAllSignals();
     _speedSection->setSpecifyFlightSpeed(!_speedSection->specifyFlightSpeed());
-    QVERIFY(_spySection->checkNoSignalByMask(dirtyChangedMask));
-    QCOMPARE(_speedSection->dirty(), true);
+    QVERIFY(_spySection->checkNoSignalByMask(_spySection->mask("dirtyChanged")));
+    QVERIFY(_speedSection->dirty());
     _spySection->clearAllSignals();
 
     // Check that the dirty bit can be cleared
     _speedSection->setDirty(false);
-    QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), false);
-    QCOMPARE(_speedSection->dirty(), false);
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("dirtyChanged")));
+    QVERIFY(!_spySection->pullBoolFromSignal("dirtyChanged"));
+    QVERIFY(!_speedSection->dirty());
     _spySection->clearAllSignals();
 
     // Flight speed change should only signal if specifyFlightSpeed is set
@@ -76,48 +67,48 @@ void SpeedSectionTest::_testDirty(void)
     _speedSection->setDirty(false);
     _spySection->clearAllSignals();
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
-    QVERIFY(_spySection->checkNoSignalByMask(dirtyChangedMask));
-    QCOMPARE(_speedSection->dirty(), false);
+    QVERIFY(_spySection->checkNoSignalByMask(_spySection->mask("dirtyChanged")));
+    QVERIFY(!_speedSection->dirty());
 
     _speedSection->setSpecifyFlightSpeed(true);
     _speedSection->setDirty(false);
     _spySection->clearAllSignals();
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
-    QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), true);
-    QCOMPARE(_speedSection->dirty(), true);
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("dirtyChanged")));
+    QVERIFY(_spySection->pullBoolFromSignal("dirtyChanged"));
+    QVERIFY(_speedSection->dirty());
 }
 
-void SpeedSectionTest::_testSettingsAvailable(void)
+void SpeedSectionTest::_testSettingsAvailable()
 {
     // No settings specified to start
-    QCOMPARE(_speedSection->specifyFlightSpeed(), false);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->specifyFlightSpeed());
+    QVERIFY(!_speedSection->settingsSpecified());
 
     // Check correct reaction to specifyFlightSpeed on/off
 
     _speedSection->setSpecifyFlightSpeed(true);
-    QCOMPARE(_speedSection->specifyFlightSpeed(), true);
-    QCOMPARE(_speedSection->settingsSpecified(), true);
-    QVERIFY(_spySpeed->checkSignalByMask(specifyFlightSpeedChangedMask));
-    QCOMPARE(_spySpeed->pullBoolFromSignalIndex(specifyFlightSpeedChangedIndex), true);
-    QVERIFY(_spySection->checkSignalByMask(settingsSpecifiedChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(settingsSpecifiedChangedIndex), true);
+    QVERIFY(_speedSection->specifyFlightSpeed());
+    QVERIFY(_speedSection->settingsSpecified());
+    QVERIFY(_spySpeed->checkSignalByMask(_spySpeed->mask("specifyFlightSpeedChanged")));
+    QVERIFY(_spySpeed->pullBoolFromSignal("specifyFlightSpeedChanged"));
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("settingsSpecifiedChanged")));
+    QVERIFY(_spySection->pullBoolFromSignal("settingsSpecifiedChanged"));
     _spySection->clearAllSignals();
     _spySpeed->clearAllSignals();
 
     _speedSection->setSpecifyFlightSpeed(false);
-    QCOMPARE(_speedSection->specifyFlightSpeed(), false);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
-    QVERIFY(_spySpeed->checkSignalByMask(specifyFlightSpeedChangedMask));
-    QCOMPARE(_spySpeed->pullBoolFromSignalIndex(specifyFlightSpeedChangedIndex), false);
-    QVERIFY(_spySection->checkSignalByMask(settingsSpecifiedChangedMask));
-    QCOMPARE(_spySection->pullBoolFromSignalIndex(settingsSpecifiedChangedIndex), false);
+    QVERIFY(!_speedSection->specifyFlightSpeed());
+    QVERIFY(!_speedSection->settingsSpecified());
+    QVERIFY(_spySpeed->checkSignalByMask(_spySpeed->mask("specifyFlightSpeedChanged")));
+    QVERIFY(!_spySpeed->pullBoolFromSignal("specifyFlightSpeedChanged"));
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("settingsSpecifiedChanged")));
+    QVERIFY(!_spySection->pullBoolFromSignal("settingsSpecifiedChanged"));
     _spySection->clearAllSignals();
     _spySpeed->clearAllSignals();
 }
 
-void SpeedSectionTest::_checkAvailable(void)
+void SpeedSectionTest::_checkAvailable()
 {
     MissionItem missionItem(1,              // sequence number
                             MAV_CMD_NAV_TAKEOFF,
@@ -132,54 +123,54 @@ void SpeedSectionTest::_checkAvailable(void)
                             true,           // autoContinue
                             false);         // isCurrentItem
     SimpleMissionItem* item = new SimpleMissionItem(_masterController, false /* flyView */, missionItem);
-    QVERIFY(item->speedSection());
-    QCOMPARE(item->speedSection()->available(), false);
+    VERIFY_NOT_NULL(item->speedSection());
+    QVERIFY(!item->speedSection()->available());
 }
 
-void SpeedSectionTest::_testItemCount(void)
+void SpeedSectionTest::_testItemCount()
 {
     // No settings specified to start
-    QCOMPARE(_speedSection->itemCount(), 0);
+    QCOMPARE_EQ(_speedSection->itemCount(), 0);
 
     _speedSection->setSpecifyFlightSpeed(true);
-    QCOMPARE(_speedSection->itemCount(), 1);
-    QVERIFY(_spySection->checkSignalByMask(itemCountChangedMask));
-    QCOMPARE(_spySection->pullIntFromSignalIndex(itemCountChangedIndex), 1);
+    QCOMPARE_EQ(_speedSection->itemCount(), 1);
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("itemCountChanged")));
+    QCOMPARE_EQ(_spySection->pullIntFromSignal("itemCountChanged"), 1);
     _spySection->clearAllSignals();
     _spySpeed->clearAllSignals();
 
     _speedSection->setSpecifyFlightSpeed(false);
-    QCOMPARE(_speedSection->itemCount(), 0);
-    QVERIFY(_spySection->checkSignalByMask(itemCountChangedMask));
-    QCOMPARE(_spySection->pullIntFromSignalIndex(itemCountChangedIndex), 0);
+    QCOMPARE_EQ(_speedSection->itemCount(), 0);
+    QVERIFY(_spySection->checkSignalByMask(_spySection->mask("itemCountChanged")));
+    QCOMPARE_EQ(_spySection->pullIntFromSignal("itemCountChanged"), 0);
     _spySection->clearAllSignals();
     _spySpeed->clearAllSignals();
 }
 
-void SpeedSectionTest::_testAppendSectionItems(void)
+void SpeedSectionTest::_testAppendSectionItems()
 {
     int seqNum = 0;
     QList<MissionItem*> rgMissionItems;
 
     // No settings specified to start
-    QCOMPARE(_speedSection->itemCount(), 0);
+    QCOMPARE_EQ(_speedSection->itemCount(), 0);
 
     _speedSection->appendSectionItems(rgMissionItems, this, seqNum);
-    QCOMPARE(rgMissionItems.count(), 0);
-    QCOMPARE(seqNum, 0);
+    QGC_VERIFY_EMPTY(rgMissionItems);
+    QCOMPARE_EQ(seqNum, 0);
     rgMissionItems.clear();
 
     _speedSection->setSpecifyFlightSpeed(true);
     _speedSection->appendSectionItems(rgMissionItems, this, seqNum);
-    QCOMPARE(rgMissionItems.count(), 1);
-    QCOMPARE(seqNum, 1);
+    QCOMPARE_EQ(rgMissionItems.count(), 1);
+    QCOMPARE_EQ(seqNum, 1);
     MissionItem expectedSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _controllerVehicle->multiRotor() ? 1 : 0, _speedSection->flightSpeed()->rawValue().toDouble(), -1, 0, 0, 0, 0, true, false);
     _missionItemsEqual(*rgMissionItems[0], expectedSpeedItem);
 }
 
-void SpeedSectionTest::_testScanForSection(void)
+void SpeedSectionTest::_testScanForSection()
 {
-    QCOMPARE(_speedSection->available(), true);
+    QVERIFY(_speedSection->available());
 
     int scanIndex = 0;
     QmlObjectListModel visualItems;
@@ -194,11 +185,11 @@ void SpeedSectionTest::_testScanForSection(void)
     MissionItem& simpleMissionItem = simpleItem.missionItem();
     visualItems.append(&simpleItem);
     scanIndex = 0;
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), true);
-    QCOMPARE(visualItems.count(), 0);
-    QCOMPARE(_speedSection->settingsSpecified(), true);
-    QCOMPARE(_speedSection->specifyFlightSpeed(), true);
-    QCOMPARE(_speedSection->flightSpeed()->rawValue().toDouble(), flightSpeed);
+    QVERIFY(_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 0);
+    QVERIFY(_speedSection->settingsSpecified());
+    QVERIFY(_speedSection->specifyFlightSpeed());
+    QGC_COMPARE_FLOAT(_speedSection->flightSpeed()->rawValue().toDouble(), flightSpeed);
     _speedSection->setSpecifyFlightSpeed(false);
     visualItems.clear();
     scanIndex = 0;
@@ -208,54 +199,54 @@ void SpeedSectionTest::_testScanForSection(void)
     simpleMissionItem = validSpeedItem;
     simpleMissionItem.setParam1(_controllerVehicle->multiRotor() ? 0 : 1);
     visualItems.append(&simpleItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 1);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 
     simpleMissionItem = validSpeedItem;
     simpleMissionItem.setParam3(50);
     visualItems.append(&simpleItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 1);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 
     simpleMissionItem = validSpeedItem;
     simpleMissionItem.setParam4(1);
     visualItems.append(&simpleItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 1);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 
     simpleMissionItem = validSpeedItem;
     simpleMissionItem.setParam5(1);
     visualItems.append(&simpleItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 1);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 
     simpleMissionItem = validSpeedItem;
     simpleMissionItem.setParam6(1);
     visualItems.append(&simpleItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 1);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 
     simpleMissionItem = validSpeedItem;
     simpleMissionItem.setParam7(1);
     visualItems.append(&simpleItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 1);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 
@@ -265,24 +256,24 @@ void SpeedSectionTest::_testScanForSection(void)
     simpleMissionItem = validSpeedItem;
     visualItems.append(&simpleWaypointItem);
     visualItems.append(&simpleMissionItem);
-    QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 2);
-    QCOMPARE(_speedSection->settingsSpecified(), false);
+    QVERIFY(!_speedSection->scanForSection(&visualItems, scanIndex));
+    QCOMPARE_EQ(visualItems.count(), 2);
+    QVERIFY(!_speedSection->settingsSpecified());
     visualItems.clear();
     scanIndex = 0;
 }
 
-void SpeedSectionTest::_testSpecifiedFlightSpeedChanged(void)
+void SpeedSectionTest::_testSpecifiedFlightSpeedChanged()
 {
     // specifiedFlightSpeedChanged SHOULD NOT signal if flight speed is changed when specifyFlightSpeed IS NOT set
     _speedSection->setSpecifyFlightSpeed(false);
     _spySpeed->clearAllSignals();
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
-    QVERIFY(_spySpeed->checkNoSignalByMask(specifiedFlightSpeedChangedMask));
+    QVERIFY(_spySpeed->checkNoSignalByMask(_spySpeed->mask("specifiedFlightSpeedChanged")));
 
     // specifiedFlightSpeedChanged SHOULD signal if flight speed is changed when specifyFlightSpeed IS set
     _speedSection->setSpecifyFlightSpeed(true);
     _spySpeed->clearAllSignals();
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
-    QVERIFY(_spySpeed->checkSignalByMask(specifiedFlightSpeedChangedMask));
+    QVERIFY(_spySpeed->checkSignalByMask(_spySpeed->mask("specifiedFlightSpeedChanged")));
 }

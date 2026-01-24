@@ -3,6 +3,26 @@
 #include <QtTest/QTest>
 #include <QtPositioning/QGeoCoordinate>
 
+// Test tile coordinates (Pacific Ocean region - avoids most land features)
+namespace {
+    constexpr double kTestTileSwLat = -48.88;
+    constexpr double kTestTileSwLon = -123.40;
+    constexpr double kTestTileNeLat = -48.87;
+    constexpr double kTestTileNeLon = -123.39;
+    constexpr double kTestTileCenterLat = -48.875;
+    constexpr double kTestTileCenterLon = -123.395;
+
+    constexpr int16_t kTestMinElevation = 10;
+    constexpr int16_t kTestMaxElevation = 100;
+    constexpr double kTestAvgElevation = 55.0;
+    constexpr int16_t kTestFillElevation = 50;
+    constexpr int16_t kTestGridSize = 10;
+
+    // Coordinate outside test tile bounds
+    constexpr double kOutsideLat = -50.0;
+    constexpr double kOutsideLon = -125.0;
+}
+
 QByteArray TerrainTileTest::_createValidTileData(
     double swLat, double swLon, double neLat, double neLon,
     int16_t minElev, int16_t maxElev, double avgElev,
@@ -35,23 +55,24 @@ QByteArray TerrainTileTest::_createValidTileData(
 void TerrainTileTest::_testValidTile()
 {
     const QByteArray tileData = _createValidTileData(
-        -48.88, -123.40, -48.87, -123.39,
-        10, 100, 55.0,
-        10, 10,
-        50
+        kTestTileSwLat, kTestTileSwLon, kTestTileNeLat, kTestTileNeLon,
+        kTestMinElevation, kTestMaxElevation, kTestAvgElevation,
+        kTestGridSize, kTestGridSize,
+        kTestFillElevation
     );
 
     TerrainTile tile(tileData);
 
     QVERIFY(tile.isValid());
-    QCOMPARE(tile.minElevation(), 10.0);
-    QCOMPARE(tile.maxElevation(), 100.0);
-    QCOMPARE(tile.avgElevation(), 55.0);
+    QCOMPARE_EQ(tile.minElevation(), static_cast<double>(kTestMinElevation));
+    QCOMPARE_EQ(tile.maxElevation(), static_cast<double>(kTestMaxElevation));
+    QCOMPARE_EQ(tile.avgElevation(), kTestAvgElevation);
 
-    const QGeoCoordinate centerCoord(-48.875, -123.395);
+    const QGeoCoordinate centerCoord(kTestTileCenterLat, kTestTileCenterLon);
+    QGC_VERIFY_VALID_COORDINATE(centerCoord);
     const double elev = tile.elevation(centerCoord);
     QVERIFY(!qIsNaN(elev));
-    QCOMPARE(elev, 50.0);
+    QCOMPARE_EQ(elev, static_cast<double>(kTestFillElevation));
 }
 
 void TerrainTileTest::_testEmptyData()
@@ -74,15 +95,15 @@ void TerrainTileTest::_testZeroGridDimensions()
     QByteArray tileData(headerSize, Qt::Uninitialized);
 
     TerrainTile::TileInfo_t* header = reinterpret_cast<TerrainTile::TileInfo_t*>(tileData.data());
-    header->swLat = -48.88;
-    header->swLon = -123.40;
-    header->neLat = -48.87;
-    header->neLon = -123.39;
-    header->minElevation = 10;
-    header->maxElevation = 100;
-    header->avgElevation = 55.0;
-    header->gridSizeLat = 0;
-    header->gridSizeLon = 10;
+    header->swLat = kTestTileSwLat;
+    header->swLon = kTestTileSwLon;
+    header->neLat = kTestTileNeLat;
+    header->neLon = kTestTileNeLon;
+    header->minElevation = kTestMinElevation;
+    header->maxElevation = kTestMaxElevation;
+    header->avgElevation = kTestAvgElevation;
+    header->gridSizeLat = 0;  // Invalid: zero grid size
+    header->gridSizeLon = kTestGridSize;
 
     TerrainTile tile(tileData);
     QVERIFY(!tile.isValid());
@@ -94,15 +115,15 @@ void TerrainTileTest::_testNegativeGridDimensions()
     QByteArray tileData(headerSize, Qt::Uninitialized);
 
     TerrainTile::TileInfo_t* header = reinterpret_cast<TerrainTile::TileInfo_t*>(tileData.data());
-    header->swLat = -48.88;
-    header->swLon = -123.40;
-    header->neLat = -48.87;
-    header->neLon = -123.39;
-    header->minElevation = 10;
-    header->maxElevation = 100;
-    header->avgElevation = 55.0;
-    header->gridSizeLat = -5;
-    header->gridSizeLon = 10;
+    header->swLat = kTestTileSwLat;
+    header->swLon = kTestTileSwLon;
+    header->neLat = kTestTileNeLat;
+    header->neLon = kTestTileNeLon;
+    header->minElevation = kTestMinElevation;
+    header->maxElevation = kTestMaxElevation;
+    header->avgElevation = kTestAvgElevation;
+    header->gridSizeLat = -5;  // Invalid: negative grid size
+    header->gridSizeLon = kTestGridSize;
 
     TerrainTile tile(tileData);
     QVERIFY(!tile.isValid());
@@ -114,14 +135,14 @@ void TerrainTileTest::_testExcessiveGridDimensions()
     QByteArray tileData(headerSize, Qt::Uninitialized);
 
     TerrainTile::TileInfo_t* header = reinterpret_cast<TerrainTile::TileInfo_t*>(tileData.data());
-    header->swLat = -48.88;
-    header->swLon = -123.40;
-    header->neLat = -48.87;
-    header->neLon = -123.39;
-    header->minElevation = 10;
-    header->maxElevation = 100;
-    header->avgElevation = 55.0;
-    header->gridSizeLat = 20000;
+    header->swLat = kTestTileSwLat;
+    header->swLon = kTestTileSwLon;
+    header->neLat = kTestTileNeLat;
+    header->neLon = kTestTileNeLon;
+    header->minElevation = kTestMinElevation;
+    header->maxElevation = kTestMaxElevation;
+    header->avgElevation = kTestAvgElevation;
+    header->gridSizeLat = 20000;  // Invalid: excessively large grid
     header->gridSizeLon = 20000;
 
     TerrainTile tile(tileData);
@@ -131,19 +152,20 @@ void TerrainTileTest::_testExcessiveGridDimensions()
 void TerrainTileTest::_testInfeasibleTileExtent()
 {
     constexpr int headerSize = static_cast<int>(sizeof(TerrainTile::TileInfo_t));
-    const int dataSize = static_cast<int>(sizeof(int16_t)) * 10 * 10;
+    const int dataSize = static_cast<int>(sizeof(int16_t)) * kTestGridSize * kTestGridSize;
     QByteArray tileData(headerSize + dataSize, Qt::Uninitialized);
 
     TerrainTile::TileInfo_t* header = reinterpret_cast<TerrainTile::TileInfo_t*>(tileData.data());
-    header->swLat = -48.87;
-    header->swLon = -123.39;
-    header->neLat = -48.88;
-    header->neLon = -123.40;
-    header->minElevation = 10;
-    header->maxElevation = 100;
-    header->avgElevation = 55.0;
-    header->gridSizeLat = 10;
-    header->gridSizeLon = 10;
+    // Swap SW and NE coordinates to create invalid extent (SW > NE)
+    header->swLat = kTestTileNeLat;  // Invalid: SW lat > NE lat
+    header->swLon = kTestTileNeLon;
+    header->neLat = kTestTileSwLat;
+    header->neLon = kTestTileSwLon;
+    header->minElevation = kTestMinElevation;
+    header->maxElevation = kTestMaxElevation;
+    header->avgElevation = kTestAvgElevation;
+    header->gridSizeLat = kTestGridSize;
+    header->gridSizeLon = kTestGridSize;
 
     TerrainTile tile(tileData);
     QVERIFY(!tile.isValid());
@@ -152,17 +174,18 @@ void TerrainTileTest::_testInfeasibleTileExtent()
 void TerrainTileTest::_testDataTooSmallForElevation()
 {
     constexpr int headerSize = static_cast<int>(sizeof(TerrainTile::TileInfo_t));
+    // Only add 10 bytes after header - not enough for 100x100 grid
     QByteArray tileData(headerSize + 10, Qt::Uninitialized);
 
     TerrainTile::TileInfo_t* header = reinterpret_cast<TerrainTile::TileInfo_t*>(tileData.data());
-    header->swLat = -48.88;
-    header->swLon = -123.40;
-    header->neLat = -48.87;
-    header->neLon = -123.39;
-    header->minElevation = 10;
-    header->maxElevation = 100;
-    header->avgElevation = 55.0;
-    header->gridSizeLat = 100;
+    header->swLat = kTestTileSwLat;
+    header->swLon = kTestTileSwLon;
+    header->neLat = kTestTileNeLat;
+    header->neLon = kTestTileNeLon;
+    header->minElevation = kTestMinElevation;
+    header->maxElevation = kTestMaxElevation;
+    header->avgElevation = kTestAvgElevation;
+    header->gridSizeLat = 100;  // Claims 100x100 grid but data is too small
     header->gridSizeLon = 100;
 
     TerrainTile tile(tileData);
@@ -172,16 +195,18 @@ void TerrainTileTest::_testDataTooSmallForElevation()
 void TerrainTileTest::_testElevationOutsideBounds()
 {
     const QByteArray tileData = _createValidTileData(
-        -48.88, -123.40, -48.87, -123.39,
-        10, 100, 55.0,
-        10, 10,
-        50
+        kTestTileSwLat, kTestTileSwLon, kTestTileNeLat, kTestTileNeLon,
+        kTestMinElevation, kTestMaxElevation, kTestAvgElevation,
+        kTestGridSize, kTestGridSize,
+        kTestFillElevation
     );
 
     TerrainTile tile(tileData);
     QVERIFY(tile.isValid());
 
-    const QGeoCoordinate outsideCoord(-50.0, -125.0);
+    // Request elevation for coordinate outside tile bounds
+    const QGeoCoordinate outsideCoord(kOutsideLat, kOutsideLon);
+    QGC_VERIFY_VALID_COORDINATE(outsideCoord);
     const double elev = tile.elevation(outsideCoord);
     QVERIFY(qIsNaN(elev));
 }
@@ -192,10 +217,12 @@ void TerrainTileTest::_testInvalidTileElevation()
     TerrainTile tile(emptyData);
     QVERIFY(!tile.isValid());
 
-    const QGeoCoordinate coord(-48.875, -123.395);
+    // Requesting elevation from invalid tile should return NaN
+    const QGeoCoordinate coord(kTestTileCenterLat, kTestTileCenterLon);
     const double elev = tile.elevation(coord);
     QVERIFY(qIsNaN(elev));
 
+    // All elevation accessors should return NaN for invalid tile
     QVERIFY(qIsNaN(tile.minElevation()));
     QVERIFY(qIsNaN(tile.maxElevation()));
     QVERIFY(qIsNaN(tile.avgElevation()));

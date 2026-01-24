@@ -5,57 +5,30 @@
 
 #include <QtTest/QTest>
 
-VisualMissionItemTest::VisualMissionItemTest(void)
+void VisualMissionItemTest::init()
 {
-
-}
-
-void VisualMissionItemTest::init(void)
-{
-    UnitTest::init();
+    OfflineTest::init();
 
     _masterController = new PlanMasterController(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, this);
+    VERIFY_NOT_NULL(_masterController);
     _controllerVehicle = _masterController->controllerVehicle();
-
-    rgVisualItemSignals[altDifferenceChangedIndex] =                        SIGNAL(altDifferenceChanged(double));
-    rgVisualItemSignals[altPercentChangedIndex] =                           SIGNAL(altPercentChanged(double));
-    rgVisualItemSignals[azimuthChangedIndex] =                              SIGNAL(azimuthChanged(double));
-    rgVisualItemSignals[commandDescriptionChangedIndex] =                   SIGNAL(commandDescriptionChanged());
-    rgVisualItemSignals[commandNameChangedIndex] =                          SIGNAL(commandNameChanged());
-    rgVisualItemSignals[abbreviationChangedIndex] =                         SIGNAL(abbreviationChanged());
-    rgVisualItemSignals[coordinateChangedIndex] =                           SIGNAL(coordinateChanged(const QGeoCoordinate&));
-    rgVisualItemSignals[exitCoordinateChangedIndex] =                       SIGNAL(exitCoordinateChanged(const QGeoCoordinate&));
-    rgVisualItemSignals[dirtyChangedIndex] =                                SIGNAL(dirtyChanged(bool));
-    rgVisualItemSignals[distanceChangedIndex] =                             SIGNAL(distanceChanged(double));
-    rgVisualItemSignals[isCurrentItemChangedIndex] =                        SIGNAL(isCurrentItemChanged(bool));
-    rgVisualItemSignals[sequenceNumberChangedIndex] =                       SIGNAL(sequenceNumberChanged(int));
-    rgVisualItemSignals[isSimpleItemChangedIndex] =                         SIGNAL(isSimpleItemChanged(bool));
-    rgVisualItemSignals[specifiesCoordinateChangedIndex] =                  SIGNAL(specifiesCoordinateChanged());
-    rgVisualItemSignals[isStandaloneCoordinateChangedIndex] =               SIGNAL(isStandaloneCoordinateChanged());
-    rgVisualItemSignals[specifiesAltitudeOnlyChangedIndex] =                SIGNAL(specifiesAltitudeOnlyChanged());
-    rgVisualItemSignals[specifiedFlightSpeedChangedIndex] =                 SIGNAL(specifiedFlightSpeedChanged());
-    rgVisualItemSignals[specifiedGimbalYawChangedIndex] =                   SIGNAL(specifiedGimbalYawChanged());
-    rgVisualItemSignals[specifiedGimbalPitchChangedIndex] =                 SIGNAL(specifiedGimbalPitchChanged());
-    rgVisualItemSignals[lastSequenceNumberChangedIndex] =                   SIGNAL(lastSequenceNumberChanged(int));
-    rgVisualItemSignals[missionGimbalYawChangedIndex] =                     SIGNAL(missionGimbalYawChanged(double));
-    rgVisualItemSignals[missionVehicleYawChangedIndex] =                    SIGNAL(missionVehicleYawChanged(double));
-    rgVisualItemSignals[exitCoordinateSameAsEntryChangedIndex] =            SIGNAL(exitCoordinateSameAsEntryChanged(bool));
+    VERIFY_NOT_NULL(_controllerVehicle);
 }
 
-void VisualMissionItemTest::cleanup(void)
+void VisualMissionItemTest::cleanup()
 {
     delete _masterController;
 
     _masterController   = nullptr;
     _controllerVehicle  = nullptr;
 
-    UnitTest::cleanup();
+    OfflineTest::cleanup();
 }
 
 void VisualMissionItemTest::_createSpy(VisualMissionItem* visualItem, MultiSignalSpy** visualSpy)
 {
     *visualSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(visualItem, rgVisualItemSignals, cVisualItemSignals), true);
+    QVERIFY(spy->init(visualItem));
     *visualSpy = spy;
 }

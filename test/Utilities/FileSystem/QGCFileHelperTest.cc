@@ -8,20 +8,6 @@
 #include <QtCore/QUrl>
 #include <QtTest/QTest>
 
-void QGCFileHelperTest::init()
-{
-    UnitTest::init();
-    _tempDir = new QTemporaryDir();
-    QVERIFY(_tempDir->isValid());
-}
-
-void QGCFileHelperTest::cleanup()
-{
-    delete _tempDir;
-    _tempDir = nullptr;
-    UnitTest::cleanup();
-}
-
 // ============================================================================
 // exists() tests
 // ============================================================================
@@ -29,7 +15,7 @@ void QGCFileHelperTest::cleanup()
 void QGCFileHelperTest::_testExistsRegularFile()
 {
     // Create a test file
-    const QString filePath = _tempDir->filePath("testfile.txt");
+    const QString filePath = tempFilePath("testfile.txt");
     QFile file(filePath);
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("test content");
@@ -41,10 +27,10 @@ void QGCFileHelperTest::_testExistsRegularFile()
 void QGCFileHelperTest::_testExistsDirectory()
 {
     // The temp directory should exist
-    QVERIFY(QGCFileHelper::exists(_tempDir->path()));
+    QVERIFY(QGCFileHelper::exists(tempPath()));
 
     // Create a subdirectory
-    const QString subDir = _tempDir->filePath("subdir");
+    const QString subDir = tempFilePath("subdir");
     QVERIFY(QDir().mkdir(subDir));
     QVERIFY(QGCFileHelper::exists(subDir));
 }
@@ -52,7 +38,7 @@ void QGCFileHelperTest::_testExistsDirectory()
 void QGCFileHelperTest::_testExistsNonExistent()
 {
     QVERIFY(!QGCFileHelper::exists("/nonexistent/path/that/does/not/exist"));
-    QVERIFY(!QGCFileHelper::exists(_tempDir->filePath("nonexistent.txt")));
+    QVERIFY(!QGCFileHelper::exists(tempFilePath("nonexistent.txt")));
 }
 
 void QGCFileHelperTest::_testExistsQtResource()
@@ -73,13 +59,13 @@ void QGCFileHelperTest::_testExistsQtResource()
 void QGCFileHelperTest::_testEnsureDirectoryExistsAlreadyExists()
 {
     // Temp directory already exists
-    QVERIFY(QGCFileHelper::ensureDirectoryExists(_tempDir->path()));
-    QVERIFY(QDir(_tempDir->path()).exists());
+    QVERIFY(QGCFileHelper::ensureDirectoryExists(tempPath()));
+    QVERIFY(QDir(tempPath()).exists());
 }
 
 void QGCFileHelperTest::_testEnsureDirectoryExistsCreate()
 {
-    const QString newDir = _tempDir->filePath("newdir");
+    const QString newDir = tempFilePath("newdir");
     QVERIFY(!QDir(newDir).exists());
 
     QVERIFY(QGCFileHelper::ensureDirectoryExists(newDir));
@@ -88,7 +74,7 @@ void QGCFileHelperTest::_testEnsureDirectoryExistsCreate()
 
 void QGCFileHelperTest::_testEnsureDirectoryExistsNested()
 {
-    const QString nestedDir = _tempDir->filePath("level1/level2/level3");
+    const QString nestedDir = tempFilePath("level1/level2/level3");
     QVERIFY(!QDir(nestedDir).exists());
 
     QVERIFY(QGCFileHelper::ensureDirectoryExists(nestedDir));
@@ -102,15 +88,15 @@ void QGCFileHelperTest::_testEnsureDirectoryExistsNested()
 void QGCFileHelperTest::_testEnsureParentExistsAlreadyExists()
 {
     // Parent of a file in temp dir already exists
-    const QString filePath = _tempDir->filePath("somefile.txt");
+    const QString filePath = tempFilePath("somefile.txt");
     QVERIFY(QGCFileHelper::ensureParentExists(filePath));
-    QVERIFY(QDir(_tempDir->path()).exists());
+    QVERIFY(QDir(tempPath()).exists());
 }
 
 void QGCFileHelperTest::_testEnsureParentExistsCreate()
 {
-    const QString filePath = _tempDir->filePath("newparent/somefile.txt");
-    const QString parentDir = _tempDir->filePath("newparent");
+    const QString filePath = tempFilePath("newparent/somefile.txt");
+    const QString parentDir = tempFilePath("newparent");
     QVERIFY(!QDir(parentDir).exists());
 
     QVERIFY(QGCFileHelper::ensureParentExists(filePath));
@@ -119,8 +105,8 @@ void QGCFileHelperTest::_testEnsureParentExistsCreate()
 
 void QGCFileHelperTest::_testEnsureParentExistsNested()
 {
-    const QString filePath = _tempDir->filePath("a/b/c/somefile.txt");
-    const QString parentDir = _tempDir->filePath("a/b/c");
+    const QString filePath = tempFilePath("a/b/c/somefile.txt");
+    const QString parentDir = tempFilePath("a/b/c");
     QVERIFY(!QDir(parentDir).exists());
 
     QVERIFY(QGCFileHelper::ensureParentExists(filePath));
@@ -156,7 +142,7 @@ void QGCFileHelperTest::_testOptimalBufferSizeCached()
     // Multiple calls should return the same value (cached)
     const size_t first = QGCFileHelper::optimalBufferSize();
     const size_t second = QGCFileHelper::optimalBufferSize();
-    const size_t third = QGCFileHelper::optimalBufferSize(_tempDir->path());
+    const size_t third = QGCFileHelper::optimalBufferSize(tempPath());
 
     QCOMPARE(first, second);
     QCOMPARE(second, third);
@@ -165,7 +151,7 @@ void QGCFileHelperTest::_testOptimalBufferSizeCached()
 void QGCFileHelperTest::_testOptimalBufferSizeWithPath()
 {
     // With path argument, should still return valid size within bounds
-    const size_t size = QGCFileHelper::optimalBufferSize(_tempDir->path());
+    const size_t size = QGCFileHelper::optimalBufferSize(tempPath());
 
     QVERIFY(size >= QGCFileHelper::kBufferSizeMin);
     QVERIFY(size <= QGCFileHelper::kBufferSizeMax);
@@ -177,7 +163,7 @@ void QGCFileHelperTest::_testOptimalBufferSizeWithPath()
 
 void QGCFileHelperTest::_testAtomicWriteBasic()
 {
-    const QString filePath = _tempDir->filePath("atomic_basic.txt");
+    const QString filePath = tempFilePath("atomic_basic.txt");
     const QByteArray data = "Hello, atomic write!";
 
     QVERIFY(!QFile::exists(filePath));
@@ -192,7 +178,7 @@ void QGCFileHelperTest::_testAtomicWriteBasic()
 
 void QGCFileHelperTest::_testAtomicWriteOverwrite()
 {
-    const QString filePath = _tempDir->filePath("atomic_overwrite.txt");
+    const QString filePath = tempFilePath("atomic_overwrite.txt");
     const QByteArray originalData = "Original content";
     const QByteArray newData = "New content after overwrite";
 
@@ -213,7 +199,7 @@ void QGCFileHelperTest::_testAtomicWriteOverwrite()
 
 void QGCFileHelperTest::_testAtomicWriteCreatesParent()
 {
-    const QString filePath = _tempDir->filePath("nested/dirs/atomic.txt");
+    const QString filePath = tempFilePath("nested/dirs/atomic.txt");
     const QByteArray data = "Data in nested directory";
 
     QVERIFY(!QFile::exists(filePath));
@@ -227,13 +213,13 @@ void QGCFileHelperTest::_testAtomicWriteCreatesParent()
 
 void QGCFileHelperTest::_testAtomicWriteEmptyPath()
 {
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("file path is empty"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "file path is empty");
     QVERIFY(!QGCFileHelper::atomicWrite(QString(), QByteArray("data")));
 }
 
 void QGCFileHelperTest::_testAtomicWriteEmptyData()
 {
-    const QString filePath = _tempDir->filePath("atomic_empty.txt");
+    const QString filePath = tempFilePath("atomic_empty.txt");
 
     // Empty data should succeed and create empty file
     QVERIFY(QGCFileHelper::atomicWrite(filePath, QByteArray()));
@@ -251,13 +237,13 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
 void QGCFileHelperTest::_testAvailableDiskSpaceBasic()
 {
     // Should return positive value for valid path
-    const qint64 available = QGCFileHelper::availableDiskSpace(_tempDir->path());
-    QVERIFY(available > 0);
+    const qint64 available = QGCFileHelper::availableDiskSpace(tempPath());
+    QCOMPARE_GT(available, static_cast<qint64>(0));
 
     // Should work for file path too (uses parent directory)
-    const QString filePath = _tempDir->filePath("testfile.txt");
+    const QString filePath = tempFilePath("testfile.txt");
     const qint64 available2 = QGCFileHelper::availableDiskSpace(filePath);
-    QVERIFY(available2 > 0);
+    QCOMPARE_GT(available2, static_cast<qint64>(0));
 }
 
 void QGCFileHelperTest::_testAvailableDiskSpaceEmptyPath()
@@ -269,35 +255,35 @@ void QGCFileHelperTest::_testAvailableDiskSpaceEmptyPath()
 void QGCFileHelperTest::_testHasSufficientDiskSpaceBasic()
 {
     // Should have space for 1 byte
-    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), 1));
+    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(tempPath(), 1));
 
     // Should have space for 1KB
-    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), 1024));
+    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(tempPath(), 1024));
 
     // Should probably not have space for 1 exabyte (10^18 bytes)
-    QVERIFY(!QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), 1000000000000000000LL));
+    QVERIFY(!QGCFileHelper::hasSufficientDiskSpace(tempPath(), 1000000000000000000LL));
 }
 
 void QGCFileHelperTest::_testHasSufficientDiskSpaceZeroBytes()
 {
     // Zero bytes should always succeed
-    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), 0));
+    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(tempPath(), 0));
 
     // Negative bytes should also succeed (treated as unknown/nothing to check)
-    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), -1));
+    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(tempPath(), -1));
 }
 
 void QGCFileHelperTest::_testHasSufficientDiskSpaceWithMargin()
 {
     // Get available space
-    const qint64 available = QGCFileHelper::availableDiskSpace(_tempDir->path());
-    QVERIFY(available > 0);
+    const qint64 available = QGCFileHelper::availableDiskSpace(tempPath());
+    QCOMPARE_GT(available, static_cast<qint64>(0));
 
     // Should have space for half the available (with 10% margin)
-    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), available / 2, 1.1));
+    QVERIFY(QGCFileHelper::hasSufficientDiskSpace(tempPath(), available / 2, 1.1));
 
     // Should not have space for 2x available
-    QVERIFY(!QGCFileHelper::hasSufficientDiskSpace(_tempDir->path(), available * 2, 1.0));
+    QVERIFY(!QGCFileHelper::hasSufficientDiskSpace(tempPath(), available * 2, 1.0));
 }
 
 // ============================================================================
@@ -397,7 +383,7 @@ void QGCFileHelperTest::_testComputeHash()
 void QGCFileHelperTest::_testComputeFileHash()
 {
     // Create a test file
-    const QString filePath = _tempDir->filePath("hashtest.txt");
+    const QString filePath = tempFilePath("hashtest.txt");
     QFile file(filePath);
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("hello");
@@ -413,23 +399,23 @@ void QGCFileHelperTest::_testComputeFileHash()
 
     // Qt resource file
     const QString resourceHash = QGCFileHelper::computeFileHash(":/unittest/manifest.json.gz");
-    QVERIFY(!resourceHash.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(resourceHash);
     QCOMPARE(resourceHash.length(), 64);  // SHA-256 = 32 bytes = 64 hex chars
 
     // Non-existent file should return empty
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("computeFileHash: failed to open"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "computeFileHash: failed to open");
     const QString noFileHash = QGCFileHelper::computeFileHash("/nonexistent/file.txt");
-    QVERIFY(noFileHash.isEmpty());
+    QGC_VERIFY_EMPTY(noFileHash);
 
     // Empty path should return empty
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("computeFileHash: empty file path"));
-    QVERIFY(QGCFileHelper::computeFileHash(QString()).isEmpty());
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "computeFileHash: empty file path");
+    QGC_VERIFY_EMPTY(QGCFileHelper::computeFileHash(QString()));
 }
 
 void QGCFileHelperTest::_testVerifyFileHash()
 {
     // Create a test file
-    const QString filePath = _tempDir->filePath("verifytest.txt");
+    const QString filePath = tempFilePath("verifytest.txt");
     QFile file(filePath);
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("hello");
@@ -445,15 +431,15 @@ void QGCFileHelperTest::_testVerifyFileHash()
     QVERIFY(QGCFileHelper::verifyFileHash(filePath, correctHash.toUpper()));
 
     // Wrong hash should fail
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("verifyFileHash: hash mismatch"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "verifyFileHash: hash mismatch");
     QVERIFY(!QGCFileHelper::verifyFileHash(filePath, wrongHash));
 
     // Empty expected hash should fail
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("verifyFileHash: empty expected hash"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "verifyFileHash: empty expected hash");
     QVERIFY(!QGCFileHelper::verifyFileHash(filePath, QString()));
 
     // Non-existent file should fail
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("computeFileHash: failed to open"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "computeFileHash: failed to open");
     QVERIFY(!QGCFileHelper::verifyFileHash("/nonexistent/file.txt", correctHash));
 }
 
@@ -473,15 +459,15 @@ void QGCFileHelperTest::_testHashAlgorithmName()
 void QGCFileHelperTest::_testTempDirectory()
 {
     const QString tempDir = QGCFileHelper::tempDirectory();
-    QVERIFY(!tempDir.isEmpty());
-    QVERIFY(QDir(tempDir).exists());
+    QGC_VERIFY_NOT_EMPTY(tempDir);
+    VERIFY_DIR_EXISTS(tempDir);
 }
 
 void QGCFileHelperTest::_testUniqueTempPath()
 {
     // Basic usage
     const QString path1 = QGCFileHelper::uniqueTempPath();
-    QVERIFY(!path1.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(path1);
     QVERIFY(path1.startsWith(QGCFileHelper::tempDirectory()));
     QVERIFY(!QFile::exists(path1));  // File should not exist
 
@@ -505,9 +491,9 @@ void QGCFileHelperTest::_testCreateTempFile()
     const QByteArray testData = "Hello, temporary file!";
 
     auto temp = QGCFileHelper::createTempFile(testData);
-    QVERIFY(temp != nullptr);
+    VERIFY_NOT_NULL(temp.get());
     QVERIFY(temp->isOpen());
-    QVERIFY(QFile::exists(temp->fileName()));
+    VERIFY_FILE_EXISTS(temp->fileName());
 
     // File should be positioned at start for reading
     QCOMPARE(temp->pos(), qint64(0));
@@ -525,25 +511,25 @@ void QGCFileHelperTest::_testCreateTempFileWithTemplate()
 
     // Template with extension
     auto temp1 = QGCFileHelper::createTempFile(testData, "myapp_XXXXXX.json");
-    QVERIFY(temp1 != nullptr);
+    VERIFY_NOT_NULL(temp1.get());
     QVERIFY(temp1->fileName().endsWith(".json"));
 
     // Template without XXXXXX
     auto temp2 = QGCFileHelper::createTempFile(testData, "simple.dat");
-    QVERIFY(temp2 != nullptr);
-    QVERIFY(temp2->fileName().contains("simple"));
+    VERIFY_NOT_NULL(temp2.get());
+    QGC_VERIFY_STRING_CONTAINS(temp2->fileName(), "simple");
     QVERIFY(temp2->fileName().endsWith(".dat"));
 
     // Empty data should work
     auto temp3 = QGCFileHelper::createTempFile(QByteArray());
-    QVERIFY(temp3 != nullptr);
+    VERIFY_NOT_NULL(temp3.get());
     QCOMPARE(temp3->size(), qint64(0));
 }
 
 void QGCFileHelperTest::_testCreateTempCopy()
 {
     // Create source file
-    const QString sourcePath = _tempDir->filePath("source.txt");
+    const QString sourcePath = tempFilePath("source.txt");
     const QByteArray sourceData = "Source file content";
     QFile source(sourcePath);
     QVERIFY(source.open(QIODevice::WriteOnly));
@@ -564,19 +550,19 @@ void QGCFileHelperTest::_testCreateTempCopy()
     QVERIFY(copy2->fileName().contains("backup"));
 
     // Non-existent source should return nullptr
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("createTempCopy: failed to open source"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "createTempCopy: failed to open source");
     auto noCopy = QGCFileHelper::createTempCopy("/nonexistent/file.txt");
     QVERIFY(noCopy == nullptr);
 
     // Empty path should return nullptr
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("createTempCopy: source path is empty"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, "createTempCopy: source path is empty");
     auto emptyCopy = QGCFileHelper::createTempCopy(QString());
     QVERIFY(emptyCopy == nullptr);
 }
 
 void QGCFileHelperTest::_testReplaceFileFromTemp()
 {
-    const QString targetPath = _tempDir->filePath("target.txt");
+    const QString targetPath = tempFilePath("target.txt");
     const QByteArray newContent = "New file content";
 
     // Create temp file with new content
@@ -605,8 +591,8 @@ void QGCFileHelperTest::_testReplaceFileFromTemp()
 
 void QGCFileHelperTest::_testReplaceFileFromTempWithBackup()
 {
-    const QString targetPath = _tempDir->filePath("targetWithBackup.txt");
-    const QString backupPath = _tempDir->filePath("targetWithBackup.txt.bak");
+    const QString targetPath = tempFilePath("targetWithBackup.txt");
+    const QString backupPath = tempFilePath("targetWithBackup.txt.bak");
     const QByteArray originalContent = "Original content";
     const QByteArray newContent = "New content";
 

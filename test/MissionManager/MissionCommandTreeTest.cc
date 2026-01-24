@@ -8,7 +8,15 @@
 
 void MissionCommandTreeTest::init()
 {
+    OfflineTest::init();
     _commandTree = new MissionCommandTree(true /* unitTest */, this);
+}
+
+void MissionCommandTreeTest::cleanup()
+{
+    delete _commandTree;
+    _commandTree = nullptr;
+    OfflineTest::cleanup();
 }
 
 QString MissionCommandTreeTest::_rawName(int id) const
@@ -39,7 +47,7 @@ void MissionCommandTreeTest::_checkFullInfoMap(const MissionCommandUIInfo *const
 
 void MissionCommandTreeTest::_checkBaseValues(const MissionCommandUIInfo *const uiInfo, int command)
 {
-    QVERIFY(uiInfo != nullptr);
+    VERIFY_NOT_NULL(uiInfo);
     _checkFullInfoMap(uiInfo);
     QCOMPARE(uiInfo->command(), static_cast<MAV_CMD>(command));
     QCOMPARE(uiInfo->rawName(), _rawName(command));
@@ -94,7 +102,7 @@ void MissionCommandTreeTest::_checkOverrideValues(const MissionCommandUIInfo* ui
     bool showUI;
     QString overrideString = QString("override fw %1").arg(command);
 
-    QVERIFY(uiInfo != nullptr);
+    VERIFY_NOT_NULL(uiInfo);
     _checkFullInfoMap(uiInfo);
     QCOMPARE(uiInfo->command(), static_cast<MAV_CMD>(command));
     QCOMPARE(uiInfo->rawName(), _rawName(command));
@@ -119,11 +127,11 @@ void MissionCommandTreeTest::testJsonLoad()
 {
     // Test loading from the bad command list
     MissionCommandList *const commandList = _commandTree->_staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC];
-    QVERIFY(commandList != nullptr);
+    VERIFY_NOT_NULL(commandList);
 
     // Command 1 should have all values defaulted, no params
     const MissionCommandUIInfo* uiInfo = commandList->getUIInfo(static_cast<MAV_CMD>(1));
-    QVERIFY(uiInfo != nullptr);
+    VERIFY_NOT_NULL(uiInfo);
     _checkFullInfoMap(uiInfo);
     QCOMPARE(uiInfo->command(), static_cast<MAV_CMD>(1));
     QCOMPARE(uiInfo->rawName(), _rawName(1));
@@ -142,9 +150,9 @@ void MissionCommandTreeTest::testJsonLoad()
 
     // Command 2 should all values defaulted for param 1
     uiInfo = commandList->getUIInfo(static_cast<MAV_CMD>(2));
-    QVERIFY(uiInfo != nullptr);
+    VERIFY_NOT_NULL(uiInfo);
     const MissionCmdParamInfo *const paramInfo = uiInfo->getParamInfo(1, showUI);
-    QVERIFY(paramInfo);
+    VERIFY_NOT_NULL(paramInfo);
     QCOMPARE(showUI, true);
     QCOMPARE(paramInfo->decimalPlaces(), -1);
     QCOMPARE(paramInfo->defaultValue(), 0.0);
@@ -192,7 +200,7 @@ void MissionCommandTreeTest::testAllTrees()
             }
             qDebug() << firmwareType << vehicleType;
             Vehicle *const vehicle = new Vehicle(firmwareType, vehicleType, this);
-            QVERIFY(MissionCommandTree::instance()->getUIInfo(vehicle, QGCMAVLink::VehicleClassMultiRotor, MAV_CMD_NAV_WAYPOINT) != nullptr);
+            VERIFY_NOT_NULL(MissionCommandTree::instance()->getUIInfo(vehicle, QGCMAVLink::VehicleClassMultiRotor, MAV_CMD_NAV_WAYPOINT));
             delete vehicle;
         }
     }

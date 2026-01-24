@@ -10,36 +10,24 @@ class SpeedSectionTest : public SectionTest
     Q_OBJECT
 
 public:
-    SpeedSectionTest(void);
+    SpeedSectionTest() = default;
 
-    void init(void) override;
-    void cleanup(void) override;
+    void init() override;
+    void cleanup() override;
 
 private slots:
-    void _testDirty                         (void);
-    void _testSettingsAvailable             (void);
-    void _checkAvailable                    (void);
-    void _testItemCount                     (void);
-    void _testAppendSectionItems            (void);
-    void _testScanForSection                (void);
-    void _testSpecifiedFlightSpeedChanged   (void);
+    void _testDirty();
+    void _testSettingsAvailable();
+    void _checkAvailable();
+    void _testItemCount();
+    void _testAppendSectionItems();
+    void _testScanForSection();
+    void _testSpecifiedFlightSpeedChanged();
 
 private:
     void _createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy);
 
-    enum {
-        specifyFlightSpeedChangedIndex = 0,
-        maxSignalIndex,
-    };
-
-    enum {
-        specifyFlightSpeedChangedMask = 1 << specifyFlightSpeedChangedIndex
-    };
-
-    static const size_t cSpeedSignals = maxSignalIndex;
-    const char*         rgSpeedSignals[cSpeedSignals];
-
-    MultiSignalSpy* _spySpeed;
-    MultiSignalSpy* _spySection;
-    SpeedSection*   _speedSection;
+    MultiSignalSpy* _spySpeed = nullptr;
+    MultiSignalSpy* _spySection = nullptr;
+    SpeedSection* _speedSection = nullptr;
 };

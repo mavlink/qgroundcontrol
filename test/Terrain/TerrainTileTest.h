@@ -1,13 +1,18 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 #include "TerrainTile.h"
 
 #include <QtCore/QByteArray>
 
-class TerrainTileTest : public UnitTest
+/// Unit test for TerrainTile.
+/// Uses OfflineTest since it doesn't require a vehicle connection.
+class TerrainTileTest : public OfflineTest
 {
     Q_OBJECT
+
+public:
+    TerrainTileTest() = default;
 
 private slots:
     void _testValidTile();

@@ -6,20 +6,16 @@
 
 #include <QtTest/QTest>
 
-TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void)
+void TransectStyleComplexItemTestBase::init()
 {
-}
-
-void TransectStyleComplexItemTestBase::init(void)
-{
-    UnitTest::init();
+    OfflineTest::init();
 
     _planViewSettings = SettingsManager::instance()->planViewSettings();
     _masterController = new PlanMasterController(this);
     _controllerVehicle = _masterController->controllerVehicle();
 }
 
-void TransectStyleComplexItemTestBase::cleanup(void)
+void TransectStyleComplexItemTestBase::cleanup()
 {
     delete _masterController;
 
@@ -27,7 +23,7 @@ void TransectStyleComplexItemTestBase::cleanup(void)
     _masterController   = nullptr;
     _controllerVehicle  = nullptr;
 
-    UnitTest::cleanup();
+    OfflineTest::cleanup();
 }
 
 void TransectStyleComplexItemTestBase::_printItemCommands(QList<MissionItem*> items)

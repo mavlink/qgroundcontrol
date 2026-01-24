@@ -42,11 +42,12 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     }
 
     _initialRequestTimeoutTimer.setSingleShot(true);
-    _initialRequestTimeoutTimer.setInterval(5000);
+    // Use much shorter timeouts in unit tests since MockLink responds instantly
+    _initialRequestTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 500 : 5000);
     (void) connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(3000);
+    _waitingParamTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 500 : 3000);
     if (!_logReplay) {
         (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
     }

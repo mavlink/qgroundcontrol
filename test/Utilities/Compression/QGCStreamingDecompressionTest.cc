@@ -9,20 +9,6 @@
 #include <QtCore/QTextStream>
 #include <QtTest/QTest>
 
-void QGCStreamingDecompressionTest::init()
-{
-    UnitTest::init();
-    _tempDir = new QTemporaryDir();
-    QVERIFY(_tempDir->isValid());
-}
-
-void QGCStreamingDecompressionTest::cleanup()
-{
-    delete _tempDir;
-    _tempDir = nullptr;
-    UnitTest::cleanup();
-}
-
 // ============================================================================
 // QGCDecompressDevice Tests
 // ============================================================================
@@ -35,7 +21,7 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
     const QByteArray compressedData = resource.readAll();
     resource.close();
 
-    const QString tempFile = _tempDir->filePath("test.json.gz");
+    const QString tempFile = tempFilePath("test.json.gz");
     QFile outFile(tempFile);
     QVERIFY(outFile.open(QIODevice::WriteOnly));
     outFile.write(compressedData);
@@ -47,7 +33,7 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
     QVERIFY(device.isSequential());
 
     const QByteArray decompressed = device.readAll();
-    QVERIFY(!decompressed.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(decompressed);
     QVERIFY(decompressed.contains("\"name\""));
 
     device.close();
@@ -69,7 +55,7 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromQBuffer()
     QVERIFY(device.open(QIODevice::ReadOnly));
 
     const QByteArray decompressed = device.readAll();
-    QVERIFY(!decompressed.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(decompressed);
     QVERIFY(decompressed.contains("\"name\""));
 
     device.close();
@@ -83,9 +69,9 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceWithQTextStream()
     QTextStream stream(&device);
     const QString content = stream.readAll();
 
-    QVERIFY(!content.isEmpty());
-    QVERIFY(content.contains("\"name\""));
-    QVERIFY(content.contains("\"version\""));
+    QGC_VERIFY_NOT_EMPTY(content);
+    QGC_VERIFY_STRING_CONTAINS(content, "\"name\"");
+    QGC_VERIFY_STRING_CONTAINS(content, "\"version\"");
 
     device.close();
 }
@@ -139,7 +125,7 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromQtResource()
     QVERIFY(device.open(QIODevice::ReadOnly));
 
     const QByteArray data = device.readAll();
-    QVERIFY(!data.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(data);
     QVERIFY(data.contains("\"name\""));
 
     device.close();
@@ -172,7 +158,7 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFormatInfo()
     QVERIFY(device.open(QIODevice::ReadOnly));
 
     // Format info available after open
-    QVERIFY(!device.filterName().isEmpty());
+    QGC_VERIFY_NOT_EMPTY(device.filterName());
     QCOMPARE(device.filterName(), QStringLiteral("gzip"));
 
     device.close();
@@ -187,10 +173,10 @@ void QGCStreamingDecompressionTest::_testArchiveFileFromZip()
     QGCArchiveFile device(":/unittest/manifest.json.zip", "manifest.json");
     QVERIFY(device.open(QIODevice::ReadOnly));
     QVERIFY(device.entryFound());
-    QVERIFY(device.entrySize() > 0);
+    QCOMPARE_GT(device.entrySize(), static_cast<qint64>(0));
 
     const QByteArray content = device.readAll();
-    QVERIFY(!content.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(content);
     QVERIFY(content.contains("\"name\""));
 
     device.close();
@@ -203,7 +189,7 @@ void QGCStreamingDecompressionTest::_testArchiveFileFrom7z()
     QVERIFY(device.entryFound());
 
     const QByteArray content = device.readAll();
-    QVERIFY(!content.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(content);
     QVERIFY(content.contains("\"name\""));
 
     device.close();
@@ -226,7 +212,7 @@ void QGCStreamingDecompressionTest::_testArchiveFileFromQBuffer()
     QVERIFY(device.entryFound());
 
     const QByteArray content = device.readAll();
-    QVERIFY(!content.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(content);
     QVERIFY(content.contains("\"name\""));
 
     device.close();
@@ -240,8 +226,8 @@ void QGCStreamingDecompressionTest::_testArchiveFileWithQTextStream()
     QTextStream stream(&device);
     const QString content = stream.readAll();
 
-    QVERIFY(!content.isEmpty());
-    QVERIFY(content.contains("\"name\""));
+    QGC_VERIFY_NOT_EMPTY(content);
+    QGC_VERIFY_STRING_CONTAINS(content, "\"name\"");
 
     device.close();
 }
@@ -267,7 +253,7 @@ void QGCStreamingDecompressionTest::_testArchiveFileNotFound()
     QGCArchiveFile device(":/unittest/manifest.json.zip", "nonexistent.txt");
     QVERIFY(!device.open(QIODevice::ReadOnly));
     QVERIFY(!device.entryFound());
-    QVERIFY(device.errorString().contains("not found"));
+    QGC_VERIFY_STRING_CONTAINS(device.errorString(), "not found");
 }
 
 void QGCStreamingDecompressionTest::_testArchiveFileFromQtResource()
@@ -276,7 +262,7 @@ void QGCStreamingDecompressionTest::_testArchiveFileFromQtResource()
     QVERIFY(device.open(QIODevice::ReadOnly));
 
     const QByteArray content = device.readAll();
-    QVERIFY(!content.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(content);
     QVERIFY(content.contains("\"name\""));
 
     device.close();
@@ -310,8 +296,8 @@ void QGCStreamingDecompressionTest::_testArchiveFileMetadata()
 
     QVERIFY(device.entryFound());
     QCOMPARE(device.entryName(), QStringLiteral("manifest.json"));
-    QVERIFY(device.entrySize() > 0);
-    QVERIFY(!device.formatName().isEmpty());
+    QCOMPARE_GT(device.entrySize(), static_cast<qint64>(0));
+    QGC_VERIFY_NOT_EMPTY(device.formatName());
 
     device.close();
 }
@@ -334,7 +320,7 @@ void QGCStreamingDecompressionTest::_testPartialReads()
         full.append(buf, static_cast<int>(bytesRead));
     }
 
-    QVERIFY(!full.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(full);
     QVERIFY(full.contains("\"name\""));
 
     device.close();

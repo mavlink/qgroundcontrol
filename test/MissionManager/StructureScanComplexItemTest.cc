@@ -7,56 +7,56 @@
 #include <QtCore/QJsonArray>
 #include <QtTest/QTest>
 
-StructureScanComplexItemTest::StructureScanComplexItemTest(void)
+StructureScanComplexItemTest::StructureScanComplexItemTest()
 {
     _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<
                    QGeoCoordinate(47.633619320000001, -122.08811074) << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
 
-void StructureScanComplexItemTest::init(void)
+void StructureScanComplexItemTest::init()
 {
-    UnitTest::init();
-
-    _rgSignals[dirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
+    OfflineTest::init();
 
     _masterController = new PlanMasterController(this);
+    VERIFY_NOT_NULL(_masterController);
     _structureScanItem = new StructureScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
+    VERIFY_NOT_NULL(_structureScanItem);
     _structureScanItem->setDirty(false);
 
     _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
-    QCOMPARE(_multiSpy->init(_structureScanItem, _rgSignals, _cSignals), true);
+    VERIFY_NOT_NULL(_multiSpy);
+    QVERIFY(_multiSpy->init(_structureScanItem));
 }
 
-void StructureScanComplexItemTest::cleanup(void)
+void StructureScanComplexItemTest::cleanup()
 {
-    delete _masterController;
     delete _multiSpy;
+    delete _masterController;
 
+    _multiSpy           = nullptr;
     _masterController   = nullptr;
     _structureScanItem  = nullptr;  // Deleted when _masterController is deleted
-    _multiSpy           = nullptr;
 
-    UnitTest::cleanup();
+    OfflineTest::cleanup();
 }
 
-void StructureScanComplexItemTest::_testDirty(void)
+void StructureScanComplexItemTest::_testDirty()
 {
     QVERIFY(!_structureScanItem->dirty());
     _structureScanItem->setDirty(false);
     QVERIFY(!_structureScanItem->dirty());
-    QVERIFY(_multiSpy->checkNoSignals());
+    QVERIFY_NO_SIGNALS(*_multiSpy);
 
     _structureScanItem->setDirty(true);
     QVERIFY(_structureScanItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY_ONLY_SIGNAL(*_multiSpy, "dirtyChanged");
+    QVERIFY(_multiSpy->pullBoolFromSignal("dirtyChanged"));
     _multiSpy->clearAllSignals();
 
     _structureScanItem->setDirty(false);
     QVERIFY(!_structureScanItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY_ONLY_SIGNAL(*_multiSpy, "dirtyChanged");
+    QVERIFY(!_multiSpy->pullBoolFromSignal("dirtyChanged"));
     _multiSpy->clearAllSignals();
 
     // These facts should set dirty when changed
@@ -70,15 +70,15 @@ void StructureScanComplexItemTest::_testDirty(void)
         } else {
             fact->setRawValue(fact->rawValue().toDouble() + 1);
         }
-        QVERIFY(_multiSpy->checkSignalByMask(dirtyChangedMask));
-        QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+        QVERIFY(_multiSpy->checkSignalByMask(_multiSpy->mask("dirtyChanged")));
+        QVERIFY(_multiSpy->pullBoolFromSignal("dirtyChanged"));
         _structureScanItem->setDirty(false);
         _multiSpy->clearAllSignals();
     }
     rgFacts.clear();
 }
 
-void StructureScanComplexItemTest::_initItem(void)
+void StructureScanComplexItemTest::_initItem()
 {
     QGCMapPolygon* mapPolygon = _structureScanItem->structurePolygon();
 
@@ -97,18 +97,19 @@ void StructureScanComplexItemTest::_initItem(void)
 void StructureScanComplexItemTest::_validateItem(StructureScanComplexItem* item)
 {
     QGCMapPolygon* mapPolygon = item->structurePolygon();
+    VERIFY_NOT_NULL(mapPolygon);
 
     for (int i=0; i<_polyPoints.count(); i++) {
         QGeoCoordinate& expectedVertex = _polyPoints[i];
         QGeoCoordinate actualVertex = mapPolygon->vertexCoordinate(i);
-        QCOMPARE(expectedVertex, actualVertex);
+        QGC_COMPARE_COORDINATE(expectedVertex, actualVertex);
     }
 
     QVERIFY(_structureScanItem->cameraCalc()->isManualCamera());
-    QCOMPARE(item->layers()->cookedValue().toInt(), 2);
+    QCOMPARE_EQ(item->layers()->cookedValue().toInt(), 2);
 }
 
-void StructureScanComplexItemTest::_testSaveLoad(void)
+void StructureScanComplexItemTest::_testSaveLoad()
 {
     _initItem();
 
@@ -117,13 +118,14 @@ void StructureScanComplexItemTest::_testSaveLoad(void)
 
     QString errorString;
     StructureScanComplexItem* newItem = new StructureScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
+    VERIFY_NOT_NULL(newItem);
     QVERIFY(newItem->load(items[0].toObject(), 10, errorString));
-    QVERIFY(errorString.isEmpty());
+    QGC_VERIFY_EMPTY(errorString);
     _validateItem(newItem);
     newItem->deleteLater();
 }
 
-void StructureScanComplexItemTest::_testItemCount(void)
+void StructureScanComplexItemTest::_testItemCount()
 {
     QList<MissionItem*> items;
 

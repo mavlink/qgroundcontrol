@@ -1,12 +1,11 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-#include <QtCore/QTemporaryDir>
-
-/// Tests for QGCDecompressDevice and QGCArchiveFile
-/// Streaming decompression via QIODevice interface
-class QGCStreamingDecompressionTest : public UnitTest
+/// Tests for QGCDecompressDevice and QGCArchiveFile.
+/// Streaming decompression via QIODevice interface.
+/// Uses TempDirTest for automatic temp directory management.
+class QGCStreamingDecompressionTest : public TempDirTest
 {
     Q_OBJECT
 
@@ -14,8 +13,6 @@ public:
     QGCStreamingDecompressionTest() = default;
 
 private slots:
-    void init() override;
-    void cleanup() override;
 
     // QGCDecompressDevice tests
     void _testDecompressDeviceFromFile();
@@ -41,7 +38,4 @@ private slots:
     // Edge cases
     void _testPartialReads();
     void _testMultipleOpens();
-
-private:
-    QTemporaryDir *_tempDir = nullptr;
 };

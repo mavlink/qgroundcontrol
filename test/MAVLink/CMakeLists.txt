@@ -5,10 +5,16 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        StatusTextHandlerTest.cc
-        StatusTextHandlerTest.h
+        MavlinkFTPTest.cc
+        MavlinkFTPTest.h
+        MAVLinkStreamConfigTest.cc
+        MAVLinkStreamConfigTest.h
         SigningTest.cc
         SigningTest.h
+        StatusTextHandlerTest.cc
+        StatusTextHandlerTest.h
+        SysStatusSensorInfoTest.cc
+        SysStatusSensorInfoTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

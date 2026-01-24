@@ -1,9 +1,10 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-/// Tests for QGCNetworkHelper (networking utility functions)
-class QGCNetworkHelperTest : public UnitTest
+/// Tests for QGCNetworkHelper (networking utility functions).
+/// Uses OfflineTest since it doesn't require a vehicle connection.
+class QGCNetworkHelperTest : public OfflineTest
 {
     Q_OBJECT
 

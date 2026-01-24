@@ -8,22 +8,34 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QTemporaryDir>
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
+
+// ============================================================================
+// Setup and Helpers
+// ============================================================================
+
+QGCCachedFileDownload* QGCFileDownloadTest::_createCachedDownloader()
+{
+    return new QGCCachedFileDownload(tempPath(), this);
+}
+
+// ============================================================================
+// QGCFileDownload Tests
+// ============================================================================
 
 void QGCFileDownloadTest::_testFileDownload()
 {
     // Local File
     QGCFileDownload *const downloader = new QGCFileDownload(this);
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this,
+    (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
         [this](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
             sender()->deleteLater();
             QVERIFY(errorMsg.isEmpty());
         });
     QSignalSpy spyQGCFileDownloadDownloadComplete(downloader, &QGCFileDownload::downloadComplete);
     QVERIFY(downloader->download(":/unittest/arducopter.apj"));
-    QVERIFY(spyQGCFileDownloadDownloadComplete.wait(1000));
+    QVERIFY(spyQGCFileDownloadDownloadComplete.wait(TestHelpers::kShortTimeoutMs));
 }
 
 // ============================================================================
@@ -33,76 +45,66 @@ void QGCFileDownloadTest::_testFileDownload()
 void QGCFileDownloadTest::_testCachedFileDownloadConstruction()
 {
     // Test construction with cache directory
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader1(tempDir.path(), this);
+    QGCCachedFileDownload* downloader1 = _createCachedDownloader();
     // QNetworkDiskCache may append trailing slash
-    QVERIFY(downloader1.cacheDirectory().startsWith(tempDir.path()));
-    QVERIFY(!downloader1.isRunning());
-    QCOMPARE(downloader1.progress(), 0.0);
-    QVERIFY(downloader1.errorString().isEmpty());
-    QVERIFY(!downloader1.isFromCache());
-    QVERIFY(downloader1.localPath().isEmpty());
+    QVERIFY(downloader1->cacheDirectory().startsWith(tempPath()));
+    QVERIFY(!downloader1->isRunning());
+    QCOMPARE(downloader1->progress(), 0.0);
+    QGC_VERIFY_EMPTY(downloader1->errorString());
+    QVERIFY(!downloader1->isFromCache());
+    QGC_VERIFY_EMPTY(downloader1->localPath());
 
     // Test construction without cache directory
     QGCCachedFileDownload downloader2(this);
-    QVERIFY(downloader2.cacheDirectory().isEmpty());
+    QGC_VERIFY_EMPTY(downloader2.cacheDirectory());
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadCacheDirectory()
 {
-    QTemporaryDir tempDir1;
     QTemporaryDir tempDir2;
-    QVERIFY(tempDir1.isValid());
     QVERIFY(tempDir2.isValid());
 
-    QGCCachedFileDownload downloader(tempDir1.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
     // QNetworkDiskCache may append trailing slash
-    QVERIFY(downloader.cacheDirectory().startsWith(tempDir1.path()));
+    QVERIFY(downloader->cacheDirectory().startsWith(tempPath()));
 
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::cacheDirectoryChanged);
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::cacheDirectoryChanged);
+    QGC_VERIFY_SPY_VALID(spy);
 
-    downloader.setCacheDirectory(tempDir2.path());
-    QVERIFY(downloader.cacheDirectory().startsWith(tempDir2.path()));
+    downloader->setCacheDirectory(tempDir2.path());
+    QVERIFY(downloader->cacheDirectory().startsWith(tempDir2.path()));
     QCOMPARE(spy.count(), 1);
     QVERIFY(spy.first().first().toString().startsWith(tempDir2.path()));
 
     // Setting same directory should not emit signal
-    downloader.setCacheDirectory(downloader.cacheDirectory());  // Use actual value to avoid trailing slash mismatch
+    downloader->setCacheDirectory(downloader->cacheDirectory());  // Use actual value to avoid trailing slash mismatch
     QCOMPARE(spy.count(), 1);
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadMaxCacheSize()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
-    QGCCachedFileDownload downloader(tempDir.path(), this);
-
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::maxCacheSizeChanged);
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::maxCacheSizeChanged);
 
     constexpr qint64 newSize = 100 * 1024 * 1024;  // 100 MB
-    downloader.setMaxCacheSize(newSize);
-    QCOMPARE(downloader.maxCacheSize(), newSize);
+    downloader->setMaxCacheSize(newSize);
+    QCOMPARE(downloader->maxCacheSize(), newSize);
     QCOMPARE(spy.count(), 1);
     QCOMPARE(spy.first().first().toLongLong(), newSize);
 
     // Setting same size should not emit signal
-    downloader.setMaxCacheSize(newSize);
+    downloader->setMaxCacheSize(newSize);
     QCOMPARE(spy.count(), 1);
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadEmptyUrl()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
     // Empty URL should fail
-    QVERIFY(!downloader.download("", 3600));
-    QVERIFY(!downloader.errorString().isEmpty());
+    QVERIFY(!downloader->download("", 3600));
+    QGC_VERIFY_NOT_EMPTY(downloader->errorString());
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadNoCacheDir()
@@ -111,22 +113,19 @@ void QGCFileDownloadTest::_testCachedFileDownloadNoCacheDir()
 
     // No cache directory should fail
     QVERIFY(!downloader.download(":/unittest/manifest.json.gz", 3600));
-    QVERIFY(!downloader.errorString().isEmpty());
+    QGC_VERIFY_NOT_EMPTY(downloader.errorString());
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadDownload()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
     bool finished = false;
     bool success = false;
     QString localPath;
     bool fromCache = false;
 
-    connect(&downloader, &QGCCachedFileDownload::finished, this,
+    connect(downloader, &QGCCachedFileDownload::finished, this,
             [&](bool s, const QString &path, const QString &, bool cached) {
                 finished = true;
                 success = s;
@@ -134,88 +133,82 @@ void QGCFileDownloadTest::_testCachedFileDownloadDownload()
                 fromCache = cached;
             });
 
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::finished);
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::finished);
+    QGC_VERIFY_SPY_VALID(spy);
 
     // Download with 1 hour cache
-    QVERIFY(downloader.download(":/unittest/manifest.json.gz", 3600));
-    QVERIFY(downloader.isRunning());
+    QVERIFY(downloader->download(":/unittest/manifest.json.gz", 3600));
+    QVERIFY(downloader->isRunning());
 
-    QVERIFY(spy.wait(5000));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
     QVERIFY(finished);
     QVERIFY(success);
-    QVERIFY(!localPath.isEmpty());
-    QVERIFY(QFile::exists(localPath));
-    QVERIFY(!downloader.isRunning());
+    QGC_VERIFY_NOT_EMPTY(localPath);
+    VERIFY_FILE_EXISTS(localPath);
+    QVERIFY(!downloader->isRunning());
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadPreferCache()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
     bool success = false;
     QString localPath;
 
-    connect(&downloader, &QGCCachedFileDownload::finished, this,
+    connect(downloader, &QGCCachedFileDownload::finished, this,
             [&](bool s, const QString &path, const QString &, bool) {
                 success = s;
                 localPath = path;
             });
 
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::finished);
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::finished);
+    QGC_VERIFY_SPY_VALID(spy);
 
-    QVERIFY(downloader.downloadPreferCache(":/unittest/arducopter.apj"));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(downloader->downloadPreferCache(":/unittest/arducopter.apj"));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     QVERIFY(success);
-    QVERIFY(!localPath.isEmpty());
-    QVERIFY(QFile::exists(localPath));
+    QGC_VERIFY_NOT_EMPTY(localPath);
+    VERIFY_FILE_EXISTS(localPath);
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadNoCache()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
     bool success = false;
     QString localPath;
 
-    connect(&downloader, &QGCCachedFileDownload::finished, this,
+    connect(downloader, &QGCCachedFileDownload::finished, this,
             [&](bool s, const QString &path, const QString &, bool) {
                 success = s;
                 localPath = path;
             });
 
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::finished);
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::finished);
+    QGC_VERIFY_SPY_VALID(spy);
 
-    QVERIFY(downloader.downloadNoCache(":/unittest/arducopter.apj"));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(downloader->downloadNoCache(":/unittest/arducopter.apj"));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     QVERIFY(success);
-    QVERIFY(!localPath.isEmpty());
-    QVERIFY(QFile::exists(localPath));
+    QGC_VERIFY_NOT_EMPTY(localPath);
+    VERIFY_FILE_EXISTS(localPath);
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadIsCached()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
     const QString testUrl = ":/unittest/manifest.json.gz";
 
     // Initially not cached
-    QVERIFY(!downloader.isCached(testUrl));
-    QVERIFY(!downloader.isCached(testUrl, 3600));
+    QVERIFY(!downloader->isCached(testUrl));
+    QVERIFY(!downloader->isCached(testUrl, 3600));
 
     // Download to populate cache
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::finished);
-    QVERIFY(downloader.download(testUrl, 3600));
-    QVERIFY(spy.wait(5000));
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::finished);
+    QVERIFY(downloader->download(testUrl, 3600));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     // Note: Qt resource URLs may not be cached by QNetworkDiskCache the same way
     // as HTTP URLs, so the cache behavior might differ. This test verifies the API works.
@@ -223,99 +216,86 @@ void QGCFileDownloadTest::_testCachedFileDownloadIsCached()
 
 void QGCFileDownloadTest::_testCachedFileDownloadCacheAge()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
     const QString testUrl = ":/unittest/manifest.json.gz";
 
     // Not cached returns -1
-    QCOMPARE(downloader.cacheAge(testUrl), -1);
+    QCOMPARE(downloader->cacheAge(testUrl), -1);
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadClearCache()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
-    QGCCachedFileDownload downloader(tempDir.path(), this);
-
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::cacheSizeChanged);
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::cacheSizeChanged);
 
     // Clear cache (should work even if empty)
-    downloader.clearCache();
+    downloader->clearCache();
 
     // cacheSize should be 0 after clear
-    QCOMPARE(downloader.cacheSize(), static_cast<qint64>(0));
+    QCOMPARE(downloader->cacheSize(), static_cast<qint64>(0));
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadRemoveFromCache()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
     const QString testUrl = ":/unittest/manifest.json.gz";
 
     // Removing non-existent URL should return false
-    QVERIFY(!downloader.removeFromCache(testUrl));
+    QVERIFY(!downloader->removeFromCache(testUrl));
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadCancel()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
     // Start download and immediately cancel
-    QVERIFY(downloader.download(":/unittest/manifest.json.gz", 3600));
-    downloader.cancel();
+    QVERIFY(downloader->download(":/unittest/manifest.json.gz", 3600));
+    downloader->cancel();
 
     // After cancel, should not be running
-    QVERIFY(!downloader.isRunning());
+    QVERIFY(!downloader->isRunning());
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadConcurrentDownloadRejected()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
     // Start first download
-    QVERIFY(downloader.download(":/unittest/manifest.json.gz", 3600));
+    QVERIFY(downloader->download(":/unittest/manifest.json.gz", 3600));
 
     // Second download should be rejected while first is running
-    QVERIFY(!downloader.download(":/unittest/arducopter.apj", 3600));
-    QVERIFY(!downloader.downloadPreferCache(":/unittest/arducopter.apj"));
-    QVERIFY(!downloader.downloadNoCache(":/unittest/arducopter.apj"));
+    QVERIFY(!downloader->download(":/unittest/arducopter.apj", 3600));
+    QVERIFY(!downloader->downloadPreferCache(":/unittest/arducopter.apj"));
+    QVERIFY(!downloader->downloadNoCache(":/unittest/arducopter.apj"));
 
     // Wait for first download to complete
-    QSignalSpy spy(&downloader, &QGCCachedFileDownload::finished);
-    QVERIFY(spy.wait(5000));
+    QSignalSpy spy(downloader, &QGCCachedFileDownload::finished);
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 }
 
 void QGCFileDownloadTest::_testCachedFileDownloadSignals()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
+    QGCCachedFileDownload* downloader = _createCachedDownloader();
 
-    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QSignalSpy progressSpy(downloader, &QGCCachedFileDownload::progressChanged);
+    QSignalSpy runningSpy(downloader, &QGCCachedFileDownload::runningChanged);
+    QSignalSpy urlSpy(downloader, &QGCCachedFileDownload::urlChanged);
+    QSignalSpy finishedSpy(downloader, &QGCCachedFileDownload::finished);
+    QSignalSpy downloadCompleteSpy(downloader, &QGCCachedFileDownload::downloadComplete);
+    QGC_VERIFY_SPY_VALID(progressSpy);
+    QGC_VERIFY_SPY_VALID(runningSpy);
+    QGC_VERIFY_SPY_VALID(urlSpy);
+    QGC_VERIFY_SPY_VALID(finishedSpy);
+    QGC_VERIFY_SPY_VALID(downloadCompleteSpy);
 
-    QSignalSpy progressSpy(&downloader, &QGCCachedFileDownload::progressChanged);
-    QSignalSpy runningSpy(&downloader, &QGCCachedFileDownload::runningChanged);
-    QSignalSpy urlSpy(&downloader, &QGCCachedFileDownload::urlChanged);
-    QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
-    QSignalSpy downloadCompleteSpy(&downloader, &QGCCachedFileDownload::downloadComplete);
-
-    QVERIFY(downloader.download(":/unittest/manifest.json.gz", 3600));
+    QVERIFY(downloader->download(":/unittest/manifest.json.gz", 3600));
 
     // Should emit running=true and url changed
-    QVERIFY(runningSpy.count() >= 1);
+    QCOMPARE_GE(runningSpy.count(), 1);
     QCOMPARE(urlSpy.count(), 1);
 
-    QVERIFY(finishedSpy.wait(5000));
+    QVERIFY(finishedSpy.wait(TestHelpers::kDefaultTimeoutMs));
 
     // finished signal should have 4 arguments: success, localPath, errorMessage, fromCache
     QCOMPARE(finishedSpy.count(), 1);
@@ -326,8 +306,12 @@ void QGCFileDownloadTest::_testCachedFileDownloadSignals()
     QCOMPARE(downloadCompleteSpy.count(), 1);
 
     // running should be false at end
-    QVERIFY(!downloader.isRunning());
+    QVERIFY(!downloader->isRunning());
 }
+
+// ============================================================================
+// Auto-Decompress Tests
+// ============================================================================
 
 void QGCFileDownloadTest::_testAutoDecompressGzip()
 {
@@ -337,7 +321,7 @@ void QGCFileDownloadTest::_testAutoDecompressGzip()
     QString resultLocalFile;
     QString resultErrorMsg;
 
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this,
+    (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
         [&resultLocalFile, &resultErrorMsg](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
             Q_UNUSED(remoteFile);
             resultLocalFile = localFile;
@@ -348,7 +332,7 @@ void QGCFileDownloadTest::_testAutoDecompressGzip()
 
     // Download with autoDecompress=true
     QVERIFY(downloader->download(":/unittest/manifest.json.gz", {}, true));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     downloader->deleteLater();
 
@@ -381,7 +365,7 @@ void QGCFileDownloadTest::_testAutoDecompressDisabled()
     QString resultLocalFile;
     QString resultErrorMsg;
 
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this,
+    (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
         [&resultLocalFile, &resultErrorMsg](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
             Q_UNUSED(remoteFile);
             resultLocalFile = localFile;
@@ -392,7 +376,7 @@ void QGCFileDownloadTest::_testAutoDecompressDisabled()
 
     // Download with autoDecompress=false (default)
     QVERIFY(downloader->download(":/unittest/manifest.json.gz", {}, false));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     downloader->deleteLater();
 
@@ -428,7 +412,7 @@ void QGCFileDownloadTest::_testAutoDecompressUncompressedFile()
     QString resultLocalFile;
     QString resultErrorMsg;
 
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this,
+    (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
         [&resultLocalFile, &resultErrorMsg](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
             Q_UNUSED(remoteFile);
             resultLocalFile = localFile;
@@ -439,7 +423,7 @@ void QGCFileDownloadTest::_testAutoDecompressUncompressedFile()
 
     // Download non-compressed file with autoDecompress=true
     QVERIFY(downloader->download(":/unittest/arducopter.apj", {}, true));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     downloader->deleteLater();
 
@@ -468,7 +452,7 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
     QString resultLocalFile;
     QString resultErrorMsg;
 
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this,
+    (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
         [&resultLocalFile, &resultErrorMsg](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
             Q_UNUSED(remoteFile);
             resultLocalFile = localFile;
@@ -479,7 +463,7 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
 
     // Download ZIP archive (no auto-decompress for archives)
     QVERIFY(downloader->download(":/unittest/manifest.json.zip", {}, false));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     downloader->deleteLater();
 
@@ -497,7 +481,7 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
 
     // Verify extracted content
     const QString extractedFile = extractDir.path() + "/manifest.json";
-    QVERIFY2(QFile::exists(extractedFile), qPrintable("Extracted file doesn't exist: " + extractedFile));
+    VERIFY_FILE_EXISTS(extractedFile);
 
     // Verify extracted content is valid JSON
     QFile jsonFile(extractedFile);
@@ -524,7 +508,7 @@ void QGCFileDownloadTest::_testDownloadDecompressAndParse()
     QString resultLocalFile;
     QString resultErrorMsg;
 
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this,
+    (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
         [&resultLocalFile, &resultErrorMsg](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
             Q_UNUSED(remoteFile);
             resultLocalFile = localFile;
@@ -535,7 +519,7 @@ void QGCFileDownloadTest::_testDownloadDecompressAndParse()
 
     // Download with auto-decompress enabled
     QVERIFY(downloader->download(":/unittest/manifest.json.gz", {}, true));
-    QVERIFY(spy.wait(5000));
+    QVERIFY(spy.wait(TestHelpers::kDefaultTimeoutMs));
 
     downloader->deleteLater();
 

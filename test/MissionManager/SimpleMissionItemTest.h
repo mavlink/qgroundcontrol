@@ -13,50 +13,26 @@ class SimpleMissionItemTest : public VisualMissionItemTest
     Q_OBJECT
 
 public:
-    SimpleMissionItemTest(void);
+    SimpleMissionItemTest() = default;
 
-    void init   (void) override;
-    void cleanup(void) override;
+    void init() override;
+    void cleanup() override;
 
 private slots:
-    void _testSignals               (void);
-    void _testEditorFacts           (void);
-    void _testDefaultValues         (void);
-    void _testCameraSectionDirty    (void);
-    void _testSpeedSectionDirty     (void);
-    void _testCameraSection         (void);
-    void _testSpeedSection          (void);
-    void _testAltitudePropogation   (void);
+    void _testSignals();
+    void _testEditorFacts();
+    void _testDefaultValues();
+    void _testCameraSectionDirty();
+    void _testSpeedSectionDirty();
+    void _testCameraSection();
+    void _testSpeedSection();
+    void _testAltitudePropogation();
 
 private:
-    enum {
-        commandChangedIndex = 0,
-        altitudeModeChangedIndex,
-        friendlyEditAllowedChangedIndex,
-        headingDegreesChangedIndex,
-        rawEditChangedIndex,
-        cameraSectionChangedIndex,
-        speedSectionChangedIndex,
-        maxSignalIndex,
-    };
+    void _testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode);
+    bool _classMatch(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
 
-    enum {
-        commandChangedMask =                        1 << commandChangedIndex,
-        altitudeModeChangedMask =                  1 << altitudeModeChangedIndex,
-        friendlyEditAllowedChangedMask =            1 << friendlyEditAllowedChangedIndex,
-        headingDegreesChangedMask =                 1 << headingDegreesChangedIndex,
-        rawEditChangedMask =                        1 << rawEditChangedIndex,
-        cameraSectionChangedMask =                  1 << cameraSectionChangedIndex,
-        speedSectionChangedMask =                   1 << speedSectionChangedIndex,
-    };
-
-    static const size_t cSimpleItemSignals = maxSignalIndex;
-    const char*         rgSimpleItemSignals[cSimpleItemSignals];
-
-    void _testEditorFactsWorker (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode);
-    bool _classMatch            (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
-
-    SimpleMissionItem*  _simpleItem = nullptr;
-    MultiSignalSpy*     _spySimpleItem = nullptr;
-    MultiSignalSpy*     _spyVisualItem = nullptr;
+    SimpleMissionItem* _simpleItem = nullptr;
+    MultiSignalSpy* _spySimpleItem = nullptr;
+    MultiSignalSpy* _spyVisualItem = nullptr;
 };

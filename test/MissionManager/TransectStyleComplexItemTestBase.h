@@ -1,26 +1,27 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
 class PlanViewSettings;
 class PlanMasterController;
 class Vehicle;
 
-/// Base class for all TransectStyleComplexItem unit tests
-class TransectStyleComplexItemTestBase : public UnitTest
+/// Base class for all TransectStyleComplexItem unit tests.
+/// Uses OfflineTest since these tests work with offline PlanMasterController.
+class TransectStyleComplexItemTestBase : public OfflineTest
 {
     Q_OBJECT
 
 public:
-    TransectStyleComplexItemTestBase(void);
+    TransectStyleComplexItemTestBase() = default;
 
 protected:
-    void init   (void) override;
-    void cleanup(void) override;
+    void init() override;
+    void cleanup() override;
 
     void _printItemCommands(QList<MissionItem*> items);
 
-    PlanMasterController*   _masterController =     nullptr;
-    Vehicle*                _controllerVehicle =    nullptr;
-    PlanViewSettings*       _planViewSettings =     nullptr;
+    PlanMasterController* _masterController = nullptr;
+    Vehicle* _controllerVehicle = nullptr;
+    PlanViewSettings* _planViewSettings = nullptr;
 };

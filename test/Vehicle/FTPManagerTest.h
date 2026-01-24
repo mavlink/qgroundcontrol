@@ -1,37 +1,46 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
+#include "MockLinkFTP.h"
 
-class FTPManagerTest : public UnitTest
+/// Tests for FTPManager functionality.
+/// Inherits from FTPTest which provides a vehicle connected without initial connect sequence.
+class FTPManagerTest : public FTPTest
 {
     Q_OBJECT
 
-private slots:
-    void _testLostPackets                               (void);
-    void _testListDirectory                             (void);
-    void _testListDirectoryNoResponse                   (void);
-    void _testListDirectoryNakResponse                  (void);
-    void _testListDirectoryNoSecondResponse             (void);
-    void _testListDirectoryNoSecondResponseAllowRetry   (void);
-    void _testListDirectoryNakSecondResponse            (void);
-    void _testListDirectoryBadSequence                  (void);
-    void _testListDirectoryCancel                       (void);
-    void _testUpload                                     (void);
+public:
+    FTPManagerTest() = default;
 
-    // Overrides from UnitTest
-    void cleanup(void) override;
+private slots:
+    void _testLostPackets();
+    void _testListDirectory();
+    void _testListDirectoryNoResponse();
+    void _testListDirectoryNakResponse();
+    void _testListDirectoryNoSecondResponse();
+    void _testListDirectoryNoSecondResponseAllowRetry();
+    void _testListDirectoryNakSecondResponse();
+    void _testListDirectoryBadSequence();
+    void _testListDirectoryCancel();
+    void _testUpload();
 
 private:
-    void _performSizeBasedTestCases (void);
-    void _performTestCases          (void);
+    void _performSizeBasedTestCases();
+    void _performTestCases();
 
-    typedef struct {
+    struct TestCase_t {
         const char* file;
-    } TestCase_t;
+    };
 
-    void _testCaseWorker            (const TestCase_t& testCase);
-    void _sizeTestCaseWorker        (int fileSize);
-    void _verifyFileSizeAndDelete   (const QString& filename, int expectedSize);
+    void _testCaseWorker(const TestCase_t& testCase);
+    void _sizeTestCaseWorker(int fileSize);
+    void _verifyFileSizeAndDelete(const QString& filename, int expectedSize);
+
+    /// Helper for listDirectory error mode tests
+    /// @param errorMode MockLinkFTP error mode to test
+    /// @param expectSuccess Whether the operation should succeed
+    /// @param expectedCount Expected number of entries (only if expectSuccess is true)
+    void _testListDirectoryWithErrorMode(MockLinkFTP::ErrorMode_t errorMode, bool expectSuccess, int expectedCount = 0);
 
     static const TestCase_t _rgTestCases[];
 };

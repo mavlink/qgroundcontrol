@@ -4,6 +4,7 @@
 #include <QtCore/QProcessEnvironment>
 
 #include "QGCCommandLineParser.h"
+#include "QGCLoggingCategory.h"
 
 #ifdef Q_OS_ANDROID
     #include "AndroidInterface.h"
@@ -26,6 +27,8 @@
         #include <cstdio> // _snwprintf_s
     #endif
 #endif
+
+QGC_LOGGING_CATEGORY(PlatformLog, "Utilities.Platform")
 
 namespace {
 

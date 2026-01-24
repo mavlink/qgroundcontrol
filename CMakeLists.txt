@@ -17,7 +17,6 @@ list(APPEND CMAKE_MODULE_PATH
     "${CMAKE_SOURCE_DIR}/cmake/platform"
 )
 
-# Include helper functions early
 include(Helpers)
 
 # ----------------------------------------------------------------------------
@@ -39,7 +38,6 @@ set(CMAKE_POLICY_VERSION_MINIMUM ${CMAKE_MINIMUM_REQUIRED_VERSION})
 # Custom Build Configuration
 # ============================================================================
 
-# Load default options and allow custom builds to override
 include(CustomOptions)
 
 if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/custom")
@@ -49,7 +47,6 @@ if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/custom")
     include(CustomOverrides)
 endif()
 
-# Disable testing if not explicitly enabled
 if(NOT QGC_BUILD_TESTING)
     set(BUILD_TESTING OFF CACHE INTERNAL "Disable testing by default" FORCE)
 endif()
@@ -96,10 +93,12 @@ project(${QGC_APP_NAME}
 # CMake & Build System Configuration
 # ============================================================================
 
-# Standard CMake modules
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
+if(QGC_BUILD_TESTING)
+    include(CTest)
+endif()
 
 # ----------------------------------------------------------------------------
 # CPM (CMake Package Manager) Configuration
@@ -243,7 +242,6 @@ list(APPEND QGC_RESOURCES
 # QGroundControl Executable Target
 # ============================================================================
 
-# Create the main executable
 qt_add_executable(${CMAKE_PROJECT_NAME}
     WIN32          # Windows GUI application
     MACOSX_BUNDLE  # macOS application bundle
@@ -284,7 +282,6 @@ add_subdirectory(src)
 
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
-    # Exclude test directory from translation scanning
     set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 endif()
 
@@ -325,7 +322,6 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
 )
 
-# Linux-specific Qt platform plugins
 if(LINUX)
     qt_import_plugins(${CMAKE_PROJECT_NAME}
         INCLUDE

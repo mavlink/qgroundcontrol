@@ -36,6 +36,24 @@ cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYP
 cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 
+# Test configuration - Tiered timeout system for different test types
+# Override with environment variables: QGC_TEST_TIMEOUT_UNIT, QGC_TEST_TIMEOUT_INTEGRATION, QGC_TEST_TIMEOUT_SLOW
+set(QGC_TEST_TIMEOUT 120 CACHE STRING "Default timeout for unit tests in seconds")
+set(QGC_TEST_TIMEOUT_UNIT 60 CACHE STRING "Timeout for fast unit tests (no vehicle)")
+set(QGC_TEST_TIMEOUT_INTEGRATION 180 CACHE STRING "Timeout for integration tests (with MockLink)")
+set(QGC_TEST_TIMEOUT_SLOW 300 CACHE STRING "Timeout for slow tests")
+
+# Allow environment variable overrides for CI customization
+if(DEFINED ENV{QGC_TEST_TIMEOUT_UNIT})
+    set(QGC_TEST_TIMEOUT_UNIT $ENV{QGC_TEST_TIMEOUT_UNIT})
+endif()
+if(DEFINED ENV{QGC_TEST_TIMEOUT_INTEGRATION})
+    set(QGC_TEST_TIMEOUT_INTEGRATION $ENV{QGC_TEST_TIMEOUT_INTEGRATION})
+endif()
+if(DEFINED ENV{QGC_TEST_TIMEOUT_SLOW})
+    set(QGC_TEST_TIMEOUT_SLOW $ENV{QGC_TEST_TIMEOUT_SLOW})
+endif()
+
 # ============================================================================
 # Feature Flags
 # ============================================================================

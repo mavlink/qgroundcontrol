@@ -1,18 +1,18 @@
-/// @file
-///     @brief Unit test fpr QGCGeo coordinate project math.
-///
-///     @author David Goodman <dagoodma@gmail.com>
-
 #include "GeoTest.h"
 #include "QGCGeo.h"
 
 #include <QtGui/QVector3D>
 #include <QtTest/QTest>
 
+// Legacy helper - prefer QGC_COMPARE_FLOAT from QtTestExtensions.h for new code
 static bool compareDoubles(double actual, double expected, double epsilon = 0.00001)
 {
     return (qAbs(actual - expected) <= epsilon);
 }
+
+// ============================================================================
+// NED Conversion Tests
+// ============================================================================
 
 void GeoTest::_convertGeoToNed_test()
 {
@@ -26,12 +26,12 @@ void GeoTest::_convertGeoToNed_test()
     double x = 0., y = 0., z = 0.;
     QGCGeo::convertGeoToNed(coord, m_origin, x, y, z);
 
-    // Use 0.01m tolerance (instead of default epsilon) because the WGS84 ellipsoidal
-    // model and reference implementation can differ at the centimeter level due to
-    // numerical precision and model approximations.
-    QVERIFY(compareDoubles(x, expectedX, 0.01));
-    QVERIFY(compareDoubles(y, expectedY, 0.01));
-    QVERIFY(compareDoubles(z, expectedZ, 0.01));
+    // Use 0.01m tolerance because the WGS84 ellipsoidal model and reference
+    // implementation can differ at the centimeter level due to numerical
+    // precision and model approximations.
+    QGC_COMPARE_FLOAT(x, expectedX, 0.01);
+    QGC_COMPARE_FLOAT(y, expectedY, 0.01);
+    QGC_COMPARE_FLOAT(z, expectedZ, 0.01);
 }
 
 void GeoTest::_convertGeoToNedAtOrigin_test()
@@ -46,9 +46,9 @@ void GeoTest::_convertGeoToNedAtOrigin_test()
     double x = 0., y = 0., z = 0.;
     QGCGeo::convertGeoToNed(coord, m_origin, x, y, z);
 
-    QVERIFY(compareDoubles(x, expectedX));
-    QVERIFY(compareDoubles(y, expectedY));
-    QVERIFY(compareDoubles(z, expectedZ));
+    QGC_COMPARE_FLOAT(x, expectedX);
+    QGC_COMPARE_FLOAT(y, expectedY);
+    QGC_COMPARE_FLOAT(z, expectedZ);
 }
 
 void GeoTest::_convertNedToGeo_test()
@@ -61,10 +61,10 @@ void GeoTest::_convertNedToGeo_test()
     QGeoCoordinate coord(0,0,0);
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
 
-    QVERIFY(coord.isValid());
-    QVERIFY(compareDoubles(coord.latitude(), 47.364869, 0.00001));
-    QVERIFY(compareDoubles(coord.longitude(), 8.594398, 0.00001));
-    QVERIFY(compareDoubles(coord.altitude(), 0.0, 0.01));
+    QGC_VERIFY_VALID_COORDINATE(coord);
+    QGC_COMPARE_FLOAT(coord.latitude(), 47.364869, 0.00001);
+    QGC_COMPARE_FLOAT(coord.longitude(), 8.594398, 0.00001);
+    QGC_COMPARE_FLOAT(coord.altitude(), 0.0, 0.01);
 }
 
 void GeoTest::_convertNedToGeoAtOrigin_test()
@@ -76,11 +76,13 @@ void GeoTest::_convertNedToGeoAtOrigin_test()
     QGeoCoordinate coord(0,0,0);
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
 
-    QVERIFY(coord.isValid());
-    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
-    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
-    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+    QGC_VERIFY_VALID_COORDINATE(coord);
+    QGC_COMPARE_COORDINATE(coord, m_origin);
 }
+
+// ============================================================================
+// UTM/MGRS Conversion Tests
+// ============================================================================
 
 void GeoTest::_convertGeoToUTM_test()
 {
@@ -91,8 +93,9 @@ void GeoTest::_convertGeoToUTM_test()
     const int zone = QGCGeo::convertGeoToUTM(coord, easting, northing);
 
     QCOMPARE(zone, 32);
-    QVERIFY(compareDoubles(easting, 465886.092246));
-    QVERIFY(compareDoubles(northing, 5247092.44892));
+    // UTM coordinates are in meters - use centimeter tolerance for large values
+    QGC_COMPARE_FLOAT(easting, 465886.092246, 0.01);
+    QGC_COMPARE_FLOAT(northing, 5247092.44892, 0.01);
 }
 
 void GeoTest::_convertUTMToGeo_test()
@@ -106,10 +109,8 @@ void GeoTest::_convertUTMToGeo_test()
     const bool result = QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, coord);
 
     QVERIFY(result);
-    QVERIFY(coord.isValid());
-    QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
-    QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
-    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+    QGC_VERIFY_VALID_COORDINATE(coord);
+    QGC_COMPARE_COORDINATE(coord, m_origin);
 }
 
 void GeoTest::_convertGeoToMGRS_test()
@@ -134,6 +135,10 @@ void GeoTest::_convertMGRSToGeo_test()
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
     QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
 }
+
+// ============================================================================
+// ECEF/ENU Conversion Tests
+// ============================================================================
 
 void GeoTest::_convertGeodeticToEcef_test()
 {
@@ -214,6 +219,10 @@ void GeoTest::_convertEnuToEcef_test()
     QVERIFY(compareDoubles(coord.altitude(), 50.0, 1.0));
 }
 
+// ============================================================================
+// Geodesic Calculation Tests
+// ============================================================================
+
 void GeoTest::_geodesicDistance_test()
 {
     // Test distance from ETH Zurich to Eiffel Tower (Paris)
@@ -223,7 +232,7 @@ void GeoTest::_geodesicDistance_test()
     const double distance = QGCGeo::geodesicDistance(zurich, paris);
 
     // Geodesic distance is approximately 493.7 km
-    QVERIFY(compareDoubles(distance, 493739.0, 100.0));
+    QGC_COMPARE_FLOAT(distance, 493739.0, 100.0);
 
     // Compare with Qt's spherical approximation to show difference
     const double qtDistance = zurich.distanceTo(paris);
@@ -240,17 +249,17 @@ void GeoTest::_geodesicAzimuth_test()
     const double azimuth = QGCGeo::geodesicAzimuth(zurich, paris);
 
     // Azimuth is approximately 291.8 degrees (northwest)
-    QVERIFY(compareDoubles(azimuth, 291.8, 1.0));
+    QGC_COMPARE_FLOAT(azimuth, 291.8, 1.0);
 
     // Test due north
     const QGeoCoordinate north(48.3764, 8.5481, 0.0);
     const double northAzimuth = QGCGeo::geodesicAzimuth(zurich, north);
-    QVERIFY(compareDoubles(northAzimuth, 0.0, 0.1));
+    QGC_COMPARE_FLOAT(northAzimuth, 0.0, 0.1);
 
     // Test due east
     const QGeoCoordinate east(47.3764, 9.5481, 0.0);
     const double eastAzimuth = QGCGeo::geodesicAzimuth(zurich, east);
-    QVERIFY(compareDoubles(eastAzimuth, 90.0, 1.0));
+    QGC_COMPARE_FLOAT(eastAzimuth, 90.0, 1.0);
 }
 
 void GeoTest::_geodesicDestination_test()
@@ -285,9 +294,13 @@ void GeoTest::_geodesicRoundTrip_test()
     const double calculatedDistance = QGCGeo::geodesicDistance(start, dest);
     const double calculatedAzimuth = QGCGeo::geodesicAzimuth(start, dest);
 
-    QVERIFY(compareDoubles(calculatedDistance, originalDistance, 0.01));
-    QVERIFY(compareDoubles(calculatedAzimuth, originalAzimuth, 0.0001));
+    QGC_COMPARE_FLOAT(calculatedDistance, originalDistance, 0.01);
+    QGC_COMPARE_FLOAT(calculatedAzimuth, originalAzimuth, 0.0001);
 }
+
+// ============================================================================
+// Path/Polygon Measurement Tests
+// ============================================================================
 
 void GeoTest::_pathLength_test()
 {
@@ -303,7 +316,7 @@ void GeoTest::_pathLength_test()
     const double length = QGCGeo::pathLength(path);
 
     // Should be approximately 2000m
-    QVERIFY(compareDoubles(length, 2000.0, 1.0));
+    QGC_COMPARE_FLOAT(length, 2000.0, 1.0);
 }
 
 void GeoTest::_polygonArea_test()
@@ -323,7 +336,7 @@ void GeoTest::_polygonArea_test()
     const double area = QGCGeo::polygonArea(square);
 
     // Should be approximately 1,000,000 m² (1 km²)
-    QVERIFY(compareDoubles(area, 1000000.0, 1000.0)); // Within 0.1%
+    QGC_COMPARE_FLOAT(area, 1000000.0, 1000.0); // Within 0.1%
 }
 
 void GeoTest::_polygonPerimeter_test()
@@ -342,8 +355,12 @@ void GeoTest::_polygonPerimeter_test()
     const double perimeter = QGCGeo::polygonPerimeter(square);
 
     // Should be approximately 4000m
-    QVERIFY(compareDoubles(perimeter, 4000.0, 1.0));
+    QGC_COMPARE_FLOAT(perimeter, 4000.0, 1.0);
 }
+
+// ============================================================================
+// Path Interpolation Tests
+// ============================================================================
 
 void GeoTest::_interpolatePath_test()
 {
@@ -371,12 +388,12 @@ void GeoTest::_interpolatePath_test()
     // Each segment should be approximately 1000m
     for (int i = 1; i < elevenPoints.size(); ++i) {
         const double segmentDist = QGCGeo::geodesicDistance(elevenPoints[i - 1], elevenPoints[i]);
-        QVERIFY(compareDoubles(segmentDist, 1000.0, 0.1));
+        QGC_COMPARE_FLOAT(segmentDist, 1000.0, 0.1);
     }
 
     // Total path length should be 10000m
     const double totalLen = QGCGeo::pathLength(elevenPoints);
-    QVERIFY(compareDoubles(totalLen, 10000.0, 0.1));
+    QGC_COMPARE_FLOAT(totalLen, 10000.0, 0.1);
 
     // Test altitude interpolation
     const QGeoCoordinate startAlt(m_origin.latitude(), m_origin.longitude(), 100.0);
@@ -404,8 +421,8 @@ void GeoTest::_interpolateAtDistance_test()
     const auto midpoint = QGCGeo::interpolateAtDistance(m_origin, dest, 2500.0);
     const double distToMid = QGCGeo::geodesicDistance(m_origin, midpoint);
     const double distFromMid = QGCGeo::geodesicDistance(midpoint, dest);
-    QVERIFY(compareDoubles(distToMid, 2500.0, 0.1));
-    QVERIFY(compareDoubles(distFromMid, 2500.0, 0.1));
+    QGC_COMPARE_FLOAT(distToMid, 2500.0, 0.1);
+    QGC_COMPARE_FLOAT(distFromMid, 2500.0, 0.1);
 
     // Test altitude interpolation at midpoint
     const QGeoCoordinate startAlt(m_origin.latitude(), m_origin.longitude(), 0.0);

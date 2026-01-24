@@ -10,12 +10,7 @@
 
 #include <QtTest/QTest>
 
-MissionControllerTest::MissionControllerTest(void)
-{
-
-}
-
-void MissionControllerTest::cleanup(void)
+void MissionControllerTest::cleanup()
 {
     delete _masterController;
     delete _multiSpyMissionController;
@@ -33,12 +28,6 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 {
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);
 
-    // VisualMissionItem signals
-    _rgVisualItemSignals[coordinateChangedSignalIndex] = SIGNAL(coordinateChanged(const QGeoCoordinate&));
-
-    // MissionController signals
-    _rgMissionControllerSignals[visualItemsChangedSignalIndex] =    SIGNAL(visualItemsChanged());
-
     // Master controller pulls offline vehicle info from settings
     SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(firmwareType));
     _masterController = new PlanMasterController(this);
@@ -47,23 +36,23 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 
     _multiSpyMissionController = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyMissionController);
-    QCOMPARE(_multiSpyMissionController->init(_missionController, _rgMissionControllerSignals, _cMissionControllerSignals), true);
+    QCOMPARE(_multiSpyMissionController->init(_missionController), true);
 
     _masterController->start();
 
-    // All signals should some through on start
-    QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(visualItemsChangedSignalMask), true);
+    // visualItemsChanged should come through on start
+    QCOMPARE(_multiSpyMissionController->checkSignalsByMask(_multiSpyMissionController->mask("visualItemsChanged")), true);
     _multiSpyMissionController->clearAllSignals();
 
     QmlObjectListModel* visualItems = _missionController->visualItems();
-    QVERIFY(visualItems);
+    VERIFY_NOT_NULL(visualItems);
 
     // Empty vehicle only has home position
     QCOMPARE(visualItems->count(), 1);
 
     // Mission Settings should be in first slot
     MissionSettingsItem* settingsItem = visualItems->value<MissionSettingsItem*>(0);
-    QVERIFY(settingsItem);
+    VERIFY_NOT_NULL(settingsItem);
 
     // Offline vehicle, so no home position
     QCOMPARE(settingsItem->coordinate().isValid(), false);
@@ -73,7 +62,7 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
 
     // No waypoint lines
     QmlObjectListModel* simpleFlightPathSegments = _missionController->simpleFlightPathSegments();
-    QVERIFY(simpleFlightPathSegments);
+    VERIFY_NOT_NULL(simpleFlightPathSegments);
     QCOMPARE(simpleFlightPathSegments->count(), 0);
 }
 
@@ -85,54 +74,54 @@ void MissionControllerTest::_testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType)
     // sets up an empty vehicle
 
     QmlObjectListModel* visualItems = _missionController->visualItems();
-    QVERIFY(visualItems);
+    VERIFY_NOT_NULL(visualItems);
     VisualMissionItem* visualItem = visualItems->value<VisualMissionItem*>(0);
-    QVERIFY(visualItem);
+    VERIFY_NOT_NULL(visualItem);
 
     _setupVisualItemSignals(visualItem);
 }
 
-void MissionControllerTest::_testEmptyVehiclePX4(void)
+void MissionControllerTest::_testEmptyVehiclePX4()
 {
     _testEmptyVehicleWorker(MAV_AUTOPILOT_PX4);
 }
 
-void MissionControllerTest::_testEmptyVehicleAPM(void)
+void MissionControllerTest::_testEmptyVehicleAPM()
 {
     _testEmptyVehicleWorker(MAV_AUTOPILOT_ARDUPILOTMEGA);
 }
 
-#if 0
 void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType)
 {
-    // Start offline and add item
-    _missionController = new MissionController();
-    Q_CHECK_PTR(_missionController);
-    _missionController->start(false /* flyView */);
+    // Start offline and add an item
+    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(firmwareType));
+    _masterController = new PlanMasterController(this);
+    _masterController->setFlyView(false);
+    _missionController = _masterController->missionController();
+    _masterController->start();
+
+    // Add a waypoint in offline mode
     _missionController->insertSimpleMissionItem(QGeoCoordinate(37.803784, -122.462276), _missionController->visualItems()->count());
 
-    // Go online to empty vehicle
+    // Verify we have 2 items (settings + waypoint)
+    QCOMPARE(_missionController->visualItems()->count(), 2);
+
+    // Now go online by connecting a vehicle
     MissionControllerManagerTest::_initForFirmwareType(firmwareType);
 
-#if 1
-    // Due to current limitations, offline items will go away
-    QCOMPARE(_missionController->visualItems()->count(), 1);
-#else
-    //Make sure our offline mission items are still there
+    // Offline items should be preserved when connecting to an empty vehicle
     QCOMPARE(_missionController->visualItems()->count(), 2);
-#endif
 }
 
-void MissionControllerTest::_testOfflineToOnlineAPM(void)
+void MissionControllerTest::_testOfflineToOnlineAPM()
 {
     _testOfflineToOnlineWorker(MAV_AUTOPILOT_ARDUPILOTMEGA);
 }
 
-void MissionControllerTest::_testOfflineToOnlinePX4(void)
+void MissionControllerTest::_testOfflineToOnlinePX4()
 {
     _testOfflineToOnlineWorker(MAV_AUTOPILOT_PX4);
 }
-#endif
 
 void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualItem)
 {
@@ -140,10 +129,10 @@ void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualIte
 
     _multiSpyMissionItem = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyMissionItem);
-    QCOMPARE(_multiSpyMissionItem->init(visualItem, _rgVisualItemSignals, _cVisualItemSignals), true);
+    QCOMPARE(_multiSpyMissionItem->init(visualItem), true);
 }
 
-void MissionControllerTest::_testGimbalRecalc(void)
+void MissionControllerTest::_testGimbalRecalc()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
     _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 1);
@@ -163,7 +152,11 @@ void MissionControllerTest::_testGimbalRecalc(void)
     item->cameraSection()->setSpecifyGimbal(true);
     item->cameraSection()->gimbalYaw()->setRawValue(0.0);
     SettingsManager::instance()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
-    QTest::qWait(500); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    // Wait for recalc to complete - gimbal yaw should be set on item at yawIndex
+    QVERIFY(TestHelpers::waitFor([&]() {
+        VisualMissionItem* vi = _missionController->visualItems()->value<VisualMissionItem*>(yawIndex);
+        return vi && !qIsNaN(vi->missionGimbalYaw());
+    }));
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
         //qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
@@ -175,7 +168,7 @@ void MissionControllerTest::_testGimbalRecalc(void)
     }
 }
 
-void MissionControllerTest::_testVehicleYawRecalc(void)
+void MissionControllerTest::_testVehicleYawRecalc()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
@@ -192,7 +185,11 @@ void MissionControllerTest::_testVehicleYawRecalc(void)
         _missionController->insertSimpleMissionItem(currentCoord, i);
     }
 
-    QTest::qWait(500); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    // Wait for recalc to complete - vehicle yaw should be set on item 2
+    QVERIFY(TestHelpers::waitFor([&]() {
+        VisualMissionItem* vi = _missionController->visualItems()->value<VisualMissionItem*>(2);
+        return vi && !qIsNaN(vi->missionVehicleYaw());
+    }));
 
     // No specific vehicle yaw set yet. Vehicle yaw should track flight path.
     double expectedVehicleYaw = wpAngleInc;
@@ -208,7 +205,11 @@ void MissionControllerTest::_testVehicleYawRecalc(void)
     SimpleMissionItem* simpleItem = _missionController->visualItems()->value<SimpleMissionItem*>(3);
     simpleItem->missionItem().setParam4(66);
 
-    QTest::qWait(500); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    // Wait for recalc to complete - item 3's yaw should now be 66
+    QVERIFY(TestHelpers::waitFor([&]() {
+        VisualMissionItem* vi = _missionController->visualItems()->value<VisualMissionItem*>(3);
+        return vi && vi->missionVehicleYaw() == 66.0;
+    }));
 
     // All item should track vehicle path except for the one changed
     expectedVehicleYaw = wpAngleInc;
@@ -222,19 +223,19 @@ void MissionControllerTest::_testVehicleYawRecalc(void)
     }
 }
 
-void MissionControllerTest::_testLoadJsonSectionAvailable(void)
+void MissionControllerTest::_testLoadJsonSectionAvailable()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
     _masterController->loadFromFile(":/unittest/SectionTest.plan");
 
     QmlObjectListModel* visualItems = _missionController->visualItems();
-    QVERIFY(visualItems);
+    VERIFY_NOT_NULL(visualItems);
     QCOMPARE(visualItems->count(), 5);
 
     // Check that only waypoint items have camera and speed sections
     for (int i=1; i<visualItems->count(); i++) {
         SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(i);
-        QVERIFY(item);
+        VERIFY_NOT_NULL(item);
         if ((int)item->command() == MAV_CMD_NAV_WAYPOINT) {
             QCOMPARE(item->cameraSection()->available(), true);
             QCOMPARE(item->speedSection()->available(), true);
@@ -246,7 +247,7 @@ void MissionControllerTest::_testLoadJsonSectionAvailable(void)
     }
 }
 
-void MissionControllerTest::_testGlobalAltMode(void)
+void MissionControllerTest::_testGlobalAltMode()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 

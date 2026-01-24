@@ -1,23 +1,31 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 #include "Vehicle.h"
 
+/// Tests for Vehicle MAV command sending with signal-based results.
+/// Uses UnitTest directly since tests iterate through test cases that each need
+/// their own connection lifecycle.
 class SendMavCommandWithSignallingTest : public UnitTest
 {
     Q_OBJECT
 
+public:
+    SendMavCommandWithSignallingTest() = default;
+
 private slots:
-    void _performTestCases(void);
-    void _duplicateCommand(void);
+    void cleanup() override;
+
+    void _performTestCases();
+    void _duplicateCommand();
 
 private:
-    typedef struct {
-        MAV_CMD                             command;
-        MAV_RESULT                          expectedCommandResult;
-        Vehicle::MavCmdResultFailureCode_t  expectedFailureCode;
-        int                                 expectedSendCount;
-    } TestCase_t;
+    struct TestCase_t {
+        MAV_CMD command;
+        MAV_RESULT expectedCommandResult;
+        Vehicle::MavCmdResultFailureCode_t expectedFailureCode;
+        int expectedSendCount;
+    };
 
     void _testCaseWorker(TestCase_t& testCase);
 

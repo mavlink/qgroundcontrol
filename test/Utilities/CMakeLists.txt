@@ -7,7 +7,9 @@ add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(FileSystem)
 add_subdirectory(Geo)
+add_subdirectory(Json)
 add_subdirectory(Network)
+add_subdirectory(Performance)
 
 # ----------------------------------------------------------------------------
 # Test Data Resources
