@@ -15,7 +15,6 @@ ValueSlider {
 
     required property Fact fact
 
-    property real _minMaxVisibilityPadding: ScreenTools.defaultFontPixelWidth
     property Fact _nullFact:                Fact { }
     property Fact _fact:                    fact ? fact : _nullFact
 
