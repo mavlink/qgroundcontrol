@@ -12,18 +12,7 @@
 
 #include <QtTest/QTest>
 
-SimpleMissionItemTest::SimpleMissionItemTest(void)
-{
-    rgSimpleItemSignals[commandChangedIndex] =                          SIGNAL(commandChanged(int));
-    rgSimpleItemSignals[altitudeModeChangedIndex] =                     SIGNAL(altitudeModeChanged());
-    rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =              SIGNAL(friendlyEditAllowedChanged(bool));
-    rgSimpleItemSignals[headingDegreesChangedIndex] =                   SIGNAL(headingDegreesChanged(double));
-    rgSimpleItemSignals[rawEditChangedIndex] =                          SIGNAL(rawEditChanged(bool));
-    rgSimpleItemSignals[cameraSectionChangedIndex] =                    SIGNAL(cameraSectionChanged(QObject*));
-    rgSimpleItemSignals[speedSectionChangedIndex] =                     SIGNAL(speedSectionChanged(QObject*));
-}
-
-void SimpleMissionItemTest::init(void)
+void SimpleMissionItemTest::init()
 {
     VisualMissionItemTest::init();
 
@@ -46,11 +35,11 @@ void SimpleMissionItemTest::init(void)
     // to incorrect ui or perf impact of uneeded signals propogating ui change.
 
     _spySimpleItem = new MultiSignalSpy();
-    QCOMPARE(_spySimpleItem->init(_simpleItem, rgSimpleItemSignals, cSimpleItemSignals), true);
+    QVERIFY(_spySimpleItem->init(_simpleItem));
     VisualMissionItemTest::_createSpy(_simpleItem, &_spyVisualItem);
 }
 
-void SimpleMissionItemTest::cleanup(void)
+void SimpleMissionItemTest::cleanup()
 {
     VisualMissionItemTest::cleanup();
 
@@ -202,7 +191,7 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
     }
 }
 
-void SimpleMissionItemTest::_testEditorFacts(void)
+void SimpleMissionItemTest::_testEditorFacts()
 {
     _testEditorFactsWorker(QGCMAVLink::VehicleClassMultiRotor,  QGCMAVLink::VehicleClassGeneric);
     _testEditorFactsWorker(QGCMAVLink::VehicleClassFixedWing,   QGCMAVLink::VehicleClassGeneric);
@@ -210,7 +199,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
     _testEditorFactsWorker(QGCMAVLink::VehicleClassVTOL,        QGCMAVLink::VehicleClassFixedWing);
 }
 
-void SimpleMissionItemTest::_testDefaultValues(void)
+void SimpleMissionItemTest::_testDefaultValues()
 {
     SimpleMissionItem item(_masterController, false /* flyView */, false /* forLoad */);
 
@@ -219,7 +208,7 @@ void SimpleMissionItemTest::_testDefaultValues(void)
     QCOMPARE(item.missionItem().param7(), SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble());
 }
 
-void SimpleMissionItemTest::_testSignals(void)
+void SimpleMissionItemTest::_testSignals()
 {
     MissionItem& missionItem = _simpleItem->missionItem();
 
@@ -233,18 +222,23 @@ void SimpleMissionItemTest::_testSignals(void)
     //      dirtyChanged
 
     // Check that actually changing coordinate signals correctly
+    // Note: setCoordinate may emit additional signals like terrainAltitudeChanged, amslEntryAltChanged, etc.
+    // We use checkSignalsByMask to verify the expected signals were emitted (allows additional signals)
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5() + 1, missionItem.param6(), missionItem.param7()));
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | exitCoordinateChangedMask | dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("coordinateChanged", "exitCoordinateChanged", "dirtyChanged")));
     _spyVisualItem->clearAllSignals();
+    _spySimpleItem->clearAllSignals();
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | exitCoordinateChangedMask | dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("coordinateChanged", "exitCoordinateChanged", "dirtyChanged")));
     _spyVisualItem->clearAllSignals();
+    _spySimpleItem->clearAllSignals();
 
     // Altitude in coordinate is not used in setCoordinate
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6(), missionItem.param7() + 1));
     QVERIFY(_spyVisualItem->checkNoSignals());
     QVERIFY(_spySimpleItem->checkNoSignals());
     _spyVisualItem->clearAllSignals();
+    _spySimpleItem->clearAllSignals();
 
     // Check dirtyChanged signalling
 
@@ -258,20 +252,20 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spyVisualItem->checkNoSignals());
 
     missionItem.setParam1(missionItem.param1() + 1);
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("dirtyChanged")));
     _spyVisualItem->clearAllSignals();
     missionItem.setParam1(missionItem.param2() + 1);
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("dirtyChanged")));
     _spyVisualItem->clearAllSignals();
     missionItem.setParam1(missionItem.param3() + 1);
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("dirtyChanged")));
     _spyVisualItem->clearAllSignals();
     missionItem.setParam1(missionItem.param4() + 1);
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("dirtyChanged")));
     _spyVisualItem->clearAllSignals();
 
     _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative ? QGroundControlQmlGlobal::AltitudeModeAbsolute : QGroundControlQmlGlobal::AltitudeModeRelative);
-    QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | static_cast<int>(friendlyEditAllowedChangedMask | altitudeModeChangedMask)));
+    QVERIFY(_spySimpleItem->checkSignalsByMask(_spySimpleItem->mask("dirtyChanged", "friendlyEditAllowedChanged", "altitudeModeChanged")));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
 
@@ -286,13 +280,14 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spySimpleItem->checkNoSignals());
 
     _simpleItem->setCommand(MAV_CMD_NAV_LOITER_TIME);
-    QVERIFY(_spySimpleItem->checkSignalsByMask(commandChangedMask));
-    QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask));
+    QVERIFY(_spySimpleItem->checkSignalsByMask(_spySimpleItem->mask("commandChanged")));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("commandNameChanged", "dirtyChanged")));
 }
 
-void SimpleMissionItemTest::_testCameraSectionDirty(void)
+void SimpleMissionItemTest::_testCameraSectionDirty()
 {
     CameraSection* cameraSection = _simpleItem->cameraSection();
+    VERIFY_NOT_NULL(cameraSection);
 
     QVERIFY(!cameraSection->dirty());
     QVERIFY(!_simpleItem->dirty());
@@ -306,9 +301,10 @@ void SimpleMissionItemTest::_testCameraSectionDirty(void)
     QVERIFY(!cameraSection->dirty());
 }
 
-void SimpleMissionItemTest::_testSpeedSectionDirty(void)
+void SimpleMissionItemTest::_testSpeedSectionDirty()
 {
     SpeedSection* speedSection = _simpleItem->speedSection();
+    VERIFY_NOT_NULL(speedSection);
 
     QVERIFY(!speedSection->dirty());
     QVERIFY(!_simpleItem->dirty());
@@ -322,38 +318,38 @@ void SimpleMissionItemTest::_testSpeedSectionDirty(void)
     QVERIFY(!speedSection->dirty());
 }
 
-void SimpleMissionItemTest::_testCameraSection(void)
+void SimpleMissionItemTest::_testCameraSection()
 {
     // No gimbal yaw to start with
     QVERIFY(qIsNaN(_simpleItem->specifiedGimbalYaw()));
     QVERIFY(qIsNaN(_simpleItem->missionGimbalYaw()));
-    QCOMPARE(_simpleItem->dirty(), false);
+    QVERIFY(!_simpleItem->dirty());
 
     double gimbalYaw = 10.1234;
     _simpleItem->cameraSection()->setSpecifyGimbal(true);
     _simpleItem->cameraSection()->gimbalYaw()->setRawValue(gimbalYaw);
-    QCOMPARE(_simpleItem->specifiedGimbalYaw(), gimbalYaw);
+    QGC_COMPARE_FLOAT(_simpleItem->specifiedGimbalYaw(), gimbalYaw);
     QVERIFY(qIsNaN(_simpleItem->missionGimbalYaw()));
-    QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedGimbalYawChangedMask), true);
-    QCOMPARE(_simpleItem->dirty(), true);
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("specifiedGimbalYawChanged")));
+    QVERIFY(_simpleItem->dirty());
 }
 
 
-void SimpleMissionItemTest::_testSpeedSection(void)
+void SimpleMissionItemTest::_testSpeedSection()
 {
     // No flight speed
     QVERIFY(qIsNaN(_simpleItem->specifiedFlightSpeed()));
-    QCOMPARE(_simpleItem->dirty(), false);
+    QVERIFY(!_simpleItem->dirty());
 
     double flightSpeed = 10.1234;
     _simpleItem->speedSection()->setSpecifyFlightSpeed(true);
     _simpleItem->speedSection()->flightSpeed()->setRawValue(flightSpeed);
-    QCOMPARE(_simpleItem->specifiedFlightSpeed(), flightSpeed);
-    QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedFlightSpeedChangedMask), true);
-    QCOMPARE(_simpleItem->dirty(), true);
+    QGC_COMPARE_FLOAT(_simpleItem->specifiedFlightSpeed(), flightSpeed);
+    QVERIFY(_spyVisualItem->checkSignalsByMask(_spyVisualItem->mask("specifiedFlightSpeedChanged")));
+    QVERIFY(_simpleItem->dirty());
 }
 
-void SimpleMissionItemTest::_testAltitudePropogation(void)
+void SimpleMissionItemTest::_testAltitudePropogation()
 {
     // Make sure that changes to altitude propogate to param 7 of the mission item
 

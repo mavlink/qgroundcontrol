@@ -8,20 +8,7 @@
 
 #include <QtTest/QTest>
 
-const char* SimpleLandingComplexItem::settingsGroup             = "SimpleLandingComplexItemUnitTest";
-const char* SimpleLandingComplexItem::jsonComplexItemTypeValue  = "utSimpleLandingPattern";
-
-LandingComplexItemTest::LandingComplexItemTest(void)
-{
-    rgSignals[finalApproachCoordinateChangedIndex]  = SIGNAL(finalApproachCoordinateChanged(QGeoCoordinate));
-    rgSignals[slopeStartCoordinateChangedIndex]     = SIGNAL(slopeStartCoordinateChanged(QGeoCoordinate));
-    rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));
-    rgSignals[landingCoordSetChangedIndex]          = SIGNAL(landingCoordSetChanged(bool));
-    rgSignals[altitudesAreRelativeChangedIndex]     = SIGNAL(altitudesAreRelativeChanged(bool));
-    rgSignals[_updateFlightPathSegmentsSignalIndex] = SIGNAL(_updateFlightPathSegmentsSignal());
-}
-
-void LandingComplexItemTest::init(void)
+void LandingComplexItemTest::init()
 {
     VisualMissionItemTest::init();
 
@@ -36,14 +23,14 @@ void LandingComplexItemTest::init(void)
     VisualMissionItemTest::_createSpy(_item, &_viMultiSpy);
 
     _multiSpy = new MultiSignalSpy();
-    QCOMPARE(_multiSpy->init(_item, rgSignals, cSignals), true);
+    QCOMPARE(_multiSpy->init(_item), true);
 
     _validStopVideoItem     = CameraSectionTest::createValidStopTimeItem(_masterController);
     _validStopDistanceItem  = CameraSectionTest::createValidStopTimeItem(_masterController);
     _validStopTimeItem      = CameraSectionTest::createValidStopTimeItem(_masterController);
 }
 
-void LandingComplexItemTest::cleanup(void)
+void LandingComplexItemTest::cleanup()
 {
     delete _multiSpy;
     _multiSpy = nullptr;
@@ -57,13 +44,13 @@ void LandingComplexItemTest::cleanup(void)
     _validStopTimeItem      = nullptr;
 }
 
-void LandingComplexItemTest::_testDirty(void)
+void LandingComplexItemTest::_testDirty()
 {
     QVERIFY(!_item->dirty());
     _item->setDirty(true);
     QVERIFY(_item->dirty());
-    QVERIFY(_viMultiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(_viMultiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_viMultiSpy->checkOnlySignalByMask(_viMultiSpy->mask("dirtyChanged")));
+    QVERIFY(_viMultiSpy->pullBoolFromSignal("dirtyChanged"));
     _item->setDirty(false);
     _viMultiSpy->clearAllSignals();
 
@@ -84,8 +71,8 @@ void LandingComplexItemTest::_testDirty(void)
         qDebug() << fact->name();
         QVERIFY(!_item->dirty());
         changeFactValue(fact);
-        QVERIFY(_viMultiSpy->checkSignalByMask(dirtyChangedMask));
-        QVERIFY(_viMultiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+        QVERIFY(_viMultiSpy->checkSignalByMask(_viMultiSpy->mask("dirtyChanged")));
+        QVERIFY(_viMultiSpy->pullBoolFromSignal("dirtyChanged"));
         _item->setDirty(false);
         _viMultiSpy->clearAllSignals();
     }
@@ -99,8 +86,8 @@ void LandingComplexItemTest::_testDirty(void)
         QVERIFY(!_item->dirty());
         QMetaProperty boolProp = metaObject->property(metaObject->indexOfProperty(boolName));
         QVERIFY(boolProp.write(_item, !boolProp.read(_item).toBool()));
-        QVERIFY(_viMultiSpy->checkSignalByMask(dirtyChangedMask));
-        QVERIFY(_viMultiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+        QVERIFY(_viMultiSpy->checkSignalByMask(_viMultiSpy->mask("dirtyChanged")));
+        QVERIFY(_viMultiSpy->pullBoolFromSignal("dirtyChanged"));
         _item->setDirty(false);
         _viMultiSpy->clearAllSignals();
     }
@@ -109,20 +96,20 @@ void LandingComplexItemTest::_testDirty(void)
 
     QVERIFY(!_item->dirty());
     _item->setFinalApproachCoordinate(changeCoordinateValue(_item->finalApproachCoordinate()));
-    QVERIFY(_viMultiSpy->checkSignalByMask(dirtyChangedMask));
-    QVERIFY(_viMultiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_viMultiSpy->checkSignalByMask(_viMultiSpy->mask("dirtyChanged")));
+    QVERIFY(_viMultiSpy->pullBoolFromSignal("dirtyChanged"));
     _item->setDirty(false);
     _viMultiSpy->clearAllSignals();
 
     QVERIFY(!_item->dirty());
     _item->setLandingCoordinate(changeCoordinateValue(_item->landingCoordinate()));
-    QVERIFY(_viMultiSpy->checkSignalByMask(dirtyChangedMask));
-    QVERIFY(_viMultiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_viMultiSpy->checkSignalByMask(_viMultiSpy->mask("dirtyChanged")));
+    QVERIFY(_viMultiSpy->pullBoolFromSignal("dirtyChanged"));
     _item->setDirty(false);
     _viMultiSpy->clearAllSignals();
 }
 
-void LandingComplexItemTest::_testItemCount(void)
+void LandingComplexItemTest::_testItemCount()
 {
     QList<MissionItem*> items;
 
@@ -148,7 +135,7 @@ void LandingComplexItemTest::_testItemCount(void)
     }
 }
 
-void LandingComplexItemTest::_testAppendSectionItems(void)
+void LandingComplexItemTest::_testAppendSectionItems()
 {
     QList<MissionItem*> rgMissionItems;
 
@@ -204,7 +191,7 @@ void LandingComplexItemTest::_testAppendSectionItems(void)
     }
 }
 
-void LandingComplexItemTest::_testScanForItems(void)
+void LandingComplexItemTest::_testScanForItems()
 {
     QList<MissionItem*> rgMissionItems;
 
@@ -243,7 +230,7 @@ void LandingComplexItemTest::_testScanForItems(void)
         QVERIFY(LandingComplexItem::_scanForItems(visualItems, false /* flyView */, _masterController, &SimpleLandingComplexItem::_isValidLandItem, &SimpleLandingComplexItem::_createItem));
         QCOMPARE(visualItems->count(), 1);
         SimpleLandingComplexItem* scannedItem = visualItems->value<SimpleLandingComplexItem*>(0);
-        QVERIFY(scannedItem);
+        VERIFY_NOT_NULL(scannedItem);
         _validateItem(scannedItem, _item);
 
         visualItems->deleteLater();
@@ -251,7 +238,7 @@ void LandingComplexItemTest::_testScanForItems(void)
     }
 }
 
-void LandingComplexItemTest::_testSaveLoad(void)
+void LandingComplexItemTest::_testSaveLoad()
 {
     QString     errorString;
 
@@ -268,7 +255,7 @@ void LandingComplexItemTest::_testSaveLoad(void)
         qDebug() << "_load failed" << errorString;
     }
     QVERIFY(loadSuccess);
-    QVERIFY(errorString.isEmpty());
+    QGC_VERIFY_EMPTY(errorString);
     _validateItem(newItem, _item);
     newItem->deleteLater();
 
@@ -283,7 +270,7 @@ void LandingComplexItemTest::_testSaveLoad(void)
         qDebug() << "_load failed" << errorString;
     }
     QVERIFY(loadSuccess);
-    QVERIFY(errorString.isEmpty());
+    QGC_VERIFY_EMPTY(errorString);
     _validateItem(newItem, _item);
     newItem->deleteLater();
 
@@ -300,14 +287,14 @@ void LandingComplexItemTest::_testSaveLoad(void)
         qDebug() << "_load failed" << errorString;
     }
     QVERIFY(loadSuccess);
-    QVERIFY(errorString.isEmpty());
+    QGC_VERIFY_EMPTY(errorString);
     _validateItem(newItem, _item);
     newItem->deleteLater();
 }
 
 void LandingComplexItemTest::_validateItem(LandingComplexItem* actualItem, LandingComplexItem* expectedItem)
 {
-    QVERIFY(actualItem);
+    VERIFY_NOT_NULL(actualItem);
 
     QCOMPARE(actualItem->stopTakingPhotos()->rawValue().toBool(),       expectedItem->stopTakingPhotos()->rawValue().toBool());
     QCOMPARE(actualItem->stopTakingVideo()->rawValue().toBool(),        expectedItem->stopTakingVideo()->rawValue().toBool());
@@ -321,10 +308,10 @@ void LandingComplexItemTest::_validateItem(LandingComplexItem* actualItem, Landi
     QCOMPARE(actualItem->altitudesAreRelative(),                        expectedItem->altitudesAreRelative());
     QCOMPARE(actualItem->landingCoordSet(),                             expectedItem->landingCoordSet());
 
-    QVERIFY(fuzzyCompareLatLon(actualItem->finalApproachCoordinate(),   expectedItem->finalApproachCoordinate()));
-    QVERIFY(fuzzyCompareLatLon(actualItem->landingCoordinate(),         expectedItem->landingCoordinate()));
+    VERIFY_COORDS_EQUAL(actualItem->finalApproachCoordinate(), expectedItem->finalApproachCoordinate());
+    VERIFY_COORDS_EQUAL(actualItem->landingCoordinate(), expectedItem->landingCoordinate());
     if (actualItem->useLoiterToAlt()->rawValue().toBool()) {
-        QVERIFY(fuzzyCompareLatLon(actualItem->slopeStartCoordinate(),  expectedItem->slopeStartCoordinate()));
+        VERIFY_COORDS_EQUAL(actualItem->slopeStartCoordinate(), expectedItem->slopeStartCoordinate());
         QCOMPARE(actualItem->loiterRadius()->rawValue().toInt(),        expectedItem->loiterRadius()->rawValue().toInt());
         QCOMPARE(actualItem->loiterClockwise()->rawValue().toBool(),    expectedItem->loiterClockwise()->rawValue().toBool());
     }
@@ -379,7 +366,7 @@ bool SimpleLandingComplexItem::_isValidLandItem(const MissionItem& missionItem)
 }
 
 // Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
-void SimpleLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
+void SimpleLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly()
 {
     if (_cTerrainCollisionSegments != 0) {
         _cTerrainCollisionSegments = 0;

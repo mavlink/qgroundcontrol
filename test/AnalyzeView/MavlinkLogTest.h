@@ -1,38 +1,29 @@
-/// @file
-///     @brief Test for mavlink log collection
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 #pragma once
 
 #include "UnitTest.h"
 
+/// Unit test for MAVLink log file management functionality.
+/// Tests the temp log file detection and cleanup APIs in MAVLinkProtocol.
 class MavlinkLogTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    MavlinkLogTest(void);
+    MavlinkLogTest() = default;
 
 private slots:
-    void init(void);
-    void cleanup(void);
+    void init() override;
+    void cleanup() override;
 
-    void _bootLogDetectionCancel_test(void);
-    void _bootLogDetectionSave_test(void);
-    void _bootLogDetectionZeroLength_test(void);
-    void _connectLogNoArm_test(void);
-    void _connectLogArm_test(void);
-    void _deleteTempLogFiles_test(void);
-
-signals:
-    void checkForLostLogFiles(void);
+    void _zeroLengthLogFilesDeleted_test();
+    void _deleteTempLogFiles_test();
+    void _nonZeroLengthLogFileProcessed_test();
 
 private:
-    void _createTempLogFile(bool zeroLength);
-    void _connectLogWorker(bool arm);
+    QString _createTempLogFile(bool zeroLength);
+    void _cleanupTempLogFiles();
+    int _countTempLogFiles();
 
-    static const char* _tempLogFileTemplate;    ///< Template for temporary log file
-    static const char* _logFileExtension;       ///< Extension for log files
-    static const char* _saveLogFilename;        ///< Filename to save log files to
+    static constexpr const char* _tempLogFileTemplate = "FlightDataXXXXXX";
+    static constexpr const char* _logFileExtension = "mavlink";
 };

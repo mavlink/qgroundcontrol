@@ -11,11 +11,6 @@
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 
-MissionCommandTreeEditorTest::MissionCommandTreeEditorTest(void)
-{
-
-}
-
 void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_t firmwareClass, QGCMAVLink::VehicleClass_t vehicleClass)
 {
     QString firmwareClassString = QGCMAVLink::firmwareClassToString(firmwareClass).replace(" ", "");
@@ -46,12 +41,13 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     qmlAppEngine->rootContext()->setContextProperty("imagePath", QStringLiteral("/home/parallels/Downloads/%1-%2.png").arg(firmwareClassString).arg(vehicleClassString));
     qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MissionCommandTreeEditorTestWindow.qml")));
 
-    QTest::qWait(1000);
+    // Allow time for QML engine to load and render
+    TestHelpers::processEvents(1000);
 
     delete qmlAppEngine;
 }
 
-void MissionCommandTreeEditorTest::testEditors(void)
+void MissionCommandTreeEditorTest::testEditors()
 {
     for (const QGCMAVLink::FirmwareClass_t& firmwareClass: QGCMAVLink::allFirmwareClasses()) {
         for (const QGCMAVLink::VehicleClass_t& vehicleClass: QGCMAVLink::allVehicleClasses()) {

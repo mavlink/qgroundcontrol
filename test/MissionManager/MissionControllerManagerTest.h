@@ -1,65 +1,55 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 #include "MissionManager.h"
+#include "PlanManager.h"
 
 #include <QtPositioning/QGeoCoordinate>
 
 class MultiSignalSpy;
 
 /// This is the base class for the MissionManager and MissionController unit tests.
+/// Uses UnitTest directly since it requires custom firmware-type initialization.
 class MissionControllerManagerTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    MissionControllerManagerTest(void);
+    MissionControllerManagerTest() = default;
 
 protected slots:
-    void cleanup(void);
+    void cleanup() override;
 
 protected:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
     void _checkInProgressValues(bool inProgress);
 
-    MissionManager* _missionManager;
+    MissionManager* _missionManager = nullptr;
 
-    typedef struct {
-        int             sequenceNumber;
-        QGeoCoordinate  coordinate;
-        MAV_CMD         command;
-        double          param1;
-        double          param2;
-        double          param3;
-        double          param4;
-        bool            autocontinue;
-        bool            isCurrentItem;
-        MAV_FRAME       frame;
-    } ItemInfo_t;
+    struct ItemInfo_t {
+        int sequenceNumber;
+        QGeoCoordinate coordinate;
+        MAV_CMD command;
+        double param1;
+        double param2;
+        double param3;
+        double param4;
+        bool autocontinue;
+        bool isCurrentItem;
+        MAV_FRAME frame;
+    };
 
-    typedef struct {
-        const char*         itemStream;
-        const ItemInfo_t    expectedItem;
-    } TestCase_t;
+    struct TestCase_t {
+        const char* itemStream;
+        const ItemInfo_t expectedItem;
+    };
 
-    typedef enum {
-        newMissionItemsAvailableSignalIndex = 0,
-        sendCompleteSignalIndex,
-        inProgressChangedSignalIndex,
-        errorSignalIndex,
-        maxSignalIndex
-    } MissionManagerSignalIndex_t;
+    MultiSignalSpy* _multiSpyMissionManager = nullptr;
 
-    typedef enum {
-        newMissionItemsAvailableSignalMask =    1 << newMissionItemsAvailableSignalIndex,
-        sendCompleteSignalMask =                1 << sendCompleteSignalIndex,
-        inProgressChangedSignalMask =           1 << inProgressChangedSignalIndex,
-        errorSignalMask =                       1 << errorSignalIndex,
-    } MissionManagerSignalMask_t;
+    // Full timeout for failure cases that need to wait for all retries
+    // In unit tests, uses the much shorter kTestAckTimeoutMs (50ms) instead of production _ackTimeoutMilliseconds (1500ms)
+    static constexpr int _missionManagerSignalWaitTime = PlanManager::kTestAckTimeoutMs * PlanManager::_maxRetryCount * 2;
 
-    MultiSignalSpy*     _multiSpyMissionManager;
-    static const size_t _cMissionManagerSignals = maxSignalIndex;
-    const char*         _rgMissionManagerSignals[_cMissionManagerSignals];
-
-    static const int _missionManagerSignalWaitTime = MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;
+    // Shorter timeout for success cases where MockLink responds quickly
+    static constexpr int _missionManagerSuccessWaitTime = 1000;
 };

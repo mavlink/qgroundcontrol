@@ -256,4 +256,10 @@ private:
 
     static const int _ackOrNakTimeoutMsecs  = 1000;
     static const int _maxRetry              = 3;
+
+public:
+    /// Ack timeout used in unit tests (much shorter for faster tests)
+    static constexpr int kTestAckTimeoutMs = 10;
+    /// Maximum wait time for FTP operations in unit tests (generous for multi-packet transfers)
+    static constexpr int kTestOperationMaxWaitMs = 5000;
 };

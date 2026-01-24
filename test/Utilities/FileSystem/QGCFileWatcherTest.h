@@ -1,11 +1,10 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-#include <QtCore/QTemporaryDir>
-
-/// Tests for QGCFileWatcher (QFileSystemWatcher wrapper with callbacks)
-class QGCFileWatcherTest : public UnitTest
+/// Tests for QGCFileWatcher (QFileSystemWatcher wrapper with callbacks).
+/// Uses TempDirTest for automatic temp directory management.
+class QGCFileWatcherTest : public TempDirTest
 {
     Q_OBJECT
 
@@ -13,8 +12,6 @@ public:
     QGCFileWatcherTest() = default;
 
 private slots:
-    void init() override;
-    void cleanup() override;
 
     // File watching tests
     void _testWatchFile();
@@ -43,7 +40,4 @@ private slots:
     void _testWatchNonExistentFile();
     void _testWatchNonExistentDirectory();
     void _testWatchEmptyPath();
-
-private:
-    QTemporaryDir *_tempDir = nullptr;
 };

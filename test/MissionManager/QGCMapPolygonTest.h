@@ -1,70 +1,40 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
 class QmlObjectListModel;
 class QGCMapPolygon;
 class MultiSignalSpy;
 
-class QGCMapPolygonTest : public UnitTest
+/// Unit test for QGCMapPolygon.
+/// Uses OfflineTest since it doesn't require a vehicle connection.
+class QGCMapPolygonTest : public OfflineTest
 {
     Q_OBJECT
 
 public:
-    QGCMapPolygonTest(void);
+    QGCMapPolygonTest();
 
 protected:
-    void init(void) final;
-    void cleanup(void) final;
+    void init() final;
+    void cleanup() final;
 
 private slots:
-    void _testDirty(void);
-    void _testVertexManipulation(void);
-    void _testKMLLoad(void);
-    void _testSelectVertex(void);
-    void _testSegmentSplit(void);
+    // Dirty State Tests
+    void _testDirty();
+
+    // Vertex Manipulation Tests
+    void _testVertexManipulation();
+    void _testSelectVertex();
+    void _testSegmentSplit();
+
+    // File Loading Tests
+    void _testKMLLoad();
 
 private:
-    enum {
-        polygonCountChangedIndex = 0,
-        pathChangedIndex,
-        polygonDirtyChangedIndex,
-        clearedIndex,
-        centerChangedIndex,
-        maxPolygonSignalIndex
-    };
-
-    enum {
-        polygonCountChangedMask =   1 << polygonCountChangedIndex,
-        pathChangedMask =           1 << pathChangedIndex,
-        polygonDirtyChangedMask =   1 << polygonDirtyChangedIndex,
-        clearedMask =               1 << clearedIndex,
-        centerChangedMask =         1 << centerChangedIndex,
-    };
-
-    static const size_t _cPolygonSignals = maxPolygonSignalIndex;
-    const char*         _rgPolygonSignals[_cPolygonSignals];
-
-    void countChanged(int count);
-    void dirtyChanged(bool dirtyChanged);
-
-    enum {
-        modelCountChangedIndex = 0,
-        modelDirtyChangedIndex,
-        maxModelSignalIndex
-    };
-
-    enum {
-        modelCountChangedMask = 1 << modelCountChangedIndex,
-        modelDirtyChangedMask = 1 << modelDirtyChangedIndex,
-    };
-
-    static const size_t _cModelSignals = maxModelSignalIndex;
-    const char*         _rgModelSignals[_cModelSignals];
-
-    MultiSignalSpy*         _multiSpyPolygon;
-    MultiSignalSpy*         _multiSpyModel;
-    QGCMapPolygon*          _mapPolygon;
-    QmlObjectListModel*     _pathModel;
-    QList<QGeoCoordinate>   _polyPoints;
+    MultiSignalSpy* _multiSpyPolygon = nullptr;
+    MultiSignalSpy* _multiSpyModel = nullptr;
+    QGCMapPolygon* _mapPolygon = nullptr;
+    QmlObjectListModel* _pathModel = nullptr;
+    QList<QGeoCoordinate> _polyPoints;
 };

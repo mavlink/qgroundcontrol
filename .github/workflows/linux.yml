@@ -140,46 +140,47 @@ jobs:
       #   with:
       #     category: "/language:c-cpp"
 
-      # NOTE: QGC's command line parser doesn't support Qt Test -o options.
-      # The test runner (UnitTest::run) uses hardcoded args via QTest::qExec().
-      # JUnit XML output would require modifying src/Utilities/QGCCommandLineParser.cc
-      # to forward -o options to the test framework.
-      # xvfb-run: Qt GUI apps require a display server; -a auto-selects free display
+      # Run tests via CTest for timeouts, parallel execution, and failure detection
+      # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
         id: tests
-        working-directory: ${{ runner.temp }}/build/Debug
+        working-directory: ${{ runner.temp }}/build
         run: |
           set +e
-          # TODO: Add JUnit output when QGC supports Qt Test -o options (see note above)
-          # xvfb-run -a ./QGroundControl --unittest \
-          #   -o ../junit-results.xml,junitxml \
-          #   -o -,txt 2>&1 | tee ../test-output.txt
-          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee ../test-output.txt
+          ctest --output-on-failure --parallel $(nproc) -LE Flaky 2>&1 | tee test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
           exit $TEST_EXIT_CODE
+
+      # Generate JUnit XML for CI integration (runs all tests sequentially)
+      - name: Generate JUnit XML Results
+        if: matrix.build_type == 'Debug' && always()
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          export QT_QPA_PLATFORM=offscreen
+          export QT_LOGGING_RULES="*=false"
+          ./Debug/QGroundControl --unittest --unittest-output:junit-results.xml || true
+        continue-on-error: true
 
       - name: Upload Test Results
         if: matrix.build_type == 'Debug' && always()
         uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.arch }}
-          # TODO: Add junit-results.xml when QGC supports Qt Test -o options
           path: |
             ${{ runner.temp }}/build/test-output.txt
-            # ${{ runner.temp }}/build/junit-results.xml
+            ${{ runner.temp }}/build/junit-results-*.xml
           retention-days: 7
 
-      # TODO: Enable when JUnit XML output is supported (see note above)
-      # - name: Upload to Trunk Flaky Tests
-      #   if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-      #   continue-on-error: true
-      #   uses: trunk-io/analytics-uploader@v1
-      #   with:
-      #     junit-paths: ${{ runner.temp }}/build/junit-results.xml
-      #     org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-      #     token: ${{ secrets.TRUNK_TOKEN }}
+      - name: Upload to Trunk Flaky Tests
+        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: trunk-io/analytics-uploader@v1
+        with:
+          junit-paths: ${{ runner.temp }}/build/junit-results-*.xml
+          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'

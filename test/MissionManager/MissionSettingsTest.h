@@ -10,15 +10,15 @@ class MissionSettingsTest : public VisualMissionItemTest
     Q_OBJECT
 
 public:
-    MissionSettingsTest(void);
+    MissionSettingsTest() = default;
 
-    void init(void) override;
-    void cleanup(void) override;
+    void init() override;
+    void cleanup() override;
 
 private slots:
-    void _testCameraSectionDirty(void);
-    void _testSpeedSectionDirty(void);
+    void _testCameraSectionDirty();
+    void _testSpeedSectionDirty();
 
 private:
-    MissionSettingsItem* _settingsItem;
+    MissionSettingsItem* _settingsItem = nullptr;
 };

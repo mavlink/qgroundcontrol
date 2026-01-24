@@ -1,25 +1,28 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
 #include <QtCore/QString>
 
-class ComponentInformationCacheTest : public UnitTest
+/// Unit test for ComponentInformationCache.
+/// Uses OfflineTest since it doesn't require a vehicle connection.
+class ComponentInformationCacheTest : public OfflineTest
 {
     Q_OBJECT
 
 public:
-    ComponentInformationCacheTest();
-    virtual ~ComponentInformationCacheTest() = default;
+    ComponentInformationCacheTest() = default;
 
 private slots:
+    void init() override;
+    void cleanup() override;
+
+    // Cache Tests
     void _basic_test();
     void _lru_test();
     void _multi_test();
-private:
-    void _setup();
-    void _cleanup();
 
+private:
     struct TmpFile {
         QString path;
         QString cacheTag;

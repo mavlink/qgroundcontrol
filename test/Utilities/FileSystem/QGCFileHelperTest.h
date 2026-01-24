@@ -1,11 +1,10 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-#include <QtCore/QTemporaryDir>
-
-/// Tests for QGCFileHelper (generic file system utilities)
-class QGCFileHelperTest : public UnitTest
+/// Tests for QGCFileHelper (generic file system utilities).
+/// Uses TempDirTest for automatic temp directory management.
+class QGCFileHelperTest : public TempDirTest
 {
     Q_OBJECT
 
@@ -13,8 +12,6 @@ public:
     QGCFileHelperTest() = default;
 
 private slots:
-    void init() override;
-    void cleanup() override;
 
     // exists() tests
     void _testExistsRegularFile();
@@ -73,7 +70,4 @@ private slots:
     void _testCreateTempCopy();
     void _testReplaceFileFromTemp();
     void _testReplaceFileFromTempWithBackup();
-
-private:
-    QTemporaryDir *_tempDir = nullptr;
 };

@@ -1,23 +1,19 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-class PlanMasterController;
-
-class PlanMasterControllerTest : public UnitTest
+/// Unit test for PlanMasterController.
+/// Uses OfflinePlanTest since tests work with offline PlanMasterController.
+class PlanMasterControllerTest : public OfflinePlanTest
 {
     Q_OBJECT
 
 public:
-    PlanMasterControllerTest(void);
+    PlanMasterControllerTest() = default;
 
 private slots:
-    void init(void) final;
-    void cleanup(void) final;
+    void cleanup() final;
 
-    void _testMissionPlannerFileLoad(void);
-    void _testActiveVehicleChanged(void);
-
-private:
-    PlanMasterController*   _masterController;
+    void _testMissionPlannerFileLoad();
+    void _testActiveVehicleChanged();
 };

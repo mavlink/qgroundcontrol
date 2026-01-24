@@ -261,6 +261,8 @@ private:
 
     int _currentParamRequestListComponentIndex = -1;    ///< Current component index for param request list workflow, -1 for no request in progress
     int _currentParamRequestListParamIndex = -1;        ///< Current parameter index for param request list workflow
+    QList<int> _paramRequestListComponentIds;           ///< Cached component IDs for param list iteration (avoids repeated keys() calls)
+    QStringList _paramRequestListParamNames;            ///< Cached param names for current component (avoids repeated keys() calls)
 
     // Mavlink standard modes worker information
     int _availableModesWorkerNextModeIndex = 0;         ///< 0: not active, +index: next mode the send in sequence, -index: send a single mode (indices are 1-based)

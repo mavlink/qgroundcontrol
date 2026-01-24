@@ -3,28 +3,24 @@
 
 #include <QtTest/QTest>
 
-MissionSettingsTest::MissionSettingsTest(void)
-    : _settingsItem(nullptr)
-{
-
-}
-
-void MissionSettingsTest::init(void)
+void MissionSettingsTest::init()
 {
     VisualMissionItemTest::init();
 
     _settingsItem = new MissionSettingsItem(_masterController, false /* flyView */);
+    VERIFY_NOT_NULL(_settingsItem);
 }
 
-void MissionSettingsTest::cleanup(void)
+void MissionSettingsTest::cleanup()
 {
     delete _settingsItem;
     VisualMissionItemTest::cleanup();
 }
 
-void MissionSettingsTest::_testCameraSectionDirty(void)
+void MissionSettingsTest::_testCameraSectionDirty()
 {
     CameraSection* cameraSection = _settingsItem->cameraSection();
+    VERIFY_NOT_NULL(cameraSection);
 
     QVERIFY(!cameraSection->dirty());
     QVERIFY(!_settingsItem->dirty());
@@ -38,9 +34,10 @@ void MissionSettingsTest::_testCameraSectionDirty(void)
     QVERIFY(!cameraSection->dirty());
 }
 
-void MissionSettingsTest::_testSpeedSectionDirty(void)
+void MissionSettingsTest::_testSpeedSectionDirty()
 {
     SpeedSection* speedSection = _settingsItem->speedSection();
+    VERIFY_NOT_NULL(speedSection);
 
     QVERIFY(!speedSection->dirty());
     QVERIFY(!_settingsItem->dirty());

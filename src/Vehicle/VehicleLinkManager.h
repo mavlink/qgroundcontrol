@@ -84,4 +84,12 @@ private:
 
     static constexpr int _commLostCheckTimeoutMSecs = 1000; ///< Check for comm lost once a second
     static constexpr int _heartbeatMaxElpasedMSecs = 3500;  ///< No heartbeat for longer than this indicates comm loss
+
+public:
+    /// Heartbeat timeout used in unit tests (much shorter for faster tests)
+    static constexpr int kTestHeartbeatTimeoutMs = 500;
+
+    /// Full comm loss detection timeout for tests: accounts for timer interval + heartbeat timeout + margin.
+    /// Use this in tests waiting for communicationLostChanged or linkStatusesChanged signals.
+    static constexpr int kTestCommLostDetectionTimeoutMs = _commLostCheckTimeoutMSecs + kTestHeartbeatTimeoutMs + 500;
 };

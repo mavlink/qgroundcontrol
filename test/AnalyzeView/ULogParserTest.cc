@@ -1,12 +1,17 @@
 #include "ULogParserTest.h"
+#include "TestHelpers.h"
+#include "QtTestExtensions.h"
 #include "ULogParser.h"
 #include "GeoTagWorker.h"
 
+#include <QtCore/QFile>
 #include <QtTest/QTest>
 
-namespace {
+// ============================================================================
+// Setup and Helpers
+// ============================================================================
 
-QByteArray loadSampleULog()
+QByteArray ULogParserTest::_loadSampleULog()
 {
     QFile file(":/unittest/SampleULog.ulg");
     if (!file.open(QIODevice::ReadOnly)) {
@@ -17,64 +22,140 @@ QByteArray loadSampleULog()
     return data;
 }
 
+namespace {
+
 bool compareFeedbackPackets(const GeoTagWorker::CameraFeedbackPacket &a, const GeoTagWorker::CameraFeedbackPacket &b)
 {
-    return qFuzzyCompare(a.timestamp, b.timestamp) &&
-           qFuzzyCompare(a.timestampUTC, b.timestampUTC) &&
+    constexpr double kEpsilon = 1e-6;
+    return TestHelpers::fuzzyCompare(a.timestamp, b.timestamp, kEpsilon) &&
+           TestHelpers::fuzzyCompare(a.timestampUTC, b.timestampUTC, kEpsilon) &&
            a.imageSequence == b.imageSequence &&
-           qFuzzyCompare(a.latitude, b.latitude) &&
-           qFuzzyCompare(a.longitude, b.longitude) &&
-           qFuzzyCompare(a.altitude, b.altitude) &&
-           qFuzzyCompare(a.groundDistance, b.groundDistance) &&
+           TestHelpers::fuzzyCompare(a.latitude, b.latitude, kEpsilon) &&
+           TestHelpers::fuzzyCompare(a.longitude, b.longitude, kEpsilon) &&
+           TestHelpers::fuzzyCompare(a.altitude, b.altitude, kEpsilon) &&
+           TestHelpers::fuzzyCompare(a.groundDistance, b.groundDistance, kEpsilon) &&
            a.captureResult == b.captureResult;
 }
 
 } // namespace
 
+void ULogParserTest::init()
+{
+    UnitTest::init();
+
+    _logBuffer = _loadSampleULog();
+    QVERIFY2(!_logBuffer.isEmpty(), "Failed to load test log SampleULog.ulg");
+}
+
+// ============================================================================
+// Non-Streamed Parser Tests
+// ============================================================================
+
 void ULogParserTest::_getTagsFromLogTest()
 {
-    const QByteArray logBuffer = loadSampleULog();
-    QVERIFY(!logBuffer.isEmpty());
-
     QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
     QString errorMessage;
-    QVERIFY(ULogParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage));
-    QVERIFY(errorMessage.isEmpty());
-    QVERIFY(!cameraFeedback.isEmpty());
+    QVERIFY(ULogParser::getTagsFromLog(_logBuffer, cameraFeedback, errorMessage));
+    QGC_VERIFY_EMPTY(errorMessage);
+    QGC_VERIFY_NOT_EMPTY(cameraFeedback);
 
     const GeoTagWorker::CameraFeedbackPacket firstCameraFeedback = cameraFeedback.constFirst();
-    QVERIFY(firstCameraFeedback.imageSequence != 0);
+    QCOMPARE_NE(firstCameraFeedback.imageSequence, 0);
 }
+
+// ============================================================================
+// Streamed Parser Tests
+// ============================================================================
 
 void ULogParserTest::_getTagsFromLogStreamedTest()
 {
-    const QByteArray logBuffer = loadSampleULog();
-    QVERIFY(!logBuffer.isEmpty());
-
     QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
     QString errorMessage;
-    QVERIFY(ULogParser::getTagsFromLogStreamed(logBuffer, cameraFeedback, errorMessage));
-    QVERIFY(errorMessage.isEmpty());
-    QVERIFY(!cameraFeedback.isEmpty());
+    QVERIFY(ULogParser::getTagsFromLogStreamed(_logBuffer, cameraFeedback, errorMessage));
+    QGC_VERIFY_EMPTY(errorMessage);
+    QGC_VERIFY_NOT_EMPTY(cameraFeedback);
 
     const GeoTagWorker::CameraFeedbackPacket firstCameraFeedback = cameraFeedback.constFirst();
-    QVERIFY(firstCameraFeedback.imageSequence != 0);
+    QCOMPARE_NE(firstCameraFeedback.imageSequence, 0);
 }
+
+// ============================================================================
+// Edge Case Tests
+// ============================================================================
+
+void ULogParserTest::_emptyBufferTest()
+{
+    const QByteArray empty;
+    QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
+    QString errorMessage;
+
+    // Empty buffer should fail gracefully
+    const bool result = ULogParser::getTagsFromLog(empty, cameraFeedback, errorMessage);
+    QVERIFY(!result);
+    QGC_VERIFY_NOT_EMPTY(errorMessage);
+
+    // Streamed parser should also fail
+    cameraFeedback.clear();
+    errorMessage.clear();
+    const bool resultStreamed = ULogParser::getTagsFromLogStreamed(empty, cameraFeedback, errorMessage);
+    QVERIFY(!resultStreamed);
+    QGC_VERIFY_NOT_EMPTY(errorMessage);
+}
+
+void ULogParserTest::_invalidDataTest()
+{
+    // Plain text - not a ULog file
+    const QByteArray textData("This is not a ULog file at all");
+    QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
+    QString errorMessage;
+
+    const bool result = ULogParser::getTagsFromLog(textData, cameraFeedback, errorMessage);
+    QVERIFY(!result);
+    QGC_VERIFY_NOT_EMPTY(errorMessage);
+
+    // Streamed parser should also fail
+    cameraFeedback.clear();
+    errorMessage.clear();
+    const bool resultStreamed = ULogParser::getTagsFromLogStreamed(textData, cameraFeedback, errorMessage);
+    QVERIFY(!resultStreamed);
+    QGC_VERIFY_NOT_EMPTY(errorMessage);
+}
+
+void ULogParserTest::_truncatedHeaderTest()
+{
+    // ULog magic bytes but truncated (ULog starts with "ULog" magic)
+    const QByteArray truncated("ULog");
+    QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
+    QString errorMessage;
+
+    const bool result = ULogParser::getTagsFromLog(truncated, cameraFeedback, errorMessage);
+    QVERIFY(!result);
+    QGC_VERIFY_NOT_EMPTY(errorMessage);
+
+    // First few bytes of valid log (truncated header)
+    const QByteArray partialLog = _logBuffer.left(50);
+    cameraFeedback.clear();
+    errorMessage.clear();
+    const bool partialResult = ULogParser::getTagsFromLog(partialLog, cameraFeedback, errorMessage);
+    QVERIFY(!partialResult);
+    QGC_VERIFY_NOT_EMPTY(errorMessage);
+}
+
+// ============================================================================
+// Comparison Tests
+// ============================================================================
 
 void ULogParserTest::_compareStreamedAndNonStreamedTest()
 {
-    const QByteArray logBuffer = loadSampleULog();
-    QVERIFY(!logBuffer.isEmpty());
-
     QList<GeoTagWorker::CameraFeedbackPacket> feedbackNonStreamed;
     QList<GeoTagWorker::CameraFeedbackPacket> feedbackStreamed;
     QString errorNonStreamed;
     QString errorStreamed;
 
-    QVERIFY(ULogParser::getTagsFromLog(logBuffer, feedbackNonStreamed, errorNonStreamed));
-    QVERIFY(ULogParser::getTagsFromLogStreamed(logBuffer, feedbackStreamed, errorStreamed));
+    QVERIFY(ULogParser::getTagsFromLog(_logBuffer, feedbackNonStreamed, errorNonStreamed));
+    QVERIFY(ULogParser::getTagsFromLogStreamed(_logBuffer, feedbackStreamed, errorStreamed));
 
-    QCOMPARE(feedbackStreamed.size(), feedbackNonStreamed.size());
+    QCOMPARE_EQ(feedbackStreamed.size(), feedbackNonStreamed.size());
 
     for (int i = 0; i < feedbackStreamed.size(); ++i) {
         QVERIFY2(compareFeedbackPackets(feedbackStreamed[i], feedbackNonStreamed[i]),
@@ -82,36 +163,34 @@ void ULogParserTest::_compareStreamedAndNonStreamedTest()
     }
 }
 
+// ============================================================================
+// Benchmark Tests
+// ============================================================================
+
 void ULogParserTest::_benchmarkNonStreamed()
 {
-    const QByteArray logBuffer = loadSampleULog();
-    QVERIFY(!logBuffer.isEmpty());
-
     QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
     QString errorMessage;
 
     QBENCHMARK {
         cameraFeedback.clear();
         errorMessage.clear();
-        (void) ULogParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage);
+        (void)ULogParser::getTagsFromLog(_logBuffer, cameraFeedback, errorMessage);
     }
 
-    QVERIFY(!cameraFeedback.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(cameraFeedback);
 }
 
 void ULogParserTest::_benchmarkStreamed()
 {
-    const QByteArray logBuffer = loadSampleULog();
-    QVERIFY(!logBuffer.isEmpty());
-
     QList<GeoTagWorker::CameraFeedbackPacket> cameraFeedback;
     QString errorMessage;
 
     QBENCHMARK {
         cameraFeedback.clear();
         errorMessage.clear();
-        (void) ULogParser::getTagsFromLogStreamed(logBuffer, cameraFeedback, errorMessage);
+        (void)ULogParser::getTagsFromLogStreamed(_logBuffer, cameraFeedback, errorMessage);
     }
 
-    QVERIFY(!cameraFeedback.isEmpty());
+    QGC_VERIFY_NOT_EMPTY(cameraFeedback);
 }

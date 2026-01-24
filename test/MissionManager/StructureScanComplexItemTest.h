@@ -1,45 +1,35 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
 class PlanMasterController;
 class StructureScanComplexItem;
 class MultiSignalSpy;
 
-class StructureScanComplexItemTest : public UnitTest
+/// Unit test for StructureScanComplexItem.
+/// Uses OfflineTest since it works with offline PlanMasterController.
+class StructureScanComplexItemTest : public OfflineTest
 {
     Q_OBJECT
 
 public:
-    StructureScanComplexItemTest(void);
+    StructureScanComplexItemTest();
 
 protected:
-    void init(void) final;
-    void cleanup(void) final;
+    void init() final;
+    void cleanup() final;
 
 private slots:
-    void _testDirty(void);
-    void _testSaveLoad(void);
-    void _testItemCount(void);
+    void _testDirty();
+    void _testSaveLoad();
+    void _testItemCount();
 
 private:
-    void _initItem(void);
+    void _initItem();
     void _validateItem(StructureScanComplexItem* item);
 
-    enum {
-        dirtyChangedIndex,
-        maxSignalIndex
-    };
-
-    enum {
-        dirtyChangedMask = 1 << dirtyChangedIndex
-    };
-
-    static const size_t _cSignals = maxSignalIndex;
-    const char*         _rgSignals[_cSignals];
-
-    PlanMasterController*       _masterController =     nullptr;
-    MultiSignalSpy*             _multiSpy =             nullptr;
-    StructureScanComplexItem*   _structureScanItem =    nullptr;
-    QList<QGeoCoordinate>       _polyPoints;
+    PlanMasterController* _masterController = nullptr;
+    MultiSignalSpy* _multiSpy = nullptr;
+    StructureScanComplexItem* _structureScanItem = nullptr;
+    QList<QGeoCoordinate> _polyPoints;
 };

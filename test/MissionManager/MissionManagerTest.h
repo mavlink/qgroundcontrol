@@ -7,25 +7,25 @@ class MissionManagerTest : public MissionControllerManagerTest
     Q_OBJECT
 
 public:
-    MissionManagerTest(void);
+    MissionManagerTest() = default;
 
 private slots:
-    //void _testWriteFailureHandlingPX4(void);
-    //void _testWriteFailureHandlingAPM(void);
-    void _testReadFailureHandlingPX4(void);
-    //void _testReadFailureHandlingAPM(void);
-    //void _testErrorAckFailureStrings(void);
+    //void _testWriteFailureHandlingPX4();
+    //void _testWriteFailureHandlingAPM();
+    void _testReadFailureHandlingPX4();
+    //void _testReadFailureHandlingAPM();
+    //void _testErrorAckFailureStrings();
 
 private:
-    void _testWriteFailureHandlingPX4(void);
-    void _testWriteFailureHandlingAPM(void);
-    //void _testReadFailureHandlingPX4(void);
-    void _testReadFailureHandlingAPM(void);
-    void _testErrorAckFailureStrings(void);
+    void _testWriteFailureHandlingPX4();
+    void _testWriteFailureHandlingAPM();
+    //void _testReadFailureHandlingPX4();
+    void _testReadFailureHandlingAPM();
+    void _testErrorAckFailureStrings();
     void _roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult, bool shouldFail);
     void _writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult, bool shouldFail);
-    void _testWriteFailureHandlingWorker(void);
-    void _testReadFailureHandlingWorker(void);
+    void _testWriteFailureHandlingWorker();
+    void _testReadFailureHandlingWorker();
 
     static const TestCase_t _rgTestCases[];
     static const size_t     _cTestCases;

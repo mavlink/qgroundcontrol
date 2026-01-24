@@ -1,12 +1,21 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-class QGCFileDownloadTest : public UnitTest
+class QGCCachedFileDownload;
+
+/// Unit test for QGCFileDownload.
+/// Uses TempDirTest for automatic temp directory management.
+class QGCFileDownloadTest : public TempDirTest
 {
     Q_OBJECT
 
+public:
+    QGCFileDownloadTest() = default;
+
 private slots:
+
+    // QGCFileDownload tests
     void _testFileDownload();
     void _testAutoDecompressGzip();
     void _testAutoDecompressDisabled();
@@ -32,4 +41,8 @@ private slots:
     void _testCachedFileDownloadCancel();
     void _testCachedFileDownloadConcurrentDownloadRejected();
     void _testCachedFileDownloadSignals();
+
+private:
+    /// Creates a cached file downloader using the test's temp directory
+    QGCCachedFileDownload* _createCachedDownloader();
 };
