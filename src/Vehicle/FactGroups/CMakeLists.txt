@@ -86,4 +86,12 @@ qt_add_resources(${CMAKE_PROJECT_NAME} json_vehicle_fact_group_alias
     FILES LocalPositionFact.json
 )
 
+# ----------------------------------------------------------------------------
+# AM32 EEPROM Schema (built-in fallback for offline use)
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} am32_eeprom_schema
+    PREFIX "/AM32"
+    FILES eeprom.json
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
