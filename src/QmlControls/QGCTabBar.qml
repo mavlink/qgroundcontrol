@@ -16,23 +16,33 @@ RowLayout {
 
     property bool _preventCurrentIndexBindingLoop: false
 
+    function _buttons() {
+        var result = []
+        for (var i = 0; i < control.children.length; i++) {
+            if (control.children[i] instanceof AbstractButton)
+                result.push(control.children[i])
+        }
+        return result
+    }
+
     function _selectCurrentIndexButton() {
-        if (control.children.length > 0) {
+        var btns = _buttons()
+        if (btns.length > 0) {
             _preventCurrentIndexBindingLoop = true
             if (control.currentIndex == -1) {
                 // No tab selected, select none
-                for (var i = 0; i < control.children.length; i++) {
-                    control.children[i].checked = false
+                for (var i = 0; i < btns.length; i++) {
+                    btns[i].checked = false
                 }
             } else {
-                let filteredCurrentIndex = Math.min(Math.max(control.currentIndex, 0), control.children.length - 1)
-                if (control.children[filteredCurrentIndex].visible) {
-                    control.children[filteredCurrentIndex].checked = true
+                let filteredCurrentIndex = Math.min(Math.max(control.currentIndex, 0), btns.length - 1)
+                if (btns[filteredCurrentIndex].visible) {
+                    btns[filteredCurrentIndex].checked = true
                 } else {
                     // We select the first visible tab if the current index is not visible
-                    for (var j = 0; j < control.children.length; j++) {
-                        if (control.children[j].visible) {
-                            control.children[j].checked = true
+                    for (var j = 0; j < btns.length; j++) {
+                        if (btns[j].visible) {
+                            btns[j].checked = true
                             break
                         }
                     }
@@ -45,13 +55,15 @@ RowLayout {
     Component.onCompleted: _selectCurrentIndexButton()
     onCurrentIndexChanged: _selectCurrentIndexButton()
     onVisibleChildrenChanged: _selectCurrentIndexButton()
+    onChildrenChanged: tabButtonGroup.buttons = _buttons()
 
     ButtonGroup {
-        buttons: control.children
+        id: tabButtonGroup
 
         onCheckedButtonChanged: {
-            for (var i = 0; i < control.children.length; i++) {
-                if (control.children[i] === checkedButton) {
+            var btns = control._buttons()
+            for (var i = 0; i < btns.length; i++) {
+                if (btns[i] === checkedButton) {
                     control.currentIndex = i
                     break
                 }
