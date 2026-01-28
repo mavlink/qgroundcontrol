@@ -304,8 +304,8 @@ SetupPage {
                                                     text:           object.label
                                                     onTriggered:    object.trigger()
                                                 }
-                                                onObjectAdded:      actionMenu.insertItem(index, object)
-                                                onObjectRemoved:    actionMenu.removeItem(object)
+                                                onObjectAdded:      (index, object) => actionMenu.insertItem(index, object)
+                                                onObjectRemoved:    (index, object) => actionMenu.removeItem(object)
                                             }
                                         }
                                     }
