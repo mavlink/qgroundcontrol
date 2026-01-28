@@ -1,37 +1,47 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
-class MultiSignalSpyV2;
+class MultiSignalSpy;
 class QGCMapPolyline;
 class QmlObjectListModel;
-class QTemporaryDir;
 
-class QGCMapPolylineTest : public UnitTest
+/// Unit test for QGCMapPolyline.
+/// Uses TempDirTest for automatic temp directory management.
+class QGCMapPolylineTest : public TempDirTest
 {
     Q_OBJECT
+
+public:
+    QGCMapPolylineTest() = default;
 
 protected:
     void init() final;
     void cleanup() final;
 
 private slots:
+    // Dirty State Tests
     void _testDirty();
+
+    // Vertex Manipulation Tests
     void _testVertexManipulation();
-    void _testShapeLoad();
     void _testSelectVertex();
 
-private:
-    QString _copyRes(const QTemporaryDir &tmpDir, const QString &name);
+    // File Loading Tests
+    void _testShapeLoad();
 
-    MultiSignalSpyV2 *_multiSpyPolyline = nullptr;
+private:
+    /// Copy a resource file to the temp directory
+    QString _copyRes(const QString &name);
+
+    MultiSignalSpy *_multiSpyPolyline = nullptr;
     int _countChangedMask = 0;
     int _pathChangedMask = 0;
     int _dirtyChangedMask = 0;
     int _clearedMask = 0;
     int _isEmptyChangedMask = 0;
     int _isValidChangedMask = 0;
-    MultiSignalSpyV2 *_multiSpyModel = nullptr;
+    MultiSignalSpy *_multiSpyModel = nullptr;
     int _modelCountChangedMask = 0;
     int _modelDirtyChangedMask = 0;
     QGCMapPolyline *_mapPolyline = nullptr;

@@ -8,38 +8,22 @@
 #include <QtTest/QSignalSpy>
 #include <QtCore/QJsonArray>
 
-#if 0
-const MissionItemTest::TestCase_t MissionItemTest::_rgTestCases[] = {
-    { "0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 0, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_WAYPOINT,     10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "1\t0\t3\t17\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 1, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_UNLIM, 10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "2\t0\t3\t18\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 2, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TURNS, 10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "3\t0\t3\t19\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 3, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LOITER_TIME,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "4\t0\t3\t21\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",  { 4, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_NAV_LAND,         10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT } },
-    { "6\t0\t2\t112\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n", { 5, QGeoCoordinate(-10.0, -20.0, -30.0), MAV_CMD_CONDITION_DELAY,  10.0, 20.0, 30.0, 40.0, true, false, MAV_FRAME_MISSION } },
-};
-const size_t MissionItemTest::_cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestCases[0]);
-#endif
-
-MissionItemTest::MissionItemTest(void)
-    : _masterController(nullptr)
+void MissionItemTest::init()
 {
-}
-
-void MissionItemTest::init(void)
-{
-    UnitTest::init();
+    OfflineTest::init();
     _masterController = new PlanMasterController(this);
+    VERIFY_NOT_NULL(_masterController);
 }
 
-void MissionItemTest::cleanup(void)
+void MissionItemTest::cleanup()
 {
     delete _masterController;
     _masterController = nullptr;
-    UnitTest::cleanup();
+    OfflineTest::cleanup();
 }
 
 // Test property get/set
-void MissionItemTest::_testSetGet(void)
+void MissionItemTest::_testSetGet()
 {
     MissionItem missionItem;
 
@@ -86,7 +70,7 @@ void MissionItemTest::_testSetGet(void)
 }
 
 // Test basic signalling
-void MissionItemTest::_testSignals(void)
+void MissionItemTest::_testSignals()
 {
     MissionItem missionItem(1,                                  // sequenceNumber
                             MAV_CMD_NAV_WAYPOINT,               // command
@@ -95,33 +79,17 @@ void MissionItemTest::_testSignals(void)
                             true,                               // autoContinue
                             true);                              // isCurrentItem
 
-    enum {
-        isCurrentItemChangedIndex = 0,
-        sequenceNumberChangedIndex,
-        maxSignalIndex
-    };
-
-    enum {
-        isCurrentItemChangedMask =          1 << isCurrentItemChangedIndex,
-        sequenceNumberChangedIndexMask =    1 << sequenceNumberChangedIndex
-    };
-
-    static const size_t cMissionItemSignals = maxSignalIndex;
-    const char*         rgMissionItemSignals[cMissionItemSignals];
-
-    rgMissionItemSignals[isCurrentItemChangedIndex] =   SIGNAL(isCurrentItemChanged(bool));
-    rgMissionItemSignals[sequenceNumberChangedIndex] =  SIGNAL(sequenceNumberChanged(int));
-
     MultiSignalSpy* multiSpyMissionItem = new MultiSignalSpy();
-    Q_CHECK_PTR(multiSpyMissionItem);
-    QCOMPARE(multiSpyMissionItem->init(&missionItem, rgMissionItemSignals, cMissionItemSignals), true);
+    VERIFY_NOT_NULL(multiSpyMissionItem);
+    QVERIFY(multiSpyMissionItem->init(&missionItem));
 
     // Validate isCurrentItemChanged signalling
     missionItem.setIsCurrentItem(true);
-    QVERIFY(multiSpyMissionItem->checkNoSignals());
+    QVERIFY_NO_SIGNALS(*multiSpyMissionItem);
     missionItem.setIsCurrentItem(false);
-    QVERIFY(multiSpyMissionItem->checkOnlySignalByMask(isCurrentItemChangedMask));
-    QSignalSpy* spy = multiSpyMissionItem->getSpyByIndex(isCurrentItemChangedIndex);
+    QVERIFY_ONLY_SIGNAL(*multiSpyMissionItem, "isCurrentItemChanged");
+    QSignalSpy* spy = multiSpyMissionItem->spy("isCurrentItemChanged");
+    VERIFY_NOT_NULL(spy);
     QList<QVariant> signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QCOMPARE(signalArgs[0].toBool(), false);
@@ -130,17 +98,18 @@ void MissionItemTest::_testSignals(void)
 
     // Validate sequenceNumberChanged signalling
     missionItem.setSequenceNumber(1);
-    QVERIFY(multiSpyMissionItem->checkNoSignals());
+    QVERIFY_NO_SIGNALS(*multiSpyMissionItem);
     missionItem.setSequenceNumber(2);
-    QVERIFY(multiSpyMissionItem->checkOnlySignalByMask(sequenceNumberChangedIndexMask));
-    spy = multiSpyMissionItem->getSpyByIndex(sequenceNumberChangedIndex);
+    QVERIFY_ONLY_SIGNAL(*multiSpyMissionItem, "sequenceNumberChanged");
+    spy = multiSpyMissionItem->spy("sequenceNumberChanged");
+    VERIFY_NOT_NULL(spy);
     signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QCOMPARE(signalArgs[0].toInt(), 2);
 }
 
 // Test signalling associated with contained facts
-void MissionItemTest::_testFactSignals(void)
+void MissionItemTest::_testFactSignals()
 {
     MissionItem missionItem(1,                                  // sequenceNumber
                             MAV_CMD_NAV_WAYPOINT,               // command
@@ -152,81 +121,89 @@ void MissionItemTest::_testFactSignals(void)
 
     // command
     QSignalSpy commandSpy(&missionItem._commandFact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(commandSpy);
     missionItem.setCommand(MAV_CMD_NAV_WAYPOINT);
     QCOMPARE(commandSpy.count(), 0);
     missionItem.setCommand(MAV_CMD_NAV_LAND);
     QCOMPARE(commandSpy.count(), 1);
-    QList<QVariant> arguments = commandSpy.takeFirst();
+    QList<QVariant> arguments = QGC_SPY_TAKE_FIRST(commandSpy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE((MAV_CMD)arguments.at(0).toInt(), MAV_CMD_NAV_LAND);
 
     // frame
     QSignalSpy frameSpy(&missionItem._frameFact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(frameSpy);
     missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
     QCOMPARE(frameSpy.count(), 0);
     missionItem.setFrame(MAV_FRAME_BODY_NED);
     QCOMPARE(frameSpy.count(), 1);
-    arguments = frameSpy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(frameSpy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE((MAV_FRAME)arguments.at(0).toInt(), MAV_FRAME_BODY_NED);
 
     // param1
     QSignalSpy param1Spy(&missionItem._param1Fact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(param1Spy);
     missionItem.setParam1(1.0);
     QCOMPARE(param1Spy.count(), 0);
     missionItem.setParam1(2.0);
     QCOMPARE(param1Spy.count(), 1);
-    arguments = param1Spy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(param1Spy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 2.0);
 
     // param2
     QSignalSpy param2Spy(&missionItem._param2Fact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(param2Spy);
     missionItem.setParam2(2.0);
     QCOMPARE(param2Spy.count(), 0);
     missionItem.setParam2(3.0);
     QCOMPARE(param2Spy.count(), 1);
-    arguments = param2Spy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(param2Spy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 3.0);
 
     // param3
     QSignalSpy param3Spy(&missionItem._param3Fact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(param3Spy);
     missionItem.setParam3(3.0);
     QCOMPARE(param3Spy.count(), 0);
     missionItem.setParam3(4.0);
     QCOMPARE(param3Spy.count(), 1);
-    arguments = param3Spy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(param3Spy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 4.0);
 
     // param4
     QSignalSpy param4Spy(&missionItem._param4Fact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(param4Spy);
     missionItem.setParam4(4.0);
     QCOMPARE(param4Spy.count(), 0);
     missionItem.setParam4(5.0);
     QCOMPARE(param4Spy.count(), 1);
-    arguments = param4Spy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(param4Spy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 5.0);
 
     // param6
     QSignalSpy param6Spy(&missionItem._param6Fact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(param6Spy);
     missionItem.setParam6(6.0);
     QCOMPARE(param6Spy.count(), 0);
     missionItem.setParam6(7.0);
     QCOMPARE(param6Spy.count(), 1);
-    arguments = param6Spy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(param6Spy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 7.0);
 
     // param7
     QSignalSpy param7Spy(&missionItem._param7Fact, SIGNAL(valueChanged(QVariant)));
+    QGC_VERIFY_SPY_VALID(param7Spy);
     missionItem.setParam7(7.0);
     QCOMPARE(param7Spy.count(), 0);
     missionItem.setParam7(8.0);
     QCOMPARE(param7Spy.count(), 1);
-    arguments = param7Spy.takeFirst();
+    arguments = QGC_SPY_TAKE_FIRST(param7Spy);
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 8.0);
 }
@@ -257,7 +234,7 @@ void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem, 
     }
 }
 
-void MissionItemTest::_testLoadFromStream(void)
+void MissionItemTest::_testLoadFromStream()
 {
     MissionItem missionItem;
 
@@ -268,7 +245,7 @@ void MissionItemTest::_testLoadFromStream(void)
     _checkExpectedMissionItem(missionItem);
 }
 
-void MissionItemTest::_testSimpleLoadFromStream(void)
+void MissionItemTest::_testSimpleLoadFromStream()
 {
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
@@ -281,7 +258,7 @@ void MissionItemTest::_testSimpleLoadFromStream(void)
     _checkExpectedMissionItem(simpleMissionItem.missionItem());
 }
 
-void MissionItemTest::_testLoadFromJsonV1(void)
+void MissionItemTest::_testLoadFromJsonV1()
 {
     MissionItem missionItem;
     QString     errorString;
@@ -309,7 +286,7 @@ void MissionItemTest::_testLoadFromJsonV1(void)
     _checkExpectedMissionItem(missionItem);
 }
 
-void MissionItemTest::_testLoadFromJsonV2(void)
+void MissionItemTest::_testLoadFromJsonV2()
 {
     MissionItem missionItem;
     QString     errorString;
@@ -375,7 +352,7 @@ void MissionItemTest::_testLoadFromJsonV2(void)
     _checkExpectedMissionItem(missionItem);
 }
 
-void MissionItemTest::_testLoadFromJsonV3(void)
+void MissionItemTest::_testLoadFromJsonV3()
 {
     MissionItem missionItem;
     QString     errorString;
@@ -423,7 +400,7 @@ void MissionItemTest::_testLoadFromJsonV3(void)
     _checkExpectedMissionItem(missionItem);
 }
 
-void MissionItemTest::_testLoadFromJsonV3NaN(void)
+void MissionItemTest::_testLoadFromJsonV3NaN()
 {
     MissionItem missionItem;
     QString     errorString;
@@ -437,7 +414,7 @@ void MissionItemTest::_testLoadFromJsonV3NaN(void)
     _checkExpectedMissionItem(missionItem, true /* allNaNs */);
 }
 
-void MissionItemTest::_testSimpleLoadFromJson(void)
+void MissionItemTest::_testSimpleLoadFromJson()
 {
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
@@ -461,7 +438,7 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
     _checkExpectedMissionItem(simpleMissionItem.missionItem());
 }
 
-void MissionItemTest::_testSaveToJson(void)
+void MissionItemTest::_testSaveToJson()
 {
     MissionItem missionItem;
     QString     errorString;
@@ -480,7 +457,7 @@ void MissionItemTest::_testSaveToJson(void)
     _checkExpectedMissionItem(missionItem, true /* allNaNs */);
 }
 
-QJsonObject MissionItemTest::_createV1Json(void)
+QJsonObject MissionItemTest::_createV1Json()
 {
     QJsonObject jsonObject;
     QJsonArray  coordinateArray;
@@ -499,7 +476,7 @@ QJsonObject MissionItemTest::_createV1Json(void)
     return jsonObject;
 }
 
-QJsonObject MissionItemTest::_createV2Json(void)
+QJsonObject MissionItemTest::_createV2Json()
 {
     QJsonObject jsonObject;
     QJsonArray  coordinateArray;

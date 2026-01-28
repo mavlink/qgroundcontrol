@@ -1,12 +1,17 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 #include "LinkInterface.h"
 #include "LinkConfiguration.h"
 
+/// Tests for VehicleLinkManager functionality.
+/// Uses UnitTest directly since it manages multiple links with custom setup/teardown.
 class VehicleLinkManagerTest : public UnitTest
 {
     Q_OBJECT
+
+public:
+    VehicleLinkManagerTest() = default;
 
 protected:
     void init() final;

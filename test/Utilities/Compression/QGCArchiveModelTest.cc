@@ -1,26 +1,11 @@
 #include "QGCArchiveModelTest.h"
+#include "MultiSignalSpy.h"
 #include "QGCArchiveModel.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
-
-void QGCArchiveModelTest::init()
-{
-    UnitTest::init();
-
-    _tempDir = new QTemporaryDir();
-    QVERIFY(_tempDir->isValid());
-}
-
-void QGCArchiveModelTest::cleanup()
-{
-    delete _tempDir;
-    _tempDir = nullptr;
-
-    UnitTest::cleanup();
-}
 
 // ============================================================================
 // Basic Model Functionality
@@ -35,8 +20,8 @@ void QGCArchiveModelTest::_testEmptyModel()
     QCOMPARE(model.fileCount(), 0);
     QCOMPARE(model.directoryCount(), 0);
     QCOMPARE(model.totalSize(), 0);
-    QVERIFY(model.archivePath().isEmpty());
-    QVERIFY(model.errorString().isEmpty());
+    QGC_VERIFY_EMPTY(model.archivePath());
+    QGC_VERIFY_EMPTY(model.errorString());
     QVERIFY(!model.loading());
 }
 
@@ -46,16 +31,17 @@ void QGCArchiveModelTest::_testLoadArchive()
 
     QGCArchiveModel model;
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
+    QGC_VERIFY_SPY_VALID(loadingSpy);
 
     model.setArchivePath(zipResource);
 
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), true);
 
-    QVERIFY(model.rowCount() > 0);
-    QVERIFY(model.count() > 0);
-    QVERIFY(model.fileCount() > 0);
-    QVERIFY(model.errorString().isEmpty());
+    QCOMPARE_GT(model.rowCount(), 0);
+    QCOMPARE_GT(model.count(), 0);
+    QCOMPARE_GT(model.fileCount(), 0);
+    QGC_VERIFY_EMPTY(model.errorString());
 }
 
 void QGCArchiveModelTest::_testRoleNames()
@@ -84,23 +70,23 @@ void QGCArchiveModelTest::_testDataAccess()
     QGCArchiveModel model;
     model.setArchivePath(zipResource);
 
-    QVERIFY(model.rowCount() > 0);
+    QCOMPARE_GT(model.rowCount(), 0);
 
     // Test data() with valid index
     const QModelIndex index = model.index(0);
     QVERIFY(index.isValid());
 
     const QVariant name = model.data(index, QGCArchiveModel::NameRole);
-    QVERIFY(!name.toString().isEmpty());
+    QGC_VERIFY_NOT_EMPTY(name.toString());
 
     const QVariant size = model.data(index, QGCArchiveModel::SizeRole);
-    QVERIFY(size.toLongLong() >= 0);
+    QCOMPARE_GE(size.toLongLong(), 0);
 
     const QVariant isDir = model.data(index, QGCArchiveModel::IsDirectoryRole);
     QVERIFY(isDir.canConvert<bool>());
 
     const QVariant formattedSize = model.data(index, QGCArchiveModel::FormattedSizeRole);
-    QVERIFY(!formattedSize.toString().isEmpty());
+    QGC_VERIFY_NOT_EMPTY(formattedSize.toString());
 
     // Test data() with invalid index
     const QModelIndex invalidIndex = model.index(-1);
@@ -117,24 +103,24 @@ void QGCArchiveModelTest::_testGetMethod()
     QGCArchiveModel model;
     model.setArchivePath(zipResource);
 
-    QVERIFY(model.count() > 0);
+    QCOMPARE_GT(model.count(), 0);
 
     // Test get() with valid index
     const QVariantMap entry = model.get(0);
-    QVERIFY(!entry.isEmpty());
-    QVERIFY(entry.contains("name"));
-    QVERIFY(entry.contains("size"));
-    QVERIFY(entry.contains("isDirectory"));
-    QVERIFY(entry.contains("formattedSize"));
-    QVERIFY(entry.contains("fileName"));
-    QVERIFY(entry.contains("directory"));
+    QGC_VERIFY_NOT_EMPTY(entry);
+    QGC_VERIFY_CONTAINS(entry, "name");
+    QGC_VERIFY_CONTAINS(entry, "size");
+    QGC_VERIFY_CONTAINS(entry, "isDirectory");
+    QGC_VERIFY_CONTAINS(entry, "formattedSize");
+    QGC_VERIFY_CONTAINS(entry, "fileName");
+    QGC_VERIFY_CONTAINS(entry, "directory");
 
     // Test get() with invalid index
     const QVariantMap invalid = model.get(-1);
-    QVERIFY(invalid.isEmpty());
+    QGC_VERIFY_EMPTY(invalid);
 
     const QVariantMap outOfBounds = model.get(model.count() + 1);
-    QVERIFY(outOfBounds.isEmpty());
+    QGC_VERIFY_EMPTY(outOfBounds);
 }
 
 // ============================================================================
@@ -145,6 +131,7 @@ void QGCArchiveModelTest::_testArchivePathProperty()
 {
     QGCArchiveModel model;
     QSignalSpy pathSpy(&model, &QGCArchiveModel::archivePathChanged);
+    QGC_VERIFY_SPY_VALID(pathSpy);
 
     const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
 
@@ -159,7 +146,7 @@ void QGCArchiveModelTest::_testArchivePathProperty()
     // Setting different path should emit signal
     model.setArchivePath(QString());
     QCOMPARE(pathSpy.count(), 2);
-    QVERIFY(model.archivePath().isEmpty());
+    QGC_VERIFY_EMPTY(model.archivePath());
 }
 
 void QGCArchiveModelTest::_testCountProperties()
@@ -169,11 +156,13 @@ void QGCArchiveModelTest::_testCountProperties()
     QGCArchiveModel model;
     QSignalSpy countSpy(&model, &QGCArchiveModel::countChanged);
     QSignalSpy fileCountSpy(&model, &QGCArchiveModel::fileCountChanged);
+    QGC_VERIFY_SPY_VALID(countSpy);
+    QGC_VERIFY_SPY_VALID(fileCountSpy);
 
     model.setArchivePath(zipResource);
 
-    QVERIFY(countSpy.count() > 0);
-    QVERIFY(model.count() > 0);
+    QCOMPARE_GT(countSpy.count(), 0);
+    QCOMPARE_GT(model.count(), 0);
     QCOMPARE(model.count(), model.rowCount());
 
     // count = fileCount + directoryCount
@@ -200,13 +189,14 @@ void QGCArchiveModelTest::_testErrorProperty()
 {
     QGCArchiveModel model;
     QSignalSpy errorSpy(&model, &QGCArchiveModel::errorStringChanged);
+    QGC_VERIFY_SPY_VALID(errorSpy);
 
     // No error initially
-    QVERIFY(model.errorString().isEmpty());
+    QGC_VERIFY_EMPTY(model.errorString());
 
     // Valid archive should have no error
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
-    QVERIFY(model.errorString().isEmpty());
+    QGC_VERIFY_EMPTY(model.errorString());
 }
 
 // ============================================================================
@@ -293,18 +283,18 @@ void QGCArchiveModelTest::_testFormatSize()
 
     // Kilobytes
     QString kb = QGCArchiveModel::formatSize(1024);
-    QVERIFY(kb.contains("KB"));
+    QGC_VERIFY_STRING_CONTAINS(kb, "KB");
 
     QString kb2 = QGCArchiveModel::formatSize(1536); // 1.5 KB
-    QVERIFY(kb2.contains("KB"));
+    QGC_VERIFY_STRING_CONTAINS(kb2, "KB");
 
     // Megabytes
     QString mb = QGCArchiveModel::formatSize(1024 * 1024);
-    QVERIFY(mb.contains("MB"));
+    QGC_VERIFY_STRING_CONTAINS(mb, "MB");
 
     // Gigabytes
     QString gb = QGCArchiveModel::formatSize(1024LL * 1024 * 1024);
-    QVERIFY(gb.contains("GB"));
+    QGC_VERIFY_STRING_CONTAINS(gb, "GB");
 
     // Negative (edge case)
     QCOMPARE(QGCArchiveModel::formatSize(-1), QStringLiteral("--"));
@@ -334,10 +324,11 @@ void QGCArchiveModelTest::_testClear()
     QGCArchiveModel model;
     model.setArchivePath(zipResource);
 
-    QVERIFY(model.count() > 0);
-    QVERIFY(model.fileCount() > 0);
+    QCOMPARE_GT(model.count(), 0);
+    QCOMPARE_GT(model.fileCount(), 0);
 
     QSignalSpy countSpy(&model, &QGCArchiveModel::countChanged);
+    QGC_VERIFY_SPY_VALID(countSpy);
 
     model.clear();
 
@@ -345,7 +336,7 @@ void QGCArchiveModelTest::_testClear()
     QCOMPARE(model.fileCount(), 0);
     QCOMPARE(model.directoryCount(), 0);
     QCOMPARE(model.totalSize(), 0);
-    QVERIFY(countSpy.count() > 0);
+    QCOMPARE_GT(countSpy.count(), 0);
 }
 
 void QGCArchiveModelTest::_testRefresh()
@@ -356,9 +347,10 @@ void QGCArchiveModelTest::_testRefresh()
     model.setArchivePath(zipResource);
 
     const int originalCount = model.count();
-    QVERIFY(originalCount > 0);
+    QCOMPARE_GT(originalCount, 0);
 
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
+    QGC_VERIFY_SPY_VALID(loadingSpy);
 
     model.refresh();
 
@@ -373,7 +365,7 @@ void QGCArchiveModelTest::_testRefresh()
 void QGCArchiveModelTest::_testInvalidArchive()
 {
     // Create a corrupt archive
-    const QString corruptPath = _tempDir->path() + "/corrupt.zip";
+    const QString corruptPath = tempPath() + "/corrupt.zip";
     QFile corrupt(corruptPath);
     QVERIFY(corrupt.open(QIODevice::WriteOnly));
     corrupt.write("This is not a valid ZIP file");
@@ -382,13 +374,15 @@ void QGCArchiveModelTest::_testInvalidArchive()
     QGCArchiveModel model;
     QSignalSpy errorSpy(&model, &QGCArchiveModel::errorStringChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
+    QGC_VERIFY_SPY_VALID(errorSpy);
+    QGC_VERIFY_SPY_VALID(loadingSpy);
 
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, ".*");
     model.setArchivePath(corruptPath);
 
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
-    QVERIFY(!model.errorString().isEmpty());
+    QGC_VERIFY_NOT_EMPTY(model.errorString());
     QCOMPARE(model.count(), 0);
 }
 
@@ -396,13 +390,14 @@ void QGCArchiveModelTest::_testNonExistentArchive()
 {
     QGCArchiveModel model;
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
+    QGC_VERIFY_SPY_VALID(loadingSpy);
 
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*"));
+    QGC_IGNORE_MESSAGE_PATTERN(QtWarningMsg, ".*");
     model.setArchivePath("/nonexistent/path/archive.zip");
 
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
-    QVERIFY(!model.errorString().isEmpty());
+    QGC_VERIFY_NOT_EMPTY(model.errorString());
     QCOMPARE(model.count(), 0);
 }
 
@@ -415,6 +410,8 @@ void QGCArchiveModelTest::_testArchiveUrl()
     QGCArchiveModel model;
     QSignalSpy pathSpy(&model, &QGCArchiveModel::archivePathChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
+    QGC_VERIFY_SPY_VALID(pathSpy);
+    QGC_VERIFY_SPY_VALID(loadingSpy);
 
     // Test with qrc:/ URL scheme (Qt resources)
     const QUrl qrcUrl(QStringLiteral("qrc:/unittest/manifest.json.zip"));
@@ -424,7 +421,7 @@ void QGCArchiveModelTest::_testArchiveUrl()
     QCOMPARE(model.archivePath(), QStringLiteral(":/unittest/manifest.json.zip"));
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), true);
-    QVERIFY(model.count() > 0);
+    QCOMPARE_GT(model.count(), 0);
 
     // Verify archiveUrl getter returns a file:// URL
     const QUrl returnedUrl = model.archiveUrl();
@@ -436,7 +433,7 @@ void QGCArchiveModelTest::_testArchiveUrl()
     loadingSpy.clear();
 
     // Create a temp file to test file:// URL
-    const QString tempZipPath = _tempDir->path() + "/test_url.zip";
+    const QString tempZipPath = tempPath() + "/test_url.zip";
     QFile::copy(QStringLiteral(":/unittest/manifest.json.zip"), tempZipPath);
     QVERIFY(QFileInfo::exists(tempZipPath));
 
@@ -445,8 +442,8 @@ void QGCArchiveModelTest::_testArchiveUrl()
 
     QCOMPARE(pathSpy.count(), 1);
     QCOMPARE(model.archivePath(), tempZipPath);
-    QVERIFY(loadingSpy.count() >= 1);
-    QVERIFY(model.count() > 0);
+    QCOMPARE_GE(loadingSpy.count(), 1);
+    QCOMPARE_GT(model.count(), 0);
 
     // Test that plain Qt resource path works (already tested in other tests)
     model.clear();
@@ -458,7 +455,7 @@ void QGCArchiveModelTest::_testArchiveUrl()
     model.setArchiveUrl(resourcePathUrl);
 
     QCOMPARE(pathSpy.count(), 1);
-    QVERIFY(model.count() > 0);
+    QCOMPARE_GT(model.count(), 0);
 }
 
 // ============================================================================
@@ -494,7 +491,7 @@ void QGCArchiveModelTest::_testModelTesterLoaded()
     // Load archive - tester monitors all signals during load
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
 
-    QVERIFY(model.rowCount() > 0);
+    QCOMPARE_GT(model.rowCount(), 0);
 
     // Access all rows - tester will verify data() returns valid values
     for (int i = 0; i < model.rowCount(); ++i) {
@@ -519,7 +516,7 @@ void QGCArchiveModelTest::_testModelTesterFilterChange()
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
 
     const int originalCount = model.rowCount();
-    QVERIFY(originalCount > 0);
+    QCOMPARE_GT(originalCount, 0);
 
     // Change filter - tester will verify beginResetModel/endResetModel signals
     model.setFilterMode(QGCArchiveModel::FilesOnly);
@@ -554,7 +551,7 @@ void QGCArchiveModelTest::_testModelTesterClearAndReload()
     // Load
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
     const int originalCount = model.rowCount();
-    QVERIFY(originalCount > 0);
+    QCOMPARE_GT(originalCount, 0);
 
     // Clear - tester verifies reset signals (but path remains set)
     model.clear();
@@ -575,7 +572,7 @@ void QGCArchiveModelTest::_testModelTesterClearAndReload()
 
     // Set path again
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.7z"));
-    QVERIFY(model.rowCount() > 0);
+    QCOMPARE_GT(model.rowCount(), 0);
 
     // Refresh with valid path
     const int count = model.rowCount();
@@ -584,5 +581,5 @@ void QGCArchiveModelTest::_testModelTesterClearAndReload()
 
     // Change path - tester verifies reset signals
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
-    QVERIFY(model.rowCount() > 0);
+    QCOMPARE_GT(model.rowCount(), 0);
 }

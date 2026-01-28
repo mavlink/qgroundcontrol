@@ -55,19 +55,19 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
 {
     qCDebug(MockLinkLog) << this;
 
-    // Initialize 5 ADS-B vehicles with different starting conditions _numberOfVehicles
-    _adsbVehicles.resize(_numberOfVehicles);
+    // Initialize ADS-B vehicles with different starting conditions
+    _adsbVehicles.reserve(_numberOfVehicles);
     for (int i = 0; i < _numberOfVehicles; ++i) {
         ADSBVehicle vehicle{};
-        vehicle.angle = i * 72; // Different starting directions (angles 0, 72, 144, 216, 288)
+        vehicle.angle = i * 72.0; // Different starting directions (angles 0, 72, 144, 216, 288)
 
         // Set initial coordinates slightly offset from the default coordinates
-        const double latOffset = 0.001 * i; // Adjust latitude slightly for each vehicle (close proximity)
-        const double lonOffset = 0.001 * (i % 2 == 0 ? i : -i); // Adjust longitude with a pattern (close proximity)
+        const double latOffset = 0.001 * i;
+        const double lonOffset = 0.001 * (i % 2 == 0 ? i : -i);
         vehicle.coordinate = QGeoCoordinate(_defaultVehicleLatitude + latOffset, _defaultVehicleLongitude + lonOffset);
 
         // Set a unique starting altitude for each vehicle near the home altitude
-        vehicle.altitude = _defaultVehicleHomeAltitude + (i * 5); // Altitudes: close to default, with slight variation
+        vehicle.altitude = _defaultVehicleHomeAltitude + (i * 5);
 
         _adsbVehicles.append(vehicle);
     }
@@ -120,6 +120,15 @@ bool MockLink::_connect()
 void MockLink::disconnect()
 {
     _missionItemHandler->shutdown();
+
+    // Stop worker thread first to prevent any more messages from being sent.
+    // This must happen before setting _connected = false to avoid race conditions
+    // where the worker checks _connected (true), then we set it false, then the
+    // worker continues sending messages to a disconnecting/destroyed vehicle.
+    if (_workerThread && _workerThread->isRunning()) {
+        _workerThread->quit();
+        _workerThread->wait();
+    }
 
     if (_connected) {
         _connected = false;
@@ -841,7 +850,7 @@ float MockLink::_floatUnionForParam(int componentId, const QString &paramName)
 
 void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
 {
-    if (_failureMode == MockConfiguration::FailParamNoReponseToRequestList) {
+    if (_failureMode == MockConfiguration::FailParamNoResponseToRequestList) {
         return;
     }
 
@@ -850,6 +859,12 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
 
     Q_ASSERT(request.target_system == _vehicleSystemId);
     Q_ASSERT(request.target_component == MAV_COMP_ID_ALL);
+
+    // Cache component IDs and first component's param names to avoid repeated keys() calls in worker
+    _paramRequestListComponentIds = _mapParamName2Value.keys();
+    if (!_paramRequestListComponentIds.isEmpty()) {
+        _paramRequestListParamNames = _mapParamName2Value[_paramRequestListComponentIds.first()].keys();
+    }
 
     // Start the worker routine
     _currentParamRequestListComponentIndex = 0;
@@ -863,11 +878,32 @@ void MockLink::_paramRequestListWorker()
         return;
     }
 
-    const int componentId = _mapParamName2Value.keys()[_currentParamRequestListComponentIndex];
-    const int cParameters = _mapParamName2Value[componentId].count();
-    const QString paramName = _mapParamName2Value[componentId].keys()[_currentParamRequestListParamIndex];
+    // Use cached lists instead of calling keys() on every iteration (500Hz)
+    if (_currentParamRequestListComponentIndex >= _paramRequestListComponentIds.count()) {
+        _currentParamRequestListComponentIndex = -1;
+        return;
+    }
 
-    if (((_failureMode == MockConfiguration::FailMissingParamOnInitialReqest) || (_failureMode == MockConfiguration::FailMissingParamOnAllRequests)) && (paramName == _failParam)) {
+    const int componentId = _paramRequestListComponentIds.at(_currentParamRequestListComponentIndex);
+    const int cParameters = _paramRequestListParamNames.count();
+
+    if (_currentParamRequestListParamIndex >= cParameters) {
+        // Move to next component
+        if (++_currentParamRequestListComponentIndex >= _paramRequestListComponentIds.count()) {
+            _currentParamRequestListComponentIndex = -1;
+            _paramRequestListComponentIds.clear();
+            _paramRequestListParamNames.clear();
+        } else {
+            // Cache param names for the new component
+            _paramRequestListParamNames = _mapParamName2Value[_paramRequestListComponentIds.at(_currentParamRequestListComponentIndex)].keys();
+            _currentParamRequestListParamIndex = 0;
+        }
+        return;
+    }
+
+    const QString &paramName = _paramRequestListParamNames.at(_currentParamRequestListParamIndex);
+
+    if (((_failureMode == MockConfiguration::FailMissingParamOnInitialRequest) || (_failureMode == MockConfiguration::FailMissingParamOnAllRequests)) && (paramName == _failParam)) {
         qCDebug(MockLinkLog) << "Skipping param send:" << paramName;
     } else {
         char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN]{};
@@ -898,15 +934,7 @@ void MockLink::_paramRequestListWorker()
     }
 
     // Move to next param index
-    if (++_currentParamRequestListParamIndex >= cParameters) {
-        // We've sent the last parameter for this component, move to next component
-        if (++_currentParamRequestListComponentIndex >= _mapParamName2Value.keys().count()) {
-            // We've finished sending the last parameter for the last component, request is complete
-            _currentParamRequestListComponentIndex = -1;
-        } else {
-            _currentParamRequestListParamIndex = 0;
-        }
-    }
+    ++_currentParamRequestListParamIndex;
 }
 
 void MockLink::_handleParamSet(const mavlink_message_t &msg)
@@ -1159,10 +1187,11 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         bool accepted = false;
         bool noAck = false;
         _handleRequestMessage(request, accepted, noAck);
+        if (noAck) {
+            // FailRequestMessageCommandNoResponse: don't send any ack, let vehicle timeout
+            return;
+        }
         if (accepted) {
-            if (noAck) {
-                return;
-            }
             commandResult = MAV_RESULT_ACCEPTED;
         }
         break;

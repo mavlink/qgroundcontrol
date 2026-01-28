@@ -1,3 +1,4 @@
+import argparse
 import socket
 import threading
 import time
@@ -133,9 +134,12 @@ def handle_client(client_socket, aircrafts):
 
 def start_server(host="0.0.0.0", port=30003):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((host, port))
     server_socket.listen(5)
-    print(f"Server listening on {host}:{port}")
+    # Get actual port (useful when port=0 for dynamic allocation)
+    actual_port = server_socket.getsockname()[1]
+    print(f"Server listening on {host}:{actual_port}")
 
     # Create 5 aircraft with unique ICAO addresses
     aircrafts = [Aircraft() for _ in range(5)]
@@ -148,4 +152,8 @@ def start_server(host="0.0.0.0", port=30003):
 
 
 if __name__ == "__main__":
-    start_server()
+    parser = argparse.ArgumentParser(description="ADS-B SBS-1 format simulator for testing")
+    parser.add_argument("--host", default="0.0.0.0", help="Host address to bind to (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=30003, help="Port to listen on (default: 30003, use 0 for dynamic)")
+    args = parser.parse_args()
+    start_server(host=args.host, port=args.port)

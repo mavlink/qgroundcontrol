@@ -1,11 +1,15 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
 #include <QtCore/QTemporaryDir>
 
-/// Tests for QGCArchiveWatcher (watches directories for archive files)
-class QGCArchiveWatcherTest : public UnitTest
+#include <memory>
+
+/// Tests for QGCArchiveWatcher (watches directories for archive files).
+/// Uses TempDirTest for automatic temp directory management.
+/// Creates additional output directory for extraction tests.
+class QGCArchiveWatcherTest : public TempDirTest
 {
     Q_OBJECT
 
@@ -47,6 +51,5 @@ private:
     void _createTestArchive(const QString &path);
     void _createTestCompressedFile(const QString &path);
 
-    QTemporaryDir *_tempDir = nullptr;
-    QTemporaryDir *_outputDir = nullptr;
+    std::unique_ptr<QTemporaryDir> _outputDir;  ///< Separate output directory for extraction tests
 };

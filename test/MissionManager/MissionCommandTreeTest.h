@@ -1,17 +1,22 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 
 class MissionCommandTree;
 class MissionCommandUIInfo;
 
-/// Unit test for the MissionItem Object
-class MissionCommandTreeTest : public UnitTest
+/// Unit test for the MissionCommandTree.
+/// Uses OfflineTest since it doesn't require a vehicle connection.
+class MissionCommandTreeTest : public OfflineTest
 {
     Q_OBJECT
 
+public:
+    MissionCommandTreeTest() = default;
+
 private slots:
-    void init();
+    void init() override;
+    void cleanup() override;
 
     void testJsonLoad();
     void testOverride();

@@ -5,15 +5,8 @@
 
 #include <QtTest/QTest>
 
-SurveyComplexItemTest::SurveyComplexItemTest(void)
+SurveyComplexItemTest::SurveyComplexItemTest()
 {
-    _rgSurveySignals[surveyVisualTransectPointsChangedIndex] =    SIGNAL(visualTransectPointsChanged());
-    _rgSurveySignals[surveyCameraShotsChangedIndex] =             SIGNAL(cameraShotsChanged());
-    _rgSurveySignals[surveyCoveredAreaChangedIndex] =             SIGNAL(coveredAreaChanged());
-    _rgSurveySignals[surveyTimeBetweenShotsChangedIndex] =        SIGNAL(timeBetweenShotsChanged());
-    _rgSurveySignals[surveyRefly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
-    _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
-
     // We use a 100m by 100m square test polygon
     const double edgeDistance = 100;
     _polyVertices.append(QGeoCoordinate(47.633550640000003, -122.08982199));
@@ -22,12 +15,14 @@ SurveyComplexItemTest::SurveyComplexItemTest(void)
     _polyVertices.append(_polyVertices[2].atDistanceAndAzimuth(edgeDistance, -90.0));
 }
 
-void SurveyComplexItemTest::init(void)
+void SurveyComplexItemTest::init()
 {
     TransectStyleComplexItemTestBase::init();
 
     _surveyItem = new SurveyComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */);
+    VERIFY_NOT_NULL(_surveyItem);
     _mapPolygon = _surveyItem->surveyAreaPolygon();
+    VERIFY_NOT_NULL(_mapPolygon);
     _mapPolygon->appendVertices(_polyVertices);
 
     QVERIFY(_surveyItem->cameraCalc()->isManualCamera());
@@ -40,7 +35,7 @@ void SurveyComplexItemTest::init(void)
 
     _surveyItem->gridAngle()->setRawValue(0);
     int expectedTransectCount = _expectedTransectCount;
-    QCOMPARE(_surveyItem->_transectCount(), expectedTransectCount);
+    QCOMPARE_EQ(_surveyItem->_transectCount(), expectedTransectCount);
 
     _surveyItem->setDirty(false);
 
@@ -49,11 +44,11 @@ void SurveyComplexItemTest::init(void)
     // to incorrect ui or perf impact of uneeded signals propogating ui change.
 
     _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
-    QCOMPARE(_multiSpy->init(_surveyItem, _rgSurveySignals, _cSurveySignals), true);
+    VERIFY_NOT_NULL(_multiSpy);
+    QVERIFY(_multiSpy->init(_surveyItem));
 }
 
-void SurveyComplexItemTest::cleanup(void)
+void SurveyComplexItemTest::cleanup()
 {
     delete _multiSpy;
     _multiSpy = nullptr;
@@ -64,22 +59,22 @@ void SurveyComplexItemTest::cleanup(void)
     _surveyItem = nullptr;
 }
 
-void SurveyComplexItemTest::_testDirty(void)
+void SurveyComplexItemTest::_testDirty()
 {
     QVERIFY(!_surveyItem->dirty());
     _surveyItem->setDirty(false);
     QVERIFY(!_surveyItem->dirty());
-    QVERIFY(_multiSpy->checkNoSignals());
+    QVERIFY_NO_SIGNALS(*_multiSpy);
 
     _surveyItem->setDirty(true);
     QVERIFY(_surveyItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(surveyDirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(surveyDirtyChangedIndex));
+    QVERIFY_ONLY_SIGNAL(*_multiSpy, "dirtyChanged");
+    QVERIFY(_multiSpy->pullBoolFromSignal("dirtyChanged"));
     _multiSpy->clearAllSignals();
 
     _surveyItem->setDirty(false);
     QVERIFY(!_surveyItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(surveyDirtyChangedMask));
+    QVERIFY_ONLY_SIGNAL(*_multiSpy, "dirtyChanged");
     _multiSpy->clearAllSignals();
 
     // These facts should set dirty when changed
@@ -93,8 +88,8 @@ void SurveyComplexItemTest::_testDirty(void)
         } else {
             fact->setRawValue(fact->rawValue().toDouble() + 1);
         }
-        QVERIFY(_multiSpy->checkSignalByMask(surveyDirtyChangedMask));
-        QVERIFY(_multiSpy->pullBoolFromSignalIndex(surveyDirtyChangedIndex));
+        QVERIFY(_multiSpy->checkSignalByMask(_multiSpy->mask("dirtyChanged")));
+        QVERIFY(_multiSpy->pullBoolFromSignal("dirtyChanged"));
         _surveyItem->setDirty(false);
         _multiSpy->clearAllSignals();
     }
@@ -120,7 +115,7 @@ double SurveyComplexItemTest::_clampGridAngle180(double gridAngle)
     return gridAngle;
 }
 
-void SurveyComplexItemTest::_testGridAngle(void)
+void SurveyComplexItemTest::_testGridAngle()
 {
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
@@ -136,7 +131,7 @@ void SurveyComplexItemTest::_testGridAngle(void)
     }
 }
 
-void SurveyComplexItemTest::_testEntryLocation(void)
+void SurveyComplexItemTest::_testEntryLocation()
 {
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
@@ -154,7 +149,7 @@ void SurveyComplexItemTest::_testEntryLocation(void)
     }
 }
 
-void SurveyComplexItemTest::_testItemCount(void)
+void SurveyComplexItemTest::_testItemCount()
 {
     typedef struct {
         bool        hoverAndCapture;
@@ -188,7 +183,7 @@ void SurveyComplexItemTest::_testItemCount(void)
         _surveyItem->refly90Degrees()->setRawValue(testCase.refly90);
         _surveyItem->turnAroundDistance()->setRawValue(testCase.hasTurnaround ? 50 : 0);
         _surveyItem->appendMissionItems(items, this);
-        QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
+        QCOMPARE_EQ(items.count() - 1, _surveyItem->lastSequenceNumber());
         items.clear();
     }
 }
@@ -235,23 +230,15 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
 
     QList<MissionItem*> items;
     _surveyItem->appendMissionItems(items, this);
-#if 0
-    // Handy for debugging failures
-    _printItemCommands(items);
-#endif
-    QCOMPARE(items.count(), expectedCommands.count());
+    QCOMPARE_EQ(items.count(), expectedCommands.count());
     for (int i=0; i<expectedCommands.count(); i++) {
         int actualCommand = items[i]->command();
         int expectedCommand = expectedCommands[i];
-#if 0
-        // Handy for debugging failures
-        qDebug() << "Index" << i;
-#endif
-        QCOMPARE(actualCommand, expectedCommand);
+        QCOMPARE_EQ(actualCommand, expectedCommand);
     }
 }
 
-void SurveyComplexItemTest::_testItemGeneration(void)
+void SurveyComplexItemTest::_testItemGeneration()
 {
     // Test all the combinations of: cameraTriggerInTurnAround: false, hasTurnAround: *, useConditionGate: *
 
@@ -319,7 +306,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
     _testItemGenerationWorker(true /* imagesInTurnaround */, false /* hasTurnaround */, false /* useConditionGate */, imagesInTurnaroundWithoutTurnaroundDistanceCommands);
 }
 
-void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
+void SurveyComplexItemTest::_testHoverCaptureItemGeneration()
 {
     static const QList<MAV_CMD> singleFullTransect = {
         MAV_CMD_NAV_WAYPOINT,           // Turnaround

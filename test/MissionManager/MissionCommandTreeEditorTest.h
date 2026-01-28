@@ -1,18 +1,19 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TestFixtures.h"
 #include "QGCMAVLink.h"
 
-/// This unit test is meant to be used stand-alone to generate images for each mission item editor for review
-class MissionCommandTreeEditorTest : public UnitTest
+/// This unit test is meant to be used stand-alone to generate images for each mission item editor for review.
+/// Uses OfflineTest since it doesn't require a vehicle connection.
+class MissionCommandTreeEditorTest : public OfflineTest
 {
     Q_OBJECT
 
 public:
-    MissionCommandTreeEditorTest(void);
+    MissionCommandTreeEditorTest() = default;
 
 private slots:
-    void testEditors(void);
+    void testEditors();
 
 private:
     void _testEditorsWorker(QGCMAVLink::FirmwareClass_t firmwareClass, QGCMAVLink::VehicleClass_t vehicleClass);

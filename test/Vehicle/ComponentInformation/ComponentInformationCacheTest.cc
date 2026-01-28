@@ -4,15 +4,18 @@
 #include <QtCore/QStandardPaths>
 #include <QtTest/QTest>
 
-ComponentInformationCacheTest::ComponentInformationCacheTest()
+void ComponentInformationCacheTest::init()
 {
+    OfflineTest::init();
+
     _cacheDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/QGCCacheTest");
     _tmpFilesDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/QGCTestFiles");
-    _cleanup();
-}
 
-void ComponentInformationCacheTest::_setup()
-{
+    // Clean up any leftover directories from previous runs
+    QDir(_tmpFilesDir).removeRecursively();
+    QDir(_cacheDir).removeRecursively();
+
+    // Create temp files directory and populate with test files
     QDir d(_tmpFilesDir);
     d.mkdir(_tmpFilesDir);
 
@@ -25,7 +28,7 @@ void ComponentInformationCacheTest::_setup()
         t.cacheTag = QString::asprintf("_tag_%08i_xy", i);
         QFile f(t.path);
         if (f.open(QIODevice::WriteOnly)) {
-            (void) f.write(t.content.toUtf8().constData(), t.content.toUtf8().size());
+            (void)f.write(t.content.toUtf8().constData(), t.content.toUtf8().size());
             f.close();
         } else {
             qWarning() << "Error opening file" << f.fileName();
@@ -34,117 +37,107 @@ void ComponentInformationCacheTest::_setup()
     }
 }
 
-void ComponentInformationCacheTest::_cleanup()
+void ComponentInformationCacheTest::cleanup()
 {
-    QDir t(_tmpFilesDir);
-    t.removeRecursively();
-    QDir d(_cacheDir);
-    d.removeRecursively();
+    QDir(_tmpFilesDir).removeRecursively();
+    QDir(_cacheDir).removeRecursively();
+
+    OfflineTest::cleanup();
 }
 
 void ComponentInformationCacheTest::_basic_test()
 {
-    _setup();
     ComponentInformationCache cache(_cacheDir, 10);
 
     QDir cacheDir(_cacheDir);
     QVERIFY(cacheDir.exists());
 
     _tmpFiles[0].cachedPath = cache.insert(_tmpFiles[0].cacheTag, _tmpFiles[0].path);
-    QVERIFY(!_tmpFiles[0].cachedPath.isEmpty());
-    QVERIFY(QFile(_tmpFiles[0].cachedPath).exists());
-    QVERIFY(!QFile(_tmpFiles[0].path).exists());
+    QGC_VERIFY_NOT_EMPTY(_tmpFiles[0].cachedPath);
+    VERIFY_FILE_EXISTS(_tmpFiles[0].cachedPath);
+    VERIFY_FILE_NOT_EXISTS(_tmpFiles[0].path);
 
-    QVERIFY(cache.access(_tmpFiles[0].cacheTag) == _tmpFiles[0].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[0].cacheTag), _tmpFiles[0].cachedPath);
 
     QFile f(_tmpFiles[0].cachedPath);
     QVERIFY(f.open(QFile::ReadOnly | QFile::Text));
     QTextStream in(&f);
-    QVERIFY(in.readAll() == _tmpFiles[0].content);
-
-    _cleanup();
+    QCOMPARE_EQ(in.readAll(), _tmpFiles[0].content);
 }
 
 
 void ComponentInformationCacheTest::_lru_test()
 {
-    _setup();
     ComponentInformationCache cache(_cacheDir, 3);
 
     auto insert = [&](int idx) {
         _tmpFiles[idx].cachedPath = cache.insert(_tmpFiles[idx].cacheTag, _tmpFiles[idx].path);
-        QVERIFY(!_tmpFiles[idx].cachedPath.isEmpty());
+        QGC_VERIFY_NOT_EMPTY(_tmpFiles[idx].cachedPath);
     };
     insert(1);
     insert(3);
     insert(0);
 
-    QVERIFY(cache.access(_tmpFiles[0].cacheTag) == _tmpFiles[0].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[1].cacheTag) == _tmpFiles[1].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[0].cacheTag), _tmpFiles[0].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[1].cacheTag), _tmpFiles[1].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
 
     insert(4);
 
-    QVERIFY(cache.access(_tmpFiles[0].cacheTag) == "");
-    QVERIFY(cache.access(_tmpFiles[1].cacheTag) == _tmpFiles[1].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[4].cacheTag) == _tmpFiles[4].cachedPath);
+    QGC_VERIFY_EMPTY(cache.access(_tmpFiles[0].cacheTag));
+    QCOMPARE_EQ(cache.access(_tmpFiles[1].cacheTag), _tmpFiles[1].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[4].cacheTag), _tmpFiles[4].cachedPath);
 
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[1].cacheTag) == _tmpFiles[1].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[1].cacheTag), _tmpFiles[1].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
 
     insert(5);
 
-    QVERIFY(cache.access(_tmpFiles[4].cacheTag) == "");
-    QVERIFY(cache.access(_tmpFiles[1].cacheTag) == _tmpFiles[1].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[5].cacheTag) == _tmpFiles[5].cachedPath);
+    QGC_VERIFY_EMPTY(cache.access(_tmpFiles[4].cacheTag));
+    QCOMPARE_EQ(cache.access(_tmpFiles[1].cacheTag), _tmpFiles[1].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[5].cacheTag), _tmpFiles[5].cachedPath);
 
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
     insert(6);
     insert(7);
 
-    QVERIFY(cache.access(_tmpFiles[4].cacheTag) == "");
-    QVERIFY(cache.access(_tmpFiles[1].cacheTag) == "");
-    QVERIFY(cache.access(_tmpFiles[5].cacheTag) == "");
-    QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[6].cacheTag) == _tmpFiles[6].cachedPath);
-    QVERIFY(cache.access(_tmpFiles[7].cacheTag) == _tmpFiles[7].cachedPath);
-
-    _cleanup();
+    QGC_VERIFY_EMPTY(cache.access(_tmpFiles[4].cacheTag));
+    QGC_VERIFY_EMPTY(cache.access(_tmpFiles[1].cacheTag));
+    QGC_VERIFY_EMPTY(cache.access(_tmpFiles[5].cacheTag));
+    QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[6].cacheTag), _tmpFiles[6].cachedPath);
+    QCOMPARE_EQ(cache.access(_tmpFiles[7].cacheTag), _tmpFiles[7].cachedPath);
 }
 
 void ComponentInformationCacheTest::_multi_test()
 {
-    _setup();
-
     auto insert = [&](ComponentInformationCache& cache, int idx) {
         _tmpFiles[idx].cachedPath = cache.insert(_tmpFiles[idx].cacheTag, _tmpFiles[idx].path);
-        QVERIFY(!_tmpFiles[idx].cachedPath.isEmpty());
+        QGC_VERIFY_NOT_EMPTY(_tmpFiles[idx].cachedPath);
     };
 
     {
         ComponentInformationCache cache(_cacheDir, 5);
         for (int i = 0; i < 5; ++i) {
             insert(cache, i);
-            QVERIFY(cache.access(_tmpFiles[i].cacheTag) == _tmpFiles[i].cachedPath);
+            QCOMPARE_EQ(cache.access(_tmpFiles[i].cacheTag), _tmpFiles[i].cachedPath);
         }
-        QVERIFY(cache.access(_tmpFiles[1].cacheTag) == _tmpFiles[1].cachedPath);
+        QCOMPARE_EQ(cache.access(_tmpFiles[1].cacheTag), _tmpFiles[1].cachedPath);
     }
     {
         // reduce cache size and ensure oldest entries are evicted
         ComponentInformationCache cache(_cacheDir, 3);
-        QVERIFY(cache.access(_tmpFiles[0].cacheTag) == "");
-        QVERIFY(cache.access(_tmpFiles[1].cacheTag) == _tmpFiles[1].cachedPath);
-        QVERIFY(cache.access(_tmpFiles[2].cacheTag) == "");
-        QVERIFY(cache.access(_tmpFiles[3].cacheTag) == _tmpFiles[3].cachedPath);
-        QVERIFY(cache.access(_tmpFiles[4].cacheTag) == _tmpFiles[4].cachedPath);
+        QGC_VERIFY_EMPTY(cache.access(_tmpFiles[0].cacheTag));
+        QCOMPARE_EQ(cache.access(_tmpFiles[1].cacheTag), _tmpFiles[1].cachedPath);
+        QGC_VERIFY_EMPTY(cache.access(_tmpFiles[2].cacheTag));
+        QCOMPARE_EQ(cache.access(_tmpFiles[3].cacheTag), _tmpFiles[3].cachedPath);
+        QCOMPARE_EQ(cache.access(_tmpFiles[4].cacheTag), _tmpFiles[4].cachedPath);
 
         insert(cache, 10);
-        QVERIFY(cache.access(_tmpFiles[1].cacheTag) == "");
-        QVERIFY(cache.access(_tmpFiles[10].cacheTag) == _tmpFiles[10].cachedPath);
+        QGC_VERIFY_EMPTY(cache.access(_tmpFiles[1].cacheTag));
+        QCOMPARE_EQ(cache.access(_tmpFiles[10].cacheTag), _tmpFiles[10].cachedPath);
     }
-
-    _cleanup();
 }
