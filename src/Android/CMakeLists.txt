@@ -10,6 +10,8 @@ endif()
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        AndroidEvents.cc
+        AndroidEvents.h
         AndroidInit.cc
         AndroidInterface.cc
         AndroidInterface.h

@@ -66,7 +66,7 @@ AssignedButtonAction::AssignedButtonAction(const QString &actionName_, bool repe
     : actionName(actionName_)
     , repeat(repeat_)
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 AvailableButtonAction::AvailableButtonAction(const QString &actionName_, bool canRepeat_, QObject *parent)
@@ -74,7 +74,7 @@ AvailableButtonAction::AvailableButtonAction(const QString &actionName_, bool ca
     , _actionName(actionName_)
     , _repeat(canRepeat_)
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 /*===========================================================================*/
@@ -146,7 +146,7 @@ Joystick::~Joystick()
     _availableButtonActions->clearAndDeleteContents();
     qDeleteAll(_assignedButtonActions);
 
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 void Joystick::_migrateLegacySettings()
@@ -1465,5 +1465,47 @@ void Joystick::stop()
         } else {
             wait();
         }
+    }
+}
+
+void Joystick::setLinkedGroupId(const QString &groupId)
+{
+    if (_linkedGroupId != groupId) {
+        _linkedGroupId = groupId;
+
+        // Persist to settings
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Joystick"));
+        settings.beginGroup(_name);
+        if (groupId.isEmpty()) {
+            settings.remove(QStringLiteral("LinkedGroupId"));
+        } else {
+            settings.setValue(QStringLiteral("LinkedGroupId"), groupId);
+        }
+        settings.endGroup();
+        settings.endGroup();
+
+        emit linkedGroupChanged();
+    }
+}
+
+void Joystick::setLinkedGroupRole(const QString &role)
+{
+    if (_linkedGroupRole != role) {
+        _linkedGroupRole = role;
+
+        // Persist to settings
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Joystick"));
+        settings.beginGroup(_name);
+        if (role.isEmpty()) {
+            settings.remove(QStringLiteral("LinkedGroupRole"));
+        } else {
+            settings.setValue(QStringLiteral("LinkedGroupRole"), role);
+        }
+        settings.endGroup();
+        settings.endGroup();
+
+        emit linkedGroupChanged();
     }
 }

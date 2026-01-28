@@ -79,7 +79,7 @@ SetupPage {
                 QGCLabel {
                     id: calibrationRequiredLabel
                     text: qsTr("Requires Calibration")
-                    visible: activeJoystick && !activeJoystick.settings.calibrated.rawValue
+                    visible: activeJoystick && activeJoystick.requiresCalibration && !activeJoystick.settings.calibrated.rawValue
                 }
             }
 
@@ -111,7 +111,7 @@ SetupPage {
                     property var _controller: controller
                     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
                     property var _activeJoystick: _controller.joystick
-                    property bool _requiresCalibration: _activeJoystick ? !_activeJoystick.calibrated : false
+                    property bool _requiresCalibration: _activeJoystick ? (_activeJoystick.requiresCalibration && !_activeJoystick.settings.calibrated.rawValue) : false
 
                     Component.onCompleted: controller.start()
 

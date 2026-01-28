@@ -96,12 +96,6 @@ SettingsPage {
             property Fact _updateHomePosition: _flyViewSettings.updateHomePosition
         }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Show Joystick Status in Toolbar")
-            fact:               _flyViewSettings.showJoystickIndicatorInToolbar
-            visible:            fact.visible
-        }
     }
 
     SettingsGroupLayout {

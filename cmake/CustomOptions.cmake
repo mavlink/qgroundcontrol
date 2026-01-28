@@ -74,13 +74,6 @@ cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Use QGC-provided GStreamer packag
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 
 # ============================================================================
-# Joystick/Input Configuration
-# ============================================================================
-
-# Example custom SDL game controller mapping:
-# set(SDL_GAMECONTROLLERCONFIG "0300000009120000544f000011010000,OpenTX Radiomaster TX16S,leftx:a3,lefty:a2,rightx:a0,righty:a1,platform:Linux" CACHE STRING "Custom SDL mappings")
-
-# ============================================================================
 # MAVLink Configuration
 # ============================================================================
 
