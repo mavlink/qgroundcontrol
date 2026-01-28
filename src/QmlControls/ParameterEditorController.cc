@@ -88,11 +88,14 @@ void ParameterTableModel::insert(int row, Fact* fact)
     colData[ValueColumn] = QVariant::fromValue(fact);
     colData[DescriptionColumn] = fact->shortDescription();
 
-    beginInsertRows(QModelIndex(), row, row);
+    if (!_externalBeginResetModel) {
+        beginInsertRows(QModelIndex(), row, row);
+    }
     _tableData.insert(row, colData);
-    endInsertRows();
-
-    emit rowCountChanged(rowCount());
+    if (!_externalBeginResetModel) {
+        endInsertRows();
+        emit rowCountChanged(rowCount());
+    }
 }
 
 void ParameterTableModel::beginReset()
