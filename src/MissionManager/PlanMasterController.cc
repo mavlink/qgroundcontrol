@@ -7,7 +7,7 @@
 #include "AppSettings.h"
 #include "JsonHelper.h"
 #include "MissionManager.h"
-#include "KMLPlanDomDocument.h"
+#include "PlanExporter.h"
 #include "SurveyPlanCreator.h"
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
@@ -462,27 +462,21 @@ void PlanMasterController::saveToFile(const QString& filename)
     }
 }
 
-void PlanMasterController::saveToKml(const QString& filename)
+void PlanMasterController::exportToFile(const QString& filename)
 {
     if (filename.isEmpty()) {
         return;
     }
 
-    QString kmlFilename = filename;
-    if (!QFileInfo(filename).fileName().contains(".")) {
-        kmlFilename += QString(".%1").arg(kmlFileExtension());
+    PlanExporter* exporter = PlanExporter::exporterForFile(filename);
+    if (!exporter) {
+        qgcApp()->showAppMessage(tr("Unsupported export format for file: %1").arg(filename));
+        return;
     }
 
-    QFile file(kmlFilename);
-
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qgcApp()->showAppMessage(tr("KML save error %1 : %2").arg(filename).arg(file.errorString()));
-    } else {
-        KMLPlanDomDocument planKML;
-        _missionController.addMissionToKML(planKML);
-        QTextStream stream(&file);
-        stream << planKML.toString();
-        file.close();
+    QString errorString;
+    if (!exporter->exportToFile(filename, &_missionController, errorString)) {
+        qgcApp()->showAppMessage(tr("Export error: %1").arg(errorString));
     }
 }
 
@@ -540,9 +534,9 @@ QString PlanMasterController::fileExtension(void) const
     return AppSettings::planFileExtension;
 }
 
-QString PlanMasterController::kmlFileExtension(void) const
+QStringList PlanMasterController::exportFilters(void) const
 {
-    return AppSettings::kmlFileExtension;
+    return PlanExporter::fileDialogFilters();
 }
 
 QStringList PlanMasterController::loadNameFilters(void) const

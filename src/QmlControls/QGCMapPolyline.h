@@ -45,9 +45,9 @@ public:
     /// @return Offset set of vertices
     QList<QGeoCoordinate> offsetPolyline(double distance);
 
-    /// Loads a polyline from a KML/SHP file
+    /// Loads a polyline from a shape file (KML, SHP, GeoJSON)
     /// @return true: success
-    Q_INVOKABLE bool loadKMLOrSHPFile(const QString &file);
+    Q_INVOKABLE bool loadShapeFile(const QString &file);
 
     Q_INVOKABLE void beginReset (void);
     Q_INVOKABLE void endReset   (void);

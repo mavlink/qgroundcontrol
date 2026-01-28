@@ -104,7 +104,7 @@ qt_add_qml_module(QGroundControlControlsModule
         InstrumentValueLabel.qml
         InstrumentValueValue.qml
         JoystickThumbPad.qml
-        KMLOrSHPFileDialog.qml
+        ShapeFileDialog.qml
         LabelledButton.qml
         LabelledComboBox.qml
         LabelledLabel.qml

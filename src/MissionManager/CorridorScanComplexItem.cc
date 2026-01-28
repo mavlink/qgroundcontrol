@@ -12,7 +12,7 @@ QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "Plan.CorridorScanComplexItemL"
 
 const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
 
-CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
+CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& shapeFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _entryPointLocation       (EntryPointDefaultOrder)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
@@ -36,8 +36,8 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     connect(&_corridorPolyline,     &QGCMapPolyline::isValidChanged,                this, &CorridorScanComplexItem::_updateWizardMode);
     connect(&_corridorPolyline,     &QGCMapPolyline::traceModeChanged,              this, &CorridorScanComplexItem::_updateWizardMode);
 
-    if (!kmlOrShpFile.isEmpty()) {
-        _corridorPolyline.loadKMLOrSHPFile(kmlOrShpFile);
+    if (!shapeFile.isEmpty()) {
+        _corridorPolyline.loadShapeFile(shapeFile);
         _corridorPolyline.setDirty(false);
     }
     setDirty(false);

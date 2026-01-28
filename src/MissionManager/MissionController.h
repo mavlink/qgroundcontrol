@@ -24,7 +24,6 @@ class LandingComplexItem;
 class MissionSettingsItem;
 class TakeoffMissionItem;
 class PlanViewSettings;
-class KMLPlanDomDocument;
 class Vehicle;
 
 typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;
@@ -157,14 +156,13 @@ public:
     /// @return Newly created item
     Q_INVOKABLE VisualMissionItem*  insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex, bool makeCurrentItem = false);
 
-    /// Add a new complex mission item to the list
+    /// Add a new complex mission item to the list from a shape file
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
-    ///     @param file: kml or shp file to load from shape from
-    ///     @param coordinate: Coordinate for item
+    ///     @param file: Shape file to load from (KML, SHP, GeoJSON)
     ///     @param visualItemIndex: index to insert at, -1 for end of list
     ///     @param makeCurrentItem: true: Make this item the current item
     /// @return Newly created item
-    Q_INVOKABLE VisualMissionItem*  insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex, bool makeCurrentItem = false);
+    Q_INVOKABLE VisualMissionItem* insertComplexMissionItemFromShapeFile(QString itemName, QString file, int visualItemIndex, bool makeCurrentItem = false);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
@@ -214,8 +212,17 @@ public:
     bool containsItems              (void) const final;
     bool showPlanFromManagerVehicle (void) final;
 
-    // Create KML file
-    void addMissionToKML(KMLPlanDomDocument& planKML);
+    /// Returns the flight path as a list of coordinates (for export)
+    QList<QGeoCoordinate> flightPathCoordinates() const;
+
+    /// Returns the controller vehicle (for export)
+    Vehicle* controllerVehicle() const { return _controllerVehicle; }
+
+    /// Convert visual items to mission items (for export)
+    /// @param rgMissionItems Output list of mission items
+    /// @param missionItemParent Parent object for memory management (caller must delete)
+    /// @return true if successful
+    bool convertToMissionItems(QList<MissionItem*>& rgMissionItems, QObject* missionItemParent) const;
 
     // Property accessors
 

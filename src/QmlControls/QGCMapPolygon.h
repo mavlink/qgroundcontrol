@@ -4,11 +4,8 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QVariantList>
 #include <QtGui/QPolygonF>
-#include <QtXml/QDomElement>
 
 #include "QmlObjectListModel.h"
-
-class KMLDomDocument;
 
 /// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
@@ -60,9 +57,9 @@ public:
     /// Offsets the current polygon edges by the specified distance in meters
     Q_INVOKABLE void offset(double distance);
 
-    /// Loads a polygon from a KML/SHP file
+    /// Loads a polygon from a shape file (KML, SHP, GeoJSON)
     /// @return true: success
-    Q_INVOKABLE bool loadKMLOrSHPFile(const QString& file);
+    Q_INVOKABLE bool loadShapeFile(const QString& file);
 
     /// Returns the path in a list of QGeoCoordinate's format
     QList<QGeoCoordinate> coordinateList(void) const;
@@ -92,8 +89,6 @@ public:
 
     /// Returns the area of the polygon in meters squared
     double area(void) const;
-
-    QDomElement kmlPolygonElement(KMLDomDocument& domDocument);
 
     // Property methods
 

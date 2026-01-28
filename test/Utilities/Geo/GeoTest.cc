@@ -26,9 +26,6 @@ void GeoTest::_convertGeoToNed_test()
     double x = 0., y = 0., z = 0.;
     QGCGeo::convertGeoToNed(coord, m_origin, x, y, z);
 
-    // Use 0.01m tolerance (instead of default epsilon) because the WGS84 ellipsoidal
-    // model and reference implementation can differ at the centimeter level due to
-    // numerical precision and model approximations.
     QVERIFY(compareDoubles(x, expectedX, 0.01));
     QVERIFY(compareDoubles(y, expectedY, 0.01));
     QVERIFY(compareDoubles(z, expectedZ, 0.01));

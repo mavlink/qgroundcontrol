@@ -191,10 +191,10 @@ void QGCMapPolylineTest::_testShapeLoad()
     (void) _copyRes(tmpDir, "pline.shx");
     (void) _copyRes(tmpDir, "pline.prj");
     const QString shpFile = _copyRes(tmpDir, "pline.shp");
-    QVERIFY(_mapPolyline->loadKMLOrSHPFile(shpFile));
+    QVERIFY(_mapPolyline->loadShapeFile(shpFile));
 
     const QString kmlFile = _copyRes(tmpDir, "polyline.kml");
-    QVERIFY(_mapPolyline->loadKMLOrSHPFile(kmlFile));
+    QVERIFY(_mapPolyline->loadShapeFile(kmlFile));
 }
 
 void QGCMapPolylineTest::_testSelectVertex()

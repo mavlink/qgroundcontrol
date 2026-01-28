@@ -3,7 +3,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "ShapeFileHelper.h"
+#include "GeoFormatRegistry.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QLineF>
@@ -349,11 +349,11 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
     return rgNewPolyline;
 }
 
-bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
+bool QGCMapPolyline::loadShapeFile(const QString &file)
 {
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    if (!ShapeFileHelper::loadPolylineFromFile(file, rgCoords, errorString)) {
+    if (!GeoFormatRegistry::loadPolyline(file, rgCoords, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }

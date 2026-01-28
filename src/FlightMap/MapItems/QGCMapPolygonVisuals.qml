@@ -207,12 +207,12 @@ Item {
 
     QGCPalette { id: qgcPal }
 
-    KMLOrSHPFileDialog {
-        id:             kmlOrSHPLoadDialog
+    ShapeFileDialog {
+        id:             shapeFileLoadDialog
         title:          qsTr("Select Polygon File")
 
         onAcceptedForLoad: (file) => {
-            mapPolygon.loadKMLOrSHPFile(file)
+            mapPolygon.loadShapeFile(file)
             mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
@@ -610,8 +610,8 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Load KML/SHP...")
-                onClicked:          kmlOrSHPLoadDialog.openForLoad()
+                text:               qsTr("Load Shape File...")
+                onClicked:          shapeFileLoadDialog.openForLoad()
                 visible:            !mapPolygon.traceMode
             }
         }
