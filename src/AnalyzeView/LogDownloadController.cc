@@ -13,6 +13,8 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
+#include <algorithm>
+
 QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
 
 LogDownloadController::LogDownloadController(QObject *parent)
@@ -193,6 +195,12 @@ void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t
 void LogDownloadController::_receivedAllEntries()
 {
     _timer->stop();
+
+    // Reverse the model so the most recent logs appear first
+    QObjectList list = *_logEntriesModel->objectList();
+    std::reverse(list.begin(), list.end());
+    _logEntriesModel->swapObjectList(list);
+
     _setListing(false);
 }
 
