@@ -10,9 +10,9 @@ PX4TuningComponent {
             buttonText: qsTr("Multirotor")
             tuningPage: "PX4TuningComponentCopterAll.qml"
         }
-        //ListElement {
-        //    buttonText: qsTr("Fixed Wing")
-        //    tuningPage: "PX4TuningComponentPlaneAll.qml"
-        //}
+        ListElement {
+            buttonText: qsTr("Fixed Wing")
+            tuningPage: "PX4TuningComponentPlaneAll.qml"
+        }
     }
 }
