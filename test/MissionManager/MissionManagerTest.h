@@ -13,6 +13,7 @@ private slots:
     //void _testWriteFailureHandlingPX4(void);
     //void _testWriteFailureHandlingAPM(void);
     void _testReadFailureHandlingPX4(void);
+    void _testCancelReadTransactionPX4(void);
     //void _testReadFailureHandlingAPM(void);
     //void _testErrorAckFailureStrings(void);
 

@@ -539,6 +539,26 @@ void ParameterManager::_ftpDownloadProgress(float progress)
     }
 }
 
+void ParameterManager::skipParameterDownload()
+{
+    if (_parametersReady) {
+        return;
+    }
+
+    if (_tryftp) {
+        _vehicle->ftpManager()->cancelDownload();
+    }
+    _initialRequestTimeoutTimer.stop();
+    _waitingParamTimeoutTimer.stop();
+    _parametersReady = true;
+    _missingParameters = true;
+    _initialLoadComplete = true;
+    _waitingForDefaultComponent = false;
+    _setLoadProgress(1.0);
+    emit missingParametersChanged(_missingParameters);
+    emit parametersReadyChanged(_parametersReady);
+}
+
 void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
     const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();

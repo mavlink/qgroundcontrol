@@ -1,6 +1,8 @@
 #include "MissionManagerTest.h"
 #include "MissionManager.h"
 #include "MultiSignalSpy.h"
+#include "MockLinkMissionItemHandler.h"
+#include "Vehicle.h"
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
@@ -313,6 +315,37 @@ void MissionManagerTest::_testReadFailureHandlingPX4(void)
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
     _testReadFailureHandlingWorker();
+}
+
+void MissionManagerTest::_testCancelReadTransactionPX4(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    QVERIFY(_mockLink);
+    _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
+
+    QSignalSpy missionDownloadSpy(_vehicle, &Vehicle::missionDownloadInProgressChanged);
+    QVERIFY(missionDownloadSpy.isValid());
+
+    _missionManager->loadFromVehicle();
+
+    QVERIFY(_missionManager->readInProgress());
+    QVERIFY(_vehicle->missionDownloadInProgress());
+    QCOMPARE(_multiSpyMissionManager->checkOnlySignalByMask(inProgressChangedSignalMask), true);
+    _checkInProgressValues(true);
+
+    _multiSpyMissionManager->clearAllSignals();
+
+    _vehicle->cancelMissionDownload();
+    _multiSpyMissionManager->waitForSignalByIndex(inProgressChangedSignalIndex, _missionManagerSignalWaitTime);
+    QCOMPARE(_multiSpyMissionManager->checkSignalByMask(newMissionItemsAvailableSignalMask | inProgressChangedSignalMask), true);
+    _checkInProgressValues(false);
+    QVERIFY(!_vehicle->missionDownloadInProgress());
+
+    if (missionDownloadSpy.count() == 0) {
+        missionDownloadSpy.wait(1000);
+    }
+    QVERIFY(missionDownloadSpy.count() >= 1);
 }
 
 void MissionManagerTest::_testErrorAckFailureStrings(void)
