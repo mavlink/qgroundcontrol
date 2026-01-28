@@ -13,8 +13,8 @@ Item {
     property real size
     property bool showHeading:  false
 
-    property real _rollAngle:   vehicle ? vehicle.roll.rawValue  : 0
-    property real _pitchAngle:  vehicle ? vehicle.pitch.rawValue : 0
+    property real _rollAngle:   vehicle?.roll?.rawValue ?? 0
+    property real _pitchAngle:  vehicle?.pitch?.rawValue ?? 0
 
     width:  size
     height: size
@@ -118,7 +118,7 @@ Item {
         color:                      "white"
         visible:                    showHeading
         font.pointSize:             ScreenTools.smallFontPointSize
-        property string _headingString: vehicle ? vehicle.heading.rawValue.toFixed(0) : "OFF"
+        property string _headingString: vehicle?.heading?.rawValue?.toFixed(0) ?? "OFF"
         property string _headingString2: _headingString.length  === 1 ? "0" + _headingString  : _headingString
         property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
     }

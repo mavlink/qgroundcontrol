@@ -60,7 +60,7 @@ Item {
                 id:                     gimbalIdLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
-                text:                   activeGimbal ? activeGimbal.deviceId.rawValue : ""
+                text:                   activeGimbal?.deviceId?.rawValue ?? ""
                 color:                  qgcPal.windowTransparentText
                 visible:                multiGimbalSetup
             }

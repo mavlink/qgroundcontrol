@@ -10,12 +10,12 @@ Node{
     property double altitudeBias: 0
     property var gpsRef: QtPositioning.coordinate(0, 0, 0)
 
-    property double roll:        vehicle ? vehicle.roll.value : 0
-    property double pitch:        vehicle ? vehicle.pitch.value : 0
-    property double heading:        vehicle ? vehicle.heading.value : 0
+    property double roll:        vehicle?.roll?.value ?? 0
+    property double pitch:        vehicle?.pitch?.value ?? 0
+    property double heading:        vehicle?.heading?.value ?? 0
 
     property double pose_y: (geo2Enu.localCoordinate.y)?(geo2Enu.localCoordinate.y * 10) : (0)
-    property double pose_z: (vehicle.altitudeRelative.value)?((vehicle.altitudeRelative.value + altitudeBias) * 10 ): (0)
+    property double pose_z: (vehicle?.altitudeRelative?.value) ? ((vehicle.altitudeRelative.value + altitudeBias) * 10) : 0
     property double pose_x: (geo2Enu.localCoordinate.x)? (geo2Enu.localCoordinate.x * 10) : (0)
 
     property int _poseAnimationDuration: 200

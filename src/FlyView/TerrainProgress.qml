@@ -13,9 +13,9 @@ Rectangle {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
-    property real   _totalBlocks:   _activeVehicle ? _activeVehicle.terrain.blocksPending.rawValue + _activeVehicle.terrain.blocksLoaded.rawValue : 0
-    property real   _blocksLoaded:  _activeVehicle ? _activeVehicle.terrain.blocksLoaded.rawValue : 0
-    property real   _blocksPending: _activeVehicle ? _activeVehicle.terrain.blocksPending.rawValue : 0
+    property real   _totalBlocks:   (_activeVehicle?.terrain?.blocksPending?.rawValue ?? 0) + (_activeVehicle?.terrain?.blocksLoaded?.rawValue ?? 0)
+    property real   _blocksLoaded:  _activeVehicle?.terrain?.blocksLoaded?.rawValue ?? 0
+    property real   _blocksPending: _activeVehicle?.terrain?.blocksPending?.rawValue ?? 0
     property real   _pctComplete:   _activeVehicle && _totalBlocks ? _blocksLoaded / _totalBlocks : 0
 
     on_BlocksPendingChanged: {

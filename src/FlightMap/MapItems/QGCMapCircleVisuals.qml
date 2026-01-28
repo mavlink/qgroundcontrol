@@ -21,7 +21,7 @@ Item {
     property color  borderColor:              QGroundControl.globalPalette.mapMissionTrajectory
     property bool   centerDragHandleVisible:  true
     property bool   radiusLabelVisible:       false
-    property real   _radius:                  mapCircle ? mapCircle.radius.rawValue : 0
+    property real   _radius:                  mapCircle?.radius?.rawValue ?? 0
 
     property var    _circleComponent
     property var    _topRotationIndicatorComponent

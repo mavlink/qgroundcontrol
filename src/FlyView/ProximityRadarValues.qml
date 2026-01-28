@@ -8,24 +8,24 @@ QtObject {
 
     signal rotationValueChanged ///< Signalled when any available rotation value changes
 
-    property real   rotationNoneValue:      _distanceSensors ? _distanceSensors.rotationNone.value : NaN
-    property real   rotationYaw45Value:     _distanceSensors ? _distanceSensors.rotationYaw45.value : NaN
-    property real   rotationYaw90Value:     _distanceSensors ? _distanceSensors.rotationYaw90.value : NaN
-    property real   rotationYaw135Value:    _distanceSensors ? _distanceSensors.rotationYaw135.value : NaN
-    property real   rotationYaw180Value:    _distanceSensors ? _distanceSensors.rotationYaw180.value : NaN
-    property real   rotationYaw225Value:    _distanceSensors ? _distanceSensors.rotationYaw225.value : NaN
-    property real   rotationYaw270Value:    _distanceSensors ? _distanceSensors.rotationYaw270.value : NaN
-    property real   rotationYaw315Value:    _distanceSensors ? _distanceSensors.rotationYaw315.value : NaN
-    property real   maxDistance:            _distanceSensors ? _distanceSensors.maxDistance.value : NaN
+    property real   rotationNoneValue:      _distanceSensors?.rotationNone?.value ?? NaN
+    property real   rotationYaw45Value:     _distanceSensors?.rotationYaw45?.value ?? NaN
+    property real   rotationYaw90Value:     _distanceSensors?.rotationYaw90?.value ?? NaN
+    property real   rotationYaw135Value:    _distanceSensors?.rotationYaw135?.value ?? NaN
+    property real   rotationYaw180Value:    _distanceSensors?.rotationYaw180?.value ?? NaN
+    property real   rotationYaw225Value:    _distanceSensors?.rotationYaw225?.value ?? NaN
+    property real   rotationYaw270Value:    _distanceSensors?.rotationYaw270?.value ?? NaN
+    property real   rotationYaw315Value:    _distanceSensors?.rotationYaw315?.value ?? NaN
+    property real   maxDistance:            _distanceSensors?.maxDistance?.value ?? NaN
 
-    property string rotationNoneValueString:    _distanceSensors ? _distanceSensors.rotationNone.valueString : _noValueStr
-    property string rotationYaw45ValueString:   _distanceSensors ? _distanceSensors.rotationYaw45.valueString : _noValueStr
-    property string rotationYaw90ValueString:   _distanceSensors ? _distanceSensors.rotationYaw90.valueString : _noValueStr
-    property string rotationYaw135ValueString:  _distanceSensors ? _distanceSensors.rotationYaw135.valueString : _noValueStr
-    property string rotationYaw180ValueString:  _distanceSensors ? _distanceSensors.rotationYaw180.valueString : _noValueStr
-    property string rotationYaw225ValueString:  _distanceSensors ? _distanceSensors.rotationYaw225.valueString : _noValueStr
-    property string rotationYaw270ValueString:  _distanceSensors ? _distanceSensors.rotationYaw270.valueString : _noValueStr
-    property string rotationYaw315ValueString:  _distanceSensors ? _distanceSensors.rotationYaw315.valueString : _noValueStr
+    property string rotationNoneValueString:    _distanceSensors?.rotationNone?.valueString ?? _noValueStr
+    property string rotationYaw45ValueString:   _distanceSensors?.rotationYaw45?.valueString ?? _noValueStr
+    property string rotationYaw90ValueString:   _distanceSensors?.rotationYaw90?.valueString ?? _noValueStr
+    property string rotationYaw135ValueString:  _distanceSensors?.rotationYaw135?.valueString ?? _noValueStr
+    property string rotationYaw180ValueString:  _distanceSensors?.rotationYaw180?.valueString ?? _noValueStr
+    property string rotationYaw225ValueString:  _distanceSensors?.rotationYaw225?.valueString ?? _noValueStr
+    property string rotationYaw270ValueString:  _distanceSensors?.rotationYaw270?.valueString ?? _noValueStr
+    property string rotationYaw315ValueString:  _distanceSensors?.rotationYaw315?.valueString ?? _noValueStr
 
     property var    rgRotationValues:           [ rotationNoneValue, rotationYaw45Value, rotationYaw90Value, rotationYaw135Value, rotationYaw180Value, rotationYaw225Value, rotationYaw270Value, rotationYaw315Value ]
     property var    rgRotationValueStrings:     [ rotationNoneValueString, rotationYaw45ValueString, rotationYaw90ValueString, rotationYaw135ValueString, rotationYaw180ValueString, rotationYaw225ValueString, rotationYaw270ValueString, rotationYaw315ValueString ]
