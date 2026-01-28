@@ -52,6 +52,13 @@ void AM32EepromSchema::fetchSchema()
         return;
     }
 
+    // TODO: Remove this debug block - forces built-in schema for testing
+    qCDebug(AM32EepromLog) << "DEBUG: Skipping download, using built-in schema";
+    if (!loadFromFile(QLatin1String(localSchemaPath))) {
+        emit schemaLoadError(QStringLiteral("Failed to load built-in schema"));
+    }
+    return;
+
     _fetching = true;
     qCDebug(AM32EepromLog) << "Fetching AM32 schema from" << schemaUrl;
 
@@ -68,7 +75,7 @@ void AM32EepromSchema::_onDownloadComplete(const QString& remoteFile, const QStr
 
     if (!errorMsg.isEmpty()) {
         qCWarning(AM32EepromLog) << "Schema download failed:" << errorMsg << "- trying built-in schema";
-        if (!loadFromFile(QStringLiteral(builtinSchemaPath))) {
+        if (!loadFromFile(QLatin1String(localSchemaPath))) {
             emit schemaLoadError(QStringLiteral("Failed to download schema and built-in fallback failed: %1").arg(errorMsg));
         }
         return;
@@ -78,7 +85,7 @@ void AM32EepromSchema::_onDownloadComplete(const QString& remoteFile, const QStr
 
     if (!loadFromFile(localFile)) {
         qCWarning(AM32EepromLog) << "Downloaded schema invalid, trying built-in";
-        if (!loadFromFile(QStringLiteral(builtinSchemaPath))) {
+        if (!loadFromFile(QLatin1String(localSchemaPath))) {
             // Error already emitted by loadFromFile
         }
     }

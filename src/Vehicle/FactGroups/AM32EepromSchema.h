@@ -144,7 +144,7 @@ public:
     static constexpr const char* schemaUrl = "https://am32.ca/eeprom.json";
 
     /// Built-in schema resource path (fallback for offline use)
-    static constexpr const char* builtinSchemaPath = ":/AM32/eeprom.json";
+    static constexpr const char* localSchemaPath = ":/AM32/eeprom.json";
 
     /// Cache expiration time in seconds (7 days)
     static constexpr int cacheMaxAgeSec = 7 * 24 * 3600;
