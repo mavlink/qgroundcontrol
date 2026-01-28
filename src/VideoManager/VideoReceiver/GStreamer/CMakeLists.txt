@@ -54,14 +54,21 @@ if(TARGET gstqml6gl)
     # Platform-Specific GStreamer Installation
     # ============================================================================
 
+    # Load shared GStreamer install configuration
+    include(GStreamerConfig)
+
     if(LINUX)
         # ----------------------------------------------------------------------------
         # Linux: Install GStreamer Plugins and Libraries
         # ----------------------------------------------------------------------------
+        gstreamer_install_plugins(
+            SOURCE_DIR "${GSTREAMER_PLUGIN_PATH}"
+            DEST_DIR "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0"
+            EXTENSION "so"
+            PREFIX "libgst"
+        )
         install(
-            DIRECTORY
-                "${GSTREAMER_PLUGIN_PATH}"
-                "${GSTREAMER_LIB_PATH}/gio"
+            DIRECTORY "${GSTREAMER_LIB_PATH}/gio"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             FILES_MATCHING
                 PATTERN "*.so"
@@ -82,11 +89,10 @@ if(TARGET gstqml6gl)
         # ----------------------------------------------------------------------------
         # Windows: Install GStreamer DLLs and Plugins
         # ----------------------------------------------------------------------------
-        install(
-            DIRECTORY "${GStreamer_ROOT_DIR}/bin/"
-            DESTINATION "${CMAKE_INSTALL_BINDIR}"
-            FILES_MATCHING
-                PATTERN "*.dll"
+        gstreamer_install_libs(
+            SOURCE_DIR "${GStreamer_ROOT_DIR}/bin"
+            DEST_DIR "${CMAKE_INSTALL_BINDIR}"
+            EXTENSION "dll"
         )
         install(
             DIRECTORY "${GSTREAMER_LIB_PATH}/gio/modules/"
@@ -94,11 +100,11 @@ if(TARGET gstqml6gl)
             FILES_MATCHING
                 PATTERN "*.dll"
         )
-        install(
-            DIRECTORY "${GSTREAMER_PLUGIN_PATH}/"
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0"
-            FILES_MATCHING
-                PATTERN "*.dll"
+        gstreamer_install_plugins(
+            SOURCE_DIR "${GSTREAMER_PLUGIN_PATH}"
+            DEST_DIR "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0"
+            EXTENSION "dll"
+            PREFIX "gst"
         )
         install(
             DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"

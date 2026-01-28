@@ -293,18 +293,18 @@ endif()
 # Plugin & Dependency Configuration
 # ============================================================================
 
-if(GStreamer_USE_STATIC_LIBS)
-    set(GSTREAMER_EXTRA_DEPS
-        gstreamer-base-1.0
-        gstreamer-video-1.0
-        gstreamer-gl-1.0
-        gstreamer-gl-prototypes-1.0
-        gstreamer-rtsp-1.0
-        # gstreamer-gl-egl-1.0
-        # gstreamer-gl-wayland-1.0
-        # gstreamer-gl-x11-1.0
-    )
+set(GSTREAMER_EXTRA_DEPS
+    gstreamer-base-1.0
+    gstreamer-video-1.0
+    gstreamer-gl-1.0
+    gstreamer-gl-prototypes-1.0
+    gstreamer-rtsp-1.0
+    # gstreamer-gl-egl-1.0
+    # gstreamer-gl-wayland-1.0
+    # gstreamer-gl-x11-1.0
+)
 
+if(GStreamer_USE_STATIC_LIBS)
     set(GSTREAMER_PLUGINS
         coreelements
         dav1d
