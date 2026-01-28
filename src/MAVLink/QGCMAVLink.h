@@ -131,9 +131,9 @@ public:
     Q_ENUM(MavlinkSysStatus)
 
     enum GripperActions {
-        GripperActionOpen     = GRIPPER_ACTION_RELEASE,
-        GripperActionClose    = GRIPPER_ACTION_GRAB,
-        GripperActionStop     = GRIPPER_ACTION_HOLD,
+        GripperActionRelease  = GRIPPER_ACTION_RELEASE,
+        GripperActionGrab     = GRIPPER_ACTION_GRAB,
+        GripperActionHold     = GRIPPER_ACTION_HOLD,
         GripperOptionInvalid  = GRIPPER_ACTIONS_ENUM_END,
     };
     Q_ENUM(GripperActions)
