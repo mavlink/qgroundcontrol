@@ -63,7 +63,6 @@ Item {
         model: 4
 
         Rectangle {
-            id:                 majorTick
             x:                  size / 2
             width:              1
             height:             ScreenTools.defaultFontPixelHeight * 0.5
@@ -82,7 +81,6 @@ Item {
         model: 8
 
         Rectangle {
-            id:                 majorTick
             x:                  size / 2
             y:                  _margin
             width:              1

@@ -26,9 +26,9 @@ Rectangle {
                                             ) + ScreenTools.defaultFontPixelHeight
     property real  contentHeight:           Math.min(
                                                 maximumHeight,
-                                                topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.spacing * ( topRightPanelColumnLayout.children.length - 1)
+                                                topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.anchors.margins * 2
                                             )
-    property real  minimumHeight:           selectedVehiclesLabel.height + swipeViewContainer.height
+    property real  minimumHeight:           swipeViewContainer.height
     property real  maximumHeight
 
     QGCPalette { id: qgcPal }
@@ -40,19 +40,8 @@ Rectangle {
     ColumnLayout {
         id:                 topRightPanelColumnLayout
         anchors.fill:       parent
-        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-        spacing:            ScreenTools.defaultFontPixelHeight / 2
-
-        QGCLabel {
-            id: selectedVehiclesLabel
-            text: {
-                let ids = Array.from({length: selectedVehicles.count}, (_, i) =>
-                    selectedVehicles.get(i).id
-                ).sort((a, b) => a - b)
-                .join(", ")
-                return qsTr("Selected: ") + ids
-            }
-        }
+        anchors.margins:    topRightPanel.color.a ? ScreenTools.defaultFontPixelHeight / 2 : 0
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.75 // _layoutMargin
 
         MultiVehicleList {
             id:                    multiVehicleList
@@ -122,7 +111,13 @@ Rectangle {
                         implicitWidth:          Math.max(selectionRowLayout.width, actionRowLayout.width) + ScreenTools.defaultFontPixelHeight * 4
 
                         QGCLabel {
-                            text:               qsTr("Multi Vehicle Selection")
+                            text: {
+                                let ids = Array.from({length: selectedVehicles.count}, (_, i) =>
+                                    selectedVehicles.get(i).id
+                                ).sort((a, b) => a - b)
+                                .join(", ")
+                                return qsTr("Vehicles Selected: ") + (ids ? ids : "-")
+                            }
                             Layout.alignment:   Qt.AlignHCenter
                         }
 
