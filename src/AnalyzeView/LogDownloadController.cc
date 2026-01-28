@@ -196,10 +196,12 @@ void LogDownloadController::_receivedAllEntries()
 {
     _timer->stop();
 
-    // Reverse the model so the most recent logs appear first
-    QObjectList list = *_logEntriesModel->objectList();
-    std::reverse(list.begin(), list.end());
-    _logEntriesModel->swapObjectList(list);
+    if (_requestingLogEntries) {
+        // Reverse the model so the most recent logs appear first
+        QObjectList list = *_logEntriesModel->objectList();
+        std::reverse(list.begin(), list.end());
+        _logEntriesModel->swapObjectList(list);
+    }
 
     _setListing(false);
 }
