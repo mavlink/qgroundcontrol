@@ -81,7 +81,8 @@ public:
     bool                isSimpleItem                (void) const final { return false; }
     bool                isStandaloneCoordinate      (void) const final { return false; }
     bool                specifiesAltitudeOnly       (void) const final { return false; }
-    QGeoCoordinate      coordinate                  (void) const final { return _coordinate; }
+    QGeoCoordinate      coordinate                  (void) const final { return entryCoordinate(); }
+    QGeoCoordinate      entryCoordinate             (void) const final { return _entryCoordinate; }
     QGeoCoordinate      exitCoordinate              (void) const final { return _exitCoordinate; }
     int                 sequenceNumber              (void) const final { return _sequenceNumber; }
     double              specifiedFlightSpeed        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
@@ -96,6 +97,7 @@ public:
     void                setDirty                    (bool dirty) final;
     void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
     void                setSequenceNumber           (int sequenceNumber) final;
+    double              editableAlt                 (void) const final;
     double              amslEntryAlt                (void) const final;
     double              amslExitAlt                 (void) const final;
     double              minAMSLAltitude             (void) const final;
@@ -146,7 +148,7 @@ protected:
     void    _recalcComplexDistance          (void);
 
     int                 _sequenceNumber = 0;
-    QGeoCoordinate      _coordinate;
+    QGeoCoordinate      _entryCoordinate;
     QGeoCoordinate      _exitCoordinate;
     QGCMapPolygon       _surveyAreaPolygon;
 

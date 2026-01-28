@@ -42,9 +42,10 @@ public:
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate             NOTIFY coordinateChanged)                           ///< Does not include altitude
     Q_PROPERTY(double           amslEntryAlt                        READ amslEntryAlt                                                       NOTIFY amslEntryAltChanged)
     Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                    NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
+    Q_PROPERTY(QGeoCoordinate   entryCoordinate                     READ entryCoordinate                                                    NOTIFY entryCoordinateChanged)                      ///< Does not include altitude
     Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                     NOTIFY exitCoordinateChanged)                       ///< Does not include altitude
     Q_PROPERTY(double           amslExitAlt                         READ amslExitAlt                                                        NOTIFY amslExitAltChanged)
-    Q_PROPERTY(bool             exitCoordinateSameAsEntry           READ exitCoordinateSameAsEntry                                          NOTIFY exitCoordinateSameAsEntryChanged)            ///< true: exitCoordinate and coordinate are the same value
+    Q_PROPERTY(bool             exitCoordinateSameAsEntry           READ exitCoordinateSameAsEntry                                          NOTIFY exitCoordinateSameAsEntryChanged)            ///< true: entryCoordinate and exitCoordinate are the same value
     Q_PROPERTY(QString          commandDescription                  READ commandDescription                                                 NOTIFY commandDescriptionChanged)
     Q_PROPERTY(QString          commandName                         READ commandName                                                        NOTIFY commandNameChanged)
     Q_PROPERTY(QString          abbreviation                        READ abbreviation                                                       NOTIFY abbreviationChanged)
@@ -140,7 +141,9 @@ public:
     virtual QString         commandName             (void) const = 0;
     virtual QString         abbreviation            (void) const = 0;
     virtual QGeoCoordinate  coordinate              (void) const = 0;
+    virtual QGeoCoordinate  entryCoordinate         (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
+    virtual double          editableAlt             (void) const = 0;
     virtual double          amslEntryAlt            (void) const = 0;
     virtual double          amslExitAlt             (void) const = 0;
     virtual int             sequenceNumber          (void) const = 0;
@@ -202,6 +205,7 @@ signals:
     void commandNameChanged             (void);
     void abbreviationChanged            (void);
     void coordinateChanged              (const QGeoCoordinate& coordinate);
+    void entryCoordinateChanged         (const QGeoCoordinate& entryCoordinate);
     void exitCoordinateChanged          (const QGeoCoordinate& exitCoordinate);
     void dirtyChanged                   (bool dirty);
     void distanceChanged                (double distance);

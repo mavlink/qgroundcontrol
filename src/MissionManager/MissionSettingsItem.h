@@ -67,7 +67,8 @@ public:
     QString         commandName                 (void) const final { return tr("Mission Settings"); }
     QString         abbreviation                (void) const final;
     QGeoCoordinate  coordinate                  (void) const final { return _plannedHomePositionCoordinate; } // Includes altitude
-    QGeoCoordinate  exitCoordinate              (void) const final { return _plannedHomePositionCoordinate; }
+    QGeoCoordinate  entryCoordinate             (void) const final { return coordinate(); }
+    QGeoCoordinate  exitCoordinate              (void) const final { return coordinate(); }
     int             sequenceNumber              (void) const final { return _sequenceNumber; }
     double          specifiedGimbalYaw          (void) final;
     double          specifiedGimbalPitch        (void) final;
@@ -80,10 +81,11 @@ public:
     void            setCoordinate               (const QGeoCoordinate& coordinate) final;   // Should only be called if the end user is moving
     void            setSequenceNumber           (int sequenceNumber) final;
     void            save                        (QJsonArray&  missionItems) final;
-    double          amslEntryAlt                (void) const final { return _plannedHomePositionCoordinate.altitude(); }
-    double          amslExitAlt                 (void) const final { return amslEntryAlt(); }
-    double          minAMSLAltitude             (void) const final { return amslEntryAlt(); }
-    double          maxAMSLAltitude             (void) const final { return amslEntryAlt(); }
+    double          editableAlt                 (void) const final { return _plannedHomePositionAltitudeFact.cookedValue().toDouble(); }
+    double          amslEntryAlt                (void) const final { return editableAlt(); }
+    double          amslExitAlt                 (void) const final { return editableAlt(); }
+    double          minAMSLAltitude             (void) const final { return editableAlt(); }
+    double          maxAMSLAltitude             (void) const final { return editableAlt(); }
 
 signals:
     void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);

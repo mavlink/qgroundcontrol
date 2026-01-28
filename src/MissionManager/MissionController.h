@@ -3,6 +3,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
@@ -175,6 +176,48 @@ public:
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     ///     @param force - true: reset internals even if specified item is already selected
     Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);
+
+    /// Repositions all mission items which specify a coordinate around a new
+    /// home coordinate. Requires a valid planned home position; otherwise the
+    /// mission is not modified and a warning is logged.
+    /// @param newHome New coordinate for the home item
+    /// @param repositionTakeoffItems If true, items identified as takeoff items
+    ///                               (isTakeoffItem) will be repositioned
+    /// @param repositionLandingItems If true, items identified as landing items
+    ///                               (isLandCommand) will be repositioned
+    Q_INVOKABLE void repositionMission(const QGeoCoordinate& newHome,
+                                       bool repositionTakeoffItems = true,
+                                       bool repositionLandingItems = true);
+
+    /// Offsets all mission items which specify a coordinate by the specified
+    /// ENU amounts in meters. Requires a valid planned home position; otherwise
+    /// the mission is not modified and a warning is logged.
+    /// @param eastMeters Distance to offset items to the east, in meters
+    /// @param northMeters Distance to offset items to the north, in meters
+    /// @param upMeters Distance to offset items upwards, in meters
+    /// @param offsetTakeoffItems If true, items identified as takeoff items
+    ///                           (isTakeoffItem) will be offset
+    /// @param offsetLandingItems If true, items identified as landing items
+    ///                           (isLandCommand) will be offset
+    Q_INVOKABLE void offsetMission(double eastMeters,
+                                   double northMeters,
+                                   double upMeters = 0.0,
+                                   bool offsetTakeoffItems = false,
+                                   bool offsetLandingItems = false);
+
+    /// Rotates all mission items which specify a coordinate around the up axis
+    /// of the home position. Complex items are rotated by moving their
+    /// reference coordinate: their geometry and orientation are not modified.
+    /// Requires a valid planned home position; otherwise the mission is not
+    /// modified and a warning is logged.
+    /// @param degreesCW Angle to rotate items by, in degrees clockwise
+    /// @param rotateTakeoffItems If true, items identified as takeoff items
+    ///                           (isTakeoffItem) will be rotated
+    /// @param rotateLandingItems If true, items identified as landing items
+    ///                           (isLandCommand) will be rotated
+    Q_INVOKABLE void rotateMission(double degreesCW,
+                                   bool rotateTakeoffItems = false,
+                                   bool rotateLandingItems = false);
 
     enum SendToVehiclePreCheckState {
         SendToVehiclePreCheckStateOk,                       // Ok to send plan to vehicle
