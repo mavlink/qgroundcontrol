@@ -15,28 +15,25 @@ public:
     // Note: forLoad = true indicates that TakeoffMissionItem::load will be called onthe item
     TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
     TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
-    TakeoffMissionItem(const MissionItem& missionItem,  PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
+    TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad);
 
-    Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE setLaunchCoordinate               NOTIFY launchCoordinateChanged)
-    Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE setLaunchTakeoffAtSameLocation    NOTIFY launchTakeoffAtSameLocationChanged)
+    Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE _setLaunchCoordinate              NOTIFY launchCoordinateChanged)
+    Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE _setLaunchTakeoffAtSameLocation   NOTIFY launchTakeoffAtSameLocationChanged)
 
-    QGeoCoordinate  launchCoordinate            (void) const;
-    bool            launchTakeoffAtSameLocation (void) const { return _launchTakeoffAtSameLocation; }
-
-    void setLaunchCoordinate            (const QGeoCoordinate& launchCoordinate);
-    void setLaunchTakeoffAtSameLocation (bool launchTakeoffAtSameLocation);
+    QGeoCoordinate launchCoordinate(void) const;
+    bool launchTakeoffAtSameLocation(void) const { return _launchTakeoffAtSameLocation; }
 
     static bool isTakeoffCommand(MAV_CMD command);
 
     ~TakeoffMissionItem();
 
     // Overrides from VisualMissionItem
-    void            setCoordinate           (const QGeoCoordinate& coordinate) override;
-    bool            isTakeoffItem           (void) const final { return true; }
-    double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    QString         mapVisualQML            (void) const override { return QStringLiteral("TakeoffItemMapVisual.qml"); }
+    void setCoordinate(const QGeoCoordinate& coordinate) override;
+    bool isTakeoffItem(void) const final { return true; }
+    double specifiedFlightSpeed(void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double specifiedGimbalYaw(void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double specifiedGimbalPitch(void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    QString mapVisualQML(void) const override { return QStringLiteral("TakeoffItemMapVisual.qml"); }
 
     // Overrides from SimpleMissionItem
     bool load(QTextStream &loadStream) final;
@@ -45,13 +42,16 @@ public:
     //void setDirty(bool dirty) final;
 
 signals:
-    void launchCoordinateChanged            (const QGeoCoordinate& launchCoordinate);
-    void launchTakeoffAtSameLocationChanged (bool launchTakeoffAtSameLocation);
+    void launchCoordinateChanged(const QGeoCoordinate& launchCoordinate);
+    void launchTakeoffAtSameLocationChanged(bool launchTakeoffAtSameLocation);
 
 private:
     void _init(bool forLoad);
     void _initLaunchTakeoffAtSameLocation(void);
+    void _setLaunchCoordinate(const QGeoCoordinate& launchCoordinate);
+    void _setLaunchTakeoffAtSameLocation(bool launchTakeoffAtSameLocation);
 
-    MissionSettingsItem*    _settingsItem;
-    bool                    _launchTakeoffAtSameLocation = true;
+
+    MissionSettingsItem* _settingsItem;
+    bool _launchTakeoffAtSameLocation = true;
 };
