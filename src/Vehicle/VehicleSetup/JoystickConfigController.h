@@ -34,6 +34,7 @@ private:
     // Overrides from RemoteControlCalibrationController
     void _saveStoredCalibrationValues() override;
     void _readStoredCalibrationValues() override;
+    bool _stickFunctionEnabled(StickFunction stickFunction) override;
 
     Joystick* _joystick = nullptr;
 };

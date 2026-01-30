@@ -1812,13 +1812,16 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
-    if (!JoystickManager::instance()->joystickEnabledForVehicle(this)) {
+    bool isActiveVehicle = (MultiVehicleManager::instance()->activeVehicle() == this);
+    bool joystickEnabled = isActiveVehicle && JoystickManager::instance()->activeJoystickEnabledForActiveVehicle();
+    if (!joystickEnabled) {
         sendJoystickDataThreadSafe(
                     static_cast<float>(roll),
                     static_cast<float>(pitch),
                     static_cast<float>(yaw),
                     static_cast<float>(thrust),
-                    0, 0, NAN, NAN);
+                    0, 0, // buttons
+                    NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN); // extension values
     }
 }
 
@@ -4052,7 +4055,7 @@ void Vehicle::clearAllParamMapRC(void)
     }
 }
 
-void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw)
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -4066,24 +4069,26 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
 
     mavlink_message_t message;
 
+    float axesScaling = 1.0 * 1000.0;
+    uint8_t extensions = 0;
+
     // Incoming values are in the range -1:1
-    float axesScaling =         1.0 * 1000.0;
     float newRollCommand =      roll * axesScaling;
     float newPitchCommand  =    pitch * axesScaling;
     float newYawCommand    =    yaw * axesScaling;
     float newThrustCommand =    thrust * axesScaling;
-    float newGimbalPitch   =    gimbalPitch * axesScaling;
-    float newGimbalYaw     =    gimbalYaw * axesScaling;
-    uint8_t extensions     =    0;
 
-    if (std::isfinite(gimbalPitch)) {
-        extensions |= 1;
+    // Scale and set extension bits/values
+    float incomingExtensionValues[] = { pitchExtension, rollExtension, aux1, aux2, aux3, aux4, aux5, aux6 };
+    int16_t outgoingExtensionValues[std::size(incomingExtensionValues)];
+    for (size_t i = 0; i < std::size(incomingExtensionValues); i++) {
+        int16_t scaledValue = 0;
+        if (!qIsNaN(incomingExtensionValues[i])) {
+            scaledValue = static_cast<int16_t>(incomingExtensionValues[i] * axesScaling);
+            extensions |= (1 << i);
+        }
+        outgoingExtensionValues[i] = scaledValue;
     }
-
-    if (std::isfinite(gimbalYaw)) {
-        extensions |= 2;
-    }
-
     mavlink_msg_manual_control_pack_chan(
         static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
         static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
@@ -4096,9 +4101,14 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         static_cast<int16_t>(newYawCommand),
         buttons, buttons2,
         extensions,
-        static_cast<int16_t>(newGimbalPitch),
-        static_cast<int16_t>(newGimbalYaw),
-        0, 0, 0, 0, 0, 0
+        outgoingExtensionValues[0],
+        outgoingExtensionValues[1],
+        outgoingExtensionValues[2],
+        outgoingExtensionValues[3],
+        outgoingExtensionValues[4],
+        outgoingExtensionValues[5],
+        outgoingExtensionValues[6],
+        outgoingExtensionValues[7]
     );
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
