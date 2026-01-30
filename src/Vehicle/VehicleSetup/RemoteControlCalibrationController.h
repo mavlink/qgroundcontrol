@@ -145,6 +145,7 @@ protected:
     int _calRoughCenterDelta; ///< Delta around center point which is considered to be roughly centered
     int _calMoveDelta;        ///< Amount of delta past center which is considered stick movement
     int _calSettleDelta;      ///< Amount of delta which is considered no stick movement
+    int _stickDetectSettleMSecs = 500;      ///< Time in ms stick must be stable before detection completes
 
     int _chanCount = 0;                     ///< Number of actual rc channels available
     static constexpr int _chanMinimum = 4;  ///< Minimum numner of channels required to run
@@ -257,7 +258,7 @@ private:
 
     static constexpr int _updateInterval = 150;             ///< Interval for timer which updates radio channel widgets
 
-    static constexpr int _stickDetectSettleMSecs = 500;
+    // _stickDetectSettleMSecs moved to protected section as configurable member variable
 
     static constexpr const char *_settingsGroup = "RadioCalibration";
     static constexpr const char *_settingsKeyTransmitterMode = "TransmitterMode";

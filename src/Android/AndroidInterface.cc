@@ -4,7 +4,7 @@
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
 
-QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "qgc.android.src.androidinterface")
+QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
 
 namespace AndroidInterface
 {

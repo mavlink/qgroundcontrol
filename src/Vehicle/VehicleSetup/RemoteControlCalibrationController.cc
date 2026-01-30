@@ -444,6 +444,9 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFu
 
     if (_stickDetectChannel == _chanMax) {
         // We have not detected enough movement on a channel yet
+        // Note: We intentionally require movement here (not just being at extreme) because
+        // this function is called for ALL channels, and some (like triggers) may rest at
+        // extreme positions. Requiring movement ensures we detect the correct channel.
 
         if (abs(_channelValueSave[channel] - value) > _calMoveDelta) {
             // Stick has moved far enough to consider it as being selected for the function
@@ -452,6 +455,7 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFu
 
             // Setup up to detect stick being pegged to min or max value
             _stickDetectChannel = channel;
+            _stickDetectValue = value;
         }
     } else if (channel == _stickDetectChannel) {
         if (_stickSettleComplete(value)) {
@@ -489,15 +493,30 @@ void RemoteControlCalibrationController::_inputStickMin(StickFunction stickFunct
 
     if (_stickDetectChannel == _chanMax) {
         // Setup up to detect stick being pegged to extreme position
+        // Check both: 1) significant movement from saved position, AND 2) value is in the expected half of range
+        const bool movedSignificantly = abs(_channelValueSave[channel] - value) > _calMoveDelta;
+
         if (_rgChannelInfo[channel].channelReversed) {
-            if (value > _calCenterPoint + _calMoveDelta) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait";
+            // Reversed channel: "min" is actually in the positive direction
+            // Also check if already at the max extreme (user moved stick before step started)
+            const bool alreadyAtExtreme = abs(value - _calValidMaxValue) < _calSettleDelta;
+
+            if ((movedSignificantly && value > _calCenterPoint) || alreadyAtExtreme) {
+                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait"
+                                                               << "movedSignificantly:" << movedSignificantly
+                                                               << "alreadyAtExtreme:" << alreadyAtExtreme;
                 _stickDetectChannel = channel;
                 _stickDetectValue = value;
             }
         } else {
-            if (value < _calCenterPoint - _calMoveDelta) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait";
+            // Normal channel: "min" is in the negative direction
+            // Also check if already at the min extreme (user moved stick before step started)
+            const bool alreadyAtExtreme = abs(value - _calValidMinValue) < _calSettleDelta;
+
+            if ((movedSignificantly && value < _calCenterPoint) || alreadyAtExtreme) {
+                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait"
+                                                               << "movedSignificantly:" << movedSignificantly
+                                                               << "alreadyAtExtreme:" << alreadyAtExtreme;
                 _stickDetectChannel = channel;
                 _stickDetectValue = value;
             }

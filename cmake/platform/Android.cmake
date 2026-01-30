@@ -150,4 +150,9 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME}
     NAME android.permission.MANAGE_EXTERNAL_STORAGE
 )
 
+# Joystick
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.VIBRATE
+)
+
 message(STATUS "QGC: Android platform configuration applied")

@@ -165,3 +165,5 @@ Qt*-linux*.tar.*
 
 # Vale prose linter (downloaded via `vale sync`)
 .github/styles/
+.gemini/
+.pytest_cache/

@@ -24,7 +24,7 @@ Item {
     property bool   calculateYAxisMutex:    true
     property real   stickPositionX:         _centerXY
     property real   stickPositionY:         !yAxisReCenter ? height : height / 2
-    property bool   alredyCreated:          false
+    property bool   alreadyCreated:          false
 
     QGCMapPalette { id: mapPal }
 
@@ -38,15 +38,15 @@ Item {
             yAxis = yAxisPositiveRangeOnly ? 0.5 : 0
             stickPositionY = _joyRoot.height / 2
         }
-        if( !alredyCreated && !yAxisReCenter ) {
+        if( !alreadyCreated && !yAxisReCenter ) {
             yAxis = yAxisPositiveRangeOnly ? 0 : -1
             stickPositionY = _joyRoot.height
         }
-        if ( alredyCreated && !yAxisReCenter ){
+        if ( alreadyCreated && !yAxisReCenter ){
             yAxis = yAxisPositiveRangeOnly ? 0.5 : 0
             stickPositionY = _joyRoot.height / 2
         }
-        alredyCreated = true
+        alreadyCreated = true
         return yAxis
     }
 

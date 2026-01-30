@@ -4,25 +4,33 @@ import java.io.File;
 import java.util.List;
 import java.lang.reflect.Method;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
-import android.net.wifi.WifiManager;
-import android.provider.Settings;
-import android.util.Log;
-import android.view.WindowManager;
-import android.app.Activity;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.provider.Settings;
+import android.util.Log;
+import android.view.InputDevice;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.WindowManager;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.qtproject.qt.android.bindings.QtActivity;
+
+import org.libsdl.app.SDL;
+import org.libsdl.app.SDLControllerManager;
+import org.libsdl.app.HIDDeviceManager;
 
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
@@ -33,6 +41,7 @@ public class QGCActivity extends QtActivity {
 
     private PowerManager.WakeLock m_wakeLock;
     private WifiManager.MulticastLock m_wifiMulticastLock;
+    private HIDDeviceManager m_hidDeviceManager;
 
     public QGCActivity() {
         m_instance = this;
@@ -57,11 +66,63 @@ public class QGCActivity extends QtActivity {
         setupMulticastLock();
 
         QGCUsbSerialManager.initialize(this);
+
+        // Initialize SDL for joystick support
+        initializeSDL();
+    }
+
+    /**
+     * Initializes SDL for joystick/gamepad support.
+     * SDL handles controller input through its Java layer (SDLControllerManager)
+     * which communicates with the native SDL library.
+     */
+    private void initializeSDL() {
+        try {
+            // Load the SDL shared library - this triggers SDL's JNI_OnLoad
+            System.loadLibrary("SDL3");
+
+            // Setup JNI bindings and initialize controller manager
+            SDL.setupJNI();
+            SDL.initialize();
+
+            // Set SDL context to this activity AFTER initialize()
+            // (initialize() calls setContext(null) to clear previous state)
+            SDL.setContext(this);
+
+            // Acquire HIDDeviceManager for USB HID and Bluetooth controller support
+            m_hidDeviceManager = HIDDeviceManager.acquire(this);
+
+            Log.i(TAG, "SDL initialized for joystick support");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "SDL3 library not found: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to initialize SDL: " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (m_hidDeviceManager != null) {
+            m_hidDeviceManager.setFrozen(true);
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (m_hidDeviceManager != null) {
+            m_hidDeviceManager.setFrozen(false);
+        }
     }
 
     @Override
     protected void onDestroy() {
         try {
+            if (m_hidDeviceManager != null) {
+                HIDDeviceManager.release(m_hidDeviceManager);
+                m_hidDeviceManager = null;
+            }
             releaseMulticastLock();
             releaseWakeLock();
             QGCUsbSerialManager.cleanup(this);
@@ -222,6 +283,66 @@ public class QGCActivity extends QtActivity {
             // Below Android 6.0, permissions are granted at install time
             return true;
         }
+    }
+
+    // =========================================================================
+    // Input Event Forwarding to SDL
+    // =========================================================================
+
+    /**
+     * Forward joystick/gamepad motion events to SDL
+     */
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (isJoystickEvent(event)) {
+            if (SDLControllerManager.handleJoystickMotionEvent(event)) {
+                return true;
+            }
+        }
+        return super.dispatchGenericMotionEvent(event);
+    }
+
+    /**
+     * Forward joystick/gamepad key events to SDL
+     */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (isJoystickButton(event)) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (SDLControllerManager.onNativePadDown(event.getDeviceId(), event.getKeyCode())) {
+                    return true;
+                }
+            } else if (event.getAction() == KeyEvent.ACTION_UP) {
+                if (SDLControllerManager.onNativePadUp(event.getDeviceId(), event.getKeyCode())) {
+                    return true;
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    /**
+     * Check if the motion event is from a joystick
+     */
+    private boolean isJoystickEvent(MotionEvent event) {
+        int source = event.getSource();
+        return (source & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK ||
+               (source & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD;
+    }
+
+    /**
+     * Check if the key event is a joystick button
+     */
+    private boolean isJoystickButton(KeyEvent event) {
+        int source = event.getSource();
+        if ((source & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD ||
+            (source & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK) {
+            return true;
+        }
+
+        // Also check for known gamepad buttons
+        int keyCode = event.getKeyCode();
+        return KeyEvent.isGamepadButton(keyCode);
     }
 
     // Native C++ functions
