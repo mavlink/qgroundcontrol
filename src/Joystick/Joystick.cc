@@ -1293,9 +1293,9 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
         { _buttonActionGimbalYawLock,           ButtonEventDownTransition,  [this]() { emit gimbalYawLock(true); } },
         { _buttonActionGimbalYawFollow,         ButtonEventDownTransition,  [this]() { emit gimbalYawLock(false); } },
         { _buttonActionEmergencyStop,           ButtonEventDownTransition,  [this]() { emit emergencyStop(); } },
-        { _buttonActionGripperClose,            ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionClose); } },
-        { _buttonActionGripperOpen,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionOpen); } },
-        { _buttonActionGripperStop,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionStop); } },
+        { _buttonActionGripperGrab,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionGrab); } },
+        { _buttonActionGripperRelease,          ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionRelease); } },
+        { _buttonActionGripperHold,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionHold); } },
         { _buttonActionLandingGearDeploy,       ButtonEventDownTransition,  [this]() { emit landingGearDeploy(); } },
         { _buttonActionLandingGearRetract,      ButtonEventDownTransition,  [this]() { emit landingGearRetract(); } },
         { _buttonActionMotorInterlockEnable,    ButtonEventDownTransition,  [this]() { emit motorInterlock(true); } },
@@ -1404,9 +1404,9 @@ void Joystick::_buildActionList(Vehicle *vehicle)
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalYawLock, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalYawFollow, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionEmergencyStop, false));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperClose, false));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperOpen, false));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperStop, false));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperGrab, false));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperRelease, false));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperHold, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearDeploy, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearRetract, false));
 #ifndef QGC_NO_ARDUPILOT_DIALECT
