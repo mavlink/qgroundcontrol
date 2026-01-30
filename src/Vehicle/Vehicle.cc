@@ -2099,29 +2099,78 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
     if (!centerCoord.isValid()) {
         return;
     }
-    // Sanity check Ardupilot. Max altitude processed is 83000
-    if (apmFirmware()) {
-        if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000  )) {
-            return;
-        }
-    }
     if (!roiModeSupported()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
     }
+
+    if (px4Firmware()) {
+        // PX4 ignores the coordinate frame in COMMAND_INT and treats the altitude as AMSL.
+        // The map click provides no altitude, so we query terrain to get a proper AMSL altitude.
+        if (_roiTerrainAtCoordinateQuery) {
+            disconnect(_roiTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_roiTerrainReceived);
+            _roiTerrainAtCoordinateQuery = nullptr;
+        }
+
+        _roiCoordinate = centerCoord;
+
+        _roiTerrainAtCoordinateQuery = new TerrainAtCoordinateQuery(true /* autoDelete */);
+        connect(_roiTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this, &Vehicle::_roiTerrainReceived);
+        QList<QGeoCoordinate> rgCoord;
+        rgCoord.append(centerCoord);
+        _roiTerrainAtCoordinateQuery->requestData(rgCoord);
+    } else {
+        // ArduPilot handles MAV_FRAME_GLOBAL_RELATIVE_ALT correctly, so altitude 0 relative to
+        // home is a reasonable default for a map click with no altitude info.
+        // Sanity check Ardupilot. Max altitude processed is 83000
+        if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000)) {
+            return;
+        }
+        _sendROICommand(centerCoord, MAV_FRAME_GLOBAL_RELATIVE_ALT, static_cast<float>(centerCoord.altitude()));
+    }
+
+    // This is picked by qml to display coordinate over map
+    emit roiCoordChanged(centerCoord);
+}
+
+void Vehicle::_roiTerrainReceived(bool success, QList<double> heights)
+{
+    _roiTerrainAtCoordinateQuery = nullptr;
+
+    if (!_roiCoordinate.isValid()) {
+        return;
+    }
+
+    float roiAltitude;
+    if (success) {
+        roiAltitude = static_cast<float>(heights[0]);
+    } else {
+        qCDebug(VehicleLog) << "_roiTerrainReceived: terrain query failed, falling back to home altitude";
+        roiAltitude = static_cast<float>(_homePosition.altitude());
+    }
+
+    qCDebug(VehicleLog) << "guidedModeROI: lat" << _roiCoordinate.latitude() << "lon" << _roiCoordinate.longitude() << "terrainAltAMSL" << roiAltitude << "success" << success;
+
+    _sendROICommand(_roiCoordinate, MAV_FRAME_GLOBAL, roiAltitude);
+
+    _roiCoordinate = QGeoCoordinate();
+}
+
+void Vehicle::_sendROICommand(const QGeoCoordinate& coord, MAV_FRAME frame, float altitude)
+{
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
         sendMavCommandInt(
                     defaultComponentId(),
                     MAV_CMD_DO_SET_ROI_LOCATION,
-                    apmFirmware() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
+                    frame,
                     true,                           // show error if fails
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
-                    centerCoord.latitude(),
-                    centerCoord.longitude(),
-                    static_cast<float>(centerCoord.altitude()));
+                    coord.latitude(),
+                    coord.longitude(),
+                    altitude);
     } else {
         sendMavCommand(
                     defaultComponentId(),
@@ -2131,12 +2180,10 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
                     static_cast<float>(qQNaN()),    // Empty
-                    static_cast<float>(centerCoord.latitude()),
-                    static_cast<float>(centerCoord.longitude()),
-                    static_cast<float>(centerCoord.altitude()));
+                    static_cast<float>(coord.latitude()),
+                    static_cast<float>(coord.longitude()),
+                    altitude);
     }
-    // This is picked by qml to display coordinate over map
-    emit roiCoordChanged(centerCoord);
 }
 
 void Vehicle::stopGuidedModeROI()
