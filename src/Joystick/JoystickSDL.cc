@@ -10,8 +10,11 @@
 
 #include <SDL3/SDL.h>
 
-// This is used for testing manual control extensions which require additional axes but all you have ia gamepad/joystick with limited axes.
+// This is used for testing manual control extensions which require additional axes but all you have is a gamepad/joystick with limited axes.
+// Only available on debug builds.
+#ifdef QT_DEBUG
 //#define TEST_WITH_VIRTUAL_AXES
+#endif
 
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 

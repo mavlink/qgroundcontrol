@@ -23,6 +23,7 @@ SetupPage {
             property var availableJoystickNames: joystickManager.availableJoystickNames
             property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
             property var activeJoystick: joystickManager.activeJoystick
+            property bool activeJoystickCalibrated: activeJoystick ? activeJoystick.settings.calibrated.rawValue : false
 
             RowLayout {
                 spacing: ScreenTools.defaultFontPixelWidth
@@ -65,9 +66,10 @@ SetupPage {
 
                 QGCCheckBox {
                     text: qsTr("Enable")
-                    checked: joystickManager.joystickEnabledForVehicle(activeVehicle)
+                    checked: joystickManager.activeJoystickEnabledForActiveVehicle
+                    enabled: activeJoystickCalibrated
 
-                    onClicked: joystickManager.setJoystickEnabledForVehicle(activeVehicle, checked)
+                    onClicked: joystickManager.activeJoystickEnabledForActiveVehicle = checked
                 }
 
                 QGCLabel {
@@ -78,8 +80,8 @@ SetupPage {
 
                 QGCLabel {
                     id: calibrationRequiredLabel
-                    text: qsTr("Requires Calibration")
-                    visible: activeJoystick && activeJoystick.requiresCalibration && !activeJoystick.settings.calibrated.rawValue
+                    text: activeJoystickCalibrated ? qsTr("Calibrated") : qsTr("Requires Calibration")
+                    enabled: !activeJoystickCalibrated
                 }
             }
 
@@ -119,7 +121,7 @@ SetupPage {
                         target: controller
 
                         function onCalibrationCompleted() {
-                            if (joystickManager.joystickEnabledForVehicle(_activeVehicle)) {
+                            if (joystickManager.activeJoystickEnabledForActiveVehicle) {
                                 return;
                             }
                             QGroundControl.showMessageDialog(
@@ -127,7 +129,7 @@ SetupPage {
                                         qsTr("Enable Joystick"),
                                         qsTr("%1 calibration is complete. Enable it now?").arg(_activeJoystick.name),
                                         Dialog.Yes | Dialog.No,
-                                        function() { joystickManager.setJoystickEnabledForVehicle(_activeVehicle, true) });
+                                        function() { joystickManager.activeJoystickEnabledForActiveVehicle = true });
                         }
                     }
 

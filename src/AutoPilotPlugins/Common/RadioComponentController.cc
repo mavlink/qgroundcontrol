@@ -16,14 +16,17 @@ RadioComponentController::RadioComponentController(QObject *parent)
     // qCDebug(RadioComponentControllerLog) << Q_FUNC_INFO << this;
 
     // Channels values are in PWM
-    _calValidMinValue = 1300;
-    _calValidMaxValue = 1700;
-    _calCenterPoint= ((_calValidMaxValue - _calValidMinValue) / 2.0f) + _calValidMinValue;
+
     _calDefaultMinValue = 1000;
     _calDefaultMaxValue = 2000;
+    _calCenterPoint= ((_calDefaultMaxValue - _calDefaultMinValue) / 2.0f) + _calDefaultMinValue;
     _calRoughCenterDelta = 50;
     _calMoveDelta = 300;
     _calSettleDelta = 20;
+
+    int valueRange = _calDefaultMaxValue - _calDefaultMinValue;
+    _calValidMinValue = _calDefaultMinValue + (valueRange * 0.3f);
+    _calValidMaxValue = _calDefaultMaxValue - (valueRange * 0.3f);
 
     // Deal with parameter differences between PX4 and Ardupilot
     if (parameterExists(ParameterManager::defaultComponentId, QStringLiteral("RC1_REVERSED"))) {
@@ -149,7 +152,7 @@ void RadioComponentController::_saveStoredCalibrationValues()
         }
 
         // Write function mapping parameters
-        for (size_t stickFunctionIndex = 0; stickFunctionIndex < stickFunctionMax; stickFunctionIndex++) {
+        for (size_t stickFunctionIndex = 0; stickFunctionIndex < stickFunctionMaxRadio; stickFunctionIndex++) {
             int32_t paramChannel;
             if (_rgFunctionChannelMapping[stickFunctionIndex] == _chanMax) {
                 // 0 signals no mapping
@@ -188,10 +191,10 @@ void RadioComponentController::_readStoredCalibrationValues()
 
     for (int i = 0; i < _chanMax; i++) {
         ChannelInfo *const info = &_rgChannelInfo[i];
-        info->stickFunction = stickFunctionMax;
+        info->stickFunction = stickFunctionMaxRadio;
     }
 
-    for (size_t i = 0; i < stickFunctionMax; i++) {
+    for (size_t i = 0; i < stickFunctionMaxRadio; i++) {
         _rgFunctionChannelMapping[i] = _chanMax;
     }
 
@@ -230,7 +233,7 @@ void RadioComponentController::_readStoredCalibrationValues()
         info->channelReversed = _channelReversedParamValue(i);
     }
 
-    for (int i=0; i<stickFunctionMax; i++) {
+    for (int i=0; i<stickFunctionMaxRadio; i++) {
         int32_t paramChannel;
 
         QString paramName = _stickFunctionToParamName(static_cast<StickFunction>(i));
@@ -250,31 +253,26 @@ void RadioComponentController::_readStoredCalibrationValues()
 
 QString RadioComponentController::_stickFunctionToParamName(RemoteControlCalibrationController::StickFunction function) const
 {
-    static const QStringList rgStickFunctionParamsPX4({
-        { "RC_MAP_ROLL" },
-        { "RC_MAP_PITCH" },
-        { "RC_MAP_YAW" },
-        { "RC_MAP_THROTTLE" }
+    static const QHash<StickFunction, QString> rgStickFunctionParamsPX4({
+        { stickFunctionRoll,     "RC_MAP_ROLL"     },
+        { stickFunctionPitch,    "RC_MAP_PITCH"    },
+        { stickFunctionYaw,      "RC_MAP_YAW"      },
+        { stickFunctionThrottle, "RC_MAP_THROTTLE" },
     });
 
-    static const QStringList rgStickFunctionParamsAPM({
-        { "RCMAP_ROLL" },
-        { "RCMAP_PITCH" },
-        { "RCMAP_YAW" },
-        { "RCMAP_THROTTLE" }
+    static const QHash<StickFunction, QString> rgStickFunctionParamsAPM({
+        { stickFunctionRoll,     "RCMAP_ROLL"     },
+        { stickFunctionPitch,    "RCMAP_PITCH"    },
+        { stickFunctionYaw,      "RCMAP_YAW"      },
+        { stickFunctionThrottle, "RCMAP_THROTTLE" },
     });
 
-    if (rgStickFunctionParamsPX4.size() != stickFunctionMax ||
-        rgStickFunctionParamsAPM.size() != stickFunctionMax) {
-        qCCritical(RadioComponentControllerLog) << "Internal Error: Param name arrays incorrect size";
-        return QString();
-    }
-    if (function < 0 || function >= stickFunctionMax) {
-        qCCritical(RadioComponentControllerLog) << "Internal Error: Invalid stick function index";
+    const auto &rgStickFunctionParams = _vehicle->px4Firmware() ? rgStickFunctionParamsPX4 : rgStickFunctionParamsAPM;
+
+    if (!rgStickFunctionParams.contains(function)) {
+        qCWarning(RadioComponentControllerLog) << "Internal Error: Invalid stick function";
         return QString();
     }
 
-    auto &rgStickFunctionParams = _vehicle->px4Firmware() ? rgStickFunctionParamsPX4 : rgStickFunctionParamsAPM;
-
-    return rgStickFunctionParams[function];
+    return rgStickFunctionParams.value(function);
 }

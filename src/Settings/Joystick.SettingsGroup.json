@@ -63,12 +63,6 @@
             "default": false
         },
         {
-            "name": "enableManualControlExtensions",
-            "shortDesc": "Enable manual control extensions",
-            "type": "bool",
-            "default": false
-        },
-        {
             "name": "transmitterMode",
             "shortDesc": "Transmitter mode (1-4)",
             "type": "uint32",
@@ -85,6 +79,54 @@
             "max": 50,
             "userMin": 0,
             "userMax": 50
+        },
+        {
+            "name": "enableManualControlAux1",
+            "shortDesc": "Enable manual control for Aux 1",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux2",
+            "shortDesc": "Enable manual control for Aux 2",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux3",
+            "shortDesc": "Enable manual control for Aux 3",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux4",
+            "shortDesc": "Enable manual control for Aux 4",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux5",
+            "shortDesc": "Enable manual control for Aux 5",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux6",
+            "shortDesc": "Enable manual control for Aux 6",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlPitchExtension",
+            "shortDesc": "Enable manual control pitch extension",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlRollExtension",
+            "shortDesc": "Enable manual control roll extension",
+            "type": "bool",
+            "default": false
         }
     ]
 }

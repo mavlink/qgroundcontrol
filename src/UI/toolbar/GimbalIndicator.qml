@@ -19,7 +19,7 @@ Item {
     property var    gimbals:                    gimbalController.gimbals
     property var    activeGimbal:               gimbalController.activeGimbal
     property var    multiGimbalSetup:           gimbalController.gimbals.count > 1
-    property bool   joystickButtonsAvailable:   activeVehicle ? joystickManager.joystickEnabledForVehicle(activeVehicle) : false
+    property bool   joystickButtonsAvailable:   activeVehicle ? joystickManager.activeJoystickEnabledForActiveVehicle : false
     property bool   showAzimuth:                QGroundControl.settingsManager.gimbalControllerSettings.toolbarIndicatorShowAzimuth.rawValue
 
     property var    margins:                    ScreenTools.defaultFontPixelWidth
@@ -30,15 +30,6 @@ Item {
     property var    settingsPanelVisible:       false
 
     property var _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
-
-    function _updateJoystickEnabled() {
-        joystickButtonsAvailable = activeVehicle ? joystickManager.joystickEnabledForVehicle(activeVehicle) : false
-    }
-
-    Connections {
-        target: joystickManager
-        function onJoystickEnabledChanged() { _updateJoystickEnabled() }
-    }
 
     QGCPalette { id: qgcPal }
 

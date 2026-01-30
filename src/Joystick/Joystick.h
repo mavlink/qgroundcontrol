@@ -101,7 +101,7 @@ public:
     Joystick(const QString &name, int axisCount, int buttonCount, int hatCount, QObject *parent = nullptr);
     virtual ~Joystick();
 
-    static constexpr int AxisMin = -32767;
+    static constexpr int AxisMin = -32768;
     static constexpr int AxisMax = 32767;
 
     enum ButtonEvent_t {
@@ -117,6 +117,14 @@ public:
         int center = 0;
         int deadband = 0;
         bool reversed = false;
+
+        void reset() {
+            min = AxisMin;
+            max = AxisMax;
+            center = 0;
+            deadband = 0;
+            reversed = false;
+        }
     };
 
     enum AxisFunction_t {
@@ -124,9 +132,15 @@ public:
         pitchFunction,
         yawFunction,
         throttleFunction,
-        gimbalPitchFunction,
-        gimbalYawFunction,
-        maxAxisFunction // If the value of this is changed, be sure to update JoystickAxis.SettingsGroup.json/stickFunction metadata
+        pitchExtensionFunction,
+        rollExtensionFunction,
+        aux1ExtensionFunction,
+        aux2ExtensionFunction,
+        aux3ExtensionFunction,
+        aux4ExtensionFunction,
+        aux5ExtensionFunction,
+        aux6ExtensionFunction,
+        maxAxisFunction
     };
     static QString axisFunctionToString(AxisFunction_t function);
 
@@ -299,8 +313,6 @@ public:
     QString linkedGroupRole() const { return _linkedGroupRole; }
     void setLinkedGroupRole(const QString &role);
 
-    void setFunctionAxis(AxisFunction_t function, int axis);
-    int getFunctionAxis(AxisFunction_t function) const;
     void setAxisCalibration(int axis, const AxisCalibration_t &calibration);
     Joystick::AxisCalibration_t getAxisCalibration(int axis) const;
 
@@ -367,9 +379,17 @@ protected:
     int _hatCount = 0;
 
 private slots:
-    void _flightModesChanged() { _buildActionList(_pollingVehicle); }
+    void _flightModesChanged() { _buildAvailableButtonsActionList(_pollingVehicle); }
 
 private:
+    enum PollingType {
+        NotPolling, ///< Not currrently polling
+        PollingForConfiguration, ///< Polling for configuration/calibration display
+        PollingForVehicle, ///< Normal polling for joystick output to Vehicle
+    };
+
+    using AxisFunctionMap_t = QMap<AxisFunction_t, int>;
+
     virtual bool _open() = 0;
     virtual void _close() = 0;
     virtual bool _update() = 0;
@@ -380,12 +400,8 @@ private:
 
     void run() override;
 
-    enum PollingType {
-        NotPolling, ///< Not currrently polling
-        PollingForConfiguration, ///< Polling for configuration/calibration display
-        PollingForVehicle, ///< Normal polling for joystick output to Vehicle
-    };
     void _startPollingForVehicle(Vehicle &vehicle);
+    void _startPollingForActiveVehicle();
     void _startPollingForConfiguration();
     void _stopPollingForConfiguration();
     void _stopAllPolling();
@@ -394,11 +410,24 @@ private:
     PollingType _previousPollingType = NotPolling;
     Vehicle* _pollingVehicle = nullptr;
 
+    void _resetFunctionToAxisMap();
+    void _resetAxisCalibrationData();
+    void _resetButtonActionData();
+    void _resetButtonEventStates();
+
+    void _foundInvalidAxisSettingsCleanup();
+
+    void _loadButtonSettings();
+    void _loadAxisSettings(bool joystickCalibrated, int transmitterMode);
+    void _saveButtonSettings();
+    void _saveAxisSettings(int transmitterMode);
     void _loadFromSettingsIntoCalibrationData();
     void _saveFromCalibrationDataIntoSettings();
+    void _clearAxisSettings();
+    void _clearButtonSettings();
 
     /// Adjust the raw axis value to the -1:1 range given calibration information
-    float _adjustRange(int value, const AxisCalibration_t &calibration, bool withDeadbands);
+    float _adjustRange(int reversedAxisValue, const AxisCalibration_t &calibration, bool withDeadbands);
 
     void _executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent);
     int  _findAvailableButtonActionIndex(const QString &action);
@@ -406,18 +435,15 @@ private:
     bool _validButton(int button) const;
     void _handleAxis();
     void _handleButtons();
-    void _buildActionList(Vehicle *vehicle);
-    AxisFunction_t _getFunctionForAxis(int axis) const;
+    void _buildAvailableButtonsActionList(Vehicle *vehicle);
+    AxisFunction_t _getAxisFunctionForJoystickAxis(int joystickAxis) const;
+    int _getJoystickAxisForAxisFunction(AxisFunction_t axisFunction) const;
+    void _setJoystickAxisForAxisFunction(AxisFunction_t axisFunction, int axis);
     void _updateButtonEventState(int buttonIndex, const bool buttonPressed, ButtonEvent_t &buttonEventState);
     void _updateButtonEventStates(QVector<ButtonEvent_t> &buttonEventStates);
-    void _migrateLegacySettings();
-
-
-    /// Relative mappings of axis functions between different TX modes
-    int _mapFunctionMode(int mode, int function);
 
     /// Remap current axis functions from current TX mode to new TX mode
-    void _remapAxes(int fromMode, int toMode, int (&newMapping)[maxAxisFunction]);
+    void _remapFunctionsInFunctionMapToNewTransmittedMode(int fromMode, int toMode);
 
     int _hatButtonCount = 0;
     int _totalButtonCount = 0;
@@ -426,9 +452,13 @@ private:
     QVector<AssignedButtonAction*> _assignedButtonActions;
     MavlinkActionManager *_mavlinkActionManager = nullptr;
     QmlObjectListModel *_availableButtonActions = nullptr;
+
+    JoystickManager* _joystickManager = nullptr;
     JoystickSettings _joystickSettings;
 
-    int _rgFunctionAxis[maxAxisFunction] = {};
+    AxisFunctionMap_t _axisFunctionToJoystickAxisMap; ///< Map from AxisFunction_t to axis index, kJoystickAxisNotAssigned if not assigned
+    static constexpr const int kJoystickAxisNotAssigned = -1;
+
     QElapsedTimer _axisElapsedTimer;
     QStringList _availableActionTitles;
     std::atomic<bool> _exitThread = false;    ///< true: signal thread to exit
@@ -436,15 +466,6 @@ private:
     // HOTAS/Multi-device linking
     QString _linkedGroupId;
     QString _linkedGroupRole;
-
-    static constexpr const char *_rgFunctionSettingsKey[maxAxisFunction] = {
-        "RollAxis",
-        "PitchAxis",
-        "YawAxis",
-        "ThrottleAxis",
-        "GimbalPitchAxis",
-        "GimbalYawAxis"
-    };
 
     static constexpr const char *_buttonActionNone =               QT_TR_NOOP("No Action");
     static constexpr const char *_buttonActionArm =                QT_TR_NOOP("Arm");

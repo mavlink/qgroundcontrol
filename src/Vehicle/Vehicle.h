@@ -435,7 +435,7 @@ public:
 
     void updateFlightDistance(double distance);
 
-    void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw);
+    void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6);
 
     // Property accesors
     int id() const{ return _systemID; }

@@ -29,9 +29,16 @@ public:
     DEFINE_SETTINGFACT(axisFrequencyHz)
     DEFINE_SETTINGFACT(buttonFrequencyHz)
     DEFINE_SETTINGFACT(throttleModeCenterZero)
-    DEFINE_SETTINGFACT(enableManualControlExtensions)
     DEFINE_SETTINGFACT(transmitterMode)
     DEFINE_SETTINGFACT(exponentialPct)
+    DEFINE_SETTINGFACT(enableManualControlPitchExtension)
+    DEFINE_SETTINGFACT(enableManualControlRollExtension)
+    DEFINE_SETTINGFACT(enableManualControlAux1)
+    DEFINE_SETTINGFACT(enableManualControlAux2)
+    DEFINE_SETTINGFACT(enableManualControlAux3)
+    DEFINE_SETTINGFACT(enableManualControlAux4)
+    DEFINE_SETTINGFACT(enableManualControlAux5)
+    DEFINE_SETTINGFACT(enableManualControlAux6)
 
 private:
     QString _joystickName;
