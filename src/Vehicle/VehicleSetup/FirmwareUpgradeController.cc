@@ -81,6 +81,7 @@ static QMap<int, QString> px4_board_name_map {
     {1058, "holybro_kakuteh7mini_default"},
     {1105, "holybro_kakuteh7-wing_default"},
     {1110, "jfb_jfb110_default"},
+    {1200, "jfb_jfb200_default"},
     {1123, "siyi_n7_default"},
     {1124, "3dr_ctrl-zero-h7-oem-revg_default"},
     {5600, "zeroone_x6_default"},
