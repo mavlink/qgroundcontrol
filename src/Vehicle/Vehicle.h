@@ -915,6 +915,8 @@ private slots:
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
     void _doSetHomeTerrainReceived          (bool success, QList<double> heights);
+    void _roiTerrainReceived                (bool success, QList<double> heights);
+    void _sendROICommand                    (const QGeoCoordinate& coord, MAV_FRAME frame, float altitude);
     void _updateAltAboveTerrain             ();
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
 
@@ -1253,6 +1255,10 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     // Terrain query members, used to get terrain altitude for doSetHome()
     TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
     QGeoCoordinate              _doSetHomeCoordinate;
+
+    // Terrain query members, used to get terrain altitude for guidedModeROI()
+    TerrainAtCoordinateQuery*   _roiTerrainAtCoordinateQuery = nullptr;
+    QGeoCoordinate              _roiCoordinate;
 
     // Terrain query members, used to get altitude above terrain Fact
     QElapsedTimer               _altitudeAboveTerrQueryTimer;
