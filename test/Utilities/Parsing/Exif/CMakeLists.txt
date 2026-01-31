@@ -1,17 +1,14 @@
 # ============================================================================
-# Analyze View Unit Tests
-# Tests for log analysis and telemetry visualization
+# EXIF Utilities Unit Tests
+# Tests for ExifUtility (metadata reading/writing using libexif)
 # ============================================================================
-
-add_subdirectory(GeoTag)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        LogDownloadTest.cc
-        LogDownloadTest.h
-        MavlinkLogTest.cc
-        MavlinkLogTest.h
+        ExifUtilityTest.cc
+        ExifUtilityTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Note: Test image DSCN0010.jpg is provided by test/AnalyzeView resources

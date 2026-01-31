@@ -62,6 +62,10 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}
         Compression
         FileSystem
+        Parsing
+        Parsing/DataFlash
+        Parsing/Exif
+        Parsing/ULog
 )
 
 # ============================================================================
@@ -72,5 +76,6 @@ add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Geo)
 add_subdirectory(Network)
+add_subdirectory(Parsing)
 add_subdirectory(SDL)
 add_subdirectory(StateMachine)

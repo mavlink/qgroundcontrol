@@ -1,17 +1,12 @@
 # ============================================================================
-# Analyze View Unit Tests
-# Tests for log analysis and telemetry visualization
+# ULog Utility Unit Tests
+# Tests for ULogUtility (general-purpose ULog parsing)
 # ============================================================================
-
-add_subdirectory(GeoTag)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        LogDownloadTest.cc
-        LogDownloadTest.h
-        MavlinkLogTest.cc
-        MavlinkLogTest.h
+        ULogUtilityTest.cc
+        ULogUtilityTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-

@@ -8,6 +8,7 @@ add_subdirectory(Compression)
 add_subdirectory(FileSystem)
 add_subdirectory(Geo)
 add_subdirectory(Network)
+add_subdirectory(Parsing)
 
 # ----------------------------------------------------------------------------
 # Test Data Resources

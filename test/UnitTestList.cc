@@ -6,11 +6,13 @@
 #include "ADSBTest.h"
 
 // AnalyzeView
+#include "DataFlashParserTest.h"
 #include "ExifParserTest.h"
 #include "GeoTagControllerTest.h"
+#include "GeoTagDataTest.h"
+#include "GeoTagImageModelTest.h"
 // #include "MavlinkLogTest.h"
 #include "LogDownloadTest.h"
-#include "PX4LogParserTest.h"
 #include "ULogParserTest.h"
 
 // AutoPilotPlugins
@@ -80,6 +82,11 @@
 #include "QGCArchiveModelTest.h"
 #include "QGCCompressionTest.h"
 #include "QGCStreamingDecompressionTest.h"
+// Exif
+#include "ExifUtilityTest.h"
+// LogParsing
+#include "DataFlashUtilityTest.h"
+#include "ULogUtilityTest.h"
 // FileSystem
 #include "QGCArchiveWatcherTest.h"
 #include "QGCFileDownloadTest.h"
@@ -114,11 +121,13 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(ADSBTest)
 
     // AnalyzeView
+    UT_REGISTER_TEST(DataFlashParserTest)
     UT_REGISTER_TEST(ExifParserTest)
     UT_REGISTER_TEST(GeoTagControllerTest)
+    UT_REGISTER_TEST(GeoTagDataTest)
+    UT_REGISTER_TEST(GeoTagImageModelTest)
     // UT_REGISTER_TEST(MavlinkLogTest)
     UT_REGISTER_TEST(LogDownloadTest)
-    UT_REGISTER_TEST(PX4LogParserTest)
     UT_REGISTER_TEST(ULogParserTest)
 
     // AutoPilotPlugins
@@ -186,6 +195,11 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(QGCArchiveModelTest)
     UT_REGISTER_TEST(QGCCompressionTest)
     UT_REGISTER_TEST(QGCStreamingDecompressionTest)
+    // Exif
+    UT_REGISTER_TEST(ExifUtilityTest)
+    // LogParsing
+    UT_REGISTER_TEST(DataFlashUtilityTest)
+    UT_REGISTER_TEST(ULogUtilityTest)
     // FileSystem
     UT_REGISTER_TEST(QGCArchiveWatcherTest)
     UT_REGISTER_TEST(QGCFileDownloadTest)
