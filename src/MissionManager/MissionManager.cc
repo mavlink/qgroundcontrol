@@ -28,9 +28,8 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
         return;
     }
 
-    _transactionInProgress = TransactionWrite;
-
-    _connectToMavlink();
+    // ArduPilot guided mode mission item is sent directly without using the mission protocol state machine
+    // since it's a special one-off item that doesn't go through the standard MISSION_COUNT/MISSION_ITEM sequence
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink) {
@@ -60,9 +59,8 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
                                              &missionItem);
 
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
+        qCDebug(MissionManagerLog) << "writeArduPilotGuidedMissionItem sent:" << gotoCoord << "altChangeOnly:" << altChangeOnly;
     }
-    _startAckTimeout(AckGuidedItem);
-    emit inProgressChanged(true);
 }
 
 void MissionManager::generateResumeMission(int resumeIndex)
@@ -198,13 +196,9 @@ void MissionManager::generateResumeMission(int resumeIndex)
     int setCurrentIndex = addHomePosition ? 1 : 0;
     resumeMission[setCurrentIndex]->setIsCurrentItem(true);
 
-    // Send to vehicle
-    _clearAndDeleteWriteMissionItems();
-    for (int i=0; i<resumeMission.count(); i++) {
-        _writeMissionItems.append(new MissionItem(*resumeMission[i], this));
-    }
+    // Send to vehicle using the state machine-based writeMissionItems
     _resumeMission = true;
-    _writeMissionItemsWorker();
+    writeMissionItems(resumeMission);
 }
 
 /// Called when a new mavlink message for out vehicle is received

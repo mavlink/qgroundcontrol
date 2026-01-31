@@ -20,6 +20,8 @@ class FactPanelController : public QObject
     Q_MOC_INCLUDE("Fact.h")
     Q_PROPERTY(Vehicle *vehicle MEMBER _vehicle CONSTANT)
 
+    friend class PowerCalibrationStateMachineTest;  // Unit test
+
 public:
     explicit FactPanelController(QObject *parent = nullptr);
     virtual ~FactPanelController();

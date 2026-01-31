@@ -252,7 +252,6 @@ void Vehicle::_commonInit(LinkInterface* link)
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
-    connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_firstMissionLoadComplete);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_clearCameraTriggerPoints);
     connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearCameraTriggerPoints);
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &Vehicle::_updateHeadingToNextWP);
@@ -285,7 +284,13 @@ void Vehicle::_commonInit(LinkInterface* link)
     });
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
-    connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
+    connect(_initialConnectStateMachine, &QStateMachine::finished,
+            this, [this]() {
+                _gotProgressUpdate(0.f);
+                // Re-enable progress tracking for manual parameter refreshes after initial connect
+                connect(_parameterManager, &ParameterManager::loadProgressChanged,
+                        this, &Vehicle::_gotProgressUpdate);
+            });
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
 
@@ -294,11 +299,9 @@ void Vehicle::_commonInit(LinkInterface* link)
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = new GeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error,          this, &Vehicle::_geoFenceManagerError);
-    connect(_geoFenceManager, &GeoFenceManager::loadComplete,   this, &Vehicle::_firstGeoFenceLoadComplete);
 
     _rallyPointManager = new RallyPointManager(this);
     connect(_rallyPointManager, &RallyPointManager::error,          this, &Vehicle::_rallyPointManagerError);
-    connect(_rallyPointManager, &RallyPointManager::loadComplete,   this, &Vehicle::_firstRallyPointLoadComplete);
 
     // Remote ID manager might want to acces parameters so make sure to create it after
     _remoteIDManager = new RemoteIDManager(this);
@@ -1675,50 +1678,20 @@ void Vehicle::_updateFlightTime()
 
 void Vehicle::_gotProgressUpdate(float progressValue)
 {
-    if (sender() != _initialConnectStateMachine && _initialConnectStateMachine->active()) {
-        return;
-    }
-    if (sender() == _initialConnectStateMachine && !_initialConnectStateMachine->active()) {
-        progressValue = 0.f;
-    }
     _loadProgress = progressValue;
     emit loadProgressChanged(progressValue);
-}
-
-void Vehicle::_firstMissionLoadComplete()
-{
-    disconnect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_firstMissionLoadComplete);
-    _initialConnectStateMachine->advance();
-}
-
-void Vehicle::_firstGeoFenceLoadComplete()
-{
-    disconnect(_geoFenceManager, &GeoFenceManager::loadComplete, this, &Vehicle::_firstGeoFenceLoadComplete);
-    _initialConnectStateMachine->advance();
-}
-
-void Vehicle::_firstRallyPointLoadComplete()
-{
-    disconnect(_rallyPointManager, &RallyPointManager::loadComplete, this, &Vehicle::_firstRallyPointLoadComplete);
-    _initialPlanRequestComplete = true;
-    emit initialPlanRequestCompleteChanged(true);
-    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
     qCDebug(VehicleLog) << "_parametersReady" << parametersReady;
 
-    // Try to set current unix time to the vehicle
-    _sendQGCTimeToVehicle();
-    // Send time twice, more likely to get to the vehicle on a noisy link
-    _sendQGCTimeToVehicle();
+    // Disconnect once parameters are ready (one-time handler for initial connect)
     if (parametersReady) {
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
-        _setupAutoDisarmSignalling();
-        _initialConnectStateMachine->advance();
     }
 
+    // Update speed limits availability (InitialConnectStateMachine handles the rest)
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
     _fixed_wing_airspeed_limits_available = _firmwarePlugin->fixedWingAirSpeedLimitsAvailable(this);
 
@@ -2539,6 +2512,14 @@ bool Vehicle::_commandCanBeDuplicated(MAV_CMD command)
     case MAV_CMD_DO_MOTOR_TEST:
         return true;
     case MAV_CMD_SET_MESSAGE_INTERVAL:
+        return true;
+    case MAV_CMD_REQUEST_MESSAGE:
+        // REQUEST_MESSAGE uses param1 to specify the message ID being requested.
+        // Different message types (AUTOPILOT_VERSION, COMPONENT_INFORMATION, etc.) may be
+        // requested in parallel during initial connect. Since duplicate detection only tracks
+        // the command type (not param1), we allow duplicates to enable parallel requests.
+        // Note: Requesting the same message ID twice simultaneously would be a caller bug,
+        // but this is acceptable since each request has its own result handler.
         return true;
     default:
         return false;

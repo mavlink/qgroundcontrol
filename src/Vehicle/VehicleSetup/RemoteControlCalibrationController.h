@@ -11,10 +11,13 @@
 Q_DECLARE_LOGGING_CATEGORY(RemoteControlCalibrationControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(RemoteControlCalibrationControllerVerboseLog)
 
+class RCCalibrationStateMachine;
+
 /// Abstract base class for calibrating RC and Joystick controller.
 class RemoteControlCalibrationController : public FactPanelController
 {
     Q_OBJECT
+    friend class RCCalibrationStateMachine;
 
     Q_PROPERTY(QQuickItem*  statusText                  MEMBER _statusText              REQUIRED)
     Q_PROPERTY(QQuickItem*  cancelButton                MEMBER _cancelButton            REQUIRED)
@@ -190,26 +193,7 @@ private:
         StateMachineStepComplete
     };
 
-    typedef void (RemoteControlCalibrationController::*inputFn)(enum StickFunction stickFunction, int chan, int value);
-    typedef void (RemoteControlCalibrationController::*buttonFn)(void);
-    struct StateMachineEntry {
-        enum StickFunction stickFunction;
-        enum StateMachineStepFunction stepFunction;
-        inputFn channelInputFn;
-        buttonFn nextButtonFn;
-    };
-
-    const StateMachineEntry &_getStateMachineEntry(int step) const;
-    void _advanceState();
     void _setupCurrentState();
-    void _inputCenterWaitBegin(StickFunction stickFunction, int channel, int value);
-    void _inputStickDetect(StickFunction stickFunction, int channel, int value);
-    void _inputStickMin(StickFunction stickFunction, int channel, int value);
-    void _inputCenterWait(StickFunction stickFunction, int channel, int value);
-    void _inputSwitchMinMax(StickFunction stickFunction, int channel, int value);    ///< Saves min/max for non-mapped channels
-    void _saveCalibrationValues();
-    void _saveAllTrims();
-    bool _stickSettleComplete(int value);
     void _startCalibration();
     void _stopCalibration();
     void _saveCurrentRawValues();   ///< Saves the current channel values, so that we can detect when the user moves an input.
@@ -218,29 +202,12 @@ private:
     int _deadbandForFunction(StickFunction stickFunction) const;
     void _emitDeadbandChanged(StickFunction stickFunction);
     int _adjustChannelRawValue(const ChannelInfo& info, int rawValue) const;
+    StateMachineStepFunction _currentStepFunction() const;
 
-    int _currentStep = -1;
     int _transmitterMode = 2;
-
-    /// The states of the calibration state machine.
-    enum rcCalStates {
-        rcCalStateChannelWait,
-        rcCalStateBegin,
-        rcCalStateIdentify,
-        rcCalStateMinMax,
-        rcCalStateCenterThrottle,
-        rcCalStateDetectInversion,
-        rcCalStateTrims,
-        rcCalStateSave
-    };
 
     int _channelValueSave[_chanMax]{};  ///< Saved values prior to detecting channel movement
     int _channelRawValue[_chanMax]{};   ///< Current set of raw channel values
-
-    int _stickDetectChannel = 0;
-    int _stickDetectValue = 0;
-    bool _stickDetectSettleStarted = false;
-    QElapsedTimer _stickDetectSettleElapsed;
 
     QQuickItem *_statusText = nullptr;
     QQuickItem *_cancelButton = nullptr;
@@ -254,7 +221,7 @@ private:
     QMap<StateMachineStepFunction, QMap<int, BothSticksDisplayPositions>> _bothStickDisplayPositionThrottleCenteredMap;
     QMap<StateMachineStepFunction, QMap<int, BothSticksDisplayPositions>> _bothStickDisplayPositionThrottleDownMap;
 
-    QList<StateMachineEntry> _stateMachine;
+    RCCalibrationStateMachine* _stateMachine = nullptr;
 
     static constexpr int _updateInterval = 150;             ///< Interval for timer which updates radio channel widgets
 

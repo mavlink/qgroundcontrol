@@ -7,6 +7,8 @@ add_subdirectory(GeoTag)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        LogDownloadStateMachineTest.cc
+        LogDownloadStateMachineTest.h
         LogDownloadTest.cc
         LogDownloadTest.h
         MavlinkLogTest.cc

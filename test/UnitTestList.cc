@@ -12,13 +12,27 @@
 #include "GeoTagDataTest.h"
 #include "GeoTagImageModelTest.h"
 // #include "MavlinkLogTest.h"
+#include "LogDownloadStateMachineTest.h"
 #include "LogDownloadTest.h"
 #include "ULogParserTest.h"
 
 // AutoPilotPlugins
 // #include "RadioConfigTest.h"
+// Common Sensors
+#include "OrientationCalibrationStateTest.h"
+#include "SensorCalibrationSideTest.h"
+#include "SensorsComponentBaseTest.h"
+// APM Sensors
+#include "AccelCalibrationMachineTest.h"
+#include "CompassCalibrationMachineTest.h"
+// PX4 Sensors
+#include "PX4OrientationCalibrationMachineTest.h"
+#include "PX4SensorCalibrationStateMachineTest.h"
+// PX4 Power
+#include "PowerCalibrationStateMachineTest.h"
 
 // Camera
+#include "CameraDiscoveryStateMachineTest.h"
 #include "QGCCameraManagerTest.h"
 
 // Comms
@@ -52,6 +66,8 @@
 #include "MissionItemTest.h"
 #include "MissionManagerTest.h"
 #include "MissionSettingsTest.h"
+#include "PlanManagerStateMachineTest.h"
+#include "PlanManagerTest.h"
 #include "PlanMasterControllerTest.h"
 #include "QGCMapPolygonTest.h"
 #include "QGCMapPolylineTest.h"
@@ -65,7 +81,31 @@
 
 // qgcunittest
 #include "ComponentInformationCacheTest.h"
+#include "ComponentInformationManagerTest.h"
 #include "ComponentInformationTranslationTest.h"
+#include "RequestMetaDataTypeStateMachineTest.h"
+
+// StateMachine
+#include "QGCStateMachineTest.h"
+// StateMachine - States
+#include "FunctionStateTest.h"
+#include "DelayStateTest.h"
+#include "AsyncFunctionStateTest.h"
+#include "WaitForSignalStateTest.h"
+#include "ConditionalStateTest.h"
+#include "SkippableAsyncStateTest.h"
+#include "ParallelStateTest.h"
+#include "SubMachineStateTest.h"
+#include "QGCStateTest.h"
+#include "QGCFinalStateTest.h"
+#include "QGCHistoryStateTest.h"
+// StateMachine - Transitions
+#include "GuardedTransitionTest.h"
+#include "InternalTransitionTest.h"
+#include "MachineEventTransitionTest.h"
+#include "NamedEventTransitionTest.h"
+#include "SignalDataTransitionTest.h"
+#include "QGCSignalTransitionTest.h"
 
 // QmlControls
 
@@ -98,16 +138,34 @@
 #include "ShapeTest.h"
 
 // Vehicle
+#include "AutotuneStateMachineTest.h"
+// Actuators
+#include "ActuatorTestingStateMachineTest.h"
+#include "ActuatorTestingTest.h"
+#include "MotorAssignmentStateMachineTest.h"
+#include "MotorAssignmentTest.h"
+// FTP
+#include "FTPControllerTest.h"
+#include "FTPDeleteStateMachineTest.h"
+#include "FTPDownloadStateMachineTest.h"
+#include "FTPListDirectoryStateMachineTest.h"
+#include "FTPUploadStateMachineTest.h"
+// VehicleSetup
+#include "RCCalibrationStateMachineTest.h"
+// VehicleSetup/Firmware
+#include "FirmwareUpgradeStateMachineTest.h"
+#include "RemoteControlCalibrationControllerTest.h"
 // Components
 #include "ComponentInformationCacheTest.h"
 #include "ComponentInformationTranslationTest.h"
 #include "FTPManagerTest.h"
-// #include "InitialConnectTest.h"
+#include "InitialConnectTest.h"
 #include "MAVLinkLogManagerTest.h"
-// #include "RequestMessageTest.h"
-// #include "SendMavCommandWithHandlerTest.h"
-// #include "SendMavCommandWithSignalingTest.h"
+// #include "RequestMessageTest.h"  // FIXME: Disabled - pre-existing test failures
+#include "SendMavCommandWithHandlerTest.h"
+#include "SendMavCommandWithSignallingTest.h"
 #include "VehicleLinkManagerTest.h"
+#include "VehicleTest.h"
 
 // Missing
 // #include "FlightGearUnitTest.h"
@@ -127,13 +185,27 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(GeoTagDataTest)
     UT_REGISTER_TEST(GeoTagImageModelTest)
     // UT_REGISTER_TEST(MavlinkLogTest)
+    UT_REGISTER_TEST(LogDownloadStateMachineTest)
     UT_REGISTER_TEST(LogDownloadTest)
     UT_REGISTER_TEST(ULogParserTest)
 
     // AutoPilotPlugins
     // UT_REGISTER_TEST(RadioConfigTest)
+    // Common Sensors
+    UT_REGISTER_TEST(OrientationCalibrationStateTest)
+    UT_REGISTER_TEST(SensorCalibrationSideTest)
+    UT_REGISTER_TEST(SensorsComponentBaseTest)
+    // APM Sensors
+    UT_REGISTER_TEST(AccelCalibrationMachineTest)
+    UT_REGISTER_TEST(CompassCalibrationMachineTest)
+    // PX4 Sensors
+    UT_REGISTER_TEST(PX4OrientationCalibrationMachineTest)
+    UT_REGISTER_TEST(PX4SensorCalibrationStateMachineTest)
+    // PX4 Power
+    UT_REGISTER_TEST(PowerCalibrationStateMachineTest)
 
     // Camera
+    UT_REGISTER_TEST(CameraDiscoveryStateMachineTest)
     UT_REGISTER_TEST(QGCCameraManagerTest)
 
     // Comms
@@ -167,6 +239,8 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(MissionItemTest)
     UT_REGISTER_TEST(MissionManagerTest)
     UT_REGISTER_TEST(MissionSettingsTest)
+    UT_REGISTER_TEST(PlanManagerStateMachineTest)
+    UT_REGISTER_TEST(PlanManagerTest)
     UT_REGISTER_TEST(PlanMasterControllerTest)
     UT_REGISTER_TEST(QGCMapPolygonTest)
     UT_REGISTER_TEST(QGCMapPolylineTest)
@@ -210,16 +284,57 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     // Shape
     UT_REGISTER_TEST(ShapeTest)
 
+    // StateMachine
+    UT_REGISTER_TEST(QGCStateMachineTest)
+    // StateMachine - States
+    UT_REGISTER_TEST(FunctionStateTest)
+    UT_REGISTER_TEST(DelayStateTest)
+    UT_REGISTER_TEST(AsyncFunctionStateTest)
+    UT_REGISTER_TEST(WaitForSignalStateTest)
+    UT_REGISTER_TEST(ConditionalStateTest)
+    UT_REGISTER_TEST(SkippableAsyncStateTest)
+    UT_REGISTER_TEST(ParallelStateTest)
+    UT_REGISTER_TEST(SubMachineStateTest)
+    UT_REGISTER_TEST(QGCStateTest)
+    UT_REGISTER_TEST(QGCFinalStateTest)
+    UT_REGISTER_TEST(QGCHistoryStateTest)
+    // StateMachine - Transitions
+    UT_REGISTER_TEST(GuardedTransitionTest)
+    UT_REGISTER_TEST(InternalTransitionTest)
+    UT_REGISTER_TEST(MachineEventTransitionTest)
+    UT_REGISTER_TEST(NamedEventTransitionTest)
+    UT_REGISTER_TEST(SignalDataTransitionTest)
+    UT_REGISTER_TEST(QGCSignalTransitionTest)
+
     // Vehicle
+    UT_REGISTER_TEST(AutotuneStateMachineTest)
+    // Actuators
+    UT_REGISTER_TEST(ActuatorTestingStateMachineTest)
+    UT_REGISTER_TEST(ActuatorTestingTest)
+    UT_REGISTER_TEST(MotorAssignmentStateMachineTest)
+    UT_REGISTER_TEST(MotorAssignmentTest)
+    // FTP
+    UT_REGISTER_TEST(FTPControllerTest)
+    UT_REGISTER_TEST(FTPDeleteStateMachineTest)
+    UT_REGISTER_TEST(FTPDownloadStateMachineTest)
+    UT_REGISTER_TEST(FTPListDirectoryStateMachineTest)
+    UT_REGISTER_TEST(FTPUploadStateMachineTest)
+    // VehicleSetup
+    UT_REGISTER_TEST(FirmwareUpgradeStateMachineTest)
+    UT_REGISTER_TEST(RCCalibrationStateMachineTest)
+    UT_REGISTER_TEST(RemoteControlCalibrationControllerTest)
     // Components
     UT_REGISTER_TEST(ComponentInformationCacheTest)
+    UT_REGISTER_TEST(ComponentInformationManagerTest)
     UT_REGISTER_TEST(ComponentInformationTranslationTest)
+    UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest)
     UT_REGISTER_TEST(FTPManagerTest)
-    // UT_REGISTER_TEST(InitialConnectTest)
+    UT_REGISTER_TEST(InitialConnectTest)
     UT_REGISTER_TEST(MAVLinkLogManagerTest)
-    // UT_REGISTER_TEST(RequestMessageTest)
-    // UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
-    // UT_REGISTER_TEST(SendMavCommandWithSignalingTest)
+    // UT_REGISTER_TEST(RequestMessageTest)  // FIXME: Disabled - pre-existing test failures
+    UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
+    UT_REGISTER_TEST(VehicleTest)
+    UT_REGISTER_TEST(SendMavCommandWithSignallingTest)
     UT_REGISTER_TEST(VehicleLinkManagerTest)
 
     // Missing

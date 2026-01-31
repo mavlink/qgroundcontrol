@@ -246,7 +246,7 @@ Rectangle {
                 text:               qsTr("Firmware")
                 Layout.fillWidth:   true
 
-                onClicked: showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/FirmwareUpgrade.qml")
+                onClicked: showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/Firmware/FirmwareUpgrade.qml")
             }
         }
     }

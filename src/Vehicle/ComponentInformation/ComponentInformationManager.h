@@ -1,111 +1,43 @@
 #pragma once
 
 #include "MAVLinkLib.h"
-#include "StateMachine.h"
+#include "QGCStateMachine.h"
+#include "RequestMetaDataTypeStateMachine.h"
 
-#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(RequestMetaDataTypeStateMachineLog)
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
 class Vehicle;
-class ComponentInformationManager;
 class ComponentInformationTranslation;
 class ComponentInformationCache;
 class CompInfo;
 class CompInfoParam;
 class CompInfoGeneral;
 class QGCCachedFileDownload;
+class AsyncFunctionState;
+class SkippableAsyncState;
+class FunctionState;
+class QGCFinalState;
 
-class RequestMetaDataTypeStateMachine : public StateMachine
+class ComponentInformationManager : public QGCStateMachine
 {
     Q_OBJECT
 
 public:
-    RequestMetaDataTypeStateMachine(ComponentInformationManager *compMgr, QObject *parent = nullptr);
-    ~RequestMetaDataTypeStateMachine();
-
-    void        request     (CompInfo* compInfo);
-    QString     typeToString(void);
-    CompInfo*   compInfo    (void) { return _compInfo; }
-
-    // Overrides from StateMachine
-    int             stateCount      (void) const final;
-    const StateFn*  rgStates        (void) const final;
-    void            statesCompleted (void) const final;
-
-private slots:
-    void    _ftpDownloadComplete                (const QString& file, const QString& errorMsg);
-    void    _ftpDownloadProgress                (float progress);
-    void    _httpDownloadComplete               (QString remoteFile, QString localFile, QString errorMsg);
-    QString _downloadCompleteJsonWorker         (const QString& jsonFileName);
-    void _downloadAndTranslationComplete(QString translatedJsonTempFile, QString errorMsg);
-
-private:
-    static void _stateRequestCompInfo           (StateMachine* stateMachine);
-    static void _stateRequestCompInfoDeprecated (StateMachine* stateMachine);
-    static void _stateRequestMetaDataJson       (StateMachine* stateMachine);
-    static void _stateRequestMetaDataJsonFallback(StateMachine* stateMachine);
-    static void _stateRequestTranslationJson    (StateMachine* stateMachine);
-    static void _stateRequestTranslate          (StateMachine* stateMachine);
-    static void _stateRequestComplete           (StateMachine* stateMachine);
-    static bool _uriIsMAVLinkFTP                (const QString& uri);
-
-    void _requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName);
-
-    ComponentInformationManager*    _compMgr                    = nullptr;
-    CompInfo*                       _compInfo                   = nullptr;
-    QString                         _jsonMetadataFileName;
-    QString                         _jsonMetadataTranslatedFileName;
-    bool                            _jsonMetadataCrcValid       = false;
-    QString                         _jsonTranslationFileName;
-    bool                            _jsonTranslationCrcValid    = false;
-
-    QString*                        _currentFileName            = nullptr;
-    QString                         _currentCacheFileTag;
-    bool                            _currentFileValidCrc        = false;
-
-    QElapsedTimer                   _downloadStartTime;
-
-    static constexpr const StateFn _rgStates[]= {
-        _stateRequestCompInfo,
-        _stateRequestCompInfoDeprecated,
-        _stateRequestMetaDataJson,
-        _stateRequestMetaDataJsonFallback,
-        _stateRequestTranslationJson,
-        _stateRequestTranslate,
-        _stateRequestComplete,
-    };
-
-    static constexpr int _cStates = sizeof(_rgStates) / sizeof(_rgStates[0]);
-};
-
-class ComponentInformationManager : public StateMachine
-{
-    Q_OBJECT
-
-public:
-    ComponentInformationManager(Vehicle *vehicle, QObject *parent = nullptr);
-    ~ComponentInformationManager();
+    explicit ComponentInformationManager(Vehicle *vehicle, QObject *parent = nullptr);
+    ~ComponentInformationManager() override;
 
     typedef void (*RequestAllCompleteFn)(void *requestAllCompleteFnData);
 
     void requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
-    Vehicle *vehicle() { return _vehicle; }
     CompInfoParam *compInfoParam(uint8_t compId);
     CompInfoGeneral *compInfoGeneral(uint8_t compId);
-
-    // Overrides from StateMachine
-    int stateCount() const final;
-    const StateFn *rgStates() const final;
 
     ComponentInformationCache &fileCache() { return _fileCache; }
     ComponentInformationTranslation *translation() { return _translation; }
 
     float progress() const;
-
-    void advance() override;
 
     static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
 
@@ -113,18 +45,25 @@ signals:
     void progressUpdate(float progress);
 
 private:
-    void _stateRequestCompInfoComplete  (void);
-    bool _isCompTypeSupported           (COMP_METADATA_TYPE type);
-    void _updateAllUri                  ();
+    void _createStates();
+    void _wireTransitions();
+    void _wireProgressTracking();
+
+    // State action functions
+    void _requestCompInfoGeneral(AsyncFunctionState* state);
+    void _updateAllUri();
+    void _requestCompInfoParam(SkippableAsyncState* state);
+    void _requestCompInfoEvents(SkippableAsyncState* state);
+    void _requestCompInfoActuators(SkippableAsyncState* state);
+    void _signalComplete();
+
+    // Skip predicates
+    bool _isCompTypeSupported(COMP_METADATA_TYPE type) const;
+
+    // Progress tracking
+    void _updateProgress();
 
     static QString _getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation);
-
-    static void _stateRequestCompInfoGeneral        (StateMachine* stateMachine);
-    static void _stateRequestCompInfoGeneralComplete(StateMachine* stateMachine);
-    static void _stateRequestCompInfoParam          (StateMachine* stateMachine);
-    static void _stateRequestCompInfoEvents         (StateMachine* stateMachine);
-    static void _stateRequestCompInfoActuators      (StateMachine* stateMachine);
-    static void _stateRequestAllCompInfoComplete    (StateMachine* stateMachine);
 
     Vehicle*                        _vehicle                    = nullptr;
     RequestMetaDataTypeStateMachine _requestTypeStateMachine;
@@ -136,16 +75,18 @@ private:
 
     QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
 
-    static constexpr const StateFn _rgStates[]= {
-        _stateRequestCompInfoGeneral,
-        _stateRequestCompInfoGeneralComplete,
-        _stateRequestCompInfoParam,
-        _stateRequestCompInfoEvents,
-        _stateRequestCompInfoActuators,
-        _stateRequestAllCompInfoComplete
-    };
+    // State pointers
+    AsyncFunctionState*     _stateRequestGeneral    = nullptr;
+    FunctionState*          _stateUpdateUri         = nullptr;
+    SkippableAsyncState*    _stateRequestParam      = nullptr;
+    SkippableAsyncState*    _stateRequestEvents     = nullptr;
+    SkippableAsyncState*    _stateRequestActuators  = nullptr;
+    FunctionState*          _stateComplete          = nullptr;
+    QGCFinalState*          _stateFinal             = nullptr;
 
-    static constexpr int _cStates = sizeof(_rgStates) / sizeof(_rgStates[0]);
+    // Progress tracking
+    int _currentStateIndex = 0;
+    static constexpr int _stateCount = 6;
 
     friend class RequestMetaDataTypeStateMachine;
 };

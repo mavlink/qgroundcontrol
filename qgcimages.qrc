@@ -88,7 +88,7 @@
         <file alias="Disarmed.svg">src/UI/toolbar/Images/Disarmed.svg</file>
         <file alias="Disconnect.svg">src/UI/toolbar/Images/Disconnect.svg</file>
         <file alias="EscIndicator.svg">src/UI/toolbar/Images/EscIndicator.svg</file>
-        <file alias="FirmwareUpgradeIcon.png">src/Vehicle/VehicleSetup/FirmwareUpgradeIcon.png</file>
+        <file alias="FirmwareUpgradeIcon.png">src/Vehicle/VehicleSetup/Firmware/FirmwareUpgradeIcon.png</file>
         <file alias="FollowComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FloatingWindow.svg">src/AnalyzeView/FloatingWindow.svg</file>

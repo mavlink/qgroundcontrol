@@ -17,6 +17,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactMetaData.h
         FactValueSliderListModel.cc
         FactValueSliderListModel.h
+        ParameterLoadStateMachine.cc
+        ParameterLoadStateMachine.h
         ParameterManager.cc
         ParameterManager.h
         SettingsFact.cc

@@ -15,6 +15,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AirframeComponentController.h
         FlightModesComponent.cc
         FlightModesComponent.h
+        PowerCalibrationStateMachine.cc
+        PowerCalibrationStateMachine.h
         PowerComponent.cc
         PowerComponent.h
         PowerComponentController.cc
@@ -33,10 +35,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         PX4TuningComponent.h
         SafetyComponent.cc
         SafetyComponent.h
-        SensorsComponent.cc
-        SensorsComponent.h
-        SensorsComponentController.cc
-        SensorsComponentController.h
 )
 
 # ----------------------------------------------------------------------------
@@ -48,6 +46,11 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_resource
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# ----------------------------------------------------------------------------
+# PX4 Sensors Component and Calibration State Machines
+# ----------------------------------------------------------------------------
+add_subdirectory(Sensors)
 
 # ----------------------------------------------------------------------------
 # PX4 QML Module
@@ -93,9 +96,9 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         PX4TuningComponentVTOL.qml
         SafetyComponent.qml
         SafetyComponentSummary.qml
-        SensorsComponent.qml
-        SensorsComponentSummary.qml
-        SensorsComponentSummaryFixedWing.qml
-        SensorsSetup.qml
+        Sensors/SensorsComponent.qml
+        Sensors/SensorsComponentSummary.qml
+        Sensors/SensorsComponentSummaryFixedWing.qml
+        Sensors/SensorsSetup.qml
     NO_PLUGIN
 )

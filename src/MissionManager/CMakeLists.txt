@@ -49,6 +49,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         PlanElementController.h
         PlanManager.cc
         PlanManager.h
+        PlanManagerStateMachine.cc
+        PlanManagerStateMachine.h
         PlanMasterController.cc
         PlanMasterController.h
         RallyPoint.cc

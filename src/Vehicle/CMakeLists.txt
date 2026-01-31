@@ -7,10 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Autotune.cpp
         Autotune.h
-        FTPController.cc
-        FTPController.h
-        FTPManager.cc
-        FTPManager.h
+        AutotuneStateMachine.cc
+        AutotuneStateMachine.h
         InitialConnectStateMachine.cc
         InitialConnectStateMachine.h
         MAVLinkLogManager.cc
@@ -41,4 +39,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 add_subdirectory(Actuators)
 add_subdirectory(ComponentInformation)
 add_subdirectory(FactGroups)
+add_subdirectory(FTP)
 add_subdirectory(VehicleSetup)

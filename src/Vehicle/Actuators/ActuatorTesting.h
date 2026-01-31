@@ -1,12 +1,12 @@
 #pragma once
 
-
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
-#include "MAVLinkLib.h"
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QTimer>
+
+class ActuatorTestingStateMachine;
 
 namespace ActuatorTesting {
 
@@ -41,13 +41,14 @@ private:
     const bool _isMotor;
 };
 
+/// Manages actuator testing functionality.
+/// Provides QML-facing API for controlling actuator test operations.
 class ActuatorTest : public QObject
 {
     Q_OBJECT
 public:
     ActuatorTest(Vehicle* vehicle);
-
-    ~ActuatorTest();
+    ~ActuatorTest() override;
 
     Q_PROPERTY(QmlObjectListModel* actuators         READ actuators                NOTIFY actuatorsChanged)
     Q_PROPERTY(Actuator* allMotorsActuator           READ allMotorsActuator        NOTIFY actuatorsChanged)
@@ -58,65 +59,34 @@ public:
 
     void updateFunctions(const QList<Actuator*>& actuators);
 
-    /**
-     * (de-)activate actuator testing. No channels can be changed while deactivated
-     */
+    /// (de-)activate actuator testing. No channels can be changed while deactivated
     Q_INVOKABLE void setActive(bool active);
 
-    /**
-     * Control an actuator.
-     * This needs to be called at least every 100ms for each controlled channel, to refresh that channel,
-     * otherwise it will be stopped.
-     * @param index actuator index
-     * @param value control value in range defined by the actuator
-     */
+    /// Control an actuator.
+    /// This needs to be called at least every 100ms for each controlled channel, to refresh that channel,
+    /// otherwise it will be stopped.
+    /// @param index actuator index
+    /// @param value control value in range defined by the actuator
     Q_INVOKABLE void setChannelTo(int index, float value);
 
-    /**
-     * Stop controlling an actuator
-     * @param index actuator index (-1 for all)
-     */
+    /// Stop controlling an actuator
+    /// @param index actuator index (-1 for all)
     Q_INVOKABLE void stopControl(int index);
 
-    bool hadFailure() const { return _hadFailure; }
+    bool hadFailure() const;
 
 signals:
     void actuatorsChanged();
     void hadFailureChanged();
 
+private slots:
+    void _onCommandFailed(const QString& message);
+
 private:
-
-    struct ActuatorState {
-        enum class State {
-            NotActive,
-            Active,
-            StopRequest,
-            Stopping
-        };
-        State state{State::NotActive};
-        float value{0.f};
-        QElapsedTimer lastUpdated;
-    };
-
-    void resetStates();
-
-    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
-    void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
-    void sendMavlinkRequest(int function, float value, float timeout);
-
-    void sendNext();
-    void watchdogTimeout();
-
-    QmlObjectListModel* _actuators{new QmlObjectListModel(this)}; ///< list of Actuator*
+    QmlObjectListModel* _actuators{new QmlObjectListModel(this)};
     Vehicle* _vehicle{nullptr};
     Actuator* _allMotorsActuator{nullptr};
-    bool _active{false};
-    bool _commandInProgress{false};
-
-    QList<ActuatorState> _states;
-    int _currentState{-1};
-    QTimer _watchdogTimer;
-    bool _hadFailure{false};
+    ActuatorTestingStateMachine* _stateMachine{nullptr};
 };
 
 } // namespace ActuatorTesting

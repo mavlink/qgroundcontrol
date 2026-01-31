@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         LogDownloadController.cc
         LogDownloadController.h
+        LogDownloadStateMachine.cc
+        LogDownloadStateMachine.h
         LogEntry.cc
         LogEntry.h
         MAVLinkChartController.cc

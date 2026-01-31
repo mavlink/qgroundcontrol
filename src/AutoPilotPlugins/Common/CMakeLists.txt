@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ESP8266Component.h
         ESP8266ComponentController.cc
         ESP8266ComponentController.h
+        ESP8266StateMachine.cc
+        ESP8266StateMachine.h
         ScriptingComponent.cc
         ScriptingComponent.h
         MotorComponent.cc
@@ -24,6 +26,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# ----------------------------------------------------------------------------
+# Common Sensors Component
+# ----------------------------------------------------------------------------
+add_subdirectory(Sensors)
 
 # ----------------------------------------------------------------------------
 # Common AutoPilot Plugins QML Module

@@ -8,6 +8,7 @@
 #include "QGCMAVLink.h"
 
 class Vehicle;
+class PlanManagerStateMachine;
 
 Q_DECLARE_LOGGING_CATEGORY(PlanManagerLog)
 
@@ -16,6 +17,7 @@ Q_DECLARE_LOGGING_CATEGORY(PlanManagerLog)
 class PlanManager : public QObject
 {
     Q_OBJECT
+    friend class PlanManagerStateMachine;
 
 public:
     PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType);
@@ -78,69 +80,33 @@ signals:
 
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
-    void _ackTimeout(void);
 
 protected:
-    typedef enum {
-        AckNone,            ///< State machine is idle
-        AckMissionCount,    ///< MISSION_COUNT message expected
-        AckMissionItem,     ///< MISSION_ITEM expected
-        AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
-        AckMissionClearAll, ///< MISSION_CLEAR_ALL sent, MISSION_ACK is expected
-        AckGuidedItem,      ///< MISSION_ACK expected in response to ArduPilot guided mode single item send
-    } AckType_t;
-
-    typedef enum {
-        TransactionNone,
-        TransactionRead,
-        TransactionWrite,
-        TransactionRemoveAll
-    } TransactionType_t;
-
-    void _startAckTimeout(AckType_t ack);
-    bool _checkForExpectedAck(AckType_t receivedAck);
-    void _readTransactionComplete(void);
-    void _handleMissionCount(const mavlink_message_t& message);
-    void _handleMissionItem(const mavlink_message_t& message);
-    void _handleMissionRequest(const mavlink_message_t& message);
-    void _handleMissionAck(const mavlink_message_t& message);
-    void _requestNextMissionItem(void);
-    void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
-    QString _ackTypeToString(AckType_t ackType);
     QString _missionResultToString(MAV_MISSION_RESULT result);
-    void _finishTransaction(bool success, bool apmGuidedItemWrite = false);
-    void _requestList(void);
-    void _writeMissionCount(void);
-    void _writeMissionItemsWorker(void);
     void _clearAndDeleteMissionItems(void);
     void _clearAndDeleteWriteMissionItems(void);
     QString _lastMissionReqestString(MAV_MISSION_RESULT result);
-    void _removeAllWorker(void);
     void _connectToMavlink(void);
     void _disconnectFromMavlink(void);
     QString _planTypeString(void);
+
+    // Called by state machine on transaction completion
+    void _onReadComplete(bool success);
+    void _onWriteComplete(bool success);
+    void _onRemoveAllComplete(bool success);
 
 protected:
     Vehicle*            _vehicle =              nullptr;
     MAV_MISSION_TYPE    _planType;
 
-    QTimer*             _ackTimeoutTimer =      nullptr;
-    AckType_t           _expectedAck;
-    int                 _retryCount;
-
-    TransactionType_t   _transactionInProgress;
-    bool                _resumeMission;
-    QList<int>          _itemIndicesToWrite;    ///< List of mission items which still need to be written to vehicle
-    QList<int>          _itemIndicesToRead;     ///< List of mission items which still need to be requested from vehicle
-    int                 _lastMissionRequest;    ///< Index of item last requested by MISSION_REQUEST
-    int                 _missionItemCountToRead;///< Count of all mission items to read
+    bool                _resumeMission = false;
+    int                 _lastMissionRequest = -1;    ///< Index of item last requested by MISSION_REQUEST
 
     QList<MissionItem*> _missionItems;          ///< Set of mission items on vehicle
     QList<MissionItem*> _writeMissionItems;     ///< Set of mission items currently being written to vehicle
-    int                 _currentMissionIndex;
-    int                 _lastCurrentIndex;
+    int                 _currentMissionIndex = -1;
+    int                 _lastCurrentIndex = -1;
 
-private:
-    void _setTransactionInProgress(TransactionType_t type);
+    PlanManagerStateMachine* _stateMachine = nullptr;
 };

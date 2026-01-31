@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        CameraDiscoveryStateMachine.cc
+        CameraDiscoveryStateMachine.h
         CameraMetaData.cc
         CameraMetaData.h
         MavlinkCameraControl.cc

@@ -1,4 +1,5 @@
 #include "RemoteControlCalibrationController.h"
+#include "RCCalibrationStateMachine.h"
 #include "Fact.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
@@ -36,22 +37,23 @@ static constexpr const char *msgComplete =              QT_TR_NOOP("All settings
 
 RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *parent)
     : FactPanelController(parent)
-    , _stateMachine{
-        // stickFunction,           stepFunction,                   channelInputFn,                                             nextButtonFn
-        { stickFunctionMax,         StateMachineStepStickNeutral,   &RemoteControlCalibrationController::_inputCenterWaitBegin, &RemoteControlCalibrationController::_saveAllTrims },
-        { stickFunctionThrottle,    StateMachineStepThrottleUp,     &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionThrottle,    StateMachineStepThrottleDown,   &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionYaw,         StateMachineStepYawRight,       &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionYaw,         StateMachineStepYawLeft,        &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionRoll,        StateMachineStepRollRight,      &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionRoll,        StateMachineStepRollLeft,       &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionPitch,       StateMachineStepPitchUp,        &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionPitch,       StateMachineStepPitchDown,      &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionPitch,       StateMachineStepPitchCenter,    &RemoteControlCalibrationController::_inputCenterWait,      nullptr },
-        { stickFunctionMax,         StateMachineStepSwitchMinMax,   &RemoteControlCalibrationController::_inputSwitchMinMax,    &RemoteControlCalibrationController::_advanceState },
-        { stickFunctionMax,         StateMachineStepComplete,       nullptr,                                                    &RemoteControlCalibrationController::_saveCalibrationValues },
-    }
 {
+    _stateMachine = new RCCalibrationStateMachine(this, this);
+
+    connect(_stateMachine, &RCCalibrationStateMachine::calibrationStarted, this, [this]() {
+        if (!_calibrating) {
+            _calibrating = true;
+            emit calibratingChanged(true);
+        }
+    });
+
+    connect(_stateMachine, &RCCalibrationStateMachine::calibrationCancelled, this, [this]() {
+        _stopCalibration();
+    });
+
+    connect(_stateMachine, &RCCalibrationStateMachine::calibrationComplete, this, [this]() {
+        _stopCalibration();
+    });
     // qCDebug(RemoteControlCalibrationControllerLog) << Q_FUNC_INFO << this;
 
     _resetInternalCalibrationValues();
@@ -245,52 +247,53 @@ void RemoteControlCalibrationController::start()
     _readStoredCalibrationValues();
 }
 
-const RemoteControlCalibrationController::StateMachineEntry &RemoteControlCalibrationController::_getStateMachineEntry(int step) const
+RemoteControlCalibrationController::StateMachineStepFunction RemoteControlCalibrationController::_currentStepFunction() const
 {
-    if (step < 0 || step >= _stateMachine.size()) {
-        qCWarning(RemoteControlCalibrationControllerLog) << "Bad step value" << step;
-        step = 0;
+    if (!_stateMachine->isCalibrating()) {
+        return StateMachineStepStickNeutral;
     }
 
-    return _stateMachine[step];
-}
+    QString stateName = _stateMachine->currentStateName();
+    if (stateName == "StickNeutral") return StateMachineStepStickNeutral;
+    if (stateName == "ThrottleUp") return StateMachineStepThrottleUp;
+    if (stateName == "ThrottleDown") return StateMachineStepThrottleDown;
+    if (stateName == "YawRight") return StateMachineStepYawRight;
+    if (stateName == "YawLeft") return StateMachineStepYawLeft;
+    if (stateName == "RollRight") return StateMachineStepRollRight;
+    if (stateName == "RollLeft") return StateMachineStepRollLeft;
+    if (stateName == "PitchUp") return StateMachineStepPitchUp;
+    if (stateName == "PitchDown") return StateMachineStepPitchDown;
+    if (stateName == "PitchCenter") return StateMachineStepPitchCenter;
+    if (stateName == "SwitchMinMax") return StateMachineStepSwitchMinMax;
+    if (stateName == "Complete") return StateMachineStepComplete;
 
-void RemoteControlCalibrationController::_advanceState()
-{
-    _currentStep++;
-    if (_currentStep >= _stateMachine.size()) {
-        _stopCalibration();
-        return;
-    }
-
-    _setupCurrentState();
+    return StateMachineStepStickNeutral;
 }
 
 void RemoteControlCalibrationController::_setupCurrentState()
 {
-    auto state = _getStateMachineEntry(_currentStep);
+    StateMachineStepFunction stepFunction = _currentStepFunction();
 
     _stepFunctionToMsgStringMap[StateMachineStepStickNeutral] = _centeredThrottle ? msgBeginThrottleCenter : msgBeginThrottleDown;
     _stepFunctionToMsgStringMap[StateMachineStepSwitchMinMax] = _joystickMode ? msgSwitchMinMaxJoystick : msgSwitchMinMaxRC;
 
     BothSticksDisplayPositions defaultPositions = { _stickDisplayPositionCentered, _stickDisplayPositionCentered };
     BothSticksDisplayPositions bothStickPositions = _centeredThrottle
-        ? _bothStickDisplayPositionThrottleCenteredMap.value(state.stepFunction).value(_transmitterMode, defaultPositions)
-        : _bothStickDisplayPositionThrottleDownMap.value(state.stepFunction).value(_transmitterMode, defaultPositions);
+        ? _bothStickDisplayPositionThrottleCenteredMap.value(stepFunction).value(_transmitterMode, defaultPositions)
+        : _bothStickDisplayPositionThrottleDownMap.value(stepFunction).value(_transmitterMode, defaultPositions);
 
-    _statusText->setProperty("text", _stepFunctionToMsgStringMap.value(state.stepFunction, QString()));
+    _statusText->setProperty("text", _stepFunctionToMsgStringMap.value(stepFunction, QString()));
     _stickDisplayPositions = { bothStickPositions.leftStick.horizontal, bothStickPositions.leftStick.vertical,
                                bothStickPositions.rightStick.horizontal, bothStickPositions.rightStick.vertical };
-    qDebug() << "_setupCurrentState stepFunction:" << state.stepFunction << "leftStick(h,v):" << bothStickPositions.leftStick.horizontal << bothStickPositions.leftStick.vertical
+    qDebug() << "_setupCurrentState stepFunction:" << stepFunction << "leftStick(h,v):" << bothStickPositions.leftStick.horizontal << bothStickPositions.leftStick.vertical
              << "rightStick(h,v):" << bothStickPositions.rightStick.horizontal << bothStickPositions.rightStick.vertical;
     emit stickDisplayPositionsChanged();
 
-    _stickDetectChannel = _chanMax;
-    _stickDetectSettleStarted = false;
-
-    _saveCurrentRawValues();
-
-    _nextButton->setEnabled(state.nextButtonFn != nullptr);
+    // Enable next button only for states that have a next button action
+    bool hasNextButton = (stepFunction == StateMachineStepStickNeutral ||
+                          stepFunction == StateMachineStepSwitchMinMax ||
+                          stepFunction == StateMachineStepComplete);
+    _nextButton->setEnabled(hasNextButton);
 }
 
 void RemoteControlCalibrationController::rawChannelValuesChanged(QVector<int> channelValues)
@@ -331,23 +334,21 @@ void RemoteControlCalibrationController::rawChannelValuesChanged(QVector<int> ch
             }
         }
 
-        if (_currentStep == -1) {
+        if (!_stateMachine->isCalibrating()) {
             if (_chanCount != channelCount) {
                 _chanCount = channelCount;
                 emit channelCountChanged(_chanCount);
             }
         } else {
-            auto state = _getStateMachineEntry(_currentStep);
-            if (state.channelInputFn) {
-                (this->*state.channelInputFn)(state.stickFunction, channel, channelValue);
-            }
+            // Forward to state machine for processing
+            _stateMachine->processChannelInput(channel, channelValue);
         }
     }
 }
 
 void RemoteControlCalibrationController::nextButtonClicked()
 {
-    if (_currentStep == -1) {
+    if (!_stateMachine->isCalibrating()) {
         // Need to have enough channels
         if (_chanCount < _chanMinimum) {
             qgcApp()->showAppMessage(QStringLiteral("Detected %1 channels. To operate vehicle, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
@@ -355,245 +356,13 @@ void RemoteControlCalibrationController::nextButtonClicked()
         }
         _startCalibration();
     } else {
-        auto state = _getStateMachineEntry(_currentStep);
-        if (state.nextButtonFn) {
-            (this->*state.nextButtonFn)();
-        }
+        _stateMachine->nextButtonPressed();
     }
 }
 
 void RemoteControlCalibrationController::cancelButtonClicked()
 {
-    _stopCalibration();
-}
-
-void RemoteControlCalibrationController::_saveAllTrims()
-{
-    // We save all trims as the first step. At this point no channels are mapped but it should still
-    // allow us to get good trims for the roll/pitch/yaw/throttle even though we don't know which
-    // channels they are yet. AS we continue through the process the other channels will get their
-    // trims reset to correct values.
-
-    for (int i=0; i<_chanCount; i++) {
-        qCDebug(RemoteControlCalibrationControllerLog) << "_saveAllTrims channel trim" << i<< _channelRawValue[i];
-        _rgChannelInfo[i].channelTrim = _channelRawValue[i];
-    }
-    _advanceState();
-}
-
-void RemoteControlCalibrationController::_inputCenterWaitBegin(StickFunction /*stickFunction*/, int channel, int value)
-{
-    if (_joystickMode) {
-        // Track deadband adjustments in joystick mode
-        int newDeadband = abs(value) * 1.1; // add 10% on top for fudge factor
-        if (newDeadband > _rgChannelInfo[channel].deadband) {
-            _rgChannelInfo[channel].deadband = qMin(newDeadband, _calValidMaxValue  );
-            qCDebug(RemoteControlCalibrationControllerLog) << "Channel:" << channel << "Deadband:" << _rgChannelInfo[channel].deadband;
-            StickFunction stickFunction = _rgChannelInfo[channel].stickFunction;
-            if (stickFunction != stickFunctionMax) {
-                _emitDeadbandChanged(stickFunction);
-            }
-        }
-    }
-
-    _nextButton->setEnabled(true);
-}
-
-bool RemoteControlCalibrationController::_stickSettleComplete(int value)
-{
-    // We are waiting for the stick to settle out to a max position
-
-    if (abs(_stickDetectValue - value) > _calSettleDelta) {
-        // Stick is moving too much to consider stopped
-
-        qCDebug(RemoteControlCalibrationControllerLog) << "_stickSettleComplete Still moving, _stickDetectValue:value" << _stickDetectValue << value;
-
-        _stickDetectValue = value;
-        _stickDetectSettleStarted = false;
-    } else {
-        // Stick is still positioned within the specified small range
-
-        if (_stickDetectSettleStarted) {
-            // We have already started waiting
-
-            if (_stickDetectSettleElapsed.elapsed() > _stickDetectSettleMSecs) {
-                // Stick has stayed positioned in one place long enough, detection is complete.
-                return true;
-            }
-        } else {
-            // Start waiting for the stick to stay settled for _stickDetectSettleWaitMSecs msecs
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "_stickSettleComplete Starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
-
-            _stickDetectSettleStarted = true;
-            _stickDetectSettleElapsed.start();
-        }
-    }
-
-    return false;
-}
-
-void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFunction, int channel, int value)
-{
-    // If this channel is already used in a mapping we can't use it again
-    if (_rgChannelInfo[channel].stickFunction != stickFunctionMax) {
-        return;
-    }
-
-    qCDebug(RemoteControlCalibrationControllerVerboseLog) << "_inputStickDetect function:channel:value" << _stickFunctionToString(stickFunction) << channel << value;
-
-    if (_stickDetectChannel == _chanMax) {
-        // We have not detected enough movement on a channel yet
-        // Note: We intentionally require movement here (not just being at extreme) because
-        // this function is called for ALL channels, and some (like triggers) may rest at
-        // extreme positions. Requiring movement ensures we detect the correct channel.
-
-        if (abs(_channelValueSave[channel] - value) > _calMoveDelta) {
-            // Stick has moved far enough to consider it as being selected for the function
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickDetect Starting settle wait";
-
-            // Setup up to detect stick being pegged to min or max value
-            _stickDetectChannel = channel;
-            _stickDetectValue = value;
-        }
-    } else if (channel == _stickDetectChannel) {
-        if (_stickSettleComplete(value)) {
-            ChannelInfo *const info = &_rgChannelInfo[channel];
-
-            // Map the channel to the function
-            _rgFunctionChannelMapping[stickFunction] = channel;
-            info->stickFunction = stickFunction;
-
-            // A non-reversed channel should show a higher value than center.
-            info->channelReversed = value < _channelValueSave[channel];
-            if (info->channelReversed) {
-                _rgChannelInfo[channel].channelMin = value;
-            } else {
-                _rgChannelInfo[channel].channelMax = value;
-            }
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickDetect Settle complete, reversed:min:max" << info->channelReversed << info->channelMin << info->channelMax;
-
-            _signalAllAttitudeValueChanges();
-
-            _advanceState();
-        }
-    }
-}
-
-void RemoteControlCalibrationController::_inputStickMin(StickFunction stickFunction, int channel, int value)
-{
-    // We only care about the channel mapped to the function we are working on
-    if (_rgFunctionChannelMapping[stickFunction] != channel) {
-        return;
-    }
-
-    qCDebug(RemoteControlCalibrationControllerVerboseLog) << "_inputStickMin function:channel:value" << _stickFunctionToString(stickFunction) << channel << value;
-
-    if (_stickDetectChannel == _chanMax) {
-        // Setup up to detect stick being pegged to extreme position
-        // Check both: 1) significant movement from saved position, AND 2) value is in the expected half of range
-        const bool movedSignificantly = abs(_channelValueSave[channel] - value) > _calMoveDelta;
-
-        if (_rgChannelInfo[channel].channelReversed) {
-            // Reversed channel: "min" is actually in the positive direction
-            // Also check if already at the max extreme (user moved stick before step started)
-            const bool alreadyAtExtreme = abs(value - _calValidMaxValue) < _calSettleDelta;
-
-            if ((movedSignificantly && value > _calCenterPoint) || alreadyAtExtreme) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait"
-                                                               << "movedSignificantly:" << movedSignificantly
-                                                               << "alreadyAtExtreme:" << alreadyAtExtreme;
-                _stickDetectChannel = channel;
-                _stickDetectValue = value;
-            }
-        } else {
-            // Normal channel: "min" is in the negative direction
-            // Also check if already at the min extreme (user moved stick before step started)
-            const bool alreadyAtExtreme = abs(value - _calValidMinValue) < _calSettleDelta;
-
-            if ((movedSignificantly && value < _calCenterPoint) || alreadyAtExtreme) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait"
-                                                               << "movedSignificantly:" << movedSignificantly
-                                                               << "alreadyAtExtreme:" << alreadyAtExtreme;
-                _stickDetectChannel = channel;
-                _stickDetectValue = value;
-            }
-        }
-    } else {
-        // We are waiting for the selected channel to settle out
-        if (_stickSettleComplete(value)) {
-            const ChannelInfo *const info = &_rgChannelInfo[channel];
-
-            // Stick detection is complete. Stick should be at extreme position.
-            if (info->channelReversed) {
-                _rgChannelInfo[channel].channelMax = value;
-            } else {
-                _rgChannelInfo[channel].channelMin = value;
-            }
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Settle complete";
-
-            // Check if this is throttle and set trim accordingly
-            if (stickFunction == stickFunctionThrottle) {
-                _rgChannelInfo[channel].channelTrim = value;
-            }
-            // XXX to support configs which can reverse they need to check a reverse
-            // flag here and not do this.
-
-            _advanceState();
-        }
-    }
-}
-
-void RemoteControlCalibrationController::_inputCenterWait(StickFunction stickFunction, int channel, int value)
-{
-    // We only care about the channel mapped to the function we are working on
-    if (_rgFunctionChannelMapping[stickFunction] != channel) {
-        return;
-    }
-
-    qCDebug(RemoteControlCalibrationControllerLog) << "_inputCenterWait function:channel:value" << _stickFunctionToString(stickFunction) << channel << value;
-    if (_stickDetectChannel == _chanMax) {
-        // Sticks have not yet moved close enough to center
-
-        if (abs(_calCenterPoint - value) < _calRoughCenterDelta) {
-            // Stick has moved close enough to center that we can start waiting for it to settle
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputCenterWait Center detected. Waiting for settle.";
-            _stickDetectChannel = channel;
-            _stickDetectValue = value;
-        }
-    } else {
-        if (_stickSettleComplete(value)) {
-            _advanceState();
-        }
-    }
-}
-
-void RemoteControlCalibrationController::_inputSwitchMinMax(StickFunction /*stickFunction*/, int channel, int value)
-{
-    // If the channel is mapped we already have min/max
-    if (_rgChannelInfo[channel].stickFunction != stickFunctionMax) {
-        return;
-    }
-
-    if (abs(_calCenterPoint - value) > _calMoveDelta) {
-        // Stick has moved far enough from center to consider for min/max
-        if (value < _calCenterPoint) {
-            const int minValue = qMin(_rgChannelInfo[channel].channelMin, value);
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "setting min channel:min" << channel << minValue;
-
-            _rgChannelInfo[channel].channelMin = minValue;
-        } else {
-            int maxValue = qMax(_rgChannelInfo[channel].channelMax, value);
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "setting max channel:max" << channel << maxValue;
-
-            _rgChannelInfo[channel].channelMax = maxValue;
-        }
-    }
+    _stateMachine->cancelCalibration();
 }
 
 void RemoteControlCalibrationController::_resetInternalCalibrationValues()
@@ -673,22 +442,14 @@ void RemoteControlCalibrationController::_startCalibration()
 
     _resetInternalCalibrationValues();
 
-    if (!_calibrating) {
-        _calibrating = true;
-        emit calibratingChanged(true);
-    }
-
     _nextButton->setProperty("text", tr("Next"));
     _cancelButton->setEnabled(true);
 
-    _currentStep = 0;
-    _setupCurrentState();
+    _stateMachine->startCalibration();
 }
 
 void RemoteControlCalibrationController::_stopCalibration()
 {
-    _currentStep = -1;
-
     if (_vehicle) {
         _readStoredCalibrationValues();
     }
@@ -978,9 +739,3 @@ void RemoteControlCalibrationController::_emitDeadbandChanged(StickFunction stic
     }
 }
 
-void RemoteControlCalibrationController::_saveCalibrationValues()
-{
-    _saveStoredCalibrationValues();
-    emit calibrationCompleted();
-    _advanceState();
-}

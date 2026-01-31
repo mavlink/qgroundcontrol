@@ -11,12 +11,15 @@ Q_DECLARE_LOGGING_CATEGORY(ESP8266ComponentControllerLog)
 
 class Fact;
 class Vehicle;
+class ESP8266StateMachine;
 
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
     QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
+
+    friend class ESP8266StateMachine;
     Q_PROPERTY(int          componentID     READ componentID                                    CONSTANT)
     Q_PROPERTY(QString      version         READ version                                        NOTIFY versionChanged)
     Q_PROPERTY(QString      wifiIPAddress   READ wifiIPAddress                                  CONSTANT)
@@ -47,7 +50,7 @@ public:
     QStringList wifiChannels() const { return _channels; }
     QStringList baudRates() const { return _baudRates; }
     int baudIndex() const;
-    bool busy() const { return (_waitType != WAIT_FOR_NOTHING); }
+    bool busy() const;
     Vehicle *vehicle() const { return _vehicle; }
 
     void setWifiSSID(const QString &id) const;
@@ -73,21 +76,11 @@ private slots:
     void _versionChanged(QVariant value) { emit versionChanged(); }
 
 private:
-    void _reboot() const;
-    void _restoreDefaults() const;
-
     QStringList _channels;
     const QStringList _baudRates = { QStringLiteral("57600"), QStringLiteral("115200"), QStringLiteral("230400"), QStringLiteral("460800"), QStringLiteral("921600") };
     QString _ipAddress;
 
-    enum {
-        WAIT_FOR_NOTHING,
-        WAIT_FOR_REBOOT,
-        WAIT_FOR_RESTORE
-    };
-
-    int _waitType = WAIT_FOR_NOTHING;
-    int _retries = 0;
+    ESP8266StateMachine* _stateMachine = nullptr;
 
     Fact *_baud = nullptr;
     Fact *_ver = nullptr;

@@ -99,6 +99,7 @@ class Vehicle : public VehicleFactGroup
     friend class SendMavCommandWithSignallingTest;  // Unit test
     friend class SendMavCommandWithHandlerTest;     // Unit test
     friend class RequestMessageTest;                // Unit test
+    friend class RetryableRequestMessageStateTest;  // Unit test
     friend class GimbalController;                  // Allow GimbalController to call _addFactGroup
 
 public:
@@ -897,9 +898,6 @@ private slots:
     void _offlineCruiseSpeedSettingChanged  (QVariant value);
     void _offlineHoverSpeedSettingChanged   (QVariant value);
     void _prearmErrorTimeout                ();
-    void _firstMissionLoadComplete          ();
-    void _firstGeoFenceLoadComplete         ();
-    void _firstRallyPointLoadComplete       ();
     void _sendMavCommandResponseTimeoutCheck();
     void _clearCameraTriggerPoints          ();
     void _updateDistanceHeadingHome         ();

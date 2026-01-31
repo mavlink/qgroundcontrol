@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Actuators.h
         ActuatorTesting.cc
         ActuatorTesting.h
+        ActuatorTestingStateMachine.cc
+        ActuatorTestingStateMachine.h
         Common.cc
         Common.h
         GeometryImage.cc
@@ -21,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Mixer.h
         MotorAssignment.cc
         MotorAssignment.h
+        MotorAssignmentStateMachine.cc
+        MotorAssignmentStateMachine.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

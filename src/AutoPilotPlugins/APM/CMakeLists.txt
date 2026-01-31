@@ -35,10 +35,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMRemoteSupportComponent.h
         APMSafetyComponent.cc
         APMSafetyComponent.h
-        APMSensorsComponent.cc
-        APMSensorsComponent.h
-        APMSensorsComponentController.cc
-        APMSensorsComponentController.h
         APMSubFrameComponent.cc
         APMSubFrameComponent.h
         APMSubMotorComponentController.cc
@@ -48,6 +44,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# ----------------------------------------------------------------------------
+# APM Sensors Component and Calibration State Machines
+# ----------------------------------------------------------------------------
+add_subdirectory(Sensors)
 
 # ----------------------------------------------------------------------------
 # APM QML Module
@@ -81,10 +82,10 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMSafetyComponentSub.qml
         APMSafetyComponentSummary.qml
         APMSafetyComponentSummarySub.qml
-        APMSensorsComponent.qml
-        APMSensorsComponentSummary.qml
-        APMSensorIdDecoder.qml
-        APMSensorParams.qml
+        Sensors/APMSensorsComponent.qml
+        Sensors/APMSensorsComponentSummary.qml
+        Sensors/APMSensorIdDecoder.qml
+        Sensors/APMSensorParams.qml
         APMSubFrameComponent.qml
         APMSubFrameComponentSummary.qml
         APMSubMotorComponent.qml

@@ -1,4 +1,5 @@
 #include "ESP8266ComponentController.h"
+#include "ESP8266StateMachine.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -6,8 +7,6 @@
 #include <QtNetwork/QHostAddress>
 
 QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "AutoPilotPlugins.ESP8266ComponentController")
-
-#define MAX_RETRIES 5
 
 ESP8266ComponentController::ESP8266ComponentController(QObject *parent)
     : FactPanelController(parent)
@@ -30,11 +29,13 @@ ESP8266ComponentController::ESP8266ComponentController(QObject *parent)
     , _pwdsta3(getParameterFact(componentID(), QStringLiteral("WIFI_PWDSTA3"), false))
     , _pwdsta4(getParameterFact(componentID(), QStringLiteral("WIFI_PWDSTA4"), false))
 {
-    // qCDebug(RadioComponentControllerLog) << Q_FUNC_INFO << this;
-
     for (int i = 1; i < 12; i++) {
         _channels.append(QString::number(i));
     }
+
+    // Create state machine
+    _stateMachine = new ESP8266StateMachine(this, this);
+    (void) connect(_stateMachine, &ESP8266StateMachine::busyChanged, this, &ESP8266ComponentController::busyChanged);
 
     (void) connect(_vehicle, &Vehicle::mavCommandResult, this, &ESP8266ComponentController::_mavCommandResult);
     (void) connect(_ssid4, &Fact::valueChanged, this, &ESP8266ComponentController::_ssidChanged);
@@ -263,53 +264,32 @@ void ESP8266ComponentController::setBaudIndex(int idx) const
     }
 }
 
+bool ESP8266ComponentController::busy() const
+{
+    return _stateMachine->isBusy();
+}
+
 void ESP8266ComponentController::reboot()
 {
-    _waitType = WAIT_FOR_REBOOT;
-    emit busyChanged();
-    _retries = MAX_RETRIES;
-    _reboot();
+    qCDebug(ESP8266ComponentControllerLog) << "reboot()";
+    _stateMachine->startReboot();
 }
 
 void ESP8266ComponentController::restoreDefaults()
 {
-    _waitType = WAIT_FOR_RESTORE;
-    emit busyChanged();
-    _retries = MAX_RETRIES;
-    _restoreDefaults();
-}
-
-void ESP8266ComponentController::_reboot() const
-{
-    _vehicle->sendMavCommand(componentID(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 0.0f, 1.0f);
-    qCDebug(ESP8266ComponentControllerLog) << "_reboot()";
-}
-
-void ESP8266ComponentController::_restoreDefaults() const
-{
-    _vehicle->sendMavCommand(componentID(), MAV_CMD_PREFLIGHT_STORAGE, true /* showError */, 2.0f);
-    qCDebug(ESP8266ComponentControllerLog) << "_restoreDefaults()";
+    qCDebug(ESP8266ComponentControllerLog) << "restoreDefaults()";
+    _stateMachine->startRestore();
 }
 
 void ESP8266ComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
 {
-    Q_UNUSED(vehicleId); Q_UNUSED(failureCode);
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(failureCode);
 
     if (component != componentID()) {
         return;
     }
 
-    if (result != MAV_RESULT_ACCEPTED) {
-        qCWarning(ESP8266ComponentControllerLog) << "ESP8266ComponentController command" << command << "rejected.";
-        return;
-    }
-
-    if (((_waitType == WAIT_FOR_REBOOT) && (command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN)) || ((_waitType == WAIT_FOR_RESTORE) && (command == MAV_CMD_PREFLIGHT_STORAGE))) {
-        _waitType = WAIT_FOR_NOTHING;
-        emit busyChanged();
-        qCDebug(ESP8266ComponentControllerLog) << "_commandAck for" << command;
-        if (command == MAV_CMD_PREFLIGHT_STORAGE) {
-            _vehicle->parameterManager()->refreshAllParameters(componentID());
-        }
-    }
+    // Delegate to state machine
+    _stateMachine->handleCommandResult(command, result);
 }

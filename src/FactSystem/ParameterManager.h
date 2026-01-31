@@ -5,7 +5,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QTimer>
+#include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
@@ -18,6 +18,7 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
 class ParameterEditorController;
+class ParameterLoadStateMachine;
 class Vehicle;
 
 class ParameterManager : public QObject
@@ -30,12 +31,13 @@ class ParameterManager : public QObject
     Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
     Q_PROPERTY(bool     pendingWrites       READ pendingWrites      NOTIFY pendingWritesChanged)        ///< true: There are still pending write updates against the vehicle
     friend class ParameterEditorController;
+    friend class ParameterLoadStateMachine;
 
 public:
     ParameterManager(Vehicle *vehicle);
     ~ParameterManager();
 
-    bool parametersReady() const { return _parametersReady; }
+    bool parametersReady() const;
     bool missingParameters() const { return _missingParameters; }
     double loadProgress() const { return _loadProgress; }
 
@@ -92,7 +94,12 @@ public:
     // These are public for creating unit tests
     static constexpr int kParamSetRetryCount = 2;                   ///< Number of retries for PARAM_SET
     static constexpr int kParamRequestReadRetryCount = 2;           ///< Number of retries for PARAM_REQUEST_READ
-    static constexpr int kWaitForParamValueAckMs = 1000;    ///< Time to wait for param value ack after set param
+    static constexpr int kWaitForParamValueAckMs = 1000;            ///< Time to wait for param value ack after set param
+    static constexpr int kInitialRequestTimeoutMsDefault = 5000;    ///< Default timeout for initial param request
+    static constexpr int kWaitingParamTimeoutMsDefault = 3000;      ///< Default timeout for waiting param
+
+    /// Set shorter timeouts for unit testing (call before vehicle connection)
+    void setTestTimeouts(int initialRequestTimeoutMs, int waitingParamTimeoutMs);
 
 signals:
     void parametersReadyChanged(bool parametersReady);
@@ -109,15 +116,15 @@ signals:
 
 private slots:
     void _factRawValueUpdated(const QVariant &rawValue);
+    void _onLoadComplete(bool success, bool missingParameters);
+    void _onLoadProgressChanged(double progress);
 
 private:
     /// Called whenever a parameter is updated or first seen.
     void _handleParamValue(int componentId, const QString &parameterName, int parameterCount, int parameterIndex, MAV_PARAM_TYPE mavParamType, const QVariant &parameterValue);
-     /// Writes the parameter update to mavlink, sets up for write wait
+    /// Writes the parameter update to mavlink, sets up for write wait
     void _mavlinkParamSet(int componentId, const QString &name, FactMetaData::ValueType_t valueType, const QVariant &rawValue);
-    void _waitingParamTimeout();
     void _tryCacheLookup();
-    void _initialRequestTimeout();
     /// Translates ParameterManager::defaultComponentId to real component id if needed
     int _actualComponentId(int componentId) const;
     void _mavlinkParamRequestRead(int componentId, const QString &paramName, int paramIndex, bool notifyFailure);
@@ -133,14 +140,6 @@ private:
     void _loadOfflineEditingParams();
     QString _logVehiclePrefix(int componentId) const;
     void _setLoadProgress(double loadProgress);
-    /// Requests missing index based parameters from the vehicle.
-    ///     @param waitingParamTimeout: true: being called due to timeout, false: being called to re-fill the batch queue
-    /// return true: Parameters were requested, false: No more requests needed
-    bool _fillIndexBatchQueue(bool waitingParamTimeout);
-    void _updateProgressBar();
-    void _checkInitialLoadComplete();
-    void _ftpDownloadComplete(const QString &fileName, const QString &errorMsg);
-    void _ftpDownloadProgress(float progress);
     /// Parse the binary parameter file and inject the parameters in the qgc fact system.
     /// See: https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_Filesystem
     bool _parseParamFile(const QString &filename);
@@ -151,48 +150,32 @@ private:
     static QVariant _stringToTypedVariant(const QString &string, FactMetaData::ValueType_t type, bool failOk = false);
 
     Vehicle *_vehicle = nullptr;
+    ParameterLoadStateMachine* _loadStateMachine = nullptr;
 
     QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2FactMap;
 
+    // QML property state
     double _loadProgress = 0;                   ///< Parameter load progess, [0.0,1.0]
-    bool _parametersReady = false;              ///< true: parameter load complete
     bool _missingParameters = false;            ///< true: parameter missing from initial load
-    bool _initialLoadComplete = false;          ///< true: Initial load of all parameters complete, whether successful or not
-    bool _waitingForDefaultComponent = false;   ///< true: last chance wait for default component params
-    bool _metaDataAddedToFacts = false;         ///< true: FactMetaData has been adde to the default component facts
+
+    // Internal state (not managed by state machine)
+    bool _offlineParametersReady = false;       ///< true: offline editing vehicle params loaded (no state machine)
     bool _logReplay = false;                    ///< true: running with log replay link
 
     typedef QPair<int /* FactMetaData::ValueType_t */, QVariant /* Fact::rawValue */> ParamTypeVal;
     typedef QMap<QString /* parameter name */, ParamTypeVal> CacheMapName2ParamTypeVal;
 
+    // Cache debugging
     QMap<int /* component id */, bool> _debugCacheCRC; ///< true: debug cache crc failure
     QMap<int /* component id */, CacheMapName2ParamTypeVal> _debugCacheMap;
     QMap<int /* component id */, QMap<QString /* param name */, bool /* seen */>> _debugCacheParamSeen;
 
-    // Wait counts from previous parameter update cycle
-    int _prevWaitingReadParamIndexCount = 0;
-
-    bool _readParamIndexProgressActive = false;
-
-    static constexpr int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
-    int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
-    static constexpr int _maxInitialLoadRetrySingleParam = 5;   ///< Maximum retries for initial index based load of a single param
-    bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)
-
-    bool _indexBatchQueueActive = false;    ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
-    QList<int> _indexBatchQueue;            ///< The current queue of index re-requests
-
+    // Parameter tracking data structures (shared with state machine)
     QMap<int, int> _paramCountMap;                              ///< Key: Component id, Value: count of parameters in this component
     QMap<int, QMap<int, int>> _waitingReadParamIndexMap;        ///< Key: Component id, Value: Map { Key: parameter index still waiting for, Value: retry count }
     QMap<int, QList<int>> _failedReadParamIndexMap;             ///< Key: Component id, Value: failed parameter index
-
-    int _totalParamCount = 0;                   ///< Number of parameters across all components
-    int _pendingWritesCount = 0;                ///< Number of parameters with pending writes
-
-    QTimer _initialRequestTimeoutTimer;
-    QTimer _waitingParamTimeoutTimer;
+    int _totalParamCount = 0;                                   ///< Number of parameters across all components
+    int _pendingWritesCount = 0;                                ///< Number of parameters with pending writes
 
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
-
-    bool _tryftp = false;
 };

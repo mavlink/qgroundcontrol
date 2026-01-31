@@ -17,6 +17,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MissionItemTest.cc MissionItemTest.h
         MissionManagerTest.cc MissionManagerTest.h
         MissionSettingsTest.cc MissionSettingsTest.h
+        PlanManagerStateMachineTest.cc PlanManagerStateMachineTest.h
+        PlanManagerTest.cc PlanManagerTest.h
         PlanMasterControllerTest.cc PlanMasterControllerTest.h
         QGCMapPolygonTest.cc QGCMapPolygonTest.h
         QGCMapPolylineTest.cc QGCMapPolylineTest.h

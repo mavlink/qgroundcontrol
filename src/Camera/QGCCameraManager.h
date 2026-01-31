@@ -15,6 +15,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
+class CameraDiscoveryStateMachine;
 class CameraMetaData;
 class Joystick;
 class MavlinkCameraControl;
@@ -38,26 +39,11 @@ class QGCCameraManager : public QObject
     Q_PROPERTY(int currentZoomLevel READ currentZoomLevel NOTIFY currentZoomLevelChanged)
 
     friend class QGCCameraManagerTest;
+    friend class CameraDiscoveryStateMachine;
 
 public:
     explicit QGCCameraManager(Vehicle* vehicle);
     ~QGCCameraManager();
-
-    struct CameraStruct {
-        CameraStruct(QGCCameraManager* manager_, uint8_t compID_, Vehicle* vehicle_);
-        ~CameraStruct();
-
-        bool infoReceived = false;
-        uint8_t compID = 0;
-        int retryCount = 0;
-        QElapsedTimer lastHeartbeat;
-        QTimer backoffTimer;
-        QPointer<Vehicle> vehicle;
-        QPointer<QGCCameraManager> manager;
-
-    private:
-        Q_DISABLE_COPY_MOVE(CameraStruct)
-    };
 
     QmlObjectListModel* cameras() { return &_cameras; }
     const QmlObjectListModel* cameras() const { return &_cameras; }
@@ -72,7 +58,8 @@ public:
 
     Vehicle* vehicle() const { return _vehicle; }
 
-    CameraStruct* findCameraStruct(uint8_t compId) const { return _cameraInfoRequest.value(QString::number(compId), nullptr); }
+    /// Find the discovery state machine for a camera component
+    CameraDiscoveryStateMachine* findDiscoveryMachine(uint8_t compId) const;
 
     int currentZoomLevel() const;
     double aspectForComp(int compId) const;
@@ -108,9 +95,12 @@ protected slots:
 private slots:
     void _setCurrentZoomLevel(int level);
 
+private slots:
+    void _onDiscoveryComplete(uint8_t compId);
+    void _onDiscoveryFailed(uint8_t compId);
+
 private:
     MavlinkCameraControl* _findCamera(int id);
-    void _requestCameraInfo(CameraStruct* cameraInfo);
     void _handleHeartbeat(const mavlink_message_t& message);
     void _handleCameraInfo(const mavlink_message_t& message);
     void _handleStorageInfo(const mavlink_message_t& message);
@@ -136,7 +126,7 @@ private:
     QElapsedTimer _lastZoomChange;
     QElapsedTimer _lastCameraChange;
     QTimer _camerasLostHeartbeatTimer;
-    QMap<QString, CameraStruct*> _cameraInfoRequest;
+    QMap<uint8_t, CameraDiscoveryStateMachine*> _discoveryMachines;
     static QVariantList _cameraList;
 
     QHash<int, double> _aspectByCompId;

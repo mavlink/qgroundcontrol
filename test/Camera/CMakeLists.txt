@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        CameraDiscoveryStateMachineTest.cc
+        CameraDiscoveryStateMachineTest.h
         QGCCameraManagerTest.cc
         QGCCameraManagerTest.h
 )

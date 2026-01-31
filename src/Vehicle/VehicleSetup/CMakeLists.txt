@@ -15,16 +15,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Firmware Upgrade (requires serial link)
 # ----------------------------------------------------------------------------
 if(NOT QGC_NO_SERIAL_LINK)
+    add_subdirectory(Firmware)
+
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
-            Bootloader.cc
-            Bootloader.h
-            FirmwareImage.cc
-            FirmwareImage.h
-            FirmwareUpgradeController.cc
-            FirmwareUpgradeController.h
-            PX4FirmwareUpgradeThread.cc
-            PX4FirmwareUpgradeThread.h
+            RCCalibrationStateMachine.cc
+            RCCalibrationStateMachine.h
             RemoteControlCalibrationController.cc
             RemoteControlCalibrationController.h
     )
@@ -40,7 +36,7 @@ qt_add_qml_module(VehicleSetupModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        FirmwareUpgrade.qml
+        Firmware/FirmwareUpgrade.qml
         JoystickComponent.qml
         JoystickComponentButtons.qml
         JoystickComponentButtonMonitor.qml

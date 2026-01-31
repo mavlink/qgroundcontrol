@@ -1,135 +1,72 @@
 #include "PowerComponentController.h"
+#include "PowerCalibrationStateMachine.h"
 #include "Vehicle.h"
 
-PowerComponentController::PowerComponentController(void)
+PowerComponentController::PowerComponentController()
+    : FactPanelController()
 {
-
 }
 
-void PowerComponentController::calibrateEsc(void)
+void PowerComponentController::calibrateEsc()
 {
-    _warningMessages.clear();
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-    _vehicle->startCalibration(QGCMAVLink::CalibrationEsc);
+    if (!_stateMachine) {
+        _stateMachine = new PowerCalibrationStateMachine(this, _vehicle, this);
+
+        // Forward signals from state machine to controller
+        connect(_stateMachine, &PowerCalibrationStateMachine::connectBattery, this, &PowerComponentController::connectBattery);
+        connect(_stateMachine, &PowerCalibrationStateMachine::batteryConnected, this, &PowerComponentController::batteryConnected);
+        connect(_stateMachine, &PowerCalibrationStateMachine::disconnectBattery, this, &PowerComponentController::disconnectBattery);
+        connect(_stateMachine, &PowerCalibrationStateMachine::calibrationFailed, this, &PowerComponentController::calibrationFailed);
+        connect(_stateMachine, &PowerCalibrationStateMachine::calibrationSuccess, this, &PowerComponentController::calibrationSuccess);
+        connect(_stateMachine, &PowerCalibrationStateMachine::oldFirmware, this, &PowerComponentController::oldFirmware);
+        connect(_stateMachine, &PowerCalibrationStateMachine::newerFirmware, this, &PowerComponentController::newerFirmware);
+        connect(_stateMachine, &PowerCalibrationStateMachine::incorrectFirmwareRevReporting, this, &PowerComponentController::incorrectFirmwareRevReporting);
+
+        connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
+    }
+
+    _stateMachine->startEscCalibration();
 }
 
-void PowerComponentController::startBusConfigureActuators(void)
+void PowerComponentController::startBusConfigureActuators()
 {
-    _warningMessages.clear();
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-    _vehicle->startUAVCANBusConfig();
+    if (!_stateMachine) {
+        _stateMachine = new PowerCalibrationStateMachine(this, _vehicle, this);
+
+        // Forward signals from state machine to controller
+        connect(_stateMachine, &PowerCalibrationStateMachine::connectBattery, this, &PowerComponentController::connectBattery);
+        connect(_stateMachine, &PowerCalibrationStateMachine::batteryConnected, this, &PowerComponentController::batteryConnected);
+        connect(_stateMachine, &PowerCalibrationStateMachine::disconnectBattery, this, &PowerComponentController::disconnectBattery);
+        connect(_stateMachine, &PowerCalibrationStateMachine::calibrationFailed, this, &PowerComponentController::calibrationFailed);
+        connect(_stateMachine, &PowerCalibrationStateMachine::calibrationSuccess, this, &PowerComponentController::calibrationSuccess);
+        connect(_stateMachine, &PowerCalibrationStateMachine::oldFirmware, this, &PowerComponentController::oldFirmware);
+        connect(_stateMachine, &PowerCalibrationStateMachine::newerFirmware, this, &PowerComponentController::newerFirmware);
+        connect(_stateMachine, &PowerCalibrationStateMachine::incorrectFirmwareRevReporting, this, &PowerComponentController::incorrectFirmwareRevReporting);
+
+        connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
+    }
+
+    _stateMachine->startBusConfig();
 }
 
-void PowerComponentController::stopBusConfigureActuators(void)
+void PowerComponentController::stopBusConfigureActuators()
 {
-    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-    _vehicle->stopUAVCANBusConfig();
+    if (_stateMachine) {
+        _stateMachine->stop();
+    }
 }
 
-void PowerComponentController::_stopCalibration(void)
+void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int compId, int severity, QString text, const QString& description)
 {
-    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-}
-
-void PowerComponentController::_stopBusConfig(void)
-{
-    _stopCalibration();
-}
-
-void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
-{
+    Q_UNUSED(compId);
+    Q_UNUSED(severity);
     Q_UNUSED(description);
 
     if (vehicleId != _vehicle->id()) {
         return;
     }
 
-    // All calibration messages start with [cal]
-    QString calPrefix("[cal] ");
-    if (!text.startsWith(calPrefix)) {
-        return;
-    }
-    text = text.right(text.length() - calPrefix.length());
-
-    // Make sure we can understand this firmware rev
-    QString calStartPrefix("calibration started: ");
-    if (text.startsWith(calStartPrefix)) {
-        text = text.right(text.length() - calStartPrefix.length());
-
-        // Split version number and cal type
-        QStringList parts = text.split(" ");
-        if (parts.count() != 2) {
-            emit incorrectFirmwareRevReporting();
-            return;
-        }
-
-#if 0
-        // FIXME: Cal version check is not working. Needs to be able to cancel, calibration
-
-        int firmwareRev = parts[0].toInt();
-        if (firmwareRev < _neededFirmwareRev) {
-            emit oldFirmware();
-            return;
-        }
-        if (firmwareRev > _neededFirmwareRev) {
-            emit newerFirmware();
-            return;
-        }
-#endif
-    }
-
-    if (text == "Connect battery now") {
-        emit connectBattery();
-        return;
-    }
-
-    if (text == "Battery connected") {
-        emit batteryConnected();
-        return;
-    }
-
-
-    QString failedPrefix("calibration failed: ");
-    if (text.startsWith(failedPrefix)) {
-        QString failureText = text.right(text.length() - failedPrefix.length());
-        _stopCalibration();
-        if (failureText.startsWith("Disconnect battery")) {
-            emit disconnectBattery();
-            return;
-        }
-
-        emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
-        return;
-    }
-
-    QString calCompletePrefix("calibration done:");
-    if (text.startsWith(calCompletePrefix)) {
-        _stopCalibration();
-        emit calibrationSuccess(_warningMessages);
-        return;
-    }
-
-    QString warningPrefix("config warning: ");
-    if (text.startsWith(warningPrefix)) {
-        _warningMessages << text.right(text.length() - warningPrefix.length());
-    }
-
-    QString busFailedPrefix("bus conf fail:");
-    if (text.startsWith(busFailedPrefix)) {
-
-        _stopBusConfig();
-        emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
-        return;
-    }
-
-    if (text.startsWith(calCompletePrefix)) {
-        _stopBusConfig();
-        emit calibrationSuccess(_warningMessages);
-        return;
-    }
-
-    QString busWarningPrefix("bus conf warn: ");
-    if (text.startsWith(busWarningPrefix)) {
-        _warningMessages << text.right(text.length() - warningPrefix.length());
+    if (_stateMachine && _stateMachine->isCalibrating()) {
+        _stateMachine->handleTextMessage(text);
     }
 }

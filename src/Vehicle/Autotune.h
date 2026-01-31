@@ -1,16 +1,19 @@
 #pragma once
 
-#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Vehicle.h"
 #include "MAVLinkLib.h"
+
+class AutotuneStateMachine;
 
 class Autotune : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+
+    friend class AutotuneStateMachine;
 
 public:
     explicit Autotune(Vehicle *vehicle);
@@ -19,36 +22,19 @@ public:
     Q_PROPERTY(float     autotuneProgress     READ autotuneProgress       NOTIFY autotuneChanged)
     Q_PROPERTY(QString   autotuneStatus       READ autotuneStatus         NOTIFY autotuneChanged)
 
-    Q_INVOKABLE void autotuneRequest ();
+    Q_INVOKABLE void autotuneRequest();
 
-    static void ackHandler      (void* resultHandlerData,   int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
-    static void progressHandler (void* progressHandlerData, int compId, const mavlink_command_ack_t& ack);
+    static void ackHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void progressHandler(void* progressHandlerData, int compId, const mavlink_command_ack_t& ack);
 
-    bool      autotuneInProgress () { return _autotuneInProgress; }
-    float     autotuneProgress   () { return _autotuneProgress; }
-    QString   autotuneStatus     () { return _autotuneStatus; }
-
-
-public slots:
-    void sendMavlinkRequest();
+    bool autotuneInProgress();
+    float autotuneProgress();
+    QString autotuneStatus();
 
 signals:
-    void autotuneChanged ();
+    void autotuneChanged();
 
 private:
-    void handleAckStatus(uint8_t ackProgress);
-    void handleAckFailure();
-    void handleAckError(uint8_t ackError);
-    void startTimers();
-    void stopTimers();
-
-private:
-    Vehicle* _vehicle                {nullptr};
-    bool     _autotuneInProgress     {false};
-    float    _autotuneProgress       {0.0};
-    QString  _autotuneStatus         {tr("Autotune: Not performed")};
-    bool     _disarmMessageDisplayed {false};
-
-    QTimer   _pollTimer;         // the frequency at which the polling should be performed
-
+    Vehicle* _vehicle = nullptr;
+    AutotuneStateMachine* _stateMachine = nullptr;
 };

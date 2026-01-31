@@ -65,11 +65,13 @@ add_qgc_test(ExifParserTest)
 add_qgc_test(GeoTagControllerTest)
 add_qgc_test(GeoTagDataTest)
 add_qgc_test(GeoTagWorkerTest)
+add_qgc_test(LogDownloadStateMachineTest)
 add_qgc_test(LogDownloadTest)
 # add_qgc_test(MavlinkLogTest)
 add_qgc_test(ULogParserTest)
 
 add_subdirectory(Camera)
+add_qgc_test(CameraDiscoveryStateMachineTest)
 add_qgc_test(QGCCameraManagerTest)
 
 add_subdirectory(Comms)
@@ -146,7 +148,13 @@ add_qgc_test(GeoTest)
 # Shape
 add_qgc_test(ShapeTest)
 
+add_subdirectory(AutoPilotPlugins)
+add_qgc_test(AccelCalibrationMachineTest)
+add_qgc_test(CompassCalibrationMachineTest)
+add_qgc_test(PowerCalibrationStateMachineTest)
+
 add_subdirectory(Vehicle)
+add_qgc_test(AutotuneStateMachineTest)
 # Components
 add_qgc_test(ComponentInformationCacheTest)
 add_qgc_test(ComponentInformationTranslationTest)
