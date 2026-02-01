@@ -9,6 +9,8 @@
 #include "StandardModes.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "Vehicle.InitialConnectStateMachine")
@@ -220,6 +222,11 @@ void InitialConnectStateMachine::_stateRequestParameters(StateMachine* stateMach
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
+    if (SettingsManager::instance()->appSettings()->disableParameterDownload()->rawValue().toBool()) {
+        qCDebug(InitialConnectStateMachineLog) << "Skipping parameter download on connect due to settings";
+        vehicle->_parameterManager->skipParameterDownload();
+        return;
+    }
     connect(vehicle->_parameterManager, &ParameterManager::loadProgressChanged, connectMachine,
             &InitialConnectStateMachine::gotProgressUpdate);
     vehicle->_parameterManager->refreshAllParameters();
@@ -233,6 +240,12 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
 
     disconnect(vehicle->_parameterManager, &ParameterManager::loadProgressChanged, connectMachine,
             &InitialConnectStateMachine::gotProgressUpdate);
+
+    if (SettingsManager::instance()->appSettings()->disableMissionDownload()->rawValue().toBool()) {
+        qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to settings";
+        vehicle->_firstMissionLoadComplete();
+        return;
+    }
 
     if (!sharedLink) {
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to no primary link";

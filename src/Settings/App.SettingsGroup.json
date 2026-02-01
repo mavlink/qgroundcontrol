@@ -254,6 +254,20 @@
     "default":     false
 },
 {
+    "name":             "disableParameterDownload",
+    "shortDesc": "Disable parameter download on connect",
+    "longDesc":  "If enabled, QGroundControl will not request parameters when a vehicle connects. This can help preserve low-bandwidth telemetry links.",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "disableMissionDownload",
+    "shortDesc": "Disable mission download on connect",
+    "longDesc":  "If enabled, QGroundControl will not request the current mission when a vehicle connects. This can help preserve low-bandwidth telemetry links.",
+    "type":             "bool",
+    "default":     false
+},
+{
     "name":             "firstRunPromptIdsShown",
     "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
     "type":             "string",

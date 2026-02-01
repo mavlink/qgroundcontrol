@@ -862,6 +862,24 @@ bool PlanManager::inProgress(void) const
     return _transactionInProgress != TransactionNone;
 }
 
+bool PlanManager::readInProgress(void) const
+{
+    return _transactionInProgress == TransactionRead;
+}
+
+void PlanManager::cancelTransaction(void)
+{
+    if (!inProgress()) {
+        return;
+    }
+
+    qCDebug(PlanManagerLog) << QStringLiteral("cancelTransaction %1").arg(_planTypeString());
+    _ackTimeoutTimer->stop();
+    _expectedAck = AckNone;
+    _retryCount = 0;
+    _finishTransaction(false);
+}
+
 void PlanManager::_removeAllWorker(void)
 {
     qCDebug(PlanManagerLog) << "_removeAllWorker";

@@ -101,6 +101,25 @@ SettingsPage {
 
     SettingsGroupLayout {
         Layout.fillWidth:   true
+        heading:            qsTr("Skip download")
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Skip parameter download")
+            fact:               _appSettings.disableParameterDownload
+            visible:            fact.visible
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Skip mission download")
+            fact:               _appSettings.disableMissionDownload
+            visible:            fact.visible
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
         heading:            qsTr("Logging")
         visible:            !_disableAllDataPersistence
 

@@ -257,6 +257,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearCameraTriggerPoints);
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &Vehicle::_updateHeadingToNextWP);
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &Vehicle::_updateMissionItemIndex);
+    connect(_missionManager, &MissionManager::inProgressChanged,        this, &Vehicle::missionDownloadInProgressChanged);
 
     connect(_missionManager, &MissionManager::sendComplete,             _trajectoryPoints, &TrajectoryPoints::clear);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, _trajectoryPoints, &TrajectoryPoints::clear);
@@ -1401,7 +1402,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
         channels.chan18_raw,
     });
 
-    // The internals of radio calibration can ony deal with contiguous channels (other stuff as well!)
+    // The internals of radio calibration can only deal with contiguous channels (other stuff as well!)
     int validChannelCount = 0;
     int firstUnusedChannelIndex = -1;
     for (int i=0; i<rawChannelValues.size(); i++) {
@@ -2357,6 +2358,18 @@ void Vehicle::sendCommand(int compId, int command, bool showError, double param1
                 static_cast<float>(param5),
                 static_cast<float>(param6),
                 static_cast<float>(param7));
+}
+
+bool Vehicle::missionDownloadInProgress() const
+{
+    return _missionManager && _missionManager->readInProgress();
+}
+
+void Vehicle::cancelMissionDownload()
+{
+    if (_missionManager) {
+        _missionManager->cancelTransaction();
+    }
 }
 
 void Vehicle::sendMavCommandWithHandler(const MavCmdAckHandlerInfo_t* ackHandlerInfo, int compId, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)

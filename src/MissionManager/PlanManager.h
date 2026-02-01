@@ -22,6 +22,7 @@ public:
     ~PlanManager();
 
     bool inProgress(void) const;
+    bool readInProgress(void) const;
     const QList<MissionItem*>& missionItems(void) { return _missionItems; }
 
     /// Current mission item as reported by MISSION_CURRENT
@@ -33,6 +34,9 @@ public:
     /// Load the mission items from the vehicle
     ///     Signals newMissionItemsAvailable when done
     void loadFromVehicle(void);
+
+    /// Cancel any in-progress plan transaction.
+    void cancelTransaction(void);
 
     /// Writes the specified set of mission items to the vehicle
     /// IMPORTANT NOTE: PlanManager will take control of the MissionItem objects with the missionItems list. It will free them when done.
