@@ -240,10 +240,14 @@ void PlanManager::_ackTimeout(void)
 
 void PlanManager::_startAckTimeout(AckType_t ack)
 {
+    // Use much shorter timeouts in unit tests since MockLink responds instantly
+    const int retryTimeout = qgcApp()->runningUnitTests() ? 10 : _retryTimeoutMilliseconds;
+    const int ackTimeout = qgcApp()->runningUnitTests() ? kTestAckTimeoutMs : _ackTimeoutMilliseconds;
+
     switch (ack) {
     case AckMissionItem:
         // We are actively trying to get the mission item, so we don't want to wait as long.
-        _ackTimeoutTimer->setInterval(_retryTimeoutMilliseconds);
+        _ackTimeoutTimer->setInterval(retryTimeout);
         break;
     case AckNone:
         // FALLTHROUGH
@@ -254,7 +258,7 @@ void PlanManager::_startAckTimeout(AckType_t ack)
     case AckMissionClearAll:
         // FALLTHROUGH
     case AckGuidedItem:
-        _ackTimeoutTimer->setInterval(_ackTimeoutMilliseconds);
+        _ackTimeoutTimer->setInterval(ackTimeout);
         break;
     }
 

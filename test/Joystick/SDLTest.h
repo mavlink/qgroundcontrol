@@ -7,9 +7,6 @@ class SDLTest : public UnitTest
 {
     Q_OBJECT
 
-public:
-    SDLTest();
-
 private slots:
     void init() override;
     void cleanup() override;

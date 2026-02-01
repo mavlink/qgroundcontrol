@@ -1,32 +1,28 @@
 #include "ComponentInformationTranslationTest.h"
+
 #include "ComponentInformationTranslation.h"
 #include "QGCCachedFileDownload.h"
-
-#include <QtTest/QTest>
+#include "UnitTest.h"
 
 void ComponentInformationTranslationTest::_basic_test()
 {
     QString translationJson = ":/unittest/TranslationTest.json";
     QString translationTs = ":/unittest/TranslationTest_de_DE.ts";
-    ComponentInformationTranslation* translation = new ComponentInformationTranslation(this, new QGCCachedFileDownload("", this));
+    ComponentInformationTranslation* translation =
+        new ComponentInformationTranslation(this, new QGCCachedFileDownload("", this));
     QString tempFilename = translation->translateJsonUsingTS(translationJson, translationTs);
-
     QVERIFY(!tempFilename.isEmpty());
-
     // Compare json files
     QFile translationJsonFile(translationJson);
     QVERIFY(translationJsonFile.open(QFile::ReadOnly | QFile::Text));
     QByteArray expectedOutput = translationJsonFile.readAll().replace("translate-me", "TRANSLATED");
-
     QJsonDocument expectedJson;
     readJson(expectedOutput, expectedJson);
-
     QFile tempJson(tempFilename);
     QVERIFY(tempJson.open(QFile::ReadOnly | QFile::Text));
     QByteArray translatedOutput = tempJson.readAll();
     QJsonDocument translatedJson;
     readJson(translatedOutput, translatedJson);
-
     QVERIFY(expectedJson == translatedJson);
 }
 
@@ -37,3 +33,5 @@ void ComponentInformationTranslationTest::readJson(const QByteArray& bytes, QJso
     QTEST_ASSERT(parseError.error == QJsonParseError::NoError);
     QVERIFY(!jsonDoc.isEmpty());
 }
+
+UT_REGISTER_TEST(ComponentInformationTranslationTest, TestLabel::Unit, TestLabel::Vehicle)

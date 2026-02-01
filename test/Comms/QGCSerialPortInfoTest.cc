@@ -1,7 +1,6 @@
 #include "QGCSerialPortInfoTest.h"
-#include "QGCSerialPortInfo.h"
 
-#include <QtTest/QTest>
+#include "QGCSerialPortInfo.h"
 
 void QGCSerialPortInfoTest::_testLoadJsonData()
 {
@@ -13,3 +12,5 @@ void QGCSerialPortInfoTest::_testLoadJsonData()
     QVERIFY(!QGCSerialPortInfo::_boardDescriptionFallbackList.isEmpty());
     QVERIFY(!QGCSerialPortInfo::_boardManufacturerFallbackList.isEmpty());
 }
+
+UT_REGISTER_TEST(QGCSerialPortInfoTest, TestLabel::Unit, TestLabel::Comms)

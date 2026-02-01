@@ -1,102 +1,60 @@
-#include <QtQuick/QQuickWindow>
-#include <QtWidgets/QApplication>
-
 #include "QGCApplication.h"
 #include "QGCCommandLineParser.h"
 #include "QGCLogging.h"
+#include "QGCLoggingCategory.h"
 #include "Platform.h"
-#include "NTRIP.h"
-
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    #include <QtWidgets/QMessageBox>
-    #include "RunGuard.h"
-#endif
-
-#ifdef Q_OS_LINUX
-    #include <unistd.h>
-    #include <sys/types.h>
-#endif
 
 #ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
 
+QGC_LOGGING_CATEGORY(MainLog, "Main")
+
 int main(int argc, char *argv[])
 {
-#if 0
-    // Useful for debugging specific unit tests
-    char argument1[] = "--unittest:FTPManagerTest";
-    char argument2[] = "--logging:Vehicle.FTPManager";
-    char *newArgv[] = { argv[0], argument1, argument2 };
-    argc = 3;
-    argv = newArgv;
-#endif
-
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    if (::getuid() == 0) {
-        const QApplication errorApp(argc, argv);
-        // QErrorMessage
-        (void) QMessageBox::critical(nullptr,
-                                     QCoreApplication::translate("main", "Error"),
-                                     QCoreApplication::translate("main", "You are running %1 as root. "
-                                                                         "You should not do this since it will cause other issues with %1. "
-                                                                         "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME));
-        return -1;
-    }
-#endif
-
-    QGCCommandLineParser::CommandLineParseResult args;
-    {
-        const QCoreApplication pre(argc, argv);
-        QCoreApplication::setApplicationName(QStringLiteral(QGC_APP_NAME));
-        QCoreApplication::setApplicationVersion(QStringLiteral(QGC_APP_VERSION_STR));
-        args = QGCCommandLineParser::parseCommandLine();
-        if (args.statusCode == QGCCommandLineParser::CommandLineParseResult::Status::Error) {
-            const QString errorMessage = args.errorString.value_or(QStringLiteral("Unknown error occurred"));
-            qCritical() << qPrintable(errorMessage);
-            // TODO: QCommandLineParser::showMessageAndExit(QCommandLineParser::MessageType::Error) - Qt6.9
-            return 1;
-        }
+    // --- Parse command line arguments ---
+    const auto args = QGCCommandLineParser::parse(argc, argv);
+    if (const auto exitCode = QGCCommandLineParser::handleParseResult(args)) {
+        return *exitCode;
     }
 
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QStringLiteral(QGC_APP_NAME));
-    RunGuard guard(runguardString);
-    if (!args.allowMultiple) {
-        if (!guard.tryToRun()) {
-            const QApplication errorApp(argc, argv);
-            (void) QMessageBox::critical(nullptr,
-                QCoreApplication::translate("main", "Error"),
-                QCoreApplication::translate("main", "A second instance of %1 is already running. "
-                                                    "Please close the other instance and try again.").arg(QStringLiteral(QGC_APP_NAME)));
-            return -1;
-        }
+    // --- Platform initialization ---
+    if (const auto exitCode = Platform::initialize(argc, argv, args)) {
+        return *exitCode;
     }
-#endif
-
-    // Early platform setup before Qt app construction
-    Platform::setupPreApp(args);
 
     QGCApplication app(argc, argv, args);
 
     QGCLogging::installHandler();
 
-    // Late platform setup after app and logging exist
     Platform::setupPostApp();
 
     app.init();
 
-    int exitCode = 0;
-    if (args.runningUnitTests) {
+    // --- Run application or tests ---
+    const auto run = [&]() -> int {
+        using QGCCommandLineParser::AppMode;
+        switch (QGCCommandLineParser::determineAppMode(args)) {
 #ifdef QGC_UNITTEST_BUILD
-        exitCode = QGCUnitTest::runTests(args.stressUnitTests, args.unitTests);
+        case AppMode::ListTests:
+        case AppMode::Test:
+            return QGCUnitTest::handleTestOptions(args);
 #endif
-    } else if (!args.simpleBootTest) {
-        exitCode = app.exec();
-    }
+        case AppMode::BootTest:
+            qCInfo(MainLog) << "Simple boot test completed";
+            return 0;
+        case AppMode::Gui:
+            qCInfo(MainLog) << "Starting application event loop";
+            return app.exec();
+        }
+        Q_UNREACHABLE();
+    };
 
+    const int exitCode = run();
+
+    // --- Cleanup ---
     app.shutdown();
 
-    qDebug() << "Exiting main";
+    qCInfo(MainLog) << "Exiting main";
     return exitCode;
 }

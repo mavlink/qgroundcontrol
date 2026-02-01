@@ -11,7 +11,7 @@ namespace {
 QByteArray generateTestDataFlash(int numEvents = 20)
 {
     QTemporaryFile tempFile;
-    tempFile.setAutoRemove(true);
+    tempFile.setAutoRemove(false);  // Don't auto-remove on close
     if (!tempFile.open()) {
         return QByteArray();
     }
@@ -20,15 +20,18 @@ QByteArray generateTestDataFlash(int numEvents = 20)
 
     const auto events = DataFlashTestGenerator::generateSampleEvents(numEvents);
     if (!DataFlashTestGenerator::generateDataFlashLog(tempPath, events)) {
+        QFile::remove(tempPath);
         return QByteArray();
     }
 
     QFile file(tempPath);
     if (!file.open(QIODevice::ReadOnly)) {
+        QFile::remove(tempPath);
         return QByteArray();
     }
     const QByteArray data = file.readAll();
     file.close();
+    QFile::remove(tempPath);  // Clean up after reading
     return data;
 }
 
@@ -157,3 +160,5 @@ void DataFlashParserTest::_benchmarkGetTagsFromLog()
 
     QVERIFY(!cameraFeedback.isEmpty());
 }
+
+UT_REGISTER_TEST(DataFlashParserTest, TestLabel::Unit, TestLabel::AnalyzeView)

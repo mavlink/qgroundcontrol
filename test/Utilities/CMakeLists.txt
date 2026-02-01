@@ -9,6 +9,7 @@ add_subdirectory(FileSystem)
 add_subdirectory(Geo)
 add_subdirectory(Network)
 add_subdirectory(Parsing)
+add_subdirectory(Platform)
 
 # ----------------------------------------------------------------------------
 # Test Data Resources

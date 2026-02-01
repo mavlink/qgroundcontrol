@@ -1,8 +1,8 @@
 #pragma once
 
-#include "JoystickSDL.h"
-
 #include <QtCore/QVector>
+
+#include "JoystickSDL.h"
 
 /// MockJoystick - A JoystickSDL subclass backed by an SDL virtual joystick for testing
 ///
@@ -30,13 +30,9 @@ public:
 
     /// Factory method to create a MockJoystick
     /// @return nullptr if creation fails
-    static MockJoystick *create(const QString &name = QStringLiteral("Mock Joystick"),
-                                 int axisCount = 6,
-                                 int buttonCount = 16,
-                                 int hatCount = 1,
-                                 int ballCount = 0,
-                                 int touchpadCount = 0,
-                                 QObject *parent = nullptr);
+    static MockJoystick* create(const QString& name = QStringLiteral("Mock Joystick"), int axisCount = 6,
+                                int buttonCount = 16, int hatCount = 1, int ballCount = 0, int touchpadCount = 0,
+                                QObject* parent = nullptr);
 
     /// @return true if the virtual joystick is valid and open
     [[nodiscard]] bool isValid() const;
@@ -74,10 +70,16 @@ public:
     bool setButton(int button, bool pressed);
 
     /// Press a button
-    bool pressButton(int button) { return setButton(button, true); }
+    bool pressButton(int button)
+    {
+        return setButton(button, true);
+    }
 
     /// Release a button
-    bool releaseButton(int button) { return setButton(button, false); }
+    bool releaseButton(int button)
+    {
+        return setButton(button, false);
+    }
 
     /// Release all buttons
     void releaseAllButtons();
@@ -89,43 +91,127 @@ public:
     // Gamepad Face Buttons (A/B/X/Y or Cross/Circle/Square/Triangle)
     // -------------------------------------------------------------------------
 
-    bool pressA() { return pressButton(ButtonA); }
-    bool releaseA() { return releaseButton(ButtonA); }
-    bool pressB() { return pressButton(ButtonB); }
-    bool releaseB() { return releaseButton(ButtonB); }
-    bool pressX() { return pressButton(ButtonX); }
-    bool releaseX() { return releaseButton(ButtonX); }
-    bool pressY() { return pressButton(ButtonY); }
-    bool releaseY() { return releaseButton(ButtonY); }
+    bool pressA()
+    {
+        return pressButton(ButtonA);
+    }
+
+    bool releaseA()
+    {
+        return releaseButton(ButtonA);
+    }
+
+    bool pressB()
+    {
+        return pressButton(ButtonB);
+    }
+
+    bool releaseB()
+    {
+        return releaseButton(ButtonB);
+    }
+
+    bool pressX()
+    {
+        return pressButton(ButtonX);
+    }
+
+    bool releaseX()
+    {
+        return releaseButton(ButtonX);
+    }
+
+    bool pressY()
+    {
+        return pressButton(ButtonY);
+    }
+
+    bool releaseY()
+    {
+        return releaseButton(ButtonY);
+    }
 
     // -------------------------------------------------------------------------
     // Gamepad Menu Buttons
     // -------------------------------------------------------------------------
 
-    bool pressStart() { return pressButton(ButtonStart); }
-    bool releaseStart() { return releaseButton(ButtonStart); }
-    bool pressBack() { return pressButton(ButtonBack); }
-    bool releaseBack() { return releaseButton(ButtonBack); }
-    bool pressGuide() { return pressButton(ButtonGuide); }
-    bool releaseGuide() { return releaseButton(ButtonGuide); }
+    bool pressStart()
+    {
+        return pressButton(ButtonStart);
+    }
+
+    bool releaseStart()
+    {
+        return releaseButton(ButtonStart);
+    }
+
+    bool pressBack()
+    {
+        return pressButton(ButtonBack);
+    }
+
+    bool releaseBack()
+    {
+        return releaseButton(ButtonBack);
+    }
+
+    bool pressGuide()
+    {
+        return pressButton(ButtonGuide);
+    }
+
+    bool releaseGuide()
+    {
+        return releaseButton(ButtonGuide);
+    }
 
     // -------------------------------------------------------------------------
     // Gamepad Shoulder Buttons
     // -------------------------------------------------------------------------
 
-    bool pressLeftShoulder() { return pressButton(ButtonLeftShoulder); }
-    bool releaseLeftShoulder() { return releaseButton(ButtonLeftShoulder); }
-    bool pressRightShoulder() { return pressButton(ButtonRightShoulder); }
-    bool releaseRightShoulder() { return releaseButton(ButtonRightShoulder); }
+    bool pressLeftShoulder()
+    {
+        return pressButton(ButtonLeftShoulder);
+    }
+
+    bool releaseLeftShoulder()
+    {
+        return releaseButton(ButtonLeftShoulder);
+    }
+
+    bool pressRightShoulder()
+    {
+        return pressButton(ButtonRightShoulder);
+    }
+
+    bool releaseRightShoulder()
+    {
+        return releaseButton(ButtonRightShoulder);
+    }
 
     // -------------------------------------------------------------------------
     // Gamepad Stick Buttons (L3/R3)
     // -------------------------------------------------------------------------
 
-    bool pressLeftStickButton() { return pressButton(ButtonLeftStick); }
-    bool releaseLeftStickButton() { return releaseButton(ButtonLeftStick); }
-    bool pressRightStickButton() { return pressButton(ButtonRightStick); }
-    bool releaseRightStickButton() { return releaseButton(ButtonRightStick); }
+    bool pressLeftStickButton()
+    {
+        return pressButton(ButtonLeftStick);
+    }
+
+    bool releaseLeftStickButton()
+    {
+        return releaseButton(ButtonLeftStick);
+    }
+
+    bool pressRightStickButton()
+    {
+        return pressButton(ButtonRightStick);
+    }
+
+    bool releaseRightStickButton()
+    {
+        return releaseButton(ButtonRightStick);
+    }
 
     // =========================================================================
     // Hat (D-Pad) Control
@@ -135,7 +221,10 @@ public:
     bool setHat(int hat, HatDirection direction);
 
     /// Center the hat (return to neutral)
-    bool centerHat(int hat = 0) { return setHat(hat, HatCentered); }
+    bool centerHat(int hat = 0)
+    {
+        return setHat(hat, HatCentered);
+    }
 
     /// Get current hat direction (for verification)
     HatDirection getHatDirection(int hat) const;
@@ -144,15 +233,50 @@ public:
     // D-Pad Convenience Methods (for hat 0)
     // -------------------------------------------------------------------------
 
-    bool pressDPadUp() { return setHat(0, HatUp); }
-    bool pressDPadDown() { return setHat(0, HatDown); }
-    bool pressDPadLeft() { return setHat(0, HatLeft); }
-    bool pressDPadRight() { return setHat(0, HatRight); }
-    bool pressDPadUpRight() { return setHat(0, HatRightUp); }
-    bool pressDPadUpLeft() { return setHat(0, HatLeftUp); }
-    bool pressDPadDownRight() { return setHat(0, HatRightDown); }
-    bool pressDPadDownLeft() { return setHat(0, HatLeftDown); }
-    bool releaseDPad() { return centerHat(0); }
+    bool pressDPadUp()
+    {
+        return setHat(0, HatUp);
+    }
+
+    bool pressDPadDown()
+    {
+        return setHat(0, HatDown);
+    }
+
+    bool pressDPadLeft()
+    {
+        return setHat(0, HatLeft);
+    }
+
+    bool pressDPadRight()
+    {
+        return setHat(0, HatRight);
+    }
+
+    bool pressDPadUpRight()
+    {
+        return setHat(0, HatRightUp);
+    }
+
+    bool pressDPadUpLeft()
+    {
+        return setHat(0, HatLeftUp);
+    }
+
+    bool pressDPadDownRight()
+    {
+        return setHat(0, HatRightDown);
+    }
+
+    bool pressDPadDownLeft()
+    {
+        return setHat(0, HatLeftDown);
+    }
+
+    bool releaseDPad()
+    {
+        return centerHat(0);
+    }
 
     // =========================================================================
     // Ball Control (Trackball)
@@ -175,20 +299,23 @@ public:
     bool setTouchpad(int touchpad, int finger, bool down, float x, float y, float pressure = 1.0f);
 
     /// Release all touchpad fingers
-    bool releaseTouchpad(int touchpad, int finger) { return setTouchpad(touchpad, finger, false, 0, 0, 0); }
+    bool releaseTouchpad(int touchpad, int finger)
+    {
+        return setTouchpad(touchpad, finger, false, 0, 0, 0);
+    }
 
     // =========================================================================
     // Multi-Input Methods (for testing simultaneous inputs)
     // =========================================================================
 
     /// Press multiple buttons simultaneously
-    bool pressButtons(const QVector<int> &buttons);
+    bool pressButtons(const QVector<int>& buttons);
 
     /// Release multiple buttons simultaneously
-    bool releaseButtons(const QVector<int> &buttons);
+    bool releaseButtons(const QVector<int>& buttons);
 
     /// Set multiple axes at once
-    bool setAxes(const QVector<QPair<int, int>> &axisValues);
+    bool setAxes(const QVector<QPair<int, int>>& axisValues);
 
     // =========================================================================
     // Input Sequences (for common test patterns)
@@ -216,15 +343,34 @@ public:
     void reset();
 
     /// Get the counts for verification
-    int mockAxisCount() const { return _mockAxisCount; }
-    int mockButtonCount() const { return _mockButtonCount; }
-    int mockHatCount() const { return _mockHatCount; }
-    int mockBallCount() const { return _mockBallCount; }
-    int mockTouchpadCount() const { return _mockTouchpadCount; }
+    int mockAxisCount() const
+    {
+        return _mockAxisCount;
+    }
+
+    int mockButtonCount() const
+    {
+        return _mockButtonCount;
+    }
+
+    int mockHatCount() const
+    {
+        return _mockHatCount;
+    }
+
+    int mockBallCount() const
+    {
+        return _mockBallCount;
+    }
+
+    int mockTouchpadCount() const
+    {
+        return _mockTouchpadCount;
+    }
 
 private:
-    explicit MockJoystick(const QString &name, int axisCount, int buttonCount, int hatCount,
-                          int ballCount, int touchpadCount, int virtualInstanceId, QObject *parent);
+    explicit MockJoystick(const QString& name, int axisCount, int buttonCount, int hatCount, int ballCount,
+                          int touchpadCount, int virtualInstanceId, QObject* parent);
 
     int _virtualInstanceId = -1;
     int _mockAxisCount = 0;

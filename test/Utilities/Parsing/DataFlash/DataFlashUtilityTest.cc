@@ -406,3 +406,5 @@ void DataFlashUtilityTest::_testIterateMessages()
     QCOMPARE(msgTypes[0], static_cast<uint8_t>(200));  // TEST
     QCOMPARE(msgTypes[1], static_cast<uint8_t>(200));  // TEST
 }
+
+UT_REGISTER_TEST(DataFlashUtilityTest, TestLabel::Unit, TestLabel::Utilities)

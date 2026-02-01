@@ -587,3 +587,5 @@ void GeoTagControllerTest::_calibratorClosestMatchTest()
     QCOMPARE(result.triggerIndices.count(), 1);
     QCOMPARE(result.triggerIndices[0], 1);  // Second trigger (99) matches due to offset alignment
 }
+
+UT_REGISTER_TEST(GeoTagControllerTest, TestLabel::Unit, TestLabel::AnalyzeView)

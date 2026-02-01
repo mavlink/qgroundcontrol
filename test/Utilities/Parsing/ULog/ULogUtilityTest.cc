@@ -119,3 +119,5 @@ void ULogUtilityTest::_testGetHeaderTimestamp()
     // Too small
     QCOMPARE(ULogUtility::getHeaderTimestamp(header, 8), 0ULL);
 }
+
+UT_REGISTER_TEST(ULogUtilityTest, TestLabel::Unit, TestLabel::Utilities)

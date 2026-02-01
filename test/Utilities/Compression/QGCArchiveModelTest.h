@@ -1,21 +1,13 @@
 #pragma once
 
-#include "UnitTest.h"
-
-#include <QtCore/QTemporaryDir>
+#include "BaseClasses/TempDirectoryTest.h"
 
 /// Tests for QGCArchiveModel (QAbstractListModel for archive contents)
-class QGCArchiveModelTest : public UnitTest
+class QGCArchiveModelTest : public TempDirectoryTest
 {
     Q_OBJECT
 
-public:
-    QGCArchiveModelTest() = default;
-
 private slots:
-    void init() override;
-    void cleanup() override;
-
     // Basic model functionality
     void _testEmptyModel();
     void _testLoadArchive();
@@ -52,7 +44,4 @@ private slots:
     void _testModelTesterLoaded();
     void _testModelTesterFilterChange();
     void _testModelTesterClearAndReload();
-
-private:
-    QTemporaryDir *_tempDir = nullptr;
 };

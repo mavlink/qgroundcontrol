@@ -100,6 +100,9 @@ project(${QGC_APP_NAME}
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
+if(QGC_BUILD_TESTING)
+    include(CTest)
+endif()
 
 # ----------------------------------------------------------------------------
 # CPM (CMake Package Manager) Configuration
@@ -185,6 +188,7 @@ find_package(Qt6
         MultimediaQuickPrivate
         OpenGL
         Quick3D
+        QuickTest
         SerialPort
         Test
 )

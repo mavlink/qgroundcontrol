@@ -344,3 +344,5 @@ void ExifUtilityTest::_testGpsRationalToDecimal()
 
     exif_data_unref(data);
 }
+
+UT_REGISTER_TEST(ExifUtilityTest, TestLabel::Unit, TestLabel::Utilities)

@@ -12,7 +12,7 @@ namespace {
 QByteArray generateTestULog(int numEvents = 20)
 {
     QTemporaryFile tempFile;
-    tempFile.setAutoRemove(true);
+    tempFile.setAutoRemove(false);  // Don't auto-remove on close
     if (!tempFile.open()) {
         return QByteArray();
     }
@@ -21,15 +21,18 @@ QByteArray generateTestULog(int numEvents = 20)
 
     const auto events = ULogTestGenerator::generateSampleEvents(numEvents);
     if (!ULogTestGenerator::generateULog(tempPath, events)) {
+        QFile::remove(tempPath);
         return QByteArray();
     }
 
     QFile file(tempPath);
     if (!file.open(QIODevice::ReadOnly)) {
+        QFile::remove(tempPath);
         return QByteArray();
     }
     const QByteArray data = file.readAll();
     file.close();
+    QFile::remove(tempPath);  // Clean up after reading
     return data;
 }
 
@@ -111,7 +114,7 @@ void ULogParserTest::_generatedULogTest()
 
     // Write to temporary file
     QTemporaryFile tempFile;
-    tempFile.setAutoRemove(true);
+    tempFile.setAutoRemove(false);  // Don't auto-remove on close
     QVERIFY(tempFile.open());
     const QString tempPath = tempFile.fileName();
     tempFile.close();
@@ -123,6 +126,7 @@ void ULogParserTest::_generatedULogTest()
     QVERIFY(file.open(QIODevice::ReadOnly));
     const QByteArray logBuffer = file.readAll();
     file.close();
+    QFile::remove(tempPath);  // Clean up after reading
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
@@ -167,3 +171,5 @@ void ULogParserTest::_benchmarkGetTagsFromLog()
 
     QVERIFY(!cameraFeedback.isEmpty());
 }
+
+UT_REGISTER_TEST(ULogParserTest, TestLabel::Unit, TestLabel::AnalyzeView)

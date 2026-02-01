@@ -1,10 +1,9 @@
 #pragma once
 
-#include "UnitTest.h"
-
 #include <memory>
 
-class MockJoystick;
+#include "MockJoystick.h"
+#include "UnitTest.h"
 
 /// Unit tests for JoystickManager
 ///
@@ -13,9 +12,6 @@ class MockJoystick;
 class JoystickManagerTest : public UnitTest
 {
     Q_OBJECT
-
-public:
-    JoystickManagerTest();
 
 private slots:
     void init() override;
