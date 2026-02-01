@@ -1,11 +1,11 @@
 #include "ULogUtility.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <cstring>
 
 #include <ulog_cpp/reader.hpp>
 
-QGC_LOGGING_CATEGORY(ULogUtilityLog, "Utilities.ULogUtility")
+Q_STATIC_LOGGING_CATEGORY(ULogUtilityLog, "Utilities.ULogUtility")
 
 namespace ULogUtility
 {

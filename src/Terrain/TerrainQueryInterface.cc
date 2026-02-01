@@ -1,13 +1,13 @@
 #include "TerrainQueryInterface.h"
 #include "TerrainTileManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "Terrain.TerrainQueryInterface")
+Q_STATIC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "Terrain.TerrainQueryInterface")
 
 TerrainQueryInterface::TerrainQueryInterface(QObject *parent)
     : QObject(parent)

@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
 #include "Fact.h"
 
-Q_DECLARE_LOGGING_CATEGORY(SettingsFactLog)
 
 /// A SettingsFact is Fact which holds a QSettings value.
 class SettingsFact : public Fact

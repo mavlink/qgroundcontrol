@@ -1,14 +1,14 @@
 #include "AirLinkLink.h"
 #include "AppSettings.h"
 #include "MAVLinkProtocol.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtNetwork/QUdpSocket>
 
-QGC_LOGGING_CATEGORY(AirLinkLinkLog, "AirLink.AirLinkLink");
+Q_STATIC_LOGGING_CATEGORY(AirLinkLinkLog, "AirLink.AirLinkLink");
 
 /*===========================================================================*/
 

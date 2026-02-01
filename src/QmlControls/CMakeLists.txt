@@ -108,6 +108,8 @@ qt_add_qml_module(QGroundControlControlsModule
         LabelledButton.qml
         LabelledComboBox.qml
         LabelledLabel.qml
+        LogCategoriesDialog.qml
+        LogSettingsDialog.qml
         LogReplayStatusBar.qml
         MainWindowSavedState.qml
         MAVLinkChart.qml

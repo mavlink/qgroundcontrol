@@ -1,11 +1,11 @@
 #include "DataFlashParser.h"
 #include "DataFlashUtility.h"
 #include "GeoTagData.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <cmath>
 
-QGC_LOGGING_CATEGORY(DataFlashParserLog, "AnalyzeView.DataFlashParser")
+Q_STATIC_LOGGING_CATEGORY(DataFlashParserLog, "AnalyzeView.DataFlashParser")
 
 namespace DataFlashParser
 {

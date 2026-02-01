@@ -5,13 +5,13 @@
 #include "ADSBTCPLink.h"
 #include "ADSBVehicle.h"
 #include "QmlObjectListModel.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 #include <qassert.h>
 
-QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog, "ADSB.ADSBVehicleManager")
+Q_STATIC_LOGGING_CATEGORY(ADSBVehicleManagerLog, "ADSB.ADSBVehicleManager")
 
 Q_APPLICATION_STATIC(ADSBVehicleManager, _adsbVehicleManager, SettingsManager::instance()->adsbVehicleManagerSettings());
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -10,7 +9,6 @@ class APMAirframeModel;
 class APMAirframeType;
 class QmlObjectListModel;
 
-Q_DECLARE_LOGGING_CATEGORY(APMAirframeComponentControllerLog)
 
 /// MVC Controller for APMAirframeComponent.qml.
 class APMAirframeComponentController : public FactPanelController

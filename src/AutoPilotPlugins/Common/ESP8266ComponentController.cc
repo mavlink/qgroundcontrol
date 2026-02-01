@@ -1,11 +1,11 @@
 #include "ESP8266ComponentController.h"
 #include "ParameterManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtNetwork/QHostAddress>
 
-QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "AutoPilotPlugins.ESP8266ComponentController")
+Q_STATIC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "AutoPilotPlugins.ESP8266ComponentController")
 
 #define MAX_RETRIES 5
 

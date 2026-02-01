@@ -8,20 +8,20 @@
 
 #include <QtCore/QDebug>
 #include <QtCore/QFile>
+#include <QtCore/QLoggingCategory>
 
 #include <algorithm>
 #include <cmath>
 #include <ranges>
 
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
 // Note how the Qt headers, System headers, and the QGroundControl headers above are kept in separate groups
 // with blank lines between them. Within each group, headers are sorted alphabetically.
 
-// Use QGC_LOGGING_CATEGORY instead of Q_LOGGING_CATEGORY for runtime log configuration support
-QGC_LOGGING_CATEGORY(CodingStyleLog, "Example.CodingStyle")
+// Use Q_STATIC_LOGGING_CATEGORY for file-local logging categories
+Q_STATIC_LOGGING_CATEGORY(CodingStyleLog, "Example.CodingStyle")
 
 CodingStyle::CodingStyle(QObject* parent) : QObject(parent)
 {

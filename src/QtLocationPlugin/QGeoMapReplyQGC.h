@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
 #include "QGCMapTasks.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog)
 
 class QNetworkAccessManager;
 class QSslError;

@@ -1,7 +1,7 @@
 #include "UdpIODevice.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(UdpIODeviceLog, "Comms.UdpIODevice")
+Q_STATIC_LOGGING_CATEGORY(UdpIODeviceLog, "Comms.UdpIODevice")
 
 UdpIODevice::UdpIODevice(QObject *parent)
     : QUdpSocket(parent)

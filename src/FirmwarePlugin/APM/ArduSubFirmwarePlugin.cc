@@ -1,8 +1,8 @@
 #include "ArduSubFirmwarePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(APMSubmarineFactGroupLog, "FirmwarePlugin.ArduSubFirmwarePlugin")
+Q_STATIC_LOGGING_CATEGORY(APMSubmarineFactGroupLog, "FirmwarePlugin.ArduSubFirmwarePlugin")
 
 APMSubmarineFactGroup::APMSubmarineFactGroup(QObject *parent)
     : FactGroup(300, QStringLiteral(":/json/Vehicle/SubmarineFact.json"), parent)

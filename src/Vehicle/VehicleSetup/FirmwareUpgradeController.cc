@@ -12,7 +12,7 @@
 #include "MultiVehicleManager.h"
 #include "FirmwareImage.h"
 #include "Fact.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDir>
 #include <QtCore/QStandardPaths>

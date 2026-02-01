@@ -3,11 +3,9 @@
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 
 #include "QGCTileSet.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MapProviderLog)
 
 // qgeomaptype_p.h
 /*enum MapStyle {

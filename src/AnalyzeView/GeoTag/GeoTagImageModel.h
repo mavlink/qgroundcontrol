@@ -1,11 +1,9 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
-#include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(GeoTagImageModelLog)
 
 /// Model for displaying geotagging image status in QML
 class GeoTagImageModel : public QAbstractListModel

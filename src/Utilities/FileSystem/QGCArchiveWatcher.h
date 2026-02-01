@@ -6,12 +6,10 @@
 #include "QGCFileWatcher.h"
 #include "QGCCompression.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtCore/QString>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCArchiveWatcherLog)
 
 class QGCCompressionJob;
 

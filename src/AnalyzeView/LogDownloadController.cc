@@ -5,7 +5,7 @@
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -13,7 +13,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
+Q_STATIC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
 
 LogDownloadController::LogDownloadController(QObject *parent)
     : QObject(parent)
@@ -56,7 +56,7 @@ void LogDownloadController::_downloadToDirectory(const QString &dir)
         _downloadPath += QDir::separator();
     }
 
-    QGCLogEntry *const log = _getNextSelected();
+    LogEntry *const log = _getNextSelected();
     if (log) {
         log->setStatus(tr("Waiting"));
     }
@@ -80,7 +80,7 @@ void LogDownloadController::_findMissingEntries()
     int start = -1;
     int end = -1;
     for (int i = 0; i < num_logs; i++) {
-        const QGCLogEntry *const entry = _logEntriesModel->value<const QGCLogEntry*>(i);
+        const LogEntry *const entry = _logEntriesModel->value<const LogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -103,7 +103,7 @@ void LogDownloadController::_findMissingEntries()
 
     if (_retries++ > 2) {
         for (int i = 0; i < num_logs; i++) {
-            QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+            LogEntry *const entry = _logEntriesModel->value<LogEntry*>(i);
             if (entry && !entry->received()) {
                 entry->setStatus(tr("Error"));
             }
@@ -159,7 +159,7 @@ void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t
         }
 
         for (int i = 0; i < num_logs; i++) {
-            QGCLogEntry *const entry = new QGCLogEntry(i);
+            LogEntry *const entry = new LogEntry(i);
             _logEntriesModel->append(entry);
         }
     }
@@ -168,7 +168,7 @@ void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t
         if ((size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
             id -= _apmOffset;
             if (id < _logEntriesModel->count()) {
-                QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(id);
+                LogEntry *const entry = _logEntriesModel->value<LogEntry*>(id);
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
                 entry->setReceived(true);
@@ -200,7 +200,7 @@ bool LogDownloadController::_entriesComplete() const
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        const QGCLogEntry *const entry = _logEntriesModel->value<const QGCLogEntry*>(i);
+        const LogEntry *const entry = _logEntriesModel->value<const LogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -363,7 +363,7 @@ bool LogDownloadController::_prepareLogDownload()
 {
     _downloadData.reset();
 
-    QGCLogEntry *const entry = _getNextSelected();
+    LogEntry *const entry = _getNextSelected();
     if (!entry) {
         return false;
     }
@@ -430,11 +430,11 @@ void LogDownloadController::refresh()
     _requestLogList(0, 0xffff);
 }
 
-QGCLogEntry *LogDownloadController::_getNextSelected() const
+LogEntry *LogDownloadController::_getNextSelected() const
 {
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+        LogEntry *const entry = _logEntriesModel->value<LogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -469,7 +469,7 @@ void LogDownloadController::_resetSelection(bool canceled)
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+        LogEntry *const entry = _logEntriesModel->value<LogEntry*>(i);
         if (!entry) {
             continue;
         }

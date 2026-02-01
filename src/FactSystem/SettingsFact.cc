@@ -1,12 +1,12 @@
 #include "SettingsFact.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(SettingsFactLog, "FactSystem.SettingsFact")
+Q_STATIC_LOGGING_CATEGORY(SettingsFactLog, "FactSystem.SettingsFact")
 
 SettingsFact::SettingsFact(QObject *parent)
     : Fact(parent)

@@ -2,7 +2,7 @@
 #include "GimbalControllerSettings.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -10,7 +10,7 @@
 #include "Gimbal.h"
 #include "QGCCameraManager.h"
 
-QGC_LOGGING_CATEGORY(GimbalControllerLog, "Gimbal.GimbalController")
+Q_STATIC_LOGGING_CATEGORY(GimbalControllerLog, "Gimbal.GimbalController")
 
 GimbalController::GimbalController(Vehicle *vehicle)
     : QObject(vehicle)

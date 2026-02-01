@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QSGGeometryNode>
 #include <QtQuick/QSGGeometry>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainProfileLog)
 
 class MissionController;
 class QmlObjectListModel;

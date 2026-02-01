@@ -1,11 +1,9 @@
 #pragma once
 
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 
 #include <jni.h>
 
-Q_DECLARE_LOGGING_CATEGORY(AndroidInterfaceLog)
 
 namespace AndroidInterface
 {

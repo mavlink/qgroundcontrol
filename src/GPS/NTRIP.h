@@ -3,14 +3,12 @@
 #include <atomic>
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
 #include <QtPositioning/QGeoCoordinate>
 
-Q_DECLARE_LOGGING_CATEGORY(NTRIPLog)
 
 class RTCMMavlink;
 class NTRIPSettings;

@@ -3,7 +3,7 @@
 #include "QGCApplication.h"
 #include "CompInfoParam.h"
 #include "Bootloader.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>

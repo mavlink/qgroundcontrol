@@ -3,7 +3,7 @@
 #include "QGCCorePlugin.h"
 #include "SimulatedPosition.h"
 // #include "DeviceInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QPermissions>
@@ -11,7 +11,7 @@
 #include <QtPositioning/private/qgeopositioninfosource_p.h>
 #include <QtPositioning/QNmeaPositionInfoSource>
 
-QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "PositionManager.QGCPositionManager")
+Q_STATIC_LOGGING_CATEGORY(QGCPositionManagerLog, "PositionManager.QGCPositionManager")
 
 Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 

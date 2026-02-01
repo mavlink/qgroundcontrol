@@ -2,12 +2,12 @@
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(SimulatedPositionLog, "PositionManager.SimulatedPosition")
+Q_STATIC_LOGGING_CATEGORY(SimulatedPositionLog, "PositionManager.SimulatedPosition")
 
 SimulatedPosition::SimulatedPosition(QObject* parent)
     : QGeoPositionInfoSource(parent)

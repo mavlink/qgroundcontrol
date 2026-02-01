@@ -4,7 +4,7 @@
 
 #include <QtCore/QTemporaryDir>
 
-/// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
+/// Tests for QGCCompression (format detection, extraction, compression, decompression)
 class QGCCompressionTest : public UnitTest
 {
     Q_OBJECT
@@ -40,6 +40,11 @@ private slots:
     void _testDecompressFromResource();
     void _testDecompressData();
     void _testDecompressIfNeeded();
+
+    // Simple zlib compression/decompression
+    void _testCompressData();
+    void _testDecompressZlib();
+    void _testCompressDataLevels();
 
     // Progress callbacks
     void _testProgressCallbackExtract();

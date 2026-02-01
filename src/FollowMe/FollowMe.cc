@@ -5,11 +5,11 @@
 #include "PositionManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtPositioning/QGeoPositionInfo>
 
-QGC_LOGGING_CATEGORY(FollowMeLog, "API.FollowMe")
+Q_STATIC_LOGGING_CATEGORY(FollowMeLog, "API.FollowMe")
 
 Q_APPLICATION_STATIC(FollowMe, _followMeInstance);
 

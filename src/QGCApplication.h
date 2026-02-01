@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
@@ -33,7 +32,6 @@ class QMetaObject;
 
 #define qgcApp() qApp
 
-Q_DECLARE_LOGGING_CATEGORY(QGCApplicationLog)
 
 /// The main application and management class.
 /// Needs QApplication base to support QtCharts module.

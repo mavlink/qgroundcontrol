@@ -1,6 +1,6 @@
 #include "MAVLinkLogManager.h"
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -14,7 +14,7 @@
 
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "Vehicle.MAVLinkLogManager")
+Q_STATIC_LOGGING_CATEGORY(MAVLinkLogManagerLog, "Vehicle.MAVLinkLogManager")
 
 static constexpr const char *kSidecarExtension = ".uploaded";
 

@@ -1,5 +1,5 @@
 #include "AndroidSerial.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
@@ -7,7 +7,7 @@
 #include <qserialport_p.h>
 #include <qserialportinfo_p.h>
 
-QGC_LOGGING_CATEGORY(AndroidSerialLog, "Android.AndroidSerial");
+Q_STATIC_LOGGING_CATEGORY(AndroidSerialLog, "Android.AndroidSerial");
 
 // TODO: Save Method Lookups
 

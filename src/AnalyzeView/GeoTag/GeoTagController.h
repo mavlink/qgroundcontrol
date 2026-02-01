@@ -8,7 +8,6 @@
 #include <QtCore/QFileInfoList>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
@@ -18,7 +17,6 @@
 
 #include <atomic>
 
-Q_DECLARE_LOGGING_CATEGORY(GeoTagControllerLog)
 
 /// Result of timestamp-based calibration/matching
 struct CalibrationResult {

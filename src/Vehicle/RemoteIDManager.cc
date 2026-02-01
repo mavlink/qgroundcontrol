@@ -4,9 +4,9 @@
 #include "PositionManager.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "Vehicle.RemoteIDManager")
+Q_STATIC_LOGGING_CATEGORY(RemoteIDManagerLog, "Vehicle.RemoteIDManager")
 
 #define AREA_COUNT 1
 #define AREA_RADIUS 0

@@ -2,9 +2,9 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "AutoPilotPlugins.SensorsComponentController")
+Q_STATIC_LOGGING_CATEGORY(SensorsComponentControllerLog, "AutoPilotPlugins.SensorsComponentController")
 
 SensorsComponentController::SensorsComponentController(void)
     : _statusLog                                (nullptr)

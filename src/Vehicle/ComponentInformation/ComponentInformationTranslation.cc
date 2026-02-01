@@ -2,7 +2,7 @@
 #include "QGCCachedFileDownload.h"
 #include "JsonHelper.h"
 #include "QGCCompression.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QStandardPaths>
 #include <QtCore/QDir>
@@ -10,7 +10,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QXmlStreamReader>
 
-QGC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformation.ComponentInformationTranslation")
+Q_STATIC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformation.ComponentInformationTranslation")
 
 ComponentInformationTranslation::ComponentInformationTranslation(QObject* parent,
                                                                  QGCCachedFileDownload* cachedFileDownload)

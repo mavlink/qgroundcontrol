@@ -1,15 +1,14 @@
 # Contributing to QGroundControl
 
-Thank you for considering contributing to QGroundControl! This guide will help you get started with contributing code, reporting issues, and improving documentation.
+Thank you for considering contributing to QGroundControl! This guide covers the contribution process. For coding conventions and technical details, see [CODING_STYLE.md](../CODING_STYLE.md).
 
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
 2. [How to Contribute](#how-to-contribute)
-3. [Coding Standards](#coding-standards)
-4. [Testing Requirements](#testing-requirements)
-5. [Pull Request Process](#pull-request-process)
-6. [License Requirements](#license-requirements)
+3. [Testing Requirements](#testing-requirements)
+4. [Pull Request Process](#pull-request-process)
+5. [License Requirements](#license-requirements)
 
 ---
 
@@ -17,11 +16,11 @@ Thank you for considering contributing to QGroundControl! This guide will help y
 
 ### Prerequisites
 
-Before you begin, please:
+Before you begin:
 
 1. Read the [Developer Guide](https://dev.qgroundcontrol.com/en/)
 2. Review the [Build Instructions](https://dev.qgroundcontrol.com/en/getting_started/)
-3. Familiarize yourself with the [Architecture Patterns](#architecture-patterns) in this guide
+3. Familiarize yourself with [CODING_STYLE.md](../CODING_STYLE.md)
 
 ### Development Environment
 
@@ -61,171 +60,16 @@ Feature requests are welcome! Please:
 
 ### Contributing Translations
 
-QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for community translations. See [tools/translations/README.md](../tools/translations/README.md) for details on how translations are managed.
+QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for community translations. See [tools/translations/README.md](../tools/translations/README.md) for details.
 
 ### Contributing Code
 
-1. **Fork the repository**
-
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/qgroundcontrol.git
-   cd qgroundcontrol
-   ```
-
-2. **Create a feature branch**
-
-   ```bash
-   git checkout -b feature/my-new-feature
-   ```
-
-3. **Make your changes** following our [coding standards](#coding-standards)
-
-4. **Test your changes thoroughly**
-   - Run unit tests: `./qgroundcontrol --unittest`
-   - Test on all relevant platforms when possible
-   - Test with both PX4 and ArduPilot if applicable
-
-5. **Commit your changes**
-
-   ```bash
-   git add .
-   git commit -m "Add feature: brief description"
-   ```
-
-6. **Push to your fork**
-
-   ```bash
-   git push origin feature/my-new-feature
-   ```
-
-7. **Create a Pull Request** from your fork to `mavlink/qgroundcontrol:master`
-
----
-
-## Coding Standards
-
-For the complete coding style guide with examples, see [CODING_STYLE.md](../CODING_STYLE.md).
-
-### C++ Guidelines
-
-- **Standard**: C++20
-- **Framework**: Qt 6 guidelines
-- **Naming Conventions**:
-  - Classes: `PascalCase`
-  - Methods/functions: `camelCase`
-  - Private members: `_leadingUnderscore`
-  - Constants: `ALL_CAPS` or `kPascalCase`
-
-- **Always use braces** for if/else/for/while statements
-
-  ```cpp
-  // Good
-  if (condition) {
-      doSomething();
-  }
-
-  // Bad
-  if (condition) doSomething();
-  ```
-
-- **Defensive coding**:
-  - Always null-check pointers before use
-  - Validate all inputs
-  - Use Q_ASSERT for debug-build development checks only (compiled out in release builds)
-  - Always use defensive error handling in production code paths (never rely on Q_ASSERT)
-  - Handle errors gracefully in production code
-
-- **Code formatting**:
-  - Run `clang-format` before committing
-  - Follow `.clang-format`, `.clang-tidy`, `.editorconfig` in repo root
-  - See `CodingStyle.h`, `CodingStyle.cc`, `CodingStyle.qml` for examples
-  - 4 spaces for indentation (no tabs)
-
-### QML Guidelines
-
-- Follow Qt QML coding conventions
-- Use type annotations
-- Prefer declarative over imperative code
-- See `src/QmlControls/QGCButton.qml` for examples
-
-### Logging
-
-Use Qt logging categories:
-
-```cpp
-Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
-QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
-
-qCDebug(MyComponentLog) << "Debug message:" << value;
-qCWarning(MyComponentLog) << "Warning message";
-qCCritical(MyComponentLog) << "Critical error";
-```
-
-### Architecture Patterns
-
-#### Fact System (Most Important!)
-
-The Fact System handles ALL vehicle parameters. Never create custom parameter storage.
-
-```cpp
-// Access parameters (always null-check!)
-Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
-if (param && param->validate(newValue, false).isEmpty()) {
-    param->setCookedValue(newValue);  // Use cookedValue for UI (with units)
-    // param->rawValue() for MAVLink/storage
-}
-```
-
-**Key classes:**
-
-- `Fact` - Single parameter with validation, units, metadata
-- `FactGroup` - Hierarchical container (handles MAVLink via `handleMessage()`)
-- `FactMetaData` - JSON-based metadata (min/max, enums, descriptions)
-
-**Rules:**
-
-- Wait for `parametersReady` signal before accessing
-- Use `cookedValue` (display) vs `rawValue` (storage)
-- Metadata in `*.FactMetaData.json` files
-
-#### Multi-Vehicle Support
-
-Always null-check the active vehicle:
-
-```cpp
-Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
-if (!vehicle) return;
-
-// Other managers
-SettingsManager::instance()->appSettings()->...
-LinkManager::instance()->...
-```
-
-#### Firmware Plugin System
-
-Use FirmwarePlugin for firmware-specific behavior:
-
-```cpp
-// FirmwarePlugin - Firmware behavior (flight modes, capabilities)
-vehicle->firmwarePlugin()->flightModes();
-vehicle->firmwarePlugin()->isCapable(capability);
-
-// AutoPilotPlugin - Vehicle setup UI
-// VehicleComponent - Individual setup items (Radio, Sensors, Safety)
-```
-
-#### QML/C++ Integration
-
-```cpp
-Q_OBJECT
-QML_ELEMENT           // Creatable in QML
-QML_SINGLETON         // Singleton
-QML_UNCREATABLE("")   // C++-only
-
-Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
-Q_INVOKABLE void method();
-Q_ENUM(EnumType)
-```
+1. **Fork the repository** and clone your fork
+2. **Create a feature branch** from master
+3. **Make your changes** following [CODING_STYLE.md](../CODING_STYLE.md)
+4. **Test thoroughly** (see [Testing Requirements](#testing-requirements))
+5. **Commit with clear messages** (imperative mood: "Add feature", not "Added feature")
+6. **Push to your fork** and create a Pull Request
 
 ---
 
@@ -236,11 +80,7 @@ Q_ENUM(EnumType)
 - Add unit tests for new functionality
 - Place tests in `test/` directory mirroring `src/` structure
 - Use Qt Test framework with `UnitTest` base class
-- Run tests before submitting:
-
-  ```bash
-  ./qgroundcontrol --unittest
-  ```
+- Run tests: `./qgroundcontrol --unittest`
 
 ### Manual Testing
 
@@ -254,16 +94,8 @@ Test your changes on:
 
 Run before committing:
 
-```bash
-# Using Makefile or justfile (recommended)
-make lint        # or: just lint
-
-# Format code
-clang-format -i path/to/changed/files.cc
-
-# Run pre-commit hooks (optional)
-pre-commit run --all-files
-```
+- `make lint` or `just lint` - Run linting
+- `pre-commit run --all-files` - Run all pre-commit hooks
 
 See [tools/README.md](../tools/README.md) for all available development commands.
 
@@ -274,12 +106,6 @@ See [tools/README.md](../tools/README.md) for all available development commands
 ### Before Submitting
 
 1. **Rebase on latest master**
-
-   ```bash
-   git fetch upstream
-   git rebase upstream/master
-   ```
-
 2. **Ensure all tests pass**
 3. **Update documentation** if needed
 4. **Write a clear PR description**:
@@ -291,7 +117,7 @@ See [tools/README.md](../tools/README.md) for all available development commands
 ### PR Requirements
 
 - ✅ All CI checks must pass
-- ✅ Code follows style guidelines
+- ✅ Code follows [CODING_STYLE.md](../CODING_STYLE.md)
 - ✅ Tests added for new features
 - ✅ No unrelated changes
 - ✅ Commit messages are clear and descriptive
@@ -314,7 +140,7 @@ See [tools/README.md](../tools/README.md) for all available development commands
 
 ### Dual-License Requirement
 
-**Important**: All contributions to QGroundControl must be compatible with our **dual-license system** (Apache 2.0 AND GPL v3).
+**Important**: All contributions must be compatible with our **dual-license system** (Apache 2.0 AND GPL v3).
 
 ### What This Means
 
@@ -332,29 +158,14 @@ By contributing, you agree that:
 
 QGroundControl uses a dual-license system:
 
-#### Apache License 2.0
-
-- Permissive license
-- Allows use in proprietary applications
-- Allows distribution via app stores
-- **Requires commercial Qt license**
-
-Full text: [LICENSE-APACHE](../LICENSE-APACHE)
-
-#### GNU General Public License v3 (GPL v3)
-
-- Copyleft license
-- Ensures software remains open source
-- **Can use open-source Qt**
-- Users can use later GPL versions (v3 is minimum for contributions)
-
-Full text: [LICENSE-GPL](../LICENSE-GPL)
+| License | Type | Qt Requirement | Use Case |
+|---------|------|----------------|----------|
+| [Apache 2.0](../LICENSE-APACHE) | Permissive | Commercial Qt license | Proprietary apps, app stores |
+| [GPL v3](../LICENSE-GPL) | Copyleft | Open-source Qt | Open source distribution |
 
 ### Questions About Licensing
 
-If you have questions about licensing, please contact:
-
-- Lorenz Meier: <lm@qgroundcontrol.org>
+Contact Lorenz Meier: <lm@qgroundcontrol.org>
 
 For more details, see [COPYING.md](COPYING.md).
 
@@ -364,7 +175,7 @@ For more details, see [COPYING.md](COPYING.md).
 
 - **User Manual**: <https://docs.qgroundcontrol.com/en/>
 - **Developer Guide**: <https://dev.qgroundcontrol.com/en/>
-- **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
+- **Support Guide**: [SUPPORT.md](SUPPORT.md)
 - **Discussion Forum**: <https://discuss.px4.io/c/qgroundcontrol>
 - **Discord**: <https://discord.gg/dronecode>
 
@@ -376,4 +187,4 @@ QGroundControl is part of the Dronecode Foundation. Please follow our [Code of C
 
 ---
 
-Thank you for contributing to QGroundControl! Your efforts help make drone control accessible to everyone.
+Thank you for contributing to QGroundControl!

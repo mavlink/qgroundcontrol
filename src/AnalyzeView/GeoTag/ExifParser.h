@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 
 #include "GeoTagData.h"
 
 class QByteArray;
 
-Q_DECLARE_LOGGING_CATEGORY(ExifParserLog)
 
 namespace ExifParser
 {

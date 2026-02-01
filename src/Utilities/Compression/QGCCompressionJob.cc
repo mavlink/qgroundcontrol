@@ -1,12 +1,12 @@
 #include "QGCCompressionJob.h"
 #include "QGCCompression.h"
 #include "QGClibarchive.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QPromise>
 
-QGC_LOGGING_CATEGORY(QGCCompressionJobLog, "Utilities.QGCCompressionJob")
+Q_STATIC_LOGGING_CATEGORY(QGCCompressionJobLog, "Utilities.QGCCompressionJob")
 
 // ============================================================================
 // Construction / Destruction

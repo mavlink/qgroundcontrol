@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtLocation/QGeoServiceProvider>
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-Q_DECLARE_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog)
 
 class QNetworkAccessManager;
 

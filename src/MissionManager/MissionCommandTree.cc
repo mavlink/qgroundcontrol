@@ -3,12 +3,12 @@
 #include "FirmwarePluginManager.h"
 #include "MissionCommandList.h"
 #include "MissionCommandUIInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtCore/QApplicationStatic>
 
-QGC_LOGGING_CATEGORY(MissionCommandTreeLog, "Plan.MissionCommandTree");
+Q_STATIC_LOGGING_CATEGORY(MissionCommandTreeLog, "Plan.MissionCommandTree");
 
 Q_APPLICATION_STATIC(MissionCommandTree, _missionCommandTreeInstance);
 

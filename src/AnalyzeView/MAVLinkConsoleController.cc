@@ -1,14 +1,14 @@
 #include "MAVLinkConsoleController.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCPalette.h"
 #include "Vehicle.h"
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 
-QGC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "AnalyzeView.MAVLinkConsoleController")
+Q_STATIC_LOGGING_CATEGORY(MAVLinkConsoleControllerLog, "AnalyzeView.MAVLinkConsoleController")
 
 MAVLinkConsoleController::MAVLinkConsoleController(QObject *parent)
     : QStringListModel(parent)

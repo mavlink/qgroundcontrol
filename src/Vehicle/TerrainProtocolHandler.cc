@@ -2,11 +2,11 @@
 #include "TerrainQuery.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "Vehicle.TerrainProtocolHandler")
+Q_STATIC_LOGGING_CATEGORY(TerrainProtocolHandlerLog, "Vehicle.TerrainProtocolHandler")
 
 TerrainProtocolHandler::TerrainProtocolHandler(Vehicle *vehicle, TerrainFactGroup *terrainFactGroup, QObject *parent)
     : QObject(parent)

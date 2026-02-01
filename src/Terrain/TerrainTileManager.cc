@@ -7,7 +7,7 @@
 #include "ElevationMapProvider.h"
 #include "SettingsManager.h"
 #include "FlightMapSettings.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCGeo.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
@@ -18,7 +18,7 @@
 
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(TerrainTileManagerLog, "Terrain.TerrainTileManager")
+Q_STATIC_LOGGING_CATEGORY(TerrainTileManagerLog, "Terrain.TerrainTileManager")
 
 namespace {
     constexpr int kMaxCarpetGridSize = 10000;

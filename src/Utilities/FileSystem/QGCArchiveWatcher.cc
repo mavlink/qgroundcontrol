@@ -1,11 +1,11 @@
 #include "QGCArchiveWatcher.h"
 #include "QGCCompressionJob.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 
-QGC_LOGGING_CATEGORY(QGCArchiveWatcherLog, "Utilities.QGCArchiveWatcher")
+Q_STATIC_LOGGING_CATEGORY(QGCArchiveWatcherLog, "Utilities.QGCArchiveWatcher")
 
 // ============================================================================
 // Construction / Destruction

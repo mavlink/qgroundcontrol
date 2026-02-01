@@ -7,11 +7,11 @@
 #include "SettingsManager.h"
 #include "PlanViewSettings.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "Plan.VTOLLandingComplexItem")
+Q_STATIC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "Plan.VTOLLandingComplexItem")
 
 const QString VTOLLandingComplexItem::name(VTOLLandingComplexItem::tr("VTOL Landing"));
 

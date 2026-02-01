@@ -3,7 +3,7 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 SendMavlinkMessageState::SendMavlinkMessageState(QState *parent, MessageEncoder encoder, int retryCount)
     : QGCState(QStringLiteral("SendMavlinkMessageState"), parent)

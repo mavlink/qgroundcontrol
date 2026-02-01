@@ -8,9 +8,9 @@
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
 
-/// Unified decompression interface for archives and single-file compression
-/// Uses libarchive for all operations (ZIP, GZIP, XZ, ZSTD, TAR, etc.)
-/// NOTE: This module is decompression-only; QGC does not create compressed files
+/// Unified compression/decompression interface
+/// - Simple zlib compression for in-memory data (compressData/decompressZlib)
+/// - Archive decompression via libarchive (ZIP, GZIP, XZ, ZSTD, TAR, etc.)
 namespace QGCCompression {
 
 // ============================================================================
@@ -373,5 +373,20 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// @param fileName Name of file inside archive
 /// @return File contents, or empty QByteArray if not found
 QByteArray extractFileDataFromDevice(QIODevice *device, const QString &fileName);
+
+// ============================================================================
+// Simple Zlib Compression (in-memory)
+// ============================================================================
+
+/// Compress data using zlib (Qt's qCompress)
+/// @param data Raw data to compress
+/// @param level Compression level (1-9, where 1=fastest, 9=best ratio, default=6)
+/// @return Compressed data (includes Qt's 4-byte size header), or empty on failure
+QByteArray compressData(const QByteArray &data, int level = 6);
+
+/// Decompress zlib data (Qt's qUncompress)
+/// @param data Compressed data (must include Qt's 4-byte size header from compressData)
+/// @return Decompressed data, or empty on failure
+QByteArray decompressZlib(const QByteArray &data);
 
 } // namespace QGCCompression

@@ -2,10 +2,10 @@
 #include "FactValueSliderListModel.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(FactLog, "FactSystem.Fact")
+Q_STATIC_LOGGING_CATEGORY(FactLog, "FactSystem.Fact")
 
 Fact::Fact(QObject *parent)
     : QObject(parent)

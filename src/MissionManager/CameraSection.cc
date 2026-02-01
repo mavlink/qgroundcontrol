@@ -4,9 +4,9 @@
 #include "PlanMasterController.h"
 #include "MissionItem.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(CameraSectionLog, "Plan.CameraSection")
+Q_STATIC_LOGGING_CATEGORY(CameraSectionLog, "Plan.CameraSection")
 
 QMap<QString, FactMetaData*> CameraSection::_metaDataMap;
 

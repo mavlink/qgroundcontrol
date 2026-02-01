@@ -3,10 +3,10 @@
 #include <QtCore/QThread>
 #include <QtQml/QQmlEngine>
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "QtLocationPlugin.QGeoServiceProviderFactoryQGC")
+Q_STATIC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "QtLocationPlugin.QGeoServiceProviderFactoryQGC")
 
 QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject *parent)
     : QObject(parent)

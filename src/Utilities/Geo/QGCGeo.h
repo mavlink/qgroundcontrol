@@ -22,11 +22,9 @@
 ///
 /// All conversions use the WGS84 ellipsoid model for accuracy.
 
-#include <QtCore/QLoggingCategory>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCGeoLog)
 
 namespace QGCGeo
 {

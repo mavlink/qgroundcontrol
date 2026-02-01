@@ -4,13 +4,13 @@
 #include "MAVLinkProtocol.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtCore/QVariant>
 
-QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "AutoPilotPlugins.APMSensorsComponentController")
-QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "AutoPilotPlugins.APMSensorsComponentController:verbose")
+Q_STATIC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "AutoPilotPlugins.APMSensorsComponentController")
+Q_STATIC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "AutoPilotPlugins.APMSensorsComponentController:verbose")
 
 APMSensorsComponentController::APMSensorsComponentController(QObject *parent)
     : FactPanelController(parent)

@@ -63,10 +63,6 @@
 #include "TransectStyleComplexItemTest.h"
 // #include "VisualMissionItemTest.h"
 
-// qgcunittest
-#include "ComponentInformationCacheTest.h"
-#include "ComponentInformationTranslationTest.h"
-
 // QmlControls
 
 // Terrain
@@ -92,6 +88,13 @@
 #include "QGCFileDownloadTest.h"
 #include "QGCFileHelperTest.h"
 #include "QGCFileWatcherTest.h"
+// Logging
+#include "LogCompressionTest.h"
+#include "LogDiskWriterTest.h"
+#include "QGCLogEntryTest.h"
+#include "LogManagerTest.h"
+#include "LogModelTest.h"
+#include "LogRemoteSinkTest.h"
 // Geo
 #include "GeoTest.h"
 // Shape
@@ -178,8 +181,6 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(TransectStyleComplexItemTest)
     // UT_REGISTER_TEST(VisualMissionItemTest)
 
-    // qgcunittest
-
     // QmlControls
 
     // Terrain
@@ -205,6 +206,13 @@ int QGCUnitTest::runTests(bool stress, const QStringList& unitTests)
     UT_REGISTER_TEST(QGCFileDownloadTest)
     UT_REGISTER_TEST(QGCFileHelperTest)
     UT_REGISTER_TEST(QGCFileWatcherTest)
+    // Logging
+    UT_REGISTER_TEST(LogCompressionTest)
+    UT_REGISTER_TEST(LogDiskWriterTest)
+    UT_REGISTER_TEST(QGCLogEntryTest)
+    UT_REGISTER_TEST(LogManagerTest)
+    UT_REGISTER_TEST(LogModelTest)
+    UT_REGISTER_TEST(LogRemoteSinkTest)
     // Geo
     UT_REGISTER_TEST(GeoTest)
     // Shape

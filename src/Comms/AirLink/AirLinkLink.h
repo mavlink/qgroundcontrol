@@ -1,11 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 
 #include "UDPLink.h"
 
-Q_DECLARE_LOGGING_CATEGORY(AirLinkLinkLog)
 
 class AirLinkConfiguration : public UDPConfiguration
 {

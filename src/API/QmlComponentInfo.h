@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 
-Q_DECLARE_LOGGING_CATEGORY(QmlComponentInfoLog)
 
 /// Represents a Qml component which can be loaded from a resource.
 class QmlComponentInfo : public QObject

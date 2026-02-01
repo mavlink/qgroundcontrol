@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QtCore/QFile>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtNetwork/QHttpPart>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkLogManagerLog)
 
 class QmlObjectListModel;
 class QNetworkAccessManager;

@@ -5,9 +5,7 @@
 #include "FactMetaData.h"
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(PX4ParameterMetaDataLog)
 
 //#define GENERATE_PARAMETER_JSON
 

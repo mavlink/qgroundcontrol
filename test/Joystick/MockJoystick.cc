@@ -3,7 +3,7 @@
 
 #include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
+Q_STATIC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
 namespace {
 

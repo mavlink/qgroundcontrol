@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QString>
 
@@ -22,7 +22,7 @@
 #include <GeographicLib/PolygonArea.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
-QGC_LOGGING_CATEGORY(QGCGeoLog, "Utilities.QGCGeo")
+Q_STATIC_LOGGING_CATEGORY(QGCGeoLog, "Utilities.QGCGeo")
 
 namespace QGCGeo
 {

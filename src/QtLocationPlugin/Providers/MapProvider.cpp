@@ -1,9 +1,9 @@
 #include "MapProvider.h"
-#include <QGCLoggingCategory.h>
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QLocale>
 
-QGC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
+Q_STATIC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
 
 // QtLocation expects MapIds to start at 1 and be sequential.
 int MapProvider::_mapIdIndex = 1;

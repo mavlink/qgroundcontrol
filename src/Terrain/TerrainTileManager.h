@@ -2,7 +2,6 @@
 
 #include "TerrainQueryInterface.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
@@ -12,7 +11,6 @@ class TerrainTile;
 class QNetworkAccessManager;
 class UnitTestTerrainQuery;
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainTileManagerLog)
 
 class TerrainTileManager : public QObject
 {

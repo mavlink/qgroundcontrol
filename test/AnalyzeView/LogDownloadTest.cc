@@ -33,7 +33,7 @@ void LogDownloadTest::_downloadTest()
 
     QmlObjectListModel *const model = controller->_getModel();
     QVERIFY(model);
-    model->value<QGCLogEntry*>(0)->setSelected(true);
+    model->value<LogEntry*>(0)->setSelected(true);
 
     const QString downloadTo = QDir::currentPath();
     controller->download(downloadTo);

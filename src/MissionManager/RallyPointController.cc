@@ -7,11 +7,11 @@
 #include "PlanMasterController.h"
 #include "RallyPointManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(RallyPointControllerLog, "PlanManager.RallyPointController")
+Q_STATIC_LOGGING_CATEGORY(RallyPointControllerLog, "PlanManager.RallyPointController")
 
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
     : PlanElementController (masterController, parent)
@@ -28,7 +28,7 @@ RallyPointController::~RallyPointController()
 
 void RallyPointController::start(bool flyView)
 {
-    qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
+    qCDebug(RallyPointControllerLog) << "start flyView" << flyView;
 
     _managerVehicleChanged(_masterController->managerVehicle());
     connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &RallyPointController::_managerVehicleChanged);

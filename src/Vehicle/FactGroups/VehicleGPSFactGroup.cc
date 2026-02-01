@@ -1,7 +1,7 @@
 #include "VehicleGPSFactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QRectF>
@@ -15,8 +14,6 @@
 class QGCCameraParamIO;
 class Vehicle;
 
-Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
-Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 /// Abstract base class for all camera controls: real and simulated
 class MavlinkCameraControl : public FactGroup

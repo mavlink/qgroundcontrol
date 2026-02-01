@@ -1,8 +1,8 @@
 #include "SysStatusSensorInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMAVLink.h"
 
-QGC_LOGGING_CATEGORY(SysStatusSensorInfoLog, "MAVLink.SysStatusSensorInfo")
+Q_STATIC_LOGGING_CATEGORY(SysStatusSensorInfoLog, "MAVLink.SysStatusSensorInfo")
 
 SysStatusSensorInfo::SysStatusSensorInfo(QObject *parent)
     : QObject(parent)

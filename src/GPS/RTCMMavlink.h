@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 typedef struct __mavlink_gps_rtcm_data_t mavlink_gps_rtcm_data_t;
 
-Q_DECLARE_LOGGING_CATEGORY(RTCMMavlinkLog)
 
 class RTCMMavlink : public QObject
 {

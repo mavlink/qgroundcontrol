@@ -1,6 +1,6 @@
 #include "ScreenToolsController.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
@@ -13,7 +13,7 @@
 #include <sys/utsname.h>
 #endif
 
-QGC_LOGGING_CATEGORY(ScreenToolsControllerLog, "QMLControls.ScreenToolsController")
+Q_STATIC_LOGGING_CATEGORY(ScreenToolsControllerLog, "QMLControls.ScreenToolsController")
 
 ScreenToolsController::ScreenToolsController(QObject *parent)
     : QObject(parent)

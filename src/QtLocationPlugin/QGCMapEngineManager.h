@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCTileSet.h"
 #include "QGCMapTasks.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineManagerLog)
 
 class QGCCachedTileSet;
 class QGCCompressionJob;

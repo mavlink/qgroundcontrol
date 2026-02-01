@@ -2,7 +2,6 @@
 
 #include <atomic>
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #ifdef Q_OS_WIN
@@ -11,7 +10,6 @@
     class QSocketNotifier;
 #endif
 
-Q_DECLARE_LOGGING_CATEGORY(SignalHandlerLog)
 
 class SignalHandler final : public QObject
 {

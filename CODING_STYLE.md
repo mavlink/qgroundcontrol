@@ -127,7 +127,7 @@ if (param.isEmpty()) {
 Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
 
 // Define in source (use QGC macro for runtime configuration)
-QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
+QGC_LOGGING_CATEGORY(MyComponentLog, "Component.Name")
 
 // Use categorized logging
 qCDebug(MyComponentLog) << "Debug message";

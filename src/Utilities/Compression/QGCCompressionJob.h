@@ -7,10 +7,8 @@
 
 #include <QtCore/QFuture>
 #include <QtCore/QFutureWatcher>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCCompressionJobLog)
 
 /// QObject wrapper for compression operations with progress signals
 /// Uses QtConcurrent and QPromise for modern async operations

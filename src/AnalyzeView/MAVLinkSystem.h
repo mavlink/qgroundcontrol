@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlObjectListModel.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkSystemLog)
 
 class QGCMAVLinkMessage;
 

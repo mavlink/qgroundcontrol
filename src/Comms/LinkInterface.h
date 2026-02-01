@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkConfiguration.h"
 
 class LinkManager;
 
-Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
 
 /// The link interface defines the interface for all links used to communicate with the ground station application.
 class LinkInterface : public QObject

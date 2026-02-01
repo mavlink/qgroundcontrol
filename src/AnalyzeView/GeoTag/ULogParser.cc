@@ -1,10 +1,10 @@
 #include "ULogParser.h"
 #include "ULogUtility.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <cmath>
 
-QGC_LOGGING_CATEGORY(ULogParserLog, "AnalyzeView.ULogParser")
+Q_STATIC_LOGGING_CATEGORY(ULogParserLog, "AnalyzeView.ULogParser")
 
 namespace ULogParser {
 

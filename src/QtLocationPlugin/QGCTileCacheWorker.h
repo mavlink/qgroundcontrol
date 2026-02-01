@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -9,7 +8,6 @@
 #include <QtCore/QWaitCondition>
 #include <QtCore/QElapsedTimer>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCTileCacheWorkerLog)
 
 class QGCMapTask;
 class QGCCachedTileSet;

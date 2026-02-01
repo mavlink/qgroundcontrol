@@ -1,8 +1,8 @@
-#include <QGCLoggingCategory.h>
+#include <QtCore/QLoggingCategory>
 
 #include "libevents_includes.h"
 
-QGC_LOGGING_CATEGORY(EventsLog, "API.Events")
+Q_STATIC_LOGGING_CATEGORY(EventsLog, "API.Events")
 
 void qgc_events_parser_debug_printf(const char *fmt, ...) {
     char msg[256];

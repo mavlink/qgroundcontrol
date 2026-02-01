@@ -8,12 +8,12 @@
 #include "QGC.h"
 #include "Fact.h"
 #include "MissionItem.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
 
-QGC_LOGGING_CATEGORY(UnitTestLog, "API.UnitTest")
+Q_LOGGING_CATEGORY(UnitTestLog, "API.UnitTest")
 
 UnitTest::UnitTest(QObject *parent)
     : QObject(parent)

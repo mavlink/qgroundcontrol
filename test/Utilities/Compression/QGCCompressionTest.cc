@@ -663,6 +663,71 @@ void QGCCompressionTest::_testDecompressIfNeeded()
 }
 
 // ============================================================================
+// Simple Zlib Compression Tests
+// ============================================================================
+
+void QGCCompressionTest::_testCompressData()
+{
+    // Test basic compression
+    const QByteArray original = QByteArray("Hello World! ").repeated(100);
+    const QByteArray compressed = QGCCompression::compressData(original);
+
+    QVERIFY(!compressed.isEmpty());
+    QVERIFY2(compressed.size() < original.size(), "Compressed data should be smaller");
+
+    // Decompress and verify
+    const QByteArray decompressed = QGCCompression::decompressZlib(compressed);
+    QCOMPARE(decompressed, original);
+
+    // Test empty data
+    QVERIFY(QGCCompression::compressData(QByteArray()).isEmpty());
+}
+
+void QGCCompressionTest::_testDecompressZlib()
+{
+    // Create compressed data
+    const QByteArray original = "Test data for decompression";
+    const QByteArray compressed = QGCCompression::compressData(original);
+
+    // Decompress
+    const QByteArray decompressed = QGCCompression::decompressZlib(compressed);
+    QCOMPARE(decompressed, original);
+
+    // Test empty data
+    QVERIFY(QGCCompression::decompressZlib(QByteArray()).isEmpty());
+
+    // Test invalid/corrupt data
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Failed to decompress"));
+    const QByteArray invalid = "not valid zlib data";
+    QVERIFY(QGCCompression::decompressZlib(invalid).isEmpty());
+}
+
+void QGCCompressionTest::_testCompressDataLevels()
+{
+    const QByteArray original = QByteArray("Test data for compression levels ").repeated(50);
+
+    // Level 1 (fastest)
+    const QByteArray fast = QGCCompression::compressData(original, 1);
+    QVERIFY(!fast.isEmpty());
+
+    // Level 9 (best compression)
+    const QByteArray best = QGCCompression::compressData(original, 9);
+    QVERIFY(!best.isEmpty());
+
+    // Best compression should be smaller or equal to fast
+    QVERIFY2(best.size() <= fast.size(), "Best compression should produce smaller or equal output");
+
+    // Both should decompress correctly
+    QCOMPARE(QGCCompression::decompressZlib(fast), original);
+    QCOMPARE(QGCCompression::decompressZlib(best), original);
+
+    // Test level clamping (levels outside 1-9 should be clamped)
+    const QByteArray clamped = QGCCompression::compressData(original, 0);  // Will be clamped to 1
+    QVERIFY(!clamped.isEmpty());
+    QCOMPARE(QGCCompression::decompressZlib(clamped), original);
+}
+
+// ============================================================================
 // Progress Callback Tests
 // ============================================================================
 

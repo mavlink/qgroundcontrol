@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 
 class QGeoCoordinate;
 class TerrainTileTest;
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 
 class TerrainTile
 {

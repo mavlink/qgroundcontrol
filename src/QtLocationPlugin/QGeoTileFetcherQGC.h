@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtLocation/private/qgeotilefetcher_p.h>
 #include <QtNetwork/QNetworkRequest>
 
-Q_DECLARE_LOGGING_CATEGORY(QGeoTileFetcherQGCLog)
 
 class QGeoTiledMappingManagerEngineQGC;
 class QGeoTiledMapReplyQGC;

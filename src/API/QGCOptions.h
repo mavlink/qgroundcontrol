@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtGui/QColor>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
@@ -9,7 +8,6 @@
 
 class QGCOptions;
 
-Q_DECLARE_LOGGING_CATEGORY(QGCFlyViewOptionsLog)
 
 class QGCFlyViewOptions : public QObject
 {
@@ -45,7 +43,6 @@ protected:
 
 /*===========================================================================*/
 
-Q_DECLARE_LOGGING_CATEGORY(QGCOptionsLog)
 
 class QGCOptions : public QObject
 {

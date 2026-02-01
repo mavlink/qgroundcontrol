@@ -1,4 +1,8 @@
 #include "PX4FirmwarePlugin.h"
+
+#include <QtCore/QLoggingCategory>
+Q_STATIC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
+
 #include "PX4ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "PX4AutoPilotPlugin.h"

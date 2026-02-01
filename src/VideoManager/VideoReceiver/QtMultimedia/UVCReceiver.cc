@@ -1,6 +1,6 @@
 #include "UVCReceiver.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "VideoSettings.h"
 
@@ -14,7 +14,7 @@
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(UVCReceiverLog, "Video.UVCReceiver")
+Q_STATIC_LOGGING_CATEGORY(UVCReceiverLog, "Video.UVCReceiver")
 
 UVCReceiver::UVCReceiver(QObject *parent)
     : QtMultimediaReceiver(parent)

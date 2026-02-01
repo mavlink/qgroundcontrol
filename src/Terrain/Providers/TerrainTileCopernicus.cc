@@ -5,10 +5,10 @@
 #include <QtCore/QJsonObject>
 
 #include "JsonHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
+Q_STATIC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
 
 TerrainTileCopernicus::TerrainTileCopernicus(const QByteArray& byteArray) : TerrainTile(byteArray)
 {

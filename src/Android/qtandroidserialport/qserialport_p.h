@@ -18,7 +18,6 @@
 
 #include <QtCore/private/qiodevice_p.h>
 #include <QtCore/private/qproperty_p.h>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QWaitCondition>
 
@@ -41,7 +40,6 @@ constexpr int EMIT_INTERVAL_MS = 10;
 
 class QTimer;
 
-Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
 QT_BEGIN_NAMESPACE
 

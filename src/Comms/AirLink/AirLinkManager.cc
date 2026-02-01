@@ -1,7 +1,7 @@
 #include "AirLinkManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QJsonDocument>
@@ -9,7 +9,7 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
-QGC_LOGGING_CATEGORY(AirLinkManagerLog, "AirLink.AirLinkManager");
+Q_STATIC_LOGGING_CATEGORY(AirLinkManagerLog, "AirLink.AirLinkManager");
 
 Q_APPLICATION_STATIC(AirLinkManager, _airLinkManager);
 

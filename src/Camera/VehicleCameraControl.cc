@@ -1,4 +1,9 @@
 #include "VehicleCameraControl.h"
+
+#include <QtCore/QLoggingCategory>
+Q_STATIC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControl")
+Q_STATIC_LOGGING_CATEGORY(CameraControlVerboseLog, "Camera.MavlinkCameraControl:verbose")
+
 #include "QGCCameraIO.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"

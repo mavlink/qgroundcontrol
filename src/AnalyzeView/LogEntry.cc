@@ -1,21 +1,21 @@
 #include "LogEntry.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.QGCLogEntry")
+Q_STATIC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.LogEntry")
 
-LogDownloadData::LogDownloadData(QGCLogEntry * const entry)
+LogDownloadData::LogDownloadData(LogEntry * const entry)
     : ID(entry->id())
     , entry(entry)
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(LogEntryLog) << this;
 }
 
 LogDownloadData::~LogDownloadData()
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(LogEntryLog) << this;
 }
 
 void LogDownloadData::advanceChunk()
@@ -43,22 +43,22 @@ bool LogDownloadData::chunkEquals(const bool val) const
 
 /*===========================================================================*/
 
-QGCLogEntry::QGCLogEntry(uint logId, const QDateTime &dateTime, uint logSize, bool received, QObject *parent)
+LogEntry::LogEntry(uint logId, const QDateTime &dateTime, uint logSize, bool received, QObject *parent)
     : QObject(parent)
     , _logID(logId)
     , _logSize(logSize)
     , _logTimeUTC(dateTime)
     , _received(received)
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(LogEntryLog) << this;
 }
 
-QGCLogEntry::~QGCLogEntry()
+LogEntry::~LogEntry()
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(LogEntryLog) << this;
 }
 
-QString QGCLogEntry::sizeStr() const
+QString LogEntry::sizeStr() const
 {
     return qgcApp()->bigSizeToString(_logSize);
 }

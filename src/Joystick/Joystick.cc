@@ -5,7 +5,7 @@
 #include "FirmwarePlugin.h"
 #include "GimbalController.h"
 #include "QGCCorePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -17,8 +17,8 @@
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(JoystickLog, "Joystick.Joystick")
-QGC_LOGGING_CATEGORY(JoystickVerboseLog, "Joystick.Joystick:verbose")
+Q_STATIC_LOGGING_CATEGORY(JoystickLog, "Joystick.Joystick")
+Q_STATIC_LOGGING_CATEGORY(JoystickVerboseLog, "Joystick.Joystick:verbose")
 
 namespace
 {

@@ -1,14 +1,14 @@
 #include "QGCSerialPortInfo.h"
 
 #include "JsonHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
-QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "Comms.QGCSerialPortInfo")
+Q_STATIC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "Comms.QGCSerialPortInfo")
 
 bool QGCSerialPortInfo::_jsonLoaded = false;
 bool QGCSerialPortInfo::_jsonDataValid = false;

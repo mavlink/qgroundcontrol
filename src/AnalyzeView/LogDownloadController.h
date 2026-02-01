@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
 
 struct LogDownloadData;
-class QGCLogEntry;
+class LogEntry;
 class QmlObjectListModel;
 class QTimer;
 class QThread;
@@ -89,7 +87,7 @@ private:
     void _setListing(bool active);
     void _updateDataRate();
 
-    QGCLogEntry *_getNextSelected() const;
+    LogEntry *_getNextSelected() const;
 
     QTimer *_timer = nullptr;
     QmlObjectListModel *_logEntriesModel = nullptr;

@@ -1,5 +1,5 @@
 #include "TCPLink.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCNetworkHelper.h"
 
 #include <QtCore/QThread>
@@ -7,7 +7,7 @@
 #include <QtNetwork/QHostInfo>
 #include <QtNetwork/QTcpSocket>
 
-QGC_LOGGING_CATEGORY(TCPLinkLog, "Comms.TCPLink")
+Q_STATIC_LOGGING_CATEGORY(TCPLinkLog, "Comms.TCPLink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 3000;

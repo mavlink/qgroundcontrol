@@ -3,9 +3,7 @@
 #include <cstdlib>
 #include <cstdarg>
 
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(EventsLog)
 
 void qgc_events_parser_debug_printf(const char *fmt, ...);
 

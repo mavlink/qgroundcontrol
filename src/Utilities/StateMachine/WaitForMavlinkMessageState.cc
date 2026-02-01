@@ -3,7 +3,7 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QString>
 #include <utility>

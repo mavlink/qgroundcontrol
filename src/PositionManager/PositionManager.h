@@ -1,12 +1,10 @@
 ﻿#pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCPositionManagerLog)
 
 class QGeoPositionInfoSource;
 class QNmeaPositionInfoSource;

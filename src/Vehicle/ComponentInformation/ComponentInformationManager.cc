@@ -10,11 +10,11 @@
 #include "CompInfoActuators.h"
 #include "QGCApplication.h"
 #include "QGCCachedFileDownload.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "Vehicle.ComponentInformationManager")
+Q_STATIC_LOGGING_CATEGORY(ComponentInformationManagerLog, "Vehicle.ComponentInformationManager")
 
 ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObject *parent)
     : StateMachine(parent)

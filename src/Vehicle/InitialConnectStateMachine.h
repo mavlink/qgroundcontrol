@@ -4,9 +4,7 @@
 #include "MAVLinkLib.h"
 #include "Vehicle.h"
 
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
 
 class InitialConnectStateMachine : public StateMachine
 {

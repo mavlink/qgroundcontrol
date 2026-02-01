@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QDir>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -12,10 +11,6 @@
 #include "FactMetaData.h"
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(ParameterManagerLog)
-Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
-Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
-Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
 class ParameterEditorController;
 class Vehicle;

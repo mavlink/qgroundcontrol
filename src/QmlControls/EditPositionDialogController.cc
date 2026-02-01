@@ -2,9 +2,9 @@
 #include "QGCGeo.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "QMLControls.EditPositionDialogController")
+Q_STATIC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "QMLControls.EditPositionDialogController")
 
 QMap<QString, FactMetaData*> EditPositionDialogController::_metaDataMap;
 

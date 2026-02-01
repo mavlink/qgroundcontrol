@@ -4,13 +4,13 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QFileInfo>
 #include <QtCore/QString>
 
-QGC_LOGGING_CATEGORY(SubtitleWriterLog, "Video.SubtitleWriter")
+Q_STATIC_LOGGING_CATEGORY(SubtitleWriterLog, "Video.SubtitleWriter")
 
 SubtitleWriter::SubtitleWriter(QObject *parent)
     : QObject(parent)

@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QNetworkAccessManager;
 
-Q_DECLARE_LOGGING_CATEGORY(AirLinkManagerLog)
 
 class AirLinkManager : public QObject
 {

@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 
 #include "RemoteControlCalibrationController.h"
 #include "Joystick.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerVerboseLog)
 
 class JoystickConfigController : public RemoteControlCalibrationController
 {

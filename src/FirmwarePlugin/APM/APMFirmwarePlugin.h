@@ -4,11 +4,9 @@
 #include "FollowMe.h"
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtNetwork/QAbstractSocket>
 
-Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
 struct APMCustomMode
 {

@@ -4,12 +4,10 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
 #include <ulog_cpp/subscription.hpp>
 
-Q_DECLARE_LOGGING_CATEGORY(ULogParserLog)
 
 namespace ULogParser {
 

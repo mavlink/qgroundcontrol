@@ -1,10 +1,10 @@
 #include "QGCArchiveFile.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <archive.h>
 #include <archive_entry.h>
 
-QGC_LOGGING_CATEGORY(QGCArchiveFileLog, "Utilities.QGCArchiveFile")
+Q_STATIC_LOGGING_CATEGORY(QGCArchiveFileLog, "Utilities.QGCArchiveFile")
 
 // ============================================================================
 // Constructors

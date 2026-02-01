@@ -1,10 +1,10 @@
 #include "FactValueSliderListModel.h"
 #include "Fact.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactValueSliderListModelLog, "FactSystem.FactValueSliderListModel")
+Q_STATIC_LOGGING_CATEGORY(FactValueSliderListModelLog, "FactSystem.FactValueSliderListModel")
 
 FactValueSliderListModel::FactValueSliderListModel(const Fact &fact, QObject *parent)
     : QAbstractListModel(parent)

@@ -1,13 +1,13 @@
 #include "AutoPilotPlugin.h"
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 
 #include <QtCore/QCoreApplication>
 
-QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "AutoPilotPlugins.AutoPilotPlugin");
+Q_STATIC_LOGGING_CATEGORY(AutoPilotPluginLog, "AutoPilotPlugins.AutoPilotPlugin");
 
 AutoPilotPlugin::AutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     : QObject(parent)

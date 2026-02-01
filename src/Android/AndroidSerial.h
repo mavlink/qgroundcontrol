@@ -2,14 +2,12 @@
 
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 
 #include <qserialport.h>
 #include <qserialportinfo.h>
 
 #include <jni.h>
 
-Q_DECLARE_LOGGING_CATEGORY(AndroidSerialLog);
 
 class QSerialPortPrivate;
 

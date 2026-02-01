@@ -3,11 +3,11 @@
 #include "MissionItem.h"
 #include "QGC.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "Plan.MissionSettingsItem")
+Q_STATIC_LOGGING_CATEGORY(MissionSettingsItemLog, "Plan.MissionSettingsItem")
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 

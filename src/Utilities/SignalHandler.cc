@@ -7,9 +7,9 @@
 #include <QtCore/QSocketNotifier>
 #endif
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(SignalHandlerLog, "Utilities.SignalHandler")
+Q_STATIC_LOGGING_CATEGORY(SignalHandlerLog, "Utilities.SignalHandler")
 
 std::atomic<SignalHandler*> SignalHandler::s_current{nullptr};
 

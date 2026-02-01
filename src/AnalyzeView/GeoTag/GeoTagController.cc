@@ -3,7 +3,7 @@
 #include "ExifParser.h"
 #include "GeoTagImageModel.h"
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "ULogParser.h"
 
 #include <QtConcurrent/QtConcurrent>
@@ -16,7 +16,7 @@
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
 
-QGC_LOGGING_CATEGORY(GeoTagControllerLog, "AnalyzeView.GeoTagController")
+Q_STATIC_LOGGING_CATEGORY(GeoTagControllerLog, "AnalyzeView.GeoTagController")
 
 namespace {
 

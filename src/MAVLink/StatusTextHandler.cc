@@ -1,10 +1,10 @@
 #include "StatusTextHandler.h"
-#include <QGCLoggingCategory.h>
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QTimer>
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(StatusTextHandlerLog, "MAVLink.StatusTextHandler")
+Q_STATIC_LOGGING_CATEGORY(StatusTextHandlerLog, "MAVLink.StatusTextHandler")
 
 StatusText::StatusText(MAV_COMPONENT componentid, MAV_SEVERITY severity, const QString &text)
     : m_compId(componentid)

@@ -4,7 +4,6 @@
 #include "LinkInterface.h"
 
 #include <QtCore/QFile>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <atomic>
@@ -13,7 +12,6 @@ class QTimer;
 
 typedef struct __mavlink_message mavlink_message_t;
 
-Q_DECLARE_LOGGING_CATEGORY(LogReplayLinkLog)
 
 /*===========================================================================*/
 

@@ -1,13 +1,13 @@
 #include "KMLHelper.h"
 #include "KMLSchemaValidator.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
 
 #include <algorithm>
 
-QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
+Q_STATIC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
 namespace KMLHelper
 {

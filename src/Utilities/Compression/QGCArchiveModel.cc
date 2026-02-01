@@ -1,6 +1,6 @@
 #include "QGCArchiveModel.h"
 #include "QGCCompression.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QCollator>
 #include <QtCore/QFileInfo>
@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-QGC_LOGGING_CATEGORY(QGCArchiveModelLog, "Utilities.QGCArchiveModel")
+Q_STATIC_LOGGING_CATEGORY(QGCArchiveModelLog, "Utilities.QGCArchiveModel")
 
 QGCArchiveModel::QGCArchiveModel(QObject *parent)
     : QAbstractListModel(parent)

@@ -1,11 +1,11 @@
 #include "ExifParser.h"
 #include "ExifUtility.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(ExifParserLog, "AnalyzeView.ExifParser")
+Q_STATIC_LOGGING_CATEGORY(ExifParserLog, "AnalyzeView.ExifParser")
 
 namespace ExifParser
 {

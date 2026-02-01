@@ -1,16 +1,16 @@
 #include "CustomPlugin.h"
 #include "QmlComponentInfo.h"
-#include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
 #include "AppSettings.h"
 #include "BrandImageSettings.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlFile>
 
-QGC_LOGGING_CATEGORY(CustomLog, "Custom.CustomPlugin")
+Q_STATIC_LOGGING_CATEGORY(CustomLog, "Custom.CustomPlugin")
 
 Q_APPLICATION_STATIC(CustomPlugin, _customPluginInstance);
 

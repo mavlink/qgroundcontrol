@@ -1,7 +1,7 @@
 #include "QGCStateMachine.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
+Q_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
 
 QGCState::QGCState(const QString& stateName, QState* parentState)
     : QState(QState::ExclusiveStates, parentState)

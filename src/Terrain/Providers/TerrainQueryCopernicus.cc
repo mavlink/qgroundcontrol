@@ -1,7 +1,7 @@
 #include "TerrainQueryCopernicus.h"
 #include "TerrainTileCopernicus.h"
 #include "ElevationMapProvider.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCNetworkHelper.h"
 
 #include <QtCore/QJsonArray>
@@ -15,7 +15,7 @@
 #include <QtNetwork/QSslConfiguration>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(TerrainQueryCopernicusLog, "Terrain.TerrainQueryCopernicus")
+Q_STATIC_LOGGING_CATEGORY(TerrainQueryCopernicusLog, "Terrain.TerrainQueryCopernicus")
 
 TerrainQueryCopernicus::TerrainQueryCopernicus(QObject *parent)
     : TerrainOnlineQuery(parent)

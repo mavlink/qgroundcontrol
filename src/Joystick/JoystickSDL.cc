@@ -1,7 +1,7 @@
 #include "JoystickSDL.h"
 #include "JoystickManager.h"
 #include "SDLJoystick.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QThread>
@@ -10,7 +10,7 @@
 
 #include <SDL3/SDL.h>
 
-QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
+Q_STATIC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
 /// Discovery cache - main thread only, cleared in shutdown()
 static QMap<QString, Joystick*> s_discoveryCache;

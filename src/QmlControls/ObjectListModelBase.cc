@@ -8,12 +8,12 @@
  ****************************************************************************/
 
 #include "ObjectListModelBase.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDebug>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(ObjectListModelBaseLog, "API.ObjectListModelBase")
+Q_STATIC_LOGGING_CATEGORY(ObjectListModelBaseLog, "API.ObjectListModelBase")
 
 ObjectListModelBase::ObjectListModelBase(QObject* parent)
     : QAbstractListModel        (parent)

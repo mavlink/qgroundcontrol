@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class LinkInterface;
@@ -9,7 +8,6 @@ class Vehicle;
 class QmlObjectListModel;
 class QTimer;
 
-Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
 class MultiVehicleManager : public QObject
 {

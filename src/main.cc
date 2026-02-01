@@ -3,7 +3,7 @@
 
 #include "QGCApplication.h"
 #include "QGCCommandLineParser.h"
-#include "QGCLogging.h"
+#include "LogManager.h"
 #include "Platform.h"
 #include "NTRIP.h"
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, args);
 
-    QGCLogging::installHandler();
+    LogManager::installHandler();
 
     // Late platform setup after app and logging exist
     Platform::setupPostApp();

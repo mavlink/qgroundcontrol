@@ -1,10 +1,8 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/private/qandroidextras_p.h>
 
-Q_DECLARE_LOGGING_CATEGORY(AndroidEventsLog)
 
 class AndroidEvents : public QObject,
                       public QtAndroidPrivate::ResumePauseListener,

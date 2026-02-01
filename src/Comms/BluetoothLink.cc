@@ -1,6 +1,6 @@
 #include "BluetoothLink.h"
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCNetworkHelper.h"
 
 #include <QtBluetooth/QBluetoothHostInfo>
@@ -10,8 +10,8 @@
 #include <QtCore/QThread>
 #include <QtCore/QVariantMap>
 
-QGC_LOGGING_CATEGORY(BluetoothLinkLog, "Comms.BluetoothLink")
-QGC_LOGGING_CATEGORY(BluetoothLinkVerboseLog, "Comms.BluetoothLink:verbose")
+Q_STATIC_LOGGING_CATEGORY(BluetoothLinkLog, "Comms.BluetoothLink")
+Q_STATIC_LOGGING_CATEGORY(BluetoothLinkVerboseLog, "Comms.BluetoothLink:verbose")
 
 /*===========================================================================*/
 

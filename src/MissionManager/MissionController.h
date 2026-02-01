@@ -2,7 +2,6 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QFile>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
@@ -11,7 +10,6 @@
 #include "QGroundControlQmlGlobal.h"
 #include "QGCMAVLink.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 class FlightPathSegment;
 class VisualMissionItem;

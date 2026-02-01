@@ -6,9 +6,10 @@
 #ifndef QGC_NO_SERIAL_LINK
     #include "SerialLink.h"
 #endif
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "Vehicle.VehicleLinkManager")
+Q_STATIC_LOGGING_CATEGORY(VehicleLinkManagerLog, "Vehicle.VehicleLinkManager")
+Q_STATIC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
     : QObject(vehicle)

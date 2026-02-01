@@ -4,14 +4,14 @@
 
 #include "QGCCachedTileSet.h"
 #include "QGCCacheTile.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapTasks.h"
 #include "QGCTile.h"
 #include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
 #include "QGeoFileTileCacheQGC.h"
 
-QGC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
+Q_STATIC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
 
 Q_APPLICATION_STATIC(QGCMapEngine, _mapEngine);
 

@@ -8,11 +8,11 @@
 #include "qserialport_p.h"
 
 #include <AndroidSerial.h>
-#include <QGCLoggingCategory.h>
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QStringList>
 
-QGC_LOGGING_CATEGORY(QSerialPortInfo_AndroidLog, "qgc.android.libs.qtandroidserialport.qserialportinfo_android")
+Q_STATIC_LOGGING_CATEGORY(QSerialPortInfo_AndroidLog, "qgc.android.libs.qtandroidserialport.qserialportinfo_android")
 
 QT_BEGIN_NAMESPACE
 

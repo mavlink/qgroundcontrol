@@ -7,9 +7,7 @@
 #include "CameraCalc.h"
 #include "TerrainQuery.h"
 
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(TransectStyleComplexItemLog)
 
 class PlanMasterController;
 

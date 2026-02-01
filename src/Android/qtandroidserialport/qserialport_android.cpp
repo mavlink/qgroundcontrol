@@ -1,5 +1,5 @@
 #include "qserialport_p.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QMap>
 #include <QtCore/QThread>
@@ -9,7 +9,7 @@
 
 // TODO: Switch from device ID to serial number to support multiple USB connections
 
-QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "qgc.android.libs.qtandroidserialport.qserialport_android")
+Q_STATIC_LOGGING_CATEGORY(AndroidSerialPortLog, "qgc.android.libs.qtandroidserialport.qserialport_android")
 
 QT_BEGIN_NAMESPACE
 

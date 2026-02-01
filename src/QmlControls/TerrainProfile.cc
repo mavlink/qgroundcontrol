@@ -3,12 +3,12 @@
 #include "QmlObjectListModel.h"
 #include "FlightPathSegment.h"
 #include "ComplexMissionItem.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCApplication.h"
 
 #include <QtQuick/QSGFlatColorMaterial>
 
-QGC_LOGGING_CATEGORY(TerrainProfileLog, "Terrain.TerrainProfile")
+Q_STATIC_LOGGING_CATEGORY(TerrainProfileLog, "Terrain.TerrainProfile")
 
 TerrainProfile::TerrainProfile(QQuickItem* parent)
     : QQuickItem(parent)

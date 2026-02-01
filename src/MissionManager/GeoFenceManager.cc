@@ -1,9 +1,9 @@
 #include "GeoFenceManager.h"
 #include "Vehicle.h"
 #include "QmlObjectListModel.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(GeoFenceManagerLog, "PlanManager.GeoFenceManager")
+Q_STATIC_LOGGING_CATEGORY(GeoFenceManagerLog, "PlanManager.GeoFenceManager")
 
 GeoFenceManager::GeoFenceManager(Vehicle* vehicle)
     : PlanManager       (vehicle, MAV_MISSION_TYPE_FENCE)

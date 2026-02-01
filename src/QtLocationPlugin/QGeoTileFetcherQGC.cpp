@@ -5,12 +5,12 @@
 #include <QtNetwork/QNetworkRequest>
 
 #include "MapProvider.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapUrlEngine.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "QtLocationPlugin.QGeoTileFetcherQGC")
+Q_STATIC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "QtLocationPlugin.QGeoTileFetcherQGC")
 
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent)
     : QGeoTileFetcher(parent)

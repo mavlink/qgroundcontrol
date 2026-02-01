@@ -2,11 +2,9 @@
 
 #include "MAVLinkLib.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(MavlinkActionLog)
 
 class Vehicle;
 

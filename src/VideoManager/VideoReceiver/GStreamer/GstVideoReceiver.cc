@@ -10,7 +10,7 @@
 
 #include "GstVideoReceiver.h"
 #include "GStreamerHelpers.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QUrl>
@@ -18,7 +18,7 @@
 
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GstVideoReceiver")
+Q_STATIC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GstVideoReceiver")
 
 GstVideoReceiver::GstVideoReceiver(QObject *parent)
     : VideoReceiver(parent)

@@ -9,9 +9,9 @@
 #include "StandardModes.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "Vehicle.InitialConnectStateMachine")
+Q_STATIC_LOGGING_CATEGORY(InitialConnectStateMachineLog, "Vehicle.InitialConnectStateMachine")
 
 InitialConnectStateMachine::InitialConnectStateMachine(Vehicle *vehicle, QObject *parent)
     : StateMachine(parent)

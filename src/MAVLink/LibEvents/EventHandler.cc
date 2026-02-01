@@ -1,8 +1,10 @@
 #include "EventHandler.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QSharedPointer>
 
 Q_DECLARE_METATYPE(QSharedPointer<events::parser::ParsedEvent>);
+Q_STATIC_LOGGING_CATEGORY(EventsLog, "API.Events")
 
 EventHandler::EventHandler(QObject* parent, const QString& profile, handle_event_f handleEventCB,
             send_request_event_message_f sendRequestCB,

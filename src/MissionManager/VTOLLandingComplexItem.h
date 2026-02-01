@@ -3,9 +3,7 @@
 #include "LandingComplexItem.h"
 #include "Fact.h"
 
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(VTOLLandingComplexItemLog)
 
 class VTOLLandingPatternTest;
 class PlanMasterController;

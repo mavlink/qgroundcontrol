@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Gimbal.h"
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(GimbalControllerLog)
 
 class QmlObjectListModel;
 class Vehicle;

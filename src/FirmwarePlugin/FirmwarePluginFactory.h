@@ -1,13 +1,11 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 
 #include "QGCMAVLink.h"
 
 class FirmwarePlugin;
 
-Q_DECLARE_LOGGING_CATEGORY(FirmwarePluginFactoryLog)
 
 class FirmwarePluginFactory : public QObject
 {

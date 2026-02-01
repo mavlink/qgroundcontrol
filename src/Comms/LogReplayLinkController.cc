@@ -1,7 +1,7 @@
 #include "LogReplayLinkController.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "Comms.LogReplayLinkController")
+Q_STATIC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "Comms.LogReplayLinkController")
 
 LogReplayLinkController::LogReplayLinkController(QObject *parent)
     : QObject(parent)

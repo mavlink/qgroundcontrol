@@ -4,9 +4,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(ComponentInformationTranslationLog)
 
 class QGCCachedFileDownload;
 

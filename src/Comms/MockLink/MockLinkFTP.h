@@ -3,13 +3,11 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 
 #include "MAVLinkFTP.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MockLinkFTPLog)
 
 class MockLink;
 

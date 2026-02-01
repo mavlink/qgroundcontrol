@@ -4,7 +4,7 @@
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtCore/QJsonDocument>
@@ -13,7 +13,7 @@
 #include <QtCore/QRegularExpressionMatch>
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(CompInfoParamLog, "ComponentInformation.CompInfoParam")
+Q_STATIC_LOGGING_CATEGORY(CompInfoParamLog, "ComponentInformation.CompInfoParam")
 
 CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId, vehicle, parent)

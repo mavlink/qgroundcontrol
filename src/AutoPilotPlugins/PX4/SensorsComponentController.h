@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QtQuick/QQuickItem>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
-Q_DECLARE_LOGGING_CATEGORY(SensorsComponentControllerLog)
 
 /// Sensors Component MVC Controller for SensorsComponent.qml.
 class SensorsComponentController : public FactPanelController

@@ -1,7 +1,7 @@
 #include "QmlComponentInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QmlComponentInfoLog, "API.QmlComponentInfo");
+Q_STATIC_LOGGING_CATEGORY(QmlComponentInfoLog, "API.QmlComponentInfo");
 
 QmlComponentInfo::QmlComponentInfo(const QString &title, QUrl url, QUrl icon, QObject *parent)
     : QObject(parent)

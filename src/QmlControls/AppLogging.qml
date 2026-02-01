@@ -12,6 +12,8 @@ Item {
 
     property bool listViewLoadCompleted: false
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
     Item {
         id:             panel
         anchors.fill:   parent
@@ -22,6 +24,33 @@ Item {
             anchors.margins: ScreenTools.defaultFontPixelWidth
             color:           qgcPal.window
 
+            // Error banner at top
+            Rectangle {
+                id:             errorBanner
+                anchors.top:    parent.top
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height:         visible ? errorRow.height + ScreenTools.defaultFontPixelHeight : 0
+                color:          qgcPal.warningText
+                visible:        qgcLogging.hasError
+
+                RowLayout {
+                    id:                 errorRow
+                    anchors.centerIn:   parent
+                    spacing:            ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        text:   qsTr("Logging error occurred")
+                        color:  "white"
+                    }
+
+                    QGCButton {
+                        text:       qsTr("Clear")
+                        onClicked:  qgcLogging.clearError()
+                    }
+                }
+            }
+
             Component {
                 id: delegateItem
                 Rectangle {
@@ -31,7 +60,7 @@ Item {
 
                     QGCLabel {
                         id:         field
-                        text:       display
+                        text:       formatted
                         width:      parent.width
                         wrapMode:   Text.Wrap
                         anchors.verticalCenter: parent.verticalCenter
@@ -41,13 +70,14 @@ Item {
 
             QGCListView {
                 id:                     listView
-                anchors.top:            parent.top
+                anchors.top:            errorBanner.bottom
+                anchors.topMargin:      errorBanner.visible ? ScreenTools.defaultFontPixelWidth : 0
                 anchors.left:           parent.left
                 anchors.right:          parent.right
-                anchors.bottom:         followTail.top
+                anchors.bottom:         buttonRow.top
                 anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
                 clip:                   true
-                model:                  debugMessageModel
+                model:                  qgcLogging.model
                 delegate:               delegateItem
 
                 function scrollToEnd() {
@@ -64,8 +94,8 @@ Item {
                 }
 
                 Connections {
-                    target:         debugMessageModel
-                    function onDataChanged(topLeft, bottomRight, roles) { listView.scrollToEnd() }
+                    target:         qgcLogging.model
+                    function onCountChanged() { listView.scrollToEnd() }
                 }
             }
 
@@ -75,199 +105,121 @@ Item {
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
                 title:          qsTr("Select log save file")
                 onAcceptedForSave: (file) => {
-                    debugMessageModel.writeMessages(file);
+                    qgcLogging.exportToFile(file);
                     visible = false;
                 }
             }
 
             Connections {
-                target:          debugMessageModel
-                function onWriteStarted() { writeButton.enabled = false }
-                function onWriteFinished(success) { writeButton.enabled = true }
+                target:          qgcLogging
+                function onExportStarted() { writeButton.enabled = false }
+                function onExportFinished(success) { writeButton.enabled = true }
             }
 
-            QGCButton {
-                id:              writeButton
-                anchors.bottom:  parent.bottom
-                anchors.left:    parent.left
-                onClicked:       writeDialog.openForSave()
-                text:            qsTr("Save App Log")
-            }
+            RowLayout {
+                id:             buttonRow
+                anchors.bottom: parent.bottom
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelWidth
 
-            QGCLabel {
-                id:                     gstLabel
-                anchors.left:           writeButton.right
-                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
-                anchors.verticalCenter: gstCombo.verticalCenter
-                text:                   qsTr("GStreamer Debug Level")
-                visible:                QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
-            }
+                QGCButton {
+                    id:         writeButton
+                    text:       qsTr("Save App Log")
+                    onClicked:  writeDialog.openForSave()
+                }
 
-            FactComboBox {
-                id:                 gstCombo
-                anchors.left:       gstLabel.right
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-                anchors.bottom:     parent.bottom
-                fact:               QGroundControl.settingsManager.appSettings.gstDebugLevel
-                visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
-                sizeToContents:     true
-            }
+                QGCLabel {
+                    id:         gstLabel
+                    text:       qsTr("GStreamer Debug Level")
+                    visible:    QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                }
 
-            QGCButton {
-                id:                     followTail
-                anchors.right:          filterButton.left
-                anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-                anchors.bottom:         parent.bottom
-                text:                   qsTr("Show Latest")
-                checkable:              true
-                checked:                true
+                FactComboBox {
+                    id:             gstCombo
+                    fact:           QGroundControl.settingsManager.appSettings.gstDebugLevel
+                    visible:        QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                    sizeToContents: true
+                }
 
-                onCheckedChanged: {
-                    if (checked && listViewLoadCompleted) {
-                        listView.positionViewAtEnd();
+                Item { Layout.fillWidth: true }
+
+                // Status indicators
+                RowLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                    Rectangle {
+                        width:          ScreenTools.defaultFontPixelHeight * 0.75
+                        height:         width
+                        radius:         width / 2
+                        color:          qgcLogging.diskLoggingEnabled ? "green" : qgcPal.windowShade
+                        border.color:   qgcPal.text
+                        border.width:   1
+
+                        QGCMouseArea {
+                            anchors.fill:   parent
+                            hoverEnabled:   true
+                            cursorShape:    Qt.PointingHandCursor
+                            onClicked:      qgcLogging.diskLoggingEnabled = !qgcLogging.diskLoggingEnabled
+
+                            ToolTip.visible: containsMouse
+                            ToolTip.text:    qsTr("Disk Logging: %1").arg(qgcLogging.diskLoggingEnabled ? qsTr("On") : qsTr("Off"))
+                        }
+                    }
+
+                    Rectangle {
+                        width:          ScreenTools.defaultFontPixelHeight * 0.75
+                        height:         width
+                        radius:         width / 2
+                        color:          qgcLogging.remoteLoggingEnabled ? "blue" : qgcPal.windowShade
+                        border.color:   qgcPal.text
+                        border.width:   1
+
+                        QGCMouseArea {
+                            anchors.fill:   parent
+                            hoverEnabled:   true
+                            cursorShape:    Qt.PointingHandCursor
+                            onClicked:      settingsDialogComponent.createObject(mainWindow).open()
+
+                            ToolTip.visible: containsMouse
+                            ToolTip.text:    qsTr("Remote Logging: %1").arg(qgcLogging.remoteLoggingEnabled ? qsTr("On") : qsTr("Off"))
+                        }
                     }
                 }
-            }
 
-            QGCButton {
-                id:             filterButton
-                anchors.bottom: parent.bottom
-                anchors.right:  parent.right
-                text:           qsTr("Set Logging")
-                onClicked:      filtersDialogComponent.createObject(mainWindow).open()
+                QGCButton {
+                    id:         followTail
+                    text:       qsTr("Show Latest")
+                    checkable:  true
+                    checked:    true
+
+                    onCheckedChanged: {
+                        if (checked && listViewLoadCompleted) {
+                            listView.positionViewAtEnd();
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:       qsTr("Categories")
+                    onClicked:  categoriesDialogComponent.createObject(mainWindow).open()
+                }
+
+                QGCButton {
+                    text:       qsTr("Settings")
+                    onClicked:  settingsDialogComponent.createObject(mainWindow).open()
+                }
             }
         }
     }
 
     Component {
-        id: filtersDialogComponent
+        id: settingsDialogComponent
+        LogSettingsDialog { }
+    }
 
-        QGCPopupDialog {
-            title:      qsTr("Logging")
-            buttons:    Dialog.Close
-
-            ColumnLayout {
-                width: maxContentAvailableWidth
-
-                SettingsGroupLayout {
-                    heading:            qsTr("Search")
-                    Layout.fillWidth:   true
-
-                    RowLayout {
-                        Layout.fillWidth:   true
-                        spacing:            ScreenTools.defaultFontPixelHeight / 2
-
-                        QGCTextField {
-                            Layout.fillWidth:   true
-                            id:                 searchText
-                            text:               ""
-                            enabled:            true
-                        }
-
-                        QGCButton {
-                            text:       qsTr("Clear")
-                            onClicked:  searchText.text = ""
-                        }
-                    }
-                }
-
-                SettingsGroupLayout {
-                    heading:            qsTr("Enabled Categories")
-                    Layout.fillWidth:   true
-
-                    Flow {
-                        Layout.fillWidth:   true
-                        spacing:            ScreenTools.defaultFontPixelHeight / 2
-
-                        Repeater {
-                            model: QGroundControl.flatLoggingCategoriesModel()
-
-                            QGCCheckBoxSlider {
-                                Layout.fillWidth:       true
-                                Layout.maximumHeight:   visible ? implicitHeight : 0
-                                text:                   object.fullCategory
-                                visible:                object.enabled
-                                checked:                object.enabled
-                                onClicked:              object.enabled = checked
-                            }
-                        }
-
-                        QGCButton {
-                            text:       qsTr("Disable All")
-                            onClicked:  QGroundControl.disableAllLoggingCategories()
-                        }
-                    }
-                }
-
-                // Shown when not filtered
-                Flow {
-                    Layout.fillWidth:   true
-                    spacing:            ScreenTools.defaultFontPixelHeight / 2
-                    visible:            searchText.text === ""
-
-                    Repeater {
-                        model: QGroundControl.treeLoggingCategoriesModel()
-
-                        ColumnLayout {
-                            spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                            RowLayout {
-                                spacing:                ScreenTools.defaultFontPixelWidth
-
-                                QGCLabel {
-                                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth
-                                    text:                   object.expanded ? qsTr("-") : qsTr("+")
-                                    horizontalAlignment:    Text.AlignLeft
-                                    visible:                object.children
-
-                                    QGCMouseArea {
-                                        anchors.fill:   parent
-                                        onClicked:      object.expanded = !object.expanded
-                                    }
-                                }
-
-                                QGCCheckBoxSlider {
-                                    Layout.fillWidth:   true
-                                    text:               object.shortCategory
-                                    checked:            object.enabled
-                                    onClicked:          object.enabled = checked
-                                }
-                            }
-
-                            Repeater {
-                                model: object.expanded ? object.children : undefined
-
-                                QGCCheckBoxSlider {
-                                    Layout.fillWidth:   true
-                                    text:               "   " + object.shortCategory
-                                    checked:            object.enabled
-                                    onClicked:          object.enabled = checked
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Shown when filtered
-                Flow {
-                    Layout.fillWidth:   true
-                    spacing:            ScreenTools.defaultFontPixelHeight / 2
-                    visible:            searchText.text !== ""
-
-                    Repeater {
-                        model: QGroundControl.flatLoggingCategoriesModel()
-
-                        QGCCheckBoxSlider {
-                            Layout.fillWidth:       true
-                            Layout.maximumHeight:   visible ? implicitHeight : 0
-                            text:                   object.fullCategory
-                            visible:                text.match(`(${searchText.text})`, "i")
-                            checked:                object.enabled
-                            onClicked:              object.enabled = checked
-                        }
-                    }
-                }
-            }
-        }
+    Component {
+        id: categoriesDialogComponent
+        LogCategoriesDialog { }
     }
 }

@@ -11,9 +11,9 @@
 #include "Fact.h"
 #include "CameraSection.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(LandingComplexItemLog, "Plan.LandingComplexItem")
+Q_STATIC_LOGGING_CATEGORY(LandingComplexItemLog, "Plan.LandingComplexItem")
 
 LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, bool flyView)
     : ComplexMissionItem        (masterController, flyView)

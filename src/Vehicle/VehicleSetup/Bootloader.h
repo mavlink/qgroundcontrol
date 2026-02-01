@@ -3,14 +3,15 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
+Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
+Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog)
+
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
 #else
 #include <QtSerialPort/QSerialPort>
 #endif
 
-Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
-Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog)
 
 class FirmwareImage;
 

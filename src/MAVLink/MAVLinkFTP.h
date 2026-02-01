@@ -1,11 +1,9 @@
 #pragma once
 
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MavlinkFTPLog)
 
 class MavlinkFTP {
 public:

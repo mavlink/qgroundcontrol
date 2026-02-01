@@ -12,13 +12,13 @@
 #include <QtNetwork/QSslSocket>
 
 #include "QGCCompression.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothLocalDevice>
 #endif
 
-QGC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")
+Q_STATIC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")
 
 namespace QGCNetworkHelper {
 

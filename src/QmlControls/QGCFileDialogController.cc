@@ -1,11 +1,11 @@
 #include "QGCFileDialogController.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
 #include <QtCore/QDir>
 
-QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QMLControls.QGCFileDialogController")
+Q_STATIC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QMLControls.QGCFileDialogController")
 
 QGCFileDialogController::QGCFileDialogController(QObject *parent)
     : QObject(parent)

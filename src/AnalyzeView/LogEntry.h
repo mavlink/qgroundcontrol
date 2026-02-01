@@ -3,20 +3,18 @@
 #include <QtCore/QBitArray>
 #include <QtCore/QDateTime>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
 
-class QGCLogEntry;
+class LogEntry;
 
-Q_DECLARE_LOGGING_CATEGORY(LogEntryLog)
 
 struct LogDownloadData
 {
-    explicit LogDownloadData(QGCLogEntry * const entry);
+    explicit LogDownloadData(LogEntry * const entry);
     ~LogDownloadData();
 
     void advanceChunk();
@@ -31,7 +29,7 @@ struct LogDownloadData
     bool chunkEquals(const bool val) const;
 
     uint ID = 0;
-    QGCLogEntry *const entry = nullptr;
+    LogEntry *const entry = nullptr;
 
     QBitArray chunk_table;
     uint32_t current_chunk = 0;
@@ -48,7 +46,7 @@ struct LogDownloadData
 
 /*===========================================================================*/
 
-class QGCLogEntry : public QObject
+class LogEntry : public QObject
 {
     Q_OBJECT
     // QML_ELEMENT
@@ -62,8 +60,8 @@ class QGCLogEntry : public QObject
     Q_PROPERTY(QString      status      READ status                         NOTIFY statusChanged)
 
 public:
-    explicit QGCLogEntry(uint logId, const QDateTime &dateTime = QDateTime(), uint logSize = 0, bool received = false, QObject *parent = nullptr);
-    ~QGCLogEntry();
+    explicit LogEntry(uint logId, const QDateTime &dateTime = QDateTime(), uint logSize = 0, bool received = false, QObject *parent = nullptr);
+    ~LogEntry() override;
 
     uint id() const { return _logID; }
     uint size() const { return _logSize; }
