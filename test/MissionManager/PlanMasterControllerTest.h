@@ -1,23 +1,20 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/VehicleTest.h"
 
 class PlanMasterController;
 
-class PlanMasterControllerTest : public UnitTest
+class PlanMasterControllerTest : public VehicleTest
 {
     Q_OBJECT
 
-public:
-    PlanMasterControllerTest(void);
-
 private slots:
-    void init(void) final;
-    void cleanup(void) final;
+    void init() final;
+    void cleanup() final;
 
-    void _testMissionPlannerFileLoad(void);
-    void _testActiveVehicleChanged(void);
+    void _testMissionPlannerFileLoad();
+    void _testActiveVehicleChanged();
 
 private:
-    PlanMasterController*   _masterController;
+    PlanMasterController* _masterController = nullptr;
 };

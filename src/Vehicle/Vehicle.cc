@@ -149,7 +149,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     // Send MAV_CMD ack timer
     _mavCommandResponseCheckTimer.setSingleShot(false);
-    _mavCommandResponseCheckTimer.setInterval(_mavCommandResponseCheckTimeoutMSecs);
+    _mavCommandResponseCheckTimer.setInterval(_mavCommandResponseCheckTimeoutMSecs());
     _mavCommandResponseCheckTimer.start();
     connect(&_mavCommandResponseCheckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandResponseTimeoutCheck);
 
@@ -358,6 +358,17 @@ Vehicle::~Vehicle()
 {
     qCDebug(VehicleLog) << "~Vehicle" << this;
 
+    // Stop all timers and disconnect their signals to prevent any callbacks during destruction.
+    // Even though _stopCommandProcessing() should have been called earlier via VehicleLinkManager,
+    // we do it again here defensively in case the vehicle is destroyed without going through
+    // the normal link removal path (e.g., in unit tests).
+    _mavCommandResponseCheckTimer.stop();
+    _mavCommandResponseCheckTimer.disconnect();
+    _sendMultipleTimer.stop();
+    _sendMultipleTimer.disconnect();
+    _prearmErrorTimer.stop();
+    _prearmErrorTimer.disconnect();
+
     delete _missionManager;
     _missionManager = nullptr;
 
@@ -368,6 +379,8 @@ Vehicle::~Vehicle()
 void Vehicle::_deleteCameraManager()
 {
     if(_cameraManager) {
+        // Disconnect all signals to prevent any callbacks during or after deletion
+        _cameraManager->disconnect();
         delete _cameraManager;
         _cameraManager = nullptr;
     }
@@ -376,9 +389,33 @@ void Vehicle::_deleteCameraManager()
 void Vehicle::_deleteGimbalController()
 {
     if (_gimbalController) {
+        // Disconnect all signals to prevent any callbacks during or after deletion
+        _gimbalController->disconnect();
         delete _gimbalController;
         _gimbalController = nullptr;
     }
+}
+
+void Vehicle::_stopCommandProcessing()
+{
+    qCDebug(VehicleLog) << "_stopCommandProcessing - stopping timers and clearing pending commands";
+
+    // Stop timers AND disconnect their signals to prevent any pending callbacks
+    // from being delivered after this point. This is critical during vehicle destruction
+    // where a queued callback could access a partially-destroyed vehicle.
+    _mavCommandResponseCheckTimer.stop();
+    _mavCommandResponseCheckTimer.disconnect();
+    _sendMultipleTimer.stop();
+    _sendMultipleTimer.disconnect();
+
+    // Clear pending commands without calling callbacks (vehicle is being destroyed)
+    _mavCommandList.clear();
+
+    // Clear request message info map - delete the allocated RequestMessageInfo objects
+    for (auto& compIdEntry : _requestMessageInfoMap) {
+        qDeleteAll(compIdEntry);
+    }
+    _requestMessageInfoMap.clear();
 }
 
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
@@ -2499,6 +2536,18 @@ int Vehicle::_findMavCommandListEntryIndex(int targetCompId, MAV_CMD command)
     return -1;
 }
 
+int Vehicle::_mavCommandResponseCheckTimeoutMSecs()
+{
+    // Use shorter check interval during unit tests for faster test execution
+    return qgcApp()->runningUnitTests() ? 50 : 500;
+}
+
+int Vehicle::_mavCommandAckTimeoutMSecs()
+{
+    // Use shorter ack timeout during unit tests for faster test execution
+    return qgcApp()->runningUnitTests() ? kTestMavCommandAckTimeoutMs : 3000;
+}
+
 bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
 {
     switch (command) {
@@ -2604,7 +2653,7 @@ void Vehicle::_sendMavCommandWorker(
     entry.rgParam6          = param6;
     entry.rgParam7          = param7;
     entry.maxTries          = _sendMavCommandShouldRetry(command) ? _mavCommandMaxRetryCount : 1;
-    entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
+    entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs();
     entry.elapsedTimer.start();
 
     qCDebug(VehicleLog) << Q_FUNC_INFO << "command:param1-7" << command << param1 << param2 << param3 << param4 << param5 << param6 << param7;
@@ -2877,8 +2926,15 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData_, [[maybe_
     auto requestMessageInfo = static_cast<RequestMessageInfo_t*>(resultHandlerData_);
     auto resultHandler      = requestMessageInfo->resultHandler;
     auto resultHandlerData  = requestMessageInfo->resultHandlerData;
-    auto vehicle            = requestMessageInfo->vehicle;
+    Vehicle* vehicle        = requestMessageInfo->vehicle;  // QPointer converts to raw pointer, null if Vehicle destroyed
     auto message            = requestMessageInfo->message;
+
+    // Vehicle was destroyed before callback fired - clean up and return without accessing vehicle
+    if (!vehicle) {
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "Vehicle destroyed before callback - skipping";
+        delete requestMessageInfo;
+        return;
+    }
 
     requestMessageInfo->commandAckReceived = true;
     if (ack.result != MAV_RESULT_ACCEPTED) {

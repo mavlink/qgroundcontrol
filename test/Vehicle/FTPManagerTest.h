@@ -1,37 +1,38 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/VehicleTestManualConnect.h"
 
-class FTPManagerTest : public UnitTest
+class FTPManagerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
 private slots:
-    void _testLostPackets                               (void);
-    void _testListDirectory                             (void);
-    void _testListDirectoryNoResponse                   (void);
-    void _testListDirectoryNakResponse                  (void);
-    void _testListDirectoryNoSecondResponse             (void);
-    void _testListDirectoryNoSecondResponseAllowRetry   (void);
-    void _testListDirectoryNakSecondResponse            (void);
-    void _testListDirectoryBadSequence                  (void);
-    void _testListDirectoryCancel                       (void);
-    void _testUpload                                     (void);
+    void _testLostPackets();
+    void _testListDirectory();
+    void _testListDirectoryNoResponse();
+    void _testListDirectoryNakResponse();
+    void _testListDirectoryNoSecondResponse();
+    void _testListDirectoryNoSecondResponseAllowRetry();
+    void _testListDirectoryNakSecondResponse();
+    void _testListDirectoryBadSequence();
+    void _testListDirectoryCancel();
+    void _testUpload();
 
     // Overrides from UnitTest
-    void cleanup(void) override;
+    void cleanup() override;
 
 private:
-    void _performSizeBasedTestCases (void);
-    void _performTestCases          (void);
+    void _performSizeBasedTestCases();
+    void _performTestCases();
 
-    typedef struct {
+    typedef struct
+    {
         const char* file;
     } TestCase_t;
 
-    void _testCaseWorker            (const TestCase_t& testCase);
-    void _sizeTestCaseWorker        (int fileSize);
-    void _verifyFileSizeAndDelete   (const QString& filename, int expectedSize);
+    void _testCaseWorker(const TestCase_t& testCase);
+    void _sizeTestCaseWorker(int fileSize);
+    void _verifyFileSizeAndDelete(const QString& filename, int expectedSize);
 
     static const TestCase_t _rgTestCases[];
 };

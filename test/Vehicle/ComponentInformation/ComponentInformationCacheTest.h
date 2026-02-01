@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
-
 #include <QtCore/QString>
+
+#include "UnitTest.h"
 
 class ComponentInformationCacheTest : public UnitTest
 {
@@ -16,11 +16,13 @@ private slots:
     void _basic_test();
     void _lru_test();
     void _multi_test();
+
 private:
     void _setup();
     void _cleanup();
 
-    struct TmpFile {
+    struct TmpFile
+    {
         QString path;
         QString cacheTag;
         QString content;

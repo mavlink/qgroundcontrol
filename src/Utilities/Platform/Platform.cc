@@ -10,7 +10,15 @@
 #endif
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
+    #include <QtWidgets/QApplication>
+    #include <QtWidgets/QMessageBox>
+    #include "RunGuard.h"
     #include "SignalHandler.h"
+#endif
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    #include <unistd.h>
+    #include <sys/types.h>
 #endif
 
 #if defined(Q_OS_MACOS)
@@ -123,8 +131,27 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 
 } // namespace
 
-void Platform::setupPreApp(const QGCCommandLineParser::CommandLineParseResult &cli)
+std::optional<int> Platform::initialize(int argc, char* argv[],
+                                         const QGCCommandLineParser::CommandLineParseResult& args)
 {
+    // --- Safety checks (may cause early exit) ---
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    if (isRunningAsRoot()) {
+        return showRootError(argc, argv);
+    }
+#endif
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    const bool allowMultiple = args.allowMultiple || args.runningUnitTests || args.listTests;
+    if (!checkSingleInstance(allowMultiple)) {
+        return showMultipleInstanceError(argc, argv);
+    }
+#else
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+#endif
+
+    // --- Environment setup ---
 #ifdef Q_OS_UNIX
     if (!qEnvironmentVariableIsSet("QT_ASSUME_STDERR_HAS_CONSOLE")) {
         (void) qputenv("QT_ASSUME_STDERR_HAS_CONSOLE", "1");
@@ -135,27 +162,38 @@ void Platform::setupPreApp(const QGCCommandLineParser::CommandLineParseResult &c
 #endif
 
 #ifdef Q_OS_WIN
-    // (void) qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
     if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
         (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach");
     }
-    setWindowsErrorModes(cli.quietWindowsAsserts);
+    setWindowsErrorModes(args.quietWindowsAsserts);
 #endif
 
 #ifdef Q_OS_MACOS
     disableAppNapViaInfoDict();
 #endif
 
-    if (cli.useDesktopGL) {
+    // --- Unit test mode: run headless ---
+#ifdef QGC_UNITTEST_BUILD
+    if (args.runningUnitTests || args.listTests) {
+        if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {
+            (void) qputenv("QT_QPA_PLATFORM", "offscreen");
+        }
+    }
+#endif
+
+    // --- Qt attributes ---
+    if (args.useDesktopGL) {
         QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
     }
 
-    if (cli.useSwRast) {
+    if (args.useSwRast) {
         QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
     }
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
+
+    return std::nullopt;
 }
 
 void Platform::setupPostApp()
@@ -169,3 +207,46 @@ void Platform::setupPostApp()
     AndroidInterface::checkStoragePermissions();
 #endif
 }
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+bool Platform::isRunningAsRoot()
+{
+    return ::getuid() == 0;
+}
+
+int Platform::showRootError(int argc, char *argv[])
+{
+    const QApplication errorApp(argc, argv);
+    (void) QMessageBox::critical(nullptr,
+        QCoreApplication::translate("main", "Error"),
+        QCoreApplication::translate("main",
+            "You are running %1 as root. "
+            "You should not do this since it will cause other issues with %1. "
+            "%1 will now exit.<br/><br/>").arg(QLatin1String(QGC_APP_NAME)));
+    return -1;
+}
+#endif
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+int Platform::showMultipleInstanceError(int argc, char *argv[])
+{
+    const QApplication errorApp(argc, argv);
+    (void) QMessageBox::critical(nullptr,
+        QCoreApplication::translate("main", "Error"),
+        QCoreApplication::translate("main",
+            "A second instance of %1 is already running. "
+            "Please close the other instance and try again.").arg(QLatin1String(QGC_APP_NAME)));
+    return -1;
+}
+
+bool Platform::checkSingleInstance(bool allowMultiple)
+{
+    if (allowMultiple) {
+        return true;
+    }
+
+    static const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QLatin1String(QGC_APP_NAME));
+    static RunGuard guard(runguardString);
+    return guard.tryToRun();
+}
+#endif

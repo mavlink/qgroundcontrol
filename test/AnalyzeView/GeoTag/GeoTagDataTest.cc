@@ -48,3 +48,5 @@ void GeoTagDataTest::_defaultValuesTest()
     QCOMPARE(data.attitude, QQuaternion());
     QCOMPARE(data.captureResult, GeoTagData::CaptureResult::NoFeedback);
 }
+
+UT_REGISTER_TEST(GeoTagDataTest, TestLabel::Unit, TestLabel::AnalyzeView)

@@ -110,9 +110,12 @@ void VehicleLinkManager::_commLostCheck()
         return;
     }
 
+    // Use much shorter heartbeat timeout in unit tests since MockLink sends heartbeats instantly
+    const int heartbeatTimeout = qgcApp()->runningUnitTests() ? kTestHeartbeatTimeoutMs : _heartbeatMaxElpasedMSecs;
+
     bool linkStatusChange = false;
     for (LinkInfo_t &linkInfo: _rgLinkInfo) {
-        if (!linkInfo.commLost && !linkInfo.link->linkConfiguration()->isHighLatency() && (linkInfo.heartbeatElapsedTimer.elapsed() > _heartbeatMaxElpasedMSecs)) {
+        if (!linkInfo.commLost && !linkInfo.link->linkConfiguration()->isHighLatency() && (linkInfo.heartbeatElapsedTimer.elapsed() > heartbeatTimeout)) {
             linkInfo.commLost = true;
             linkStatusChange = true;
 
@@ -245,6 +248,9 @@ void VehicleLinkManager::_linkDisconnected()
     _updatePrimaryLink();
     if (_rgLinkInfo.isEmpty() && !_allLinksRemovedSignalledByCloseVehicle) {
         qCDebug(VehicleLog) << "signalling allLinksRemoved";
+        // Stop command processing timers immediately to prevent callbacks during the
+        // asynchronous vehicle destruction sequence
+        _vehicle->_stopCommandProcessing();
         emit allLinksRemoved(_vehicle);
     }
 }
@@ -356,6 +362,9 @@ void VehicleLinkManager::closeVehicle()
     _rgLinkInfo.clear();
 
     _allLinksRemovedSignalledByCloseVehicle = true; // Prevent double signal of allLinksRemoved
+    // Stop command processing timers immediately to prevent callbacks during the
+    // asynchronous vehicle destruction sequence
+    _vehicle->_stopCommandProcessing();
     emit allLinksRemoved(_vehicle);
 }
 

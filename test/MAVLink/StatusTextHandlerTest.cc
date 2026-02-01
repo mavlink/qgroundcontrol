@@ -1,14 +1,13 @@
 #include "StatusTextHandlerTest.h"
-#include "StatusTextHandler.h"
-#include "MAVLinkLib.h"
 
-#include <QtTest/QTest>
+#include "MAVLinkLib.h"
+#include "StatusTextHandler.h"
 
 void StatusTextHandlerTest::_testGetMessageText()
 {
     mavlink_message_t message;
-    (void) mavlink_msg_statustext_pack(255, MAV_COMP_ID_USER1, &message, MAV_SEVERITY_INFO,"StatusTextHandlerTest", 0, 0);
-
+    (void)mavlink_msg_statustext_pack(255, MAV_COMP_ID_USER1, &message, MAV_SEVERITY_INFO, "StatusTextHandlerTest", 0,
+                                      0);
     const QString messageText = StatusTextHandler::getMessageText(message);
     QCOMPARE(messageText, "StatusTextHandlerTest");
 }
@@ -16,22 +15,22 @@ void StatusTextHandlerTest::_testGetMessageText()
 void StatusTextHandlerTest::_testHandleTextMessage()
 {
     StatusTextHandler* statusTextHandler = new StatusTextHandler(this);
-
-    statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "StatusTextHandlerTestInfo", "This is the StatusTextHandlerTestInfo Test");
+    statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, "StatusTextHandlerTestInfo",
+                                                    "This is the StatusTextHandlerTestInfo Test");
     QString messages = statusTextHandler->formattedMessages();
     QVERIFY(!messages.isEmpty());
     QVERIFY(messages.contains("StatusTextHandlerTestInfo"));
     QCOMPARE(statusTextHandler->getNormalCount(), 1);
     QCOMPARE(statusTextHandler->messageCount(), 1);
-
-    statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING, "StatusTextHandlerTestWarning", "This is the StatusTextHandlerTestWarning Test");
+    statusTextHandler->handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_WARNING,
+                                                    "StatusTextHandlerTestWarning",
+                                                    "This is the StatusTextHandlerTestWarning Test");
     messages = statusTextHandler->formattedMessages();
     QVERIFY(messages.contains("StatusTextHandlerTestInfo"));
     QVERIFY(messages.contains("StatusTextHandlerTestWarning"));
     QCOMPARE(statusTextHandler->getNormalCount(), 1);
     QCOMPARE(statusTextHandler->getWarningCount(), 1);
     QCOMPARE(statusTextHandler->messageCount(), 2);
-
     statusTextHandler->clearMessages();
     messages = statusTextHandler->formattedMessages();
     QVERIFY(messages.isEmpty());
@@ -39,3 +38,5 @@ void StatusTextHandlerTest::_testHandleTextMessage()
     QCOMPARE(statusTextHandler->getWarningCount(), 0);
     QCOMPARE(statusTextHandler->messageCount(), 0);
 }
+
+UT_REGISTER_TEST(StatusTextHandlerTest, TestLabel::Unit)

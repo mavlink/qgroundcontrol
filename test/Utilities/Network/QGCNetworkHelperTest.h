@@ -7,9 +7,6 @@ class QGCNetworkHelperTest : public UnitTest
 {
     Q_OBJECT
 
-public:
-    QGCNetworkHelperTest() = default;
-
 private slots:
     // HTTP status code helpers tests
     void _testClassifyHttpStatusInformational();

@@ -73,14 +73,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         QGCApplication.h
 )
 
-# Platform-specific sources
-if(NOT ANDROID AND NOT IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            RunGuard.cc
-            RunGuard.h
-    )
-endif()
 
 # ----------------------------------------------------------------------------
 # Include Directories
@@ -201,12 +193,6 @@ else()
             $<$<BOOL:${QGC_DEBUG_QML}>:QT_QML_DEBUG>
     )
 endif()
-
-# ============================================================================
-# Code Coverage Configuration
-# ============================================================================
-
-include(Coverage)
 
 # ============================================================================
 # Target Properties

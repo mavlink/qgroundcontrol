@@ -224,3 +224,5 @@ void ExifParserTest::_writePreservesExistingDataTest()
     const QDateTime timeAfterWrite = ExifParser::readTime(buffer);
     QCOMPARE(timeAfterWrite, originalTime);
 }
+
+UT_REGISTER_TEST(ExifParserTest, TestLabel::Unit, TestLabel::AnalyzeView)

@@ -22,8 +22,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         FileSystem/QGCArchiveWatcher.h
         FileSystem/QGCFileWatcher.cc
         FileSystem/QGCFileWatcher.h
-        Platform.cc
-        Platform.h
         QGC.cc
         QGC.h
         QGCCommandLineParser.cc
@@ -35,27 +33,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         StateMachine.cc
         StateMachine.h
 )
-
-# ----------------------------------------------------------------------------
-# Platform-Specific Sources
-# ----------------------------------------------------------------------------
-# Signal handling not available on mobile platforms
-if(NOT ANDROID AND NOT IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            SignalHandler.cc
-            SignalHandler.h
-    )
-endif()
-
-# iOS-specific screen management
-if(IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            MobileScreenMgr.mm
-            MobileScreenMgr.h
-    )
-endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -77,5 +54,6 @@ add_subdirectory(Compression)
 add_subdirectory(Geo)
 add_subdirectory(Network)
 add_subdirectory(Parsing)
+add_subdirectory(Platform)
 add_subdirectory(SDL)
 add_subdirectory(StateMachine)

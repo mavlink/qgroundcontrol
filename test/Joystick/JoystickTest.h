@@ -1,11 +1,11 @@
 #pragma once
 
-#include "UnitTest.h"
-#include "Joystick.h"
-
 #include <QtCore/QMap>
 
 #include <memory>
+
+#include "Joystick.h"
+#include "UnitTest.h"
 
 class MockJoystick;
 class JoystickSDL;
@@ -17,9 +17,6 @@ class JoystickSDL;
 class JoystickTest : public UnitTest
 {
     Q_OBJECT
-
-public:
-    JoystickTest();
 
 private slots:
     void init() override;
@@ -76,7 +73,7 @@ private slots:
     void _gamepadBindingQueryTest();
 
 private:
-    JoystickSDL *_findJoystickByInstanceId(int instanceId);
+    JoystickSDL* _findJoystickByInstanceId(int instanceId);
     void _pumpEvents();
 
     std::unique_ptr<MockJoystick> _mockJoystick;

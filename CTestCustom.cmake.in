@@ -1,0 +1,82 @@
+# ============================================================================
+# CTest Custom Configuration
+# ============================================================================
+# This file is configured by CMake and copied to the build directory.
+# It configures memory checking (Valgrind) and other CTest options.
+
+# ----------------------------------------------------------------------------
+# Memory Checking Configuration
+# ----------------------------------------------------------------------------
+set(CTEST_MEMORYCHECK_COMMAND "@VALGRIND_EXECUTABLE@")
+set(CTEST_MEMORYCHECK_TYPE "Valgrind")
+
+# Command options - use semicolons to create a proper CMake list
+set(CTEST_MEMORYCHECK_COMMAND_OPTIONS
+    "--leak-check=full"
+    "--show-leak-kinds=definite,possible"
+    "--track-origins=yes"
+    "--trace-children=yes"
+    "--error-exitcode=0"
+    "--num-callers=50"
+    "--suppressions=@CMAKE_SOURCE_DIR@/tools/debuggers/valgrind.supp"
+)
+
+# Suppressions file (also set for some CTest versions)
+set(CTEST_MEMORYCHECK_SUPPRESSIONS_FILE "@CMAKE_SOURCE_DIR@/tools/debuggers/valgrind.supp")
+
+# ----------------------------------------------------------------------------
+# Test Filtering
+# ----------------------------------------------------------------------------
+# Tests to skip entirely
+set(CTEST_CUSTOM_TESTS_IGNORE
+    # Add test names to skip here
+)
+
+# Tests that are expected to fail (won't count as failures)
+set(CTEST_CUSTOM_MEMCHECK_IGNORE
+    # Tests with known memory issues in third-party code
+)
+
+# ----------------------------------------------------------------------------
+# Output Filtering
+# ----------------------------------------------------------------------------
+# Patterns that indicate warnings (but not failures)
+set(CTEST_CUSTOM_WARNING_MATCH
+    "warning:"
+    "Warning:"
+    "WARNING:"
+)
+
+# Patterns to ignore in warnings
+set(CTEST_CUSTOM_WARNING_EXCEPTION
+    ".*Qt.*"
+    ".*_deps.*"
+    ".*third_party.*"
+)
+
+# Error patterns
+set(CTEST_CUSTOM_ERROR_MATCH
+    "error:"
+    "Error:"
+    "ERROR:"
+    "FAIL!"
+    "Segmentation fault"
+    "ASSERT"
+)
+
+# Patterns to ignore in errors
+set(CTEST_CUSTOM_ERROR_EXCEPTION
+    ".*_deps.*"
+)
+
+# ----------------------------------------------------------------------------
+# Coverage Configuration
+# ----------------------------------------------------------------------------
+set(CTEST_CUSTOM_COVERAGE_EXCLUDE
+    ".*_deps/.*"
+    ".*/test/.*"
+    ".*/build/.*"
+    ".*/Qt/.*"
+    ".*moc_.*"
+    ".*_autogen/.*"
+)

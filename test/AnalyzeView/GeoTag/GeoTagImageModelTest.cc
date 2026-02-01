@@ -208,3 +208,5 @@ void GeoTagImageModelTest::_dataInvalidIndexTest()
     // Invalid role should return empty QVariant
     QVERIFY(!model.data(model.index(0), Qt::UserRole + 100).isValid());
 }
+
+UT_REGISTER_TEST(GeoTagImageModelTest, TestLabel::Unit, TestLabel::AnalyzeView)

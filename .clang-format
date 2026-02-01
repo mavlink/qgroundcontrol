@@ -11,6 +11,7 @@ IndentWidth: 4
 TabWidth: 4
 UseTab: Never
 ContinuationIndentWidth: 4
+AccessModifierOffset: -4
 
 # Bracing - Custom QGC style
 # Functions/Classes: New line (Allman)
@@ -73,7 +74,7 @@ AlignTrailingComments:
 
 # Line breaks
 AlwaysBreakAfterReturnType: None
-AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakTemplateDeclarations: true
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
@@ -90,4 +91,5 @@ BinPackParameters: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1
 ReflowComments: true
+SeparateDefinitionBlocks: Always
 Standard: c++20

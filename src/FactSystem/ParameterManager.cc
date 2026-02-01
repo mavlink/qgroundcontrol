@@ -42,17 +42,18 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     }
 
     _initialRequestTimeoutTimer.setSingleShot(true);
-    _initialRequestTimeoutTimer.setInterval(5000);
+    // Use much shorter timeouts in unit tests since MockLink responds instantly
+    _initialRequestTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 500 : 5000);
     (void) connect(&_initialRequestTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_initialRequestTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(3000);
+    _waitingParamTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 500 : 3000);
     if (!_logReplay) {
         (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
     }
 
     // Ensure the cache directory exists
-    (void) QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
+    (void) QDir().mkpath(parameterCacheDir().absolutePath());
 }
 
 ParameterManager::~ParameterManager()
@@ -868,8 +869,11 @@ void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
 
 QDir ParameterManager::parameterCacheDir()
 {
-    const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
-    return (spath + QDir::separator() + QStringLiteral("ParamCache"));
+    // Use application-specific subdirectory to isolate parallel test runs
+    const QFileInfo settingsFile(QSettings().fileName());
+    const QString basePath = settingsFile.dir().absolutePath();
+    const QString appName = settingsFile.completeBaseName();
+    return QDir(basePath + QDir::separator() + appName + QDir::separator() + QStringLiteral("ParamCache"));
 }
 
 QString ParameterManager::parameterCacheFile(int vehicleId, int componentId)

@@ -286,9 +286,6 @@ bool hasSufficientDiskSpace(const QString &path, qint64 requiredBytes, double ma
         return false;
     }
 
-    qCDebug(QGCFileHelperLog) << "Disk space check passed:"
-                              << "required" << bytesRequired << "bytes"
-                              << "available" << bytesAvailable << "bytes";
     return true;
 }
 

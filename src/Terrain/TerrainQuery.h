@@ -39,6 +39,9 @@ public:
 
     void addQuery(TerrainAtCoordinateQuery *terrainAtCoordinateQuery, const QList<QGeoCoordinate> &coordinates);
 
+    /// Set custom terrain query interface (for testing). Takes ownership.
+    void setTerrainQueryInterface(TerrainQueryInterface *terrainQuery);
+
 private slots:
     void _sendNextBatch();
     void _coordinateHeights(bool success, const QList<double> &heights);

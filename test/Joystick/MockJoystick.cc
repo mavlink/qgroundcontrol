@@ -1,7 +1,8 @@
 #include "MockJoystick.h"
-#include "SDLJoystick.h"
 
 #include <QtCore/QLoggingCategory>
+
+#include "SDLJoystick.h"
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
 
@@ -17,10 +18,10 @@ QList<int> makeAxisList(int count)
     return axes;
 }
 
-} // namespace
+}  // namespace
 
-MockJoystick *MockJoystick::create(const QString &name, int axisCount, int buttonCount,
-                                    int hatCount, int ballCount, int touchpadCount, QObject *parent)
+MockJoystick* MockJoystick::create(const QString& name, int axisCount, int buttonCount, int hatCount, int ballCount,
+                                   int touchpadCount, QObject* parent)
 {
     const int instanceId = SDLJoystick::createVirtualJoystick(name, axisCount, buttonCount, hatCount);
     if (instanceId < 0) {
@@ -28,7 +29,7 @@ MockJoystick *MockJoystick::create(const QString &name, int axisCount, int butto
         return nullptr;
     }
 
-    auto *mock = new MockJoystick(name, axisCount, buttonCount, hatCount, ballCount, touchpadCount, instanceId, parent);
+    auto* mock = new MockJoystick(name, axisCount, buttonCount, hatCount, ballCount, touchpadCount, instanceId, parent);
     if (!mock->_open()) {
         qCWarning(JoystickSDLLog) << "MockJoystick: Failed to open virtual joystick" << name;
         delete mock;
@@ -37,24 +38,21 @@ MockJoystick *MockJoystick::create(const QString &name, int axisCount, int butto
     return mock;
 }
 
-MockJoystick::MockJoystick(const QString &name, int axisCount, int buttonCount, int hatCount,
-                           int ballCount, int touchpadCount, int virtualInstanceId, QObject *parent)
+MockJoystick::MockJoystick(const QString& name, int axisCount, int buttonCount, int hatCount, int ballCount,
+                           int touchpadCount, int virtualInstanceId, QObject* parent)
     : JoystickSDL(name,
                   QList<int>(),             // No gamepad axes (virtual joystick isn't recognized as gamepad)
                   makeAxisList(axisCount),  // All axes are non-gamepad axes
-                  buttonCount,
-                  hatCount,
-                  virtualInstanceId,
-                  parent)
-    , _virtualInstanceId(virtualInstanceId)
-    , _mockAxisCount(axisCount)
-    , _mockButtonCount(buttonCount)
-    , _mockHatCount(hatCount)
-    , _mockBallCount(ballCount)
-    , _mockTouchpadCount(touchpadCount)
-    , _axisStates(axisCount, 0)
-    , _buttonStates(buttonCount, false)
-    , _hatStates(hatCount, HatCentered)
+                  buttonCount, hatCount, virtualInstanceId, parent),
+      _virtualInstanceId(virtualInstanceId),
+      _mockAxisCount(axisCount),
+      _mockButtonCount(buttonCount),
+      _mockHatCount(hatCount),
+      _mockBallCount(ballCount),
+      _mockTouchpadCount(touchpadCount),
+      _axisStates(axisCount, 0),
+      _buttonStates(buttonCount, false),
+      _hatStates(hatCount, HatCentered)
 {
 }
 
@@ -187,7 +185,7 @@ bool MockJoystick::setTouchpad(int touchpad, int finger, bool down, float x, flo
 // Multi-Input Methods
 // =============================================================================
 
-bool MockJoystick::pressButtons(const QVector<int> &buttons)
+bool MockJoystick::pressButtons(const QVector<int>& buttons)
 {
     bool success = true;
     for (int button : buttons) {
@@ -198,7 +196,7 @@ bool MockJoystick::pressButtons(const QVector<int> &buttons)
     return success;
 }
 
-bool MockJoystick::releaseButtons(const QVector<int> &buttons)
+bool MockJoystick::releaseButtons(const QVector<int>& buttons)
 {
     bool success = true;
     for (int button : buttons) {
@@ -209,10 +207,10 @@ bool MockJoystick::releaseButtons(const QVector<int> &buttons)
     return success;
 }
 
-bool MockJoystick::setAxes(const QVector<QPair<int, int>> &axisValues)
+bool MockJoystick::setAxes(const QVector<QPair<int, int>>& axisValues)
 {
     bool success = true;
-    for (const auto &pair : axisValues) {
+    for (const auto& pair : axisValues) {
         if (!setAxis(pair.first, pair.second)) {
             success = false;
         }

@@ -1,21 +1,13 @@
 #pragma once
 
-#include "UnitTest.h"
-
-#include <QtCore/QTemporaryDir>
+#include "BaseClasses/TempDirectoryTest.h"
 
 /// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
-class QGCCompressionTest : public UnitTest
+class QGCCompressionTest : public TempDirectoryTest
 {
     Q_OBJECT
 
-public:
-    QGCCompressionTest() = default;
-
 private slots:
-    void init() override;
-    void cleanup() override;
-
     // Format detection
     void _testFormatDetection();
     void _testFormatDetectionFromContent();
@@ -90,7 +82,5 @@ private slots:
     void _benchmarkListArchive();
 
 private:
-    bool _compareFiles(const QString &file1, const QString &file2);
-
-    QTemporaryDir *_tempOutputDir = nullptr;
+    bool _compareFiles(const QString& file1, const QString& file2);
 };
