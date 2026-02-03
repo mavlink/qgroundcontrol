@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6'>
+  <bounds minlat='47.3970' minlon='8.5440' maxlat='47.3990' maxlon='8.5480'/>
+
+  <!-- Nodes for building A (simple 3-level building) -->
+  <node id='1' lat='47.3975' lon='8.5450'/>
+  <node id='2' lat='47.3975' lon='8.5455'/>
+  <node id='3' lat='47.3978' lon='8.5455'/>
+  <node id='4' lat='47.3978' lon='8.5450'/>
+
+  <!-- Nodes for building B (explicit height=12m) -->
+  <node id='5' lat='47.3980' lon='8.5460'/>
+  <node id='6' lat='47.3980' lon='8.5465'/>
+  <node id='7' lat='47.3983' lon='8.5465'/>
+  <node id='8' lat='47.3983' lon='8.5460'/>
+
+  <!-- Nodes for building C (bungalow = single storey) -->
+  <node id='9'  lat='47.3985' lon='8.5450'/>
+  <node id='10' lat='47.3985' lon='8.5453'/>
+  <node id='11' lat='47.3987' lon='8.5453'/>
+  <node id='12' lat='47.3987' lon='8.5450'/>
+
+  <!-- Nodes for building D (multipolygon: outer ring) -->
+  <node id='13' lat='47.3972' lon='8.5470'/>
+  <node id='14' lat='47.3972' lon='8.5478'/>
+  <node id='15' lat='47.3976' lon='8.5478'/>
+  <node id='16' lat='47.3976' lon='8.5470'/>
+
+  <!-- Nodes for building D (multipolygon: inner courtyard) -->
+  <node id='17' lat='47.3973' lon='8.5472'/>
+  <node id='18' lat='47.3973' lon='8.5476'/>
+  <node id='19' lat='47.3975' lon='8.5476'/>
+  <node id='20' lat='47.3975' lon='8.5472'/>
+
+  <!-- Building A: 3 levels -->
+  <way id='100'>
+    <nd ref='1'/><nd ref='2'/><nd ref='3'/><nd ref='4'/><nd ref='1'/>
+    <tag k='building' v='yes'/>
+    <tag k='building:levels' v='3'/>
+  </way>
+
+  <!-- Building B: explicit height -->
+  <way id='101'>
+    <nd ref='5'/><nd ref='6'/><nd ref='7'/><nd ref='8'/><nd ref='5'/>
+    <tag k='building' v='commercial'/>
+    <tag k='height' v='12'/>
+  </way>
+
+  <!-- Building C: bungalow (single storey) -->
+  <way id='102'>
+    <nd ref='9'/><nd ref='10'/><nd ref='11'/><nd ref='12'/><nd ref='9'/>
+    <tag k='building' v='bungalow'/>
+  </way>
+
+  <!-- Building D outer ring (way for multipolygon relation) -->
+  <way id='200'>
+    <nd ref='13'/><nd ref='14'/><nd ref='15'/><nd ref='16'/><nd ref='13'/>
+    <tag k='building' v='yes'/>
+    <tag k='building:levels' v='5'/>
+  </way>
+
+  <!-- Building D inner courtyard -->
+  <way id='201'>
+    <nd ref='17'/><nd ref='18'/><nd ref='19'/><nd ref='20'/><nd ref='17'/>
+  </way>
+
+  <!-- Multipolygon relation merging outer + inner -->
+  <relation id='300'>
+    <member type='way' ref='200' role='outer'/>
+    <member type='way' ref='201' role='inner'/>
+    <tag k='type' v='multipolygon'/>
+    <tag k='building' v='yes'/>
+  </relation>
+</osm>

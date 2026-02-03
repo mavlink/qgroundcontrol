@@ -19,6 +19,13 @@ ListModel {
     }
 
     ListElement {
+        name: qsTr("3D View")
+        url: "qrc:/qml/QGroundControl/Viewer3D/Viewer3DSettings.qml"
+        iconUrl: "qrc:/qml/QGroundControl/Viewer3D/City3DMapIcon.svg"
+        pageVisible: function() { return QGroundControl.settingsManager.viewer3DSettings.visible }
+    }
+
+    ListElement {
         name: qsTr("Plan View")
         url: "qrc:/qml/QGroundControl/AppSettings/PlanViewSettings.qml"
         iconUrl: "qrc:/qmlimages/Plan.svg"

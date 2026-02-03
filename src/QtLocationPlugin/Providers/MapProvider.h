@@ -51,6 +51,8 @@ public:
 
     virtual int long2tileX(double lon, int z) const;
     virtual int lat2tileY(double lat, int z) const;
+    virtual double tileX2long(int x, int z) const;
+    virtual double tileY2lat(int y, int z) const;
 
     virtual bool isElevationProvider() const { return false; }
     virtual bool isBingProvider() const { return false; }
