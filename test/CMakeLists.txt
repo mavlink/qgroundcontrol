@@ -188,6 +188,20 @@ endif()
 add_qgc_test(ShapeTest LABELS Unit Utilities)
 
 # ----------------------------------------------------------------------------
+# Viewer3D
+# ----------------------------------------------------------------------------
+add_subdirectory(Viewer3D)
+add_qgc_test(CityMapGeometryTest LABELS Unit Viewer3D)
+add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
+add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DTileQueryTest LABELS Unit Viewer3D)
+add_qgc_test(GeoCoordinateTypeTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DInstancingTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DManagerTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DMapProviderTest LABELS Unit Viewer3D)
+
+# ----------------------------------------------------------------------------
 # Vehicle
 # ----------------------------------------------------------------------------
 add_subdirectory(Vehicle)
