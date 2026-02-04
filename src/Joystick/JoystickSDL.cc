@@ -10,6 +10,9 @@
 
 #include <SDL3/SDL.h>
 
+// This is used for testing manual control extensions which require additional axes but all you have ia gamepad/joystick with limited axes.
+//#define TEST_WITH_VIRTUAL_AXES
+
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
 /// Discovery cache - main thread only, cleared in shutdown()
@@ -98,7 +101,11 @@ static bool sdlEventWatcher(void *userdata, SDL_Event *event)
 }
 
 JoystickSDL::JoystickSDL(const QString &name, const QList<int> &gamepadAxes, const QList<int> &nonGamepadAxes, int buttonCount, int hatCount, int instanceId, QObject *parent)
-    : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length(), buttonCount, hatCount, parent)
+    : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length()
+#ifdef TEST_WITH_VIRTUAL_AXES
+               + 2  // Add 2 virtual axes for testing
+#endif
+               , buttonCount, hatCount, parent)
     , _gamepadAxes(gamepadAxes)
     , _nonGamepadAxes(nonGamepadAxes)
     , _instanceId(instanceId)
@@ -411,6 +418,43 @@ int JoystickSDL::_getAxisValue(int idx) const
     if (idx < 0) {
         return 0;
     }
+
+#ifdef TEST_WITH_VIRTUAL_AXES
+    // Handle virtual axes (last 2 axes)
+    const int totalPhysicalAxes = _gamepadAxes.length() + _nonGamepadAxes.length();
+    if (idx >= totalPhysicalAxes && idx < totalPhysicalAxes + 2) {
+        // Check if button 0 is pressed
+        bool button0Down = false;
+        if (_sdlGamepad) {
+            button0Down = SDL_GetGamepadButton(_sdlGamepad, static_cast<SDL_GamepadButton>(0));
+        } else if (_sdlJoystick) {
+            button0Down = SDL_GetJoystickButton(_sdlJoystick, 0);
+        }
+
+        if (button0Down) {
+            // When button 0 is down, return values from axis 0 and 1
+            const int virtualAxisIdx = idx - totalPhysicalAxes;
+            if (virtualAxisIdx == 0) {
+                // First virtual axis maps to axis 0
+                if (_sdlGamepad && _gamepadAxes.length() > 0) {
+                    return SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[0]));
+                } else if (_sdlJoystick) {
+                    return SDL_GetJoystickAxis(_sdlJoystick, 0);
+                }
+            } else {
+                // Second virtual axis maps to axis 1
+                if (_sdlGamepad && _gamepadAxes.length() > 1) {
+                    return SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[1]));
+                } else if (_sdlJoystick) {
+                    return SDL_GetJoystickAxis(_sdlJoystick, 1);
+                }
+            }
+        } else {
+            // When button 0 is up, return centered values
+            return 0;
+        }
+    }
+#endif
 
     if (_sdlGamepad) {
         if (idx < _gamepadAxes.length()) {
@@ -1013,7 +1057,11 @@ bool JoystickSDL::hasAxis(int axis) const
         return SDL_GamepadHasAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[axis]));
     }
     if (_sdlJoystick) {
-        const int totalAxes = _gamepadAxes.length() + _nonGamepadAxes.length();
+        const int totalAxes = _gamepadAxes.length() + _nonGamepadAxes.length()
+#ifdef TEST_WITH_VIRTUAL_AXES
+                            + 2  // Add 2 virtual axes for testing
+#endif
+                            ;
         return axis >= 0 && axis < totalAxes;
     }
     return false;
