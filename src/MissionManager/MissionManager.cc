@@ -223,6 +223,10 @@ void MissionManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         _handleMissionCurrent(message);
         break;
 
+    case MAVLINK_MSG_ID_MISSION_ITEM_REACHED:
+        _handleMissionItemReached(message);
+        break;
+
     case MAVLINK_MSG_ID_HEARTBEAT:
         _handleHeartbeat(message);
         break;
@@ -268,6 +272,33 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
     mavlink_mission_current_t missionCurrent;
     mavlink_msg_mission_current_decode(&message, &missionCurrent);
     _updateMissionIndex(missionCurrent.seq);
+}
+
+void MissionManager::_handleMissionItemReached(const mavlink_message_t& message)
+{
+    mavlink_mission_item_reached_t missionItemReached;
+    mavlink_msg_mission_item_reached_decode(&message, &missionItemReached);
+
+    if (_missionItems.empty()) {
+        return;
+    }
+
+    if (!_vehicle->pauseVehicleSupported() || missionItemReached.seq != _missionItems.count() - 1) {
+        return;
+    }
+
+    /*
+        Pause the mission once reaching last item if it is a coordinate-based command rather than a loiter/land/takeoff command.
+        This gets around ArduPilot behavior of staying in auto mode but not reacting to set current waypoint command if the last item
+        is reached and it is not a RTL / land.
+    */
+    const MissionItem* lastItem = _missionItems.last();
+    const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_vehicle, _vehicle->vehicleClass(), lastItem->command());
+
+    if (uiInfo && !uiInfo->isLoiterCommand() && !uiInfo->isLandCommand() && !uiInfo->isTakeoffCommand() && uiInfo->specifiesCoordinate()) {
+        qCDebug(MissionManagerLog) << "_handleMissionItemReached: Reached last mission item which is coordinate based, pausing vehicle.";
+        _vehicle->guidedModeChangeAltitude(0, true /* pauseVehicle */);
+    }
 }
 
 void MissionManager::_handleHeartbeat(const mavlink_message_t& message)
