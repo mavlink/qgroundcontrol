@@ -102,6 +102,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
             continue;
         }
 
+        if (!link->decodedFirstMavlinkPacket()) {
+            link->setDecodedFirstMavlinkPacket(true);
+        }
+
         // It's ok to get v1 HEARTBEAT messages on a v2 link:
         //  PX4 defaults to sending V1 then switches to V2 after receiving a V2 message from GCS
         //  ArduPilot always sends both versions
