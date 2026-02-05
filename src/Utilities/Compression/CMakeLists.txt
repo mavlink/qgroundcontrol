@@ -99,19 +99,28 @@ CPMAddPackage(
 
 if(TARGET liblzma)
     # Help libarchive find our liblzma (prevent using system liblzma during cross-compile)
+    #
+    # IMPORTANT: CMake's FindLibLZMA.cmake uses find_package_handle_standard_args()
+    # which requires ALL of LIBLZMA_HAS_AUTO_DECODER, LIBLZMA_HAS_EASY_ENCODER,
+    # and LIBLZMA_HAS_LZMA_PRESET to be truthy, otherwise it sets LIBLZMA_FOUND=FALSE.
+    # Even though we only need decompression (no encoders), we must set all three to TRUE
+    # to prevent FindLibLZMA from rejecting our liblzma and causing libarchive to compile
+    # without LZMA/XZ support. Without this, libarchive falls back to spawning an external
+    # "xz -d -qq" process, which fails on Windows where xz is not installed.
     set(LIBLZMA_INCLUDE_DIR "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
+    set(LIBLZMA_INCLUDE_DIRS "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
     set(LIBLZMA_LIBRARY "liblzma" CACHE STRING "" FORCE)
-    set(LIBLZMA_FOUND TRUE CACHE BOOL "" FORCE)
     set(LIBLZMA_LIBRARIES "liblzma" CACHE STRING "" FORCE)
+    set(LIBLZMA_FOUND TRUE CACHE BOOL "" FORCE)
     set(LIBLZMA_HAS_AUTO_DECODER TRUE CACHE BOOL "" FORCE)
-    set(LIBLZMA_HAS_EASY_ENCODER FALSE CACHE BOOL "" FORCE)  # Encoders disabled
-    set(LIBLZMA_HAS_LZMA_PRESET FALSE CACHE BOOL "" FORCE)   # Encoders disabled
+    set(LIBLZMA_HAS_EASY_ENCODER TRUE CACHE BOOL "" FORCE)   # Must be TRUE for FindLibLZMA validation
+    set(LIBLZMA_HAS_LZMA_PRESET TRUE CACHE BOOL "" FORCE)    # Must be TRUE for FindLibLZMA validation
     set(LibLZMA_FOUND TRUE CACHE BOOL "" FORCE)
     # libarchive's FindLibLZMA expects LibLZMA::LibLZMA target
     if(NOT TARGET LibLZMA::LibLZMA)
         add_library(LibLZMA::LibLZMA ALIAS liblzma)
     endif()
-    message(STATUS "liblzma support enabled")
+    message(STATUS "liblzma support enabled (decoder-only build, encoders not available at runtime)")
 else()
     message(FATAL_ERROR "liblzma target not found")
 endif()
