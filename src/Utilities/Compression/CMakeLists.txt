@@ -98,16 +98,22 @@ CPMAddPackage(
 )
 
 if(TARGET liblzma)
-    # Help libarchive find our liblzma (prevent using system liblzma during cross-compile)
+    # Set Find-module variables so libarchive's find_package(LibLZMA) succeeds
     set(LIBLZMA_INCLUDE_DIR "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
+    set(LIBLZMA_INCLUDE_DIRS "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)  # libarchive uses plural
     set(LIBLZMA_LIBRARY "liblzma" CACHE STRING "" FORCE)
     set(LIBLZMA_FOUND TRUE CACHE BOOL "" FORCE)
     set(LIBLZMA_LIBRARIES "liblzma" CACHE STRING "" FORCE)
     set(LIBLZMA_HAS_AUTO_DECODER TRUE CACHE BOOL "" FORCE)
-    set(LIBLZMA_HAS_EASY_ENCODER FALSE CACHE BOOL "" FORCE)  # Encoders disabled
-    set(LIBLZMA_HAS_LZMA_PRESET FALSE CACHE BOOL "" FORCE)   # Encoders disabled
+    set(LIBLZMA_HAS_EASY_ENCODER TRUE CACHE BOOL "" FORCE)   # Satisfy FindLibLZMA sanity check
+    set(LIBLZMA_HAS_LZMA_PRESET TRUE CACHE BOOL "" FORCE)   # Satisfy FindLibLZMA sanity check
     set(LibLZMA_FOUND TRUE CACHE BOOL "" FORCE)
-    # libarchive's FindLibLZMA expects LibLZMA::LibLZMA target
+
+    # Pre-cache configure-time check results (checks require built library, but we only have target)
+    # These values match our decoder-only build configuration
+    set(LZMA_API_STATIC 1 CACHE INTERNAL "liblzma is static")
+    set(HAVE_LZMA_STREAM_ENCODER_MT 0 CACHE INTERNAL "Encoder disabled in our build")
+
     if(NOT TARGET LibLZMA::LibLZMA)
         add_library(LibLZMA::LibLZMA ALIAS liblzma)
     endif()
@@ -149,7 +155,14 @@ if(TARGET libzstd_static)
     set(ZSTD_LIBRARIES "libzstd_static" CACHE STRING "" FORCE)
     set(ZSTD_FOUND TRUE CACHE BOOL "" FORCE)
     set(Zstd_FOUND TRUE CACHE BOOL "" FORCE)
-    # libarchive's FindZstd.cmake expects Zstd::Zstd target
+
+    # Pre-cache configure-time check results (checks require built library, but we only have target)
+    # These values match our decoder-only build configuration
+    set(HAVE_LIBZSTD 1 CACHE INTERNAL "zstd decompression available")
+    set(HAVE_ZSTD_compressStream 0 CACHE INTERNAL "Compression disabled in our build")
+    set(HAVE_ZSTD_minCLevel 0 CACHE INTERNAL "Compression disabled in our build")
+
+    # Create the imported targets that consumers expect
     if(NOT TARGET Zstd::Zstd)
         add_library(Zstd::Zstd ALIAS libzstd_static)
     endif()
