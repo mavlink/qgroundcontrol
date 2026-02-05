@@ -161,6 +161,8 @@ private:
 #else
     static constexpr int _autoconnectConnectDelayMSecs = 1000;
 #endif
+    // If an autoconnect serial link hasn't received any MAVLink data within this time, disconnect and retry
+    static constexpr int _autoconnectNoMavlinkTimeoutMSecs = 10000;
 
 #ifndef QGC_NO_SERIAL_LINK
 private:
@@ -183,10 +185,12 @@ private:
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
     bool _portAlreadyConnected(const QString &portName);
+    void _disconnectAutoConnectLink(const QString &portName);
     void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
     UdpIODevice *_nmeaSocket = nullptr;
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
+    QMap<QString, int> _autoconnectNoMavlinkCount; ///< key: port systemLocation, value: seconds since autoconnect with no MAVLink data
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
     QStringList _commPortDisplayList;

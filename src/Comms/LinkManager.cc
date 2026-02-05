@@ -107,6 +107,18 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
 
 bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 {
+#ifndef QGC_NO_SERIAL_LINK
+    // If we're creating a serial link, disconnect any existing autoconnect link on the same port first.
+    // This prevents "Access denied" errors on Windows when the user manually connects to a port
+    // that autoconnect has already opened.
+    if (config->type() == LinkConfiguration::TypeSerial) {
+        const SerialConfiguration *newSerialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+        if (newSerialConfig && !config->isAutoConnect()) {
+            _disconnectAutoConnectLink(newSerialConfig->portName());
+        }
+    }
+#endif
+
     SharedLinkInterfacePtr link = nullptr;
 
     switch(config->type()) {
@@ -915,6 +927,38 @@ void LinkManager::_addSerialAutoConnectLink()
                 continue;
             }
             if (_portAlreadyConnected(portInfo.systemLocation()) || (_autoConnectRTKPort == portInfo.systemLocation())) {
+                // Check for zombie autoconnect links: port is open but no MAVLink data received
+                if (_autoConnectRTKPort != portInfo.systemLocation()) {
+                    SharedLinkInterfacePtr existingLink;
+                    {
+                        QMutexLocker locker(&_linksMutex);
+                        const QString searchPort = portInfo.systemLocation().trimmed();
+                        for (const SharedLinkInterfacePtr &linkInterface : _rgLinks) {
+                            const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
+                            if (linkConfig && linkConfig->isAutoConnect()) {
+                                const SerialConfiguration *serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
+                                if (serialConfig && (serialConfig->portName() == searchPort)) {
+                                    existingLink = linkInterface;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (existingLink && !existingLink->decodedFirstMavlinkPacket()) {
+                        _autoconnectNoMavlinkCount[portInfo.systemLocation()] += _autoconnectUpdateTimerMSecs;
+                        if (_autoconnectNoMavlinkCount[portInfo.systemLocation()] > _autoconnectNoMavlinkTimeoutMSecs) {
+                            qCWarning(LinkManagerLog) << "Autoconnect link on" << portInfo.systemLocation()
+                                                      << "has not received MAVLink data - disconnecting to retry";
+                            _autoconnectNoMavlinkCount.remove(portInfo.systemLocation());
+                            existingLink->disconnect();
+                            continue;
+                        }
+                    } else {
+                        // Link is communicating, clear any timeout counter
+                        _autoconnectNoMavlinkCount.remove(portInfo.systemLocation());
+                    }
+                }
                 qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
             } else if (!_autoconnectPortWaitList.contains(portInfo.systemLocation())) {
                 // We don't connect to the port the first time we see it. The ability to correctly detect whether we
@@ -999,6 +1043,32 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
     return false;
 }
 
+void LinkManager::_disconnectAutoConnectLink(const QString &portName)
+{
+    const QString searchPort = portName.trimmed();
+    SharedLinkInterfacePtr linkToDisconnect;
+
+    {
+        QMutexLocker locker(&_linksMutex);
+        for (const SharedLinkInterfacePtr &linkInterface : _rgLinks) {
+            const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
+            if (!linkConfig || !linkConfig->isAutoConnect()) {
+                continue;
+            }
+            const SerialConfiguration *serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
+            if (serialConfig && (serialConfig->portName() == searchPort)) {
+                linkToDisconnect = linkInterface;
+                break;
+            }
+        }
+    }
+
+    if (linkToDisconnect) {
+        qCDebug(LinkManagerLog) << "Disconnecting existing autoconnect link on port" << searchPort << "to allow manual connection";
+        linkToDisconnect->disconnect();
+    }
+}
+
 bool LinkManager::_portAlreadyConnected(const QString &portName)
 {
     QMutexLocker locker(&_linksMutex);
@@ -1008,6 +1078,13 @@ bool LinkManager::_portAlreadyConnected(const QString &portName)
         const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
         const SerialConfiguration* const serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
         if (serialConfig && (serialConfig->portName() == searchPort)) {
+            // Also verify the link is actually connected. The serial port open happens
+            // asynchronously, so the link may be in _rgLinks but not truly connected yet
+            // (or the connection may have failed). If not connected, allow autoconnect to retry.
+            if (!linkInterface->isConnected()) {
+                qCDebug(LinkManagerLog) << "Port in link list but not connected, allowing retry:" << searchPort;
+                return false;
+            }
             return true;
         }
     }
