@@ -4,63 +4,76 @@
   "QGC.MetaData.Facts": [
     {
       "name": "ntripServerConnectEnabled",
-      "shortDescription": "Connect to NTRIP server",
-      "longDescription": "Connect to NTRIP server using specified address/port",
+      "shortDesc": "Connect to NTRIP server",
+      "longDesc": "Connect to NTRIP server using specified address/port",
       "type": "bool",
-      "defaultValue": false,
-      "qgcRebootRequired": true
+      "default": false
     },
     {
       "name": "ntripServerHostAddress",
-      "shortDescription": "Host address",
+      "shortDesc": "Host address",
       "type": "string",
-      "defaultValue": "127.0.0.1",
-      "qgcRebootRequired": true
+      "default": ""
     },
     {
       "name": "ntripServerPort",
-      "shortDescription": "Server port",
-      "type": "int32",
-      "defaultValue": 2101,
-      "qgcRebootRequired": true
+      "shortDesc": "Server port",
+      "type": "uint16",
+      "default": 2101
     },
     {
       "name": "ntripUsername",
-      "shortDescription": "Username",
+      "shortDesc": "Username",
       "type": "string",
-      "defaultValue": "",
-      "qgcRebootRequired": true
+      "default": ""
     },
     {
       "name": "ntripPassword",
-      "shortDescription": "Password",
+      "shortDesc": "Password",
       "type": "string",
-      "defaultValue": "",
-      "qgcRebootRequired": true
+      "default": ""
     },
     {
       "name": "ntripMountpoint",
-      "shortDescription": "Mount Point",
-      "longDescription": "NTRIP Mount Point. Leave blank for RTCM over TCP",
+      "shortDesc": "Mount Point",
+      "longDesc": "NTRIP mount point. Leave blank for RTCM over TCP",
       "type": "string",
-      "defaultValue": "",
-      "qgcRebootRequired": true
+      "default": ""
     },
     {
       "name": "ntripWhitelist",
-      "shortDescription": "RTCM Message Whitelist",
-      "longDescription": "RTCM Messages to send over mavlink. Leave blank for all messages",
+      "shortDesc": "RTCM Message Filter",
+      "longDesc": "Comma-separated RTCM message IDs to forward (e.g. 1005,1077,1087). Leave blank for all messages.",
       "type": "string",
-      "defaultValue": "",
-      "qgcRebootRequired": true
+      "default": ""
     },
     {
-      "name": "ntripUseSpartn",
-      "shortDescription": "Use SPARTN pipeline",
-      "longDescription": "If enabled, connect with TLS (2102) and treat payload as SPARTN instead of RTCM. Requires SPARTN keys handled by the receiver.",
+      "name": "ntripUseTls",
+      "shortDesc": "Use TLS encryption",
+      "longDesc": "Connect using TLS/SSL encryption (required for some SPARTN casters on port 2102)",
       "type": "bool",
-      "defaultValue": false,
-      "qgcRebootRequired": true
+      "default": false
+    },
+    {
+      "name": "ntripUdpForwardEnabled",
+      "shortDesc": "UDP forward RTCM data",
+      "longDesc": "Forward received RTCM correction data via UDP to the specified address and port",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "name": "ntripUdpTargetAddress",
+      "shortDesc": "UDP target address",
+      "longDesc": "IP address to forward RTCM data to via UDP",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "name": "ntripUdpTargetPort",
+      "shortDesc": "UDP target port",
+      "longDesc": "Port to forward RTCM data to via UDP",
+      "type": "uint16",
+      "default": 0
     }
   ]
 }
