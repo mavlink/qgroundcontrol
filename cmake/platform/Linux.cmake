@@ -10,14 +10,12 @@ endif()
 # Linux-Specific Compiler Flags
 # ----------------------------------------------------------------------------
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    # Enable additional warnings for better code quality
-    # target_compile_options(${CMAKE_PROJECT_NAME}
-    #     PRIVATE
-    #         -Wall
-    #         -Wextra
-    #         -Wpedantic
-    #         $<$<CONFIG:Release>:-O3>
-    # )
+    target_compile_options(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            -Wall
+            -Wextra
+            -Wno-unused-parameter
+    )
 endif()
 
 # ----------------------------------------------------------------------------
