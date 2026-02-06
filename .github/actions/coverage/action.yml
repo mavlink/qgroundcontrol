@@ -29,7 +29,7 @@ runs:
       working-directory: ${{ inputs.build-dir }}
       shell: bash
       run: |
-        cmake --build . --target coverage-report 2>&1 | tee coverage-output.txt
+        cmake --build . --target coverage 2>&1 | tee coverage-output.txt
 
         # Extract coverage summary for GitHub Step Summary
         {

@@ -1,4 +1,5 @@
 #include "QGCCommandLineParser.h"
+#include "qgc_version.h"
 
 #include <QtCore/QCommandLineOption>
 #include <QtCore/QCoreApplication>

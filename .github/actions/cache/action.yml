@@ -35,8 +35,8 @@ runs:
         fi
         echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
 
-        # Read max_size from tools/ccache.conf (single source of truth)
-        CCACHE_CONF_PATH="${{ github.workspace }}/tools/ccache.conf"
+        # Read max_size from tools/configs/ccache.conf (single source of truth)
+        CCACHE_CONF_PATH="${{ github.workspace }}/tools/configs/ccache.conf"
         CCACHE_MAX_SIZE="2G"  # Default
         if [[ -f "$CCACHE_CONF_PATH" ]]; then
           # Single awk pass to extract value (more robust than grep|sed)

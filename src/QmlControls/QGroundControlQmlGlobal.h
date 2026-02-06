@@ -7,6 +7,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlUnitsConversion.h"
+#include "qgc_version.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
 
