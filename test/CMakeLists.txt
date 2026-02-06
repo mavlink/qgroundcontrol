@@ -140,6 +140,17 @@ add_qgc_test(TransectStyleComplexItemTest LABELS Unit MissionManager RESOURCE_LO
 # add_qgc_test(MessageBoxTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
+# QtLocationPlugin
+# ----------------------------------------------------------------------------
+add_subdirectory(QtLocationPlugin)
+add_qgc_test(MapProviderTest LABELS Unit)
+add_qgc_test(QGCCacheWorkerTest LABELS Unit)
+add_qgc_test(QGCCachedTileSetTest LABELS Unit)
+add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
+add_qgc_test(QGCTileSetTest LABELS Unit)
+add_qgc_test(UrlFactoryTest LABELS Unit)
+
+# ----------------------------------------------------------------------------
 # Terrain
 # ----------------------------------------------------------------------------
 add_subdirectory(Terrain)
