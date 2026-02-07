@@ -56,7 +56,6 @@ set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valg
 # Feature Flags
 # ============================================================================
 
-option(QGC_UTM_ADAPTER "Enable UTM (Unmanned Traffic Management) Adapter" OFF)
 option(QGC_VIEWER3D "Enable 3D Viewer (requires Qt Quick 3D)" ON)
 
 # ============================================================================

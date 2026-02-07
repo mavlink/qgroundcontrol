@@ -50,7 +50,6 @@ add_subdirectory(QmlControls)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
 add_subdirectory(UI)
-add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
@@ -133,7 +132,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlControlsModule
         QGroundControlModule
         ToolbarModule
-        UTMSPModule
         VehicleSetupModule
 )
 

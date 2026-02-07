@@ -22,7 +22,6 @@ class QGCPalette;
 class QGCPositionManager;
 class SettingsManager;
 class VideoManager;
-class UTMSPManager;
 class AirLinkManager;
 class QmlObjectListModel;
 
@@ -37,9 +36,6 @@ Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("VideoManager.h")
-#ifdef QGC_UTM_ADAPTER
-Q_MOC_INCLUDE("UTMSPManager.h")
-#endif
 #ifndef QGC_AIRLINK_DISABLED
 Q_MOC_INCLUDE("AirLinkManager.h")
 #endif
@@ -113,12 +109,6 @@ public:
     // Elevation Provider
     Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              CONSTANT)
     Q_PROPERTY(QString  elevationProviderNotice         READ elevationProviderNotice            CONSTANT)
-
-    Q_PROPERTY(bool              utmspSupported           READ    utmspSupported              CONSTANT)
-
-#ifdef QGC_UTM_ADAPTER
-    Q_PROPERTY(UTMSPManager*     utmspManager             READ    utmspManager                CONSTANT)
-#endif
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -223,13 +213,6 @@ public:
     static bool qgcDailyBuild() { return false; }
 #endif
 
-#ifdef QGC_UTM_ADAPTER
-    UTMSPManager* utmspManager() {return _utmspManager;}
-    bool utmspSupported() { return true; }
-#else
-    bool utmspSupported() { return false; }
-#endif
-
 signals:
     void isMultiplexingEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
@@ -252,9 +235,6 @@ private:
 #endif
 #ifndef QGC_AIRLINK_DISABLED
     AirLinkManager*         _airlinkManager         = nullptr;
-#endif
-#ifdef QGC_UTM_ADAPTER
-    UTMSPManager*           _utmspManager           = nullptr;
 #endif
 
     double                  _flightMapInitialZoom   = 17.0;

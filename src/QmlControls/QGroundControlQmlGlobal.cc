@@ -25,9 +25,6 @@
 #ifndef QGC_AIRLINK_DISABLED
 #include "AirLinkManager.h"
 #endif
-#ifdef QGC_UTM_ADAPTER
-#include "UTMSPManager.h"
-#endif
 
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
@@ -54,9 +51,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
 #endif
 #ifndef QGC_AIRLINK_DISABLED
     , _airlinkManager(AirLinkManager::instance())
-#endif
-#ifdef QGC_UTM_ADAPTER
-    , _utmspManager(UTMSPManager::instance())
 #endif
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.

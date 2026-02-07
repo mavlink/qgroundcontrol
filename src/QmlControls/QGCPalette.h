@@ -153,12 +153,6 @@ public:
     DEFINE_QGC_COLOR(photoCaptureButtonColor,       setPhotoCaptureButtonColor)
     DEFINE_QGC_COLOR(videoCaptureButtonColor,       setVideoCaptureButtonColor)
 
-#ifdef QGC_UTM_ADAPTER
-    DEFINE_QGC_COLOR(switchUTMSP,                    setSwitchUTMSP)
-    DEFINE_QGC_COLOR(sliderUTMSP,                    setSliderUTMSP)
-    DEFINE_QGC_COLOR(successNotifyUTMSP,             setSuccessNotifyUTMSP)
-#endif
-
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();
 
