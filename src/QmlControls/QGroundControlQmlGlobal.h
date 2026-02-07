@@ -22,7 +22,6 @@ class QGCPalette;
 class QGCPositionManager;
 class SettingsManager;
 class VideoManager;
-class AirLinkManager;
 class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
@@ -36,9 +35,6 @@ Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("VideoManager.h")
-#ifndef QGC_AIRLINK_DISABLED
-Q_MOC_INCLUDE("AirLinkManager.h")
-#endif
 
 class QGroundControlQmlGlobal : public QObject
 {
@@ -73,10 +69,6 @@ public:
 #ifndef QGC_NO_SERIAL_LINK
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
 #endif
-#ifndef QGC_AIRLINK_DISABLED
-    Q_PROPERTY(AirLinkManager*      airlinkManager          READ    airlinkManager          CONSTANT)
-#endif
-    Q_PROPERTY(bool                 airlinkSupported        READ    airlinkSupported        CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
@@ -164,13 +156,6 @@ public:
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
 
-#ifndef QGC_AIRLINK_DISABLED
-    AirLinkManager*         airlinkManager      ()  { return _airlinkManager; }
-    bool                    airlinkSupported    ()  { return true; }
-#else
-    bool                    airlinkSupported    ()  { return false; }
-#endif
-
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -232,9 +217,6 @@ private:
     QGCPalette*             _globalPalette          = nullptr;
 #ifndef QGC_NO_SERIAL_LINK
     FactGroup*              _gpsRtkFactGroup        = nullptr;
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    AirLinkManager*         _airlinkManager         = nullptr;
 #endif
 
     double                  _flightMapInitialZoom   = 17.0;

@@ -76,7 +76,6 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth communication links" ON)
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
-option(QGC_AIRLINK_DISABLED "Disable AIRLink support" ON)
 option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 # ============================================================================

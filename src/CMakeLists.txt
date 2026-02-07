@@ -150,10 +150,6 @@ if(QGC_VIEWER3D)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 endif()
 
-if(NOT QGC_AIRLINK_DISABLED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
-endif()
-
 # ============================================================================
 # Compile Definitions
 # ============================================================================

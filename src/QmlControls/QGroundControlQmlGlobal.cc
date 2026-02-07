@@ -22,9 +22,6 @@
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
-#ifndef QGC_AIRLINK_DISABLED
-#include "AirLinkManager.h"
-#endif
 
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
@@ -48,9 +45,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _globalPalette(new QGCPalette(this))
 #ifndef QGC_NO_SERIAL_LINK
     , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    , _airlinkManager(AirLinkManager::instance())
 #endif
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
