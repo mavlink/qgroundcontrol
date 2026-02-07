@@ -139,7 +139,7 @@ Item {
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
-            onTriggered:    editPositionDialog.createObject(mainWindow, { coordinate: mapPolyline.path[menu._removeVertexIndex] }).open()
+            onTriggered:    editPositionDialog.createObject(mainWindow).open()
         }
     }
 
@@ -147,6 +147,7 @@ Item {
         id: editPositionDialog
 
         EditPositionDialog {
+            coordinate: mapPolyline.path[menu._removeVertexIndex]
             onCoordinateChanged: mapPolyline.adjustVertex(menu._removeVertexIndex,coordinate)
         }
     }

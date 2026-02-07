@@ -13,7 +13,7 @@ class EditPositionDialogController : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(QGeoCoordinate   coordinate  READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
+    Q_PROPERTY(QGeoCoordinate   coordinate  READ coordinate WRITE setCoordinate NOTIFY coordinateChanged REQUIRED)
     Q_PROPERTY(Fact             *latitude   READ latitude                       CONSTANT)
     Q_PROPERTY(Fact             *longitude  READ longitude                      CONSTANT)
     Q_PROPERTY(Fact             *zone       READ zone                           CONSTANT)

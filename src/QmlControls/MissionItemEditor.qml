@@ -293,9 +293,7 @@ Rectangle {
                         Layout.fillWidth: true
                         text: qsTr("Edit mission position...")
                         onClicked: {
-                            editMissionPositionDialogComponent.createObject(
-                                        mainWindow,
-                                        { coordinate: _missionController.plannedHomePosition }).open()
+                            editMissionPositionDialogComponent.createObject(mainWindow).open()
                             missionStartHamburgerMenuDropPanel.close()
                         }
                     }
@@ -512,6 +510,7 @@ Rectangle {
         EditPositionDialog {
             id: missionEditPositionDialog
 
+            coordinate: _missionController.plannedHomePosition
             onCoordinateChanged: _missionController.repositionMission(coordinate)
         }
     }
