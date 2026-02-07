@@ -2,14 +2,14 @@
 #include "MAVLinkInspectorController.h"
 #include "MAVLinkMessageField.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCharts/QAbstractSeries>
 #include <QtCore/QTimer>
 
 Q_DECLARE_METATYPE(QAbstractSeries*)
 
-QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "AnalyzeView.MAVLinkChartController")
+Q_STATIC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "AnalyzeView.MAVLinkChartController")
 
 MAVLinkChartController::MAVLinkChartController(QObject *parent)
     : QObject(parent)

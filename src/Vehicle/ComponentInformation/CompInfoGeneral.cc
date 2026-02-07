@@ -1,11 +1,11 @@
 #include "CompInfoGeneral.h"
 #include "JsonHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(CompInfoGeneralLog, "ComponentInformation.CompInfoGeneral")
+Q_STATIC_LOGGING_CATEGORY(CompInfoGeneralLog, "ComponentInformation.CompInfoGeneral")
 
 CompInfoGeneral::CompInfoGeneral(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_GENERAL, compId, vehicle, parent)

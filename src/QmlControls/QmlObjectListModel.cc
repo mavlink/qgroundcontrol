@@ -2,9 +2,9 @@
 
 #include <QtQml/QQmlEngine>
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
+Q_STATIC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : ObjectListModelBase(parent)

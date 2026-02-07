@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QStringListModel>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkConsoleControllerLog)
 
 class QGCPalette;
 class Vehicle;

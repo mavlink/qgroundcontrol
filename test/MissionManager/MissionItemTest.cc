@@ -425,6 +425,4 @@ QJsonObject MissionItemTest::_createV3Json(bool allNaNs)
     return jsonObject;
 }
 
-#include "UnitTest.h"
-
 UT_REGISTER_TEST(MissionItemTest, TestLabel::Unit, TestLabel::MissionManager)

@@ -56,6 +56,4 @@ void PlanMasterControllerTest::_testActiveVehicleChanged()
     QVERIFY(spyMissionManager.onlyEmittedOnceByMask(missionManagerErrorSignalMask));
 }
 
-#include "UnitTest.h"
-
 UT_REGISTER_TEST(PlanMasterControllerTest, TestLabel::Integration, TestLabel::MissionManager)

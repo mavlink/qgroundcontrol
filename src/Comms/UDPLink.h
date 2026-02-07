@@ -5,7 +5,6 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QString>
 #include <QtNetwork/QHostAddress>
@@ -22,7 +21,6 @@
 class QUdpSocket;
 class QThread;
 
-Q_DECLARE_LOGGING_CATEGORY(UDPLinkLog)
 
 /*===========================================================================*/
 

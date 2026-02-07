@@ -5,9 +5,9 @@
 #include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(MissionManagerLog, "PlanManager.MissionManager")
+Q_STATIC_LOGGING_CATEGORY(MissionManagerLog, "PlanManager.MissionManager")
 
 MissionManager::MissionManager(Vehicle* vehicle)
     : PlanManager               (vehicle, MAV_MISSION_TYPE_MISSION)

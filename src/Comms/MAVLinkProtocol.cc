@@ -5,7 +5,7 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 
@@ -18,7 +18,7 @@
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "Comms.MAVLinkProtocol")
+Q_STATIC_LOGGING_CATEGORY(MAVLinkProtocolLog, "Comms.MAVLinkProtocol")
 
 Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 

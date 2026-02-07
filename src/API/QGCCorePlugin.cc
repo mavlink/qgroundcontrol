@@ -1,5 +1,5 @@
 #include "QGCCorePlugin.h"
-#include "QGCLogging.h"
+#include "LogManager.h"
 #include "AppSettings.h"
 #include "MavlinkSettings.h"
 #include "FactMetaData.h"
@@ -10,7 +10,7 @@
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
 #include "MAVLinkLib.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
 #include "QmlObjectListModel.h"
@@ -31,7 +31,7 @@
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
+Q_STATIC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
 
 #ifndef QGC_CUSTOM_BUILD
 Q_APPLICATION_STATIC(QGCCorePlugin, _qgcCorePluginInstance);
@@ -254,7 +254,7 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     QQmlApplicationEngine *const qmlEngine = new QQmlApplicationEngine(parent);
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
-    qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), QGCLogging::instance());
+    qmlEngine->rootContext()->setContextProperty(QStringLiteral("qgcLogging"), LogManager::instance());
     return qmlEngine;
 }
 

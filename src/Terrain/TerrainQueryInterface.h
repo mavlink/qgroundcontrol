@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtNetwork/QNetworkReply>
@@ -8,7 +7,6 @@
 class QGeoCoordinate;
 class QNetworkAccessManager;
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainQueryInterfaceLog)
 
 namespace TerrainQuery
 {

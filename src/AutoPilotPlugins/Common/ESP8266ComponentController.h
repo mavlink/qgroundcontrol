@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(ESP8266ComponentControllerLog)
 
 class Fact;
 class Vehicle;

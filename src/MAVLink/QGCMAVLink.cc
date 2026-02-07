@@ -1,7 +1,7 @@
 #include "QGCMAVLink.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
+Q_STATIC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
 
 const QHash<int, QString> QGCMAVLink::mavlinkCompIdHash {
     { MAV_COMP_ID_AUTOPILOT1, "Autopilot" },

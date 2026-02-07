@@ -1,13 +1,13 @@
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtNetwork/QNetworkDiskCache>
 #include <QtNetwork/QNetworkRequest>
 
-QGC_LOGGING_CATEGORY(QGCCachedFileDownloadLog, "Utilities.QGCCachedFileDownload")
+Q_STATIC_LOGGING_CATEGORY(QGCCachedFileDownloadLog, "Utilities.QGCCachedFileDownload")
 
 // ============================================================================
 // Construction / Destruction

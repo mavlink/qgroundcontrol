@@ -1,64 +1,64 @@
-#include "LogEntry.h"
+#include "MAVLinkLogEntry.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.QGCLogEntry")
+Q_STATIC_LOGGING_CATEGORY(MAVLinkLogEntryLog, "AnalyzeView.MAVLinkLogEntry")
 
-LogDownloadData::LogDownloadData(QGCLogEntry * const entry)
+MAVLinkLogDownloadData::MAVLinkLogDownloadData(MAVLinkLogEntry * const entry)
     : ID(entry->id())
     , entry(entry)
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkLogEntryLog) << this;
 }
 
-LogDownloadData::~LogDownloadData()
+MAVLinkLogDownloadData::~MAVLinkLogDownloadData()
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkLogEntryLog) << this;
 }
 
-void LogDownloadData::advanceChunk()
+void MAVLinkLogDownloadData::advanceChunk()
 {
     ++current_chunk;
     chunk_table = QBitArray(chunkBins(), false);
 }
 
-uint32_t LogDownloadData::chunkBins() const
+uint32_t MAVLinkLogDownloadData::chunkBins() const
 {
     const qreal num = static_cast<qreal>((entry->size() - (current_chunk * kChunkSize))) / static_cast<qreal>(MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
     return qMin(static_cast<uint32_t>(qCeil(num)), kTableBins);
 }
 
-uint32_t LogDownloadData::numChunks() const
+uint32_t MAVLinkLogDownloadData::numChunks() const
 {
     const qreal num = static_cast<qreal>(entry->size()) / static_cast<qreal>(kChunkSize);
     return qCeil(num);
 }
 
-bool LogDownloadData::chunkEquals(const bool val) const
+bool MAVLinkLogDownloadData::chunkEquals(const bool val) const
 {
     return (chunk_table == QBitArray(chunk_table.size(), val));
 }
 
 /*===========================================================================*/
 
-QGCLogEntry::QGCLogEntry(uint logId, const QDateTime &dateTime, uint logSize, bool received, QObject *parent)
+MAVLinkLogEntry::MAVLinkLogEntry(uint logId, const QDateTime &dateTime, uint logSize, bool received, QObject *parent)
     : QObject(parent)
     , _logID(logId)
     , _logSize(logSize)
     , _logTimeUTC(dateTime)
     , _received(received)
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkLogEntryLog) << this;
 }
 
-QGCLogEntry::~QGCLogEntry()
+MAVLinkLogEntry::~MAVLinkLogEntry()
 {
-    // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkLogEntryLog) << this;
 }
 
-QString QGCLogEntry::sizeStr() const
+QString MAVLinkLogEntry::sizeStr() const
 {
     return qgcApp()->bigSizeToString(_logSize);
 }

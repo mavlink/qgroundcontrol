@@ -1,11 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 
 #include "FactGroup.h"
 #include "APMFirmwarePlugin.h"
 
-Q_DECLARE_LOGGING_CATEGORY(APMSubmarineFactGroupLog)
 
 class APMSubmarineFactGroup : public FactGroup
 {

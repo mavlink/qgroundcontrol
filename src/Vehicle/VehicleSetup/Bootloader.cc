@@ -1,5 +1,5 @@
 #include "Bootloader.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "FirmwareImage.h"
 #include "QGC.h"
 
@@ -7,8 +7,8 @@
 #include <QtCore/QFile>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "VehicleSetup.FirmwareUpgrade")
-QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "VehicleSetup.FirmwareUpgrade:verbose")
+Q_STATIC_LOGGING_CATEGORY(FirmwareUpgradeLog, "VehicleSetup.FirmwareUpgrade")
+Q_STATIC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "VehicleSetup.FirmwareUpgrade:verbose")
 
 /// This class manages interactions with the bootloader
 Bootloader::Bootloader(bool sikRadio, QObject *parent)

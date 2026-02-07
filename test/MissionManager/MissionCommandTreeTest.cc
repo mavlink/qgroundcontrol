@@ -3,7 +3,6 @@
 #include "MissionCommandList.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-#include "UnitTest.h"
 #include "Vehicle.h"
 
 void MissionCommandTreeTest::init()

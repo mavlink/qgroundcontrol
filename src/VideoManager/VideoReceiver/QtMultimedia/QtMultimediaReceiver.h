@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
 
 #include "VideoReceiver.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QtMultimediaReceiverLog)
 
 class QMediaPlayer;
 class QVideoSink;

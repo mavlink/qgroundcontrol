@@ -12,10 +12,10 @@
 #include <cstring>
 
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGClibarchive.h"
 
-QGC_LOGGING_CATEGORY(QGCCompressionLog, "Utilities.QGCCompression")
+Q_STATIC_LOGGING_CATEGORY(QGCCompressionLog, "Utilities.QGCCompression")
 
 namespace QGCCompression {
 
@@ -961,6 +961,20 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
         setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
     }
     return result;
+}
+
+// ============================================================================
+// In-Memory Compression (zlib via Qt)
+// ============================================================================
+
+QByteArray compressData(const QByteArray &data, int level)
+{
+    return qCompress(data, level);
+}
+
+QByteArray uncompressData(const QByteArray &data)
+{
+    return qUncompress(data);
 }
 
 }  // namespace QGCCompression

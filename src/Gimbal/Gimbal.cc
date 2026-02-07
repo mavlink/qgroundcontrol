@@ -1,8 +1,8 @@
 #include "Gimbal.h"
 #include "GimbalController.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(GimbalLog, "Gimbal.Gimbal")
+Q_STATIC_LOGGING_CATEGORY(GimbalLog, "Gimbal.Gimbal")
 
 Gimbal::Gimbal(GimbalController *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GimbalFact.json"), parent)

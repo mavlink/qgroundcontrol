@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QQueue>
@@ -11,8 +10,6 @@
 
 class QTimer;
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
-Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
 
 // IMPORTANT NOTE: The terrain query objects below must continue to live until the the terrain system signals data back through them.
 // Because of that it makes object lifetime tricky. Normally you would use autoDelete = true such they delete themselves when they

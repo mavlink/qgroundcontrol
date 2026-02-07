@@ -3,7 +3,7 @@
 #include "MockLinkFTP.h"
 #include "MockLinkWorker.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "FirmwarePlugin.h"
 
 #include <QtCore/QFile>
@@ -13,8 +13,8 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
-QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
+Q_STATIC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
+Q_STATIC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
 
 std::atomic<int> MockLink::_nextVehicleSystemId{128};
 

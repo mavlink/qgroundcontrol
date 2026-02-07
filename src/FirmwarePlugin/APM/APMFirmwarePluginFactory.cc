@@ -3,9 +3,9 @@
 #include "ArduPlaneFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
 #include "ArduSubFirmwarePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "FirmwarePlugin.APMFirmwarePluginFactory");
+Q_STATIC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "FirmwarePlugin.APMFirmwarePluginFactory");
 
 APMFirmwarePluginFactory APMFirmwarePluginFactory(nullptr);
 

@@ -1,10 +1,10 @@
 #include "MissionFixtures.h"
 
 #include "MissionController.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SimpleMissionItem.h"
 
-QGC_LOGGING_CATEGORY(MissionFixturesLog, "Test.MissionFixtures")
+Q_STATIC_LOGGING_CATEGORY(MissionFixturesLog, "Test.MissionFixtures")
 
 namespace TestFixtures {
 namespace Mission {

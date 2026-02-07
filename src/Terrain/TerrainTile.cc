@@ -1,10 +1,10 @@
 #include "TerrainTile.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
+Q_STATIC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
 
 TerrainTile::TerrainTile(const QByteArray &byteArray)
 {

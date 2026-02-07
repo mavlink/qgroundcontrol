@@ -17,7 +17,7 @@
 #include "JoystickComponent.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 #ifdef QT_DEBUG
@@ -30,7 +30,7 @@
 #include "SerialLink.h"
 #endif
 
-QGC_LOGGING_CATEGORY(APMAutoPilotPluginLog, "AutoPilotPlugins.APM.apmautopilotplugin")
+Q_STATIC_LOGGING_CATEGORY(APMAutoPilotPluginLog, "AutoPilotPlugins.APM.apmautopilotplugin")
 
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     : AutoPilotPlugin(vehicle, parent)

@@ -1,6 +1,6 @@
 #include "SHPFileHelper.h"
 #include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
@@ -9,7 +9,7 @@
 
 #include "shapefil.h"
 
-QGC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")
+Q_STATIC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")
 
 namespace {
     constexpr const char *_errorPrefix = QT_TR_NOOP("SHP file load failed. %1");

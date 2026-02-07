@@ -1,11 +1,11 @@
 #include "MissionCommandUIInfo.h"
 #include "JsonHelper.h"
 #include "FactMetaData.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <limits>
 
-QGC_LOGGING_CATEGORY(MissionCommandsLog, "Plan.MissionCommands")
+Q_STATIC_LOGGING_CATEGORY(MissionCommandsLog, "Plan.MissionCommands")
 
 MissionCmdParamInfo::MissionCmdParamInfo(QObject* parent)
     : QObject(parent)

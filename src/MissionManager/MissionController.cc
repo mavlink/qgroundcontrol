@@ -22,14 +22,14 @@
 #include "PlanViewSettings.h"
 #include "MissionCommandTree.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
-QGC_LOGGING_CATEGORY(MissionControllerLog, "PlanManager.MissionController")
+Q_STATIC_LOGGING_CATEGORY(MissionControllerLog, "PlanManager.MissionController")
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController (masterController, parent)

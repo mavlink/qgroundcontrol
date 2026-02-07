@@ -2,9 +2,9 @@
 
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "Comms.MockLink.MockLinkMissionItemHandler")
+Q_STATIC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "Comms.MockLink.MockLinkMissionItemHandler")
 
 MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink *mockLink)
     : QObject(mockLink)

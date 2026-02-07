@@ -17,14 +17,14 @@
 #include "RallyPointManager.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QFileInfo>
 
-QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanManager.PlanMasterController")
+Q_STATIC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanManager.PlanMasterController")
 
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject               (parent)

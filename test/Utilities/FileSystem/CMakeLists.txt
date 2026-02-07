@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         QGCFileHelperTest.h
         QGCFileWatcherTest.cc
         QGCFileWatcherTest.h
+        QGCFileWriterTest.cc
+        QGCFileWriterTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

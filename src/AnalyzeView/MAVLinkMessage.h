@@ -2,14 +2,12 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
 
 class QmlObjectListModel;
 
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkMessageLog)
 
 class QGCMAVLinkMessage : public QObject
 {

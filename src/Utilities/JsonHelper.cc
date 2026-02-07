@@ -11,12 +11,12 @@
 #include "FactMetaData.h"
 #include "MissionCommandList.h"
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCNetworkHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QmlObjectListModel.h"
 
-QGC_LOGGING_CATEGORY(JsonHelperLog, "Utilities.JsonHelper")
+Q_STATIC_LOGGING_CATEGORY(JsonHelperLog, "Utilities.JsonHelper")
 
 Q_APPLICATION_STATIC(QTranslator, s_jsonTranslator);
 

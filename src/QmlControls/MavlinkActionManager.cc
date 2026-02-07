@@ -5,14 +5,14 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QJsonArray>
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(MavlinkActionManagerLog, "QMLControls.MavlinkActionManager")
+Q_STATIC_LOGGING_CATEGORY(MavlinkActionManagerLog, "QMLControls.MavlinkActionManager")
 
 MavlinkActionManager::MavlinkActionManager(QObject *parent)
     : QObject(parent)

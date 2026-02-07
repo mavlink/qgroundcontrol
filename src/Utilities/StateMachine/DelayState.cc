@@ -1,5 +1,9 @@
 #include "DelayState.h"
 
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
+
 DelayState::DelayState(QState* parentState, int delayMsecs)
     : QGCState("DelayState", parentState)
 {

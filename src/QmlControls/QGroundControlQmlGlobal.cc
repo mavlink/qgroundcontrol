@@ -14,7 +14,7 @@
 #include "MissionCommandTree.h"
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include "LoggingCategoryManager.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
@@ -26,7 +26,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
 
-QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
+Q_STATIC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
 
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
@@ -326,25 +326,25 @@ void QGroundControlQmlGlobal::clearDeleteAllSettingsNextBoot()
 
 QmlObjectListModel *QGroundControlQmlGlobal::treeLoggingCategoriesModel()
 {
-    return QGCLoggingCategoryManager::instance()->treeCategoryModel();
+    return LoggingCategoryManager::instance()->treeCategoryModel();
 }
 
 QmlObjectListModel *QGroundControlQmlGlobal::flatLoggingCategoriesModel()
 {
-    return QGCLoggingCategoryManager::instance()->flatCategoryModel();
+    return LoggingCategoryManager::instance()->flatCategoryModel();
 }
 
 void QGroundControlQmlGlobal::setCategoryLoggingOn(const QString &category, bool enable)
 {
-    QGCLoggingCategoryManager::instance()->setCategoryLoggingOn(category, enable);
+    LoggingCategoryManager::instance()->setCategoryEnabled(category, enable);
 }
 
 bool QGroundControlQmlGlobal::categoryLoggingOn(const QString &category)
 {
-    return QGCLoggingCategoryManager::categoryLoggingOn(category);
+    return LoggingCategoryManager::instance()->isCategoryEnabled(category);
 }
 
 void QGroundControlQmlGlobal::disableAllLoggingCategories()
 {
-    QGCLoggingCategoryManager::instance()->disableAllCategories();
+    LoggingCategoryManager::instance()->disableAllCategories();
 }

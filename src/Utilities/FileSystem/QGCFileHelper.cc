@@ -14,8 +14,7 @@
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QUrl>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCFileHelperLog)
-Q_LOGGING_CATEGORY(QGCFileHelperLog, "Utilities.QGCFileHelper")
+Q_STATIC_LOGGING_CATEGORY(QGCFileHelperLog, "Utilities.QGCFileHelper")
 
 namespace QGCFileHelper {
 

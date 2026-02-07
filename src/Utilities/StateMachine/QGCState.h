@@ -4,7 +4,6 @@
 #include <QString>
 #include <QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 
 class QGCStateMachine;
 class Vehicle;

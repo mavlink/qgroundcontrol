@@ -6,11 +6,11 @@
 
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(MultiVehicleTestLog, "Test.MultiVehicleTest")
+Q_STATIC_LOGGING_CATEGORY(MultiVehicleTestLog, "Test.MultiVehicleTest")
 
 MultiVehicleTest::MultiVehicleTest(QObject* parent) : UnitTest(parent)
 {

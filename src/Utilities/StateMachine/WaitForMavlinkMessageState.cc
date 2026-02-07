@@ -3,7 +3,9 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
 
 #include <QString>
 #include <utility>

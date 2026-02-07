@@ -2,13 +2,13 @@
 #include "Fact.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(RadioComponentControllerLog, "AutoPilotPlugins.RadioComponentController")
-QGC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "AutoPilotPlugins.RadioComponentController:verbose")
+Q_STATIC_LOGGING_CATEGORY(RadioComponentControllerLog, "AutoPilotPlugins.RadioComponentController")
+Q_STATIC_LOGGING_CATEGORY(RadioComponentControllerVerboseLog, "AutoPilotPlugins.RadioComponentController:verbose")
 
 RadioComponentController::RadioComponentController(QObject *parent)
     : RemoteControlCalibrationController(parent)

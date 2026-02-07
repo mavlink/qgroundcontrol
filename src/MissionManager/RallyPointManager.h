@@ -2,13 +2,11 @@
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtCore/QLoggingCategory>
 
 #include "PlanManager.h"
 
 class Vehicle;
 
-Q_DECLARE_LOGGING_CATEGORY(RallyPointManagerLog)
 
 /// This is the base class for firmware specific rally point managers. A rally point manager is responsible
 /// for communicating with the vehicle to set/get rally points.

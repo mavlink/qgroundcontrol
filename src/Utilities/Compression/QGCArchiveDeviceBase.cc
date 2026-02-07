@@ -1,14 +1,14 @@
 #include "QGCArchiveDeviceBase.h"
 #include "QGCFileHelper.h"
 #include "QGClibarchive.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <archive.h>
 #include <archive_entry.h>
 
 #include <cstring>
 
-QGC_LOGGING_CATEGORY(QGCArchiveDeviceBaseLog, "Utilities.QGCArchiveDeviceBase")
+Q_STATIC_LOGGING_CATEGORY(QGCArchiveDeviceBaseLog, "Utilities.QGCArchiveDeviceBase")
 
 // ============================================================================
 // Constructors / Destructor

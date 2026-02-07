@@ -1,9 +1,9 @@
 #include "DataFlashUtility.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <cstring>
 
-QGC_LOGGING_CATEGORY(DataFlashUtilityLog, "Utilities.DataFlashUtility")
+Q_STATIC_LOGGING_CATEGORY(DataFlashUtilityLog, "Utilities.DataFlashUtility")
 
 namespace DataFlashUtility
 {

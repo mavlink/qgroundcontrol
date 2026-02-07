@@ -1,7 +1,7 @@
 #include "FactGroup.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(FactGroupLog, "FactSystem.FactGroup")
+Q_STATIC_LOGGING_CATEGORY(FactGroupLog, "FactSystem.FactGroup")
 
 FactGroup::FactGroup(int updateRateMsecs, const QString &metaDataFile, QObject *parent, bool ignoreCamelCase)
     : QObject(parent)

@@ -1,10 +1,10 @@
 #include "KMLDomDocument.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtGui/QColor>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(KMLDomDocumentLog, "Utilities.KMLDomDocument")
+Q_STATIC_LOGGING_CATEGORY(KMLDomDocumentLog, "Utilities.KMLDomDocument")
 
 KMLDomDocument::KMLDomDocument(const QString &name)
 {

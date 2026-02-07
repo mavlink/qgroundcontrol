@@ -1,8 +1,8 @@
 #include "MAVLinkStreamConfig.h"
 #include "MAVLinkLib.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(MAVLinkStreamConfigLog, "MAVLink.MAVLinkStreamConfig")
+Q_STATIC_LOGGING_CATEGORY(MAVLinkStreamConfigLog, "MAVLink.MAVLinkStreamConfig")
 
 MAVLinkStreamConfig::MAVLinkStreamConfig(const SetMessageIntervalCb &messageIntervalCb)
     : _messageIntervalCb(messageIntervalCb)

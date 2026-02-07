@@ -1,13 +1,13 @@
 #include "AudioOutput.h"
 #include "Fact.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCApplication.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
 
-QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
+Q_STATIC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
 // qt.speech.tts.android
 

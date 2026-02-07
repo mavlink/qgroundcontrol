@@ -3,6 +3,9 @@
 #include "DeviceInfo.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
 
 namespace
 {

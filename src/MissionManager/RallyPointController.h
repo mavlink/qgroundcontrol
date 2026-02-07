@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
 
-Q_DECLARE_LOGGING_CATEGORY(RallyPointControllerLog)
 
 class GeoFenceManager;
 class RallyPointManager;

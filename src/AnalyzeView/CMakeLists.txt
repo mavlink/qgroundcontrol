@@ -9,14 +9,14 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         LogDownloadController.cc
         LogDownloadController.h
-        LogEntry.cc
-        LogEntry.h
         MAVLinkChartController.cc
         MAVLinkChartController.h
         MAVLinkConsoleController.cc
         MAVLinkConsoleController.h
         MAVLinkInspectorController.cc
         MAVLinkInspectorController.h
+        MAVLinkLogEntry.cc
+        MAVLinkLogEntry.h
         MAVLinkMessage.cc
         MAVLinkMessage.h
         MAVLinkMessageField.cc

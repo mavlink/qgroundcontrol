@@ -1,5 +1,5 @@
 #include "SDLJoystick.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
@@ -7,7 +7,7 @@
 
 #include <SDL3/SDL.h>
 
-QGC_LOGGING_CATEGORY(SDLJoystickLog, "qgc.utilities.sdl.joystick")
+Q_STATIC_LOGGING_CATEGORY(SDLJoystickLog, "qgc.utilities.sdl.joystick")
 
 namespace SDLJoystick {
 

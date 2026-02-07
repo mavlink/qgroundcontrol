@@ -1,11 +1,11 @@
 #include "LogDownloadController.h"
 #include "AppSettings.h"
-#include "LogEntry.h"
+#include "MAVLinkLogEntry.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -13,7 +13,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
+Q_STATIC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
 
 LogDownloadController::LogDownloadController(QObject *parent)
     : QObject(parent)
@@ -56,7 +56,7 @@ void LogDownloadController::_downloadToDirectory(const QString &dir)
         _downloadPath += QDir::separator();
     }
 
-    QGCLogEntry *const log = _getNextSelected();
+    MAVLinkLogEntry *const log = _getNextSelected();
     if (log) {
         log->setStatus(tr("Waiting"));
     }
@@ -80,7 +80,7 @@ void LogDownloadController::_findMissingEntries()
     int start = -1;
     int end = -1;
     for (int i = 0; i < num_logs; i++) {
-        const QGCLogEntry *const entry = _logEntriesModel->value<const QGCLogEntry*>(i);
+        const MAVLinkLogEntry *const entry = _logEntriesModel->value<const MAVLinkLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -103,7 +103,7 @@ void LogDownloadController::_findMissingEntries()
 
     if (_retries++ > 2) {
         for (int i = 0; i < num_logs; i++) {
-            QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+            MAVLinkLogEntry *const entry = _logEntriesModel->value<MAVLinkLogEntry*>(i);
             if (entry && !entry->received()) {
                 entry->setStatus(tr("Error"));
             }
@@ -159,7 +159,7 @@ void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t
         }
 
         for (int i = 0; i < num_logs; i++) {
-            QGCLogEntry *const entry = new QGCLogEntry(i);
+            MAVLinkLogEntry *const entry = new MAVLinkLogEntry(i);
             _logEntriesModel->append(entry);
         }
     }
@@ -168,7 +168,7 @@ void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t
         if ((size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
             id -= _apmOffset;
             if (id < _logEntriesModel->count()) {
-                QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(id);
+                MAVLinkLogEntry *const entry = _logEntriesModel->value<MAVLinkLogEntry*>(id);
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
                 entry->setReceived(true);
@@ -200,7 +200,7 @@ bool LogDownloadController::_entriesComplete() const
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        const QGCLogEntry *const entry = _logEntriesModel->value<const QGCLogEntry*>(i);
+        const MAVLinkLogEntry *const entry = _logEntriesModel->value<const MAVLinkLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -232,14 +232,14 @@ void LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, c
 
     bool result = false;
     if (ofs <= _downloadData->entry->size()) {
-        const uint32_t chunk = ofs / LogDownloadData::kChunkSize;
+        const uint32_t chunk = ofs / MAVLinkLogDownloadData::kChunkSize;
         // qCDebug(LogDownloadControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
         if (chunk != _downloadData->current_chunk) {
             qCWarning(LogDownloadControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
             return;
         }
 
-        const uint16_t bin = (ofs - (chunk * LogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
+        const uint16_t bin = (ofs - (chunk * MAVLinkLogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
         if (bin >= _downloadData->chunk_table.size()) {
             qCWarning(LogDownloadControllerLog) << "Out of range bin received";
         } else {
@@ -268,7 +268,7 @@ void LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, c
             } else if (_chunkComplete()) {
                 _downloadData->advanceChunk();
                 _requestLogData(_downloadData->ID,
-                                _downloadData->current_chunk * LogDownloadData::kChunkSize,
+                                _downloadData->current_chunk * MAVLinkLogDownloadData::kChunkSize,
                                 _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
             } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
                 // Likely to be grabbing fragments and got to the end of a gap
@@ -315,7 +315,7 @@ void LogDownloadController::_findMissingData()
         }
     }
 
-    const uint32_t pos = (_downloadData->current_chunk * LogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+    const uint32_t pos = (_downloadData->current_chunk * MAVLinkLogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
     const uint32_t len = (end - start) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
     _requestLogData(_downloadData->ID, pos, len, _retries);
 }
@@ -363,7 +363,7 @@ bool LogDownloadController::_prepareLogDownload()
 {
     _downloadData.reset();
 
-    QGCLogEntry *const entry = _getNextSelected();
+    MAVLinkLogEntry *const entry = _getNextSelected();
     if (!entry) {
         return false;
     }
@@ -373,7 +373,7 @@ bool LogDownloadController::_prepareLogDownload()
 
     const QString ftime = (entry->time().date().year() >= 2010) ? entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss")) : QStringLiteral("UnknownDate");
 
-    _downloadData = std::make_unique<LogDownloadData>(entry);
+    _downloadData = std::make_unique<MAVLinkLogDownloadData>(entry);
     _downloadData->filename = QStringLiteral("log_") + QString::number(entry->id()) + "_" + ftime;
 
     if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
@@ -430,11 +430,11 @@ void LogDownloadController::refresh()
     _requestLogList(0, 0xffff);
 }
 
-QGCLogEntry *LogDownloadController::_getNextSelected() const
+MAVLinkLogEntry *LogDownloadController::_getNextSelected() const
 {
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+        MAVLinkLogEntry *const entry = _logEntriesModel->value<MAVLinkLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -469,7 +469,7 @@ void LogDownloadController::_resetSelection(bool canceled)
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+        MAVLinkLogEntry *const entry = _logEntriesModel->value<MAVLinkLogEntry*>(i);
         if (!entry) {
             continue;
         }

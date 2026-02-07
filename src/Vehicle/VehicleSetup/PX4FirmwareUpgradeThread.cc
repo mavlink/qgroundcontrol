@@ -1,7 +1,10 @@
 #include "PX4FirmwareUpgradeThread.h"
 #include "Bootloader.h"
 #include "FirmwareImage.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(FirmwareUpgradeLog, "VehicleSetup.FirmwareUpgradeController")
+Q_STATIC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "VehicleSetup.FirmwareUpgradeController:verbose")
 
 #include <QtCore/QThread>
 #include <QtCore/QTimer>

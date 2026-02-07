@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(ScreenToolsControllerLog)
 
 /// This Qml control is used to return screen parameters
 class ScreenToolsController : public QObject

@@ -5,7 +5,7 @@
 #include "JoystickManager.h"
 #include "MavlinkCameraControl.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCVideoStreamInfo.h"
 #include "SimulatedCameraControl.h"
 
@@ -16,7 +16,7 @@
 
 constexpr double kPi = std::numbers::pi_v<double>;
 
-QGC_LOGGING_CATEGORY(CameraManagerLog, "Camera.QGCCameraManager")
+Q_STATIC_LOGGING_CATEGORY(CameraManagerLog, "Camera.QGCCameraManager")
 
 namespace {
     constexpr int kHeartbeatTickMs = 500;

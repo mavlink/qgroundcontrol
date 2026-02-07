@@ -3,10 +3,10 @@
 #include <QtTest/QSignalSpy>
 
 #include "FTPManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(FTPTestLog, "Test.FTPTest")
+Q_STATIC_LOGGING_CATEGORY(FTPTestLog, "Test.FTPTest")
 
 FTPTest::FTPTest(QObject* parent) : VehicleTest(parent)
 {

@@ -1,14 +1,12 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MissionController.h"
 #include "GeoFenceController.h"
 #include "RallyPointController.h"
 
-Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
 class QGCCompressionJob;
 class QmlObjectListModel;

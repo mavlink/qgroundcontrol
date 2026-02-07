@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 
 #include "MAVLinkLib.h"
@@ -9,8 +8,6 @@ class MavlinkCameraControl;
 class Fact;
 class Vehicle;
 
-Q_DECLARE_LOGGING_CATEGORY(CameraIOLog)
-Q_DECLARE_LOGGING_CATEGORY(CameraIOLogVerbose)
 
 /// Camera parameter handler.
 class QGCCameraParamIO : public QObject

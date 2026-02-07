@@ -1,10 +1,10 @@
 #include "JoystickComponent.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include "Joystick.h"
 #include "JoystickManager.h"
 
-QGC_LOGGING_CATEGORY(JoystickComponentLog, "AutoPilotPlugins.JoystickComponent")
+Q_STATIC_LOGGING_CATEGORY(JoystickComponentLog, "AutoPilotPlugins.JoystickComponent")
 
 JoystickComponent::JoystickComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownJoystickVehicleComponent, parent)

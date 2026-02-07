@@ -5,7 +5,6 @@
 
 #include "QGCNetworkHelper.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 #include <QtNetwork/QNetworkReply>
@@ -16,7 +15,6 @@ class QAbstractNetworkCache;
 class QGCCompressionJob;
 class QFile;
 
-Q_DECLARE_LOGGING_CATEGORY(QGCFileDownloadLog)
 
 /// File download with progress, decompression, and hash verification
 ///

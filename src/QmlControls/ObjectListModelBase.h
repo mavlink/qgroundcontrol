@@ -11,10 +11,8 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(ObjectListModelBaseLog)
 
 /// Base class for custom object list models: QmlObjectListModel, SparselObjectListModel
 class ObjectListModelBase : public QAbstractListModel

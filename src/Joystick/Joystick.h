@@ -2,7 +2,6 @@
 
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 #include <QtCore/QVariantMap>
@@ -13,8 +12,6 @@
 #include "Fact.h"
 #include "JoystickSettings.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 class MavlinkActionManager;
 class QmlObjectListModel;

@@ -1,6 +1,10 @@
 #include "ActuatorActions.h"
 #include "QGCApplication.h"
 
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
+
 using namespace ActuatorActions;
 
 QString Config::typeToLabel() const

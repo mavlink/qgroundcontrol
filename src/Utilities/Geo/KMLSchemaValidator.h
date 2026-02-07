@@ -1,14 +1,12 @@
 #pragma once
 
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
 
 class QDomDocument;
 class QDomElement;
 
-Q_DECLARE_LOGGING_CATEGORY(KMLSchemaValidatorLog)
 
 /// Validates KML documents against rules extracted from the OGC KML 2.2 XSD schema.
 /// This provides schema-driven validation without requiring a full XML Schema processor.

@@ -3,7 +3,7 @@
 #include <QtCore/QDir>
 
 #include "LogDownloadController.h"
-#include "LogEntry.h"
+#include "MAVLinkLogEntry.h"
 #include "MAVLinkProtocol.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
@@ -25,7 +25,7 @@ void LogDownloadTest::_downloadTest()
     multiSpyLogDownloadController->clearAllSignals();
     QmlObjectListModel* const model = controller->_getModel();
     QVERIFY(model);
-    model->value<QGCLogEntry*>(0)->setSelected(true);
+    model->value<MAVLinkLogEntry*>(0)->setSelected(true);
     const QString downloadTo = QDir::currentPath();
     controller->download(downloadTo);
     QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", 10000));

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
@@ -15,7 +14,6 @@
 #include <ulog_cpp/messages.hpp>
 #include <ulog_cpp/subscription.hpp>
 
-Q_DECLARE_LOGGING_CATEGORY(ULogUtilityLog)
 
 namespace ULogUtility
 {

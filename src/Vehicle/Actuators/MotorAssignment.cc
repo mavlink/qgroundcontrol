@@ -4,6 +4,9 @@
 #include "QmlObjectListModel.h"
 
 #include <vector>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
 
 MotorAssignment::MotorAssignment(QObject* parent, Vehicle* vehicle, QmlObjectListModel* actuators)
         : QObject(parent), _vehicle(vehicle), _actuators(actuators)

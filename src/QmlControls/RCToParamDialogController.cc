@@ -2,10 +2,10 @@
 #include "ParameterManager.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Fact.h"
 
-QGC_LOGGING_CATEGORY(RCToParamDialogControllerLog, "QMLControls.RCToParamDialogController")
+Q_STATIC_LOGGING_CATEGORY(RCToParamDialogControllerLog, "QMLControls.RCToParamDialogController")
 
 QMap<QString, FactMetaData*> RCToParamDialogController::_metaDataMap;
 

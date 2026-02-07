@@ -12,7 +12,10 @@
 #include "MultiVehicleManager.h"
 #include "FirmwareImage.h"
 #include "Fact.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(FirmwareUpgradeLog, "VehicleSetup.FirmwareUpgradeController")
+Q_STATIC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "VehicleSetup.FirmwareUpgradeController:verbose")
 
 #include <QtCore/QDir>
 #include <QtCore/QStandardPaths>

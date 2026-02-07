@@ -18,7 +18,7 @@
 
 #include <QtCore/private/qthread_p.h>
 
-#include "QGCLogging.h"
+#include "LogManager.h"
 #include "AudioOutput.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
@@ -32,7 +32,8 @@
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
 #include "QGCImageProvider.h"
-#include "QGCLoggingCategory.h"
+#include "LoggingCategoryManager.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
 #include "AppSettings.h"
@@ -45,7 +46,7 @@
 #include "SerialLink.h"
 #endif
 
-QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
+Q_STATIC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
 
 QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QApplication(argc, argv)
@@ -141,7 +142,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     }
 
     // Set up our logging filters
-    QGCLoggingCategoryManager::instance()->setFilterRulesFromSettings(loggingOptions);
+    LoggingCategoryManager::instance()->installFilter(loggingOptions);
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
@@ -211,6 +212,18 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     SettingsManager::instance()->init();
+
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    LogManager* const logManager = LogManager::instance();
+    logManager->setLogDirectory(appSettings->crashSavePath());
+    connect(appSettings, &AppSettings::savePathsChanged, logManager, [logManager, appSettings]() {
+        logManager->setLogDirectory(appSettings->crashSavePath());
+    });
+
+    if (_logOutput) {
+        logManager->setDiskLoggingEnabled(true);
+    }
+
     if (_systemId > 0) {
         qCDebug(QGCApplicationLog) << "Setting MAVLink System ID to:" << _systemId;
         SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);

@@ -5,10 +5,10 @@
 
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(CommsTestLog, "Test.CommsTest")
+Q_STATIC_LOGGING_CATEGORY(CommsTestLog, "Test.CommsTest")
 
 CommsTest::CommsTest(QObject* parent) : UnitTest(parent)
 {

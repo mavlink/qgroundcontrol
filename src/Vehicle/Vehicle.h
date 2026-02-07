@@ -74,7 +74,6 @@ class ParsedEvent;
 }
 }
 
-Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
 class Vehicle : public VehicleFactGroup
 {

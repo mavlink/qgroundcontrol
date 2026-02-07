@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
@@ -9,7 +8,6 @@
 #include "QmlUnitsConversion.h"
 #include "qgc_version.h"
 
-Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
 
 class ADSBVehicleManager;
 class FactGroup;

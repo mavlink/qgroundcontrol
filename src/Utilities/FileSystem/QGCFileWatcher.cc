@@ -1,10 +1,10 @@
 #include "QGCFileWatcher.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 
-QGC_LOGGING_CATEGORY(QGCFileWatcherLog, "Utilities.QGCFileWatcher")
+Q_STATIC_LOGGING_CATEGORY(QGCFileWatcherLog, "Utilities.QGCFileWatcher")
 
 // ============================================================================
 // Construction / Destruction

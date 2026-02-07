@@ -3,7 +3,7 @@
 #include "Fact.h"
 #include "FactGroup.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "RTCMMavlink.h"
 #include "SettingsManager.h"
 #include <QtNetwork/QSslSocket>
@@ -22,7 +22,7 @@
 #include <QtQml/QQmlEngine>
 #include <QtQml/QJSEngine>
 
-QGC_LOGGING_CATEGORY(NTRIPLog, "qgc.ntrip")
+Q_STATIC_LOGGING_CATEGORY(NTRIPLog, "qgc.ntrip")
 
 // Register the QML type without constructing the singleton up-front.
 // This avoids creating NTRIPManager during a temporary Q(Core)Application

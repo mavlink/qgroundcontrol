@@ -214,6 +214,4 @@ void MissionControllerTest::_testGlobalAltMode()
     }
 }
 
-#include "UnitTest.h"
-
 UT_REGISTER_TEST(MissionControllerTest, TestLabel::Integration, TestLabel::MissionManager)

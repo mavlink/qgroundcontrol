@@ -7,11 +7,11 @@
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
+Q_STATIC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
 const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
 

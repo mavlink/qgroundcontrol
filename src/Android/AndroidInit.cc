@@ -2,13 +2,13 @@
 #ifndef QGC_NO_SERIAL_LINK
     #include "AndroidSerial.h"
 #endif
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.androidinit");
+Q_STATIC_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.androidinit");
 
 static jobject _context = nullptr;
 static jobject _class_loader = nullptr;

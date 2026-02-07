@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LogReplayLink.h"
 
-Q_DECLARE_LOGGING_CATEGORY(LogReplayLinkControllerLog)
 
 class LogReplayLinkController : public QObject
 {

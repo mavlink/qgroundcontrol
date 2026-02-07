@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
@@ -13,7 +12,6 @@ class Vehicle;
 class QQuickItem;
 class QQmlContext;
 
-Q_DECLARE_LOGGING_CATEGORY(VehicleComponentLog)
 
 /// A vehicle component is an object which abstracts the physical portion of a vehicle into a set of
 /// configurable values and user interface.

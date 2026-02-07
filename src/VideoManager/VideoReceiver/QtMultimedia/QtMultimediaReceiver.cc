@@ -1,5 +1,5 @@
 #include "QtMultimediaReceiver.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaFormat>
@@ -12,7 +12,7 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickItemGrabResult>
 
-QGC_LOGGING_CATEGORY(QtMultimediaReceiverLog, "Video.QtMultimediaReceiver")
+Q_STATIC_LOGGING_CATEGORY(QtMultimediaReceiverLog, "Video.QtMultimediaReceiver")
 
 QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
     : VideoReceiver(parent)

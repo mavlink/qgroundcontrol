@@ -10,11 +10,11 @@
 #include "FirmwarePlugin.h"
 #include "KMLPlanDomDocument.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "Plan.TransectStyleComplexItem")
+Q_STATIC_LOGGING_CATEGORY(TransectStyleComplexItemLog, "Plan.TransectStyleComplexItem")
 
 TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup)
     : ComplexMissionItem                (masterController, flyView)

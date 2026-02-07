@@ -6,7 +6,7 @@
 #include "JoystickManagerSettings.h"
 #include "JoystickSDL.h"
 #include "SDLJoystick.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #ifdef Q_OS_ANDROID
 #include "AndroidEvents.h"
@@ -18,7 +18,7 @@ using JoystickBackend = JoystickSDL;
 #include <QtCore/QSettings>
 #include <QtGui/QVector3D>
 
-QGC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.JoystickManager")
+Q_STATIC_LOGGING_CATEGORY(JoystickManagerLog, "Joystick.JoystickManager")
 
 Q_APPLICATION_STATIC(JoystickManager, _joystickManager);
 

@@ -13,11 +13,11 @@
 #include <atomic>
 
 #include "QGCCacheTile.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapUrlEngine.h"
 #include "QGCTile.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGCTileCacheWorkerLog)
+Q_STATIC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker")
 
 class TransactionGuard {
 public:

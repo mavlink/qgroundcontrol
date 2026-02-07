@@ -1,14 +1,14 @@
 #include "LinkInterface.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "MAVLinkSigning.h"
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(LinkInterfaceLog, "Comms.LinkInterface")
+Q_STATIC_LOGGING_CATEGORY(LinkInterfaceLog, "Comms.LinkInterface")
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
     : QObject(parent)

@@ -4,9 +4,9 @@
 #include <QtCore/QCommandLineOption>
 #include <QtCore/QCoreApplication>
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QGCCommandLineParserLog, "Utilities.QGCCommandLineParser")
+Q_STATIC_LOGGING_CATEGORY(QGCCommandLineParserLog, "Utilities.QGCCommandLineParser")
 
 namespace QGCCommandLineParser {
 

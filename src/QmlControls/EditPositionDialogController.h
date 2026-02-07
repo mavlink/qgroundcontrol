@@ -1,13 +1,11 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 
-Q_DECLARE_LOGGING_CATEGORY(EditPositionDialogControllerLog)
 
 class EditPositionDialogController : public QObject
 {

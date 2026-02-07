@@ -3,11 +3,9 @@
 #include "MAVLinkLib.h"
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtGui/QImage>
 
-Q_DECLARE_LOGGING_CATEGORY(ImageProtocolManagerLog)
 
 /// Supports the Mavlink image transmission protocol (https://mavlink.io/en/services/image_transmission.html).
 /// Mainly used by optical flow cameras.

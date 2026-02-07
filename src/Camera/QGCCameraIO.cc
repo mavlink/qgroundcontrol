@@ -2,11 +2,11 @@
 #include "MavlinkCameraControl.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(QGCCameraParamIOLog, "Camera.QGCCameraParamIO")
-QGC_LOGGING_CATEGORY(QGCCameraParamIOVerbose, "Camera.QGCCameraParamIO:verbose")
+Q_STATIC_LOGGING_CATEGORY(QGCCameraParamIOLog, "Camera.QGCCameraParamIO")
+Q_STATIC_LOGGING_CATEGORY(QGCCameraParamIOVerbose, "Camera.QGCCameraParamIO:verbose")
 
 namespace {
     constexpr int kMaxRetries = 3;

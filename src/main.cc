@@ -1,14 +1,14 @@
 #include "QGCApplication.h"
 #include "QGCCommandLineParser.h"
-#include "QGCLogging.h"
-#include "QGCLoggingCategory.h"
+#include "LogManager.h"
+#include <QtCore/QLoggingCategory>
 #include "Platform.h"
 
 #ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
 
-QGC_LOGGING_CATEGORY(MainLog, "Main")
+Q_STATIC_LOGGING_CATEGORY(MainLog, "Main")
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, args);
 
-    QGCLogging::installHandler();
+    LogManager::installHandler();
 
     Platform::setupPostApp();
 

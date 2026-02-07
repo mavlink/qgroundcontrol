@@ -2,14 +2,14 @@
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QDir>
 #include <limits>
 
-QGC_LOGGING_CATEGORY(FTPManagerLog, "Vehicle.FTPManager")
+Q_STATIC_LOGGING_CATEGORY(FTPManagerLog, "Vehicle.FTPManager")
 
 FTPManager::FTPManager(Vehicle* vehicle)
     : QObject   (vehicle)

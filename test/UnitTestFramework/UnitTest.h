@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QFlags>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
@@ -169,8 +168,6 @@ inline int longMs()
 // ============================================================================
 // Forward Declarations
 // ============================================================================
-
-Q_DECLARE_LOGGING_CATEGORY(UnitTestLog)
 
 class Fact;
 class MissionItem;

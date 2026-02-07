@@ -5,9 +5,9 @@
 #include <QtCore/QJsonObject>
 
 #include "JsonHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(CameraMetaDataLog, "Camera.CameraMetaData")
+Q_STATIC_LOGGING_CATEGORY(CameraMetaDataLog, "Camera.CameraMetaData")
 
 CameraMetaData::CameraMetaData(const QString &canonicalName,
                                const QString &brand,

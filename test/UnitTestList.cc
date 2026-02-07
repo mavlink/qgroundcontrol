@@ -1,11 +1,10 @@
 #include "UnitTestList.h"
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QSet>
 
-#include "QGCLoggingCategory.h"
-
-QGC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
+Q_STATIC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
 
 // ============================================================================
 // Test Execution Functions

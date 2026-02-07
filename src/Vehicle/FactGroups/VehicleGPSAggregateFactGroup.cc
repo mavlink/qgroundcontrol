@@ -9,7 +9,7 @@
 
 #include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleGPSFactGroup.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include <QtMath>
 
 VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject *parent)

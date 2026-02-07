@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QStringList>
 
 #include "QGCCommandLineParser.h"
 #include "UnitTest.h"
-
-Q_DECLARE_LOGGING_CATEGORY(UnitTestListLog)
 
 namespace QGCUnitTest {
 

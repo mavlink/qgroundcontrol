@@ -14,6 +14,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCVideoStreamInfo.h"
 #include "MissionCommandTree.h"
+#include "QGCNetworkHelper.h"
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtCore/QDir>
@@ -23,7 +24,10 @@
 #include <QtQml/QQmlEngine>
 #include <QtNetwork/QNetworkReply>
 
-#include "QGCNetworkHelper.h"
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControl")
+Q_STATIC_LOGGING_CATEGORY(CameraControlVerboseLog, "Camera.MavlinkCameraControl:verbose")
 
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)

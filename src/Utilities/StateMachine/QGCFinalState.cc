@@ -2,6 +2,10 @@
 #include "QGCState.h"
 #include "QGCStateMachine.h"
 
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
+
 QGCFinalState::QGCFinalState(QState* parent)
     : QFinalState(parent)
 {

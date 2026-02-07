@@ -251,6 +251,4 @@ void QGCMapPolygonTest::_testSegmentSplit()
     QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 2);
 }
 
-#include "UnitTest.h"
-
 UT_REGISTER_TEST(QGCMapPolygonTest, TestLabel::Unit, TestLabel::MissionManager)

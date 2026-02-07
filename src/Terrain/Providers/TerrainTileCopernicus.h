@@ -1,11 +1,9 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 
 #include "TerrainTile.h"
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainTileCopernicusLog)
 
 /// Implements an interface for https://terrain-ce.suite.auterion.com/api/v1/
 class TerrainTileCopernicus : public TerrainTile

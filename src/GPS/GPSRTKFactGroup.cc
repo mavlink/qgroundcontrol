@@ -1,7 +1,7 @@
 #include "GPSRTKFactGroup.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "GPS.GPSRTKFactGroup")
+Q_STATIC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "GPS.GPSRTKFactGroup")
 
 GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSRTKFact.json"), parent)

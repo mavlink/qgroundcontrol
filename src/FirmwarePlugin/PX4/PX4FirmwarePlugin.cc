@@ -9,6 +9,9 @@
 
 #include <QDebug>
 #include <QString>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 #include "px4_custom_mode.h"
 

@@ -10,9 +10,9 @@
 #include <archive_entry.h>
 
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QGClibarchiveLog, "Utilities.QGClibarchive")
+Q_STATIC_LOGGING_CATEGORY(QGClibarchiveLog, "Utilities.QGClibarchive")
 
 // ============================================================================
 // Thread-Local Format Detection State

@@ -15,7 +15,7 @@
 #include "QGCCachedTileSet.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoFileTileCacheQGC.h"
@@ -24,7 +24,7 @@
 
 using namespace Qt::StringLiterals;
 
-QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QtLocationPlugin.QGCMapEngineManager")
+Q_STATIC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QtLocationPlugin.QGCMapEngineManager")
 
 Q_APPLICATION_STATIC(QGCMapEngineManager, _mapEngineManager);
 

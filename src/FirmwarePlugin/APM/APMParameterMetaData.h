@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QXmlStreamReader>
@@ -8,8 +7,6 @@
 #include "MAVLinkLib.h"
 #include "FactMetaData.h"
 
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
 class APMFactMetaDataRaw : public QObject
 {

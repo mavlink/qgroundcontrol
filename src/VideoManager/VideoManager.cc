@@ -5,7 +5,7 @@
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
 #include "Vehicle.h"
@@ -26,7 +26,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
+Q_STATIC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] = {
     "mkv",

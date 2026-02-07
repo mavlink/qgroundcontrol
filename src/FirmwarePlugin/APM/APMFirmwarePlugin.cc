@@ -18,14 +18,15 @@
 #include "Vehicle.h"
 #include "StatusTextHandler.h"
 #include "MAVLinkProtocol.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "DeviceInfo.h"
 
 #include <QtNetwork/QTcpSocket>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "FirmwarePlugin.APMFirmwarePlugin")
+Q_STATIC_LOGGING_CATEGORY(APMFirmwarePluginLog, "FirmwarePlugin.APMFirmwarePlugin")
+Q_STATIC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
     : FirmwarePlugin(parent)

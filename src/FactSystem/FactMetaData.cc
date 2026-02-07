@@ -1,13 +1,13 @@
 #include "FactMetaData.h"
 #include "JsonHelper.h"
 #include "MAVLinkLib.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "UnitsSettings.h"
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")
+Q_STATIC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {

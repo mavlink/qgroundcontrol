@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -9,7 +8,6 @@
 class Fact;
 class Vehicle;
 
-Q_DECLARE_LOGGING_CATEGORY(SyslinkComponentControllerLog)
 
 class SyslinkComponentController : public FactPanelController
 {

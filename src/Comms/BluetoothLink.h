@@ -14,7 +14,6 @@
 #include <QtBluetooth/QLowEnergyService>
 #include <QtBluetooth/QLowEnergyCharacteristic>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -26,8 +25,6 @@
 
 class QThread;
 
-Q_DECLARE_LOGGING_CATEGORY(BluetoothLinkLog)
-Q_DECLARE_LOGGING_CATEGORY(BluetoothLinkVerboseLog)
 
 /*===========================================================================*/
 

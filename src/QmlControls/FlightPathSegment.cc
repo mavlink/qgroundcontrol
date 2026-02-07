@@ -1,8 +1,8 @@
 #include "FlightPathSegment.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "Plan.FlightPathSegment")
+Q_STATIC_LOGGING_CATEGORY(FlightPathSegmentLog, "Plan.FlightPathSegment")
 
 FlightPathSegment::FlightPathSegment(SegmentType segmentType, const QGeoCoordinate& coord1, double amslCoord1Alt, const QGeoCoordinate& coord2, double amslCoord2Alt, bool queryTerrainData, QObject* parent)
     : QObject           (parent)

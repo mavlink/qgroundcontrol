@@ -27,7 +27,7 @@
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCImageProvider.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCQGeoCoordinate.h"
 #include "RallyPointManager.h"
 #include "RemoteIDManager.h"
@@ -55,7 +55,7 @@
 
 #include <QtCore/QDateTime>
 
-QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
+Q_STATIC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 #define UPDATE_TIMER 50
 #define DEFAULT_LAT  38.965767f

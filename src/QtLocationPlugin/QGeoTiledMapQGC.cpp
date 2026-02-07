@@ -1,9 +1,9 @@
 #include "QGeoTiledMapQGC.h"
 
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoTiledMapQGCLog, "QtLocationPlugin.QGeoTiledMapQGC")
+Q_STATIC_LOGGING_CATEGORY(QGeoTiledMapQGCLog, "QtLocationPlugin.QGeoTiledMapQGC")
 
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngineQGC *engine, QObject *parent)
     : QGeoTiledMap(engine, parent)

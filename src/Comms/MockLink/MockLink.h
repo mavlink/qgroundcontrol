@@ -7,7 +7,6 @@
 #include "MockLinkMissionItemHandler.h"
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
 #include <QtPositioning/QGeoCoordinate>
@@ -18,8 +17,6 @@ class MockLinkFTP;
 class MockLinkWorker;
 class QThread;
 
-Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
-Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
 class MockLink : public LinkInterface
 {

@@ -14,7 +14,7 @@
 #include <cmath>
 #include <limits>
 
-QGC_LOGGING_CATEGORY(FTPControllerLog, "Vehicle.FTPController")
+Q_STATIC_LOGGING_CATEGORY(FTPControllerLog, "Vehicle.FTPController")
 
 FTPController::FTPController(QObject *parent)
     : QObject(parent)

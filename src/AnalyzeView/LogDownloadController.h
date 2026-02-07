@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
 
-struct LogDownloadData;
-class QGCLogEntry;
+struct MAVLinkLogDownloadData;
+class MAVLinkLogEntry;
 class QmlObjectListModel;
 class QTimer;
 class QThread;
@@ -89,7 +87,7 @@ private:
     void _setListing(bool active);
     void _updateDataRate();
 
-    QGCLogEntry *_getNextSelected() const;
+    MAVLinkLogEntry *_getNextSelected() const;
 
     QTimer *_timer = nullptr;
     QmlObjectListModel *_logEntriesModel = nullptr;
@@ -98,7 +96,7 @@ private:
     bool _requestingLogEntries = false;
     int _apmOffset = 0;
     int _retries = 0;
-    std::unique_ptr<LogDownloadData> _downloadData;
+    std::unique_ptr<MAVLinkLogDownloadData> _downloadData;
     QString _downloadPath;
     Vehicle *_vehicle = nullptr;
     bool _compressLogs = false;

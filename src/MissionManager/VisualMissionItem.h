@@ -2,7 +2,6 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 

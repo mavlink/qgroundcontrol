@@ -2,14 +2,12 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 
 class RemoteIDSettings;
 class Vehicle;

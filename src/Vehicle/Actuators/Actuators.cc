@@ -7,6 +7,9 @@
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
 
 #include <algorithm>
 

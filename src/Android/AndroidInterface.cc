@@ -1,10 +1,10 @@
 #include "AndroidInterface.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
 
-QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
+Q_STATIC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
 
 namespace AndroidInterface
 {

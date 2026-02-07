@@ -4,7 +4,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QLineF>
 #include <QMetaMethod>

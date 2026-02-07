@@ -4,8 +4,6 @@
 
 #include "SDLJoystick.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
-
 namespace {
 
 QList<int> makeAxisList(int count)
@@ -25,13 +23,13 @@ MockJoystick* MockJoystick::create(const QString& name, int axisCount, int butto
 {
     const int instanceId = SDLJoystick::createVirtualJoystick(name, axisCount, buttonCount, hatCount);
     if (instanceId < 0) {
-        qCWarning(JoystickSDLLog) << "MockJoystick: Failed to create virtual joystick" << name;
+        qWarning() << "MockJoystick: Failed to create virtual joystick" << name;
         return nullptr;
     }
 
     auto* mock = new MockJoystick(name, axisCount, buttonCount, hatCount, ballCount, touchpadCount, instanceId, parent);
     if (!mock->_open()) {
-        qCWarning(JoystickSDLLog) << "MockJoystick: Failed to open virtual joystick" << name;
+        qWarning() << "MockJoystick: Failed to open virtual joystick" << name;
         delete mock;
         return nullptr;
     }

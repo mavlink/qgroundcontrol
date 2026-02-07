@@ -2,14 +2,14 @@
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkAccessManager>
 
-QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
+Q_STATIC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
 
 QGCFileDownload::QGCFileDownload(QObject *parent)
     : QObject(parent)

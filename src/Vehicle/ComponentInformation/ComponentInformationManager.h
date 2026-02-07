@@ -4,10 +4,7 @@
 #include "StateMachine.h"
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(RequestMetaDataTypeStateMachineLog)
-Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
 class Vehicle;
 class ComponentInformationManager;

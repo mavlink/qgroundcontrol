@@ -1,6 +1,10 @@
 #include "ShowAppMessageState.h"
 #include "QGCApplication.h"
 
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
+
 ShowAppMessageState::ShowAppMessageState(QState* parentState, const QString& appMessage)
     : QGCState("ShowAppMessageState", parentState)
     , _appMessage(appMessage)

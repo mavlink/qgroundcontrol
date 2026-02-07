@@ -5,7 +5,7 @@
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtCore/QJsonObject>
@@ -14,7 +14,7 @@
 #include <QtGui/QCursor>
 #include <QtGui/QGuiApplication>
 
-QGC_LOGGING_CATEGORY(APMAirframeComponentControllerLog, "AutoPilotPlugins.APMAirframeComponentController")
+Q_STATIC_LOGGING_CATEGORY(APMAirframeComponentControllerLog, "AutoPilotPlugins.APMAirframeComponentController")
 
 /*===========================================================================*/
 

@@ -40,6 +40,4 @@ void MissionSettingsTest::_testSpeedSectionDirty()
     QVERIFY(!speedSection->dirty());
 }
 
-#include "UnitTest.h"
-
 UT_REGISTER_TEST(MissionSettingsTest, TestLabel::Unit, TestLabel::MissionManager)

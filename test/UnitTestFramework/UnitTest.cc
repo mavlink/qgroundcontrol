@@ -4,6 +4,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QStandardPaths>
 #include <QtTest/QTest>
 
@@ -13,10 +14,9 @@
 #include "Fact.h"
 #include "MissionItem.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
+Q_STATIC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
 
 // ============================================================================
 // TestContext Implementation

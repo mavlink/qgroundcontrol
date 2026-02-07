@@ -1,7 +1,7 @@
 #include "QGCOptions.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "API.QGCFlyViewOptions");
+Q_STATIC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "API.QGCFlyViewOptions");
 
 QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions *options, QObject *parent)
     : QObject(parent)
@@ -17,7 +17,7 @@ QGCFlyViewOptions::~QGCFlyViewOptions()
 
 /*===========================================================================*/
 
-QGC_LOGGING_CATEGORY(QGCOptionsLog, "API.QGCOptions");
+Q_STATIC_LOGGING_CATEGORY(QGCOptionsLog, "API.QGCOptions");
 
 QGCOptions::QGCOptions(QObject *parent)
     : QObject(parent)

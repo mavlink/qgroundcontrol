@@ -2,12 +2,10 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
 #include <libexif/exif-data.h>
 
-Q_DECLARE_LOGGING_CATEGORY(ExifUtilityLog)
 
 namespace ExifUtility
 {

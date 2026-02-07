@@ -3,12 +3,12 @@
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactSystem.FactPanelController")
+Q_STATIC_LOGGING_CATEGORY(FactPanelControllerLog, "FactSystem.FactPanelController")
 
 FactPanelController::FactPanelController(QObject *parent)
     : QObject(parent)

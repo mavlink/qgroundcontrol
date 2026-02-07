@@ -2,11 +2,9 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtCore/QtGlobal>
 
-Q_DECLARE_LOGGING_CATEGORY(DataFlashParserLog)
 
 struct GeoTagData;
 

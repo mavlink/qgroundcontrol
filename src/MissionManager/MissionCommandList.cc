@@ -1,9 +1,11 @@
 #include "MissionCommandList.h"
 #include "JsonHelper.h"
 #include "MissionCommandUIInfo.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(MissionCommandsLog, "Plan.MissionCommands")
 
 MissionCommandList::MissionCommandList(const QString& jsonFilename, bool baseCommandList, QObject* parent)
     : QObject(parent)

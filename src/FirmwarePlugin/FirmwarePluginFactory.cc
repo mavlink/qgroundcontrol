@@ -1,10 +1,10 @@
 #include "FirmwarePluginFactory.h"
 #include "FirmwarePlugin.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QGlobalStatic>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "FirmwarePlugin.FirmwarePluginFactory");
+Q_STATIC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "FirmwarePlugin.FirmwarePluginFactory");
 
 /*===========================================================================*/
 

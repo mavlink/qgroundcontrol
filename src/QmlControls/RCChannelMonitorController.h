@@ -3,10 +3,8 @@
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(RCChannelMonitorControllerLog)
 
 class RCChannelMonitorController : public FactPanelController
 {

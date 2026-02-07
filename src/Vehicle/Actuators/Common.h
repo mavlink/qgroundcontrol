@@ -4,11 +4,9 @@
 
 #include <QtCore/QString>
 #include <QtCore/QJsonValue>
-#include <QtCore/QLoggingCategory>
 #include <QtGui/QVector3D>
 
 
-Q_DECLARE_LOGGING_CATEGORY(ActuatorsConfigLog)
 
 class ParameterManager;
 

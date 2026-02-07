@@ -1,11 +1,11 @@
 #include "KMLSchemaValidator.h"
 #include "KMLDomDocument.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
 
-QGC_LOGGING_CATEGORY(KMLSchemaValidatorLog, "Utilities.KMLSchemaValidator")
+Q_STATIC_LOGGING_CATEGORY(KMLSchemaValidatorLog, "Utilities.KMLSchemaValidator")
 
 namespace {
     // XSD namespace

@@ -1,10 +1,10 @@
 #include "RTCMMavlink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
+Q_STATIC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
 
 RTCMMavlink::RTCMMavlink(QObject *parent)
     : QObject(parent)

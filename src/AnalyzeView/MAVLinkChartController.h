@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkChartControllerLog)
 
 class MAVLinkInspectorController;
 class QAbstractSeries;

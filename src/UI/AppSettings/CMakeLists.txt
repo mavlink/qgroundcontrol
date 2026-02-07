@@ -12,7 +12,10 @@ qt_add_qml_module(AppSettingsModule
         GeneralSettings.qml
         HelpSettings.qml
         LinkSettings.qml
+        LogCategoriesDialog.qml
         LogReplaySettings.qml
+        LogSettings.qml
+        LogSettingsDialog.qml
         MapSettings.qml
         NTRIPSettings.qml
         MockLink.qml

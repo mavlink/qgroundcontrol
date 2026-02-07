@@ -1,5 +1,5 @@
 #include "LinkConfiguration.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
@@ -13,7 +13,7 @@
 #include "MockLink.h"
 #endif
 
-QGC_LOGGING_CATEGORY(LinkConfigurationLog, "Comms.LinkConfiguration")
+Q_STATIC_LOGGING_CATEGORY(LinkConfigurationLog, "Comms.LinkConfiguration")
 
 LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
     : QObject(parent)

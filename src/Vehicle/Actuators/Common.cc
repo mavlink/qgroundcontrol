@@ -1,8 +1,8 @@
 #include "Common.h"
 #include "ParameterManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
+Q_STATIC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
 
 
 void Parameter::parse(const QJsonValue& jsonValue)

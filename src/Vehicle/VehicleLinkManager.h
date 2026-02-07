@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -9,7 +8,6 @@
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(VehicleLinkManagerLog)
 
 class Vehicle;
 class VehicleLinkManagerTest;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QJsonArray>
 #include <QtCore/QMap>
 #include <QtCore/QStringList>
@@ -12,7 +11,6 @@
 
 class Vehicle;
 
-Q_DECLARE_LOGGING_CATEGORY(FactGroupLog)
 
 /// Used to group Facts together into an object hierarachy.
 class FactGroup : public QObject

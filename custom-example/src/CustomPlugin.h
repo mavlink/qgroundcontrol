@@ -11,7 +11,6 @@ class CustomPlugin;
 class CustomSettings;
 class QQmlApplicationEngine;
 
-Q_DECLARE_LOGGING_CATEGORY(CustomLog)
 
 class CustomFlyViewOptions : public QGCFlyViewOptions
 {

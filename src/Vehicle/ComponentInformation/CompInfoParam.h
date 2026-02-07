@@ -4,13 +4,11 @@
 #include "MAVLinkLib.h"
 #include "FactMetaData.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 class Vehicle;
 class FirmwarePlugin;
 
-Q_DECLARE_LOGGING_CATEGORY(CompInfoParamLog)
 
 class CompInfoParam : public CompInfo
 {

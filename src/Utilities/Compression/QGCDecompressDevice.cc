@@ -1,10 +1,10 @@
 #include "QGCDecompressDevice.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <archive.h>
 #include <archive_entry.h>
 
-QGC_LOGGING_CATEGORY(QGCDecompressDeviceLog, "Utilities.QGCDecompressDevice")
+Q_STATIC_LOGGING_CATEGORY(QGCDecompressDeviceLog, "Utilities.QGCDecompressDevice")
 
 // ============================================================================
 // Constructors

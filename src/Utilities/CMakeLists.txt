@@ -22,14 +22,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         FileSystem/QGCArchiveWatcher.h
         FileSystem/QGCFileWatcher.cc
         FileSystem/QGCFileWatcher.h
+        FileSystem/QGCFileWriter.cc
+        FileSystem/QGCFileWriter.h
         QGC.cc
         QGC.h
         QGCCommandLineParser.cc
         QGCCommandLineParser.h
-        QGCLogging.cc
-        QGCLogging.h
-        QGCLoggingCategory.cc
-        QGCLoggingCategory.h
         StateMachine.cc
         StateMachine.h
 )
@@ -39,10 +37,8 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}
         Compression
         FileSystem
+        Logging
         Parsing
-        Parsing/DataFlash
-        Parsing/Exif
-        Parsing/ULog
 )
 
 # ============================================================================
@@ -50,6 +46,7 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 # ============================================================================
 
 add_subdirectory(Audio)
+add_subdirectory(Logging)
 add_subdirectory(Compression)
 add_subdirectory(Geo)
 add_subdirectory(Network)

@@ -1,9 +1,9 @@
 #include "DeviceInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QApplicationStatic>
 
-QGC_LOGGING_CATEGORY(QGCDeviceInfoLog, "Utilities.QGCDeviceInfo")
+Q_STATIC_LOGGING_CATEGORY(QGCDeviceInfoLog, "Utilities.QGCDeviceInfo")
 
 namespace QGCDeviceInfo
 {

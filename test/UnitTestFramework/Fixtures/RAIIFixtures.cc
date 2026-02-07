@@ -10,11 +10,11 @@
 #include "LinkManager.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
+Q_STATIC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
 
 namespace TestFixtures {
 

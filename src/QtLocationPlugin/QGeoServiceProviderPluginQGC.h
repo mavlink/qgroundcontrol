@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QtPlugin>
 #include <QtLocation/QGeoServiceProviderFactory>
-
-Q_DECLARE_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog)
 
 class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
 {

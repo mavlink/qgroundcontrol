@@ -1,12 +1,13 @@
 #include "SimulatedCameraControl.h"
 #include "FlyViewSettings.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VideoManager.h"
 
-QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
+Q_STATIC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
+Q_STATIC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControl")
 
 SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent)
     : MavlinkCameraControl(vehicle, parent)

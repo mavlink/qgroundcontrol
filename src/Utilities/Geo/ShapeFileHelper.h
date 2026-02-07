@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(ShapeFileHelperLog)
 
 /// Routines for loading polygons or polylines from KML or SHP files.
 class ShapeFileHelper : public QObject

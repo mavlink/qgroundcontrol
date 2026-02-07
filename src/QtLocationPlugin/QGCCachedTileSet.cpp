@@ -2,7 +2,7 @@
 
 #include "ElevationMapProvider.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCNetworkHelper.h"
@@ -11,7 +11,7 @@
 #include "QGeoFileTileCacheQGC.h"
 #include "QGeoTileFetcherQGC.h"
 
-QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QtLocationPlugin.QGCCachedTileSet")
+Q_STATIC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QtLocationPlugin.QGCCachedTileSet")
 
 QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
     : QObject(parent)

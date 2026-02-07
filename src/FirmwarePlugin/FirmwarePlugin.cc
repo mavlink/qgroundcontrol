@@ -6,14 +6,14 @@
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
+Q_STATIC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
 
 static const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 

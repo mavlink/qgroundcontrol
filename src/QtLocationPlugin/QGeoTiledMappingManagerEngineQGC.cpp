@@ -15,7 +15,7 @@
 #include "MapProvider.h"
 #include "QGCNetworkHelper.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapUrlEngine.h"
@@ -23,7 +23,7 @@
 #include "QGeoTiledMapQGC.h"
 #include "QGeoTileFetcherQGC.h"
 
-QGC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "QtLocationPlugin.QGeoTiledMappingManagerEngineQGC")
+Q_STATIC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "QtLocationPlugin.QGeoTiledMappingManagerEngineQGC")
 
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString, QNetworkAccessManager *networkManager, QObject *parent)
     : QGeoTiledMappingManagerEngine(parent)

@@ -1,7 +1,7 @@
 #include "QGCVideoStreamInfo.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(QGCVideoStreamInfoLog, "Camera.QGCVideoStreamInfo")
+Q_STATIC_LOGGING_CATEGORY(QGCVideoStreamInfoLog, "Camera.QGCVideoStreamInfo")
 
 QGCVideoStreamInfo::QGCVideoStreamInfo(const mavlink_video_stream_information_t &info, QObject *parent)
     : QObject(parent)

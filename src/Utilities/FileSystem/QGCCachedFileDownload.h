@@ -4,7 +4,6 @@
 /// @brief Cached file download with time-based expiration and fallback support
 
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
@@ -12,7 +11,6 @@
 class QGCFileDownload;
 class QNetworkDiskCache;
 
-Q_DECLARE_LOGGING_CATEGORY(QGCCachedFileDownloadLog)
 
 /// Cached file download with time-based expiration
 ///

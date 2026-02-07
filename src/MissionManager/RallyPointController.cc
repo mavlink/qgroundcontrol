@@ -7,11 +7,12 @@
 #include "PlanMasterController.h"
 #include "RallyPointManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(RallyPointControllerLog, "PlanManager.RallyPointController")
+Q_STATIC_LOGGING_CATEGORY(RallyPointControllerLog, "PlanManager.RallyPointController")
+Q_STATIC_LOGGING_CATEGORY(GeoFenceControllerLog, "PlanManager.GeoFenceController")
 
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
     : PlanElementController (masterController, parent)

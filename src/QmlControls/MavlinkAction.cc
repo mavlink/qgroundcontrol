@@ -1,8 +1,8 @@
 #include "MavlinkAction.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(MavlinkActionLog, "QMLControls.MavlinkAction")
+Q_STATIC_LOGGING_CATEGORY(MavlinkActionLog, "QMLControls.MavlinkAction")
 
 MavlinkAction::MavlinkAction(QObject *parent)
     : QObject(parent)

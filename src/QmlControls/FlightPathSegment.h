@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
@@ -8,7 +7,6 @@
 
 #include "TerrainQuery.h"
 
-Q_DECLARE_LOGGING_CATEGORY(FlightPathSegmentLog)
 
 // Important Note: The altitudes in the coordinates must be AMSL
 class FlightPathSegment : public QObject

@@ -1,12 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class Joystick;
 class JoystickManagerSettings;

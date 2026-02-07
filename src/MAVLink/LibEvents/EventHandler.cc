@@ -1,6 +1,9 @@
 #include "EventHandler.h"
 
 #include <QtCore/QSharedPointer>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(EventsLog, "MAVLink.LibEvents")
 
 Q_DECLARE_METATYPE(QSharedPointer<events::parser::ParsedEvent>);
 

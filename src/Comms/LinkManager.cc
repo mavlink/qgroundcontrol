@@ -4,7 +4,7 @@
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
@@ -39,8 +39,8 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
-QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
+Q_STATIC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
+Q_STATIC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
 
 Q_APPLICATION_STATIC(LinkManager, _linkManagerInstance);
 

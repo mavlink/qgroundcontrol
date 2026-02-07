@@ -1,7 +1,7 @@
 #include "StateMachine.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(StateMachineLog, "Utilities.StateMachine");
+Q_STATIC_LOGGING_CATEGORY(StateMachineLog, "Utilities.StateMachine");
 
 StateMachine::StateMachine(QObject *parent)
     : QObject(parent)

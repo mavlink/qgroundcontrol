@@ -9,10 +9,10 @@
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGC.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(VehicleTestLog, "Test.VehicleTest")
+Q_STATIC_LOGGING_CATEGORY(VehicleTestLog, "Test.VehicleTest")
 
 VehicleTest::VehicleTest(QObject* parent) : UnitTest(parent)
 {

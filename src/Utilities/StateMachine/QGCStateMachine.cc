@@ -6,6 +6,9 @@
 #include "AudioOutput.h"
 
 #include <QFinalState>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
 
 QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QObject* parent)
     : QStateMachine (parent)

@@ -40,6 +40,4 @@ void MissionControllerManagerTest::_checkInProgressValues(bool inProgress)
     QCOMPARE(_multiSpyMissionManager->argument<bool>(SIGNAL(inProgressChanged(bool))), inProgress);
 }
 
-#include "UnitTest.h"
-
 UT_REGISTER_TEST(MissionControllerManagerTest, TestLabel::Integration, TestLabel::MissionManager)

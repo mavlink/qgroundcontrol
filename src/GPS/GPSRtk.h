@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
@@ -8,7 +7,6 @@
 #include "sensor_gnss_relative.h"
 #include "sensor_gps.h"
 
-Q_DECLARE_LOGGING_CATEGORY(GPSRtkLog)
 
 class GPSRTKFactGroup;
 class FactGroup;

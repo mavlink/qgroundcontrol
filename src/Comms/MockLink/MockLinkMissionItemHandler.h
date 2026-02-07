@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
@@ -9,7 +8,6 @@
 
 class MockLink;
 
-Q_DECLARE_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog)
 
 class MockLinkMissionItemHandler : public QObject
 {

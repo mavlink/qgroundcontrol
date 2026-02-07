@@ -5,11 +5,11 @@
 #include <QtCore/QSettings>
 
 #include "QGCCachedTileSet.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 
-QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker")
+Q_STATIC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker")
 
 QGCCacheWorker::QGCCacheWorker(QObject *parent)
     : QThread(parent)

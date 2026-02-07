@@ -2,14 +2,14 @@
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QtEndian>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogReplayLinkLog, "Comms.LogReplayLink")
+Q_STATIC_LOGGING_CATEGORY(LogReplayLinkLog, "Comms.LogReplayLink")
 
 /*===========================================================================*/
 

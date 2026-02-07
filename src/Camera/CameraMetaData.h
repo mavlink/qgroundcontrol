@@ -1,9 +1,7 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(CameraMetaDataLog)
 
 /// Set of meta data which describes a camera available on the vehicle
 class CameraMetaData

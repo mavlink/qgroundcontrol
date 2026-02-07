@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 
 #include "FactGroup.h"
 
-Q_DECLARE_LOGGING_CATEGORY(GPSRTKFactGroupLog)
 
 class GPSRTKFactGroup : public FactGroup
 {

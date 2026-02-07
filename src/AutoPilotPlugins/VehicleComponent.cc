@@ -1,12 +1,12 @@
 #include "VehicleComponent.h"
 #include "ParameterManager.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "Vehicle.h"
 
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(VehicleComponentLog, "AutoPilotPlugins.VehicleComponent");
+Q_STATIC_LOGGING_CATEGORY(VehicleComponentLog, "AutoPilotPlugins.VehicleComponent");
 
 VehicleComponent::VehicleComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent, QObject *parent)
     : QObject(parent)

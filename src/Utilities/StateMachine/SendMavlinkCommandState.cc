@@ -3,6 +3,10 @@
 #include "MissionCommandTree.h"
 #include "Vehicle.h"
 
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.QGCStateMachine")
+
 SendMavlinkCommandState::SendMavlinkCommandState(QState* parentState, MAV_CMD command, double param1, double param2, double param3, double param4, double param5, double param6, double param7)
     : QGCState("SendMavlinkCommandState", parentState)
 {

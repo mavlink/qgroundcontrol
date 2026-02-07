@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #include "QGCMAVLink.h"
@@ -8,7 +7,6 @@
 class FirmwarePlugin;
 class FirmwarePluginFactory;
 
-Q_DECLARE_LOGGING_CATEGORY(FirmwarePluginManagerLog)
 
 /// FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
 class FirmwarePluginManager : public QObject

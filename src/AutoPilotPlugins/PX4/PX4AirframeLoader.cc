@@ -1,6 +1,6 @@
 #include "PX4AirframeLoader.h"
 #include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "AirframeComponentAirframes.h"
 #include "AutoPilotPlugin.h"
 
@@ -11,7 +11,7 @@
 #include <QtCore/QXmlStreamReader>
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "AutoPilotPlugins.PX4AirframeLoader")
+Q_STATIC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "AutoPilotPlugins.PX4AirframeLoader")
 
 bool PX4AirframeLoader::_airframeMetaDataLoaded = false;
 

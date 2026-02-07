@@ -57,6 +57,8 @@ set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valg
 # ============================================================================
 
 option(QGC_VIEWER3D "Enable 3D Viewer (requires Qt Quick 3D)" ON)
+option(QGC_DISABLE_QT_DEBUG "Disable Qt debug output at compile time" OFF)
+option(QGC_DISABLE_QT_INFO "Disable Qt info output at compile time" OFF)
 
 # ============================================================================
 # Compression Format Options

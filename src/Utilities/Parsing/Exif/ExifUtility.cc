@@ -1,10 +1,10 @@
 #include "ExifUtility.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <cassert>
 #include <cmath>
 
-QGC_LOGGING_CATEGORY(ExifUtilityLog, "Utilities.ExifUtility")
+Q_STATIC_LOGGING_CATEGORY(ExifUtilityLog, "Utilities.ExifUtility")
 
 namespace ExifUtility
 {

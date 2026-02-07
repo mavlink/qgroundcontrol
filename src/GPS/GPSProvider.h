@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaType>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -14,7 +13,6 @@
 #include "sensor_gnss_relative.h"
 #include "sensor_gps.h"
 
-Q_DECLARE_LOGGING_CATEGORY(GPSProviderLog)
 
 class QSerialPort;
 class GPSBaseStationSupport;

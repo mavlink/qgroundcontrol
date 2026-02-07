@@ -8,13 +8,13 @@
 #include "MissionItem.h"
 #include "QGCApplication.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 
 #include <QtGui/QPolygonF>
 #include <QtCore/QJsonArray>
 #include <QtCore/QLineF>
 
-QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
+Q_STATIC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
 const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
 

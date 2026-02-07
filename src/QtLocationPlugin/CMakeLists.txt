@@ -88,6 +88,7 @@ target_include_directories(QGCLocation
         ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
         ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Compression
         ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/FileSystem
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Logging
         ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Network
         Providers
 )

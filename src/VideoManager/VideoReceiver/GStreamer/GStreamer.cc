@@ -2,7 +2,7 @@
 #include "GStreamerHelpers.h"
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
-#include "QGCLoggingCategory.h"
+#include <QtCore/QLoggingCategory>
 #include "SettingsManager.h"
 #include "VideoSettings.h"
 
@@ -13,9 +13,10 @@
 
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamerDecoderRanks")
-QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
+Q_STATIC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
+Q_STATIC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamerDecoderRanks")
+Q_STATIC_LOGGING_CATEGORY(GStreamerAPILog, "Video.GStreamerAPI", QtInfoMsg)
+Q_STATIC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GstVideoReceiver")
 
 // TODO: Clean These up with Macros or CMake
 G_BEGIN_DECLS

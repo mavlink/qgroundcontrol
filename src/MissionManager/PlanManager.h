@@ -2,14 +2,12 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
-#include <QtCore/QLoggingCategory>
 
 #include "MissionItem.h"
 #include "QGCMAVLink.h"
 
 class Vehicle;
 
-Q_DECLARE_LOGGING_CATEGORY(PlanManagerLog)
 
 /// The PlanManager class is the base class for the Mission, GeoFence and Rally Point managers. All of which use the
 /// new mavlink v2 mission protocol.

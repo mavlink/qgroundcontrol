@@ -2,6 +2,9 @@
 #include "VideoManager.h"
 
 #include <QtCore/QVariantList>
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"

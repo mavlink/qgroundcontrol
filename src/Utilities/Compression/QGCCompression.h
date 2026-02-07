@@ -144,6 +144,21 @@ inline Format detectFormat(const QUrl &url, bool useContentFallback = true) {
 }
 
 // ============================================================================
+// In-Memory Compression (zlib via Qt)
+// ============================================================================
+
+/// Compress data in memory using zlib (via qCompress).
+/// @param data Raw data to compress
+/// @param level Compression level 1-9 (1=fast, 9=best, 6=default). 0 or negative = default.
+/// @return Compressed data (includes Qt's 4-byte size header), or empty on failure
+QByteArray compressData(const QByteArray &data, int level = -1);
+
+/// Decompress data produced by compressData() (via qUncompress).
+/// @param data Compressed data (must include Qt's 4-byte size header)
+/// @return Decompressed data, or empty on failure
+QByteArray uncompressData(const QByteArray &data);
+
+// ============================================================================
 // Single-File Decompression
 // ============================================================================
 

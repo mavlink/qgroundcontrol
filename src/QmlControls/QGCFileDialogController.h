@@ -1,11 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCFileDialogControllerLog)
 
 class QGCFileDialogController : public QObject
 {

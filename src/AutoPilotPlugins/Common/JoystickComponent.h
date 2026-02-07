@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 
 #include "VehicleComponent.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickComponentLog)
 
 class Joystick;
 

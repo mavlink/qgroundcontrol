@@ -1,6 +1,10 @@
 #include "ActuatorOutputs.h"
 #include "ParameterManager.h"
 
+#include <QtCore/QLoggingCategory>
+
+Q_STATIC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
+
 using namespace ActuatorOutputs;
 
 void ChannelConfig::reevaluate()

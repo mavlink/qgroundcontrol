@@ -3,14 +3,12 @@
 #include "FirmwarePluginFactory.h"
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 
 class ArduCopterFirmwarePlugin;
 class ArduPlaneFirmwarePlugin;
 class ArduRoverFirmwarePlugin;
 class ArduSubFirmwarePlugin;
 
-Q_DECLARE_LOGGING_CATEGORY(FirmwarePluginFactoryLog)
 
 class APMFirmwarePluginFactory : public FirmwarePluginFactory
 {

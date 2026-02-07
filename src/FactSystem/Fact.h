@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QObject>
 #include <QtCore/QRecursiveMutex>
@@ -12,7 +11,6 @@
 
 class FactValueSliderListModel;
 
-Q_DECLARE_LOGGING_CATEGORY(FactLog)
 
 /// A Fact is used to hold a single value within the system.
 class Fact : public QObject

@@ -9,13 +9,11 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
 #include <archive.h>
 
-Q_DECLARE_LOGGING_CATEGORY(QGClibarchiveLog)
 
 namespace QGClibarchive {
 
