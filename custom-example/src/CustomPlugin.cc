@@ -276,6 +276,17 @@ QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
     return _qmlEngine;
 }
 
+const QVariantList &CustomPlugin::toolBarIndicators()
+{
+    if (_toolBarIndicatorList.isEmpty()) {
+        _toolBarIndicatorList = QGCCorePlugin::toolBarIndicators();
+        _toolBarIndicatorList.append(QVariant::fromValue(
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/Custom/Widgets/BrandingLogoIndicator.qml"))));
+    }
+
+    return _toolBarIndicatorList;
+}
+
 /*===========================================================================*/
 
 CustomOverrideInterceptor::CustomOverrideInterceptor()
