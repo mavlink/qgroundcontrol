@@ -56,7 +56,6 @@ set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valg
 # Feature Flags
 # ============================================================================
 
-option(QGC_UTM_ADAPTER "Enable UTM (Unmanned Traffic Management) Adapter" OFF)
 option(QGC_VIEWER3D "Enable 3D Viewer (requires Qt Quick 3D)" ON)
 
 # ============================================================================
@@ -77,7 +76,6 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth communication links" ON)
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
-option(QGC_AIRLINK_DISABLED "Disable AIRLink support" ON)
 option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 # ============================================================================

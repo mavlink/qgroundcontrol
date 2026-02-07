@@ -28,10 +28,6 @@
 #include "MockLink.h"
 #endif
 
-#ifndef QGC_AIRLINK_DISABLED
-#include "AirLinkLink.h"
-#endif
-
 #ifdef QGC_ZEROCONF_ENABLED
 #include <qmdnsengine/browser.h>
 #include <qmdnsengine/cache.h>
@@ -132,11 +128,6 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 #ifdef QT_DEBUG
     case LinkConfiguration::TypeMock:
         link = std::make_shared<MockLink>(config);
-        break;
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    case LinkConfiguration::AirLink:
-        link = std::make_shared<AirLinkLink>(config);
         break;
 #endif
     case LinkConfiguration::TypeLast:
@@ -381,11 +372,6 @@ void LinkManager::loadLinkConfigurationList()
                 link = new MockConfiguration(name);
                 break;
 #endif
-#ifndef QGC_AIRLINK_DISABLED
-            case LinkConfiguration::AirLink:
-                link = new AirLinkConfiguration(name);
-                break;
-#endif
             case LinkConfiguration::TypeLast:
             default:
                 break;
@@ -592,9 +578,6 @@ QStringList LinkManager::linkTypeStrings() const
 #endif
 #ifdef QT_DEBUG
     list += tr("Mock Link");
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    list += tr("AirLink");
 #endif
     list += tr("Log Replay");
 

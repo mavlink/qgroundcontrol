@@ -6,7 +6,6 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.UTMSP
 
 // Toolbar for Plan View
 RowLayout {
@@ -27,16 +26,8 @@ RowLayout {
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
-    // Properties of UTM adapter
-    property bool _utmspEnabled: QGroundControl.utmspSupported
-
     function _uploadClicked() {
-        if (_utmspEnabled) {
-            QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
-            UTMSPStateStorage.removeFlightPlanState = true
-            UTMSPStateStorage.indicatorDisplayStatus = true
-        }
-        _planMasterController.upload();
+        _planMasterController.upload()
     }
 
     function _downloadClicked() {
@@ -91,18 +82,8 @@ RowLayout {
                                      qsTr("Are you sure you want to remove the plan from the vehicle and the plan editor?"),
                                      Dialog.Yes | Dialog.Cancel,
                                      function() {
-                                        _planMasterController.removeAllFromVehicle();
-                                        if (_utmspEnabled) {
-                                            _resetRegisterFlightPlan = true;
-                                            QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(false);
-                                            UTMSPStateStorage.startTimeStamp = "";
-                                            UTMSPStateStorage.showActivationTab = false;
-                                            UTMSPStateStorage.flightID = "";
-                                            UTMSPStateStorage.enableMissionUploadButton = false;
-                                            UTMSPStateStorage.indicatorPendingStatus = true;
-                                            UTMSPStateStorage.indicatorApprovedStatus = false;
-                                            UTMSPStateStorage.indicatorActivatedStatus = false;
-                                            UTMSPStateStorage.currentStateIndex = 0}})
+                                        _planMasterController.removeAllFromVehicle()
+                                     })
     }
 
     function _clearClicked() {
@@ -134,7 +115,7 @@ RowLayout {
         id: uploadButton
         text: qsTr("Upload")
         iconSource: "/res/UploadToVehicle.svg"
-        enabled: _utmspEnabled ? (!_syncInProgress && UTMSPStateStorage.enableMissionUploadButton) : (!_syncInProgress && _hasPlanItems)
+        enabled: !_syncInProgress && _hasPlanItems
         visible: !_syncInProgress
         primary: _controllerDirty
         onClicked: _uploadClicked()
@@ -208,7 +189,7 @@ RowLayout {
                     QGCButton {
                         Layout.fillWidth: true
                         text: qsTr("Download")
-                        enabled: _utmspEnabled ? !_syncInProgress && UTMSPStateStorage.enableMissionDownloadButton : !_syncInProgress
+                        enabled: !_syncInProgress
                         visible: !_syncInProgress
 
                         onClicked: {

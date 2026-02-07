@@ -258,18 +258,6 @@
     "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
     "type":             "string",
     "default":     ""
-},
-{
-    "name": "loginAirLink",
-    "shortDesc": "AirLink User Name",
-    "type": "string",
-    "default": ""
-},
-{
-    "name": "passAirLink",
-    "shortDesc": "AirLink Password",
-    "type": "string",
-    "default": ""
 }
 ]
 }

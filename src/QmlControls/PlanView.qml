@@ -11,7 +11,6 @@ import QGroundControl.FlightMap
 import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.FlyView
-import QGroundControl.UTMSP
 
 Item {
     id: _root
@@ -36,15 +35,10 @@ Item {
     property var    _appSettings: QGroundControl.settingsManager.appSettings
     property var    _planViewSettings: QGroundControl.settingsManager.planViewSettings
     property bool   _promptForPlanUsageShowing: false
-    property bool   _utmspEnabled: QGroundControl.utmspSupported
-    property bool   _resetGeofencePolygon: false   //Reset the Geofence Polygon
-    property bool   _triggerSubmit
-    property bool   _resetRegisterFlightPlan
 
     readonly property int _layerMission: 1
     readonly property int _layerFence: 2
     readonly property int _layerRally: 3
-    readonly property int _layerUTMSP: 4
 
     readonly property string _armedVehicleUploadPrompt: qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
@@ -280,9 +274,6 @@ Item {
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-				if(_utmspEnabled){
-                	QGroundControl.utmspManager.utmspVehicle.updateLastCoordinates(coordinate.latitude, coordinate.longitude)
-                }
 
                 switch (_editingLayer) {
                 case _layerMission:
@@ -421,17 +412,6 @@ Item {
                 opacity: _editingLayer != _layerRally ? editorMap._nonInteractiveOpacity : 1
             }
 
-            UTMSPMapVisuals {
-                enabled: _utmspEnabled
-                map: editorMap
-                currentMissionItems: _visualItems
-                myGeoFenceController: _geoFenceController
-                interactive: _editingLayer == _layerUTMSP
-                homePosition: _missionController.plannedHomePosition
-                planView: true
-                opacity: _editingLayer != _layerUTMSP ? editorMap._nonInteractiveOpacity : 1
-                resetCheck: _resetGeofencePolygon
-            }
         }
 
         //-----------------------------------------------------------
@@ -466,7 +446,6 @@ Item {
                         visible: toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             insertTakeoffItemAfterCurrent()
-                            _triggerSubmit = true
                         }
                     },
                     ToolStripAction {
@@ -519,7 +498,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            width: _utmspEnabled ? _rightPanelWidth + ScreenTools.defaultFontPixelWidth * 21.667 : _rightPanelWidth
+            width: _rightPanelWidth
             planMasterController: _planMasterController
             editorMap: editorMap
         }
