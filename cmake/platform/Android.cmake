@@ -107,20 +107,18 @@ endif()
 # Android Permissions
 # ----------------------------------------------------------------------------
 
-if(QGC_ENABLE_BLUETOOTH)
-    qt_add_android_permission(${CMAKE_PROJECT_NAME}
-        NAME android.permission.BLUETOOTH_SCAN
-        ATTRIBUTES
-            minSdkVersion 31
-            usesPermissionFlags neverForLocation
-    )
-    qt_add_android_permission(${CMAKE_PROJECT_NAME}
-        NAME android.permission.BLUETOOTH_CONNECT
-        ATTRIBUTES
-            minSdkVersion 31
-            usesPermissionFlags neverForLocation
-    )
-endif()
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.BLUETOOTH_SCAN
+    ATTRIBUTES
+        minSdkVersion 31
+        usesPermissionFlags neverForLocation
+)
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.BLUETOOTH_CONNECT
+    ATTRIBUTES
+        minSdkVersion 31
+        usesPermissionFlags neverForLocation
+)
 
 if(NOT QGC_NO_SERIAL_LINK)
     qt_add_android_permission(${CMAKE_PROJECT_NAME}

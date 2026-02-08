@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -7,35 +9,72 @@ import QGroundControl.Controls
 
 ColumnLayout {
     id:         root
-    spacing:    _rowSpacing
 
-    visible: subEditConfig !== null
+    readonly property var screenTools: ScreenTools
+    readonly property var qgc:         QGroundControl
+    readonly property var btConfig:    BluetoothConfiguration
+    QGCPalette { id: qgcPal; colorGroupEnabled: root.enabled }
+    readonly property var palette:     qgcPal
+
+    // Pull shared settings values from LinkSettings Loader when available.
+    property var subEditConfig:       (root.parent && root.parent.subEditConfig !== undefined) ? root.parent.subEditConfig : null
+    readonly property real _secondColumnWidth: (root.parent && root.parent._secondColumnWidth !== undefined) ? root.parent._secondColumnWidth : (root.screenTools.defaultFontPixelWidth * 30)
+    readonly property real _rowSpacing:        (root.parent && root.parent._rowSpacing !== undefined) ? root.parent._rowSpacing : (root.screenTools.defaultFontPixelHeight / 2)
+    readonly property real _colSpacing:        (root.parent && root.parent._colSpacing !== undefined) ? root.parent._colSpacing : (root.screenTools.defaultFontPixelWidth / 2)
+
+    spacing:    root._rowSpacing
+
+    visible: root.subEditConfig !== null
 
     function saveSettings() { }
 
     //-- Properties --
     property bool paired: false
 
-    readonly property bool   isBleMode:      subEditConfig ? subEditConfig.mode === BluetoothConfiguration.BluetoothMode.ModeLowEnergy : false
-    readonly property bool   isClassicMode:  subEditConfig ? subEditConfig.mode === BluetoothConfiguration.BluetoothMode.ModeClassic : false
-    readonly property string currentAddress: subEditConfig ? subEditConfig.address : ""
-    readonly property bool   hasAdapter:     subEditConfig ? subEditConfig.adapterAvailable : false
-    readonly property bool   adapterOn:      subEditConfig ? subEditConfig.adapterPoweredOn : false
-    readonly property bool   isScanning:     subEditConfig ? subEditConfig.scanning : false
+    readonly property bool   isBleMode:      root.subEditConfig ? root.subEditConfig.mode === root.btConfig.BluetoothMode.ModeLowEnergy : false
+    readonly property bool   isClassicMode:  root.subEditConfig ? root.subEditConfig.mode === root.btConfig.BluetoothMode.ModeClassic : false
+    readonly property string currentAddress: root.subEditConfig ? root.subEditConfig.address : ""
+    readonly property bool   hasAdapter:     root.subEditConfig ? root.subEditConfig.adapterAvailable : false
+    readonly property bool   adapterOn:      root.subEditConfig ? root.subEditConfig.adapterPoweredOn : false
+    readonly property bool   isScanning:     root.subEditConfig ? root.subEditConfig.scanning : false
 
     property var knownDevices: []
     property var availableAdapters: []
+    property bool _initialAdapterSelected: false
+
+    function toArray(listLike) {
+        if (!listLike) {
+            return []
+        }
+        if (Array.isArray(listLike)) {
+            return listLike.slice()
+        }
+
+        var arr = []
+        var length = 0
+        if (typeof listLike.length === "number") {
+            length = listLike.length
+            for (var i = 0; i < length; i++) {
+                arr.push(listLike[i])
+            }
+            return arr
+        }
+        if (typeof listLike.count === "number" && typeof listLike.get === "function") {
+            length = listLike.count
+            for (var j = 0; j < length; j++) {
+                arr.push(listLike.get(j))
+            }
+            return arr
+        }
+        return arr
+    }
 
     // Sorted device list
     readonly property var sortedDevices: {
-        if (!subEditConfig) return []
-        var devices = subEditConfig.devicesModel
-        if (!devices || devices.length === 0) {
-            devices = subEditConfig.nameList || []
-        }
-        var arr = Array.isArray(devices) ? devices.slice() : []
+        if (!root.subEditConfig) return []
+        var arr = root.toArray(root.subEditConfig.devicesModel)
 
-        if (isBleMode) {
+        if (root.isBleMode) {
             arr.sort(function(a, b) {
                 var rssiA = (typeof a === "object" && a.rssi) ? a.rssi : -999
                 var rssiB = (typeof b === "object" && b.rssi) ? b.rssi : -999
@@ -53,13 +92,14 @@ ColumnLayout {
 
     //-- Helper Functions --
     function refreshDeviceLists() {
-        if (!subEditConfig) {
-            knownDevices = []
-            availableAdapters = []
+        if (!root.subEditConfig) {
+            root.knownDevices = []
+            root.availableAdapters = []
+            _initialAdapterSelected = false
             return
         }
-        var connected = subEditConfig.getConnectedDevices() || []
-        var paired = subEditConfig.getAllPairedDevices() || []
+        var connected = root.subEditConfig.getConnectedDevices() || []
+        var pairedDevices = root.subEditConfig.getAllPairedDevices() || []
         var seen = {}
         var merged = []
 
@@ -70,24 +110,36 @@ ColumnLayout {
                 merged.push({ name: dev.name, address: dev.address, isConnected: true })
             }
         }
-        for (var j = 0; j < paired.length; j++) {
-            var pdev = paired[j]
+        for (var j = 0; j < pairedDevices.length; j++) {
+            var pdev = pairedDevices[j]
             if (pdev.address && !seen[pdev.address]) {
                 seen[pdev.address] = true
                 merged.push({ name: pdev.name, address: pdev.address, isConnected: false })
             }
         }
-        knownDevices = merged
-        availableAdapters = subEditConfig.getAllAvailableAdapters() || []
+        root.knownDevices = merged
+        root.availableAdapters = root.subEditConfig.getAllAvailableAdapters() || []
+
+        if (root.subEditConfig.adapterAddress && root.subEditConfig.adapterAddress !== "") {
+            _initialAdapterSelected = true
+        }
+
+        if (!_initialAdapterSelected && root.availableAdapters.length > 0 && (!root.subEditConfig.adapterAddress || root.subEditConfig.adapterAddress === "")) {
+            const firstAddress = root.availableAdapters[0].address || ""
+            if (firstAddress !== "") {
+                root.subEditConfig.selectAdapter(firstAddress)
+                _initialAdapterSelected = (root.subEditConfig.adapterAddress === firstAddress)
+            }
+        }
     }
 
     function updatePairingStatus() {
-        if (!subEditConfig) {
-            paired = false
+        if (!root.subEditConfig) {
+            root.paired = false
             return
         }
-        paired = isClassicMode && currentAddress !== "" &&
-                 subEditConfig.getPairingStatus(currentAddress) !== qsTr("Unpaired")
+        root.paired = root.isClassicMode && root.currentAddress !== "" &&
+                 root.subEditConfig.isPaired(root.currentAddress)
     }
 
     function rssiToSignalLevel(rssi) {
@@ -100,18 +152,24 @@ ColumnLayout {
 
     //-- Signal Connections --
     Connections {
-        target:  subEditConfig
-        enabled: subEditConfig !== null
+        target:  root.subEditConfig
+        enabled: root.subEditConfig !== null
 
-        function onDevicesModelChanged() { refreshDeviceLists(); updatePairingStatus() }
-        function onDeviceChanged()       { updatePairingStatus() }
-        function onModeChanged()         { refreshDeviceLists(); updatePairingStatus() }
-        function onAdapterStateChanged() { refreshDeviceLists() }
-        function onPairingStatusChanged(){ refreshDeviceLists(); updatePairingStatus() }
-        function onErrorOccurred(error)  { QGroundControl.showMessageDialog(root, qsTr("Bluetooth Error"), error) }
+        function onDevicesModelChanged() { root.refreshDeviceLists(); root.updatePairingStatus() }
+        function onDeviceChanged()       { root.updatePairingStatus() }
+        function onModeChanged()         { root.refreshDeviceLists(); root.updatePairingStatus() }
+        function onAdapterStateChanged() { root.refreshDeviceLists() }
+        function onPairingStatusChanged(){ root.refreshDeviceLists(); root.updatePairingStatus() }
+        function onErrorOccurred(error)  { root.qgc.showMessageDialog(root, qsTr("Bluetooth Error"), error, Dialog.Ok) }
     }
 
     Component.onCompleted: {
+        refreshDeviceLists()
+        updatePairingStatus()
+    }
+
+    onSubEditConfigChanged: {
+        _initialAdapterSelected = false
         refreshDeviceLists()
         updatePairingStatus()
     }
@@ -126,18 +184,18 @@ ColumnLayout {
 
     GridLayout {
         columns:          2
-        columnSpacing:    _colSpacing
-        rowSpacing:       _rowSpacing
+        columnSpacing:    root._colSpacing
+        rowSpacing:       root._rowSpacing
         Layout.fillWidth: true
 
         QGCLabel {
             text:    qsTr("Adapter")
-            visible: hasAdapter
+            visible: root.hasAdapter
         }
         QGCComboBox {
             id:             adapterCombo
-            width:          _secondColumnWidth
-            visible:        hasAdapter
+            Layout.preferredWidth: root._secondColumnWidth
+            visible:        root.hasAdapter
             sizeToContents: false
             clip:           true
 
@@ -146,8 +204,8 @@ ColumnLayout {
 
             model: {
                 var result = []
-                for (var i = 0; i < availableAdapters.length; i++) {
-                    var a = availableAdapters[i]
+                for (var i = 0; i < root.availableAdapters.length; i++) {
+                    var a = root.availableAdapters[i]
                     var name = a.name || qsTr("Unknown")
                     if (name.length > maxNameLength) {
                         name = name.substring(0, maxNameLength - 1) + "…"
@@ -157,58 +215,58 @@ ColumnLayout {
                 return result
             }
             currentIndex: {
-                var currentAddr = subEditConfig ? subEditConfig.adapterAddress : ""
-                for (var i = 0; i < availableAdapters.length; i++) {
-                    if (availableAdapters[i].address === currentAddr) return i
+                var currentAddr = root.subEditConfig ? root.subEditConfig.adapterAddress : ""
+                for (var i = 0; i < root.availableAdapters.length; i++) {
+                    if (root.availableAdapters[i].address === currentAddr) return i
                 }
                 return 0
             }
             onActivated: function(index) {
-                if (subEditConfig && index >= 0 && index < availableAdapters.length) {
-                    subEditConfig.selectAdapter(availableAdapters[index].address)
+                if (root.subEditConfig && index >= 0 && index < root.availableAdapters.length) {
+                    root.subEditConfig.selectAdapter(root.availableAdapters[index].address)
                 }
             }
         }
 
         QGCLabel {
             text:    qsTr("Status")
-            visible: hasAdapter
+            visible: root.hasAdapter
         }
         QGCLabel {
-            Layout.preferredWidth: _secondColumnWidth
-            text:                  subEditConfig ? subEditConfig.hostMode : ""
-            visible:               hasAdapter
-            color:                 adapterOn ? qgcPal.text : qgcPal.warningText
+            Layout.preferredWidth: root._secondColumnWidth
+            text:                  root.subEditConfig ? root.subEditConfig.hostMode : ""
+            visible:               root.hasAdapter
+            color:                 root.adapterOn ? root.palette.text : root.palette.warningText
         }
 
         QGCLabel {
             text:              qsTr("Bluetooth adapter unavailable")
-            visible:           !hasAdapter
-            color:             qgcPal.warningText
+            visible:           !root.hasAdapter
+            color:             root.palette.warningText
             Layout.columnSpan: 2
         }
     }
 
     RowLayout {
         Layout.fillWidth: true
-        spacing:          _colSpacing
-        visible:          hasAdapter
+        spacing:          root._colSpacing
+        visible:          root.hasAdapter
 
         QGCCheckBox {
             text:    qsTr("Powered On")
-            checked: adapterOn
+            checked: root.adapterOn
             onClicked: {
-                if (!subEditConfig) return
-                checked ? subEditConfig.powerOnAdapter() : subEditConfig.powerOffAdapter()
+                if (!root.subEditConfig) return
+                root.adapterOn ? root.subEditConfig.powerOffAdapter() : root.subEditConfig.powerOnAdapter()
             }
         }
 
         QGCCheckBox {
+            id:      discoverableCheck
             text:    qsTr("Discoverable")
-            checked: subEditConfig && (subEditConfig.hostMode === qsTr("Discoverable") ||
-                                       subEditConfig.hostMode === qsTr("Discoverable (Limited)"))
-            enabled: adapterOn
-            onClicked: { if (subEditConfig) subEditConfig.setAdapterDiscoverable(checked) }
+            checked: root.subEditConfig ? root.subEditConfig.adapterDiscoverable : false
+            enabled: root.adapterOn
+            onClicked: { if (root.subEditConfig) root.subEditConfig.setAdapterDiscoverable(discoverableCheck.checked) }
         }
     }
 
@@ -222,61 +280,61 @@ ColumnLayout {
 
     GridLayout {
         columns:          2
-        columnSpacing:    _colSpacing
-        rowSpacing:       _rowSpacing
+        columnSpacing:    root._colSpacing
+        rowSpacing:       root._rowSpacing
         Layout.fillWidth: true
 
         QGCLabel { text: qsTr("Mode") }
         RowLayout {
-            Layout.preferredWidth: _secondColumnWidth
-            spacing:               _colSpacing
+            Layout.preferredWidth: root._secondColumnWidth
+            spacing:               root._colSpacing
 
             QGCRadioButton {
                 text:    qsTr("Classic")
-                checked: isClassicMode
-                onClicked: { if (subEditConfig) subEditConfig.mode = BluetoothConfiguration.BluetoothMode.ModeClassic }
+                checked: root.isClassicMode
+                onClicked: { if (root.subEditConfig) root.subEditConfig.mode = root.btConfig.BluetoothMode.ModeClassic }
             }
 
             QGCRadioButton {
                 text:    qsTr("BLE")
-                checked: isBleMode
-                onClicked: { if (subEditConfig) subEditConfig.mode = BluetoothConfiguration.BluetoothMode.ModeLowEnergy }
+                checked: root.isBleMode
+                onClicked: { if (root.subEditConfig) root.subEditConfig.mode = root.btConfig.BluetoothMode.ModeLowEnergy }
             }
         }
 
         QGCLabel { text: qsTr("Selected Device") }
         QGCLabel {
-            Layout.preferredWidth: _secondColumnWidth
-            text: subEditConfig && subEditConfig.deviceName ? subEditConfig.deviceName : qsTr("None")
+            Layout.preferredWidth: root._secondColumnWidth
+            text: root.subEditConfig && root.subEditConfig.deviceName ? root.subEditConfig.deviceName : qsTr("None")
         }
 
         QGCLabel { text: qsTr("Device Address") }
         QGCLabel {
-            Layout.preferredWidth: _secondColumnWidth
-            text: currentAddress || qsTr("N/A")
+            Layout.preferredWidth: root._secondColumnWidth
+            text: root.currentAddress || qsTr("N/A")
         }
 
         // Classic Bluetooth Pairing
         QGCLabel {
             text:    qsTr("Pairing")
-            visible: isClassicMode && currentAddress !== ""
+            visible: root.isClassicMode && root.currentAddress !== ""
         }
         RowLayout {
-            Layout.preferredWidth: _secondColumnWidth
-            visible:               isClassicMode && currentAddress !== ""
-            spacing:               _colSpacing
+            Layout.preferredWidth: root._secondColumnWidth
+            visible:               root.isClassicMode && root.currentAddress !== ""
+            spacing:               root._colSpacing
 
             QGCLabel {
-                text:             subEditConfig ? subEditConfig.getPairingStatus(currentAddress) : ""
+                text:             root.subEditConfig ? root.subEditConfig.getPairingStatus(root.currentAddress) : ""
                 Layout.fillWidth: true
             }
 
             QGCButton {
-                text: paired ? qsTr("Unpair") : qsTr("Pair")
+                text: root.paired ? qsTr("Unpair") : qsTr("Pair")
                 onClicked: {
-                    if (!subEditConfig) return
-                    paired ? subEditConfig.removePairing(currentAddress)
-                           : subEditConfig.requestPairing(currentAddress)
+                    if (!root.subEditConfig) return
+                    root.paired ? root.subEditConfig.removePairing(root.currentAddress)
+                           : root.subEditConfig.requestPairing(root.currentAddress)
                 }
             }
         }
@@ -284,42 +342,53 @@ ColumnLayout {
         // BLE Signal Strength
         QGCLabel {
             text:    qsTr("Signal Strength")
-            visible: isBleMode && (rssiDisplay.hasConnected || rssiDisplay.hasSelected)
+            visible: root.isBleMode && (rssiDisplay.hasConnected || rssiDisplay.hasSelected)
         }
         RowLayout {
             id: rssiDisplay
-            Layout.preferredWidth: _secondColumnWidth
-            visible: isBleMode && (hasConnected || hasSelected)
-            spacing: ScreenTools.defaultFontPixelWidth
+            Layout.preferredWidth: root._secondColumnWidth
+            visible: root.isBleMode && (hasConnected || hasSelected)
+            spacing: root.screenTools.defaultFontPixelWidth
 
-            readonly property bool hasConnected: subEditConfig && subEditConfig.connectedRssi !== 0
-            readonly property bool hasSelected:  subEditConfig && subEditConfig.selectedRssi !== 0
-            readonly property int  rssi:         hasConnected ? subEditConfig.connectedRssi : (subEditConfig ? subEditConfig.selectedRssi : 0)
-            readonly property int  signalLevel:  rssiToSignalLevel(rssi)
+            readonly property bool hasConnected: root.subEditConfig && root.subEditConfig.connectedRssi !== 0
+            readonly property bool hasSelected:  root.subEditConfig && root.subEditConfig.selectedRssi !== 0
+            readonly property int  rssi:         hasConnected ? root.subEditConfig.connectedRssi : (root.subEditConfig ? root.subEditConfig.selectedRssi : 0)
+            readonly property int  signalLevel:  root.rssiToSignalLevel(rssi)
 
             Row {
+                id: rssiBars
                 spacing: 1
+                readonly property real barWidth:     root.screenTools.defaultFontPixelWidth * 0.5
+                readonly property real maxBarHeight: root.screenTools.defaultFontPixelHeight
+
                 Repeater {
                     model: 4
-                    Rectangle {
-                        width:  ScreenTools.defaultFontPixelWidth * 0.5
-                        height: ScreenTools.defaultFontPixelHeight * (0.4 + index * 0.2)
-                        color:  index < rssiDisplay.signalLevel ? qgcPal.text : qgcPal.buttonText
-                        opacity: index < rssiDisplay.signalLevel ? 1.0 : 0.3
-                        anchors.bottom: parent.bottom
+                    delegate: Item {
+                        id: rssiBarDelegate
+                        required property int index
+                        width:  rssiBars.barWidth
+                        height: rssiBars.maxBarHeight
+
+                        Rectangle {
+                            width:  parent.width
+                            height: root.screenTools.defaultFontPixelHeight * (0.4 + rssiBarDelegate.index * 0.2)
+                            color:  rssiBarDelegate.index < rssiDisplay.signalLevel ? root.palette.text : root.palette.buttonText
+                            opacity: rssiBarDelegate.index < rssiDisplay.signalLevel ? 1.0 : 0.3
+                            anchors.bottom: parent.bottom
+                        }
                     }
                 }
             }
 
             QGCLabel {
                 text: rssiDisplay.rssi + " dBm"
-                color: rssiDisplay.hasConnected ? qgcPal.text : qgcPal.buttonText
+                color: rssiDisplay.hasConnected ? root.palette.text : root.palette.buttonText
             }
 
             QGCLabel {
                 text: rssiDisplay.hasConnected ? qsTr("(Connected)") : qsTr("(Last Scan)")
-                font.pointSize: ScreenTools.smallFontPointSize
-                color: qgcPal.buttonText
+                font.pointSize: root.screenTools.smallFontPointSize
+                color: root.palette.buttonText
             }
         }
     }
@@ -330,49 +399,52 @@ ColumnLayout {
     QGCCheckBox {
         id:      showBleConfig
         text:    qsTr("Advanced BLE Configuration")
-        visible: isBleMode
+        visible: root.isBleMode
         checked: false
     }
 
     GridLayout {
         columns:          2
-        columnSpacing:    _colSpacing
-        rowSpacing:       _rowSpacing
+        columnSpacing:    root._colSpacing
+        rowSpacing:       root._rowSpacing
         Layout.fillWidth: true
-        visible:          isBleMode && showBleConfig.checked
+        visible:          root.isBleMode && showBleConfig.checked
 
         QGCLabel { text: qsTr("Service UUID") }
         QGCTextField {
-            Layout.preferredWidth: _secondColumnWidth
-            text:                  subEditConfig ? subEditConfig.serviceUuid : ""
+            id:                    serviceUuidField
+            Layout.preferredWidth: root._secondColumnWidth
+            text:                  root.subEditConfig ? root.subEditConfig.serviceUuid : ""
             placeholderText:       qsTr("Auto-detect")
-            onEditingFinished:     { if (subEditConfig) subEditConfig.serviceUuid = text }
+            onEditingFinished:     { if (root.subEditConfig) root.subEditConfig.serviceUuid = serviceUuidField.text }
         }
 
         QGCLabel { text: qsTr("RX Characteristic") }
         QGCTextField {
-            Layout.preferredWidth: _secondColumnWidth
-            text:                  subEditConfig ? subEditConfig.readUuid : ""
+            id:                    readUuidField
+            Layout.preferredWidth: root._secondColumnWidth
+            text:                  root.subEditConfig ? root.subEditConfig.readUuid : ""
             placeholderText:       qsTr("Auto-detect")
-            onEditingFinished:     { if (subEditConfig) subEditConfig.readUuid = text }
+            onEditingFinished:     { if (root.subEditConfig) root.subEditConfig.readUuid = readUuidField.text }
         }
 
         QGCLabel { text: qsTr("TX Characteristic") }
         QGCTextField {
-            Layout.preferredWidth: _secondColumnWidth
-            text:                  subEditConfig ? subEditConfig.writeUuid : ""
+            id:                    writeUuidField
+            Layout.preferredWidth: root._secondColumnWidth
+            text:                  root.subEditConfig ? root.subEditConfig.writeUuid : ""
             placeholderText:       qsTr("Auto-detect")
-            onEditingFinished:     { if (subEditConfig) subEditConfig.writeUuid = text }
+            onEditingFinished:     { if (root.subEditConfig) root.subEditConfig.writeUuid = writeUuidField.text }
         }
     }
 
     QGCLabel {
         text:             qsTr("UUIDs are auto-detected for most devices. Only configure if connection fails.")
-        visible:          isBleMode && showBleConfig.checked
+        visible:          root.isBleMode && showBleConfig.checked
         wrapMode:         Text.WordWrap
         Layout.fillWidth: true
-        font.pointSize:   ScreenTools.smallFontPointSize
-        color:            qgcPal.buttonText
+        font.pointSize:   root.screenTools.smallFontPointSize
+        color:            root.palette.buttonText
     }
 
     //==========================================================================
@@ -381,25 +453,25 @@ ColumnLayout {
     SectionHeader {
         Layout.fillWidth: true
         text:             qsTr("Known Devices")
-        visible:          isClassicMode && knownDevices.length > 0
+        visible:          root.isClassicMode && root.knownDevices.length > 0
     }
 
     Flow {
         Layout.fillWidth: true
-        spacing:          ScreenTools.defaultFontPixelWidth
-        visible:          isClassicMode && knownDevices.length > 0
+        spacing:          root.screenTools.defaultFontPixelWidth
+        visible:          root.isClassicMode && root.knownDevices.length > 0
 
         Repeater {
-            model: knownDevices
-
-            QGCButton {
+            model: root.knownDevices
+            delegate: QGCButton {
+                required property var modelData
                 property var  dev: modelData
                 property bool isConnected: dev.isConnected === true
 
                 text: (dev.name || dev.address || qsTr("Unknown")) + (isConnected ? " [Connected]" : "")
                 checkable:  true
-                checked:    dev.address === currentAddress
-                onClicked:  { if (subEditConfig && dev.address) subEditConfig.setDeviceByAddress(dev.address) }
+                checked:    dev.address === root.currentAddress
+                onClicked:  { if (root.subEditConfig && dev.address) root.subEditConfig.setDeviceByAddress(dev.address) }
             }
         }
     }
@@ -409,108 +481,120 @@ ColumnLayout {
     //==========================================================================
     SectionHeader {
         Layout.fillWidth: true
-        text: isBleMode ? qsTr("Available BLE Devices") : qsTr("Available Devices")
+        text: root.isBleMode ? qsTr("Available BLE Devices") : qsTr("Available Devices")
     }
 
     // Scanning status
     RowLayout {
         Layout.fillWidth: true
-        visible:          isScanning
-        spacing:          ScreenTools.defaultFontPixelWidth
+        visible:          root.isScanning
+        spacing:          root.screenTools.defaultFontPixelWidth
 
         BusyIndicator {
-            Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 2
+            Layout.preferredWidth:  root.screenTools.defaultFontPixelHeight * 2
             Layout.preferredHeight: Layout.preferredWidth
             running:                true
         }
 
         QGCLabel {
             text:  qsTr("Scanning for devices...")
-            color: qgcPal.text
+            color: root.palette.text
         }
     }
 
     // Device list
     QGCFlickable {
+        id:                     deviceList
         Layout.fillWidth:       true
-        Layout.preferredHeight: Math.min(contentHeight, ScreenTools.defaultFontPixelHeight * 16)
+        Layout.preferredHeight: Math.min(deviceList.contentHeight, root.screenTools.defaultFontPixelHeight * 16)
         contentHeight:          deviceColumn.height
-        contentWidth:           width
+        contentWidth:           root.width
         clip:                   true
-        visible:                !isScanning || sortedDevices.length > 0
+        visible:                !root.isScanning || root.sortedDevices.length > 0
 
         ColumnLayout {
             id:      deviceColumn
             width:   parent.width
-            spacing: ScreenTools.defaultFontPixelHeight * 0.25
+            spacing: root.screenTools.defaultFontPixelHeight * 0.25
 
             Repeater {
                 id:    deviceRepeater
-                model: sortedDevices
-
-                QGCButton {
+                model: root.sortedDevices
+                delegate: QGCButton {
                     id: deviceBtn
+                    required property var modelData
                     Layout.fillWidth: true
 
                     property var    dev:           (typeof modelData === "object") ? modelData : ({ name: modelData })
                     property string deviceName:    dev.name || ""
                     property string deviceAddress: dev.address || ""
-                    property bool   hasRssi:       isBleMode && (typeof dev.rssi === "number") && dev.rssi !== 0
+                    property bool   hasRssi:       root.isBleMode && (typeof dev.rssi === "number") && dev.rssi !== 0
                     property int    rssiVal:       hasRssi ? dev.rssi : 0
-                    property int    signalLevel:   hasRssi ? rssiToSignalLevel(rssiVal) : -1
-                    property bool   isPaired:      isClassicMode && deviceAddress !== "" &&
-                                                   subEditConfig && subEditConfig.getPairingStatus(deviceAddress) !== qsTr("Unpaired")
+                    property int    signalLevel:   hasRssi ? root.rssiToSignalLevel(rssiVal) : -1
+                    property bool   isPaired:      root.isClassicMode && deviceAddress !== "" &&
+                                                   root.subEditConfig && root.subEditConfig.isPaired(deviceAddress)
 
                     checkable:      true
                     autoExclusive:  true
-                    checked:        deviceAddress !== "" ? deviceAddress === currentAddress
-                                                         : deviceName === (subEditConfig ? subEditConfig.deviceName : "")
+                    checked:        deviceAddress !== "" ? deviceAddress === root.currentAddress
+                                                         : deviceName === (root.subEditConfig ? root.subEditConfig.deviceName : "")
 
                     contentItem: RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth
+                        spacing: root.screenTools.defaultFontPixelWidth
 
                         // Signal bars
                         Row {
+                            id: deviceSignalBars
                             visible: deviceBtn.hasRssi
                             spacing: 1
+                            readonly property real barWidth:     root.screenTools.defaultFontPixelWidth * 0.4
+                            readonly property real maxBarHeight: root.screenTools.defaultFontPixelHeight * 0.9
+
                             Repeater {
                                 model: 4
-                                Rectangle {
-                                    width:  ScreenTools.defaultFontPixelWidth * 0.4
-                                    height: ScreenTools.defaultFontPixelHeight * (0.3 + index * 0.2)
-                                    color:  index < deviceBtn.signalLevel ? qgcPal.text : qgcPal.buttonText
-                                    opacity: index < deviceBtn.signalLevel ? 1.0 : 0.3
-                                    anchors.bottom: parent.bottom
+                                delegate: Item {
+                                    id: deviceSignalBarDelegate
+                                    required property int index
+                                    width:  deviceSignalBars.barWidth
+                                    height: deviceSignalBars.maxBarHeight
+
+                                    Rectangle {
+                                        width:  parent.width
+                                        height: root.screenTools.defaultFontPixelHeight * (0.3 + deviceSignalBarDelegate.index * 0.2)
+                                        color:  deviceSignalBarDelegate.index < deviceBtn.signalLevel ? root.palette.text : root.palette.buttonText
+                                        opacity: deviceSignalBarDelegate.index < deviceBtn.signalLevel ? 1.0 : 0.3
+                                        anchors.bottom: parent.bottom
+                                    }
                                 }
                             }
                         }
 
                         QGCLabel {
-                            text:             deviceBtn.deviceName
+                            text:             deviceBtn.deviceName || deviceBtn.deviceAddress || qsTr("Unknown")
                             Layout.fillWidth: true
                             elide:            Text.ElideRight
-                            color:            deviceBtn.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            color:            deviceBtn.checked ? root.palette.buttonHighlightText : root.palette.buttonText
                         }
 
                         QGCLabel {
                             visible:        deviceBtn.isPaired
                             text:           qsTr("Paired")
-                            font.pointSize: ScreenTools.smallFontPointSize
-                            color:          qgcPal.buttonText
+                            font.pointSize: root.screenTools.smallFontPointSize
+                            color:          root.palette.buttonText
                         }
 
                         QGCLabel {
                             visible:        deviceBtn.hasRssi
                             text:           deviceBtn.rssiVal + " dBm"
-                            font.pointSize: ScreenTools.smallFontPointSize
-                            color:          qgcPal.buttonText
+                            font.pointSize: root.screenTools.smallFontPointSize
+                            color:          root.palette.buttonText
                         }
                     }
 
                     onClicked: {
-                        if (!subEditConfig) return
-                        deviceAddress !== "" ? subEditConfig.setDeviceByAddress(deviceAddress)
-                                             : subEditConfig.setDevice(deviceName)
+                        if (!root.subEditConfig) return
+                        deviceAddress !== "" ? root.subEditConfig.setDeviceByAddress(deviceAddress)
+                                             : root.subEditConfig.setDevice(deviceName)
                     }
                 }
             }
@@ -520,34 +604,34 @@ ColumnLayout {
     // Empty state
     ColumnLayout {
         Layout.fillWidth: true
-        spacing:          ScreenTools.defaultFontPixelHeight
-        visible:          !isScanning && sortedDevices.length === 0
+        spacing:          root.screenTools.defaultFontPixelHeight
+        visible:          !root.isScanning && root.sortedDevices.length === 0
 
         QGCLabel {
             text:                qsTr("No devices found")
             Layout.fillWidth:    true
             horizontalAlignment: Text.AlignHCenter
-            color:               qgcPal.warningText
+            color:               root.palette.warningText
         }
 
         QGCLabel {
-            text: isBleMode ? qsTr("Make sure your BLE device is powered on and advertising")
+            text: root.isBleMode ? qsTr("Make sure your BLE device is powered on and advertising")
                             : qsTr("Make sure your Bluetooth device is powered on and discoverable")
             Layout.fillWidth:    true
             horizontalAlignment: Text.AlignHCenter
             wrapMode:            Text.WordWrap
-            font.pointSize:      ScreenTools.smallFontPointSize
-            color:               qgcPal.buttonText
+            font.pointSize:      root.screenTools.smallFontPointSize
+            color:               root.palette.buttonText
         }
     }
 
     // Scan button
     QGCButton {
         Layout.alignment: Qt.AlignHCenter
-        text:             isScanning ? qsTr("Stop Scan") : qsTr("Scan for Devices")
+        text:             root.isScanning ? qsTr("Stop Scan") : qsTr("Scan for Devices")
         onClicked: {
-            if (!subEditConfig) return
-            isScanning ? subEditConfig.stopScan() : subEditConfig.startScan()
+            if (!root.subEditConfig) return
+            root.isScanning ? root.subEditConfig.stopScan() : root.subEditConfig.startScan()
         }
     }
 }

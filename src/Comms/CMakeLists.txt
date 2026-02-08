@@ -22,6 +22,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MAVLinkProtocol.h
         TCPLink.cc
         TCPLink.h
+        UdpIODevice.cc
+        UdpIODevice.h
         UDPLink.cc
         UDPLink.h
 )
@@ -54,11 +56,8 @@ else()
             QGCSerialPortInfo.h
             SerialLink.cc
             SerialLink.h
-            UdpIODevice.cc
-            UdpIODevice.h
     )
 
-    # Qt SerialPort not available on mobile platforms
     if(NOT ANDROID AND NOT IOS)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::SerialPort)
     endif()
@@ -67,16 +66,7 @@ endif()
 # ----------------------------------------------------------------------------
 # Bluetooth Communication
 # ----------------------------------------------------------------------------
-if(QGC_ENABLE_BLUETOOTH)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Bluetooth)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            BluetoothLink.cc
-            BluetoothLink.h
-    )
-
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BLUETOOTH)
-endif()
+add_subdirectory(Bluetooth)
 
 # ----------------------------------------------------------------------------
 # ZeroConf/mDNS Service Discovery
