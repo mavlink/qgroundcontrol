@@ -247,7 +247,7 @@ jobs:
           script: |
             timeout 20s adb start-server >/dev/null 2>&1 || true
             timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
-            python3 .github/scripts/android_boot_test.py --apk "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk" --package org.mavlink.qgroundcontrol --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --log-output /tmp/qgc_emulator_boot.log
+            python3 .github/scripts/android_boot_test.py --apk "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk" --package org.mavlink.qgroundcontrol --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
 
       - name: Collect Emulator Diagnostics
         if: ${{ failure() && matrix.emulator }}

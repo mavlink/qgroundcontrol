@@ -44,6 +44,8 @@ class QGroundControlQmlGlobal : public QObject
     QML_SINGLETON
 
 public:
+    static constexpr int kDefaultMessageDialogButtons = 0x00000400; // Dialog.Ok (Qt 6 StandardButton::Ok)
+
     explicit QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
 
@@ -152,7 +154,7 @@ public:
         QObject* owner,
         const QString& title,
         const QString& text,
-        int buttons = 1,
+        int buttons = kDefaultMessageDialogButtons,
         QJSValue acceptFunction = QJSValue(),
         QJSValue closeFunction = QJSValue());
 

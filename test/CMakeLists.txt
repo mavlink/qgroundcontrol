@@ -72,6 +72,10 @@ add_qgc_test(QGCCameraManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockL
 # Comms
 # ----------------------------------------------------------------------------
 add_subdirectory(Comms)
+add_qgc_test(BluetoothConfigurationTest LABELS Unit Comms)
+add_qgc_test(BluetoothEmulatedAdapterTest LABELS Integration Comms)
+add_qgc_test(BluetoothLiveAdapterTest LABELS Integration Comms)
+add_qgc_test(BluetoothWorkerTest LABELS Unit Comms)
 add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
 
 # ----------------------------------------------------------------------------

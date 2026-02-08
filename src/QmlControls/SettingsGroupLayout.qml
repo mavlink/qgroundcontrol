@@ -68,11 +68,11 @@ ColumnLayout {
         radius:             ScreenTools.defaultFontPixelHeight / 2
 
         Repeater {
-            model: showDividers ? _contentLayout.children.length : 0
+            model: showDividers ? _ySortedChildren.length : 0
 
             Rectangle {
                 x:          showBorder ? _margins : 0
-                y:          _contentItem.y + _contentItem.height + _margins + (showBorder ? _margins : 0)
+                y:          _contentItem ? (_contentItem.y + _contentItem.height + _margins + (showBorder ? _margins : 0)) : 0
                 width:      parent.width - (showBorder ? _margins * 2 : 0)
                 height:     1
                 color:      QGroundControl.globalPalette.groupBorder
@@ -81,16 +81,16 @@ ColumnLayout {
                 property var _contentItem: _ySortedChildren[index]
 
                 function _isRepeater(item) {
-                    return item.toString().startsWith("QQuickRepeater");
+                    return item && item.toString().startsWith("QQuickRepeater");
                 }
 
                 function _isContentItemVisible() {
-                    if (!_contentItem.visible || _isRepeater(_contentItem)) {
+                    if (!_contentItem || !_contentItem.visible || _isRepeater(_contentItem)) {
                         return false
                     }
                     // Any children after this one visually from top to bottom must be visible to show divider
                     for (let i = index + 1; i < _ySortedChildren.length; ++i) {
-                        if (_isRepeater(_ySortedChildren[i])) {
+                        if (!_ySortedChildren[i] || _isRepeater(_ySortedChildren[i])) {
                             continue
                         }
                         if (_ySortedChildren[i].visible) {

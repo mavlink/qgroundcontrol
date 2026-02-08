@@ -151,7 +151,137 @@ def parse_args() -> argparse.Namespace:
         default=4,
         help="Delay in seconds between adb install retries",
     )
+    parser.add_argument(
+        "--launch-retries",
+        type=int,
+        default=2,
+        help="Number of launch attempts before failing the boot test",
+    )
     return parser.parse_args()
+
+
+def run_boot_attempt(
+    package_name: str,
+    timeout: int,
+    stability_window: int,
+    app_launch_pattern: re.Pattern[str],
+    app_log_pattern: re.Pattern[str],
+    crash_signature_pattern: re.Pattern[str],
+    crash_context_pattern: re.Pattern[str],
+    crash_log_pattern: re.Pattern[str],
+) -> tuple[bool, str | None, str | None, str, re.Pattern[str]]:
+    run_command(["adb", "shell", "am", "force-stop", package_name])
+    run_command(["adb", "logcat", "-c"])
+
+    launch_result = run_command(
+        [
+            "adb",
+            "shell",
+            "monkey",
+            "-p",
+            package_name,
+            "-c",
+            "android.intent.category.LAUNCHER",
+            "1",
+        ]
+    )
+    if launch_result.returncode != 0:
+        return (
+            False,
+            f"Failed to launch app via monkey (exit code {launch_result.returncode})",
+            None,
+            read_logcat(),
+            app_log_pattern,
+        )
+
+    print(f"Waiting for boot test to complete (timeout: {timeout}s)...")
+    app_launched = False
+    app_launched_at = 0
+    app_seen_running_once = False
+    consecutive_not_running = 0
+
+    for second in range(1, timeout + 1):
+        logcat_content = read_logcat()
+        saw_app_logs = bool(app_log_pattern.search(logcat_content))
+
+        if "Simple boot test completed" in logcat_content:
+            print(f"Boot test completed successfully in {second}s")
+            return True, None, None, logcat_content, app_log_pattern
+
+        is_running = app_running(package_name)
+        if is_running:
+            app_seen_running_once = True
+            consecutive_not_running = 0
+
+        launch_detected_in_log = bool(app_launch_pattern.search(logcat_content))
+        if not app_launched and (launch_detected_in_log or is_running or saw_app_logs):
+            app_launched = True
+            app_launched_at = second
+            if launch_detected_in_log:
+                launch_source = "logcat marker"
+            elif is_running:
+                launch_source = "running process"
+            else:
+                launch_source = "application logs"
+            print(
+                f"App launch detected ({launch_source}); waiting for "
+                f"{stability_window}s stability window or simple boot completion marker."
+            )
+
+        has_relevant_crash = any(
+            crash_signature_pattern.search(line)
+            and crash_context_pattern.search(line)
+            for line in logcat_content.splitlines()
+        )
+        if has_relevant_crash:
+            return (
+                False,
+                "Crash detected during boot test",
+                None,
+                logcat_content,
+                crash_log_pattern,
+            )
+
+        if app_launched:
+            if app_seen_running_once and not is_running:
+                consecutive_not_running += 1
+            if app_seen_running_once and consecutive_not_running >= 5:
+                return (
+                    False,
+                    "App process exited during stability check",
+                    None,
+                    logcat_content,
+                    crash_log_pattern,
+                )
+
+            if second - app_launched_at >= stability_window:
+                print(
+                    "Boot test passed: app remained running for "
+                    f"{stability_window}s after launch."
+                )
+                return True, None, None, logcat_content, app_log_pattern
+
+        if second == timeout:
+            timeout_notice = None
+            if app_launched:
+                timeout_notice = "App launched but did not satisfy the stability/marker checks."
+            return (
+                False,
+                f"Boot test timed out after {timeout}s",
+                timeout_notice,
+                logcat_content,
+                app_log_pattern,
+            )
+
+        time.sleep(1)
+
+    return (
+        False,
+        "Boot test did not reach a passing condition",
+        None,
+        read_logcat(),
+        app_log_pattern,
+    )
 
 
 def main() -> int:
@@ -197,113 +327,52 @@ def main() -> int:
             app_log_pattern,
         )
 
-    run_command(["adb", "shell", "am", "force-stop", args.package])
-    run_command(["adb", "logcat", "-c"])
-    run_command(
-        [
-            "adb",
-            "shell",
-            "monkey",
-            "-p",
-            args.package,
-            "-c",
-            "android.intent.category.LAUNCHER",
-            "1",
-        ],
-        check=True,
-    )
+    final_error_message = "Boot test did not reach a passing condition"
+    final_notice = None
+    final_logcat = ""
+    final_log_pattern = app_log_pattern
 
-    print(f"Waiting for boot test to complete (timeout: {args.timeout}s)...")
-    app_launched = False
-    app_launched_at = 0
-    app_seen_running_once = False
-    consecutive_not_running = 0
-    boot_test_passed = False
+    for attempt in range(1, args.launch_retries + 1):
+        print(f"Starting boot test attempt {attempt}/{args.launch_retries}...")
+        passed, message, notice, logcat_content, log_pattern = run_boot_attempt(
+            package_name=args.package,
+            timeout=args.timeout,
+            stability_window=args.stability_window,
+            app_launch_pattern=app_launch_pattern,
+            app_log_pattern=app_log_pattern,
+            crash_signature_pattern=crash_signature_pattern,
+            crash_context_pattern=crash_context_pattern,
+            crash_log_pattern=crash_log_pattern,
+        )
 
-    for second in range(1, args.timeout + 1):
-        logcat_content = read_logcat()
-        saw_app_logs = bool(app_log_pattern.search(logcat_content))
+        if passed:
+            write_log(args.log_output, logcat_content)
+            print_log_group(logcat_content, app_log_pattern)
+            print(f"Emulator boot test passed for {args.package}")
+            return 0
 
-        if "Simple boot test completed" in logcat_content:
-            print(f"Boot test completed successfully in {second}s")
-            boot_test_passed = True
-            break
+        if message:
+            final_error_message = message
+        final_notice = notice
+        final_logcat = logcat_content
+        final_log_pattern = log_pattern
 
-        is_running = app_running(args.package)
-        if is_running:
-            app_seen_running_once = True
-            consecutive_not_running = 0
-
-        launch_detected_in_log = bool(app_launch_pattern.search(logcat_content))
-        if not app_launched and (launch_detected_in_log or is_running or saw_app_logs):
-            app_launched = True
-            app_launched_at = second
-            if launch_detected_in_log:
-                launch_source = "logcat marker"
-            elif is_running:
-                launch_source = "running process"
-            else:
-                launch_source = "application logs"
+        if attempt < args.launch_retries:
             print(
-                f"App launch detected ({launch_source}); waiting for "
-                f"{args.stability_window}s stability window or simple boot completion marker."
+                f"::warning::{final_error_message} on attempt "
+                f"{attempt}/{args.launch_retries}; retrying..."
             )
+            time.sleep(2)
 
-        has_relevant_crash = any(
-            crash_signature_pattern.search(line)
-            and crash_context_pattern.search(line)
-            for line in logcat_content.splitlines()
-        )
-        if has_relevant_crash:
-            return emit_failure(
-                "Crash detected during boot test",
-                args.log_output,
-                crash_log_pattern,
-            )
+    if not final_logcat:
+        final_logcat = read_logcat()
 
-        if app_launched:
-            if app_seen_running_once and not is_running:
-                consecutive_not_running += 1
-            if app_seen_running_once and consecutive_not_running >= 5:
-                return emit_failure(
-                    "App process exited during stability check",
-                    args.log_output,
-                    crash_log_pattern,
-                )
-
-            if second - app_launched_at >= args.stability_window:
-                print(
-                    "Boot test passed: app remained running for "
-                    f"{args.stability_window}s after launch."
-                )
-                boot_test_passed = True
-                break
-
-        if second == args.timeout:
-            notice = None
-            if app_launched:
-                notice = "App launched but did not satisfy the stability/marker checks."
-            return emit_failure(
-                f"Boot test timed out after {args.timeout}s",
-                args.log_output,
-                app_log_pattern,
-                notice=notice,
-            )
-
-        time.sleep(1)
-
-    if not boot_test_passed:
-        return emit_failure(
-            "Boot test did not reach a passing condition",
-            args.log_output,
-            app_log_pattern,
-        )
-
-    final_log = read_logcat()
-    write_log(args.log_output, final_log)
-    print_log_group(final_log, app_log_pattern)
-    print(f"Emulator boot test passed for {args.package}")
-    return 0
+    write_log(args.log_output, final_logcat)
+    print(f"::error::{final_error_message}")
+    if final_notice:
+        print(f"::notice::{final_notice}")
+    print_log_group(final_logcat, final_log_pattern)
+    return 1
 
 
 if __name__ == "__main__":
