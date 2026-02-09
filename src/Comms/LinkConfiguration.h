@@ -82,9 +82,6 @@ public:
 #ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
 #endif
-#ifndef QGC_AIRLINK_DISABLED
-        AirLink,
-#endif
         TypeLogReplay,
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };

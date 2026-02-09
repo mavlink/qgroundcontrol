@@ -22,7 +22,7 @@ function(download_tool VAR URL)
     if(NOT EXISTS "${_dest}")
         file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/tools")
         message(STATUS "QGC: Downloading ${_name} to ${_dest}")
-        file(DOWNLOAD "${URL}" "${_dest}" STATUS _status)
+        file(DOWNLOAD "${URL}" "${_dest}" STATUS _status TLS_VERIFY ON)
         list(GET _status 0 _result)
         if(NOT _result EQUAL 0)
             message(FATAL_ERROR "Failed to download ${URL} to ${_dest}: ${_status}")
@@ -38,8 +38,8 @@ endfunction()
 
 message(STATUS "QGC: Downloading AppImage build tools...")
 
-download_tool(LINUXDEPLOY https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${CMAKE_SYSTEM_PROCESSOR}.AppImage)
-download_tool(APPIMAGETOOL https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${CMAKE_SYSTEM_PROCESSOR}.AppImage)
+download_tool(LINUXDEPLOY https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-${CMAKE_SYSTEM_PROCESSOR}.AppImage)
+download_tool(APPIMAGETOOL https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-${CMAKE_SYSTEM_PROCESSOR}.AppImage)
 
 # AppImageLint is only available for x86_64
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
