@@ -176,7 +176,7 @@ jobs:
       - name: Upload to Trunk Flaky Tests
         if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
         continue-on-error: true
-        uses: trunk-io/analytics-uploader@v1
+        uses: trunk-io/analytics-uploader@v2
         with:
           junit-paths: ${{ runner.temp }}/build/junit-results-*.xml
           org-slug: ${{ vars.TRUNK_ORG_SLUG }}
