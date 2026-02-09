@@ -24,6 +24,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+if(NOT DEFINED CMAKE_AUTOGEN_PARALLEL)
+    cmake_host_system_information(RESULT _nproc QUERY NUMBER_OF_LOGICAL_CORES)
+    set(CMAKE_AUTOGEN_PARALLEL ${_nproc})
+endif()
+
 # ----------------------------------------------------------------------------
 # Build Configuration
 # ----------------------------------------------------------------------------
