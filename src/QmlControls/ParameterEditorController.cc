@@ -95,10 +95,11 @@ void ParameterTableModel::insert(int row, Fact* fact)
 
 void ParameterTableModel::beginReset()
 {
+    _resetNestingCount++;
+
     if (_resetNestingCount == 0) {
         beginResetModel();
     }
-    _resetNestingCount++;
 }
 
 void ParameterTableModel::endReset()
