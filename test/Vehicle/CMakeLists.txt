@@ -17,6 +17,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         InitialConnectPeripheralStartupTest.h
         MAVLinkLogManagerTest.cc
         MAVLinkLogManagerTest.h
+        PX4ManifestTest.cc
+        PX4ManifestTest.h
         RequestMessageTest.cc
         RequestMessageTest.h
         SendMavCommandWithHandlerTest.cc
@@ -38,6 +40,15 @@ endif()
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
+# PX4 Manifest Test Data
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} "VehicleTest_PX4Manifest_res"
+    PREFIX "/Vehicle"
+    FILES
+        px4_manifest_v2.json
+)
+
+# ----------------------------------------------------------------------------
 # Component Information Tests
 # ----------------------------------------------------------------------------
 add_subdirectory(ComponentInformation)
@@ -49,6 +60,7 @@ add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
 add_qgc_test(InitialConnectTest LABELS Integration Vehicle)
 add_qgc_test(InitialConnectPeripheralStartupTest LABELS Integration Vehicle)
 add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle)
+add_qgc_test(PX4ManifestTest LABELS Unit Vehicle)
 add_qgc_test(RequestMessageTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle)
