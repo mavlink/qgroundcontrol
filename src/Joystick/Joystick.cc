@@ -601,7 +601,7 @@ void Joystick::run()
             }
 
             _handleButtons();
-            
+
             if (axisCount() != 0) {
                 _handleAxis();
             }
@@ -864,10 +864,10 @@ void Joystick::_handleAxis()
         }
 
         if (throttleSmoothing) {
-            static float throttleSmoothing = 0.f;
-            throttleSmoothing += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
-            throttleSmoothing = std::max(static_cast<float>(-1.f), std::min(throttleSmoothing, static_cast<float>(1.f)));
-            throttle = throttleSmoothing;
+            static float throttleSmoothingValue = 0.f;
+            throttleSmoothingValue += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
+            throttleSmoothingValue = std::max(static_cast<float>(-1.f), std::min(throttleSmoothingValue, static_cast<float>(1.f)));
+            throttle = throttleSmoothingValue;
         }
 
         if (circleCorrection) {

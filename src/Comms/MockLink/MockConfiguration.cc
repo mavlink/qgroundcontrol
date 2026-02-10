@@ -14,8 +14,8 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _firmwareType(copy->firmwareType())
     , _vehicleType(copy->vehicleType())
     , _sendStatusText(copy->sendStatusText())
-    , _incrementVehicleId(copy->incrementVehicleId())
     , _failureMode(copy->failureMode())
+    , _incrementVehicleId(copy->incrementVehicleId())
 {
     qCDebug(MockConfigurationLog) << this;
 }

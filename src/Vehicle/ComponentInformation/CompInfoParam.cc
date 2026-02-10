@@ -15,8 +15,8 @@
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "ComponentInformation.CompInfoParam")
 
-CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
-    : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId, vehicle, parent)
+CompInfoParam::CompInfoParam(uint8_t compId_, Vehicle* vehicle_, QObject* parent)
+    : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId_, vehicle_, parent)
 {
 
 }
@@ -76,14 +76,14 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName)
     }
 }
 
-FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaData::ValueType_t type)
+FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaData::ValueType_t valueType)
 {
     FactMetaData* factMetaData = nullptr;
 
     if (_noJsonMetadata) {
         QObject* opaqueMetaData = _getOpaqueParameterMetaData();
         if (opaqueMetaData) {
-            factMetaData = vehicle->firmwarePlugin()->_getMetaDataForFact(opaqueMetaData, name, type, vehicle->vehicleType());
+            factMetaData = vehicle->firmwarePlugin()->_getMetaDataForFact(opaqueMetaData, name, valueType, vehicle->vehicleType());
         }
     }
 
@@ -117,7 +117,7 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
             }
 
             if (!factMetaData) {
-                factMetaData = new FactMetaData(type, this);
+                factMetaData = new FactMetaData(valueType, this);
                 int i = name.indexOf("_");
                 if (i > 0) {
                     factMetaData->setGroup(name.left(i));
@@ -160,7 +160,8 @@ QString CompInfoParam::_parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT fi
         QDir        cacheDir = QFileInfo(settings.fileName()).dir();
 
         // First look for a direct cache hit
-        int cacheMinorVersion, cacheMajorVersion;
+        int cacheMinorVersion = 0;
+        int cacheMajorVersion = 0;
         QFile cacheFile(cacheDir.filePath(QString("%1.%2.%3.xml").arg(_cachedMetaDataFilePrefix).arg(firmwareType).arg(wantedMajorVersion)));
         if (cacheFile.exists()) {
             fwPlugin->_getParameterMetaDataVersionInfo(cacheFile.fileName(), cacheMajorVersion, cacheMinorVersion);
@@ -186,9 +187,9 @@ QString CompInfoParam::_parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT fi
             for (int i = 0; i < cacheHits.count(); i++) {
                 const QRegularExpressionMatch match = regex.match(cacheHits[i]);
                 if (match.hasMatch() && match.lastCapturedIndex() == 0) {
-                    const int majorVersion = match.captured(1).toInt();
-                    if ((majorVersion > cacheMajorVersion) && (majorVersion < wantedMajorVersion)) {
-                        cacheMajorVersion = majorVersion;
+                    const int matchedMajorVersion = match.captured(1).toInt();
+                    if ((matchedMajorVersion > cacheMajorVersion) && (matchedMajorVersion < wantedMajorVersion)) {
+                        cacheMajorVersion = matchedMajorVersion;
                         cacheHitIndex = i;
                     }
                 }
@@ -196,11 +197,11 @@ QString CompInfoParam::_parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT fi
 
             if (cacheHitIndex != -1) {
                 // We have a cache hit on a lower major version, read minor version as well
-                int majorVersion;
+                int cacheFileMajorVersion;
                 cacheFile.setFileName(cacheDir.filePath(cacheHits[cacheHitIndex]));
-                fwPlugin->_getParameterMetaDataVersionInfo(cacheFile.fileName(), majorVersion, cacheMinorVersion);
-                if (majorVersion != cacheMajorVersion) {
-                    qWarning() << "Parameter meta data cache corruption:" << cacheFile.fileName() << "major version does not match file name" << "actual:excepted" << majorVersion << cacheMajorVersion;
+                fwPlugin->_getParameterMetaDataVersionInfo(cacheFile.fileName(), cacheFileMajorVersion, cacheMinorVersion);
+                if (cacheFileMajorVersion != cacheMajorVersion) {
+                    qWarning() << "Parameter meta data cache corruption:" << cacheFile.fileName() << "major version does not match file name" << "actual:excepted" << cacheFileMajorVersion << cacheMajorVersion;
                     cacheHit = false;
                 } else {
                     qCDebug(CompInfoParamLog) << "Indirect cache hit on file:major:minor:want" << cacheFile.fileName() << cacheMajorVersion << cacheMinorVersion << wantedMajorVersion;

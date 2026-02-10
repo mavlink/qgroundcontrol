@@ -78,7 +78,7 @@ class QGCLoggingCategoryItem : public QObject
     Q_PROPERTY(QmlObjectListModel* children MEMBER children CONSTANT)
 
 public:
-    QGCLoggingCategoryItem(const QString& shortCategory, const QString& fullCategory, bool enabled, QObject* parent = nullptr);
+    QGCLoggingCategoryItem(const QString& shortCategory_, const QString& fullCategory_, bool enabled_, QObject* parent = nullptr);
 
     bool enabled() const { return _enabled; }
     void setEnabled(bool enabled);

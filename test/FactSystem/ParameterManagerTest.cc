@@ -255,7 +255,6 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
     QVERIFY2(sawPendingFalse, "Expected pendingWritesChanged(false) signal");
     // We should get two rawValueChanged signals if unsuccessful (one for the set, one for the refresh)
     // We should get one rawValueChanged signal if successful (just the set)
-    bool rawValueChangedCountMatches = false;
     rawValueChangedSpy.wait(ParameterManager::kWaitForParamValueAckMs * ParameterManager::kParamSetRetryCount + 500);
     if (expectSuccess) {
         QCOMPARE(rawValueChangedSpy.count(), 1);

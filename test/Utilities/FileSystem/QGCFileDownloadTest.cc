@@ -16,7 +16,7 @@ void QGCFileDownloadTest::_testFileDownload()
     // Local File
     QGCFileDownload* const downloader = new QGCFileDownload(this);
     (void)connect(downloader, &QGCFileDownload::downloadComplete, this,
-                  [this](const QString& remoteFile, const QString& localFile, const QString& errorMsg) {
+                  [this](const QString& /*remoteFile*/, const QString& /*localFile*/, const QString& errorMsg) {
                       sender()->deleteLater();
                       QVERIFY(errorMsg.isEmpty());
                   });

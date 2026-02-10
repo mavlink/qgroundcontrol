@@ -1,8 +1,8 @@
 #include "CompInfoEvents.h"
 #include "Vehicle.h"
 
-CompInfoEvents::CompInfoEvents(uint8_t compId, Vehicle* vehicle, QObject* parent)
-    : CompInfo(COMP_METADATA_TYPE_EVENTS, compId, vehicle, parent)
+CompInfoEvents::CompInfoEvents(uint8_t compId_, Vehicle* vehicle_, QObject* parent)
+    : CompInfo(COMP_METADATA_TYPE_EVENTS, compId_, vehicle_, parent)
 {
 
 }

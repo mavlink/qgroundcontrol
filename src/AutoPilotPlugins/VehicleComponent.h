@@ -68,7 +68,7 @@ signals:
     void setupSourceChanged();
 
 protected slots:
-    void _triggerUpdated(QVariant value) { emit setupCompleteChanged(); }
+    void _triggerUpdated(QVariant /*value*/) { emit setupCompleteChanged(); }
 
 protected:
     Vehicle *_vehicle = nullptr;

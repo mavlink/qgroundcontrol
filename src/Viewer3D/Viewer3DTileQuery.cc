@@ -193,7 +193,7 @@ void MapTileQuery::tileDone(Viewer3DTileReply::tileInfo_t _tileData)
     reply->deleteLater();
 }
 
-void MapTileQuery::tileGiveUp(Viewer3DTileReply::tileInfo_t _tileData)
+void MapTileQuery::tileGiveUp(Viewer3DTileReply::tileInfo_t /*_tileData*/)
 {
     Viewer3DTileReply* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
     disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);

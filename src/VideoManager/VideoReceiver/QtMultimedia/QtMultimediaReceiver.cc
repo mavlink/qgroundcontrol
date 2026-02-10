@@ -50,7 +50,7 @@ QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
     (void) connect(_mediaPlayer, &QMediaPlayer::bufferProgressChanged, this, [](float filled) {
         qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << "Buffer Progress:" << filled;
     });
-    (void) connect(_mediaPlayer, &QMediaPlayer::errorOccurred, this, [this](QMediaPlayer::Error error, const QString &errorString) {
+    (void) connect(_mediaPlayer, &QMediaPlayer::errorOccurred, this, [](QMediaPlayer::Error error, const QString &errorString) {
         switch (error) {
         case QMediaPlayer::Error::NetworkError:
             break;
@@ -72,7 +72,7 @@ QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
         }
         emit recordingChanged(_mediaRecorder->recorderState() == QMediaRecorder::RecorderState::RecordingState);
     });
-    (void) connect(_mediaRecorder, &QMediaRecorder::errorOccurred, this, [this](QMediaRecorder::Error error, const QString &errorString) {
+    (void) connect(_mediaRecorder, &QMediaRecorder::errorOccurred, this, [](QMediaRecorder::Error error, const QString &errorString) {
         switch (error) {
         case QMediaRecorder::Error::OutOfSpaceError:
             break;
@@ -115,7 +115,7 @@ void *QtMultimediaReceiver::createVideoSink(QQuickItem *widget, QObject *parent)
     return videoSink;
 }
 
-void QtMultimediaReceiver::releaseVideoSink(void *sink)
+void QtMultimediaReceiver::releaseVideoSink(void * /*sink*/)
 {
     /*if (!sink) {
         return;

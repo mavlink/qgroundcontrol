@@ -198,7 +198,7 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         bool foundInCache = false;
         for (auto it = s_discoveryCache.begin(); it != s_discoveryCache.end(); ++it) {
             auto *cachedJs = static_cast<JoystickSDL*>(it.value());
-            if (cachedJs->instanceId() == jid) {
+            if (static_cast<SDL_JoystickID>(cachedJs->instanceId()) == jid) {
                 name = it.key();
                 current[name] = cachedJs;
                 s_discoveryCache.erase(it);

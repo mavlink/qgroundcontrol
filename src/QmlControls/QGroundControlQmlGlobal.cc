@@ -60,11 +60,11 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     _flightMapPositionSettledTimer.setInterval(1000);
     (void) connect(&_flightMapPositionSettledTimer, &QTimer::timeout, this, []() {
         // When they settle, save flightMapPosition and Zoom to the config file
-        QSettings settings;
-        settings.beginGroup(_flightMapPositionSettingsGroup);
-        settings.setValue(_flightMapPositionLatitudeSettingsKey, _coord.latitude());
-        settings.setValue(_flightMapPositionLongitudeSettingsKey, _coord.longitude());
-        settings.setValue(_flightMapZoomSettingsKey, _zoom);
+        QSettings settingsInner;
+        settingsInner.beginGroup(_flightMapPositionSettingsGroup);
+        settingsInner.setValue(_flightMapPositionLatitudeSettingsKey, _coord.latitude());
+        settingsInner.setValue(_flightMapPositionLongitudeSettingsKey, _coord.longitude());
+        settingsInner.setValue(_flightMapZoomSettingsKey, _zoom);
     });
     connect(this, &QGroundControlQmlGlobal::flightMapPositionChanged, this, [this](QGeoCoordinate){
         if (!_flightMapPositionSettledTimer.isActive()) {

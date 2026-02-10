@@ -7,8 +7,8 @@
 
 QGC_LOGGING_CATEGORY(CompInfoGeneralLog, "ComponentInformation.CompInfoGeneral")
 
-CompInfoGeneral::CompInfoGeneral(uint8_t compId, Vehicle* vehicle, QObject* parent)
-    : CompInfo(COMP_METADATA_TYPE_GENERAL, compId, vehicle, parent)
+CompInfoGeneral::CompInfoGeneral(uint8_t compId_, Vehicle* vehicle_, QObject* parent)
+    : CompInfo(COMP_METADATA_TYPE_GENERAL, compId_, vehicle_, parent)
 {
 
 }
@@ -55,8 +55,8 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
 
     QJsonArray rgSupportedTypes = jsonObj[_jsonMetadataTypesKey].toArray();
     for (QJsonValue typeValue : rgSupportedTypes) {
-        int type = typeValue["type"].toInt(-1);
-        if (type == -1)
+        int metadataType = typeValue["type"].toInt(-1);
+        if (metadataType == -1)
             continue;
         Uris uris;
         uris.uriMetaData = typeValue["uri"].toString();
@@ -71,12 +71,12 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
         if (uris.uriMetaData.isEmpty() || !uris.crcMetaDataValid) {
             // The CRC is optional for dynamically updated metadata, and once we want to support that this logic needs
             // to be updated.
-            qCDebug(CompInfoGeneralLog) << "Metadata missing fields: type:uri:crcValid" << type <<
+            qCDebug(CompInfoGeneralLog) << "Metadata missing fields: type:uri:crcValid" << metadataType <<
                     uris.uriMetaData << uris.crcMetaDataValid;
             continue;
         }
 
-        _supportedTypes[(COMP_METADATA_TYPE)type] = uris;
-        qCDebug(CompInfoGeneralLog) << "Metadata type : uri : crc" << type << uris.uriMetaData << uris.crcMetaData;
+        _supportedTypes[(COMP_METADATA_TYPE)metadataType] = uris;
+        qCDebug(CompInfoGeneralLog) << "Metadata type : uri : crc" << metadataType << uris.uriMetaData << uris.crcMetaData;
     }
 }
