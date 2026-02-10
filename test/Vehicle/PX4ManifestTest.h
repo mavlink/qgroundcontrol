@@ -12,4 +12,8 @@ private slots:
     void _testParsePX4ManifestMissingFields();
     void _testBuildFirmwareHashFromManifest();
     void _testBoardNotInManifest();
+    void _testSha256MapPopulation();
+    void _testBuildPX4FirmwareNames();
+    void _testBootloaderFilteredOut();
+    void _testDefaultBuildPreSelected();
 };
