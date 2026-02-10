@@ -288,6 +288,8 @@ bool QGCSerialPortInfo::isSystemPort(const QSerialPortInfo &port)
             return true;
         }
     }
+#else
+    Q_UNUSED(port);
 #endif
 
     // TODO: Add Linux (LTE modems, etc) and Windows as needed

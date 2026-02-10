@@ -432,7 +432,7 @@ public:
     void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float gimbalPitch, float gimbalYaw);
 
     // Property accesors
-    int id() const{ return _id; }
+    int id() const{ return _systemID; }
     int compId() const{ return _compID; }
     MAV_AUTOPILOT firmwareType() const { return _firmwareType; }
     MAV_TYPE vehicleType() const { return _vehicleType; }
@@ -977,7 +977,7 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     /// Stops command processing timers to prevent callbacks during vehicle destruction.
     void _stopCommandProcessing();
 
-    int     _id;                    ///< Mavlink system id
+    int     _systemID;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
 

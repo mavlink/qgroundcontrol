@@ -165,7 +165,7 @@ void FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, do
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const
+void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &/*headingCoord*/) const
 {
     Q_UNUSED(vehicle);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);

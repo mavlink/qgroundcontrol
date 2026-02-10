@@ -188,10 +188,10 @@ bool JsonHelper::loadGeoCoordinate(const QJsonValue& jsonValue, bool altitudeReq
         return false;
     }
 
-    for (const QJsonValue& jsonValue : coordinateArray) {
-        if ((jsonValue.type() != QJsonValue::Double) && (jsonValue.type() != QJsonValue::Null)) {
+    for (const QJsonValue& coordinateValue : coordinateArray) {
+        if ((coordinateValue.type() != QJsonValue::Double) && (coordinateValue.type() != QJsonValue::Null)) {
             errorString =
-                QObject::tr("Coordinate array may only contain double values, found: %1").arg(jsonValue.type());
+                QObject::tr("Coordinate array may only contain double values, found: %1").arg(coordinateValue.type());
             return false;
         }
     }

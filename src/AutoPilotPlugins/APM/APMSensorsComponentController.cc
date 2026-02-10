@@ -352,7 +352,7 @@ void APMSensorsComponentController::calibrateGyro()
 
 void APMSensorsComponentController::_handleTextMessage(int sysid, int componentid, int severity, const QString &text, const QString &description)
 {
-    Q_UNUSED(severity); Q_UNUSED(description);
+    Q_UNUSED(componentid); Q_UNUSED(severity); Q_UNUSED(description);
 
     if (sysid != _vehicle->id()) {
         return;

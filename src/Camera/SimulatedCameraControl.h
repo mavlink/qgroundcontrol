@@ -97,8 +97,8 @@ public:
     void setFocusLevel(qreal /*level*/) override {}
     void setCameraMode(CameraMode mode) override;
     void setPhotoCaptureMode(PhotoCaptureMode mode) override;
-    void setPhotoLapse(qreal interval) override {}
-    void setPhotoLapseCount(int count) override {}
+    void setPhotoLapse(qreal /*interval*/) override {}
+    void setPhotoLapseCount(int /*count*/) override {}
 
     bool trackingEnabled() const override { return false; }
     void setTrackingEnabled(bool /*set*/) override {}

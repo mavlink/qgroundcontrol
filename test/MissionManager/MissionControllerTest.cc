@@ -206,10 +206,10 @@ void MissionControllerTest::_testGlobalAltMode()
         QCOMPARE(si->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
         for (int i = 2; i < _missionController->visualItems()->count(); i++) {
             qDebug() << i;
-            SimpleMissionItem* si =
+            SimpleMissionItem* siLoop =
                 qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(i));
-            QCOMPARE(si->altitudeMode(), testCase.altMode);
-            QCOMPARE(si->missionItem().frame(), testCase.expectedMavFrame);
+            QCOMPARE(siLoop->altitudeMode(), testCase.altMode);
+            QCOMPARE(siLoop->missionItem().frame(), testCase.expectedMavFrame);
         }
     }
 }

@@ -142,7 +142,7 @@ ArduSubFirmwarePlugin::~ArduSubFirmwarePlugin()
 
 }
 
-int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const
 {
     // Remapping not supported
     return Vehicle::versionNotSetValue;

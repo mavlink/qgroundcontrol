@@ -29,18 +29,18 @@ FactGroupWithId *FactGroupListModel::_findOrAddFactGroupById(Vehicle *vehicle, u
     int i = 0;
 
     // We maintain the list in order sorted by id so the ui shows them sorted.
-    for (; i < count(); i++) {
+    for (; i < static_cast<int>(count()); i++) {
         auto *const currentGroup = value<FactGroupWithId*>(i);
         const int currentId = currentGroup->id()->rawValue().toInt();
-        if (currentId > id) {
+        if (currentId > static_cast<int>(id)) {
             break;
-        } else if (currentId == id) {
+        } else if (currentId == static_cast<int>(id)) {
             return currentGroup;
         }
     }
 
     auto *const newGroup = _createFactGroupWithId(id);
-    insert(i, newGroup);
+    insert(static_cast<int>(i), newGroup);
     vehicle->_addFactGroup(newGroup, _factGroupNameWithId(id));
 
     return newGroup;

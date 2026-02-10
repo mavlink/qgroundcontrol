@@ -101,7 +101,7 @@ void RadioComponentController::_setChannelReversedParamValue(int channel, bool r
 
 void RadioComponentController::_saveStoredCalibrationValues()
 {
-    if (!_vehicle->px4Firmware() && ((_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) || (_vehicle->multiRotor()) &&  _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionThrottle]].channelReversed)) {
+    if (!_vehicle->px4Firmware() && ((_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) || _vehicle->multiRotor()) && _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionThrottle]].channelReversed) {
         // A reversed throttle could lead to dangerous power up issues if the firmware doesn't handle it absolutely correctly in all places.
         // So in this case fail the calibration for anything other than PX4 which is known to be able to handle this correctly.
         emit throttleReversedCalFailure();

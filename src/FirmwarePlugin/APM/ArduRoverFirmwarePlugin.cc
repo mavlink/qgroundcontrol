@@ -56,7 +56,7 @@ ArduRoverFirmwarePlugin::~ArduRoverFirmwarePlugin()
 
 }
 
-int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const
 {
     // Remapping not supported
     return Vehicle::versionNotSetValue;

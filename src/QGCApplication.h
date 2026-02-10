@@ -19,7 +19,7 @@ class QGCApplication;
 class QEvent;
 class QPostEventList;
 class QMetaMethod;
-class QMetaObject;
+struct QMetaObject;
 
 #if defined(qApp)
 #undef qApp

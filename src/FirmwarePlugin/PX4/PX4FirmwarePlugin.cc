@@ -812,7 +812,7 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
     _updateFlightModeList(modeList);
 }
 
-QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* vehicle, const QString& indicatorName) const
+QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* /*vehicle*/, const QString& indicatorName) const
 {
     if (indicatorName == "Battery") {
         return QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/FirmwarePlugin/PX4/PX4BatteryIndicator.qml"));

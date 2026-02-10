@@ -597,6 +597,8 @@ void QGCApplication::removeCompressedSignal(const QMetaMethod &method)
     _compressedSignals.remove(method);
 }
 
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_DEPRECATED
 bool QGCApplication::compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents)
 {
     if (event->type() != QEvent::MetaCall) {
@@ -635,6 +637,7 @@ bool QGCApplication::compressEvent(QEvent *event, QObject *receiver, QPostEventL
 
     return false;
 }
+QT_WARNING_POP
 
 bool QGCApplication::event(QEvent *e)
 {

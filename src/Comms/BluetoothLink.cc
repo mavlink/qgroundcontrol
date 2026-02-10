@@ -1070,7 +1070,7 @@ void BluetoothWorker::_setupClassicSocket()
         (void) connect(_socket.data(), &QBluetoothSocket::bytesWritten, this, &BluetoothWorker::_onSocketBytesWritten);
 
         (void) connect(_socket.data(), &QBluetoothSocket::stateChanged, this,
-                      [this](QBluetoothSocket::SocketState state) {
+                      [](QBluetoothSocket::SocketState state) {
             qCDebug(BluetoothLinkLog) << "Bluetooth Socket State Changed:" << state;
         });
     }
@@ -2049,8 +2049,8 @@ void BluetoothLink::_checkPermission()
 
     const Qt::PermissionStatus permissionStatus = QCoreApplication::instance()->checkPermission(permission);
     if (permissionStatus == Qt::PermissionStatus::Undetermined) {
-        QCoreApplication::instance()->requestPermission(permission, this, [this](const QPermission &permission) {
-            _handlePermissionStatus(permission.status());
+        QCoreApplication::instance()->requestPermission(permission, this, [this](const QPermission &perm) {
+            _handlePermissionStatus(perm.status());
         });
     } else {
         _handlePermissionStatus(permissionStatus);

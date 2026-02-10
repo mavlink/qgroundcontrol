@@ -512,7 +512,7 @@ void MockLink::_sendBatteryStatus()
     uint16_t rgVoltagesNone[10]{};
     uint16_t rgVoltagesExtNone[4]{};
 
-    for (int i = 0; i < std::size(rgVoltages); i++) {
+    for (size_t i = 0; i < std::size(rgVoltages); i++) {
         rgVoltages[i] = UINT16_MAX;
         rgVoltagesNone[i] = UINT16_MAX;
     }
@@ -1402,7 +1402,7 @@ void MockLink::_sendGlobalPositionInt()
 {
     static uint64_t timeTick = 0;
 
-    mavlink_message_t msg{0};
+    mavlink_message_t msg{};
     (void) mavlink_msg_global_position_int_pack_chan(
         _vehicleSystemId,
         _vehicleComponentId,
@@ -1788,7 +1788,7 @@ void MockLink::_moveADSBVehicle(int vehicleIndex)
     coord.setAltitude(100); // Keeping altitude constant for simplicity
 }
 
-void MockLink::_handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted)
+void MockLink::_handleRequestMessageAutopilotVersion(const mavlink_command_long_t &/*request*/, bool &accepted)
 {
     accepted = true;
 
@@ -1808,7 +1808,7 @@ void MockLink::_handleRequestMessageAutopilotVersion(const mavlink_command_long_
     _respondWithAutopilotVersion();
 }
 
-void MockLink::_handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck)
+void MockLink::_handleRequestMessageDebug(const mavlink_command_long_t &/*request*/, bool &accepted, bool &noAck)
 {
     accepted = true;
     noAck = false;
@@ -1863,7 +1863,7 @@ void MockLink::_handleRequestMessageAvailableModes(const mavlink_command_long_t 
     }
 }
 
-void MockLink::_handleRequestMessageGimbalManagerInformation(const mavlink_command_long_t &request, bool &accepted)
+void MockLink::_handleRequestMessageGimbalManagerInformation(const mavlink_command_long_t &/*request*/, bool &accepted)
 {
     accepted = true;
 
