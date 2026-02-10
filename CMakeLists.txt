@@ -259,6 +259,9 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     ${QGC_RESOURCES}
 )
 
+# Apply compiler warning configuration to QGC target
+qgc_apply_warning_flags()
+
 # ----------------------------------------------------------------------------
 # Platform-Specific Configuration
 # ----------------------------------------------------------------------------

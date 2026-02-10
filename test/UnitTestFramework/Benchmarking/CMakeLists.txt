@@ -6,6 +6,7 @@ CPMAddPackage(
     GITHUB_REPOSITORY martinus/nanobench
     VERSION 4.3.11
 )
+qgc_disable_dependency_warnings(nanobench)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE nanobench)
 
 target_sources(${CMAKE_PROJECT_NAME}
