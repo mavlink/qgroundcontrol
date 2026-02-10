@@ -12,7 +12,6 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-import QGroundControl.UTMSP
 import QGroundControl.Viewer3D
 
 Item {
@@ -21,9 +20,6 @@ Item {
     // These should only be used by MainRootWindow
     property var planController:    _planController
     property var guidedController:  _guidedController
-
-    // Properties of UTM adapter
-    property bool utmspSendActTrigger: false
 
     PlanMasterController {
         id:                     _planController
@@ -163,21 +159,9 @@ Item {
         }
     }
 
-    UTMSPActivationStatusBar {
-        activationStartTimestamp:   UTMSPStateStorage.startTimeStamp
-        activationApproval:         UTMSPStateStorage.showActivationTab && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
-        flightID:                   UTMSPStateStorage.flightID
-        anchors.fill:               parent
-
-        function onActivationTriggered(value) {
-            _root.utmspSendActTrigger = value
-        }
-    }
-
     FlyViewToolBar {
         id:                 toolbar
         guidedValueSlider:  _guidedValueSlider
-        utmspSliderTrigger: utmspSendActTrigger
         visible:            !QGroundControl.videoManager.fullScreen
     }
 }

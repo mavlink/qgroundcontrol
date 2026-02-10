@@ -49,10 +49,6 @@ else()
     return()
 endif()
 
-# Coverage thresholds (fail CI if coverage falls below these)
-set(QGC_COVERAGE_LINE_THRESHOLD 30 CACHE STRING "Minimum line coverage percentage")
-set(QGC_COVERAGE_BRANCH_THRESHOLD 20 CACHE STRING "Minimum branch coverage percentage")
-
 # Find gcovr for report generation
 find_program(GCOVR_EXECUTABLE gcovr)
 
@@ -78,55 +74,60 @@ if(GCOVR_EXECUTABLE)
         list(APPEND GCOVR_COMMON_ARGS --gcov-executable "${GCOVR_GCOV_EXECUTABLE}")
     endif()
 
-    # coverage: Run tests and generate both XML (for Codecov) and HTML
-    add_custom_target(coverage
-        # Run tests
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
-        # Generate reports
-        COMMAND ${GCOVR_EXECUTABLE}
-            ${GCOVR_COMMON_ARGS}
-            --xml coverage.xml
-            --html coverage.html
-            --html-details
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running tests and generating coverage report (XML + HTML)"
-        VERBATIM
-    )
-    add_dependencies(coverage ${CMAKE_PROJECT_NAME})
+    if(QGC_BUILD_TESTING)
+        # coverage: Run tests and generate both XML (for Codecov) and HTML
+        add_custom_target(coverage
+            # Run tests
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            # Generate reports
+            COMMAND ${GCOVR_EXECUTABLE}
+                ${GCOVR_COMMON_ARGS}
+                --xml coverage.xml
+                --html coverage.html
+                --html-details
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and generating coverage report (XML + HTML)"
+            VERBATIM
+        )
+        add_dependencies(coverage ${CMAKE_PROJECT_NAME})
 
-    # coverage-html: Run tests and generate HTML only (for local viewing)
-    add_custom_target(coverage-html
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
-        COMMAND ${GCOVR_EXECUTABLE}
-            ${GCOVR_COMMON_ARGS}
-            --html coverage.html
-            --html-details
-        COMMAND ${CMAKE_COMMAND} -E echo "Coverage report: ${CMAKE_BINARY_DIR}/coverage.html"
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running tests and generating HTML coverage report"
-        VERBATIM
-    )
-    add_dependencies(coverage-html ${CMAKE_PROJECT_NAME})
+        # coverage-html: Run tests and generate HTML only (for local viewing)
+        add_custom_target(coverage-html
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            COMMAND ${GCOVR_EXECUTABLE}
+                ${GCOVR_COMMON_ARGS}
+                --html coverage.html
+                --html-details
+            COMMAND ${CMAKE_COMMAND} -E echo "Coverage report: ${CMAKE_BINARY_DIR}/coverage.html"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and generating HTML coverage report"
+            VERBATIM
+        )
+        add_dependencies(coverage-html ${CMAKE_PROJECT_NAME})
 
-    # coverage-check: Run tests and verify coverage meets thresholds (for CI)
-    add_custom_target(coverage-check
-        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
-        COMMAND ${GCOVR_EXECUTABLE}
-            ${GCOVR_COMMON_ARGS}
-            --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
-            --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
-            --xml coverage.xml
-            --html coverage.html
-            --html-details
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running tests and verifying coverage thresholds (lines>=${QGC_COVERAGE_LINE_THRESHOLD}%, branches>=${QGC_COVERAGE_BRANCH_THRESHOLD}%)"
-        VERBATIM
-    )
-    add_dependencies(coverage-check ${CMAKE_PROJECT_NAME})
+        # coverage-check: Run tests and verify coverage meets thresholds (for CI)
+        add_custom_target(coverage-check
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            COMMAND ${GCOVR_EXECUTABLE}
+                ${GCOVR_COMMON_ARGS}
+                --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
+                --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
+                --xml coverage.xml
+                --html coverage.html
+                --html-details
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running tests and verifying coverage thresholds (lines>=${QGC_COVERAGE_LINE_THRESHOLD}%, branches>=${QGC_COVERAGE_BRANCH_THRESHOLD}%)"
+            VERBATIM
+        )
+        add_dependencies(coverage-check ${CMAKE_PROJECT_NAME})
+    endif()
 
     # coverage-clean: Remove coverage data files
     add_custom_target(coverage-clean
         COMMAND ${CMAKE_COMMAND} -E rm -f coverage.xml coverage.html
+        COMMAND find ${CMAKE_BINARY_DIR} -name "*.gcda" -delete
+        COMMAND find ${CMAKE_BINARY_DIR} -name "*.profraw" -delete
+        COMMAND find ${CMAKE_BINARY_DIR} -name "*.profdata" -delete
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Cleaning coverage data"
         VERBATIM

@@ -1,4 +1,5 @@
 #include "QGCApplication.h"
+#include "qgc_version.h"
 
 #include <QtCore/QEvent>
 #include <QtCore/QFile>

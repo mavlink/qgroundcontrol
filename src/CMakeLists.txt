@@ -50,7 +50,6 @@ add_subdirectory(QmlControls)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
 add_subdirectory(UI)
-add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
@@ -80,6 +79,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_BINARY_DIR}
 )
 
 # ============================================================================
@@ -132,7 +132,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlControlsModule
         QGroundControlModule
         ToolbarModule
-        UTMSPModule
         VehicleSetupModule
 )
 
@@ -151,24 +150,13 @@ if(QGC_VIEWER3D)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 endif()
 
-if(NOT QGC_AIRLINK_DISABLED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
-endif()
-
 # ============================================================================
 # Compile Definitions
 # ============================================================================
 
-# Application metadata
+# Application metadata (version macros provided via generated qgc_version.h)
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
-        QGC_APP_NAME="${QGC_APP_NAME}"
-        QGC_ORG_NAME="${QGC_ORG_NAME}"
-        QGC_ORG_DOMAIN="${QGC_ORG_DOMAIN}"
-        QGC_APP_VERSION_STR="${QGC_APP_VERSION_STR}"
-        QGC_APP_DATE="${QGC_APP_DATE}"
-        QGC_APP_DESCRIPTION="${QGC_APP_DESCRIPTION}"
-        QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
         $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
         $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
 )

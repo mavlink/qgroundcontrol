@@ -4,7 +4,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.UTMSP
 
 Item {
     required property var editorMap
@@ -207,39 +206,5 @@ Item {
             }
         }
 
-        Component {
-            id: utmspToolComponent
-
-            Column {
-                spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                UTMSPAdapterEditor{
-                    width:                  parent.width
-                    currentMissionItems:     root._visualItems
-                    myGeoFenceController:    root._geoFenceController
-                    flightMap:               root.editorMap
-                    triggerSubmitButton:     _triggerSubmit
-                    resetRegisterFlightPlan: _resetRegisterFlightPlan
-
-                    onRemoveFlightPlanTriggered: {
-                        root.planMasterController.removeAllFromVehicle()
-                        root._missionController.setCurrentPlanViewSeqNum(0, true)
-                        _resetRegisterFlightPlan = true
-                    }
-
-                    onResetGeofencePolygonTriggered: {
-                        resetUTMSPGeoFenceTimer.start()
-                    }
-
-                    Timer {
-                        id:             resetUTMSPGeoFenceTimer
-                        interval:       2500
-                        running:        false
-                        repeat:         false
-                        onTriggered:    _resetGeofencePolygon = true
-                    }
-                }
-            }
-        }
     }
 }

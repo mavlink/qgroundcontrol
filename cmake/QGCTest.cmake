@@ -32,24 +32,28 @@ add_custom_target(check
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running all tests"
+    VERBATIM
 )
 
 add_custom_target(check-unit
     COMMAND ${CMAKE_CTEST_COMMAND} -L Unit --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running unit tests"
+    VERBATIM
 )
 
 add_custom_target(check-integration
     COMMAND ${CMAKE_CTEST_COMMAND} -L Integration --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running integration tests"
+    VERBATIM
 )
 
 add_custom_target(check-fast
     COMMAND ${CMAKE_CTEST_COMMAND} -LE Slow --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running fast tests (excluding Slow)"
+    VERBATIM
 )
 
 add_custom_target(check-ci
@@ -66,7 +70,20 @@ foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
         COMMAND ${CMAKE_CTEST_COMMAND} -L ${_category} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
         USES_TERMINAL
         COMMENT "Running ${_category} tests"
+        VERBATIM
     )
+endforeach()
+
+# Collect all check targets for build dependency injection
+set(_qgc_check_targets check check-unit check-integration check-fast check-ci)
+foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
+    string(TOLOWER ${_category} _target_suffix)
+    list(APPEND _qgc_check_targets check-${_target_suffix})
+endforeach()
+
+# Ensure all check targets build the main executable first
+foreach(_target IN LISTS _qgc_check_targets)
+    add_dependencies(${_target} ${CMAKE_PROJECT_NAME})
 endforeach()
 
 # ----------------------------------------------------------------------------
@@ -96,7 +113,7 @@ function(add_qgc_test test_name)
 
     add_test(
         NAME ${test_name}
-        COMMAND $<TARGET_FILE:${PROJECT_NAME}> --unittest:${test_name} --allow-multiple
+        COMMAND $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
@@ -135,6 +152,4 @@ function(add_qgc_test test_name)
         set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "MockLink")
     endif()
 
-    # Add dependency so 'check' target builds first
-    add_dependencies(check ${PROJECT_NAME})
 endfunction()

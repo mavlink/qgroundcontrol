@@ -111,10 +111,10 @@ void QGCCachedTileSet::_doneWithDownload()
         setTotalTileSize(_savedTileSize);
 
         quint32 avg = 0;
-        if (_savedTileSize != 0) {
+        if (_savedTileCount != 0) {
             avg = _savedTileSize / _savedTileCount;
         } else {
-            qCWarning(QGCCachedTileSetLog) << "_savedTileSize=0";
+            qCWarning(QGCCachedTileSetLog) << "_savedTileCount=0";
         }
 
         setUniqueTileSize(_uniqueTileCount * avg);
@@ -142,8 +142,13 @@ void QGCCachedTileSet::_prepareDownload()
         }
 
         QGCTile* const tile = _tilesToDownload.dequeue();
-        const int mapId = UrlFactory::getQtMapIdFromProviderType(tile->type);
-        QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(mapId, tile->x, tile->y, tile->z);
+        QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(tile->type, tile->x, tile->y, tile->z);
+        if (!request.url().isValid()) {
+            qCWarning(QGCCachedTileSetLog) << "Invalid URL for tile" << tile->hash << "- skipping";
+            setErrorCount(_errorCount + 1);
+            delete tile;
+            continue;
+        }
         request.setOriginatingObject(this);
         request.setAttribute(QNetworkRequest::User, tile->hash);
 
@@ -152,7 +157,10 @@ void QGCCachedTileSet::_prepareDownload()
         QGCNetworkHelper::ignoreSslErrorsIfNeeded(reply);
         (void) connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
         (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
-        (void) _replies.insert(tile->hash, reply);
+        {
+            QMutexLocker lock(&_repliesMutex);
+            (void) _replies.insert(tile->hash, reply);
+        }
 
         delete tile;
         if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (QGeoTileFetcherQGC::concurrentDownloads(_type) * 10))) {
@@ -185,10 +193,13 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    if (_replies.contains(hash)) {
-        (void) _replies.remove(hash);
-    } else {
-        qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
+    {
+        QMutexLocker lock(&_repliesMutex);
+        if (_replies.contains(hash)) {
+            (void) _replies.remove(hash);
+        } else {
+            qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
+        }
     }
     qCDebug(QGCCachedTileSetLog) << "Tile fetched:" << hash;
 
@@ -200,7 +211,10 @@ void QGCCachedTileSet::_networkReplyFinished()
 
     const QString type = UrlFactory::tileHashToType(hash);
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromProviderType(type);
-    Q_CHECK_PTR(mapProvider);
+    if (!mapProvider) {
+        qCWarning(QGCCachedTileSetLog) << "Invalid map provider for type:" << type;
+        return;
+    }
 
     if (mapProvider->isElevationProvider()) {
         const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
@@ -252,10 +266,13 @@ void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
         return;
     }
 
-    if (_replies.contains(hash)) {
-        (void) _replies.remove(hash);
-    } else {
-        qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
+    {
+        QMutexLocker lock(&_repliesMutex);
+        if (_replies.contains(hash)) {
+            (void) _replies.remove(hash);
+        } else {
+            qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
+        }
     }
 
     if (error != QNetworkReply::OperationCanceledError) {
