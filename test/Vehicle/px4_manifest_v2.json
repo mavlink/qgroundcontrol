@@ -1,0 +1,137 @@
+{
+    "format_version": 2,
+    "latest_stable": "v1.15.2",
+    "latest_beta": "v1.16.0-beta1",
+    "latest_dev": "v1.16.0-dev",
+    "releases": {
+        "v1.15.2": {
+            "git_tag": "v1.15.2",
+            "release_date": "2024-11-20",
+            "channel": "stable",
+            "builds": [
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_bootloader.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/stable/px4_fmu-v5_bootloader.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 32768,
+                    "mav_autopilot": 12
+                },
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_default.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/stable/px4_fmu-v5_default.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 1048576,
+                    "mav_autopilot": 12
+                },
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_rover.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/stable/px4_fmu-v5_rover.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "f1e2d3c4b5a6f1e2d3c4b5a6f1e2d3c4b5a6f1e2d3c4b5a6f1e2d3c4b5a6f1e2",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 900000,
+                    "mav_autopilot": 12
+                },
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "ark_can-flow_canbootloader.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/stable/ark_can-flow_canbootloader.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 9688,
+                    "mav_autopilot": 12
+                },
+                {
+                    "board_id": 53,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v6x_default.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/stable/px4_fmu-v6x_default.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 2097152,
+                    "mav_autopilot": 12
+                },
+                {
+                    "board_id": 9,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v2_default.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/stable/px4_fmu-v2_default.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 983040,
+                    "mav_autopilot": 12
+                }
+            ]
+        },
+        "v1.16.0-beta1": {
+            "git_tag": "v1.16.0-beta1",
+            "release_date": "2024-12-01",
+            "channel": "beta",
+            "builds": [
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_default.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/beta/px4_fmu-v5_default.px4",
+                    "git_hash": "def789abc012",
+                    "sha256sum": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5",
+                    "git_identity": "v1.16.0-beta1",
+                    "build_time": 1701000000,
+                    "image_size": 1100000,
+                    "mav_autopilot": 12
+                },
+                {
+                    "board_id": 53,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v6x_default.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/beta/px4_fmu-v6x_default.px4",
+                    "git_hash": "def789abc012",
+                    "sha256sum": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                    "git_identity": "v1.16.0-beta1",
+                    "build_time": 1701000000,
+                    "image_size": 2200000,
+                    "mav_autopilot": 12
+                }
+            ]
+        },
+        "v1.16.0-dev": {
+            "git_tag": "v1.16.0-dev",
+            "release_date": "2024-12-10",
+            "channel": "dev",
+            "builds": [
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_default.px4",
+                    "url": "https://px4-travis.s3.amazonaws.com/Firmware/master/px4_fmu-v5_default.px4",
+                    "git_hash": "789012345abc",
+                    "sha256sum": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+                    "git_identity": "main",
+                    "build_time": 1702000000,
+                    "image_size": 1150000,
+                    "mav_autopilot": 12
+                }
+            ]
+        }
+    }
+}
