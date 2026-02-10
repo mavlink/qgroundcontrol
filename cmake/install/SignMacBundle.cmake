@@ -45,18 +45,20 @@ execute_process(
 # ----------------------------------------------------------------------------
 # Sign GStreamer Framework Components
 # ----------------------------------------------------------------------------
-execute_process(
-    COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f -name "*" -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-    COMMAND_ERROR_IS_FATAL ANY
-)
-execute_process(
-    COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer"
-    COMMAND_ERROR_IS_FATAL ANY
-)
-execute_process(
-    COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/GStreamer"
-    COMMAND_ERROR_IS_FATAL ANY
-)
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
+    execute_process(
+        COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(
+        COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(
+        COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/GStreamer"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endif()
 
 # ----------------------------------------------------------------------------
 # Sign All Frameworks
@@ -89,15 +91,16 @@ execute_process(
 # Notarization Process
 # ============================================================================
 
+set(_notarize_zip "${CMAKE_BINARY_DIR}/qgc_notarization_upload.zip")
 message(STATUS "QGC: Archiving Bundle for Notarization upload")
-file(REMOVE "qgc_notarization_upload.zip")
+file(REMOVE "${_notarize_zip}")
 execute_process(
-    COMMAND ditto -c -k --keepParent "${QGC_STAGING_BUNDLE_PATH}" qgc_notarization_upload.zip
+    COMMAND ditto -c -k --keepParent "${QGC_STAGING_BUNDLE_PATH}" "${_notarize_zip}"
     COMMAND_ERROR_IS_FATAL ANY
 )
 message(STATUS "QGC: Notarizing app bundle. This may take a while...")
 execute_process(
-    COMMAND xcrun notarytool submit qgc_notarization_upload.zip --apple-id "$ENV{QGC_MACOS_NOTARIZATION_USERNAME}" --team-id "$ENV{QGC_MACOS_NOTARIZATION_TEAM_ID}" --password "$ENV{QGC_MACOS_NOTARIZATION_PASSWORD}" --wait
+    COMMAND xcrun notarytool submit "${_notarize_zip}" --apple-id "$ENV{QGC_MACOS_NOTARIZATION_USERNAME}" --team-id "$ENV{QGC_MACOS_NOTARIZATION_TEAM_ID}" --password "$ENV{QGC_MACOS_NOTARIZATION_PASSWORD}" --wait
     COMMAND_ERROR_IS_FATAL ANY
 )
 message(STATUS "QGC: Stapling notarization ticket to app bundle")

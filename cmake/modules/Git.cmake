@@ -3,33 +3,43 @@
 # Extracts version information and metadata from Git repository
 # ----------------------------------------------------------------------------
 
-find_package(Git REQUIRED)
+find_package(Git QUIET)
 
-# Verify we're in a Git repository
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
-    message(WARNING "QGC: Not a Git repository. Version information may be incomplete.")
+if(NOT GIT_FOUND OR NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    message(WARNING "QGC: Git not found or not a git repository. Using fallback version info.")
+    set(QGC_GIT_BRANCH "unknown")
+    set(QGC_GIT_HASH "0000000")
+    set(QGC_APP_VERSION_STR "v0.0.0")
+    set(QGC_APP_VERSION "0.0.0")
+    set(QGC_APP_VERSION_MAJOR "0")
+    set(QGC_APP_VERSION_MINOR "0")
+    set(QGC_APP_VERSION_PATCH "0")
+    string(TIMESTAMP QGC_APP_DATE "%Y-%m-%dT%H:%M:%S%z" UTC)
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/src/qgc_version.h.in"
+        "${CMAKE_BINARY_DIR}/qgc_version.h"
+        @ONLY
+    )
+    return()
 endif()
 
 # Optionally update submodules during configuration
-if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" OFF)
-    if(GIT_SUBMODULE)
-        message(STATUS "Updating Git submodules...")
-        execute_process(
-            COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-            RESULT_VARIABLE GIT_SUBMODULE_RESULT
-            OUTPUT_VARIABLE GIT_SUBMODULE_OUTPUT
-            ERROR_VARIABLE GIT_SUBMODULE_ERROR
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        if(NOT GIT_SUBMODULE_RESULT EQUAL 0)
-            include(CMakePrintHelpers)
-            cmake_print_variables(GIT_SUBMODULE_RESULT GIT_SUBMODULE_OUTPUT GIT_SUBMODULE_ERROR)
-            message(FATAL_ERROR "Git submodule update failed with code ${GIT_SUBMODULE_RESULT}")
-        endif()
-        message(STATUS "Git submodules updated successfully")
+if(GIT_SUBMODULE)
+    message(STATUS "Updating Git submodules...")
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE GIT_SUBMODULE_RESULT
+        OUTPUT_VARIABLE GIT_SUBMODULE_OUTPUT
+        ERROR_VARIABLE GIT_SUBMODULE_ERROR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT GIT_SUBMODULE_RESULT EQUAL 0)
+        include(CMakePrintHelpers)
+        cmake_print_variables(GIT_SUBMODULE_RESULT GIT_SUBMODULE_OUTPUT GIT_SUBMODULE_ERROR)
+        message(FATAL_ERROR "Git submodule update failed with code ${GIT_SUBMODULE_RESULT}")
     endif()
+    message(STATUS "Git submodules updated successfully")
 endif()
 
 include(CMakePrintHelpers)
@@ -139,3 +149,12 @@ else()
     set(QGC_APP_VERSION_PATCH "0")
 endif()
 # cmake_print_variables(QGC_APP_VERSION QGC_APP_VERSION_MAJOR QGC_APP_VERSION_MINOR QGC_APP_VERSION_PATCH)
+
+# ----------------------------------------------------------------------------
+# Generate Version Header
+# ----------------------------------------------------------------------------
+configure_file(
+    "${CMAKE_SOURCE_DIR}/src/qgc_version.h.in"
+    "${CMAKE_BINARY_DIR}/qgc_version.h"
+    @ONLY
+)

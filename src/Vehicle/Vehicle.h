@@ -67,9 +67,6 @@ class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleObjectAvoidance;
-#ifdef QGC_UTM_ADAPTER
-class UTMSPVehicle;
-#endif
 
 namespace events {
 namespace parser {
@@ -1046,10 +1043,6 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
     GimbalController*               _gimbalController               = nullptr;
-
-#ifdef QGC_UTM_ADAPTER
-    UTMSPVehicle*                    _utmspVehicle                    = nullptr;
-#endif
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT

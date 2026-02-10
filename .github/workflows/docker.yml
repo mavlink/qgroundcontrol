@@ -124,6 +124,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           trivy-config: '.github/trivy.yaml'
+          cache-dir: ${{ runner.temp }}/.cache/trivy
 
       - name: Upload Trivy results to GitHub Security
         if: steps.artifact.outputs.found == 'true'

@@ -1,4 +1,7 @@
 #include "QmlObjectListModel.h"
+
+#include <QtQml/QQmlEngine>
+
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")

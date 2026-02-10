@@ -104,5 +104,4 @@ endif()
 # Communication Link Subdirectories
 # ============================================================================
 
-add_subdirectory(AirLink)
 add_subdirectory(MockLink)

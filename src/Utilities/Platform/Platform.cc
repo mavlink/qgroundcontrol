@@ -1,4 +1,5 @@
 #include "Platform.h"
+#include "qgc_version.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QProcessEnvironment>
