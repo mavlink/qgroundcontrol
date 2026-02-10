@@ -28,6 +28,7 @@ Rectangle {
     property var  _flyViewSettings:             QGroundControl.settingsManager.flyViewSettings
     property bool _showAdditionalIndicators:    _flyViewSettings.showAdditionalIndicatorsCompass.value && !usedByMultipleVehicleList
     property bool _lockNoseUpCompass:           _flyViewSettings.lockNoseUpCompass.value && !usedByMultipleVehicleList
+    property bool _isCompassAndAttitude:           _flyViewSettings.instrumentQmlFile2.enumIndex == 1
 
     function showCOG(){
         if (_groundSpeed < 0.5) {
@@ -128,7 +129,7 @@ Rectangle {
             transform: Translate {
                 property double _angle: _headingToHome
 
-                x: translateCenterToAngleX(parent.width / 2, _angle)
+                x: translateCenterToAngleX(_isCompassAndAttitude ? parent.width / 4 : parent.width / 2 , _angle)
                 y: translateCenterToAngleY(parent.height / 2, _angle)
             }
         }
