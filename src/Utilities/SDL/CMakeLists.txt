@@ -75,6 +75,15 @@ CPMAddPackage(
         "${SDL_EXTRA_OPTIONS}"
 )
 
+# Suppress compiler warnings for SDL3 dependency
+if(SDL3_ADDED)
+    if(ANDROID)
+        qgc_disable_dependency_warnings(SDL3-shared)
+    else()
+        qgc_disable_dependency_warnings(SDL3-static)
+    endif()
+endif()
+
 if(ANDROID)
     target_compile_definitions(SDL3-shared PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
     target_link_libraries(SDL3-shared PRIVATE log android)

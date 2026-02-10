@@ -101,11 +101,7 @@ typedef SSIZE_T ssize_t;
     )
 
     # Suppress warnings in third-party code
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(exif PRIVATE -w)
-    elseif(MSVC)
-        target_compile_options(exif PRIVATE /w)
-    endif()
+    qgc_disable_dependency_warnings(exif)
 endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE exif)

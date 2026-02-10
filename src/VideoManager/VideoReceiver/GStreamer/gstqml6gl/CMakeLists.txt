@@ -18,7 +18,7 @@ if(MACOS)
         message(FATAL_ERROR "GStreamer.framework not found at ${GSTREAMER_FRAMEWORK_PATH}. Install GStreamer using tools/setup/install-dependencies-osx.sh script")
     endif()
     target_link_libraries(gstqml6gl PUBLIC "$<LINK_LIBRARY:FRAMEWORK,${GSTREAMER_FRAMEWORK_PATH}>")
-    target_include_directories(gstqml6gl PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+    target_include_directories(gstqml6gl SYSTEM PUBLIC "${GSTREAMER_FRAMEWORK_PATH}/Headers")
     # Verify correct framework version
     execute_process(
         COMMAND defaults read "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0/Resources/Info.plist" CFBundleShortVersionString
@@ -97,6 +97,9 @@ file(GLOB gstqml6gl_SRCS
     "${QGC_GST_QT6_PLUGIN_PATH}/*.h"
 )
 target_sources(gstqml6gl PRIVATE ${gstqml6gl_SRCS})
+
+# Suppress compiler warnings for third-party GStreamer plugin sources
+qgc_disable_dependency_warnings(gstqml6gl)
 
 target_link_libraries(gstqml6gl
     PRIVATE
