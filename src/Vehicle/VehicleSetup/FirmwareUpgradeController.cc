@@ -30,7 +30,7 @@ struct FirmwareToUrlElement_t
 };
 
 // PX4 manifest URL
-static constexpr const char* _px4ManifestUrl = "https://px4-travis.s3.amazonaws.com/Firmware/manifest.json";
+static constexpr const char* _px4ManifestUrl = "https://artifacts.px4.io/Firmware/manifest.json";
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 {
@@ -234,6 +234,9 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
         if (_rgManifestFirmwareInfo.length()) {
             _buildAPMFirmwareNames();
         }
+        if (_px4ManifestLoaded) {
+            _buildPX4FirmwareNames();
+        }
         emit showFirmwareSelectDlg();
     }
 }
@@ -253,13 +256,13 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     switch (boardId) {
         case Bootloader::boardIDSiKRadio1000: {
             FirmwareToUrlElement_t element = {SiKRadio, StableFirmware, DefaultVehicleFirmware,
-                                              "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx"};
+                                              "https://artifacts.px4.io/SiK/stable/radio~hm_trp.ihx"};
             _rgFirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType),
                                       element.url);
         } break;
         case Bootloader::boardIDSiKRadio1060: {
             FirmwareToUrlElement_t element = {SiKRadio, StableFirmware, DefaultVehicleFirmware,
-                                              "https://px4-travis.s3.amazonaws.com/SiK/stable/radio~hb1060.ihx"};
+                                              "https://artifacts.px4.io/SiK/stable/radio~hb1060.ihx"};
             _rgFirmwareDynamic.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType),
                                       element.url);
         } break;
@@ -466,6 +469,9 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
     _selectedFirmwareBuildType = firmwareType;
     emit selectedFirmwareBuildTypeChanged(_selectedFirmwareBuildType);
     _buildAPMFirmwareNames();
+    if (_bootloaderFound && _px4ManifestLoaded) {
+        _buildPX4FirmwareNames();
+    }
 }
 
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
@@ -600,6 +606,9 @@ void FirmwareUpgradeController::_px4ManifestDownloadComplete(QString remoteFile,
                                     << "releases, stable:" << _px4ManifestLatestStable;
         _px4ManifestLoaded = true;
         emit px4ManifestLoadedChanged();
+        if (_bootloaderFound) {
+            _buildPX4FirmwareNames();
+        }
     }
 }
 
@@ -681,6 +690,95 @@ bool FirmwareUpgradeController::_parsePX4Manifest(const QJsonDocument& doc)
                                 << "latest beta:" << _px4ManifestLatestBeta << "latest dev:" << _px4ManifestLatestDev;
 
     return true;
+}
+
+void FirmwareUpgradeController::setSelectedPX4Version(const QString& version)
+{
+    if (_selectedPX4Version != version) {
+        _selectedPX4Version = version;
+        if (_bootloaderFound && _px4ManifestLoaded) {
+            _buildPX4FirmwareNames();
+        }
+    }
+}
+
+void FirmwareUpgradeController::_buildPX4FirmwareNames(void)
+{
+    _px4FirmwareNames.clear();
+    _px4FirmwareNamesBestIndex = -1;
+    _px4FirmwareUrls.clear();
+    _px4FirmwareSha256Map.clear();
+
+    if (!_px4ManifestLoaded || _selectedFirmwareBuildType == CustomFirmware) {
+        emit px4FirmwareNamesChanged();
+        return;
+    }
+
+    // Determine which version tag to use based on firmware build type
+    QString versionTag;
+    switch (_selectedFirmwareBuildType) {
+        case StableFirmware:
+            versionTag = _selectedPX4Version.isEmpty() ? _px4ManifestLatestStable : _selectedPX4Version;
+            break;
+        case BetaFirmware:
+            versionTag = _px4ManifestLatestBeta;
+            break;
+        case DeveloperFirmware:
+            versionTag = _px4ManifestLatestDev;
+            break;
+        default:
+            emit px4FirmwareNamesChanged();
+            return;
+    }
+
+    if (versionTag.isEmpty() || !_px4ManifestReleases.contains(versionTag)) {
+        emit px4FirmwareNamesChanged();
+        return;
+    }
+
+    const PX4ManifestReleaseInfo_t& release = _px4ManifestReleases[versionTag];
+    uint32_t boardId = _bootloaderBoardID;
+
+    int currentIndex = 0;
+    for (const PX4ManifestBuildInfo_t& build : release.builds) {
+        if (build.boardId != boardId) {
+            continue;
+        }
+
+        // Filter out bootloader and canbootloader builds
+        if (build.filename.contains(QStringLiteral("bootloader"), Qt::CaseInsensitive)) {
+            continue;
+        }
+
+        // Build friendly name: "px4_fmu-v5_default (v1.16.1)"
+        QString friendlyName = build.filename;
+        friendlyName.replace(QStringLiteral(".px4"), QString());
+        friendlyName = QStringLiteral("%1 (%2)").arg(friendlyName, versionTag);
+
+        _px4FirmwareNames.append(friendlyName);
+        _px4FirmwareUrls.append(build.url);
+
+        if (!build.sha256sum.isEmpty()) {
+            _px4FirmwareSha256Map[build.url] = build.sha256sum;
+        }
+
+        // Pre-select the _default build
+        if (_px4FirmwareNamesBestIndex == -1 && build.filename.contains(QStringLiteral("_default"))) {
+            _px4FirmwareNamesBestIndex = currentIndex;
+        }
+
+        currentIndex++;
+    }
+
+    // If no _default found, default to first entry
+    if (_px4FirmwareNamesBestIndex == -1) {
+        _px4FirmwareNamesBestIndex = 0;
+    }
+
+    qCDebug(FirmwareUpgradeLog) << "PX4 firmware names built:" << _px4FirmwareNames.count() << "builds for board"
+                                << boardId << "version" << versionTag << "best index:" << _px4FirmwareNamesBestIndex;
+
+    emit px4FirmwareNamesChanged();
 }
 
 void FirmwareUpgradeController::_buildPX4FirmwareHashFromManifest(int boardId)

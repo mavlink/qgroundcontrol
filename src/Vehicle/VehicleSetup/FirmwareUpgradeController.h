@@ -93,6 +93,10 @@ public:
     Q_PROPERTY(bool px4ManifestLoaded READ px4ManifestLoaded NOTIFY px4ManifestLoadedChanged)
     Q_PROPERTY(bool px4ManifestDownloading MEMBER _px4ManifestDownloading NOTIFY px4ManifestLoadedChanged)
     Q_PROPERTY(QStringList px4AvailableVersions READ px4AvailableVersions NOTIFY px4AvailableVersionsChanged)
+    Q_PROPERTY(QStringList px4FirmwareNames MEMBER _px4FirmwareNames NOTIFY px4FirmwareNamesChanged)
+    Q_PROPERTY(int px4FirmwareNamesBestIndex MEMBER _px4FirmwareNamesBestIndex NOTIFY px4FirmwareNamesChanged)
+    Q_PROPERTY(QStringList px4FirmwareUrls MEMBER _px4FirmwareUrls NOTIFY px4FirmwareNamesChanged)
+
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
 
@@ -115,6 +119,9 @@ public:
     Q_INVOKABLE void flashSingleFirmwareMode(FirmwareBuildType_t firmwareType);
 
     Q_INVOKABLE FirmwareVehicleType_t vehicleTypeFromFirmwareSelectionIndex(int index);
+
+    /// Select a specific PX4 firmware version from the manifest
+    Q_INVOKABLE void setSelectedPX4Version(const QString& version);
 
     // overload, not exposed to qml side
     void flash(const FirmwareIdentifier& firmwareId);
@@ -211,6 +218,7 @@ signals:
     void px4DevVersionChanged(const QString& px4DevVersion);
     void px4ManifestLoadedChanged(void);
     void px4AvailableVersionsChanged(void);
+    void px4FirmwareNamesChanged(void);
     void downloadingFirmwareListChanged(bool downloadingFirmwareList);
 
 private slots:
@@ -243,6 +251,7 @@ private:
     void _downloadPX4Manifest(void);
     bool _parsePX4Manifest(const QJsonDocument& doc);
     void _buildPX4FirmwareHashFromManifest(int boardId);
+    void _buildPX4FirmwareNames(void);
     void _downloadArduPilotManifest(void);
 
     QString _singleFirmwareURL;
@@ -336,6 +345,9 @@ private:
     QStringList _px4AvailableVersions;
     QString _selectedPX4Version;
     QMap<QString, QString> _px4FirmwareSha256Map;  // URL → sha256sum
+    QStringList _px4FirmwareNames;
+    int _px4FirmwareNamesBestIndex = 0;
+    QStringList _px4FirmwareUrls;
 
     const QString _apmBoardDescriptionReplaceText;
 

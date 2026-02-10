@@ -149,12 +149,14 @@ SetupPage {
                             case FirmwareUpgradeController.BetaFirmware:
                                 versionString = controller.px4BetaVersion
                                 break
+                            case FirmwareUpgradeController.DeveloperFirmware:
+                                versionString = controller.px4DevVersion
+                                break
                             }
                         } else {
                             versionString = controller.px4StableVersion
                         }
-                        px4FlightStackRadio.text = qsTr("PX4 Pro ") + versionString
-                        //px4FlightStackRadio2.text = qsTr("PX4 Pro ") + versionString
+                        px4FlightStackRadio.text = qsTr("PX4 Autopilot") + versionString
                     }
 
                     Component.onCompleted: {
@@ -176,37 +178,42 @@ SetupPage {
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
 
                             var stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
-                            if (apmFlightStack.checked) {
-                                if (firmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
-                                    vehicleType = apmVehicleTypeCombo.currentIndex
-                                } else {
-                                    if (controller.apmFirmwareNames.length === 0) {
-                                        // Not ready yet, or no firmware available
-                                        mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("Either firmware list is still downloading, or no firmware is available for current selection."))
-                                        firmwareSelectDialog.preventClose = true
-                                        return
-                                    }
-                                    if (ardupilotFirmwareSelectionCombo.currentIndex == -1) {
-                                        mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("You must choose a board type."))
-                                        firmwareSelectDialog.preventClose = true
-                                        return
-                                    }
-
-                                    var firmwareUrl = controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex]
-                                    if (firmwareUrl == "") {
-                                        mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("No firmware was found for the current selection."))
-                                        firmwareSelectDialog.preventClose = true
-                                        return
-                                    }
-                                    controller.flashFirmwareUrl(controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex])
-                                    return
-                                }
-                            }
-                            //-- If custom, get file path
                             if (firmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
                                 customFirmwareDialog.openForLoad()
+                            } else if (apmFlightStack.checked) {
+                                if (controller.apmFirmwareNames.length === 0) {
+                                    // Not ready yet, or no firmware available
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("Either firmware list is still downloading, or no firmware is available for current selection."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+                                if (ardupilotFirmwareSelectionCombo.currentIndex == -1) {
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("You must choose a board type."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+
+                                var firmwareUrl = controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex]
+                                if (firmwareUrl == "") {
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("No firmware was found for the current selection."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+                                controller.flashFirmwareUrl(controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex])
                             } else {
-                                controller.flash(stack, firmwareBuildType, vehicleType)
+                                // PX4 path
+                                if (controller.px4FirmwareNames.length === 0) {
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("Either firmware list is still downloading, or no firmware is available for current selection."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+                                var px4FirmwareUrl = controller.px4FirmwareUrls[px4FirmwareSelectionCombo.currentIndex]
+                                if (px4FirmwareUrl === "") {
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("No firmware was found for the current selection."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+                                controller.flashFirmwareUrl(px4FirmwareUrl)
                             }
                         }
                     }
@@ -280,7 +287,7 @@ SetupPage {
 
                             QGCRadioButton {
                                 id:             px4FlightStackRadio
-                                text:           qsTr("PX4 Pro ")
+                                text:           qsTr("PX4 Autopilot")
                                 font.bold:      _defaultFirmwareIsPX4
                                 checked:        _defaultFirmwareIsPX4
 
@@ -326,18 +333,40 @@ SetupPage {
                             onModelChanged:     currentIndex = controller.apmFirmwareNamesBestIndex
                         }
 
+                        QGCComboBox {
+                            id:                 px4FirmwareSelectionCombo
+                            Layout.fillWidth:   true
+                            visible:            px4FlightStackRadio.checked && !controller.px4ManifestDownloading && controller.px4ManifestLoaded && controller.px4FirmwareNames.length > 0
+                            model:              controller.px4FirmwareNames
+                            onModelChanged:     currentIndex = controller.px4FirmwareNamesBestIndex
+                        }
+
                         QGCLabel {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
                             text:               qsTr("Downloading list of available firmwares...")
-                            visible:            controller.downloadingFirmwareList
+                            visible:            controller.downloadingFirmwareList || controller.px4ManifestDownloading
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth:   true
+                            wrapMode:           Text.WordWrap
+                            text:               qsTr("PX4 firmware list unavailable — check network connection")
+                            visible:            px4FlightStackRadio.checked && !controller.px4ManifestDownloading && !controller.px4ManifestLoaded
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth:   true
+                            wrapMode:           Text.WordWrap
+                            text:               qsTr("No firmware available for this board")
+                            visible:            px4FlightStackRadio.checked && controller.px4ManifestLoaded && !controller.px4ManifestDownloading && controller.px4FirmwareNames.length === 0
                         }
 
                         QGCLabel {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
                             text:               qsTr("No Firmware Available")
-                            visible:            !controller.downloadingFirmwareList && (QGroundControl.apmFirmwareSupported && controller.apmFirmwareNames.length === 0)
+                            visible:            apmFlightStack.checked && !controller.downloadingFirmwareList && controller.apmFirmwareNames.length === 0
                         }
 
                         QGCCheckBox {
@@ -387,6 +416,16 @@ SetupPage {
                                     firmwareWarningMessageVisible = false
                                 }
                                 updatePX4VersionDisplay()
+                            }
+                        }
+
+                        QGCComboBox {
+                            id:                 px4VersionCombo
+                            Layout.fillWidth:   true
+                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked && controller.px4ManifestLoaded && controller.px4AvailableVersions.length > 0
+                            model:              controller.px4AvailableVersions
+                            onActivated: (index) => {
+                                controller.setSelectedPX4Version(model[index])
                             }
                         }
 
