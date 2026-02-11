@@ -690,11 +690,12 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 break;
         }
     } else {
+        QString commandStr = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(command));
         if ((result == MAV_RESULT_TEMPORARILY_REJECTED) || (result == MAV_RESULT_FAILED)) {
             if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
-                qCDebug(CameraControlLog) << "Command temporarily rejected for" << command;
+                qCDebug(CameraControlLog) << "Command temporarily rejected (MAV_RESULT_TEMPORARILY_REJECTED) for" << commandStr;
             } else {
-                qCDebug(CameraControlLog) << "Command failed for" << command;
+                qCDebug(CameraControlLog) << "Command failed (MAV_RESULT_FAILED) for" << commandStr;
             }
             switch(command) {
                 case MAV_CMD_RESET_CAMERA_SETTINGS:
@@ -726,7 +727,7 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                     break;
             }
         } else {
-            qCDebug(CameraControlLog) << "Bad response for" << MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(command)) << QGCMAVLink::mavResultToString(result);
+            qCDebug(CameraControlLog) << "Bad response for" << commandStr << QGCMAVLink::mavResultToString(result);
         }
     }
 }
