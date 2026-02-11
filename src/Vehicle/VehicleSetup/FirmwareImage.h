@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QString>
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtCore/QTextStream>
 
 /// Support for Intel Hex firmware file
@@ -12,7 +12,7 @@ class FirmwareImage : public QObject
     Q_OBJECT
 
 public:
-    FirmwareImage(QObject *parent = 0);
+    FirmwareImage(QObject* parent = 0);
 
     /// Loads the specified image file. Supported formats: .px4, .bin, .ihx.
     /// Emits errorMesssage and statusMessage signals while loading.
@@ -22,13 +22,28 @@ public:
     bool load(const QString& imageFilename, uint32_t boardId);
 
     /// Returns the number of bytes in the image.
-    uint32_t imageSize(void) const { return _imageSize; }
+    uint32_t imageSize(void) const
+    {
+        return _imageSize;
+    }
 
     /// @return true: image format is .bin
-    bool imageIsBinFormat(void) const { return _binFormat; }
+    bool imageIsBinFormat(void) const
+    {
+        return _binFormat;
+    }
 
     /// @return Filename for .bin file
-    QString binFilename(void) const { return _binFilename; }
+    QString binFilename(void) const
+    {
+        return _binFilename;
+    }
+
+    /// @return SHA-256 hex string of the decompressed firmware image (before padding), empty if not a .px4 file
+    QString imageSha256(void) const
+    {
+        return _imageSha256;
+    }
 
     /// @return Block count from .ihx image
     uint16_t ihxBlockCount(void) const;
@@ -56,29 +71,28 @@ private:
     bool _readWordFromStream(QTextStream& stream, uint16_t& word);
     bool _readBytesFromStream(QTextStream& stream, uint8_t byteCount, QByteArray& bytes);
 
-    bool _decompressJsonValue(const QJsonObject&	jsonObject,
-                              const QByteArray&     jsonDocBytes,
-                              const QString&		sizeKey,
-                              const QString&		bytesKey,
-                              QByteArray&			decompressedBytes);
+    bool _decompressJsonValue(const QJsonObject& jsonObject, const QByteArray& jsonDocBytes, const QString& sizeKey,
+                              const QString& bytesKey, QByteArray& decompressedBytes);
 
-    typedef struct {
-        uint16_t    address;
-        QByteArray  bytes;
+    typedef struct
+    {
+        uint16_t address;
+        QByteArray bytes;
     } IntelHexBlock_t;
 
-    bool                    _binFormat;
-    uint32_t                _boardId;
-    QString                 _binFilename;
-    QList<IntelHexBlock_t>  _ihxBlocks;
-    uint32_t                _imageSize;
+    bool _binFormat;
+    uint32_t _boardId;
+    QString _binFilename;
+    QString _imageSha256;
+    QList<IntelHexBlock_t> _ihxBlocks;
+    uint32_t _imageSize;
 
-    static constexpr const char* _jsonBoardIdKey =            "board_id";
-    static constexpr const char* _jsonParamXmlSizeKey =       "parameter_xml_size";
-    static constexpr const char* _jsonParamXmlKey =           "parameter_xml";
-    static constexpr const char* _jsonAirframeXmlSizeKey =    "airframe_xml_size";
-    static constexpr const char* _jsonAirframeXmlKey =        "airframe_xml";
-    static constexpr const char* _jsonImageSizeKey =          "image_size";
-    static constexpr const char* _jsonImageKey =              "image";
-    static constexpr const char* _jsonMavAutopilotKey =       "mav_autopilot";
+    static constexpr const char* _jsonBoardIdKey = "board_id";
+    static constexpr const char* _jsonParamXmlSizeKey = "parameter_xml_size";
+    static constexpr const char* _jsonParamXmlKey = "parameter_xml";
+    static constexpr const char* _jsonAirframeXmlSizeKey = "airframe_xml_size";
+    static constexpr const char* _jsonAirframeXmlKey = "airframe_xml";
+    static constexpr const char* _jsonImageSizeKey = "image_size";
+    static constexpr const char* _jsonImageKey = "image";
+    static constexpr const char* _jsonMavAutopilotKey = "mav_autopilot";
 };

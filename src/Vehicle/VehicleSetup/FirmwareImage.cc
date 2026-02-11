@@ -1,22 +1,21 @@
 #include "FirmwareImage.h"
-#include "JsonHelper.h"
-#include "QGCApplication.h"
-#include "CompInfoParam.h"
-#include "Bootloader.h"
-#include "QGCLoggingCategory.h"
 
+#include <QtCore/QCryptographicHash>
+#include <QtCore/QDir>
 #include <QtCore/QFile>
-#include <QtCore/QTextStream>
+#include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QFileInfo>
-#include <QtCore/QDir>
+#include <QtCore/QTextStream>
 
-FirmwareImage::FirmwareImage(QObject* parent) :
-    QObject(parent),
-    _imageSize(0)
+#include "Bootloader.h"
+#include "CompInfoParam.h"
+#include "JsonHelper.h"
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+
+FirmwareImage::FirmwareImage(QObject* parent) : QObject(parent), _imageSize(0)
 {
-
 }
 
 bool FirmwareImage::load(const QString& imageFilename, uint32_t boardId)
@@ -95,7 +94,8 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
 
     QFile ihxFile(ihxFilename);
     if (!ihxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit statusMessage(QString("Unable to open firmware file %1, error: %2").arg(ihxFilename, ihxFile.errorString()));
+        emit statusMessage(
+            QString("Unable to open firmware file %1, error: %2").arg(ihxFilename, ihxFile.errorString()));
         return false;
     }
 
@@ -107,16 +107,14 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             return false;
         }
 
-        uint8_t     blockByteCount;
-        uint16_t    address;
-        uint8_t     recordType;
-        QByteArray  bytes;
-        uint8_t     crc;
+        uint8_t blockByteCount;
+        uint16_t address;
+        uint8_t recordType;
+        QByteArray bytes;
+        uint8_t crc;
 
-        if (!_readByteFromStream(stream, blockByteCount) ||
-            !_readWordFromStream(stream, address) ||
-            !_readByteFromStream(stream, recordType) ||
-            !_readBytesFromStream(stream, blockByteCount, bytes) ||
+        if (!_readByteFromStream(stream, blockByteCount) || !_readWordFromStream(stream, address) ||
+            !_readByteFromStream(stream, recordType) || !_readBytesFromStream(stream, blockByteCount, bytes) ||
             !_readByteFromStream(stream, crc)) {
             emit statusMessage(tr("Incorrectly formatted line in .ihx file, line too short"));
             return false;
@@ -143,7 +141,8 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             if (appendToLastBlock) {
                 _ihxBlocks[_ihxBlocks.length() - 1].bytes += bytes;
                 // Too noisy even for verbose
-                //qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                // qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2
+                // block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             } else {
                 IntelHexBlock_t block;
 
@@ -151,7 +150,10 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
                 block.bytes = bytes;
 
                 _ihxBlocks += block;
-                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3")
+                                                          .arg(address)
+                                                          .arg(blockByteCount)
+                                                          .arg(ihxBlockCount());
             }
 
             _imageSize += blockByteCount;
@@ -170,17 +172,19 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
     return true;
 }
 
-bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId) {
+bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId)
+{
     bool result = false;
-    if (boardId == firmwareId ) {
+    if (boardId == firmwareId) {
         result = true;
     }
-    switch(boardId) {
-    case Bootloader::boardIDPX4FMUV3:
-        if (firmwareId == 9) result = true;
-        break;
-    default:
-        break;
+    switch (boardId) {
+        case Bootloader::boardIDPX4FMUV3:
+            if (firmwareId == 9)
+                result = true;
+            break;
+        default:
+            break;
     }
     return result;
 }
@@ -220,8 +224,10 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     // Make sure the keys are the correct type
     QStringList keys;
     QList<QJsonValue::Type> types;
-    keys << _jsonBoardIdKey << _jsonParamXmlSizeKey << _jsonParamXmlKey << _jsonAirframeXmlSizeKey << _jsonAirframeXmlKey << _jsonImageSizeKey << _jsonImageKey << _jsonMavAutopilotKey;
-    types << QJsonValue::Double << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::Double;
+    keys << _jsonBoardIdKey << _jsonParamXmlSizeKey << _jsonParamXmlKey << _jsonAirframeXmlSizeKey
+         << _jsonAirframeXmlKey << _jsonImageSizeKey << _jsonImageKey << _jsonMavAutopilotKey;
+    types << QJsonValue::Double << QJsonValue::Double << QJsonValue::String << QJsonValue::Double << QJsonValue::String
+          << QJsonValue::Double << QJsonValue::String << QJsonValue::Double;
     if (!JsonHelper::validateKeyTypes(px4Json, keys, types, errorString)) {
         emit statusMessage(tr("Firmware file has invalid key: %1").arg(errorString));
         return false;
@@ -229,7 +235,9 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 
     uint32_t firmwareBoardId = (uint32_t)px4Json.value(_jsonBoardIdKey).toInt();
     if (!isCompatible(_boardId, firmwareBoardId)) {
-        emit statusMessage(tr("Downloaded firmware board id does not match hardware board id: %1 != %2").arg(firmwareBoardId).arg(_boardId));
+        emit statusMessage(tr("Downloaded firmware board id does not match hardware board id: %1 != %2")
+                               .arg(firmwareBoardId)
+                               .arg(_boardId));
         return false;
     }
 
@@ -251,14 +259,16 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
             if (bytesWritten != decompressedBytes.length()) {
-                emit statusMessage(tr("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
+                emit statusMessage(
+                    tr("Write failed for parameter meta data file, error: %1").arg(parameterFile.errorString()));
                 parameterFile.close();
                 QFile::remove(parameterFilename);
             } else {
                 parameterFile.close();
             }
         } else {
-            emit statusMessage(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename, parameterFile.errorString()));
+            emit statusMessage(tr("Unable to open parameter meta data file %1 for writing, error: %2")
+                                   .arg(parameterFilename, parameterFile.errorString()));
         }
 
         // Cache this file with the system
@@ -266,41 +276,46 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     }
 
     // Decompress the airframe xml and save to file
-    success = _decompressJsonValue(px4Json,                         // JSON object
-                                        bytes,                      // Raw bytes of JSON document
-                                        _jsonAirframeXmlSizeKey,    // key which holds byte size
-                                        _jsonAirframeXmlKey,        // key which holds compressed bytes
-                                        decompressedBytes);         // Returned decompressed bytes
+    success = _decompressJsonValue(px4Json,                  // JSON object
+                                   bytes,                    // Raw bytes of JSON document
+                                   _jsonAirframeXmlSizeKey,  // key which holds byte size
+                                   _jsonAirframeXmlKey,      // key which holds compressed bytes
+                                   decompressedBytes);       // Returned decompressed bytes
     if (success) {
         QString airframeFilename = QGCApplication::cachedAirframeMetaDataFile();
-        //qDebug() << airframeFilename;
+        // qDebug() << airframeFilename;
         QFile airframeFile(QGCApplication::cachedAirframeMetaDataFile());
 
         if (airframeFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = airframeFile.write(decompressedBytes);
             if (bytesWritten != decompressedBytes.length()) {
                 // FIXME: What about these warnings?
-                emit statusMessage(tr("Write failed for airframe meta data file, error: %1").arg(airframeFile.errorString()));
+                emit statusMessage(
+                    tr("Write failed for airframe meta data file, error: %1").arg(airframeFile.errorString()));
                 airframeFile.close();
                 QFile::remove(airframeFilename);
             } else {
                 airframeFile.close();
             }
         } else {
-            emit statusMessage(tr("Unable to open airframe meta data file %1 for writing, error: %2").arg(airframeFilename, airframeFile.errorString()));
+            emit statusMessage(tr("Unable to open airframe meta data file %1 for writing, error: %2")
+                                   .arg(airframeFilename, airframeFile.errorString()));
         }
     }
 
     // Decompress the image and save to file
     _imageSize = px4Json.value(QString("image_size")).toInt();
-    success = _decompressJsonValue(px4Json,               // JSON object
-                                   bytes,                 // Raw bytes of JSON document
-                                   _jsonImageSizeKey,     // key which holds byte size
-                                   _jsonImageKey,         // key which holds compressed bytes
-                                   decompressedBytes);    // Returned decompressed bytes
+    success = _decompressJsonValue(px4Json,             // JSON object
+                                   bytes,               // Raw bytes of JSON document
+                                   _jsonImageSizeKey,   // key which holds byte size
+                                   _jsonImageKey,       // key which holds compressed bytes
+                                   decompressedBytes);  // Returned decompressed bytes
     if (!success) {
         return false;
     }
+
+    // Compute SHA-256 of the decompressed image before padding
+    _imageSha256 = QString::fromLatin1(QCryptographicHash::hash(decompressedBytes, QCryptographicHash::Sha256).toHex());
 
     // Pad image to 4-byte boundary
     while ((decompressedBytes.length() % 4) != 0) {
@@ -313,7 +328,8 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 
     QFile decompressFile(decompressFilename);
     if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        emit statusMessage(tr("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename, decompressFile.errorString()));
+        emit statusMessage(tr("Unable to open decompressed file %1 for writing, error: %2")
+                               .arg(decompressFilename, decompressFile.errorString()));
         return false;
     }
 
@@ -330,11 +346,11 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 }
 
 /// Decompress a set of bytes stored in a Json document.
-bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< JSON object
-                                         const QByteArray&	jsonDocBytes,		///< Raw bytes of JSON document
-                                         const QString&		sizeKey,			///< key which holds byte size
-                                         const QString&		bytesKey,			///< key which holds compress bytes
-                                         QByteArray&		decompressedBytes)	///< Returned decompressed bytes
+bool FirmwareImage::_decompressJsonValue(const QJsonObject& jsonObject,   ///< JSON object
+                                         const QByteArray& jsonDocBytes,  ///< Raw bytes of JSON document
+                                         const QString& sizeKey,          ///< key which holds byte size
+                                         const QString& bytesKey,         ///< key which holds compress bytes
+                                         QByteArray& decompressedBytes)   ///< Returned decompressed bytes
 {
     // Validate decompressed size key
     if (!jsonObject.contains(sizeKey)) {
@@ -380,7 +396,9 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
         return false;
     }
     if (decompressedBytes.length() != decompressedSize) {
-        emit statusMessage(tr("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.length()));
+        emit statusMessage(tr("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)")
+                               .arg(decompressedSize)
+                               .arg(decompressedBytes.length()));
         return false;
     }
 
