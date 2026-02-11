@@ -21,6 +21,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "N"
+        rotation:           _lockNoseUpCompass ? _heading : 0
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 0)
@@ -31,6 +32,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "E"
+        rotation:           _lockNoseUpCompass ? _heading : 0
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 90)
@@ -41,6 +43,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "S"
+        rotation:           _lockNoseUpCompass ? _heading : 0
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 180)
@@ -51,6 +54,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "W"
+        rotation:           _lockNoseUpCompass ? _heading : 0
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 270)
