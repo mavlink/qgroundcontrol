@@ -690,11 +690,12 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                 break;
         }
     } else {
+        QString commandStr = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(command));
         if ((result == MAV_RESULT_TEMPORARILY_REJECTED) || (result == MAV_RESULT_FAILED)) {
             if (result == MAV_RESULT_TEMPORARILY_REJECTED) {
-                qCDebug(CameraControlLog) << "Command temporarily rejected for" << command;
+                qCDebug(CameraControlLog) << "Command temporarily rejected (MAV_RESULT_TEMPORARILY_REJECTED) for" << commandStr;
             } else {
-                qCDebug(CameraControlLog) << "Command failed for" << command;
+                qCDebug(CameraControlLog) << "Command failed (MAV_RESULT_FAILED) for" << commandStr;
             }
             switch(command) {
                 case MAV_CMD_RESET_CAMERA_SETTINGS:
@@ -726,7 +727,7 @@ VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int comman
                     break;
             }
         } else {
-            qCDebug(CameraControlLog) << "Bad response for" << MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(command)) << QGCMAVLink::mavResultToString(result);
+            qCDebug(CameraControlLog) << "Bad response for" << commandStr << QGCMAVLink::mavResultToString(result);
         }
     }
 }
@@ -913,11 +914,11 @@ VehicleCameraControl::_loadSettings(const QDomNodeList nodeList)
         QDomNodeList optionsRoot = optionElem.elementsByTagName(kOptions);
         if(optionsRoot.size()) {
             //-- Iterate options
-            QDomNode node = optionsRoot.item(0);
-            QDomElement elem = node.toElement();
-            QDomNodeList options = elem.elementsByTagName(kOption);
-            for(int i = 0; i < options.size(); i++) {
-                QDomNode option = options.item(i);
+            QDomNode optionsNode = optionsRoot.item(0);
+            QDomElement optionsElem = optionsNode.toElement();
+            QDomNodeList options = optionsElem.elementsByTagName(kOption);
+            for(int optionIndex = 0; optionIndex < options.size(); optionIndex++) {
+                QDomNode option = options.item(optionIndex);
                 QString optName;
                 QString optValue;
                 QVariant optVariant;
@@ -1086,25 +1087,25 @@ VehicleCameraControl::_handleLocalization(QByteArray& bytes)
     QDomElement elem = node.toElement();
     QDomNodeList locales = elem.elementsByTagName(kLocale);
     for(int i = 0; i < locales.size(); i++) {
-        QDomNode locale = locales.item(i);
+        QDomNode localeNode = locales.item(i);
         QString name;
-        if(!read_attribute(locale, kName, name)) {
+        if(!read_attribute(localeNode, kName, name)) {
             qWarning() << "Localization entry is missing its name attribute";
             continue;
         }
         // If we found a direct match, deal with it now
         if(localeName == name.toLower().replace("-", "_")) {
-            return _replaceLocaleStrings(locale, bytes);
+            return _replaceLocaleStrings(localeNode, bytes);
         }
     }
     //-- No direct match. Pick first matching language (if any)
     localeName = localeName.left(3);
     for(int i = 0; i < locales.size(); i++) {
-        QDomNode locale = locales.item(i);
+        QDomNode localeNode = locales.item(i);
         QString name;
-        read_attribute(locale, kName, name);
+        read_attribute(localeNode, kName, name);
         if(name.toLower().startsWith(localeName)) {
-            return _replaceLocaleStrings(locale, bytes);
+            return _replaceLocaleStrings(localeNode, bytes);
         }
     }
     //-- Could not find a language to use
@@ -2002,10 +2003,10 @@ VehicleCameraControl::_loadRanges(QDomNode option, const QString factName, QStri
             QStringList  optNames;
             QStringList  optValues;
             //-- Iterate options
-            for(int i = 0; i < rangeOptions.size(); i++) {
+            for(int rangeOptionIndex = 0; rangeOptionIndex < rangeOptions.size(); rangeOptionIndex++) {
                 QString optName;
                 QString optValue;
-                QDomNode roption = rangeOptions.item(i);
+                QDomNode roption = rangeOptions.item(rangeOptionIndex);
                 if(!read_attribute(roption, kName, optName)) {
                     qCritical() << QString("Malformed roption for parameter %1").arg(factName);
                     return false;

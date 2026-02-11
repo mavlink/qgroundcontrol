@@ -87,6 +87,7 @@ public:
     explicit MessageHandler(const std::string &messageName,
                            const MessageCallback &callback,
                            QString &errorMsg);
+    virtual ~MessageHandler() = default;
 
     // DataHandlerInterface overrides
     void error(const std::string &msg, bool is_recoverable) override;

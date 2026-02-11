@@ -13,6 +13,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(int      firmware            READ firmware           WRITE setFirmware           NOTIFY firmwareChanged)
     Q_PROPERTY(int      vehicle             READ vehicle            WRITE setVehicle            NOTIFY vehicleChanged)
     Q_PROPERTY(bool     sendStatus          READ sendStatusText     WRITE setSendStatusText     NOTIFY sendStatusChanged)
+    Q_PROPERTY(bool     enableCamera        READ enableCamera       WRITE setEnableCamera       NOTIFY enableCameraChanged)
     Q_PROPERTY(bool     incrementVehicleId  READ incrementVehicleId WRITE setIncrementVehicleId NOTIFY incrementVehicleIdChanged)
 
 public:
@@ -42,6 +43,8 @@ public:
     void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; emit vehicleChanged(); }
     bool sendStatusText() const { return _sendStatusText; }
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
+    bool enableCamera() const { return _enableCamera; }
+    void setEnableCamera(bool enableCamera) { _enableCamera = enableCamera; emit enableCameraChanged(); }
 
     enum FailureMode_t {
         FailNone,                                                   ///< No failures
@@ -58,12 +61,14 @@ signals:
     void firmwareChanged();
     void vehicleChanged();
     void sendStatusChanged();
+    void enableCameraChanged();
     void incrementVehicleIdChanged();
 
 private:
     MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
     MAV_TYPE _vehicleType = MAV_TYPE_QUADROTOR;
     bool _sendStatusText = false;
+    bool _enableCamera = false;
     FailureMode_t _failureMode = FailNone;
     bool _incrementVehicleId = true;
     uint16_t _boardVendorId = 0;
@@ -72,6 +77,7 @@ private:
     static constexpr const char *_firmwareTypeKey = "FirmwareType";
     static constexpr const char *_vehicleTypeKey = "VehicleType";
     static constexpr const char *_sendStatusTextKey = "SendStatusText";
+    static constexpr const char *_enableCameraKey = "EnableCamera";
     static constexpr const char *_incrementVehicleIdKey = "IncrementVehicleId";
     static constexpr const char *_failureModeKey = "FailureMode";
 };

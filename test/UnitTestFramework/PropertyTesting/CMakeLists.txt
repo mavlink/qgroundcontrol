@@ -26,6 +26,7 @@ CPMAddPackage(
 set(CMAKE_CXX_FLAGS_DEBUG "${_RC_SAVED_CXX_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "${_RC_SAVED_C_FLAGS}")
 
+qgc_disable_dependency_warnings(rapidcheck)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE rapidcheck)
 
 target_sources(${CMAKE_PROJECT_NAME}

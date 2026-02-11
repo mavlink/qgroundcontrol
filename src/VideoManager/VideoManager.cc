@@ -382,7 +382,7 @@ void VideoManager::_videoSourceChanged()
     }
 }
 
-bool VideoManager::_updateUVC(VideoReceiver *receiver)
+bool VideoManager::_updateUVC(VideoReceiver * /*receiver*/)
 {
     bool result = false;
 

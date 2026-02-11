@@ -204,17 +204,17 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
             // Degnenerate case: Move tangent to loiter point
             _slopeStartCoordinate = _finalApproachCoordinate;
 
-            double heading = _landingCoordinate.azimuthTo(_slopeStartCoordinate);
+            double slopeStartHeading = _landingCoordinate.azimuthTo(_slopeStartCoordinate);
 
             _ignoreRecalcSignals = true;
-            landingHeading()->setRawValue(heading);
+            landingHeading()->setRawValue(slopeStartHeading);
             emit slopeStartCoordinateChanged(_slopeStartCoordinate);
             _ignoreRecalcSignals = false;
         } else {
-            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(distance, 2));
-            double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? -1 : 1);
+            double loiterDistance = qSqrt(qPow(radius, 2) + qPow(distance, 2));
+            double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/loiterDistance)) * (_loiterClockwise()->rawValue().toBool() ? -1 : 1);
 
-            _finalApproachCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToLoiterDistance, heading + 180 + angleLoiterToTangent);
+            _finalApproachCoordinate = _landingCoordinate.atDistanceAndAzimuth(loiterDistance, heading + 180 + angleLoiterToTangent);
             _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
 
             _ignoreRecalcSignals = true;
@@ -742,10 +742,10 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
     }
 
     if (!complexObject.contains(_jsonDeprecatedLoiterCoordinateKey) && !complexObject.contains(_jsonFinalApproachCoordinateKey)) {
-        QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        QList<JsonHelper::KeyValidateInfo> finalApproachKeyInfoList = {
             { _jsonFinalApproachCoordinateKey, QJsonValue::Array, true },
         };
-        if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+        if (!JsonHelper::validateKeys(complexObject, finalApproachKeyInfoList, errorString)) {
             return false;
         }
     }

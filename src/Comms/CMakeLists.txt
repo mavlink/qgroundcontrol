@@ -93,6 +93,7 @@ if(QGC_ZEROCONF_ENABLED)
     )
 
     if(TARGET qmdnsengine)
+        qgc_disable_dependency_warnings(qmdnsengine)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
         target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
     else()

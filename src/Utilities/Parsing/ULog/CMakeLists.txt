@@ -22,9 +22,9 @@ CPMAddPackage(
     GIT_TAG v1.0.1
 )
 
-# Suppress Clang warnings for ulog_cpp
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(ulog_cpp PRIVATE -Wno-unknown-warning-option)
-endif()
+qgc_disable_dependency_warnings(ulog_cpp)
+
+# Suppress warnings from ulog_cpp headers when included in QGC source code
+target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PRIVATE ${ulog_cpp_SOURCE_DIR})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp::ulog_cpp)

@@ -356,9 +356,9 @@ void Actuators::updateActuatorActions()
                         auto actuatorAction = new ActuatorActions::Action(this, action, outputFunction.label, outputFunctionVal, _vehicle);
                         ActuatorActions::ActionGroup* actionGroup = nullptr;
                         // try to find the group
-                        for (int groupIdx = 0; groupIdx < _actuatorActions->count(); groupIdx++) {
+                        for (int actionGroupIdx = 0; actionGroupIdx < _actuatorActions->count(); actionGroupIdx++) {
                             ActuatorActions::ActionGroup* curActionGroup =
-                                    qobject_cast<ActuatorActions::ActionGroup*>(_actuatorActions->get(groupIdx));
+                                    qobject_cast<ActuatorActions::ActionGroup*>(_actuatorActions->get(actionGroupIdx));
                             if (curActionGroup->type() == action.type) {
                                 actionGroup = curActionGroup;
                                 break;
@@ -469,8 +469,8 @@ bool Actuators::parseJson(const QJsonDocument &json)
                 }
             }
 
-            QJsonArray parameters = subgroup["parameters"].toArray();
-            for (const auto&& parameterJson : parameters) {
+            QJsonArray subgroupParameters = subgroup["parameters"].toArray();
+            for (const auto&& parameterJson : subgroupParameters) {
                 actuatorSubgroup->addConfigParam(parseParam(parameterJson.toObject()));
             }
 
@@ -586,8 +586,8 @@ bool Actuators::parseJson(const QJsonDocument &json)
     Mixer::MixerOptions mixerOptions{};
     QJsonValue mixerConfigJson = mixerJson.toObject().value("config");
     QJsonArray mixerConfigJsonArr = mixerConfigJson.toArray();
-    for (const auto&& mixerConfigJson : mixerConfigJsonArr) {
-        QJsonValue mixerConfig = mixerConfigJson.toObject();
+    for (const auto&& mixerConfigJsonValue : mixerConfigJsonArr) {
+        QJsonValue mixerConfig = mixerConfigJsonValue.toObject();
         Mixer::MixerOption option{};
         option.option = mixerConfig["option"].toString();
         option.type = mixerConfig["type"].toString();

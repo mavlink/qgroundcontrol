@@ -69,18 +69,18 @@ void OsmParserThread::parseOsmFile(QString filePath)
     emit fileParsed(false);
 }
 
-bool OsmParserThread::decodeFile(QDomDocument &xml_content, QMap<uint64_t, OsmParserThread::BuildingType_t> &buildingMap, QMap<uint64_t, QGeoCoordinate> &nodeMap, QGeoCoordinate &coordinateMin, QGeoCoordinate &coordinateMax, QGeoCoordinate &gpsRef)
+bool OsmParserThread::decodeFile(QDomDocument &xml_content, QMap<uint64_t, OsmParserThread::BuildingType_t> &buildingMap, QMap<uint64_t, QGeoCoordinate> &nodeMap, QGeoCoordinate &outCoordinateMin, QGeoCoordinate &outCoordinateMax, QGeoCoordinate &gpsRef)
 {
     QDomElement root = xml_content.documentElement();
     QDomElement xmlComponent = root.firstChild().toElement();
     QGeoCoordinate tmpGpsRef;
     bool gpsRefIsSet = false;
     while(!xmlComponent.isNull()) {
-        if(decodeNodeTags(xmlComponent, nodeMap, coordinateMin, coordinateMax, tmpGpsRef)){
+        if(decodeNodeTags(xmlComponent, nodeMap, outCoordinateMin, outCoordinateMax, tmpGpsRef)){
             gpsRefIsSet = true;
             gpsRef = tmpGpsRef;
         }
-        decodeBuildings(xmlComponent, buildingMap, nodeMap, coordinateMin, coordinateMax, gpsRef);
+        decodeBuildings(xmlComponent, buildingMap, nodeMap, outCoordinateMin, outCoordinateMax, gpsRef);
         decodeRelations(xmlComponent, buildingMap, nodeMap, gpsRef);
 
         xmlComponent = xmlComponent.nextSibling().toElement();
@@ -218,7 +218,7 @@ void OsmParserThread::decodeBuildings(QDomElement &xmlComponent, QMap<uint64_t, 
     }
 }
 
-void OsmParserThread::decodeRelations(QDomElement &xmlComponent, QMap<uint64_t, OsmParserThread::BuildingType_t> &bldMap, QMap<uint64_t, QGeoCoordinate> &nodeMap, QGeoCoordinate gpsRef)
+void OsmParserThread::decodeRelations(QDomElement &xmlComponent, QMap<uint64_t, OsmParserThread::BuildingType_t> &bldMap, QMap<uint64_t, QGeoCoordinate> &/*nodeMap*/, QGeoCoordinate /*gpsRef*/)
 {
     if (xmlComponent.tagName()!="relation"){
         return;

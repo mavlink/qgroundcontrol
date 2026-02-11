@@ -59,6 +59,9 @@ CPMAddPackage(
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib)
+if(geographiclib_ADDED)
+    qgc_disable_dependency_warnings(GeographicLib_STATIC)
+endif()
 
 # ============================================================================
 # Shapelib Integration
@@ -75,3 +78,6 @@ CPMAddPackage(
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
+if(Shapelib_ADDED)
+    qgc_disable_dependency_warnings(shp)
+endif()

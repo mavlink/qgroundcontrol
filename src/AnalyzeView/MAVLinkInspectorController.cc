@@ -137,8 +137,8 @@ void MAVLinkInspectorController::_refreshFrequency()
             continue;
         }
 
-        for (int i = 0; i < system->messages()->count(); i++) {
-            QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(system->messages()->get(i));
+        for (int messageIndex = 0; messageIndex < system->messages()->count(); messageIndex++) {
+            QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(system->messages()->get(messageIndex));
             if (msg) {
                 msg->updateFreq();
             }

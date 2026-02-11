@@ -6,9 +6,9 @@
 
 QGC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.QGCLogEntry")
 
-LogDownloadData::LogDownloadData(QGCLogEntry * const entry)
-    : ID(entry->id())
-    , entry(entry)
+LogDownloadData::LogDownloadData(QGCLogEntry * const logEntry)
+    : ID(logEntry->id())
+    , entry(logEntry)
 {
     // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
 }

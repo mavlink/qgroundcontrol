@@ -58,6 +58,11 @@ CPMAddPackage(
         "${ZLIB_EXTRA_OPTIONS}"
 )
 
+# Suppress compiler warnings for zlib dependency
+if(zlib_ADDED)
+    qgc_disable_dependency_warnings(zlibstatic)
+endif()
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ZLIB::ZLIBSTATIC)
 
 # Export ZLIB paths for libarchive to find
@@ -98,6 +103,7 @@ CPMAddPackage(
 )
 
 if(TARGET liblzma)
+    qgc_disable_dependency_warnings(liblzma)
     # Set Find-module variables so libarchive's find_package(LibLZMA) succeeds
     set(LIBLZMA_INCLUDE_DIR "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
     set(LIBLZMA_INCLUDE_DIRS "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)  # libarchive uses plural
@@ -149,6 +155,7 @@ CPMAddPackage(
 )
 
 if(TARGET libzstd_static)
+    qgc_disable_dependency_warnings(libzstd_static)
     # Help libarchive find our ZSTD (prevent using system zstd during cross-compile)
     set(ZSTD_INCLUDE_DIR "${zstd_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
     set(ZSTD_LIBRARY "libzstd_static" CACHE STRING "" FORCE)
@@ -193,6 +200,7 @@ if(QGC_ENABLE_LZ4)
     )
 
     if(TARGET lz4_static)
+        qgc_disable_dependency_warnings(lz4_static)
         # Help libarchive find our LZ4
         set(LZ4_INCLUDE_DIR "${lz4_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
         set(LZ4_LIBRARY "lz4_static" CACHE STRING "" FORCE)
@@ -233,6 +241,7 @@ if(QGC_ENABLE_BZIP2)
     )
 
     if(TARGET bz2_static)
+        qgc_disable_dependency_warnings(bz2_static)
         # Help libarchive/minizip find our BZip2
         set(BZIP2_INCLUDE_DIR "${bzip2_SOURCE_DIR}" CACHE PATH "" FORCE)
         set(BZIP2_LIBRARY "bz2_static" CACHE STRING "" FORCE)
@@ -308,6 +317,7 @@ CPMAddPackage(
 )
 
 if(TARGET archive_static)
+    qgc_disable_dependency_warnings(archive_static)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE archive_static)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE LIBARCHIVE_STATIC)
     if(QGC_ENABLE_BZIP2)

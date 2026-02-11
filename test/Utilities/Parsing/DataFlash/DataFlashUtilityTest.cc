@@ -299,7 +299,7 @@ void DataFlashUtilityTest::_testParseFmtMessages()
     // FMT payload for FMT message definition
     char fmtPayload[86];
     memset(fmtPayload, 0, sizeof(fmtPayload));
-    fmtPayload[0] = 128;  // type for FMT
+    fmtPayload[0] = static_cast<char>(0x80);  // type for FMT
     fmtPayload[1] = 89;   // length (3 header + 86 payload)
     memcpy(fmtPayload + 2, "FMT\0", 4);
     memcpy(fmtPayload + 6, "BBnNZ\0\0\0\0\0\0\0\0\0\0\0", 16);

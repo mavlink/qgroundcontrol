@@ -83,33 +83,33 @@ public:
 
     void setError(const QSerialPortErrorInfo &errorInfo);
 
-    void setBindableError(QSerialPort::SerialPortError error)
-    { setError(error); }
+    void setBindableError(QSerialPort::SerialPortError error_)
+    { setError(error_); }
     Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::SerialPortError, error,
         &QSerialPortPrivate::setBindableError, QSerialPort::NoError)
 
-    bool setBindableDataBits(QSerialPort::DataBits dataBits)
-    { return q_func()->setDataBits(dataBits); }
+    bool setBindableDataBits(QSerialPort::DataBits dataBits_)
+    { return q_func()->setDataBits(dataBits_); }
     Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::DataBits, dataBits,
         &QSerialPortPrivate::setBindableDataBits, QSerialPort::Data8)
 
-    bool setBindableParity(QSerialPort::Parity parity)
-    { return q_func()->setParity(parity); }
+    bool setBindableParity(QSerialPort::Parity parity_)
+    { return q_func()->setParity(parity_); }
     Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::Parity, parity,
         &QSerialPortPrivate::setBindableParity, QSerialPort::NoParity)
 
-    bool setBindableStopBits(QSerialPort::StopBits stopBits)
-    { return q_func()->setStopBits(stopBits); }
+    bool setBindableStopBits(QSerialPort::StopBits stopBits_)
+    { return q_func()->setStopBits(stopBits_); }
     Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::StopBits, stopBits,
         &QSerialPortPrivate::setBindableStopBits, QSerialPort::OneStop)
 
-    bool setBindableFlowControl(QSerialPort::FlowControl flowControl)
-    { return q_func()->setFlowControl(flowControl); }
+    bool setBindableFlowControl(QSerialPort::FlowControl flowControl_)
+    { return q_func()->setFlowControl(flowControl_); }
     Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, QSerialPort::FlowControl, flowControl,
         &QSerialPortPrivate::setBindableFlowControl, QSerialPort::NoFlowControl)
 
-    bool setBindableBreakEnabled(bool isBreakEnabled)
-    { return q_func()->setBreakEnabled(isBreakEnabled); }
+    bool setBindableBreakEnabled(bool isBreakEnabled_)
+    { return q_func()->setBreakEnabled(isBreakEnabled_); }
     Q_OBJECT_COMPAT_PROPERTY_WITH_ARGS(QSerialPortPrivate, bool, isBreakEnabled,
         &QSerialPortPrivate::setBindableBreakEnabled, false)
 

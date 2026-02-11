@@ -16,7 +16,7 @@ Q_DECLARE_LOGGING_CATEGORY(LogEntryLog)
 
 struct LogDownloadData
 {
-    explicit LogDownloadData(QGCLogEntry * const entry);
+    explicit LogDownloadData(QGCLogEntry * const logEntry);
     ~LogDownloadData();
 
     void advanceChunk();

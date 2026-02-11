@@ -62,13 +62,11 @@ protected:
 
         for (size_t i = 0; i < count; ++i) {
             _currentCase = static_cast<int>(i);
-            bool passed = true;
 
             try {
                 runSingleTestCase(cases[i], static_cast<int>(i));
                 _passedCases++;
             } catch (...) {
-                passed = false;
                 _failedCases++;
             }
 

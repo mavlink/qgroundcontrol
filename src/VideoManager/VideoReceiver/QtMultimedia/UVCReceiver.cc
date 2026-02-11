@@ -32,11 +32,6 @@ UVCReceiver::UVCReceiver(QObject *parent)
         adjustAspectRatio();
     });
 
-    // QMediaDevices::defaultVideoInput()
-    (void) connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, [this] {
-
-    });
-
     checkPermission();
 }
 
@@ -67,9 +62,11 @@ void UVCReceiver::adjustAspectRatio()
 
     const QSize resolution = cameraFormat.resolution();
     if (resolution.isValid()) {
-        const qreal aspectRatio = resolution.width() / resolution.height();
-        const qreal height = height * aspectRatio;
-        _videoOutput->setHeight(height * aspectRatio);
+        const qreal aspectRatio = static_cast<qreal>(resolution.width()) / resolution.height();
+        const qreal width = _videoOutput->width();
+        if (width > 0.0) {
+            _videoOutput->setHeight(width / aspectRatio);
+        }
     }
 }
 

@@ -1332,8 +1332,8 @@ void MissionController::_recalcFlightPathSegments(void)
                     }
 
                     lastSegmentVisualItemPair =  VisualItemPair(lastFlyThroughVI, visualItem);
-                    SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(lastFlyThroughVI);
-                    bool mavlinkTerrainFrame = simpleItem ? simpleItem->missionItem().frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT : false;
+                    SimpleMissionItem* lastSimpleItem = qobject_cast<SimpleMissionItem*>(lastFlyThroughVI);
+                    bool mavlinkTerrainFrame = lastSimpleItem ? lastSimpleItem->missionItem().frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT : false;
                     FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair, mavlinkTerrainFrame);
                     segment->setSpecialVisual(roiActive);
                     if (addDirectionArrow) {

@@ -111,7 +111,7 @@ void FollowMe::_sendGCSMotionReport()
         return;
     }
 
-    GCSMotionReport motionReport{0};
+    GCSMotionReport motionReport{};
     uint8_t estimationCapabilities = 0;
 
     // Get the current location coordinates

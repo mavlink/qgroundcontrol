@@ -9,7 +9,7 @@ QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "FirmwarePlugin.APMFirmwarePlu
 
 APMFirmwarePluginFactory APMFirmwarePluginFactory(nullptr);
 
-APMFirmwarePluginFactory::APMFirmwarePluginFactory(QObject *parent)
+APMFirmwarePluginFactory::APMFirmwarePluginFactory(QObject */*parent*/)
 {
     // qCDebug(FirmwarePluginFactoryLog) << Q_FUNC_INFO << this;
 }

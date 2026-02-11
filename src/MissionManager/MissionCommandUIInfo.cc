@@ -357,12 +357,12 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             }
 
             // Validate key types
-            QList<QJsonValue::Type> types;
-            types << QJsonValue::Null << QJsonValue::Double << QJsonValue::String << QJsonValue::String
-                  << QJsonValue::String << QJsonValue::String << QJsonValue::Bool
-                                    << QJsonValue::Bool
-                  << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
-            if (!JsonHelper::validateKeyTypes(paramObject, allParamKeys, types, internalError)) {
+            QList<QJsonValue::Type> paramTypes;
+            paramTypes << QJsonValue::Null << QJsonValue::Double << QJsonValue::String << QJsonValue::String
+                       << QJsonValue::String << QJsonValue::String << QJsonValue::Bool
+                       << QJsonValue::Bool
+                       << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
+            if (!JsonHelper::validateKeyTypes(paramObject, allParamKeys, paramTypes, internalError)) {
                 errorString = _loadErrorString(internalError);
                 return false;
             }
