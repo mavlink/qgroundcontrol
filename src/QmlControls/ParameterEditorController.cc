@@ -97,7 +97,7 @@ void ParameterTableModel::beginReset()
 {
     _resetNestingCount++;
 
-    if (_resetNestingCount == 0) {
+    if (_resetNestingCount == 1) {
         beginResetModel();
     }
 }
