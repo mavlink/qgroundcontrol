@@ -14,6 +14,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _firmwareType(copy->firmwareType())
     , _vehicleType(copy->vehicleType())
     , _sendStatusText(copy->sendStatusText())
+    , _enableCamera(copy->enableCamera())
     , _failureMode(copy->failureMode())
     , _incrementVehicleId(copy->incrementVehicleId())
 {
@@ -34,6 +35,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setFirmwareType(mockLinkSource->firmwareType());
     setVehicleType(mockLinkSource->vehicleType());
     setSendStatusText(mockLinkSource->sendStatusText());
+    setEnableCamera(mockLinkSource->enableCamera());
     setIncrementVehicleId(mockLinkSource->incrementVehicleId());
     setFailureMode(mockLinkSource->failureMode());
 }
@@ -45,6 +47,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setFirmwareType(static_cast<MAV_AUTOPILOT>(settings.value(_firmwareTypeKey, static_cast<int>(MAV_AUTOPILOT_PX4)).toInt()));
     setVehicleType(static_cast<MAV_TYPE>(settings.value(_vehicleTypeKey, static_cast<int>(MAV_TYPE_QUADROTOR)).toInt()));
     setSendStatusText(settings.value(_sendStatusTextKey, false).toBool());
+    setEnableCamera(settings.value(_enableCameraKey, false).toBool());
     setIncrementVehicleId(settings.value(_incrementVehicleIdKey, true).toBool());
     setFailureMode(static_cast<FailureMode_t>(settings.value(_failureModeKey, static_cast<int>(FailNone)).toInt()));
 
@@ -58,6 +61,7 @@ void MockConfiguration::saveSettings(QSettings &settings, const QString &root) c
     settings.setValue(_firmwareTypeKey, firmwareType());
     settings.setValue(_vehicleTypeKey, vehicleType());
     settings.setValue(_sendStatusTextKey, sendStatusText());
+    settings.setValue(_enableCameraKey, enableCamera());
     settings.setValue(_incrementVehicleIdKey, incrementVehicleId());
     settings.setValue(_failureModeKey, failureMode());
 
