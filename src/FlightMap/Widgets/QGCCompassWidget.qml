@@ -123,6 +123,7 @@ Rectangle {
                 font.bold:          true
                 color:              qgcPal.text
                 anchors.centerIn:   parent
+                rotation:           _lockNoseUpCompass ? _heading : 0
             }
 
             transform: Translate {
