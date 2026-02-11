@@ -16,4 +16,13 @@ private slots:
     void _testBuildPX4FirmwareNames();
     void _testBootloaderFilteredOut();
     void _testDefaultBuildPreSelected();
+    void _testFirmwareCategoryFilter();
+    void _testDevModeShowsAllCategories();
+    void _testLabelPrettyDisplayName();
+    void _testMissingManifestObjectFallback();
+    void _testHardwareInfoParsed();
+    void _testBuildPX4AdvancedVersions();
+    void _testBuildPX4AdvancedBuildNames();
+    void _testPX4AdvancedSelectedChannel();
+    void _testSetSelectedPX4AdvancedVersionByIndex();
 };
