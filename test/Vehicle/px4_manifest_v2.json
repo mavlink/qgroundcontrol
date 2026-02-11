@@ -19,19 +19,73 @@
                     "git_identity": "v1.15.2",
                     "build_time": 1700000000,
                     "image_size": 32768,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_bootloader",
+                        "label_pretty": "Bootloader",
+                        "firmware_category": "bootloader",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
                 },
                 {
                     "board_id": 50,
                     "board_revision": 0,
                     "filename": "px4_fmu-v5_default.px4",
+                    "url": "https://artifacts.px4.io/Firmware/stable/px4_fmu-v5_allinone.px4",
+                    "git_hash": "abc123def456",
+                    "sha256sum": "aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44",
+                    "git_identity": "v1.15.2",
+                    "build_time": 1700000000,
+                    "image_size": 1200000,
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_default",
+                        "label_pretty": "Default",
+                        "firmware_category": "dev",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
+                },
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_multicopter.px4",
                     "url": "https://artifacts.px4.io/Firmware/stable/px4_fmu-v5_default.px4",
                     "git_hash": "abc123def456",
                     "sha256sum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                     "git_identity": "v1.15.2",
                     "build_time": 1700000000,
                     "image_size": 1048576,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_multicopter",
+                        "label_pretty": "Multicopter",
+                        "firmware_category": "vehicle",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
                 },
                 {
                     "board_id": 50,
@@ -43,7 +97,21 @@
                     "git_identity": "v1.15.2",
                     "build_time": 1700000000,
                     "image_size": 900000,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_rover",
+                        "label_pretty": "Rover",
+                        "firmware_category": "vehicle",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
                 },
                 {
                     "board_id": 50,
@@ -55,7 +123,21 @@
                     "git_identity": "v1.15.2",
                     "build_time": 1700000000,
                     "image_size": 9688,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "ARK_CAN_FLOW",
+                        "target": "ark_can-flow_canbootloader",
+                        "label_pretty": "CAN Bootloader",
+                        "firmware_category": "canbootloader",
+                        "manufacturer": "ARK Electronics",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f1",
+                            "productstr": "ARK CAN Flow"
+                        }
+                    }
                 },
                 {
                     "board_id": 53,
@@ -67,7 +149,21 @@
                     "git_identity": "v1.15.2",
                     "build_time": 1700000000,
                     "image_size": 2097152,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V6X",
+                        "target": "px4_fmu-v6x_default",
+                        "label_pretty": "Multicopter",
+                        "firmware_category": "vehicle",
+                        "manufacturer": "Auterion",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x3185",
+                            "product_id": "0x0035",
+                            "chip": "stm32h7",
+                            "productstr": "PX4 BL FMU v6X.x"
+                        }
+                    }
                 },
                 {
                     "board_id": 9,
@@ -98,7 +194,21 @@
                     "git_identity": "v1.16.0-beta1",
                     "build_time": 1701000000,
                     "image_size": 1100000,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_default",
+                        "label_pretty": "Multicopter",
+                        "firmware_category": "vehicle",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
                 },
                 {
                     "board_id": 53,
@@ -110,7 +220,21 @@
                     "git_identity": "v1.16.0-beta1",
                     "build_time": 1701000000,
                     "image_size": 2200000,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V6X",
+                        "target": "px4_fmu-v6x_default",
+                        "label_pretty": "Multicopter",
+                        "firmware_category": "vehicle",
+                        "manufacturer": "Auterion",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x3185",
+                            "product_id": "0x0035",
+                            "chip": "stm32h7",
+                            "productstr": "PX4 BL FMU v6X.x"
+                        }
+                    }
                 }
             ]
         },
@@ -129,7 +253,47 @@
                     "git_identity": "main",
                     "build_time": 1702000000,
                     "image_size": 1150000,
-                    "mav_autopilot": 12
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_default",
+                        "label_pretty": "Multicopter",
+                        "firmware_category": "vehicle",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
+                },
+                {
+                    "board_id": 50,
+                    "board_revision": 0,
+                    "filename": "px4_fmu-v5_bootloader.px4",
+                    "url": "https://artifacts.px4.io/Firmware/master/px4_fmu-v5_bootloader.px4",
+                    "git_hash": "789012345abc",
+                    "sha256sum": "",
+                    "git_identity": "main",
+                    "build_time": 1702000000,
+                    "image_size": 32768,
+                    "mav_autopilot": 12,
+                    "manifest": {
+                        "name": "PX4_FMU_V5",
+                        "target": "px4_fmu-v5_bootloader",
+                        "label_pretty": "Bootloader",
+                        "firmware_category": "bootloader",
+                        "manufacturer": "Holybro",
+                        "hardware": {
+                            "architecture": "arm",
+                            "vendor_id": "0x26ac",
+                            "product_id": "0x0032",
+                            "chip": "stm32f7",
+                            "productstr": "PX4 BL FMU v5.x"
+                        }
+                    }
                 }
             ]
         }
