@@ -96,6 +96,13 @@ public:
     Q_PROPERTY(QStringList px4FirmwareNames MEMBER _px4FirmwareNames NOTIFY px4FirmwareNamesChanged)
     Q_PROPERTY(int px4FirmwareNamesBestIndex MEMBER _px4FirmwareNamesBestIndex NOTIFY px4FirmwareNamesChanged)
     Q_PROPERTY(QStringList px4FirmwareUrls MEMBER _px4FirmwareUrls NOTIFY px4FirmwareNamesChanged)
+    Q_PROPERTY(QStringList px4AdvancedVersions READ px4AdvancedVersions NOTIFY px4AdvancedVersionsChanged)
+    Q_PROPERTY(int px4AdvancedVersionsBestIndex READ px4AdvancedVersionsBestIndex NOTIFY px4AdvancedVersionsChanged)
+    Q_PROPERTY(QStringList px4AdvancedBuildNames MEMBER _px4AdvancedBuildNames NOTIFY px4AdvancedBuildNamesChanged)
+    Q_PROPERTY(QStringList px4AdvancedBuildUrls MEMBER _px4AdvancedBuildUrls NOTIFY px4AdvancedBuildNamesChanged)
+    Q_PROPERTY(
+        int px4AdvancedBuildNamesBestIndex MEMBER _px4AdvancedBuildNamesBestIndex NOTIFY px4AdvancedBuildNamesChanged)
+    Q_PROPERTY(QString px4AdvancedSelectedChannel READ px4AdvancedSelectedChannel NOTIFY px4AdvancedBuildNamesChanged)
 
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
@@ -122,6 +129,12 @@ public:
 
     /// Select a specific PX4 firmware version from the manifest
     Q_INVOKABLE void setSelectedPX4Version(const QString& version);
+
+    /// Select a PX4 advanced version by combo box index
+    Q_INVOKABLE void setSelectedPX4AdvancedVersionByIndex(int index);
+
+    /// Retry downloading the PX4 manifest
+    Q_INVOKABLE void retryPX4ManifestDownload(void);
 
     // overload, not exposed to qml side
     void flash(const FirmwareIdentifier& firmwareId);
@@ -191,6 +204,18 @@ public:
         return _px4AvailableVersions;
     }
 
+    QStringList px4AdvancedVersions(void)
+    {
+        return _px4AdvancedVersions;
+    }
+
+    int px4AdvancedVersionsBestIndex(void)
+    {
+        return _px4AdvancedVersionsBestIndex;
+    }
+
+    QString px4AdvancedSelectedChannel(void);
+
     bool pixhawkBoard(void) const
     {
         return _boardType == QGCSerialPortInfo::BoardTypePixhawk;
@@ -219,6 +244,8 @@ signals:
     void px4ManifestLoadedChanged(void);
     void px4AvailableVersionsChanged(void);
     void px4FirmwareNamesChanged(void);
+    void px4AdvancedVersionsChanged(void);
+    void px4AdvancedBuildNamesChanged(void);
     void downloadingFirmwareListChanged(bool downloadingFirmwareList);
 
 private slots:
@@ -252,6 +279,8 @@ private:
     bool _parsePX4Manifest(const QJsonDocument& doc);
     void _buildPX4FirmwareHashFromManifest(int boardId);
     void _buildPX4FirmwareNames(void);
+    void _buildPX4AdvancedVersions(void);
+    void _buildPX4AdvancedBuildNames(void);
     void _downloadArduPilotManifest(void);
 
     QString _singleFirmwareURL;
@@ -326,6 +355,24 @@ private:
         uint64_t buildTime = 0;
         uint64_t imageSize = 0;
         int mavAutopilot = 0;
+
+        // Nested manifest object fields
+        QString manifestName;      // e.g. "PX4_FMU_V6X"
+        QString manifestTarget;    // e.g. "px4_fmu-v6x_multicopter"
+        QString labelPretty;       // e.g. "Multicopter"
+        QString firmwareCategory;  // "vehicle", "dev", "bootloader"
+        QString manufacturer;      // e.g. "Auterion"
+
+        struct HardwareInfo_t
+        {
+            QString architecture;  // e.g. "arm"
+            QString vendorId;      // e.g. "0x3185"
+            QString productId;     // e.g. "0x0035"
+            QString chip;          // e.g. "stm32h7"
+            QString productStr;    // e.g. "PX4 BL FMU v6X.x"
+        };
+
+        HardwareInfo_t hardware;
     };
 
     struct PX4ManifestReleaseInfo_t
@@ -348,6 +395,15 @@ private:
     QStringList _px4FirmwareNames;
     int _px4FirmwareNamesBestIndex = 0;
     QStringList _px4FirmwareUrls;
+
+    // PX4 advanced mode data
+    QStringList _px4AdvancedVersions;     // Display: "v1.15.2 (stable)"
+    QStringList _px4AdvancedVersionTags;  // Raw: "v1.15.2" (parallel index)
+    int _px4AdvancedVersionsBestIndex = 0;
+    QStringList _px4AdvancedBuildNames;   // Just labels: "Default", "Multicopter"
+    QStringList _px4AdvancedBuildUrls;
+    int _px4AdvancedBuildNamesBestIndex = 0;
+    QString _selectedPX4AdvancedVersion;
 
     const QString _apmBoardDescriptionReplaceText;
 
@@ -382,6 +438,20 @@ private:
     static constexpr const char* _px4ManifestSha256Key = "sha256sum";
     static constexpr const char* _px4ManifestBoardRevisionKey = "board_revision";
     static constexpr const char* _px4ManifestMavAutopilotKey = "mav_autopilot";
+
+    // PX4 manifest v2 nested manifest object keys
+    static constexpr const char* _px4ManifestManifestKey = "manifest";
+    static constexpr const char* _px4ManifestNameKey = "name";
+    static constexpr const char* _px4ManifestTargetKey = "target";
+    static constexpr const char* _px4ManifestLabelPrettyKey = "label_pretty";
+    static constexpr const char* _px4ManifestFirmwareCategoryKey = "firmware_category";
+    static constexpr const char* _px4ManifestManufacturerKey = "manufacturer";
+    static constexpr const char* _px4ManifestHardwareKey = "hardware";
+    static constexpr const char* _px4ManifestArchitectureKey = "architecture";
+    static constexpr const char* _px4ManifestVendorIdKey = "vendor_id";
+    static constexpr const char* _px4ManifestProductIdKey = "product_id";
+    static constexpr const char* _px4ManifestChipKey = "chip";
+    static constexpr const char* _px4ManifestProductStrKey = "productstr";
 
     typedef struct
     {

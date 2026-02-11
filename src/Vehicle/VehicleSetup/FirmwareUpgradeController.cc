@@ -236,6 +236,7 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
         }
         if (_px4ManifestLoaded) {
             _buildPX4FirmwareNames();
+            _buildPX4AdvancedVersions();
         }
         emit showFirmwareSelectDlg();
     }
@@ -312,11 +313,10 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     connect(downloader, &QGCFileDownload::downloadProgress, this,
             &FirmwareUpgradeController::_firmwareDownloadProgress);
 
-    // Set SHA-256 for verification if available from PX4 manifest
+    // Log expected SHA-256 if available (verified after image decompression, not on the .px4 container)
     if (_px4FirmwareSha256Map.contains(_firmwareFilename)) {
         const QString& sha256 = _px4FirmwareSha256Map[_firmwareFilename];
         if (!sha256.isEmpty()) {
-            downloader->setExpectedHash(sha256);
             _appendStatusLog(tr(" SHA-256: %1").arg(sha256));
         }
     }
@@ -347,6 +347,20 @@ void FirmwareUpgradeController::_firmwareDownloadComplete(QString /*remoteFile*/
         if (!image->load(localFile, _bootloaderBoardID)) {
             _errorCancel(tr("Image load failed"));
             return;
+        }
+
+        // Verify SHA-256 of the decompressed firmware image against manifest hash
+        if (_px4FirmwareSha256Map.contains(_firmwareFilename)) {
+            const QString& expectedHash = _px4FirmwareSha256Map[_firmwareFilename];
+            const QString& actualHash = image->imageSha256();
+            if (!expectedHash.isEmpty() && !actualHash.isEmpty()) {
+                if (actualHash.compare(expectedHash, Qt::CaseInsensitive) != 0) {
+                    _errorCancel(tr("Firmware image hash verification failed. Expected: %1, Got: %2")
+                                     .arg(expectedHash, actualHash));
+                    return;
+                }
+                _appendStatusLog(tr("Firmware image hash verified"));
+            }
         }
 
         // We can't proceed unless we have the bootloader
@@ -554,6 +568,14 @@ FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::vehi
     return _apmVehicleTypeFromCurrentVersionList[index];
 }
 
+void FirmwareUpgradeController::retryPX4ManifestDownload(void)
+{
+    if (_px4ManifestDownloading || _px4ManifestLoaded) {
+        return;
+    }
+    _downloadPX4Manifest();
+}
+
 void FirmwareUpgradeController::_downloadPX4Manifest(void)
 {
     qCDebug(FirmwareUpgradeLog) << "Downloading PX4 manifest from" << _px4ManifestUrl;
@@ -608,6 +630,7 @@ void FirmwareUpgradeController::_px4ManifestDownloadComplete(QString remoteFile,
         emit px4ManifestLoadedChanged();
         if (_bootloaderFound) {
             _buildPX4FirmwareNames();
+            _buildPX4AdvancedVersions();
         }
     }
 }
@@ -672,6 +695,25 @@ bool FirmwareUpgradeController::_parsePX4Manifest(const QJsonDocument& doc)
             buildInfo.buildTime = static_cast<uint64_t>(buildObj[_px4ManifestBuildTimeKey].toDouble());
             buildInfo.imageSize = static_cast<uint64_t>(buildObj[_px4ManifestImageSizeKey].toDouble());
             buildInfo.mavAutopilot = buildObj[_px4ManifestMavAutopilotKey].toInt();
+
+            // Parse optional nested manifest object
+            if (buildObj.contains(QString(_px4ManifestManifestKey))) {
+                QJsonObject manifestObj = buildObj[QString(_px4ManifestManifestKey)].toObject();
+                buildInfo.manifestName = manifestObj[QString(_px4ManifestNameKey)].toString();
+                buildInfo.manifestTarget = manifestObj[QString(_px4ManifestTargetKey)].toString();
+                buildInfo.labelPretty = manifestObj[QString(_px4ManifestLabelPrettyKey)].toString();
+                buildInfo.firmwareCategory = manifestObj[QString(_px4ManifestFirmwareCategoryKey)].toString();
+                buildInfo.manufacturer = manifestObj[QString(_px4ManifestManufacturerKey)].toString();
+
+                if (manifestObj.contains(QString(_px4ManifestHardwareKey))) {
+                    QJsonObject hwObj = manifestObj[QString(_px4ManifestHardwareKey)].toObject();
+                    buildInfo.hardware.architecture = hwObj[QString(_px4ManifestArchitectureKey)].toString();
+                    buildInfo.hardware.vendorId = hwObj[QString(_px4ManifestVendorIdKey)].toString();
+                    buildInfo.hardware.productId = hwObj[QString(_px4ManifestProductIdKey)].toString();
+                    buildInfo.hardware.chip = hwObj[QString(_px4ManifestChipKey)].toString();
+                    buildInfo.hardware.productStr = hwObj[QString(_px4ManifestProductStrKey)].toString();
+                }
+            }
 
             releaseInfo.builds.append(buildInfo);
         }
@@ -745,15 +787,29 @@ void FirmwareUpgradeController::_buildPX4FirmwareNames(void)
             continue;
         }
 
-        // Filter out bootloader and canbootloader builds
-        if (build.filename.contains(QStringLiteral("bootloader"), Qt::CaseInsensitive)) {
-            continue;
+        // Filter by firmware_category when available, otherwise fall back to filename heuristic
+        if (!build.firmwareCategory.isEmpty()) {
+            if (build.firmwareCategory != QStringLiteral("vehicle") && build.labelPretty != QStringLiteral("Default")) {
+                if (_selectedFirmwareBuildType != DeveloperFirmware) {
+                    continue;
+                }
+            }
+        } else {
+            // Legacy fallback: filter out bootloader/canbootloader by filename
+            if (build.filename.contains(QStringLiteral("bootloader"), Qt::CaseInsensitive)) {
+                continue;
+            }
         }
 
-        // Build friendly name: "px4_fmu-v5_default (v1.16.1)"
-        QString friendlyName = build.filename;
-        friendlyName.replace(QStringLiteral(".px4"), QString());
-        friendlyName = QStringLiteral("%1 (%2)").arg(friendlyName, versionTag);
+        // Build friendly name using label_pretty when available
+        QString friendlyName;
+        if (!build.labelPretty.isEmpty()) {
+            friendlyName = QStringLiteral("%1 (%2)").arg(build.labelPretty, versionTag);
+        } else {
+            friendlyName = build.filename;
+            friendlyName.replace(QStringLiteral(".px4"), QString());
+            friendlyName = QStringLiteral("%1 (%2)").arg(friendlyName, versionTag);
+        }
 
         _px4FirmwareNames.append(friendlyName);
         _px4FirmwareUrls.append(build.url);
@@ -762,15 +818,20 @@ void FirmwareUpgradeController::_buildPX4FirmwareNames(void)
             _px4FirmwareSha256Map[build.url] = build.sha256sum;
         }
 
-        // Pre-select the _default build
-        if (_px4FirmwareNamesBestIndex == -1 && build.filename.contains(QStringLiteral("_default"))) {
+        // Pre-select best build: prefer "Default" label, then "Multicopter", then "_default" filename
+        if (build.labelPretty == QStringLiteral("Default")) {
             _px4FirmwareNamesBestIndex = currentIndex;
+        } else if (_px4FirmwareNamesBestIndex == -1) {
+            if (build.labelPretty == QStringLiteral("Multicopter") ||
+                build.filename.contains(QStringLiteral("_default"))) {
+                _px4FirmwareNamesBestIndex = currentIndex;
+            }
         }
 
         currentIndex++;
     }
 
-    // If no _default found, default to first entry
+    // If no preferred build found, default to first entry
     if (_px4FirmwareNamesBestIndex == -1) {
         _px4FirmwareNamesBestIndex = 0;
     }
@@ -779,6 +840,149 @@ void FirmwareUpgradeController::_buildPX4FirmwareNames(void)
                                 << boardId << "version" << versionTag << "best index:" << _px4FirmwareNamesBestIndex;
 
     emit px4FirmwareNamesChanged();
+}
+
+void FirmwareUpgradeController::_buildPX4AdvancedVersions(void)
+{
+    _px4AdvancedVersions.clear();
+    _px4AdvancedVersionTags.clear();
+    _px4AdvancedVersionsBestIndex = 0;
+
+    if (!_px4ManifestLoaded || !_bootloaderFound) {
+        emit px4AdvancedVersionsChanged();
+        return;
+    }
+
+    uint32_t boardId = _bootloaderBoardID;
+    int latestStableIndex = -1;
+
+    for (const QString& versionTag : _px4AvailableVersions) {
+        if (!_px4ManifestReleases.contains(versionTag)) {
+            continue;
+        }
+
+        const PX4ManifestReleaseInfo_t& release = _px4ManifestReleases[versionTag];
+
+        // Check if any build in this release matches the connected board
+        bool hasBoardMatch = false;
+        for (const PX4ManifestBuildInfo_t& build : release.builds) {
+            if (build.boardId == boardId) {
+                hasBoardMatch = true;
+                break;
+            }
+        }
+
+        if (hasBoardMatch) {
+            QString displayName = QStringLiteral("%1 (%2)").arg(versionTag, release.channel);
+            _px4AdvancedVersions.append(displayName);
+            _px4AdvancedVersionTags.append(versionTag);
+
+            if (latestStableIndex == -1 && release.channel == QStringLiteral("stable")) {
+                latestStableIndex = _px4AdvancedVersions.count() - 1;
+            }
+        }
+    }
+
+    _px4AdvancedVersionsBestIndex = (latestStableIndex >= 0) ? latestStableIndex : 0;
+
+    if (!_px4AdvancedVersionTags.isEmpty()) {
+        _selectedPX4AdvancedVersion = _px4AdvancedVersionTags[_px4AdvancedVersionsBestIndex];
+        _buildPX4AdvancedBuildNames();
+    }
+
+    emit px4AdvancedVersionsChanged();
+}
+
+void FirmwareUpgradeController::_buildPX4AdvancedBuildNames(void)
+{
+    _px4AdvancedBuildNames.clear();
+    _px4AdvancedBuildUrls.clear();
+    _px4AdvancedBuildNamesBestIndex = -1;
+
+    if (_selectedPX4AdvancedVersion.isEmpty() || !_px4ManifestReleases.contains(_selectedPX4AdvancedVersion)) {
+        emit px4AdvancedBuildNamesChanged();
+        return;
+    }
+
+    const PX4ManifestReleaseInfo_t& release = _px4ManifestReleases[_selectedPX4AdvancedVersion];
+    uint32_t boardId = _bootloaderBoardID;
+    bool isDev = (release.channel == QStringLiteral("dev"));
+
+    int currentIndex = 0;
+    for (const PX4ManifestBuildInfo_t& build : release.builds) {
+        if (build.boardId != boardId) {
+            continue;
+        }
+
+        // Apply same filtering as _buildPX4FirmwareNames
+        if (!build.firmwareCategory.isEmpty()) {
+            if (build.firmwareCategory != QStringLiteral("vehicle") && build.labelPretty != QStringLiteral("Default")) {
+                if (!isDev) {
+                    continue;
+                }
+            }
+        } else {
+            if (build.filename.contains(QStringLiteral("bootloader"), Qt::CaseInsensitive)) {
+                continue;
+            }
+        }
+
+        // Display name without version tag (version is shown in version dropdown)
+        QString friendlyName;
+        if (!build.labelPretty.isEmpty()) {
+            friendlyName = build.labelPretty;
+        } else {
+            friendlyName = build.filename;
+            friendlyName.replace(QStringLiteral(".px4"), QString());
+        }
+
+        _px4AdvancedBuildNames.append(friendlyName);
+        _px4AdvancedBuildUrls.append(build.url);
+
+        if (!build.sha256sum.isEmpty()) {
+            _px4FirmwareSha256Map[build.url] = build.sha256sum;
+        }
+
+        // Pre-select best build: prefer "Default" label, then "Multicopter", then "_default" filename
+        if (build.labelPretty == QStringLiteral("Default")) {
+            _px4AdvancedBuildNamesBestIndex = currentIndex;
+        } else if (_px4AdvancedBuildNamesBestIndex == -1) {
+            if (build.labelPretty == QStringLiteral("Multicopter") ||
+                build.filename.contains(QStringLiteral("_default"))) {
+                _px4AdvancedBuildNamesBestIndex = currentIndex;
+            }
+        }
+
+        currentIndex++;
+    }
+
+    if (_px4AdvancedBuildNamesBestIndex == -1) {
+        _px4AdvancedBuildNamesBestIndex = 0;
+    }
+
+    qCDebug(FirmwareUpgradeLog) << "PX4 advanced build names built:" << _px4AdvancedBuildNames.count()
+                                << "builds for board" << boardId << "version" << _selectedPX4AdvancedVersion
+                                << "best index:" << _px4AdvancedBuildNamesBestIndex;
+
+    emit px4AdvancedBuildNamesChanged();
+}
+
+void FirmwareUpgradeController::setSelectedPX4AdvancedVersionByIndex(int index)
+{
+    if (index < 0 || index >= _px4AdvancedVersionTags.count()) {
+        return;
+    }
+
+    _selectedPX4AdvancedVersion = _px4AdvancedVersionTags[index];
+    _buildPX4AdvancedBuildNames();
+}
+
+QString FirmwareUpgradeController::px4AdvancedSelectedChannel(void)
+{
+    if (_selectedPX4AdvancedVersion.isEmpty() || !_px4ManifestReleases.contains(_selectedPX4AdvancedVersion)) {
+        return QString();
+    }
+    return _px4ManifestReleases[_selectedPX4AdvancedVersion].channel;
 }
 
 void FirmwareUpgradeController::_buildPX4FirmwareHashFromManifest(int boardId)

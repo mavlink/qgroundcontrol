@@ -63,6 +63,7 @@ SetupPage {
                 folder:             QGroundControl.settingsManager.appSettings.logSavePath
                 onAcceptedForLoad: (file) => {
                     controller.flashFirmwareUrl(file)
+                    firmwareSelectDialog.close()
                     close()
                 }
             }
@@ -156,7 +157,7 @@ SetupPage {
                         } else {
                             versionString = controller.px4StableVersion
                         }
-                        px4FlightStackRadio.text = qsTr("PX4 Autopilot") + versionString
+                        px4FlightStackRadio.text = qsTr("PX4 Autopilot") + (versionString.length > 0 ? " " + versionString : "")
                     }
 
                     Component.onCompleted: {
@@ -200,8 +201,22 @@ SetupPage {
                                     return
                                 }
                                 controller.flashFirmwareUrl(controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex])
+                            } else if (_advanced.checked && px4FlightStackRadio.checked) {
+                                // PX4 advanced path
+                                if (controller.px4AdvancedBuildNames.length === 0) {
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("Either firmware list is still downloading, or no firmware is available for current selection."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+                                var px4AdvFirmwareUrl = controller.px4AdvancedBuildUrls[px4AdvancedBuildCombo.currentIndex]
+                                if (px4AdvFirmwareUrl === "") {
+                                    mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("No firmware was found for the current selection."))
+                                    firmwareSelectDialog.preventClose = true
+                                    return
+                                }
+                                controller.flashFirmwareUrl(px4AdvFirmwareUrl)
                             } else {
-                                // PX4 path
+                                // PX4 normal path
                                 if (controller.px4FirmwareNames.length === 0) {
                                     mainWindow.showMessageDialog(firmwareSelectDialog.title, qsTr("Either firmware list is still downloading, or no firmware is available for current selection."))
                                     firmwareSelectDialog.preventClose = true
@@ -336,7 +351,7 @@ SetupPage {
                         QGCComboBox {
                             id:                 px4FirmwareSelectionCombo
                             Layout.fillWidth:   true
-                            visible:            px4FlightStackRadio.checked && !controller.px4ManifestDownloading && controller.px4ManifestLoaded && controller.px4FirmwareNames.length > 0
+                            visible:            px4FlightStackRadio.checked && !_advanced.checked && !controller.px4ManifestDownloading && controller.px4ManifestLoaded && controller.px4FirmwareNames.length > 0
                             model:              controller.px4FirmwareNames
                             onModelChanged:     currentIndex = controller.px4FirmwareNamesBestIndex
                         }
@@ -355,11 +370,18 @@ SetupPage {
                             visible:            px4FlightStackRadio.checked && !controller.px4ManifestDownloading && !controller.px4ManifestLoaded
                         }
 
+                        QGCButton {
+                            text:               qsTr("Retry")
+                            visible:            px4FlightStackRadio.checked && !controller.px4ManifestDownloading && !controller.px4ManifestLoaded
+                            onClicked:          controller.retryPX4ManifestDownload()
+                        }
+
                         QGCLabel {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
                             text:               qsTr("No firmware available for this board")
-                            visible:            px4FlightStackRadio.checked && controller.px4ManifestLoaded && !controller.px4ManifestDownloading && controller.px4FirmwareNames.length === 0
+                            visible:            px4FlightStackRadio.checked && controller.px4ManifestLoaded && !controller.px4ManifestDownloading &&
+                                                (_advanced.checked ? controller.px4AdvancedVersions.length === 0 : controller.px4FirmwareNames.length === 0)
                         }
 
                         QGCLabel {
@@ -377,6 +399,10 @@ SetupPage {
                             onClicked: {
                                 firmwareBuildTypeCombo.currentIndex = 0
                                 firmwareWarningMessageVisible = false
+                                if (checked && px4FlightStackRadio.checked) {
+                                    px4AdvancedVersionCombo.currentIndex = controller.px4AdvancedVersionsBestIndex
+                                    controller.setSelectedPX4AdvancedVersionByIndex(controller.px4AdvancedVersionsBestIndex)
+                                }
                                 updatePX4VersionDisplay()
                             }
                         }
@@ -384,7 +410,7 @@ SetupPage {
                         QGCLabel {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
-                            visible:            showFirmwareTypeSelection
+                            visible:            showFirmwareTypeSelection && !px4FlightStackRadio.checked
                             text:               _singleFirmwareMode ?  qsTr("Select the standard version or one from the file system (previously downloaded):") :
                                                                       qsTr("Select which version of the above flight stack you would like to install:")
                         }
@@ -392,7 +418,7 @@ SetupPage {
                         QGCComboBox {
                             id:                 firmwareBuildTypeCombo
                             Layout.fillWidth:   true
-                            visible:            showFirmwareTypeSelection
+                            visible:            showFirmwareTypeSelection && !px4FlightStackRadio.checked
                             textRole:           "text"
                             model:              _singleFirmwareMode ? singleFirmwareModeTypeList : firmwareBuildTypeList
 
@@ -419,13 +445,67 @@ SetupPage {
                             }
                         }
 
-                        QGCComboBox {
-                            id:                 px4VersionCombo
+                        // PX4 Advanced Mode: Version dropdown
+                        QGCLabel {
                             Layout.fillWidth:   true
-                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked && controller.px4ManifestLoaded && controller.px4AvailableVersions.length > 0
-                            model:              controller.px4AvailableVersions
+                            wrapMode:           Text.WordWrap
+                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked
+                            text:               qsTr("Select firmware version:")
+                        }
+
+                        QGCComboBox {
+                            id:                 px4AdvancedVersionCombo
+                            Layout.fillWidth:   true
+                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked && controller.px4ManifestLoaded && controller.px4AdvancedVersions.length > 0
+                            model:              controller.px4AdvancedVersions
+                            onModelChanged:     currentIndex = controller.px4AdvancedVersionsBestIndex
                             onActivated: (index) => {
-                                controller.setSelectedPX4Version(model[index])
+                                controller.setSelectedPX4AdvancedVersionByIndex(index)
+                                var channel = controller.px4AdvancedSelectedChannel
+                                if (channel === "beta") {
+                                    firmwareWarningMessageVisible = true
+                                    firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
+                                            qsTr("This firmware version is ONLY intended for beta testers. ") +
+                                            qsTr("Although it has received FLIGHT TESTING, it represents actively changed code. ") +
+                                            qsTr("Do NOT use for normal operation.")
+                                } else if (channel === "dev") {
+                                    firmwareWarningMessageVisible = true
+                                    firmwareVersionWarningLabel.text = qsTr("WARNING: CONTINUOUS BUILD FIRMWARE. ") +
+                                            qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
+                                            qsTr("It is only intended for DEVELOPERS. ") +
+                                            qsTr("Run bench tests without props first. ") +
+                                            qsTr("Do NOT fly this without additional safety precautions. ") +
+                                            qsTr("Follow the forums actively when using it.")
+                                } else {
+                                    firmwareWarningMessageVisible = false
+                                }
+                                updatePX4VersionDisplay()
+                            }
+                        }
+
+                        // PX4 Advanced Mode: Build variant dropdown
+                        QGCLabel {
+                            Layout.fillWidth:   true
+                            wrapMode:           Text.WordWrap
+                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked
+                            text:               qsTr("Select build variant:")
+                        }
+
+                        QGCComboBox {
+                            id:                 px4AdvancedBuildCombo
+                            Layout.fillWidth:   true
+                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked && controller.px4ManifestLoaded && controller.px4AdvancedBuildNames.length > 0
+                            model:              controller.px4AdvancedBuildNames
+                            onModelChanged:     currentIndex = controller.px4AdvancedBuildNamesBestIndex
+                        }
+
+                        // PX4 Advanced Mode: Custom firmware button
+                        QGCButton {
+                            Layout.fillWidth:   true
+                            visible:            showFirmwareTypeSelection && px4FlightStackRadio.checked
+                            text:               qsTr("Custom firmware file...")
+                            onClicked: {
+                                customFirmwareDialog.openForLoad()
                             }
                         }
 
