@@ -126,10 +126,11 @@ Rectangle {
             }
 
             transform: Translate {
-                property double _angle: _headingToHome
+                property double _angle:        _headingToHome
+                property real   _labelOffset:  1.1 * root.width / 2
 
-                x: translateCenterToAngleX(parent.width / 2, _angle)
-                y: translateCenterToAngleY(parent.height / 2, _angle)
+                x: translateCenterToAngleX(_labelOffset, _angle)
+                y: translateCenterToAngleY(_labelOffset, _angle)
             }
         }
     }
