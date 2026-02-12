@@ -154,7 +154,7 @@ signals:
 
 private slots:
     void _firmwareDownloadProgress          (qint64 curr, qint64 total);
-    void _firmwareDownloadComplete          (QString remoteFile, QString localFile, QString errorMsg);
+    void _firmwareDownloadComplete          (bool success, const QString &localFile, const QString &errorMsg);
     void _foundBoard                        (bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
     void _noBoardFound                      (void);
     void _boardGone                         (void);
@@ -167,8 +167,8 @@ private slots:
     void _eraseStarted                      (void);
     void _eraseComplete                     (void);
     void _eraseProgressTick                 (void);
-    void _px4ReleasesGithubDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
-    void _ardupilotManifestDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
+    void _px4ReleasesGithubDownloadComplete (bool success, const QString &localFile, const QString &errorMsg);
+    void _ardupilotManifestDownloadComplete (bool success, const QString &localFile, const QString &errorMsg);
     void _buildAPMFirmwareNames             (void);
 
 private:

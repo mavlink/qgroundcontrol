@@ -16,18 +16,6 @@ namespace JsonHelper
 {
     QTranslator *translator();
 
-    /// Determines is the specified file is a json file
-    /// @return true: file is json, false: file is not json
-    bool isJsonFile(const QString &fileName, ///< filename
-                    QJsonDocument &jsonDoc,  ///< returned json document
-                    QString &errorString);   ///< error on parse failure
-
-    /// Determines is the specified data is a json file
-    /// @return true: file is json, false: file is not json
-    bool isJsonFile(const QByteArray &bytes, ///< json bytes
-                    QJsonDocument &jsonDoc,  ///< returned json document
-                    QString &errorString);   ///< error on parse failure
-
     /// Saves the standard file header the json object
     void saveQGCJsonFileHeader(QJsonObject &jsonObject,  ///< root json object
                                const QString &fileType,  ///< file type for file
@@ -64,20 +52,6 @@ namespace JsonHelper
                                         int maxSupportedVersion,         ///< maximum supported major version
                                         int &version,                    ///< returned file version
                                         QString &errorString);           ///< returned error string if validation fails
-
-    /// Validates that the specified keys are in the object
-    /// @return false: validation failed, errorString set
-    bool validateRequiredKeys(const QJsonObject &jsonObject, ///< json object to validate
-                              const QStringList &keys,       ///< keys which are required to be present
-                              QString &errorString);         ///< returned error string if validation fails
-
-    /// Validates the types of specified keys are in the object
-    ///     A Key type of JsonValue::Null indicates a double type which may be null which indicates NaN
-    /// @return false: validation failed, errorString set
-    bool validateKeyTypes(const QJsonObject &jsonObject,         ///< json object to validate
-                          const QStringList &keys,               ///< keys to validate
-                          const QList<QJsonValue::Type> &types,  ///< required type for each key, QJsonValue::Null specifies double with possible NaN
-                          QString &errorString);                 ///< returned error string if validation fails
 
     struct KeyValidateInfo {
         const char *key;        ///< json key name
@@ -131,9 +105,6 @@ namespace JsonHelper
     /// Saves a polygon to a json array
     void savePolygon(const QmlObjectListModel &list, ///< List which contains vertices
                      QJsonArray &polygonArray);      ///< Array to save into
-
-    /// Returns NaN if the value is null, or if not, the double value
-    double possibleNaNJsonValue(const QJsonValue &value);
 
     constexpr const char *jsonVersionKey = "version";
     constexpr const char *jsonFileTypeKey = "fileType";

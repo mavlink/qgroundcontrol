@@ -114,6 +114,8 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
     emit totalBytesChanged(-1);
     _setProgress(0.0);
     _setErrorString(QString());
+    _finishEmitted = false;
+    _lastResultFromCache = false;
 
     // Determine output path
     _localPath = _generateOutputPath(remoteUrl);
@@ -140,11 +142,6 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
 
     // Create request with configuration
     QNetworkRequest request = QGCNetworkHelper::createRequest(url, config);
-
-    // Apply legacy attributes if any (for backward compatibility)
-    for (const auto &[attr, value] : _legacyAttributes) {
-        request.setAttribute(attr, value);
-    }
 
     qCDebug(QGCFileDownloadLog) << "Starting download:" << url.toString() << "to" << _localPath;
 
@@ -177,6 +174,15 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
 
 void QGCFileDownload::cancel()
 {
+    const bool shouldEmitCancel = (_state != State::Idle && _state != State::Completed
+                                   && _state != State::Failed && _state != State::Cancelled);
+
+    if (shouldEmitCancel) {
+        _setState(State::Cancelled);
+        _setErrorString(tr("Download cancelled"));
+        _emitFinished(false, QString(), _errorString);
+    }
+
     if (_currentReply != nullptr) {
         qCDebug(QGCFileDownloadLog) << "Cancelling download";
         _currentReply->abort();
@@ -186,21 +192,7 @@ void QGCFileDownload::cancel()
         _decompressionJob->cancel();
     }
 
-    if (_state != State::Idle && _state != State::Completed && _state != State::Failed) {
-        _setState(State::Cancelled);
-        _emitFinished(false, QString(), tr("Download cancelled"));
-    }
-
     _cleanup();
-}
-
-bool QGCFileDownload::download(const QString &remoteFile,
-                                const QList<QPair<QNetworkRequest::Attribute, QVariant>> &requestAttributes,
-                                bool autoDecompress)
-{
-    _legacyAttributes = requestAttributes;
-    setAutoDecompress(autoDecompress);
-    return start(remoteFile);
 }
 
 // ============================================================================
@@ -232,10 +224,8 @@ void QGCFileDownload::_onReadyRead()
 
     // Stream data directly to file (memory-efficient)
     const QByteArray data = _currentReply->readAll();
-    if (!data.isEmpty()) {
-        if (_outputFile->write(data) != data.size()) {
-            qCWarning(QGCFileDownloadLog) << "Write error:" << _outputFile->errorString();
-        }
+    if (!_writeReplyData(data)) {
+        _failForWriteError(QStringLiteral("readyRead"));
     }
 }
 
@@ -249,12 +239,23 @@ void QGCFileDownload::_onDownloadFinished()
     }
     reply->deleteLater();
 
+    if (_state == State::Cancelled) {
+        _cleanup();
+        return;
+    }
+
+    _lastResultFromCache = reply->attribute(QNetworkRequest::SourceIsFromCacheAttribute).toBool();
+
     // Close output file
     if (_outputFile != nullptr) {
         // Write any remaining data
         const QByteArray remaining = reply->readAll();
-        if (!remaining.isEmpty()) {
-            _outputFile->write(remaining);
+        if (!_writeReplyData(remaining)) {
+            _outputFile->close();
+            delete _outputFile;
+            _outputFile = nullptr;
+            _failForWriteError(QStringLiteral("finished"));
+            return;
         }
         _outputFile->close();
         delete _outputFile;
@@ -264,7 +265,7 @@ void QGCFileDownload::_onDownloadFinished()
     // Check for errors
     if (reply->error() != QNetworkReply::NoError) {
         // Error already handled in _onDownloadError
-        if (_state == State::Downloading) {
+        if (_state == State::Downloading || _state == State::Verifying) {
             _setState(State::Failed);
             _emitFinished(false, QString(), QGCNetworkHelper::errorMessage(reply));
         }
@@ -311,6 +312,10 @@ void QGCFileDownload::_onDownloadFinished()
 
 void QGCFileDownload::_onDownloadError(QNetworkReply::NetworkError code)
 {
+    if (_state == State::Cancelled) {
+        return;
+    }
+
     QString errorMsg;
 
     switch (code) {
@@ -347,6 +352,11 @@ void QGCFileDownload::_onDownloadError(QNetworkReply::NetworkError code)
 
 void QGCFileDownload::_onDecompressionFinished(bool success)
 {
+    if (_state == State::Cancelled) {
+        _compressedFilePath.clear();
+        return;
+    }
+
     if (success) {
         const QString decompressedPath = _decompressionJob->outputPath();
         qCDebug(QGCFileDownloadLog) << "Decompression completed:" << decompressedPath;
@@ -422,16 +432,46 @@ void QGCFileDownload::_cleanup()
         delete _outputFile;
         _outputFile = nullptr;
     }
-
-    _legacyAttributes.clear();
 }
 
 void QGCFileDownload::_emitFinished(bool success, const QString &localPath, const QString &errorMessage)
 {
+    if (_finishEmitted) {
+        return;
+    }
+    _finishEmitted = true;
     emit finished(success, localPath, errorMessage);
+}
 
-    // Legacy signal for backward compatibility
-    emit downloadComplete(_url.toString(), localPath, errorMessage);
+bool QGCFileDownload::_writeReplyData(const QByteArray &data)
+{
+    if (data.isEmpty()) {
+        return true;
+    }
+
+    if (_outputFile == nullptr) {
+        return false;
+    }
+
+    return _outputFile->write(data) == data.size();
+}
+
+bool QGCFileDownload::_failForWriteError(const QString &context)
+{
+    const QString error = tr("Failed to write downloaded file (%1): %2")
+                              .arg(context, _outputFile != nullptr ? _outputFile->errorString() : QString());
+    qCWarning(QGCFileDownloadLog) << error;
+    _setErrorString(error);
+    _setState(State::Failed);
+
+    if (_currentReply != nullptr) {
+        _currentReply->disconnect(this);
+        _currentReply->abort();
+    }
+
+    _cleanup();
+    _emitFinished(false, QString(), error);
+    return false;
 }
 
 QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const

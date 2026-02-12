@@ -1,6 +1,6 @@
 #include "ComponentInformationTranslation.h"
 #include "QGCCachedFileDownload.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
@@ -30,10 +30,10 @@ bool ComponentInformationTranslation::downloadAndTranslate(const QString& summar
     }
 
     // Download file
-    connect(_cachedFileDownload, &QGCCachedFileDownload::downloadComplete, this, &ComponentInformationTranslation::onDownloadCompleted);
+    connect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
     if (!_cachedFileDownload->download(url, maxCacheAgeSec)) {
         qCWarning(ComponentInformationTranslationLog) << "Metadata translation download failed";
-        disconnect(_cachedFileDownload, &QGCCachedFileDownload::downloadComplete, this, &ComponentInformationTranslation::onDownloadCompleted);
+        disconnect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
         return false;
     }
     return true;
@@ -44,7 +44,7 @@ QString ComponentInformationTranslation::getUrlFromSummaryJson(const QString &su
     QString         errorString;
     QJsonDocument   jsonDoc;
 
-    if (!JsonHelper::isJsonFile(summaryJsonFile, jsonDoc, errorString)) {
+    if (!JsonParsing::isJsonFile(summaryJsonFile, jsonDoc, errorString)) {
         qCWarning(ComponentInformationTranslationLog) << "Metadata translation summary json file open failed:" << errorString;
         return "";
     }
@@ -63,16 +63,17 @@ QString ComponentInformationTranslation::getUrlFromSummaryJson(const QString &su
     return url;
 }
 
-void ComponentInformationTranslation::onDownloadCompleted(QString remoteFile, QString localFile, QString errorMsg)
+void ComponentInformationTranslation::onDownloadCompleted(bool success, const QString &localFile, QString errorMsg, [[maybe_unused]] bool fromCache)
 {
-    disconnect(_cachedFileDownload, &QGCCachedFileDownload::downloadComplete, this, &ComponentInformationTranslation::onDownloadCompleted);
+    disconnect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
 
     QString tsFileName = localFile;
     bool deleteFile = false;
-    if (errorMsg.isEmpty()) {
+    if (success) {
         const QString tempPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath("qgc_translation_file_decompressed.ts");
         tsFileName = QGCCompression::decompressIfNeeded(localFile, tempPath, false);
         if (tsFileName.isEmpty()) {
+            const QString remoteFile = _cachedFileDownload->url().toString();
             errorMsg = "Decompression of translation file failed: " + remoteFile;
         } else if (tsFileName != localFile) {
             deleteFile = true;  // Mark for cleanup since we decompressed
@@ -103,7 +104,7 @@ QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toT
     QString         errorString;
     QJsonDocument   jsonDoc;
 
-    if (!JsonHelper::isJsonFile(toTranslateJsonFile, jsonDoc, errorString)) {
+    if (!JsonParsing::isJsonFile(toTranslateJsonFile, jsonDoc, errorString)) {
         qCWarning(ComponentInformationTranslationLog) << "Metadata json file to translate open failed:" << errorString;
         return "";
     }

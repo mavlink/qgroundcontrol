@@ -1,5 +1,6 @@
 #include "CompInfoGeneral.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonDocument>
@@ -32,7 +33,7 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
     QString         errorString;
     QJsonDocument   jsonDoc;
 
-    if (!JsonHelper::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
+    if (!JsonParsing::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
         qCWarning(CompInfoGeneralLog) << "Metadata json file open failed: compid:" << compId << errorString;
         return;
     }

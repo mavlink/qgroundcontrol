@@ -2,6 +2,7 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
+#include <QtNetwork/QNetworkRequest>
 
 #include "QGCNetworkHelper.h"
 #include "UnitTest.h"
@@ -367,6 +368,20 @@ void QGCNetworkHelperTest::_testRequestConfigDefaults()
     QVERIFY(!config.backgroundRequest);
     QVERIFY(config.userAgent.isEmpty());
     QCOMPARE(config.accept, QStringLiteral("*/*"));
+}
+
+void QGCNetworkHelperTest::_testRequestConfigAttributes()
+{
+    QGCNetworkHelper::RequestConfig config;
+    config.requestAttributes.append({
+        QNetworkRequest::CacheLoadControlAttribute,
+        QVariant::fromValue(QNetworkRequest::AlwaysNetwork),
+    });
+
+    const QNetworkRequest request = QGCNetworkHelper::createRequest(QUrl(QStringLiteral("https://example.com")), config);
+    const QVariant attribute = request.attribute(QNetworkRequest::CacheLoadControlAttribute);
+    QVERIFY(attribute.isValid());
+    QCOMPARE(attribute.toInt(), static_cast<int>(QNetworkRequest::AlwaysNetwork));
 }
 
 // ============================================================================

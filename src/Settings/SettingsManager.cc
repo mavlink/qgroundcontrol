@@ -28,6 +28,7 @@
 #include "Viewer3DSettings.h"
 #endif
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCCorePlugin.h"
 #include "QGCApplication.h"
 
@@ -160,7 +161,7 @@ void SettingsManager::_loadSettingsFiles()
 
         QJsonDocument jsonDoc;
         QString errorString;
-        if (!JsonHelper::isJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString)) {
+        if (!JsonParsing::isJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString)) {
             qCWarning(SettingsManagerLog) << "Failed to load settings file:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }

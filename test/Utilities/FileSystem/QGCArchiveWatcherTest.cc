@@ -262,6 +262,49 @@ void QGCArchiveWatcherTest::_testAutoDecompressCompressedFile()
     QVERIFY(QFileInfo::exists(QDir(_outputDirPath).filePath("auto_decompress.json")));
 }
 
+void QGCArchiveWatcherTest::_testRemoveAfterExtraction()
+{
+    QGCArchiveWatcher watcher;
+    watcher.setDebounceDelay(50);
+    watcher.setAutoDecompress(true);
+    watcher.setRemoveAfterExtraction(true);
+    watcher.setOutputDirectory(_outputDirPath);
+
+    QSignalSpy extractionSpy(&watcher, &QGCArchiveWatcher::extractionComplete);
+    QVERIFY(watcher.watchDirectory(tempDir()->path()));
+
+    const QString archivePath = tempDir()->filePath("remove_after_extract.zip");
+    _createTestArchive(archivePath);
+
+    QVERIFY(extractionSpy.wait(5000));
+    QCOMPARE(extractionSpy.count(), 1);
+    QVERIFY(extractionSpy.at(0).at(2).toBool());
+    QVERIFY(!QFile::exists(archivePath));
+}
+
+void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
+{
+    QGCArchiveWatcher watcher;
+    watcher.setDebounceDelay(50);
+    watcher.setAutoDecompress(true);
+    watcher.setOutputDirectory(_outputDirPath);
+
+    QSignalSpy extractionSpy(&watcher, &QGCArchiveWatcher::extractionComplete);
+    QVERIFY(watcher.watchDirectory(tempDir()->path()));
+
+    const QString archivePath = tempDir()->filePath("cancel_extract.zip");
+    _createTestArchive(archivePath);
+
+    QTest::qWait(50);
+    watcher.cancelExtraction();
+
+    QVERIFY(!watcher.isExtracting());
+    QCOMPARE(watcher.progress(), 0.0);
+
+    QTest::qWait(300);
+    QVERIFY(extractionSpy.count() <= 1);
+}
+
 // ============================================================================
 // Error handling
 // ============================================================================

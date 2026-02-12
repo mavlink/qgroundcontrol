@@ -291,26 +291,6 @@ int SHPFileHelper::getEntityCount(const QString &shpFile, QString &errorString)
     return cEntities;
 }
 
-bool SHPFileHelper::loadPolygonFromFile(const QString &shpFile, QList<QGeoCoordinate> &vertices, QString &errorString, double filterMeters)
-{
-    QList<QList<QGeoCoordinate>> polygons;
-    if (!loadPolygonsFromFile(shpFile, polygons, errorString, filterMeters)) {
-        return false;
-    }
-    vertices = polygons.first();
-    return true;
-}
-
-bool SHPFileHelper::loadPolylineFromFile(const QString &shpFile, QList<QGeoCoordinate> &vertices, QString &errorString, double filterMeters)
-{
-    QList<QList<QGeoCoordinate>> polylines;
-    if (!loadPolylinesFromFile(shpFile, polylines, errorString, filterMeters)) {
-        return false;
-    }
-    vertices = polylines.first();
-    return true;
-}
-
 bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGeoCoordinate>> &polygons, QString &errorString, double filterMeters)
 {
     int utmZone = 0;

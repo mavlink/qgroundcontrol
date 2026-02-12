@@ -5,6 +5,8 @@
 
 #include "QGCCompression.h"
 
+#include <atomic>
+#include <memory>
 #include <QtCore/QFuture>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QLoggingCategory>
@@ -198,7 +200,8 @@ private:
     void _setRunning(bool running);
     void _setErrorString(const QString &error);
 
-    static QFuture<bool> _runWithProgress(WorkFunction work);
+    static QFuture<bool> _runWithProgress(WorkFunction work,
+                                          const std::shared_ptr<std::atomic_bool> &cancelRequested);
 
     QFutureWatcher<bool> *_watcher = nullptr;
     QFuture<bool> _future;
@@ -209,4 +212,5 @@ private:
     QString _sourcePath;
     QString _outputPath;
     Operation _operation = Operation::None;
+    std::shared_ptr<std::atomic_bool> _cancelRequested;
 };

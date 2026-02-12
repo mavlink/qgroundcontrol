@@ -43,6 +43,7 @@ private slots:
     // Request configuration tests
     void _testDefaultUserAgent();
     void _testRequestConfigDefaults();
+    void _testRequestConfigAttributes();
 
     // Network availability tests
     void _testIsNetworkAvailable();
