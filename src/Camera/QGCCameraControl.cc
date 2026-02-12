@@ -2516,5 +2516,5 @@ QGCCameraControl::_requestTrackingStatus()
                              MAV_CMD_SET_MESSAGE_INTERVAL,
                              true,
                              MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
-                             500000); // Interval (us)
+                             40000); // Interval (us)
 }
