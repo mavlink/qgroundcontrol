@@ -1632,7 +1632,10 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
 void Vehicle::_sendMessageMultipleNext()
 {
     if (_nextSendMessageMultipleIndex < _sendMessageMultipleList.count()) {
-        qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
+        uint32_t msgId = _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
+        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(msgId);
+        QString msgName = info ? info->name : QString::number(msgId);
+        qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << msgName;
 
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
@@ -2648,7 +2651,8 @@ void Vehicle::_sendMavCommandWorker(
     entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs();
     entry.elapsedTimer.start();
 
-    qCDebug(VehicleLog) << Q_FUNC_INFO << "command:param1-7" << command << param1 << param2 << param3 << param4 << param5 << param6 << param7;
+    QString commandStr = _formatMavCommand(command, param1);
+    qCDebug(VehicleLog) << "Sending" << commandStr << "param1-7:" << command << param1 << param2 << param3 << param4 << param5 << param6 << param7;
 
     _mavCommandList.append(entry);
     _sendMavCommandFromList(_mavCommandList.count() - 1);
@@ -2662,7 +2666,17 @@ void Vehicle::_sendMavCommandFromList(int index)
     QString friendlyName = MissionCommandTree::instance()->friendlyName(commandEntry.command);
 
     if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
-        qCDebug(VehicleLog) << Q_FUNC_INFO << "giving up after max retries" << rawCommandName;
+        QString logMsg = QStringLiteral("Giving up sending command after max retries: %1").arg(rawCommandName);
+
+        // For REQUEST_MESSAGE commands, also log which message was being requested
+        if (commandEntry.command == MAV_CMD_REQUEST_MESSAGE) {
+            int requestedMsgId = static_cast<int>(commandEntry.rgParam1);
+            const mavlink_message_info_t *info = mavlink_get_message_info_by_id(requestedMsgId);
+            logMsg += QStringLiteral(" requesting: %1").arg(info->name);
+        }
+
+        qCWarning(VehicleLog) << logMsg;
+
         _mavCommandList.removeAt(index);
         if (commandEntry.ackHandlerInfo.resultHandler) {
             mavlink_command_ack_t ack = {};
@@ -2683,7 +2697,8 @@ void Vehicle::_sendMavCommandFromList(int index)
         return;
     }
 
-    qCDebug(VehicleLog) << Q_FUNC_INFO << "command:tryCount:param1-7" << rawCommandName << commandEntry.tryCount << commandEntry.rgParam1 << commandEntry.rgParam2 << commandEntry.rgParam3 << commandEntry.rgParam4 << commandEntry.rgParam5 << commandEntry.rgParam6 << commandEntry.rgParam7;
+    QString commandStr = _formatMavCommand(commandEntry.command, commandEntry.rgParam1);
+    qCDebug(VehicleLog) << "Sending" << commandStr << "tryCount:param1-7" << commandEntry.tryCount << commandEntry.rgParam1 << commandEntry.rgParam2 << commandEntry.rgParam3 << commandEntry.rgParam4 << commandEntry.rgParam5 << commandEntry.rgParam6 << commandEntry.rgParam7;
 
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -2791,7 +2806,20 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_msg_command_ack_decode(&message, &ack);
 
     QString rawCommandName  = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(ack.command));
-    qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
+    QString logMsg = QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
+
+    // For REQUEST_MESSAGE commands, also log which message was requested
+    if (ack.command == MAV_CMD_REQUEST_MESSAGE) {
+        int entryIndex = _findMavCommandListEntryIndex(message.compid, static_cast<MAV_CMD>(ack.command));
+        if (entryIndex != -1) {
+            int requestedMsgId = static_cast<int>(_mavCommandList[entryIndex].rgParam1);
+            const mavlink_message_info_t *info = mavlink_get_message_info_by_id(requestedMsgId);
+            QString msgName = info ? QString(info->name) : QString::number(requestedMsgId);
+            logMsg += QStringLiteral(" msgId(%1)").arg(msgName);
+        }
+    }
+
+    qCDebug(VehicleLog) << logMsg;
 
     if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
         if (ack.result == MAV_RESULT_ACCEPTED) {
@@ -2876,7 +2904,9 @@ void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message
         auto resultHandler      = pInfo->resultHandler;
         auto resultHandlerData  = pInfo->resultHandlerData;
 
-        qCDebug(VehicleLog) << Q_FUNC_INFO << "message received - compId:msgId" << message.compid << message.msgid;
+        const mavlink_message_info_t *info = mavlink_get_message_info_by_id(message.msgid);
+        QString msgName = info ? QString(info->name) : QString::number(message.msgid);
+        qCDebug(VehicleLog) << Q_FUNC_INFO << "message received - compId:msgId" << message.compid << msgName;
 
         if (!pInfo->commandAckReceived) {
             qCDebug(VehicleLog) << Q_FUNC_INFO << "message received before ack came back.";
@@ -2899,7 +2929,9 @@ void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message
                     auto resultHandler      = requestMessageInfo->resultHandler;
                     auto resultHandlerData  = requestMessageInfo->resultHandlerData;
 
-                    qCDebug(VehicleLog) << Q_FUNC_INFO << "request message timed out - compId:msgId" << requestMessageInfo->compId << requestMessageInfo->msgId;
+                    const mavlink_message_info_t* info = mavlink_get_message_info_by_id(requestMessageInfo->msgId);
+                    QString msgName = info ? info->name : QString::number(requestMessageInfo->msgId);
+                    qCDebug(VehicleLog) << Q_FUNC_INFO << "request message timed out - compId:msgId" << requestMessageInfo->compId << msgName;
 
                     _removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
 
@@ -3546,6 +3578,18 @@ void Vehicle::_setMessageInterval(int messageId, int rate)
                    true,                        // show error
                    messageId,
                    rate);
+}
+
+QString Vehicle::_formatMavCommand(MAV_CMD command, float param1)
+{
+    QString commandName = MissionCommandTree::instance()->rawName(command);
+
+    if (command == MAV_CMD_REQUEST_MESSAGE && param1 > 0) {
+        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(param1));
+        QString param1Str = info ? QString("%1(%2)").arg(param1).arg(info->name) : QString::number(param1);
+        return QString("%1: %2").arg(commandName).arg(param1Str);
+    }
+    return QString("%1: %2").arg(commandName).arg(param1);
 }
 
 bool Vehicle::isInitialConnectComplete() const

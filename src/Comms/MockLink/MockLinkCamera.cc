@@ -505,4 +505,16 @@ void MockLinkCamera::_sendCommandAck(uint8_t compId, uint16_t command, uint8_t r
         0,   // target_system
         0);  // target_component
     _mockLink->respondWithMavlinkMessage(msg);
+
+    QString commandName = MissionCommandTree::instance()->rawName(static_cast<MAV_CMD>(command));
+    QString logMsg = QStringLiteral("Sent COMMAND_ACK for compId: %1 command: %2 result: %3")
+                        .arg(compId).arg(commandName).arg(result);
+
+    if (command == MAV_CMD_REQUEST_MESSAGE && requestedMsgId >= 0) {
+        const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(requestedMsgId));
+        QString msgName = info ? info->name : QString::number(requestedMsgId);
+        logMsg += QStringLiteral(" requestedMsg: %1").arg(msgName);
+    }
+
+    qCDebug(MockLinkCameraLog) << logMsg;
 }
