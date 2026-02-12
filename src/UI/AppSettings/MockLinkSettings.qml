@@ -5,10 +5,8 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-GridLayout {
-    columns:        2
-    rowSpacing:     _rowSpacing
-    columnSpacing:  _colSpacing
+ColumnLayout {
+    spacing: _rowSpacing
 
     readonly property int _MAV_AUTOPILOT_GENERIC:       0
     readonly property int _MAV_AUTOPILOT_PX4:           12
@@ -34,7 +32,16 @@ GridLayout {
             break
         }
         subEditConfig.sendStatus = sendStatus.checked
+        subEditConfig.enableCamera = enableCamera.checked
         subEditConfig.incrementVehicleId = incrementVehicleId.checked
+        subEditConfig.cameraCaptureVideo = cameraCaptureVideo.checked
+        subEditConfig.cameraCaptureImage = cameraCaptureImage.checked
+        subEditConfig.cameraHasModes = cameraHasModes.checked
+        subEditConfig.cameraCanCaptureImageInVideoMode = cameraCanCaptureImageInVideoMode.checked
+        subEditConfig.cameraCanCaptureVideoInImageMode = cameraCanCaptureVideoInImageMode.checked
+        subEditConfig.cameraHasBasicZoom = cameraHasBasicZoom.checked
+        subEditConfig.cameraHasTrackingPoint = cameraHasTrackingPoint.checked
+        subEditConfig.cameraHasTrackingRectangle = cameraHasTrackingRectangle.checked
     }
 
     Component.onCompleted: {
@@ -56,36 +63,111 @@ GridLayout {
         }
     }
 
-    QGCCheckBox {
-        id:                 sendStatus
-        Layout.columnSpan:  2
-        text:               qsTr("Send Status Text and Voice")
-        checked:            subEditConfig.sendStatus
+    QGCCheckBoxSlider {
+        id: sendStatus
+        Layout.fillWidth: true
+        text: qsTr("Send Status Text and Voice")
+        checked: subEditConfig.sendStatus
     }
 
-    QGCCheckBox {
-        id:                 incrementVehicleId
-        Layout.columnSpan:  2
-        text:               qsTr("Increment Vehicle Id")
-        checked:            subEditConfig.incrementVehicleId
+    QGCCheckBoxSlider {
+        id: enableCamera
+        Layout.fillWidth: true
+        text: qsTr("Enable Camera")
+        checked: subEditConfig.enableCamera
     }
 
-    QGCLabel { text: qsTr("Firmware") }
-    QGCComboBox {
-        id:                     firmwareTypeCombo
-        Layout.preferredWidth:  _secondColumnWidth
-        model:                  [ qsTr("PX4 Pro"), qsTr("ArduPilot"), qsTr("Generic MAVLink") ]
+    QGCCheckBoxSlider {
+        id: incrementVehicleId
+        Layout.fillWidth: true
+        text: qsTr("Increment Vehicle Id")
+        checked: subEditConfig.incrementVehicleId
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        text: qsTr("Camera Capabilities")
+        font.bold: true
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraCaptureVideo
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_CAPTURE_VIDEO"
+        checked: subEditConfig.cameraCaptureVideo
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraCaptureImage
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_CAPTURE_IMAGE"
+        checked: subEditConfig.cameraCaptureImage
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraHasModes
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_HAS_MODES"
+        checked: subEditConfig.cameraHasModes
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraCanCaptureImageInVideoMode
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE"
+        checked: subEditConfig.cameraCanCaptureImageInVideoMode
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraCanCaptureVideoInImageMode
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE"
+        checked: subEditConfig.cameraCanCaptureVideoInImageMode
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraHasBasicZoom
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM"
+        checked: subEditConfig.cameraHasBasicZoom
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraHasTrackingPoint
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_HAS_TRACKING_POINT"
+        checked: subEditConfig.cameraHasTrackingPoint
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraHasTrackingRectangle
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE"
+        checked: subEditConfig.cameraHasTrackingRectangle
+        visible: enableCamera.checked
+    }
+
+    LabelledComboBox {
+        id: firmwareTypeCombo
+        Layout.fillWidth: true
+        label: qsTr("Firmware Type")
+        model: [ qsTr("PX4 Pro"), qsTr("ArduPilot"), qsTr("Generic MAVLink") ]
 
         property bool apmFirmwareSelected: currentIndex === 1
     }
 
-    QGCLabel {
-        text:       qsTr("Vehicle Type")
-        visible:    firmwareTypeCombo.apmFirmwareSelected
-    }
-    QGCComboBox {
+    LabelledComboBox {
         id:                     vehicleTypeCombo
-        Layout.preferredWidth:  _secondColumnWidth
+        Layout.fillWidth:  true
+        label:                  qsTr("Vehicle Type")
         model:                  [ qsTr("ArduCopter"), qsTr("ArduPlane") ]
         visible:                firmwareTypeCombo.apmFirmwareSelected
     }
