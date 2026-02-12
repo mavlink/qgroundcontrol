@@ -115,7 +115,7 @@ jobs:
           abis: ${{ env.QT_ANDROID_ABIS }}
           build-type: ${{ inputs.build_type || 'Release' }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          ndk-version: ${{ steps.config.outputs.ndk_version }}
+          ndk-full-version: ${{ steps.config.outputs.ndk_full_version }}
           java-version: ${{ steps.config.outputs.java_version }}
           android-platform: ${{ steps.config.outputs.android_platform }}
           android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
