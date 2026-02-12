@@ -37,6 +37,7 @@ ColumnLayout {
         subEditConfig.cameraCaptureVideo = cameraCaptureVideo.checked
         subEditConfig.cameraCaptureImage = cameraCaptureImage.checked
         subEditConfig.cameraHasModes = cameraHasModes.checked
+        subEditConfig.cameraHasVideoStream = cameraHasVideoStream.checked
         subEditConfig.cameraCanCaptureImageInVideoMode = cameraCanCaptureImageInVideoMode.checked
         subEditConfig.cameraCanCaptureVideoInImageMode = cameraCanCaptureVideoInImageMode.checked
         subEditConfig.cameraHasBasicZoom = cameraHasBasicZoom.checked
@@ -112,6 +113,14 @@ ColumnLayout {
         Layout.fillWidth: true
         text: "CAMERA_CAP_FLAGS_HAS_MODES"
         checked: subEditConfig.cameraHasModes
+        visible: enableCamera.checked
+    }
+
+    QGCCheckBoxSlider {
+        id: cameraHasVideoStream
+        Layout.fillWidth: true
+        text: "CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM"
+        checked: subEditConfig.cameraHasVideoStream
         visible: enableCamera.checked
     }
 

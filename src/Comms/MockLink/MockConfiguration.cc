@@ -20,6 +20,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _cameraCaptureVideo(copy->cameraCaptureVideo())
     , _cameraCaptureImage(copy->cameraCaptureImage())
     , _cameraHasModes(copy->cameraHasModes())
+    , _cameraHasVideoStream(copy->cameraHasVideoStream())
     , _cameraCanCaptureImageInVideoMode(copy->cameraCanCaptureImageInVideoMode())
     , _cameraCanCaptureVideoInImageMode(copy->cameraCanCaptureVideoInImageMode())
     , _cameraHasBasicZoom(copy->cameraHasBasicZoom())
@@ -49,6 +50,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setCameraCaptureVideo(mockLinkSource->cameraCaptureVideo());
     setCameraCaptureImage(mockLinkSource->cameraCaptureImage());
     setCameraHasModes(mockLinkSource->cameraHasModes());
+    setCameraHasVideoStream(mockLinkSource->cameraHasVideoStream());
     setCameraCanCaptureImageInVideoMode(mockLinkSource->cameraCanCaptureImageInVideoMode());
     setCameraCanCaptureVideoInImageMode(mockLinkSource->cameraCanCaptureVideoInImageMode());
     setCameraHasBasicZoom(mockLinkSource->cameraHasBasicZoom());
@@ -69,6 +71,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setCameraCaptureVideo(settings.value(_cameraCaptureVideoKey, true).toBool());
     setCameraCaptureImage(settings.value(_cameraCaptureImageKey, true).toBool());
     setCameraHasModes(settings.value(_cameraHasModesKey, true).toBool());
+    setCameraHasVideoStream(settings.value(_cameraHasVideoStreamKey, true).toBool());
     setCameraCanCaptureImageInVideoMode(settings.value(_cameraCanCaptureImageInVideoModeKey, true).toBool());
     setCameraCanCaptureVideoInImageMode(settings.value(_cameraCanCaptureVideoInImageModeKey, false).toBool());
     setCameraHasBasicZoom(settings.value(_cameraHasBasicZoomKey, true).toBool());
@@ -91,6 +94,7 @@ void MockConfiguration::saveSettings(QSettings &settings, const QString &root) c
     settings.setValue(_cameraCaptureVideoKey, cameraCaptureVideo());
     settings.setValue(_cameraCaptureImageKey, cameraCaptureImage());
     settings.setValue(_cameraHasModesKey, cameraHasModes());
+    settings.setValue(_cameraHasVideoStreamKey, cameraHasVideoStream());
     settings.setValue(_cameraCanCaptureImageInVideoModeKey, cameraCanCaptureImageInVideoMode());
     settings.setValue(_cameraCanCaptureVideoInImageModeKey, cameraCanCaptureVideoInImageMode());
     settings.setValue(_cameraHasBasicZoomKey, cameraHasBasicZoom());

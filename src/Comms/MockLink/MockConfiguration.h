@@ -18,6 +18,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(bool cameraCaptureVideo                   READ cameraCaptureVideo                  WRITE setCameraCaptureVideo                  NOTIFY cameraCaptureVideoChanged)
     Q_PROPERTY(bool cameraCaptureImage                   READ cameraCaptureImage                  WRITE setCameraCaptureImage                  NOTIFY cameraCaptureImageChanged)
     Q_PROPERTY(bool cameraHasModes                       READ cameraHasModes                      WRITE setCameraHasModes                      NOTIFY cameraHasModesChanged)
+    Q_PROPERTY(bool cameraHasVideoStream                 READ cameraHasVideoStream                WRITE setCameraHasVideoStream                NOTIFY cameraHasVideoStreamChanged)
     Q_PROPERTY(bool cameraCanCaptureImageInVideoMode     READ cameraCanCaptureImageInVideoMode    WRITE setCameraCanCaptureImageInVideoMode    NOTIFY cameraCanCaptureImageInVideoModeChanged)
     Q_PROPERTY(bool cameraCanCaptureVideoInImageMode     READ cameraCanCaptureVideoInImageMode    WRITE setCameraCanCaptureVideoInImageMode    NOTIFY cameraCanCaptureVideoInImageModeChanged)
     Q_PROPERTY(bool cameraHasBasicZoom                   READ cameraHasBasicZoom                  WRITE setCameraHasBasicZoom                  NOTIFY cameraHasBasicZoomChanged)
@@ -60,6 +61,8 @@ public:
     void setCameraCaptureImage(bool value) { _cameraCaptureImage = value; emit cameraCaptureImageChanged(); }
     bool cameraHasModes() const { return _cameraHasModes; }
     void setCameraHasModes(bool value) { _cameraHasModes = value; emit cameraHasModesChanged(); }
+    bool cameraHasVideoStream() const { return _cameraHasVideoStream; }
+    void setCameraHasVideoStream(bool value) { _cameraHasVideoStream = value; emit cameraHasVideoStreamChanged(); }
     bool cameraCanCaptureImageInVideoMode() const { return _cameraCanCaptureImageInVideoMode; }
     void setCameraCanCaptureImageInVideoMode(bool value) { _cameraCanCaptureImageInVideoMode = value; emit cameraCanCaptureImageInVideoModeChanged(); }
     bool cameraCanCaptureVideoInImageMode() const { return _cameraCanCaptureVideoInImageMode; }
@@ -91,6 +94,7 @@ signals:
     void cameraCaptureVideoChanged();
     void cameraCaptureImageChanged();
     void cameraHasModesChanged();
+    void cameraHasVideoStreamChanged();
     void cameraCanCaptureImageInVideoModeChanged();
     void cameraCanCaptureVideoInImageModeChanged();
     void cameraHasBasicZoomChanged();
@@ -111,6 +115,7 @@ private:
     bool _cameraCaptureVideo = true;
     bool _cameraCaptureImage = true;
     bool _cameraHasModes = true;
+    bool _cameraHasVideoStream = true;
     bool _cameraCanCaptureImageInVideoMode = true;
     bool _cameraCanCaptureVideoInImageMode = false;
     bool _cameraHasBasicZoom = true;
@@ -126,6 +131,7 @@ private:
     static constexpr const char *_cameraCaptureVideoKey = "CameraCaptureVideo";
     static constexpr const char *_cameraCaptureImageKey = "CameraCaptureImage";
     static constexpr const char *_cameraHasModesKey = "CameraHasModes";
+    static constexpr const char *_cameraHasVideoStreamKey = "CameraHasVideoStream";
     static constexpr const char *_cameraCanCaptureImageInVideoModeKey = "CameraCanCaptureImageInVideoMode";
     static constexpr const char *_cameraCanCaptureVideoInImageModeKey = "CameraCanCaptureVideoInImageMode";
     static constexpr const char *_cameraHasBasicZoomKey = "CameraHasBasicZoom";
