@@ -547,88 +547,6 @@ QString strippedPath(const QString& filePath)
 }
 
 // ============================================================================
-// URL Utilities
-// ============================================================================
-
-QString toLocalPath(const QUrl& url)
-{
-    if (url.isEmpty()) {
-        return {};
-    }
-
-    // Get string representation first to check for Qt resource paths
-    // QUrl parsing can mangle :/ paths, so check the original string first
-    const QString urlStr = url.toString();
-
-    // Check if it's already a Qt resource path (:/ prefix)
-    // This must be checked BEFORE QUrl parsing mangles it
-    if (urlStr.startsWith(QLatin1String(":/"))) {
-        return urlStr;
-    }
-
-    // Local file URL: file:///path/to/file
-    if (url.isLocalFile()) {
-        return url.toLocalFile();
-    }
-
-    // Qt resource URL: qrc:/path or qrc:///path
-    if (url.scheme() == QLatin1String("qrc")) {
-        // Convert qrc:/path to :/path for QFile
-        QString path = url.path();
-        if (path.startsWith(QLatin1Char('/'))) {
-            return QLatin1Char(':') + path;
-        }
-        return QStringLiteral(":/") + path;
-    }
-
-    // Plain path string (no scheme) - common from QML when user types a path
-    // Check this AFTER scheme checks since scheme() returns empty for invalid URLs too
-    if (url.scheme().isEmpty()) {
-        // If it looks like a path (starts with /), return as-is
-        if (urlStr.startsWith(QLatin1Char('/'))) {
-            return urlStr;
-        }
-        // Otherwise return the path component
-        return url.path().isEmpty() ? urlStr : url.path();
-    }
-
-    // Remote URLs (http://, https://, ftp://) are not supported
-    qCWarning(QGCCompressionLog) << "Unsupported URL scheme:" << url.scheme()
-                                 << "- only file://, qrc:/, and local paths are supported";
-    return {};
-}
-
-bool isLocalUrl(const QUrl& url)
-{
-    if (url.isEmpty()) {
-        return false;
-    }
-
-    // Check string representation for Qt resource path first
-    const QString urlStr = url.toString();
-    if (urlStr.startsWith(QLatin1String(":/"))) {
-        return true;
-    }
-
-    // Local file URL
-    if (url.isLocalFile()) {
-        return true;
-    }
-
-    // Qt resource URL
-    if (url.scheme() == QLatin1String("qrc")) {
-        return true;
-    }
-
-    // Plain path string (no scheme or empty scheme)
-    if (url.scheme().isEmpty()) {
-        return true;
-    }
-
-    return false;
-}
-
-// ============================================================================
 // Single-File Decompression
 // ============================================================================
 
@@ -745,6 +663,25 @@ bool extractArchive(const QString& archivePath, const QString& outputDirectoryPa
     captureFormatInfo();
     if (!success) {
         setError(Error::IoError, QStringLiteral("Failed to extract archive: ") + archivePath);
+    }
+    return success;
+}
+
+bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, Format format,
+                          ProgressCallback progress, qint64 maxDecompressedBytes)
+{
+    if (!validateArchiveInput(archivePath, format)) {
+        return false;
+    }
+
+    qCDebug(QGCCompressionLog) << "Atomically extracting" << formatName(format) << "archive" << archivePath
+                               << "to" << outputDirectoryPath;
+
+    const bool success =
+        QGClibarchive::extractArchiveAtomic(archivePath, outputDirectoryPath, progress, maxDecompressedBytes);
+    captureFormatInfo();
+    if (!success) {
+        setError(Error::IoError, QStringLiteral("Failed to atomically extract archive: ") + archivePath);
     }
     return success;
 }

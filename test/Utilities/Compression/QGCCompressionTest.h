@@ -16,6 +16,9 @@ private slots:
     // Archive extraction from Qt resources
     void _testZipFromResource();
     void _test7zFromResource();
+    void _testExtractArchiveAtomic();
+    void _testExtractArchiveAtomicReplacesExistingDirectory();
+    void _testExtractArchiveAtomicFailureKeepsExistingDirectory();
     void _testListArchive();
     void _testListArchiveDetailed();
     void _testListArchiveNaturalSort();
@@ -47,13 +50,9 @@ private slots:
 
     // QGCCompressionJob (async operations)
     void _testCompressionJobExtract();
+    void _testCompressionJobReentrantStartFromFinished();
     void _testCompressionJobCancel();
     void _testCompressionJobAsyncStatic();
-
-    // QUrl utilities
-    void _testToLocalPath();
-    void _testIsLocalUrl();
-    void _testUrlOverloads();
 
     // Sparse file handling
     void _testSparseFileExtraction();

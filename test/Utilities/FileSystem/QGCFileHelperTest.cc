@@ -6,6 +6,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QUrl>
 
+#include "QGCCompression.h"
 #include "QGCFileHelper.h"
 
 // ============================================================================
@@ -204,6 +205,24 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
     QCOMPARE(file.size(), 0);
 }
 
+void QGCFileHelperTest::_testReadCompressedFile()
+{
+    QString error;
+    const QByteArray data = QGCFileHelper::readFile(":/unittest/manifest.json.gz", &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(!data.isEmpty());
+    QVERIFY(data.contains("\"name\""));
+}
+
+void QGCFileHelperTest::_testReadCompressedFileMaxBytes()
+{
+    QString error;
+    const QByteArray partial = QGCFileHelper::readFile(":/unittest/manifest.json.gz", &error, 8);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(!partial.isEmpty());
+    QVERIFY(partial.size() <= 8);
+}
+
 // ============================================================================
 // Disk space utilities tests
 // ============================================================================
@@ -286,6 +305,32 @@ void QGCFileHelperTest::_testToLocalPathQrcUrls()
     qrcUrl.setScheme("qrc");
     qrcUrl.setPath("/test/file.txt");
     QCOMPARE(QGCFileHelper::toLocalPath(qrcUrl), QString(":/test/file.txt"));
+
+    // QUrl(":/resource/path") is invalid in Qt but should still round-trip to resource path.
+    QCOMPARE(QGCFileHelper::toLocalPath(QUrl(QStringLiteral(":/resource/path"))),
+             QStringLiteral(":/resource/path"));
+}
+
+void QGCFileHelperTest::_testToLocalPathCompressionInterop()
+{
+    const QString archivePath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.zip")));
+    QCOMPARE(archivePath, QStringLiteral(":/unittest/manifest.json.zip"));
+    QCOMPARE(QGCCompression::detectFormat(archivePath), QGCCompression::Format::ZIP);
+    QVERIFY(QGCCompression::validateArchive(archivePath));
+
+    const QStringList entries = QGCCompression::listArchive(archivePath);
+    QVERIFY(entries.contains(QStringLiteral("manifest.json")));
+
+    const QString extractDir = tempDir()->filePath("from_url_extract");
+    QVERIFY(QGCCompression::extractArchive(archivePath, extractDir));
+    QVERIFY(QFile::exists(extractDir + QStringLiteral("/manifest.json")));
+
+    const QString gzipPath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.gz")));
+    QCOMPARE(gzipPath, QStringLiteral(":/unittest/manifest.json.gz"));
+
+    const QString decompressedPath = tempDir()->filePath("from_url_manifest.json");
+    QVERIFY(QGCCompression::decompressFile(gzipPath, decompressedPath));
+    QVERIFY(QFile::exists(decompressedPath));
 }
 
 void QGCFileHelperTest::_testIsLocalPath()
@@ -299,7 +344,8 @@ void QGCFileHelperTest::_testIsLocalPath()
     // Empty path
     QVERIFY(!QGCFileHelper::isLocalPath(""));
     // Network URLs (not local)
-    // Note: http:// URLs are not "local" but toLocalPath will return the URL string
+    QVERIFY(!QGCFileHelper::isLocalPath("http://example.com/file.txt"));
+    QVERIFY(!QGCFileHelper::isLocalPath("https://example.com/file.txt"));
 }
 
 void QGCFileHelperTest::_testIsQtResource()
@@ -361,6 +407,28 @@ void QGCFileHelperTest::_testComputeFileHash()
     // Empty path should return empty
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression("computeFileHash: empty file path"));
     QVERIFY(QGCFileHelper::computeFileHash(QString()).isEmpty());
+}
+
+void QGCFileHelperTest::_testComputeDecompressedFileHash()
+{
+    const QString gzPath = QStringLiteral(":/unittest/manifest.json.gz");
+    QString error;
+    const QByteArray plainData = QGCFileHelper::readFile(gzPath, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QVERIFY(!plainData.isEmpty());
+
+    const QString expectedPlainHash = QGCFileHelper::computeHash(plainData);
+    QVERIFY(!expectedPlainHash.isEmpty());
+
+    const QString decompressedHash = QGCFileHelper::computeDecompressedFileHash(gzPath);
+    QVERIFY(!decompressedHash.isEmpty());
+    QCOMPARE(decompressedHash, expectedPlainHash);
+
+    // For uncompressed files, the helper should match computeFileHash()
+    const QString passthroughPath = QStringLiteral(":/unittest/arducopter.apj");
+    const QString regularHash = QGCFileHelper::computeFileHash(passthroughPath);
+    const QString passthroughHash = QGCFileHelper::computeDecompressedFileHash(passthroughPath);
+    QCOMPARE(passthroughHash, regularHash);
 }
 
 void QGCFileHelperTest::_testVerifyFileHash()
@@ -538,6 +606,71 @@ void QGCFileHelperTest::_testReplaceFileFromTempWithBackup()
     QFile backup(backupPath);
     QVERIFY(backup.open(QIODevice::ReadOnly));
     QCOMPARE(backup.readAll(), originalContent);
+}
+
+void QGCFileHelperTest::_testCopyDirectoryRecursively()
+{
+    const QString sourceDir = tempDir()->filePath("copy_src");
+    const QString nestedDir = sourceDir + "/nested";
+    const QString destDir = tempDir()->filePath("copy_dst");
+
+    QVERIFY(QDir().mkpath(nestedDir));
+
+    QFile file1(sourceDir + "/root.txt");
+    QVERIFY(file1.open(QIODevice::WriteOnly));
+    file1.write("root");
+    file1.close();
+
+    QFile file2(nestedDir + "/child.txt");
+    QVERIFY(file2.open(QIODevice::WriteOnly));
+    file2.write("child");
+    file2.close();
+
+    QVERIFY(QGCFileHelper::copyDirectoryRecursively(sourceDir, destDir));
+    QVERIFY(QFile::exists(destDir + "/root.txt"));
+    QVERIFY(QFile::exists(destDir + "/nested/child.txt"));
+}
+
+void QGCFileHelperTest::_testMoveFileOrCopyFile()
+{
+    const QString sourcePath = tempDir()->filePath("move_source.txt");
+    const QString destPath = tempDir()->filePath("move_dest.txt");
+
+    QFile source(sourcePath);
+    QVERIFY(source.open(QIODevice::WriteOnly));
+    source.write("move-me");
+    source.close();
+
+    QVERIFY(QGCFileHelper::moveFileOrCopy(sourcePath, destPath));
+    QVERIFY(!QFile::exists(sourcePath));
+    QVERIFY(QFile::exists(destPath));
+}
+
+void QGCFileHelperTest::_testMoveFileOrCopyDirectory()
+{
+    const QString sourceDir = tempDir()->filePath("move_dir_src");
+    const QString destDir = tempDir()->filePath("move_dir_dst");
+    QVERIFY(QDir().mkpath(sourceDir));
+
+    QFile sourceFile(sourceDir + "/data.txt");
+    QVERIFY(sourceFile.open(QIODevice::WriteOnly));
+    sourceFile.write("dir-data");
+    sourceFile.close();
+
+    QVERIFY(QGCFileHelper::moveFileOrCopy(sourceDir, destDir));
+    QVERIFY(!QFile::exists(sourceDir));
+    QVERIFY(QFile::exists(destDir + "/data.txt"));
+}
+
+void QGCFileHelperTest::_testReplaceFileFromTempInvalidArgs()
+{
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("replaceFileFromTemp: temp file is null or not open"));
+    QVERIFY(!QGCFileHelper::replaceFileFromTemp(nullptr, tempDir()->filePath("out.txt")));
+
+    auto temp = QGCFileHelper::createTempFile(QByteArrayLiteral("data"));
+    QVERIFY(temp != nullptr);
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("replaceFileFromTemp: target path is empty"));
+    QVERIFY(!QGCFileHelper::replaceFileFromTemp(temp.get(), QString()));
 }
 
 UT_REGISTER_TEST(QGCFileHelperTest, TestLabel::Unit, TestLabel::Utilities)

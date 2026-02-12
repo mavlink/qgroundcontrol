@@ -42,17 +42,17 @@ void ULogUtilityTest::_testIsValidHeaderInvalid()
 
 void ULogUtilityTest::_testIsValidHeaderQByteArray()
 {
-    // Test QByteArray convenience overload
+    // Test QByteArray data with pointer/size API
     QByteArray valid("ULog", 4);
     valid.append('\x01');  // version
     valid.append(11, '\x00');  // rest of header
-    QVERIFY(ULogUtility::isValidHeader(valid));
+    QVERIFY(ULogUtility::isValidHeader(valid.constData(), valid.size()));
 
     QByteArray invalid("NotULog", 7);
-    QVERIFY(!ULogUtility::isValidHeader(invalid));
+    QVERIFY(!ULogUtility::isValidHeader(invalid.constData(), invalid.size()));
 
     QByteArray empty;
-    QVERIFY(!ULogUtility::isValidHeader(empty));
+    QVERIFY(!ULogUtility::isValidHeader(empty.constData(), empty.size()));
 }
 
 // ============================================================================

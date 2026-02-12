@@ -317,7 +317,12 @@ QString toLocalPath(const QString &urlOrPath)
 QString toLocalPath(const QUrl &url)
 {
     if (!url.isValid()) {
-        return QString();
+        // QUrl(":/resource") is invalid but still carries the usable path.
+        const QString path = url.path();
+        if (!path.isEmpty()) {
+            return path;
+        }
+        return {};
     }
 
     const QString scheme = url.scheme().toLower();
@@ -423,12 +428,18 @@ QString computeDecompressedFileHash(const QString &filePath, QCryptographicHash:
     constexpr qint64 chunkSize = 65536;
     QByteArray buffer;
 
-    while (!decompressor.atEnd()) {
+    while (true) {
         buffer = decompressor.read(chunkSize);
-        if (buffer.isEmpty() && !decompressor.atEnd()) {
+        if (buffer.isEmpty()) {
+            if (decompressor.atEnd()) {
+                break;
+            }
+
             qCWarning(QGCFileHelperLog) << "computeDecompressedFileHash: read error";
+            decompressor.close();
             return {};
         }
+
         hash.addData(buffer);
     }
 

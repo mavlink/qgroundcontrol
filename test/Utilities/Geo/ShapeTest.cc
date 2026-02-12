@@ -7,6 +7,38 @@
 #include "KMLSchemaValidator.h"
 #include "ShapeFileHelper.h"
 
+namespace {
+
+bool loadFirstPolygon(const QString& file, QList<QGeoCoordinate>& vertices, QString& errorString, double filterMeters)
+{
+    QList<QList<QGeoCoordinate>> polygons;
+    if (!ShapeFileHelper::loadPolygonsFromFile(file, polygons, errorString, filterMeters)) {
+        return false;
+    }
+    if (polygons.isEmpty()) {
+        errorString = QStringLiteral("No polygons found");
+        return false;
+    }
+    vertices = polygons.first();
+    return true;
+}
+
+bool loadFirstPolyline(const QString& file, QList<QGeoCoordinate>& vertices, QString& errorString, double filterMeters)
+{
+    QList<QList<QGeoCoordinate>> polylines;
+    if (!ShapeFileHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters)) {
+        return false;
+    }
+    if (polylines.isEmpty()) {
+        errorString = QStringLiteral("No polylines found");
+        return false;
+    }
+    vertices = polylines.first();
+    return true;
+}
+
+}  // namespace
+
 QString ShapeTest::_copyRes(const QTemporaryDir& tmpDir, const QString& name)
 {
     const QString dstPath = tmpDir.filePath(name);
@@ -46,7 +78,7 @@ void ShapeTest::_testLoadPolylineFromSHP()
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
     // Use 0 for filterMeters to disable vertex filtering for test
-    QVERIFY(ShapeFileHelper::loadPolylineFromFile(shpFile, rgCoords, errorString, 0));
+    QVERIFY(loadFirstPolyline(shpFile, rgCoords, errorString, 0));
     QVERIFY(errorString.isEmpty());
     QVERIFY(rgCoords.count() > 0);
 }
@@ -57,7 +89,7 @@ void ShapeTest::_testLoadPolylineFromKML()
     const QString shpFile = _copyRes(tmpDir, "polyline.kml");
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    QVERIFY(ShapeFileHelper::loadPolylineFromFile(shpFile, rgCoords, errorString));
+    QVERIFY(loadFirstPolyline(shpFile, rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.isEmpty());
     QVERIFY(rgCoords.count() > 0);
 }
@@ -72,7 +104,7 @@ void ShapeTest::_testLoadPolygonFromSHP()
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
     // Use 0 for filterMeters to disable vertex filtering for test
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(shpFile, rgCoords, errorString, 0));
+    QVERIFY(loadFirstPolygon(shpFile, rgCoords, errorString, 0));
     QVERIFY(errorString.isEmpty());
     QVERIFY(rgCoords.count() >= 3);
 }
@@ -83,7 +115,7 @@ void ShapeTest::_testLoadPolygonFromKML()
     const QString shpFile = _copyRes(tmpDir, "polygon.kml");
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(shpFile, rgCoords, errorString));
+    QVERIFY(loadFirstPolygon(shpFile, rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.isEmpty());
     QVERIFY(rgCoords.count() >= 3);
 }
@@ -203,7 +235,7 @@ void ShapeTest::_testUnsupportedProjectionError()
     _writePrjFile(prjPath, "PROJCS[\"NAD_1983_StatePlane_California_III\",GEOGCS[\"GCS_North_American_1983\"]]");
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    QVERIFY(!ShapeFileHelper::loadPolygonFromFile(shpFile, rgCoords, errorString));
+    QVERIFY(!loadFirstPolygon(shpFile, rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.contains("NAD_1983_StatePlane_California_III"));
     QVERIFY(errorString.contains("WGS84"));
 }
@@ -215,7 +247,7 @@ void ShapeTest::_testLoadFromQtResource()
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
     // Test KML from resource (KML already uses QFile internally)
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(":/unittest/polygon.kml", rgCoords, errorString));
+    QVERIFY(loadFirstPolygon(":/unittest/polygon.kml", rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.isEmpty());
     QVERIFY(rgCoords.count() >= 3);
 }
@@ -231,10 +263,10 @@ void ShapeTest::_testVertexFiltering()
     QList<QGeoCoordinate> unfilteredCoords;
     QList<QGeoCoordinate> filteredCoords;
     // Load without filtering
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(shpFile, unfilteredCoords, errorString, 0));
+    QVERIFY(loadFirstPolygon(shpFile, unfilteredCoords, errorString, 0));
     QVERIFY(errorString.isEmpty());
     // Load with filtering (default 5m)
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(shpFile, filteredCoords, errorString));
+    QVERIFY(loadFirstPolygon(shpFile, filteredCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.isEmpty());
     // Filtered should have same or fewer vertices than unfiltered
     QVERIFY(filteredCoords.count() <= unfilteredCoords.count());
@@ -267,11 +299,11 @@ void ShapeTest::_testKMLVertexFiltering()
     QList<QGeoCoordinate> unfilteredCoords;
     QList<QGeoCoordinate> filteredCoords;
     // Load without filtering
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(kmlFile, unfilteredCoords, errorString, 0));
+    QVERIFY(loadFirstPolygon(kmlFile, unfilteredCoords, errorString, 0));
     QVERIFY(errorString.isEmpty());
     QCOMPARE(unfilteredCoords.count(), 6);  // 7 coords - 1 duplicate closing = 6
     // Load with filtering (default 5m)
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(kmlFile, filteredCoords, errorString));
+    QVERIFY(loadFirstPolygon(kmlFile, filteredCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.isEmpty());
     // Filtered should have fewer vertices (the closely spaced ones should be filtered)
     QVERIFY(filteredCoords.count() < unfilteredCoords.count());
@@ -299,7 +331,7 @@ void ShapeTest::_testKMLAltitudeParsing()
     const QString kmlFile = _writeKmlFile(tmpDir, "altitude_polygon.kml", kmlContent);
     QString errorString;
     QList<QGeoCoordinate> coords;
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(kmlFile, coords, errorString, 0));
+    QVERIFY(loadFirstPolygon(kmlFile, coords, errorString, 0));
     QVERIFY(errorString.isEmpty());
     QCOMPARE(coords.count(), 4);  // 5 coords - 1 duplicate closing = 4
     // Verify altitudes were parsed correctly
@@ -338,7 +370,7 @@ void ShapeTest::_testKMLCoordinateValidation()
     QString errorString;
     QList<QGeoCoordinate> coords;
     // Should succeed but skip invalid coordinates
-    QVERIFY(ShapeFileHelper::loadPolygonFromFile(kmlFile, coords, errorString, 0));
+    QVERIFY(loadFirstPolygon(kmlFile, coords, errorString, 0));
     QVERIFY(errorString.isEmpty());
     // Should have 3 valid coordinates (the two invalid ones skipped, plus duplicate closing removed)
     // Valid: -122,37 | -121,38 | -121,37

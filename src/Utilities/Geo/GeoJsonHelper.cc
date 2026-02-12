@@ -1,5 +1,6 @@
 #include "GeoJsonHelper.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
@@ -38,7 +39,7 @@ QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorSt
 
     QJsonDocument jsonDoc;
     const QByteArray bytes = file.readAll();
-    if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorString)) {
+    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
         errorString = QString(_errorPrefix).arg(errorString);
     }
 

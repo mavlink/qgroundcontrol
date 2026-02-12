@@ -1,5 +1,6 @@
 #include "CompInfoParam.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "FactMetaData.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
@@ -36,7 +37,7 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName)
 
     _noJsonMetadata = false;
 
-    if (!JsonHelper::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
+    if (!JsonParsing::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
         qCWarning(CompInfoParamLog) << "Metadata json file open failed: compid:" << compId << errorString;
         return;
     }

@@ -38,7 +38,7 @@ public:
 private slots:
     void    _ftpDownloadComplete                (const QString& file, const QString& errorMsg);
     void    _ftpDownloadProgress                (float progress);
-    void    _httpDownloadComplete               (QString remoteFile, QString localFile, QString errorMsg);
+    void    _httpDownloadComplete               (bool success, const QString &localFile, const QString &errorMsg, bool fromCache);
     QString _downloadCompleteJsonWorker         (const QString& jsonFileName);
     void _downloadAndTranslationComplete(QString translatedJsonTempFile, QString errorMsg);
 

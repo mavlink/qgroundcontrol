@@ -36,19 +36,9 @@ public:
     /// Get the number of geometry entities in the file
     static int getEntityCount(const QString &file, QString &errorString);
 
-    /// Load first polygon entity (convenience wrapper)
-    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
-    static bool loadPolygonFromFile(const QString &file, QList<QGeoCoordinate> &vertices, QString &errorString,
-                                    double filterMeters = kDefaultVertexFilterMeters);
-
     /// Load all polygon entities
     /// @param filterMeters Filter vertices closer than this distance (0 to disable)
     static bool loadPolygonsFromFile(const QString &file, QList<QList<QGeoCoordinate>> &polygons, QString &errorString,
-                                     double filterMeters = kDefaultVertexFilterMeters);
-
-    /// Load first polyline entity (convenience wrapper)
-    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
-    static bool loadPolylineFromFile(const QString &file, QList<QGeoCoordinate> &coords, QString &errorString,
                                      double filterMeters = kDefaultVertexFilterMeters);
 
     /// Load all polyline entities

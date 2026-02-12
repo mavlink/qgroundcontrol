@@ -183,6 +183,10 @@ QString httpStatusText(HttpStatusCode statusCode)
 
 QString httpStatusText(int statusCode)
 {
+    if (classifyHttpStatus(statusCode) == HttpStatusClass::Unknown) {
+        return QStringLiteral("Unknown Status (%1)").arg(statusCode);
+    }
+
     return httpStatusText(static_cast<HttpStatusCode>(statusCode));
 }
 
@@ -409,6 +413,10 @@ void configureRequest(QNetworkRequest& request, const RequestConfig& config)
 
     if (!config.contentType.isEmpty()) {
         request.setHeader(QNetworkRequest::ContentTypeHeader, config.contentType);
+    }
+
+    for (const auto &[attribute, value] : config.requestAttributes) {
+        request.setAttribute(attribute, value);
     }
 
     request.setRawHeader("Connection", "keep-alive");
@@ -882,39 +890,7 @@ void configureProxy(QNetworkAccessManager* manager)
 
 bool looksLikeCompressedData(const QByteArray& data)
 {
-    if (data.size() < 4) {
-        return false;
-    }
-
-    const auto* bytes = reinterpret_cast<const unsigned char*>(data.constData());
-
-    // gzip: 1f 8b
-    if (bytes[0] == 0x1f && bytes[1] == 0x8b) {
-        return true;
-    }
-
-    // xz: fd 37 7a 58 5a 00
-    if (data.size() >= 6 && bytes[0] == 0xfd && bytes[1] == 0x37 && bytes[2] == 0x7a && bytes[3] == 0x58 &&
-        bytes[4] == 0x5a && bytes[5] == 0x00) {
-        return true;
-    }
-
-    // zstd: 28 b5 2f fd
-    if (bytes[0] == 0x28 && bytes[1] == 0xb5 && bytes[2] == 0x2f && bytes[3] == 0xfd) {
-        return true;
-    }
-
-    // bzip2: 42 5a 68 ('BZh')
-    if (bytes[0] == 0x42 && bytes[1] == 0x5a && bytes[2] == 0x68) {
-        return true;
-    }
-
-    // lz4 frame: 04 22 4d 18
-    if (bytes[0] == 0x04 && bytes[1] == 0x22 && bytes[2] == 0x4d && bytes[3] == 0x18) {
-        return true;
-    }
-
-    return false;
+    return QGCCompression::isCompressionFormat(QGCCompression::detectFormatFromData(data));
 }
 
 QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error)

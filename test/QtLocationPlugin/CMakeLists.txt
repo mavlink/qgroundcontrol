@@ -7,6 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         MapProviderTest.cc
         MapProviderTest.h
+        QGCMapEngineManagerArchiveTest.cc
+        QGCMapEngineManagerArchiveTest.h
         QGCCachedTileSetTest.cc
         QGCCachedTileSetTest.h
         QGCCacheWorkerTest.cc

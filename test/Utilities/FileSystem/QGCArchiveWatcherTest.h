@@ -33,6 +33,8 @@ private slots:
     // Auto-decompress tests
     void _testAutoDecompressArchive();
     void _testAutoDecompressCompressedFile();
+    void _testRemoveAfterExtraction();
+    void _testCancelExtractionResetsState();
 
     // Error handling
     void _testWatchNonExistentDirectory();
