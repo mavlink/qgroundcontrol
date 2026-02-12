@@ -53,7 +53,16 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _boardVendorId(_mockConfig->boardVendorId())
     , _boardProductId(_mockConfig->boardProductId())
     , _missionItemHandler(new MockLinkMissionItemHandler(this))
-    , _mockLinkCamera(_enableCamera ? new MockLinkCamera(this) : nullptr)
+    , _mockLinkCamera(_enableCamera ? new MockLinkCamera(this,
+                                                         _mockConfig->cameraCaptureVideo(),
+                                                         _mockConfig->cameraCaptureImage(),
+                                                         _mockConfig->cameraHasModes(),
+                                                         _mockConfig->cameraCanCaptureImageInVideoMode(),
+                                                         _mockConfig->cameraCanCaptureVideoInImageMode(),
+                                                         _mockConfig->cameraHasBasicZoom(),
+                                                         _mockConfig->cameraHasTrackingPoint(),
+                                                         _mockConfig->cameraHasTrackingRectangle())
+                                    : nullptr)
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
 {
     qCDebug(MockLinkLog) << this;
