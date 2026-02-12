@@ -88,11 +88,13 @@ private:
     void _sendCameraSettings(uint8_t compId);
     void _sendStorageInformation(uint8_t compId);
     void _sendCameraCaptureStatus(uint8_t compId);
+    void _sendCameraImageCaptured(uint8_t compId);
     void _sendVideoStreamInformation(uint8_t compId, uint8_t streamId);
     void _sendVideoStreamStatus(uint8_t compId, uint8_t streamId);
-    void _sendCommandAck(uint8_t compId, uint16_t command, uint8_t result);
+    void _sendCommandAck(uint8_t compId, uint16_t command, uint8_t result, int requestedMsgId = -1);
 
     CameraState *_findCamera(uint8_t compId);
+    static const char *_imageCaptureStatusToString(uint8_t status);
 
     static constexpr uint8_t  kNumCameras       = 2;
     static constexpr uint8_t  kNumStreams        = 2;    ///< Streams per camera

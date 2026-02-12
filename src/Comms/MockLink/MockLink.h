@@ -46,6 +46,10 @@ public:
     int vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
 
+    double vehicleLatitude() const { return _vehicleLatitude; }
+    double vehicleLongitude() const { return _vehicleLongitude; }
+    double vehicleAltitudeAMSL() const { return _vehicleAltitudeAMSL; }
+
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
 

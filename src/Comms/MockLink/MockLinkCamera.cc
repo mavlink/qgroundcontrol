@@ -51,6 +51,17 @@ MockLinkCamera::CameraState *MockLinkCamera::_findCamera(uint8_t compId)
     return nullptr;
 }
 
+const char *MockLinkCamera::_imageCaptureStatusToString(uint8_t status)
+{
+    switch (status) {
+    case ImageCaptureIdle:            return "Idle";
+    case ImageCaptureInProgress:      return "InProgress";
+    case ImageCaptureInterval:        return "Interval";
+    case ImageCaptureIntervalCapture: return "IntervalCapture";
+    default:                          return "Unknown";
+    }
+}
+
 void MockLinkCamera::sendCameraHeartbeats()
 {
     for (uint8_t i = 0; i < kNumCameras; i++) {
@@ -66,6 +77,26 @@ void MockLinkCamera::sendCameraHeartbeats()
             0,
             MAV_STATE_ACTIVE);
         _mockLink->respondWithMavlinkMessage(msg);
+    }
+}
+
+void MockLinkCamera::run10HzTasks()
+{
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    for (uint8_t i = 0; i < kNumCameras; i++) {
+        CameraState *cam = &_cameras[i];
+
+        // Check for single-shot capture completion (after 500ms)
+        if (cam->singleShotStartMs > 0 && (now - cam->singleShotStartMs) >= 500) {
+            cam->imagesCaptured++;
+            cam->image_status = ImageCaptureIdle;
+            cam->singleShotStartMs = 0;
+
+            qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "single-shot complete, total:" << cam->imagesCaptured;
+            _sendCameraImageCaptured(cam->compId);
+            _sendCameraCaptureStatus(cam->compId);
+        }
     }
 }
 
@@ -150,22 +181,23 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
     {
         const float interval = request.param1;  // seconds (0 = single shot)
         const int count = static_cast<int>(request.param3);
-        cam->imagesCaptured += (count > 0) ? count : 1;
 
         // Set capture status based on interval
         if (interval > 0) {
             // Interval capture mode
             cam->image_status = ImageCaptureIntervalCapture;
             cam->image_interval = interval;
+            cam->imagesCaptured += (count > 0) ? count : 1;
+            cam->singleShotStartMs = 0;
         } else {
-            // Single shot
+            // Single shot - start capture, count will increment after 0.5s
             cam->image_status = ImageCaptureInProgress;
             cam->image_interval = 0.0f;
+            cam->singleShotStartMs = QDateTime::currentMSecsSinceEpoch();
         }
 
         qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture started"
-                                   << "interval:" << interval << "count:" << count
-                                   << "total captured:" << cam->imagesCaptured;
+                                   << "interval:" << interval << "count:" << count;
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         // Send capture status update
         _sendCameraCaptureStatus(targetCompId);
@@ -175,6 +207,7 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
     case MAV_CMD_IMAGE_STOP_CAPTURE:
         cam->image_status = ImageCaptureIdle;
         cam->image_interval = 0.0f;
+        cam->singleShotStartMs = 0;
         qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture stopped";
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         _sendCameraCaptureStatus(targetCompId);
@@ -207,6 +240,7 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
         cam->imagesCaptured = 0;
         cam->image_status = ImageCaptureIdle;
         cam->image_interval = 0.0f;
+        cam->singleShotStartMs = 0;
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         _sendStorageInformation(targetCompId);
         return true;
@@ -239,6 +273,7 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
         cam->focusLevel = 0.0f;
         cam->image_status = ImageCaptureIdle;
         cam->image_interval = 0.0f;
+        cam->singleShotStartMs = 0;
         qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "settings reset";
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         _sendCameraSettings(targetCompId);
@@ -445,11 +480,48 @@ void MockLinkCamera::_sendCameraCaptureStatus(uint8_t compId)
         0);                                                 // camera_device_id
     _mockLink->respondWithMavlinkMessage(msg);
 
-    qCDebug(MockLinkCameraLog) << "Sent CAMERA_CAPTURE_STATUS for compId" << compId
-                               << "status" << cam->image_status
-                               << "interval" << cam->image_interval
-                               << "recording" << cam->recording
-                               << "images" << cam->imagesCaptured;
+    qCDebug(MockLinkCameraLog) << "Sent CAMERA_CAPTURE_STATUS for compId:" << compId
+                               << "status:" << _imageCaptureStatusToString(cam->image_status)
+                               << "interval:" << cam->image_interval
+                               << "recording:" << cam->recording
+                               << "images:" << cam->imagesCaptured;
+}
+
+void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
+{
+    const CameraState *cam = _findCamera(compId);
+    if (!cam) {
+        return;
+    }
+
+    // Use vehicle's current position for image location
+    // In a real camera this would be the position when the image was taken
+    const int32_t lat = static_cast<int32_t>(_mockLink->vehicleLatitude() * 1e7);
+    const int32_t lon = static_cast<int32_t>(_mockLink->vehicleLongitude() * 1e7);
+    const float alt = static_cast<float>(_mockLink->vehicleAltitudeAMSL());
+    const float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};    // quaternion (not used in this mock, set to identity)
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_camera_image_captured_pack_chan(
+        _mockLink->vehicleId(),
+        compId,
+        _mockLink->mavlinkChannel(),
+        &msg,
+        0,                                              // time_boot_ms
+        0,                                              // time_utc
+        (compId - MAV_COMP_ID_CAMERA) + 1,              // camera_id (1-based, derived from compId)
+        lat,                                            // lat (degrees * 1E7)
+        lon,                                            // lon (degrees * 1E7)
+        alt,                                            // alt (MSL)
+        alt,                                            // relative_alt (same as MSL for simplicity)
+        q,                                              // q (quaternion, unused)
+        cam->imagesCaptured,                            // image_index
+        1,                                              // capture_result (1=success)
+        "");                                            // file_url
+    _mockLink->respondWithMavlinkMessage(msg);
+
+    qCDebug(MockLinkCameraLog) << "Sent CAMERA_IMAGE_CAPTURED for compId:" << compId
+                               << "index:" << cam->imagesCaptured;
 }
 
 void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamId)
