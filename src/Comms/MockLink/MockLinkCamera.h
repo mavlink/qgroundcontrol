@@ -12,7 +12,7 @@ class MockLink;
 ///
 /// Two cameras are provided:
 ///   Camera 1 (MAV_COMP_ID_CAMERA)  – full-featured: video capture, photo capture,
-///       mode switching, basic zoom, basic focus, video streaming
+///       mode switching, basic zoom, video streaming
 ///       (udp://127.0.0.1:5600, H.264 RTP, 1920×1080 @ 30 fps),
 ///       and image capture while in video mode.
 ///   Camera 2 (MAV_COMP_ID_CAMERA2) – photo-only: image capture only; video,
@@ -62,6 +62,7 @@ public:
                             bool captureVideo = true,
                             bool captureImage = true,
                             bool hasModes = true,
+                            bool hasVideoStream = true,
                             bool canCaptureImageInVideoMode = true,
                             bool canCaptureVideoInImageMode = false,
                             bool hasBasicZoom = true,

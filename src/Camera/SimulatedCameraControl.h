@@ -48,13 +48,15 @@ public:
     QSize resolution() const override { return QSize(0, 0); }
     bool capturesVideo() const override;
     bool capturesPhotos() const override;
-    bool hasModes() const override { return (capturesPhotos() && capturesVideo()); }
+    bool hasModes() const override;
     bool hasZoom() const override { return false; }
     bool hasFocus() const override { return false; }
     bool hasTracking() const override { return false; }
     bool hasVideoStream() const override;
     bool photosInVideoMode() const override { return true; }
     bool videoInPhotoMode() const override { return false; }
+    CaptureVideoState captureVideoState() const override;
+    CapturePhotosState capturePhotosState() const override;
 
     int compID() const override { return 0; }
     bool isBasic() const override { return true; }
@@ -95,7 +97,7 @@ public:
 
     void setZoomLevel(qreal /*level*/) override {}
     void setFocusLevel(qreal /*level*/) override {}
-    void setCameraMode(CameraMode mode) override;
+    void setCameraMode(CameraMode cameraMode) override;
     void setPhotoCaptureMode(PhotoCaptureMode mode) override;
     void setPhotoLapse(qreal /*interval*/) override {}
     void setPhotoLapseCount(int /*count*/) override {}
@@ -113,14 +115,14 @@ public:
     bool validateParameter(Fact* /*pFact*/, QVariant& /*newValue*/) override { return false; }
 
     void handleBatteryStatus(const mavlink_battery_status_t& /*bs*/) override {}
-    void handleCaptureStatus(const mavlink_camera_capture_status_t& /*capStatus*/) override {}
-    void handleParamAck(const mavlink_param_ext_ack_t& /*ack*/) override {}
-    void handleParamValue(const mavlink_param_ext_value_t& /*value*/) override {}
-    void handleSettings(const mavlink_camera_settings_t& /*settings*/) override {}
-    void handleStorageInfo(const mavlink_storage_information_t& /*st*/) override {}
-    void handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t* /*tis*/) override {}
-    void handleVideoInfo(const mavlink_video_stream_information_t* /*vi*/) override {}
-    void handleVideoStatus(const mavlink_video_stream_status_t* /*vs*/) override {}
+    void handleCameraCaptureStatus(const mavlink_camera_capture_status_t& /*cameraCaptureStatus*/) override {}
+    void handleParamExtAck(const mavlink_param_ext_ack_t& /*paramExtAck*/) override {}
+    void handleParamExtValue(const mavlink_param_ext_value_t& /*paramExtValue*/) override {}
+    void handleCameraSettings(const mavlink_camera_settings_t& /*settings*/) override {}
+    void handleStorageInformation(const mavlink_storage_information_t& /*storageInformation*/) override {}
+    void handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t& /*trackingImageStatus*/) override {}
+    void handleVideoStreamInformation(const mavlink_video_stream_information_t& /*videoStreamInformation*/) override {}
+    void handleVideoStreamStatus(const mavlink_video_stream_status_t& /*videoStreamStatus*/) override {}
 
 protected slots:
     void _paramDone() override {};

@@ -12,6 +12,7 @@ MockLinkCamera::MockLinkCamera(MockLink *mockLink,
                                bool captureVideo,
                                bool captureImage,
                                bool hasModes,
+                               bool hasVideoStream,
                                bool canCaptureImageInVideoMode,
                                bool canCaptureVideoInImageMode,
                                bool hasBasicZoom,
@@ -24,21 +25,25 @@ MockLinkCamera::MockLinkCamera(MockLink *mockLink,
     if (captureVideo)                   configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_VIDEO;
     if (captureImage)                   configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
     if (hasModes)                       configuredFlags |= CAMERA_CAP_FLAGS_HAS_MODES;
+    if (hasVideoStream)                 configuredFlags |= CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM;
     if (canCaptureImageInVideoMode)     configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE;
     if (canCaptureVideoInImageMode)     configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE;
     if (hasBasicZoom)                   configuredFlags |= CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM;
     if (hasTrackingPoint)               configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
     if (hasTrackingRectangle)           configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
 
-    // Camera 1: full-featured with configurable flags + always-on features
+    // Camera 1: full-featured with configurable flags
     _cameras[0].compId   = MAV_COMP_ID_CAMERA;
-    _cameras[0].capFlags = configuredFlags
-                         | CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS
-                         | CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM;
+    _cameras[0].capFlags = configuredFlags;
+    _cameras[0].cameraMode = CAMERA_MODE_IMAGE;
+    if ((configuredFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) && (configuredFlags & CAMERA_CAP_FLAGS_HAS_MODES)) {
+        _cameras[0].cameraMode = CAMERA_MODE_VIDEO;
+    }
 
     // Camera 2: photo-only (always CAPTURE_IMAGE only)
     _cameras[1].compId   = MAV_COMP_ID_CAMERA2;
     _cameras[1].capFlags = CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
+    _cameras[1].cameraMode = CAMERA_MODE_IMAGE;
 }
 
 MockLinkCamera::CameraState *MockLinkCamera::_findCamera(uint8_t compId)
@@ -129,110 +134,146 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
         return true;
 
     case MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION:
-    {
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM)) {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
-        }
-        const uint8_t streamId = static_cast<uint8_t>(request.param1);
-        if (streamId == 0) {
-            // Request all streams
-            for (uint8_t s = 1; s <= kNumStreams; s++) {
-                _sendVideoStreamInformation(targetCompId, s);
+        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
+            const uint8_t streamId = static_cast<uint8_t>(request.param1);
+            if (streamId == 0) {
+                // Request all streams
+                for (uint8_t s = 1; s <= kNumStreams; s++) {
+                    _sendVideoStreamInformation(targetCompId, s);
+                }
+            } else {
+                _sendVideoStreamInformation(targetCompId, streamId);
             }
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         } else {
-            _sendVideoStreamInformation(targetCompId, streamId);
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         return true;
-    }
 
     case MAV_CMD_REQUEST_VIDEO_STREAM_STATUS:
-    {
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM)) {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
-        }
-        const uint8_t streamId = static_cast<uint8_t>(request.param1);
-        if (streamId == 0) {
-            for (uint8_t s = 1; s <= kNumStreams; s++) {
-                _sendVideoStreamStatus(targetCompId, s);
+        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
+            const uint8_t streamId = static_cast<uint8_t>(request.param1);
+            if (streamId == 0) {
+                for (uint8_t s = 1; s <= kNumStreams; s++) {
+                    _sendVideoStreamStatus(targetCompId, s);
+                }
+            } else {
+                _sendVideoStreamStatus(targetCompId, streamId);
             }
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         } else {
-            _sendVideoStreamStatus(targetCompId, streamId);
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         return true;
-    }
 
     case MAV_CMD_SET_CAMERA_MODE:
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES)) {
+        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) {
+            const uint8_t requestedMode = static_cast<uint8_t>(request.param2);
+
+            if ((requestedMode != CAMERA_MODE_IMAGE) && (requestedMode != CAMERA_MODE_VIDEO)) {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                return true;
+            }
+
+            const bool supportsImageMode =
+                (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) ||
+                (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
+            const bool supportsVideoMode =
+                (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) ||
+                (cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
+
+            if ((requestedMode == CAMERA_MODE_IMAGE && !supportsImageMode) ||
+                (requestedMode == CAMERA_MODE_VIDEO && !supportsVideoMode)) {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                return true;
+            }
+
+            cam->cameraMode = requestedMode;
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "mode set to" << cam->cameraMode;
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            // Send updated settings after mode change
+            _sendCameraSettings(targetCompId);
+        } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
         }
-        cam->cameraMode = static_cast<uint8_t>(request.param2);
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "mode set to" << cam->cameraMode;
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        // Send updated settings after mode change
-        _sendCameraSettings(targetCompId);
         return true;
 
     case MAV_CMD_IMAGE_START_CAPTURE:
-    {
-        const float interval = request.param1;  // seconds (0 = single shot)
-        const int count = static_cast<int>(request.param3);
+        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
+            if ((cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) &&
+                (cam->cameraMode == CAMERA_MODE_VIDEO) &&
+                !(cam->capFlags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE)) {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                return true;
+            }
 
-        // Set capture status based on interval
-        if (interval > 0) {
-            // Interval capture mode
-            cam->image_status = ImageCaptureIntervalCapture;
-            cam->image_interval = interval;
-            cam->imagesCaptured += (count > 0) ? count : 1;
-            cam->singleShotStartMs = 0;
+            const float interval = request.param2;
+            const int count = static_cast<int>(request.param3);
+
+            // Set capture status based on interval
+            if (interval > 0) {
+                // Interval capture mode
+                cam->image_status = ImageCaptureIntervalCapture;
+                cam->image_interval = interval;
+                cam->imagesCaptured += (count > 0) ? count : 1;
+                cam->singleShotStartMs = 0;
+            } else {
+                // Single shot - start capture, count will increment after 0.5s
+                cam->image_status = ImageCaptureInProgress;
+                cam->image_interval = 0.0f;
+                cam->singleShotStartMs = QDateTime::currentMSecsSinceEpoch();
+            }
+
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture started"
+                                    << "interval:" << interval << "count:" << count;
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            // Send capture status update
+            _sendCameraCaptureStatus(targetCompId);
         } else {
-            // Single shot - start capture, count will increment after 0.5s
-            cam->image_status = ImageCaptureInProgress;
-            cam->image_interval = 0.0f;
-            cam->singleShotStartMs = QDateTime::currentMSecsSinceEpoch();
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
-
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture started"
-                                   << "interval:" << interval << "count:" << count;
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        // Send capture status update
-        _sendCameraCaptureStatus(targetCompId);
         return true;
-    }
 
     case MAV_CMD_IMAGE_STOP_CAPTURE:
-        cam->image_status = ImageCaptureIdle;
-        cam->image_interval = 0.0f;
-        cam->singleShotStartMs = 0;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture stopped";
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendCameraCaptureStatus(targetCompId);
+        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
+            cam->image_status = ImageCaptureIdle;
+            cam->image_interval = 0.0f;
+            cam->singleShotStartMs = 0;
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture stopped";
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            _sendCameraCaptureStatus(targetCompId);
+        } else {
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+        }
         return true;
 
     case MAV_CMD_VIDEO_START_CAPTURE:
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO)) {
+        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) {
+            if ((cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) &&
+                (cam->cameraMode == CAMERA_MODE_IMAGE) &&
+                !(cam->capFlags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE)) {
+                _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+                return true;
+            }
+
+            cam->recording = true;
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording started";
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            _sendCameraCaptureStatus(targetCompId);
+        } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
         }
-        cam->recording = true;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording started";
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendCameraCaptureStatus(targetCompId);
         return true;
 
     case MAV_CMD_VIDEO_STOP_CAPTURE:
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO)) {
+        if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO) {
+            cam->recording = false;
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording stopped";
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            _sendCameraCaptureStatus(targetCompId);
+        } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
         }
-        cam->recording = false;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording stopped";
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendCameraCaptureStatus(targetCompId);
         return true;
 
     case MAV_CMD_STORAGE_FORMAT:
@@ -246,25 +287,18 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
         return true;
 
     case MAV_CMD_SET_CAMERA_ZOOM:
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM)) {
+        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM) {
+             cam->zoomLevel = request.param2;
+             qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
+             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+             _sendCameraSettings(targetCompId);
+        } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
         }
-        cam->zoomLevel = request.param2;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendCameraSettings(targetCompId);
         return true;
 
     case MAV_CMD_SET_CAMERA_FOCUS:
-        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS)) {
-            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
-            return true;
-        }
-        cam->focusLevel = request.param2;
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "focus set to" << cam->focusLevel;
-        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-        _sendCameraSettings(targetCompId);
+        _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         return true;
 
     case MAV_CMD_RESET_CAMERA_SETTINGS:

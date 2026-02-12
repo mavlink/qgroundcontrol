@@ -57,6 +57,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
                                                          _mockConfig->cameraCaptureVideo(),
                                                          _mockConfig->cameraCaptureImage(),
                                                          _mockConfig->cameraHasModes(),
+                                                         _mockConfig->cameraHasVideoStream(),
                                                          _mockConfig->cameraCanCaptureImageInVideoMode(),
                                                          _mockConfig->cameraCanCaptureVideoInImageMode(),
                                                          _mockConfig->cameraHasBasicZoom(),
