@@ -219,6 +219,10 @@ void MockLink::run10HzTasks()
             }
             _sendExtendedSysState();
         }
+
+        if (_enableCamera) {
+            _mockLinkCamera->run10HzTasks();
+        }
     }
 }
 
