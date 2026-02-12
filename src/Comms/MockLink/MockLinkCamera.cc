@@ -1,24 +1,42 @@
 #include "MockLinkCamera.h"
 #include "MockLink.h"
+#include "MissionManager/MissionCommandTree.h"
+#include "QGCLoggingCategory.h"
 
+#include <QtCore/QDateTime>
 #include <QtCore/QLoggingCategory>
 
-Q_LOGGING_CATEGORY(MockLinkCameraLog, "qgc.comms.mocklink.camera")
+QGC_LOGGING_CATEGORY(MockLinkCameraLog, "Comms.MockLink.MockLinkCamera")
 
-MockLinkCamera::MockLinkCamera(MockLink *mockLink)
+MockLinkCamera::MockLinkCamera(MockLink *mockLink,
+                               bool captureVideo,
+                               bool captureImage,
+                               bool hasModes,
+                               bool canCaptureImageInVideoMode,
+                               bool canCaptureVideoInImageMode,
+                               bool hasBasicZoom,
+                               bool hasTrackingPoint,
+                               bool hasTrackingRectangle)
     : _mockLink(mockLink)
 {
-    // Camera 1: full-featured (video + photo + modes + zoom + focus + streams)
-    _cameras[0].compId   = MAV_COMP_ID_CAMERA;
-    _cameras[0].capFlags = CAMERA_CAP_FLAGS_CAPTURE_VIDEO
-                         | CAMERA_CAP_FLAGS_CAPTURE_IMAGE
-                         | CAMERA_CAP_FLAGS_HAS_MODES
-                         | CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM
-                         | CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS
-                         | CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM
-                         | CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE;
+    // Build capability flags from configuration
+    uint32_t configuredFlags = 0;
+    if (captureVideo)                   configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_VIDEO;
+    if (captureImage)                   configuredFlags |= CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
+    if (hasModes)                       configuredFlags |= CAMERA_CAP_FLAGS_HAS_MODES;
+    if (canCaptureImageInVideoMode)     configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE;
+    if (canCaptureVideoInImageMode)     configuredFlags |= CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE;
+    if (hasBasicZoom)                   configuredFlags |= CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM;
+    if (hasTrackingPoint)               configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
+    if (hasTrackingRectangle)           configuredFlags |= CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
 
-    // Camera 2: photo-only (no video, no modes, no streams)
+    // Camera 1: full-featured with configurable flags + always-on features
+    _cameras[0].compId   = MAV_COMP_ID_CAMERA;
+    _cameras[0].capFlags = configuredFlags
+                         | CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS
+                         | CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM;
+
+    // Camera 2: photo-only (always CAPTURE_IMAGE only)
     _cameras[1].compId   = MAV_COMP_ID_CAMERA2;
     _cameras[1].capFlags = CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
 }

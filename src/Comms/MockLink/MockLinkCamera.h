@@ -55,13 +55,25 @@ public:
         float    focusLevel          = 0.0f;
         uint8_t  image_status        = ImageCaptureIdle;     ///< ImageCaptureStatus enum
         float    image_interval      = 0.0f;                 ///< Interval between image captures (seconds)
+        qint64   singleShotStartMs   = 0;                    ///< Timestamp when single-shot capture started (0 = not active)
     };
 
-    explicit MockLinkCamera(MockLink *mockLink);
+    explicit MockLinkCamera(MockLink *mockLink,
+                            bool captureVideo = true,
+                            bool captureImage = true,
+                            bool hasModes = true,
+                            bool canCaptureImageInVideoMode = true,
+                            bool canCaptureVideoInImageMode = false,
+                            bool hasBasicZoom = true,
+                            bool hasTrackingPoint = false,
+                            bool hasTrackingRectangle = false);
     ~MockLinkCamera() = default;
 
     /// Send heartbeats for all simulated camera components (call from 1Hz tasks)
     void sendCameraHeartbeats();
+
+    /// Update camera states (call from 10Hz tasks)
+    void run10HzTasks();
 
     /// Handle a COMMAND_LONG that targets a camera component.
     /// @return true if the command was handled (ack already sent)
