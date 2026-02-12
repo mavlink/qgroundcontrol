@@ -10,11 +10,19 @@ Q_DECLARE_LOGGING_CATEGORY(MockConfigurationLog)
 class MockConfiguration : public LinkConfiguration
 {
     Q_OBJECT
-    Q_PROPERTY(int      firmware            READ firmware           WRITE setFirmware           NOTIFY firmwareChanged)
-    Q_PROPERTY(int      vehicle             READ vehicle            WRITE setVehicle            NOTIFY vehicleChanged)
-    Q_PROPERTY(bool     sendStatus          READ sendStatusText     WRITE setSendStatusText     NOTIFY sendStatusChanged)
-    Q_PROPERTY(bool     enableCamera        READ enableCamera       WRITE setEnableCamera       NOTIFY enableCameraChanged)
-    Q_PROPERTY(bool     incrementVehicleId  READ incrementVehicleId WRITE setIncrementVehicleId NOTIFY incrementVehicleIdChanged)
+    Q_PROPERTY(int  firmware                             READ firmware                            WRITE setFirmware                            NOTIFY firmwareChanged)
+    Q_PROPERTY(int  vehicle                              READ vehicle                             WRITE setVehicle                             NOTIFY vehicleChanged)
+    Q_PROPERTY(bool sendStatus                           READ sendStatusText                      WRITE setSendStatusText                      NOTIFY sendStatusChanged)
+    Q_PROPERTY(bool enableCamera                         READ enableCamera                        WRITE setEnableCamera                        NOTIFY enableCameraChanged)
+    Q_PROPERTY(bool incrementVehicleId                   READ incrementVehicleId                  WRITE setIncrementVehicleId                  NOTIFY incrementVehicleIdChanged)
+    Q_PROPERTY(bool cameraCaptureVideo                   READ cameraCaptureVideo                  WRITE setCameraCaptureVideo                  NOTIFY cameraCaptureVideoChanged)
+    Q_PROPERTY(bool cameraCaptureImage                   READ cameraCaptureImage                  WRITE setCameraCaptureImage                  NOTIFY cameraCaptureImageChanged)
+    Q_PROPERTY(bool cameraHasModes                       READ cameraHasModes                      WRITE setCameraHasModes                      NOTIFY cameraHasModesChanged)
+    Q_PROPERTY(bool cameraCanCaptureImageInVideoMode     READ cameraCanCaptureImageInVideoMode    WRITE setCameraCanCaptureImageInVideoMode    NOTIFY cameraCanCaptureImageInVideoModeChanged)
+    Q_PROPERTY(bool cameraCanCaptureVideoInImageMode     READ cameraCanCaptureVideoInImageMode    WRITE setCameraCanCaptureVideoInImageMode    NOTIFY cameraCanCaptureVideoInImageModeChanged)
+    Q_PROPERTY(bool cameraHasBasicZoom                   READ cameraHasBasicZoom                  WRITE setCameraHasBasicZoom                  NOTIFY cameraHasBasicZoomChanged)
+    Q_PROPERTY(bool cameraHasTrackingPoint               READ cameraHasTrackingPoint              WRITE setCameraHasTrackingPoint              NOTIFY cameraHasTrackingPointChanged)
+    Q_PROPERTY(bool cameraHasTrackingRectangle           READ cameraHasTrackingRectangle          WRITE setCameraHasTrackingRectangle          NOTIFY cameraHasTrackingRectangleChanged)
 
 public:
     explicit MockConfiguration(const QString &name, QObject *parent = nullptr);
@@ -46,6 +54,23 @@ public:
     bool enableCamera() const { return _enableCamera; }
     void setEnableCamera(bool enableCamera) { _enableCamera = enableCamera; emit enableCameraChanged(); }
 
+    bool cameraCaptureVideo() const { return _cameraCaptureVideo; }
+    void setCameraCaptureVideo(bool value) { _cameraCaptureVideo = value; emit cameraCaptureVideoChanged(); }
+    bool cameraCaptureImage() const { return _cameraCaptureImage; }
+    void setCameraCaptureImage(bool value) { _cameraCaptureImage = value; emit cameraCaptureImageChanged(); }
+    bool cameraHasModes() const { return _cameraHasModes; }
+    void setCameraHasModes(bool value) { _cameraHasModes = value; emit cameraHasModesChanged(); }
+    bool cameraCanCaptureImageInVideoMode() const { return _cameraCanCaptureImageInVideoMode; }
+    void setCameraCanCaptureImageInVideoMode(bool value) { _cameraCanCaptureImageInVideoMode = value; emit cameraCanCaptureImageInVideoModeChanged(); }
+    bool cameraCanCaptureVideoInImageMode() const { return _cameraCanCaptureVideoInImageMode; }
+    void setCameraCanCaptureVideoInImageMode(bool value) { _cameraCanCaptureVideoInImageMode = value; emit cameraCanCaptureVideoInImageModeChanged(); }
+    bool cameraHasBasicZoom() const { return _cameraHasBasicZoom; }
+    void setCameraHasBasicZoom(bool value) { _cameraHasBasicZoom = value; emit cameraHasBasicZoomChanged(); }
+    bool cameraHasTrackingPoint() const { return _cameraHasTrackingPoint; }
+    void setCameraHasTrackingPoint(bool value) { _cameraHasTrackingPoint = value; emit cameraHasTrackingPointChanged(); }
+    bool cameraHasTrackingRectangle() const { return _cameraHasTrackingRectangle; }
+    void setCameraHasTrackingRectangle(bool value) { _cameraHasTrackingRectangle = value; emit cameraHasTrackingRectangleChanged(); }
+
     enum FailureMode_t {
         FailNone,                                                   ///< No failures
         FailParamNoResponseToRequestList,                           ///< Do not respond to PARAM_REQUEST_LIST
@@ -63,6 +88,14 @@ signals:
     void sendStatusChanged();
     void enableCameraChanged();
     void incrementVehicleIdChanged();
+    void cameraCaptureVideoChanged();
+    void cameraCaptureImageChanged();
+    void cameraHasModesChanged();
+    void cameraCanCaptureImageInVideoModeChanged();
+    void cameraCanCaptureVideoInImageModeChanged();
+    void cameraHasBasicZoomChanged();
+    void cameraHasTrackingPointChanged();
+    void cameraHasTrackingRectangleChanged();
 
 private:
     MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
@@ -74,10 +107,28 @@ private:
     uint16_t _boardVendorId = 0;
     uint16_t _boardProductId = 0;
 
+    // Camera capability flags (defaults match current Camera 1 configuration)
+    bool _cameraCaptureVideo = true;
+    bool _cameraCaptureImage = true;
+    bool _cameraHasModes = true;
+    bool _cameraCanCaptureImageInVideoMode = true;
+    bool _cameraCanCaptureVideoInImageMode = false;
+    bool _cameraHasBasicZoom = true;
+    bool _cameraHasTrackingPoint = false;
+    bool _cameraHasTrackingRectangle = false;
+
     static constexpr const char *_firmwareTypeKey = "FirmwareType";
     static constexpr const char *_vehicleTypeKey = "VehicleType";
     static constexpr const char *_sendStatusTextKey = "SendStatusText";
     static constexpr const char *_enableCameraKey = "EnableCamera";
     static constexpr const char *_incrementVehicleIdKey = "IncrementVehicleId";
     static constexpr const char *_failureModeKey = "FailureMode";
+    static constexpr const char *_cameraCaptureVideoKey = "CameraCaptureVideo";
+    static constexpr const char *_cameraCaptureImageKey = "CameraCaptureImage";
+    static constexpr const char *_cameraHasModesKey = "CameraHasModes";
+    static constexpr const char *_cameraCanCaptureImageInVideoModeKey = "CameraCanCaptureImageInVideoMode";
+    static constexpr const char *_cameraCanCaptureVideoInImageModeKey = "CameraCanCaptureVideoInImageMode";
+    static constexpr const char *_cameraHasBasicZoomKey = "CameraHasBasicZoom";
+    static constexpr const char *_cameraHasTrackingPointKey = "CameraHasTrackingPoint";
+    static constexpr const char *_cameraHasTrackingRectangleKey = "CameraHasTrackingRectangle";
 };
