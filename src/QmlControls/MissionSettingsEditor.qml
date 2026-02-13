@@ -40,6 +40,12 @@ Rectangle {
     QGCPalette { id: qgcPal }
     Component { id: altModeDialogComponent; AltModeDialog { } }
 
+    QGCPopupDialogFactory {
+        id: altModeDialogFactory
+
+        dialogComponent: altModeDialogComponent
+    }
+
     Connections {
         target: _controllerVehicle
         function onSupportsTerrainFrameChanged() {
@@ -82,7 +88,7 @@ Rectangle {
                         removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
                     }
                 }
-                altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
+                altModeDialogFactory.open({ rgRemoveModes: removeModes, updateAltModeFn: updateFunction })
             }
         }
 

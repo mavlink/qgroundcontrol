@@ -64,6 +64,12 @@ Rectangle {
         }
     }
 
+    QGCPopupDialogFactory {
+        id: editPositionDialogFactory
+
+        dialogComponent: editPositionDialog
+    }
+
     Component {
         id: editPositionDialog
 
@@ -149,7 +155,13 @@ Rectangle {
 
             QGCMouseArea {
                 fillItem:   parent
-                onClicked:  commandDialog.createObject(mainWindow).open()
+                onClicked:  commandDialogFactory.open()
+            }
+
+            QGCPopupDialogFactory {
+                id: commandDialogFactory
+
+                dialogComponent: commandDialog
             }
 
             Component {
@@ -215,7 +227,7 @@ Rectangle {
                         text:               qsTr("Edit position...")
                         enabled:            missionItem.specifiesCoordinate
                         onClicked: {
-                            editPositionDialog.createObject(mainWindow).open()
+                            editPositionDialogFactory.open()
                             hamburgerMenuDropPanel.close()
                         }
                     }

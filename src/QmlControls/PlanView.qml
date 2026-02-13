@@ -81,7 +81,7 @@ Item {
         onPromptForPlanUsageOnVehicleChange: {
             if (!_promptForPlanUsageShowing) {
                 _promptForPlanUsageShowing = true
-                promptForPlanUsageOnVehicleChangePopupComponent.createObject(mainWindow).open()
+                promptForPlanUsageOnVehicleChangePopupFactory.open()
             }
         }
 
@@ -651,6 +651,12 @@ Item {
                 }
             }
         } // Column
+    }
+
+    QGCPopupDialogFactory {
+        id: promptForPlanUsageOnVehicleChangePopupFactory
+
+        dialogComponent: promptForPlanUsageOnVehicleChangePopupComponent
     }
 
     Component {

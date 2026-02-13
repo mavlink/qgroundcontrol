@@ -114,8 +114,14 @@ SetupPage {
                     }
                 }
 
-                onShowFirmwareSelectDlg:    firmwareSelectDialogComponent.createObject(mainWindow).open()
+                onShowFirmwareSelectDlg:    firmwareSelectDialogFactory.open()
                 onError:                    statusTextArea.append(flashFailText)
+            }
+
+            QGCPopupDialogFactory {
+                id: firmwareSelectDialogFactory
+
+                dialogComponent: firmwareSelectDialogComponent
             }
 
             Component {
@@ -427,6 +433,7 @@ SetupPage {
                     color: qgcPal.windowShade
                 }
             }
+
         } // ColumnLayout
     } // Component
 } // SetupPage

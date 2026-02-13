@@ -154,12 +154,18 @@ ApplicationWindow {
     //-- Global simple message dialog
 
     function showMessageDialog(dialogTitle, dialogText, buttons = Dialog.Ok, acceptFunction = null, closeFunction = null) {
-        simpleMessageDialogComponent.createObject(mainWindow, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction, closeFunction: closeFunction }).open()
+        simpleMessageDialogFactory.open({ title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction, closeFunction: closeFunction })
     }
 
     // This variant is only meant to be called by QGCApplication
     function _showMessageDialog(dialogTitle, dialogText) {
         showMessageDialog(dialogTitle, dialogText)
+    }
+
+    QGCPopupDialogFactory {
+        id: simpleMessageDialogFactory
+
+        dialogComponent: simpleMessageDialogComponent
     }
 
     Component {

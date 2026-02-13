@@ -101,9 +101,15 @@ Item {
         onAcceptedForLoad: (file) => {
             close()
             if (controller.buildDiffFromFile(file)) {
-                parameterDiffDialog.createObject(mainWindow).open()
+                parameterDiffDialogFactory.open()
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: editorDialogFactory
+
+        dialogComponent: editorDialogComponent
     }
 
     Component {
@@ -113,6 +119,12 @@ Item {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: parameterDiffDialogFactory
+
+        dialogComponent: parameterDiffDialog
     }
 
     Component {
@@ -297,7 +309,7 @@ Item {
                 anchors.fill: parent
                 onClicked: mouse => {
                     _editorDialogFact = fact
-                    editorDialogComponent.createObject(mainWindow).open()
+                    editorDialogFactory.open()
                 }
             }
         }

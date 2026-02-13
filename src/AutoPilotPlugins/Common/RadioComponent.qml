@@ -65,7 +65,7 @@ SetupPage {
                     QGCButton {
                         id: bindButton
                         text: qsTr("Spektrum Bind")
-                        onClicked: spektrumBindDialogComponent.createObject(mainWindow).open()
+                        onClicked: spektrumBindDialogFactory.open()
                     }
 
                     QGCButton {
@@ -83,6 +83,12 @@ SetupPage {
                                                                 Dialog.Ok | Dialog.Cancel,
                                                                 function() { controller.copyTrims() })
                     }
+                }
+
+                QGCPopupDialogFactory {
+                    id: spektrumBindDialogFactory
+
+                    dialogComponent: spektrumBindDialogComponent
                 }
 
                 Component {

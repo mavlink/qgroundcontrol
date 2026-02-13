@@ -236,9 +236,15 @@ QGCPopupDialog {
         QGCButton {
             text:       qsTr("Set RC to Param")
             visible:    _advanced.checked && !validate && showRCToParam
-            onClicked:  rcToParamDialog.createObject(mainWindow).open()
+            onClicked:  rcToParamDialogFactory.open()
         }
     } // Column
+
+    QGCPopupDialogFactory {
+        id: rcToParamDialogFactory
+
+        dialogComponent: rcToParamDialog
+    }
 
     Component {
         id: rcToParamDialog

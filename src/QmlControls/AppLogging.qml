@@ -134,9 +134,15 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.right:  parent.right
                 text:           qsTr("Set Logging")
-                onClicked:      filtersDialogComponent.createObject(mainWindow).open()
+                onClicked:      filtersDialogFactory.open()
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: filtersDialogFactory
+
+        dialogComponent: filtersDialogComponent
     }
 
     Component {

@@ -330,7 +330,7 @@ RowLayout {
                                 var paramName = link.substr(8);
                                 fact = controller.getParameterFact(-1, paramName, true)
                                 if (fact != null) {
-                                    paramEditorDialogComponent.createObject(mainWindow).open()
+                                    paramEditorDialogFactory.open()
                                 }
                             } else {
                                 Qt.openUrlExternally(link);
@@ -339,6 +339,12 @@ RowLayout {
 
                         FactPanelController {
                             id: controller
+                        }
+
+                        QGCPopupDialogFactory {
+                            id: paramEditorDialogFactory
+
+                            dialogComponent: paramEditorDialogComponent
                         }
 
                         Component {
