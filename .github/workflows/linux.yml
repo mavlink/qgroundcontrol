@@ -19,6 +19,8 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*debian*'
+      - 'tools/setup/install_dependencies.py'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -93,9 +95,7 @@ jobs:
         uses: ./.github/actions/common
 
       - name: Install Dependencies
-        run: |
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
+        run: python3 ./tools/setup/install_dependencies.py --platform debian
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -114,13 +114,12 @@ jobs:
           arch: ${{ matrix.arch }}
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      # Advanced CodeQL: Uncomment these steps after disabling default setup in repo settings
-      # - name: Initialize CodeQL
-      #   if: matrix.build_type == 'Debug'
-      #   uses: github/codeql-action/init@v4
-      #   with:
-      #     languages: c-cpp
-      #     config-file: ./.github/codeql/codeql-config.yml
+      - name: Initialize CodeQL
+        if: matrix.build_type == 'Debug'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -134,11 +133,12 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      # - name: Perform CodeQL Analysis
-      #   if: matrix.build_type == 'Debug'
-      #   uses: github/codeql-action/analyze@v4
-      #   with:
-      #     category: "/language:c-cpp"
+      - name: Perform CodeQL Analysis
+        if: matrix.build_type == 'Debug'
+        continue-on-error: true
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:c-cpp"
 
       # Run tests via CTest for timeouts, parallel execution, and failure detection
       # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
@@ -170,6 +170,7 @@ jobs:
           name: test-results-${{ matrix.arch }}
           path: |
             ${{ runner.temp }}/build/test-output.txt
+            ${{ runner.temp }}/build/junit-results.xml
             ${{ runner.temp }}/build/junit-results-*.xml
           retention-days: 7
 
@@ -178,7 +179,7 @@ jobs:
         continue-on-error: true
         uses: trunk-io/analytics-uploader@v1
         with:
-          junit-paths: ${{ runner.temp }}/build/junit-results-*.xml
+          junit-paths: ${{ runner.temp }}/build/junit-results*.xml
           org-slug: ${{ vars.TRUNK_ORG_SLUG }}
           token: ${{ secrets.TRUNK_TOKEN }}
 
@@ -214,6 +215,7 @@ jobs:
         with:
           artifact_name: ${{ matrix.package }}.AppImage
           package_name: ${{ matrix.package }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}

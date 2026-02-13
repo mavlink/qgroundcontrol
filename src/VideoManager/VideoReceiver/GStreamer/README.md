@@ -68,7 +68,7 @@ QGC also supports RTSP, TCP-MPEG2 and MPEG-TS pipelines.
 
 ### Linux
 
-For a quick setup, use the setup tool provided at qgroundcontrol/tools/setup/install-dependencies-debian.sh.
+For a quick setup, use `python3 qgroundcontrol/tools/setup/install_dependencies.py --platform debian`.
 
 Alternatively for a manual approach you can use apt-get to install GStreamer 1.0:
 

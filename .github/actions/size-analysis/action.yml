@@ -1,0 +1,42 @@
+name: Binary Size Analysis
+description: Analyze binary size metrics using bloaty and standard tools
+
+inputs:
+  binary-path:
+    description: 'Path to the binary to analyze'
+    required: true
+  install-bloaty:
+    description: 'Install bloaty from source (takes ~2 min)'
+    default: 'true'
+  output-file:
+    description: 'Path for metrics JSON output'
+    default: 'size-metrics.json'
+
+outputs:
+  binary_size:
+    description: 'Size of the binary in bytes'
+    value: ${{ steps.metrics.outputs.binary_size }}
+  stripped_size:
+    description: 'Size of stripped binary in bytes'
+    value: ${{ steps.metrics.outputs.stripped_size }}
+  symbol_count:
+    description: 'Number of symbols in binary'
+    value: ${{ steps.metrics.outputs.symbol_count }}
+  metrics_file:
+    description: 'Path to the metrics JSON file'
+    value: ${{ inputs.output-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Analyze binary size
+      id: metrics
+      shell: bash
+      run: |
+        args=(
+          --binary "${{ inputs.binary-path }}"
+          --output "${{ inputs.output-file }}"
+        )
+        [[ "${{ inputs.install-bloaty }}" == "true" ]] && args+=(--install-bloaty)
+
+        python3 "${{ github.workspace }}/.github/scripts/size_analysis.py" "${args[@]}"
