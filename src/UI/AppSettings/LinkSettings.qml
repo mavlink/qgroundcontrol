@@ -133,7 +133,7 @@ SettingsPage {
                         fillItem: parent
                         onClicked: {
                             var editingConfig = _linkManager.startConfigurationEditing(object)
-                            linkDialogComponent.createObject(mainWindow, { editingConfig: editingConfig, originalConfig: object }).open()
+                            linkDialogFactory.open({ editingConfig: editingConfig, originalConfig: object })
                         }
                     }
                 }
@@ -182,9 +182,15 @@ SettingsPage {
 
             onClicked: {
                 var editingConfig = _linkManager.createConfiguration(ScreenTools.isSerialAvailable ? LinkConfiguration.TypeSerial : LinkConfiguration.TypeUdp, "")
-                linkDialogComponent.createObject(mainWindow, { editingConfig: editingConfig, originalConfig: null }).open()
+                linkDialogFactory.open({ editingConfig: editingConfig, originalConfig: null })
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: linkDialogFactory
+
+        dialogComponent: linkDialogComponent
     }
 
     Component {

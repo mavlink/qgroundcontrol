@@ -43,7 +43,7 @@ SetupPage {
                 onOldFirmware:          mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName))
                 onNewerFirmware:        mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName))
                 onDisconnectBattery:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"),    qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."))
-                onConnectBattery:       escCalibrationDlgComponent.createObject(mainWindow).open()
+                onConnectBattery:       escCalibrationDlgFactory.open()
             }
 
             ColumnLayout {
@@ -361,7 +361,7 @@ SetupPage {
                             QGCButton {
                                 text:       qsTr("Calculate")
                                 visible:    battVoltageDividerAvailable
-                                onClicked:  calcVoltageDividerDlgComponent.createObject(mainWindow, { batteryIndex: _batteryIndex }).open()
+                                onClicked:  calcVoltageDividerDlgFactory.open({ batteryIndex: _batteryIndex })
                             }
                             Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battVoltageDividerAvailable }
 
@@ -385,7 +385,7 @@ SetupPage {
                             QGCButton {
                                 text:       qsTr("Calculate")
                                 visible:    battAmpsPerVoltAvailable
-                                onClicked:  calcAmpsPerVoltDlgComponent.createObject(mainWindow, { batteryIndex: _batteryIndex }).open()
+                                onClicked:  calcAmpsPerVoltDlgFactory.open({ batteryIndex: _batteryIndex })
                             }
                             Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battAmpsPerVoltAvailable }
 
@@ -442,6 +442,12 @@ SetupPage {
                     }
                 } // QGCGroupBox - Battery settings
             } // Component - batterySetupComponent
+
+            QGCPopupDialogFactory {
+                id: calcVoltageDividerDlgFactory
+
+                dialogComponent: calcVoltageDividerDlgComponent
+            }
 
             Component {
                 id: calcVoltageDividerDlgComponent
@@ -501,6 +507,12 @@ SetupPage {
                 }
             }
 
+            QGCPopupDialogFactory {
+                id: calcAmpsPerVoltDlgFactory
+
+                dialogComponent: calcAmpsPerVoltDlgComponent
+            }
+
             Component {
                 id: calcAmpsPerVoltDlgComponent
 
@@ -557,6 +569,12 @@ SetupPage {
                         }
                     }
                 }
+            }
+
+            QGCPopupDialogFactory {
+                id: escCalibrationDlgFactory
+
+                dialogComponent: escCalibrationDlgComponent
             }
 
             Component {

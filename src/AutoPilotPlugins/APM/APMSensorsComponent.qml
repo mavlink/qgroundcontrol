@@ -96,7 +96,7 @@ SetupPage {
                     break
                 }
 
-                orientationsDialogComponent.createObject(mainWindow, { title: dialogTitle, buttons: dialogButtons }).open()
+                orientationsDialogFactory.open({ title: dialogTitle, buttons: dialogButtons })
             }
 
             function showSimpleAccelCalOption() {
@@ -144,7 +144,7 @@ SetupPage {
 
                 onWaitingForCancelChanged: {
                     if (controller.waitingForCancel) {
-                        waitForCancelDialogComponent.createObject(mainWindow).open()
+                        waitForCancelDialogFactory.open()
                     }
                 }
 
@@ -153,7 +153,7 @@ SetupPage {
                     case MAVLink.CalibrationAccel:
                     case MAVLink.CalibrationMag:
                         _singleCompassSettingsComponentShowPriority = true
-                        postOnboardCompassCalibrationComponent.createObject(mainWindow).open()
+                        postOnboardCompassCalibrationFactory.open()
                         break
                     }
                 }
@@ -164,6 +164,12 @@ SetupPage {
             }
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
+            QGCPopupDialogFactory {
+                id: waitForCancelDialogFactory
+
+                dialogComponent: waitForCancelDialogComponent
+            }
 
             Component {
                 id: waitForCancelDialogComponent
@@ -246,6 +252,12 @@ SetupPage {
                         property int index: _index
                     }
                 }
+            }
+
+            QGCPopupDialogFactory {
+                id: postOnboardCompassCalibrationFactory
+
+                dialogComponent: postOnboardCompassCalibrationComponent
             }
 
             Component {
@@ -390,6 +402,12 @@ SetupPage {
                         }
                     }
                 }
+            }
+
+            QGCPopupDialogFactory {
+                id: orientationsDialogFactory
+
+                dialogComponent: orientationsDialogComponent
             }
 
             Component {
@@ -576,6 +594,12 @@ SetupPage {
                 }
             }
 
+            QGCPopupDialogFactory {
+                id: compassMotDialogFactory
+
+                dialogComponent: compassMotDialogComponent
+            }
+
             Component {
                 id: compassMotDialogComponent
 
@@ -715,7 +739,7 @@ SetupPage {
                         width:      _buttonWidth
                         text:       qsTr("CompassMot")
                         visible:    globals.activeVehicle ? globals.activeVehicle.supportsMotorInterference : false
-                        onClicked:  compassMotDialogComponent.createObject(mainWindow).open()
+                        onClicked:  compassMotDialogFactory.open()
                     }
 
                     QGCButton {
