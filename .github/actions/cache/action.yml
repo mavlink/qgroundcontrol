@@ -24,63 +24,48 @@ runs:
       id: ccache-config
       shell: bash
       run: |
-        # Pin ccache version for reproducibility and to avoid API calls
-        # Update periodically via Dependabot or manually
-        CCACHE_VERSION="4.10.2"
-
-        # Validate version format (defense in depth)
-        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
-          exit 1
-        fi
-        echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
-
-        # Read max_size from tools/configs/ccache.conf (single source of truth)
-        CCACHE_CONF_PATH="${{ github.workspace }}/tools/configs/ccache.conf"
-        CCACHE_MAX_SIZE="2G"  # Default
-        if [[ -f "$CCACHE_CONF_PATH" ]]; then
-          # Single awk pass to extract value (more robust than grep|sed)
-          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
-          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
+        # Determine architecture
+        if [[ "${{ inputs.target }}" == "linux_gcc_arm64" ]]; then
+          arch="aarch64"
         else
-          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
+          arch="x86_64"
         fi
-        echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
+
+        python3 "${{ github.workspace }}/.github/scripts/install_ccache.py" \
+          --arch "$arch" \
+          --config "${{ github.workspace }}/tools/configs/ccache.conf" \
+          --output-only
 
     - name: Cache ccache binary (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
+      if: runner.os == 'Linux'
       id: ccache-binary
       uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-x86_64
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-${{ steps.ccache-config.outputs.arch }}
 
     - name: Install ccache (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
       run: |
-        set -e
-        # Download pre-built binary (not source tarball)
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        # Copy pre-built binary directly (no compilation needed)
-        sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
-        sudo chmod +x /usr/local/bin/ccache
+        python3 "${{ github.workspace }}/.github/scripts/install_ccache.py" \
+          --arch "${{ steps.ccache-config.outputs.arch }}" \
+          --install
 
-    - name: Setup sccache (Windows x64 only)
-      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
+    # Note: sccache doesn't have ARM64 Windows binaries, skip for native ARM64 builds
+    - name: Setup sccache (Windows x64)
+      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.target != 'win64_msvc2022_arm64'
       uses: mozilla-actions/sccache-action@v0.0.9
 
-    - run: echo "SCCACHE_GHA_ENABLED=${{ inputs.save-cache == 'true' && 'true' || 'false' }}" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
+    - run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.target != 'win64_msvc2022_arm64'
       shell: bash
 
     - name: Setup Build Cache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64' && 'sccache' || 'ccache' }}
+        # Use sccache for Windows x64, ccache for everything else (including Windows ARM64)
+        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.target != 'win64_msvc2022_arm64' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}
@@ -95,18 +80,12 @@ runs:
       run: mkdir -p "${{ inputs.cpm-modules }}"
       shell: bash
 
-    - name: Cache CPM Modules (restore and save)
-      if: inputs.cpm-modules != '' && inputs.save-cache == 'true'
+    - name: Cache CPM Modules
+      if: inputs.cpm-modules != ''
       uses: actions/cache@v5
       with:
         path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: ${{ github.workflow }}-cpm-modules-
-
-    - name: Cache CPM Modules (restore only)
-      if: inputs.cpm-modules != '' && inputs.save-cache != 'true'
-      uses: actions/cache/restore@v5
-      with:
-        path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: ${{ github.workflow }}-cpm-modules-
+        key: ${{ github.workflow }}-cpm-${{ runner.os }}-${{ hashFiles('package-lock.cmake', 'CMakeLists.txt') }}
+        restore-keys: |
+          ${{ github.workflow }}-cpm-${{ runner.os }}-
+          ${{ github.workflow }}-cpm-

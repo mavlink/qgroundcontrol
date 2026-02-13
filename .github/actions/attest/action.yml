@@ -1,0 +1,27 @@
+name: Attest Build Provenance
+description: Attest build provenance with common condition checks
+
+inputs:
+  subject-path:
+    description: 'Path to the artifact to attest'
+    required: true
+  condition:
+    description: 'Additional condition (e.g., build_type == Release)'
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Check attestation conditions
+      id: check
+      uses: ./.github/actions/attest-condition
+      with:
+        subject-path: ${{ inputs.subject-path }}
+        condition: ${{ inputs.condition }}
+
+    - name: Attest Build Provenance
+      if: steps.check.outputs.skip != 'true'
+      uses: actions/attest-build-provenance@v3
+      with:
+        subject-path: ${{ inputs.subject-path }}

@@ -108,7 +108,7 @@
       "type": "shell"
     },
     {
-      "command": "${workspaceFolder}/tools/clean.sh",
+      "command": "python3 ${workspaceFolder}/tools/clean.py",
       "group": "none",
       "label": "Clean All",
       "problemMatcher": [],
@@ -116,9 +116,9 @@
     },
     {
       "args": [
-        "${workspaceFolder}/tools/translations/qgc-lupdate.sh"
+        "${workspaceFolder}/tools/translations/qgc_lupdate.py"
       ],
-      "command": "source",
+      "command": "python3",
       "group": "none",
       "label": "Update Translations",
       "problemMatcher": [],

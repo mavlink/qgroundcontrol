@@ -7,7 +7,7 @@ Tools for testing QGroundControl without physical hardware.
 | Tool | Use Case | Setup |
 |------|----------|-------|
 | `mock_vehicle.py` | UI testing, quick checks | `pip install pymavlink` |
-| `run-arducopter-sitl.sh` | Full simulation, mission testing | Docker required |
+| `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
 
 ## Mock Vehicle (Lightweight)
 
@@ -53,10 +53,16 @@ Full ArduPilot simulation via Docker. Supports missions, geofences, all commands
 
 ```bash
 # Run (builds image on first run, ~10-15 min)
-./run-arducopter-sitl.sh
+python run_arducopter_sitl.py
 
 # With simulated network latency (Herelink-like)
-./run-arducopter-sitl.sh --with-latency
+python run_arducopter_sitl.py --with-latency
+
+# Stop container
+python run_arducopter_sitl.py --stop
+
+# View logs
+python run_arducopter_sitl.py --logs
 
 # Connect QGC to: tcp://localhost:5760
 ```

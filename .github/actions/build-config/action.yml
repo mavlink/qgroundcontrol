@@ -60,66 +60,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Validate and read build config
+    - name: Read build config
       id: read
       shell: bash
-      run: |
-        CONFIG_FILE="${GITHUB_WORKSPACE}/.github/build-config.json"
-        if [[ ! -f "$CONFIG_FILE" ]]; then
-          echo "::error::Build config not found: $CONFIG_FILE"
-          exit 1
-        fi
-        if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
-          echo "::error::Invalid JSON in $CONFIG_FILE"
-          exit 1
-        fi
-
-        # Read all values (no fallbacks - config is authoritative)
-        QT_VERSION=$(jq -r '.qt_version' "$CONFIG_FILE")
-        QT_MIN_VERSION=$(jq -r '.qt_minimum_version' "$CONFIG_FILE")
-        QT_MODULES=$(jq -r '.qt_modules' "$CONFIG_FILE")
-        QT_MODULES_IOS=$(echo "$QT_MODULES" | sed 's/qtserialport//g; s/qtscxml//g; s/  */ /g; s/^ *//; s/ *$//')
-        GST_MIN_VERSION=$(jq -r '.gstreamer_minimum_version' "$CONFIG_FILE")
-        GST_MACOS_VERSION=$(jq -r '.gstreamer_macos_version' "$CONFIG_FILE")
-        GST_ANDROID_VERSION=$(jq -r '.gstreamer_android_version' "$CONFIG_FILE")
-        GST_WIN_VERSION=$(jq -r '.gstreamer_windows_version' "$CONFIG_FILE")
-        NDK_VERSION=$(jq -r '.ndk_version' "$CONFIG_FILE")
-        NDK_FULL_VERSION=$(jq -r '.ndk_full_version' "$CONFIG_FILE")
-        JAVA_VERSION=$(jq -r '.java_version' "$CONFIG_FILE")
-        ANDROID_PLATFORM=$(jq -r '.android_platform' "$CONFIG_FILE")
-        ANDROID_MIN_SDK=$(jq -r '.android_min_sdk' "$CONFIG_FILE")
-        ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' "$CONFIG_FILE")
-        ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' "$CONFIG_FILE")
-        XCODE_VERSION=$(jq -r '.xcode_version' "$CONFIG_FILE")
-        XCODE_IOS_VERSION=$(jq -r '.xcode_ios_version' "$CONFIG_FILE")
-        CMAKE_MIN_VERSION=$(jq -r '.cmake_minimum_version' "$CONFIG_FILE")
-
-        {
-          echo "qt_version=$QT_VERSION"
-          echo "qt_minimum_version=$QT_MIN_VERSION"
-          echo "qt_modules=$QT_MODULES"
-          echo "qt_modules_ios=$QT_MODULES_IOS"
-          echo "gstreamer_minimum_version=$GST_MIN_VERSION"
-          echo "gstreamer_macos_version=$GST_MACOS_VERSION"
-          echo "gstreamer_android_version=$GST_ANDROID_VERSION"
-          echo "gstreamer_windows_version=$GST_WIN_VERSION"
-          echo "ndk_version=$NDK_VERSION"
-          echo "ndk_full_version=$NDK_FULL_VERSION"
-          echo "java_version=$JAVA_VERSION"
-          echo "android_platform=$ANDROID_PLATFORM"
-          echo "android_min_sdk=$ANDROID_MIN_SDK"
-          echo "android_build_tools=$ANDROID_BUILD_TOOLS"
-          echo "android_cmdline_tools=$ANDROID_CMDLINE_TOOLS"
-          echo "xcode_version=$XCODE_VERSION"
-          echo "xcode_ios_version=$XCODE_IOS_VERSION"
-          echo "cmake_minimum_version=$CMAKE_MIN_VERSION"
-        } >> "$GITHUB_OUTPUT"
-
-    # Only set commonly-used variables as environment variables to avoid polluting the env.
-    # All values are available as step outputs (e.g., steps.config.outputs.ndk_version).
-    # Note: GSTREAMER_VERSION is NOT set here - workflows should set platform-specific version
-    # using gstreamer_macos_version, gstreamer_windows_version, or gstreamer_minimum_version.
-    - name: Set environment variables
-      shell: bash
-      run: |
-        echo "QT_VERSION=${{ steps.read.outputs.qt_version }}" >> "$GITHUB_ENV"
+      run: python3 ./tools/setup/read_config.py --github-output

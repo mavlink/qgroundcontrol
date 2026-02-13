@@ -30,6 +30,18 @@ Before you begin, please:
 - **Platforms**: Windows, macOS, Linux, Android, iOS
 - **IDE**: Qt Creator (recommended), VS Code, or your preferred IDE
 
+#### Quick Setup with direnv (optional)
+
+If you use [direnv](https://direnv.net/), the repository includes a `.envrc` that automatically:
+- Activates the Python virtual environment
+- Adds Qt to your PATH (if installed)
+- Exports build configuration variables
+- Enables ccache if available
+
+```bash
+direnv allow  # Run once after cloning
+```
+
 ---
 
 ## How to Contribute

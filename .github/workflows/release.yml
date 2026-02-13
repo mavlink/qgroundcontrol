@@ -1,9 +1,9 @@
 name: Release
 
-# Disabled: semantic-release blocked by branch protection (can't push CHANGELOG.md)
-# To fix: either remove @semantic-release/git plugin or use a PAT from allowed pusher
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,17 +11,12 @@ concurrency:
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
 
 jobs:
-  semantic-release:
-    name: Semantic Release
+  wait-for-builds:
+    name: Wait for Platform Builds
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    outputs:
-      new_release: ${{ steps.release.outputs.new_release }}
-      version: ${{ steps.release.outputs.version }}
+    timeout-minutes: 180
 
     steps:
       - name: Harden Runner
@@ -29,50 +24,6 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 'lts/*'
-
-      - name: Run semantic-release
-        id: release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./tools/release.sh --install
-
-          # Capture semantic-release output
-          set +e
-          OUTPUT=$(./tools/release.sh --run 2>&1)
-          EXIT_CODE=$?
-          echo "$OUTPUT"
-          set -e
-
-          # Check if a new release was created
-          if echo "$OUTPUT" | grep -q "Published release"; then
-            VERSION=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*Published release \([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' | head -n1)
-            echo "new_release=true" >> $GITHUB_OUTPUT
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "New release: v$VERSION"
-          else
-            echo "new_release=false" >> $GITHUB_OUTPUT
-            echo "No new release"
-          fi
-
-  wait-for-builds:
-    name: Wait for Platform Builds
-    needs: semantic-release
-    if: needs.semantic-release.outputs.new_release == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-
-    steps:
       - name: Wait for builds to complete
         uses: int128/wait-for-workflows-action@v1
         with:
@@ -82,14 +33,17 @@ jobs:
             MacOS
             Android
           timeout-minutes: 170
-          poll-interval-minutes: 1
+          poll-interval-minutes: 5
 
   upload-artifacts:
     name: Upload Release Artifacts
-    needs: [semantic-release, wait-for-builds]
-    if: needs.semantic-release.outputs.new_release == 'true'
+    needs: wait-for-builds
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Harden Runner
@@ -99,8 +53,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Generate SBOM (SPDX)
         uses: anchore/sbom-action@v0
@@ -127,10 +79,37 @@ jobs:
       - name: List artifacts
         run: find artifacts -type f | head -50 || echo "No artifacts found"
 
+      - name: Attest Linux AppImage
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl*.AppImage
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
+      - name: Attest macOS DMG
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl.dmg
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
+      - name: Attest Windows EXE
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl*.exe
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
+      - name: Attest Android APK
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl.apk
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.semantic-release.outputs.version }}
           files: |
             artifacts/**/*.AppImage
             artifacts/**/*.dmg

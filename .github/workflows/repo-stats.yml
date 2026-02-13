@@ -15,6 +15,11 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Generate repository metrics
         uses: lowlighter/metrics@v4
         with:

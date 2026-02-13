@@ -1,0 +1,121 @@
+name: Detect Changes
+description: Detect source, test, and CI changes for a platform
+
+inputs:
+  platform:
+    description: 'Platform (linux, windows, macos, android, ios)'
+    required: true
+
+outputs:
+  src:
+    description: 'Source files changed'
+    value: ${{ steps.check.outputs.src }}
+  tests:
+    description: 'Test files changed'
+    value: ${{ steps.check.outputs.tests }}
+  ci:
+    description: 'CI files changed'
+    value: ${{ steps.check.outputs.ci }}
+  should-build:
+    description: 'Whether build should run'
+    value: ${{ steps.check.outputs.should_build }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+
+    - name: Check for changes
+      id: check
+      shell: bash
+      run: |
+        platform="${{ inputs.platform }}"
+
+        # Get changed files
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          changed=$(git diff --name-only HEAD^1 HEAD)
+        else
+          # For push events, compare with parent
+          changed=$(git diff --name-only HEAD^1 HEAD 2>/dev/null || git diff --name-only HEAD HEAD)
+        fi
+
+        echo "Changed files:"
+        echo "$changed"
+
+        # Common source patterns
+        src_patterns=(
+          "^src/"
+          "^CMakeLists.txt$"
+          "^cmake/"
+          "^libs/"
+          "^deploy/${platform}/"
+        )
+
+        # Platform-specific source patterns
+        case "$platform" in
+          android) src_patterns+=("^android/") ;;
+        esac
+
+        # Test patterns
+        test_patterns=("^test/")
+
+        # CI patterns
+        ci_patterns=(
+          "^\.github/workflows/${platform}\.yml$"
+          "^\.github/actions/"
+          "^\.github/scripts/"
+        )
+
+        # Platform-specific CI patterns
+        case "$platform" in
+          linux)   ci_patterns+=("^tools/setup/.*debian") ;;
+          windows) ci_patterns+=("^tools/setup/.*windows") ;;
+          macos)   ci_patterns+=("^tools/setup/.*macos") ;;
+          android) ci_patterns+=("^tools/setup/") ;;
+          ios)     ci_patterns+=("^tools/setup/.*ios" "^tools/setup/.*macos") ;;
+        esac
+
+        # Check for matches
+        src_changed="false"
+        tests_changed="false"
+        ci_changed="false"
+
+        while IFS= read -r file; do
+          [[ -z "$file" ]] && continue
+
+          for pattern in "${src_patterns[@]}"; do
+            if [[ "$file" =~ $pattern ]]; then
+              src_changed="true"
+              break
+            fi
+          done
+
+          for pattern in "${test_patterns[@]}"; do
+            if [[ "$file" =~ $pattern ]]; then
+              tests_changed="true"
+              break
+            fi
+          done
+
+          for pattern in "${ci_patterns[@]}"; do
+            if [[ "$file" =~ $pattern ]]; then
+              ci_changed="true"
+              break
+            fi
+          done
+        done <<< "$changed"
+
+        echo "src=$src_changed" >> "$GITHUB_OUTPUT"
+        echo "tests=$tests_changed" >> "$GITHUB_OUTPUT"
+        echo "ci=$ci_changed" >> "$GITHUB_OUTPUT"
+
+        if [[ "$src_changed" == "true" || "$tests_changed" == "true" || "$ci_changed" == "true" ]]; then
+          echo "should_build=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "should_build=false" >> "$GITHUB_OUTPUT"
+        fi
+
+        echo "Results: src=$src_changed tests=$tests_changed ci=$ci_changed"

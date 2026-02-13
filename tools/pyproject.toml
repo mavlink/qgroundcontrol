@@ -1,0 +1,82 @@
+# Python tooling dependencies for QGroundControl
+#
+# Usage:
+#   pip install -e ./tools[ci]           # CI workflows
+#   pip install -e ./tools[coverage]     # Code coverage
+#   pip install -e ./tools[dev]          # Local development
+#   pip install -e ./tools[lsp]          # LSP server
+#   pip install -e ./tools[test]         # Testing
+#   uv pip install -e ./tools[ci]        # Faster with uv
+#
+# Groups can be combined:
+#   pip install -e ./tools[ci,coverage]
+
+[project]
+name = "qgc-tools"
+version = "0.1.0"
+description = "Python tooling for QGroundControl development"
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+# CI workflows: pre-commit hooks, GStreamer builds
+ci = [
+    "pre-commit>=3.0",
+    "meson>=1.0",
+    "ninja>=1.11",
+]
+
+# Qt installation via aqtinstall
+qt = [
+    "aqtinstall>=3.0",
+    "py7zr>=0.20",
+    "setuptools>=61.0",
+    "wheel",
+    "cmake>=3.21",
+    "ninja>=1.11",
+]
+
+# Code coverage reporting
+coverage = [
+    "gcovr>=7.0",
+]
+
+# Local development tools
+dev = [
+    "jinja2>=3.0",
+    "pyyaml>=6.0",
+    "pymavlink>=2.4",
+]
+
+# Testing
+test = [
+    "pytest>=7.0",
+]
+
+# QGC LSP server
+lsp = [
+    "pygls>=1.0",
+    "lsprotocol>=2023.0",
+]
+
+# All dependencies
+all = [
+    "qgc-tools[ci,qt,coverage,dev,lsp,test]",
+]
+
+[project.scripts]
+# Main tools (available after: pip install -e ./tools)
+qgc-analyze = "analyze:main"
+qgc-check-deps = "check_deps:main"
+qgc-coverage = "coverage:main"
+qgc-docs = "generate_docs:main"
+qgc-lint-fix = "lint_fix:main"
+qgc-pre-commit = "pre_commit:main"
+qgc-run-tests = "run_tests:main"
+qgc-smoke-test = "smoke_test:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = []  # No Python packages, just dependencies

@@ -56,10 +56,12 @@ runs:
       with:
         distribution: temurin
         java-version: ${{ inputs.java-version }}
-        cache: gradle
-        cache-dependency-path: |
-          **/*.gradle*
-          **/gradle-wrapper.properties
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        cache-read-only: ${{ inputs.save-cache != 'true' }}
+        gradle-home-cache-cleanup: true
 
     - name: Setup Android Environment
       uses: android-actions/setup-android@v3
@@ -98,66 +100,51 @@ runs:
         cpm-modules: ${{ inputs.cpm-modules }}
         save-cache: ${{ inputs.save-cache }}
 
-    - name: Install Qt for ${{ runner.os }}
-      uses: jurplel/install-qt-action@v4
+    - name: Install Qt (Host)
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
         target: desktop
         arch: ${{ inputs.arch }}
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
 
     - name: Install Qt for Android (arm64_v8a)
       if: contains(inputs.abis, 'arm64-v8a')
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
         target: android
         arch: android_arm64_v8a
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
 
     - name: Install Qt for Android (armv7)
       if: contains(inputs.abis, 'armeabi-v7a')
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
         target: android
         arch: android_armv7
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
 
     - name: Install Qt for Android (x86_64)
       if: contains(inputs.abis, 'x86_64')
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
         target: android
         arch: android_x86_64
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
 
     - name: Install Qt for Android (x86)
       if: contains(inputs.abis, 'x86')
-      uses: jurplel/install-qt-action@v4
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
         target: android
         arch: android_x86
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true

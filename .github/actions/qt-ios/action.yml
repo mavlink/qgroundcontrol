@@ -1,0 +1,64 @@
+name: iOS Qt
+description: Install Qt for iOS (host macOS + iOS target)
+inputs:
+  version:
+    description: Qt Version
+    required: true
+  modules:
+    description: Qt Modules (desktop)
+    required: true
+  ios-modules:
+    description: Qt Modules for iOS (if different from desktop)
+    required: false
+    default: ''
+  xcode-version:
+    description: Xcode version to use
+    required: true
+  cpm-modules:
+    description: CPM Cache Path
+    required: false
+  build-type:
+    description: Build Type (Debug or Release)
+    required: false
+    default: Release
+  save-cache:
+    description: Save cache (set to false for PR builds)
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - name: Restore file timestamps
+      uses: chetan/git-restore-mtime-action@v2
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ inputs.xcode-version }}
+
+    - name: Setup Caching
+      uses: ./.github/actions/cache
+      with:
+        host: mac
+        target: ios
+        build-type: ${{ inputs.build-type }}
+        cpm-modules: ${{ inputs.cpm-modules }}
+        save-cache: ${{ inputs.save-cache }}
+
+    - name: Install Qt (Host macOS)
+      uses: ./.github/actions/qt-install
+      with:
+        version: ${{ inputs.version }}
+        host: mac
+        target: desktop
+        arch: clang_64
+        modules: ${{ inputs.modules }}
+
+    - name: Install Qt for iOS
+      uses: ./.github/actions/qt-install
+      with:
+        version: ${{ inputs.version }}
+        host: mac
+        target: ios
+        arch: ios
+        modules: ${{ inputs.ios-modules || inputs.modules }}

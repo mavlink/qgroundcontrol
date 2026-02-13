@@ -1,0 +1,41 @@
+name: Setup Python
+description: Setup Python with uv for fast dependency installation
+
+inputs:
+  groups:
+    description: 'Dependency groups to install (comma-separated: ci, qt, coverage, dev, lsp, all)'
+    required: false
+    default: 'ci'
+  python-version:
+    description: 'Python version'
+    required: false
+    default: '3.12'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+        cache-dependency-glob: ""  # No uv.lock in this project
+
+    - name: Install dependencies
+      shell: bash
+      env:
+        GROUPS: ${{ inputs.groups }}
+      run: python3 tools/setup/install_python.py "$GROUPS"
+
+    - name: Add venv to PATH
+      shell: bash
+      run: |
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
+        else
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+        fi

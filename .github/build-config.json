@@ -18,5 +18,127 @@
   "qt_modules": "qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver",
   "qt_version": "6.10.2",
   "xcode_ios_version": "latest-stable",
-  "xcode_version": "16.x"
+  "xcode_version": "16.x",
+
+  "platforms": {
+    "linux": {
+      "timeout_minutes": 120,
+      "variants": [
+        {
+          "name": "x86_64",
+          "runner": "ubuntu-22.04",
+          "host": "linux",
+          "arch": "linux_gcc_64",
+          "package": "QGroundControl-x86_64",
+          "build_types": ["Debug", "Release"]
+        },
+        {
+          "name": "aarch64",
+          "runner": "ubuntu-24.04-arm",
+          "host": "linux_arm64",
+          "arch": "linux_gcc_arm64",
+          "package": "QGroundControl-aarch64",
+          "build_types": ["Release"]
+        }
+      ]
+    },
+    "windows": {
+      "timeout_minutes": 120,
+      "variants": [
+        {
+          "name": "amd64",
+          "runner": "windows-2022",
+          "host": "windows",
+          "arch": "win64_msvc2022_64",
+          "package": "QGroundControl-installer-AMD64",
+          "build_types": ["Release"],
+          "gstreamer": true
+        },
+        {
+          "name": "arm64",
+          "runner": "windows-11-arm",
+          "host": "windows_arm64",
+          "arch": "win64_msvc2022_arm64",
+          "package": "QGroundControl-installer-ARM64",
+          "build_types": ["Release"],
+          "gstreamer": false
+        },
+        {
+          "name": "arm64-cross",
+          "runner": "windows-2022",
+          "host": "windows",
+          "arch": "win64_msvc2022_arm64_cross_compiled",
+          "package": "QGroundControl-installer-AMD64-ARM64",
+          "build_types": ["Release"],
+          "gstreamer": false,
+          "qt_version": "6.10.0",
+          "comment": "Pin Qt until aqtinstall supports 6.10.1+ for cross-compiled ARM64 (tracking: miurahr/aqtinstall#952)"
+        }
+      ]
+    },
+    "macos": {
+      "timeout_minutes": 120,
+      "variants": [
+        {
+          "name": "universal",
+          "runner": "macos-15",
+          "host": "mac",
+          "arch": "clang_64",
+          "package": "QGroundControl",
+          "build_types": ["Release"]
+        }
+      ]
+    },
+    "android": {
+      "timeout_minutes": 120,
+      "variants": [
+        {
+          "name": "linux",
+          "runner": "ubuntu-latest",
+          "host": "linux",
+          "arch": "linux_gcc_64",
+          "qt_host_path": "gcc_64",
+          "shell": "bash",
+          "primary": true,
+          "abis": "arm64-v8a;armeabi-v7a",
+          "build_types": ["Release"]
+        },
+        {
+          "name": "mac",
+          "runner": "macos-latest",
+          "host": "mac",
+          "arch": "clang_64",
+          "qt_host_path": "macos",
+          "shell": "bash",
+          "primary": false,
+          "abis": "arm64-v8a",
+          "build_types": ["Release"]
+        },
+        {
+          "name": "windows",
+          "runner": "windows-latest",
+          "host": "windows",
+          "arch": "win64_msvc2022_64",
+          "qt_host_path": "msvc2022_64",
+          "shell": "pwsh",
+          "primary": false,
+          "abis": "arm64-v8a",
+          "build_types": ["Release"]
+        }
+      ]
+    },
+    "ios": {
+      "timeout_minutes": 120,
+      "variants": [
+        {
+          "name": "device",
+          "runner": "macos-15",
+          "host": "mac",
+          "arch": "ios",
+          "package": "QGroundControl",
+          "build_types": ["Release"]
+        }
+      ]
+    }
+  }
 }
