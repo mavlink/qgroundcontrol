@@ -14,7 +14,8 @@ tools/
 ├── format-check.sh          # Check/apply clang-format
 ├── generate-docs.sh         # Generate API docs (Doxygen)
 ├── param-docs.py            # Generate parameter documentation
-├── ccache.conf              # ccache configuration
+├── configs/                 # Tool configuration files
+│   └── ccache.conf          # ccache configuration
 ├── analyzers/               # Static analysis scripts
 │   └── vehicle_null_check.py
 ├── coding-style/            # Code style examples
@@ -384,7 +385,7 @@ Configuration for [ccache](https://ccache.dev/) to speed up rebuilds. CMake auto
 
 ```bash
 # Manual use:
-export CCACHE_CONFIGPATH=/path/to/qgroundcontrol/tools/ccache.conf
+export CCACHE_CONFIGPATH=/path/to/qgroundcontrol/tools/configs/ccache.conf
 ```
 
 ### coding-style/
