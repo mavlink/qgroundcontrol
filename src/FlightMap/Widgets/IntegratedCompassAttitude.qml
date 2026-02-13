@@ -27,13 +27,13 @@ Item {
     IntegratedAttitudeIndicator {
         id:                     rollIndicator
         x:                      -_totalAttitudeSize
-        attitudeAngleDegrees:   vehicle ? vehicle.roll.rawValue : 0
+        attitudeAngleDegrees:   vehicle?.roll?.rawValue ?? 0
         compassRadius:          control.compassRadius
     }
 
     IntegratedAttitudeIndicator {
         x:                      -_totalAttitudeSize
-        attitudeAngleDegrees:   vehicle ? vehicle.pitch.rawValue : 0
+        attitudeAngleDegrees:   vehicle?.pitch?.rawValue ?? 0
         compassRadius:          control.compassRadius
         attitudeSize:           control.attitudeSize
         attitudeSpacing:        control.attitudeSpacing

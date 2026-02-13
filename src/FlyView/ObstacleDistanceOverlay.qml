@@ -53,7 +53,7 @@ Canvas {
             return
 
         _offsetDeg = _activeVehicle.objectAvoidance.angleOffset
-        _heading = _activeVehicle.heading.value
+        _heading = _activeVehicle?.heading?.value ?? 0
         _maxRadiusMeters = _activeVehicle.objectAvoidance.maxDistance / 100
         _rangesLen = 360.0 / _incrementDeg
         if (_rangesLen > _ranges.length)

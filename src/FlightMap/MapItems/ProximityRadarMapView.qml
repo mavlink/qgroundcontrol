@@ -12,7 +12,7 @@ MapQuickItem {
 
     property var    vehicle                                                         /// Vehicle object, undefined for ADSB vehicle
     property var    map
-    property double heading:    vehicle ? vehicle.heading.value : Number.NaN    ///< Vehicle heading, NAN for none
+    property double heading:    vehicle?.heading?.value ?? Number.NaN    ///< Vehicle heading, NAN for none
 
     anchorPoint.x:  vehicleItem.width  / 2
     anchorPoint.y:  vehicleItem.height / 2
