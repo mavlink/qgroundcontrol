@@ -1,0 +1,5 @@
+import QtQml
+
+Instantiator {
+
+}

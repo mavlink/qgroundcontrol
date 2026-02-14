@@ -140,6 +140,11 @@ add_qgc_test(TransectStyleComplexItemTest LABELS Unit MissionManager RESOURCE_LO
 # add_qgc_test(MessageBoxTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
+# QmlControls
+# ----------------------------------------------------------------------------
+add_subdirectory(QmlControls)
+
+# ----------------------------------------------------------------------------
 # QtLocationPlugin
 # ----------------------------------------------------------------------------
 add_subdirectory(QtLocationPlugin)

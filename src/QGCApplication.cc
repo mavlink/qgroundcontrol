@@ -250,7 +250,8 @@ void QGCApplication::_initForNormalAppBoot()
 {
     _initVideo(); // GStreamer must be initialized before QmlEngine
 
-    QQuickStyle::setStyle("Basic");
+    QQuickStyle::setFallbackStyle("Basic");
+    QQuickStyle::setStyle("QGCBasic");
     QGCCorePlugin::instance()->init();
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();

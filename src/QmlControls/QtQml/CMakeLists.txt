@@ -1,0 +1,11 @@
+set(QGC_QT_QML_QML_FILES
+    QtQml/QGCBinding.qml
+    QtQml/QGCComponent.qml
+    QtQml/QGCConnections.qml
+    QtQml/QGCInstantiator.qml
+    QtQml/QGCListElement.qml
+    QtQml/QGCListModel.qml
+    QtQml/QGCQtObject.qml
+    QtQml/QGCTimer.qml
+    QtQml/QGCWorkerScript.qml
+)

@@ -75,6 +75,11 @@ set_source_files_properties(ScreenTools.qml PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE
 )
 
+include(QtQuickControls/CMakeLists.txt)
+include(QtQuick/CMakeLists.txt)
+include(QtQml/CMakeLists.txt)
+include(Styles/CMakeLists.txt)
+
 qt_add_qml_module(QGroundControlControlsModule
     URI QGroundControl.Controls
     VERSION 1.0
@@ -126,6 +131,9 @@ qt_add_qml_module(QGroundControlControlsModule
         PreFlightCheckGroup.qml
         PreFlightCheckModel.qml
         QGCButton.qml
+        ${QGC_QT_QUICK_CONTROLS_QML_FILES}
+        ${QGC_QT_QUICK_QML_FILES}
+        ${QGC_QT_QML_QML_FILES}
         QGCCheckBox.qml
         QGCCheckBoxSlider.qml
         QGCColoredImage.qml
@@ -141,20 +149,15 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCListView.qml
         QGCMapLabel.qml
         QGCMarqueeLabel.qml
-        QGCMenu.qml
-        QGCMenuItem.qml
-        QGCMenuSeparator.qml
         QGCMouseArea.qml
         QGCMovableItem.qml
         QGCOptionsComboBox.qml
-        QGCPageIndicator.qml
         QGCPopupDialog.qml
         QGCPopupDialogFactory.qml
         QGCRadioButton.qml
         QGCRoundButton.qml
         QGCSimpleMessageDialog.qml
         QGCSlider.qml
-        QGCSwipeView.qml
         QGCTabBar.qml
         QGCTabButton.qml
         QGCTextField.qml
@@ -249,6 +252,20 @@ qt_add_qml_module(QGroundControlControlsModule
         OfflineMapEditor.qml
 
         ScreenTools.qml
+    NO_PLUGIN
+)
+
+# ----------------------------------------------------------------------------
+# Qt Quick Controls Custom Style
+# ----------------------------------------------------------------------------
+qt_add_library(QGCBasicStyleModule STATIC)
+
+qt_add_qml_module(QGCBasicStyleModule
+    URI QGCBasic
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        ${QGC_QGCBASIC_STYLE_QML_FILES}
     NO_PLUGIN
 )
 

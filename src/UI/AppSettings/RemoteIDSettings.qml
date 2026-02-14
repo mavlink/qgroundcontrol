@@ -48,9 +48,9 @@ SettingsPage {
     property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
 
     // GPS properties
-    property var    gcsPosition:        QGroundControl.qgcPositionManger.gcsPosition
-    property real   gcsHeading:         QGroundControl.qgcPositionManger.gcsHeading
-    property real   gcsHDOP:            QGroundControl.qgcPositionManger.gcsPositionHorizontalAccuracy
+    property var    gcsPosition:        QGroundControl.qgcPositionManager.gcsPosition
+    property real   gcsHeading:         QGroundControl.qgcPositionManager.gcsHeading
+    property real   gcsHDOP:            QGroundControl.qgcPositionManager.gcsPositionHorizontalAccuracy
     property string gpsDisabled:        "Disabled"
     property string gpsUdpPort:         "UDP Port"
 
