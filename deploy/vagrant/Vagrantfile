@@ -83,7 +83,7 @@ Vagrant.configure(2) do |config|
      sudo apt-get install -y python3-pip python3-venv python3-dev
 
      # use common package installation:
-     /usr/bin/env bash /vagrant/tools/setup/install-dependencies-debian.sh
+     python3 /vagrant/tools/setup/install_dependencies.py --platform debian
 
      sudo systemctl set-default graphical.target
 

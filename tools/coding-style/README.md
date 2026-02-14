@@ -78,8 +78,8 @@ Use clang-tidy for static analysis:
 
 ```bash
 # Analyze changed files
-./tools/analyze.sh
+./tools/analyze.py
 
 # Analyze all files
-./tools/analyze.sh --all
+./tools/analyze.py --all
 ```

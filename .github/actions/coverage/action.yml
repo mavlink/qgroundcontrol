@@ -21,6 +21,18 @@ inputs:
     description: Codecov flags (comma-separated)
     required: false
     default: unittests
+  pr-number:
+    description: Pull request number to post comment (optional)
+    required: false
+    default: ''
+  baseline-xml:
+    description: Path to baseline coverage XML for comparison (optional)
+    required: false
+    default: ''
+  comment-tag:
+    description: Tag for updating existing PR comment
+    required: false
+    default: coverage-report
 
 runs:
   using: composite
@@ -68,3 +80,19 @@ runs:
           ${{ inputs.build-dir }}/coverage.html
           ${{ inputs.build-dir }}/coverage.*.html
         retention-days: ${{ inputs.retention-days }}
+
+    - name: Generate PR comment
+      if: inputs.pr-number != ''
+      shell: bash
+      env:
+        COVERAGE_XML: ${{ inputs.build-dir }}/coverage.xml
+        BASELINE_XML: ${{ inputs.baseline-xml }}
+      run: python3 "${{ github.workspace }}/.github/scripts/coverage-comment.py"
+
+    - name: Post PR comment
+      if: inputs.pr-number != ''
+      uses: thollander/actions-comment-pull-request@v3
+      with:
+        pr-number: ${{ inputs.pr-number }}
+        comment-tag: ${{ inputs.comment-tag }}
+        file-path: coverage-comment.md

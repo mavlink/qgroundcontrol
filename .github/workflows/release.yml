@@ -90,6 +90,10 @@ jobs:
     if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Harden Runner
@@ -126,6 +130,34 @@ jobs:
 
       - name: List artifacts
         run: find artifacts -type f | head -50 || echo "No artifacts found"
+
+      - name: Attest Linux AppImage
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl*.AppImage
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
+      - name: Attest macOS DMG
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl.dmg
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
+      - name: Attest Windows EXE
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl*.exe
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
+
+      - name: Attest Android APK
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: artifacts/**/QGroundControl.apk
+          sbom-path: sbom.spdx.json
+        continue-on-error: true
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2

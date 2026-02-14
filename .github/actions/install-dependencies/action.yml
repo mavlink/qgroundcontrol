@@ -24,56 +24,60 @@ runs:
   steps:
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
-      shell: pwsh
+      uses: nick-fields/retry@v3
       env:
-        GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
-        INSTALL_GSTREAMER: ${{ inputs.gstreamer }}
-        INSTALL_VULKAN: ${{ inputs.vulkan }}
-      run: |
-        $params = @{}
-        if ($env:GSTREAMER_VERSION) {
-          $params['GStreamerVersion'] = $env:GSTREAMER_VERSION
-        }
-        if ($env:INSTALL_GSTREAMER -ne 'true') {
-          $params['SkipGStreamer'] = $true
-        }
-        if ($env:INSTALL_VULKAN -eq 'true') {
-          $params['InstallVulkan'] = $true
-        }
-        $workspace = $env:GITHUB_WORKSPACE
-        if (-not $workspace) {
-          $workspace = Resolve-Path "$PSScriptRoot/../.."
-        }
-        $scriptPath = Join-Path $workspace 'tools/setup/install-dependencies-windows.ps1'
-        & $scriptPath @params
+        INPUT_GSTREAMER: ${{ inputs.gstreamer }}
+        INPUT_GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
+        INPUT_VULKAN: ${{ inputs.vulkan }}
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        shell: pwsh
+        command: |
+          $params = @{}
+          if ($env:INPUT_GSTREAMER_VERSION) {
+            $params['GStreamerVersion'] = $env:INPUT_GSTREAMER_VERSION
+          }
+          if ($env:INPUT_GSTREAMER -ne 'true') {
+            $params['SkipGStreamer'] = $true
+          }
+          if ($env:INPUT_VULKAN -eq 'true') {
+            $params['InstallVulkan'] = $true
+          }
+          & ./tools/setup/install-dependencies-windows.ps1 @params
 
     - name: Install dependencies (Linux)
       if: runner.os == 'Linux'
-      shell: bash
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        command: |
+          sudo python3 tools/setup/install_dependencies.py --platform debian
+
+    - name: Install extra packages (Linux)
+      if: runner.os == 'Linux' && inputs.extra-packages != ''
+      uses: nick-fields/retry@v3
       env:
         EXTRA_PACKAGES: ${{ inputs.extra-packages }}
-      run: |
-        if [ -f "./tools/setup/install-dependencies-debian.sh" ]; then
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
-        fi
-        if [ -n "$EXTRA_PACKAGES" ]; then
-          # Validate package names to prevent command injection
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: |
           for pkg in $EXTRA_PACKAGES; do
             if [[ ! "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9.+-]*$ ]]; then
               echo "Error: Invalid package name '$pkg'" >&2
               exit 1
             fi
           done
-          # shellcheck disable=SC2086  # Word splitting is intentional for package list
+          # shellcheck disable=SC2086
           sudo apt-get install -y $EXTRA_PACKAGES
-        fi
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
-      shell: bash
-      run: |
-        if [ -f "./tools/setup/install-dependencies-macos.sh" ]; then
-          chmod a+x ./tools/setup/install-dependencies-macos.sh
-          ./tools/setup/install-dependencies-macos.sh
-        fi
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        command: |
+          python3 tools/setup/install_dependencies.py --platform macos
