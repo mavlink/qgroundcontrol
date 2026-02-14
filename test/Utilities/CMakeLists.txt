@@ -10,6 +10,7 @@ add_subdirectory(Geo)
 add_subdirectory(Network)
 add_subdirectory(Parsing)
 add_subdirectory(Platform)
+add_subdirectory(StateMachine)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE

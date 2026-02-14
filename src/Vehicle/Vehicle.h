@@ -60,6 +60,7 @@ class QGCCameraManager;
 class RallyPointManager;
 class RemoteIDManager;
 class RequestMessageTest;
+class RetryableRequestMessageStateTest;
 class SendMavCommandWithHandlerTest;
 class SendMavCommandWithSignallingTest;
 class StandardModes;
@@ -98,6 +99,7 @@ class Vehicle : public VehicleFactGroup
     friend class SendMavCommandWithSignallingTest;  // Unit test
     friend class SendMavCommandWithHandlerTest;     // Unit test
     friend class RequestMessageTest;                // Unit test
+    friend class RetryableRequestMessageStateTest;  // Unit test
 #endif
     friend class GimbalController;                  // Allow GimbalController to call _addFactGroup
 
@@ -1191,8 +1193,9 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     static constexpr int _mavCommandAckTimeoutMSecsHighLatency = 120000;
 
 public:
-    /// Ack timeout used in unit tests (much shorter for faster tests)
-    static constexpr int kTestMavCommandAckTimeoutMs = 100;
+    /// Ack timeout used in unit tests. Increased from 100ms to accommodate ASan/UBSan
+    /// scheduling jitter which can delay ack processing by >100ms on loaded CI runners.
+    static constexpr int kTestMavCommandAckTimeoutMs = 500;
     /// Maximum wait time for mav command in unit tests (all retries + overhead)
     static constexpr int kTestMavCommandMaxWaitMs = kTestMavCommandAckTimeoutMs * _mavCommandMaxRetryCount * 2;
 

@@ -25,6 +25,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Ensure pip available for Qt installer
+      shell: bash
+      run: python3 -m ensurepip --upgrade 2>/dev/null || python3 -m pip --version 2>/dev/null || true
     - name: Install Qt ${{ inputs.version }}
       uses: jurplel/install-qt-action@v4
       with:

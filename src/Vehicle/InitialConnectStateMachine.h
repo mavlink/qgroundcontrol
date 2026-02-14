@@ -1,75 +1,82 @@
 #pragma once
 
-#include "StateMachine.h"
+#include "QGCStateMachine.h"
 #include "MAVLinkLib.h"
-#include "Vehicle.h"
 
 #include <QtCore/QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
 
-class InitialConnectStateMachine : public StateMachine
+class Vehicle;
+class SkippableAsyncState;
+class AsyncFunctionState;
+class RetryableRequestMessageState;
+class RetryState;
+
+/// State machine for initial vehicle connection sequence.
+/// Handles requesting autopilot version, standard modes, component info,
+/// parameters, missions, geofence, and rally points in sequence.
+///
+/// Uses QGCStateMachine's built-in weighted progress tracking where different
+/// states contribute different amounts to the overall progress (e.g., parameter
+/// loading takes longer than version request).
+class InitialConnectStateMachine : public QGCStateMachine
 {
     Q_OBJECT
 
 public:
-    InitialConnectStateMachine(Vehicle *vehicle, QObject *parent = nullptr);
-    ~InitialConnectStateMachine();
+    explicit InitialConnectStateMachine(Vehicle* vehicle, QObject* parent = nullptr);
+    ~InitialConnectStateMachine() override;
 
-    // Overrides from StateMachine
-    int             stateCount      (void) const final;
-    const StateFn*  rgStates        (void) const final;
-    void            statesCompleted (void) const final;
-
-    void advance() override;
-
-signals:
-    void progressUpdate(float progress);
+    void start();
 
 private slots:
-    void gotProgressUpdate(double progressValue);
-    void standardModesRequestCompleted();
+    void _onSubProgressUpdate(double progressValue);
 
 private:
-    static void _stateRequestAutopilotVersion           (StateMachine* stateMachine);
-    static void _stateRequestCompInfo                   (StateMachine* stateMachine);
-    static void _stateRequestStandardModes              (StateMachine* stateMachine);
-    static void _stateRequestCompInfoComplete           (void* requestAllCompleteFnData);
-    static void _stateRequestParameters                 (StateMachine* stateMachine);
-    static void _stateRequestMission                    (StateMachine* stateMachine);
-    static void _stateRequestGeoFence                   (StateMachine* stateMachine);
-    static void _stateRequestRallyPoints                (StateMachine* stateMachine);
-    static void _stateSignalInitialConnectComplete      (StateMachine* stateMachine);
+    // State creation and wiring
+    void _createStates();
+    void _wireTransitions();
+    void _wireProgressTracking();
+    void _wireTimeoutHandling();
 
-    static void _autopilotVersionRequestMessageHandler  (void* resultHandlerData, MAV_RESULT commandResult, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    // State callbacks
+    void _handleAutopilotVersionSuccess(const mavlink_message_t& message);
+    void _handleAutopilotVersionFailure();
+    void _requestStandardModes(AsyncFunctionState* state);
+    void _requestCompInfo(AsyncFunctionState* state);
+    void _requestParameters(AsyncFunctionState* state);
+    void _onParametersReady(bool ready);
+    void _requestMission(SkippableAsyncState* state);
+    void _requestGeoFence(SkippableAsyncState* state);
+    void _requestRallyPoints(SkippableAsyncState* state);
+    void _signalComplete();
 
-    float _progress(float subProgress = 0.f);
+    // Skip predicates
+    bool _shouldSkipAutopilotVersionRequest() const;
+    bool _shouldSkipForLinkType() const;
+    bool _hasPrimaryLink() const;
 
-    Vehicle* _vehicle;
+    // State pointers for wiring
+    RetryableRequestMessageState* _stateAutopilotVersion = nullptr;
+    AsyncFunctionState* _stateStandardModes = nullptr;
+    AsyncFunctionState* _stateCompInfo = nullptr;
+    AsyncFunctionState* _stateParameters = nullptr;
+    SkippableAsyncState* _stateMission = nullptr;
+    SkippableAsyncState* _stateGeoFence = nullptr;
+    SkippableAsyncState* _stateRallyPoints = nullptr;
+    RetryState* _stateComplete = nullptr;
+    QGCFinalState* _stateFinal = nullptr;
 
-    int _progressWeightTotal;
+    // Timeout handling with retry
+    static constexpr int _maxRetries = 1;
 
-    static constexpr const StateMachine::StateFn _rgStates[] = {
-        _stateRequestAutopilotVersion,
-        _stateRequestStandardModes,
-        _stateRequestCompInfo,
-        _stateRequestParameters,
-        _stateRequestMission,
-        _stateRequestGeoFence,
-        _stateRequestRallyPoints,
-        _stateSignalInitialConnectComplete
-    };
-
-    static constexpr const int _rgProgressWeights[] = {
-        1, //_stateRequestAutopilotVersion
-        1, //_stateRequestStandardModes
-        5, //_stateRequestCompInfo
-        5, //_stateRequestParameters
-        2, //_stateRequestMission
-        1, //_stateRequestGeoFence
-        1, //_stateRequestRallyPoints
-        1, //_stateSignalInitialConnectComplete
-    };
-
-    static constexpr int _cStates = sizeof(_rgStates) / sizeof(_rgStates[0]);
+    // Timeout values (ms)
+    static constexpr int _timeoutAutopilotVersion = 5000;
+    static constexpr int _timeoutStandardModes = 5000;
+    static constexpr int _timeoutCompInfo = 30000;
+    static constexpr int _timeoutParameters = 60000;
+    static constexpr int _timeoutMission = 30000;
+    static constexpr int _timeoutGeoFence = 15000;
+    static constexpr int _timeoutRallyPoints = 15000;
 };

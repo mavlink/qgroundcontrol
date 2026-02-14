@@ -104,7 +104,7 @@ def create_venv(venv_path: Path) -> None:
     print(f"Creating virtual environment: {venv_path}")
 
     if has_uv():
-        subprocess.run(["uv", "venv", str(venv_path)], check=True)
+        subprocess.run(["uv", "venv", "--seed", str(venv_path)], check=True)
     else:
         subprocess.run([sys.executable, "-m", "venv", str(venv_path)], check=True)
 

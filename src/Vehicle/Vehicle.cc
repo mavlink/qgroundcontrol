@@ -1725,13 +1725,11 @@ void Vehicle::_gotProgressUpdate(float progressValue)
 void Vehicle::_firstMissionLoadComplete()
 {
     disconnect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_firstMissionLoadComplete);
-    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_firstGeoFenceLoadComplete()
 {
     disconnect(_geoFenceManager, &GeoFenceManager::loadComplete, this, &Vehicle::_firstGeoFenceLoadComplete);
-    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_firstRallyPointLoadComplete()
@@ -1739,7 +1737,6 @@ void Vehicle::_firstRallyPointLoadComplete()
     disconnect(_rallyPointManager, &RallyPointManager::loadComplete, this, &Vehicle::_firstRallyPointLoadComplete);
     _initialPlanRequestComplete = true;
     emit initialPlanRequestCompleteChanged(true);
-    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_parametersReady(bool parametersReady)
@@ -1753,7 +1750,6 @@ void Vehicle::_parametersReady(bool parametersReady)
     if (parametersReady) {
         disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
-        _initialConnectStateMachine->advance();
     }
 
     _multirotor_speed_limits_available = _firmwarePlugin->mulirotorSpeedLimitsAvailable(this);
@@ -3059,7 +3055,10 @@ void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message
 
         for (auto& compIdEntry : _requestMessageInfoMap) {
             for (auto requestMessageInfo : compIdEntry) {
-                if (requestMessageInfo->messageWaitElapsedTimer.isValid() && requestMessageInfo->messageWaitElapsedTimer.elapsed() > (qgcApp()->runningUnitTests() ? 50 : 1000)) {
+                // Unit-test environments can have enough scheduling jitter that a 50ms
+                // response deadline causes false request-message timeouts.
+                const int messageWaitTimeoutMs = qgcApp()->runningUnitTests() ? 500 : 1000;
+                if (requestMessageInfo->messageWaitElapsedTimer.isValid() && requestMessageInfo->messageWaitElapsedTimer.elapsed() > messageWaitTimeoutMs) {
                     auto resultHandler      = requestMessageInfo->resultHandler;
                     auto resultHandlerData  = requestMessageInfo->resultHandlerData;
 

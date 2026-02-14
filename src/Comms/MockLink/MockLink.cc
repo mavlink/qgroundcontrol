@@ -629,6 +629,8 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
 
 void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
 {
+    _receivedMavlinkMessageCountMap[msg.msgid]++;
+
     if (_missionItemHandler->handleMavlinkMessage(msg)) {
         return;
     }
@@ -1123,6 +1125,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     mavlink_msg_command_long_decode(&msg, &request);
 
     _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
+    _receivedMavCommandByCompCountMap[static_cast<MAV_CMD>(request.command)][request.target_component]++;
+    if (request.command == MAV_CMD_REQUEST_MESSAGE) {
+        _receivedRequestMessageByCompAndMsgCountMap[request.target_component][static_cast<int>(request.param1)]++;
+    }
 
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
