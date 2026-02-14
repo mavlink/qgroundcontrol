@@ -433,10 +433,6 @@ if(GlX11 IN_LIST GStreamer_FIND_COMPONENTS)
     find_gstreamer_component(GlX11 gstreamer-gl-x11-1.0)
 endif()
 
-if(App IN_LIST GStreamer_FIND_COMPONENTS)
-    find_gstreamer_component(App gstreamer-app-1.0)
-endif()
-
 # ============================================================================
 # Package Finalization
 # ============================================================================

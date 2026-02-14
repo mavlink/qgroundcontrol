@@ -17,7 +17,7 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         find_package(GStreamer
             REQUIRED
             COMPONENTS Core Base Video Gl GlPrototypes Rtsp
-            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11 App
+            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
         )
     endif()
 
@@ -52,10 +52,17 @@ if(TARGET gstqml6gl)
 
     # ============================================================================
     # GStreamer App Support (for WebSocket video via appsrc)
+    # Uses pkg_check_modules directly instead of FindGStreamer.cmake component
+    # to avoid IMPORTED target directory-scope visibility issues with autogen.
     # ============================================================================
 
-    if(TARGET GStreamer::App)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::App)
+    find_package(PkgConfig QUIET)
+    if(PKG_CONFIG_FOUND)
+        pkg_check_modules(GSTREAMER_APP QUIET IMPORTED_TARGET gstreamer-app-1.0)
+    endif()
+    if(TARGET PkgConfig::GSTREAMER_APP)
+        set_target_properties(PkgConfig::GSTREAMER_APP PROPERTIES IMPORTED_GLOBAL TRUE)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE PkgConfig::GSTREAMER_APP)
         target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_APP_AVAILABLE)
 
         target_sources(${CMAKE_PROJECT_NAME}
