@@ -147,6 +147,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
 
     // Exit coordinate is the same as entrance coordinate
+    connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::entryCoordinateChanged);
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::exitCoordinateChanged);
 
     // The following changes may also change friendlyEditAllowed
@@ -1102,6 +1103,10 @@ QGeoCoordinate SimpleMissionItem::coordinate(void) const
     } else {
         return QGeoCoordinate(_missionItem.param5(), _missionItem.param6());
     }
+}
+
+double SimpleMissionItem::editableAlt() const {
+    return _missionItem.param7();
 }
 
 double SimpleMissionItem::amslEntryAlt(void) const

@@ -40,14 +40,31 @@ EditPositionDialogController::~EditPositionDialogController()
 
 void EditPositionDialogController::setCoordinate(QGeoCoordinate coordinate)
 {
-    if (coordinate != _coordinate) {
-        _coordinate = coordinate;
-        emit coordinateChanged(coordinate);
+    if (!coordinate.isValid()) {
+        qCWarning(EditPositionDialogControllerLog) << "Attempt to set invalid coordinate";
+        return;
+    }
+
+    if (coordinate == _coordinate) {
+        return;
+    }
+
+    const bool wasInvalid = !_coordinate.isValid();
+    _coordinate = coordinate;
+
+    // Do not emit on the initial invalid->valid transition to prevent
+    // onCoordinateChanged handlers from firing on initial dialog setup.
+    if (!wasInvalid) {
+        emit coordinateChanged(_coordinate);
     }
 }
 
 void EditPositionDialogController::initValues()
 {
+    if (!_coordinate.isValid()) {
+        return;
+    }
+
     _latitudeFact->setRawValue(_coordinate.latitude());
     _longitudeFact->setRawValue(_coordinate.longitude());
 
@@ -68,17 +85,19 @@ void EditPositionDialogController::initValues()
 
 void EditPositionDialogController::setFromGeo()
 {
-    _coordinate.setLatitude(_latitudeFact->rawValue().toDouble());
-    _coordinate.setLongitude(_longitudeFact->rawValue().toDouble());
-    emit coordinateChanged(_coordinate);
+    QGeoCoordinate newCoordinate = _coordinate;
+    newCoordinate.setLatitude(_latitudeFact->rawValue().toDouble());
+    newCoordinate.setLongitude(_longitudeFact->rawValue().toDouble());
+    setCoordinate(newCoordinate);
 }
 
 void EditPositionDialogController::setFromUTM()
 {
     qCDebug(EditPositionDialogControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1);
-    if (QGCGeo::convertUTMToGeo(_eastingFact->rawValue().toDouble(), _northingFact->rawValue().toDouble(), _zoneFact->rawValue().toInt(), _hemisphereFact->rawValue().toInt() == 1, _coordinate)) {
-        qCDebug(EditPositionDialogControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1) << _coordinate;
-        emit coordinateChanged(_coordinate);
+    QGeoCoordinate newCoordinate;
+    if (QGCGeo::convertUTMToGeo(_eastingFact->rawValue().toDouble(), _northingFact->rawValue().toDouble(), _zoneFact->rawValue().toInt(), _hemisphereFact->rawValue().toInt() == 1, newCoordinate)) {
+        qCDebug(EditPositionDialogControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1) << newCoordinate;
+        setCoordinate(newCoordinate);
     } else {
         initValues();
     }
@@ -86,8 +105,9 @@ void EditPositionDialogController::setFromUTM()
 
 void EditPositionDialogController::setFromMGRS()
 {
-    if (QGCGeo::convertMGRSToGeo(_mgrsFact->rawValue().toString(), _coordinate)) {
-        emit coordinateChanged(_coordinate);
+    QGeoCoordinate newCoordinate;
+    if (QGCGeo::convertMGRSToGeo(_mgrsFact->rawValue().toString(), newCoordinate)) {
+        setCoordinate(newCoordinate);
     } else {
         initValues();
     }

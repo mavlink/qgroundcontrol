@@ -41,6 +41,12 @@ void LandingComplexItem::_init(void)
 
     connect(useLoiterToAlt(),           &Fact::rawValueChanged,                             this, &LandingComplexItem::_recalcFromApproachModeChange);
 
+    connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::entryCoordinateChanged);
+    connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::exitCoordinateChanged);
+
+    // The main coordinate is aliased to the exit (landing point) because that's the core of this complex item and the master for all transformations
+    connect(this,                       &LandingComplexItem::exitCoordinateChanged,         this, &LandingComplexItem::coordinateChanged);
+
     connect(this,                       &LandingComplexItem::finalApproachCoordinateChanged,this, &LandingComplexItem::_recalcFromCoordinateChange);
     connect(this,                       &LandingComplexItem::landingCoordinateChanged,      this, &LandingComplexItem::_recalcFromCoordinateChange);
 
@@ -109,11 +115,9 @@ void LandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
     if (coordinate != _landingCoordinate) {
         _landingCoordinate = coordinate;
         if (_landingCoordSet) {
-            emit exitCoordinateChanged(coordinate);
             emit landingCoordinateChanged(coordinate);
         } else {
             _ignoreRecalcSignals = true;
-            emit exitCoordinateChanged(coordinate);
             emit landingCoordinateChanged(coordinate);
             _ignoreRecalcSignals = false;
             _landingCoordSet = true;
@@ -127,7 +131,6 @@ void LandingComplexItem::setFinalApproachCoordinate(const QGeoCoordinate& coordi
 {
     if (coordinate != _finalApproachCoordinate) {
         _finalApproachCoordinate = coordinate;
-        emit coordinateChanged(coordinate);
         emit finalApproachCoordinateChanged(coordinate);
     }
 }
@@ -176,7 +179,6 @@ void LandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
         _ignoreRecalcSignals = true;
         emit slopeStartCoordinateChanged(_slopeStartCoordinate);
         emit finalApproachCoordinateChanged(_finalApproachCoordinate);
-        emit coordinateChanged(_finalApproachCoordinate);
         _calcGlideSlope();
         _ignoreRecalcSignals = false;
     }
@@ -219,7 +221,6 @@ void LandingComplexItem::_recalcFromRadiusChange(void)
 
             _ignoreRecalcSignals = true;
             emit finalApproachCoordinateChanged(_finalApproachCoordinate);
-            emit coordinateChanged(_finalApproachCoordinate);
             _ignoreRecalcSignals = false;
         }
     }
@@ -252,7 +253,6 @@ void LandingComplexItem::_recalcFromApproachModeChange(void)
 
         _ignoreRecalcSignals = true;
         emit finalApproachCoordinateChanged(_finalApproachCoordinate);
-        emit coordinateChanged(_finalApproachCoordinate);
         _calcGlideSlope();
         _ignoreRecalcSignals = false;
     }
@@ -656,6 +656,10 @@ void LandingComplexItem::setSequenceNumber(int sequenceNumber)
     }
 }
 
+double LandingComplexItem::editableAlt() const {
+    return finalApproachAltitude()->rawValue().toDouble();
+}
+
 double LandingComplexItem::amslEntryAlt(void) const
 {
     return finalApproachAltitude()->rawValue().toDouble() + (_altitudesAreRelative ? _missionController->plannedHomePosition().altitude() : 0);
@@ -676,7 +680,6 @@ void LandingComplexItem::_updateFinalApproachCoodinateAltitudeFromFact(void)
 {
     _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
     emit finalApproachCoordinateChanged(_finalApproachCoordinate);
-    emit coordinateChanged(_finalApproachCoordinate);
 }
 
 void LandingComplexItem::_updateLandingCoodinateAltitudeFromFact(void)
@@ -822,7 +825,9 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
     _ignoreRecalcSignals    = false;
 
     _recalcFromCoordinateChange();
-    emit coordinateChanged(this->coordinate());    // This will kick off terrain query
+    // These will kick off terrain query
+    emit finalApproachCoordinateChanged(_finalApproachCoordinate);
+    emit landingCoordinateChanged(_landingCoordinate);
 
     return true;
 }
