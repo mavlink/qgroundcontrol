@@ -211,6 +211,6 @@ jobs:
           name: ${{ inputs.tool }}-output
           path: |
             ${{ runner.temp }}/build/iwyu-output.txt
-            ${{ runner.temp }}/build/Debug/sanitizer-output.txt
+            ${{ runner.temp }}/build/sanitizer-output.txt
           if-no-files-found: ignore
           retention-days: 7

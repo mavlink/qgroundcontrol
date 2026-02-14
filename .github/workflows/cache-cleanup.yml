@@ -30,12 +30,14 @@ jobs:
 
       - name: List caches
         id: list
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
         run: |
           echo "## Cache Summary" >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ -n "${{ inputs.branch }}" ]]; then
-            echo "Branch filter: \`${{ inputs.branch }}\`" >> "$GITHUB_STEP_SUMMARY"
-            CACHES=$(gh actions-cache list -R "${{ github.repository }}" -B "${{ inputs.branch }}" --order desc --limit 100)
+          if [[ -n "$INPUT_BRANCH" ]]; then
+            echo "Branch filter: \`$INPUT_BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+            CACHES=$(gh actions-cache list -R "${{ github.repository }}" -B "$INPUT_BRANCH" --order desc --limit 100)
           else
             CACHES=$(gh actions-cache list -R "${{ github.repository }}" --order desc --limit 100)
           fi
@@ -63,13 +65,15 @@ jobs:
 
       - name: Delete caches
         if: inputs.dry-run == false && steps.list.outputs.count != '0'
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
         run: |
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## Deletion Results" >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ -n "${{ inputs.branch }}" ]]; then
-            KEYS=$(gh actions-cache list -R "${{ github.repository }}" -B "${{ inputs.branch }}" --limit 100 | cut -f1)
-            BRANCH_ARG="-B ${{ inputs.branch }}"
+          if [[ -n "$INPUT_BRANCH" ]]; then
+            KEYS=$(gh actions-cache list -R "${{ github.repository }}" -B "$INPUT_BRANCH" --limit 100 | cut -f1)
+            BRANCH_ARG="-B $INPUT_BRANCH"
           else
             KEYS=$(gh actions-cache list -R "${{ github.repository }}" --limit 100 | cut -f1)
             BRANCH_ARG=""
