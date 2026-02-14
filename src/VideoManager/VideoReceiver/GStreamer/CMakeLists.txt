@@ -17,7 +17,7 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         find_package(GStreamer
             REQUIRED
             COMPONENTS Core Base Video Gl GlPrototypes Rtsp
-            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
+            OPTIONAL_COMPONENTS GlEgl GlWayland GlX11 App
         )
     endif()
 
@@ -49,6 +49,30 @@ if(TARGET gstqml6gl)
     add_subdirectory(gstqgc)
 
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
+
+    # ============================================================================
+    # GStreamer App Support (for WebSocket video via appsrc)
+    # ============================================================================
+
+    if(TARGET GStreamer::App)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::App)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_APP_AVAILABLE)
+
+        target_sources(${CMAKE_PROJECT_NAME}
+            PRIVATE
+                QGCWebSocketVideoSource.cc
+                QGCWebSocketVideoSource.h
+        )
+
+        find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
+            COMPONENTS WebSockets
+        )
+        if(TARGET Qt6::WebSockets)
+            target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::WebSockets)
+        else()
+            message(WARNING "Qt6::WebSockets not found - WebSocket video streaming will not be available")
+        endif()
+    endif()
 
     # ============================================================================
     # Platform-Specific GStreamer Installation

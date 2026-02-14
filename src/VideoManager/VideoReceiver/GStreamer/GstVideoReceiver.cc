@@ -18,6 +18,14 @@
 
 #include <gst/gst.h>
 
+#ifdef QGC_GST_APP_AVAILABLE
+#include "QGCWebSocketVideoSource.h"
+#include <gst/app/gstappsrc.h>
+#endif
+
+#include "SettingsManager.h"
+#include "VideoSettings.h"
+
 QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GstVideoReceiver")
 
 GstVideoReceiver::GstVideoReceiver(QObject *parent)
@@ -130,6 +138,8 @@ void GstVideoReceiver::start(uint32_t timeout)
         g_object_set(_pipeline,
                      "message-forward", TRUE,
                      nullptr);
+
+        _captureStreamSettings();
 
         _source = _makeSource(_uri);
         if (!_source) {
@@ -702,6 +712,16 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
                              nullptr);
                 gst_clear_caps(&caps);
             }
+        } else if (input.startsWith(QStringLiteral("http://"), Qt::CaseInsensitive) ||
+                   input.startsWith(QStringLiteral("https://"), Qt::CaseInsensitive)) {
+            return _makeHttpSource(input);
+        } else if (input.startsWith(QStringLiteral("ws://"), Qt::CaseInsensitive) ||
+                   input.startsWith(QStringLiteral("wss://"), Qt::CaseInsensitive)) {
+#ifdef QGC_GST_APP_AVAILABLE
+            return _makeWebSocketSource(input);
+#else
+            qCCritical(GstVideoReceiverLog) << "WebSocket video requires GStreamer App support (gstapp). Not available in this build.";
+#endif
         } else {
             qCDebug(GstVideoReceiverLog) << "URI is not recognized";
         }
@@ -789,6 +809,189 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     gst_clear_object(&source);
 
     return srcbin;
+}
+
+GstElement *GstVideoReceiver::_makeHttpSource(const QString &uri)
+{
+    qCDebug(GstVideoReceiverLog) << "Creating HTTP MJPEG source for:" << uri;
+
+    GstElement *source = gst_element_factory_make("souphttpsrc", "source");
+    if (!source) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('souphttpsrc') failed";
+        return nullptr;
+    }
+
+    g_object_set(source,
+                 "location", uri.toUtf8().constData(),
+                 "is-live", TRUE,
+                 "timeout", _httpSettings.timeout,
+                 "retries", _httpSettings.retryAttempts,
+                 "blocksize", _httpSettings.bufferSize,
+                 "keep-alive", _httpSettings.keepAlive ? TRUE : FALSE,
+                 "user-agent", _httpSettings.userAgent.toUtf8().constData(),
+                 nullptr);
+
+    GstElement *demux = gst_element_factory_make("multipartdemux", nullptr);
+    if (!demux) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('multipartdemux') failed";
+        gst_object_unref(source);
+        return nullptr;
+    }
+
+    g_object_set(demux, "single-stream", TRUE, nullptr);
+
+    GstElement *jpegparse = gst_element_factory_make("jpegparse", nullptr);
+    if (!jpegparse) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('jpegparse') failed";
+        gst_object_unref(source);
+        gst_object_unref(demux);
+        return nullptr;
+    }
+
+    GstElement *bin = gst_bin_new("sourcebin");
+    if (!bin) {
+        qCCritical(GstVideoReceiverLog) << "gst_bin_new('sourcebin') failed";
+        gst_object_unref(source);
+        gst_object_unref(demux);
+        gst_object_unref(jpegparse);
+        return nullptr;
+    }
+
+    gst_bin_add_many(GST_BIN(bin), source, demux, jpegparse, nullptr);
+
+    if (!gst_element_link(source, demux)) {
+        qCCritical(GstVideoReceiverLog) << "Failed to link souphttpsrc to multipartdemux";
+        gst_object_unref(bin);
+        return nullptr;
+    }
+
+    struct PadLinkData {
+        GstElement *target;
+    };
+    auto *padData = new PadLinkData{jpegparse};
+
+    g_signal_connect_data(demux, "pad-added",
+        G_CALLBACK(+[](GstElement *, GstPad *pad, gpointer user_data) {
+            auto *data = static_cast<PadLinkData *>(user_data);
+            GstPad *sinkpad = gst_element_get_static_pad(data->target, "sink");
+            if (sinkpad) {
+                if (gst_pad_link(pad, sinkpad) != GST_PAD_LINK_OK) {
+                    qCWarning(GstVideoReceiverLog) << "Failed to link multipartdemux pad to jpegparse";
+                }
+                gst_object_unref(sinkpad);
+            }
+        }),
+        padData,
+        +[](gpointer data, GClosure *) { delete static_cast<PadLinkData *>(data); },
+        static_cast<GConnectFlags>(0));
+
+    GstPad *srcPad = gst_element_get_static_pad(jpegparse, "src");
+    if (srcPad) {
+        gst_element_add_pad(bin, gst_ghost_pad_new("src", srcPad));
+        gst_object_unref(srcPad);
+    }
+
+    return bin;
+}
+
+#ifdef QGC_GST_APP_AVAILABLE
+GstElement *GstVideoReceiver::_makeWebSocketSource(const QString &uri)
+{
+    qCDebug(GstVideoReceiverLog) << "Creating WebSocket source for:" << uri;
+
+    GstElement *appsrc = gst_element_factory_make("appsrc", "source");
+    if (!appsrc) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('appsrc') failed";
+        return nullptr;
+    }
+
+    GstCaps *caps = gst_caps_from_string("image/jpeg,framerate=0/1");
+    g_object_set(appsrc,
+                 "caps", caps,
+                 "is-live", TRUE,
+                 "do-timestamp", TRUE,
+                 "stream-type", 0,
+                 "format", GST_FORMAT_TIME,
+                 nullptr);
+    gst_caps_unref(caps);
+
+    GstElement *jpegdec = gst_element_factory_make("jpegdec", nullptr);
+    if (!jpegdec) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('jpegdec') failed";
+        gst_object_unref(appsrc);
+        return nullptr;
+    }
+
+    GstElement *videoconvert = gst_element_factory_make("videoconvert", nullptr);
+    if (!videoconvert) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('videoconvert') failed";
+        gst_object_unref(appsrc);
+        gst_object_unref(jpegdec);
+        return nullptr;
+    }
+
+    GstElement *bin = gst_bin_new("sourcebin");
+    if (!bin) {
+        qCCritical(GstVideoReceiverLog) << "gst_bin_new('sourcebin') failed";
+        gst_object_unref(appsrc);
+        gst_object_unref(jpegdec);
+        gst_object_unref(videoconvert);
+        return nullptr;
+    }
+
+    gst_object_ref(appsrc);
+
+    gst_bin_add_many(GST_BIN(bin), appsrc, jpegdec, videoconvert, nullptr);
+
+    if (!gst_element_link_many(appsrc, jpegdec, videoconvert, nullptr)) {
+        qCCritical(GstVideoReceiverLog) << "Failed to link WebSocket pipeline elements";
+        gst_object_unref(appsrc);
+        gst_object_unref(bin);
+        return nullptr;
+    }
+
+    GstPad *srcPad = gst_element_get_static_pad(videoconvert, "src");
+    if (srcPad) {
+        gst_element_add_pad(bin, gst_ghost_pad_new("src", srcPad));
+        gst_object_unref(srcPad);
+    }
+
+    const QUrl wsUrl(uri);
+    _wsSource = new QGCWebSocketVideoSource(wsUrl, appsrc, nullptr);
+    _wsSource->setTimeout(_wsSettings.timeout);
+    _wsSource->setReconnectDelay(_wsSettings.reconnectDelay);
+    _wsSource->setHeartbeatInterval(_wsSettings.heartbeat);
+
+    _wsSource->moveToThread(QCoreApplication::instance()->thread());
+
+    g_object_set_data_full(G_OBJECT(bin), "ws-source", _wsSource,
+        +[](gpointer data) {
+            auto *wsSource = static_cast<QGCWebSocketVideoSource *>(data);
+            QMetaObject::invokeMethod(wsSource, &QGCWebSocketVideoSource::stop, Qt::QueuedConnection);
+            wsSource->deleteLater();
+        });
+
+    gst_object_unref(appsrc);
+
+    QMetaObject::invokeMethod(_wsSource, &QGCWebSocketVideoSource::start, Qt::QueuedConnection);
+
+    return bin;
+}
+#endif
+
+void GstVideoReceiver::_captureStreamSettings()
+{
+    VideoSettings *settings = SettingsManager::instance()->videoSettings();
+
+    _httpSettings.timeout = settings->httpTimeout()->rawValue().toUInt();
+    _httpSettings.retryAttempts = settings->httpRetryAttempts()->rawValue().toUInt();
+    _httpSettings.bufferSize = settings->httpBufferSize()->rawValue().toUInt();
+    _httpSettings.keepAlive = settings->httpKeepAlive()->rawValue().toBool();
+    _httpSettings.userAgent = settings->httpUserAgent()->rawValue().toString();
+
+    _wsSettings.timeout = settings->websocketTimeout()->rawValue().toUInt();
+    _wsSettings.reconnectDelay = settings->websocketReconnectDelay()->rawValue().toUInt();
+    _wsSettings.heartbeat = settings->websocketHeartbeat()->rawValue().toUInt();
 }
 
 GstElement *GstVideoReceiver::_makeDecoder(GstCaps *caps, GstElement *videoSink)

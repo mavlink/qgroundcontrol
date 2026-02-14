@@ -20,6 +20,8 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+    videoSourceList.append(videoSourceHTTP);
+    videoSourceList.append(videoSourceWebSocket);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
@@ -76,6 +78,18 @@ DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
 DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+DECLARE_SETTINGSFACT(VideoSettings, httpTimeout)
+DECLARE_SETTINGSFACT(VideoSettings, httpRetryAttempts)
+DECLARE_SETTINGSFACT(VideoSettings, httpBufferSize)
+DECLARE_SETTINGSFACT(VideoSettings, httpKeepAlive)
+DECLARE_SETTINGSFACT(VideoSettings, httpUserAgent)
+DECLARE_SETTINGSFACT(VideoSettings, websocketTimeout)
+DECLARE_SETTINGSFACT(VideoSettings, websocketReconnectDelay)
+DECLARE_SETTINGSFACT(VideoSettings, websocketHeartbeat)
+DECLARE_SETTINGSFACT(VideoSettings, adaptiveQuality)
+DECLARE_SETTINGSFACT(VideoSettings, minQuality)
+DECLARE_SETTINGSFACT(VideoSettings, maxQuality)
+DECLARE_SETTINGSFACT(VideoSettings, websocketBufferFrames)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
@@ -175,6 +189,24 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
     return _tcpUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpUrl)
+{
+    if (!_httpUrlFact) {
+        _httpUrlFact = _createSettingsFact(httpUrlName);
+        connect(_httpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpUrlFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, websocketUrl)
+{
+    if (!_websocketUrlFact) {
+        _websocketUrlFact = _createSettingsFact(websocketUrlName);
+        connect(_websocketUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _websocketUrlFact;
+}
+
 bool VideoSettings::streamConfigured(void)
 {
     //-- First, check if it's autoconfigured
@@ -206,6 +238,16 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpUrl()->rawValue().toString();
         return !udpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If HTTP MJPEG, check for URL
+    if(vSource == videoSourceHTTP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for HTTP MJPEG Stream:" << httpUrl()->rawValue().toString();
+        return !httpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If WebSocket, check for URL
+    if(vSource == videoSourceWebSocket) {
+        qCDebug(VideoManagerLog) << "Testing configuration for WebSocket Stream:" << websocketUrl()->rawValue().toString();
+        return !websocketUrl()->rawValue().toString().isEmpty();
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {
