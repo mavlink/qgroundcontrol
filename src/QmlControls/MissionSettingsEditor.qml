@@ -104,7 +104,7 @@ Rectangle {
             text: qsTr("Apply New Altitude")
             visible: false
 
-            onClicked: mainWindow.showMessageDialog(qsTr("Apply New Altitude"),
+            onClicked: QGroundControl.showMessageDialog(root, qsTr("Apply New Altitude"),
                             qsTr("You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?"),
                             Dialog.Yes | Dialog.No,
                             function() { applyDefaultAltitudeButton.visible = false; _missionController.applyDefaultMissionAltitude() })

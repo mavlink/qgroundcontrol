@@ -43,7 +43,7 @@ Item {
         }
         QGCMenuItem {
             text:           qsTr("Reset all to firmware's defaults")
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
+            onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations."),
                                                          Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToDefaults() })
@@ -51,7 +51,7 @@ Item {
         QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
             visible:        !_activeVehicle.apmFirmware
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
+            onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults."),
                                                          Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToVehicleConfiguration() })
@@ -80,7 +80,7 @@ Item {
         QGCMenuSeparator { }
         QGCMenuItem {
             text:           qsTr("Reboot Vehicle")
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reboot Vehicle"),
+            onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reboot Vehicle"),
                                                          qsTr("Select Ok to reboot vehicle."),
                                                          Dialog.Cancel | Dialog.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
