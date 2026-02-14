@@ -30,6 +30,11 @@ Item {
         var dialog = props === undefined || props === null
             ? dialogComponent.createObject(dialogParent)
             : dialogComponent.createObject(dialogParent, props)
+
+        if (!dialog) {
+            console.warn("QGCPopupDialogFactory: Failed to create dialog from dialogComponent");
+            return null;
+        }
         dialog.open()
         return dialog
     }
