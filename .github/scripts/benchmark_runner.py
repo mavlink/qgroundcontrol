@@ -75,6 +75,9 @@ def parse_benchmark_output(output: str) -> list[dict]:
             elif unit == "secs":
                 value *= 1000000
                 unit = "usecs"
+            elif unit == "nsecs":
+                value /= 1000
+                unit = "usecs"
 
             results.append({"name": name, "unit": unit, "value": value})
 
@@ -95,7 +98,7 @@ def fallback_startup_benchmark(binary: Path, platform: str) -> list[dict]:
             env=env,
         )
         elapsed_ms = (time.monotonic() - start) * 1000
-        return [{"name": "Startup (list tests)", "unit": "ms", "value": elapsed_ms}]
+        return [{"name": "Startup (list tests)", "unit": "usecs", "value": elapsed_ms * 1000}]
     except Exception as e:
         print(f"Fallback benchmark failed: {e}")
         return []

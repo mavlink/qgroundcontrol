@@ -96,7 +96,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          fetch-depth: 1
+          fetch-depth: 0
           fetch-tags: true
 
       - name: Get build config
@@ -137,7 +137,7 @@ jobs:
             -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
             -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
             -DQT_ANDROID_SIGN_APK=${{ matrix.primary && env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }} \
-            -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
 
       - name: Build
         shell: bash
