@@ -8,6 +8,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 SettingsPage {
+    id:                             _root
     property var _linkManager:          QGroundControl.linkManager
     property var _autoConnectSettings:  QGroundControl.settingsManager.autoConnectSettings
 
@@ -154,7 +155,8 @@ SettingsPage {
 
                     QGCMouseArea {
                         fillItem:   parent
-                        onClicked:  mainWindow.showMessageDialog(
+                        onClicked:  QGroundControl.showMessageDialog(
+                                        _root,
                                         qsTr("Delete Link"),
                                         qsTr("Are you sure you want to delete '%1'?").arg(object.name),
                                         Dialog.Ok | Dialog.Cancel,

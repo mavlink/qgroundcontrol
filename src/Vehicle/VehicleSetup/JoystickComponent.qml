@@ -122,7 +122,8 @@ SetupPage {
                             if (joystickManager.joystickEnabledForVehicle(_activeVehicle)) {
                                 return;
                             }
-                            mainWindow.showMessageDialog(
+                            QGroundControl.showMessageDialog(
+                                        root,
                                         qsTr("Enable Joystick"),
                                         qsTr("%1 calibration is complete. Enable it now?").arg(_activeJoystick.name),
                                         Dialog.Yes | Dialog.No,

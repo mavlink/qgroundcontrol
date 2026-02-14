@@ -239,14 +239,14 @@ ColumnLayout {
             onClicked: {
                 if (text === qsTr("Calibrate")) {
                     if (controller.channelCount < controller.minChannelCount) {
-                        mainWindow.showMessageDialog(qsTr("Remote Not Ready"),
+                        QGroundControl.showMessageDialog(root, qsTr("Remote Not Ready"),
                                                         controller.channelCount == 0 ? qsTr("Please turn on remote.") :
                                                                                     (controller.channelCount < controller.minChannelCount ?
                                                                                             qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
                                                                                             qsTr("Ready to calibrate.")))
                         return
                     } else if (!controller.joystickMode) {
-                        mainWindow.showMessageDialog(qsTr("Zero Trims"),
+                        QGroundControl.showMessageDialog(root, qsTr("Zero Trims"),
                                                         qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
                                                             (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
                                                         Dialog.Ok,

@@ -687,7 +687,7 @@ SetupPage {
 
                         onClicked: {
                             if (controller.accelSetupNeeded) {
-                                mainWindow.showMessageDialog(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."))
+                                QGroundControl.showMessageDialog(sensorsPage, qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."))
                             } else {
                                 showOrientationsDialog(_calTypeCompass)
                             }
@@ -702,9 +702,9 @@ SetupPage {
 
                         onClicked: {
                             if (controller.accelSetupNeeded) {
-                                mainWindow.showMessageDialog(_levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."))
+                                QGroundControl.showMessageDialog(sensorsPage, _levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."))
                             } else {
-                                mainWindow.showMessageDialog(_levelHorizonText,
+                                QGroundControl.showMessageDialog(sensorsPage, _levelHorizonText,
                                                              qsTr("To level the horizon you need to place the vehicle in its level flight position and press Ok."),
                                                              Dialog.Cancel | Dialog.Ok,
                                                              function() { controller.levelHorizon() })
@@ -716,7 +716,7 @@ SetupPage {
                         width:      _buttonWidth
                         text:       qsTr("Gyro")
                         visible:    globals.activeVehicle && (globals.activeVehicle.multiRotor | globals.activeVehicle.rover | globals.activeVehicle.sub)
-                        onClicked:  mainWindow.showMessageDialog(qsTr("Calibrate Gyro"),
+                        onClicked:  QGroundControl.showMessageDialog(sensorsPage, qsTr("Calibrate Gyro"),
                                                                  qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.\n\nClick Ok to start calibration."),
                                                                  Dialog.Cancel | Dialog.Ok,
                                                                  function() { controller.calibrateGyro() })
@@ -725,7 +725,7 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       _calibratePressureText
-                        onClicked:  mainWindow.showMessageDialog(_calibratePressureText,
+                        onClicked:  QGroundControl.showMessageDialog(sensorsPage, _calibratePressureText,
                                                                  qsTr("Pressure calibration will set the %1 to zero at the current pressure reading. %2").arg(_altText).arg(_helpTextFW),
                                                                  Dialog.Cancel | Dialog.Ok,
                                                                  function() { controller.calibratePressure() })

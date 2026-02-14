@@ -4,6 +4,7 @@
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QJSValue>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlUnitsConversion.h"
@@ -137,6 +138,24 @@ public:
     Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
     Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
 
+    /// Shows a simple message dialog. The dialog is parented to owner and will automatically close
+    /// if the owner is destroyed, preventing orphaned dialogs that can cause crashes.
+    ///   @param owner          The QML item that owns this dialog. The dialog will be destroyed when this item is destroyed.
+    ///                             Typically mainWindow should not be used as the owner, instead use a more specific item such as the one that
+    ///                             triggered the dialog to ensure proper cleanup.
+    ///   @param title          Dialog title
+    ///   @param text           Dialog message text
+    ///   @param buttons        Dialog button flags (e.g. Dialog.Ok, Dialog.Yes | Dialog.No)
+    ///   @param acceptFunction Optional callback invoked when the dialog is accepted
+    ///   @param closeFunction  Optional callback invoked when the dialog is closed
+    Q_INVOKABLE void showMessageDialog(
+        QObject* owner,
+        const QString& title,
+        const QString& text,
+        int buttons = 1,
+        QJSValue acceptFunction = QJSValue(),
+        QJSValue closeFunction = QJSValue());
+
     // Property accessors
 
     static QString appName();
@@ -203,6 +222,7 @@ signals:
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
+    void showMessageDialogRequested     (QObject* owner, QString title, QString text, int buttons, QJSValue acceptFunction, QJSValue closeFunction);
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;

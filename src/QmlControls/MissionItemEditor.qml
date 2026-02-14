@@ -250,7 +250,7 @@ Rectangle {
                             if (missionItem.rawEdit && !missionItem.friendlyEditAllowed) {
                                 missionItem.rawEdit = false
                                 checked = false
-                                mainWindow.showMessageDialog(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
+                                QGroundControl.showMessageDialog(_root, qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
                             }
                             hamburgerMenuDropPanel.close()
                         }

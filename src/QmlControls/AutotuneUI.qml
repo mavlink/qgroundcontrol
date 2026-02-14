@@ -7,6 +7,7 @@ import QGroundControl.FactControls
 import QGroundControl.Controls
 
 ColumnLayout {
+    id:        _root
     spacing: ScreenTools.defaultFontPixelHeight
 
     property var  _activeVehicle:   globals.activeVehicle
@@ -19,7 +20,7 @@ ColumnLayout {
         text:      qsTr("Start AutoTune")
         enabled:   _activeVehicle.flying && !_activeVehicle.landing && !_autotuneManager.autotuneInProgress
 
-        onClicked: mainWindow.showMessageDialog(autotuneButton.text,
+        onClicked: QGroundControl.showMessageDialog(_root, autotuneButton.text,
                                                 qsTr("WARNING!\
         \n\nThe auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure! \
         \n\nBefore starting the auto-tuning process, make sure that: \

@@ -323,7 +323,8 @@ Item {
         function onShowAcquireGimbalControlPopup() {
             if(!acquirePopupConnection.isPopupOpen){
                 acquirePopupConnection.isPopupOpen = true;
-                mainWindow.showMessageDialog(
+                QGroundControl.showMessageDialog(
+                    control,
                     "Request Gimbal Control?",
                     "Command not sent. Another user has control of the gimbal.",
                     Dialog.Yes | Dialog.No,
