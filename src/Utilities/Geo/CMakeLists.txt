@@ -94,6 +94,9 @@ endfunction()
 # GeographicLib Integration
 # ============================================================================
 
+set(_qgc_prev_skip_install_rules_geographiclib "${CMAKE_SKIP_INSTALL_RULES}")
+set(CMAKE_SKIP_INSTALL_RULES ON)
+
 CPMAddPackage(
     NAME geographiclib
     VERSION 2.7
@@ -116,6 +119,12 @@ CPMAddPackage(
         "DOCDIR OFF"
         "EXAMPLEDIR OFF"
 )
+
+set(CMAKE_SKIP_INSTALL_RULES "${_qgc_prev_skip_install_rules_geographiclib}")
+unset(_qgc_prev_skip_install_rules_geographiclib)
+if(DEFINED geographiclib_BINARY_DIR)
+    file(WRITE "${geographiclib_BINARY_DIR}/cmake_install.cmake" "# QGC stub: GeographicLib install rules are intentionally skipped\n")
+endif()
 
 if(NOT TARGET GeographicLib::GeographicLib AND TARGET GeographicLib_STATIC)
     add_library(GeographicLib::GeographicLib ALIAS GeographicLib_STATIC)
