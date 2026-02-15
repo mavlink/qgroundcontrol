@@ -88,8 +88,8 @@ if(ANDROID)
     target_compile_definitions(SDL3-shared PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
     target_link_libraries(SDL3-shared PRIVATE log android)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL3::SDL3-shared)
-    set_target_properties(SDL3-shared PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/android-build/libs/${CMAKE_ANDROID_ARCH_ABI}"
+    set_property(TARGET ${CMAKE_PROJECT_NAME} APPEND PROPERTY
+        QT_ANDROID_EXTRA_LIBS "$<TARGET_FILE:SDL3-shared>"
     )
 else()
     target_compile_definitions(SDL3-static PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
