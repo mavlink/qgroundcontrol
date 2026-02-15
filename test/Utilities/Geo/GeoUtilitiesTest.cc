@@ -973,7 +973,7 @@ void GeoUtilitiesTest::_testBenchmarkDouglasPeucker()
     const qint64 elapsed = timer.elapsed();
     qDebug() << "Douglas-Peucker 1000 points:" << elapsed << "ms, reduced to" << simplified.size();
 
-    QVERIFY(elapsed < 1000);  // Should complete in under 1 second
+    QVERIFY(elapsed < 3000);  // CI runners can be noisy; keep a loose regression guard.
     QVERIFY(simplified.size() < path.size());
 }
 

@@ -142,6 +142,9 @@ endif()
 # Shapelib Integration
 # ============================================================================
 
+set(_qgc_prev_skip_install_rules_shapelib "${CMAKE_SKIP_INSTALL_RULES}")
+set(CMAKE_SKIP_INSTALL_RULES ON)
+
 CPMAddPackage(
     NAME Shapelib
     VERSION 1.6.2
@@ -151,6 +154,12 @@ CPMAddPackage(
         "BUILD_APPS OFF"
         "BUILD_TESTING OFF"
 )
+
+set(CMAKE_SKIP_INSTALL_RULES "${_qgc_prev_skip_install_rules_shapelib}")
+unset(_qgc_prev_skip_install_rules_shapelib)
+if(DEFINED Shapelib_BINARY_DIR)
+    file(WRITE "${Shapelib_BINARY_DIR}/cmake_install.cmake" "# QGC stub: Shapelib install rules are intentionally skipped\n")
+endif()
 
 if(NOT TARGET Shapelib::shp AND TARGET shp)
     add_library(Shapelib::shp ALIAS shp)
