@@ -78,6 +78,9 @@ endif()
 # XZ (LZMA) Integration - liblzma from xz-utils
 # ============================================================================
 
+set(_qgc_prev_skip_install_rules_xz "${CMAKE_SKIP_INSTALL_RULES}")
+set(CMAKE_SKIP_INSTALL_RULES ON)
+
 CPMAddPackage(
     NAME xz
     VERSION 5.8.2
@@ -102,6 +105,12 @@ CPMAddPackage(
         "XZ_MICROLZMA_DECODER OFF"       # Not used by QGC
         "XZ_LZIP_DECODER OFF"            # Not used by QGC
 )
+
+set(CMAKE_SKIP_INSTALL_RULES "${_qgc_prev_skip_install_rules_xz}")
+unset(_qgc_prev_skip_install_rules_xz)
+if(DEFINED xz_BINARY_DIR)
+    file(WRITE "${xz_BINARY_DIR}/cmake_install.cmake" "# QGC stub: xz install rules are intentionally skipped\n")
+endif()
 
 if(TARGET liblzma)
     qgc_disable_dependency_warnings(liblzma)
@@ -138,6 +147,9 @@ if(POLICY CMP0194)
     set(CMAKE_POLICY_DEFAULT_CMP0194 NEW CACHE STRING "" FORCE)
 endif()
 
+set(_qgc_prev_skip_install_rules_zstd "${CMAKE_SKIP_INSTALL_RULES}")
+set(CMAKE_SKIP_INSTALL_RULES ON)
+
 CPMAddPackage(
     NAME zstd
     VERSION 1.5.7
@@ -155,6 +167,12 @@ CPMAddPackage(
         "ZSTD_BUILD_COMPRESSION OFF"     # Decoder-only: QGC only decompresses
         "ZSTD_BUILD_DICTBUILDER OFF"     # Dictionary builder not needed
 )
+
+set(CMAKE_SKIP_INSTALL_RULES "${_qgc_prev_skip_install_rules_zstd}")
+unset(_qgc_prev_skip_install_rules_zstd)
+if(DEFINED zstd_BINARY_DIR)
+    file(WRITE "${zstd_BINARY_DIR}/cmake_install.cmake" "# QGC stub: zstd install rules are intentionally skipped\n")
+endif()
 
 if(TARGET libzstd_static)
     qgc_disable_dependency_warnings(libzstd_static)
@@ -332,4 +350,3 @@ if(TARGET archive_static)
 else()
     message(FATAL_ERROR "libarchive target not found")
 endif()
-

@@ -286,7 +286,13 @@ if len(sys.argv) < 2:
     sys.exit(2)
 
 database = sys.argv[1]
-sql = sys.stdin.read()
+sql_bytes = sys.stdin.buffer.read()
+for encoding in ("utf-8", "cp1252", "latin-1"):
+    try:
+        sql = sql_bytes.decode(encoding)
+        break
+    except UnicodeDecodeError:
+        continue
 connection = sqlite3.connect(database)
 try:
     connection.executescript(sql)
