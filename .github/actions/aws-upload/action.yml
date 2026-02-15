@@ -34,8 +34,12 @@ runs:
   steps:
     - name: Validate credentials
       shell: bash
+      env:
+        AWS_ROLE_ARN: ${{ inputs.aws_role_arn }}
+        AWS_KEY_ID: ${{ inputs.aws_key_id }}
+        AWS_SECRET_KEY: ${{ inputs.aws_secret_access_key }}
       run: |
-        if [[ -z "${{ inputs.aws_role_arn }}" && ( -z "${{ inputs.aws_key_id }}" || -z "${{ inputs.aws_secret_access_key }}" ) ]]; then
+        if [[ -z "$AWS_ROLE_ARN" && ( -z "$AWS_KEY_ID" || -z "$AWS_SECRET_KEY" ) ]]; then
           echo "::error::Either aws_role_arn (OIDC) or both aws_key_id and aws_secret_access_key (static credentials) must be provided"
           exit 1
         fi

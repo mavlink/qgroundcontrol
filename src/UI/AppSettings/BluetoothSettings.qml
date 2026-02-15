@@ -108,7 +108,7 @@ ColumnLayout {
         function onModeChanged()         { refreshDeviceLists(); updatePairingStatus() }
         function onAdapterStateChanged() { refreshDeviceLists() }
         function onPairingStatusChanged(){ refreshDeviceLists(); updatePairingStatus() }
-        function onErrorOccurred(error)  { mainWindow.showMessageDialog(qsTr("Bluetooth Error"), error) }
+        function onErrorOccurred(error)  { QGroundControl.showMessageDialog(root, qsTr("Bluetooth Error"), error) }
     }
 
     Component.onCompleted: {

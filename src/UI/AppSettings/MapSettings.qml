@@ -39,7 +39,7 @@ Item {
 
         Connections {
             target:                 _mapEngineManager
-            function onErrorMessageChanged() { errorDialogComponent.createObject(mainWindow).open() }
+            function onErrorMessageChanged() { errorDialogFactory.open() }
         }
 
         SettingsGroupLayout {
@@ -117,7 +117,7 @@ Item {
                 enabled:    !_currentlyImportOrExporting
                 onClicked: {
                     _mapEngineManager.importAction = QGCMapEngineManager.ImportAction.ActionNone
-                    importDialogComponent.createObject(mainWindow).open()
+                    importDialogFactory.open()
                 }
             }
 
@@ -126,7 +126,7 @@ Item {
                 buttonText: qsTr("Export")
                 visible:    QGroundControl.corePlugin.options.showOfflineMapExport
                 enabled:    !_currentlyImportOrExporting
-                onClicked:  exportDialogComponent.createObject(mainWindow).open()
+                onClicked:  exportDialogFactory.open()
             }
 
             RowLayout {
@@ -242,6 +242,12 @@ Item {
             }
         }
 
+        QGCPopupDialogFactory {
+            id: exportDialogFactory
+
+            dialogComponent: exportDialogComponent
+        }
+
         Component {
             id: exportDialogComponent
 
@@ -269,6 +275,12 @@ Item {
                     }
                 }
             }
+        }
+
+        QGCPopupDialogFactory {
+            id: importDialogFactory
+
+            dialogComponent: importDialogComponent
         }
 
         Component {
@@ -299,6 +311,12 @@ Item {
                     }
                 }
             }
+        }
+
+        QGCPopupDialogFactory {
+            id: errorDialogFactory
+
+            dialogComponent: errorDialogComponent
         }
 
         Component {

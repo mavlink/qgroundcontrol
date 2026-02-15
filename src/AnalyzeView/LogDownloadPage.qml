@@ -107,7 +107,7 @@ AnalyzePage {
 
                     onClicked: {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
-                            mainWindow.showMessageDialog(qsTr("Log Refresh"), qsTr("You must be connected to a vehicle in order to download logs."))
+                            QGroundControl.showMessageDialog(logDownloadPage, qsTr("Log Refresh"), qsTr("You must be connected to a vehicle in order to download logs."))
                             return
                         }
 
@@ -130,7 +130,7 @@ AnalyzePage {
                         }
 
                         if (!logsSelected) {
-                            mainWindow.showMessageDialog(qsTr("Log Download"), qsTr("You must select at least one log file to download."))
+                            QGroundControl.showMessageDialog(logDownloadPage, qsTr("Log Download"), qsTr("You must select at least one log file to download."))
                             return
                         }
 
@@ -158,7 +158,8 @@ AnalyzePage {
                     Layout.fillWidth: true
                     enabled: !LogDownloadController.requestingList && !LogDownloadController.downloadingLogs && (LogDownloadController.model.count > 0)
                     text: qsTr("Erase All")
-                    onClicked: mainWindow.showMessageDialog(
+                    onClicked: QGroundControl.showMessageDialog(
+                        logDownloadPage,
                         qsTr("Delete All Log Files"),
                         qsTr("All log files will be erased permanently. Is this really what you want?"),
                         Dialog.Yes | Dialog.No,

@@ -108,7 +108,7 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
               -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
@@ -116,7 +116,7 @@ jobs:
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Sanity check dev build executable
-        working-directory: ${{ runner.temp }}/build/Release/QGroundControl.app/Contents/MacOS
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 
       - name: Import Code Signing Certificate

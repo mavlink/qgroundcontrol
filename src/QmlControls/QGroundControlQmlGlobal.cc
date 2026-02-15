@@ -295,6 +295,17 @@ QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltMode altMode)
     return QString();
 }
 
+void QGroundControlQmlGlobal::showMessageDialog(
+    QObject* owner,
+    const QString& title,
+    const QString& text,
+    int buttons,
+    QJSValue acceptFunction,
+    QJSValue closeFunction)
+{
+    emit showMessageDialogRequested(owner, title, text, buttons, acceptFunction, closeFunction);
+}
+
 QString QGroundControlQmlGlobal::elevationProviderName()
 {
     return _settingsManager->flightMapSettings()->elevationMapProvider()->rawValue().toString();

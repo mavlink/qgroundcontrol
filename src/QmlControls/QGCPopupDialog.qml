@@ -9,20 +9,25 @@ import QGroundControl.Controls
 // Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
 //
 // Example usage:
+//      QGCPopupDialogFactory {
+//          id: myDialogFactory
+//          dialogComponent: myDialogComponent
+//      }
+//
 //      Component {
-//          id: dialogComponent
+//          id: myDialogComponent
 //
 //          QGCPopupDialog {
 //              ...
 //          }
 //      }
 //
-//      onFoo: dialogComponent.createObject(mainWindow).open()
+//      onFoo: myDialogFactory.open()
+//      onBar: myDialogFactory.open({ title: "My Title", myProp: someValue })
 //
 // Notes:
-//  * QGCPopupDialog should be created from a component to limit the memory usage of the dialog
-//      to only when it is displayed.
-//  * Parent for createObject should always be mainWindow.
+//  * Use QGCPopupDialogFactory to create and open dialogs. The factory handles correct parenting and cleanup of the dialog instances.
+//  * The dialog automatically reparents itself to Overlay.overlay on creation, while tracking the original parent's lifetime to prevent orphaned dialogs.
 // Differences from standard Qml Dialog:
 //  * The QGCPopupDialog object will automatically be destroyed when it closed. You can override this
 //      behaviour by setting destroyOnClose to false if it was not created dynamically.
@@ -32,7 +37,6 @@ Popup {
     id:                 root
     width:  mainWindow.width
     height: mainWindow.height
-    parent:             Overlay.overlay
     modal:              true
     focus:              true
     margins:            0
@@ -71,7 +75,18 @@ Popup {
         }
     }
 
+    // We use this to track when the original parent of the dialog is destroyed. This allows us to automatically close the dialog when that happens which prevents
+    // orphaned dialogs which cause crashes.
+    Connections {
+        id: originalParentConnections
+        ignoreUnknownSignals: true // Prevents warning from initial connection when parent is null
+        onDestroyed: root.close()
+    }
+
     Component.onCompleted: {
+        originalParentConnections.target = parent
+        parent = Overlay.overlay
+
         // The last child item will be the true dialog content.
         // Re-Parent it to the right place in the ui hierarchy.
         contentChildren[contentChildren.length - 1].parent = dialogContentParent

@@ -81,18 +81,18 @@ Item {
         onPromptForPlanUsageOnVehicleChange: {
             if (!_promptForPlanUsageShowing) {
                 _promptForPlanUsageShowing = true
-                promptForPlanUsageOnVehicleChangePopupComponent.createObject(mainWindow).open()
+                promptForPlanUsageOnVehicleChangePopupFactory.open()
             }
         }
 
         function waitingOnIncompleteDataMessage(save) {
             var saveOrUpload = save ? qsTr("Save") : qsTr("Upload")
-            mainWindow.showMessageDialog(qsTr("Unable to %1").arg(saveOrUpload), qsTr("Plan has incomplete items. Complete all items and %1 again.").arg(saveOrUpload))
+            QGroundControl.showMessageDialog(_root, qsTr("Unable to %1").arg(saveOrUpload), qsTr("Plan has incomplete items. Complete all items and %1 again.").arg(saveOrUpload))
         }
 
         function waitingOnTerrainDataMessage(save) {
             var saveOrUpload = save ? qsTr("Save") : qsTr("Upload")
-            mainWindow.showMessageDialog(qsTr("Unable to %1").arg(saveOrUpload), qsTr("Plan is waiting on terrain data from server for correct altitude values."))
+            QGroundControl.showMessageDialog(_root, qsTr("Unable to %1").arg(saveOrUpload), qsTr("Plan is waiting on terrain data from server for correct altitude values."))
         }
 
         function checkReadyForSaveUpload(save) {
@@ -113,9 +113,9 @@ Item {
             switch (_missionController.sendToVehiclePreCheck()) {
                 case MissionController.SendToVehiclePreCheckStateOk: sendToVehicle()
                     break
-                case MissionController.SendToVehiclePreCheckStateActiveMission: mainWindow.showMessageDialog(qsTr("Send To Vehicle"), qsTr("Current mission must be paused prior to uploading a new Plan"))
+                case MissionController.SendToVehiclePreCheckStateActiveMission: QGroundControl.showMessageDialog(_root, qsTr("Send To Vehicle"), qsTr("Current mission must be paused prior to uploading a new Plan"))
                     break
-                case MissionController.SendToVehiclePreCheckStateFirwmareVehicleMismatch: mainWindow.showMessageDialog(qsTr("Plan Upload"),
+                case MissionController.SendToVehiclePreCheckStateFirwmareVehicleMismatch: QGroundControl.showMessageDialog(_root, qsTr("Plan Upload"),
                                                  qsTr("This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. " +
                                                       "This can lead to errors or incorrect behavior. " +
                                                       "It is recommended to recreate the Plan for the correct firmware/vehicle type.\n\n" +
@@ -651,6 +651,12 @@ Item {
                 }
             }
         } // Column
+    }
+
+    QGCPopupDialogFactory {
+        id: promptForPlanUsageOnVehicleChangePopupFactory
+
+        dialogComponent: promptForPlanUsageOnVehicleChangePopupComponent
     }
 
     Component {

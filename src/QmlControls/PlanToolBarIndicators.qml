@@ -32,7 +32,7 @@ RowLayout {
 
     function _downloadClicked() {
         if (_planMasterController.dirty) {
-            mainWindow.showMessageDialog(qsTr("Download"),
+            QGroundControl.showMessageDialog(root, qsTr("Download"),
                                          qsTr("You have unsaved/unsent changes. Downloading from the Vehicle will lose these changes. Are you sure?"),
                                          Dialog.Yes | Dialog.Cancel,
                                          function() { _planMasterController.loadFromVehicle() })
@@ -43,7 +43,7 @@ RowLayout {
 
     function _openButtonClicked() {
         if (_planMasterController.dirty) {
-            mainWindow.showMessageDialog(qsTr("Open Plan"),
+            QGroundControl.showMessageDialog(root, qsTr("Open Plan"),
                                         qsTr("You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?"),
                                         Dialog.Yes | Dialog.Cancel,
                                         function() { _planMasterController.loadFromSelectedFile() } )
@@ -55,7 +55,7 @@ RowLayout {
     function _saveButtonClicked() {
         if(_planMasterController.currentPlanFile !== "") {
             _planMasterController.saveToCurrent()
-            mainWindow.showMessageDialog(qsTr("Save"),
+            QGroundControl.showMessageDialog(root, qsTr("Save"),
                                         qsTr("Plan saved to `%1`").arg(_planMasterController.currentPlanFile),
                                         Dialog.Ok)
         } else {
@@ -71,14 +71,14 @@ RowLayout {
     }
 
     function _storageClearButtonClicked() {
-        mainWindow.showMessageDialog(qsTr("Clear"),
+        QGroundControl.showMessageDialog(root, qsTr("Clear"),
                                      qsTr("Are you sure you want to remove all the items from the plan editor?"),
                                      Dialog.Yes | Dialog.Cancel,
                                      function() { _planMasterController.removeAll(); })
     }
 
     function _vehicleClearButtonClicked() {
-        mainWindow.showMessageDialog(qsTr("Clear"),
+        QGroundControl.showMessageDialog(root, qsTr("Clear"),
                                      qsTr("Are you sure you want to remove the plan from the vehicle and the plan editor?"),
                                      Dialog.Yes | Dialog.Cancel,
                                      function() {

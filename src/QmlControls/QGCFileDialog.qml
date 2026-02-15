@@ -26,7 +26,7 @@ Item {
     function openForLoad() {
         _openForLoad = true
         if (_mobileDlg && folder.length !== 0) {
-            mobileFileOpenDialogComponent.createObject(mainWindow).open()
+            mobileFileOpenDialogFactory.open()
         } else if (selectFolder) {
             fullFolderDialog.open()
         } else {
@@ -38,7 +38,7 @@ Item {
     function openForSave() {
         _openForLoad = false
         if (_mobileDlg && folder.length !== 0) {
-            mobileFileSaveDialogComponent.createObject(mainWindow).open()
+            mobileFileSaveDialogFactory.open()
         } else {
             fullFileDialog.fileMode = FileDialog.SaveFile
             fullFileDialog.open()
@@ -116,6 +116,12 @@ Item {
         onRejected: _root.rejected()
     }
 
+    QGCPopupDialogFactory {
+        id: mobileFileOpenDialogFactory
+
+        dialogComponent: mobileFileOpenDialogComponent
+    }
+
     Component {
         id: mobileFileOpenDialogComponent
 
@@ -176,6 +182,12 @@ Item {
                 }
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: mobileFileSaveDialogFactory
+
+        dialogComponent: mobileFileSaveDialogComponent
     }
 
     Component {

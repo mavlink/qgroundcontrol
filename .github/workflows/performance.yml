@@ -149,6 +149,15 @@ jobs:
           path: metrics.json
           retention-days: 90
 
+      - name: Ensure gh-pages branch exists
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "Initializing gh-pages branch for benchmark storage..."
+            SHA=$(git commit-tree "$(git hash-object -t tree /dev/null)" -m "Initialize GitHub Pages")
+            git push origin "${SHA}:refs/heads/gh-pages" || echo "Branch may have been created concurrently"
+          fi
+
       - name: Store size metrics
         uses: benchmark-action/github-action-benchmark@v1
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -212,7 +221,6 @@ jobs:
           host: linux
           arch: linux_gcc_64
           modules: ${{ steps.config.outputs.qt_modules }}
-          cache: 'true'
 
       - name: Download binary
         uses: actions/download-artifact@v7
@@ -230,6 +238,14 @@ jobs:
           binary-path: ${{ needs.build.outputs.binary_path }}
           test-filter: MAVLinkBenchmark
           output-file: benchmark.json
+
+      - name: Ensure gh-pages branch exists
+        run: |
+          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "Initializing gh-pages branch for benchmark storage..."
+            SHA=$(git commit-tree "$(git hash-object -t tree /dev/null)" -m "Initialize GitHub Pages")
+            git push origin "${SHA}:refs/heads/gh-pages" || echo "Branch may have been created concurrently"
+          fi
 
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1

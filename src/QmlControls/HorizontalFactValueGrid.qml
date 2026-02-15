@@ -175,9 +175,15 @@ HorizontalFactValueGridTemplate {
             var labelOrDataItem = columnGridLayoutItem.childAt(mappedMouse.x, mappedMouse.y)
             //console.log(mappedMouse.x, mappedMouse.y, labelOrDataItem, labelOrDataItem ? labelOrDataItem.instrumentValueData : "null", labelOrDataItem && labelOrDataItem.parent ? labelOrDataItem.parent.instrumentValueData : "null")
             if (labelOrDataItem && labelOrDataItem.instrumentValueData !== undefined) {
-                valueEditDialog.createObject(mainWindow, { instrumentValueData: labelOrDataItem.instrumentValueData }).open()
+                valueEditDialogFactory.open({ instrumentValueData: labelOrDataItem.instrumentValueData })
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: valueEditDialogFactory
+
+        dialogComponent: valueEditDialog
     }
 
     Component {

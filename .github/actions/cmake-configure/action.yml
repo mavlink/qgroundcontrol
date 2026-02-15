@@ -88,3 +88,5 @@ runs:
         fi
 
         python3 "${{ github.workspace }}/tools/configure.py" "${args[@]}"
+
+        echo "build_dir=$(cd "${{ inputs.build-dir }}" && pwd)" >> "$GITHUB_OUTPUT"

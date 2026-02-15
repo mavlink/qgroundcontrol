@@ -449,7 +449,13 @@ jobs:
     if: >
       github.event.workflow_run.head_branch == 'master' &&
       github.event.workflow_run.conclusion == 'success'
+    concurrency:
+      group: save-baselines
+      cancel-in-progress: false
     timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -480,6 +486,12 @@ jobs:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-${{ github.run_id }}
 
+      - name: Delete stale artifact sizes baseline cache
+        if: hashFiles('baseline-sizes.json') != ''
+        run: gh actions-cache delete artifact-sizes-baseline-latest -R "${{ github.repository }}" --confirm || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache artifact sizes as latest
         if: hashFiles('baseline-sizes.json') != ''
         uses: actions/cache/save@v5
@@ -487,9 +499,19 @@ jobs:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-latest
 
-      - name: Save coverage baseline
+      - name: Copy coverage to baseline path
         if: hashFiles('artifacts/coverage-report/coverage.xml') != ''
+        run: cp artifacts/coverage-report/coverage.xml baseline-coverage.xml
+
+      - name: Delete stale coverage baseline cache
+        if: hashFiles('baseline-coverage.xml') != ''
+        run: gh actions-cache delete coverage-baseline-latest -R "${{ github.repository }}" --confirm || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save coverage baseline
+        if: hashFiles('baseline-coverage.xml') != ''
         uses: actions/cache/save@v5
         with:
-          path: artifacts/coverage-report/coverage.xml
+          path: baseline-coverage.xml
           key: coverage-baseline-latest
