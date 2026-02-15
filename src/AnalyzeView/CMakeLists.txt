@@ -4,25 +4,12 @@
 # ============================================================================
 
 add_subdirectory(GeoTag)
+add_subdirectory(MAVLinkConsole)
+add_subdirectory(MAVLinkInspector)
+add_subdirectory(MAVLinkLogs)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        LogDownloadController.cc
-        LogDownloadController.h
-        LogEntry.cc
-        LogEntry.h
-        MAVLinkChartController.cc
-        MAVLinkChartController.h
-        MAVLinkConsoleController.cc
-        MAVLinkConsoleController.h
-        MAVLinkInspectorController.cc
-        MAVLinkInspectorController.h
-        MAVLinkMessage.cc
-        MAVLinkMessage.h
-        MAVLinkMessageField.cc
-        MAVLinkMessageField.h
-        MAVLinkSystem.cc
-        MAVLinkSystem.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -37,10 +24,13 @@ qt_add_qml_module(AnalyzeViewModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
+        AnalyzePage.qml
         AnalyzeView.qml
-        LogDownloadPage.qml
-        MAVLinkConsolePage.qml
-        MAVLinkInspectorPage.qml
-        VibrationPage.qml
+        MAVLinkConsole/MAVLinkConsolePage.qml
+        MAVLinkInspector/MAVLinkChart.qml
+        MAVLinkInspector/MAVLinkMessageButton.qml
+        MAVLinkInspector/MAVLinkInspectorPage.qml
+        MAVLinkLogs/MAVLinkLogPage.qml
+        Vibration/VibrationPage.qml
     NO_PLUGIN
 )

@@ -115,7 +115,7 @@
         <file alias="LandMode.svg">src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LightsComponentIcon.png">src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png</file>
-        <file alias="LogDownloadIcon.svg">src/AnalyzeView/LogDownloadIcon.svg</file>
+        <file alias="MAVLinkLogIcon.svg">src/AnalyzeView/MAVLinkLogs/MAVLinkLogIcon.svg</file>
         <file alias="LowBattery.svg">src/AutoPilotPlugins/PX4/Images/LowBattery.svg</file>
         <file alias="LowBatteryLight.svg">src/AutoPilotPlugins/PX4/Images/LowBatteryLight.svg</file>
         <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
@@ -130,8 +130,8 @@
         <file alias="MapSyncChanged.svg">src/FlightMap/Images/MapSyncChanged.svg</file>
         <file alias="MapType.svg">src/FlightMap/Images/MapType.svg</file>
         <file alias="MapTypeBlack.svg">src/FlightMap/Images/MapTypeBlack.svg</file>
-        <file alias="MAVLinkConsoleIcon.svg">src/AnalyzeView/MAVLinkConsoleIcon.svg</file>
-        <file alias="MAVLinkInspector.svg">src/AnalyzeView/MAVLinkInspector.svg</file>
+        <file alias="MAVLinkConsoleIcon.svg">src/AnalyzeView/MAVLinkConsole/MAVLinkConsoleIcon.svg</file>
+        <file alias="MAVLinkInspector.svg">src/AnalyzeView/MAVLinkInspector/MAVLinkInspector.svg</file>
         <file alias="Megaphone.svg">src/UI/toolbar/Images/Megaphone.svg</file>
         <file alias="MotorComponentIcon.svg">src/AutoPilotPlugins/Common/Images/MotorComponentIcon.svg</file>
         <file alias="no-logging-light.svg">src/AutoPilotPlugins/PX4/Images/no-logging-light.svg</file>
@@ -212,7 +212,7 @@
         <file alias="VehicleTailDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDownRotate.png</file>
         <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
         <file alias="VehicleUpsideDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDownRotate.png</file>
-        <file alias="VibrationPageIcon">src/AnalyzeView/VibrationPageIcon.png</file>
+        <file alias="VibrationPageIcon">src/AnalyzeView/Vibration/VibrationPageIcon.png</file>
         <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="Yield.svg">src/UI/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>

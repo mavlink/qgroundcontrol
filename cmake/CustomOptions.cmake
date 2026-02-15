@@ -62,9 +62,6 @@ set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valg
 option(QGC_ENABLE_BZIP2 "Enable BZip2 decompression support" OFF)
 option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 
-# MAVLink Inspector is disabled by default due to GPL licensing of QtCharts
-# option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable MAVLink Inspector" OFF)
-
 # ============================================================================
 # Communication Options
 # ============================================================================

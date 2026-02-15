@@ -73,7 +73,13 @@ add_qgc_test(GeoTagControllerTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFile
 add_qgc_test(GeoTagDataTest LABELS Unit AnalyzeView)
 add_qgc_test(GeoTagImageModelTest LABELS Unit AnalyzeView)
 add_qgc_test(ULogParserTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(LogDownloadTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(MAVLinkChartControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkConsoleControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkInspectorControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkLogDownloadTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(MAVLinkMessageFieldTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkMessageTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkSystemTest LABELS Unit AnalyzeView)
 add_qgc_test(MavlinkLogTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK MockLink)
 
 # ----------------------------------------------------------------------------

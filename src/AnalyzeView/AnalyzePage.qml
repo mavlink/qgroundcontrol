@@ -10,7 +10,6 @@ Item {
     anchors.margins:            ScreenTools.defaultFontPixelWidth
 
     property alias  pageComponent:      pageLoader.sourceComponent
-    property alias  pageName:           pageNameLabel.text
     property alias  pageDescription:    pageDescriptionLabel.text
     property alias  headerComponent:    headerLoader.sourceComponent
     property real   availableWidth:     width  - pageLoader.x
@@ -40,11 +39,6 @@ Item {
         anchors.right:          floatIcon.visible ? floatIcon.left : parent.right
         spacing:                _margins
         visible:                !ScreenTools.isShortScreen && headerLoader.sourceComponent === null
-        QGCLabel {
-            id:                 pageNameLabel
-            font.pointSize:     ScreenTools.largeFontPointSize
-            visible:            !popped
-        }
         QGCLabel {
             id:                 pageDescriptionLabel
             anchors.left:       parent.left
@@ -77,8 +71,8 @@ Item {
         fillMode:               Image.PreserveAspectFit
         color:                  qgcPal.text
         visible:                allowPopout && !popped && !ScreenTools.isMobile
-        MouseArea {
-            anchors.fill:   parent
+        QGCMouseArea {
+            fillItem:       floatIcon
             onClicked:      popout()
         }
     }

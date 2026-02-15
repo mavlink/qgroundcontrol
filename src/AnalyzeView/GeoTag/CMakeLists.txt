@@ -36,4 +36,5 @@ qt_add_qml_module(GeoTagModule
     NO_PLUGIN
 )
 
+target_link_libraries(GeoTagModule PRIVATE AnalyzeViewModule)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeoTagModule)

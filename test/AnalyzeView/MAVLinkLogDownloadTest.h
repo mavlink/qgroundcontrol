@@ -2,7 +2,7 @@
 
 #include "BaseClasses/VehicleTest.h"
 
-class LogDownloadTest : public VehicleTest
+class MAVLinkLogDownloadTest : public VehicleTest
 {
     Q_OBJECT
 
