@@ -86,6 +86,7 @@ CPMAddPackage(
     OPTIONS
         "BUILD_TESTING OFF"
         "BUILD_SHARED_LIBS OFF"
+        "CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}"
         "XZ_TOOL_XZ OFF"
         "XZ_TOOL_XZDEC OFF"
         "XZ_TOOL_LZMADEC OFF"
@@ -144,6 +145,7 @@ CPMAddPackage(
     GIT_TAG v1.5.7
     SOURCE_SUBDIR build/cmake
     OPTIONS
+        "CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}"
         "ZSTD_BUILD_PROGRAMS OFF"
         "ZSTD_BUILD_TESTS OFF"
         "ZSTD_BUILD_CONTRIB OFF"
@@ -330,5 +332,4 @@ if(TARGET archive_static)
 else()
     message(FATAL_ERROR "libarchive target not found")
 endif()
-
 

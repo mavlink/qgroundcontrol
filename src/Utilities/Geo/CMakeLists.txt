@@ -268,13 +268,46 @@ if(CMAKE_CROSSCOMPILING)
         NAMES sqlite3 sqlite
         NO_CMAKE_FIND_ROOT_PATH
     )
-    if(NOT QGC_HOST_SQLITE3_EXECUTABLE)
-        message(FATAL_ERROR
-            "QGC: Cross-compiling requires a host sqlite3 executable for PROJ database generation. "
-            "Install sqlite3 and make sure it is available in PATH."
-        )
+    if(QGC_HOST_SQLITE3_EXECUTABLE)
+        set(_qgc_proj_sqlite3_exe "${QGC_HOST_SQLITE3_EXECUTABLE}")
+    else()
+        # Fallback for cross-build hosts without sqlite3 CLI: emulate the
+        # minimal sqlite3 shell behavior PROJ needs (read SQL from stdin).
+        find_package(Python3 COMPONENTS Interpreter REQUIRED)
+        set(_qgc_sqlite_wrapper_dir "${CMAKE_CURRENT_BINARY_DIR}")
+        set(_qgc_sqlite_wrapper_py "${_qgc_sqlite_wrapper_dir}/qgc_sqlite_wrapper.py")
+        file(WRITE "${_qgc_sqlite_wrapper_py}" [=[
+#!/usr/bin/env python3
+import sqlite3
+import sys
+
+if len(sys.argv) < 2:
+    print("usage: qgc_sqlite_wrapper.py <database>", file=sys.stderr)
+    sys.exit(2)
+
+database = sys.argv[1]
+sql = sys.stdin.read()
+connection = sqlite3.connect(database)
+try:
+    connection.executescript(sql)
+    connection.commit()
+finally:
+    connection.close()
+]=])
+
+        if(WIN32)
+            set(_qgc_sqlite_wrapper_cmd "${_qgc_sqlite_wrapper_dir}/qgc_sqlite_wrapper.cmd")
+            file(WRITE "${_qgc_sqlite_wrapper_cmd}" "@echo off\r\n\"${Python3_EXECUTABLE}\" \"${_qgc_sqlite_wrapper_py}\" %*\r\n")
+            set(_qgc_proj_sqlite3_exe "${_qgc_sqlite_wrapper_cmd}")
+        else()
+            file(CHMOD "${_qgc_sqlite_wrapper_py}"
+                PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+            )
+            set(_qgc_proj_sqlite3_exe "${_qgc_sqlite_wrapper_py}")
+        endif()
+
+        message(STATUS "QGC: Using Python-based sqlite3 wrapper for cross-compiled PROJ database generation")
     endif()
-    set(_qgc_proj_sqlite3_exe "${QGC_HOST_SQLITE3_EXECUTABLE}")
 endif()
 set(EXE_SQLITE3 "${_qgc_proj_sqlite3_exe}")
 set(SQLite3_INCLUDE_DIR "${SQLite3_INCLUDE_DIR}" CACHE PATH "Path to SQLite3 include directory" FORCE)
@@ -324,6 +357,9 @@ CPMAddPackage(
 
 set(CMAKE_SKIP_INSTALL_RULES "${_qgc_prev_skip_install_rules_proj}")
 unset(_qgc_prev_skip_install_rules_proj)
+if(NOT EXISTS "${PROJ_BINARY_DIR}/cmake_install.cmake")
+    file(WRITE "${PROJ_BINARY_DIR}/cmake_install.cmake" "# QGC stub: PROJ install rules are intentionally skipped\n")
+endif()
 
 if(TARGET generate_proj_db AND NOT CMAKE_CROSSCOMPILING)
     add_dependencies(generate_proj_db sqlite)
@@ -389,6 +425,9 @@ CPMAddPackage(
 )
 set(CMAKE_SKIP_INSTALL_RULES "${_qgc_prev_skip_install_rules}")
 unset(_qgc_prev_skip_install_rules)
+if(NOT EXISTS "${GDAL_BINARY_DIR}/cmake_install.cmake")
+    file(WRITE "${GDAL_BINARY_DIR}/cmake_install.cmake" "# QGC stub: GDAL install rules are intentionally skipped\n")
+endif()
 
 if(DEFINED gdal_SOURCE_DIR)
     # Remove non-Qt *.qml test fixtures that confuse Qt's QML tooling.
