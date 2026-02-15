@@ -7,8 +7,20 @@ add_subdirectory(GeoTag)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        LogDownloadTest.cc
-        LogDownloadTest.h
+        MAVLinkChartControllerTest.cc
+        MAVLinkChartControllerTest.h
+        MAVLinkConsoleControllerTest.cc
+        MAVLinkConsoleControllerTest.h
+        MAVLinkInspectorControllerTest.cc
+        MAVLinkInspectorControllerTest.h
+        MAVLinkLogDownloadTest.cc
+        MAVLinkLogDownloadTest.h
+        MAVLinkMessageFieldTest.cc
+        MAVLinkMessageFieldTest.h
+        MAVLinkMessageTest.cc
+        MAVLinkMessageTest.h
+        MAVLinkSystemTest.cc
+        MAVLinkSystemTest.h
         MavlinkLogTest.cc
         MavlinkLogTest.h
 )

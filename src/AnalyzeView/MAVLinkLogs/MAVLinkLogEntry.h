@@ -10,14 +10,14 @@
 
 #include "MAVLinkLib.h"
 
-class QGCLogEntry;
+class QGCMAVLinkLogEntry;
 
-Q_DECLARE_LOGGING_CATEGORY(LogEntryLog)
+Q_DECLARE_LOGGING_CATEGORY(MAVLinkLogEntryLog)
 
-struct LogDownloadData
+struct MAVLinkLogDownloadData
 {
-    explicit LogDownloadData(QGCLogEntry * const logEntry);
-    ~LogDownloadData();
+    explicit MAVLinkLogDownloadData(QGCMAVLinkLogEntry * const logEntry);
+    ~MAVLinkLogDownloadData();
 
     void advanceChunk();
 
@@ -31,7 +31,7 @@ struct LogDownloadData
     bool chunkEquals(const bool val) const;
 
     uint ID = 0;
-    QGCLogEntry *const entry = nullptr;
+    QGCMAVLinkLogEntry *const entry = nullptr;
 
     QBitArray chunk_table;
     uint32_t current_chunk = 0;
@@ -49,7 +49,7 @@ struct LogDownloadData
 
 /*===========================================================================*/
 
-class QGCLogEntry : public QObject
+class QGCMAVLinkLogEntry : public QObject
 {
     Q_OBJECT
     // QML_ELEMENT
@@ -63,8 +63,8 @@ class QGCLogEntry : public QObject
     Q_PROPERTY(QString      status      READ status                         NOTIFY statusChanged)
 
 public:
-    explicit QGCLogEntry(uint logId, const QDateTime &dateTime = QDateTime(), uint logSize = 0, bool received = false, QObject *parent = nullptr);
-    ~QGCLogEntry();
+    explicit QGCMAVLinkLogEntry(uint logId, const QDateTime &dateTime = QDateTime(), uint logSize = 0, bool received = false, QObject *parent = nullptr);
+    ~QGCMAVLinkLogEntry();
 
     uint id() const { return _logID; }
     uint size() const { return _logSize; }

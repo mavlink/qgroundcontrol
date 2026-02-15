@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Window
 import QtQuick.Controls
 
 import QGroundControl
@@ -23,10 +22,6 @@ Rectangle {
         anchors.fill: parent
     }
 
-    GeoTagController {
-        id: geoController
-    }
-
     QGCFlickable {
         id:                 buttonScroll
         width:              buttonColumn.width
@@ -44,37 +39,32 @@ Rectangle {
             width:      _maxButtonWidth
             spacing:    _defaultTextHeight / 2
 
-            property real _maxButtonWidth: 0
-
-            Component.onCompleted: reflowWidths()
-
-            // I don't know why this does not work
-            Connections {
-                target:         QGroundControl.settingsManager.appSettings.appFontPointSize
-                function onValueChanged(value) { buttonColumn.reflowWidths() }
-            }
-
-            function reflowWidths() {
-                buttonColumn._maxButtonWidth = 0
-                for (var i = 0; i < children.length; i++) {
-                    buttonColumn._maxButtonWidth = Math.max(buttonColumn._maxButtonWidth, children[i].width)
+            property real _maxButtonWidth: {
+                var maxW = 0
+                for (var i = 0; i < buttonRepeater.count; i++) {
+                    var item = buttonRepeater.itemAt(i)
+                    if (item) maxW = Math.max(maxW, item.implicitWidth)
                 }
-                for (var j = 0; j < children.length; j++) {
-                    children[j].width = buttonColumn._maxButtonWidth
-                }
+                return maxW
             }
 
             Repeater {
                 id:     buttonRepeater
                 model:  QGroundControl.corePlugin ? QGroundControl.corePlugin.analyzePages : []
 
-                Component.onCompleted:  itemAt(0).checked = true
+                Component.onCompleted: {
+                    if (count > 0) {
+                        itemAt(0).checked = true
+                        panelLoader.source = QGroundControl.corePlugin.analyzePages[0].url
+                        panelLoader.title  = QGroundControl.corePlugin.analyzePages[0].title
+                    }
+                }
 
                 SubMenuButton {
-                    id:                 subMenu
                     imageResource:      modelData.icon
                     autoExclusive:      true
                     text:               modelData.title
+                    width:              buttonColumn._maxButtonWidth
 
                     onClicked: {
                         panelLoader.source  = modelData.url
@@ -108,13 +98,13 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        source:                 "LogDownloadPage.qml"
+        source:                 ""
 
         property string title
 
         Connections {
             target:     panelLoader.item
-            function onPopout() { mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source) }
+            function onPopout() { mainWindow.createWindowedAnalyzePage(panelLoader.title, panelLoader.source) }
         }
     }
 }

@@ -117,7 +117,7 @@
     "LandingComplexItemTest::LandingComplexItemTest": {
       "seconds": 0.338131
     },
-    "LogDownloadTest::LogDownloadTest": {
+    "MAVLinkLogDownloadTest::MAVLinkLogDownloadTest": {
       "seconds": 1.7378
     },
     "MAVLinkLogManagerTest::MAVLinkLogManagerTest": {
