@@ -131,10 +131,21 @@ elseif(LINUX)
 # Android Platform
 # ----------------------------------------------------------------------------
 elseif(ANDROID)
+    set(_gst_android_url_official "https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz")
+    set(_gst_android_url_qgc_mirror "https://qgroundcontrol.s3.us-west-2.amazonaws.com/android-gstreamer/qgc-android-gstreamer-${GStreamer_FIND_VERSION}.tar.xz")
+
     if(QGC_CUSTOM_GST_PACKAGE)
-        set(_gst_android_url "https://qgroundcontrol.s3.us-west-2.amazonaws.com/android-gstreamer/qgc-android-gstreamer-${GStreamer_FIND_VERSION}.tar.xz")
+        # Prefer QGC mirror, but keep upstream as fallback to reduce CI flakiness.
+        set(_gst_android_urls
+            "${_gst_android_url_qgc_mirror}"
+            "${_gst_android_url_official}"
+        )
     else()
-        set(_gst_android_url "https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz")
+        # Prefer upstream package, fall back to QGC mirror on transient CDN/network failures.
+        set(_gst_android_urls
+            "${_gst_android_url_official}"
+            "${_gst_android_url_qgc_mirror}"
+        )
         # https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz.sha256sum
         # set(_gst_android_url_hash "be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485")
     endif()
@@ -142,7 +153,7 @@ elseif(ANDROID)
     CPMAddPackage(
         NAME gstreamer
         VERSION ${GStreamer_FIND_VERSION}
-        URL ${_gst_android_url}
+        URL ${_gst_android_urls}
         # URL_HASH ${_gst_android_url_hash}
     )
 
