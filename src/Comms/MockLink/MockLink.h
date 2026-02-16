@@ -16,6 +16,7 @@
 
 class MockLinkCamera;
 class MockLinkFTP;
+class MockLinkGimbal;
 class MockLinkWorker;
 class QThread;
 
@@ -108,13 +109,13 @@ public:
         _paramRequestReadFailureFirstAttemptPending = (mode == FailParamRequestReadFirstAttemptNoResponse);
     }
 
-    static MockLink *startPX4MockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startGenericMockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startNoInitialConnectMockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduCopterMockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduPlaneMockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduSubMockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduRoverMockLink(bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startPX4MockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startGenericMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startNoInitialConnectMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startAPMArduCopterMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startAPMArduPlaneMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startAPMArduSubMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startAPMArduRoverMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
     // Special commands for testing Vehicle::sendMavCommandWithHandler
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED = MAV_CMD_USER_1;
@@ -182,7 +183,6 @@ private:
     void _handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted);
     void _handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
     void _handleRequestMessageAvailableModes(const mavlink_command_long_t &request, bool &accepted);
-    void _handleRequestMessageGimbalManagerInformation(const mavlink_command_long_t &request, bool &accepted);
 
     void _sendHeartBeat();
     void _sendHighLatency2();
@@ -193,8 +193,6 @@ private:
     void _sendVibration();
     void _sendSysStatus();
     void _sendBatteryStatus();
-    void _sendGimbalManagerStatus();
-    void _sendGimbalDeviceAttitudeStatus();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
@@ -211,7 +209,7 @@ private:
     int  _availableModesCount() const;
     void _moveADSBVehicle(int vehicleIndex);
 
-    static MockLink *_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, bool enableCamera, MockConfiguration::FailureMode_t failureMode);
+    static MockLink *_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode);
     static MockLink *_startMockLink(MockConfiguration *mockConfig);
 
     /// Creates a file with random contents of the specified size.
@@ -226,6 +224,7 @@ private:
     const MAV_TYPE _vehicleType = MAV_TYPE_QUADROTOR;
     const bool _sendStatusText = false;
     const bool _enableCamera = false;
+    const bool _enableGimbal = false;
     const MockConfiguration::FailureMode_t _failureMode = MockConfiguration::FailNone;
     const uint8_t _vehicleSystemId = 0;
     const double _vehicleLatitude = 0.0;
@@ -237,6 +236,7 @@ private:
     const uint16_t _boardProductId = 0;
     MockLinkMissionItemHandler *const _missionItemHandler = nullptr;
     MockLinkCamera *const _mockLinkCamera = nullptr;
+    MockLinkGimbal *const _mockLinkGimbal = nullptr;
     MockLinkFTP *const _mockLinkFTP = nullptr;
 
     uint8_t _mavlinkAuxChannel = std::numeric_limits<uint8_t>::max();
@@ -277,9 +277,6 @@ private:
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
-
-    bool _sendGimbalManagerStatusNow = false;
-    bool _sendGimbalDeviceAttitudeStatusNow = false;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
     ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;

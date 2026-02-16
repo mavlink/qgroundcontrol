@@ -105,7 +105,30 @@ void MockLinkCamera::run10HzTasks()
     }
 }
 
-bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId)
+bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t &msg)
+{
+    if (msg.msgid != MAVLINK_MSG_ID_COMMAND_LONG) {
+        return false;
+    }
+
+    mavlink_command_long_t request{};
+    mavlink_msg_command_long_decode(&msg, &request);
+
+    // Check if this command targets a camera component
+    if (request.target_component < MAV_COMP_ID_CAMERA || request.target_component > MAV_COMP_ID_CAMERA6) {
+        return false;
+    }
+
+    const uint8_t targetCompId = request.target_component;
+
+    if (request.command == MAV_CMD_REQUEST_MESSAGE) {
+        return _handleRequestMessage(request, targetCompId);
+    }
+
+    return _handleCameraCommand(request, targetCompId);
+}
+
+bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId)
 {
     CameraState *cam = _findCamera(targetCompId);
     if (!cam) {
@@ -327,7 +350,7 @@ bool MockLinkCamera::handleCameraCommand(const mavlink_command_long_t &request, 
     return false;
 }
 
-bool MockLinkCamera::handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId)
+bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId)
 {
     const CameraState *cam = _findCamera(targetCompId);
     if (!cam) {

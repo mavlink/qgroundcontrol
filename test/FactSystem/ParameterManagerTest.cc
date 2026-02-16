@@ -29,7 +29,7 @@ void ParameterManagerTest::cleanup()
 void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t failureMode)
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, failureMode);
+    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, failureMode);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
     // Wait for the Vehicle to get created
@@ -73,7 +73,7 @@ void ParameterManagerTest::_requestListMissingParamSuccess()
 void ParameterManagerTest::_requestListNoResponse()
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, MockConfiguration::FailParamNoResponseToRequestList);
+    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, MockConfiguration::FailParamNoResponseToRequestList);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
     // Wait for the Vehicle to get created
@@ -97,7 +97,7 @@ void ParameterManagerTest::_requestListNoResponse()
 void ParameterManagerTest::_requestListMissingParamFail()
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, MockConfiguration::FailMissingParamOnAllRequests);
+    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, MockConfiguration::FailMissingParamOnAllRequests);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
     // Wait for the Vehicle to get created
@@ -286,7 +286,7 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
 void ParameterManagerTest::_FTPnoFailure()
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startAPMArduPlaneMockLink(false /* sendStatusText */, false /* enableCamera */, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, MockConfiguration::FailParamNoReponseToRequestList);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
@@ -323,7 +323,7 @@ void ParameterManagerTest::_FTPnoFailure()
 void ParameterManagerTest::_FTPChangeParam()
 {
     Q_ASSERT(!_mockLink);
-    _mockLink = MockLink::startAPMArduPlaneMockLink(false /* sendStatusText */, false /* enableCamera */, MockConfiguration::FailParamNoReponseToRequestList);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, MockConfiguration::FailParamNoReponseToRequestList);
     _mockLink->mockLinkFTP()->enableBinParamFile(true);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);

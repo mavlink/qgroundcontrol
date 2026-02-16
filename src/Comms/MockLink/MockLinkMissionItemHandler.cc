@@ -27,7 +27,7 @@ void MockLinkMissionItemHandler::_startMissionItemResponseTimer()
     _missionItemResponseTimer.start(500);
 }
 
-bool MockLinkMissionItemHandler::handleMessage(const mavlink_message_t &msg)
+bool MockLinkMissionItemHandler::handleMavlinkMessage(const mavlink_message_t &msg)
 {
     switch (msg.msgid) {
     case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
