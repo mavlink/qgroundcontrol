@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771260070107,
+  "lastUpdate": 1771272542642,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -38,6 +38,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "Symbol Count",
             "value": 74759,
+            "unit": "symbols"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "don@thegagnes.com",
+            "name": "Don Gagne",
+            "username": "DonLakeFlyer"
+          },
+          "committer": {
+            "email": "DonLakeFlyer@users.noreply.github.com",
+            "name": "Don Gagne",
+            "username": "DonLakeFlyer"
+          },
+          "distinct": true,
+          "id": "becfcc60254cb58f48da043e29b151d2c74d8b6c",
+          "message": "Fix fake mobile support",
+          "timestamp": "2026-02-16T11:38:43-08:00",
+          "tree_id": "2f1e28195f8a307d28b99eb72af623aa9b32b433",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/becfcc60254cb58f48da043e29b151d2c74d8b6c"
+        },
+        "date": 1771272520429,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Binary Size",
+            "value": 51561960,
+            "unit": "bytes"
+          },
+          {
+            "name": "Stripped Size",
+            "value": 46686872,
+            "unit": "bytes"
+          },
+          {
+            "name": "Symbol Count",
+            "value": 74853,
             "unit": "symbols"
           }
         ]
