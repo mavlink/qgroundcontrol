@@ -76,15 +76,19 @@ public:
     /// Update camera states (call from 10Hz tasks)
     void run10HzTasks();
 
+    /// Handle all incoming MAVLink messages for camera.
+    /// @return true if the message was handled by the camera
+    bool handleMavlinkMessage(const mavlink_message_t &msg);
+
+private:
     /// Handle a COMMAND_LONG that targets a camera component.
     /// @return true if the command was handled (ack already sent)
-    bool handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId);
+    bool _handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId);
 
     /// Handle a MAV_CMD_REQUEST_MESSAGE for camera-related message IDs.
     /// @return true if the message ID was handled
-    bool handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId);
+    bool _handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId);
 
-private:
     void _sendCameraInformation(uint8_t compId);
     void _sendCameraSettings(uint8_t compId);
     void _sendStorageInformation(uint8_t compId);

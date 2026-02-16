@@ -12,6 +12,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MockLinkCamera.h
         MockLinkFTP.cc
         MockLinkFTP.h
+        MockLinkGimbal.cc
+        MockLinkGimbal.h
         MockLinkWorker.cc
         MockLinkWorker.h
         MockLinkMissionItemHandler.cc
