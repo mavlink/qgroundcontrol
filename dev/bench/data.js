@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771272507567,
+  "lastUpdate": 1771292584176,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -57,6 +57,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Startup (list tests)",
             "value": 58578.55700000414,
+            "unit": "usecs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "don@thegagnes.com",
+            "name": "Don Gagne",
+            "username": "DonLakeFlyer"
+          },
+          "committer": {
+            "email": "DonLakeFlyer@users.noreply.github.com",
+            "name": "Don Gagne",
+            "username": "DonLakeFlyer"
+          },
+          "distinct": true,
+          "id": "e589d92c275593ae997032f3990ce7f8fca50fc6",
+          "message": "MockLink gimbal support",
+          "timestamp": "2026-02-16T17:14:13-08:00",
+          "tree_id": "d42b8ada3e599d49051abd0b43729e2a862d620c",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/e589d92c275593ae997032f3990ce7f8fca50fc6"
+        },
+        "date": 1771292562636,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Startup (list tests)",
+            "value": 42620.47800000346,
             "unit": "usecs"
           }
         ]
