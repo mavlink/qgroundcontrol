@@ -85,7 +85,7 @@ public:
     double          amslExitAlt         (void) const final;             //returns alt of last transect point
     void            applyNewAltitude    (double newAltitude) final;                                                                             //+  
     
-    double          specifiedFlightSpeed(void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
+    double          specifiedFlightSpeed(void) final;                                                                                           //+
     double          specifiedGimbalYaw  (void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
     double          specifiedGimbalPitch(void) final { return std::numeric_limits<double>::quiet_NaN(); }                                       //+
     

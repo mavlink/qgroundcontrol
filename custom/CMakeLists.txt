@@ -50,6 +50,7 @@ set_source_files_properties(res/Custom/Widgets/CustomQuickButton.qml PROPERTIES 
 set_source_files_properties(res/Custom/Widgets/CustomSignalStrength.qml PROPERTIES QT_RESOURCE_ALIAS CustomSignalStrength.qml)
 set_source_files_properties(res/Custom/Widgets/CustomToolBarButton.qml PROPERTIES QT_RESOURCE_ALIAS CustomToolBarButton.qml)
 set_source_files_properties(res/Custom/Widgets/CustomVehicleButton.qml PROPERTIES QT_RESOURCE_ALIAS CustomVehicleButton.qml)
+set_source_files_properties(res/Custom/Widgets/CustomProximitySensor.qml PROPERTIES QT_RESOURCE_ALIAS CustomProximitySensor.qml)
 
 qt_add_qml_module(CustomModule
     URI Custom.Widgets
@@ -64,6 +65,7 @@ qt_add_qml_module(CustomModule
         res/Custom/Widgets/CustomSignalStrength.qml
         res/Custom/Widgets/CustomToolBarButton.qml
         res/Custom/Widgets/CustomVehicleButton.qml
+        res/Custom/Widgets/CustomProximitySensor.qml
     NO_PLUGIN
 )
 

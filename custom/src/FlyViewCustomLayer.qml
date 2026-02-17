@@ -255,4 +255,14 @@ Item {
             anchors.centerIn:   parent
         }
     }
+
+    CustomProximitySensor {
+        id:                 proximitySensor
+        anchors.bottom:     attitudeIndicator.top
+        anchors.right:      parent.right
+
+        vehicle:            _activeVehicle
+        size:               ScreenTools.defaultFontPixelHeight * 6
+
+    }
 }

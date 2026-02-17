@@ -49,6 +49,8 @@ SprayComplexItem::SprayComplexItem(PlanMasterController* masterController, bool 
     connect(&_speedFact,            &Fact::valueChanged,                    this,   &SprayComplexItem::_setDirty);
     connect(&_sprayAreaPolygon,     &QGCMapPolygon::dirtyChanged,           this,   &SprayComplexItem::_setIfDirty);
 
+    connect(&_speedFact,            &Fact::valueChanged,                    this,   &SprayComplexItem::specifiedFlightSpeedChanged);
+
     connect(&_sprayAreaPolygon,     &QGCMapPolygon::isValidChanged,         this,   &SprayComplexItem::_updateWizardMode);
     connect(&_sprayAreaPolygon,     &QGCMapPolygon::traceModeChanged,       this,   &SprayComplexItem::_updateWizardMode);
 
@@ -94,6 +96,10 @@ void SprayComplexItem::_updateWizardMode(void)
 void SprayComplexItem::applyNewAltitude(double newAltitude)
 {
     _altitudeFact.setRawValue(newAltitude);
+}
+
+double SprayComplexItem::specifiedFlightSpeed(){
+    return _speedFact.rawValue().toDouble();
 }
 
 void SprayComplexItem::save(QJsonArray&  missionItems)
@@ -168,8 +174,8 @@ void SprayComplexItem::setSequenceNumber(int sequenceNumber)
 }
 int SprayComplexItem::lastSequenceNumber(void) const
 {
-    int numOfItems = 0;
-    numOfItems += _visualTransectPoints.count() ? _visualTransectPoints.count()*2 + 1 : 0; 
+    int numOfItems = 2;  //1 for MAV_CMD_DO_CHANGE_SPEED
+    numOfItems += _visualTransectPoints.count() ? _visualTransectPoints.count()*2 : 0; 
     return _sequenceNumber + numOfItems;
 }
 
@@ -503,7 +509,19 @@ void SprayComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* m
     MAV_FRAME                   mavFrame    = MAV_FRAME_GLOBAL_TERRAIN_ALT;
 
     MissionItem* item = nullptr;
-    
+
+    item = new MissionItem(seqNum++,
+                           MAV_CMD_NAV_TAKEOFF,
+                           mavFrame,
+                           0,0,0,0,                                     
+                           _visualTransectPoints[0].latitude(),
+                           _visualTransectPoints[0].longitude(),
+                           _altitudeFact.rawValue().toDouble(),
+                           true,                                       // autoContinue
+                           false,                                      // isCurrentItem
+                           missionItemParent);
+    items.append(item);
+
     for (int coordIndex=0; coordIndex<_visualTransectPoints.count(); coordIndex+=2) {
         QGeoCoordinate sprayEntryCoord = _visualTransectPoints[coordIndex];
         QGeoCoordinate sprayExitCoord = _visualTransectPoints[coordIndex+1];
@@ -514,7 +532,7 @@ void SprayComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* m
                            std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
                            sprayEntryCoord.latitude(),
                            sprayEntryCoord.longitude(),
-                           sprayEntryCoord.altitude(),
+                           _altitudeFact.rawValue().toDouble(),
                            true,                                       // autoContinue
                            false,                                      // isCurrentItem
                            missionItemParent);
@@ -535,7 +553,7 @@ void SprayComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* m
                            std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
                            sprayExitCoord.latitude(),
                            sprayExitCoord.longitude(),
-                           sprayExitCoord.altitude(),
+                           _altitudeFact.rawValue().toDouble(),
                            true,                                       // autoContinue
                            false,                                      // isCurrentItem
                            missionItemParent);
@@ -550,6 +568,14 @@ void SprayComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* m
                            missionItemParent);
         items.append(item);
     }
+    item = new MissionItem(seqNum++,
+                           MAV_CMD_NAV_RETURN_TO_LAUNCH,
+                           mavFrame,
+                           0,0,0,0,0,0,0,                                    
+                           true,                                       // autoContinue
+                           false,                                      // isCurrentItem
+                           missionItemParent);
+    items.append(item);
 }
 
 SprayComplexItem::ReadyForSaveState SprayComplexItem::readyForSaveState(void) const
