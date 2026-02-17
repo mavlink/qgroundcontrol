@@ -41,6 +41,8 @@ Popup {
     focus:              true
     margins:            0
 
+    default property alias dialogContent: dialogContentParent.data
+
     property string title
     property var    buttons:                Dialog.Ok
     property alias  acceptButtonEnabled:    acceptButton.enabled
@@ -86,10 +88,6 @@ Popup {
     Component.onCompleted: {
         originalParentConnections.target = parent
         parent = Overlay.overlay
-
-        // The last child item will be the true dialog content.
-        // Re-Parent it to the right place in the ui hierarchy.
-        contentChildren[contentChildren.length - 1].parent = dialogContentParent
     }
 
     onAboutToShow: {
