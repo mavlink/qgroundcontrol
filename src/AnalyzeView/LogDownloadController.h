@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QQueue>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
@@ -89,6 +91,14 @@ private:
     void _setListing(bool active);
     void _updateDataRate();
 
+    // MAVFTP methods
+    void _requestLogListMavftp();
+    void _mavftpListDirComplete(const QStringList &dirList, const QString &errorMsg);
+    void _listNextMavftpSubdir();
+    void _downloadLogMavftp(QGCLogEntry *entry);
+    void _ftpDownloadComplete(const QString &file, const QString &errorMsg);
+    void _ftpDownloadProgress(float value);
+
     QGCLogEntry *_getNextSelected() const;
 
     QTimer *_timer = nullptr;
@@ -101,6 +111,17 @@ private:
     std::unique_ptr<LogDownloadData> _downloadData;
     QString _downloadPath;
     Vehicle *_vehicle = nullptr;
+
+    // MAVFTP state
+    bool _useMavftp = false;
+    QStringList _mavftpDirsToList;
+    uint _mavftpLogIdCounter = 0;
+    QQueue<QGCLogEntry*> _ftpDownloadQueue;
+    QGCLogEntry *_ftpCurrentDownloadEntry = nullptr;
+    QElapsedTimer _ftpDownloadElapsed;
+    size_t _ftpDownloadBytesAtLastUpdate = 0;
+    qreal _ftpDownloadRateAvg = 0.;
+
     bool _compressLogs = false;
     bool _compressing = false;
     float _compressionProgress = 0.0F;

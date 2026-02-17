@@ -80,6 +80,9 @@ public:
     void setSelected(bool sel) { if (sel != _selected) { _selected = sel; emit selectedChanged(); } }
     void setStatus(const QString &stat) { if (stat != _status) { _status = stat; emit statusChanged(); } }
 
+    QString ftpPath() const { return _ftpPath; }
+    void setFtpPath(const QString &path) { _ftpPath = path; }
+
 signals:
     void idChanged();
     void timeChanged();
@@ -95,4 +98,5 @@ private:
     bool _received = false;
     bool _selected = false;
     QString _status = QStringLiteral("Pending");
+    QString _ftpPath;
 };
