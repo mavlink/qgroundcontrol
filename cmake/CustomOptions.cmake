@@ -104,6 +104,9 @@ option(QGC_DISABLE_APM_PLUGIN_FACTORY "Disable ArduPilot plugin factory" OFF)
 option(QGC_DISABLE_PX4_PLUGIN "Disable PX4 plugin" OFF)
 option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 plugin factory" OFF)
 
+# MAVLink FTP Log Download
+option(QGC_ENABLE_MAVFTP_LOG_DOWNLOAD "Enable MAVLink FTP log download for PX4" ON)
+
 # ============================================================================
 # Platform-Specific Configuration
 # ============================================================================

@@ -80,6 +80,12 @@ public:
     void setSelected(bool sel) { if (sel != _selected) { _selected = sel; emit selectedChanged(); } }
     void setStatus(const QString &stat) { if (stat != _status) { _status = stat; emit statusChanged(); } }
 
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+    // ftpPath is internal plumbing (not exposed to QML), so no Q_PROPERTY needed
+    QString ftpPath() const { return _ftpPath; }
+    void setFtpPath(const QString &path) { if (path != _ftpPath) { _ftpPath = path; } }
+#endif
+
 signals:
     void idChanged();
     void timeChanged();
@@ -95,4 +101,7 @@ private:
     bool _received = false;
     bool _selected = false;
     QString _status = QStringLiteral("Pending");
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+    QString _ftpPath;
+#endif
 };
