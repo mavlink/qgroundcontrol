@@ -66,7 +66,7 @@ AssignedButtonAction::AssignedButtonAction(const QString &actionName_, bool repe
     : actionName(actionName_)
     , repeat(repeat_)
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 AvailableButtonAction::AvailableButtonAction(const QString &actionName_, bool canRepeat_, QObject *parent)
@@ -74,7 +74,7 @@ AvailableButtonAction::AvailableButtonAction(const QString &actionName_, bool ca
     , _actionName(actionName_)
     , _repeat(canRepeat_)
 {
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 /*===========================================================================*/
@@ -146,7 +146,7 @@ Joystick::~Joystick()
     _availableButtonActions->clearAndDeleteContents();
     qDeleteAll(_assignedButtonActions);
 
-    // qCDebug(JoystickLog) << Q_FUNC_INFO << this;
+    qCDebug(JoystickLog) << this;
 }
 
 void Joystick::_migrateLegacySettings()
@@ -576,31 +576,50 @@ void Joystick::_remapAxes(int fromMode, int toMode, int (&newMapping)[maxAxisFun
 
 void Joystick::run()
 {
-    _open();
+    bool openFailed = false;
+    bool updateFailed = false;
 
-    _axisElapsedTimer.start();
-
-    for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
-        if (_assignedButtonActions[buttonIndex]) {
-            _assignedButtonActions[buttonIndex]->buttonElapsedTimer.start();
-        }
+    if (!_open()) {
+        qCWarning(JoystickLog) << "Failed to open joystick:" << _name;
+        openFailed = true;
     }
 
-    while (!_exitThread) {
-        _update();
-        _handleButtons();
-        if (axisCount() != 0) {
-            _handleAxis();
+    if (!openFailed) {
+        _axisElapsedTimer.start();
+
+        for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
+            if (_assignedButtonActions[buttonIndex]) {
+                _assignedButtonActions[buttonIndex]->buttonElapsedTimer.start();
+            }
         }
 
-        double axisFrequencyHz = _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
-        double buttonFrequencyHz = _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
+        while (!_exitThread) {
+            if (!_update()) {
+                qCWarning(JoystickLog) << "Joystick disconnected or update failed:" << _name;
+                updateFailed = true;
+                break;
+            }
 
-        const int sleep = qMin(static_cast<int>(1000.0 / axisFrequencyHz), static_cast<int>(1000.0 / buttonFrequencyHz)) / 2;
-        QThread::msleep(sleep);
-    }
+            _handleButtons();
+
+            if (axisCount() != 0) {
+                _handleAxis();
+            }
+
+            const double axisFrequencyHz = _joystickSettings.axisFrequencyHz()->rawValue().toDouble();
+            const double buttonFrequencyHz = _joystickSettings.buttonFrequencyHz()->rawValue().toDouble();
+
+            const int sleep = qMin(static_cast<int>(1000.0 / axisFrequencyHz), static_cast<int>(1000.0 / buttonFrequencyHz)) / 2;
+            QThread::msleep(sleep);
+        }
 
         _close();
+    }
+
+    if ((openFailed || updateFailed) && !_exitThread) {
+        qCDebug(JoystickLog) << "Triggering joystick rescan after failure";
+        QMetaObject::invokeMethod(JoystickManager::instance(), "_checkForAddedOrRemovedJoysticks", Qt::QueuedConnection);
+    }
 }
 
 void Joystick::_updateButtonEventState(int buttonIndex, const bool buttonPressed, ButtonEvent_t &buttonEventState)
@@ -845,10 +864,10 @@ void Joystick::_handleAxis()
         }
 
         if (throttleSmoothing) {
-            static float throttleSmoothing = 0.f;
-            throttleSmoothing += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
-            throttleSmoothing = std::max(static_cast<float>(-1.f), std::min(throttleSmoothing, static_cast<float>(1.f)));
-            throttle = throttleSmoothing;
+            static float throttleSmoothingValue = 0.f;
+            throttleSmoothingValue += (throttle * (40 / 1000.f)); // for throttle to change from min to max it will take 1000ms (40ms is a loop time)
+            throttleSmoothingValue = std::max(static_cast<float>(-1.f), std::min(throttleSmoothingValue, static_cast<float>(1.f)));
+            throttle = throttleSmoothingValue;
         }
 
         if (circleCorrection) {
@@ -967,7 +986,7 @@ void Joystick::_startPollingForConfiguration()
 
     qCDebug(JoystickLog) << "Started joystick polling for configuration. Saved previous polling type:" << _pollingTypeToString(_currentPollingType);
 
-    _previousPollingType = _currentPollingType;;
+    _previousPollingType = _currentPollingType;
     _currentPollingType = PollingForConfiguration;
 
     if (!isRunning()) {
@@ -1274,9 +1293,9 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
         { _buttonActionGimbalYawLock,           ButtonEventDownTransition,  [this]() { emit gimbalYawLock(true); } },
         { _buttonActionGimbalYawFollow,         ButtonEventDownTransition,  [this]() { emit gimbalYawLock(false); } },
         { _buttonActionEmergencyStop,           ButtonEventDownTransition,  [this]() { emit emergencyStop(); } },
-        { _buttonActionGripperClose,            ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionClose); } },
-        { _buttonActionGripperOpen,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionOpen); } },
-        { _buttonActionGripperStop,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionStop); } },
+        { _buttonActionGripperGrab,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionGrab); } },
+        { _buttonActionGripperRelease,          ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionRelease); } },
+        { _buttonActionGripperHold,             ButtonEventDownTransition,  [this]() { emit gripperAction(QGCMAVLink::GripperActionHold); } },
         { _buttonActionLandingGearDeploy,       ButtonEventDownTransition,  [this]() { emit landingGearDeploy(); } },
         { _buttonActionLandingGearRetract,      ButtonEventDownTransition,  [this]() { emit landingGearRetract(); } },
         { _buttonActionMotorInterlockEnable,    ButtonEventDownTransition,  [this]() { emit motorInterlock(true); } },
@@ -1385,9 +1404,9 @@ void Joystick::_buildActionList(Vehicle *vehicle)
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalYawLock, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionGimbalYawFollow, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionEmergencyStop, false));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperClose, false));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperOpen, false));
-    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperStop, false));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperGrab, false));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperRelease, false));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionGripperHold, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearDeploy, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearRetract, false));
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -1465,5 +1484,47 @@ void Joystick::stop()
         } else {
             wait();
         }
+    }
+}
+
+void Joystick::setLinkedGroupId(const QString &groupId)
+{
+    if (_linkedGroupId != groupId) {
+        _linkedGroupId = groupId;
+
+        // Persist to settings
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Joystick"));
+        settings.beginGroup(_name);
+        if (groupId.isEmpty()) {
+            settings.remove(QStringLiteral("LinkedGroupId"));
+        } else {
+            settings.setValue(QStringLiteral("LinkedGroupId"), groupId);
+        }
+        settings.endGroup();
+        settings.endGroup();
+
+        emit linkedGroupChanged();
+    }
+}
+
+void Joystick::setLinkedGroupRole(const QString &role)
+{
+    if (_linkedGroupRole != role) {
+        _linkedGroupRole = role;
+
+        // Persist to settings
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Joystick"));
+        settings.beginGroup(_name);
+        if (role.isEmpty()) {
+            settings.remove(QStringLiteral("LinkedGroupRole"));
+        } else {
+            settings.setValue(QStringLiteral("LinkedGroupRole"), role);
+        }
+        settings.endGroup();
+        settings.endGroup();
+
+        emit linkedGroupChanged();
     }
 }

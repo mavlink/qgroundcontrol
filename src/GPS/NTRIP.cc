@@ -384,13 +384,13 @@ void NTRIPTCPLink::_hardwareConnect()
         QSslSocket* sslSocket = qobject_cast<QSslSocket*>(_socket);
         Q_ASSERT(sslSocket);
 
-        QObject::connect(sslSocket, &QSslSocket::encrypted, this, [this, sendHttpRequest]() {
+        QObject::connect(sslSocket, &QSslSocket::encrypted, this, [sendHttpRequest]() {
             qCDebug(NTRIPLog) << "SPARTN TLS connection established";
             sendHttpRequest();
         }, Qt::DirectConnection);
 
         QObject::connect(sslSocket, QOverload<const QList<QSslError>&>::of(&QSslSocket::sslErrors),
-                         this, [this](const QList<QSslError> &errors) {
+                         this, [](const QList<QSslError> &errors) {
             for (const QSslError &e : errors) {
                 qCWarning(NTRIPLog) << "TLS Error:" << e.errorString();
             }

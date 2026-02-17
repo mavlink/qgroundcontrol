@@ -23,16 +23,16 @@ private:
     QString _paramLabel(int index) const;
 
     /// Verifies that all values have been set
-    void _checkFullInfoMap(const MissionCommandUIInfo *uiInfo);
+    void _checkFullInfoMap(const MissionCommandUIInfo* uiInfo);
 
     /// Verifies that values match settings for base tree
-    void _checkBaseValues(const MissionCommandUIInfo *uiInfo, int command);
+    void _checkBaseValues(const MissionCommandUIInfo* uiInfo, int command);
 
     /// Verifies that values match settings for an override
-    void _checkOverrideValues(const MissionCommandUIInfo *uiInfo, int command);
+    void _checkOverrideValues(const MissionCommandUIInfo* uiInfo, int command);
 
     // Verifies that values match settings for an override
-    void _checkOverrideParamValues(const MissionCommandUIInfo *uiInfo, int command, int paramIndex);
+    void _checkOverrideParamValues(const MissionCommandUIInfo* uiInfo, int command, int paramIndex);
 
-    MissionCommandTree *_commandTree = nullptr;
+    MissionCommandTree* _commandTree = nullptr;
 };

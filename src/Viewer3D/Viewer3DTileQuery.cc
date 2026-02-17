@@ -1,220 +1,221 @@
 #include "Viewer3DTileQuery.h"
 
-#define MAX_TILE_COUNTS     200
-#define MAX_ZOOM_LEVEL      23
-#define MAX_LATITUDE       85.05112878
+#include "QGCLoggingCategory.h"
+#include "MapProvider.h"
+#include "QGCMapUrlEngine.h"
 
-enum RequestStat{
-    STARTED,
-    IN_PROGRESS,
-    FINISHED,
-    ERROR,
-};
+#include <QtGui/QPainter>
+#include <QtGui/QPixmap>
+#include <QtNetwork/QNetworkAccessManager>
 
-MapTileQuery::MapTileQuery(QObject *parent)
+#include <cmath>
+
+QGC_LOGGING_CATEGORY(Viewer3DTileQueryLog, "Viewer3d.Viewer3DTileQuery")
+
+static constexpr int kMaxTileCounts = 200;
+static constexpr int kMaxZoomLevel  = 23;
+
+Viewer3DTileQuery::Viewer3DTileQuery(QObject *parent)
     : QObject{parent}
 {
 }
 
-void MapTileQuery::loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileMaxIndex)
+void Viewer3DTileQuery::MapTileContainer_t::init()
 {
-    _mapTilesLoadStat = RequestStat::STARTED;
+    mapWidth = (tileMaxIndex.x() - tileMinIndex.x() + 1) * tileSize;
+    mapHeight = (tileMaxIndex.y() - tileMinIndex.y() + 1) * tileSize;
+    mapTextureImage = QImage(mapWidth, mapHeight, QImage::Format_RGBA32FPx4);
+    mapTextureImage.fill(Qt::gray);
+}
+
+void Viewer3DTileQuery::MapTileContainer_t::setMapTile()
+{
+    QPixmap tmpPixmap;
+    tmpPixmap.loadFromData(currentTileData);
+    QImage tmpImage = tmpPixmap.toImage().convertToFormat(QImage::Format_RGBA32FPx4);
+
+    QPainter painter(&mapTextureImage);
+    int idxX = (currentTileIndex.x() - tileMinIndex.x()) * tileSize;
+    int idxY = (currentTileIndex.y() - tileMinIndex.y()) * tileSize;
+    painter.drawImage(idxX, idxY, tmpImage);
+}
+
+QByteArray Viewer3DTileQuery::MapTileContainer_t::mapData() const
+{
+    return QByteArray(reinterpret_cast<const char *>(mapTextureImage.constBits()), mapTextureImage.sizeInBytes());
+}
+
+void Viewer3DTileQuery::MapTileContainer_t::clear()
+{
+    tileList.clear();
+}
+
+void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileMaxIndex)
+{
     _mapToBeLoaded.clear();
     _mapToBeLoaded.zoomLevel = zoomLevel;
     _mapToBeLoaded.tileMinIndex = tileMinIndex;
     _mapToBeLoaded.tileMaxIndex = tileMaxIndex;
     _mapToBeLoaded.init();
 
+    if (!_networkManager) {
+        _networkManager = new QNetworkAccessManager(this);
+        _networkManager->setTransferTimeout(9000);
+    }
+
     for (int x = tileMinIndex.x(); x <= tileMaxIndex.x(); x++) {
         for (int y = tileMinIndex.y(); y <= tileMaxIndex.y(); y++) {
-            QString tileKey = getTileKey(_mapId, x, y, zoomLevel);
-            _mapToBeLoaded.tileList.append(tileKey);
-            Viewer3DTileReply* _reply = new Viewer3DTileReply(zoomLevel, x, y, _mapId, this);
-            connect(_reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
-            connect(_reply, &Viewer3DTileReply::tileGiveUp, this, &MapTileQuery::tileGiveUp);
-            connect(_reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
+            _mapToBeLoaded.tileList.append(_tileKey(_mapId, x, y, zoomLevel));
+
+            auto *reply = new Viewer3DTileReply(zoomLevel, x, y, _mapId, _mapType, _networkManager, this);
+            connect(reply, &Viewer3DTileReply::tileDone, this, &Viewer3DTileQuery::_tileDone);
+            connect(reply, &Viewer3DTileReply::tileGiveUp, this, &Viewer3DTileQuery::_tileGiveUp);
+            connect(reply, &Viewer3DTileReply::tileEmpty, this, &Viewer3DTileQuery::_tileEmpty);
         }
     }
-    totalTilesCount = _mapToBeLoaded.tileList.size();
-    downloadedTilesCount = 0;
-    qDebug() << totalTilesCount << "Tiles to be downloaded!!";
+
+    _totalTilesCount = _mapToBeLoaded.tileList.size();
+    _downloadedTilesCount = 0;
+    qCDebug(Viewer3DTileQueryLog) << "Requesting" << _totalTilesCount << "tiles at zoom" << zoomLevel
+                                  << "x:[" << tileMinIndex.x() << ".." << tileMaxIndex.x() << "]"
+                                  << "y:[" << tileMinIndex.y() << ".." << tileMaxIndex.y() << "]";
 }
 
-MapTileQuery::TileStatistics_t MapTileQuery::findAndLoadMapTiles(int zoomLevel, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2)
+Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
-    float lat_1 = coordinate_1.latitude(); float lon_1 = coordinate_1.longitude();
-    float lat_2 = coordinate_2.latitude(); float lon_2 = coordinate_2.longitude();
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    if (!provider) {
+        return {};
+    }
 
-    QGeoCoordinate minCoordinate = QGeoCoordinate(fmax(lat_1, lat_2), fmin(lon_1, lon_2), 0);
-    QGeoCoordinate maxCoordinate = QGeoCoordinate(fmin(lat_1, lat_2), fmax(lon_1, lon_2), 0);
+    const double lat1 = coordinateMin.latitude();
+    const double lon1 = coordinateMin.longitude();
+    const double lat2 = coordinateMax.latitude();
+    const double lon2 = coordinateMax.longitude();
 
-    QPoint minPixel = latLonToPixelXY(minCoordinate, zoomLevel);
-    QPoint maxPixel = latLonToPixelXY(maxCoordinate, zoomLevel);
+    const int minTileX = provider->long2tileX(std::fmin(lon1, lon2), zoomLevel);
+    const int maxTileX = provider->long2tileX(std::fmax(lon1, lon2), zoomLevel);
+    const int minTileY = provider->lat2tileY(std::fmax(lat1, lat2), zoomLevel);
+    const int maxTileY = provider->lat2tileY(std::fmin(lat1, lat2), zoomLevel);
 
-    QPoint minTile = pixelXYToTileXY(minPixel);
-    QPoint maxTile = pixelXYToTileXY(maxPixel);
+    const QPoint minTile(minTileX, minTileY);
+    const QPoint maxTile(maxTileX, maxTileY);
 
-    minPixel = tileXYToPixelXY(minTile);
-    maxPixel = tileXYToPixelXY(QPoint(maxTile.x() + 1, maxTile.y() + 1)); //since the coordinate is for the top left corner of each tile
+    const QGeoCoordinate nwCoord(provider->tileY2lat(minTileY, zoomLevel),
+                                 provider->tileX2long(minTileX, zoomLevel), 0);
+    const QGeoCoordinate seCoord(provider->tileY2lat(maxTileY + 1, zoomLevel),
+                                 provider->tileX2long(maxTileX + 1, zoomLevel), 0);
 
-    minCoordinate = pixelXYToLatLong(minPixel, zoomLevel);
-    maxCoordinate = pixelXYToLatLong(maxPixel, zoomLevel);
+    const QGeoCoordinate finalMin = QGeoCoordinate(seCoord.latitude(), nwCoord.longitude(), 0);
+    const QGeoCoordinate finalMax = QGeoCoordinate(nwCoord.latitude(), seCoord.longitude(), 0);
 
-    // qDebug() << maxCoordinate.latitude() << "," << minCoordinate.longitude() << ";"<< minCoordinate.latitude()<< "," << maxCoordinate.longitude();
-    QGeoCoordinate minCoordinate_ = QGeoCoordinate(maxCoordinate.latitude(), minCoordinate.longitude(), 0);
-    QGeoCoordinate maxCoordinate_ = QGeoCoordinate(minCoordinate.latitude(), maxCoordinate.longitude(), 0);
+    _loadMapTiles(zoomLevel, minTile, maxTile);
 
-    loadMapTiles(zoomLevel, minTile, maxTile);
+    TileStatistics_t output;
+    output.coordinateMin = finalMin;
+    output.coordinateMax = finalMax;
+    output.tileCounts = QSize(maxTile.x() - minTile.x() + 1, maxTile.y() - minTile.y() + 1);
+    output.zoomLevel = zoomLevel;
 
-    TileStatistics_t _output;
-    _output.coordinateMin = minCoordinate_;
-    _output.coordinateMax = maxCoordinate_;
-    _output.tileCounts = QSize(maxTile.x() - minTile.x() + 1, maxTile.y() - minTile.y() + 1);
-    _output.zoomLevel = zoomLevel;
-
-    return _output;
+    return output;
 }
 
-void MapTileQuery::adaptiveMapTilesLoader(QString mapType, int mapId, QGeoCoordinate coordinate_1, QGeoCoordinate coordinate_2)
+void Viewer3DTileQuery::adaptiveMapTilesLoader(const QString &mapType, int mapId, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
     _mapId = mapId;
     _mapType = mapType;
-    for(_zoomLevel=MAX_ZOOM_LEVEL; _zoomLevel>0; _zoomLevel--){
-        if(maxTileCount(_zoomLevel, coordinate_1, coordinate_2) < MAX_TILE_COUNTS){
+
+    for (_zoomLevel = kMaxZoomLevel; _zoomLevel > 0; _zoomLevel--) {
+        if (maxTileCount(_zoomLevel, coordinateMin, coordinateMax) < kMaxTileCounts) {
             break;
         }
     }
 
-    _textureCoordinateMin = coordinate_1;
-    _textureCoordinateMax = coordinate_2;
-    emit textureGeometryReady(findAndLoadMapTiles(_zoomLevel, coordinate_1, coordinate_2));
+    _textureCoordinateMin = coordinateMin;
+    _textureCoordinateMax = coordinateMax;
+    emit textureGeometryReady(_findAndLoadMapTiles(_zoomLevel, coordinateMin, coordinateMax));
 }
 
-int MapTileQuery::maxTileCount(int zoomLevel, QGeoCoordinate coordinateMin, QGeoCoordinate coordinateMax)
+int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
-    double mapSize = powf(2, zoomLevel);
-    double latResolution = 180.0 / mapSize;
-    double lonResolution = 360.0 / mapSize;
-
-    double latLen = coordinateMax.latitude() - coordinateMin.latitude();
-    double lonLen = coordinateMax.longitude() - coordinateMin.longitude();
-
-    int tileXCount = ceil(lonLen/lonResolution);
-    int tileYCount = ceil(latLen/latResolution);
-
-    return tileXCount * tileYCount;
-}
-
-double MapTileQuery::valueClip(double n, double _minValue, double _maxValue)
-{
-    return fmin(fmax(n, _minValue), _maxValue);
-}
-
-QPoint MapTileQuery::latLonToPixelXY(QGeoCoordinate pointCoordinate, int zoomLevel)
-{
-    double MinLatitude = -MAX_LATITUDE;
-    double MaxLatitude = MAX_LATITUDE;
-    double MinLongitude = -180.0f;
-    double MaxLongitude = 180.0f;
-
-    double latitude = valueClip(pointCoordinate.latitude(), MinLatitude, MaxLatitude);
-    double longitude = valueClip(pointCoordinate.longitude(), MinLongitude, MaxLongitude);
-
-    double x = (longitude + 180) / (360);
-    double y = 0;
-    if(fabs(latitude) < MaxLatitude){
-        double sinLatitude = sin(qDegreesToRadians(latitude));
-        y = 0.5 - log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * M_PI);
-    }else{
-        y = (90 - latitude) / 180;
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    if (!provider) {
+        return 0;
     }
 
-    double mapSize = powf(2, zoomLevel) * 256.0f;
-    int pixelX = (int) valueClip(x * mapSize + 0.5, 0, mapSize - 1);
-    int pixelY = (int) valueClip(y * mapSize + 0.5, 0, mapSize - 1);
+    const double minLon = std::fmin(coordinateMin.longitude(), coordinateMax.longitude());
+    const double maxLon = std::fmax(coordinateMin.longitude(), coordinateMax.longitude());
+    const double minLat = std::fmin(coordinateMin.latitude(), coordinateMax.latitude());
+    const double maxLat = std::fmax(coordinateMin.latitude(), coordinateMax.latitude());
 
-    return QPoint(pixelX, pixelY);
+    const int minTileX = provider->long2tileX(minLon, zoomLevel);
+    const int maxTileX = provider->long2tileX(maxLon, zoomLevel);
+    const int minTileY = provider->lat2tileY(maxLat, zoomLevel);
+    const int maxTileY = provider->lat2tileY(minLat, zoomLevel);
+
+    return (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
 }
 
-QPoint MapTileQuery::pixelXYToTileXY(QPoint pixel)
+void Viewer3DTileQuery::_cleanupReply(Viewer3DTileReply *reply)
 {
-    return  QPoint(pixel.x() / 256, pixel.y() / 256);
+    disconnect(reply, &Viewer3DTileReply::tileDone, this, &Viewer3DTileQuery::_tileDone);
+    disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &Viewer3DTileQuery::_tileGiveUp);
+    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &Viewer3DTileQuery::_tileEmpty);
+    reply->deleteLater();
 }
 
-QPoint MapTileQuery::tileXYToPixelXY(QPoint tile)
+void Viewer3DTileQuery::_tileDone(Viewer3DTileReply::TileInfo_t tileData)
 {
-    return QPoint(tile.x() * 256, tile.y() * 256);
-}
+    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
 
-QGeoCoordinate MapTileQuery::pixelXYToLatLong(QPoint pixel, int zoomLevel)
-{
-    double mapSize = powf(2, zoomLevel) * 256.0f;
-    double x = (valueClip(pixel.x(), 0, mapSize - 1) / mapSize) - 0.5;
-    double y = 0;
-    if(pixel.y() <mapSize - 1 && pixel.y() > 0){
-        y = 0.5 - (valueClip(pixel.y(), 0, mapSize - 1) / mapSize);
-    }else{
-        y = (pixel.y() >= mapSize - 1)?(-1):(1);
-    }
+    const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
+    const qsizetype itemRemoved = _mapToBeLoaded.tileList.removeAll(key);
 
-    double latitude = 90.0f - 360.0f * atan(exp(-y * 2 * M_PI)) / M_PI;
-    double longitude = 360 * x;
-    return QGeoCoordinate(latitude, longitude, 0);
-}
-
-void MapTileQuery::tileDone(Viewer3DTileReply::tileInfo_t _tileData)
-{
-    Viewer3DTileReply* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
-
-    QString tileKey = getTileKey(_tileData.mapId, _tileData.x, _tileData.y, _tileData.zoomLevel);
-    qsizetype itemRemoved = _mapToBeLoaded.tileList.removeAll(tileKey);
-
-    if(itemRemoved > 0){
-        _mapToBeLoaded.currentTileIndex = QPoint(_tileData.x, _tileData.y);
-        _mapToBeLoaded.currentTileData = _tileData.data;
-        _mapToBeLoaded.currentTileStat = RequestStat::FINISHED;
+    if (itemRemoved > 0) {
+        _mapToBeLoaded.currentTileIndex = QPoint(tileData.x, tileData.y);
+        _mapToBeLoaded.currentTileData = tileData.data;
         _mapToBeLoaded.setMapTile();
-        downloadedTilesCount++;
-        emit mapTileDownloaded(100.0 * ((float) downloadedTilesCount/ (float)totalTilesCount));
+        _downloadedTilesCount++;
+        emit mapTileDownloaded(100.0f * (static_cast<float>(_downloadedTilesCount) / static_cast<float>(_totalTilesCount)));
 
-        // qDebug() << _tileData.x << _tileData.y << _tileData.zoomLevel << "tile downloaded!!!" << _mapToBeLoaded.tileList.size();
-
-        if(_mapToBeLoaded.tileList.size() == 0){
-            _mapTilesLoadStat = RequestStat::FINISHED;
-            qDebug() << "All tiles downloaded ";
-            downloadedTilesCount = totalTilesCount;
+        if (_mapToBeLoaded.tileList.isEmpty()) {
+            qCDebug(Viewer3DTileQueryLog) << "All tiles downloaded";
+            _downloadedTilesCount = _totalTilesCount;
             emit loadingMapCompleted();
         }
-
     }
-    disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
-    disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &MapTileQuery::tileGiveUp);
-    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
-    reply->deleteLater();
+
+    _cleanupReply(reply);
 }
 
-void MapTileQuery::tileGiveUp(Viewer3DTileReply::tileInfo_t _tileData)
+void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileReply::TileInfo_t tileData)
 {
-    Viewer3DTileReply* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
-    disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
-    disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &MapTileQuery::tileGiveUp);
-    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
-    reply->deleteLater();
+    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
+    _cleanupReply(reply);
+
+    const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
+    _mapToBeLoaded.tileList.removeAll(key);
+    _downloadedTilesCount++;
+    emit mapTileDownloaded(100.0f * (static_cast<float>(_downloadedTilesCount) / static_cast<float>(_totalTilesCount)));
+
+    if (_mapToBeLoaded.tileList.isEmpty()) {
+        _downloadedTilesCount = _totalTilesCount;
+        emit loadingMapCompleted();
+    }
 }
 
-void MapTileQuery::tileEmpty(Viewer3DTileReply::tileInfo_t _tileData)
+void Viewer3DTileQuery::_tileEmpty(Viewer3DTileReply::TileInfo_t tileData)
 {
-    Viewer3DTileReply* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
-    disconnect(reply, &Viewer3DTileReply::tileDone, this, &MapTileQuery::tileDone);
-    disconnect(reply, &Viewer3DTileReply::tileEmpty, this, &MapTileQuery::tileEmpty);
-    reply->deleteLater();
-    if(_tileData.zoomLevel > 0 && _tileData.zoomLevel == _zoomLevel){
+    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
+    _cleanupReply(reply);
+
+    if (tileData.zoomLevel > 0 && tileData.zoomLevel == _zoomLevel) {
         _zoomLevel -= 1;
-        emit textureGeometryReady(findAndLoadMapTiles(_zoomLevel, _textureCoordinateMin, _textureCoordinateMax));
+        emit textureGeometryReady(_findAndLoadMapTiles(_zoomLevel, _textureCoordinateMin, _textureCoordinateMax));
     }
 }
 
-QString MapTileQuery::getTileKey(int mapId, int x, int y, int zoomLevel)
+QString Viewer3DTileQuery::_tileKey(int mapId, int x, int y, int zoomLevel)
 {
     return QString::asprintf("%010d%08d%08d%03d", mapId, x, y, zoomLevel);
 }

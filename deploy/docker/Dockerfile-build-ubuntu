@@ -31,11 +31,12 @@ ENV LANG=en_US.UTF-8 \
 
 # ---------- Bring in the helper scripts and config ----------
 COPY .github/build-config.json /tmp/qt/
-COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
+COPY tools/setup/install_dependencies.py /tmp/qt/
 COPY tools/setup/install-qt-debian.sh /tmp/qt/
 COPY tools/setup/read-config.sh /tmp/qt/
 RUN chmod +x /tmp/qt/*.sh && \
-    /tmp/qt/install-dependencies-debian.sh && \
+    apt-get update && apt-get install -y --no-install-recommends python3 && \
+    python3 /tmp/qt/install_dependencies.py --platform debian && \
     /tmp/qt/install-qt-debian.sh
 
 # Extract Qt version and set environment (scripts install to /opt/Qt/<version>/gcc_64)

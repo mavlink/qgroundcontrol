@@ -139,8 +139,14 @@ Item {
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
-            onTriggered:    editPositionDialog.createObject(mainWindow, { coordinate: mapPolyline.path[menu._removeVertexIndex] }).open()
+            onTriggered:    editPositionDialogFactory.open({ coordinate: mapPolyline.path[menu._removeVertexIndex] })
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: editPositionDialogFactory
+
+        dialogComponent: editPositionDialog
     }
 
     Component {

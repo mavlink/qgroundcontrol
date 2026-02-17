@@ -101,7 +101,7 @@
         <file alias="Gears.svg">src/UI/toolbar/Images/Gears.svg</file>
         <file alias="GeoFence.svg">src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
-        <file alias="GeoTagIcon.svg">src/AnalyzeView/GeoTagIcon.svg</file>
+        <file alias="GeoTagIcon.svg">src/AnalyzeView/GeoTag/GeoTagIcon.svg</file>
         <file alias="Gps.svg">src/UI/toolbar/Images/Gps.svg</file>
         <file alias="GpsAuthentication.svg">src/UI/toolbar/Images/GpsAuthentication.svg</file>
         <file alias="GpsInterference.svg">src/UI/toolbar/Images/GpsInterference.svg</file>

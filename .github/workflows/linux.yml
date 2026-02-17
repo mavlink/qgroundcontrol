@@ -19,6 +19,8 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'tools/setup/*debian*'
+      - 'tools/setup/install_dependencies.py'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -82,7 +84,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          fetch-depth: 1
+          fetch-depth: 0
           fetch-tags: true
 
       - name: Get build config
@@ -93,9 +95,7 @@ jobs:
         uses: ./.github/actions/common
 
       - name: Install Dependencies
-        run: |
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
+        run: python3 ./tools/setup/install_dependencies.py --platform debian
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -114,13 +114,12 @@ jobs:
           arch: ${{ matrix.arch }}
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      # Advanced CodeQL: Uncomment these steps after disabling default setup in repo settings
-      # - name: Initialize CodeQL
-      #   if: matrix.build_type == 'Debug'
-      #   uses: github/codeql-action/init@v4
-      #   with:
-      #     languages: c-cpp
-      #     config-file: ./.github/codeql/codeql-config.yml
+      - name: Initialize CodeQL
+        if: matrix.build_type == 'Debug'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -128,34 +127,28 @@ jobs:
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
               -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
               -DQGC_ENABLE_COVERAGE=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
 
       - name: Build
         working-directory: ${{ runner.temp }}/build
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
-      # - name: Perform CodeQL Analysis
-      #   if: matrix.build_type == 'Debug'
-      #   uses: github/codeql-action/analyze@v4
-      #   with:
-      #     category: "/language:c-cpp"
+      - name: Perform CodeQL Analysis
+        if: matrix.build_type == 'Debug'
+        continue-on-error: true
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:c-cpp"
 
-      # NOTE: QGC's command line parser doesn't support Qt Test -o options.
-      # The test runner (UnitTest::run) uses hardcoded args via QTest::qExec().
-      # JUnit XML output would require modifying src/Utilities/QGCCommandLineParser.cc
-      # to forward -o options to the test framework.
-      # xvfb-run: Qt GUI apps require a display server; -a auto-selects free display
+      # Run tests via CTest for timeouts, parallel execution, and failure detection
+      # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
         id: tests
-        working-directory: ${{ runner.temp }}/build/Debug
+        working-directory: ${{ runner.temp }}/build
         run: |
           set +e
-          # TODO: Add JUnit output when QGC supports Qt Test -o options (see note above)
-          # xvfb-run -a ./QGroundControl --unittest \
-          #   -o ../junit-results.xml,junitxml \
-          #   -o -,txt 2>&1 | tee ../test-output.txt
-          xvfb-run -a ./QGroundControl --unittest 2>&1 | tee ../test-output.txt
+          ctest --output-on-failure --parallel $(nproc) -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
           exit $TEST_EXIT_CODE
@@ -165,21 +158,20 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.arch }}
-          # TODO: Add junit-results.xml when QGC supports Qt Test -o options
           path: |
             ${{ runner.temp }}/build/test-output.txt
-            # ${{ runner.temp }}/build/junit-results.xml
+            ${{ runner.temp }}/build/junit-results.xml
+            ${{ runner.temp }}/build/junit-results-*.xml
           retention-days: 7
 
-      # TODO: Enable when JUnit XML output is supported (see note above)
-      # - name: Upload to Trunk Flaky Tests
-      #   if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-      #   continue-on-error: true
-      #   uses: trunk-io/analytics-uploader@v1
-      #   with:
-      #     junit-paths: ${{ runner.temp }}/build/junit-results.xml
-      #     org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-      #     token: ${{ secrets.TRUNK_TOKEN }}
+      - name: Upload to Trunk Flaky Tests
+        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
+        continue-on-error: true
+        uses: trunk-io/analytics-uploader@v1
+        with:
+          junit-paths: ${{ runner.temp }}/build/junit-results*.xml
+          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
@@ -213,6 +205,7 @@ jobs:
         with:
           artifact_name: ${{ matrix.package }}.AppImage
           package_name: ${{ matrix.package }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}

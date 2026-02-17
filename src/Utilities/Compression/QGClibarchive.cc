@@ -766,6 +766,18 @@ bool extractAnyArchive(const QString& archivePath, const QString& outputDirector
 bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, ProgressCallback progress,
                           qint64 maxBytes)
 {
+    const QFileInfo outputInfo(outputDirectoryPath);
+    if (outputInfo.fileName().isEmpty()) {
+        qCWarning(QGClibarchiveLog) << "Invalid output directory path:" << outputDirectoryPath;
+        return false;
+    }
+
+    const QString parentDirectoryPath = outputInfo.absoluteDir().absolutePath();
+    if (!QGCFileHelper::ensureDirectoryExists(parentDirectoryPath)) {
+        qCWarning(QGClibarchiveLog) << "Failed to create output parent directory:" << parentDirectoryPath;
+        return false;
+    }
+
     // Pre-check: verify archive can be opened and get stats for disk space check
     const ArchiveStats stats = getArchiveStats(archivePath);
     if (stats.totalEntries == 0) {
@@ -781,58 +793,87 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
         }
     }
 
-    // Create temporary directory for staging extraction
-    // QTemporaryDir auto-removes on destruction (success or failure)
-    QTemporaryDir tempDir;
-    if (!tempDir.isValid()) {
-        qCWarning(QGClibarchiveLog) << "Failed to create temporary directory:" << tempDir.errorString();
+    const QString outputDirectoryName = outputInfo.fileName();
+
+    // Stage extraction in the same parent directory to keep commit/rollback renames on one filesystem.
+    QTemporaryDir stagingDir(QGCFileHelper::joinPath(parentDirectoryPath,
+                                                     QStringLiteral("%1.qgc_stage_XXXXXX").arg(outputDirectoryName)));
+    if (!stagingDir.isValid()) {
+        qCWarning(QGClibarchiveLog) << "Failed to create staging directory:" << stagingDir.errorString();
         return false;
     }
+    stagingDir.setAutoRemove(false);
 
-    qCDebug(QGClibarchiveLog) << "Atomic extraction: staging to" << tempDir.path();
+    const QString stagingPath = stagingDir.path();
+    const QFileInfo stagingInfo(stagingPath);
+    const QString stagingName = stagingInfo.fileName();
+
+    qCDebug(QGClibarchiveLog) << "Atomic extraction: staging to" << stagingPath;
 
     // Extract to temporary directory
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
+        (void) QDir(stagingPath).removeRecursively();
         return false;
     }
 
     const qint64 totalSize = reader.dataSize();
-    if (!extractArchiveEntries(reader.release(), tempDir.path(), progress, totalSize, maxBytes)) {
-        // Extraction failed - QTemporaryDir destructor will clean up
-        qCDebug(QGClibarchiveLog) << "Extraction failed, cleaning up temp directory";
+    if (!extractArchiveEntries(reader.release(), stagingPath, progress, totalSize, maxBytes)) {
+        qCDebug(QGClibarchiveLog) << "Staged extraction failed, cleaning up";
+        (void) QDir(stagingPath).removeRecursively();
         return false;
     }
 
-    // Ensure output directory exists
-    if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
-        return false;
-    }
+    QDir parentDir(parentDirectoryPath);
+    QString backupPath;
+    QString backupName;
 
-    // Move extracted files from temp to final destination
-    QDir tempDirObj(tempDir.path());
-    const QStringList entries = tempDirObj.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
-
-    for (const QString& entry : entries) {
-        const QString srcPath = QGCFileHelper::joinPath(tempDir.path(), entry);
-        const QString dstPath = QGCFileHelper::joinPath(outputDirectoryPath, entry);
-
-        // Remove existing destination if it exists (for atomic replacement)
-        if (QFileInfo::exists(dstPath)) {
-            if (QFileInfo(dstPath).isDir()) {
-                QDir(dstPath).removeRecursively();
-            } else {
-                QFile::remove(dstPath);
-            }
+    const QFileInfo existingOutputInfo(outputDirectoryPath);
+    if (existingOutputInfo.exists()) {
+        if (!existingOutputInfo.isDir()) {
+            qCWarning(QGClibarchiveLog) << "Output path exists and is not a directory:" << outputDirectoryPath;
+            (void) QDir(stagingPath).removeRecursively();
+            return false;
         }
 
-        if (!QGCFileHelper::moveFileOrCopy(srcPath, dstPath)) {
-            qCWarning(QGClibarchiveLog) << "Failed to move entry:" << entry;
+        QTemporaryDir backupDir(QGCFileHelper::joinPath(parentDirectoryPath,
+                                                        QStringLiteral("%1.qgc_backup_XXXXXX").arg(outputDirectoryName)));
+        if (!backupDir.isValid()) {
+            qCWarning(QGClibarchiveLog) << "Failed to create backup directory placeholder:"
+                                        << backupDir.errorString();
+            (void) QDir(stagingPath).removeRecursively();
+            return false;
+        }
+        backupDir.setAutoRemove(false);
+        backupPath = backupDir.path();
+        backupName = QFileInfo(backupPath).fileName();
+        (void) backupDir.remove();
+
+        if (!parentDir.rename(outputDirectoryName, backupName)) {
+            qCWarning(QGClibarchiveLog) << "Failed to move existing output to backup:" << outputDirectoryPath;
+            (void) QDir(stagingPath).removeRecursively();
             return false;
         }
     }
 
-    qCDebug(QGClibarchiveLog) << "Atomic extraction complete:" << entries.size() << "entries";
+    if (!parentDir.rename(stagingName, outputDirectoryName)) {
+        qCWarning(QGClibarchiveLog) << "Failed to commit staged extraction for" << outputDirectoryPath;
+        (void) QDir(stagingPath).removeRecursively();
+
+        if (!backupName.isEmpty()) {
+            if (!parentDir.rename(backupName, outputDirectoryName)) {
+                qCWarning(QGClibarchiveLog) << "Failed to rollback backup for" << outputDirectoryPath;
+            }
+        }
+
+        return false;
+    }
+
+    if (!backupPath.isEmpty()) {
+        (void) QDir(backupPath).removeRecursively();
+    }
+
+    qCDebug(QGClibarchiveLog) << "Atomic extraction committed:" << outputDirectoryPath;
     return true;
 }
 

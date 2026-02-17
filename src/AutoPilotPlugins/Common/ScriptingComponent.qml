@@ -198,11 +198,11 @@ SetupPage {
                                 fillItem: parent
                                 onClicked: {
                                     var confirm = qsTr("Are you sure you want to delete the script \"%1\"? This action cannot be undone.").arg(modelData)
-                                    mainWindow.showMessageDialog(qsTr("Delete Lua Script"), confirm, Dialog.Ok | Dialog.Cancel, function() {
+                                    QGroundControl.showMessageDialog(scriptingPage, qsTr("Delete Lua Script"), confirm, Dialog.Ok | Dialog.Cancel, function() {
                                         var remotePath = root.fullRemotePath(modelData)
                                         if (!ftpController.deleteFile(remotePath)) {
                                             var deleteError = ftpController.errorString.length > 0 ? ftpController.errorString : qsTr("Delete failed")
-                                            mainWindow.showMessageDialog(qsTr("Lua Delete"), deleteError)
+                                            QGroundControl.showMessageDialog(scriptingPage, qsTr("Lua Delete"), deleteError)
                                         }
                                     })
                                 }
@@ -251,7 +251,7 @@ SetupPage {
                     var remotePath = root.fullRemotePath(fileName)
                     if (!ftpController.uploadFile(file, remotePath)) {
                         var uploadError = ftpController.errorString.length > 0 ? ftpController.errorString : qsTr("Upload failed")
-                        mainWindow.showMessageDialog(qsTr("Lua Upload"), uploadError)
+                        QGroundControl.showMessageDialog(scriptingPage, qsTr("Lua Upload"), uploadError)
                     }
                     close()
                 }
@@ -272,7 +272,7 @@ SetupPage {
                     }
                     if (!ftpController.downloadFile(root.fullRemotePath(fileToDownload), folder, fileToDownload)) {
                         var downloadError = ftpController.errorString.length > 0 ? ftpController.errorString : qsTr("Download failed")
-                        mainWindow.showMessageDialog(qsTr("Lua Download"), downloadError)
+                        QGroundControl.showMessageDialog(scriptingPage, qsTr("Lua Download"), downloadError)
                     }
                     close()
                 }

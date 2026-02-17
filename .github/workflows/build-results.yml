@@ -2,7 +2,7 @@ name: Build Results
 
 on:
   workflow_run:
-    workflows: [Linux, Windows, MacOS, Android]
+    workflows: [Linux, Windows, MacOS, Android, pre-commit]
     types: [completed]
 
 permissions:
@@ -72,18 +72,57 @@ jobs:
               'MacOS': { status: 'Pending', conclusion: 'pending', url: '' },
               'Android': { status: 'Pending', conclusion: 'pending', url: '' }
             };
+            const preCommit = { status: 'Not Triggered', conclusion: 'not_triggered', url: '' };
+            const latestByName = {};
 
             for (const run of runs.data.workflow_runs) {
-              if (platforms[run.name]) {
-                if (run.status === 'completed') {
-                  platforms[run.name].status = run.conclusion === 'success' ? 'Passed' : 'Failed';
-                  platforms[run.name].conclusion = run.conclusion;
-                  platforms[run.name].url = run.html_url;
-                } else if (run.status === 'in_progress') {
-                  platforms[run.name].status = 'Running';
-                  platforms[run.name].conclusion = 'in_progress';
-                  platforms[run.name].url = run.html_url;
-                }
+              if (run.event !== 'pull_request') {
+                continue;
+              }
+
+              if (!platforms[run.name] && run.name !== 'pre-commit') {
+                continue;
+              }
+
+              const existing = latestByName[run.name];
+              if (!existing || new Date(run.created_at) > new Date(existing.created_at)) {
+                latestByName[run.name] = run;
+              }
+            }
+
+            for (const name of Object.keys(platforms)) {
+              const run = latestByName[name];
+              if (!run) continue;
+
+              if (run.status === 'completed') {
+                platforms[name].status = run.conclusion === 'success' ? 'Passed' : 'Failed';
+                platforms[name].conclusion = run.conclusion || 'failure';
+                platforms[name].url = run.html_url;
+              } else if (run.status === 'in_progress') {
+                platforms[name].status = 'Running';
+                platforms[name].conclusion = 'in_progress';
+                platforms[name].url = run.html_url;
+              } else {
+                platforms[name].status = 'Pending';
+                platforms[name].conclusion = 'pending';
+                platforms[name].url = run.html_url;
+              }
+            }
+
+            const preCommitRun = latestByName['pre-commit'];
+            if (preCommitRun) {
+              if (preCommitRun.status === 'completed') {
+                preCommit.status = preCommitRun.conclusion === 'success' ? 'Passed' : 'Failed';
+                preCommit.conclusion = preCommitRun.conclusion || 'failure';
+                preCommit.url = preCommitRun.html_url;
+              } else if (preCommitRun.status === 'in_progress') {
+                preCommit.status = 'Running';
+                preCommit.conclusion = 'in_progress';
+                preCommit.url = preCommitRun.html_url;
+              } else {
+                preCommit.status = 'Pending';
+                preCommit.conclusion = 'pending';
+                preCommit.url = preCommitRun.html_url;
               }
             }
 
@@ -110,6 +149,10 @@ jobs:
             core.setOutput('table', table);
             core.setOutput('summary', summary);
             core.setOutput('all_complete', allComplete);
+            core.setOutput('precommit_status', preCommit.status);
+            core.setOutput('precommit_url', preCommit.url);
+            core.setOutput('precommit_conclusion', preCommit.conclusion);
+            core.setOutput('precommit_run_id', preCommitRun ? String(preCommitRun.id) : '');
 
       - name: Collect artifact sizes
         if: steps.pr.outputs.result != 'null'
@@ -124,6 +167,16 @@ jobs:
         uses: ./.github/actions/download-all-artifacts
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download pre-commit results artifact
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.precommit_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          run-id: ${{ steps.builds.outputs.precommit_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: pre-commit-results
+          path: artifacts/pre-commit-results
 
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != 'null'
@@ -154,7 +207,62 @@ jobs:
           ${{ steps.builds.outputs.table }}
           **${{ steps.builds.outputs.summary }}**
 
+          ### Pre-commit
+
+          | Check | Status | Details |
+          |-------|--------|---------|
           HEADER
+
+          PRECOMMIT_STATUS="${{ steps.builds.outputs.precommit_status }}"
+          PRECOMMIT_URL="${{ steps.builds.outputs.precommit_url }}"
+          PRECOMMIT_DETAILS="-"
+          PRECOMMIT_NOTE=""
+
+          if [[ -n "$PRECOMMIT_URL" ]]; then
+            PRECOMMIT_DETAILS="[View]($PRECOMMIT_URL)"
+          fi
+
+          if [[ -f "artifacts/pre-commit-results/pre-commit-results.json" ]]; then
+            PARSED_PRECOMMIT=$(python3 - << 'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("artifacts/pre-commit-results/pre-commit-results.json")
+          try:
+              data = json.loads(path.read_text(encoding="utf-8"))
+          except Exception:
+              print("||||")
+              raise SystemExit(0)
+
+          exit_code = str(data.get("exit_code", "1")).strip()
+          passed = str(data.get("passed", "0")).strip()
+          failed = str(data.get("failed", "0")).strip()
+          skipped = str(data.get("skipped", "0")).strip()
+          run_url = str(data.get("run_url", "")).strip()
+          status = "Passed" if exit_code == "0" else "Failed (non-blocking)"
+          print(f"{status}|{passed}|{failed}|{skipped}|{run_url}")
+          PY
+            )
+
+            IFS='|' read -r ART_STATUS ART_PASSED ART_FAILED ART_SKIPPED ART_URL <<< "$PARSED_PRECOMMIT"
+
+            if [[ -n "$ART_STATUS" ]]; then
+              PRECOMMIT_STATUS="$ART_STATUS"
+            fi
+            if [[ -n "$ART_URL" ]]; then
+              PRECOMMIT_DETAILS="[View]($ART_URL)"
+            fi
+            if [[ -n "$ART_PASSED" ]]; then
+              PRECOMMIT_NOTE="Pre-commit hooks: ${ART_PASSED} passed, ${ART_FAILED:-0} failed, ${ART_SKIPPED:-0} skipped."
+            fi
+          fi
+
+          echo "| pre-commit | $PRECOMMIT_STATUS | $PRECOMMIT_DETAILS |" >> comment.md
+          echo "" >> comment.md
+          if [[ -n "$PRECOMMIT_NOTE" ]]; then
+            echo "$PRECOMMIT_NOTE" >> comment.md
+            echo "" >> comment.md
+          fi
 
           # === Test Results Section ===
           if ls artifacts/test-results-*/test-output.txt 1>/dev/null 2>&1; then
@@ -169,9 +277,18 @@ jobs:
             for file in artifacts/test-results-*/test-output.txt; do
               ARCH=$(dirname "$file" | xargs basename | sed 's/test-results-//')
 
-              PASSED=$(grep -c "^PASS" "$file" 2>/dev/null) || PASSED=0
-              FAILED=$(grep -c "^FAIL" "$file" 2>/dev/null) || FAILED=0
-              SKIPPED=$(grep -c "^SKIP" "$file" 2>/dev/null) || SKIPPED=0
+              # CTest output format:
+              #   "123/456 Test #123: SomeTest ... Passed"
+              PASSED=$(grep -Ec 'Test #[0-9]+: .* Passed' "$file" 2>/dev/null || true)
+              FAILED=$(grep -Ec 'Test #[0-9]+: .* \*\*\*Failed' "$file" 2>/dev/null || true)
+              SKIPPED=$(grep -Ec 'Test #[0-9]+: .* (\*\*\*Skipped|Skipped)' "$file" 2>/dev/null || true)
+
+              # Fallback for older/non-CTest markers
+              if [[ "$PASSED" -eq 0 && "$FAILED" -eq 0 && "$SKIPPED" -eq 0 ]]; then
+                PASSED=$(grep -c "^PASS" "$file" 2>/dev/null || true)
+                FAILED=$(grep -c "^FAIL" "$file" 2>/dev/null || true)
+                SKIPPED=$(grep -c "^SKIP" "$file" 2>/dev/null || true)
+              fi
 
               TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
               TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
@@ -184,7 +301,7 @@ jobs:
                 echo "<details><summary>Failed tests</summary>" >> comment.md
                 echo "" >> comment.md
                 echo '```' >> comment.md
-                grep "^FAIL" "$file" | head -20 >> comment.md
+                grep -E "Test #[0-9]+: .* \*\*\*Failed|^FAIL" "$file" | head -20 >> comment.md
                 echo '```' >> comment.md
                 echo "</details>" >> comment.md
               else
@@ -332,7 +449,13 @@ jobs:
     if: >
       github.event.workflow_run.head_branch == 'master' &&
       github.event.workflow_run.conclusion == 'success'
+    concurrency:
+      group: save-baselines
+      cancel-in-progress: false
     timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -363,6 +486,12 @@ jobs:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-${{ github.run_id }}
 
+      - name: Delete stale artifact sizes baseline cache
+        if: hashFiles('baseline-sizes.json') != ''
+        run: gh actions-cache delete artifact-sizes-baseline-latest -R "${{ github.repository }}" --confirm || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache artifact sizes as latest
         if: hashFiles('baseline-sizes.json') != ''
         uses: actions/cache/save@v5
@@ -370,9 +499,19 @@ jobs:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-latest
 
-      - name: Save coverage baseline
+      - name: Copy coverage to baseline path
         if: hashFiles('artifacts/coverage-report/coverage.xml') != ''
+        run: cp artifacts/coverage-report/coverage.xml baseline-coverage.xml
+
+      - name: Delete stale coverage baseline cache
+        if: hashFiles('baseline-coverage.xml') != ''
+        run: gh actions-cache delete coverage-baseline-latest -R "${{ github.repository }}" --confirm || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save coverage baseline
+        if: hashFiles('baseline-coverage.xml') != ''
         uses: actions/cache/save@v5
         with:
-          path: artifacts/coverage-report/coverage.xml
+          path: baseline-coverage.xml
           key: coverage-baseline-latest

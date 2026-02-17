@@ -19,7 +19,7 @@ class QGCApplication;
 class QEvent;
 class QPostEventList;
 class QMetaMethod;
-class QMetaObject;
+struct QMetaObject;
 
 #if defined(qApp)
 #undef qApp
@@ -118,7 +118,7 @@ public slots:
 private slots:
     /// Called when the delay timer fires to show the missing parameters warning
     void _missingParamsDisplay();
-    void _qgcCurrentStableVersionDownloadComplete(const QString &remoteFile, const QString &localFile, const QString &errorMsg);
+    void _qgcCurrentStableVersionDownloadComplete(bool success, const QString &localFile, const QString &errorMsg);
     static bool _parseVersionText(const QString &versionString, int &majorVersion, int &minorVersion, int &buildVersion);
     void _showDelayedAppMessages();
 

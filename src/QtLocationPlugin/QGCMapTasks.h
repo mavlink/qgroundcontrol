@@ -6,6 +6,7 @@
 
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
+#include "QGCTileCacheTypes.h"
 #include "QGCTile.h"
 
 class QGCMapTask : public QObject
@@ -315,14 +316,14 @@ class QGCExportTileTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    explicit QGCExportTileTask(const QList<QGCCachedTileSet*> &sets, const QString &path, QObject *parent = nullptr)
+    explicit QGCExportTileTask(const QList<TileSetRecord> &sets, const QString &path, QObject *parent = nullptr)
         : QGCMapTask(TaskType::taskExport, parent)
         , m_sets(sets)
         , m_path(path)
     {}
     ~QGCExportTileTask() = default;
 
-    QList<QGCCachedTileSet*> sets() const { return m_sets; }
+    const QList<TileSetRecord> &sets() const { return m_sets; }
     QString path() const { return m_path; }
 
     void setExportCompleted()
@@ -340,7 +341,7 @@ signals:
     void actionProgress(int percentage);
 
 private:
-    const QList<QGCCachedTileSet*> m_sets;
+    const QList<TileSetRecord> m_sets;
     const QString m_path;
 };
 

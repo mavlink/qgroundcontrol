@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Generator, NamedTuple
 
 # Add tools to path for imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from common.patterns import (
     FACT_MEMBER_PATTERN,

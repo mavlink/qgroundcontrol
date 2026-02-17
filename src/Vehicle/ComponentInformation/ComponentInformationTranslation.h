@@ -31,7 +31,7 @@ signals:
     void downloadComplete(QString translatedJsonTempFile, QString errorMsg);
 
 private slots:
-    void onDownloadCompleted(QString remoteFile, QString localFile, QString errorMsg);
+    void onDownloadCompleted(bool success, const QString &localFile, QString errorMsg, bool fromCache);
 private:
     QString getUrlFromSummaryJson(const QString& summaryJsonFile, const QString& locale);
 

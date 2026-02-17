@@ -17,6 +17,11 @@ MockLinkWorker::~MockLinkWorker()
 
 void MockLinkWorker::startWork()
 {
+    // Prevent double-start which would leak timers
+    if (_timer1Hz) {
+        return;
+    }
+
     _timer1Hz = new QTimer(this);
     _timer10Hz = new QTimer(this);
     _timer500Hz = new QTimer(this);
@@ -27,13 +32,13 @@ void MockLinkWorker::startWork()
     (void) connect(_timer500Hz, &QTimer::timeout, this, &MockLinkWorker::run500HzTasks);
     (void) connect(_timerStatusText, &QTimer::timeout, this, &MockLinkWorker::sendStatusTextMessages);
 
-    _timer1Hz->start(1000);
-    _timer10Hz->start(100);
-    _timer500Hz->start(2);
+    _timer1Hz->start(kTimer1HzIntervalMs);
+    _timer10Hz->start(kTimer10HzIntervalMs);
+    _timer500Hz->start(kTimer500HzIntervalMs);
 
-    if (_mockLink->shouldSendStatusText()) {
+    if (_mockLink && _mockLink->shouldSendStatusText()) {
         _timerStatusText->setSingleShot(true);
-        _timerStatusText->start(10000);
+        _timerStatusText->start(kStatusTextDelayMs);
     }
 
     run1HzTasks();
@@ -43,28 +48,44 @@ void MockLinkWorker::startWork()
 
 void MockLinkWorker::stopWork()
 {
-    _timer1Hz->stop();
-    _timer10Hz->stop();
-    _timer500Hz->stop();
-    _timerStatusText->stop();
+    if (_timer1Hz) {
+        _timer1Hz->stop();
+    }
+    if (_timer10Hz) {
+        _timer10Hz->stop();
+    }
+    if (_timer500Hz) {
+        _timer500Hz->stop();
+    }
+    if (_timerStatusText) {
+        _timerStatusText->stop();
+    }
 }
 
 void MockLinkWorker::run1HzTasks()
 {
-    _mockLink->run1HzTasks();
+    if (_mockLink) {
+        _mockLink->run1HzTasks();
+    }
 }
 
 void MockLinkWorker::run10HzTasks()
 {
-    _mockLink->run10HzTasks();
+    if (_mockLink) {
+        _mockLink->run10HzTasks();
+    }
 }
 
 void MockLinkWorker::run500HzTasks()
 {
-    _mockLink->run500HzTasks();
+    if (_mockLink) {
+        _mockLink->run500HzTasks();
+    }
 }
 
 void MockLinkWorker::sendStatusTextMessages()
 {
-    _mockLink->sendStatusTextMessages();
+    if (_mockLink) {
+        _mockLink->sendStatusTextMessages();
+    }
 }

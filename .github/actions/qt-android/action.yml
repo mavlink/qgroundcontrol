@@ -24,10 +24,10 @@ inputs:
     description: Build Type (Debug or Release)
     required: false
     default: Release
-  ndk-version:
-    description: Android NDK version (use build-config.outputs.ndk_version)
+  ndk-full-version:
+    description: Android NDK full version (use build-config.outputs.ndk_full_version)
     required: false
-    default: 'r27c'
+    default: '27.2.12479018'
   java-version:
     description: Java version (use build-config.outputs.java_version)
     required: false
@@ -66,23 +66,21 @@ runs:
       id: setup-android
       with:
         cmdline-tools-version: ${{ inputs.android-cmdline-tools }}
-        packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-build-tools }}'
+        packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-build-tools }} ndk;${{ inputs.ndk-full-version }}'
         log-accepted-android-sdk-licenses: false
-
-    - name: Install Android NDK
-      uses: nttld/setup-ndk@v1
-      id: setup-ndk
-      with:
-        ndk-version: ${{ inputs.ndk-version }}
-        add-to-path: false
-        local-cache: true
 
     - name: Update Android SDK / NDK / Tools
       shell: bash
       run: |
-        echo "ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
-        echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
-        echo "ANDROID_NDK=${{ steps.setup-ndk.outputs.ndk-path }}" >> "$GITHUB_ENV"
+        ANDROID_SDK_ROOT_UNIX="${ANDROID_SDK_ROOT//\\//}"
+        NDK_PATH="${ANDROID_SDK_ROOT_UNIX}/ndk/${{ inputs.ndk-full-version }}"
+        if [[ ! -d "$NDK_PATH" ]]; then
+          echo "::error::NDK path not found: $NDK_PATH"
+          exit 1
+        fi
+        echo "ANDROID_NDK_ROOT=${NDK_PATH}" >> "$GITHUB_ENV"
+        echo "ANDROID_NDK_HOME=${NDK_PATH}" >> "$GITHUB_ENV"
+        echo "ANDROID_NDK=${NDK_PATH}" >> "$GITHUB_ENV"
         if [[ "$RUNNER_OS" == "Windows" ]]; then
           "${ANDROID_SDK_ROOT}"/cmdline-tools/latest/bin/sdkmanager.bat --update
           "${GITHUB_WORKSPACE}"/android/gradlew.bat --version

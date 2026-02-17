@@ -10,16 +10,8 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/docker.yml'
-      - '.github/actions/docker/**'
-      - '.github/build-config.json'
-      - 'deploy/docker/**'
-      - 'deploy/linux/**'
-      - 'tools/setup/**'
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
@@ -31,9 +23,42 @@ permissions:
   security-events: write
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+    outputs:
+      linux: ${{ steps.filter.outputs.linux }}
+      android: ${{ steps.filter.outputs.android }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'src/**'
+              - 'cmake/**'
+              - 'CMakeLists.txt'
+              - 'tools/setup/**'
+              - '.github/workflows/docker.yml'
+              - '.github/actions/docker/**'
+              - '.github/build-config.json'
+            linux:
+              - 'deploy/linux/**'
+              - 'deploy/docker/Dockerfile-build-ubuntu'
+            android:
+              - 'android/**'
+              - 'deploy/android/**'
+              - 'deploy/docker/Dockerfile-build-android'
+
   build:
     name: Docker ${{ matrix.platform }}
     runs-on: ubuntu-latest
+    needs: changes
+    if: always() && !cancelled()
     timeout-minutes: 120
 
     strategy:
@@ -55,7 +80,42 @@ jobs:
         shell: bash
 
     steps:
+      - name: Check if build needed
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "Not a PR - building all platforms"
+            exit 0
+          fi
+
+          SHARED="${{ needs.changes.outputs.shared }}"
+          LINUX="${{ needs.changes.outputs.linux }}"
+          ANDROID="${{ needs.changes.outputs.android }}"
+          PLATFORM="${{ matrix.platform }}"
+
+          if [[ "$SHARED" == "true" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "Shared files changed - building $PLATFORM"
+          elif [[ "$PLATFORM" == "Linux" && "$LINUX" == "true" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "Linux-specific files changed - building Linux"
+          elif [[ "$PLATFORM" == "Android" && "$ANDROID" == "true" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "Android-specific files changed - building Android"
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "No relevant changes for $PLATFORM - skipping"
+          fi
+
+      - name: Harden Runner
+        if: steps.check.outputs.should_build == 'true'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Free Disk Space
+        if: steps.check.outputs.should_build == 'true'
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: true
@@ -67,18 +127,15 @@ jobs:
           swap-storage: true
 
       - name: Checkout
+        if: steps.check.outputs.should_build == 'true'
         uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 1
           fetch-tags: true
 
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
       - name: Build with Docker
+        if: steps.check.outputs.should_build == 'true'
         uses: ./.github/actions/docker
         with:
           dockerfile: ${{ matrix.dockerfile }}
@@ -86,6 +143,7 @@ jobs:
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Find build artifact
+        if: steps.check.outputs.should_build == 'true'
         id: artifact
         run: |
           set +o pipefail  # Disable pipefail to handle find | head gracefully
@@ -124,6 +182,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           trivy-config: '.github/trivy.yaml'
+          cache-dir: ${{ runner.temp }}/.cache/trivy
 
       - name: Upload Trivy results to GitHub Security
         if: steps.artifact.outputs.found == 'true'

@@ -45,6 +45,7 @@
         { "vendorID": 11694, "productID": 0,        "boardClass": "Pixhawk",    "name": "CubePilot" },
 
         { "vendorID": 2702,  "productID": 110,      "boardClass": "Pixhawk",    "name": "JFB JFB110" },
+        { "vendorID": 2702,  "productID": 200,      "boardClass": "Pixhawk",    "name": "JFB JFB200" },
 
         { "vendorID": 13735, "productID": 1,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-K1" },
         { "vendorID": 13735, "productID": 2,        "boardClass": "Pixhawk",    "name": "ThePeach FCC-R1" },

@@ -1,77 +1,67 @@
 #pragma once
 
-#include <QtQuick3D/QQuick3DGeometry>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtGui/QVector3D>
+#include <QtCore/QLoggingCategory>
 #include <QtGui/QVector2D>
+#include <QtGui/QVector3D>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <QtQuick3D/QQuick3DGeometry>
 
-class Viewer3DSettings;
+Q_DECLARE_LOGGING_CATEGORY(Viewer3DTerrainGeometryLog)
 
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(int sectorCount READ sectorCount WRITE setSectorCount NOTIFY sectorCountChanged)
-    Q_PROPERTY(int stackCount READ stackCount WRITE setStackCount NOTIFY stackCountChanged)
-    Q_PROPERTY(int radius READ radius WRITE setRadius NOTIFY radiusChanged)
-    Q_PROPERTY(QGeoCoordinate roiMin READ roiMin WRITE setRoiMin NOTIFY roiMinChanged)
-    Q_PROPERTY(QGeoCoordinate roiMax READ roiMax WRITE setRoiMax NOTIFY roiMaxChanged)
+    Q_PROPERTY(int            sectorCount   READ sectorCount   WRITE setSectorCount   NOTIFY sectorCountChanged)
+    Q_PROPERTY(int            stackCount    READ stackCount    WRITE setStackCount    NOTIFY stackCountChanged)
+    Q_PROPERTY(QGeoCoordinate roiMin        READ roiMin        WRITE setRoiMin        NOTIFY roiMinChanged)
+    Q_PROPERTY(QGeoCoordinate roiMax        READ roiMax        WRITE setRoiMax        NOTIFY roiMaxChanged)
     Q_PROPERTY(QGeoCoordinate refCoordinate READ refCoordinate WRITE setRefCoordinate NOTIFY refCoordinateChanged)
+
+    friend class Viewer3DTerrainGeometryTest;
 
 public:
     explicit Viewer3DTerrainGeometry();
 
     Q_INVOKABLE void updateEarthData();
 
-
-    int sectorCount() const;
+    int sectorCount() const { return _sectorCount; }
     void setSectorCount(int newSectorCount);
 
-    int stackCount() const;
+    int stackCount() const { return _stackCount; }
     void setStackCount(int newStackCount);
 
-    int radius() const;
-    void setRadius(int newRadius);
-
-    QGeoCoordinate roiMin() const;
+    QGeoCoordinate roiMin() const { return _roiMin; }
     void setRoiMin(const QGeoCoordinate &newRoiMin);
 
-    QGeoCoordinate roiMax() const;
+    QGeoCoordinate roiMax() const { return _roiMax; }
     void setRoiMax(const QGeoCoordinate &newRoiMax);
 
-    QGeoCoordinate refCoordinate() const;
+    QGeoCoordinate refCoordinate() const { return _refCoordinate; }
     void setRefCoordinate(const QGeoCoordinate &newRefCoordinate);
 
-private:
+signals:
+    void sectorCountChanged();
+    void stackCountChanged();
+    void roiMinChanged();
+    void roiMaxChanged();
+    void refCoordinateChanged();
 
-    int _sectorCount;
-    int _stackCount;
+private:
+    bool _buildTerrain(const QGeoCoordinate &roiMinCoordinate, const QGeoCoordinate &roiMaxCoordinate, const QGeoCoordinate &refCoordinate, bool scale);
+    static QVector3D _computeFaceNormal(const QVector3D &x1, const QVector3D &x2, const QVector3D &x3);
+    void _clearScene();
+
     std::vector<QVector3D> _vertices;
     std::vector<QVector2D> _texCoords;
     std::vector<QVector3D> _normals;
 
-    void buildTerrain(QGeoCoordinate roiMinCoordinate, QGeoCoordinate roiMaxCoordinate, QGeoCoordinate refCoordinate, bool scale);
-    bool buildTerrain_2(QGeoCoordinate roiMinCoordinate, QGeoCoordinate roiMaxCoordinate, QGeoCoordinate refCoordinate, bool scale);
-
-    QVector3D computeFaceNormal(QVector3D x1, QVector3D x2, QVector3D x3);
-    void changeUpAxis(int from, int to);
-    void clearScene();
-
-    int _radius;
     QGeoCoordinate _roiMin;
     QGeoCoordinate _roiMax;
     QGeoCoordinate _refCoordinate;
-    Viewer3DSettings* _viewer3DSettings = nullptr;
 
-
-signals:
-
-    void sectorCountChanged();
-    void stackCountChanged();
-    void radiusChanged();
-    void roiMinChanged();
-    void roiMaxChanged();
-    void refCoordinateChanged();
+    int _sectorCount = 0;
+    int _stackCount = 0;
 };

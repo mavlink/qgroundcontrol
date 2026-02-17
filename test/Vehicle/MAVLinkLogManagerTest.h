@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/VehicleTestManualConnect.h"
 
-class MAVLinkLogManagerTest : public UnitTest
+class MAVLinkLogManagerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 

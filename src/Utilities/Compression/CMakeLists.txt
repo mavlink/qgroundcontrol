@@ -58,6 +58,11 @@ CPMAddPackage(
         "${ZLIB_EXTRA_OPTIONS}"
 )
 
+# Suppress compiler warnings for zlib dependency
+if(zlib_ADDED)
+    qgc_disable_dependency_warnings(zlibstatic)
+endif()
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ZLIB::ZLIBSTATIC)
 
 # Export ZLIB paths for libarchive to find
@@ -98,16 +103,23 @@ CPMAddPackage(
 )
 
 if(TARGET liblzma)
-    # Help libarchive find our liblzma (prevent using system liblzma during cross-compile)
+    qgc_disable_dependency_warnings(liblzma)
+    # Set Find-module variables so libarchive's find_package(LibLZMA) succeeds
     set(LIBLZMA_INCLUDE_DIR "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)
+    set(LIBLZMA_INCLUDE_DIRS "${xz_SOURCE_DIR}/src/liblzma/api" CACHE PATH "" FORCE)  # libarchive uses plural
     set(LIBLZMA_LIBRARY "liblzma" CACHE STRING "" FORCE)
     set(LIBLZMA_FOUND TRUE CACHE BOOL "" FORCE)
     set(LIBLZMA_LIBRARIES "liblzma" CACHE STRING "" FORCE)
     set(LIBLZMA_HAS_AUTO_DECODER TRUE CACHE BOOL "" FORCE)
-    set(LIBLZMA_HAS_EASY_ENCODER FALSE CACHE BOOL "" FORCE)  # Encoders disabled
-    set(LIBLZMA_HAS_LZMA_PRESET FALSE CACHE BOOL "" FORCE)   # Encoders disabled
+    set(LIBLZMA_HAS_EASY_ENCODER TRUE CACHE BOOL "" FORCE)   # Satisfy FindLibLZMA sanity check
+    set(LIBLZMA_HAS_LZMA_PRESET TRUE CACHE BOOL "" FORCE)   # Satisfy FindLibLZMA sanity check
     set(LibLZMA_FOUND TRUE CACHE BOOL "" FORCE)
-    # libarchive's FindLibLZMA expects LibLZMA::LibLZMA target
+
+    # Pre-cache configure-time check results (checks require built library, but we only have target)
+    # These values match our decoder-only build configuration
+    set(LZMA_API_STATIC 1 CACHE INTERNAL "liblzma is static")
+    set(HAVE_LZMA_STREAM_ENCODER_MT 0 CACHE INTERNAL "Encoder disabled in our build")
+
     if(NOT TARGET LibLZMA::LibLZMA)
         add_library(LibLZMA::LibLZMA ALIAS liblzma)
     endif()
@@ -143,13 +155,21 @@ CPMAddPackage(
 )
 
 if(TARGET libzstd_static)
+    qgc_disable_dependency_warnings(libzstd_static)
     # Help libarchive find our ZSTD (prevent using system zstd during cross-compile)
     set(ZSTD_INCLUDE_DIR "${zstd_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
     set(ZSTD_LIBRARY "libzstd_static" CACHE STRING "" FORCE)
     set(ZSTD_LIBRARIES "libzstd_static" CACHE STRING "" FORCE)
     set(ZSTD_FOUND TRUE CACHE BOOL "" FORCE)
     set(Zstd_FOUND TRUE CACHE BOOL "" FORCE)
-    # libarchive's FindZstd.cmake expects Zstd::Zstd target
+
+    # Pre-cache configure-time check results (checks require built library, but we only have target)
+    # These values match our decoder-only build configuration
+    set(HAVE_LIBZSTD 1 CACHE INTERNAL "zstd decompression available")
+    set(HAVE_ZSTD_compressStream 0 CACHE INTERNAL "Compression disabled in our build")
+    set(HAVE_ZSTD_minCLevel 0 CACHE INTERNAL "Compression disabled in our build")
+
+    # Create the imported targets that consumers expect
     if(NOT TARGET Zstd::Zstd)
         add_library(Zstd::Zstd ALIAS libzstd_static)
     endif()
@@ -180,6 +200,7 @@ if(QGC_ENABLE_LZ4)
     )
 
     if(TARGET lz4_static)
+        qgc_disable_dependency_warnings(lz4_static)
         # Help libarchive find our LZ4
         set(LZ4_INCLUDE_DIR "${lz4_SOURCE_DIR}/lib" CACHE PATH "" FORCE)
         set(LZ4_LIBRARY "lz4_static" CACHE STRING "" FORCE)
@@ -220,6 +241,7 @@ if(QGC_ENABLE_BZIP2)
     )
 
     if(TARGET bz2_static)
+        qgc_disable_dependency_warnings(bz2_static)
         # Help libarchive/minizip find our BZip2
         set(BZIP2_INCLUDE_DIR "${bzip2_SOURCE_DIR}" CACHE PATH "" FORCE)
         set(BZIP2_LIBRARY "bz2_static" CACHE STRING "" FORCE)
@@ -295,6 +317,7 @@ CPMAddPackage(
 )
 
 if(TARGET archive_static)
+    qgc_disable_dependency_warnings(archive_static)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE archive_static)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE LIBARCHIVE_STATIC)
     if(QGC_ENABLE_BZIP2)

@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QtCore/QJsonDocument>
+#include <QtCore/QList>
+#include <QtCore/QPair>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
+#include <QtCore/QVariant>
 #include <QtHttpServer/QHttpServerRequest>
 #include <QtHttpServer/QHttpServerResponder>
 #include <QtNetwork/QHttpPart>
@@ -153,6 +156,7 @@ struct RequestConfig
     QString accept = QStringLiteral("*/*");
     QString acceptEncoding;
     QString contentType;
+    QList<QPair<QNetworkRequest::Attribute, QVariant>> requestAttributes;
 };
 
 /// Configure a QNetworkRequest with standard settings

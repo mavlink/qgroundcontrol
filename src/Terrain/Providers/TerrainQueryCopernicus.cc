@@ -206,10 +206,10 @@ void TerrainQueryCopernicus::_parseCarpetData(const QJsonValue &carpetJson)
 
     QList<QList<double>> carpet;
     if (!_carpetStatsOnly) {
-        const QJsonArray carpetArray = jsonObject["carpet"].toArray();
+        const QJsonArray carpetDataArray = jsonObject["carpet"].toArray();
 
-        for (qsizetype i = 0; i < carpetArray.count(); i++) {
-            const QJsonArray rowArray = carpetArray[i].toArray();
+        for (qsizetype i = 0; i < carpetDataArray.count(); i++) {
+            const QJsonArray rowArray = carpetDataArray[i].toArray();
             (void) carpet.append(QList<double>());
 
             for (qsizetype j = 0; j < rowArray.count(); j++) {

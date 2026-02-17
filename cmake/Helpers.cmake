@@ -2,10 +2,7 @@
 # QGroundControl CMake Helper Functions
 # ----------------------------------------------------------------------------
 
-if(QGC_HELPERS_INCLUDED)
-    return()
-endif()
-set(QGC_HELPERS_INCLUDED TRUE)
+include_guard(GLOBAL)
 
 # ----------------------------------------------------------------------------
 # qgc_set_qt_resource_alias
@@ -54,32 +51,46 @@ function(qgc_config_caching)
         string(TOLOWER "${_cache_tool}" _cache_tool)
 
         if(_cache_tool STREQUAL "ccache")
-            # Use config file for static settings (max_size, compression, sloppiness)
-            set(ENV{CCACHE_CONFIGPATH} "${CMAKE_SOURCE_DIR}/tools/ccache.conf")
-            # Dynamic settings that need CMAKE_SOURCE_DIR
-            set(ENV{CCACHE_DIR} "${CMAKE_SOURCE_DIR}/.cache/ccache")
-            set(ENV{CCACHE_BASEDIR} "${CMAKE_SOURCE_DIR}")
-            if(APPLE)
-                set(ENV{CCACHE_COMPILERCHECK} "content")
+            set(_ccache_conf "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
+            if(WIN32)
+                # Windows: set env vars at configure time (inherited by Ninja).
+                # Only set defaults so external cache setups (CI/IDE) are not clobbered.
+                if(EXISTS "${_ccache_conf}" AND (NOT DEFINED ENV{CCACHE_CONFIGPATH} OR "$ENV{CCACHE_CONFIGPATH}" STREQUAL ""))
+                    set(ENV{CCACHE_CONFIGPATH} "${_ccache_conf}")
+                endif()
+                if(NOT DEFINED ENV{CCACHE_DIR} OR "$ENV{CCACHE_DIR}" STREQUAL "")
+                    set(ENV{CCACHE_DIR} "${CMAKE_SOURCE_DIR}/.cache/ccache")
+                endif()
+                if(NOT DEFINED ENV{CCACHE_BASEDIR} OR "$ENV{CCACHE_BASEDIR}" STREQUAL "")
+                    set(ENV{CCACHE_BASEDIR} "${CMAKE_SOURCE_DIR}")
+                endif()
+                set(_cache_launcher "${QGC_CACHE_PROGRAM}")
+            else()
+                # Unix: wrapper script to set env vars at build time.
+                # Use defaults so external cache setups (CI/IDE) can override.
+                set(_ccache_wrapper "${CMAKE_BINARY_DIR}/ccache-launcher")
+                set(_wrapper "#!/bin/sh\n")
+                if(EXISTS "${_ccache_conf}")
+                    string(APPEND _wrapper "export CCACHE_CONFIGPATH=\"\${CCACHE_CONFIGPATH:-${_ccache_conf}}\"\n")
+                endif()
+                string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/ccache}\"\n")
+                string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
+                if(APPLE)
+                    string(APPEND _wrapper "export CCACHE_COMPILERCHECK=\"\${CCACHE_COMPILERCHECK:-content}\"\n")
+                endif()
+                string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
+                file(WRITE "${_ccache_wrapper}" "${_wrapper}")
+                file(CHMOD "${_ccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+                set(_cache_launcher "${_ccache_wrapper}")
             endif()
         elseif(_cache_tool STREQUAL "sccache")
-            # set(ENV{SCCACHE_PATH} "")
-            # set(ENV{SCCACHE_DIR} "")
-            # set(ENV{SCCACHE_SERVER_PORT} "")
-            # set(ENV{SCCACHE_SERVER_UDS} "")
-            # set(ENV{SCCACHE_IGNORE_SERVER_IO_ERROR} "")
-            # set(ENV{SCCACHE_C_CUSTOM_CACHE_BUSTER} "")
-            # set(ENV{SCCACHE_RECACHE} "")
-            # set(ENV{SCCACHE_ERROR_LOG} "")
-            # set(ENV{SCCACHE_LOG} "")
-            # set(ENV{SCCACHE_CACHE_SIZE} "")
-            # set(ENV{SCCACHE_IDLE_TIMEOUT} "")
+            set(_cache_launcher "${QGC_CACHE_PROGRAM}")
         else()
             return()
         endif()
 
-        set(CMAKE_C_COMPILER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "C compiler launcher" FORCE)
-        set(CMAKE_CXX_COMPILER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "CXX compiler launcher" FORCE)
+        set(CMAKE_C_COMPILER_LAUNCHER "${_cache_launcher}" CACHE STRING "C compiler launcher" FORCE)
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${_cache_launcher}" CACHE STRING "CXX compiler launcher" FORCE)
         # Linker launchers not currently used but available if needed
         # set(CMAKE_C_LINKER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "C linker cache")
         # set(CMAKE_CXX_LINKER_LAUNCHER "${QGC_CACHE_PROGRAM}" CACHE STRING "CXX linker cache")
@@ -98,11 +109,15 @@ endfunction()
 # Falls back to the system default linker
 # ----------------------------------------------------------------------------
 function(qgc_set_linker)
+    if(CMAKE_CROSSCOMPILING)
+        return()
+    endif()
+
     include(CheckLinkerFlag)
 
     # Try linkers in order of preference: mold > lld > gold
     foreach(_ld mold lld gold)
-        set(_flag "LINKER:-fuse-ld=${_ld}")
+        set(_flag "-fuse-ld=${_ld}")
         check_linker_flag(CXX "${_flag}" HAVE_LD_${_ld})
 
         if(HAVE_LD_${_ld})
@@ -142,6 +157,10 @@ endfunction()
 # Enables Interprocedural Optimization (IPO/LTO) for Release builds
 # ----------------------------------------------------------------------------
 function(qgc_enable_ipo)
+    if(LINUX)
+        return()
+    endif()
+
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         include(CheckIPOSupported)
         check_ipo_supported(RESULT _result OUTPUT _output LANGUAGES C CXX)

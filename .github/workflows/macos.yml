@@ -18,6 +18,7 @@ on:
       - 'test/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -63,8 +64,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          fetch-depth: 1
+          fetch-depth: 0
           fetch-tags: true
+
+      - name: Restore file timestamps
+        uses: chetan/git-restore-mtime-action@v2
 
       - name: Get build config
         id: config
@@ -79,10 +83,9 @@ jobs:
           xcode-version: ${{ steps.config.outputs.xcode_version }}
 
       - name: Install Dependencies (include GStreamer)
-        working-directory: ${{ github.workspace }}/tools/setup
         env:
           GSTREAMER_VERSION: ${{ steps.config.outputs.gstreamer_macos_version }}
-        run: sh install-dependencies-macos.sh
+        run: python3 ./tools/setup/install_dependencies.py --platform macos
 
       - name: Setup Caching
         uses: ./.github/actions/cache
@@ -105,7 +108,7 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
               -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
@@ -113,7 +116,7 @@ jobs:
         run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Sanity check dev build executable
-        working-directory: ${{ runner.temp }}/build/Release/QGroundControl.app/Contents/MacOS
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS
         run: ./QGroundControl --simple-boot-test
 
       - name: Import Code Signing Certificate
@@ -157,6 +160,7 @@ jobs:
         with:
           artifact_name: QGroundControl.dmg
           package_name: QGroundControl
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}

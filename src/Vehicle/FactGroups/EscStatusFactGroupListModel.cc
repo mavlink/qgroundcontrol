@@ -10,7 +10,7 @@ EscStatusFactGroupListModel::EscStatusFactGroupListModel(QObject* parent)
 bool EscStatusFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const
 {
     bool shouldHandle = false;
-    uint32_t firstIndex;
+    uint32_t firstIndex = 0;
 
     ids.clear();
 
@@ -96,7 +96,7 @@ void EscStatusFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t
     }
 }
 
-void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_t &message)
+void EscStatusFactGroup::_handleEscInfo(Vehicle * /*vehicle*/, const mavlink_message_t &message)
 {
     mavlink_esc_info_t escInfo{};
     mavlink_msg_esc_info_decode(&message, &escInfo);
@@ -122,7 +122,7 @@ void EscStatusFactGroup::_handleEscInfo(Vehicle *vehicle, const mavlink_message_
     _setTelemetryAvailable(true);
 }
 
-void EscStatusFactGroup::_handleEscStatus(Vehicle *vehicle, const mavlink_message_t &message)
+void EscStatusFactGroup::_handleEscStatus(Vehicle * /*vehicle*/, const mavlink_message_t &message)
 {
     mavlink_esc_status_t escStatus{};
     mavlink_msg_esc_status_decode(&message, &escStatus);

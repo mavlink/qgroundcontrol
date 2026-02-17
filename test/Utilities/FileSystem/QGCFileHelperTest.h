@@ -1,21 +1,13 @@
 #pragma once
 
-#include "UnitTest.h"
-
-#include <QtCore/QTemporaryDir>
+#include "BaseClasses/TempDirectoryTest.h"
 
 /// Tests for QGCFileHelper (generic file system utilities)
-class QGCFileHelperTest : public UnitTest
+class QGCFileHelperTest : public TempDirectoryTest
 {
     Q_OBJECT
 
-public:
-    QGCFileHelperTest() = default;
-
 private slots:
-    void init() override;
-    void cleanup() override;
-
     // exists() tests
     void _testExistsRegularFile();
     void _testExistsDirectory();
@@ -44,6 +36,8 @@ private slots:
     void _testAtomicWriteCreatesParent();
     void _testAtomicWriteEmptyPath();
     void _testAtomicWriteEmptyData();
+    void _testReadCompressedFile();
+    void _testReadCompressedFileMaxBytes();
 
     // Disk space utilities tests
     void _testAvailableDiskSpaceBasic();
@@ -56,12 +50,14 @@ private slots:
     void _testToLocalPathPlainPaths();
     void _testToLocalPathFileUrls();
     void _testToLocalPathQrcUrls();
+    void _testToLocalPathCompressionInterop();
     void _testIsLocalPath();
     void _testIsQtResource();
 
     // Checksum utilities tests
     void _testComputeHash();
     void _testComputeFileHash();
+    void _testComputeDecompressedFileHash();
     void _testVerifyFileHash();
     void _testHashAlgorithmName();
 
@@ -73,7 +69,8 @@ private slots:
     void _testCreateTempCopy();
     void _testReplaceFileFromTemp();
     void _testReplaceFileFromTempWithBackup();
-
-private:
-    QTemporaryDir *_tempDir = nullptr;
+    void _testCopyDirectoryRecursively();
+    void _testMoveFileOrCopyFile();
+    void _testMoveFileOrCopyDirectory();
+    void _testReplaceFileFromTempInvalidArgs();
 };

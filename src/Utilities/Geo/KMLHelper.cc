@@ -172,20 +172,6 @@ int KMLHelper::getEntityCount(const QString &kmlFile, QString &errorString)
     return count;
 }
 
-bool KMLHelper::loadPolygonFromFile(const QString &kmlFile, QList<QGeoCoordinate> &vertices, QString &errorString, double filterMeters)
-{
-    QList<QList<QGeoCoordinate>> polygons;
-    if (!loadPolygonsFromFile(kmlFile, polygons, errorString, filterMeters)) {
-        return false;
-    }
-    if (polygons.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "No polygons found in KML file"));
-        return false;
-    }
-    vertices = polygons.first();
-    return true;
-}
-
 bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoordinate>> &polygons, QString &errorString, double filterMeters)
 {
     errorString.clear();
@@ -253,20 +239,6 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
         return false;
     }
 
-    return true;
-}
-
-bool KMLHelper::loadPolylineFromFile(const QString &kmlFile, QList<QGeoCoordinate> &coords, QString &errorString, double filterMeters)
-{
-    QList<QList<QGeoCoordinate>> polylines;
-    if (!loadPolylinesFromFile(kmlFile, polylines, errorString, filterMeters)) {
-        return false;
-    }
-    if (polylines.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("KML", "No polylines found in KML file"));
-        return false;
-    }
-    coords = polylines.first();
     return true;
 }
 

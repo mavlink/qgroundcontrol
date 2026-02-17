@@ -1,9 +1,9 @@
 #pragma once
 
-#include "UnitTest.h"
-
-#include <QtCore/QJsonDocument>
 #include <QtCore/QByteArray>
+#include <QtCore/QJsonDocument>
+
+#include "UnitTest.h"
 
 class ComponentInformationTranslationTest : public UnitTest
 {
@@ -15,6 +15,10 @@ public:
 
 private slots:
     void _basic_test();
+    void _downloadAndTranslateFromSummary_test();
+    void _downloadAndTranslateMissingLocale_test();
+    void _onDownloadCompletedFailurePropagatesError_test();
+
 private:
     void readJson(const QByteArray& bytes, QJsonDocument& jsonDoc);
 };

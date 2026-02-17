@@ -12,7 +12,8 @@ include(CMakePrintHelpers)
 # ----------------------------------------------------------------------------
 set(QT_INSTALLER_FRAMEWORK_DIR ${QT_ROOT_DIR}/../../Tools/QtInstallerFramework)
 find_program(QT_INSTALLER_FRAMEWORK binarycreator
-    PATHS "${QT_INSTALLER_FRAMEWORK_ROOT}/*/bin"
+    PATHS "${QT_INSTALLER_FRAMEWORK_DIR}/*/bin"
+    REQUIRED
 )
 
 # ----------------------------------------------------------------------------
@@ -76,6 +77,12 @@ configure_file(
 # ----------------------------------------------------------------------------
 if(WIN32)
     set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer-${CMAKE_SYSTEM_PROCESSOR}.exe)
+elseif(APPLE)
+    set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer-${CMAKE_SYSTEM_PROCESSOR})
+elseif(LINUX)
+    set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer-${CMAKE_SYSTEM_PROCESSOR}.run)
+else()
+    set(QGC_INSTALLER_NAME ${CMAKE_PROJECT_NAME}-Installer)
 endif()
 
 # ----------------------------------------------------------------------------
@@ -83,4 +90,6 @@ endif()
 # ----------------------------------------------------------------------------
 execute_process(
     COMMAND ${QT_INSTALLER_FRAMEWORK} --offline-only -c ${INSTALLER_OUTPUT_CONFIG_DIR}/config.xml -p ${INSTALLER_OUTPUT_PACKAGES_DIR} ${CMAKE_BINARY_DIR}/${QGC_INSTALLER_NAME}
+    COMMAND_ECHO STDOUT
+    COMMAND_ERROR_IS_FATAL ANY
 )

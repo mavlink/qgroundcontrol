@@ -13,7 +13,8 @@ include(BuildConfig)
 # ============================================================================
 
 set(QGC_APP_NAME "QGroundControl" CACHE STRING "Application name")
-set(QGC_APP_COPYRIGHT "Copyright (c) 2025 QGroundControl. All rights reserved." CACHE STRING "Copyright notice")
+string(TIMESTAMP _copyright_year "%Y")
+set(QGC_APP_COPYRIGHT "Copyright (c) ${_copyright_year} QGroundControl. All rights reserved." CACHE STRING "Copyright notice")
 set(QGC_APP_DESCRIPTION "Open Source Ground Control App" CACHE STRING "Application description")
 set(QGC_ORG_NAME "QGroundControl" CACHE STRING "Organization name")
 set(QGC_ORG_DOMAIN "qgroundcontrol.com" CACHE STRING "Organization domain")
@@ -29,19 +30,28 @@ set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings schema version")
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" OFF)
 option(QGC_USE_CACHE "Enable compiler caching (ccache/sccache)" ON)
+option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
 option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
+option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 
 # Debug-dependent options
 cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 
-# ============================================================================
-# Feature Flags
-# ============================================================================
+# Git options
+option(GIT_SUBMODULE "Update submodules during configuration" OFF)
 
-option(QGC_UTM_ADAPTER "Enable UTM (Unmanned Traffic Management) Adapter" OFF)
-option(QGC_VIEWER3D "Enable 3D Viewer (requires Qt Quick 3D)" ON)
+# Link parallelism (Ninja only)
+set(QGC_LINK_PARALLEL_LEVEL 2 CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)")
+
+# Coverage thresholds
+set(QGC_COVERAGE_LINE_THRESHOLD 30 CACHE STRING "Minimum line coverage percentage")
+set(QGC_COVERAGE_BRANCH_THRESHOLD 20 CACHE STRING "Minimum branch coverage percentage")
+
+# Valgrind options
+set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valgrind")
 
 # ============================================================================
 # Compression Format Options
@@ -60,7 +70,6 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 # ============================================================================
 option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth communication links" ON)
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
-option(QGC_AIRLINK_DISABLED "Disable AIRLink support" ON)
 option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 # ============================================================================
@@ -71,13 +80,6 @@ option(QGC_ENABLE_UVC "Enable UVC (USB Video Class) device support" ON)
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer video backend" ON)
 cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Use QGC-provided GStreamer packages" OFF "QGC_ENABLE_GST_VIDEOSTREAMING" OFF)
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
-
-# ============================================================================
-# Joystick/Input Configuration
-# ============================================================================
-
-# Example custom SDL game controller mapping:
-# set(SDL_GAMECONTROLLERCONFIG "0300000009120000544f000011010000,OpenTX Radiomaster TX16S,leftx:a3,lefty:a2,rightx:a0,righty:a1,platform:Linux" CACHE STRING "Custom SDL mappings")
 
 # ============================================================================
 # MAVLink Configuration
@@ -108,9 +110,9 @@ option(QGC_DISABLE_PX4_PLUGIN_FACTORY "Disable PX4 plugin factory" OFF)
 # ----------------------------------------------------------------------------
 # Android Platform
 # ----------------------------------------------------------------------------
-set(QGC_QT_ANDROID_COMPILE_SDK_VERSION "35" CACHE STRING "Android compile SDK version")
-set(QGC_QT_ANDROID_TARGET_SDK_VERSION "35" CACHE STRING "Android target SDK version")
-set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android minimum SDK version")
+set(QGC_QT_ANDROID_COMPILE_SDK_VERSION "${QGC_CONFIG_ANDROID_PLATFORM}" CACHE STRING "Android compile SDK version")
+set(QGC_QT_ANDROID_TARGET_SDK_VERSION "${QGC_CONFIG_ANDROID_PLATFORM}" CACHE STRING "Android target SDK version")
+set(QGC_QT_ANDROID_MIN_SDK_VERSION "${QGC_CONFIG_ANDROID_MIN_SDK}" CACHE STRING "Android minimum SDK version")
 set(QGC_ANDROID_PACKAGE_NAME "${QGC_PACKAGE_NAME}" CACHE STRING "Android package identifier")
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android" CACHE PATH "Android package source directory")
 set(QT_ANDROID_DEPLOYMENT_TYPE "" CACHE STRING "Android deployment type (empty or Release)")
@@ -126,6 +128,12 @@ set(QGC_MACOS_BUNDLE_ID "${QGC_PACKAGE_NAME}" CACHE STRING "macOS bundle identif
 set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.icns" CACHE FILEPATH "macOS application icon path")
 set(QGC_MACOS_ENTITLEMENTS_PATH "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.entitlements" CACHE FILEPATH "macOS entitlements file path")
 option(QGC_MACOS_UNIVERSAL_BUILD "Build macOS universal binary (x86_64h + arm64)" ON)
+
+# ----------------------------------------------------------------------------
+# iOS Platform
+# ----------------------------------------------------------------------------
+set(QGC_IOS_DEPLOYMENT_TARGET "${QGC_CONFIG_IOS_DEPLOYMENT_TARGET}" CACHE STRING "iOS minimum deployment target")
+set(QGC_IOS_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "iOS targeted device family (1=iPhone, 2=iPad)")
 
 # ----------------------------------------------------------------------------
 # Linux Platform

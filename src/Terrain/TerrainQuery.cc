@@ -51,6 +51,19 @@ void TerrainAtCoordinateBatchManager::addQuery(TerrainAtCoordinateQuery *terrain
     }
 }
 
+void TerrainAtCoordinateBatchManager::setTerrainQueryInterface(TerrainQueryInterface *terrainQuery)
+{
+    if (_terrainQuery) {
+        disconnect(_terrainQuery, &TerrainQueryInterface::coordinateHeightsReceived, this, &TerrainAtCoordinateBatchManager::_coordinateHeights);
+        delete _terrainQuery;
+    }
+    _terrainQuery = terrainQuery;
+    if (_terrainQuery) {
+        _terrainQuery->setParent(this);
+        (void) connect(_terrainQuery, &TerrainQueryInterface::coordinateHeightsReceived, this, &TerrainAtCoordinateBatchManager::_coordinateHeights);
+    }
+}
+
 void TerrainAtCoordinateBatchManager::_sendNextBatch()
 {
     qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "_state:_requestQueue.count:_sentRequests.count" << _stateToString(_state) << _requestQueue.count() << _sentRequests.count();

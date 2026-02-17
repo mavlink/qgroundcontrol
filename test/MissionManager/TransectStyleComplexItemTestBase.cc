@@ -1,39 +1,31 @@
 #include "TransectStyleComplexItemTestBase.h"
-#include "SettingsManager.h"
+
+#include "MissionItem.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
-#include "MissionItem.h"
+#include "SettingsManager.h"
 
-#include <QtTest/QTest>
 
-TransectStyleComplexItemTestBase::TransectStyleComplexItemTestBase(void)
+void TransectStyleComplexItemTestBase::init()
 {
-}
-
-void TransectStyleComplexItemTestBase::init(void)
-{
-    UnitTest::init();
+    OfflineMissionTest::init();
 
     _planViewSettings = SettingsManager::instance()->planViewSettings();
-    _masterController = new PlanMasterController(this);
-    _controllerVehicle = _masterController->controllerVehicle();
+    _controllerVehicle = planController()->controllerVehicle();
 }
 
-void TransectStyleComplexItemTestBase::cleanup(void)
+void TransectStyleComplexItemTestBase::cleanup()
 {
-    delete _masterController;
+    _planViewSettings = nullptr;
+    _controllerVehicle = nullptr;
 
-    _planViewSettings   = nullptr;
-    _masterController   = nullptr;
-    _controllerVehicle  = nullptr;
-
-    UnitTest::cleanup();
+    OfflineMissionTest::cleanup();
 }
 
 void TransectStyleComplexItemTestBase::_printItemCommands(QList<MissionItem*> items)
 {
     // Handy for debugging failures
-    for (int i=0; i<items.count(); i++) {
+    for (int i = 0; i < items.count(); i++) {
         MissionItem* item = items[i];
         qDebug() << "Index:Cmd" << i << item->command();
     }

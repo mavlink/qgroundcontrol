@@ -186,4 +186,5 @@ private:
     // Pending extractions queue
     QStringList _pendingExtractions;
     QString _currentArchive;
+    bool _cancelPending = false;
 };

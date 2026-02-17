@@ -10,10 +10,28 @@ Q_DECLARE_LOGGING_CATEGORY(MockConfigurationLog)
 class MockConfiguration : public LinkConfiguration
 {
     Q_OBJECT
-    Q_PROPERTY(int      firmware            READ firmware           WRITE setFirmware           NOTIFY firmwareChanged)
-    Q_PROPERTY(int      vehicle             READ vehicle            WRITE setVehicle            NOTIFY vehicleChanged)
-    Q_PROPERTY(bool     sendStatus          READ sendStatusText     WRITE setSendStatusText     NOTIFY sendStatusChanged)
-    Q_PROPERTY(bool     incrementVehicleId  READ incrementVehicleId WRITE setIncrementVehicleId NOTIFY incrementVehicleIdChanged)
+    Q_PROPERTY(int  firmware                             READ firmware                            WRITE setFirmware                            NOTIFY firmwareChanged)
+    Q_PROPERTY(int  vehicle                              READ vehicle                             WRITE setVehicle                             NOTIFY vehicleChanged)
+    Q_PROPERTY(bool sendStatus                           READ sendStatusText                      WRITE setSendStatusText                      NOTIFY sendStatusChanged)
+    Q_PROPERTY(bool enableCamera                         READ enableCamera                        WRITE setEnableCamera                        NOTIFY enableCameraChanged)
+    Q_PROPERTY(bool enableGimbal                        READ enableGimbal                        WRITE setEnableGimbal                        NOTIFY enableGimbalChanged)
+    Q_PROPERTY(bool gimbalHasRollAxis                   READ gimbalHasRollAxis                   WRITE setGimbalHasRollAxis                   NOTIFY gimbalHasRollAxisChanged)
+    Q_PROPERTY(bool gimbalHasPitchAxis                  READ gimbalHasPitchAxis                  WRITE setGimbalHasPitchAxis                  NOTIFY gimbalHasPitchAxisChanged)
+    Q_PROPERTY(bool gimbalHasYawAxis                    READ gimbalHasYawAxis                    WRITE setGimbalHasYawAxis                    NOTIFY gimbalHasYawAxisChanged)
+    Q_PROPERTY(bool gimbalHasYawFollow                  READ gimbalHasYawFollow                  WRITE setGimbalHasYawFollow                  NOTIFY gimbalHasYawFollowChanged)
+    Q_PROPERTY(bool gimbalHasYawLock                    READ gimbalHasYawLock                    WRITE setGimbalHasYawLock                    NOTIFY gimbalHasYawLockChanged)
+    Q_PROPERTY(bool gimbalHasRetract                    READ gimbalHasRetract                    WRITE setGimbalHasRetract                    NOTIFY gimbalHasRetractChanged)
+    Q_PROPERTY(bool gimbalHasNeutral                    READ gimbalHasNeutral                    WRITE setGimbalHasNeutral                    NOTIFY gimbalHasNeutralChanged)
+    Q_PROPERTY(bool incrementVehicleId                   READ incrementVehicleId                  WRITE setIncrementVehicleId                  NOTIFY incrementVehicleIdChanged)
+    Q_PROPERTY(bool cameraCaptureVideo                   READ cameraCaptureVideo                  WRITE setCameraCaptureVideo                  NOTIFY cameraCaptureVideoChanged)
+    Q_PROPERTY(bool cameraCaptureImage                   READ cameraCaptureImage                  WRITE setCameraCaptureImage                  NOTIFY cameraCaptureImageChanged)
+    Q_PROPERTY(bool cameraHasModes                       READ cameraHasModes                      WRITE setCameraHasModes                      NOTIFY cameraHasModesChanged)
+    Q_PROPERTY(bool cameraHasVideoStream                 READ cameraHasVideoStream                WRITE setCameraHasVideoStream                NOTIFY cameraHasVideoStreamChanged)
+    Q_PROPERTY(bool cameraCanCaptureImageInVideoMode     READ cameraCanCaptureImageInVideoMode    WRITE setCameraCanCaptureImageInVideoMode    NOTIFY cameraCanCaptureImageInVideoModeChanged)
+    Q_PROPERTY(bool cameraCanCaptureVideoInImageMode     READ cameraCanCaptureVideoInImageMode    WRITE setCameraCanCaptureVideoInImageMode    NOTIFY cameraCanCaptureVideoInImageModeChanged)
+    Q_PROPERTY(bool cameraHasBasicZoom                   READ cameraHasBasicZoom                  WRITE setCameraHasBasicZoom                  NOTIFY cameraHasBasicZoomChanged)
+    Q_PROPERTY(bool cameraHasTrackingPoint               READ cameraHasTrackingPoint              WRITE setCameraHasTrackingPoint              NOTIFY cameraHasTrackingPointChanged)
+    Q_PROPERTY(bool cameraHasTrackingRectangle           READ cameraHasTrackingRectangle          WRITE setCameraHasTrackingRectangle          NOTIFY cameraHasTrackingRectangleChanged)
 
 public:
     explicit MockConfiguration(const QString &name, QObject *parent = nullptr);
@@ -42,14 +60,52 @@ public:
     void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; emit vehicleChanged(); }
     bool sendStatusText() const { return _sendStatusText; }
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
+    bool enableCamera() const { return _enableCamera; }
+    void setEnableCamera(bool enableCamera) { _enableCamera = enableCamera; emit enableCameraChanged(); }
+    bool enableGimbal() const { return _enableGimbal; }
+    void setEnableGimbal(bool enableGimbal) { _enableGimbal = enableGimbal; emit enableGimbalChanged(); }
+
+    bool gimbalHasRollAxis() const { return _gimbalHasRollAxis; }
+    void setGimbalHasRollAxis(bool value) { _gimbalHasRollAxis = value; emit gimbalHasRollAxisChanged(); }
+    bool gimbalHasPitchAxis() const { return _gimbalHasPitchAxis; }
+    void setGimbalHasPitchAxis(bool value) { _gimbalHasPitchAxis = value; emit gimbalHasPitchAxisChanged(); }
+    bool gimbalHasYawAxis() const { return _gimbalHasYawAxis; }
+    void setGimbalHasYawAxis(bool value) { _gimbalHasYawAxis = value; emit gimbalHasYawAxisChanged(); }
+    bool gimbalHasYawFollow() const { return _gimbalHasYawFollow; }
+    void setGimbalHasYawFollow(bool value) { _gimbalHasYawFollow = value; emit gimbalHasYawFollowChanged(); }
+    bool gimbalHasYawLock() const { return _gimbalHasYawLock; }
+    void setGimbalHasYawLock(bool value) { _gimbalHasYawLock = value; emit gimbalHasYawLockChanged(); }
+    bool gimbalHasRetract() const { return _gimbalHasRetract; }
+    void setGimbalHasRetract(bool value) { _gimbalHasRetract = value; emit gimbalHasRetractChanged(); }
+    bool gimbalHasNeutral() const { return _gimbalHasNeutral; }
+    void setGimbalHasNeutral(bool value) { _gimbalHasNeutral = value; emit gimbalHasNeutralChanged(); }
+
+    bool cameraCaptureVideo() const { return _cameraCaptureVideo; }
+    void setCameraCaptureVideo(bool value) { _cameraCaptureVideo = value; emit cameraCaptureVideoChanged(); }
+    bool cameraCaptureImage() const { return _cameraCaptureImage; }
+    void setCameraCaptureImage(bool value) { _cameraCaptureImage = value; emit cameraCaptureImageChanged(); }
+    bool cameraHasModes() const { return _cameraHasModes; }
+    void setCameraHasModes(bool value) { _cameraHasModes = value; emit cameraHasModesChanged(); }
+    bool cameraHasVideoStream() const { return _cameraHasVideoStream; }
+    void setCameraHasVideoStream(bool value) { _cameraHasVideoStream = value; emit cameraHasVideoStreamChanged(); }
+    bool cameraCanCaptureImageInVideoMode() const { return _cameraCanCaptureImageInVideoMode; }
+    void setCameraCanCaptureImageInVideoMode(bool value) { _cameraCanCaptureImageInVideoMode = value; emit cameraCanCaptureImageInVideoModeChanged(); }
+    bool cameraCanCaptureVideoInImageMode() const { return _cameraCanCaptureVideoInImageMode; }
+    void setCameraCanCaptureVideoInImageMode(bool value) { _cameraCanCaptureVideoInImageMode = value; emit cameraCanCaptureVideoInImageModeChanged(); }
+    bool cameraHasBasicZoom() const { return _cameraHasBasicZoom; }
+    void setCameraHasBasicZoom(bool value) { _cameraHasBasicZoom = value; emit cameraHasBasicZoomChanged(); }
+    bool cameraHasTrackingPoint() const { return _cameraHasTrackingPoint; }
+    void setCameraHasTrackingPoint(bool value) { _cameraHasTrackingPoint = value; emit cameraHasTrackingPointChanged(); }
+    bool cameraHasTrackingRectangle() const { return _cameraHasTrackingRectangle; }
+    void setCameraHasTrackingRectangle(bool value) { _cameraHasTrackingRectangle = value; emit cameraHasTrackingRectangleChanged(); }
 
     enum FailureMode_t {
-        FailNone,                                                   // No failures
-        FailParamNoReponseToRequestList,                            // Do no respond to PARAM_REQUEST_LIST
-        FailMissingParamOnInitialReqest,                            // Not all params are sent on initial request, should still succeed since QGC will re-query missing params
-        FailMissingParamOnAllRequests,                              // Not all params are sent on initial request, QGC retries will fail as well
-        FailInitialConnectRequestMessageAutopilotVersionFailure,    // REQUEST_MESSAGE:AUTOPILOT_VERSION returns failure
-        FailInitialConnectRequestMessageAutopilotVersionLost,       // REQUEST_MESSAGE:AUTOPILOT_VERSION success, AUTOPILOT_VERSION never sent
+        FailNone,                                                   ///< No failures
+        FailParamNoResponseToRequestList,                           ///< Do not respond to PARAM_REQUEST_LIST
+        FailMissingParamOnInitialRequest,                           ///< Not all params are sent on initial request, should still succeed since QGC will re-query missing params
+        FailMissingParamOnAllRequests,                              ///< Not all params are sent on initial request, QGC retries will fail as well
+        FailInitialConnectRequestMessageAutopilotVersionFailure,    ///< REQUEST_MESSAGE:AUTOPILOT_VERSION returns failure
+        FailInitialConnectRequestMessageAutopilotVersionLost,       ///< REQUEST_MESSAGE:AUTOPILOT_VERSION success, AUTOPILOT_VERSION never sent
     };
     FailureMode_t failureMode() const { return _failureMode; }
     void setFailureMode(FailureMode_t failureMode) { _failureMode = failureMode; }
@@ -58,20 +114,78 @@ signals:
     void firmwareChanged();
     void vehicleChanged();
     void sendStatusChanged();
+    void enableCameraChanged();
+    void enableGimbalChanged();
+    void gimbalHasRollAxisChanged();
+    void gimbalHasPitchAxisChanged();
+    void gimbalHasYawAxisChanged();
+    void gimbalHasYawFollowChanged();
+    void gimbalHasYawLockChanged();
+    void gimbalHasRetractChanged();
+    void gimbalHasNeutralChanged();
     void incrementVehicleIdChanged();
+    void cameraCaptureVideoChanged();
+    void cameraCaptureImageChanged();
+    void cameraHasModesChanged();
+    void cameraHasVideoStreamChanged();
+    void cameraCanCaptureImageInVideoModeChanged();
+    void cameraCanCaptureVideoInImageModeChanged();
+    void cameraHasBasicZoomChanged();
+    void cameraHasTrackingPointChanged();
+    void cameraHasTrackingRectangleChanged();
 
 private:
     MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
     MAV_TYPE _vehicleType = MAV_TYPE_QUADROTOR;
     bool _sendStatusText = false;
+    bool _enableCamera = false;
+    bool _enableGimbal = false;
     FailureMode_t _failureMode = FailNone;
     bool _incrementVehicleId = true;
     uint16_t _boardVendorId = 0;
     uint16_t _boardProductId = 0;
 
+    // Camera capability flags (defaults match current Camera 1 configuration)
+    bool _cameraCaptureVideo = true;
+    bool _cameraCaptureImage = true;
+    bool _cameraHasModes = true;
+    bool _cameraHasVideoStream = true;
+    bool _cameraCanCaptureImageInVideoMode = true;
+    bool _cameraCanCaptureVideoInImageMode = false;
+    bool _cameraHasBasicZoom = true;
+    bool _cameraHasTrackingPoint = false;
+    bool _cameraHasTrackingRectangle = false;
+
+    // Gimbal capability flags (defaults - all enabled)
+    bool _gimbalHasRollAxis = true;
+    bool _gimbalHasPitchAxis = true;
+    bool _gimbalHasYawAxis = true;
+    bool _gimbalHasYawFollow = true;
+    bool _gimbalHasYawLock = true;
+    bool _gimbalHasRetract = true;
+    bool _gimbalHasNeutral = true;
+
     static constexpr const char *_firmwareTypeKey = "FirmwareType";
     static constexpr const char *_vehicleTypeKey = "VehicleType";
     static constexpr const char *_sendStatusTextKey = "SendStatusText";
+    static constexpr const char *_enableCameraKey = "EnableCamera";
+    static constexpr const char *_enableGimbalKey = "EnableGimbal";
+    static constexpr const char *_gimbalHasRollAxisKey = "GimbalHasRollAxis";
+    static constexpr const char *_gimbalHasPitchAxisKey = "GimbalHasPitchAxis";
+    static constexpr const char *_gimbalHasYawAxisKey = "GimbalHasYawAxis";
+    static constexpr const char *_gimbalHasYawFollowKey = "GimbalHasYawFollow";
+    static constexpr const char *_gimbalHasYawLockKey = "GimbalHasYawLock";
+    static constexpr const char *_gimbalHasRetractKey = "GimbalHasRetract";
+    static constexpr const char *_gimbalHasNeutralKey = "GimbalHasNeutral";
     static constexpr const char *_incrementVehicleIdKey = "IncrementVehicleId";
     static constexpr const char *_failureModeKey = "FailureMode";
+    static constexpr const char *_cameraCaptureVideoKey = "CameraCaptureVideo";
+    static constexpr const char *_cameraCaptureImageKey = "CameraCaptureImage";
+    static constexpr const char *_cameraHasModesKey = "CameraHasModes";
+    static constexpr const char *_cameraHasVideoStreamKey = "CameraHasVideoStream";
+    static constexpr const char *_cameraCanCaptureImageInVideoModeKey = "CameraCanCaptureImageInVideoMode";
+    static constexpr const char *_cameraCanCaptureVideoInImageModeKey = "CameraCanCaptureVideoInImageMode";
+    static constexpr const char *_cameraHasBasicZoomKey = "CameraHasBasicZoom";
+    static constexpr const char *_cameraHasTrackingPointKey = "CameraHasTrackingPoint";
+    static constexpr const char *_cameraHasTrackingRectangleKey = "CameraHasTrackingRectangle";
 };

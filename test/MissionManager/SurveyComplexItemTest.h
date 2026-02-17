@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TransectStyleComplexItemTestBase.h"
-
 #include <QtPositioning/QGeoCoordinate>
+
+#include "TransectStyleComplexItemTestBase.h"
 
 class SurveyComplexItem;
 class QGCMapPolygon;
@@ -14,65 +14,43 @@ class SurveyComplexItemTest : public TransectStyleComplexItemTestBase
     Q_OBJECT
 
 public:
-    SurveyComplexItemTest(void);
+    SurveyComplexItemTest();
 
 protected:
-    void init(void) final;
-    void cleanup(void) final;
+    void init() final;
+    void cleanup() final;
 
 #if 1
 private slots:
-    void _testDirty(void);
-    void _testGridAngle(void);
-    void _testEntryLocation(void);
-    void _testItemGeneration(void);
-    void _testItemCount(void);
-    void _testHoverCaptureItemGeneration(void);
+    void _testDirty();
+    void _testGridAngle();
+    void _testEntryLocation();
+    void _testItemGeneration();
+    void _testItemCount();
+    void _testHoverCaptureItemGeneration();
 #else
     // Handy mechanism to to a single test
 private slots:
-    void _testItemCount(void);
+    void _testItemCount();
+
 private:
-    void _testDirty(void);
-    void _testGridAngle(void);
-    void _testEntryLocation(void);
-    void _testItemGeneration(void);
-    void _testHoverCaptureItemGeneration(void);
+    void _testDirty();
+    void _testGridAngle();
+    void _testEntryLocation();
+    void _testItemGeneration();
+    void _testHoverCaptureItemGeneration();
 #endif
 
 private:
-    double          _clampGridAngle180(double gridAngle);
-    QList<MAV_CMD>  _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
-    void            _testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate, const QList<MAV_CMD>& expectedCommands);
+    double _clampGridAngle180(double gridAngle);
+    QList<MAV_CMD> _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
+    void _testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate,
+                                   const QList<MAV_CMD>& expectedCommands);
 
-    // SurveyComplexItem signals
-
-    enum {
-        surveyVisualTransectPointsChangedIndex = 0,
-        surveyCameraShotsChangedIndex,
-        surveyCoveredAreaChangedIndex,
-        surveyTimeBetweenShotsChangedIndex,
-        surveyRefly90DegreesChangedIndex,
-        surveyDirtyChangedIndex,
-        surveyMaxSignalIndex
-    };
-
-    enum {
-        surveyVisualTransectPointsChangedMask = 1 << surveyVisualTransectPointsChangedIndex,
-        surveyCameraShotsChangedMask =          1 << surveyCameraShotsChangedIndex,
-        surveyCoveredAreaChangedMask =          1 << surveyCoveredAreaChangedIndex,
-        surveyTimeBetweenShotsChangedMask =     1 << surveyTimeBetweenShotsChangedIndex,
-        surveyRefly90DegreesChangedMask =       1 << surveyRefly90DegreesChangedIndex,
-        surveyDirtyChangedMask =                1 << surveyDirtyChangedIndex
-    };
-
-    static const size_t _cSurveySignals = surveyMaxSignalIndex;
-    const char*         _rgSurveySignals[_cSurveySignals];
-
-    MultiSignalSpy*         _multiSpy =             nullptr;
-    SurveyComplexItem*      _surveyItem =           nullptr;
-    QGCMapPolygon*          _mapPolygon =           nullptr;
-    QList<QGeoCoordinate>   _polyVertices;
+    MultiSignalSpy* _multiSpy = nullptr;
+    SurveyComplexItem* _surveyItem = nullptr;
+    QGCMapPolygon* _mapPolygon = nullptr;
+    QList<QGeoCoordinate> _polyVertices;
 
     static const int _expectedTransectCount = 2;
 };

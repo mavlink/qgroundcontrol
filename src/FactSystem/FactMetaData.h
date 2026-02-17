@@ -188,7 +188,7 @@ public:
     void setWriteOnly(bool bValue) { _writeOnly = bValue; }
     void setVolatileValue(bool bValue);
 
-    void setTranslators(Translator rawTranslator, Translator cookedTranslator);
+    void setTranslators(Translator rawTranslator_, Translator cookedTranslator_);
 
     /// Set the translators to the standard built in versions
     void setBuiltInTranslator();

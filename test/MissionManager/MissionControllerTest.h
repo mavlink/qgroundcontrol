@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MissionControllerManagerTest.h"
+#include "UnitTest.h"
 
 class MissionController;
 class MultiSignalSpy;
@@ -11,65 +12,23 @@ class MissionControllerTest : public MissionControllerManagerTest
 {
     Q_OBJECT
 
-public:
-    MissionControllerTest(void);
-
 private slots:
-    void cleanup(void);
+    void cleanup();
 
-    void _testLoadJsonSectionAvailable  (void);
-    void _testEmptyVehicleAPM           (void);
-    void _testEmptyVehiclePX4           (void);
-    void _testGlobalAltMode             (void);
-    void _testGimbalRecalc              (void);
-    void _testVehicleYawRecalc          (void);
+    void _testLoadJsonSectionAvailable();
+    void _testGlobalAltMode();
+    void _testGimbalRecalc();
+    void _testVehicleYawRecalc();
 
-private:
-#if 0
-    void _testOfflineToOnlineAPM(void);
-    void _testOfflineToOnlinePX4(void);
-#endif
+    // Parameterized tests - runs once per autopilot type
+    UT_PARAMETERIZED_TEST(_testEmptyVehicle);
 
 private:
     void _initForFirmwareType(MAV_AUTOPILOT firmwareType);
-    void _testEmptyVehicleWorker(MAV_AUTOPILOT firmwareType);
-    void _testAddWaypointWorker(MAV_AUTOPILOT firmwareType);
-#if 0
-    void _testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType);
-#endif
     void _setupVisualItemSignals(VisualMissionItem* visualItem);
 
-    // MissiomItems signals
-
-    enum {
-        coordinateChangedSignalIndex = 0,
-        visualItemMaxSignalIndex
-    };
-
-    enum {
-        coordinateChangedSignalMask =   1 << coordinateChangedSignalIndex,
-        visualItemMaxSignalMask =       1 << visualItemMaxSignalIndex,
-    };
-
-    // MissionController signals
-
-    enum {
-        visualItemsChangedSignalIndex = 0,
-        missionControllerMaxSignalIndex
-    };
-
-    enum {
-        visualItemsChangedSignalMask =                 1 << visualItemsChangedSignalIndex,
-    };
-
-    MultiSignalSpy*         _multiSpyMissionController  = nullptr;
-    MultiSignalSpy*         _multiSpyMissionItem        = nullptr;
-    PlanMasterController*   _masterController           = nullptr;
-    MissionController*      _missionController          = nullptr;
-
-    static const size_t _cVisualItemSignals = visualItemMaxSignalIndex;
-    static const size_t _cMissionControllerSignals = missionControllerMaxSignalIndex;
-
-    const char*         _rgMissionControllerSignals[_cMissionControllerSignals];
-    const char*         _rgVisualItemSignals[_cVisualItemSignals];
+    MultiSignalSpy* _multiSpyMissionController = nullptr;
+    MultiSignalSpy* _multiSpyMissionItem = nullptr;
+    PlanMasterController* _masterController = nullptr;
+    MissionController* _missionController = nullptr;
 };

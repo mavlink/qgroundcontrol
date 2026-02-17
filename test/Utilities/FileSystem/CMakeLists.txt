@@ -7,6 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCArchiveWatcherTest.cc
         QGCArchiveWatcherTest.h
+        QGCCachedFileDownloadTest.cc
+        QGCCachedFileDownloadTest.h
         QGCFileDownloadTest.cc
         QGCFileDownloadTest.h
         QGCFileHelperTest.cc

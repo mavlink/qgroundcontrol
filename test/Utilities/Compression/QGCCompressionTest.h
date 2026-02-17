@@ -1,21 +1,13 @@
 #pragma once
 
-#include "UnitTest.h"
-
-#include <QtCore/QTemporaryDir>
+#include "BaseClasses/TempDirectoryTest.h"
 
 /// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
-class QGCCompressionTest : public UnitTest
+class QGCCompressionTest : public TempDirectoryTest
 {
     Q_OBJECT
 
-public:
-    QGCCompressionTest() = default;
-
 private slots:
-    void init() override;
-    void cleanup() override;
-
     // Format detection
     void _testFormatDetection();
     void _testFormatDetectionFromContent();
@@ -24,6 +16,9 @@ private slots:
     // Archive extraction from Qt resources
     void _testZipFromResource();
     void _test7zFromResource();
+    void _testExtractArchiveAtomic();
+    void _testExtractArchiveAtomicReplacesExistingDirectory();
+    void _testExtractArchiveAtomicFailureKeepsExistingDirectory();
     void _testListArchive();
     void _testListArchiveDetailed();
     void _testListArchiveNaturalSort();
@@ -55,13 +50,9 @@ private slots:
 
     // QGCCompressionJob (async operations)
     void _testCompressionJobExtract();
+    void _testCompressionJobReentrantStartFromFinished();
     void _testCompressionJobCancel();
     void _testCompressionJobAsyncStatic();
-
-    // QUrl utilities
-    void _testToLocalPath();
-    void _testIsLocalUrl();
-    void _testUrlOverloads();
 
     // Sparse file handling
     void _testSparseFileExtraction();
@@ -90,7 +81,5 @@ private slots:
     void _benchmarkListArchive();
 
 private:
-    bool _compareFiles(const QString &file1, const QString &file2);
-
-    QTemporaryDir *_tempOutputDir = nullptr;
+    bool _compareFiles(const QString& file1, const QString& file2);
 };

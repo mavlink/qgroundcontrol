@@ -1,16 +1,13 @@
 #pragma once
 
-#include "UnitTest.h"
-#include "LinkInterface.h"
+#include "BaseClasses/CommsTest.h"
 #include "LinkConfiguration.h"
+#include "LinkInterface.h"
+#include "MockLink.h"
 
-class VehicleLinkManagerTest : public UnitTest
+class VehicleLinkManagerTest : public CommsTest
 {
     Q_OBJECT
-
-protected:
-    void init() final;
-    void cleanup() final;
 
 private slots:
     void _simpleLinkTest();
@@ -20,12 +17,13 @@ private slots:
     void _highLatencyLinkTest();
 
 private:
-    void _startMockLink(int mockIndex, bool highLatency, bool incrementVehicleId, SharedLinkConfigurationPtr &sharedConfig, SharedLinkInterfacePtr &mockLink);
+    void _startMockLink(int mockIndex, bool highLatency, bool incrementVehicleId,
+                        SharedLinkConfigurationPtr& sharedConfig, SharedLinkInterfacePtr& mockLink);
 
-    static constexpr const char *_primaryLinkChangedSignalName = "primaryLinkChanged";
-    static constexpr const char *_allLinksRemovedSignalName = "allLinksRemoved";
-    static constexpr const char *_communicationLostChangedSignalName = "communicationLostChanged";
-    static constexpr const char *_communicationLostEnabledChangedSignalName = "communicationLostEnabledChanged";
-    static constexpr const char *_linkNamesChangedSignalName = "linkNamesChanged";
-    static constexpr const char *_linkStatusesChangedSignalName = "linkStatusesChanged";
+    static constexpr const char* _primaryLinkChangedSignalName = "primaryLinkChanged";
+    static constexpr const char* _allLinksRemovedSignalName = "allLinksRemoved";
+    static constexpr const char* _communicationLostChangedSignalName = "communicationLostChanged";
+    static constexpr const char* _communicationLostEnabledChangedSignalName = "communicationLostEnabledChanged";
+    static constexpr const char* _linkNamesChangedSignalName = "linkNamesChanged";
+    static constexpr const char* _linkStatusesChangedSignalName = "linkStatusesChanged";
 };

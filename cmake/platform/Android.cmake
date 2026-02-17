@@ -91,7 +91,8 @@ list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
 # ----------------------------------------------------------------------------
 CPMAddPackage(
     NAME android_openssl
-    URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
+    GITHUB_REPOSITORY KDAB/android_openssl
+    GIT_TAG b71f1470962019bd89534a2919f5925f93bc5779
 )
 
 if(android_openssl_ADDED)
@@ -140,6 +141,8 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME}
 # Needed for read/write to SD Card Path in AppSettings
 qt_add_android_permission(${CMAKE_PROJECT_NAME}
     NAME android.permission.WRITE_EXTERNAL_STORAGE
+    ATTRIBUTES
+        maxSdkVersion 32
 )
 qt_add_android_permission(${CMAKE_PROJECT_NAME}
     NAME android.permission.READ_EXTERNAL_STORAGE
@@ -148,6 +151,11 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME}
 )
 qt_add_android_permission(${CMAKE_PROJECT_NAME}
     NAME android.permission.MANAGE_EXTERNAL_STORAGE
+)
+
+# Joystick
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.VIBRATE
 )
 
 message(STATUS "QGC: Android platform configuration applied")

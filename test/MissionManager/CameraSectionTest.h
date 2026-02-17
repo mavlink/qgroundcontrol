@@ -12,70 +12,50 @@ class CameraSectionTest : public SectionTest
     Q_OBJECT
 
 public:
-    CameraSectionTest(void);
+    void init() override;
+    void cleanup() override;
 
-    void init(void) override;
-    void cleanup(void) override;
-
-    static SimpleMissionItem* createValidStopVideoItem      (PlanMasterController* masterController);
-    static SimpleMissionItem* createValidStopDistanceItem   (PlanMasterController* masterController);
-    static SimpleMissionItem* createValidStopTimeItem       (PlanMasterController* masterController);
-    static SimpleMissionItem* createInvalidStopVideoItem    (PlanMasterController* masterController);
-    static SimpleMissionItem* createInvalidStopDistanceItem (PlanMasterController* masterController);
-    static SimpleMissionItem* createInvalidStopTimeItem     (PlanMasterController* masterController);
+    static SimpleMissionItem* createValidStopVideoItem(PlanMasterController* masterController);
+    static SimpleMissionItem* createValidStopDistanceItem(PlanMasterController* masterController);
+    static SimpleMissionItem* createValidStopTimeItem(PlanMasterController* masterController);
+    static SimpleMissionItem* createInvalidStopVideoItem(PlanMasterController* masterController);
+    static SimpleMissionItem* createInvalidStopDistanceItem(PlanMasterController* masterController);
+    static SimpleMissionItem* createInvalidStopTimeItem(PlanMasterController* masterController);
 
 private slots:
-    void _testDirty                                 (void);
-    void _testSettingsAvailable                     (void);
-    void _checkAvailable                            (void);
-    void _testItemCount                             (void);
-    void _testAppendSectionItems                    (void);
-    void _testScanForGimbalSection                  (void);
-    void _testScanForPhotoIntervalTimeSection       (void);
-    void _testScanForPhotoIntervalDistanceSection   (void);
-    void _testScanForStartVideoSection              (void);
-    void _testScanForStopVideoSection               (void);
-    void _testScanForStopPhotoSection               (void);
-    void _testScanForCameraModeSection              (void);
-    void _testScanForTakePhotoSection               (void);
-    void _testScanForMultipleItems                  (void);
-    void _testSpecifiedGimbalValuesChanged          (void);
+    void _testDirty();
+    void _testSettingsAvailable();
+    void _checkAvailable();
+    void _testItemCount();
+    void _testAppendSectionItems();
+    void _testScanForGimbalSection();
+    void _testScanForPhotoIntervalTimeSection();
+    void _testScanForPhotoIntervalDistanceSection();
+    void _testScanForStartVideoSection();
+    void _testScanForStopVideoSection();
+    void _testScanForStopPhotoSection();
+    void _testScanForCameraModeSection();
+    void _testScanForTakePhotoSection();
+    void _testScanForMultipleItems();
+    void _testSpecifiedGimbalValuesChanged();
 
 private:
     void _createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy);
     void _validateItemScan(SimpleMissionItem* validItem);
-    void _resetSection(void);
+    void _resetSection();
 
-    enum {
-        specifyGimbalChangedIndex = 0,
-        specifiedGimbalYawChangedIndex,
-        specifiedGimbalPitchChangedIndex,
-        specifyCameraModeChangedIndex,
-        maxSignalIndex,
-    };
-
-    enum {
-        specifyGimbalChangedMask =          1 << specifyGimbalChangedIndex,
-        specifiedGimbalYawChangedMask =     1 << specifiedGimbalYawChangedIndex,
-        specifiedGimbalPitchChangedMask =   1 << specifiedGimbalPitchChangedIndex,
-        specifyCameraModeChangedMask =      1 << specifyCameraModeChangedIndex,
-    };
-
-    static const size_t cCameraSignals = maxSignalIndex;
-    const char*         rgCameraSignals[cCameraSignals];
-
-    MultiSignalSpy*     _spyCamera;
-    MultiSignalSpy*     _spySection;
-    CameraSection*      _cameraSection;
-    SimpleMissionItem*  _validGimbalItem;
-    SimpleMissionItem*  _validDistanceItem;
-    SimpleMissionItem*  _validTimeItem;
-    SimpleMissionItem*  _validStartVideoItem;
-    SimpleMissionItem*  _validStopVideoItem;
-    SimpleMissionItem*  _validStopDistanceItem;
-    SimpleMissionItem*  _validStopTimeItem;
-    SimpleMissionItem*  _validCameraPhotoModeItem;
-    SimpleMissionItem*  _validCameraVideoModeItem;
-    SimpleMissionItem*  _validCameraSurveyPhotoModeItem;
-    SimpleMissionItem*  _validTakePhotoItem;
+    MultiSignalSpy* _spyCamera = nullptr;
+    MultiSignalSpy* _spySection = nullptr;
+    CameraSection* _cameraSection = nullptr;
+    SimpleMissionItem* _validGimbalItem = nullptr;
+    SimpleMissionItem* _validDistanceItem = nullptr;
+    SimpleMissionItem* _validTimeItem = nullptr;
+    SimpleMissionItem* _validStartVideoItem = nullptr;
+    SimpleMissionItem* _validStopVideoItem = nullptr;
+    SimpleMissionItem* _validStopDistanceItem = nullptr;
+    SimpleMissionItem* _validStopTimeItem = nullptr;
+    SimpleMissionItem* _validCameraPhotoModeItem = nullptr;
+    SimpleMissionItem* _validCameraVideoModeItem = nullptr;
+    SimpleMissionItem* _validCameraSurveyPhotoModeItem = nullptr;
+    SimpleMissionItem* _validTakePhotoItem = nullptr;
 };

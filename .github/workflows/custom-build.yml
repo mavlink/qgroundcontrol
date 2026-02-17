@@ -54,9 +54,7 @@ jobs:
         uses: ./.github/actions/common
 
       - name: Install Dependencies
-        run: |
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
+        run: python3 ./tools/setup/install_dependencies.py --platform debian
 
       - name: Setup Caching
         uses: ./.github/actions/cache

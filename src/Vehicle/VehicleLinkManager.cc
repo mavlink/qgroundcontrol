@@ -110,9 +110,12 @@ void VehicleLinkManager::_commLostCheck()
         return;
     }
 
+    // Use much shorter heartbeat timeout in unit tests since MockLink sends heartbeats instantly
+    const int heartbeatTimeout = qgcApp()->runningUnitTests() ? kTestHeartbeatTimeoutMs : _heartbeatMaxElpasedMSecs;
+
     bool linkStatusChange = false;
     for (LinkInfo_t &linkInfo: _rgLinkInfo) {
-        if (!linkInfo.commLost && !linkInfo.link->linkConfiguration()->isHighLatency() && (linkInfo.heartbeatElapsedTimer.elapsed() > _heartbeatMaxElpasedMSecs)) {
+        if (!linkInfo.commLost && !linkInfo.link->linkConfiguration()->isHighLatency() && (linkInfo.heartbeatElapsedTimer.elapsed() > heartbeatTimeout)) {
             linkInfo.commLost = true;
             linkStatusChange = true;
 
@@ -245,6 +248,9 @@ void VehicleLinkManager::_linkDisconnected()
     _updatePrimaryLink();
     if (_rgLinkInfo.isEmpty() && !_allLinksRemovedSignalledByCloseVehicle) {
         qCDebug(VehicleLog) << "signalling allLinksRemoved";
+        // Stop command processing timers immediately to prevent callbacks during the
+        // asynchronous vehicle destruction sequence
+        _vehicle->_stopCommandProcessing();
         emit allLinksRemoved(_vehicle);
     }
 }
@@ -258,10 +264,10 @@ SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink()
             continue;
         }
 
-        SharedLinkInterfacePtr link = linkInfo.link;
-        auto linkInterface = link.get();
+        SharedLinkInterfacePtr candidateLink = linkInfo.link;
+        auto linkInterface = candidateLink.get();
         if (linkInterface && LinkManager::isLinkUSBDirect(linkInterface)) {
-            return link;
+            return candidateLink;
         }
     }
 #endif
@@ -272,18 +278,18 @@ SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink()
             continue;
         }
 
-        SharedLinkInterfacePtr link = linkInfo.link;
-        const SharedLinkConfigurationPtr config = link->linkConfiguration();
+        SharedLinkInterfacePtr candidateLink = linkInfo.link;
+        const SharedLinkConfigurationPtr config = candidateLink->linkConfiguration();
         if (config && !config->isHighLatency()) {
-            return link;
+            return candidateLink;
         }
     }
 
     // Last possible choice is a high latency link
-    SharedLinkInterfacePtr link = _primaryLink.lock();
-    if (link && link->linkConfiguration()->isHighLatency()) {
+    SharedLinkInterfacePtr primaryLink = _primaryLink.lock();
+    if (primaryLink && primaryLink->linkConfiguration()->isHighLatency()) {
         // Best choice continues to be the current high latency link
-        return link;
+        return primaryLink;
     }
 
     // Pick any high latency link if one exists
@@ -292,10 +298,10 @@ SharedLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink()
             continue;
         }
 
-        SharedLinkInterfacePtr link = linkInfo.link;
-        const SharedLinkConfigurationPtr config = link->linkConfiguration();
+        SharedLinkInterfacePtr candidateLink = linkInfo.link;
+        const SharedLinkConfigurationPtr config = candidateLink->linkConfiguration();
         if (config && config->isHighLatency()) {
-            return link;
+            return candidateLink;
         }
     }
 
@@ -356,6 +362,9 @@ void VehicleLinkManager::closeVehicle()
     _rgLinkInfo.clear();
 
     _allLinksRemovedSignalledByCloseVehicle = true; // Prevent double signal of allLinksRemoved
+    // Stop command processing timers immediately to prevent callbacks during the
+    // asynchronous vehicle destruction sequence
+    _vehicle->_stopCommandProcessing();
     emit allLinksRemoved(_vehicle);
 }
 

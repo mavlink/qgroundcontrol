@@ -1,10 +1,10 @@
 #include "CompInfo.h"
 
-CompInfo::CompInfo(COMP_METADATA_TYPE type, uint8_t compId, Vehicle* vehicle, QObject* parent)
+CompInfo::CompInfo(COMP_METADATA_TYPE type_, uint8_t compId_, Vehicle* vehicle_, QObject* parent)
     : QObject   (parent)
-    , type      (type)
-    , vehicle   (vehicle)
-    , compId    (compId)
+    , type      (type_)
+    , vehicle   (vehicle_)
+    , compId    (compId_)
 {
 
 }

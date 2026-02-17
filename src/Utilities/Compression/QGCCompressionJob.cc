@@ -1,6 +1,5 @@
 #include "QGCCompressionJob.h"
 #include "QGCCompression.h"
-#include "QGClibarchive.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtConcurrent/QtConcurrent>
@@ -38,26 +37,28 @@ QFuture<bool> QGCCompressionJob::extractArchiveAsync(const QString &archivePath,
                                                       const QString &outputDirectoryPath,
                                                       qint64 maxBytes)
 {
+    const auto cancelRequested = std::make_shared<std::atomic_bool>(false);
     auto work = [archivePath, outputDirectoryPath, maxBytes](QGCCompression::ProgressCallback progress) {
         return QGCCompression::extractArchive(archivePath, outputDirectoryPath,
                                                QGCCompression::Format::Auto,
                                                progress, maxBytes);
     };
 
-    return _runWithProgress(work);
+    return _runWithProgress(work, cancelRequested);
 }
 
 QFuture<bool> QGCCompressionJob::decompressFileAsync(const QString &inputPath,
                                                       const QString &outputPath,
                                                       qint64 maxBytes)
 {
+    const auto cancelRequested = std::make_shared<std::atomic_bool>(false);
     auto work = [inputPath, outputPath, maxBytes](QGCCompression::ProgressCallback progress) {
         return QGCCompression::decompressFile(inputPath, outputPath,
                                                QGCCompression::Format::Auto,
                                                progress, maxBytes);
     };
 
-    return _runWithProgress(work);
+    return _runWithProgress(work, cancelRequested);
 }
 
 // ============================================================================
@@ -82,8 +83,9 @@ void QGCCompressionJob::extractArchiveAtomic(const QString &archivePath,
                                               qint64 maxBytes)
 {
     auto work = [archivePath, outputDirectoryPath, maxBytes](QGCCompression::ProgressCallback progress) {
-        return QGClibarchive::extractArchiveAtomic(archivePath, outputDirectoryPath,
-                                                    progress, maxBytes);
+        return QGCCompression::extractArchiveAtomic(archivePath, outputDirectoryPath,
+                                                     QGCCompression::Format::Auto,
+                                                     progress, maxBytes);
     };
 
     _startOperation(Operation::ExtractArchiveAtomic, archivePath, outputDirectoryPath, work);
@@ -126,10 +128,17 @@ void QGCCompressionJob::extractFiles(const QString &archivePath,
 
 void QGCCompressionJob::cancel()
 {
-    if (_running && _future.isRunning()) {
-        qCDebug(QGCCompressionJobLog) << "Cancelling operation:" << static_cast<int>(_operation);
-        _future.cancel();
+    if (!_running || !_future.isRunning()) {
+        return;
     }
+
+    qCDebug(QGCCompressionJobLog) << "Cancelling operation:" << static_cast<int>(_operation);
+
+    if (_cancelRequested) {
+        _cancelRequested->store(true, std::memory_order_release);
+    }
+
+    _future.cancel();
 }
 
 // ============================================================================
@@ -145,8 +154,10 @@ void QGCCompressionJob::_onFutureFinished()
 {
     bool success = false;
     QString error;
+    const bool wasCancelled = _future.isCanceled()
+                              || (_cancelRequested && _cancelRequested->load(std::memory_order_acquire));
 
-    if (_future.isCanceled()) {
+    if (wasCancelled) {
         error = QStringLiteral("Operation cancelled");
         qCDebug(QGCCompressionJobLog) << "Operation cancelled:" << static_cast<int>(_operation);
     } else {
@@ -173,6 +184,7 @@ void QGCCompressionJob::_onFutureFinished()
     _setProgress(success ? 1.0 : _progress);
     _setRunning(false);
     _operation = Operation::None;
+    _cancelRequested.reset();
 
     emit finished(success);
 }
@@ -208,16 +220,18 @@ void QGCCompressionJob::_startOperation(Operation op, const QString &source,
     _setProgress(0.0);
     _setErrorString(QString());
     _setRunning(true);
+    _cancelRequested = std::make_shared<std::atomic_bool>(false);
 
     // Create and start the future
-    _future = _runWithProgress(std::move(work));
+    _future = _runWithProgress(std::move(work), _cancelRequested);
     _watcher->setFuture(_future);
 }
 
-QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work)
+QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work,
+                                                  const std::shared_ptr<std::atomic_bool> &cancelRequested)
 {
     // Use QPromise to create a QFuture with progress reporting
-    return QtConcurrent::run([work = std::move(work)]() -> bool {
+    return QtConcurrent::run([work = std::move(work), cancelRequested]() -> bool {
         QPromise<bool> promise;
         QFuture<bool> future = promise.future();
 
@@ -225,8 +239,9 @@ QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work)
         promise.setProgressRange(0, 100);
 
         // Progress callback that updates QPromise and checks for cancellation
-        auto progressCallback = [&promise](qint64 bytesProcessed, qint64 totalBytes) -> bool {
-            if (promise.isCanceled()) {
+        auto progressCallback = [&promise, cancelRequested](qint64 bytesProcessed, qint64 totalBytes) -> bool {
+            if (promise.isCanceled()
+                || (cancelRequested && cancelRequested->load(std::memory_order_acquire))) {
                 return false;  // Signal cancellation to the work function
             }
 
@@ -245,7 +260,11 @@ QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work)
 
         bool success = false;
         try {
-            success = work(progressCallback);
+            if (cancelRequested && cancelRequested->load(std::memory_order_acquire)) {
+                success = false;
+            } else {
+                success = work(progressCallback);
+            }
         } catch (const std::exception &e) {
             qCWarning(QGCCompressionJobLog) << "Exception during compression operation:" << e.what();
             success = false;

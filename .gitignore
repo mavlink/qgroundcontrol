@@ -26,7 +26,7 @@ tags
 # ------------------------------------------------------------------------------
 # Build System & CMake
 # ------------------------------------------------------------------------------
-build/
+build*/
 cmake-build-*/
 out/
 CMakeFiles
@@ -165,3 +165,5 @@ Qt*-linux*.tar.*
 
 # Vale prose linter (downloaded via `vale sync`)
 .github/styles/
+.gemini/
+.pytest_cache/

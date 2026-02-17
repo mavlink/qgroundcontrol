@@ -94,6 +94,17 @@ int MapProvider::lat2tileY(double lat, int z) const
     return static_cast<int>(floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
 }
 
+double MapProvider::tileX2long(int x, int z) const
+{
+    return x / std::pow(2.0, z) * 360.0 - 180.0;
+}
+
+double MapProvider::tileY2lat(int y, int z) const
+{
+    const double n = M_PI - 2.0 * M_PI * y / std::pow(2.0, z);
+    return qRadiansToDegrees(std::atan(std::sinh(n)));
+}
+
 QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
                                      double topleftLat, double bottomRightLon,
                                      double bottomRightLat) const
