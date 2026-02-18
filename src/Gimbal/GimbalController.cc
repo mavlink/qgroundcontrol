@@ -421,7 +421,32 @@ void GimbalController::centerGimbal()
         qCDebug(GimbalControllerLog) << "gimbalYawStep: active gimbal is nullptr, returning";
         return;
     }
-    sendPitchBodyYaw(0.0, 0.0, true);
+
+    const bool preserveYawLock = SettingsManager::instance()->gimbalControllerSettings()->preserveYawLockOnPositionCommands()->rawValue().toBool();
+    if (preserveYawLock && _activeGimbal->yawLock()) {
+        // Preserve yaw lock: send command in earth frame with yaw lock flag
+        sendPitchAbsoluteYaw(0.0, _vehicle->heading()->rawValue().toFloat(), true);
+    } else {
+        // Default behavior: send command in body frame (yaw follow)
+        sendPitchBodyYaw(0.0, 0.0, true);
+    }
+}
+
+void GimbalController::tilt90Gimbal()
+{
+    if (!_activeGimbal) {
+        qCDebug(GimbalControllerLog) << "tilt90Gimbal: active gimbal is nullptr, returning";
+        return;
+    }
+
+    const bool preserveYawLock = SettingsManager::instance()->gimbalControllerSettings()->preserveYawLockOnPositionCommands()->rawValue().toBool();
+    if (preserveYawLock && _activeGimbal->yawLock()) {
+        // Preserve yaw lock: send command in earth frame with yaw lock flag
+        sendPitchAbsoluteYaw(-90.0, _activeGimbal->absoluteYaw()->rawValue().toFloat(), true);
+    } else {
+        // Default behavior: send command in body frame (yaw follow)
+        sendPitchBodyYaw(-90.0, 0.0, true);
+    }
 }
 
 void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool /*rateControl*/, bool /*retract*/, bool /*neutral*/, bool /*yawlock*/)
