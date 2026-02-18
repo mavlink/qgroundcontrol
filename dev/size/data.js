@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771377429173,
+  "lastUpdate": 1771446041306,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -150,6 +150,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "Stripped Size",
             "value": 46687416,
+            "unit": "bytes"
+          },
+          {
+            "name": "Symbol Count",
+            "value": 74853,
+            "unit": "symbols"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "htramsey98@gmail.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "committer": {
+            "email": "68555040+HTRamsey@users.noreply.github.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "distinct": true,
+          "id": "a76de3c56e9b74bc8f4cd2677f84d17782c6484a",
+          "message": "Fix Flaky Android Emulator Test",
+          "timestamp": "2026-02-18T14:50:27-05:00",
+          "tree_id": "187469aeae7ebe073f3abafefc4d67cc1e980988",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/a76de3c56e9b74bc8f4cd2677f84d17782c6484a"
+        },
+        "date": 1771446018403,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Binary Size",
+            "value": 51562568,
+            "unit": "bytes"
+          },
+          {
+            "name": "Stripped Size",
+            "value": 46687480,
             "unit": "bytes"
           },
           {
