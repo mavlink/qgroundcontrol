@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771292584176,
+  "lastUpdate": 1771377430129,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -86,6 +86,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Startup (list tests)",
             "value": 42620.47800000346,
+            "unit": "usecs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "don@thegagnes.com",
+            "name": "Don Gagne",
+            "username": "DonLakeFlyer"
+          },
+          "committer": {
+            "email": "DonLakeFlyer@users.noreply.github.com",
+            "name": "Don Gagne",
+            "username": "DonLakeFlyer"
+          },
+          "distinct": true,
+          "id": "be3211bee63e56e5551045d59bc7960df46ab8cb",
+          "message": "Use default property to assign hierarchy for child controls",
+          "timestamp": "2026-02-17T16:48:36-08:00",
+          "tree_id": "c82f572d89d1d176cda2ccda7c55db96504c4b9a",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/be3211bee63e56e5551045d59bc7960df46ab8cb"
+        },
+        "date": 1771377409238,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Startup (list tests)",
+            "value": 44721.622000025716,
             "unit": "usecs"
           }
         ]
