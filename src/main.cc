@@ -8,7 +8,7 @@
     #include "UnitTestList.h"
 #endif
 
-QGC_LOGGING_CATEGORY(MainLog, "Main")
+QGC_LOGGING_CATEGORY_ON(MainLog, "Main")
 
 int main(int argc, char *argv[])
 {
