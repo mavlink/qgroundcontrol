@@ -73,6 +73,53 @@ There are other indicators which only show in certain situations:
 
 * Telemetry RSSI
 * RC RSSI
-* Gimbal - Only displayed if the vehicle supports the [Mavlink Gimbal Protocol](https://mavlink.io/en/services/gimbal_v2.html)
 * VTOL transitions
 * Select from multiple connected vehicles
+
+## Gimbal Indicator
+
+The Gimbal indicator appears in the toolbar when the vehicle supports the [MAVLink Gimbal Protocol v2](https://mavlink.io/en/services/gimbal_v2.html). It displays the current gimbal status and provides controls for gimbal operation.
+
+### Gimbal Status Display
+
+The toolbar indicator shows:
+
+* **Pitch angle** - Current pitch position in degrees
+* **Yaw value** - Either local yaw (relative to vehicle heading) or azimuth (absolute earth frame), depending on settings
+* **Yaw Lock status** - Visual indicator showing whether yaw lock is enabled or disabled
+  * **Yaw Lock (Locked icon)** - Gimbal yaw is locked to earth frame (maintains absolute heading)
+  * **Yaw Follow (Follow icon)** - Gimbal yaw follows vehicle body frame (rotates with vehicle)
+
+### Gimbal Controls
+
+Clicking the gimbal indicator opens a dropdown panel with the following controls:
+
+#### Quick controls
+
+* **Center** - Points the gimbal forward (0° pitch, 0° yaw relative to vehicle)
+* **Tilt 90** - Points the gimbal straight down (-90° pitch)
+* **Point Home** - Points the gimbal towards the home position
+* **Retract** - Sets gimbal to retracted position. This is not supported by all gimbals.
+* **Yaw Lock/Unlock** - More info below
+* **Gimbal Control Acquisition** - More info below
+
+#### Yaw Lock Mode Toggle
+
+Toggle between two yaw control modes:
+
+* **Yaw Lock** - Gimbal maintains a fixed heading relative to earth/north. When the vehicle rotates, the gimbal counter-rotates to maintain its absolute heading.
+* **Yaw Follow** - Gimbal yaw is relative to the vehicle body. When the vehicle rotates, the gimbal rotates with it.
+
+#### Gimbal Control Acquisition
+
+If the option "Show Acquire/Release control button" is set, a new **Acquire/Release Control** button will appear 
+* Click to request control from the current operator, or to release control if we have it.
+* Control is typically needed before sending gimbal commands. If not in control, **it will be requested automatically** when sending other commands.
+
+### Yaw Lock Behavior with Center and tilt 90 Commands
+
+By default, the Center and Tilt 90 buttons will also set yaw to follow mode. This is the typical user expectation for these commands.
+
+**Example**: If you're in Yaw Lock mode and press "Center", the gimbal will point forward relative to the vehicle (Yaw Follow mode) rather than maintaining its absolute earth heading.
+
+To change this behaviour and preserve last yaw lock status, you can enable the setting "Preserve yaw lock status on tilt 90 and center commands, don't force yaw follow".
