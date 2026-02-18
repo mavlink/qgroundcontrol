@@ -140,7 +140,7 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Create Debug Keystore
-        if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' }}
+        if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
         shell: bash
         run: |
           keytool -genkey -v \
