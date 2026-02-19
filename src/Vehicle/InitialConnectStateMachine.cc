@@ -158,8 +158,8 @@ void InitialConnectStateMachine::_autopilotVersionRequestMessageHandler(void* re
     case Vehicle::RequestMessageFailureMessageNotReceived:
         qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION command acked but message never received";
         break;
-    case Vehicle::RequestMessageFailureDuplicateCommand:
-        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION Internal Error: Duplicate command";
+    case Vehicle::RequestMessageFailureDuplicate:
+        qCDebug(InitialConnectStateMachineLog) << "REQUEST_MESSAGE:AUTOPILOT_VERSION Internal Error: Duplicate request";
         break;
     }
 
