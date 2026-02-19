@@ -5,8 +5,9 @@ buildscript {
     }
 
     dependencies {
-        //noinspection AndroidGradlePluginVersion
-        classpath 'com.android.tools.build:gradle:8.11.1'
+        // Qt injects `qtGradlePluginType` dynamically (application/library), which
+        // still relies on classpath-based plugin resolution.
+        classpath 'com.android.tools.build:gradle:9.0.1'
     }
 }
 
@@ -22,10 +23,34 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     //noinspection GradleDependency
     implementation 'androidx.core:core:1.16.0'
-    implementation 'com.github.mik3y:usb-serial-for-android:3.9.0'
+    implementation 'com.github.mik3y:usb-serial-for-android:3.10.0'
 }
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
+
+def resolveCpmJavaSourceDir() {
+    final List<File> candidates = []
+    if (project.hasProperty('QGC_CPM_JAVA_SRC_DIR')) {
+        candidates.add(file(project.property('QGC_CPM_JAVA_SRC_DIR').toString()))
+    }
+    if (project.hasProperty('cpmJavaSrcDir')) {
+        candidates.add(file(project.property('cpmJavaSrcDir').toString()))
+    }
+    final String envPath = System.getenv('QGC_EXTRA_JAVA_SOURCES_DIR')
+    if (envPath != null && !envPath.isEmpty()) {
+        candidates.add(file(envPath))
+    }
+    candidates.add(new File(projectDir, '../extra_java_sources'))
+    candidates.add(new File(projectDir, '../../extra_java_sources'))
+
+    for (File candidate : candidates) {
+        if (candidate.exists()) {
+            return candidate
+        }
+    }
+
+    return null
+}
 
 android {
     /*******************************************************
@@ -54,7 +79,16 @@ android {
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = [qtAndroidDir + '/src', 'src', 'java']
+            java.srcDirs = [qtAndroidDir + '/src', 'src', 'java'].tap {
+                // CPM Java dependencies deployed to the build tree by CMake
+                def cpmJava = resolveCpmJavaSourceDir()
+                if (cpmJava != null) {
+                    it.add(cpmJava.absolutePath)
+                    println "cpmJavaSrcDir: ${cpmJava.absolutePath}"
+                } else {
+                    println "cpmJavaSrcDir: <not found>"
+                }
+            }
             aidl.srcDirs = [qtAndroidDir + '/src', 'src', 'aidl']
             res.srcDirs = [qtAndroidDir + '/res', 'res']
             resources.srcDirs = ['resources']
@@ -78,8 +112,9 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    lintOptions {
-        abortOnError = false
+    lint {
+        abortOnError = true
+        checkReleaseBuilds = true
     }
 
     // Do not compress Qt binary resources file
@@ -88,7 +123,6 @@ android {
     }
 
     defaultConfig {
-        resConfig "en"
         minSdkVersion qtMinSdkVersion
         targetSdkVersion qtTargetSdkVersion
         ndk.abiFilters = qtTargetAbiList.split(",")
@@ -102,7 +136,7 @@ android {
         println "versionName: ${versionName}"
     }
 
-    println "androidPackageName: ${namespace}"
+    // println "androidPackageName: ${namespace}"
     println "androidCompileSdkVersion: ${compileSdkVersion}"
     println "androidBuildToolsVersion: ${buildToolsVersion}"
     println "androidNdkVersion: ${ndkVersion}"
@@ -110,6 +144,14 @@ android {
     println "buildDir: ${buildDir}"
     println "qtAndroidDir: ${qtAndroidDir}"
     println "Java Version: " + JavaVersion.current()
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 
     packagingOptions {
         // exclude 'lib/*/*_qmltooling_*'

@@ -7,8 +7,6 @@
 #include <qserialport.h>
 #include <qserialportinfo.h>
 
-#include <jni.h>
-
 Q_DECLARE_LOGGING_CATEGORY(AndroidSerialLog);
 
 class QSerialPortPrivate;
@@ -58,11 +56,7 @@ namespace AndroidSerial
 
     constexpr const char *kJniUsbSerialManagerClassName = "org/mavlink/qgroundcontrol/QGCUsbSerialManager";
 
-    jclass getSerialManagerClass();
     void setNativeMethods();
-    void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong classPtr);
-    void jniDeviceNewData(JNIEnv *env, jobject obj, jlong classPtr, jbyteArray data);
-    void jniDeviceException(JNIEnv *env, jobject obj, jlong classPtr, jstring message);
     QList<QSerialPortInfo> availableDevices();
     int getDeviceId(const QString &portName);
     int getDeviceHandle(int deviceId);
@@ -88,4 +82,8 @@ namespace AndroidSerial
     bool startReadThread(int deviceId);
     bool stopReadThread(int deviceId);
     bool readThreadRunning(int deviceId);
+
+    void registerPointer(QSerialPortPrivate *ptr);
+    void unregisterPointer(QSerialPortPrivate *ptr);
+    void cleanupJniCache();
 } // namespace AndroidSerial

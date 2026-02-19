@@ -688,7 +688,7 @@ QSerialPort::StopBits QSerialPort::stopBits() const
     return d->stopBits;
 }
 
-QBindable<bool> QSerialPort::bindableStopBits()
+QBindable<QSerialPort::StopBits> QSerialPort::bindableStopBits()
 {
     return &d_func()->stopBits;
 }
@@ -933,8 +933,12 @@ bool QSerialPort::clear(Directions directions)
         return false;
     }
 
-    if (directions & Input)
+    if (directions & Input) {
+        QMutexLocker locker(&d->_readMutex);
         d->buffer.clear();
+        d->_pendingData.clear();
+        d->_bufferBytesEstimate.store(0, std::memory_order_relaxed);
+    }
     if (directions & Output)
         d->writeBuffer.clear();
     return d->clear(directions);
@@ -1178,6 +1182,10 @@ qint64 QSerialPort::readData(char *data, qint64 maxSize)
 {
     Q_UNUSED(data);
     Q_UNUSED(maxSize);
+
+    // QIODevice drains from d->buffer before calling here; refresh estimate so
+    // Android read-backpressure tracks current buffered bytes.
+    d_func()->_bufferBytesEstimate.store(d_func()->buffer.size(), std::memory_order_relaxed);
 
     // In any case we need to start the notifications if they were
     // disabled by the read handler. If enabled, next call does nothing.

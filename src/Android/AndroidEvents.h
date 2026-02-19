@@ -12,8 +12,12 @@ class AndroidEvents : public QObject,
                       public QtAndroidPrivate::NewIntentListener
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(AndroidEvents)
 
 public:
+    explicit AndroidEvents(QObject *parent = nullptr);
+    ~AndroidEvents() override;
+
     static AndroidEvents *instance();
 
     void handleResume() override;
@@ -26,8 +30,4 @@ signals:
     void paused();
     void activityResult(int requestCode, int resultCode, QJniObject data);
     void newIntent(QJniObject intent);
-
-public:
-    explicit AndroidEvents(QObject *parent = nullptr);
-    ~AndroidEvents() override;
 };

@@ -28,13 +28,13 @@
         android:name="org.qtproject.qt.android.bindings.QtApplication"
         android:hardwareAccelerated="true"
         android:label="-- %%INSERT_APP_NAME%% --"
-        android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
-        android:fullBackupOnly="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:localeConfig="@xml/locales_config"
         android:icon="-- %%INSERT_APP_ICON%% --"
-        android:usesCleartextTraffic="true"
-        android:networkSecurityConfig="@xml/network_security_config">
-        <!-- android:theme="@style/AppTheme" -->
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/AppTheme">
 
         <activity
             android:name="org.mavlink.qgroundcontrol.QGCActivity"

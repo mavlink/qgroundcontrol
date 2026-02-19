@@ -118,6 +118,7 @@ ios/iOSForAppStore-Info.plist
 
 # Android
 android/local.properties
+.gradle/
 *.class
 
 # Linux

@@ -5,15 +5,13 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJniEnvironment>
-#include <QtCore/QJniObject>
-#include <QtCore/QLoggingCategory>
 
-QGC_LOGGING_CATEGORY(AndroidInitLog, "qgc.android.androidinit");
-
-static jobject _context = nullptr;
-static jobject _class_loader = nullptr;
+QGC_LOGGING_CATEGORY(AndroidInitLog, "Android.AndroidInit");
 
 #ifdef QGC_GST_STREAMING
+
+static jobject _class_loader = nullptr;
+
 extern "C"
 {
     extern void gst_amc_jni_set_java_vm(JavaVM *java_vm);
@@ -23,29 +21,42 @@ extern "C"
         return _class_loader;
     }
 }
+
 #endif
 
-static jboolean jniInit(JNIEnv *env, jobject context)
+static jboolean jniInit(JNIEnv *env, jobject thiz)
 {
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
-    const jclass context_cls = env->GetObjectClass(context);
-    if (!context_cls) {
+#ifdef QGC_GST_STREAMING
+    const jclass contextClass = env->GetObjectClass(thiz);
+    if (!contextClass) {
         return JNI_FALSE;
     }
 
-    const jmethodID get_class_loader_id = env->GetMethodID(context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
+    const jmethodID getClassLoaderId = env->GetMethodID(contextClass, "getClassLoader", "()Ljava/lang/ClassLoader;");
     if (QJniEnvironment::checkAndClearExceptions(env)) {
+        env->DeleteLocalRef(contextClass);
         return JNI_FALSE;
     }
 
-    const jobject class_loader = env->CallObjectMethod(context, get_class_loader_id);
+    const jobject classLoader = env->CallObjectMethod(thiz, getClassLoaderId);
     if (QJniEnvironment::checkAndClearExceptions(env)) {
+        env->DeleteLocalRef(contextClass);
         return JNI_FALSE;
     }
 
-    _context = env->NewGlobalRef(context);
-    _class_loader = env->NewGlobalRef(class_loader);
+    if (_class_loader) {
+        env->DeleteGlobalRef(_class_loader);
+        _class_loader = nullptr;
+    }
+    _class_loader = env->NewGlobalRef(classLoader);
+    env->DeleteLocalRef(classLoader);
+    env->DeleteLocalRef(contextClass);
+#else
+    Q_UNUSED(env);
+    Q_UNUSED(thiz);
+#endif
 
     return JNI_TRUE;
 }
@@ -58,38 +69,22 @@ static jint jniSetNativeMethods()
         {"nativeInit", "()Z", reinterpret_cast<void *>(jniInit)}
     };
 
-    QJniEnvironment jniEnv;
-    (void) jniEnv.checkAndClearExceptions();
-
-    jclass objectClass = jniEnv->FindClass(AndroidInterface::kJniQGCActivityClassName);
-    if (!objectClass) {
-        qCWarning(AndroidInitLog) << "Couldn't find class:" << AndroidInterface::kJniQGCActivityClassName;
-        (void) jniEnv.checkAndClearExceptions();
-        return JNI_ERR;
-    }
-
-    const jint val = jniEnv->RegisterNatives(objectClass, javaMethods, std::size(javaMethods));
-    if (val < 0) {
-        qCWarning(AndroidInitLog) << "Error registering methods:" << val;
-        (void) jniEnv.checkAndClearExceptions();
+    QJniEnvironment env;
+    if (!env.registerNativeMethods(AndroidInterface::kJniQGCActivityClassName, javaMethods, std::size(javaMethods))) {
+        qCWarning(AndroidInitLog) << "Failed to register native methods for" << AndroidInterface::kJniQGCActivityClassName;
         return JNI_ERR;
     }
 
     qCDebug(AndroidInitLog) << "Main Native Functions Registered";
-
-    (void) jniEnv.checkAndClearExceptions();
-
     return JNI_OK;
 }
 
-jint JNI_OnLoad(JavaVM *vm, void *reserved)
+jint JNI_OnLoad(JavaVM *vm, void *)
 {
-    Q_UNUSED(reserved);
-
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
-    JNIEnv *env;
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+    void *env = nullptr;
+    if (vm->GetEnv(&env, JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
     }
 
@@ -97,17 +92,36 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
         return JNI_ERR;
     }
 
-    #ifdef QGC_GST_STREAMING
-        gst_amc_jni_set_java_vm(vm);
-    #endif
+#ifdef QGC_GST_STREAMING
+    gst_amc_jni_set_java_vm(vm);
+#endif
 
     AndroidInterface::setNativeMethods();
 
-    #ifndef QGC_NO_SERIAL_LINK
-        AndroidSerial::setNativeMethods();
-    #endif
+#ifndef QGC_NO_SERIAL_LINK
+    AndroidSerial::setNativeMethods();
+#endif
 
     QNativeInterface::QAndroidApplication::hideSplashScreen(333);
 
     return JNI_VERSION_1_6;
+}
+
+void JNI_OnUnload(JavaVM *vm, void *)
+{
+    qCDebug(AndroidInitLog) << Q_FUNC_INFO;
+
+#ifdef QGC_GST_STREAMING
+    JNIEnv *env = nullptr;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_OK && _class_loader) {
+        env->DeleteGlobalRef(_class_loader);
+        _class_loader = nullptr;
+    }
+#else
+    Q_UNUSED(vm);
+#endif
+
+#ifndef QGC_NO_SERIAL_LINK
+    AndroidSerial::cleanupJniCache();
+#endif
 }

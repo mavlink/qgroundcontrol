@@ -6,7 +6,7 @@
 
 #include <QtCore/qiodevice.h>
 
-#include <QtSerialPort/qserialportglobal.h>
+#include "qserialportglobal.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -143,7 +143,7 @@ public:
 
     bool setStopBits(StopBits stopBits);
     StopBits stopBits() const;
-    QBindable<bool> bindableStopBits();
+    QBindable<StopBits> bindableStopBits();
 
     bool setFlowControl(FlowControl flowControl);
     FlowControl flowControl() const;

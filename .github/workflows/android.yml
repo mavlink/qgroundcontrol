@@ -58,6 +58,7 @@ jobs:
             arch: linux_gcc_64
             qt_host_path: gcc_64
             shell: bash
+            custom_gst_package: false
             primary: true
             emulator: false
           - host: mac
@@ -65,6 +66,7 @@ jobs:
             arch: clang_64
             qt_host_path: macos
             shell: bash
+            custom_gst_package: false
             primary: false
             emulator: false
           - host: windows
@@ -72,6 +74,7 @@ jobs:
             arch: win64_msvc2022_64
             qt_host_path: msvc2022_64
             shell: pwsh
+            custom_gst_package: false
             primary: false
             emulator: false
           - host: linux-emulator
@@ -203,7 +206,10 @@ jobs:
           key: avd-${{ runner.os }}-${{ runner.arch }}-api${{ steps.config.outputs.android_platform }}-x86_64-google_apis-pixel_6-qt${{ steps.config.outputs.qt_version }}-ndk${{ steps.config.outputs.ndk_full_version }}-v2
 
       - name: Create AVD Snapshot
+        id: avd-snapshot
         if: ${{ matrix.emulator && steps.avd-cache.outputs.cache-hit != 'true' }}
+        timeout-minutes: 15
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ steps.config.outputs.android_platform }}
@@ -222,8 +228,17 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: echo "Generated AVD snapshot for cache."
 
+      - name: Kill Stale Emulator
+        if: ${{ matrix.emulator && steps.avd-snapshot.outcome == 'failure' }}
+        shell: bash
+        run: |
+          pkill -9 -f qemu-system || true
+          adb kill-server 2>/dev/null || true
+          sleep 5
+
       - name: Emulator Boot Test
         if: ${{ matrix.emulator }}
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ steps.config.outputs.android_platform }}
