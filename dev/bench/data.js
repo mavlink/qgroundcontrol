@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771446038147,
+  "lastUpdate": 1771488124933,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -144,6 +144,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Startup (list tests)",
             "value": 45815.068999999654,
+            "unit": "usecs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "henrywarhurst@users.noreply.github.com",
+            "name": "Henry Warhurst",
+            "username": "henrywarhurst"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "80eed3dab89adbcfe9dfa2a548a693aaf84814d9",
+          "message": "Fix NTRIP crash on HTTP 4xx/5xx and duplicate connection on startup (#13990)\n\n* Fix NTRIP crash on HTTP 4xx/5xx and duplicate connection on startup\n\n  Summary                                                                                                                                                                                                                                                     \r\n                                                                                                                                                                                                                                                              \r\n  - Remove start() call from NTRIPTCPLink constructor — it caused a double connection (constructor + QThread::started), leaking the first socket and triggering 401 from casters that reject duplicate logins                                                 \r\n  - Fix crash in HTTP 4xx/5xx error path: null out _socket before disconnectFromHost() so the synchronous disconnected handler bails via the existing !_socket guard, and use deleteLater() instead of delete to avoid destroying the socket mid-signal-chain\r\n                                                                                                                                                                                                                                                              \r\n  Test plan                                                                                                                                                                                                                                                   \r\n\r\n  - Connect to an NTRIP caster with valid credentials — should get 200 OK on first attempt\r\n  - Connect with invalid credentials — should show error and retry without crashing\n\n* Remove license header from NTRIP.cc\n\nRemoved license header from NTRIP.cc\n\n* Remove superfluous `this`",
+          "timestamp": "2026-02-19T02:32:56-05:00",
+          "tree_id": "49094b77b654c242871c1e100e007352f44d5513",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/80eed3dab89adbcfe9dfa2a548a693aaf84814d9"
+        },
+        "date": 1771488103703,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Startup (list tests)",
+            "value": 39686.740999997026,
             "unit": "usecs"
           }
         ]
