@@ -35,7 +35,7 @@ AM32EepromSchema::AM32EepromSchema(QObject* parent)
     , _cachedFileDownload(new QGCCachedFileDownload(
           QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/AM32SchemaCache"), this))
 {
-    connect(_cachedFileDownload, &QGCCachedFileDownload::downloadComplete,
+    connect(_cachedFileDownload, &QGCCachedFileDownload::finished,
             this, &AM32EepromSchema::_onDownloadComplete);
 }
 
@@ -68,12 +68,12 @@ void AM32EepromSchema::fetchSchema()
     }
 }
 
-void AM32EepromSchema::_onDownloadComplete(const QString& remoteFile, const QString& localFile, const QString& errorMsg)
+void AM32EepromSchema::_onDownloadComplete(bool success, const QString& localFile, const QString& errorMsg, bool fromCache)
 {
-    Q_UNUSED(remoteFile);
+    Q_UNUSED(fromCache);
     _fetching = false;
 
-    if (!errorMsg.isEmpty()) {
+    if (!success) {
         qCWarning(AM32EepromLog) << "Schema download failed:" << errorMsg << "- trying built-in schema";
         if (!loadFromFile(QLatin1String(localSchemaPath))) {
             emit schemaLoadError(QStringLiteral("Failed to download schema and built-in fallback failed: %1").arg(errorMsg));

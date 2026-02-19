@@ -154,7 +154,7 @@ signals:
     void schemaLoadError(const QString& error);
 
 private slots:
-    void _onDownloadComplete(const QString& remoteFile, const QString& localFile, const QString& errorMsg);
+    void _onDownloadComplete(bool success, const QString& localFile, const QString& errorMsg, bool fromCache);
 
 private:
     AM32EepromSchema(QObject* parent = nullptr);
