@@ -31,9 +31,8 @@ void UrlFactoryTest::_testGetElevationProviderTypes()
     QVERIFY(elevTypes.contains(kCopernicus));
 
     const QStringList allTypes = UrlFactory::getProviderTypes();
-    for (const auto &t : elevTypes) {
-        QVERIFY2(allTypes.contains(t),
-                 qPrintable(QStringLiteral("Elevation type '%1' not in allTypes").arg(t)));
+    for (const auto& t : elevTypes) {
+        QVERIFY2(allTypes.contains(t), qPrintable(QStringLiteral("Elevation type '%1' not in allTypes").arg(t)));
     }
 }
 
@@ -48,7 +47,7 @@ void UrlFactoryTest::_testMapIdFromProviderTypeValid()
 void UrlFactoryTest::_testProviderTypeFromMapIdRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         const int id = UrlFactory::getQtMapIdFromProviderType(type);
         QVERIFY2(id > 0, qPrintable(QStringLiteral("Bad id for type: %1").arg(type)));
         const QString recovered = UrlFactory::getProviderTypeFromQtMapId(id);
@@ -84,7 +83,7 @@ void UrlFactoryTest::_testHashFromProviderTypeValid()
 void UrlFactoryTest::_testProviderTypeFromHashRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         const int hash = UrlFactory::hashFromProviderType(type);
         QVERIFY2(hash > 0, qPrintable(QStringLiteral("Bad hash for: %1").arg(type)));
         const QString recovered = UrlFactory::providerTypeFromHash(hash);
@@ -114,7 +113,7 @@ void UrlFactoryTest::_testGetTileHashFormat()
 void UrlFactoryTest::_testTileHashToTypeRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         const QString hash = UrlFactory::getTileHash(type, 42, 99, 7);
         const QString recovered = UrlFactory::tileHashToType(hash);
         QCOMPARE(recovered, type);
@@ -130,14 +129,20 @@ void UrlFactoryTest::_testTileHashToTypeInvalid()
 
 void UrlFactoryTest::_testGetImageFormatByType()
 {
-    const QByteArray png("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A" "data", 12);
+    const QByteArray png(
+        "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+        "data",
+        12);
     QCOMPARE(UrlFactory::getImageFormat(kBingRoad, png), QStringLiteral("png"));
 }
 
 void UrlFactoryTest::_testGetImageFormatByMapId()
 {
     const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
-    const QByteArray jpeg("\xFF\xD8\xFF\xE0" "data", 8);
+    const QByteArray jpeg(
+        "\xFF\xD8\xFF\xE0"
+        "data",
+        8);
     QCOMPARE(UrlFactory::getImageFormat(id, jpeg), QStringLiteral("jpg"));
 }
 
@@ -146,6 +151,30 @@ void UrlFactoryTest::_testGetImageFormatInvalidInputs()
     const QByteArray png("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A", 8);
     QVERIFY(UrlFactory::getImageFormat(QString(), png).isEmpty());
     QVERIFY(UrlFactory::getImageFormat(-1, png).isEmpty());
+}
+
+void UrlFactoryTest::_testGetTileURLByType()
+{
+    const QUrl url = UrlFactory::getTileURL(kBingRoad, 301, 385, 10);
+    QVERIFY(url.isValid());
+    QVERIFY(!url.isEmpty());
+    QVERIFY(url.scheme().startsWith(QStringLiteral("http")));
+}
+
+void UrlFactoryTest::_testGetTileURLByMapId()
+{
+    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    QVERIFY(id > 0);
+    const QUrl url = UrlFactory::getTileURL(id, 301, 385, 10);
+    QVERIFY(url.isValid());
+    QVERIFY(!url.isEmpty());
+    QVERIFY(url.scheme().startsWith(QStringLiteral("http")));
+}
+
+void UrlFactoryTest::_testGetTileURLInvalidInputs()
+{
+    QVERIFY(UrlFactory::getTileURL(QString(), 0, 0, 1).isEmpty());
+    QVERIFY(UrlFactory::getTileURL(-1, 0, 0, 1).isEmpty());
 }
 
 // --- averageSizeForType ---

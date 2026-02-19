@@ -247,7 +247,8 @@ void ShapeTest::_testLoadFromQtResource()
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
     // Test KML from resource (KML already uses QFile internally)
-    QVERIFY(loadFirstPolygon(":/unittest/polygon.kml", rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
+    QVERIFY(
+        loadFirstPolygon(":/unittest/polygon.kml", rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
     QVERIFY(errorString.isEmpty());
     QVERIFY(rgCoords.count() >= 3);
 }

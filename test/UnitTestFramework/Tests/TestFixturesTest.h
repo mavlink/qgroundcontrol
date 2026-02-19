@@ -21,14 +21,18 @@ private slots:
     // TempFile/TempDir Fixtures
     void _testTempFileFixture();
     void _testTempFileFixtureWithTemplate();
+    void _testTempJsonFileFixture();
     void _testTempDirFixture();
     void _testTempDirFixtureCreateFile();
+    void _testNetworkReplyFixture();
+    void _testSingleInstanceLockFixture();
 
     // SignalSpyFixture
     void _testSignalSpyFixtureExpect();
     void _testSignalSpyFixtureExpectExactly();
     void _testSignalSpyFixtureExpectNot();
     void _testSignalSpyFixtureWaitAndVerify();
+    void _testWaitForSignalCountHelper();
 
     // SettingsFixture
     void _testSettingsFixtureRestore();

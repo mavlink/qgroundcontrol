@@ -38,12 +38,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.tool == 'clazy' && 60 || 120 }}
 
-    env:
-      SANITIZER_FLAGS: >-
-        ${{ inputs.tool == 'asan' && '-fsanitize=address -fno-omit-frame-pointer' ||
-            inputs.tool == 'ubsan' && '-fsanitize=undefined -fno-omit-frame-pointer' ||
-            inputs.tool == 'tsan' && '-fsanitize=thread' || '' }}
-
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -102,14 +96,23 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           )
 
-          # Add sanitizer flags for asan/ubsan/tsan
-          if [[ -n "$SANITIZER_FLAGS" ]]; then
+          if [[ "${{ contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool) }}" == "true" ]]; then
             CMAKE_ARGS+=(
-              -DCMAKE_C_FLAGS="$SANITIZER_FLAGS"
-              -DCMAKE_CXX_FLAGS="$SANITIZER_FLAGS"
-              -DCMAKE_EXE_LINKER_FLAGS="$SANITIZER_FLAGS"
               -DQGC_BUILD_TESTING=ON
+              -DQGC_ENABLE_COVERAGE=OFF
             )
+
+            case "${{ inputs.tool }}" in
+              asan)
+                CMAKE_ARGS+=(-DQGC_ENABLE_ASAN=ON)
+                ;;
+              ubsan)
+                CMAKE_ARGS+=(-DQGC_ENABLE_UBSAN=ON)
+                ;;
+              tsan)
+                CMAKE_ARGS+=(-DQGC_ENABLE_TSAN=ON)
+                ;;
+            esac
           fi
 
           "${{ env.QT_ROOT_DIR }}/bin/qt-cmake" "${CMAKE_ARGS[@]}"
@@ -182,27 +185,19 @@ jobs:
 
       - name: Run Sanitizer Tests
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
-        id: sanitizer-tests
-        continue-on-error: true
-        uses: ./.github/actions/run-tests
+        uses: ./.github/actions/run-unit-tests
         env:
-          ASAN_OPTIONS: detect_leaks=1:halt_on_error=0:print_stats=1
-          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=0
-          TSAN_OPTIONS: second_deadlock_stack=1:halt_on_error=0
+          ASAN_OPTIONS: ${{ inputs.tool == 'asan' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
+          LSAN_OPTIONS: ${{ inputs.tool == 'asan' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
+          UBSAN_OPTIONS: ${{ inputs.tool == 'ubsan' && 'print_stacktrace=1:halt_on_error=1' || '' }}
+          TSAN_OPTIONS: ${{ inputs.tool == 'tsan' && format('second_deadlock_stack=1:halt_on_error=1:suppressions={0}/build/tsan_suppressions.txt', runner.temp) || '' }}
         with:
           build-dir: ${{ runner.temp }}/build
-          build-type: Debug
-          log-file: sanitizer-output.txt
-
-      - name: Check Sanitizer Output
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
-        run: |
-          log_file="${{ steps.sanitizer-tests.outputs.log_file }}"
-          if [[ -f "$log_file" ]] && grep -qE "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" "$log_file"; then
-            echo "::error::Sanitizer detected issues"
-            grep -E "(ERROR: (Address|Thread|Memory)Sanitizer|runtime error:)" "$log_file"
-            exit 1
-          fi
+          junit-output: junit-results-analysis-${{ inputs.tool }}.xml
+          ctest-output: sanitizer-output.txt
+          include-labels: 'Unit|Integration'
+          exclude-labels: 'Flaky|Network'
+          parallel: '1'
 
       - name: Upload Output
         if: always()
@@ -212,5 +207,6 @@ jobs:
           path: |
             ${{ runner.temp }}/build/iwyu-output.txt
             ${{ runner.temp }}/build/sanitizer-output.txt
+            ${{ runner.temp }}/build/junit-results-analysis-${{ inputs.tool }}.xml
           if-no-files-found: ignore
           retention-days: 7

@@ -30,6 +30,7 @@ FTPManager* FTPTest::ftpManager() const
 bool FTPTest::waitForFTPComplete(int timeoutMs)
 {
     if (!ftpManager()) {
+        qCWarning(FTPTestLog) << "waitForFTPComplete: no FTPManager available";
         return false;
     }
 
@@ -39,7 +40,7 @@ bool FTPTest::waitForFTPComplete(int timeoutMs)
 
     // Wait for commandProgress to reach 1.0 (complete)
     QSignalSpy spy(ftpManager(), &FTPManager::commandProgress);
-    while (spy.wait(timeoutMs)) {
+    while (UnitTest::waitForSignal(spy, timeoutMs, QStringLiteral("FTPManager::commandProgress"))) {
         if (!spy.isEmpty()) {
             float progress = spy.last().at(0).toFloat();
             if (progress >= 1.0f) {

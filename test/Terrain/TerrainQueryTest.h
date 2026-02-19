@@ -9,9 +9,12 @@ class TerrainQueryTest : public TerrainTest
 private slots:
     void _testRequestCoordinateHeights();
     void _testRequestPathHeights();
+    void _testRequestPathHeightsSpacing();
     void _testRequestCarpetHeights();
+    void _testRequestCarpetHeightsStatsOnly();
     void _testRequestCarpetHeightsInvalidBounds();
     void _testPolyPathQueryEmptyPath();
     void _testPolyPathQuerySingleCoord();
+    void _testPolyPathQueryFailureClearsAccumulatedSegments();
     void _testTerrainAtCoordinateQuery();
 };

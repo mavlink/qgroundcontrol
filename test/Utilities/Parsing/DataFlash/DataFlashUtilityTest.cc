@@ -1,10 +1,11 @@
 #include "DataFlashUtilityTest.h"
-#include "DataFlashUtility.h"
 
 #include <QtTest/QTest>
 
-#include <cstring>
 #include <cmath>
+#include <cstring>
+
+#include "DataFlashUtility.h"
 
 // ============================================================================
 // Format Character Size Tests
@@ -134,8 +135,7 @@ void DataFlashUtilityTest::_testParseValueFloats()
     // Single-precision float
     float f32 = 3.14159f;
     double result = DataFlashUtility::parseValue(reinterpret_cast<char*>(&f32), 'f').toDouble();
-    QVERIFY2(qAbs(result - 3.14159) < 0.0001,
-             qPrintable(QString("Expected ~3.14159, got %1").arg(result)));
+    QVERIFY2(qAbs(result - 3.14159) < 0.0001, qPrintable(QString("Expected ~3.14159, got %1").arg(result)));
 
     // Double-precision float
     double f64 = 2.718281828459045;
@@ -187,8 +187,7 @@ void DataFlashUtilityTest::_testHalfToFloat()
     // Test via parseValue
     uint16_t half = 0x3C00;  // 1.0
     double result = DataFlashUtility::parseValue(reinterpret_cast<char*>(&half), 'g').toDouble();
-    QVERIFY2(qAbs(result - 1.0) < 0.001,
-             qPrintable(QString("Expected 1.0, got %1").arg(result)));
+    QVERIFY2(qAbs(result - 1.0) < 0.001, qPrintable(QString("Expected 1.0, got %1").arg(result)));
 }
 
 void DataFlashUtilityTest::_testHalfToFloatSpecial()
@@ -267,11 +266,11 @@ void DataFlashUtilityTest::_testParseFmtPayload()
     char payload[86];
     memset(payload, 0, sizeof(payload));
 
-    payload[0] = 100;                    // type
-    payload[1] = 25;                     // length
-    memcpy(payload + 2, "CAM\0", 4);     // name
-    memcpy(payload + 6, "QBILLff\0\0\0\0\0\0\0\0\0", 16);  // format
-    memcpy(payload + 22, "TimeUS,Img,Lat,Lng,Alt,R,P", 27); // columns (including null)
+    payload[0] = 100;                                        // type
+    payload[1] = 25;                                         // length
+    memcpy(payload + 2, "CAM\0", 4);                         // name
+    memcpy(payload + 6, "QBILLff\0\0\0\0\0\0\0\0\0", 16);    // format
+    memcpy(payload + 22, "TimeUS,Img,Lat,Lng,Alt,R,P", 27);  // columns (including null)
 
     const DataFlashUtility::MessageFormat fmt = DataFlashUtility::parseFmtPayload(payload);
 
@@ -300,7 +299,7 @@ void DataFlashUtilityTest::_testParseFmtMessages()
     char fmtPayload[86];
     memset(fmtPayload, 0, sizeof(fmtPayload));
     fmtPayload[0] = static_cast<char>(0x80);  // type for FMT
-    fmtPayload[1] = 89;   // length (3 header + 86 payload)
+    fmtPayload[1] = 89;                       // length (3 header + 86 payload)
     memcpy(fmtPayload + 2, "FMT\0", 4);
     memcpy(fmtPayload + 6, "BBnNZ\0\0\0\0\0\0\0\0\0\0\0", 16);
     memcpy(fmtPayload + 22, "Type,Length,Name,Format,Columns", 32);
@@ -324,9 +323,7 @@ void DataFlashUtilityTest::_testParseMessage()
     fmt.length = 13;  // 3 header + 10 payload (8+1+1)
     fmt.name = QStringLiteral("TEST");
     fmt.format = QStringLiteral("QBb");
-    fmt.columns = QStringList() << QStringLiteral("TimeUS")
-                                << QStringLiteral("Value1")
-                                << QStringLiteral("Value2");
+    fmt.columns = QStringList() << QStringLiteral("TimeUS") << QStringLiteral("Value1") << QStringLiteral("Value2");
 
     // Create payload: Q(8 bytes) + B(1 byte) + b(1 byte) = 10 bytes
     char payload[10];
@@ -363,9 +360,9 @@ void DataFlashUtilityTest::_testIterateMessages()
     char fmtPayload[86];
     memset(fmtPayload, 0, sizeof(fmtPayload));
     fmtPayload[0] = static_cast<char>(200);  // type for TEST
-    fmtPayload[1] = 12;  // length (3 header + 9 payload)
+    fmtPayload[1] = 12;                      // length (3 header + 9 payload)
     memcpy(fmtPayload + 2, "TEST", 4);
-    memcpy(fmtPayload + 6, "QBx", 3);  // Note: 'x' is unknown, should be skipped
+    memcpy(fmtPayload + 6, "QBx", 3);        // Note: 'x' is unknown, should be skipped
     memcpy(fmtPayload + 22, "TimeUS,Val", 10);
     data.append(fmtPayload, sizeof(fmtPayload));
 
@@ -395,11 +392,11 @@ void DataFlashUtilityTest::_testIterateMessages()
     QList<uint8_t> msgTypes;
 
     DataFlashUtility::iterateMessages(data.constData(), data.size(), formats,
-        [&](uint8_t msgType, const char *, int, const DataFlashUtility::MessageFormat &) {
-            ++messageCount;
-            msgTypes.append(msgType);
-            return true;
-        });
+                                      [&](uint8_t msgType, const char*, int, const DataFlashUtility::MessageFormat&) {
+                                          ++messageCount;
+                                          msgTypes.append(msgType);
+                                          return true;
+                                      });
 
     // Should have found 2 TEST messages (FMT messages are only used to build format table)
     QCOMPARE(messageCount, 2);

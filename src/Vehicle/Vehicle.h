@@ -94,9 +94,11 @@ class Vehicle : public VehicleFactGroup
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
     friend class FactGroupListModel;                // Allow call _addFactGroup
+#ifdef QGC_UNITTEST_BUILD
     friend class SendMavCommandWithSignallingTest;  // Unit test
     friend class SendMavCommandWithHandlerTest;     // Unit test
     friend class RequestMessageTest;                // Unit test
+#endif
     friend class GimbalController;                  // Allow GimbalController to call _addFactGroup
 
 public:
@@ -107,9 +109,11 @@ public:
             MAV_TYPE                vehicleType,
             QObject*                parent = nullptr);
 
-    // Pass these into the offline constructor to create an offline vehicle which tracks the offline vehicle settings
-    static const MAV_AUTOPILOT    MAV_AUTOPILOT_TRACK = static_cast<MAV_AUTOPILOT>(-1);
-    static const MAV_TYPE         MAV_TYPE_TRACK = static_cast<MAV_TYPE>(-1);
+    // Pass these into the offline constructor to create an offline vehicle which tracks the offline vehicle settings.
+    // Keep these as valid enum values to avoid UBSan failures on enum loads/comparisons.
+    // Use ENUM_END sentinels — no real component should report these values.
+    static const MAV_AUTOPILOT    MAV_AUTOPILOT_TRACK = MAV_AUTOPILOT_ENUM_END;
+    static const MAV_TYPE         MAV_TYPE_TRACK = MAV_TYPE_ENUM_END;
 
     // The following is used to create a disconnected Vehicle for use while offline editing.
     Vehicle(MAV_AUTOPILOT           firmwareType,

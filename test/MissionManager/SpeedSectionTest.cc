@@ -9,16 +9,20 @@ void SpeedSectionTest::init()
 {
     SectionTest::init();
     _speedSection = _simpleItem->speedSection();
-    _createSpy(_speedSection, &_spySpeed);
+    MultiSignalSpy* speedSpy = nullptr;
+    _createSpy(_speedSection, &speedSpy);
+    _spySpeed.reset(speedSpy);
     QVERIFY(_spySpeed);
-    SectionTest::_createSpy(_speedSection, &_spySection);
+    MultiSignalSpy* sectionSpy = nullptr;
+    SectionTest::_createSpy(_speedSection, &sectionSpy);
+    _spySection.reset(sectionSpy);
     QVERIFY(_spySection);
 }
 
 void SpeedSectionTest::cleanup()
 {
-    delete _spySpeed;
-    delete _spySection;
+    _spySpeed.reset();
+    _spySection.reset();
     SectionTest::cleanup();
 }
 

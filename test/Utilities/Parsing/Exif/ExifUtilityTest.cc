@@ -1,8 +1,9 @@
 #include "ExifUtilityTest.h"
-#include "ExifUtility.h"
 
 #include <QtCore/QFile>
 #include <QtTest/QTest>
+
+#include "ExifUtility.h"
 
 // ============================================================================
 // EXIF Data Detection Tests
@@ -63,7 +64,7 @@ void ExifUtilityTest::_testLoadFromBuffer()
     const QByteArray buffer = file.readAll();
     file.close();
 
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
     // Should have IFDs
@@ -81,7 +82,7 @@ void ExifUtilityTest::_testLoadFromBufferInvalid()
 
     // Empty buffer - libexif returns an ExifData but with no entries
     QByteArray empty;
-    ExifData *emptyData = ExifUtility::loadFromBuffer(empty);
+    ExifData* emptyData = ExifUtility::loadFromBuffer(empty);
     if (emptyData) {
         // Should have no entries in IFD0
         QCOMPARE(emptyData->ifd[EXIF_IFD_0]->count, 0U);
@@ -90,7 +91,7 @@ void ExifUtilityTest::_testLoadFromBufferInvalid()
 
     // Random data - may return ExifData but with no meaningful entries
     QByteArray random(1024, 'x');
-    ExifData *randomData = ExifUtility::loadFromBuffer(random);
+    ExifData* randomData = ExifUtility::loadFromBuffer(random);
     if (randomData) {
         // Should have no entries
         QCOMPARE(randomData->ifd[EXIF_IFD_0]->count, 0U);
@@ -104,7 +105,7 @@ void ExifUtilityTest::_testLoadFromBufferInvalid()
     pngData.append('N');
     pngData.append('G');
     pngData.append(1024, '\x00');
-    ExifData *pngResult = ExifUtility::loadFromBuffer(pngData);
+    ExifData* pngResult = ExifUtility::loadFromBuffer(pngData);
     if (pngResult) {
         QCOMPARE(pngResult->ifd[EXIF_IFD_0]->count, 0U);
         exif_data_unref(pngResult);
@@ -120,7 +121,7 @@ void ExifUtilityTest::_testSaveToBuffer()
 
     const int originalSize = buffer.size();
 
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
     // Save back (should succeed even without modifications)
@@ -136,6 +137,36 @@ void ExifUtilityTest::_testSaveToBuffer()
     QVERIFY(qAbs(buffer.size() - originalSize) < 1000);
 }
 
+void ExifUtilityTest::_testSaveToBufferRejectsNonJpeg()
+{
+    ExifData* data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+
+    QByteArray notJpeg("plain-text-data");
+    QVERIFY(!ExifUtility::saveToBuffer(data, notJpeg));
+
+    exif_data_unref(data);
+}
+
+void ExifUtilityTest::_testSaveToBufferRejectsTiff()
+{
+    ExifData* data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+
+    // Minimal little-endian TIFF header: "II" + 0x002A
+    QByteArray tiffData;
+    tiffData.append('I');
+    tiffData.append('I');
+    tiffData.append('\x2A');
+    tiffData.append('\x00');
+    tiffData.append(16, '\x00');
+
+    QVERIFY(ExifUtility::isTiff(tiffData));
+    QVERIFY(!ExifUtility::saveToBuffer(data, tiffData));
+
+    exif_data_unref(data);
+}
+
 // ============================================================================
 // Tag Reading Tests
 // ============================================================================
@@ -147,7 +178,7 @@ void ExifUtilityTest::_testReadString()
     const QByteArray buffer = file.readAll();
     file.close();
 
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
     // Read DateTimeDigitized from EXIF IFD
@@ -169,7 +200,7 @@ void ExifUtilityTest::_testReadShort()
     const QByteArray buffer = file.readAll();
     file.close();
 
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
     // Read orientation (common EXIF tag)
@@ -187,7 +218,7 @@ void ExifUtilityTest::_testReadRational()
     const QByteArray buffer = file.readAll();
     file.close();
 
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
     // Try reading focal length (commonly a rational)
@@ -204,17 +235,17 @@ void ExifUtilityTest::_testReadRational()
 
 void ExifUtilityTest::_testInitTag()
 {
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     // Test initTag for a standard tag that can be auto-initialized
-    ExifEntry *entry = ExifUtility::initTag(data, EXIF_IFD_0, EXIF_TAG_ORIENTATION);
+    ExifEntry* entry = ExifUtility::initTag(data, EXIF_IFD_0, EXIF_TAG_ORIENTATION);
     QVERIFY(entry != nullptr);
     QVERIFY(entry->data != nullptr);
     QCOMPARE(entry->tag, static_cast<ExifTag>(EXIF_TAG_ORIENTATION));
 
     // Calling again should return the same entry
-    ExifEntry *entry2 = ExifUtility::initTag(data, EXIF_IFD_0, EXIF_TAG_ORIENTATION);
+    ExifEntry* entry2 = ExifUtility::initTag(data, EXIF_IFD_0, EXIF_TAG_ORIENTATION);
     QCOMPARE(entry, entry2);
 
     // Write a value
@@ -230,17 +261,12 @@ void ExifUtilityTest::_testInitTag()
 
 void ExifUtilityTest::_testCreateTag()
 {
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     // Create a GPS latitude entry (3 rationals for deg/min/sec)
-    ExifEntry *entry = ExifUtility::createTag(
-        data,
-        EXIF_IFD_GPS,
-        static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE),
-        EXIF_FORMAT_RATIONAL,
-        3
-    );
+    ExifEntry* entry = ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE),
+                                              EXIF_FORMAT_RATIONAL, 3);
 
     QVERIFY(entry != nullptr);
     QVERIFY(entry->data != nullptr);
@@ -257,18 +283,13 @@ void ExifUtilityTest::_testCreateTag()
 
 void ExifUtilityTest::_testWriteGpsCoordinate()
 {
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     ExifByteOrder order = exif_data_get_byte_order(data);
 
-    ExifEntry *entry = ExifUtility::createTag(
-        data,
-        EXIF_IFD_GPS,
-        static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE),
-        EXIF_FORMAT_RATIONAL,
-        3
-    );
+    ExifEntry* entry = ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE),
+                                              EXIF_FORMAT_RATIONAL, 3);
     QVERIFY(entry != nullptr);
 
     // Write a coordinate
@@ -279,27 +300,21 @@ void ExifUtilityTest::_testWriteGpsCoordinate()
     double readBack = ExifUtility::gpsRationalToDecimal(entry, order);
 
     // Should be within tolerance (DMS conversion loses some precision)
-    QVERIFY2(qAbs(readBack - testLat) < 0.001,
-             qPrintable(QString("Expected %1, got %2").arg(testLat).arg(readBack)));
+    QVERIFY2(qAbs(readBack - testLat) < 0.001, qPrintable(QString("Expected %1, got %2").arg(testLat).arg(readBack)));
 
     exif_data_unref(data);
 }
 
 void ExifUtilityTest::_testWriteRational()
 {
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     ExifByteOrder order = exif_data_get_byte_order(data);
 
     // Create altitude entry (single rational)
-    ExifEntry *entry = ExifUtility::createTag(
-        data,
-        EXIF_IFD_GPS,
-        static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE),
-        EXIF_FORMAT_RATIONAL,
-        1
-    );
+    ExifEntry* entry = ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE),
+                                              EXIF_FORMAT_RATIONAL, 1);
     QVERIFY(entry != nullptr);
 
     // Write altitude
@@ -310,26 +325,20 @@ void ExifUtilityTest::_testWriteRational()
     ExifRational rational = exif_get_rational(entry->data, order);
     double readBack = static_cast<double>(rational.numerator) / static_cast<double>(rational.denominator);
 
-    QVERIFY2(qAbs(readBack - testAlt) < 0.1,
-             qPrintable(QString("Expected %1, got %2").arg(testAlt).arg(readBack)));
+    QVERIFY2(qAbs(readBack - testAlt) < 0.1, qPrintable(QString("Expected %1, got %2").arg(testAlt).arg(readBack)));
 
     exif_data_unref(data);
 }
 
 void ExifUtilityTest::_testGpsRationalToDecimal()
 {
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     ExifByteOrder order = exif_data_get_byte_order(data);
 
-    ExifEntry *entry = ExifUtility::createTag(
-        data,
-        EXIF_IFD_GPS,
-        static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE),
-        EXIF_FORMAT_RATIONAL,
-        3
-    );
+    ExifEntry* entry = ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE),
+                                              EXIF_FORMAT_RATIONAL, 3);
     QVERIFY(entry != nullptr);
 
     // Test various coordinates
@@ -341,6 +350,35 @@ void ExifUtilityTest::_testGpsRationalToDecimal()
         QVERIFY2(qAbs(result - coord) < 0.001,
                  qPrintable(QString("Coord %1: expected %2, got %3").arg(coord).arg(coord).arg(result)));
     }
+
+    exif_data_unref(data);
+}
+
+void ExifUtilityTest::_testWriteDateTimeOriginalRejectsInvalidInput()
+{
+    const QDateTime invalidDateTime;
+    QVERIFY(!ExifUtility::writeDateTimeOriginal(nullptr, invalidDateTime));
+
+    ExifData *data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+
+    QVERIFY(!ExifUtility::writeDateTimeOriginal(data, invalidDateTime));
+    exif_data_unref(data);
+}
+
+void ExifUtilityTest::_testWriteDateTimeOriginalWritesBothTags()
+{
+    ExifData *data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+
+    const QDateTime dateTime(QDate(2025, 2, 14), QTime(12, 34, 56), QTimeZone::UTC);
+    QVERIFY(dateTime.isValid());
+
+    QVERIFY(ExifUtility::writeDateTimeOriginal(data, dateTime));
+
+    const QString expected = QStringLiteral("2025:02:14 12:34:56");
+    QCOMPARE(ExifUtility::readString(data, EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_IFD_EXIF), expected);
+    QCOMPARE(ExifUtility::readString(data, EXIF_TAG_DATE_TIME_DIGITIZED, EXIF_IFD_EXIF), expected);
 
     exif_data_unref(data);
 }

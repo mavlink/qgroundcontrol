@@ -174,7 +174,7 @@ void QGCArchiveWatcherTest::_testArchiveDetectedSignal()
     const QString archivePath = tempDir()->filePath("detected.zip");
     _createTestArchive(archivePath);
     // Wait for detection
-    QVERIFY(spy.wait(1000));
+    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::shortMs());
     QCOMPARE(spy.count(), 1);
     QCOMPARE(spy.at(0).at(0).toString(), archivePath);
     QCOMPARE(spy.at(0).at(1).value<QGCCompression::Format>(), QGCCompression::Format::ZIP);
@@ -234,7 +234,7 @@ void QGCArchiveWatcherTest::_testAutoDecompressArchive()
     const QString archivePath = tempDir()->filePath("auto_extract.zip");
     _createTestArchive(archivePath);
     // Wait for extraction to complete
-    QVERIFY(extractionSpy.wait(5000));
+    QVERIFY_SIGNAL_WAIT(extractionSpy, TestTimeout::mediumMs());
     QCOMPARE(extractionSpy.count(), 1);
     QCOMPARE(extractionSpy.at(0).at(0).toString(), archivePath);
     QVERIFY(extractionSpy.at(0).at(2).toBool());  // success
@@ -254,7 +254,7 @@ void QGCArchiveWatcherTest::_testAutoDecompressCompressedFile()
     const QString compressedPath = tempDir()->filePath("auto_decompress.json.gz");
     _createTestCompressedFile(compressedPath);
     // Wait for decompression to complete
-    QVERIFY(extractionSpy.wait(5000));
+    QVERIFY_SIGNAL_WAIT(extractionSpy, TestTimeout::mediumMs());
     QCOMPARE(extractionSpy.count(), 1);
     QCOMPARE(extractionSpy.at(0).at(0).toString(), compressedPath);
     QVERIFY(extractionSpy.at(0).at(2).toBool());  // success
@@ -276,7 +276,7 @@ void QGCArchiveWatcherTest::_testRemoveAfterExtraction()
     const QString archivePath = tempDir()->filePath("remove_after_extract.zip");
     _createTestArchive(archivePath);
 
-    QVERIFY(extractionSpy.wait(5000));
+    QVERIFY_SIGNAL_WAIT(extractionSpy, TestTimeout::mediumMs());
     QCOMPARE(extractionSpy.count(), 1);
     QVERIFY(extractionSpy.at(0).at(2).toBool());
     QVERIFY(!QFile::exists(archivePath));
@@ -295,13 +295,11 @@ void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
     const QString archivePath = tempDir()->filePath("cancel_extract.zip");
     _createTestArchive(archivePath);
 
-    QTest::qWait(50);
+    QVERIFY_TRUE_WAIT(watcher.isExtracting() || extractionSpy.count() > 0, TestTimeout::shortMs());
     watcher.cancelExtraction();
 
-    QVERIFY(!watcher.isExtracting());
-    QCOMPARE(watcher.progress(), 0.0);
-
-    QTest::qWait(300);
+    QVERIFY_TRUE_WAIT(!watcher.isExtracting() && watcher.progress() == 0.0, TestTimeout::shortMs());
+    QVERIFY_NO_SIGNAL_WAIT(extractionSpy, TestTimeout::shortMs());
     QVERIFY(extractionSpy.count() <= 1);
 }
 

@@ -1,11 +1,10 @@
 #pragma once
 
-#include <QtCore/QString>
 #include <QtCore/QList>
+#include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
 
-namespace ULogTestGenerator
-{
+namespace ULogTestGenerator {
 
 struct CameraCaptureEvent
 {
@@ -15,7 +14,7 @@ struct CameraCaptureEvent
     QGeoCoordinate coordinate;
     float groundDistance = 0.0f;
     float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};  // Identity quaternion
-    int8_t result = 1;  // 1 = Success
+    int8_t result = 1;                      // 1 = Success
     uint8_t cameraId = 0;
 };
 
@@ -23,7 +22,7 @@ struct CameraCaptureEvent
 /// @param filename Output file path
 /// @param events List of camera capture events
 /// @return true if successful
-bool generateULog(const QString &filename, const QList<CameraCaptureEvent> &events);
+bool generateULog(const QString& filename, const QList<CameraCaptureEvent>& events);
 
 /// Generate sample events for testing (matching timestamps and valid coordinates)
 /// @param count Number of events to generate
@@ -31,6 +30,6 @@ bool generateULog(const QString &filename, const QList<CameraCaptureEvent> &even
 /// @param intervalSec Interval between events in seconds
 /// @return List of generated events
 QList<CameraCaptureEvent> generateSampleEvents(int count, uint64_t startTimestamp_us = 1000000,
-                                                double intervalSec = 2.0);
+                                               double intervalSec = 2.0);
 
 }  // namespace ULogTestGenerator

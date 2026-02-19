@@ -1,0 +1,75 @@
+name: Run Unit Tests
+description: Run unit tests via CTest and generate standardized test artifacts.
+
+inputs:
+  build-dir:
+    description: Path to CMake build directory
+    required: true
+  junit-output:
+    description: JUnit XML output filename
+    required: false
+    default: junit-results.xml
+  ctest-output:
+    description: Captured CTest stdout/stderr filename
+    required: false
+    default: test-output.txt
+  include-labels:
+    description: CTest labels regex to include
+    required: false
+    default: Unit
+  exclude-labels:
+    description: CTest labels regex to exclude
+    required: false
+    default: 'Flaky|Network'
+  parallel:
+    description: Number of parallel CTest jobs, or 'auto'
+    required: false
+    default: auto
+
+runs:
+  using: composite
+  steps:
+    - name: Detect parallel jobs
+      id: jobs
+      shell: bash
+      run: |
+        if [[ "${{ inputs.parallel }}" != "auto" ]]; then
+          JOBS="${{ inputs.parallel }}"
+        elif command -v nproc >/dev/null 2>&1; then
+          JOBS="$(nproc)"
+        elif command -v sysctl >/dev/null 2>&1; then
+          JOBS="$(sysctl -n hw.ncpu)"
+        elif [[ -n "${NUMBER_OF_PROCESSORS:-}" ]]; then
+          JOBS="${NUMBER_OF_PROCESSORS}"
+        else
+          JOBS=2
+        fi
+
+        if [[ ! "$JOBS" =~ ^[0-9]+$ ]] || [[ "$JOBS" -lt 1 ]]; then
+          echo "::error::Invalid parallel job count: $JOBS"
+          exit 1
+        fi
+
+        echo "jobs=$JOBS" >> "$GITHUB_OUTPUT"
+
+    - name: Run CTest
+      shell: bash
+      working-directory: ${{ inputs.build-dir }}
+      run: |
+        set -o pipefail
+
+        CTEST_ARGS=(
+          --output-on-failure
+          --output-junit "${{ inputs.junit-output }}"
+          --parallel "${{ steps.jobs.outputs.jobs }}"
+        )
+
+        if [[ -n "${{ inputs.include-labels }}" ]]; then
+          CTEST_ARGS+=(-L "${{ inputs.include-labels }}")
+        fi
+
+        if [[ -n "${{ inputs.exclude-labels }}" ]]; then
+          CTEST_ARGS+=(-LE "${{ inputs.exclude-labels }}")
+        fi
+
+        ctest "${CTEST_ARGS[@]}" 2>&1 | tee "${{ inputs.ctest-output }}"

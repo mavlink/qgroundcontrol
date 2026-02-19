@@ -200,5 +200,7 @@ private slots:
     void    _updateFinalApproachCoodinateAltitudeFromFact   (void);
     void    _updateLandingCoodinateAltitudeFromFact         (void);
 
+#ifdef QGC_UNITTEST_BUILD
     friend class LandingComplexItemTest;
+#endif
 };

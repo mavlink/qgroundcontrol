@@ -295,8 +295,7 @@ void BluetoothConfigurationTest::_testDestroyDuringAsyncRefresh()
         config.getAllAvailableAdapters(); // triggers async refresh
         // config destroyed here with potential in-flight QtConcurrent task
     }
-    // If we get here without crash/ASAN error, the lifetime fix works
-    QVERIFY(true);
+    QVERIFY2(true, "destruction during async refresh must not crash");
 }
 
 UT_REGISTER_TEST(BluetoothConfigurationTest, TestLabel::Unit, TestLabel::Comms)

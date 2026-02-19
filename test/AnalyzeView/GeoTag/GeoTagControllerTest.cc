@@ -1,20 +1,22 @@
 #include "GeoTagControllerTest.h"
-#include "GeoTagController.h"
-#include "GeoTagImageModel.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QUrl>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
+
 #include "ExifParser.h"
 #include "ExifUtility.h"
+#include "GeoTagController.h"
+#include "GeoTagImageModel.h"
 #include "ULogTestGenerator.h"
-
-#include <QtCore/QTemporaryDir>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
 
 namespace {
 
-QString generateTestULogFile(QTemporaryDir &tempDir, int numEvents = 20)
+QString generateTestULogFile(const QString& directoryPath, int numEvents = 20)
 {
-    const QString ulogPath = tempDir.path() + "/test.ulg";
+    const QString ulogPath = QDir(directoryPath).filePath(QStringLiteral("test.ulg"));
     const auto events = ULogTestGenerator::generateSampleEvents(numEvents);
     if (!ULogTestGenerator::generateULog(ulogPath, events)) {
         return QString();
@@ -50,18 +52,16 @@ GeoTagData makeTriggerWithInvalidCoord(qint64 timestamp)
     return trigger;
 }
 
-} // namespace
+}  // namespace
 
 void GeoTagControllerTest::_propertyAccessorsTest()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString imageDirPath = tempDir.path() + "/images";
-    const QString taggedDirPath = tempDir.path() + "/tagged";
+    const QString imageDirPath = tempPath(QStringLiteral("images"));
+    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     QVERIFY(QDir().mkpath(taggedDirPath));
 
-    const QString ulogPath = generateTestULogFile(tempDir, 10);
+    const QString ulogPath = generateTestULogFile(tempDirPath(), 10);
     QVERIFY(!ulogPath.isEmpty());
 
     QFile file(":/unittest/DSCN0010.jpg");
@@ -79,9 +79,9 @@ void GeoTagControllerTest::_propertyAccessorsTest()
     QVERIFY(!controller->imageDirectory().isEmpty());
     QVERIFY(!controller->saveDirectory().isEmpty());
 
-    QCOMPARE(controller->logFile(), ulogPath);
-    QCOMPARE(controller->imageDirectory(), imageDirPath + "/");
-    QCOMPARE(controller->saveDirectory(), taggedDirPath);
+    QCOMPARE(QDir::cleanPath(controller->logFile()), QDir::cleanPath(ulogPath));
+    QCOMPARE(QDir::cleanPath(controller->imageDirectory()), QDir::cleanPath(imageDirPath));
+    QCOMPARE(QDir::cleanPath(controller->saveDirectory()), QDir::cleanPath(taggedDirPath));
     QCOMPARE(controller->progress(), 0.0);
     QVERIFY(!controller->inProgress());
 
@@ -91,9 +91,9 @@ void GeoTagControllerTest::_propertyAccessorsTest()
     QCOMPARE(controller->toleranceSecs(), 5.0);
 
     // Test tolerance clamping
-    controller->setToleranceSecs(0.05);  // Below minimum
-    QCOMPARE(controller->toleranceSecs(), 0.1);  // Clamped to 0.1
-    controller->setToleranceSecs(100.0);  // Above maximum
+    controller->setToleranceSecs(0.05);           // Below minimum
+    QCOMPARE(controller->toleranceSecs(), 0.1);   // Clamped to 0.1
+    controller->setToleranceSecs(100.0);          // Above maximum
     QCOMPARE(controller->toleranceSecs(), 60.0);  // Clamped to 60
 }
 
@@ -101,15 +101,15 @@ void GeoTagControllerTest::_urlPathConversionTest()
 {
     GeoTagController* const controller = new GeoTagController(this);
 
-    const QString testPath = QDir::tempPath() + "/test_file.ulg";
+    const QString testPath = tempPath(QStringLiteral("test_file.ulg"));
 
     QFile testFile(testPath);
     QVERIFY(testFile.open(QIODevice::WriteOnly));
     testFile.write("test");
     testFile.close();
 
-    controller->setLogFile(QStringLiteral("file://") + testPath);
-    QCOMPARE(controller->logFile(), testPath);
+    controller->setLogFile(QUrl::fromLocalFile(testPath).toString());
+    QCOMPARE(QDir::cleanPath(controller->logFile()), QDir::cleanPath(testPath));
 
     testFile.remove();
 }
@@ -136,15 +136,13 @@ void GeoTagControllerTest::_validationTest()
 
 void GeoTagControllerTest::_calibrationMismatchTest()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString imageDirPath = tempDir.path() + "/images";
-    const QString taggedDirPath = tempDir.path() + "/tagged";
+    const QString imageDirPath = tempPath(QStringLiteral("images"));
+    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     QVERIFY(QDir().mkpath(taggedDirPath));
 
     const int numImages = 10;
-    const QString ulogPath = generateTestULogFile(tempDir, numImages);
+    const QString ulogPath = generateTestULogFile(tempDirPath(), numImages);
     QVERIFY(!ulogPath.isEmpty());
 
     // Copy test images (same timestamp, so calibration will fail)
@@ -163,7 +161,7 @@ void GeoTagControllerTest::_calibrationMismatchTest()
     controller->startTagging();
 
     // Wait for taggingCompleteChanged signal (indicates results are ready)
-    QTRY_VERIFY_WITH_TIMEOUT(completeSpy.count() > 0 || !controller->errorMessage().isEmpty(), 10000);
+    QTRY_VERIFY_WITH_TIMEOUT(completeSpy.count() > 0 || !controller->errorMessage().isEmpty(), TestTimeout::longMs());
 
     // With "continue on failures" behavior, partial matches now succeed
     // Only 1 image matches (all have same timestamp), so we get 1 tagged
@@ -174,10 +172,8 @@ void GeoTagControllerTest::_fullGeotaggingTest()
 {
     const int numImages = 10;
 
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString imageDirPath = tempDir.path() + "/images";
-    const QString taggedDirPath = tempDir.path() + "/tagged";
+    const QString imageDirPath = tempPath(QStringLiteral("images"));
+    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     QVERIFY(QDir().mkpath(taggedDirPath));
 
@@ -185,7 +181,7 @@ void GeoTagControllerTest::_fullGeotaggingTest()
     const auto events = ULogTestGenerator::generateSampleEvents(numImages, 1000000, 2.0);
     QCOMPARE(events.size(), numImages);
 
-    const QString ulogPath = tempDir.path() + "/test.ulg";
+    const QString ulogPath = tempPath(QStringLiteral("test.ulg"));
     QVERIFY(ULogTestGenerator::generateULog(ulogPath, events));
 
     // Load template image
@@ -205,7 +201,7 @@ void GeoTagControllerTest::_fullGeotaggingTest()
         const qint64 triggerOffsetSec = static_cast<qint64>((lastTriggerUs - triggerUs) / 1000000);
         const QDateTime imageTime = QDateTime::fromSecsSinceEpoch(baseImageTime - triggerOffsetSec);
 
-        ExifData *exifData = ExifUtility::loadFromBuffer(imageBuffer);
+        ExifData* exifData = ExifUtility::loadFromBuffer(imageBuffer);
         QVERIFY(exifData != nullptr);
         QVERIFY(ExifUtility::writeDateTimeOriginal(exifData, imageTime));
         QVERIFY(ExifUtility::saveToBuffer(exifData, imageBuffer));
@@ -230,11 +226,12 @@ void GeoTagControllerTest::_fullGeotaggingTest()
 
     // Wait for inProgressChanged (emitted twice: start and finish)
     // First emission is when processing starts, second is when it finishes
-    QTRY_VERIFY_WITH_TIMEOUT(inProgressSpy.count() >= 2, 30000);
+    QTRY_VERIFY_WITH_TIMEOUT(inProgressSpy.count() >= 2, TestTimeout::longMs());
 
     QVERIFY2(controller->errorMessage().isEmpty(), qPrintable(controller->errorMessage()));
     QVERIFY2(controller->taggedCount() > 0, qPrintable(QString("Expected tagged images, got %1 tagged, %2 skipped")
-             .arg(controller->taggedCount()).arg(controller->skippedCount())));
+                                                           .arg(controller->taggedCount())
+                                                           .arg(controller->skippedCount())));
 
     // Verify output files exist and have GPS data
     QDir taggedDir(taggedDirPath);
@@ -247,14 +244,14 @@ void GeoTagControllerTest::_fullGeotaggingTest()
         const QByteArray taggedBuffer = taggedFile.readAll();
         taggedFile.close();
 
-        ExifData *verifyData = ExifUtility::loadFromBuffer(taggedBuffer);
+        ExifData* verifyData = ExifUtility::loadFromBuffer(taggedBuffer);
         QVERIFY(verifyData != nullptr);
 
-        ExifContent *gpsIfd = verifyData->ifd[EXIF_IFD_GPS];
+        ExifContent* gpsIfd = verifyData->ifd[EXIF_IFD_GPS];
         QVERIFY(gpsIfd != nullptr);
 
-        ExifEntry *latEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE));
-        ExifEntry *lonEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE));
+        ExifEntry* latEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE));
+        ExifEntry* lonEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE));
         QVERIFY(latEntry != nullptr);
         QVERIFY(lonEntry != nullptr);
 
@@ -266,19 +263,16 @@ void GeoTagControllerTest::_previewModeTest()
 {
     constexpr int numImages = 3;
 
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
     // Generate ULog with valid camera captures
     const auto events = ULogTestGenerator::generateSampleEvents(numImages, 1000000, 2.0);
     QCOMPARE(events.size(), numImages);
 
-    const QString ulogPath = tempDir.path() + "/test.ulg";
+    const QString ulogPath = tempPath(QStringLiteral("test.ulg"));
     QVERIFY(ULogTestGenerator::generateULog(ulogPath, events));
 
     // Create image directory and tagged output directory paths
-    const QString imageDirPath = tempDir.filePath("images");
-    const QString taggedDirPath = tempDir.filePath("tagged");
+    const QString imageDirPath = tempPath(QStringLiteral("images"));
+    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     // Don't create tagged directory - preview mode shouldn't need it
 
@@ -299,7 +293,7 @@ void GeoTagControllerTest::_previewModeTest()
         const qint64 triggerOffsetSec = static_cast<qint64>((lastTriggerUs - triggerUs) / 1000000);
         const QDateTime imageTime = QDateTime::fromSecsSinceEpoch(baseImageTime - triggerOffsetSec);
 
-        ExifData *exifData = ExifUtility::loadFromBuffer(imageBuffer);
+        ExifData* exifData = ExifUtility::loadFromBuffer(imageBuffer);
         QVERIFY(exifData != nullptr);
         QVERIFY(ExifUtility::writeDateTimeOriginal(exifData, imageTime));
         QVERIFY(ExifUtility::saveToBuffer(exifData, imageBuffer));
@@ -324,11 +318,11 @@ void GeoTagControllerTest::_previewModeTest()
     controller->startTagging();
 
     // Wait for completion
-    QTRY_VERIFY_WITH_TIMEOUT(inProgressSpy.count() >= 2, 30000);
+    QTRY_VERIFY_WITH_TIMEOUT(inProgressSpy.count() >= 2, TestTimeout::longMs());
 
     QVERIFY2(controller->errorMessage().isEmpty(), qPrintable(controller->errorMessage()));
-    QVERIFY2(controller->taggedCount() > 0, qPrintable(QString("Expected tagged images, got %1 tagged")
-             .arg(controller->taggedCount())));
+    QVERIFY2(controller->taggedCount() > 0,
+             qPrintable(QString("Expected tagged images, got %1 tagged").arg(controller->taggedCount())));
 
     // Verify no output directory or files were created
     QVERIFY2(!QDir(taggedDirPath).exists(), "Preview mode should not create output directory");
@@ -389,11 +383,7 @@ void GeoTagControllerTest::_calibratorEmptyInputsTest()
 void GeoTagControllerTest::_calibratorPerfectMatchTest()
 {
     QList<qint64> imageTimestamps = {100, 200, 300};
-    QList<GeoTagData> triggers = {
-        makeValidTrigger(100),
-        makeValidTrigger(200),
-        makeValidTrigger(300)
-    };
+    QList<GeoTagData> triggers = {makeValidTrigger(100), makeValidTrigger(200), makeValidTrigger(300)};
 
     CalibrationResult result = GeoTagCalibrator::calibrate(imageTimestamps, triggers, 0, 2);
 
@@ -436,8 +426,8 @@ void GeoTagControllerTest::_calibratorNoMatchOutsideToleranceTest()
     // Triggers: offsets from 50 are {40, 0} - only offset 0 matches image offset 0
     QList<qint64> imageTimestamps = {100, 200, 300};
     QList<GeoTagData> triggers = {
-        makeValidTrigger(10),   // offset 40 - far from any image offset
-        makeValidTrigger(50)    // offset 0 - matches image offset 0
+        makeValidTrigger(10),  // offset 40 - far from any image offset
+        makeValidTrigger(50)   // offset 0 - matches image offset 0
     };
 
     CalibrationResult result = GeoTagCalibrator::calibrate(imageTimestamps, triggers, 0, 2);
@@ -451,11 +441,9 @@ void GeoTagControllerTest::_calibratorNoMatchOutsideToleranceTest()
 void GeoTagControllerTest::_calibratorSkipInvalidTriggersTest()
 {
     QList<qint64> imageTimestamps = {100, 200, 300};
-    QList<GeoTagData> triggers = {
-        makeValidTrigger(100),
-        makeInvalidTrigger(200),  // Failure result - should be skipped
-        makeValidTrigger(300)
-    };
+    QList<GeoTagData> triggers = {makeValidTrigger(100),
+                                  makeInvalidTrigger(200),  // Failure result - should be skipped
+                                  makeValidTrigger(300)};
 
     CalibrationResult result = GeoTagCalibrator::calibrate(imageTimestamps, triggers, 0, 2);
 
@@ -468,11 +456,9 @@ void GeoTagControllerTest::_calibratorSkipInvalidTriggersTest()
 void GeoTagControllerTest::_calibratorSkipInvalidCoordinatesTest()
 {
     QList<qint64> imageTimestamps = {100, 200, 300};
-    QList<GeoTagData> triggers = {
-        makeValidTrigger(100),
-        makeTriggerWithInvalidCoord(200),  // Invalid coordinate - should be skipped
-        makeValidTrigger(300)
-    };
+    QList<GeoTagData> triggers = {makeValidTrigger(100),
+                                  makeTriggerWithInvalidCoord(200),  // Invalid coordinate - should be skipped
+                                  makeValidTrigger(300)};
 
     CalibrationResult result = GeoTagCalibrator::calibrate(imageTimestamps, triggers, 0, 2);
 
@@ -488,10 +474,7 @@ void GeoTagControllerTest::_calibratorUnmatchedImagesTest()
     // Trigger offset 200 matches image offset 200 (image 2 at timestamp 300)
     // Trigger offset 0 matches image offset 0 (image 4 at timestamp 500)
     QList<qint64> imageTimestamps = {100, 200, 300, 400, 500};
-    QList<GeoTagData> triggers = {
-        makeValidTrigger(100),
-        makeValidTrigger(300)
-    };
+    QList<GeoTagData> triggers = {makeValidTrigger(100), makeValidTrigger(300)};
 
     CalibrationResult result = GeoTagCalibrator::calibrate(imageTimestamps, triggers, 0, 2);
 
@@ -515,11 +498,7 @@ void GeoTagControllerTest::_calibratorTimeOffsetTest()
     // Triggers: {100, 200, 300} → offsets from 300: {200, 100, 0}
     // Same offsets = all match regardless of absolute timestamp difference!
     QList<qint64> imageTimestamps = {90, 190, 290};
-    QList<GeoTagData> triggers = {
-        makeValidTrigger(100),
-        makeValidTrigger(200),
-        makeValidTrigger(300)
-    };
+    QList<GeoTagData> triggers = {makeValidTrigger(100), makeValidTrigger(200), makeValidTrigger(300)};
 
     // Both sequences have same duration (200 seconds), so offsets align
     {
@@ -534,11 +513,7 @@ void GeoTagControllerTest::_calibratorTimeOffsetTest()
     // Note: Using 10 instead of 0 because 0 is reserved for failed EXIF parsing
     {
         QList<qint64> images2 = {10, 110, 210};
-        QList<GeoTagData> triggers2 = {
-            makeValidTrigger(5),
-            makeValidTrigger(105),
-            makeValidTrigger(205)
-        };
+        QList<GeoTagData> triggers2 = {makeValidTrigger(5), makeValidTrigger(105), makeValidTrigger(205)};
         CalibrationResult result = GeoTagCalibrator::calibrate(images2, triggers2, 0, 2);
         QCOMPARE(result.imageIndices.count(), 3);
     }
@@ -548,11 +523,9 @@ void GeoTagControllerTest::_calibratorDuplicatePreventionTest()
 {
     // Two triggers close to same image timestamp
     QList<qint64> imageTimestamps = {100, 200};
-    QList<GeoTagData> triggers = {
-        makeValidTrigger(100),
-        makeValidTrigger(101),  // Very close to first, but image 0 already used
-        makeValidTrigger(200)
-    };
+    QList<GeoTagData> triggers = {makeValidTrigger(100),
+                                  makeValidTrigger(101),  // Very close to first, but image 0 already used
+                                  makeValidTrigger(200)};
 
     CalibrationResult result = GeoTagCalibrator::calibrate(imageTimestamps, triggers, 0, 2);
 

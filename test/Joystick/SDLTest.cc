@@ -4,10 +4,15 @@
 #include "SDLJoystick.h"
 #include "SDLPlatform.h"
 
+void SDLTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    QVERIFY(JoystickSDL::init());
+}
+
 void SDLTest::init()
 {
     UnitTest::init();
-    QVERIFY(JoystickSDL::init());
 }
 
 void SDLTest::cleanup()

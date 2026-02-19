@@ -1,13 +1,15 @@
 #pragma once
 
-#include "BaseClasses/VehicleTest.h"
+#include "BaseClasses/VehicleTestManualConnect.h"
 #include "Vehicle.h"
 
-class SendMavCommandWithSignallingTest : public VehicleTest
+class SendMavCommandWithSignallingTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
 private slots:
+    void init() override;
+    void _performTestCases_data();
     void _performTestCases();
     void _duplicateCommand();
 

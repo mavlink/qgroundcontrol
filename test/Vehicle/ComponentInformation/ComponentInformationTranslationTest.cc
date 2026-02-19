@@ -1,15 +1,12 @@
 #include "ComponentInformationTranslationTest.h"
 
-#include "QGCCachedFileDownload.h"
-#include "UnitTest.h"
-
-#include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 #include <QtTest/QSignalSpy>
 
-#define private public
+#include "QGCCachedFileDownload.h"
+#include "UnitTest.h"
+
 #include "ComponentInformationTranslation.h"
-#undef private
 
 void ComponentInformationTranslationTest::_basic_test()
 {
@@ -37,16 +34,13 @@ void ComponentInformationTranslationTest::readJson(const QByteArray& bytes, QJso
 {
     QJsonParseError parseError;
     jsonDoc = QJsonDocument::fromJson(bytes, &parseError);
-    QTEST_ASSERT(parseError.error == QJsonParseError::NoError);
+    QVERIFY2(parseError.error == QJsonParseError::NoError, qPrintable(parseError.errorString()));
     QVERIFY(!jsonDoc.isEmpty());
 }
 
 void ComponentInformationTranslationTest::_downloadAndTranslateFromSummary_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString summaryPath = tempDir.filePath(QStringLiteral("summary.json"));
+    const QString summaryPath = tempPath(QStringLiteral("summary.json"));
     const QString locale = QLocale::system().name();
     QFile summaryFile(summaryPath);
     QVERIFY(summaryFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
@@ -58,14 +52,14 @@ void ComponentInformationTranslationTest::_downloadAndTranslateFromSummary_test(
     summaryStream << "}\n";
     summaryFile.close();
 
-    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
+    QGCCachedFileDownload cachedDownloader(tempDirPath(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
 
     QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
     QVERIFY(completeSpy.isValid());
 
     QVERIFY(translation.downloadAndTranslate(summaryPath, QStringLiteral(":/unittest/TranslationTest.json"), 3600));
-    QVERIFY(completeSpy.wait(5000));
+    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::mediumMs());
     QCOMPARE(completeSpy.count(), 1);
 
     const QList<QVariant> args = completeSpy.first();
@@ -84,10 +78,7 @@ void ComponentInformationTranslationTest::_downloadAndTranslateFromSummary_test(
 
 void ComponentInformationTranslationTest::_downloadAndTranslateMissingLocale_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString summaryPath = tempDir.filePath(QStringLiteral("summary_missing_locale.json"));
+    const QString summaryPath = tempPath(QStringLiteral("summary_missing_locale.json"));
     QFile summaryFile(summaryPath);
     QVERIFY(summaryFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
     QTextStream summaryStream(&summaryFile);
@@ -98,7 +89,46 @@ void ComponentInformationTranslationTest::_downloadAndTranslateMissingLocale_tes
     summaryStream << "}\n";
     summaryFile.close();
 
-    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
+    QGCCachedFileDownload cachedDownloader(tempDirPath(), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+
+    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
+    QVERIFY(!translation.downloadAndTranslate(summaryPath, QStringLiteral(":/unittest/TranslationTest.json"), 3600));
+    QCOMPARE(completeSpy.count(), 0);
+}
+
+void ComponentInformationTranslationTest::_downloadAndTranslateMissingUrl_test()
+{
+    const QString summaryPath = tempPath(QStringLiteral("summary_missing_url.json"));
+    const QString locale = QLocale::system().name();
+
+    QFile summaryFile(summaryPath);
+    QVERIFY(summaryFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
+    QTextStream summaryStream(&summaryFile);
+    summaryStream << "{\n";
+    summaryStream << "  \"" << locale << "\": {\n";
+    summaryStream << "    \"unused\": \"value\"\n";
+    summaryStream << "  }\n";
+    summaryStream << "}\n";
+    summaryFile.close();
+
+    QGCCachedFileDownload cachedDownloader(tempDirPath(), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+
+    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
+    QVERIFY(!translation.downloadAndTranslate(summaryPath, QStringLiteral(":/unittest/TranslationTest.json"), 3600));
+    QCOMPARE(completeSpy.count(), 0);
+}
+
+void ComponentInformationTranslationTest::_downloadAndTranslateInvalidSummaryJson_test()
+{
+    const QString summaryPath = tempPath(QStringLiteral("summary_invalid.json"));
+    QFile summaryFile(summaryPath);
+    QVERIFY(summaryFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
+    summaryFile.write("{ invalid json");
+    summaryFile.close();
+
+    QGCCachedFileDownload cachedDownloader(tempDirPath(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
 
     QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
@@ -108,10 +138,7 @@ void ComponentInformationTranslationTest::_downloadAndTranslateMissingLocale_tes
 
 void ComponentInformationTranslationTest::_onDownloadCompletedFailurePropagatesError_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
+    QGCCachedFileDownload cachedDownloader(tempDirPath(), this);
     ComponentInformationTranslation translation(this, &cachedDownloader);
     translation._toTranslateJsonFile = QStringLiteral(":/unittest/TranslationTest.json");
 
@@ -124,6 +151,23 @@ void ComponentInformationTranslationTest::_onDownloadCompletedFailurePropagatesE
     const QList<QVariant> args = completeSpy.first();
     QVERIFY(args.at(0).toString().isEmpty());
     QCOMPARE(args.at(1).toString(), QStringLiteral("simulated failure"));
+}
+
+void ComponentInformationTranslationTest::_onDownloadCompletedMissingTsPropagatesError_test()
+{
+    QGCCachedFileDownload cachedDownloader(tempDirPath(), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+    translation._toTranslateJsonFile = QStringLiteral(":/unittest/TranslationTest.json");
+
+    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
+    QVERIFY(completeSpy.isValid());
+
+    translation.onDownloadCompleted(true, tempPath(QStringLiteral("missing.ts")), QString(), false);
+    QCOMPARE(completeSpy.count(), 1);
+
+    const QList<QVariant> args = completeSpy.first();
+    QVERIFY(args.at(0).toString().isEmpty());
+    QVERIFY(!args.at(1).toString().isEmpty());
 }
 
 UT_REGISTER_TEST(ComponentInformationTranslationTest, TestLabel::Unit, TestLabel::Vehicle)

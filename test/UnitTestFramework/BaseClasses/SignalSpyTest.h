@@ -35,7 +35,9 @@ class SignalSpyTest : public UnitTest
     Q_OBJECT
 
 public:
-    explicit SignalSpyTest(QObject* parent = nullptr) : UnitTest(parent) {}
+    explicit SignalSpyTest(QObject* parent = nullptr) : UnitTest(parent)
+    {
+    }
 
 protected:
     /// Creates a MultiSignalSpy for the given object with automatic signal discovery
@@ -104,7 +106,7 @@ protected:
     }
 
     /// Waits for a signal with timeout
-    bool waitForSignal(MultiSignalSpy* spy, const char* signalName, int timeoutMs = 5000)
+    bool waitForSignal(MultiSignalSpy* spy, const char* signalName, int timeoutMs = TestTimeout::mediumMs())
     {
         if (!spy) {
             return false;
@@ -113,6 +115,7 @@ protected:
     }
 
 protected slots:
+
     void cleanup() override
     {
         _spies.clear();

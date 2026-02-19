@@ -11,6 +11,14 @@ add_subdirectory(Network)
 add_subdirectory(Parsing)
 add_subdirectory(Platform)
 
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGCMathTest.cc
+        QGCMathTest.h
+)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
 # ----------------------------------------------------------------------------
 # Test Data Resources
 # ----------------------------------------------------------------------------

@@ -14,6 +14,7 @@ class JoystickManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
     void init() override;
     void cleanup() override;
 
@@ -24,6 +25,7 @@ private slots:
     // Hot-plug tests
     void _joystickAddedSignalTest();
     void _joystickRemovedSignalTest();
+    void _instanceIdReuseNameMismatchManagerTest();
 
     // Active joystick selection
     void _setActiveJoystickTest();
@@ -31,11 +33,20 @@ private slots:
 
     // Polling control tests
     void _pollingControlTest();
+    void _sensorUpdateRoutesToCorrectSignalsTest();
 
     // Multiple controller handling tests
     void _multipleControllerManagementTest();
 
+    // Group helper tests
+    void _linkedGroupMembersTest();
+    void _joystickByNameTest();
+
 private:
+    void _refreshJoysticks(JoystickManager* manager);
+    bool _waitForJoystickNames(JoystickManager* manager, const QStringList& expectedNames,
+                               int timeoutMs = TestTimeout::mediumMs());
+
     std::unique_ptr<MockJoystick> _mockJoystick1;
     std::unique_ptr<MockJoystick> _mockJoystick2;
 };

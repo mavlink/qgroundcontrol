@@ -3,11 +3,14 @@
 #include <QtCore/QFlags>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QStringView>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QTest>
 
+#include <functional>
 #include <initializer_list>
 
 // ============================================================================
@@ -114,13 +117,32 @@ QStringList availableLabelNames();
 /// @param spy QSignalSpy to wait on
 /// @param timeoutMs Timeout in milliseconds
 #define QVERIFY_SIGNAL_WAIT(spy, timeoutMs) \
-    QVERIFY2((spy).wait(timeoutMs), qPrintable(QString("Timeout waiting for signal after %1ms").arg(timeoutMs)))
+    QVERIFY2(UnitTest::waitForSignal((spy), (timeoutMs), QStringLiteral(#spy)), \
+             qPrintable(QString("Timeout waiting for signal after %1ms: %2").arg(timeoutMs).arg(QStringLiteral(#spy))))
+
+/// Verify that no signal is emitted within timeout, with better error message
+/// @param spy QSignalSpy to monitor
+/// @param timeoutMs Timeout in milliseconds
+#define QVERIFY_NO_SIGNAL_WAIT(spy, timeoutMs) \
+    QVERIFY2(UnitTest::waitForNoSignal((spy), (timeoutMs), QStringLiteral(#spy)), \
+             qPrintable(QString("Unexpected signal within %1ms: %2").arg(timeoutMs).arg(QStringLiteral(#spy))))
+
+/// Wait for a signal count with timeout, with better error message
+/// @param spy QSignalSpy to check
+/// @param expectedCount Minimum signal count expected
+/// @param timeoutMs Timeout in milliseconds
+#define QVERIFY_SIGNAL_COUNT_WAIT(spy, expectedCount, timeoutMs) \
+    QVERIFY2(UnitTest::waitForSignalCount((spy), (expectedCount), (timeoutMs), QStringLiteral(#spy)), \
+             qPrintable(QString("Timeout waiting for signal count %1 after %2ms: %3") \
+                            .arg(expectedCount) \
+                            .arg(timeoutMs) \
+                            .arg(QStringLiteral(#spy))))
 
 /// Wait for a condition with timeout
 /// @param condition Boolean expression to wait for
 /// @param timeoutMs Timeout in milliseconds
 #define QVERIFY_TRUE_WAIT(condition, timeoutMs)                           \
-    QVERIFY2(QTest::qWaitFor([&]() { return (condition); }, (timeoutMs)), \
+    QVERIFY2(UnitTest::waitForCondition([&]() { return (condition); }, (timeoutMs), QStringLiteral(#condition)), \
              qPrintable(QString("Condition not met within %1ms: " #condition).arg(timeoutMs)))
 
 /// Compare floating point values with configurable epsilon
@@ -144,25 +166,44 @@ QStringList availableLabelNames();
 // ============================================================================
 
 namespace TestTimeout {
+/// Returns true when running under CI (GitHub Actions, etc.)
+inline bool isCI()
+{
+    static const bool ci = qEnvironmentVariableIsSet("CI") || qEnvironmentVariableIsSet("GITHUB_ACTIONS");
+    return ci;
+}
+
 /// Short timeout for quick operations (1 second, 2s on CI)
 inline int shortMs()
 {
-    static const int timeout = qEnvironmentVariableIsSet("CI") ? 2000 : 1000;
+    static const int timeout = isCI() ? 2000 : 1000;
     return timeout;
 }
 
 /// Medium timeout for normal async operations (5 seconds, 10s on CI)
 inline int mediumMs()
 {
-    static const int timeout = qEnvironmentVariableIsSet("CI") ? 10000 : 5000;
+    static const int timeout = isCI() ? 10000 : 5000;
     return timeout;
 }
 
 /// Long timeout for slow operations like vehicle connection (30 seconds, 60s on CI)
 inline int longMs()
 {
-    static const int timeout = qEnvironmentVariableIsSet("CI") ? 60000 : 30000;
+    static const int timeout = isCI() ? 60000 : 30000;
     return timeout;
+}
+
+/// Iteration count for stress tests.
+/// Uses QGC_TEST_STRESS_ITERATIONS when set to a positive integer.
+inline int stressIterations(int localDefault, int ciDefault)
+{
+    bool ok = false;
+    const int configured = qEnvironmentVariableIntValue("QGC_TEST_STRESS_ITERATIONS", &ok);
+    if (ok && configured > 0) {
+        return configured;
+    }
+    return isCI() ? ciDefault : localDefault;
 }
 }  // namespace TestTimeout
 
@@ -174,6 +215,7 @@ Q_DECLARE_LOGGING_CATEGORY(UnitTestLog)
 
 class Fact;
 class MissionItem;
+class QSignalSpy;
 class Vehicle;
 
 // ============================================================================
@@ -197,7 +239,9 @@ private:
 };
 
 /// Macro for easy context creation
-#define TEST_CONTEXT(msg) TestContext _testContext##__LINE__(msg)
+#define _TEST_CONTEXT_CONCAT_(prefix, line) prefix##line
+#define _TEST_CONTEXT_CONCAT(prefix, line) _TEST_CONTEXT_CONCAT_(prefix, line)
+#define TEST_CONTEXT(msg) TestContext _TEST_CONTEXT_CONCAT(_testContext, __LINE__)(msg)
 
 /// Print additional debug info (only shown on failure or in verbose mode)
 #define TEST_DEBUG(msg) TestDebug::log(msg)
@@ -206,6 +250,8 @@ private:
 class TestDebug
 {
 public:
+    static constexpr int kMaxBufferedMessages = 50;
+
     static void log(const QString& message);
     static void setVerbose(bool verbose);
     static bool isVerbose();
@@ -262,6 +308,28 @@ public:
 
     /// Check if verbose mode is enabled
     static bool isVerbose();
+
+    /// Wait for a signal with standardized timeout diagnostics.
+    static bool waitForSignal(QSignalSpy& spy, int timeoutMs, QStringView signalName = {});
+
+    /// Wait to ensure no additional signal emissions occur during timeout.
+    static bool waitForNoSignal(QSignalSpy& spy, int timeoutMs, QStringView signalName = {});
+
+    /// Wait until a signal spy reaches at least expectedCount emissions.
+    static bool waitForSignalCount(QSignalSpy& spy, int expectedCount, int timeoutMs, QStringView signalName = {});
+
+    /// Wait for a condition with standardized timeout diagnostics.
+    static bool waitForCondition(const std::function<bool()>& condition, int timeoutMs,
+                                 QStringView conditionName = {});
+
+    /// Waits for a QObject to be deleted (QPointer becomes null) while draining deferred deletes.
+    static bool waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs,
+                               QStringView objectName = {});
+
+    /// Process queued events/deferred deletes to stabilize teardown between tests.
+    /// If iterations <= 0, CI-aware defaults are used.
+    /// If waitMs < 0, CI-aware defaults are used. If waitMs == 0, no sleep between iterations.
+    static void settleEventLoopForCleanup(int iterations = 0, int waitMs = 0);
 
     // ========================================================================
     // Test Properties
@@ -361,6 +429,13 @@ protected slots:
     /// Called after each test function
     virtual void cleanup();
 
+protected:
+    /// Emits a one-time failure context dump for the currently running test function.
+    void dumpFailureContextIfTestFailed(QStringView reason = {});
+
+    /// Allows derived fixtures to append state to failure dumps.
+    virtual QString failureContextSummary() const;
+
 private:
     void _cleanupTempFiles();
     void _resetTestState();
@@ -375,6 +450,7 @@ private:
     bool _unitTestRun = false;
     bool _initCalled = false;
     bool _cleanupCalled = false;
+    bool _failureContextDumped = false;
     bool _standalone = false;
 };
 

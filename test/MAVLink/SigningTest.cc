@@ -10,10 +10,12 @@ void SigningTest::_testInitSigning()
     const mavlink_signing_t* signing = status->signing;
     QVERIFY(memcmp(signing->secret_key, QCryptographicHash::hash("secret_key", QCryptographicHash::Sha256).constData(),
                    sizeof(signing->secret_key)) == 0);
-    QVERIFY(MAVLinkSigning::initSigning(MAVLINK_COMM_0, QByteArrayView("1", 32),
+    QByteArray keyData(32, '\0');
+    keyData[0] = '1';
+    QVERIFY(MAVLinkSigning::initSigning(MAVLINK_COMM_0, keyData,
                                         MAVLinkSigning::insecureConnectionAccceptUnsignedCallback));
     QVERIFY(memcmp(signing->secret_key,
-                   QCryptographicHash::hash(QByteArrayView("1", 32), QCryptographicHash::Sha256).constData(),
+                   QCryptographicHash::hash(keyData, QCryptographicHash::Sha256).constData(),
                    sizeof(signing->secret_key)) == 0);
     QVERIFY(MAVLinkSigning::initSigning(MAVLINK_COMM_0, QByteArrayView(),
                                         MAVLinkSigning::insecureConnectionAccceptUnsignedCallback));

@@ -1,9 +1,14 @@
 #pragma once
 
 #include <QtCore/QList>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonParseError>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
+#include <QtCore/QUrl>
 #include <QtCore/QVariant>
+#include <QtNetwork/QNetworkReply>
 
 #include <memory>
 
@@ -12,6 +17,7 @@
 #include "MultiSignalSpy.h"
 
 class MockLink;
+class RunGuard;
 class Vehicle;
 class Fact;
 
@@ -205,6 +211,58 @@ private:
 };
 
 // ============================================================================
+// NetworkReplyFixture - Lightweight fake QNetworkReply for helper tests
+// ============================================================================
+
+/// Fake QNetworkReply with configurable status/redirect/error/body data
+class NetworkReplyFixture final : public QNetworkReply
+{
+public:
+    explicit NetworkReplyFixture(const QUrl& url, QObject* parent = nullptr);
+    ~NetworkReplyFixture() override;
+
+    void setHttpStatus(int statusCode);
+    void setRedirectTarget(const QUrl& target);
+    void setNetworkError(QNetworkReply::NetworkError errorCode, const QString& message);
+    void setContentType(const QString& contentType);
+    void setContentLength(qint64 length);
+    void setBody(const QByteArray& body, const QString& contentType = QString());
+
+    void abort() override;
+
+protected:
+    qint64 readData(char* data, qint64 maxSize) override;
+
+private:
+    QByteArray _body;
+    qint64 _readOffset = 0;
+};
+
+// ============================================================================
+// SingleInstanceLockFixture - RAII wrapper for RunGuard lock ownership
+// ============================================================================
+
+class SingleInstanceLockFixture
+{
+public:
+    explicit SingleInstanceLockFixture(const QString& lockKey, bool acquireOnCreate = true);
+    ~SingleInstanceLockFixture();
+
+    SingleInstanceLockFixture(const SingleInstanceLockFixture&) = delete;
+    SingleInstanceLockFixture& operator=(const SingleInstanceLockFixture&) = delete;
+
+    bool tryAcquire();
+    void release();
+
+    bool isLocked() const;
+    QString key() const;
+
+private:
+    QString _lockKey;
+    std::unique_ptr<RunGuard> _guard;
+};
+
+// ============================================================================
 // TempFileFixture - RAII wrapper for temporary files
 // ============================================================================
 
@@ -246,6 +304,30 @@ public:
 
 private:
     std::unique_ptr<QTemporaryFile> _file;
+};
+
+// ============================================================================
+// TempJsonFileFixture - JSON-focused temp file helper
+// ============================================================================
+
+class TempJsonFileFixture
+{
+public:
+    explicit TempJsonFileFixture(const QString& templateName = QStringLiteral("test_json_XXXXXX.json"));
+    ~TempJsonFileFixture();
+
+    TempJsonFileFixture(const TempJsonFileFixture&) = delete;
+    TempJsonFileFixture& operator=(const TempJsonFileFixture&) = delete;
+
+    bool isValid() const;
+    QString path() const;
+
+    bool writeJson(const QJsonDocument& json, bool compact = true);
+    bool writeJson(const QJsonObject& object, bool compact = true);
+    QJsonDocument readJson(QJsonParseError* error = nullptr);
+
+private:
+    TempFileFixture _file;
 };
 
 // ============================================================================

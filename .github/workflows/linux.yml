@@ -124,16 +124,29 @@ jobs:
         with:
           category: "/language:c-cpp"
 
-      # Run tests via CTest for timeouts, parallel execution, and failure detection
-      # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          set +e
-          ctest --output-on-failure --parallel "$(nproc)" -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
-          TEST_EXIT_CODE=${PIPESTATUS[0]}
-          exit "${TEST_EXIT_CODE}"
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-${{ matrix.arch }}.xml
+          ctest-output: test-output-linux-${{ matrix.arch }}.txt
+          include-labels: 'Unit|Integration'
+          exclude-labels: 'Flaky|Network'
+          parallel: '1'
+
+      - name: Analyze Unit Test Durations
+        if: matrix.build_type == 'Debug' && always()
+        uses: ./.github/actions/test-duration-report
+        with:
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.arch }}.xml
+          baseline-path: ${{ github.workspace }}/.github/test-duration-baseline.json
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.arch }}.json
+          top-n: '20'
+          slow-threshold-seconds: '60'
+          regression-factor: '1.5'
+          min-delta-seconds: '5'
+          fail-on-regression: 'false'
 
       - name: Report Test Results
         if: matrix.build_type == 'Debug' && always()
@@ -141,16 +154,58 @@ jobs:
         with:
           name: Unit Tests (${{ matrix.arch }})
           build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-${{ matrix.arch }}.xml
+          output-file: test-output-linux-${{ matrix.arch }}.txt
           artifact-name: test-results-${{ matrix.arch }}
           retention-days: 7
           trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
           trunk-token: ${{ secrets.TRUNK_TOKEN }}
+
+      - name: Upload Duration Report
+        if: matrix.build_type == 'Debug' && always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-duration-${{ matrix.arch }}
+          path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.arch }}.json
+          retention-days: 7
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
+
+      - name: Verify Coverage Thresholds
+        if: matrix.build_type == 'Debug'
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          python3 - <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          if not Path("coverage.xml").exists():
+              print("::warning::coverage.xml not found, skipping threshold check")
+              sys.exit(0)
+
+          tree = ET.parse("coverage.xml")
+          cov = tree.getroot()
+          line_rate = float(cov.get("line-rate", 0)) * 100
+          branch_rate = float(cov.get("branch-rate", 0)) * 100
+
+          print(f"Line coverage: {line_rate:.1f}% (threshold: 30%)")
+          print(f"Branch coverage: {branch_rate:.1f}% (threshold: 20%)")
+
+          failed = False
+          if line_rate < 30:
+              print(f"::error::Line coverage {line_rate:.1f}% is below 30% threshold")
+              failed = True
+          if branch_rate < 20:
+              print(f"::error::Branch coverage {branch_rate:.1f}% is below 20% threshold")
+              failed = True
+
+          sys.exit(1 if failed else 0)
+          PY
 
       - name: Verify Executable
         if: matrix.build_type == 'Release'
@@ -184,3 +239,105 @@ jobs:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+
+  sanitizers:
+    name: Sanitizers linux_gcc_64 Debug (ASan+UBSan)
+    if: github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          fetch-tags: true
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Setup Caching
+        uses: ./.github/actions/cache
+        with:
+          host: linux
+          target: linux_gcc_64
+          build-type: Debug
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          save-cache: ${{ github.event_name != 'pull_request' }}
+
+      - name: Install Qt for Linux
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Configure (ASan+UBSan)
+        working-directory: ${{ runner.temp }}/build
+        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
+              -DCMAKE_BUILD_TYPE=Debug
+              -DQGC_BUILD_TESTING=ON
+              -DQGC_ENABLE_COVERAGE=OFF
+              -DQGC_ENABLE_ASAN=ON
+              -DQGC_ENABLE_UBSAN=ON
+              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
+
+      - name: Build (ASan+UBSan)
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --build . --target all --config Debug --parallel
+
+      - name: Run Unit Tests (ASan+UBSan)
+        uses: ./.github/actions/run-unit-tests
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:check_initialization_order=1
+          LSAN_OPTIONS: suppressions=${{ runner.temp }}/build/asan_suppressions.txt
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-sanitizers.xml
+          ctest-output: test-output-linux-sanitizers.txt
+          include-labels: 'Unit|Integration'
+          exclude-labels: 'Flaky|Network'
+          parallel: '1'
+
+      - name: Analyze Unit Test Durations (Sanitizers)
+        if: always()
+        uses: ./.github/actions/test-duration-report
+        with:
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-sanitizers.xml
+          baseline-path: ${{ github.workspace }}/.github/test-duration-baseline.json
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-sanitizers.json
+          top-n: '20'
+          slow-threshold-seconds: '60'
+          regression-factor: '1.5'
+          min-delta-seconds: '5'
+          fail-on-regression: 'false'
+
+      - name: Upload Test Results (Sanitizers)
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-results-linux-sanitizers
+          path: |
+            ${{ runner.temp }}/build/test-output-linux-sanitizers.txt
+            ${{ runner.temp }}/build/junit-results-linux-sanitizers.xml
+            ${{ runner.temp }}/build/test-duration-linux-sanitizers.json
+          retention-days: 7

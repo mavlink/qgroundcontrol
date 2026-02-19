@@ -62,7 +62,9 @@ class Joystick : public QThread
 
     friend class JoystickManager;
     friend class JoystickConfigController;
+#ifdef QGC_UNITTEST_BUILD
     friend class JoystickTest;
+#endif
 
 public:
     Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)

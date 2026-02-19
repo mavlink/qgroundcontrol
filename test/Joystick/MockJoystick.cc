@@ -29,6 +29,9 @@ MockJoystick* MockJoystick::create(const QString& name, int axisCount, int butto
         return nullptr;
     }
 
+    // Some SDL backends report newly attached virtual devices asynchronously.
+    SDLJoystick::pumpEvents();
+
     auto* mock = new MockJoystick(name, axisCount, buttonCount, hatCount, ballCount, touchpadCount, instanceId, parent);
     if (!mock->_open()) {
         qCWarning(JoystickSDLLog) << "MockJoystick: Failed to open virtual joystick" << name;

@@ -191,4 +191,13 @@ void MissionCommandTreeTest::testAllTrees()
     }
 }
 
+void MissionCommandTreeTest::testUnknownCommandFallbacks()
+{
+    constexpr MAV_CMD unknownCommand = static_cast<MAV_CMD>(9999);
+    QCOMPARE(_commandTree->friendlyName(unknownCommand), QStringLiteral("MAV_CMD(9999)"));
+    QCOMPARE(_commandTree->rawName(unknownCommand), QStringLiteral("MAV_CMD(9999)"));
+    QVERIFY(!_commandTree->isLandCommand(unknownCommand));
+    QVERIFY(!_commandTree->isTakeoffCommand(unknownCommand));
+}
+
 UT_REGISTER_TEST(MissionCommandTreeTest, TestLabel::Unit, TestLabel::MissionManager)

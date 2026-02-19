@@ -15,6 +15,8 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
+#include <cstring>
+
 QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
 
@@ -568,6 +570,11 @@ void MockLink::_writeBytes(const QByteArray &bytes)
 
 void MockLink::_writeBytesQueued(const QByteArray &bytes)
 {
+    if (!_connected || !mavlinkChannelIsSet()) {
+        qCDebug(MockLinkLog) << "Dropping queued bytes on disconnected/uninitialized mock link";
+        return;
+    }
+
     if (_inNSH) {
         _handleIncomingNSHBytes(bytes.constData(), bytes.length());
         return;
@@ -1877,13 +1884,16 @@ void MockLink::_sendGeneralMetaData()
 
 void MockLink::_sendRemoteIDArmStatus()
 {
+    char armStatusError[MAVLINK_MSG_OPEN_DRONE_ID_ARM_STATUS_FIELD_ERROR_LEN] = {};
+    std::strncpy(armStatusError, "No Error", sizeof(armStatusError) - 1);
+
     mavlink_message_t msg{};
     (void) mavlink_msg_open_drone_id_arm_status_pack(
         _vehicleSystemId,
         MAV_COMP_ID_ODID_TXRX_1,
         &msg,
         MAV_ODID_ARM_STATUS_GOOD_TO_ARM,
-        QStringLiteral("No Error").toStdString().c_str()
+        armStatusError
     );
     respondWithMavlinkMessage(msg);
 }
@@ -1909,6 +1919,9 @@ void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
     qCDebug(MockLinkLog) << "_sendAvailableMode modeIndexOneBased:" << modeIndexOneBased;
 
     const FlightMode_t &availableMode = _availableFlightModes[modeIndexOneBased - 1];
+    char modeName[MAVLINK_MSG_AVAILABLE_MODES_FIELD_MODE_NAME_LEN] = {};
+    std::strncpy(modeName, availableMode.name, sizeof(modeName) - 1);
+
     mavlink_message_t msg{};
 
     (void) mavlink_msg_available_modes_pack_chan(
@@ -1921,7 +1934,7 @@ void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
         availableMode.standard_mode,
         availableMode.custom_mode,
         availableMode.canBeSet ? 0 : MAV_MODE_PROPERTY_NOT_USER_SELECTABLE,
-        availableMode.name);
+        modeName);
     respondWithMavlinkMessage(msg);
 }
 

@@ -1,5 +1,4 @@
 #include "Viewer3DInstancingTest.h"
-#include "Viewer3DInstancing.h"
 
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
@@ -7,6 +6,8 @@
 #include <QtTest/QSignalSpy>
 
 #include <cmath>
+
+#include "Viewer3DInstancing.h"
 
 static const int kEntrySize = static_cast<int>(sizeof(QQuick3DInstancing::InstanceTableEntry));
 
@@ -26,10 +27,7 @@ void Viewer3DInstancingTest::_testAddEntry()
 {
     Viewer3DInstancing inst;
 
-    inst.addEntry(QVector3D(1, 2, 3),
-                  QVector3D(0.1f, 0.1f, 0.1f),
-                  QQuaternion(),
-                  QColor(Qt::red));
+    inst.addEntry(QVector3D(1, 2, 3), QVector3D(0.1f, 0.1f, 0.1f), QQuaternion(), QColor(Qt::red));
 
     QCOMPARE(inst.count(), 1);
     QCOMPARE(inst._entries.size(), 1);
@@ -42,10 +40,7 @@ void Viewer3DInstancingTest::_testAddMultipleEntries()
     Viewer3DInstancing inst;
 
     for (int i = 0; i < 5; ++i) {
-        inst.addEntry(QVector3D(i, 0, 0),
-                      QVector3D(1, 1, 1),
-                      QQuaternion(),
-                      QColor(Qt::blue));
+        inst.addEntry(QVector3D(i, 0, 0), QVector3D(1, 1, 1), QQuaternion(), QColor(Qt::blue));
     }
 
     QCOMPARE(inst.count(), 5);
@@ -133,7 +128,7 @@ void Viewer3DInstancingTest::_testAddLineSegment()
 
     QCOMPARE(inst.count(), 1);
 
-    const auto &entry = inst._entries[0];
+    const auto& entry = inst._entries[0];
 
     // Midpoint
     QCOMPARE_FUZZY(entry.position.x(), 50.0f, 0.01f);
@@ -162,7 +157,7 @@ void Viewer3DInstancingTest::_testAddLineSegmentVertical()
 
     QCOMPARE(inst.count(), 1);
 
-    const auto &entry = inst._entries[0];
+    const auto& entry = inst._entries[0];
 
     // Midpoint
     QCOMPARE_FUZZY(entry.position.y(), 25.0f, 0.01f);
@@ -193,7 +188,7 @@ void Viewer3DInstancingTest::_testAddLineSegmentDiagonal()
 
     QCOMPARE(inst.count(), 1);
 
-    const auto &entry = inst._entries[0];
+    const auto& entry = inst._entries[0];
 
     // Midpoint should be (50, 50, 50)
     QCOMPARE_FUZZY(entry.position.x(), 50.0f, 0.01f);

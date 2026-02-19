@@ -69,7 +69,9 @@ JoystickManager::~JoystickManager()
         delete it->second;
     }
 
-    JoystickBackend::shutdown();
+    // Cache contains the same joystick instances tracked in _name2JoystickMap.
+    // We already deleted those above, so clear cache pointers only.
+    JoystickBackend::shutdown(false);
 
     qCDebug(JoystickManagerLog) << this;
 }
@@ -97,8 +99,18 @@ void JoystickManager::_checkForAddedOrRemovedJoysticks()
 
     qCDebug(JoystickManagerLog) << "Discovery returned" << newJoystickMap.size() << "joysticks";
 
-    if (_activeJoystick && !newJoystickMap.contains(_activeJoystick->name())) {
-        qCInfo(JoystickManagerLog) << "Active joystick removed:" << _activeJoystick->name();
+    QString activeJoystickName;
+    if (_activeJoystick) {
+        for (auto it = _name2JoystickMap.keyValueBegin(); it != _name2JoystickMap.keyValueEnd(); ++it) {
+            if (it->second == _activeJoystick) {
+                activeJoystickName = it->first;
+                break;
+            }
+        }
+    }
+
+    if (_activeJoystick && (activeJoystickName.isEmpty() || !newJoystickMap.contains(activeJoystickName))) {
+        qCInfo(JoystickManagerLog) << "Active joystick removed:" << (activeJoystickName.isEmpty() ? QStringLiteral("<stale>") : activeJoystickName);
         _setActiveJoystick(nullptr);
     }
 
@@ -328,4 +340,3 @@ void JoystickManager::_updatePollingTimer()
         _pollTimer.start();
     }
 }
-

@@ -3,7 +3,10 @@
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+
+#include <limits>
 
 #include <osmium/handler.hpp>
 #include <osmium/io/reader.hpp>
@@ -11,6 +14,7 @@
 #include <osmium/visitor.hpp>
 
 #include <cmath>
+#include <limits>
 
 QGC_LOGGING_CATEGORY(OsmParserThreadLog, "Viewer3d.OsmParserThread")
 
@@ -250,8 +254,10 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
     _mapLoadedFlag = false;
 
     QString resolvedPath = filePath;
-#ifdef __unix__
-    resolvedPath = QStringLiteral("/") + filePath;
+#ifdef Q_OS_UNIX
+    if (!QDir::isAbsolutePath(resolvedPath)) {
+        resolvedPath = QStringLiteral("/") + filePath;
+    }
 #endif
 
     QFileInfo fileInfo(resolvedPath);
@@ -272,17 +278,15 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
         osmium::io::Reader reader{inputFile, osmium::osm_entity_bits::all};
 
         const auto &header = reader.header();
-        if (header.boxes().empty()) {
-            reader.close();
-            emit fileParsed(false);
-            return;
+        bool hasHeaderBounds = !header.boxes().empty();
+        if (hasHeaderBounds) {
+            const auto &box = header.boxes().front();
+            _coordinateMin = QGeoCoordinate(box.bottom_left().lat(), box.bottom_left().lon(), 0);
+            _coordinateMax = QGeoCoordinate(box.top_right().lat(), box.top_right().lon(), 0);
+            _gpsRefPoint = QGeoCoordinate(
+                0.5 * (_coordinateMin.latitude() + _coordinateMax.latitude()),
+                0.5 * (_coordinateMin.longitude() + _coordinateMax.longitude()), 0);
         }
-        const auto &box = header.boxes().front();
-        _coordinateMin = QGeoCoordinate(box.bottom_left().lat(), box.bottom_left().lon(), 0);
-        _coordinateMax = QGeoCoordinate(box.top_right().lat(), box.top_right().lon(), 0);
-        _gpsRefPoint = QGeoCoordinate(
-            0.5 * (_coordinateMin.latitude() + _coordinateMax.latitude()),
-            0.5 * (_coordinateMin.longitude() + _coordinateMax.longitude()), 0);
 
         OsmBuildingHandler handler(_gpsRefPoint, _singleStoreyBuildings, _doubleStoreyLeisure);
         handler.coordMin = _coordinateMin;
@@ -292,8 +296,66 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
 
         _mapNodes = std::move(handler.nodes);
         _mapBuildings = std::move(handler.buildings);
-        _coordinateMin = handler.coordMin;
-        _coordinateMax = handler.coordMax;
+        if (!hasHeaderBounds) {
+            // Some libosmium builds do not expose bounds in header for valid .osm files.
+            if (_mapNodes.isEmpty()) {
+                emit fileParsed(false);
+                return;
+            }
+
+            double minLat = std::numeric_limits<double>::max();
+            double minLon = std::numeric_limits<double>::max();
+            double maxLat = std::numeric_limits<double>::lowest();
+            double maxLon = std::numeric_limits<double>::lowest();
+
+            for (auto it = _mapNodes.cbegin(); it != _mapNodes.cend(); ++it) {
+                minLat = std::fmin(minLat, it.value().latitude());
+                minLon = std::fmin(minLon, it.value().longitude());
+                maxLat = std::fmax(maxLat, it.value().latitude());
+                maxLon = std::fmax(maxLon, it.value().longitude());
+            }
+
+            _coordinateMin = QGeoCoordinate(minLat, minLon, 0);
+            _coordinateMax = QGeoCoordinate(maxLat, maxLon, 0);
+            _gpsRefPoint = QGeoCoordinate(0.5 * (minLat + maxLat), 0.5 * (minLon + maxLon), 0);
+
+            // Building local coordinates were computed before fallback bounds were known.
+            // Recompute with the finalized reference point for consistent geometry.
+            for (auto it = _mapBuildings.begin(); it != _mapBuildings.end(); ++it) {
+                BuildingType_t &building = it.value();
+                building.points_local.clear();
+                building.points_local_inner.clear();
+
+                building.bb_max = QVector2D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+                building.bb_min = QVector2D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+
+                for (const QGeoCoordinate &gpsCoord : building.points_gps) {
+                    const QVector3D localPt = QGCGeo::convertGpsToEnu(gpsCoord, _gpsRefPoint);
+                    const QVector2D local2D(localPt.x(), localPt.y());
+                    building.points_local.push_back(local2D);
+
+                    building.bb_max[0] = std::fmax(building.bb_max[0], local2D.x());
+                    building.bb_max[1] = std::fmax(building.bb_max[1], local2D.y());
+                    building.bb_min[0] = std::fmin(building.bb_min[0], local2D.x());
+                    building.bb_min[1] = std::fmin(building.bb_min[1], local2D.y());
+                }
+
+                for (const QGeoCoordinate &gpsCoord : building.points_gps_inner) {
+                    const QVector3D localPt = QGCGeo::convertGpsToEnu(gpsCoord, _gpsRefPoint);
+                    const QVector2D local2D(localPt.x(), localPt.y());
+                    building.points_local_inner.push_back(local2D);
+
+                    building.bb_max[0] = std::fmax(building.bb_max[0], local2D.x());
+                    building.bb_max[1] = std::fmax(building.bb_max[1], local2D.y());
+                    building.bb_min[0] = std::fmin(building.bb_min[0], local2D.x());
+                    building.bb_min[1] = std::fmin(building.bb_min[1], local2D.y());
+                }
+            }
+        } else {
+            _coordinateMin = handler.coordMin;
+            _coordinateMax = handler.coordMax;
+        }
+
         _mapLoadedFlag = true;
         emit fileParsed(true);
     } catch (const std::exception &e) {

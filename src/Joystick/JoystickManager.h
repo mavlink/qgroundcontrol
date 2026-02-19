@@ -29,7 +29,9 @@ class JoystickManager : public QObject
     /// Number of connected joysticks
     Q_PROPERTY(int joystickCount READ joystickCount NOTIFY availableJoystickNamesChanged)
 
+#ifdef QGC_UNITTEST_BUILD
     friend class JoystickManagerTest;
+#endif
 
 public:
     explicit JoystickManager(QObject *parent = nullptr);

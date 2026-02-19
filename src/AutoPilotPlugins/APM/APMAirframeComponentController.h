@@ -19,6 +19,9 @@ class APMAirframeComponentController : public FactPanelController
     QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QmlObjectListModel *frameClassModel MEMBER _frameClassModel CONSTANT)
+#ifdef QGC_UNITTEST_BUILD
+    friend class APMAirframeComponentControllerTest; // Unit test
+#endif
 
 public:
     explicit APMAirframeComponentController(QObject *parent = nullptr);

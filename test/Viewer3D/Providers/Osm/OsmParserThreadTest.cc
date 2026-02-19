@@ -1,9 +1,10 @@
 #include "OsmParserThreadTest.h"
-#include "OsmParserThread.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
+
+#include "OsmParserThread.h"
 
 void OsmParserThreadTest::_testParseValidOsmFile()
 {
@@ -12,7 +13,7 @@ void OsmParserThreadTest::_testParseValidOsmFile()
     QVERIFY(spy.isValid());
 
     QTemporaryFile tmpFile;
-    tmpFile.setFileTemplate(QDir::tempPath() + "/test_XXXXXX.osm");
+    tmpFile.setFileTemplate(tempPath(QStringLiteral("test_XXXXXX.osm")));
     QVERIFY(tmpFile.open());
 
     const QByteArray osmXml =
@@ -39,13 +40,7 @@ void OsmParserThreadTest::_testParseValidOsmFile()
     tmpFile.close();
 
     // Call parseOsmFile directly on the thread object to avoid needing a running event loop
-    // The file path needs the leading slash stripped on unix since parseOsmFile adds one
-    QString path = tmpFile.fileName();
-    if (path.startsWith('/')) {
-        path = path.mid(1);
-    }
-
-    thread._parseOsmFile(path);
+    thread._parseOsmFile(tmpFile.fileName());
 
     QCOMPARE(spy.count(), 1);
     QVERIFY(spy.first().at(0).toBool());
@@ -75,16 +70,11 @@ void OsmParserThreadTest::_testParseEmptyFile()
     QVERIFY(spy.isValid());
 
     QTemporaryFile tmpFile;
-    tmpFile.setFileTemplate(QDir::tempPath() + "/test_empty_XXXXXX.osm");
+    tmpFile.setFileTemplate(tempPath(QStringLiteral("test_empty_XXXXXX.osm")));
     QVERIFY(tmpFile.open());
     tmpFile.close();
 
-    QString path = tmpFile.fileName();
-    if (path.startsWith('/')) {
-        path = path.mid(1);
-    }
-
-    thread._parseOsmFile(path);
+    thread._parseOsmFile(tmpFile.fileName());
 
     // Empty file: should emit fileParsed(false) since decodeFile returns false
     QCOMPARE(spy.count(), 1);
@@ -95,13 +85,8 @@ void OsmParserThreadTest::_testBuildingTypeAppend()
 {
     OsmParserThread::BuildingType_t building;
 
-    std::vector<QGeoCoordinate> outerPoints = {
-        QGeoCoordinate(47.0, 8.0),
-        QGeoCoordinate(47.1, 8.1)
-    };
-    std::vector<QGeoCoordinate> innerPoints = {
-        QGeoCoordinate(47.05, 8.05)
-    };
+    std::vector<QGeoCoordinate> outerPoints = {QGeoCoordinate(47.0, 8.0), QGeoCoordinate(47.1, 8.1)};
+    std::vector<QGeoCoordinate> innerPoints = {QGeoCoordinate(47.05, 8.05)};
 
     building.append(outerPoints, false);
     QCOMPARE(static_cast<int>(building.points_gps.size()), 2);
@@ -110,8 +95,8 @@ void OsmParserThreadTest::_testBuildingTypeAppend()
     building.append(innerPoints, true);
     QCOMPARE(static_cast<int>(building.points_gps_inner.size()), 1);
 
-    std::vector<QVector2D> localOuter = { QVector2D(1, 2), QVector2D(3, 4) };
-    std::vector<QVector2D> localInner = { QVector2D(5, 6) };
+    std::vector<QVector2D> localOuter = {QVector2D(1, 2), QVector2D(3, 4)};
+    std::vector<QVector2D> localInner = {QVector2D(5, 6)};
 
     building.append(localOuter, false);
     QCOMPARE(static_cast<int>(building.points_local.size()), 2);
@@ -130,7 +115,8 @@ void OsmParserThreadTest::_testBuildingTypeBoundingBox()
     QCOMPARE_FUZZY(building.bb_min.y(), 1e6f, 1.0f);
 }
 
-static QString _writeResourceToTempFile(const QString &resourcePath, const QString &templateName)
+static QString _writeResourceToTempFile(const QString& tempDirectoryPath, const QString& resourcePath,
+                                        const QString& templateName)
 {
     QFile resFile(resourcePath);
     if (!resFile.open(QIODevice::ReadOnly)) {
@@ -139,34 +125,25 @@ static QString _writeResourceToTempFile(const QString &resourcePath, const QStri
     const QByteArray data = resFile.readAll();
     resFile.close();
 
-    auto *tmpFile = new QTemporaryFile(QDir::tempPath() + "/" + templateName);
-    if (!tmpFile->open()) {
-        delete tmpFile;
+    QTemporaryFile tmpFile(QDir(tempDirectoryPath).filePath(templateName));
+    tmpFile.setAutoRemove(false);
+    if (!tmpFile.open()) {
         return {};
     }
-    tmpFile->write(data);
-    tmpFile->flush();
-    tmpFile->close();
-
-    QString path = tmpFile->fileName();
-    tmpFile->setAutoRemove(true);
-    // Keep the QTemporaryFile alive as a leaked object — its destructor cleans up.
-    // This is acceptable in test code where the process exits shortly after.
-
-    if (path.startsWith('/')) {
-        path = path.mid(1);
-    }
-    return path;
+    tmpFile.write(data);
+    tmpFile.flush();
+    return tmpFile.fileName();
 }
 
 void OsmParserThreadTest::_testParseMultipleBuildings()
 {
-    const QString path = _writeResourceToTempFile(":/unittest/test_buildings.osm", "multi_XXXXXX.osm");
-    QVERIFY(!path.isEmpty());
-
+    const QString absolutePath =
+        _writeResourceToTempFile(tempDirPath(), QStringLiteral(":/unittest/test_buildings.osm"),
+                                 QStringLiteral("multi_XXXXXX.osm"));
+    QVERIFY(!absolutePath.isEmpty());
     OsmParserThread thread;
     QSignalSpy spy(&thread, &OsmParserThread::fileParsed);
-    thread._parseOsmFile(path);
+    thread._parseOsmFile(absolutePath);
 
     QCOMPARE(spy.count(), 1);
     QVERIFY(spy.first().at(0).toBool());
@@ -178,7 +155,7 @@ void OsmParserThreadTest::_testParseMultipleBuildings()
     // Way 200 is merged with 201 into the relation building (keyed on 200).
     // Way 201 is removed as a standalone entry.
     // So: 100, 101, 102, 200 = 4 buildings (201 merged into 200 by the relation).
-    const auto &buildings = thread.mapBuildings();
+    const auto& buildings = thread.mapBuildings();
 
     // Building A (way 100): 3 levels
     QVERIFY(buildings.contains(100));
@@ -192,28 +169,31 @@ void OsmParserThreadTest::_testParseMultipleBuildings()
     // Building C (way 102): bungalow = 1 level
     QVERIFY(buildings.contains(102));
     QCOMPARE(buildings.value(102).levels, 1.0f);
+
+    QFile::remove(absolutePath);
 }
 
 void OsmParserThreadTest::_testParseMultipolygonRelation()
 {
-    const QString path = _writeResourceToTempFile(":/unittest/test_buildings.osm", "mpoly_XXXXXX.osm");
-    QVERIFY(!path.isEmpty());
-
+    const QString absolutePath =
+        _writeResourceToTempFile(tempDirPath(), QStringLiteral(":/unittest/test_buildings.osm"),
+                                 QStringLiteral("mpoly_XXXXXX.osm"));
+    QVERIFY(!absolutePath.isEmpty());
     OsmParserThread thread;
     QSignalSpy spy(&thread, &OsmParserThread::fileParsed);
-    thread._parseOsmFile(path);
+    thread._parseOsmFile(absolutePath);
 
     QCOMPARE(spy.count(), 1);
     QVERIFY(spy.first().at(0).toBool());
 
-    const auto &buildings = thread.mapBuildings();
+    const auto& buildings = thread.mapBuildings();
 
     // The relation merges way 200 (outer) with way 201 (inner).
     // Way 201 should be removed as standalone; merged building keyed on 200.
     QVERIFY(buildings.contains(200));
     QVERIFY(!buildings.contains(201));
 
-    const auto &merged = buildings.value(200);
+    const auto& merged = buildings.value(200);
 
     // Outer ring has 5 points (closed polygon), inner has 5 points
     QVERIFY(!merged.points_gps.empty());
@@ -223,17 +203,22 @@ void OsmParserThreadTest::_testParseMultipolygonRelation()
 
     // Levels from relation: max of way 200 (5) and way 201 (0) = 5
     QCOMPARE(merged.levels, 5.0f);
+
+    QFile::remove(absolutePath);
 }
 
 void OsmParserThreadTest::_benchmarkParseOsmFile()
 {
-    const QString path = _writeResourceToTempFile(":/unittest/map_sim_small.osm", "bench_XXXXXX.osm");
-    QVERIFY(!path.isEmpty());
-
-    QBENCHMARK {
+    const QString absolutePath = _writeResourceToTempFile(tempDirPath(), QStringLiteral(":/unittest/map_sim_small.osm"),
+                                                          QStringLiteral("bench_XXXXXX.osm"));
+    QVERIFY(!absolutePath.isEmpty());
+    QBENCHMARK
+    {
         OsmParserThread thread;
-        thread._parseOsmFile(path);
+        thread._parseOsmFile(absolutePath);
     }
+
+    QFile::remove(absolutePath);
 }
 
 UT_REGISTER_TEST(OsmParserThreadTest, TestLabel::Unit)

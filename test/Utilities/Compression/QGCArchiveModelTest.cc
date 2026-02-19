@@ -1,5 +1,6 @@
 #include "QGCArchiveModelTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
@@ -342,7 +343,7 @@ void QGCArchiveModelTest::_testArchiveUrl()
     const QUrl fileUrl = QUrl::fromLocalFile(tempZipPath);
     model.setArchiveUrl(fileUrl);
     QCOMPARE(pathSpy.count(), 1);
-    QCOMPARE(model.archivePath(), tempZipPath);
+    QCOMPARE(QDir::cleanPath(model.archivePath()), QDir::cleanPath(tempZipPath));
     QVERIFY(loadingSpy.count() >= 1);
     QVERIFY(model.count() > 0);
     // Test that plain Qt resource path works (already tested in other tests)

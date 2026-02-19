@@ -1,7 +1,8 @@
 #include "GeoTagDataTest.h"
-#include "GeoTagData.h"
 
 #include <QtTest/QTest>
+
+#include "GeoTagData.h"
 
 void GeoTagDataTest::_captureResultEnumTest()
 {

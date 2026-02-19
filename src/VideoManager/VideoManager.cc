@@ -13,6 +13,7 @@
 #include "VideoSettings.h"
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
+#include "VideoItemStub.h"
 #else
 #include "VideoItemStub.h"
 #endif
@@ -46,7 +47,13 @@ VideoManager::VideoManager(QObject *parent)
     (void) qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
 #ifdef QGC_GST_STREAMING
-    if (!GStreamer::initialize()) {
+    const bool skipGStreamerForUnitTests =
+        qgcApp() && qgcApp()->runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
+
+    if (skipGStreamerForUnitTests) {
+        (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+        qCInfo(VideoManagerLog) << "Skipping GStreamer initialization for unit tests";
+    } else if (!GStreamer::initialize()) {
         qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
     }
 #else

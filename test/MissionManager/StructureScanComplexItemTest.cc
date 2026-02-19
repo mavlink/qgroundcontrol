@@ -2,14 +2,14 @@
 
 #include <QtCore/QJsonArray>
 
+#include "CoordFixtures.h"
 #include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
 #include "StructureScanComplexItem.h"
 
 StructureScanComplexItemTest::StructureScanComplexItemTest()
 {
-    _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199)
-                << QGeoCoordinate(47.634129020000003, -122.08887249)
+    _polyPoints << TestFixtures::Coord::missionTestOrigin() << QGeoCoordinate(47.634129020000003, -122.08887249)
                 << QGeoCoordinate(47.633619320000001, -122.08811074)
                 << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
@@ -20,7 +20,7 @@ void StructureScanComplexItemTest::init()
     _structureScanItem = new StructureScanComplexItem(planController(), false /* flyView */, QString() /* kmlFile */);
     _structureScanItem->setDirty(false);
     _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
+    QVERIFY(_multiSpy);
     QCOMPARE(_multiSpy->init(_structureScanItem), true);
 }
 

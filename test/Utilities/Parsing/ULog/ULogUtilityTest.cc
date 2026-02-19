@@ -1,9 +1,10 @@
 #include "ULogUtilityTest.h"
-#include "ULogUtility.h"
 
 #include <QtTest/QTest>
 
 #include <cstring>
+
+#include "ULogUtility.h"
 
 // ============================================================================
 // Header Validation Tests
@@ -12,8 +13,7 @@
 void ULogUtilityTest::_testIsValidHeader()
 {
     // Valid ULog header: "ULog" magic bytes
-    char valid[16] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x00, 0x00,
-                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    char valid[16] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
     QVERIFY(ULogUtility::isValidHeader(valid, sizeof(valid)));
 }
@@ -44,7 +44,7 @@ void ULogUtilityTest::_testIsValidHeaderQByteArray()
 {
     // Test QByteArray data with pointer/size API
     QByteArray valid("ULog", 4);
-    valid.append('\x01');  // version
+    valid.append('\x01');      // version
     valid.append(11, '\x00');  // rest of header
     QVERIFY(ULogUtility::isValidHeader(valid.constData(), valid.size()));
 

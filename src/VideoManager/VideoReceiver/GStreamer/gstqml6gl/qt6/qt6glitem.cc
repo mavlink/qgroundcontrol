@@ -117,8 +117,7 @@ Qt6GLVideoItem::Qt6GLVideoItem()
 
   this->priv->display = gst_qml6_get_gl_display(TRUE);
 
-  connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
-          SLOT(handleWindowChanged(QQuickWindow*)));
+  connect(this, &QQuickItem::windowChanged, this, &Qt6GLVideoItem::handleWindowChanged);
 
   this->proxy = QSharedPointer<Qt6GLVideoItemInterface>(new Qt6GLVideoItemInterface(this));
 

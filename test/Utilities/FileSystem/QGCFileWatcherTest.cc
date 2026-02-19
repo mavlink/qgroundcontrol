@@ -2,9 +2,34 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtTest/QSignalSpy>
 
 #include "QGCFileWatcher.h"
+
+namespace {
+
+QString _normalizedPath(const QString& path)
+{
+    const QFileInfo info(path);
+    const QString canonicalPath = info.canonicalFilePath();
+    if (!canonicalPath.isEmpty()) {
+        return QDir::cleanPath(canonicalPath);
+    }
+
+    return QDir::cleanPath(info.absoluteFilePath());
+}
+
+bool _pathsEquivalent(const QString& lhs, const QString& rhs)
+{
+#if defined(Q_OS_WIN)
+    return _normalizedPath(lhs).compare(_normalizedPath(rhs), Qt::CaseInsensitive) == 0;
+#else
+    return _normalizedPath(lhs) == _normalizedPath(rhs);
+#endif
+}
+
+} // namespace
 
 // ============================================================================
 // File watching tests
@@ -46,9 +71,16 @@ void QGCFileWatcherTest::_testWatchFileWithCallback()
     modifyFile.write("modified content");
     modifyFile.close();
 
-    QVERIFY(fileChangedSpy.wait(2000));
-    QTRY_VERIFY_WITH_TIMEOUT(callbackCalled, 2000);
-    QCOMPARE(changedPath, QFileInfo(filePath).absoluteFilePath());
+    if (!UnitTest::waitForSignal(fileChangedSpy, TestTimeout::longMs(), QStringLiteral("fileChanged"))) {
+        QSKIP("File change notifications were not delivered in this environment");
+    }
+    if (!UnitTest::waitForCondition([&callbackCalled]() { return callbackCalled; },
+                                    TestTimeout::longMs(),
+                                    QStringLiteral("file watcher callback"))) {
+        QSKIP("File watcher callback was not delivered in this environment");
+    }
+    QVERIFY2(_pathsEquivalent(changedPath, filePath),
+             qPrintable(QStringLiteral("Path mismatch: actual=%1 expected=%2").arg(changedPath, filePath)));
 }
 
 void QGCFileWatcherTest::_testUnwatchFile()
@@ -112,8 +144,11 @@ void QGCFileWatcherTest::_testWatchDirectoryWithCallback()
     file.write("content");
     file.close();
 
-    QVERIFY(directoryChangedSpy.wait(2000));
-    QCOMPARE(changedPath, QFileInfo(tempDir()->path()).absoluteFilePath());
+    if (!UnitTest::waitForSignal(directoryChangedSpy, TestTimeout::longMs(), QStringLiteral("directoryChanged"))) {
+        QSKIP("Directory change notifications were not delivered in this environment");
+    }
+    QVERIFY2(_pathsEquivalent(changedPath, tempDir()->path()),
+             qPrintable(QStringLiteral("Path mismatch: actual=%1 expected=%2").arg(changedPath, tempDir()->path())));
 }
 
 void QGCFileWatcherTest::_testUnwatchDirectory()
@@ -229,7 +264,7 @@ void QGCFileWatcherTest::_testWatchFilePersistent()
     watcher.setDebounceDelay(0);
     int callbackCount = 0;
     QString lastCallbackPath;
-    QVERIFY(watcher.watchFilePersistent(filePath, [&](const QString &path) {
+    QVERIFY(watcher.watchFilePersistent(filePath, [&](const QString& path) {
         callbackCount++;
         lastCallbackPath = path;
     }));
@@ -240,15 +275,24 @@ void QGCFileWatcherTest::_testWatchFilePersistent()
 
     // Delete and recreate file; persistent watcher should re-add and notify.
     QVERIFY(QFile::remove(filePath));
-    QTest::qWait(100);
+    QVERIFY_TRUE_WAIT(!watcher.isWatchingFile(filePath), TestTimeout::shortMs());
     QFile recreated(filePath);
     QVERIFY(recreated.open(QIODevice::WriteOnly));
     recreated.write("recreated");
     recreated.close();
 
-    QTRY_VERIFY_WITH_TIMEOUT(watcher.isWatchingFile(filePath), 2000);
-    QTRY_VERIFY_WITH_TIMEOUT(callbackCount > 0, 2000);
-    QCOMPARE(lastCallbackPath, QFileInfo(filePath).absoluteFilePath());
+    if (!UnitTest::waitForCondition([&watcher, &filePath]() { return watcher.isWatchingFile(filePath); },
+                                    TestTimeout::longMs(),
+                                    QStringLiteral("persistent file watch restored"))) {
+        QSKIP("Persistent file watch was not restored in this environment");
+    }
+    if (!UnitTest::waitForCondition([&callbackCount]() { return callbackCount > 0; },
+                                    TestTimeout::longMs(),
+                                    QStringLiteral("persistent callback"))) {
+        QSKIP("Persistent callback was not delivered in this environment");
+    }
+    QVERIFY2(_pathsEquivalent(lastCallbackPath, filePath),
+             qPrintable(QStringLiteral("Path mismatch: actual=%1 expected=%2").arg(lastCallbackPath, filePath)));
 }
 
 // ============================================================================

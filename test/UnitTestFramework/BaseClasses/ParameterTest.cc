@@ -4,7 +4,10 @@
 
 #include "Fact.h"
 #include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+
+QGC_LOGGING_CATEGORY(ParameterTestLog, "Test.ParameterTest")
 
 ParameterTest::ParameterTest(QObject* parent) : VehicleTest(parent)
 {
@@ -19,6 +22,7 @@ ParameterManager* ParameterTest::parameterManager() const
 Fact* ParameterTest::getFact(const QString& name, int componentId) const
 {
     if (!parameterManager()) {
+        qCWarning(ParameterTestLog) << "getFact: no parameter manager (vehicle not connected?)";
         return nullptr;
     }
 
@@ -27,6 +31,7 @@ Fact* ParameterTest::getFact(const QString& name, int componentId) const
     }
 
     if (!parameterManager()->parameterExists(componentId, name)) {
+        qCWarning(ParameterTestLog) << "getFact: parameter not found:" << name << "compId:" << componentId;
         return nullptr;
     }
 
@@ -49,6 +54,7 @@ bool ParameterTest::parameterExists(const QString& name, int componentId) const
 bool ParameterTest::waitForParameterUpdate(const QString& name, int timeoutMs)
 {
     if (!parameterManager()) {
+        qCWarning(ParameterTestLog) << "waitForParameterUpdate: no parameter manager";
         return false;
     }
 
@@ -58,9 +64,10 @@ bool ParameterTest::waitForParameterUpdate(const QString& name, int timeoutMs)
 
     Fact* fact = getFact(name);
     if (!fact) {
+        qCWarning(ParameterTestLog) << "waitForParameterUpdate: parameter not found:" << name;
         return false;
     }
 
     QSignalSpy spy(fact, &Fact::rawValueChanged);
-    return spy.wait(timeoutMs);
+    return UnitTest::waitForSignal(spy, timeoutMs, QStringLiteral("Fact::rawValueChanged"));
 }

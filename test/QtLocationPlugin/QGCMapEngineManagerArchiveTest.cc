@@ -1,6 +1,5 @@
 #include "QGCMapEngineManagerArchiveTest.h"
 
-#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtTest/QSignalSpy>
 
@@ -17,7 +16,7 @@ void QGCMapEngineManagerArchiveTest::_importArchiveRejectsInvalidInput()
     QVERIFY(!manager.importArchive(QStringLiteral("/nonexistent/archive.zip")));
     QVERIFY(manager.errorMessage().contains(QStringLiteral("Archive file not found")));
 
-    const QString plainFile = QDir::temp().filePath(QStringLiteral("qgc_map_manager_plain.txt"));
+    const QString plainFile = tempPath(QStringLiteral("qgc_map_manager_plain.txt"));
     QFile file(plainFile);
     QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
     file.write("not an archive");
@@ -38,7 +37,8 @@ void QGCMapEngineManagerArchiveTest::_importArchiveNoTileDatabase()
 
     QVERIFY(manager.importArchive(QStringLiteral(":/unittest/manifest.json.zip")));
 
-    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone, 10000);
+    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                              TestTimeout::mediumMs());
     QVERIFY(manager.errorMessage().contains(QStringLiteral("No tile database found in archive")));
 }
 

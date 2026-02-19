@@ -30,7 +30,7 @@ public:
     QString incrementSize;
     QString units;
     bool rebootRequired = false;
-    bool readOnly;
+    bool readOnly = false;
     QList<QPair<QString, QString>> values;
     QList<QPair<QString, QString>> bitmask;
 };

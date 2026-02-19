@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TempDirectoryTest.h"
 
-class GeoTagControllerTest : public UnitTest
+class GeoTagControllerTest : public TempDirectoryTest
 {
     Q_OBJECT
 

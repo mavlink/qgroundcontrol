@@ -1,0 +1,317 @@
+{
+  "description": "Baseline test durations for CI regression detection. Format: tests[test_key].seconds.",
+  "generated_at_utc": "2026-02-14T11:46:54Z",
+  "source": "ctest --output-junit -L Unit|Integration -LE Flaky|Network",
+  "tests": {
+    "ADSBTest::ADSBTest": {
+      "seconds": 1.16587
+    },
+    "APMAirframeComponentControllerTest::APMAirframeComponentControllerTest": {
+      "seconds": 2.3544
+    },
+    "AudioOutputTest::AudioOutputTest": {
+      "seconds": 0.062553
+    },
+    "CameraCalcTest::CameraCalcTest": {
+      "seconds": 0.275893
+    },
+    "CameraSectionTest::CameraSectionTest": {
+      "seconds": 0.844493
+    },
+    "CityMapGeometryTest::CityMapGeometryTest": {
+      "seconds": 0.0585342
+    },
+    "ComponentInformationCacheTest::ComponentInformationCacheTest": {
+      "seconds": 0.0598976
+    },
+    "ComponentInformationTranslationTest::ComponentInformationTranslationTest": {
+      "seconds": 0.069531
+    },
+    "CorridorScanComplexItemTest::CorridorScanComplexItemTest": {
+      "seconds": 0.352495
+    },
+    "DataFlashParserTest::DataFlashParserTest": {
+      "seconds": 0.348761
+    },
+    "DataFlashUtilityTest::DataFlashUtilityTest": {
+      "seconds": 0.0668035
+    },
+    "ExifParserTest::ExifParserTest": {
+      "seconds": 0.0645003
+    },
+    "ExifUtilityTest::ExifUtilityTest": {
+      "seconds": 0.0626055
+    },
+    "FTPControllerTest::FTPControllerTest": {
+      "seconds": 8.10473
+    },
+    "FTPManagerTest::FTPManagerTest": {
+      "seconds": 1.71777
+    },
+    "FWLandingPatternTest::FWLandingPatternTest": {
+      "seconds": 0.224532
+    },
+    "FactGroupTest::FactGroupTest": {
+      "seconds": 0.0675246
+    },
+    "FactMetaDataTest::FactMetaDataTest": {
+      "seconds": 0.0635547
+    },
+    "FactSystemTestGeneric::FactSystemTestGeneric": {
+      "seconds": 6.40522
+    },
+    "FactSystemTestPX4::FactSystemTestPX4": {
+      "seconds": 6.50906
+    },
+    "FactTest::FactTest": {
+      "seconds": 0.0673354
+    },
+    "FactValueSliderListModelTest::FactValueSliderListModelTest": {
+      "seconds": 0.0654026
+    },
+    "FirmwareUpgradeControllerTest::FirmwareUpgradeControllerTest": {
+      "seconds": 0.205713
+    },
+    "FollowMeTest::FollowMeTest": {
+      "seconds": 1.14088
+    },
+    "GeoCoordinateTypeTest::GeoCoordinateTypeTest": {
+      "seconds": 0.0598317
+    },
+    "GeoJsonHelperTest::GeoJsonHelperTest": {
+      "seconds": 0.0640422
+    },
+    "GeoTagControllerTest::GeoTagControllerTest": {
+      "seconds": 0.186876
+    },
+    "GeoTagDataTest::GeoTagDataTest": {
+      "seconds": 0.0692603
+    },
+    "GeoTagImageModelTest::GeoTagImageModelTest": {
+      "seconds": 0.0676902
+    },
+    "GeoTest::GeoTest": {
+      "seconds": 0.960327
+    },
+    "GpsTest::GpsTest": {
+      "seconds": 0.0670525
+    },
+    "InitialConnectTest::InitialConnectTest": {
+      "seconds": 6.68513
+    },
+    "JoystickManagerTest::JoystickManagerTest": {
+      "seconds": 0.576801
+    },
+    "JoystickTest::JoystickTest": {
+      "seconds": 0.579732
+    },
+    "JsonHelperTest::JsonHelperTest": {
+      "seconds": 0.0574545
+    },
+    "JsonParsingTest::JsonParsingTest": {
+      "seconds": 0.057854
+    },
+    "KMLDomDocumentTest::KMLDomDocumentTest": {
+      "seconds": 0.0638221
+    },
+    "LandingComplexItemTest::LandingComplexItemTest": {
+      "seconds": 0.338131
+    },
+    "LogDownloadTest::LogDownloadTest": {
+      "seconds": 1.7378
+    },
+    "MAVLinkLogManagerTest::MAVLinkLogManagerTest": {
+      "seconds": 0.219348
+    },
+    "MapProviderTest::MapProviderTest": {
+      "seconds": 0.0667295
+    },
+    "MavlinkLogTest::MavlinkLogTest": {
+      "seconds": 8.32996
+    },
+    "MissionCommandTreeEditorTest::MissionCommandTreeEditorTest": {
+      "seconds": 5.27864
+    },
+    "MissionCommandTreeTest::MissionCommandTreeTest": {
+      "seconds": 0.640216
+    },
+    "MissionControllerManagerTest::MissionControllerManagerTest": {
+      "seconds": 0.0621603
+    },
+    "MissionControllerTest::MissionControllerTest": {
+      "seconds": 10.653
+    },
+    "MissionItemTest::MissionItemTest": {
+      "seconds": 0.603392
+    },
+    "MissionManagerTest::MissionManagerTest": {
+      "seconds": 11.8225
+    },
+    "MissionSettingsTest::MissionSettingsTest": {
+      "seconds": 0.180082
+    },
+    "MockJoystickTest::MockJoystickTest": {
+      "seconds": 0.559345
+    },
+    "MultiSignalSpyTest::MultiSignalSpyTest": {
+      "seconds": 0.0642857
+    },
+    "OsmParserTest::OsmParserTest": {
+      "seconds": 0.0643322
+    },
+    "OsmParserThreadTest::OsmParserThreadTest": {
+      "seconds": 0.251832
+    },
+    "ParameterManagerTest::ParameterManagerTest": {
+      "seconds": 26.6801
+    },
+    "PlanMasterControllerTest::PlanMasterControllerTest": {
+      "seconds": 1.82095
+    },
+    "PlatformTest::PlatformTest": {
+      "seconds": 0.0609059
+    },
+    "QGCArchiveModelTest::QGCArchiveModelTest": {
+      "seconds": 0.0667616
+    },
+    "QGCArchiveWatcherTest::QGCArchiveWatcherTest": {
+      "seconds": 1.33558
+    },
+    "QGCCacheWorkerTest::QGCCacheWorkerTest": {
+      "seconds": 0.736326
+    },
+    "QGCCachedTileSetTest::QGCCachedTileSetTest": {
+      "seconds": 0.069113
+    },
+    "QGCCameraManagerTest::QGCCameraManagerTest": {
+      "seconds": 0.0662694
+    },
+    "QGCCompressionTest::QGCCompressionTest": {
+      "seconds": 2.2121
+    },
+    "QGCFileHelperTest::QGCFileHelperTest": {
+      "seconds": 0.0884415
+    },
+    "QGCFileWatcherTest::QGCFileWatcherTest": {
+      "seconds": 0.100344
+    },
+    "QGCMapEngineManagerArchiveTest::QGCMapEngineManagerArchiveTest": {
+      "seconds": 0.115553
+    },
+    "QGCMapPolygonTest::QGCMapPolygonTest": {
+      "seconds": 0.0654288
+    },
+    "QGCMapPolylineTest::QGCMapPolylineTest": {
+      "seconds": 0.0681801
+    },
+    "QGCMathTest::QGCMathTest": {
+      "seconds": 0.0633762
+    },
+    "QGCSerialPortInfoTest::QGCSerialPortInfoTest": {
+      "seconds": 0.0633188
+    },
+    "QGCStreamingDecompressionTest::QGCStreamingDecompressionTest": {
+      "seconds": 0.0675689
+    },
+    "QGCTileCacheDatabaseTest::QGCTileCacheDatabaseTest": {
+      "seconds": 0.717575
+    },
+    "QGCTileSetTest::QGCTileSetTest": {
+      "seconds": 0.0642604
+    },
+    "QGCVideoStreamInfoTest::QGCVideoStreamInfoTest": {
+      "seconds": 0.066375
+    },
+    "QmlObjectListModelTest::QmlObjectListModelTest": {
+      "seconds": 0.0610928
+    },
+    "QmlQuickTests::QmlQuickTests": {
+      "seconds": 0.0320309
+    },
+    "QmlTestRunner::QmlTestRunner": {
+      "seconds": 0.0608171
+    },
+    "RequestMessageTest::RequestMessageTest": {
+      "seconds": 1.55101
+    },
+    "RunGuardTest::RunGuardTest": {
+      "seconds": 0.0732259
+    },
+    "SDLTest::SDLTest": {
+      "seconds": 1.17423
+    },
+    "SendMavCommandWithHandlerTest::SendMavCommandWithHandlerTest": {
+      "seconds": 1.9587
+    },
+    "SendMavCommandWithSignallingTest::SendMavCommandWithSignallingTest": {
+      "seconds": 1.81034
+    },
+    "ShapeTest::ShapeTest": {
+      "seconds": 0.110999
+    },
+    "SignalHandlerTest::SignalHandlerTest": {
+      "seconds": 0.0606249
+    },
+    "SigningTest::SigningTest": {
+      "seconds": 0.0635523
+    },
+    "SimpleMissionItemTest::SimpleMissionItemTest": {
+      "seconds": 0.824757
+    },
+    "SpeedSectionTest::SpeedSectionTest": {
+      "seconds": 0.428163
+    },
+    "StatusTextHandlerTest::StatusTextHandlerTest": {
+      "seconds": 0.0663427
+    },
+    "StructureScanComplexItemTest::StructureScanComplexItemTest": {
+      "seconds": 0.235859
+    },
+    "SurveyComplexItemTest::SurveyComplexItemTest": {
+      "seconds": 2.12223
+    },
+    "SysStatusSensorInfoTest::SysStatusSensorInfoTest": {
+      "seconds": 0.0667915
+    },
+    "TerrainTileTest::TerrainTileTest": {
+      "seconds": 0.063868
+    },
+    "TestBaseClassesTest::TestBaseClassesTest": {
+      "seconds": 1.81895
+    },
+    "TestFixturesTest::TestFixturesTest": {
+      "seconds": 0.266585
+    },
+    "TransectStyleComplexItemTest::TransectStyleComplexItemTest": {
+      "seconds": 0.333972
+    },
+    "ULogParserTest::ULogParserTest": {
+      "seconds": 0.342795
+    },
+    "ULogUtilityTest::ULogUtilityTest": {
+      "seconds": 0.0589828
+    },
+    "UrlFactoryTest::UrlFactoryTest": {
+      "seconds": 0.0665445
+    },
+    "VehicleLinkManagerTest::VehicleLinkManagerTest": {
+      "seconds": 15.7449
+    },
+    "Viewer3DInstancingTest::Viewer3DInstancingTest": {
+      "seconds": 0.0681367
+    },
+    "Viewer3DManagerTest::Viewer3DManagerTest": {
+      "seconds": 0.0627887
+    },
+    "Viewer3DMapProviderTest::Viewer3DMapProviderTest": {
+      "seconds": 0.0612472
+    },
+    "Viewer3DTerrainGeometryTest::Viewer3DTerrainGeometryTest": {
+      "seconds": 0.0617059
+    },
+    "Viewer3DTileQueryTest::Viewer3DTileQueryTest": {
+      "seconds": 0.0652186
+    }
+  },
+  "version": 1
+}

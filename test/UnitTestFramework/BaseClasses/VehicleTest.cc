@@ -2,6 +2,7 @@
 
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
+#include <QtCore/QStringList>
 
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
@@ -51,6 +52,7 @@ void VehicleTest::init()
 
 void VehicleTest::cleanup()
 {
+    dumpFailureContextIfTestFailed(QStringLiteral("before VehicleTest teardown"));
     _disconnectMockLink();
     UnitTest::cleanup();
 }
@@ -58,6 +60,7 @@ void VehicleTest::cleanup()
 bool VehicleTest::waitForParametersReady(int timeoutMs)
 {
     if (!_vehicle || !_vehicle->parameterManager()) {
+        qCWarning(VehicleTestLog) << "waitForParametersReady: no vehicle or parameter manager";
         return false;
     }
 
@@ -79,12 +82,13 @@ bool VehicleTest::waitForParametersReady(int timeoutMs)
         return true;
     }
 
-    return spy.wait(timeoutMs);
+    return UnitTest::waitForSignal(spy, timeoutMs, QStringLiteral("ParameterManager::parametersReadyChanged"));
 }
 
 bool VehicleTest::waitForInitialConnect(int timeoutMs)
 {
     if (!_vehicle) {
+        qCWarning(VehicleTestLog) << "waitForInitialConnect: no vehicle";
         return false;
     }
 
@@ -106,7 +110,7 @@ bool VehicleTest::waitForInitialConnect(int timeoutMs)
         return true;
     }
 
-    return spy.wait(timeoutMs);
+    return UnitTest::waitForSignal(spy, timeoutMs, QStringLiteral("Vehicle::initialConnectComplete"));
 }
 
 void VehicleTest::simulateCommLoss(bool lost)
@@ -125,7 +129,7 @@ void VehicleTest::simulateConnectionRemoved()
 
 void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::FailureMode_t failureMode)
 {
-    Q_ASSERT(!_mockLink);
+    QVERIFY2(!_mockLink, "MockLink already connected");
 
     QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     QVERIFY2(spyVehicle.isValid(), "Failed to create spy for activeVehicleChanged");
@@ -153,14 +157,16 @@ void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::F
         (void)connect(_mockLink, &QObject::destroyed, this, [this]() { _mockLink = nullptr; });
     }
 
-    QVERIFY2(spyVehicle.wait(TestTimeout::longMs()), "Timeout waiting for vehicle connection");
+    QVERIFY2(UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")),
+             "Timeout waiting for vehicle connection");
     _vehicle = MultiVehicleManager::instance()->activeVehicle();
     QVERIFY2(_vehicle != nullptr, "Vehicle should not be null after connection");
 
     if (autopilot != MAV_AUTOPILOT_INVALID) {
         QSignalSpy spyConnect(_vehicle, &Vehicle::initialConnectComplete);
         QVERIFY2(spyConnect.isValid(), "Failed to create spy for initialConnectComplete");
-        QVERIFY2(spyConnect.wait(TestTimeout::longMs()), "Timeout waiting for initial connect");
+        QVERIFY2(UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete")),
+                 "Timeout waiting for initial connect");
     }
 }
 
@@ -173,31 +179,13 @@ void VehicleTest::_disconnectMockLink()
         _mockLink->disconnect();
         _mockLink = nullptr;
 
-        QVERIFY2(spyVehicle.wait(TestTimeout::longMs()), "Timeout waiting for vehicle disconnection");
+        QVERIFY2(UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")),
+                 "Timeout waiting for vehicle disconnection");
         _vehicle = MultiVehicleManager::instance()->activeVehicle();
         QVERIFY2(!_vehicle, "Vehicle should be null after disconnection");
 
-        // Process ALL pending events including deleteLater() calls to ensure the old vehicle
-        // and MockLink are fully destroyed before any subsequent test case creates new ones.
-        // This prevents use-after-free issues when callbacks from old objects fire during
-        // new object creation.
-        //
-        // We use a more aggressive approach on CI where system load can cause timer callbacks
-        // to be delayed: process events, wait a bit for any pending timers to fire, then
-        // process events again. This ensures cascading deletions complete fully.
-        //
-        // The DeferredDelete event type is specifically important for deleteLater() cleanup.
-        static const bool isCi = qEnvironmentVariableIsSet("CI") || qEnvironmentVariableIsSet("GITHUB_ACTIONS");
-        const int iterations = isCi ? 10 : 5;
-        const int waitMs = isCi ? 20 : 10;
-
-        for (int i = 0; i < iterations; ++i) {
-            QCoreApplication::processEvents(QEventLoop::AllEvents);
-            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-            if (i < iterations - 1) {
-                QTest::qWait(waitMs);  // Allow pending timer callbacks to fire
-            }
-        }
+        // Ensure old vehicle/MockLink cleanup fully settles before subsequent tests.
+        UnitTest::settleEventLoopForCleanup();
     }
 }
 
@@ -221,4 +209,34 @@ void VehicleTest::_missionItemsEqual(const MissionItem& actual, const MissionIte
     QVERIFY(QGC::fuzzyCompare(actual.param5(), expected.param5()));
     QVERIFY(QGC::fuzzyCompare(actual.param6(), expected.param6()));
     QVERIFY(QGC::fuzzyCompare(actual.param7(), expected.param7()));
+}
+
+QString VehicleTest::failureContextSummary() const
+{
+    QStringList lines;
+
+    const QString baseSummary = UnitTest::failureContextSummary();
+    if (!baseSummary.isEmpty()) {
+        lines.append(baseSummary.split('\n', Qt::SkipEmptyParts));
+    }
+
+    lines.append(QStringLiteral("VehicleTest: vehicle=%1 mockLink=%2")
+                     .arg(_vehicle ? QStringLiteral("present") : QStringLiteral("null"))
+                     .arg(_mockLink ? QStringLiteral("present") : QStringLiteral("null")));
+
+    if (_vehicle) {
+        lines.append(QStringLiteral("VehicleTest: vehicle.id=%1 initialConnectComplete=%2")
+                         .arg(_vehicle->id())
+                         .arg(_vehicle->isInitialConnectComplete()));
+        if (_vehicle->parameterManager()) {
+            lines.append(QStringLiteral("VehicleTest: parametersReady=%1")
+                             .arg(_vehicle->parameterManager()->parametersReady()));
+        }
+    }
+
+    if (_mockLink) {
+        lines.append(QStringLiteral("VehicleTest: mockLink.connected=%1").arg(_mockLink->isConnected()));
+    }
+
+    return lines.join('\n');
 }

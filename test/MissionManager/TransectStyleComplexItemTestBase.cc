@@ -5,7 +5,6 @@
 #include "PlanViewSettings.h"
 #include "SettingsManager.h"
 
-
 void TransectStyleComplexItemTestBase::init()
 {
     OfflineMissionTest::init();

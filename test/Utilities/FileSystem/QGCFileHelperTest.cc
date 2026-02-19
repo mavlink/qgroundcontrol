@@ -307,8 +307,7 @@ void QGCFileHelperTest::_testToLocalPathQrcUrls()
     QCOMPARE(QGCFileHelper::toLocalPath(qrcUrl), QString(":/test/file.txt"));
 
     // QUrl(":/resource/path") is invalid in Qt but should still round-trip to resource path.
-    QCOMPARE(QGCFileHelper::toLocalPath(QUrl(QStringLiteral(":/resource/path"))),
-             QStringLiteral(":/resource/path"));
+    QCOMPARE(QGCFileHelper::toLocalPath(QUrl(QStringLiteral(":/resource/path"))), QStringLiteral(":/resource/path"));
 }
 
 void QGCFileHelperTest::_testToLocalPathCompressionInterop()
