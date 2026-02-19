@@ -43,6 +43,17 @@ public class QGCLogger {
     }
 
     /**
+     * Logs a warning message along with a throwable.
+     *
+     * @param tag       The source of the log message.
+     * @param message   The message to log.
+     * @param throwable The throwable to log.
+     */
+    public static void w(String tag, String message, Throwable throwable) {
+        Log.w(tag, message, throwable);
+    }
+
+    /**
      * Logs an error message along with a throwable.
      *
      * @param tag       The source of the log message.

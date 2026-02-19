@@ -85,6 +85,33 @@ endif()
 
 message(STATUS "QGC: Bundling runtime dependencies with linuxdeploy...")
 
+# linuxdeploy can fail to resolve libblas.so.3 on runners where alternatives
+# are temporarily inconsistent after cached apt restores.
+set(_linuxdeploy_extra_args)
+execute_process(
+    COMMAND /bin/sh -c "ldconfig -p | awk '/libblas\\.so\\.3/{print $NF; exit}'"
+    OUTPUT_VARIABLE _blas_path
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT _blas_path)
+    file(GLOB _blas_candidates
+        "/usr/lib/*/libblas.so.3"
+        "/usr/lib/*/openblas*/libblas.so.3"
+        "/lib/*/libblas.so.3"
+    )
+    list(LENGTH _blas_candidates _blas_candidate_count)
+    if(_blas_candidate_count GREATER 0)
+        list(GET _blas_candidates 0 _blas_path)
+    endif()
+endif()
+
+if(_blas_path AND EXISTS "${_blas_path}")
+    message(STATUS "QGC: Using BLAS runtime dependency: ${_blas_path}")
+    list(APPEND _linuxdeploy_extra_args --library "${_blas_path}")
+else()
+    message(WARNING "QGC: Could not pre-resolve libblas.so.3; linuxdeploy will attempt auto-resolution")
+endif()
+
 execute_process(
     COMMAND "${LINUXDEPLOY_PATH}"
             --appdir "${APPDIR_PATH}"
@@ -92,6 +119,7 @@ execute_process(
             --desktop-file "${APPDIR_PATH}/usr/share/applications/${QGC_PACKAGE_NAME}.desktop"
             --custom-apprun "${CMAKE_BINARY_DIR}/AppRun"
             --icon-file "${APPDIR_PATH}/usr/share/icons/hicolor/256x256/apps/${CMAKE_PROJECT_NAME}.png"
+            ${_linuxdeploy_extra_args}
     COMMAND_ECHO STDOUT
     COMMAND_ERROR_IS_FATAL ANY
 )

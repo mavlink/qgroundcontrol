@@ -81,6 +81,35 @@ runs:
           echo "::warning::dpkg --configure -a failed; package state may be inconsistent"
         fi
 
+        multiarch="$(dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || true)"
+        blas_link=""
+        if [[ -n "${multiarch}" ]]; then
+          blas_link="/usr/lib/${multiarch}/libblas.so.3"
+        fi
+
+        # Ensure BLAS SONAME is resolvable before AppImage dependency bundling.
+        if ! ldconfig -p | grep -qE '\blibblas\.so\.3\b'; then
+          echo "::warning::libblas.so.3 missing from linker cache; attempting repair"
+          sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y -qq --reinstall libblas3 libopenblas0 || true
+          if [[ -n "${multiarch}" ]]; then
+            sudo update-alternatives --auto "libblas.so.3-${multiarch}" || true
+          fi
+
+          if [[ -n "${blas_link}" && ! -e "${blas_link}" ]]; then
+            candidate="$(find /usr/lib -type f -name 'libblas.so.3' 2>/dev/null | head -n1 || true)"
+            if [[ -n "${candidate}" ]]; then
+              echo "::warning::Creating compatibility symlink ${blas_link} -> ${candidate}"
+              sudo ln -sf "${candidate}" "${blas_link}"
+            fi
+          fi
+          sudo ldconfig
+        fi
+
+        if ! ldconfig -p | grep -qE '\blibblas\.so\.3\b'; then
+          echo "::error::libblas.so.3 is still missing after repair attempt"
+          exit 1
+        fi
+
     - name: Install optional apt packages (Linux)
       if: runner.os == 'Linux'
       shell: bash

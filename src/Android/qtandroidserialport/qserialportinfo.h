@@ -19,14 +19,14 @@ class Q_SERIALPORT_EXPORT QSerialPortInfo
     Q_DECLARE_PRIVATE(QSerialPortInfo)
 public:
     QSerialPortInfo();
-    explicit QSerialPortInfo(const QSerialPort &port);
-    explicit QSerialPortInfo(const QString &name);
-    QSerialPortInfo(const QSerialPortInfo &other);
-    QSerialPortInfo(const QSerialPortInfoPrivate &dd);
+    explicit QSerialPortInfo(const QSerialPort& port);
+    explicit QSerialPortInfo(const QString& name);
+    QSerialPortInfo(const QSerialPortInfo& other);
+    QSerialPortInfo(const QSerialPortInfoPrivate& dd);
     ~QSerialPortInfo();
 
-    QSerialPortInfo& operator=(const QSerialPortInfo &other);
-    void swap(QSerialPortInfo &other);
+    QSerialPortInfo& operator=(const QSerialPortInfo& other);
+    void swap(QSerialPortInfo& other);
 
     QString portName() const;
     QString systemLocation() const;
@@ -46,14 +46,13 @@ public:
     static QList<QSerialPortInfo> availablePorts();
 
 private:
-    // QSerialPortInfo(const QSerialPortInfoPrivate &dd);
-    friend QList<QSerialPortInfo> availablePortsByUdev(bool &ok);
-    friend QList<QSerialPortInfo> availablePortsBySysfs(bool &ok);
-    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok);
+    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool& ok);
     std::unique_ptr<QSerialPortInfoPrivate> d_ptr;
 };
 
 inline bool QSerialPortInfo::isNull() const
-{ return !d_ptr; }
+{
+    return !d_ptr;
+}
 
 QT_END_NAMESPACE

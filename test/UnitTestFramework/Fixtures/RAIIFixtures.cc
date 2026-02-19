@@ -16,6 +16,7 @@
 #include "Vehicle.h"
 
 #include <cstring>
+#include <memory>
 
 QGC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
 

@@ -5,8 +5,9 @@ buildscript {
     }
 
     dependencies {
-        //noinspection AndroidGradlePluginVersion
-        classpath 'com.android.tools.build:gradle:8.11.1'
+        // Qt injects `qtGradlePluginType` dynamically (application/library), which
+        // still relies on classpath-based plugin resolution.
+        classpath 'com.android.tools.build:gradle:9.0.1'
     }
 }
 
@@ -22,10 +23,92 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     //noinspection GradleDependency
     implementation 'androidx.core:core:1.16.0'
-    implementation 'com.github.mik3y:usb-serial-for-android:3.9.0'
+    implementation 'com.github.mik3y:usb-serial-for-android:3.10.0'
+    testImplementation 'junit:junit:4.13.2'
 }
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
+
+def loadQgcAndroidConfig() {
+    final Properties props = new Properties()
+    final List<File> candidates = []
+    if (project.hasProperty('QGC_ANDROID_PROPERTIES_FILE')) {
+        candidates.add(file(project.property('QGC_ANDROID_PROPERTIES_FILE').toString()))
+    }
+    final String envPath = System.getenv('QGC_ANDROID_PROPERTIES_FILE')
+    if (envPath != null && !envPath.isEmpty()) {
+        candidates.add(file(envPath))
+    }
+
+    // Default: look in the parent of the Gradle project dir (CMAKE_BINARY_DIR)
+    // androiddeployqt copies this build.gradle into <build>/android-build/,
+    // while CMake generates the properties file in <build>/.
+    candidates.add(new File(project.projectDir.parentFile, 'qgc-android-config.properties'))
+
+    for (File candidate : candidates) {
+        if (!candidate.exists()) {
+            continue
+        }
+
+        candidate.withInputStream { stream -> props.load(stream) }
+        println "qgcAndroidConfig: ${candidate.absolutePath}"
+        final List<String> requiredKeys = [
+            'QGC_ANDROID_COMPILE_SDK_VERSION',
+            'QGC_ANDROID_TARGET_SDK_VERSION',
+            'QGC_ANDROID_MIN_SDK_VERSION'
+        ]
+
+        for (String key : requiredKeys) {
+            final String value = props.getProperty(key)
+            if (value == null || value.isEmpty()) {
+                throw new GradleException("qgcAndroidConfig missing required key '${key}' in ${candidate.absolutePath}")
+            }
+        }
+
+        return props
+    }
+
+    throw new GradleException(
+        "Missing qgc-android-config.properties. Configure with CMake (qt-cmake) " +
+        "or pass -PQGC_ANDROID_PROPERTIES_FILE=/path/to/qgc-android-config.properties"
+    )
+}
+
+final Properties qgcAndroidConfig = loadQgcAndroidConfig()
+
+def qgcConfigOrDefault = { String key, Object fallback ->
+    final String value = qgcAndroidConfig.getProperty(key)
+    if (value != null && !value.isEmpty()) {
+        return value
+    }
+    return fallback
+}
+
+def resolveCpmJavaSourceDir = {
+    final List<File> candidates = []
+    final String sharedConfigPath = qgcAndroidConfig.getProperty('QGC_CPM_JAVA_SRC_DIR')
+    if (sharedConfigPath != null && !sharedConfigPath.isEmpty()) {
+        candidates.add(file(sharedConfigPath))
+    }
+    if (project.hasProperty('QGC_CPM_JAVA_SRC_DIR')) {
+        candidates.add(file(project.property('QGC_CPM_JAVA_SRC_DIR').toString()))
+    }
+    if (project.hasProperty('cpmJavaSrcDir')) {
+        candidates.add(file(project.property('cpmJavaSrcDir').toString()))
+    }
+    final String envPath = System.getenv('QGC_EXTRA_JAVA_SOURCES_DIR')
+    if (envPath != null && !envPath.isEmpty()) {
+        candidates.add(file(envPath))
+    }
+
+    for (File candidate : candidates) {
+        if (candidate.exists()) {
+            return candidate
+        }
+    }
+
+    return null
+}
 
 android {
     /*******************************************************
@@ -44,7 +127,7 @@ android {
 
     // namespace = androidPackageName
     namespace = "org.mavlink.qgroundcontrol"
-    compileSdkVersion androidCompileSdkVersion
+    compileSdk qgcConfigOrDefault('QGC_ANDROID_COMPILE_SDK_VERSION', androidCompileSdkVersion).toInteger()
     buildToolsVersion androidBuildToolsVersion
     ndkVersion = androidNdkVersion
 
@@ -54,7 +137,19 @@ android {
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = [qtAndroidDir + '/src', 'src', 'java']
+            java.srcDirs = [qtAndroidDir + '/src', 'src', 'java'].tap {
+                // CPM Java dependencies deployed to the build tree by CMake
+                def cpmJava = resolveCpmJavaSourceDir()
+                if (cpmJava != null) {
+                    it.add(cpmJava.absolutePath)
+                    println "cpmJavaSrcDir: ${cpmJava.absolutePath}"
+                } else {
+                    println "cpmJavaSrcDir: <not found>"
+                }
+            }
+            // Exclude JUnit test sources from the main source set — they are
+            // picked up via 'src' above but belong to the test configuration.
+            java.filter.exclude 'test/**'
             aidl.srcDirs = [qtAndroidDir + '/src', 'src', 'aidl']
             res.srcDirs = [qtAndroidDir + '/res', 'res']
             resources.srcDirs = ['resources']
@@ -62,6 +157,9 @@ android {
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
        }
+        test {
+            java.srcDirs = ['src/test/java']
+        }
     }
 
     tasks.withType(JavaCompile) {
@@ -78,8 +176,12 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    lintOptions {
+    lint {
         abortOnError = false
+        checkReleaseBuilds = true
+        // Keep lint strict for project sources but ignore third-party CPM Java
+        // code checked out under ../extra_java_sources.
+        lintConfig = file("lint.xml")
     }
 
     // Do not compress Qt binary resources file
@@ -88,28 +190,41 @@ android {
     }
 
     defaultConfig {
-        resConfig "en"
-        minSdkVersion qtMinSdkVersion
-        targetSdkVersion qtTargetSdkVersion
+        minSdk qgcConfigOrDefault('QGC_ANDROID_MIN_SDK_VERSION', qtMinSdkVersion).toInteger()
+        targetSdk qgcConfigOrDefault('QGC_ANDROID_TARGET_SDK_VERSION', qtTargetSdkVersion).toInteger()
         ndk.abiFilters = qtTargetAbiList.split(",")
+        if (qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_CODE')) {
+            versionCode Integer.parseInt(qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_CODE'))
+        }
+        if (qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_NAME')) {
+            versionName qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_NAME')
+        }
 
         println "timestamp: " + getTimestampStr()
         // println "applicationId: ${applicationId}"
-        println "minSdkVersion: ${minSdkVersion}"
-        println "targetSdkVersion: ${targetSdkVersion}"
+        println "minSdk: ${minSdk}"
+        println "targetSdk: ${targetSdk}"
         println "ndk.abiFilters: ${ndk.abiFilters}"
         println "versionCode: ${versionCode}"
         println "versionName: ${versionName}"
     }
 
-    println "androidPackageName: ${namespace}"
-    println "androidCompileSdkVersion: ${compileSdkVersion}"
+    // println "androidPackageName: ${namespace}"
+    println "compileSdk: ${compileSdk}"
     println "androidBuildToolsVersion: ${buildToolsVersion}"
     println "androidNdkVersion: ${ndkVersion}"
     println "project.name: ${project.name}"
     println "buildDir: ${buildDir}"
     println "qtAndroidDir: ${qtAndroidDir}"
     println "Java Version: " + JavaVersion.current()
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 
     packagingOptions {
         // exclude 'lib/*/*_qmltooling_*'
