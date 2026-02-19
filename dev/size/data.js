@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771500151691,
+  "lastUpdate": 1771501981052,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -272,6 +272,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "Symbol Count",
             "value": 74853,
+            "unit": "symbols"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "htramsey98@gmail.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "committer": {
+            "email": "68555040+HTRamsey@users.noreply.github.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "distinct": true,
+          "id": "e799c7604123b6142dd7bacc854d500f221d14aa",
+          "message": "Fix Bluetooth UI freezes",
+          "timestamp": "2026-02-19T06:32:34-05:00",
+          "tree_id": "fbc6f6c44d6ffa7c673c7607a4da507c747097c1",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/e799c7604123b6142dd7bacc854d500f221d14aa"
+        },
+        "date": 1771501958224,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Binary Size",
+            "value": 51616584,
+            "unit": "bytes"
+          },
+          {
+            "name": "Stripped Size",
+            "value": 46726872,
+            "unit": "bytes"
+          },
+          {
+            "name": "Symbol Count",
+            "value": 75054,
             "unit": "symbols"
           }
         ]
