@@ -88,8 +88,8 @@ To install Qt:
    - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **Mac:** `sh qgroundcontrol/tools/setup/install-dependencies-osx.sh`
-   - **Windows:** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
+   - **Mac:** `sh qgroundcontrol/tools/setup/install-dependencies-macos.sh`
+   - **Windows:** `qgroundcontrol/tools/setup/install-dependencies-windows.ps1`
    - **Android:** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Read [Qt 6 for Android](https://doc.qt.io/qt-6/android.html) carefully to the extend. Continue with [Gettting Started with Qt 6 for Android](https://doc.qt.io/qt-6/android-getting-started.html).
 
 2. Install OS-Specific Functionalities

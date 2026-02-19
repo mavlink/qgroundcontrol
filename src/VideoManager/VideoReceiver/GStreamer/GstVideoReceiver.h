@@ -66,12 +66,13 @@ private slots:
 
 private:
     GstElement *_makeSource(const QString &input);
-    GstElement *_makeDecoder(GstCaps *caps = nullptr, GstElement *videoSink = nullptr);
+    GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
     void _onNewSourcePad(GstPad *pad);
     void _onNewDecoderPad(GstPad *pad);
     bool _addDecoder(GstElement *src);
+    void _ensureVideoSinkInPipeline();
     bool _addVideoSink(GstPad *pad);
     void _noteTeeFrame();
     void _noteVideoSinkFrame();

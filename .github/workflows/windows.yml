@@ -102,12 +102,6 @@ jobs:
           build-type: ${{ matrix.build_type }}
           save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install GStreamer
-        if: matrix.arch == 'win64_msvc2022_64'
-        uses: ./.github/actions/install-dependencies
-        with:
-          gstreamer-version: ${{ steps.build-setup.outputs.gstreamer_windows_version }}
-
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
@@ -133,8 +127,21 @@ jobs:
           build-type: ${{ matrix.build_type }}
           stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
           extra-args: >-
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }}
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}/../msvc2022_64', env.QT_ROOT_DIR) || '' }}
+
+      - name: Add GStreamer to PATH
+        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        run: |
+          $cacheFile = "${{ runner.temp }}\build\CMakeCache.txt"
+          $match = Select-String -Path $cacheFile -Pattern '^GStreamer_ROOT_DIR:.*=(.+)$'
+          if (-not $match) {
+            Write-Error "GStreamer_ROOT_DIR not found in CMakeCache.txt"
+            exit 1
+          }
+          $rootDir = $match.Matches[0].Groups[1].Value
+          "$rootDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Build
         uses: ./.github/actions/cmake-build

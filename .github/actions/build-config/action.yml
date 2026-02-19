@@ -23,6 +23,9 @@ outputs:
   gstreamer_windows_version:
     description: GStreamer version (Windows)
     value: ${{ steps.read.outputs.gstreamer_windows_version }}
+  ndk_version:
+    description: Android NDK version (short form)
+    value: ${{ steps.read.outputs.ndk_version }}
   ndk_full_version:
     description: Android NDK version (full form for sdkmanager)
     value: ${{ steps.read.outputs.ndk_full_version }}

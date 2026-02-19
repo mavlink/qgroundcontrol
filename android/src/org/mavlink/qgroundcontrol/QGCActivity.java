@@ -6,9 +6,7 @@ import java.lang.reflect.Method;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +14,6 @@ import android.os.Environment;
 import android.os.PowerManager;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -31,6 +28,8 @@ import org.qtproject.qt.android.bindings.QtActivity;
 import org.libsdl.app.SDL;
 import org.libsdl.app.SDLControllerManager;
 import org.libsdl.app.HIDDeviceManager;
+
+import org.freedesktop.gstreamer.GStreamer;
 
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
@@ -60,7 +59,8 @@ public class QGCActivity extends QtActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        nativeInit();
+        final boolean nativeInitSucceeded = nativeInit();
+        initializeGStreamer(nativeInitSucceeded);
         acquireWakeLock();
         keepScreenOn();
         setupMulticastLock();
@@ -69,6 +69,27 @@ public class QGCActivity extends QtActivity {
 
         // Initialize SDL for joystick support
         initializeSDL();
+    }
+
+    private void initializeGStreamer(boolean nativeInitSucceeded) {
+        if (!nativeInitSucceeded) {
+            nativeGstInitResult(false);
+            Log.e(TAG, "nativeInit failed; skipping GStreamer initialization");
+            return;
+        }
+
+        try {
+            System.loadLibrary("gstreamer_android");
+            GStreamer.init(this);
+            nativeGstInitResult(true);
+            Log.i(TAG, "GStreamer initialized successfully");
+        } catch (UnsatisfiedLinkError e) {
+            nativeGstInitResult(false);
+            Log.e(TAG, "GStreamer library not found: " + e.getMessage());
+        } catch (Exception e) {
+            nativeGstInitResult(false);
+            Log.e(TAG, "Failed to initialize GStreamer: " + e.getMessage());
+        }
     }
 
     /**
@@ -225,8 +246,7 @@ public class QGCActivity extends QtActivity {
     }
 
     /**
-     * Checks and requests storage permissions for SD card access.
-     * For Android 11+ (API 30+), this requires MANAGE_EXTERNAL_STORAGE permission.
+     * Checks storage permissions for SD card access.
      *
      * @return true if permissions are granted, false otherwise
      */
@@ -237,21 +257,10 @@ public class QGCActivity extends QtActivity {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ (API 30+) requires MANAGE_EXTERNAL_STORAGE for full SD card access
+            // Android 11+ (API 30+) requires MANAGE_EXTERNAL_STORAGE for full SD card access.
+            // Do not launch settings from here; this path is called during startup.
             if (!Environment.isExternalStorageManager()) {
-                Log.i(TAG, "MANAGE_EXTERNAL_STORAGE not granted, requesting...");
-                try {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                    intent.setData(Uri.parse("package:" + m_instance.getPackageName()));
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    m_instance.startActivity(intent);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to open storage permission settings", e);
-                    // Fallback to general settings
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    m_instance.startActivity(intent);
-                }
+                Log.i(TAG, "MANAGE_EXTERNAL_STORAGE not granted");
                 return false;
             }
             Log.i(TAG, "MANAGE_EXTERNAL_STORAGE already granted");
@@ -347,6 +356,7 @@ public class QGCActivity extends QtActivity {
 
     // Native C++ functions
     public native boolean nativeInit();
+    public native void nativeGstInitResult(boolean success);
     public native void qgcLogDebug(final String message);
     public native void qgcLogWarning(final String message);
 }

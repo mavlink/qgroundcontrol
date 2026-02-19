@@ -375,7 +375,7 @@ jobs:
           junit-output: junit-results-linux-sanitizers.xml
           ctest-output: test-output-linux-sanitizers.txt
           include-labels: 'Unit|Integration'
-          exclude-labels: 'Flaky|Network'
+          exclude-labels: 'Flaky|Network|NoSanitizer'
           parallel: '1'
 
       - name: Analyze Unit Test Durations (Sanitizers)

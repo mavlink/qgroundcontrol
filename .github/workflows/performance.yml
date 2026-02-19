@@ -61,7 +61,7 @@ jobs:
         with:
           build-dir: build
           build-type: Release
-          stable: true
+          stable: false
 
       - name: Build
         uses: ./.github/actions/cmake-build

@@ -216,7 +216,7 @@ python3 ./tools/setup/install_dependencies.py --platform macos
 python .\tools\setup\install_dependencies.py --platform windows
 .\tools\setup\install-qt-windows.ps1
 
-# Build GStreamer from source (Linux, optional)
+# Build GStreamer from source (optional — CMake auto-downloads pre-built SDKs)
 python3 ./tools/setup/build-gstreamer.py --platform linux --prefix /opt/gstreamer
 ```
 
@@ -417,7 +417,7 @@ Version numbers and build settings are centralized in `.github/build-config.json
 {
   "qt_version": "6.10.1",
   "qt_modules": "qtcharts qtlocation ...",
-  "gstreamer_version": "1.24.12",
+  "gstreamer_default_version": "1.24.13",
   "ndk_version": "r27c",
   ...
 }

@@ -292,3 +292,16 @@ add_qgc_test(RequestMetaDataTypeStateMachineTest LABELS Integration Vehicle RESO
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+
+# ----------------------------------------------------------------------------
+# VideoManager
+# ----------------------------------------------------------------------------
+add_subdirectory(VideoManager)
+add_qgc_test(VideoManagerInitTest LABELS Unit)
+add_qgc_test(GStreamerTest LABELS Integration NoSanitizer)
+
+# Disabled tests
+# add_qgc_test(FlightGearUnitTest LABELS Integration)
+# add_qgc_test(LinkManagerTest LABELS Integration Comms)
+# add_qgc_test(SendMavCommandTest LABELS Integration Vehicle)
+# add_qgc_test(TCPLinkTest LABELS Integration Comms Network)
