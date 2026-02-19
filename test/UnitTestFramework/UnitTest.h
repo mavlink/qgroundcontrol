@@ -30,6 +30,7 @@ enum class TestLabel
     Joystick = 1 << 9,        ///< Joystick/controller tests
     AnalyzeView = 1 << 10,    ///< Log analysis and geo-tagging tests
     Terrain = 1 << 11,        ///< Terrain query and tile tests
+    QmlControls = 1 << 12,    ///< QML controls (map polygon, polyline, etc.)
 };
 Q_DECLARE_FLAGS(TestLabels, TestLabel)
 Q_DECLARE_OPERATORS_FOR_FLAGS(TestLabels)

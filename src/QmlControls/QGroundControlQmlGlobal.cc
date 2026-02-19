@@ -15,6 +15,7 @@
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
+#include "Fact.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
@@ -25,6 +26,7 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
+#include <cmath>
 
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
 
@@ -56,6 +58,23 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     _coord.setLatitude(settings.value(_flightMapPositionLatitudeSettingsKey,    _coord.latitude()).toDouble());
     _coord.setLongitude(settings.value(_flightMapPositionLongitudeSettingsKey,  _coord.longitude()).toDouble());
     _zoom = settings.value(_flightMapZoomSettingsKey, _zoom).toDouble();
+    if (!_coord.isValid()) {
+        _coord = QGeoCoordinate(0.0, 0.0);
+    }
+    if (!std::isfinite(_zoom) || (_zoom <= 0.0)) {
+        _zoom = 2.0;
+    }
+
+    if (SettingsManager *const settingsManager = SettingsManager::instance()) {
+        if (FlightMapSettings *const flightMapSettings = settingsManager->flightMapSettings()) {
+            if (Fact *const elevationMapProvider = flightMapSettings->elevationMapProvider()) {
+                (void) connect(elevationMapProvider, &Fact::rawValueChanged, this, [this](const QVariant &) {
+                    emit elevationProviderNameChanged();
+                });
+            }
+        }
+    }
+
     _flightMapPositionSettledTimer.setSingleShot(true);
     _flightMapPositionSettledTimer.setInterval(1000);
     (void) connect(&_flightMapPositionSettledTimer, &QTimer::timeout, this, []() {
@@ -67,14 +86,10 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
         settingsInner.setValue(_flightMapZoomSettingsKey, _zoom);
     });
     connect(this, &QGroundControlQmlGlobal::flightMapPositionChanged, this, [this](QGeoCoordinate){
-        if (!_flightMapPositionSettledTimer.isActive()) {
-            _flightMapPositionSettledTimer.start();
-        }
+        _flightMapPositionSettledTimer.start();
     });
     connect(this, &QGroundControlQmlGlobal::flightMapZoomChanged, this, [this](double){
-        if (!_flightMapPositionSettledTimer.isActive()) {
-            _flightMapPositionSettledTimer.start();
-        }
+        _flightMapPositionSettledTimer.start();
     });
 }
 
@@ -226,18 +241,17 @@ bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPo
             intersectPoint != line1A && intersectPoint != line1B;
 }
 
-void QGroundControlQmlGlobal::setFlightMapPosition(QGeoCoordinate& coordinate)
+void QGroundControlQmlGlobal::setFlightMapPosition(const QGeoCoordinate& coordinate)
 {
-    if (coordinate != flightMapPosition()) {
-        _coord.setLatitude(coordinate.latitude());
-        _coord.setLongitude(coordinate.longitude());
-        emit flightMapPositionChanged(coordinate);
+    if (coordinate != flightMapPosition() && coordinate.isValid()) {
+        _coord = coordinate;
+        emit flightMapPositionChanged(_coord);
     }
 }
 
 void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
 {
-    if (zoom != flightMapZoom()) {
+    if (std::isfinite(zoom) && (zoom > 0.0) && (zoom != flightMapZoom())) {
         _zoom = zoom;
         emit flightMapZoomChanged(zoom);
     }

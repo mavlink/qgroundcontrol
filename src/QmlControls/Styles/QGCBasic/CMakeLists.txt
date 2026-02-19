@@ -1,0 +1,77 @@
+set(QGC_QGCBASIC_STYLE_COMPONENTS
+    AbstractButton
+    Action
+    ActionGroup
+    ApplicationWindow
+    BusyIndicator
+    Button
+    ButtonGroup
+    Calendar
+    CalendarModel
+    CheckBox
+    CheckDelegate
+    ComboBox
+    Container
+    Control
+    DayOfWeekRow
+    DelayButton
+    Dial
+    Dialog
+    DialogButtonBox
+    Drawer
+    Frame
+    GroupBox
+    HorizontalHeaderView
+    HorizontalHeaderViewDelegate
+    ItemDelegate
+    Label
+    Menu
+    MenuBar
+    MenuBarItem
+    MenuItem
+    MenuSeparator
+    MonthGrid
+    Page
+    PageIndicator
+    Pane
+    Popup
+    ProgressBar
+    RadioButton
+    RadioDelegate
+    RangeSlider
+    RoundButton
+    ScrollBar
+    ScrollIndicator
+    ScrollView
+    SearchField
+    SelectionRectangle
+    Slider
+    SpinBox
+    SplitView
+    StackView
+    SwipeDelegate
+    SwipeView
+    Switch
+    SwitchDelegate
+    TabBar
+    TabButton
+    TableViewDelegate
+    TextArea
+    TextField
+    ToolBar
+    ToolButton
+    ToolSeparator
+    ToolTip
+    TreeViewDelegate
+    Tumbler
+    VerticalHeaderView
+    VerticalHeaderViewDelegate
+    WeekNumberColumn
+)
+
+set(QGC_QGCBASIC_STYLE_QML_FILES)
+foreach(component IN LISTS QGC_QGCBASIC_STYLE_COMPONENTS)
+    set(_style_qml "Styles/QGCBasic/${component}.qml")
+    set_source_files_properties(${_style_qml} PROPERTIES QT_RESOURCE_ALIAS "${component}.qml")
+    list(APPEND QGC_QGCBASIC_STYLE_QML_FILES ${_style_qml})
+endforeach()

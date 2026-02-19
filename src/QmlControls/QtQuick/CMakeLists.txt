@@ -1,0 +1,18 @@
+set(QGC_QT_QUICK_QML_FILES
+    QtQuick/QGCFontMetrics.qml
+    QtQuick/QGCGridView.qml
+    QtQuick/QGCLoader.qml
+    QtQuick/QGCNumberAnimation.qml
+    QtQuick/QGCPathView.qml
+    QtQuick/QGCPropertyAnimation.qml
+    QtQuick/QGCRepeater.qml
+    QtQuick/QGCShortcut.qml
+    QtQuick/QGCSystemPalette.qml
+    QtQuick/QGCState.qml
+    QtQuick/QGCTableView.qml
+    QtQuick/QGCTextEdit.qml
+    QtQuick/QGCTextMetrics.qml
+    QtQuick/QGCTextInput.qml
+    QtQuick/QGCTransition.qml
+    QtQuick/QGCTreeView.qml
+)

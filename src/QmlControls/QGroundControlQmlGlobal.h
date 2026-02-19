@@ -61,7 +61,7 @@ public:
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
-    Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
+    Q_PROPERTY(QGCPositionManager*  qgcPositionManager      READ    qgcPositionManager      CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
@@ -75,7 +75,7 @@ public:
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
     Q_PROPERTY(bool                 singleVehicleSupport    READ    singleVehicleSupport    CONSTANT)
     Q_PROPERTY(bool                 px4ProFirmwareSupported READ    px4ProFirmwareSupported CONSTANT)
-    Q_PROPERTY(int                  apmFirmwareSupported    READ    apmFirmwareSupported    CONSTANT)
+    Q_PROPERTY(bool                 apmFirmwareSupported    READ    apmFirmwareSupported    CONSTANT)
     Q_PROPERTY(QGeoCoordinate       flightMapPosition       READ    flightMapPosition       WRITE setFlightMapPosition  NOTIFY flightMapPositionChanged)
     Q_PROPERTY(double               flightMapZoom           READ    flightMapZoom           WRITE setFlightMapZoom      NOTIFY flightMapZoomChanged)
     Q_PROPERTY(double               flightMapInitialZoom    MEMBER  _flightMapInitialZoom   CONSTANT)   ///< Zoom level to use when either gcs or vehicle shows up for first time
@@ -100,8 +100,8 @@ public:
 
     //-------------------------------------------------------------------------
     // Elevation Provider
-    Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              CONSTANT)
-    Q_PROPERTY(QString  elevationProviderNotice         READ elevationProviderNotice            CONSTANT)
+    Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              NOTIFY elevationProviderNameChanged)
+    Q_PROPERTY(QString  elevationProviderNotice         READ elevationProviderNotice            NOTIFY elevationProviderNameChanged)
 
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
@@ -162,7 +162,7 @@ public:
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
-    QGCPositionManager*     qgcPositionManger   ()  { return _qgcPositionManager; }
+    QGCPositionManager*     qgcPositionManager  ()  { return _qgcPositionManager; }
     MissionCommandTree*     missionCommandTree  ()  { return _missionCommandTree; }
     VideoManager*           videoManager        ()  { return _videoManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
@@ -203,7 +203,7 @@ public:
     bool    px4ProFirmwareSupported ();
     bool    apmFirmwareSupported    ();
 
-    void    setFlightMapPosition        (QGeoCoordinate& coordinate);
+    void    setFlightMapPosition        (const QGeoCoordinate& coordinate);
     void    setFlightMapZoom            (double zoom);
 
     QString parameterFileExtension  (void) const;
@@ -223,6 +223,7 @@ signals:
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
     void showMessageDialogRequested     (QObject* owner, QString title, QString text, int buttons, QJSValue acceptFunction, QJSValue closeFunction);
+    void elevationProviderNameChanged   ();
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
