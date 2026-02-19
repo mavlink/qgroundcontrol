@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771501981052,
+  "lastUpdate": 1771532565778,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -311,6 +311,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "Symbol Count",
             "value": 75054,
+            "unit": "symbols"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "htramsey98@gmail.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "committer": {
+            "email": "68555040+HTRamsey@users.noreply.github.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "distinct": true,
+          "id": "64c8917c1a75ea3b5c766185389b0c60664b9936",
+          "message": "tests: expand coverage and fix sanitizer regressions\n\n- add reusable unit-test workflow/actions and broaden unit/integration coverage\n\n- fix sanitizer and UB issues in mission, MAVLink, metadata, and cache paths\n\n- harden runtime edge cases across NTRIP, joystick/SDL, GeoJSON/OSM, and video init",
+          "timestamp": "2026-02-19T14:50:19-05:00",
+          "tree_id": "2d6d11591d431b7ea221f64ee2fe4992041d645b",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/64c8917c1a75ea3b5c766185389b0c60664b9936"
+        },
+        "date": 1771532544702,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Binary Size",
+            "value": 51636680,
+            "unit": "bytes"
+          },
+          {
+            "name": "Stripped Size",
+            "value": 46744600,
+            "unit": "bytes"
+          },
+          {
+            "name": "Symbol Count",
+            "value": 75094,
             "unit": "symbols"
           }
         ]
