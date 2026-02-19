@@ -64,7 +64,8 @@ runs:
             macos)   version_key="gstreamer_macos_version" ;;
             windows) version_key="gstreamer_windows_version" ;;
             android) version_key="gstreamer_android_version" ;;
-            *)       version_key="gstreamer_version" ;;
+            ios)     version_key="gstreamer_ios_version" ;;
+            *)       version_key="gstreamer_default_version" ;;
           esac
           version=$("${py_cmd}" ./tools/setup/read_config.py --get "${version_key}")
         fi

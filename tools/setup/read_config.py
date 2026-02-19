@@ -62,8 +62,9 @@ EXPORT_KEYS = [
     "qt_minimum_version",
     "qt_modules",
     "gstreamer_minimum_version",
-    "gstreamer_version",
+    "gstreamer_default_version",
     "gstreamer_macos_version",
+    "gstreamer_ios_version",
     "gstreamer_android_version",
     "gstreamer_windows_version",
     "xcode_version",
@@ -88,6 +89,8 @@ def get_export_values(config: dict[str, Any]) -> dict[str, str]:
         if key in config:
             env_name = key.upper()
             result[env_name] = str(config[key])
+            if key == "gstreamer_default_version":
+                result["GSTREAMER_VERSION"] = str(config[key])
     return result
 
 
@@ -181,6 +184,9 @@ def main() -> int:
     # Handle --get for single value
     if args.get:
         key = args.get.lower()  # Normalize to lowercase
+        if key == "gstreamer_version" and "gstreamer_default_version" in config:
+            print(config["gstreamer_default_version"])
+            return 0
         if key in config:
             print(config[key])
             return 0

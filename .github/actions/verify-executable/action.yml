@@ -13,6 +13,10 @@ inputs:
     description: "Working directory (defaults to binary parent directory)"
     required: false
     default: ""
+  build-dir:
+    description: "CMake build directory (used to locate auto-downloaded GStreamer SDK for dev builds)"
+    required: false
+    default: ""
   timeout:
     description: "Timeout in seconds"
     required: false
@@ -26,6 +30,7 @@ runs:
       env:
         INPUT_BINARY_PATH: ${{ inputs.binary-path }}
         INPUT_WORKING_DIR: ${{ inputs.working-dir }}
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
         INPUT_TYPE: ${{ inputs.type }}
         INPUT_TIMEOUT: ${{ inputs.timeout }}
       run: |
@@ -68,6 +73,36 @@ runs:
         else
           echo "Error: Python interpreter not found in PATH" >&2
           exit 1
+        fi
+
+        # For dev builds (before cmake --install), GStreamer plugins haven't been
+        # copied into the app bundle yet. Extract GStreamer_ROOT_DIR from CMakeCache
+        # and set env vars so the runtime can find the auto-downloaded SDK's plugins.
+        if [[ -n "${INPUT_BUILD_DIR}" && -f "${INPUT_BUILD_DIR}/CMakeCache.txt" ]]; then
+          gst_root=$(grep -m1 '^GStreamer_ROOT_DIR:' "${INPUT_BUILD_DIR}/CMakeCache.txt" | cut -d= -f2-)
+          if [[ -n "${gst_root}" && -d "${gst_root}/lib/gstreamer-1.0" ]]; then
+            echo "Setting GStreamer env from build cache: ${gst_root}"
+            plugin_dir="${gst_root}/lib/gstreamer-1.0"
+            export GST_PLUGIN_PATH="${plugin_dir}"
+            export GST_PLUGIN_PATH_1_0="${plugin_dir}"
+            export GST_PLUGIN_SYSTEM_PATH="${plugin_dir}"
+            export GST_PLUGIN_SYSTEM_PATH_1_0="${plugin_dir}"
+
+            scanner="${gst_root}/libexec/gstreamer-1.0/gst-plugin-scanner"
+            if [[ "${RUNNER_OS}" == "Windows" ]]; then
+              scanner="${scanner}.exe"
+            fi
+            if [[ -x "${scanner}" ]]; then
+              export GST_PLUGIN_SCANNER="${scanner}"
+              export GST_PLUGIN_SCANNER_1_0="${scanner}"
+            fi
+
+            if [[ "${RUNNER_OS}" == "macOS" ]]; then
+              export DYLD_LIBRARY_PATH="${gst_root}/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+            elif [[ "${RUNNER_OS}" == "Windows" ]]; then
+              export PATH="${gst_root}/bin${PATH:+:$PATH}"
+            fi
+          fi
         fi
 
         set +e

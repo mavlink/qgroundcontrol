@@ -2,14 +2,18 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
-#include <QtCore/QRunnable>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include <functional>
+
+#include <QtCore/QFutureWatcher>
+#include <QtCore/QFuture>
+#include <QtCore/QPromise>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class QQuickWindow;
-class FinishVideoInitialization;
 class SubtitleWriter;
 class Vehicle;
 class VideoReceiver;
@@ -46,8 +50,6 @@ public:
     explicit VideoManager(QObject *parent = nullptr);
     ~VideoManager();
 
-    friend class FinishVideoInitialization;
-
     static VideoManager *instance();
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
@@ -57,6 +59,8 @@ public:
     Q_INVOKABLE void stopVideo();
 
     void init(QQuickWindow *mainWindow);
+    void startGStreamerInit();
+    bool waitForGStreamerInit(int timeoutMs = 60000);
     void cleanup();
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
@@ -101,7 +105,10 @@ private slots:
     void _videoSourceChanged();
 
 private:
+    static bool _shouldSkipGStreamerForUnitTests();
     void _initAfterQmlIsReady();
+    void _onGstInitComplete(bool success);
+    void _createVideoReceivers();
     void _initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window);
     bool _updateAutoStream(VideoReceiver *receiver);
     bool _updateUVC(VideoReceiver *receiver);
@@ -118,9 +125,26 @@ private:
     SubtitleWriter *_subtitleWriter = nullptr;
     VideoSettings *_videoSettings = nullptr;
 
+    enum class InitState : uint8_t {
+        NotStarted,
+        Pending,
+        GstReady,
+        QmlReady,
+        Running,
+        Failed
+    };
+
+    InitState _initState = InitState::NotStarted;
+    QFuture<bool> _gstInitFuture;
     bool _initialized = false;
-    bool _initAfterQmlIsReadyDone = false;
+    bool _gstreamerDisabledForUnitTests = false;
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_ANDROID)
+    QPromise<bool> _gstInitPromise;
+#endif
     bool _fullScreen = false;
+    // Written from VideoReceiver worker-thread callbacks (dispatched via
+    // QueuedConnection), read on the main/QML thread. QAtomicInteger prevents
+    // torn reads; associated signals are emitted on the main thread.
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
     QAtomicInteger<bool> _streaming = false;
@@ -129,15 +153,8 @@ private:
     QString _uvcVideoSourceID;
     Vehicle *_activeVehicle = nullptr;
     QQuickWindow *_mainWindow = nullptr;
-};
-
-/*===========================================================================*/
-
-class FinishVideoInitialization : public QRunnable
-{
-public:
-    FinishVideoInitialization();
-    ~FinishVideoInitialization();
-
-    void run() final;
+#ifdef QGC_UNITTEST_BUILD
+    friend class VideoManagerInitTest;
+    std::function<void()> _createVideoReceiversForTest;
+#endif
 };

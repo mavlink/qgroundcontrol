@@ -102,6 +102,7 @@ jobs:
         uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
+          build-dir: ${{ runner.temp }}/build
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'

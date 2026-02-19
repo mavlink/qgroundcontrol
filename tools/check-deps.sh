@@ -190,7 +190,7 @@ check_gstreamer_version() {
     fi
 
     local current_version
-    current_version=$(python3 -c "import json; print(json.load(open('$config_file')).get('gstreamer_version', 'unknown'))")
+    current_version=$(python3 -c "import json; print(json.load(open('$config_file')).get('gstreamer_default_version', 'unknown'))")
 
     echo "  Configured: GStreamer $current_version"
 

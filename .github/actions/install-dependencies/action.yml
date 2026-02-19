@@ -1,15 +1,7 @@
 name: Install Dependencies
-description: Install platform-specific build dependencies (GStreamer, etc.)
+description: Install platform-specific build dependencies. GStreamer is automatically downloaded by CMake during configure.
 
 inputs:
-  gstreamer:
-    description: 'Install GStreamer (Windows x64 only)'
-    required: false
-    default: 'true'
-  gstreamer-version:
-    description: 'GStreamer version (default: from build-config.json)'
-    required: false
-    default: ''
   vulkan:
     description: 'Install Vulkan SDK (Windows only, for validation layers)'
     required: false
@@ -26,8 +18,6 @@ runs:
       if: runner.os == 'Windows'
       uses: nick-fields/retry@v3
       env:
-        INPUT_GSTREAMER: ${{ inputs.gstreamer }}
-        INPUT_GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
         INPUT_VULKAN: ${{ inputs.vulkan }}
       with:
         timeout_minutes: 10
@@ -35,11 +25,7 @@ runs:
         shell: python
         command: |
           import os, subprocess, sys
-          args = [sys.executable, './tools/setup/install_dependencies.py', '--platform', 'windows']
-          if os.environ.get('INPUT_GSTREAMER_VERSION'):
-              args += ['--gstreamer-version', os.environ['INPUT_GSTREAMER_VERSION']]
-          if os.environ.get('INPUT_GSTREAMER') != 'true':
-              args.append('--skip-gstreamer')
+          args = [sys.executable, './tools/setup/install_dependencies.py', '--platform', 'windows', '--skip-gstreamer']
           if os.environ.get('INPUT_VULKAN') == 'true':
               args.append('--vulkan')
           sys.exit(subprocess.run(args).returncode)
