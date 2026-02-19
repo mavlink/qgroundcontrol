@@ -190,11 +190,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     # Runtime benchmarks are noisy and expensive on shared runners.
-    # Run only on manual dispatch or push to master, not on every PR.
-    if: github.event.inputs.run_benchmarks == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    # Run only on manual dispatch when explicitly requested.
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_benchmarks == 'true'
     needs: build
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Harden Runner
@@ -239,21 +239,13 @@ jobs:
           test-filter: MAVLinkBenchmark
           output-file: benchmark.json
 
-      - name: Ensure gh-pages branch exists
-        run: |
-          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-            echo "Initializing gh-pages branch for benchmark storage..."
-            SHA=$(git commit-tree "$(git hash-object -t tree /dev/null)" -m "Initialize GitHub Pages")
-            git push origin "${SHA}:refs/heads/gh-pages" || echo "Branch may have been created concurrently"
-          fi
-
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: customSmallerIsBetter
           output-file-path: benchmark.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: ${{ github.event_name == 'push' }}
+          auto-push: false
           benchmark-data-dir-path: dev/bench
           alert-threshold: '150%'
           comment-on-alert: true

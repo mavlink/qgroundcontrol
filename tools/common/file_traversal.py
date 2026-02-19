@@ -14,6 +14,7 @@ DEFAULT_SKIP_DIRS = frozenset({
     'libs',
     'test',
     '.cache',
+    '.ccache',
     'cpm_modules',
     '_deps',
     'node_modules',

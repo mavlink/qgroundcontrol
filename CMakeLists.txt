@@ -106,7 +106,11 @@ endif()
 # CPM (CMake Package Manager) Configuration
 # ----------------------------------------------------------------------------
 if(NOT CPM_SOURCE_CACHE)
-    set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cache/CPM" CACHE PATH "CPM source cache directory")
+    if(DEFINED ENV{CPM_SOURCE_CACHE} AND NOT "$ENV{CPM_SOURCE_CACHE}" STREQUAL "")
+        set(CPM_SOURCE_CACHE "$ENV{CPM_SOURCE_CACHE}" CACHE PATH "CPM source cache directory")
+    else()
+        set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cache/CPM" CACHE PATH "CPM source cache directory")
+    endif()
 endif()
 include(CPM)
 
@@ -227,6 +231,9 @@ qt_policy(
     SET QTP0004 NEW  # Improved translation handling
     SET QTP0005 NEW  # Enhanced deployment handling
 )
+
+# Disable QML cache generation in Debug builds across all targets.
+add_compile_definitions($<$<CONFIG:Debug>:QT_QML_NO_CACHEGEN>)
 
 # ============================================================================
 # Custom Build Subdirectory
