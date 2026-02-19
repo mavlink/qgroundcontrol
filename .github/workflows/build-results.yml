@@ -16,6 +16,9 @@ jobs:
     name: Post Build Results
     runs-on: ubuntu-latest
     if: github.event.workflow_run.event == 'pull_request'
+    concurrency:
+      group: build-results-pr-${{ github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
     timeout-minutes: 10
 
     steps:
@@ -30,6 +33,7 @@ jobs:
           sparse-checkout: |
             .github/actions/download-all-artifacts
             .github/actions/collect-artifact-sizes
+            .github/scripts/generate_build_results_comment.py
           sparse-checkout-cone-mode: false
 
       - name: Get PR number
@@ -155,21 +159,21 @@ jobs:
             core.setOutput('precommit_run_id', preCommitRun ? String(preCommitRun.id) : '');
 
       - name: Collect artifact sizes
-        if: steps.pr.outputs.result != 'null'
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           output-file: pr-sizes.json
 
       - name: Download artifacts from all platform workflows
-        if: steps.pr.outputs.result != 'null'
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download pre-commit results artifact
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.precommit_run_id != ''
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true' && steps.builds.outputs.precommit_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v7
         with:
@@ -179,8 +183,7 @@ jobs:
           path: artifacts/pre-commit-results
 
       - name: Restore baseline sizes
-        if: steps.pr.outputs.result != 'null'
-        id: baseline-sizes
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         uses: actions/cache/restore@v5
         continue-on-error: true
         with:
@@ -188,8 +191,7 @@ jobs:
           key: artifact-sizes-baseline-latest
 
       - name: Restore baseline coverage
-        if: steps.pr.outputs.result != 'null'
-        id: baseline-coverage
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         uses: actions/cache/restore@v5
         continue-on-error: true
         with:
@@ -198,242 +200,57 @@ jobs:
 
       - name: Generate combined report
         if: steps.pr.outputs.result != 'null'
+        env:
+          BUILD_TABLE: ${{ steps.builds.outputs.table }}
+          BUILD_SUMMARY: ${{ steps.builds.outputs.summary }}
+          PRECOMMIT_STATUS: ${{ steps.builds.outputs.precommit_status }}
+          PRECOMMIT_URL: ${{ steps.builds.outputs.precommit_url }}
+          PRECOMMIT_RESULTS_PATH: artifacts/pre-commit-results/pre-commit-results.json
+          TEST_RESULTS_GLOB: artifacts/test-results-*/test-output.txt
+          COVERAGE_XML: artifacts/coverage-report/coverage.xml
+          BASELINE_COVERAGE_XML: baseline-coverage.xml
+          PR_SIZES_JSON: pr-sizes.json
+          BASELINE_SIZES_JSON: baseline-sizes.json
+          TRIGGERED_BY: ${{ github.event.workflow_run.name }}
+          COMMENT_OUTPUT: comment.md
         run: |
-          cat > comment.md << 'HEADER'
-          ## Build Results
-
-          ### Platform Status
-
-          ${{ steps.builds.outputs.table }}
-          **${{ steps.builds.outputs.summary }}**
-
-          ### Pre-commit
-
-          | Check | Status | Details |
-          |-------|--------|---------|
-          HEADER
-
-          PRECOMMIT_STATUS="${{ steps.builds.outputs.precommit_status }}"
-          PRECOMMIT_URL="${{ steps.builds.outputs.precommit_url }}"
-          PRECOMMIT_DETAILS="-"
-          PRECOMMIT_NOTE=""
-
-          if [[ -n "$PRECOMMIT_URL" ]]; then
-            PRECOMMIT_DETAILS="[View]($PRECOMMIT_URL)"
-          fi
-
-          if [[ -f "artifacts/pre-commit-results/pre-commit-results.json" ]]; then
-            PARSED_PRECOMMIT=$(python3 - << 'PY'
-          import json
-          from pathlib import Path
-
-          path = Path("artifacts/pre-commit-results/pre-commit-results.json")
-          try:
-              data = json.loads(path.read_text(encoding="utf-8"))
-          except Exception:
-              print("||||")
-              raise SystemExit(0)
-
-          exit_code = str(data.get("exit_code", "1")).strip()
-          passed = str(data.get("passed", "0")).strip()
-          failed = str(data.get("failed", "0")).strip()
-          skipped = str(data.get("skipped", "0")).strip()
-          run_url = str(data.get("run_url", "")).strip()
-          status = "Passed" if exit_code == "0" else "Failed (non-blocking)"
-          print(f"{status}|{passed}|{failed}|{skipped}|{run_url}")
-          PY
-            )
-
-            IFS='|' read -r ART_STATUS ART_PASSED ART_FAILED ART_SKIPPED ART_URL <<< "$PARSED_PRECOMMIT"
-
-            if [[ -n "$ART_STATUS" ]]; then
-              PRECOMMIT_STATUS="$ART_STATUS"
-            fi
-            if [[ -n "$ART_URL" ]]; then
-              PRECOMMIT_DETAILS="[View]($ART_URL)"
-            fi
-            if [[ -n "$ART_PASSED" ]]; then
-              PRECOMMIT_NOTE="Pre-commit hooks: ${ART_PASSED} passed, ${ART_FAILED:-0} failed, ${ART_SKIPPED:-0} skipped."
-            fi
-          fi
-
-          echo "| pre-commit | $PRECOMMIT_STATUS | $PRECOMMIT_DETAILS |" >> comment.md
-          echo "" >> comment.md
-          if [[ -n "$PRECOMMIT_NOTE" ]]; then
-            echo "$PRECOMMIT_NOTE" >> comment.md
-            echo "" >> comment.md
-          fi
-
-          # === Test Results Section ===
-          if ls artifacts/test-results-*/test-output.txt 1>/dev/null 2>&1; then
-            echo "### Test Results" >> comment.md
-            echo "" >> comment.md
-
-            TOTAL_PASSED=0
-            TOTAL_FAILED=0
-            TOTAL_SKIPPED=0
-            HAS_FAILURES=false
-
-            for file in artifacts/test-results-*/test-output.txt; do
-              ARCH=$(dirname "$file" | xargs basename | sed 's/test-results-//')
-
-              # CTest output format:
-              #   "123/456 Test #123: SomeTest ... Passed"
-              PASSED=$(grep -Ec 'Test #[0-9]+: .* Passed' "$file" 2>/dev/null || true)
-              FAILED=$(grep -Ec 'Test #[0-9]+: .* \*\*\*Failed' "$file" 2>/dev/null || true)
-              SKIPPED=$(grep -Ec 'Test #[0-9]+: .* (\*\*\*Skipped|Skipped)' "$file" 2>/dev/null || true)
-
-              # Fallback for older/non-CTest markers
-              if [[ "$PASSED" -eq 0 && "$FAILED" -eq 0 && "$SKIPPED" -eq 0 ]]; then
-                PASSED=$(grep -c "^PASS" "$file" 2>/dev/null || true)
-                FAILED=$(grep -c "^FAIL" "$file" 2>/dev/null || true)
-                SKIPPED=$(grep -c "^SKIP" "$file" 2>/dev/null || true)
-              fi
-
-              TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
-              TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
-              TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
-
-              if [[ "$FAILED" -gt 0 ]]; then
-                HAS_FAILURES=true
-                echo "**$ARCH**: $PASSED passed, $FAILED failed, $SKIPPED skipped" >> comment.md
-                echo "" >> comment.md
-                echo "<details><summary>Failed tests</summary>" >> comment.md
-                echo "" >> comment.md
-                echo '```' >> comment.md
-                grep -E "Test #[0-9]+: .* \*\*\*Failed|^FAIL" "$file" | head -20 >> comment.md
-                echo '```' >> comment.md
-                echo "</details>" >> comment.md
-              else
-                echo "**$ARCH**: $PASSED passed, $SKIPPED skipped" >> comment.md
-              fi
-              echo "" >> comment.md
-            done
-
-            if [[ "$HAS_FAILURES" == "true" ]]; then
-              echo "**Total: $TOTAL_PASSED passed, $TOTAL_FAILED failed, $TOTAL_SKIPPED skipped**" >> comment.md
-            else
-              echo "**Total: $TOTAL_PASSED passed, $TOTAL_SKIPPED skipped**" >> comment.md
-            fi
-            echo "" >> comment.md
-          fi
-
-          # === Coverage Section ===
-          if [[ -f "artifacts/coverage-report/coverage.xml" ]]; then
-            echo "### Code Coverage" >> comment.md
-            echo "" >> comment.md
-
-            COVERAGE=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('artifacts/coverage-report/coverage.xml')
-          root = tree.getroot()
-          line_rate = float(root.get('line-rate', 0))
-          print(f'{line_rate * 100:.1f}%')
-          " 2>/dev/null || echo "N/A")
-
-            if [[ -f "baseline-coverage.xml" ]]; then
-              BASELINE=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('baseline-coverage.xml')
-          root = tree.getroot()
-          line_rate = float(root.get('line-rate', 0))
-          print(f'{line_rate * 100:.1f}')
-          " 2>/dev/null || echo "0")
-
-              CURRENT=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('artifacts/coverage-report/coverage.xml')
-          root = tree.getroot()
-          line_rate = float(root.get('line-rate', 0))
-          print(f'{line_rate * 100:.1f}')
-          " 2>/dev/null || echo "0")
-
-              DIFF=$(python3 -c "import sys; print(f'{float(sys.argv[1]) - float(sys.argv[2]):+.1f}')" "$CURRENT" "$BASELINE" 2>/dev/null || echo "+0.0")
-
-              echo "| Coverage | Baseline | Change |" >> comment.md
-              echo "|----------|----------|--------|" >> comment.md
-              echo "| $COVERAGE | ${BASELINE}% | ${DIFF}% |" >> comment.md
-            else
-              echo "Coverage: **$COVERAGE**" >> comment.md
-              echo "" >> comment.md
-              echo "*No baseline available for comparison*" >> comment.md
-            fi
-            echo "" >> comment.md
-          fi
-
-          # === Artifact Sizes Section ===
-          # pr-sizes.json is generated by the "Collect build status and artifact sizes" step
-          if [[ -f "pr-sizes.json" ]]; then
-            echo "### Artifact Sizes" >> comment.md
-            echo "" >> comment.md
-
-            python3 << 'EOF'
-          import json
-          import os
-
-          with open('pr-sizes.json') as f:
-              pr_data = json.load(f)
-
-          baseline = {}
-          if os.path.exists('baseline-sizes.json'):
-              with open('baseline-sizes.json') as f:
-                  baseline_data = json.load(f)
-                  baseline = {a['name']: a for a in baseline_data.get('artifacts', [])}
-
-          lines = []
-
-          if baseline:
-              lines.extend([
-                  '| Artifact | Size | Δ from master |',
-                  '|----------|------|---------------|'
-              ])
-          else:
-              lines.extend([
-                  '| Artifact | Size |',
-                  '|----------|------|'
-              ])
-
-          total_delta = 0
-          for a in pr_data.get('artifacts', []):
-              name = a['name']
-              size = a['size_human']
-
-              if baseline and name in baseline:
-                  old_size = baseline[name]['size_bytes']
-                  new_size = a['size_bytes']
-                  delta = new_size - old_size
-                  total_delta += delta
-
-                  if delta > 0:
-                      delta_str = f'+{delta / 1024 / 1024:.2f} MB (increase)'
-                  elif delta < 0:
-                      delta_str = f'{delta / 1024 / 1024:.2f} MB (decrease)'
-                  else:
-                      delta_str = 'No change'
-
-                  lines.append(f'| {name} | {size} | {delta_str} |')
-              else:
-                  lines.append(f'| {name} | {size} |')
-
-          lines.append('')
-          if baseline and total_delta != 0:
-              direction = 'increased' if total_delta > 0 else 'decreased'
-              lines.append(f'**Total size {direction} by {abs(total_delta) / 1024 / 1024:.2f} MB**')
-          elif not baseline:
-              lines.append('*No baseline available for comparison*')
-
-          with open('sizes-section.md', 'w') as f:
-              f.write('\n'.join(lines))
-          EOF
-
-            cat sizes-section.md >> comment.md
-          fi
-
-          echo "" >> comment.md
-          echo "---" >> comment.md
-          echo "<sub>Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC') • Triggered by: ${{ github.event.workflow_run.name }}</sub>" >> comment.md
-
+          python3 "${{ github.workspace }}/.github/scripts/generate_build_results_comment.py"
           cat comment.md
+
+      - name: Deduplicate prior build-results comments
+        if: steps.pr.outputs.result != 'null'
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.result }}
+        with:
+          script: |
+            const issue_number = Number(process.env.PR_NUMBER);
+            if (!Number.isInteger(issue_number) || issue_number <= 0) {
+              return;
+            }
+
+            const marker = 'thollander/actions-comment-pull-request "build-results"';
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                per_page: 100
+              }
+            );
+
+            const tagged = comments
+              .filter(c => c.user?.type === 'Bot' && c.body?.includes(marker))
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            for (const comment of tagged.slice(1)) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: comment.id
+              });
+            }
 
       - name: Post combined comment
         if: steps.pr.outputs.result != 'null'
@@ -473,7 +290,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Collect artifact sizes
-        id: sizes
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}

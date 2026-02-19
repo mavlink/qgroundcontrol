@@ -93,37 +93,25 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Common setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        id: build-setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          qt-version: ${{ matrix.qt_version || '' }}
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
         shell: pwsh
+        env:
+          GST_VERSION: ${{ steps.build-setup.outputs.gstreamer_windows_version }}
         run: |
           ./tools/setup/install-dependencies-windows.ps1 `
-            -GStreamerVersion ${{ steps.config.outputs.gstreamer_windows_version }} `
+            -GStreamerVersion $env:GST_VERSION `
             -SkipVulkan
-
-      - name: Setup cache
-        uses: ./.github/actions/cache
-        with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}\build\cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4
@@ -152,11 +140,13 @@ jobs:
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+      - name: Attest Build with SBOM
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: '${{ runner.temp }}\build\${{ matrix.package }}.exe'
+          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.exe
+          subject-name: ${{ matrix.package }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload artifact (installer)
         if: matrix.build_type == 'Release'

@@ -87,32 +87,16 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
         run: python3 ./tools/setup/install_dependencies.py --platform debian
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Initialize CodeQL
         if: matrix.build_type == 'Debug'
@@ -144,34 +128,23 @@ jobs:
       # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
-        id: tests
         working-directory: ${{ runner.temp }}/build
         run: |
           set +e
-          ctest --output-on-failure --parallel $(nproc) -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
+          ctest --output-on-failure --parallel "$(nproc)" -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-          exit $TEST_EXIT_CODE
+          exit "${TEST_EXIT_CODE}"
 
-      - name: Upload Test Results
+      - name: Report Test Results
         if: matrix.build_type == 'Debug' && always()
-        uses: actions/upload-artifact@v6
+        uses: ./.github/actions/test-report
         with:
-          name: test-results-${{ matrix.arch }}
-          path: |
-            ${{ runner.temp }}/build/test-output.txt
-            ${{ runner.temp }}/build/junit-results.xml
-            ${{ runner.temp }}/build/junit-results-*.xml
+          name: Unit Tests (${{ matrix.arch }})
+          build-dir: ${{ runner.temp }}/build
+          artifact-name: test-results-${{ matrix.arch }}
           retention-days: 7
-
-      - name: Upload to Trunk Flaky Tests
-        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-        continue-on-error: true
-        uses: trunk-io/analytics-uploader@v1
-        with:
-          junit-paths: ${{ runner.temp }}/build/junit-results*.xml
-          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-          token: ${{ secrets.TRUNK_TOKEN }}
+          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
@@ -193,11 +166,13 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
 
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+      - name: Attest Build with SBOM
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: '${{ runner.temp }}/build/${{ matrix.package }}.AppImage'
+          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          subject-name: ${{ matrix.package }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

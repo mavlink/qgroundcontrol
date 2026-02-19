@@ -198,8 +198,9 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install-qt-debian.sh` | Linux | Install Qt via aqtinstall |
 | `install-qt-macos.sh` | macOS | Install Qt via aqtinstall |
 | `install-qt-windows.ps1` | Windows | Install Qt via aqtinstall |
-| `build-gstreamer.sh` | Linux | Build GStreamer from source (optional) |
-| `read-config.sh` | All | Helper to read `.github/build-config.json` |
+| `build-gstreamer.py` | All | Build GStreamer from source (optional) |
+| `read_config.py` | All | Read `.github/build-config.json` (Python, cross-platform) |
+| `read-config.sh` | All | Shell wrapper for `read_config.py` |
 
 ### Usage Examples
 
@@ -217,7 +218,7 @@ python3 ./tools/setup/install_dependencies.py --platform macos
 .\tools\setup\install-qt-windows.ps1
 
 # Build GStreamer from source (Linux, optional)
-./tools/setup/build-gstreamer.sh -p /opt/gstreamer
+python3 ./tools/setup/build-gstreamer.py --platform linux --prefix /opt/gstreamer
 ```
 
 ## Static Analyzers

@@ -1,0 +1,89 @@
+name: Attest Build with SBOM
+description: Generate SBOM and attest build provenance with SBOM
+
+inputs:
+  subject-path:
+    description: "Path to the artifact to attest"
+    required: true
+  subject-name:
+    description: "Name for the SBOM artifact (without extension)"
+    required: true
+  scan-path:
+    description: "Path to scan for SBOM (defaults to subject-path parent directory)"
+    required: false
+    default: ""
+  sbom-format:
+    description: "SBOM format (spdx-json or cyclonedx-json)"
+    required: false
+    default: "spdx-json"
+
+outputs:
+  sbom-path:
+    description: "Path to generated SBOM file"
+    value: ${{ steps.sbom.outputs.sbom-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check attestation conditions
+      id: check
+      uses: ./.github/actions/attest-condition
+      with:
+        subject-path: ${{ inputs.subject-path }}
+
+    - name: Determine scan path
+      id: paths
+      if: steps.check.outputs.skip != 'true'
+      shell: bash
+      env:
+        SUBJECT_PATH: ${{ inputs.subject-path }}
+        SCAN_PATH: ${{ inputs.scan-path }}
+        SBOM_FORMAT: ${{ inputs.sbom-format }}
+        RUNNER_TEMP_DIR: ${{ runner.temp }}
+        SUBJECT_NAME: ${{ inputs.subject-name }}
+      run: |
+        set -euo pipefail
+
+        subject_path="${SUBJECT_PATH}"
+        scan_path="${SCAN_PATH}"
+
+        if [[ -z "${scan_path}" ]]; then
+          scan_path="$(dirname "${subject_path}")"
+        fi
+
+        if [[ "${SBOM_FORMAT}" == "cyclonedx-json" ]]; then
+          suffix="cdx.json"
+        else
+          suffix="spdx.json"
+        fi
+        sbom_path="${RUNNER_TEMP_DIR}/${SUBJECT_NAME}.sbom.${suffix}"
+
+        echo "scan-path=${scan_path}" >> "${GITHUB_OUTPUT}"
+        echo "sbom-path=${sbom_path}" >> "${GITHUB_OUTPUT}"
+        echo "Scan path: ${scan_path}"
+        echo "SBOM path: ${sbom_path}"
+
+    - name: Generate SBOM
+      id: sbom
+      if: steps.check.outputs.skip != 'true'
+      uses: anchore/sbom-action@v0
+      with:
+        path: ${{ steps.paths.outputs.scan-path }}
+        format: ${{ inputs.sbom-format }}
+        output-file: ${{ steps.paths.outputs.sbom-path }}
+        upload-artifact: true
+        upload-artifact-retention: 30
+        artifact-name: sbom-${{ inputs.subject-name }}
+
+    - name: Attest Build Provenance
+      if: steps.check.outputs.skip != 'true'
+      uses: actions/attest-build-provenance@v3
+      with:
+        subject-path: ${{ inputs.subject-path }}
+
+    - name: Attest SBOM
+      if: steps.check.outputs.skip != 'true'
+      uses: actions/attest-sbom@v3
+      with:
+        subject-path: ${{ inputs.subject-path }}
+        sbom-path: ${{ steps.paths.outputs.sbom-path }}
