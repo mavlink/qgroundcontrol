@@ -20,9 +20,31 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Setup Python 3.12
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    - name: Resolve Python command
+      id: python
+      shell: bash
+      run: |
+        if command -v python3 >/dev/null 2>&1; then
+          echo "cmd=python3" >> "${GITHUB_OUTPUT}"
+        elif command -v python >/dev/null 2>&1; then
+          echo "cmd=python" >> "${GITHUB_OUTPUT}"
+        else
+          echo "Error: Python not found in PATH" >&2
+          exit 1
+        fi
+
     - name: Get ccache config
       id: ccache-config
       shell: bash
+      env:
+        INPUT_TARGET: ${{ inputs.target }}
+        PY_CMD: ${{ steps.python.outputs.cmd }}
+        WORKSPACE: ${{ github.workspace }}
       run: |
         # Pin ccache version for reproducibility and to avoid API calls
         # Update periodically via Dependabot or manually
@@ -38,27 +60,19 @@ runs:
           echo "Error: Invalid sccache version format: $SCCACHE_VERSION" >&2
           exit 1
         fi
-        echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
         echo "sccache_version=${SCCACHE_VERSION}" >> "$GITHUB_OUTPUT"
 
-        if [[ "${{ inputs.target }}" == "linux_gcc_arm64" ]]; then
-          echo "arch=aarch64" >> "$GITHUB_OUTPUT"
+        if [[ "${INPUT_TARGET}" == "linux_gcc_arm64" ]]; then
+          arch="aarch64"
         else
-          echo "arch=x86_64" >> "$GITHUB_OUTPUT"
+          arch="x86_64"
         fi
 
-        # Read max_size from tools/configs/ccache.conf (single source of truth)
-        WORKSPACE_UNIX="${GITHUB_WORKSPACE//\\//}"
-        CCACHE_CONF_PATH="${WORKSPACE_UNIX}/tools/configs/ccache.conf"
-        CCACHE_MAX_SIZE="2G"  # Default
-        if [[ -f "$CCACHE_CONF_PATH" ]]; then
-          # Single awk pass to extract value (more robust than grep|sed)
-          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
-          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
-        else
-          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
-        fi
-        echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
+        "${PY_CMD}" "${WORKSPACE}/.github/scripts/install_ccache.py" \
+          --version "${CCACHE_VERSION}" \
+          --arch "${arch}" \
+          --config "${WORKSPACE}/tools/configs/ccache.conf" \
+          --output-only
 
     - name: Cache ccache binary (Linux)
       if: runner.os == 'Linux'
@@ -72,16 +86,15 @@ runs:
       if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
       env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        PY_CMD: ${{ steps.python.outputs.cmd }}
+        WORKSPACE: ${{ github.workspace }}
+        CCACHE_VER: ${{ steps.ccache-config.outputs.version }}
         CCACHE_ARCH: ${{ steps.ccache-config.outputs.arch }}
       run: |
-        set -e
-        # Download pre-built binary (not source tarball)
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}.tar.xz"
-        tar -xf "ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}.tar.xz"
-        # Copy pre-built binary directly (no compilation needed)
-        sudo cp "ccache-${CCACHE_VERSION}-linux-${CCACHE_ARCH}/ccache" /usr/local/bin/ccache
-        sudo chmod +x /usr/local/bin/ccache
+        "${PY_CMD}" "${WORKSPACE}/.github/scripts/install_ccache.py" \
+          --version "${CCACHE_VER}" \
+          --arch "${CCACHE_ARCH}" \
+          --install
 
     - name: Setup sccache (Windows x64 only)
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'

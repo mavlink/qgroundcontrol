@@ -290,11 +290,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Attest Build Provenance
-        if: ${{ !matrix.emulator && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: actions/attest-build-provenance@v3
+      - name: Attest Build with SBOM
+        if: ${{ !matrix.emulator }}
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
+          subject-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload Build File
         if: ${{ !matrix.emulator }}
