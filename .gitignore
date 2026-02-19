@@ -35,6 +35,7 @@ CMakeUserPresets.json
 compile_commands.json
 cpm_modules
 .cache/
+.ccache/
 
 # ------------------------------------------------------------------------------
 # Qt Generated Files

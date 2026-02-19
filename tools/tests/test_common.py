@@ -113,6 +113,7 @@ class TestFileTraversal:
     def test_should_skip_path_cache(self):
         """Should skip cache directories."""
         assert should_skip_path(Path("/project/.cache/file.cpp"))
+        assert should_skip_path(Path("/project/.ccache/file.cpp"))
 
     def test_should_not_skip_src(self):
         """Should not skip src directories."""
@@ -125,6 +126,7 @@ class TestFileTraversal:
         assert "libs" in DEFAULT_SKIP_DIRS
         assert "node_modules" in DEFAULT_SKIP_DIRS
         assert ".git" in DEFAULT_SKIP_DIRS
+        assert ".ccache" in DEFAULT_SKIP_DIRS
 
 
 class TestLocatorIntegration:
