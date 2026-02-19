@@ -243,12 +243,13 @@ void QGCApplication::_initVideo()
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
     VideoManager::instance();
+    VideoManager::instance()->startGStreamerInit();
     _videoManagerInitialized = true;
 }
 
 void QGCApplication::_initForNormalAppBoot()
 {
-    _initVideo(); // GStreamer must be initialized before QmlEngine
+    _initVideo(); // OpenGL graphics API must be set before QmlEngine; GStreamer init runs async
 
     QQuickStyle::setStyle("Basic");
     QGCCorePlugin::instance()->init();

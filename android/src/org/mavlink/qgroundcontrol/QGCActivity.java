@@ -8,6 +8,8 @@ import android.view.MotionEvent;
 
 import org.qtproject.qt.android.bindings.QtActivity;
 
+import org.freedesktop.gstreamer.GStreamer;
+
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
     private static final String MULTICAST_LOCK_TAG = "QGroundControl";
@@ -22,12 +24,34 @@ public class QGCActivity extends QtActivity {
         super.onCreate(savedInstanceState);
         m_instance = this;
 
-        nativeInit();
+        final boolean nativeInitSucceeded = nativeInit();
+        initializeGStreamer(nativeInitSucceeded);
         setupMulticastLock();
 
         QGCUsbSerialManager.initialize(this);
         QGCSDLManager.initialize(this);
         m_storagePermissionController = new QGCStoragePermissionController(this);
+    }
+
+    private void initializeGStreamer(boolean nativeInitSucceeded) {
+        if (!nativeInitSucceeded) {
+            nativeGstInitResult(false);
+            QGCLogger.e(TAG, "nativeInit failed; skipping GStreamer initialization");
+            return;
+        }
+
+        try {
+            System.loadLibrary("gstreamer_android");
+            GStreamer.init(this);
+            nativeGstInitResult(true);
+            QGCLogger.i(TAG, "GStreamer initialized successfully");
+        } catch (UnsatisfiedLinkError e) {
+            nativeGstInitResult(false);
+            QGCLogger.e(TAG, "GStreamer library not found: " + e.getMessage());
+        } catch (Exception e) {
+            nativeGstInitResult(false);
+            QGCLogger.e(TAG, "Failed to initialize GStreamer: " + e.getMessage());
+        }
     }
 
     @Override
@@ -150,6 +174,7 @@ public class QGCActivity extends QtActivity {
 
     // Native C++ functions
     public native boolean nativeInit();
+    public native void nativeGstInitResult(boolean success);
     public native void qgcLogDebug(final String message);
     public native void qgcLogWarning(final String message);
     public native void nativeStoragePermissionsResult(boolean granted);
