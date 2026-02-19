@@ -224,9 +224,6 @@ NTRIPTCPLink::NTRIPTCPLink(const QString& hostAddress,
     }
 
     _state = NTRIPState::uninitialised;
-
-    // Start the thread only after all members are initialized to avoid races
-    start();
 }
 
 NTRIPTCPLink::~NTRIPTCPLink()
@@ -571,11 +568,16 @@ void NTRIPTCPLink::_readBytes()
                 qCWarning(NTRIPLog) << "NTRIP: Server error response:" << trimmed;
                 emit error(QString("NTRIP HTTP error: %1").arg(trimmed));
 
-                _socket->disconnectFromHost();
-                _socket->close();
-                delete _socket;
+                // Null out _socket before disconnectFromHost() so the
+                // synchronous 'disconnected' handler bails via !_socket guard.
+                QTcpSocket* sock = _socket;
                 _socket = nullptr;
                 _state = NTRIPState::uninitialised;
+
+                QObject::disconnect(_readyReadConn);
+                sock->disconnectFromHost();
+                sock->close();
+                sock->deleteLater();
 
                 if (!_stopping.load()) {
                     QTimer::singleShot(3000, this, [this]() {
