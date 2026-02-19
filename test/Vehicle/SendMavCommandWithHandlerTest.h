@@ -1,15 +1,20 @@
 #pragma once
 
-#include "BaseClasses/VehicleTestManualConnect.h"
+#include "BaseClasses/VehicleTest.h"
 #include "Vehicle.h"
 
-class SendMavCommandWithHandlerTest : public VehicleTestManualConnect
+class SendMavCommandWithHandlerTest : public VehicleTestNoInitialConnect
 {
     Q_OBJECT
 
+public:
+    explicit SendMavCommandWithHandlerTest(QObject* parent = nullptr)
+        : VehicleTestNoInitialConnect(parent)
+    {
+        setAutopilotType(MAV_AUTOPILOT_INVALID);
+    }
+
 private slots:
-    void init() override;
-    void _performTestCases_data();
     void _performTestCases();
     void _compIdAllFailure();
     void _duplicateCommand();
