@@ -58,12 +58,11 @@ runs:
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''
       uses: nick-fields/retry@v3
-      env:
-        EXTRA_PACKAGES: ${{ inputs.extra-packages }}
       with:
         timeout_minutes: 5
         max_attempts: 3
         command: |
+          EXTRA_PACKAGES='${{ inputs.extra-packages }}'
           for pkg in $EXTRA_PACKAGES; do
             if [[ ! "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9.+-]*$ ]]; then
               echo "Error: Invalid package name '$pkg'" >&2

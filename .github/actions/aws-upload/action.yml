@@ -81,6 +81,7 @@ runs:
 
         # Sanitize ref name - remove path traversal attempts and special chars
         SAFE_REF_NAME=$(echo "$REF_NAME" | sed 's/\.\.//g' | sed 's/[^a-zA-Z0-9._-]/_/g')
+        # Intentional: public-read for distributing release builds to users.
         aws s3 cp "$ARTIFACT_PATH" \
           "s3://${S3_BUCKET}/builds/${SAFE_REF_NAME}/${ARTIFACT_NAME}" \
           --acl public-read

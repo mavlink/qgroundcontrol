@@ -13,9 +13,9 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
+        HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        REPO: ${{ github.repository }}
       run: |
-        HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-        REPO="${{ github.repository }}"
 
         if [ -z "$HEAD_SHA" ]; then
           echo "Error: No head SHA available"

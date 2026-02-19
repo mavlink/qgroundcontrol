@@ -27,19 +27,10 @@ inputs:
     required: false
     default: 'false'
 
-outputs:
-  success:
-    description: 'Whether the build succeeded'
-    value: ${{ steps.build.outputs.success }}
-  duration:
-    description: 'Build duration in seconds'
-    value: ${{ steps.build.outputs.duration }}
-
 runs:
   using: composite
   steps:
     - name: Build
-      id: build
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       env:
@@ -79,13 +70,9 @@ runs:
         end_time=$(date +%s)
         duration=$((end_time - start_time))
 
-        echo "duration=$duration" >> "$GITHUB_OUTPUT"
-
         if [[ $exit_code -eq 0 ]]; then
           echo "✓ Build completed in ${duration}s"
-          echo "success=true" >> "$GITHUB_OUTPUT"
         else
           echo "::error::Build failed after ${duration}s"
-          echo "success=false" >> "$GITHUB_OUTPUT"
           [[ "$CONTINUE" != "true" ]] && exit $exit_code
         fi

@@ -41,9 +41,6 @@ outputs:
   passed:
     description: 'Whether tests passed (true/false)'
     value: ${{ steps.run.outputs.passed }}
-  output_file:
-    description: 'Path to JUnit XML output'
-    value: ${{ steps.run.outputs.output_file }}
   log_file:
     description: 'Path to test log'
     value: ${{ steps.run.outputs.log_file }}
@@ -75,7 +72,12 @@ runs:
         [[ "${{ inputs.platform }}" == "offscreen" ]] && args+=(--headless)
 
         # Run tests (exit code handled by the script)
-        python3 "${{ github.workspace }}/tools/run_tests.py" "${args[@]}" || exit_code=$?
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+        "${py_cmd}" "${{ github.workspace }}/tools/run_tests.py" "${args[@]}" || exit_code=$?
 
         # Script writes to GITHUB_OUTPUT, propagate exit code
         exit ${exit_code:-0}

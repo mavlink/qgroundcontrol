@@ -22,9 +22,6 @@ outputs:
   symbol_count:
     description: 'Number of symbols in binary'
     value: ${{ steps.metrics.outputs.symbol_count }}
-  metrics_file:
-    description: 'Path to the metrics JSON file'
-    value: ${{ inputs.output-file }}
 
 runs:
   using: composite
@@ -39,4 +36,9 @@ runs:
         )
         [[ "${{ inputs.install-bloaty }}" == "true" ]] && args+=(--install-bloaty)
 
-        python3 "${{ github.workspace }}/.github/scripts/size_analysis.py" "${args[@]}"
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+        "${py_cmd}" "${{ github.workspace }}/.github/scripts/size_analysis.py" "${args[@]}"

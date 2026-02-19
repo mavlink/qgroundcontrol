@@ -1,0 +1,86 @@
+name: Verify Executable
+description: Run simple boot test on QGroundControl binary or package
+
+inputs:
+  binary-path:
+    description: "Path to executable or package to verify"
+    required: true
+  type:
+    description: "Type of executable (binary, appimage, dmg, exe) - currently informational"
+    required: false
+    default: "binary"
+  working-dir:
+    description: "Working directory (defaults to binary parent directory)"
+    required: false
+    default: ""
+  timeout:
+    description: "Timeout in seconds"
+    required: false
+    default: "60"
+
+runs:
+  using: composite
+  steps:
+    - name: Verify executable
+      shell: bash
+      env:
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_WORKING_DIR: ${{ inputs.working-dir }}
+        INPUT_TYPE: ${{ inputs.type }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+      run: |
+        set -euo pipefail
+
+        binary_path="${INPUT_BINARY_PATH}"
+
+        if [[ -n "${INPUT_WORKING_DIR}" ]]; then
+          work_dir="${INPUT_WORKING_DIR}"
+        else
+          work_dir="$(dirname "${binary_path}")"
+        fi
+
+        binary_name="$(basename "${binary_path}")"
+        run_binary="${binary_name}"
+        run_headless="true"
+
+        # AppImages typically don't ship the "offscreen" Qt platform plugin.
+        # Let run_tests.py use xvfb-run (Linux, no DISPLAY) instead.
+        if [[ "${INPUT_TYPE}" == "appimage" || "${binary_name}" == *.AppImage ]]; then
+          run_headless="false"
+        fi
+
+        if [[ ! -d "${work_dir}" ]]; then
+          echo "::error::Working directory not found: ${work_dir}"
+          exit 1
+        fi
+
+        pushd "${work_dir}" >/dev/null
+
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          chmod +x "${binary_name}" 2>/dev/null || true
+          run_binary="${PWD}/${binary_name}"
+        fi
+
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+
+        set +e
+        args=(
+          --binary "${run_binary}"
+          --timeout "${INPUT_TIMEOUT}"
+          --verify-only
+          -v
+        )
+        if [[ "${run_headless}" == "true" ]]; then
+          args+=(--headless)
+        fi
+        "${py_cmd}" "${GITHUB_WORKSPACE}/tools/run_tests.py" "${args[@]}"
+        exit_code=$?
+        set -e
+
+        popd >/dev/null
+
+        exit "${exit_code}"
