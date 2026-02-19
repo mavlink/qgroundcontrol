@@ -16,8 +16,8 @@ class SurveyComplexItem : public TransectStyleComplexItem
 
 public:
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
-    /// @param kmlOrShpFile Polygon comes from this file, empty for default polygon
-    SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile);
+    /// @param shapeFile Polygon comes from this file, empty for default polygon
+    SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& shapeFile);
 
     Q_PROPERTY(Fact*            gridAngle              READ gridAngle              CONSTANT)
     Q_PROPERTY(Fact*            flyAlternateTransects  READ flyAlternateTransects  CONSTANT)

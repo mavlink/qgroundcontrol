@@ -14,80 +14,79 @@ RowLayout {
     id: root
     spacing: ScreenTools.defaultFontPixelWidth
 
-    property var _planMasterController: planMasterController
-    property var _missionController: _planMasterController.missionController
-    property var _geoFenceController: _planMasterController.geoFenceController
-    property var _rallyPointController: _planMasterController.rallyPointController
-    property bool _controllerOffline: _planMasterController.offline
-    property var _controllerDirty: _planMasterController.dirty
-    property var _syncInProgress: _planMasterController.syncInProgress
-    property var _visualItems: _missionController.visualItems
-    property bool _hasPlanItems: _planMasterController.containsItems
+    property var _missionController: planMasterController.missionController
+    property bool _controllerDirty: planMasterController.dirty
+    property bool _syncInProgress: planMasterController.syncInProgress
+    property bool _hasPlanItems: planMasterController.containsItems
 
-    readonly property real _margins: ScreenTools.defaultFontPixelWidth
+    function _confirmAction(title, message, onAccepted) {
+        mainWindow.showMessageDialog(title, message, Dialog.Yes | Dialog.Cancel, onAccepted)
+    }
+
+    function _runWithDirtyConfirmation(title, message, action) {
+        if (planMasterController.dirty) {
+            _confirmAction(title, message, action)
+        } else {
+            action()
+        }
+    }
 
     function _uploadClicked() {
-        _planMasterController.upload()
+        planMasterController.upload()
     }
 
     function _downloadClicked() {
-        if (_planMasterController.dirty) {
-            QGroundControl.showMessageDialog(root, qsTr("Download"),
-                                         qsTr("You have unsaved/unsent changes. Downloading from the Vehicle will lose these changes. Are you sure?"),
-                                         Dialog.Yes | Dialog.Cancel,
-                                         function() { _planMasterController.loadFromVehicle() })
-        } else {
-            _planMasterController.loadFromVehicle()
-        }
+        _runWithDirtyConfirmation(
+            qsTr("Download"),
+            qsTr("You have unsaved/unsent changes. Downloading from the Vehicle will lose these changes. Are you sure?"),
+            function() { planMasterController.loadFromVehicle() }
+        )
     }
 
     function _openButtonClicked() {
-        if (_planMasterController.dirty) {
-            QGroundControl.showMessageDialog(root, qsTr("Open Plan"),
-                                        qsTr("You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?"),
-                                        Dialog.Yes | Dialog.Cancel,
-                                        function() { _planMasterController.loadFromSelectedFile() } )
-        } else {
-            _planMasterController.loadFromSelectedFile()
-        }
+        _runWithDirtyConfirmation(
+            qsTr("Open Plan"),
+            qsTr("You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?"),
+            function() { planMasterController.loadFromSelectedFile() }
+        )
     }
 
     function _saveButtonClicked() {
-        if(_planMasterController.currentPlanFile !== "") {
-            _planMasterController.saveToCurrent()
-            QGroundControl.showMessageDialog(root, qsTr("Save"),
-                                        qsTr("Plan saved to `%1`").arg(_planMasterController.currentPlanFile),
+        if(planMasterController.currentPlanFile !== "") {
+            planMasterController.saveToCurrent()
+            mainWindow.showMessageDialog(qsTr("Save"),
+                                        qsTr("Plan saved to `%1`").arg(planMasterController.currentPlanFile),
                                         Dialog.Ok)
         } else {
-            _planMasterController.saveToSelectedFile()
+            planMasterController.saveToSelectedFile()
         }
     }
 
-    function _saveAsKMLClicked() {
-        // Don't save if we only have Mission Settings item
-        if (_visualItems.count > 1) {
-            _planMasterController.saveKmlToSelectedFile()
+    function _exportClicked() {
+        // Don't export if we only have Mission Settings item
+        if (_missionController.visualItems.count > 1) {
+            planMasterController.exportToSelectedFile()
         }
     }
 
     function _storageClearButtonClicked() {
-        QGroundControl.showMessageDialog(root, qsTr("Clear"),
-                                     qsTr("Are you sure you want to remove all the items from the plan editor?"),
-                                     Dialog.Yes | Dialog.Cancel,
-                                     function() { _planMasterController.removeAll(); })
+        _confirmAction(
+            qsTr("Clear"),
+            qsTr("Are you sure you want to remove all the items from the plan editor?"),
+            function() { planMasterController.removeAll() }
+        )
     }
 
     function _vehicleClearButtonClicked() {
-        QGroundControl.showMessageDialog(root, qsTr("Clear"),
-                                     qsTr("Are you sure you want to remove the plan from the vehicle and the plan editor?"),
-                                     Dialog.Yes | Dialog.Cancel,
-                                     function() {
-                                        _planMasterController.removeAllFromVehicle()
-                                     })
+        _confirmAction(
+            qsTr("Clear"),
+            qsTr("Are you sure you want to remove the plan from the vehicle and the plan editor?"),
+            function() { planMasterController.removeAllFromVehicle() }
+        )
     }
 
     function _clearClicked() {
-        if (_planMasterController.offline) {
+        if (planMasterController.offline) {
             _storageClearButtonClicked();
         } else {
             _vehicleClearButtonClicked();
@@ -99,12 +98,12 @@ RowLayout {
     QGCButton {
         text: qsTr("Open")
         iconSource: "/qmlimages/Plan.svg"
-        enabled: !_planMasterController.syncInProgress
+        enabled: !planMasterController.syncInProgress
         onClicked: _openButtonClicked()
     }
 
     QGCButton {
-        text: _planMasterController.currentPlanFile === "" ? qsTr("Save As") : qsTr("Save")
+        text: planMasterController.currentPlanFile === "" ? qsTr("Save As") : qsTr("Save")
         iconSource: "/res/SaveToDisk.svg"
         enabled: !_syncInProgress && _hasPlanItems
         primary: _controllerDirty
@@ -161,7 +160,7 @@ RowLayout {
         QGCLabel {
             text: qsTr("- %1 to add ROI %2").arg(ScreenTools.isMobile ? qsTr("Press and hold") : qsTr("Right click")).arg(_missionController.isROIActive ? qsTr("or Cancel ROI") : "")
             font.pointSize: ScreenTools.smallFontPointSize
-            visible: _editingLayer === _layerMission && _planMasterController.controllerVehicle.roiModeSupported
+            visible: _editingLayer === _layerMission && planMasterController.controllerVehicle.roiModeSupported
         }
     }
 
@@ -177,12 +176,12 @@ RowLayout {
 
                     QGCButton {
                         Layout.fillWidth: true
-                        text: qsTr("Save as KML")
+                        text: qsTr("Export")
                         enabled: !_syncInProgress && _hasPlanItems
 
                         onClicked: {
                             dropPanel.close()
-                            _saveAsKMLClicked()
+                            _exportClicked()
                         }
                     }
 

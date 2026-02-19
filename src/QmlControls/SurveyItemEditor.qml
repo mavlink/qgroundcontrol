@@ -96,14 +96,13 @@ TransectStyleComplexItemEditor {
         }
     }
 
-    KMLOrSHPFileDialog {
-        id:             kmlOrSHPLoadDialog
+    ShapeFileDialog {
+        id:             shapeFileLoadDialog
         title:          qsTr("Select Polygon File")
 
         onAcceptedForLoad: (file) => {
-            missionItem.surveyAreaPolygon.loadKMLOrSHPFile(file)
+            missionItem.surveyAreaPolygon.loadShapeFile(file)
             missionItem.resetState = false
-            //editorMap.mapFitFunctions.fitMapViewportTomissionItems()
             close()
         }
     }

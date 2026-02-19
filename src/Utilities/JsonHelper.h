@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
 
-class QmlObjectListModel;
 class QTranslator;
 
 Q_DECLARE_LOGGING_CATEGORY(JsonHelperLog)
@@ -82,29 +82,23 @@ namespace JsonHelper
     bool loadGeoCoordinateArray(const QJsonValue &jsonValue,        ///< json value which contains points
                                 bool altitudeRequired,              ///< true: altitude field must be specified
                                 QVariantList &rgVarPoints,          ///< returned points
-                                QString &errorString);              ///< returned error string if load failure
+                                QString &errorString,               ///< returned error string if load failure
+                                bool geoJsonFormat = false);        ///< if true, use [lon, lat], [lat, lon] otherwise
     bool loadGeoCoordinateArray(const QJsonValue &jsonValue,        ///< json value which contains points
                                 bool altitudeRequired,              ///< true: altitude field must be specified
                                 QList<QGeoCoordinate> &rgPoints,    ///< returned points
-                                QString &errorString);              ///< returned error string if load failure
+                                QString &errorString,               ///< returned error string if load failure
+                                bool geoJsonFormat = false);        ///< if true, use [lon, lat], [lat, lon] otherwise
 
     /// Saves a list of QGeoCoordinates to a json array
     void saveGeoCoordinateArray(const QVariantList &rgVarPoints,        ///< points to save
                                 bool writeAltitude,                     ///< true: write altitide value
-                                QJsonValue &jsonValue);                 ///< json value to save to
+                                QJsonValue &jsonValue,                  ///< json value to save to
+                                bool geoJsonFormat = false);            ///< if true, use [lon, lat], [lat, lon] otherwise
     void saveGeoCoordinateArray(const QList<QGeoCoordinate> &rgPoints,  ///< points to save
                                 bool writeAltitude,                     ///< true: write altitide value
-                                QJsonValue &jsonValue);                 ///< json value to save to
-
-    /// Loads a polygon from an array
-    bool loadPolygon(const QJsonArray &polygonArray,    ///< Array of coordinates
-                     QmlObjectListModel &list,          ///< Empty list to add vertices to
-                     QObject *parent,                   ///< parent for newly allocated QGCQGeoCoordinates
-                     QString &errorString);             ///< returned error string if load failure
-
-    /// Saves a polygon to a json array
-    void savePolygon(const QmlObjectListModel &list, ///< List which contains vertices
-                     QJsonArray &polygonArray);      ///< Array to save into
+                                QJsonValue &jsonValue,                  ///< json value to save to
+                                bool geoJsonFormat = false);            ///< if true, use [lon, lat], [lat, lon] otherwise
 
     constexpr const char *jsonVersionKey = "version";
     constexpr const char *jsonFileTypeKey = "fileType";

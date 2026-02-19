@@ -37,6 +37,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         QGCMapCircle.h
         QGCMapPalette.cc
         QGCMapPalette.h
+        QGCMapPathBase.cc
+        QGCMapPathBase.h
         QGCMapPolygon.cc
         QGCMapPolygon.h
         QGCMapPolyline.cc
@@ -104,7 +106,7 @@ qt_add_qml_module(QGroundControlControlsModule
         InstrumentValueLabel.qml
         InstrumentValueValue.qml
         JoystickThumbPad.qml
-        KMLOrSHPFileDialog.qml
+        ShapeFileDialog.qml
         LabelledButton.qml
         LabelledComboBox.qml
         LabelledLabel.qml

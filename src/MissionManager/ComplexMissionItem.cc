@@ -5,7 +5,6 @@
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "MissionController.h"
-#include "KMLPlanDomDocument.h"
 #include "SettingsManager.h"
 
 #include <QtCore/QCborMap>
@@ -99,11 +98,6 @@ QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
     return QCborValue::fromVariant(settings.value(name)).toMap().toJsonObject();
-}
-
-void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)
-{
-    // Default implementation has no visuals
 }
 
 void ComplexMissionItem::_appendFlightPathSegment(FlightPathSegment::SegmentType segmentType, const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt)

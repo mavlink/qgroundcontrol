@@ -13,8 +13,6 @@
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
-#include "QGCQGeoCoordinate.h"
-#include "QmlObjectListModel.h"
 #include "JsonParsing.h"
 
 QGC_LOGGING_CATEGORY(JsonHelperLog, "Utilities.JsonHelper")
@@ -280,7 +278,7 @@ void JsonHelper::saveQGCJsonFileHeader(QJsonObject& jsonObject, const QString& f
 }
 
 bool JsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitudeRequired, QVariantList& rgVarPoints,
-                                        QString& errorString)
+                                        QString& errorString, bool geoJsonFormat)
 {
     if (!jsonValue.isArray()) {
         errorString = QObject::tr("value for coordinate array is not array");
@@ -292,7 +290,7 @@ bool JsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitu
     rgVarPoints.clear();
     for (const QJsonValue& point : rgJsonPoints) {
         QGeoCoordinate coordinate;
-        if (!JsonHelper::loadGeoCoordinate(point, altitudeRequired, coordinate, errorString)) {
+        if (!JsonHelper::loadGeoCoordinate(point, altitudeRequired, coordinate, errorString, geoJsonFormat)) {
             return false;
         }
         rgVarPoints.append(QVariant::fromValue(coordinate));
@@ -302,11 +300,11 @@ bool JsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitu
 }
 
 bool JsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitudeRequired,
-                                        QList<QGeoCoordinate>& rgPoints, QString& errorString)
+                                        QList<QGeoCoordinate>& rgPoints, QString& errorString, bool geoJsonFormat)
 {
     QVariantList rgVarPoints;
 
-    if (!loadGeoCoordinateArray(jsonValue, altitudeRequired, rgVarPoints, errorString)) {
+    if (!loadGeoCoordinateArray(jsonValue, altitudeRequired, rgVarPoints, errorString, geoJsonFormat)) {
         return false;
     }
 
@@ -318,12 +316,13 @@ bool JsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitu
     return true;
 }
 
-void JsonHelper::saveGeoCoordinateArray(const QVariantList& rgVarPoints, bool writeAltitude, QJsonValue& jsonValue)
+void JsonHelper::saveGeoCoordinateArray(const QVariantList& rgVarPoints, bool writeAltitude, QJsonValue& jsonValue,
+                                        bool geoJsonFormat)
 {
     QJsonArray rgJsonPoints;
     for (const QVariant& point : rgVarPoints) {
         QJsonValue jsonPoint;
-        JsonHelper::saveGeoCoordinate(point.value<QGeoCoordinate>(), writeAltitude, jsonPoint);
+        JsonHelper::saveGeoCoordinate(point.value<QGeoCoordinate>(), writeAltitude, jsonPoint, geoJsonFormat);
         rgJsonPoints.append(jsonPoint);
     }
 
@@ -331,14 +330,14 @@ void JsonHelper::saveGeoCoordinateArray(const QVariantList& rgVarPoints, bool wr
 }
 
 void JsonHelper::saveGeoCoordinateArray(const QList<QGeoCoordinate>& rgPoints, bool writeAltitude,
-                                        QJsonValue& jsonValue)
+                                        QJsonValue& jsonValue, bool geoJsonFormat)
 {
     QVariantList rgVarPoints;
     for (const QGeoCoordinate& coord : rgPoints) {
         rgVarPoints.append(QVariant::fromValue(coord));
     }
 
-    return saveGeoCoordinateArray(rgVarPoints, writeAltitude, jsonValue);
+    return saveGeoCoordinateArray(rgVarPoints, writeAltitude, jsonValue, geoJsonFormat);
 }
 
 bool JsonHelper::validateKeys(const QJsonObject& jsonObject, const QList<JsonHelper::KeyValidateInfo>& keyInfo,
@@ -365,28 +364,3 @@ bool JsonHelper::validateKeys(const QJsonObject& jsonObject, const QList<JsonHel
     return JsonParsing::validateKeyTypes(jsonObject, keyList, typeList, errorString);
 }
 
-bool JsonHelper::loadPolygon(const QJsonArray& polygonArray, QmlObjectListModel& list, QObject* parent,
-                             QString& errorString)
-{
-    for (const QJsonValue& pointValue : polygonArray) {
-        QGeoCoordinate pointCoord;
-        if (!JsonHelper::loadGeoCoordinate(pointValue, false /* altitudeRequired */, pointCoord, errorString, true)) {
-            list.clearAndDeleteContents();
-            return false;
-        }
-        list.append(new QGCQGeoCoordinate(pointCoord, parent));
-    }
-
-    return true;
-}
-
-void JsonHelper::savePolygon(const QmlObjectListModel& list, QJsonArray& polygonArray)
-{
-    for (qsizetype i = 0; i < list.count(); i++) {
-        const QGeoCoordinate vertex = list.value<QGCQGeoCoordinate*>(i)->coordinate();
-
-        QJsonValue jsonValue;
-        JsonHelper::saveGeoCoordinate(vertex, false /* writeAltitude */, jsonValue);
-        polygonArray.append(jsonValue);
-    }
-}

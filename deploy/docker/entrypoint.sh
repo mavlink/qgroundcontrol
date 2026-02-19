@@ -32,7 +32,8 @@ if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
 else
     echo "Building QGroundControl (${BUILD_TYPE})..."
     qt-cmake -S /project/source -B /project/build -G Ninja \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+        -DCMAKE_INSTALL_PREFIX=/project/build/AppDir/usr
     cmake --build /project/build --target all --parallel
     cmake --install /project/build --config "${BUILD_TYPE}"
 fi

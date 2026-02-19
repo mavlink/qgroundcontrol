@@ -1,0 +1,21 @@
+diff --git a/cmake/modules/packages/FindHDFS.cmake b/cmake/modules/packages/FindHDFS.cmake
+index 7d33c95..b18e141 100644
+--- a/cmake/modules/packages/FindHDFS.cmake
++++ b/cmake/modules/packages/FindHDFS.cmake
+@@ -22,10 +22,12 @@ include(FindPackageHandleStandardArgs)
+ 
+ find_package(JNI)
+ if(JNI_FOUND)
+-    add_library(HDFS::JVM UNKNOWN IMPORTED)
+-    set_target_properties(HDFS::JVM PROPERTIES
+-                          IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+-                          IMPORTED_LOCATION "${JAVA_JVM_LIBRARY}")
++    if(NOT TARGET HDFS::JVM)
++        add_library(HDFS::JVM UNKNOWN IMPORTED)
++        set_target_properties(HDFS::JVM PROPERTIES
++                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
++                              IMPORTED_LOCATION "${JAVA_JVM_LIBRARY}")
++    endif()
+ endif()
+ 
+ find_path(HDFS_INCLUDE_DIR NAMES hdfs.h)

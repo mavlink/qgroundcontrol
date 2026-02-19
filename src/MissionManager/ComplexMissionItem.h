@@ -6,7 +6,6 @@
 
 class PlanMasterController;
 class MissionController;
-class KMLPlanDomDocument;
 
 class ComplexMissionItem : public VisualMissionItem
 {
@@ -79,8 +78,6 @@ public:
     /// Returns the name of the settings group for presets.
     ///     Empty string signals no support for presets.
     virtual QString presetsSettingsGroup(void) { return QString(); }
-
-    virtual void addKMLVisuals(KMLPlanDomDocument& domDocument);
 
     bool presetsSupported   (void) { return !presetsSettingsGroup().isEmpty(); }
     bool isIncomplete       (void) const { return _isIncomplete; }

@@ -1,125 +1,169 @@
 #include "QGCMapPolygonTest.h"
-
-#include <QtTest/QSignalSpy>
-
-#include "MultiSignalSpy.h"
 #include "QGCMapPolygon.h"
 #include "QGCQGeoCoordinate.h"
+#include "MultiSignalSpy.h"
 #include "QmlObjectListModel.h"
 
-QGCMapPolygonTest::QGCMapPolygonTest()
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
+
+QGCMapPolygonTest::QGCMapPolygonTest(void)
 {
-    _polyPoints << QGeoCoordinate(47.635638361473475, -122.09269407980834)
-                << QGeoCoordinate(47.635638361473475, -122.08545246602667)
-                << QGeoCoordinate(47.63057923872075, -122.08545246602667)
-                << QGeoCoordinate(47.63057923872075, -122.09269407980834);
+    _polyPoints << QGeoCoordinate(47.635638361473475, -122.09269407980834 ) <<
+                   QGeoCoordinate(47.635638361473475, -122.08545246602667) <<
+                   QGeoCoordinate(47.63057923872075, -122.08545246602667) <<
+                   QGeoCoordinate(47.63057923872075, -122.09269407980834);
 }
 
-void QGCMapPolygonTest::init()
+void QGCMapPolygonTest::init(void)
 {
     UnitTest::init();
+
     _mapPolygon = new QGCMapPolygon(this);
     _pathModel = _mapPolygon->qmlPathModel();
     QVERIFY(_pathModel);
-    _multiSpyPolygon = new MultiSignalSpy();
-    QVERIFY(_multiSpyPolygon->init(_mapPolygon,
-                                   {"countChanged", "pathChanged", "dirtyChanged", "cleared", "centerChanged"}));
-    _multiSpyModel = new MultiSignalSpy();
-    QVERIFY(_multiSpyModel->init(_pathModel, {"countChanged", "dirtyChanged"}));
+
+    _multiSpyPolygon = new MultiSignalSpy(this);
+    QVERIFY(_multiSpyPolygon->init(_mapPolygon));
+    _polygonCountChangedMask = _multiSpyPolygon->mask("countChanged");
+    _pathChangedMask = _multiSpyPolygon->mask("pathChanged");
+    _polygonDirtyChangedMask = _multiSpyPolygon->mask("dirtyChanged");
+    _polygonIsEmptyChangedMask = _multiSpyPolygon->mask("isEmptyChanged");
+    _polygonIsValidChangedMask = _multiSpyPolygon->mask("isValidChanged");
+    _clearedMask = _multiSpyPolygon->mask("cleared");
+    _centerChangedMask = _multiSpyPolygon->mask("centerChanged");
+
+    _multiSpyModel = new MultiSignalSpy(this);
+    QVERIFY(_multiSpyModel->init(_pathModel));
+    _modelCountChangedMask = _multiSpyModel->mask("countChanged");
+    _modelDirtyChangedMask = _multiSpyModel->mask("dirtyChanged");
 }
 
-void QGCMapPolygonTest::cleanup()
+void QGCMapPolygonTest::cleanup(void)
 {
+    UnitTest::cleanup();
     delete _mapPolygon;
     _mapPolygon = nullptr;
     delete _multiSpyPolygon;
     _multiSpyPolygon = nullptr;
     delete _multiSpyModel;
     _multiSpyModel = nullptr;
-    UnitTest::cleanup();
 }
 
-void QGCMapPolygonTest::_testDirty()
+void QGCMapPolygonTest::_testDirty(void)
 {
+    // Check basic dirty bit set/get
+
     QVERIFY(!_mapPolygon->dirty());
     QVERIFY(!_pathModel->dirty());
+
     _mapPolygon->setDirty(false);
     QVERIFY(!_mapPolygon->dirty());
     QVERIFY(!_pathModel->dirty());
     QVERIFY(_multiSpyPolygon->noneEmitted());
     QVERIFY(_multiSpyModel->noneEmitted());
+
     _mapPolygon->setDirty(true);
     QVERIFY(_mapPolygon->dirty());
     QVERIFY(!_pathModel->dirty());
-    QVERIFY(_multiSpyPolygon->onlyEmittedOnce("dirtyChanged"));
+    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_polygonDirtyChangedMask));
     QVERIFY(_multiSpyPolygon->argument<bool>("dirtyChanged"));
     QVERIFY(_multiSpyModel->noneEmitted());
     _multiSpyPolygon->clearAllSignals();
+
     _mapPolygon->setDirty(false);
     QVERIFY(!_mapPolygon->dirty());
     QVERIFY(!_pathModel->dirty());
-    QVERIFY(_multiSpyPolygon->onlyEmittedOnce("dirtyChanged"));
+    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_polygonDirtyChangedMask));
     QVERIFY(!_multiSpyPolygon->argument<bool>("dirtyChanged"));
     QVERIFY(_multiSpyModel->noneEmitted());
     _multiSpyPolygon->clearAllSignals();
+
     _pathModel->setDirty(true);
     QVERIFY(_pathModel->dirty());
     QVERIFY(_mapPolygon->dirty());
-    QVERIFY(_multiSpyPolygon->onlyEmittedOnce("dirtyChanged"));
+    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_polygonDirtyChangedMask));
     QVERIFY(_multiSpyPolygon->argument<bool>("dirtyChanged"));
-    QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));
+    QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_modelDirtyChangedMask));
     QVERIFY(_multiSpyModel->argument<bool>("dirtyChanged"));
     _multiSpyPolygon->clearAllSignals();
     _multiSpyModel->clearAllSignals();
+
     _mapPolygon->setDirty(false);
     QVERIFY(!_mapPolygon->dirty());
     QVERIFY(!_pathModel->dirty());
-    QVERIFY(_multiSpyPolygon->onlyEmittedOnce("dirtyChanged"));
+    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_polygonDirtyChangedMask));
     QVERIFY(!_multiSpyPolygon->argument<bool>("dirtyChanged"));
-    QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));
+    QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_modelDirtyChangedMask));
     QVERIFY(!_multiSpyModel->argument<bool>("dirtyChanged"));
     _multiSpyPolygon->clearAllSignals();
     _multiSpyModel->clearAllSignals();
 }
 
-void QGCMapPolygonTest::_testVertexManipulation()
+void QGCMapPolygonTest::_testVertexManipulation(void)
 {
-    for (int i = 0; i < _polyPoints.count(); i++) {
+#if 0
+    Q_INVOKABLE void clear(void);
+    Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
+    Q_INVOKABLE void removeVertex(int vertexIndex);
+
+    /// Adjust the value for the specified coordinate
+    ///     @param vertexIndex Polygon point index to modify (0-based)
+    ///     @param coordinate New coordinate for point
+    Q_INVOKABLE void adjustVertex(int vertexIndex, const QGeoCoordinate coordinate);
+
+    /// Splits the segment comprised of vertextIndex -> vertexIndex + 1
+    Q_INVOKABLE void splitPolygonSegment(int vertexIndex);
+#endif
+
+    // Vertex addition testing
+
+    for (int i = 0; i < _polyPoints.count(); ++i) {
         QCOMPARE(_mapPolygon->count(), i);
+
         _mapPolygon->appendVertex(_polyPoints[i]);
-        QTest::qWait(100);
+        QTRY_VERIFY(_multiSpyPolygon->emittedByMask(_pathChangedMask));
+        QTRY_VERIFY(_multiSpyModel->emittedByMask(_modelCountChangedMask));
         if (i >= 2) {
-            QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
-                _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged")));
+            // Center is not recalculated until there are 3 points or more
+            QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_pathChangedMask | _polygonDirtyChangedMask | _polygonCountChangedMask | _polygonIsEmptyChangedMask | _polygonIsValidChangedMask | _centerChangedMask));
         } else {
-            QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
-                _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged")));
+            QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_pathChangedMask | _polygonDirtyChangedMask | _polygonCountChangedMask | _polygonIsEmptyChangedMask | _polygonIsValidChangedMask));
         }
-        QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
-        QCOMPARE(_multiSpyPolygon->argument<int>("countChanged"), i + 1);
-        QCOMPARE(_multiSpyModel->argument<int>("countChanged"), i + 1);
+        QVERIFY(_multiSpyModel->emittedByMask(_modelDirtyChangedMask | _modelCountChangedMask));
+        QCOMPARE(_multiSpyPolygon->argument<int>("countChanged"), i+1);
+        QCOMPARE(_multiSpyModel->argument<int>("countChanged"), i+1);
+        QCOMPARE(_multiSpyPolygon->count("centerChanged"), (i >= 2) ? 1 : 0);
+
         QVERIFY(_mapPolygon->dirty());
         QVERIFY(_pathModel->dirty());
-        QCOMPARE(_mapPolygon->count(), i + 1);
+
+        QCOMPARE(_mapPolygon->count(), i+1);
+
         QVariantList polyList = _mapPolygon->path();
-        QCOMPARE(polyList.count(), i + 1);
+        QCOMPARE(polyList.count(), i+1);
         QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
-        QCOMPARE(_pathModel->count(), i + 1);
+
+        QCOMPARE(_pathModel->count(), i+1);
         QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(i)->coordinate(), _polyPoints[i]);
+
         _mapPolygon->setDirty(false);
         _multiSpyPolygon->clearAllSignals();
         _multiSpyModel->clearAllSignals();
     }
+
     // Vertex adjustment testing
+
     QGCQGeoCoordinate* geoCoord = _pathModel->value<QGCQGeoCoordinate*>(1);
     QSignalSpy coordSpy(geoCoord, SIGNAL(coordinateChanged(QGeoCoordinate)));
     QSignalSpy coordDirtySpy(geoCoord, SIGNAL(dirtyChanged(bool)));
     QGeoCoordinate adjustCoord(_polyPoints[1].latitude() + 1, _polyPoints[1].longitude() + 1);
     _mapPolygon->adjustVertex(1, adjustCoord);
-    QTest::qWait(100);
-    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
-        _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "centerChanged")));
-    QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));
+    QTRY_VERIFY(_multiSpyPolygon->emittedByMask(_pathChangedMask));
+    QTRY_VERIFY(_multiSpyModel->emittedByMask(_modelDirtyChangedMask));
+    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(_pathChangedMask | _polygonDirtyChangedMask | _centerChangedMask));
+    QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_modelDirtyChangedMask));
+    QCOMPARE(_multiSpyPolygon->count("centerChanged"), 1);
     QCOMPARE(coordSpy.count(), 1);
     QCOMPARE(coordDirtySpy.count(), 1);
     QCOMPARE(geoCoord->coordinate(), adjustCoord);
@@ -130,14 +174,17 @@ void QGCMapPolygonTest::_testVertexManipulation()
     QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(2)->coordinate(), _polyPoints[2]);
     QCOMPARE(polyList[3].value<QGeoCoordinate>(), _polyPoints[3]);
     QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(3)->coordinate(), _polyPoints[3]);
+
     _mapPolygon->setDirty(false);
     _multiSpyPolygon->clearAllSignals();
     _multiSpyModel->clearAllSignals();
+
     // Vertex removal testing
+
     _mapPolygon->removeVertex(1);
-    QVERIFY(_multiSpyPolygon->onlyEmittedByMask(
-        _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged")));
-    QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+    QVERIFY(_multiSpyPolygon->onlyEmittedByMask(_pathChangedMask | _polygonDirtyChangedMask | _polygonCountChangedMask | _polygonIsEmptyChangedMask | _polygonIsValidChangedMask | _centerChangedMask));
+    QVERIFY(_multiSpyModel->emittedByMask(_modelDirtyChangedMask | _modelCountChangedMask));
+    QVERIFY(_multiSpyPolygon->count("centerChanged") >= 1);
     QCOMPARE(_mapPolygon->count(), 3);
     polyList = _mapPolygon->path();
     QCOMPARE(polyList.count(), 3);
@@ -148,11 +195,13 @@ void QGCMapPolygonTest::_testVertexManipulation()
     QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(1)->coordinate(), _polyPoints[2]);
     QCOMPARE(polyList[2].value<QGeoCoordinate>(), _polyPoints[3]);
     QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(2)->coordinate(), _polyPoints[3]);
+
     // Clear testing
+
     _mapPolygon->clear();
-    QVERIFY(_multiSpyPolygon->onlyEmittedByMask(
-        _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged", "cleared")));
-    QVERIFY(_multiSpyModel->onlyEmittedByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+    QVERIFY(_multiSpyPolygon->onlyEmittedByMask(_pathChangedMask | _polygonDirtyChangedMask | _polygonCountChangedMask | _polygonIsEmptyChangedMask | _polygonIsValidChangedMask | _centerChangedMask | _clearedMask));
+    QVERIFY(_multiSpyModel->emittedByMask(_modelDirtyChangedMask | _modelCountChangedMask));
+    QVERIFY(_multiSpyPolygon->count("centerChanged") >= 1);
     QVERIFY(_mapPolygon->dirty());
     QVERIFY(_pathModel->dirty());
     QCOMPARE(_mapPolygon->count(), 0);
@@ -161,96 +210,205 @@ void QGCMapPolygonTest::_testVertexManipulation()
     QCOMPARE(_pathModel->count(), 0);
 }
 
-void QGCMapPolygonTest::_testKMLLoad()
+void QGCMapPolygonTest::_testKMLLoad(void)
 {
-    QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonGood.kml")));
-    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
-    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
-    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
+    QVERIFY(_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonGood.kml")));
+
+    QVERIFY(!_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
+
+    QVERIFY(!_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
+
+    QVERIFY(!_mapPolygon->loadShapeFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
 }
 
-void QGCMapPolygonTest::_testSelectVertex()
+void QGCMapPolygonTest::_testSelectVertex(void)
 {
-    for (const QGeoCoordinate& vertex : std::as_const(_polyPoints)) {
+    // Create polygon
+    for (const QGeoCoordinate &vertex : std::as_const(_polyPoints)) {
         _mapPolygon->appendVertex(vertex);
     }
+
     QVERIFY(_mapPolygon->selectedVertex() == -1);
     QVERIFY(_mapPolygon->count() == _polyPoints.count());
+
+    // Test deselect
     _mapPolygon->selectVertex(-1);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+    // Test out of bounds
     _mapPolygon->selectVertex(_polyPoints.count());
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+    // Simple select test
     _mapPolygon->selectVertex(_polyPoints.count() - 1);
     QVERIFY(_mapPolygon->selectedVertex() == _polyPoints.count() - 1);
+    // Keep selected test
     _mapPolygon->selectVertex(0);
     _mapPolygon->removeVertex(_polyPoints.count() - 1);
     QVERIFY(_mapPolygon->selectedVertex() == 0);
+    // Deselect if selected vertex removed
     _mapPolygon->appendVertex(_polyPoints[_polyPoints.count() - 1]);
     _mapPolygon->selectVertex(_polyPoints.count() - 1);
     _mapPolygon->removeVertex(_polyPoints.count() - 1);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+    // Shift selected index down if removed index < selected index
     _mapPolygon->appendVertex(_polyPoints[_polyPoints.count() - 1]);
     _mapPolygon->selectVertex(_polyPoints.count() - 1);
     _mapPolygon->removeVertex(0);
     QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 1);
 }
 
-void QGCMapPolygonTest::_testSegmentSplit()
+void QGCMapPolygonTest::_testRemoveVertexOutOfRange(void)
 {
-    for (const QGeoCoordinate& vertex : std::as_const(_polyPoints)) {
+    _mapPolygon->setPath(_polyPoints);
+    _mapPolygon->selectVertex(1);
+    QTRY_VERIFY(_multiSpyPolygon->emittedByMask(_pathChangedMask));
+    _multiSpyPolygon->clearAllSignals();
+    _multiSpyModel->clearAllSignals();
+
+    _mapPolygon->removeVertex(-1);
+    QCOMPARE(_mapPolygon->count(), _polyPoints.count());
+    QCOMPARE(_pathModel->count(), _polyPoints.count());
+    QCOMPARE(_mapPolygon->selectedVertex(), 1);
+    QVERIFY(_multiSpyPolygon->noneEmitted());
+    QVERIFY(_multiSpyModel->noneEmitted());
+
+    _mapPolygon->removeVertex(_polyPoints.count());
+    QCOMPARE(_mapPolygon->count(), _polyPoints.count());
+    QCOMPARE(_pathModel->count(), _polyPoints.count());
+    QCOMPARE(_mapPolygon->selectedVertex(), 1);
+    QVERIFY(_multiSpyPolygon->noneEmitted());
+    QVERIFY(_multiSpyModel->noneEmitted());
+}
+
+void QGCMapPolygonTest::_testAdjustVertexOutOfRange(void)
+{
+    _mapPolygon->setPath(_polyPoints);
+    _mapPolygon->selectVertex(1);
+    QTRY_VERIFY(_multiSpyPolygon->emittedByMask(_pathChangedMask));
+    const QVariantList initialPath = _mapPolygon->path();
+    _multiSpyPolygon->clearAllSignals();
+    _multiSpyModel->clearAllSignals();
+
+    _mapPolygon->adjustVertex(-1, QGeoCoordinate(1.0, 1.0));
+    QCOMPARE(_mapPolygon->count(), _polyPoints.count());
+    QCOMPARE(_pathModel->count(), _polyPoints.count());
+    QCOMPARE(_mapPolygon->selectedVertex(), 1);
+    QCOMPARE(_mapPolygon->path(), initialPath);
+    QVERIFY(_multiSpyPolygon->noneEmitted());
+    QVERIFY(_multiSpyModel->noneEmitted());
+
+    _mapPolygon->adjustVertex(_polyPoints.count(), QGeoCoordinate(2.0, 2.0));
+    QCOMPARE(_mapPolygon->count(), _polyPoints.count());
+    QCOMPARE(_pathModel->count(), _polyPoints.count());
+    QCOMPARE(_mapPolygon->selectedVertex(), 1);
+    QCOMPARE(_mapPolygon->path(), initialPath);
+    QVERIFY(_multiSpyPolygon->noneEmitted());
+    QVERIFY(_multiSpyModel->noneEmitted());
+}
+
+void QGCMapPolygonTest::_testSplitSegmentOutOfRange(void)
+{
+    _mapPolygon->setPath(_polyPoints);
+    _mapPolygon->selectVertex(1);
+    QTRY_VERIFY(_multiSpyPolygon->emittedByMask(_pathChangedMask));
+    const QVariantList initialPath = _mapPolygon->path();
+    _multiSpyPolygon->clearAllSignals();
+    _multiSpyModel->clearAllSignals();
+
+    _mapPolygon->splitPolygonSegment(-1);
+    QCOMPARE(_mapPolygon->count(), _polyPoints.count());
+    QCOMPARE(_pathModel->count(), _polyPoints.count());
+    QCOMPARE(_mapPolygon->selectedVertex(), 1);
+    QCOMPARE(_mapPolygon->path(), initialPath);
+    QVERIFY(_multiSpyPolygon->noneEmitted());
+    QVERIFY(_multiSpyModel->noneEmitted());
+
+    _mapPolygon->splitPolygonSegment(_polyPoints.count());
+    QCOMPARE(_mapPolygon->count(), _polyPoints.count());
+    QCOMPARE(_pathModel->count(), _polyPoints.count());
+    QCOMPARE(_mapPolygon->selectedVertex(), 1);
+    QCOMPARE(_mapPolygon->path(), initialPath);
+    QVERIFY(_multiSpyPolygon->noneEmitted());
+    QVERIFY(_multiSpyModel->noneEmitted());
+}
+
+void QGCMapPolygonTest::_testSegmentSplit(void)
+{
+    // Create polygon
+    for (const QGeoCoordinate &vertex : std::as_const(_polyPoints)) {
         _mapPolygon->appendVertex(vertex);
     }
+
     QVERIFY(_mapPolygon->selectedVertex() == -1);
     QVERIFY(_mapPolygon->count() == _polyPoints.count());
     QVERIFY(_mapPolygon->count() == 4);
+
+    // Test deselect, select, deselect
     _mapPolygon->selectVertex(-1);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
     _mapPolygon->selectVertex(3);
     QVERIFY(_mapPolygon->selectedVertex() == 3);
     _mapPolygon->selectVertex(-1);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split at beginning, with no selected
     _mapPolygon->selectVertex(-1);
     _mapPolygon->splitPolygonSegment(0);
     QVERIFY(_mapPolygon->count() == 5);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split at beginning, with same idx selected
     _mapPolygon->selectVertex(0);
     _mapPolygon->splitPolygonSegment(0);
     QVERIFY(_mapPolygon->count() == 6);
     QVERIFY(_mapPolygon->selectedVertex() == 0);
+
+    // Test split at beginning, with later idx selected
     _mapPolygon->selectVertex(1);
     _mapPolygon->splitPolygonSegment(0);
     QVERIFY(_mapPolygon->count() == 7);
     QVERIFY(_mapPolygon->selectedVertex() == 2);
+
+    // Test split in middle, with no selected
     _mapPolygon->selectVertex(-1);
     _mapPolygon->splitPolygonSegment(2);
     QVERIFY(_mapPolygon->count() == 8);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+
+    // Test split in middle, with earlier selected
     _mapPolygon->selectVertex(1);
     _mapPolygon->splitPolygonSegment(2);
     QVERIFY(_mapPolygon->count() == 9);
     QVERIFY(_mapPolygon->selectedVertex() == 1);
+
+    // Test split in middle, with same selected
     _mapPolygon->selectVertex(2);
     _mapPolygon->splitPolygonSegment(2);
     QVERIFY(_mapPolygon->count() == 10);
     QVERIFY(_mapPolygon->selectedVertex() == 2);
+
+    // Test split in middle, with later selected
     _mapPolygon->selectVertex(3);
     _mapPolygon->splitPolygonSegment(2);
     QVERIFY(_mapPolygon->count() == 11);
     QVERIFY(_mapPolygon->selectedVertex() == 4);
+
+    // Test split at end, with no selected
     _mapPolygon->selectVertex(-1);
-    _mapPolygon->splitPolygonSegment(_mapPolygon->count() - 1);
+    _mapPolygon->splitPolygonSegment(_mapPolygon->count()-1);
     QVERIFY(_mapPolygon->count() == 12);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
-    _mapPolygon->selectVertex(_mapPolygon->count() - 2);
-    _mapPolygon->splitPolygonSegment(_mapPolygon->count() - 1);
-    QVERIFY(_mapPolygon->count() == 13);
-    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 3);
-    _mapPolygon->selectVertex(_mapPolygon->count() - 1);
-    _mapPolygon->splitPolygonSegment(_mapPolygon->count() - 1);
-    QVERIFY(_mapPolygon->count() == 14);
-    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 2);
-}
 
-#include "UnitTest.h"
+    // Test split at end, with earlier selected
+    _mapPolygon->selectVertex(_mapPolygon->count()-2);
+    _mapPolygon->splitPolygonSegment(_mapPolygon->count()-1);
+    QVERIFY(_mapPolygon->count() == 13);
+    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count()-3);
+
+    // Test split at end, with same selected
+    _mapPolygon->selectVertex(_mapPolygon->count()-1);
+    _mapPolygon->splitPolygonSegment(_mapPolygon->count()-1);
+    QVERIFY(_mapPolygon->count() == 14);
+    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count()-2);
+}
 
 UT_REGISTER_TEST(QGCMapPolygonTest, TestLabel::Unit, TestLabel::MissionManager)
