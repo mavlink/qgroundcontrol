@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771488160360,
+  "lastUpdate": 1771500151691,
   "repoUrl": "https://github.com/mavlink/qgroundcontrol",
   "entries": {
     "Benchmark": [
@@ -228,6 +228,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "Stripped Size",
             "value": 46687480,
+            "unit": "bytes"
+          },
+          {
+            "name": "Symbol Count",
+            "value": 74853,
+            "unit": "symbols"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "68555040+HTRamsey@users.noreply.github.com",
+            "name": "Holden Ramsey",
+            "username": "HTRamsey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c5b560b828bcfed414655ae52db1d8a309864d3b",
+          "message": "CI: QML debug cachegen + cache consistency fixes (#14003)\n\n* Focus fixes: QML debug cachegen + manual runtime benchmarks\n\n* ci(docker): retry transient docker build failures",
+          "timestamp": "2026-02-19T05:52:01-05:00",
+          "tree_id": "45ffcb0caaaa7e738a196ee296ba5925724acded",
+          "url": "https://github.com/mavlink/qgroundcontrol/commit/c5b560b828bcfed414655ae52db1d8a309864d3b"
+        },
+        "date": 1771500129419,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Binary Size",
+            "value": 51563080,
+            "unit": "bytes"
+          },
+          {
+            "name": "Stripped Size",
+            "value": 46687992,
             "unit": "bytes"
           },
           {
