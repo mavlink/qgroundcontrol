@@ -115,7 +115,7 @@ jobs:
             esac
           fi
 
-          "${{ env.QT_ROOT_DIR }}/bin/qt-cmake" "${CMAKE_ARGS[@]}"
+          "${QT_ROOT_DIR}/bin/qt-cmake" "${CMAKE_ARGS[@]}"
 
       - name: Build (sanitizers only)
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
@@ -131,22 +131,22 @@ jobs:
           INPUT_PATH: ${{ inputs.path }}
           ANALYZE_ALL: ${{ inputs.analyze_all }}
         run: |
-          ARGS="--tool clazy --build-dir ${{ runner.temp }}/build"
+          ARGS=(--tool clazy --build-dir "${RUNNER_TEMP}/build")
 
           if [[ "$ANALYZE_ALL" == "true" ]]; then
-            ARGS="$ARGS --all"
+            ARGS+=(--all)
           elif [[ -n "$INPUT_PATH" ]]; then
             if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
               echo "::error::Invalid path: must be relative, no '..'"
               exit 1
             fi
-            ARGS="$ARGS $INPUT_PATH"
+            ARGS+=("$INPUT_PATH")
           else
-            ARGS="$ARGS --all"
+            ARGS+=(--all)
           fi
 
-          echo "Running: python3 ./tools/analyze.py $ARGS"
-          python3 ./tools/analyze.py $ARGS
+          echo "Running: python3 ./tools/analyze.py ${ARGS[*]}"
+          python3 ./tools/analyze.py "${ARGS[@]}"
 
       - name: Run IWYU
         if: inputs.tool == 'iwyu'
@@ -162,7 +162,7 @@ jobs:
               exit 1
             fi
 
-            FILES=$(find "${{ github.workspace }}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
+            FILES=$(find "${GITHUB_WORKSPACE}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
             if [[ -z "$FILES" ]]; then
               echo "::error::No source files found in $INPUT_PATH"
               exit 1
@@ -181,7 +181,7 @@ jobs:
 
           echo ""
           echo "=== IWYU Summary ==="
-          grep -E "^(${{ github.workspace }}/src/.*should (add|remove)|The full include-list)" iwyu-output.txt | head -200 || echo "No suggestions found"
+          grep -E "^(${GITHUB_WORKSPACE}/src/.*should (add|remove)|The full include-list)" iwyu-output.txt | head -200 || echo "No suggestions found"
 
       - name: Run Sanitizer Tests
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)

@@ -24,9 +24,6 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-permissions: {}
-
 jobs:
   build:
     name: Build
@@ -49,32 +46,16 @@ jobs:
           submodules: recursive
           fetch-depth: 1
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: ${{ github.event_name == 'push' }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: linux
-          target: linux_gcc_64
-          build-type: Release
-          cpm-modules: build/cpm_modules
-          save-cache: ${{ github.event_name == 'push' }}
-
-      - name: Install Qt
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
@@ -112,10 +93,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    outputs:
-      binary_size: ${{ steps.analyze.outputs.binary_size }}
-      stripped_size: ${{ steps.analyze.outputs.stripped_size }}
-      symbol_count: ${{ steps.analyze.outputs.symbol_count }}
 
     steps:
       - name: Harden Runner
@@ -125,6 +102,12 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/ensure-branch
+            .github/actions/size-analysis
+            .github/scripts/size_analysis.py
+          sparse-checkout-cone-mode: false
 
       - name: Download binary
         uses: actions/download-artifact@v7
@@ -136,7 +119,6 @@ jobs:
         run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
 
       - name: Analyze binary size
-        id: analyze
         uses: ./.github/actions/size-analysis
         with:
           binary-path: ${{ needs.build.outputs.binary_path }}
@@ -151,12 +133,9 @@ jobs:
 
       - name: Ensure gh-pages branch exists
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: |
-          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-            echo "Initializing gh-pages branch for benchmark storage..."
-            SHA=$(git commit-tree "$(git hash-object -t tree /dev/null)" -m "Initialize GitHub Pages")
-            git push origin "${SHA}:refs/heads/gh-pages" || echo "Branch may have been created concurrently"
-          fi
+        uses: ./.github/actions/ensure-branch
+        with:
+          branch: gh-pages
 
       - name: Store size metrics
         uses: benchmark-action/github-action-benchmark@v1
@@ -204,11 +183,15 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          sparse-checkout: |
+            .github/actions/benchmark-runner
+            .github/actions/build-config
+            .github/actions/qt-install
+            .github/scripts/benchmark_runner.py
+            tools/setup/read_config.py
+            .github/build-config.json
+          sparse-checkout-cone-mode: false
 
       - name: Get build config
         id: config
@@ -232,7 +215,6 @@ jobs:
         run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
 
       - name: Run benchmarks
-        id: bench
         uses: ./.github/actions/benchmark-runner
         with:
           binary-path: ${{ needs.build.outputs.binary_path }}

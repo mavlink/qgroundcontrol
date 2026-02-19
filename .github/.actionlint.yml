@@ -1,0 +1,4 @@
+shellcheck:
+  exclude:
+    - SC2086  # info: double quote to prevent globbing (QT_ROOT_DIR path has no spaces)
+    - SC2129  # style: consider grouping redirects (pre-existing in cache-cleanup.yml)

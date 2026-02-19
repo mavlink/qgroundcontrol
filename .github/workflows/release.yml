@@ -50,18 +50,17 @@ jobs:
           # Capture semantic-release output
           set +e
           OUTPUT=$(./tools/release.sh --run 2>&1)
-          EXIT_CODE=$?
           echo "$OUTPUT"
           set -e
 
           # Check if a new release was created
           if echo "$OUTPUT" | grep -q "Published release"; then
             VERSION=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*Published release \([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' | head -n1)
-            echo "new_release=true" >> $GITHUB_OUTPUT
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "new_release=true" >> "${GITHUB_OUTPUT}"
+            echo "version=$VERSION" >> "${GITHUB_OUTPUT}"
             echo "New release: v$VERSION"
           else
-            echo "new_release=false" >> $GITHUB_OUTPUT
+            echo "new_release=false" >> "${GITHUB_OUTPUT}"
             echo "No new release"
           fi
 

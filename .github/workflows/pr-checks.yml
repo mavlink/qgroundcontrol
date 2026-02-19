@@ -17,6 +17,11 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Check PR title format
         id: title_check
         continue-on-error: true
@@ -223,15 +228,21 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Get current size label
         id: current
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          CURRENT_LABEL=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels" \
-            --jq '.[] | select(.name | startswith("size/")) | .name' | head -1)
-          echo "label=${CURRENT_LABEL}" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          CURRENT_LABEL=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
+            --jq '.[] | select(.name | startswith("size/")) | .name' | head -1)
+          echo "label=${CURRENT_LABEL}" >> "$GITHUB_OUTPUT"
 
       - name: Label PR by size
         continue-on-error: true
@@ -265,12 +276,14 @@ jobs:
             translations/*
 
       - name: Remove outdated size labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OLD_LABEL: ${{ steps.current.outputs.label }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          OLD_LABEL="${{ steps.current.outputs.label }}"
-
           # Get all current size labels
-          CURRENT_LABELS=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels" \
+          CURRENT_LABELS=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
             --jq '.[] | select(.name | startswith("size/")) | .name')
 
           # Count size labels - if more than one, remove the old one
@@ -278,13 +291,11 @@ jobs:
 
           if [[ "$LABEL_COUNT" -gt 1 && -n "$OLD_LABEL" ]]; then
             # Multiple size labels exist - remove the old one
-            ENCODED_LABEL=$(echo "$OLD_LABEL" | sed 's|/|%2F|g')
-            gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
+            ENCODED_LABEL="${OLD_LABEL//\//%2F}"
+            gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
               -X DELETE 2>/dev/null || true
           fi
           # If only one label exists, size didn't change - nothing to remove
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   label:
     name: Label PR by Files
@@ -293,9 +304,13 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Label PR by changed files
         uses: actions/labeler@v6
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
-

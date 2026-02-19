@@ -82,29 +82,30 @@ jobs:
     steps:
       - name: Check if build needed
         id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SHARED: ${{ needs.changes.outputs.shared }}
+          LINUX: ${{ needs.changes.outputs.linux }}
+          ANDROID: ${{ needs.changes.outputs.android }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+          if [[ "${EVENT_NAME}" != "pull_request" ]]; then
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Not a PR - building all platforms"
             exit 0
           fi
 
-          SHARED="${{ needs.changes.outputs.shared }}"
-          LINUX="${{ needs.changes.outputs.linux }}"
-          ANDROID="${{ needs.changes.outputs.android }}"
-          PLATFORM="${{ matrix.platform }}"
-
           if [[ "$SHARED" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Shared files changed - building $PLATFORM"
           elif [[ "$PLATFORM" == "Linux" && "$LINUX" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Linux-specific files changed - building Linux"
           elif [[ "$PLATFORM" == "Android" && "$ANDROID" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Android-specific files changed - building Android"
           else
-            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "should_build=false" >> "${GITHUB_OUTPUT}"
             echo "No relevant changes for $PLATFORM - skipping"
           fi
 
@@ -145,15 +146,17 @@ jobs:
       - name: Find build artifact
         if: steps.check.outputs.should_build == 'true'
         id: artifact
+        env:
+          BUILD_DIR: ${{ github.workspace }}/build
+          ARTIFACT_PATTERN: ${{ matrix.artifact_pattern }}
         run: |
           set +o pipefail  # Disable pipefail to handle find | head gracefully
-          BUILD_DIR="${{ github.workspace }}/build"
-          echo "Searching for ${{ matrix.artifact_pattern }} in ${BUILD_DIR}"
+          echo "Searching for ${ARTIFACT_PATTERN} in ${BUILD_DIR}"
 
           # Check if build directory exists
           if [ ! -d "${BUILD_DIR}" ]; then
             echo "::warning::Build directory does not exist: ${BUILD_DIR}"
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "found=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
@@ -163,14 +166,14 @@ jobs:
 
           # Find the produced artifact (APK or AppImage)
           # Use -quit for efficiency and to avoid broken pipe with head
-          ARTIFACT=$(find "${BUILD_DIR}" -name "${{ matrix.artifact_pattern }}" -type f -print -quit 2>/dev/null)
+          ARTIFACT=$(find "${BUILD_DIR}" -name "${ARTIFACT_PATTERN}" -type f -print -quit 2>/dev/null)
           if [ -z "$ARTIFACT" ]; then
-            echo "::warning::No artifact matching ${{ matrix.artifact_pattern }} found"
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "::warning::No artifact matching ${ARTIFACT_PATTERN} found"
+            echo "found=false" >> "${GITHUB_OUTPUT}"
           else
             echo "Found artifact: $ARTIFACT"
-            echo "path=$ARTIFACT" >> $GITHUB_OUTPUT
-            echo "found=true" >> $GITHUB_OUTPUT
+            echo "path=$ARTIFACT" >> "${GITHUB_OUTPUT}"
+            echo "found=true" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Scan artifact for vulnerabilities

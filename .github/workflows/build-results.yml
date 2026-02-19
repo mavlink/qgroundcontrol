@@ -10,6 +10,7 @@ permissions:
   actions: read
   checks: write
   pull-requests: write
+  issues: write
 
 jobs:
   post-pr-comment:
@@ -214,7 +215,7 @@ jobs:
           TRIGGERED_BY: ${{ github.event.workflow_run.name }}
           COMMENT_OUTPUT: comment.md
         run: |
-          python3 "${{ github.workspace }}/.github/scripts/generate_build_results_comment.py"
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_build_results_comment.py"
           cat comment.md
 
       - name: Deduplicate prior build-results comments
@@ -304,9 +305,10 @@ jobs:
 
       - name: Delete stale artifact sizes baseline cache
         if: hashFiles('baseline-sizes.json') != ''
-        run: gh actions-cache delete artifact-sizes-baseline-latest -R "${{ github.repository }}" --confirm || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh actions-cache delete artifact-sizes-baseline-latest -R "${GH_REPO}" --confirm || true
 
       - name: Cache artifact sizes as latest
         if: hashFiles('baseline-sizes.json') != ''
@@ -321,9 +323,10 @@ jobs:
 
       - name: Delete stale coverage baseline cache
         if: hashFiles('baseline-coverage.xml') != ''
-        run: gh actions-cache delete coverage-baseline-latest -R "${{ github.repository }}" --confirm || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh actions-cache delete coverage-baseline-latest -R "${GH_REPO}" --confirm || true
 
       - name: Save coverage baseline
         if: hashFiles('baseline-coverage.xml') != ''

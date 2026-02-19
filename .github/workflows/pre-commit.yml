@@ -35,21 +35,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Full history needed for diff vs master
+          fetch-depth: 1
 
       - name: Get build config
         id: config
         uses: ./.github/actions/build-config
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: ./.github/actions/setup-python
         with:
-          python-version: '3.x'
-
-      - name: Install pre-commit
-        run: |
-          python -m pip install pre-commit
-          python -m pip freeze --local
+          groups: precommit
+          python-version: '3.12'
 
       - name: Restore pre-commit cache (PR)
         if: github.event_name == 'pull_request'

@@ -55,15 +55,17 @@ jobs:
           COUNT=$(echo "$CACHES" | wc -l)
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Key | Size | Branch |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|-----|------|--------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "$CACHES" | while read -r KEY SIZE BRANCH; do
-            echo "| \`${KEY:0:50}\` | $SIZE | $BRANCH |" >> "$GITHUB_STEP_SUMMARY"
-          done
-
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Total: $COUNT caches**" >> "$GITHUB_STEP_SUMMARY"
+          # shellcheck disable=SC2129
+          {
+            echo ""
+            echo "| Key | Size | Branch |"
+            echo "|-----|------|--------|"
+            echo "$CACHES" | while read -r KEY SIZE BRANCH; do
+              echo "| \`${KEY:0:50}\` | $SIZE | $BRANCH |"
+            done
+            echo ""
+            echo "**Total: $COUNT caches**"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Delete caches
         if: inputs['dry-run'] == false && steps.list.outputs.count != '0'

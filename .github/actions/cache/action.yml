@@ -49,18 +49,12 @@ runs:
         # Pin ccache version for reproducibility and to avoid API calls
         # Update periodically via Dependabot or manually
         CCACHE_VERSION="4.12.3"
-        SCCACHE_VERSION="v0.14.0"
 
         # Validate version format (defense in depth)
         if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
           echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
           exit 1
         fi
-        if [[ ! "$SCCACHE_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "Error: Invalid sccache version format: $SCCACHE_VERSION" >&2
-          exit 1
-        fi
-        echo "sccache_version=${SCCACHE_VERSION}" >> "$GITHUB_OUTPUT"
 
         if [[ "${INPUT_TARGET}" == "linux_gcc_arm64" ]]; then
           arch="aarch64"
@@ -96,15 +90,14 @@ runs:
           --arch "${CCACHE_ARCH}" \
           --install
 
-    - name: Setup sccache (Windows x64 only)
+    - name: Setup sccache (Windows x64)
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
       uses: mozilla-actions/sccache-action@v0.0.9
-      with:
-        version: ${{ steps.ccache-config.outputs.sccache_version }}
 
-    - run: echo "SCCACHE_GHA_ENABLED=${{ inputs.save-cache == 'true' && 'true' || 'false' }}" >> "$GITHUB_ENV"
+    - name: Enable sccache GHA cache backend
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
       shell: bash
+      run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
 
     - name: Install ccache (Windows ARM64)
       if: runner.os == 'Windows' && inputs.host == 'windows_arm64'
@@ -148,10 +141,10 @@ runs:
         echo "CPM_SOURCE_CACHE=${cpm_cache_path}" >> "$GITHUB_ENV"
         echo "path=${cpm_cache_path}" >> "$GITHUB_OUTPUT"
 
-    - name: Setup Build Cache
+    - name: Setup Build Cache (ccache)
+      if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64')"
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64' && 'sccache' || 'ccache' }}
         key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
         restore-keys: |
           ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-

@@ -25,6 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -56,6 +61,11 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Download Artifact
         uses: actions/download-artifact@v7
         with:
@@ -74,7 +84,7 @@ jobs:
           BRANCH: ${{ env.BRANCH_NAME }}
         run: |
           # Sanitize branch name to prevent path traversal and shell injection
-          SAFE_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/_/g')
+          SAFE_BRANCH="${BRANCH//[^a-zA-Z0-9._-]/_}"
           rm -rf "docs.qgroundcontrol.com/${SAFE_BRANCH}"
           mkdir -p "docs.qgroundcontrol.com/${SAFE_BRANCH}"
           cp -r ~/_book/* "docs.qgroundcontrol.com/${SAFE_BRANCH}/"

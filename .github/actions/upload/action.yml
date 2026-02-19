@@ -44,12 +44,6 @@ runs:
         retention-days: ${{ inputs.retention_days != '' && inputs.retention_days || (github.event_name == 'pull_request' && '7' || '30') }}
         compression-level: ${{ inputs.compression_level }}
 
-    - name: Attest build provenance
-      if: github.event_name == 'push' && github.repository_owner == 'mavlink'
-      uses: actions/attest-build-provenance@v3
-      with:
-        subject-path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
-
     - name: Upload to AWS
       if: >-
         fromJSON(inputs.upload_aws) &&

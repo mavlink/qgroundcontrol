@@ -5,21 +5,18 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Copy build config and setup scripts
 COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install_dependencies.py /tmp/qt/
-COPY tools/setup/read-config.sh /tmp/qt/
-RUN chmod +x /tmp/qt/*.sh && \
-    apt-get update && apt-get install -y --no-install-recommends python3 && \
+COPY tools/setup/read_config.py /tmp/qt/
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && \
     python3 /tmp/qt/install_dependencies.py --platform debian
 
 # Read all versions from centralized config
-RUN apt-get update && apt-get install -y jq && \
-    CONFIG=/tmp/qt/build-config.json && \
-    echo "export QT_VERSION=$(jq -r '.qt_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_MODULES=\"$(jq -r '.qt_modules' $CONFIG)\"" >> /etc/profile.d/qgc.sh && \
-    echo "export JAVA_VERSION=$(jq -r '.java_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
-    echo "export NDK_FULL_VERSION=$(jq -r '.ndk_full_version' $CONFIG)" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_PLATFORM=$(jq -r '.android_platform' $CONFIG)" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_BUILD_TOOLS=$(jq -r '.android_build_tools' $CONFIG)" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_CMDLINE_TOOLS=$(jq -r '.android_cmdline_tools' $CONFIG)" >> /etc/profile.d/qgc.sh && \
+RUN echo "export QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version)" >> /etc/profile.d/qgc.sh && \
+    echo "export QT_MODULES=\"$(python3 /tmp/qt/read_config.py --get qt_modules)\"" >> /etc/profile.d/qgc.sh && \
+    echo "export JAVA_VERSION=$(python3 /tmp/qt/read_config.py --get java_version)" >> /etc/profile.d/qgc.sh && \
+    echo "export NDK_FULL_VERSION=$(python3 /tmp/qt/read_config.py --get ndk_full_version)" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_PLATFORM=$(python3 /tmp/qt/read_config.py --get android_platform)" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_BUILD_TOOLS=$(python3 /tmp/qt/read_config.py --get android_build_tools)" >> /etc/profile.d/qgc.sh && \
+    echo "export ANDROID_CMDLINE_TOOLS=$(python3 /tmp/qt/read_config.py --get android_cmdline_tools)" >> /etc/profile.d/qgc.sh && \
     chmod +x /etc/profile.d/qgc.sh
 
 RUN . /etc/profile.d/qgc.sh && apt-get install -y openjdk-${JAVA_VERSION}-jdk

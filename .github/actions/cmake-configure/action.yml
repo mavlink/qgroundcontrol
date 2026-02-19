@@ -47,38 +47,45 @@ inputs:
     required: false
     default: 'true'
 
-outputs:
-  build-dir:
-    description: 'Absolute path to build directory'
-    value: ${{ steps.configure.outputs.build_dir }}
-
 runs:
   using: composite
   steps:
     - name: Create build directory
       shell: bash
-      run: mkdir -p "${{ inputs.build-dir }}"
+      env:
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
+      run: mkdir -p "${INPUT_BUILD_DIR}"
 
     - name: Configure
-      id: configure
       shell: bash
       env:
+        INPUT_SOURCE_DIR: ${{ inputs.source-dir }}
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUT_GENERATOR: ${{ inputs.generator }}
+        INPUT_BUILD_TYPE: ${{ inputs.build-type }}
+        INPUT_TESTING: ${{ inputs.testing }}
+        INPUT_COVERAGE: ${{ inputs.coverage }}
+        INPUT_STABLE: ${{ inputs.stable }}
+        INPUT_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}
+        INPUT_UNITY_BUILD: ${{ inputs.unity-build }}
+        INPUT_UNITY_BATCH_SIZE: ${{ inputs.unity-batch-size }}
         INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+        WORKSPACE: ${{ github.workspace }}
       run: |
         args=(
-          -S "${{ inputs.source-dir }}"
-          -B "${{ inputs.build-dir }}"
-          -G "${{ inputs.generator }}"
-          -t "${{ inputs.build-type }}"
+          -S "${INPUT_SOURCE_DIR}"
+          -B "${INPUT_BUILD_DIR}"
+          -G "${INPUT_GENERATOR}"
+          -t "${INPUT_BUILD_TYPE}"
         )
 
-        [[ "${{ inputs.testing }}" == "true" ]] && args+=(--testing)
-        [[ "${{ inputs.coverage }}" == "true" ]] && args+=(--coverage)
-        [[ "${{ inputs.stable }}" == "true" ]] && args+=(--stable)
-        [[ "${{ inputs.use-qt-cmake }}" != "true" ]] && args+=(--no-qt-cmake)
+        [[ "${INPUT_TESTING}" == "true" ]] && args+=(--testing)
+        [[ "${INPUT_COVERAGE}" == "true" ]] && args+=(--coverage)
+        [[ "${INPUT_STABLE}" == "true" ]] && args+=(--stable)
+        [[ "${INPUT_USE_QT_CMAKE}" != "true" ]] && args+=(--no-qt-cmake)
 
-        if [[ "${{ inputs.unity-build }}" == "true" ]]; then
-          args+=(--unity --unity-batch "${{ inputs.unity-batch-size }}")
+        if [[ "${INPUT_UNITY_BUILD}" == "true" ]]; then
+          args+=(--unity --unity-batch "${INPUT_UNITY_BATCH_SIZE}")
         fi
 
         # Add extra args if provided
@@ -87,6 +94,9 @@ runs:
           args+=("${extra[@]}")
         fi
 
-        python3 "${{ github.workspace }}/tools/configure.py" "${args[@]}"
-
-        echo "build_dir=$(cd "${{ inputs.build-dir }}" && pwd)" >> "$GITHUB_OUTPUT"
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+        "${py_cmd}" "${WORKSPACE}/tools/configure.py" "${args[@]}"

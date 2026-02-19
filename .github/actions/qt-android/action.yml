@@ -63,7 +63,6 @@ runs:
 
     - name: Setup Android Environment
       uses: android-actions/setup-android@v3
-      id: setup-android
       with:
         cmdline-tools-version: ${{ inputs.android-cmdline-tools }}
         packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-build-tools }} ndk;${{ inputs.ndk-full-version }}'
@@ -111,7 +110,7 @@ runs:
         cache: true
 
     - name: Install Qt for Android (arm64_v8a)
-      if: contains(inputs.abis, 'arm64-v8a')
+      if: contains(format(';{0};', inputs.abis), ';arm64-v8a;')
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{ inputs.version }}
@@ -124,7 +123,7 @@ runs:
         cache: true
 
     - name: Install Qt for Android (armv7)
-      if: contains(inputs.abis, 'armeabi-v7a')
+      if: contains(format(';{0};', inputs.abis), ';armeabi-v7a;')
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{ inputs.version }}
@@ -137,7 +136,7 @@ runs:
         cache: true
 
     - name: Install Qt for Android (x86_64)
-      if: contains(inputs.abis, 'x86_64')
+      if: contains(format(';{0};', inputs.abis), ';x86_64;')
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{ inputs.version }}
@@ -150,7 +149,7 @@ runs:
         cache: true
 
     - name: Install Qt for Android (x86)
-      if: contains(inputs.abis, 'x86')
+      if: contains(format(';{0};', inputs.abis), ';x86;')
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{ inputs.version }}

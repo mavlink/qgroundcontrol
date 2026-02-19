@@ -13,9 +13,16 @@ jobs:
     timeout-minutes: 120
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      # flatpak-builder requires namespace operations not available in an unprivileged container.
+      # This workflow is manual-trigger only and runner egress is audited as mitigation.
       options: --privileged
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -33,3 +40,5 @@ jobs:
         with:
           name: QGroundControl-flatpak
           path: QGroundControl.flatpak
+          retention-days: 14
+          compression-level: 0
