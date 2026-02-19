@@ -154,11 +154,14 @@ bool JoystickSDL::init()
     return true;
 }
 
-void JoystickSDL::shutdown()
+void JoystickSDL::shutdown(bool deleteDiscoveryCache)
 {
     SDL_RemoveEventWatch(sdlEventWatcher, nullptr);
     SDLJoystick::shutdown();
 
+    if (deleteDiscoveryCache) {
+        qDeleteAll(s_discoveryCache);
+    }
     s_discoveryCache.clear();
 }
 
@@ -184,14 +187,18 @@ QMap<QString, Joystick*> JoystickSDL::discover()
 
     qCDebug(JoystickSDLLog) << "SDL_GetJoysticks returned" << count << "joysticks";
     for (int n = 0; n < count; ++n) {
+        const QString joystickName = SDLJoystick::getNameForInstanceId(ids[n]);
         qCDebug(JoystickSDLLog) << "  [" << n << "] ID:" << ids[n]
-                                << "Name:" << SDL_GetJoystickNameForID(ids[n])
+                                << "Name:" << joystickName
                                 << "IsGamepad:" << SDL_IsGamepad(ids[n]);
     }
 
     for (int n = 0; n < count; ++n) {
         const SDL_JoystickID jid = ids[n];
-        QString baseName = QString::fromUtf8(SDL_GetJoystickNameForID(jid));
+        QString baseName = SDLJoystick::getNameForInstanceId(jid);
+        if (baseName.isEmpty()) {
+            baseName = QStringLiteral("Joystick %1").arg(jid);
+        }
         QString name = baseName;
 
         // Check cache by instance ID (reconnection of same device)
@@ -199,10 +206,17 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         for (auto it = s_discoveryCache.begin(); it != s_discoveryCache.end(); ++it) {
             auto *cachedJs = static_cast<JoystickSDL*>(it.value());
             if (static_cast<SDL_JoystickID>(cachedJs->instanceId()) == jid) {
-                name = it.key();
-                current[name] = cachedJs;
-                s_discoveryCache.erase(it);
-                foundInCache = true;
+                if (cachedJs->name() == baseName) {
+                    name = it.key();
+                    current[name] = cachedJs;
+                    s_discoveryCache.erase(it);
+                    foundInCache = true;
+                } else {
+                    // SDL instance ids can be recycled. If the id matches but the reported
+                    // name changed, treat it as a new device and drop the stale cached object.
+                    cachedJs->deleteLater();
+                    s_discoveryCache.erase(it);
+                }
                 break;
             }
         }
@@ -340,7 +354,7 @@ void JoystickSDL::_close()
         return;
     }
 
-    qCDebug(JoystickSDLLog) << "Closing" << SDL_GetJoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
+    qCDebug(JoystickSDLLog) << "Closing joystick" << _name << "at" << _sdlJoystick;
 
     if (_sdlHaptic) {
         SDL_CloseHaptic(_sdlHaptic);

@@ -47,6 +47,21 @@ ninja check-mavlink          # MAVLink tests
 ninja check-comms            # Comms tests
 ```
 
+### QML Test Split
+
+There are two separate QML-related test entry points with different purposes:
+
+- `QmlQuickTests` (recommended for real QML testing): Runs `tst_*.qml` via a dedicated Qt Quick Test executable (`QGCQmlQuickTests`) out-of-process.
+- `QmlTestRunner` (sanity/structure check): Runs inside the regular `UnitTest` harness and validates test discovery/setup, but is not the primary Qt Quick execution path.
+
+```bash
+# Real QML quick tests
+ctest -R QmlQuickTests --output-on-failure
+
+# In-process sanity check runner
+ctest -R QmlTestRunner --output-on-failure
+```
+
 ## Writing Tests
 
 ### Basic Test Class
@@ -160,13 +175,16 @@ ninja coverage-report
 
 ```bash
 # AddressSanitizer (memory errors)
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSANITIZER=address
-
-# ThreadSanitizer (data races)
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSANITIZER=thread
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_ASAN=ON
 
 # UndefinedBehaviorSanitizer
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DSANITIZER=undefined
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_UBSAN=ON
+
+# Combined ASan + UBSan (recommended default sanitizer lane)
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON
+
+# ThreadSanitizer (data races, run separately)
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_TSAN=ON
 ```
 
 ## JUnit XML Output

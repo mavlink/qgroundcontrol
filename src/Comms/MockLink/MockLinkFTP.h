@@ -29,7 +29,7 @@ public:
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
-    void enableRandromDrops(bool enable) { _randomDropsEnabled = enable; }
+    void enableRandomDrops(bool enable) { _randomDropsEnabled = enable; }
     void enableBinParamFile(bool enable) { _BinParamFileEnabled = enable; }
 
     /// Returns the list of remote paths which have been uploaded in this session.

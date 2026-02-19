@@ -1,8 +1,9 @@
 #include "CityMapGeometryTest.h"
-#include "CityMapGeometry.h"
-#include "OsmParser.h"
 
 #include <QtTest/QSignalSpy>
+
+#include "CityMapGeometry.h"
+#include "OsmParser.h"
 
 void CityMapGeometryTest::_testDefaultModelName()
 {

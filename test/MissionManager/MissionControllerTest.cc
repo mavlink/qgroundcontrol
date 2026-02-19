@@ -3,7 +3,6 @@
 #include "AppSettings.h"
 #include "MissionController.h"
 #include "MissionSettingsItem.h"
-#include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
 #include "SettingsManager.h"
@@ -11,16 +10,12 @@
 #include "TestFixtures.h"
 using namespace TestFixtures;
 
+MissionControllerTest::~MissionControllerTest() = default;
 
 void MissionControllerTest::cleanup()
 {
-    delete _masterController;
-    delete _multiSpyMissionController;
-    delete _multiSpyMissionItem;
-    _masterController = nullptr;
+    _masterController.reset();
     _missionController = nullptr;
-    _multiSpyMissionController = nullptr;
-    _multiSpyMissionItem = nullptr;
     MissionControllerManagerTest::cleanup();
 }
 
@@ -30,16 +25,15 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     // Master controller pulls offline vehicle info from settings
     SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(
         QGCMAVLink::firmwareClass(firmwareType));
-    _masterController = new PlanMasterController(this);
+    _masterController = std::make_unique<PlanMasterController>();
     _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
-    _multiSpyMissionController = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpyMissionController);
-    QCOMPARE(_multiSpyMissionController->init(_missionController), true);
+    SignalSpyFixture missionControllerSpy(_missionController);
+    QVERIFY(missionControllerSpy.spy());
+    missionControllerSpy.expect("visualItemsChanged");
     _masterController->start();
     // visualItemsChanged should be emitted during start (along with many other signals)
-    QVERIFY(_multiSpyMissionController->emitted(SIGNAL(visualItemsChanged())));
-    _multiSpyMissionController->clearAllSignals();
+    QVERIFY(missionControllerSpy.waitAndVerify(TestTimeout::mediumMs()));
     QmlObjectListModel* visualItems = _missionController->visualItems();
     QVERIFY(visualItems);
     // Empty vehicle only has home position
@@ -78,10 +72,8 @@ void MissionControllerTest::_testEmptyVehicle()
 
 void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualItem)
 {
-    delete _multiSpyMissionItem;
-    _multiSpyMissionItem = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpyMissionItem);
-    QCOMPARE(_multiSpyMissionItem->init(visualItem), true);
+    SignalSpyFixture visualItemSpy(visualItem);
+    QVERIFY(visualItemSpy.spy());
 }
 
 void MissionControllerTest::_testGimbalRecalc()
@@ -103,7 +95,20 @@ void MissionControllerTest::_testGimbalRecalc()
     item->cameraSection()->setSpecifyGimbal(true);
     item->cameraSection()->gimbalYaw()->setRawValue(0.0);
     SettingsManager::instance()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
-    QTest::qWait(500);  // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    QVERIFY_TRUE_WAIT(([&]() {
+        for (int i = 1; i < _missionController->visualItems()->count(); i++) {
+            VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+            if (i >= yawIndex) {
+                if (!qFuzzyCompare(visualItem->missionGimbalYaw() + 1.0, 1.0)) {
+                    return false;
+                }
+            } else if (!qIsNaN(visualItem->missionGimbalYaw())) {
+                return false;
+            }
+        }
+        return true;
+    }()),
+                      TestTimeout::mediumMs());
     for (int i = 1; i < _missionController->visualItems()->count(); i++) {
         // qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
@@ -129,7 +134,20 @@ void MissionControllerTest::_testVehicleYawRecalc()
         currentCoord = currentCoord.atDistanceAndAzimuth(wpDistance, wpAngle);
         _missionController->insertSimpleMissionItem(currentCoord, i);
     }
-    QTest::qWait(500);  // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    QVERIFY_TRUE_WAIT(([&]() {
+        double expectedVehicleYaw = wpAngleInc;
+        for (int i = 2; i < cMissionItems; i++) {
+            VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+            if (!qFuzzyCompare(visualItem->missionVehicleYaw() + 1.0, expectedVehicleYaw + 1.0)) {
+                return false;
+            }
+            if (i <= cMissionItems - 1) {
+                expectedVehicleYaw += wpAngleInc;
+            }
+        }
+        return true;
+    }()),
+                      TestTimeout::mediumMs());
     // No specific vehicle yaw set yet. Vehicle yaw should track flight path.
     double expectedVehicleYaw = wpAngleInc;
     for (int i = 2; i < cMissionItems; i++) {
@@ -142,7 +160,21 @@ void MissionControllerTest::_testVehicleYawRecalc()
     }
     SimpleMissionItem* simpleItem = _missionController->visualItems()->value<SimpleMissionItem*>(3);
     simpleItem->missionItem().setParam4(66);
-    QTest::qWait(500);  // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+    QVERIFY_TRUE_WAIT(([&]() {
+        double expectedYaw = wpAngleInc;
+        for (int i = 2; i < cMissionItems; i++) {
+            VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+            const double expected = (i == 3) ? 66.0 : expectedYaw;
+            if (!qFuzzyCompare(visualItem->missionVehicleYaw() + 1.0, expected + 1.0)) {
+                return false;
+            }
+            if (i <= cMissionItems - 1) {
+                expectedYaw += wpAngleInc;
+            }
+        }
+        return true;
+    }()),
+                      TestTimeout::mediumMs());
     // All item should track vehicle path except for the one changed
     expectedVehicleYaw = wpAngleInc;
     for (int i = 2; i < cMissionItems; i++) {
@@ -205,7 +237,7 @@ void MissionControllerTest::_testGlobalAltMode()
         QCOMPARE(si->altitudeMode(), QGroundControlQmlGlobal::AltitudeModeRelative);
         QCOMPARE(si->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
         for (int i = 2; i < _missionController->visualItems()->count(); i++) {
-            qDebug() << i;
+            TEST_DEBUG(QStringLiteral("Validating altitude mode index %1").arg(i));
             SimpleMissionItem* siLoop =
                 qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(i));
             QCOMPARE(siLoop->altitudeMode(), testCase.altMode);

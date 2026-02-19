@@ -1,6 +1,9 @@
 #pragma once
 
+#include "MultiSignalSpy.h"
 #include "SectionTest.h"
+
+#include <memory>
 
 class SpeedSection;
 
@@ -25,7 +28,7 @@ private slots:
 private:
     void _createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy);
 
-    MultiSignalSpy* _spySpeed = nullptr;
-    MultiSignalSpy* _spySection = nullptr;
+    std::unique_ptr<MultiSignalSpy> _spySpeed;
+    std::unique_ptr<MultiSignalSpy> _spySection;
     SpeedSection* _speedSection = nullptr;
 };

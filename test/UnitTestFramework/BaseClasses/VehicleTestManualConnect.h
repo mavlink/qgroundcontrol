@@ -1,7 +1,7 @@
 #pragma once
 
-#include "VehicleTest.h"
 #include "MultiVehicleManager.h"
+#include "VehicleTest.h"
 
 /// Test fixture for tests that manage their own MockLink connection.
 ///
@@ -30,9 +30,12 @@ class VehicleTestManualConnect : public VehicleTest
     Q_OBJECT
 
 public:
-    explicit VehicleTestManualConnect(QObject* parent = nullptr) : VehicleTest(parent) {}
+    explicit VehicleTestManualConnect(QObject* parent = nullptr) : VehicleTest(parent)
+    {
+    }
 
 protected slots:
+
     void init() override
     {
         UnitTest::init();

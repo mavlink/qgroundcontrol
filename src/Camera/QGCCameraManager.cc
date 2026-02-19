@@ -134,7 +134,7 @@ void QGCCameraManager::_vehicleReady(bool ready)
 void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
 {
     // Only pay attention to camera components (MAV_COMP_ID_CAMERA..CAMERA6)
-    // and the autopilot (it might proxy a non-MAVLink camera).
+    // and camera-related messages proxied by the autopilot.
     const bool fromAutopilot = message.compid == MAV_COMP_ID_AUTOPILOT1;
     const bool fromCamera = (message.compid >= MAV_COMP_ID_CAMERA) && (message.compid <= MAV_COMP_ID_CAMERA6);
     if ((message.sysid == _vehicle->id()) && (fromAutopilot || fromCamera)) {
@@ -146,7 +146,11 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
             _handleStorageInformation(message);
             break;
         case MAVLINK_MSG_ID_HEARTBEAT:
-            _handleHeartbeat(message);
+            // Autopilot heartbeats should not be treated as camera discovery.
+            // Only actual camera component heartbeats should start CAMERA_INFORMATION requests.
+            if (fromCamera) {
+                _handleHeartbeat(message);
+            }
             break;
         case MAVLINK_MSG_ID_CAMERA_INFORMATION:
             _handleCameraInfo(message);

@@ -19,7 +19,7 @@ void FollowMeTest::_testFollowMe()
     vehicle->setFlightMode(vehicle->followFlightMode());
     SettingsManager::instance()->appSettings()->followTarget()->setRawValue(1);
     QSignalSpy spyGCSMotionReport(vehicle, &Vehicle::messagesSentChanged);
-    QVERIFY(spyGCSMotionReport.wait(1500));
+    QVERIFY_SIGNAL_WAIT(spyGCSMotionReport, TestTimeout::mediumMs());
     _disconnectMockLink();
 }
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BaseClasses/VehicleTest.h"
+#include "BaseClasses/VehicleTestManualConnect.h"
 #include "Vehicle.h"
 
-class RequestMessageTest : public VehicleTest
+class RequestMessageTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
@@ -11,7 +11,9 @@ signals:
     void resultHandlerCalled();
 
 private slots:
+    void init() override;
     void _performTestCases();
+    void _performTestCasesStress();
     void _compIdAllFailure();
     void _duplicateCommand();
 

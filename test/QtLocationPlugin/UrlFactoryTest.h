@@ -25,6 +25,9 @@ private slots:
     void _testGetImageFormatByType();
     void _testGetImageFormatByMapId();
     void _testGetImageFormatInvalidInputs();
+    void _testGetTileURLByType();
+    void _testGetTileURLByMapId();
+    void _testGetTileURLInvalidInputs();
     void _testAverageSizeForKnownProviders();
     void _testAverageSizeForInvalidType();
     void _testIsElevationTrue();

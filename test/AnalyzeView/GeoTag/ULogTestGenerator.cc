@@ -2,12 +2,12 @@
 
 #include <ulog_cpp/simple_writer.hpp>
 
-namespace ULogTestGenerator
-{
+namespace ULogTestGenerator {
 
 // Struct matching the camera_capture message format
 // Fields must be ordered by decreasing size to avoid padding
 #pragma pack(push, 1)
+
 struct CameraCaptureMessage
 {
     uint64_t timestamp;
@@ -22,9 +22,10 @@ struct CameraCaptureMessage
     uint8_t camera_id;
     uint8_t _padding[2];  // Align to 8 bytes
 };
+
 #pragma pack(pop)
 
-bool generateULog(const QString &filename, const QList<CameraCaptureEvent> &events)
+bool generateULog(const QString& filename, const QList<CameraCaptureEvent>& events)
 {
     if (events.isEmpty()) {
         qWarning() << "No events to write";
@@ -42,16 +43,9 @@ bool generateULog(const QString &filename, const QList<CameraCaptureEvent> &even
         // Define camera_capture message format
         // Fields ordered by decreasing size to avoid padding
         std::vector<ulog_cpp::Field> fields = {
-            {"uint64_t", "timestamp"},
-            {"uint64_t", "timestamp_utc"},
-            {"double", "lat"},
-            {"double", "lon"},
-            {"float", "alt"},
-            {"float", "ground_distance"},
-            {"float", "q", 4},  // Array of 4 floats
-            {"uint32_t", "seq"},
-            {"int8_t", "result"},
-            {"uint8_t", "camera_id"},
+            {"uint64_t", "timestamp"}, {"uint64_t", "timestamp_utc"}, {"double", "lat"},        {"double", "lon"},
+            {"float", "alt"},          {"float", "ground_distance"},  {"float", "q", 4},  // Array of 4 floats
+            {"uint32_t", "seq"},       {"int8_t", "result"},          {"uint8_t", "camera_id"},
         };
         writer.writeMessageFormat("camera_capture", fields);
 
@@ -62,7 +56,7 @@ bool generateULog(const QString &filename, const QList<CameraCaptureEvent> &even
         const uint16_t msgId = writer.writeAddLoggedMessage("camera_capture");
 
         // Write events
-        for (const CameraCaptureEvent &event : events) {
+        for (const CameraCaptureEvent& event : events) {
             CameraCaptureMessage msg{};
             msg.timestamp = event.timestamp_us;
             msg.timestamp_utc = event.timestamp_utc_us;
@@ -84,7 +78,7 @@ bool generateULog(const QString &filename, const QList<CameraCaptureEvent> &even
         writer.fsync();
         return true;
 
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         qWarning() << "Failed to generate ULog:" << e.what();
         return false;
     }
@@ -109,10 +103,9 @@ QList<CameraCaptureEvent> generateSampleEvents(int count, uint64_t startTimestam
         event.seq = static_cast<uint32_t>(i);
 
         // Move slightly for each capture
-        event.coordinate = QGeoCoordinate(
-            startLat + (i * 0.0001),  // ~11m per step
-            startLon + (i * 0.0001),
-            altitude + (i * 0.5)  // Slight altitude variation
+        event.coordinate = QGeoCoordinate(startLat + (i * 0.0001),  // ~11m per step
+                                          startLon + (i * 0.0001),
+                                          altitude + (i * 0.5)      // Slight altitude variation
         );
 
         event.groundDistance = static_cast<float>(altitude);

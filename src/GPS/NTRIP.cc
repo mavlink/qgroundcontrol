@@ -182,6 +182,7 @@ NTRIPTCPLink::NTRIPTCPLink(const QString& hostAddress,
                            const QString& mountpoint,
                            const QString& whitelist,
                            bool useSpartn,
+                           bool autoStart,
                            QObject* parent)
     : QObject(parent)
     , _hostAddress(hostAddress)
@@ -224,6 +225,11 @@ NTRIPTCPLink::NTRIPTCPLink(const QString& hostAddress,
     }
 
     _state = NTRIPState::uninitialised;
+
+    // Start only when requested so unit tests can exercise parser behavior without sockets.
+    if (autoStart) {
+        start();
+    }
 }
 
 NTRIPTCPLink::~NTRIPTCPLink()

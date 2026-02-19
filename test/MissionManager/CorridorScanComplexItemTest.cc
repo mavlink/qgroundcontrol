@@ -1,12 +1,13 @@
 #include "CorridorScanComplexItemTest.h"
 
+#include "CoordFixtures.h"
 #include "CorridorScanComplexItem.h"
 #include "MultiSignalSpy.h"
 #include "PlanViewSettings.h"
 
 CorridorScanComplexItemTest::CorridorScanComplexItemTest()
 {
-    _polyLineVertices.append(QGeoCoordinate(47.633550640000003, -122.08982199));
+    _polyLineVertices.append(TestFixtures::Coord::missionTestOrigin());
     _polyLineVertices.append(_polyLineVertices[0].atDistanceAndAzimuth(_corridorLineSegmentDistance, 0));
     _polyLineVertices.append(_polyLineVertices[1].atDistanceAndAzimuth(_corridorLineSegmentDistance, 20));
 }
@@ -49,70 +50,19 @@ void CorridorScanComplexItemTest::_testDirty()
     QGeoCoordinate coord = _corridorItem->corridorPolyline()->vertexCoordinate(0);
     coord.setLatitude(coord.latitude() + 1);
     _corridorItem->corridorPolyline()->adjustVertex(1, coord);
-    QTest::qWait(100);  // Let event loop process so queued signals flow through
-    QVERIFY(_corridorItem->dirty());
+    QVERIFY_TRUE_WAIT(_corridorItem->dirty(), TestTimeout::mediumMs());
     _corridorItem->setDirty(false);
 }
 
 void CorridorScanComplexItemTest::_testCameraTrigger()
 {
-#if 0
-    QCOMPARE(_corridorItem->property("cameraTrigger").toBool(), true);
-    // Set up a grid
-    for (int i=0; i<3; i++) {
-        _mapPolyline->appendVertex(_linePoints[i]);
-    }
-    _corridorItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-    int lastSeq = _corridorItem->lastSequenceNumber();
-    QVERIFY(lastSeq > 0);
-    // Turning off camera triggering should remove two camera trigger mission items, this should trigger:
-    //      lastSequenceNumberChanged
-    //      dirtyChanged
-    _corridorItem->setProperty("cameraTrigger", false);
-    QVERIFY(_multiSpy->onlyEmittedOnceByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq - 2);
-    _corridorItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-    // Turn on camera triggering and make sure things go back to previous count
-    _corridorItem->setProperty("cameraTrigger", true);
-    QVERIFY(_multiSpy->onlyEmittedOnceByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
-#endif
+    QSKIP("cameraTrigger property API removed in TransectStyle refactor");
 }
-#if 0
-void CorridorScanComplexItemTest::_testEntryLocation()
-{
-    _setPolygon();
-    for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
-        _corridorItem->gridAngle()->setRawValue(gridAngle);
-        QList<QGeoCoordinate> rgSeenEntryCoords;
-        QList<int> rgEntryLocation;
-        rgEntryLocation << SurveyComplexItem::EntryLocationTopLeft
-                        << SurveyComplexItem::EntryLocationTopRight
-                        << SurveyComplexItem::EntryLocationBottomLeft
-                        << SurveyComplexItem::EntryLocationBottomRight;
-        // Validate that each entry location is unique
-        for (int i=0; i<rgEntryLocation.count(); i++) {
-            int entryLocation = rgEntryLocation[i];
-            _corridorItem->gridEntryLocation()->setRawValue(entryLocation);
-            QVERIFY(!rgSeenEntryCoords.contains(_corridorItem->coordinate()));
-            rgSeenEntryCoords << _corridorItem->coordinate();
-        }
-        rgSeenEntryCoords.clear();
-    }
-}
-#endif
+
 void CorridorScanComplexItemTest::_waitForReadyForSave()
 {
-    int loops = 0;
-    while (loops++ < 8) {
-        if (_corridorItem->readyForSaveState() == CorridorScanComplexItem::ReadyForSave) {
-            return;
-        }
-        QTest::qWait(500);
-    }
-    QVERIFY(false);
+    QVERIFY_TRUE_WAIT(_corridorItem->readyForSaveState() == CorridorScanComplexItem::ReadyForSave,
+                      TestTimeout::mediumMs());
 }
 
 void CorridorScanComplexItemTest::_testItemCount()
@@ -145,8 +95,7 @@ void CorridorScanComplexItemTest::_testPathChanges()
     QGeoCoordinate vertex = _corridorItem->corridorPolyline()->vertexCoordinate(1);
     vertex.setLatitude(vertex.latitude() + 0.01);
     _corridorItem->corridorPolyline()->adjustVertex(1, vertex);
-    QTest::qWait(100);  // Let event loop process so queued signals flow through
-    QVERIFY(_multiSpyCorridorPolygon->emitted("pathChanged"));
+    QVERIFY_TRUE_WAIT(_multiSpyCorridorPolygon->emitted("pathChanged"), TestTimeout::mediumMs());
 }
 
 QList<MAV_CMD> CorridorScanComplexItemTest::_createExpectedCommands(bool hasTurnaround, bool useConditionGate)

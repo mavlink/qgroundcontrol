@@ -2,6 +2,10 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QJsonObject>
+#include <QtCore/QTimer>
+#include <QtCore/QUuid>
+#include <QtNetwork/QNetworkRequest>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -174,6 +178,25 @@ void TestFixturesTest::_testTempFileFixtureWithTemplate()
     QCOMPARE(tempFile.readAll(), QByteArray("Test content"));
 }
 
+void TestFixturesTest::_testTempJsonFileFixture()
+{
+    TempJsonFileFixture tempJson;
+    QVERIFY(tempJson.isValid());
+    QVERIFY(tempJson.path().endsWith(".json"));
+
+    const QJsonObject object = {
+        {QStringLiteral("name"), QStringLiteral("qgc")},
+        {QStringLiteral("value"), 42}
+    };
+    QVERIFY(tempJson.writeJson(object));
+
+    QJsonParseError error {};
+    const QJsonDocument parsed = tempJson.readJson(&error);
+    QCOMPARE(error.error, QJsonParseError::NoError);
+    QCOMPARE(parsed.object().value(QStringLiteral("name")).toString(), QStringLiteral("qgc"));
+    QCOMPARE(parsed.object().value(QStringLiteral("value")).toInt(), 42);
+}
+
 void TestFixturesTest::_testTempDirFixture()
 {
     QString dirPath;
@@ -201,6 +224,47 @@ void TestFixturesTest::_testTempDirFixtureCreateFile()
     QFile file(filePath);
     QVERIFY(file.open(QIODevice::ReadOnly));
     QCOMPARE(file.readAll(), content);
+}
+
+void TestFixturesTest::_testNetworkReplyFixture()
+{
+    const QByteArray body = R"({"ok":true})";
+    NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com/api/v1/source")));
+    reply.setHttpStatus(302);
+    reply.setRedirectTarget(QUrl(QStringLiteral("../next")));
+    reply.setNetworkError(QNetworkReply::ConnectionRefusedError, QStringLiteral("connection refused"));
+    reply.setBody(body, QStringLiteral("application/json"));
+
+    QCOMPARE(reply.attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), 302);
+    QCOMPARE(reply.attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl(), QUrl(QStringLiteral("../next")));
+    QCOMPARE(reply.error(), QNetworkReply::ConnectionRefusedError);
+    QCOMPARE(reply.errorString(), QStringLiteral("connection refused"));
+    QCOMPARE(reply.header(QNetworkRequest::ContentTypeHeader).toString(), QStringLiteral("application/json"));
+    QCOMPARE(reply.header(QNetworkRequest::ContentLengthHeader).toLongLong(), static_cast<qint64>(body.size()));
+    QCOMPARE(reply.readAll(), body);
+}
+
+void TestFixturesTest::_testSingleInstanceLockFixture()
+{
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    QSKIP("Single-instance lock fixture is only relevant on desktop targets");
+#else
+    const QString key = QStringLiteral("SingleInstanceLockFixtureTest_%1")
+                            .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+
+    SingleInstanceLockFixture primary(key);
+    QVERIFY(primary.isLocked());
+
+    SingleInstanceLockFixture secondary(key, false);
+    QVERIFY(!secondary.isLocked());
+    QVERIFY(!secondary.tryAcquire());
+
+    primary.release();
+    QVERIFY(!primary.isLocked());
+
+    QVERIFY(secondary.tryAcquire());
+    QVERIFY(secondary.isLocked());
+#endif
 }
 
 // ============================================================================
@@ -257,6 +321,21 @@ void TestFixturesTest::_testSignalSpyFixtureWaitAndVerify()
     QTimer::singleShot(50, &emitter, [&emitter]() { emitter.emitStateChanged(true); });
     // Wait and verify - should succeed within timeout
     QVERIFY(spy.waitAndVerify(1000));
+}
+
+void TestFixturesTest::_testWaitForSignalCountHelper()
+{
+    SignalEmitter emitter;
+    QSignalSpy spy(&emitter, &SignalEmitter::valueChanged);
+    QVERIFY(spy.isValid());
+
+    QTimer::singleShot(20, &emitter, [&emitter]() { emitter.emitValueChanged(1); });
+    QTimer::singleShot(40, &emitter, [&emitter]() { emitter.emitValueChanged(2); });
+
+    QVERIFY_SIGNAL_COUNT_WAIT(spy, 2, TestTimeout::mediumMs());
+    QCOMPARE(spy.count(), 2);
+
+    QVERIFY(!UnitTest::waitForSignalCount(spy, 3, 100, QStringLiteral("valueChanged")));
 }
 
 // ============================================================================

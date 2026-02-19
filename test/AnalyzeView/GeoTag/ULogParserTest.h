@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TempDirectoryTest.h"
 
-class ULogParserTest : public UnitTest
+class ULogParserTest : public TempDirectoryTest
 {
     Q_OBJECT
 

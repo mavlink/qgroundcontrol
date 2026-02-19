@@ -111,10 +111,9 @@
 /// 4. Use relative() when comparing implementations
 /// 5. Check the "err%" column - high values indicate noisy measurements
 
-#define ANKERL_NANOBENCH_IMPLEMENT
-#include <nanobench.h>
-
 #include <QtTest/QTest>
+
+#include <nanobench.h>
 
 /// Macro to run a benchmark and optionally fail if performance regresses.
 /// By default, just runs the benchmark and prints results.
@@ -130,9 +129,9 @@
 ///     ankerl::nanobench::doNotOptimizeAway(result);
 /// });
 /// @endcode
-#define BENCH_QT(name, ...)                                                    \
-    do {                                                                       \
-        ankerl::nanobench::Bench().run(name, [&] { __VA_ARGS__ });             \
+#define BENCH_QT(name, ...)                                        \
+    do {                                                           \
+        ankerl::nanobench::Bench().run(name, [&] { __VA_ARGS__ }); \
     } while (false)
 
 /// Macro to compare two implementations and show relative performance.
@@ -149,12 +148,12 @@
 ///     "geodesicDistance", { dist = QGCGeo::geodesicDistance(c1, c2); }
 /// );
 /// @endcode
-#define BENCH_QT_COMPARE(baseline_name, baseline_code, test_name, test_code)   \
-    do {                                                                       \
-        ankerl::nanobench::Bench _bench;                                       \
-        _bench.relative(true);                                                 \
-        _bench.run(baseline_name, [&] { baseline_code });                      \
-        _bench.run(test_name, [&] { test_code });                              \
+#define BENCH_QT_COMPARE(baseline_name, baseline_code, test_name, test_code) \
+    do {                                                                     \
+        ankerl::nanobench::Bench _bench;                                     \
+        _bench.relative(true);                                               \
+        _bench.run(baseline_name, [&] { baseline_code });                    \
+        _bench.run(test_name, [&] { test_code });                            \
     } while (false)
 
 /// Namespace for QGC benchmark utilities
@@ -165,22 +164,16 @@ namespace qgc::bench {
 /// - Stable settings to minimize noise
 inline ankerl::nanobench::Bench ciConfig()
 {
-    return ankerl::nanobench::Bench()
-        .warmup(10)
-        .epochs(100)
-        .minEpochIterations(10);
+    return ankerl::nanobench::Bench().warmup(10).epochs(100).minEpochIterations(10);
 }
 
 /// Create a pre-configured benchmark for thorough local testing
 inline ankerl::nanobench::Bench thoroughConfig()
 {
-    return ankerl::nanobench::Bench()
-        .warmup(100)
-        .epochs(1000)
-        .minEpochIterations(100);
+    return ankerl::nanobench::Bench().warmup(100).epochs(1000).minEpochIterations(100);
 }
 
-} // namespace qgc::bench
+}  // namespace qgc::bench
 
 // ============================================================================
 // Qt QBENCHMARK Helpers
@@ -195,9 +188,9 @@ inline ankerl::nanobench::Bench thoroughConfig()
 ///     expensiveOperation();
 /// }
 /// @endcode
-#define QBENCHMARK_ITERATIONS(n) \
+#define QBENCHMARK_ITERATIONS(n)                                       \
     for (bool _qbench_once = true; _qbench_once; _qbench_once = false) \
-        QBENCHMARK
+    QBENCHMARK
 
 /// @brief Prevent compiler from optimizing away a value in QBENCHMARK
 /// Qt's version of doNotOptimizeAway for consistency.
@@ -209,7 +202,7 @@ inline ankerl::nanobench::Bench thoroughConfig()
 ///     QT_BENCHMARK_KEEP(result);
 /// }
 /// @endcode
-template<typename T>
+template <typename T>
 inline void qtBenchmarkKeep(T const& value)
 {
     // Use volatile to prevent optimization

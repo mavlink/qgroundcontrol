@@ -9,7 +9,6 @@
 
 using namespace TestFixtures;
 
-
 void FWLandingPatternTest::init()
 {
     VisualMissionItemTest::init();

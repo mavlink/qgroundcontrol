@@ -1,8 +1,9 @@
 #include "OsmParserTest.h"
-#include "OsmParser.h"
-#include "OsmParserThread.h"
 
 #include <QtTest/QSignalSpy>
+
+#include "OsmParser.h"
+#include "OsmParserThread.h"
 
 void OsmParserTest::_testBuildingToMeshEmpty()
 {
@@ -15,12 +16,7 @@ void OsmParserTest::_testTriangulateWalls()
 {
     OsmParser parser;
     std::vector<QVector3D> mesh;
-    std::vector<QVector2D> square = {
-        QVector2D(0, 0),
-        QVector2D(1, 0),
-        QVector2D(1, 1),
-        QVector2D(0, 1)
-    };
+    std::vector<QVector2D> square = {QVector2D(0, 0), QVector2D(1, 0), QVector2D(1, 1), QVector2D(0, 1)};
     float height = 5.0f;
 
     parser._triangulateWallsExtrudedPolygon(mesh, square, height, false);
@@ -35,12 +31,7 @@ void OsmParserTest::_testTriangulateWallsInverse()
     OsmParser parser;
     std::vector<QVector3D> meshNormal;
     std::vector<QVector3D> meshInverse;
-    std::vector<QVector2D> square = {
-        QVector2D(0, 0),
-        QVector2D(1, 0),
-        QVector2D(1, 1),
-        QVector2D(0, 1)
-    };
+    std::vector<QVector2D> square = {QVector2D(0, 0), QVector2D(1, 0), QVector2D(1, 1), QVector2D(0, 1)};
     float height = 5.0f;
 
     parser._triangulateWallsExtrudedPolygon(meshNormal, square, height, false);
@@ -63,12 +54,7 @@ void OsmParserTest::_testTriangulateRectangle()
 {
     OsmParser parser;
     std::vector<QVector3D> mesh;
-    std::vector<QVector3D> rect = {
-        QVector3D(0, 0, 0),
-        QVector3D(1, 0, 0),
-        QVector3D(1, 1, 0),
-        QVector3D(0, 1, 0)
-    };
+    std::vector<QVector3D> rect = {QVector3D(0, 0, 0), QVector3D(1, 0, 0), QVector3D(1, 1, 0), QVector3D(0, 1, 0)};
 
     parser._triangulateRectangle(mesh, rect, false);
     QCOMPARE(static_cast<int>(mesh.size()), 6);
@@ -79,12 +65,7 @@ void OsmParserTest::_testTriangulateRectangleInverted()
     OsmParser parser;
     std::vector<QVector3D> meshNormal;
     std::vector<QVector3D> meshInverted;
-    std::vector<QVector3D> rect = {
-        QVector3D(0, 0, 0),
-        QVector3D(1, 0, 0),
-        QVector3D(1, 1, 0),
-        QVector3D(0, 1, 0)
-    };
+    std::vector<QVector3D> rect = {QVector3D(0, 0, 0), QVector3D(1, 0, 0), QVector3D(1, 1, 0), QVector3D(0, 1, 0)};
 
     parser._triangulateRectangle(meshNormal, rect, false);
     parser._triangulateRectangle(meshInverted, rect, true);

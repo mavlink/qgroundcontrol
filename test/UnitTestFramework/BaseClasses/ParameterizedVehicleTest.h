@@ -1,13 +1,11 @@
 #pragma once
 
-#include <QtCore/QDebug>
-
 #include "VehicleTestManualConnect.h"
 
 /// Test fixture for parameterized vehicle tests with test case arrays.
 ///
 /// Provides infrastructure for tests that iterate through arrays of test cases,
-/// with automatic logging and result tracking.
+/// with automatic logging and per-case cleanup.
 ///
 /// Example:
 /// @code
@@ -44,8 +42,9 @@ class ParameterizedVehicleTest : public VehicleTestManualConnect
     Q_OBJECT
 
 public:
-    explicit ParameterizedVehicleTest(QObject* parent = nullptr)
-        : VehicleTestManualConnect(parent) {}
+    explicit ParameterizedVehicleTest(QObject* parent = nullptr) : VehicleTestManualConnect(parent)
+    {
+    }
 
 protected:
     /// Runs all test cases in the array
@@ -56,28 +55,18 @@ protected:
     void runTestCases(const T* cases, size_t count)
     {
         _totalCases = static_cast<int>(count);
-        _passedCases = 0;
-        _failedCases = 0;
+        _executedCases = 0;
         _currentCase = 0;
 
         for (size_t i = 0; i < count; ++i) {
             _currentCase = static_cast<int>(i);
-
-            try {
-                runSingleTestCase(cases[i], static_cast<int>(i));
-                _passedCases++;
-            } catch (...) {
-                _failedCases++;
-            }
+            runSingleTestCase(cases[i], static_cast<int>(i));
+            _executedCases++;
 
             // Ensure clean state between test cases
             if (_mockLink) {
                 _disconnectMockLink();
             }
-        }
-
-        if (_failedCases > 0) {
-            qWarning() << "Test cases:" << _passedCases << "passed," << _failedCases << "failed";
         }
     }
 
@@ -95,7 +84,7 @@ protected:
     /// Logs the start of a test case
     void logTestCase(int index, const char* name)
     {
-        qDebug() << "Test case" << (index + 1) << "/" << _totalCases << ":" << name;
+        TEST_DEBUG(QStringLiteral("Test case %1/%2: %3").arg(index + 1).arg(_totalCases).arg(QString::fromLatin1(name)));
     }
 
     /// Logs the start of a test case with QString name
@@ -105,20 +94,31 @@ protected:
     }
 
     /// Returns the current test case index
-    int currentCaseIndex() const { return _currentCase; }
+    int currentCaseIndex() const
+    {
+        return _currentCase;
+    }
 
     /// Returns total number of test cases
-    int totalCases() const { return _totalCases; }
+    int totalCases() const
+    {
+        return _totalCases;
+    }
 
-    /// Returns number of passed test cases so far
-    int passedCases() const { return _passedCases; }
+    /// Returns number of executed test cases so far
+    int passedCases() const
+    {
+        return _executedCases;
+    }
 
-    /// Returns number of failed test cases so far
-    int failedCases() const { return _failedCases; }
+    /// Returns number of failed test cases so far (not tracked by this helper)
+    int failedCases() const
+    {
+        return 0;
+    }
 
 private:
     int _totalCases = 0;
-    int _passedCases = 0;
-    int _failedCases = 0;
+    int _executedCases = 0;
     int _currentCase = 0;
 };

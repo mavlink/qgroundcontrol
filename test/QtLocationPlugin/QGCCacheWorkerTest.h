@@ -21,5 +21,5 @@ private slots:
     void _testStopWhileProcessing();
 
 private:
-    bool _startWorker(QGCCacheWorker &worker, int timeoutMs = 5000);
+    bool _startWorker(QGCCacheWorker& worker, int timeoutMs = TestTimeout::mediumMs());
 };

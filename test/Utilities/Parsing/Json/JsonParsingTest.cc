@@ -5,8 +5,8 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/qnumeric.h>
 
-#include "QGCFileHelper.h"
 #include "JsonParsing.h"
+#include "QGCFileHelper.h"
 
 void JsonParsingTest::_testValidateRequiredKeysSuccess()
 {
@@ -42,9 +42,8 @@ void JsonParsingTest::_testValidateKeyTypesSuccess()
 
     QString errorString;
     QVERIFY(JsonParsing::validateKeyTypes(object, {"count", "label", "enabled", "optional"},
-                                             {QJsonValue::Double, QJsonValue::String, QJsonValue::Bool,
-                                              QJsonValue::Array},
-                                             errorString));
+                                          {QJsonValue::Double, QJsonValue::String, QJsonValue::Bool, QJsonValue::Array},
+                                          errorString));
     QVERIFY(errorString.isEmpty());
 }
 
@@ -130,6 +129,15 @@ void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
 
     QVERIFY(JsonParsing::isJsonFile(QStringLiteral(":/unittest/manifest.json.gz"), document, errorString));
     QVERIFY(document.isObject());
+}
+
+void JsonParsingTest::_testIsJsonFileMissingPath()
+{
+    QJsonDocument document;
+    QString errorString;
+
+    QVERIFY(!JsonParsing::isJsonFile(QStringLiteral("/definitely/missing/file.json"), document, errorString));
+    QVERIFY(!errorString.isEmpty());
 }
 
 UT_REGISTER_TEST(JsonParsingTest, TestLabel::Unit, TestLabel::Utilities)

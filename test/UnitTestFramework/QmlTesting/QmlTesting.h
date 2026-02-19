@@ -12,8 +12,10 @@
 ///
 /// 1. QML test files (tst_*.qml) are placed in test/UnitTestFramework/QmlTesting/tests/
 /// 2. Each file contains TestCase elements with test functions
-/// 3. QmlTestRunner loads and executes these tests
-/// 4. Results integrate with CTest
+/// 3. A dedicated Qt Quick Test executable (QGCQmlQuickTests) runs them
+///    out-of-process via quick_test_main()
+/// 4. QmlTestRunner still provides an in-process structural/sanity check
+/// 5. Results integrate with CTest
 ///
 /// ## Basic Test Structure
 ///
@@ -88,10 +90,10 @@
 /// ## Running QML Tests
 ///
 /// Via CTest:
-///   ctest -R QmlTest
+///   ctest -R QmlQuickTests
 ///
-/// Via command line:
-///   ./QGroundControl --unittest QmlTestRunner
+/// Via command line (sanity check only):
+///   ./QGroundControl --unittest:QmlTestRunner
 ///
 /// ## File Naming
 ///

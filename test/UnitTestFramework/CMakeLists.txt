@@ -11,11 +11,9 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_subdirectory(ApprovalTesting)
 add_subdirectory(BaseClasses)
 add_subdirectory(Benchmarking)
 add_subdirectory(Fixtures)
-add_subdirectory(Mocking)
 add_subdirectory(PropertyTesting)
 add_subdirectory(QmlTesting)
 add_subdirectory(Tests)

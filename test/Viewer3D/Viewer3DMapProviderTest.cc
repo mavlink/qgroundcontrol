@@ -1,13 +1,14 @@
 #include "Viewer3DMapProviderTest.h"
-#include "OsmParser.h"
-#include "Viewer3DMapProvider.h"
 
 #include <QtTest/QSignalSpy>
+
+#include "OsmParser.h"
+#include "Viewer3DMapProvider.h"
 
 void Viewer3DMapProviderTest::_testOsmParserIsMapProvider()
 {
     OsmParser parser;
-    Viewer3DMapProvider *provider = &parser;
+    Viewer3DMapProvider* provider = &parser;
     QVERIFY(provider != nullptr);
 }
 

@@ -1,7 +1,8 @@
 #include "Viewer3DTerrainGeometryTest.h"
-#include "Viewer3DTerrainGeometry.h"
 
 #include <QtTest/QSignalSpy>
+
+#include "Viewer3DTerrainGeometry.h"
 
 void Viewer3DTerrainGeometryTest::_testComputeFaceNormal()
 {
@@ -197,7 +198,6 @@ void Viewer3DTerrainGeometryTest::_testPropertySetters()
         geo.setStackCount(20);
         QCOMPARE(spy.count(), 1);
     }
-
 }
 
 UT_REGISTER_TEST(Viewer3DTerrainGeometryTest, TestLabel::Unit)

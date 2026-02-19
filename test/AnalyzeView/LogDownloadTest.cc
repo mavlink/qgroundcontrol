@@ -16,10 +16,10 @@ void LogDownloadTest::_downloadTest()
     MultiSignalSpy* multiSpyLogDownloadController = new MultiSignalSpy(this);
     QVERIFY(multiSpyLogDownloadController->init(controller));
     controller->refresh();
-    QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", 10000));
+    QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", TestTimeout::longMs()));
     multiSpyLogDownloadController->clearAllSignals();
     if (controller->_getRequestingList()) {
-        QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", 10000));
+        QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", TestTimeout::longMs()));
         QCOMPARE(controller->_getRequestingList(), false);
     }
     multiSpyLogDownloadController->clearAllSignals();
@@ -28,10 +28,10 @@ void LogDownloadTest::_downloadTest()
     model->value<QGCLogEntry*>(0)->setSelected(true);
     const QString downloadTo = QDir::currentPath();
     controller->download(downloadTo);
-    QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", 10000));
+    QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", TestTimeout::longMs()));
     multiSpyLogDownloadController->clearAllSignals();
     if (controller->_getDownloadingLogs()) {
-        QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", 10000));
+        QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", TestTimeout::longMs()));
         QCOMPARE(controller->_getDownloadingLogs(), false);
     }
     multiSpyLogDownloadController->clearAllSignals();

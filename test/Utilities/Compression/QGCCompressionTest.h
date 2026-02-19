@@ -69,6 +69,7 @@ private slots:
 
     // Cross-platform path handling
     void _testWindowsPathSeparators();
+    void _testExtractArchiveToSymlinkedOutputPath();
     void _testSpecialCharactersInPath();
     void _testUnicodePaths();
 

@@ -1,7 +1,8 @@
 #include "Viewer3DManagerTest.h"
-#include "Viewer3DManager.h"
 
 #include <QtTest/QSignalSpy>
+
+#include "Viewer3DManager.h"
 
 void Viewer3DManagerTest::_testInitialState()
 {

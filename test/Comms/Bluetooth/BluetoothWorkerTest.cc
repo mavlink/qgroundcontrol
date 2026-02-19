@@ -92,8 +92,7 @@ void BluetoothWorkerTest::_testConnectWhileConnectedWarns()
     // it just proceeds, which is fine.
     worker->connectLink();
 
-    // If we get here without crash, the guard logic is functional
-    QVERIFY(true);
+    QVERIFY2(true, "double connectLink must not crash");
 }
 
 void BluetoothWorkerTest::_testDisconnectResetsReconnectState()
@@ -180,7 +179,7 @@ void BluetoothWorkerTest::_testDestroyClassicWorker()
         worker->setupConnection();
         // destroyed here — must not crash
     }
-    QVERIFY(true);
+    QVERIFY2(true, "classic worker destruction must not crash");
 }
 
 void BluetoothWorkerTest::_testDestroyBleWorker()
@@ -193,7 +192,7 @@ void BluetoothWorkerTest::_testDestroyBleWorker()
         worker->setupConnection();
         // destroyed here — must not crash
     }
-    QVERIFY(true);
+    QVERIFY2(true, "BLE worker destruction must not crash");
 }
 
 UT_REGISTER_TEST(BluetoothWorkerTest, TestLabel::Unit, TestLabel::Comms)

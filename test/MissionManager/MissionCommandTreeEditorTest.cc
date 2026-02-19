@@ -1,5 +1,6 @@
 #include "MissionCommandTreeEditorTest.h"
 
+#include <QtCore/QStandardPaths>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 
@@ -10,7 +11,6 @@
 #include "QGCCorePlugin.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
-
 
 void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_t firmwareClass,
                                                       QGCMAVLink::VehicleClass_t vehicleClass)
@@ -41,10 +41,11 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     qmlAppEngine->rootContext()->setContextProperty("missionItems", varSimpleItems);
     qmlAppEngine->rootContext()->setContextProperty("cColumns", cColumns);
     qmlAppEngine->rootContext()->setContextProperty(
-        "imagePath",
-        QStringLiteral("/home/parallels/Downloads/%1-%2.png").arg(firmwareClassString).arg(vehicleClassString));
+        "imagePath", QStringLiteral("%1/%2-%3.png")
+                         .arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation), firmwareClassString,
+                              vehicleClassString));
     qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MissionCommandTreeEditorTestWindow.qml")));
-    QTest::qWait(1000);
+    QVERIFY_TRUE_WAIT(!qmlAppEngine->rootObjects().isEmpty(), TestTimeout::mediumMs());
     delete qmlAppEngine;
 }
 

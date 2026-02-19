@@ -1,7 +1,9 @@
 #include "QGCMapPolygonTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtTest/QSignalSpy>
 
+#include "CoordFixtures.h"
 #include "MultiSignalSpy.h"
 #include "QGCMapPolygon.h"
 #include "QGCQGeoCoordinate.h"
@@ -9,10 +11,7 @@
 
 QGCMapPolygonTest::QGCMapPolygonTest()
 {
-    _polyPoints << QGeoCoordinate(47.635638361473475, -122.09269407980834)
-                << QGeoCoordinate(47.635638361473475, -122.08545246602667)
-                << QGeoCoordinate(47.63057923872075, -122.08545246602667)
-                << QGeoCoordinate(47.63057923872075, -122.09269407980834);
+    _polyPoints = TestFixtures::Coord::missionTestRectangle();
 }
 
 void QGCMapPolygonTest::init()
@@ -87,13 +86,15 @@ void QGCMapPolygonTest::_testVertexManipulation()
     for (int i = 0; i < _polyPoints.count(); i++) {
         QCOMPARE(_mapPolygon->count(), i);
         _mapPolygon->appendVertex(_polyPoints[i]);
-        QTest::qWait(100);
+        QCoreApplication::processEvents();
         if (i >= 2) {
-            QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
-                _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged")));
+            QVERIFY2(_multiSpyPolygon->onlyEmittedOnceByMask(
+                         _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged")),
+                     qPrintable(_multiSpyPolygon->summary()));
         } else {
-            QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
-                _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged")));
+            QVERIFY2(_multiSpyPolygon->onlyEmittedOnceByMask(
+                         _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged")),
+                     qPrintable(_multiSpyPolygon->summary()));
         }
         QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
         QCOMPARE(_multiSpyPolygon->argument<int>("countChanged"), i + 1);
@@ -112,11 +113,11 @@ void QGCMapPolygonTest::_testVertexManipulation()
     }
     // Vertex adjustment testing
     QGCQGeoCoordinate* geoCoord = _pathModel->value<QGCQGeoCoordinate*>(1);
-    QSignalSpy coordSpy(geoCoord, SIGNAL(coordinateChanged(QGeoCoordinate)));
-    QSignalSpy coordDirtySpy(geoCoord, SIGNAL(dirtyChanged(bool)));
+    QSignalSpy coordSpy(geoCoord, &QGCQGeoCoordinate::coordinateChanged);
+    QSignalSpy coordDirtySpy(geoCoord, &QGCQGeoCoordinate::dirtyChanged);
     QGeoCoordinate adjustCoord(_polyPoints[1].latitude() + 1, _polyPoints[1].longitude() + 1);
     _mapPolygon->adjustVertex(1, adjustCoord);
-    QTest::qWait(100);
+    QCoreApplication::processEvents();
     QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
         _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "centerChanged")));
     QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));

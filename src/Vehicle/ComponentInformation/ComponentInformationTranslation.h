@@ -13,6 +13,9 @@ class QGCCachedFileDownload;
 class ComponentInformationTranslation : public QObject
 {
     Q_OBJECT
+#ifdef QGC_UNITTEST_BUILD
+    friend class ComponentInformationTranslationTest; // Unit test
+#endif
 
 public:
     ComponentInformationTranslation(QObject* parent, QGCCachedFileDownload* cachedFileDownload);

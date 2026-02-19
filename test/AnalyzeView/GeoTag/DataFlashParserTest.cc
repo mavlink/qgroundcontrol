@@ -1,10 +1,11 @@
 #include "DataFlashParserTest.h"
-#include "DataFlashParser.h"
-#include "DataFlashTestGenerator.h"
-#include "GeoTagData.h"
 
 #include <QtCore/QTemporaryFile>
 #include <QtTest/QTest>
+
+#include "DataFlashParser.h"
+#include "DataFlashTestGenerator.h"
+#include "GeoTagData.h"
 
 namespace {
 
@@ -35,7 +36,7 @@ QByteArray generateTestDataFlash(int numEvents = 20)
     return data;
 }
 
-} // namespace
+}  // namespace
 
 void DataFlashParserTest::_getTagsFromLogTest()
 {
@@ -84,7 +85,7 @@ void DataFlashParserTest::_parseGeoTagDataFieldsTest()
     QVERIFY(DataFlashParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage));
     QVERIFY(!cameraFeedback.isEmpty());
 
-    for (const GeoTagData &data : cameraFeedback) {
+    for (const GeoTagData& data : cameraFeedback) {
         QVERIFY(data.timestamp >= 0);
 
         if (data.captureResult == GeoTagData::CaptureResult::Success) {
@@ -126,7 +127,7 @@ void DataFlashParserTest::_generatedDataFlashTest()
     QCOMPARE(cameraFeedback.size(), numEvents);
 
     int validCount = 0;
-    for (const GeoTagData &data : cameraFeedback) {
+    for (const GeoTagData& data : cameraFeedback) {
         QVERIFY(data.coordinate.isValid());
         QCOMPARE(data.captureResult, GeoTagData::CaptureResult::Success);
         QVERIFY(data.isValid());
@@ -135,8 +136,8 @@ void DataFlashParserTest::_generatedDataFlashTest()
     QCOMPARE(validCount, numEvents);
 
     for (int i = 0; i < numEvents; ++i) {
-        const GeoTagData &parsed = cameraFeedback[i];
-        const auto &original = events[i];
+        const GeoTagData& parsed = cameraFeedback[i];
+        const auto& original = events[i];
 
         QVERIFY(qAbs(parsed.coordinate.latitude() - original.coordinate.latitude()) < 0.0001);
         QVERIFY(qAbs(parsed.coordinate.longitude() - original.coordinate.longitude()) < 0.0001);
@@ -152,10 +153,11 @@ void DataFlashParserTest::_benchmarkGetTagsFromLog()
     QList<GeoTagData> cameraFeedback;
     QString errorMessage;
 
-    QBENCHMARK {
+    QBENCHMARK
+    {
         cameraFeedback.clear();
         errorMessage.clear();
-        (void) DataFlashParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage);
+        (void)DataFlashParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage);
     }
 
     QVERIFY(!cameraFeedback.isEmpty());
