@@ -47,11 +47,6 @@ inputs:
     required: false
     default: 'true'
 
-outputs:
-  build-dir:
-    description: 'Absolute path to build directory'
-    value: ${{ steps.configure.outputs.build_dir }}
-
 runs:
   using: composite
   steps:
@@ -60,7 +55,6 @@ runs:
       run: mkdir -p "${{ inputs.build-dir }}"
 
     - name: Configure
-      id: configure
       shell: bash
       env:
         INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
@@ -87,6 +81,9 @@ runs:
           args+=("${extra[@]}")
         fi
 
-        python3 "${{ github.workspace }}/tools/configure.py" "${args[@]}"
-
-        echo "build_dir=$(cd "${{ inputs.build-dir }}" && pwd)" >> "$GITHUB_OUTPUT"
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+        "${py_cmd}" "${{ github.workspace }}/tools/configure.py" "${args[@]}"

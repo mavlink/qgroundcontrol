@@ -188,36 +188,34 @@ Generate parameter documentation from FactMetaData JSON files.
 
 ## Setup Scripts
 
-Scripts in `setup/` help configure development environments. They read configuration from `.github/build-config.json` for consistent versioning.
+Scripts in `setup/` help configure development environments.
 
 | Script | Platform | Description |
 |--------|----------|-------------|
 | `install_dependencies.py --platform debian` | Linux | Install build dependencies via apt |
 | `install_dependencies.py --platform macos` | macOS | Install dependencies via Homebrew + GStreamer |
 | `install-dependencies-windows.ps1` | Windows | Install GStreamer (Vulkan SDK optional) |
-| `install-qt-debian.sh` | Linux | Install Qt via aqtinstall |
-| `install-qt-macos.sh` | macOS | Install Qt via aqtinstall |
-| `install-qt-windows.ps1` | Windows | Install Qt via aqtinstall |
-| `build-gstreamer.sh` | Linux | Build GStreamer from source (optional) |
-| `read-config.sh` | All | Helper to read `.github/build-config.json` |
+| `install_python.py` | All | Create Python venv and install tool groups |
+| `read_config.py` | All | Read values from `.github/build-config.json` |
+| `gstreamer/build-gstreamer.py` | All | Build GStreamer for Linux/macOS/Windows/Android/iOS |
 
 ### Usage Examples
 
 ```bash
 # Linux: Install all dependencies
 python3 ./tools/setup/install_dependencies.py --platform debian
-./tools/setup/install-qt-debian.sh
 
 # macOS: Install all dependencies
 python3 ./tools/setup/install_dependencies.py --platform macos
-./tools/setup/install-qt-macos.sh
 
 # Windows (PowerShell as Admin):
 .\tools\setup\install-dependencies-windows.ps1
-.\tools\setup\install-qt-windows.ps1
 
-# Build GStreamer from source (Linux, optional)
-./tools/setup/build-gstreamer.sh -p /opt/gstreamer
+# Setup Python tooling
+python3 ./tools/setup/install_python.py ci
+
+# Build GStreamer from source
+python3 ./tools/setup/gstreamer/build-gstreamer.py --platform linux --type release
 ```
 
 ## Static Analyzers

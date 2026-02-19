@@ -1,0 +1,26 @@
+name: Ensure Branch
+description: Ensure a remote branch exists, creating an empty initial commit if needed.
+
+inputs:
+  branch:
+    description: 'Branch name to ensure exists'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Ensure branch exists
+      shell: bash
+      env:
+        INPUT_BRANCH: ${{ inputs.branch }}
+      run: |
+        set -euo pipefail
+
+        if git ls-remote --exit-code --heads origin "${INPUT_BRANCH}" >/dev/null 2>&1; then
+          echo "Branch '${INPUT_BRANCH}' already exists."
+          exit 0
+        fi
+
+        echo "Initializing branch '${INPUT_BRANCH}'..."
+        sha="$(git commit-tree "$(git hash-object -t tree /dev/null)" -m "Initialize ${INPUT_BRANCH}")"
+        git push origin "${sha}:refs/heads/${INPUT_BRANCH}" || echo "Branch may have been created concurrently."

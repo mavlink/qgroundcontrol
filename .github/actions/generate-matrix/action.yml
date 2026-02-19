@@ -1,0 +1,42 @@
+name: Generate Build Matrix
+description: Generate build matrix for a platform
+
+inputs:
+  platform:
+    description: "Platform (linux, windows, macos, android, ios)"
+    required: true
+  build-type:
+    description: "Build type override"
+    required: false
+    default: ""
+
+outputs:
+  matrix:
+    description: "Build matrix JSON include list"
+    value: ${{ steps.matrix.outputs.matrix }}
+  timeout_minutes:
+    description: "Timeout in minutes"
+    value: ${{ steps.matrix.outputs.timeout_minutes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate matrix
+      id: matrix
+      shell: bash
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        BUILD_TYPE: ${{ inputs.build-type }}
+        EVENT_NAME: ${{ github.event_name }}
+      run: |
+        set -euo pipefail
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+        "${py_cmd}" "${{ github.workspace }}/.github/scripts/generate_matrix.py" \
+          --platform "${PLATFORM}" \
+          --build-type "${BUILD_TYPE}" \
+          --event-name "${EVENT_NAME}" \
+          --output github

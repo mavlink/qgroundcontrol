@@ -128,22 +128,22 @@ jobs:
           INPUT_PATH: ${{ inputs.path }}
           ANALYZE_ALL: ${{ inputs.analyze_all }}
         run: |
-          ARGS="--tool clazy --build-dir ${{ runner.temp }}/build"
+          ARGS=(--tool clazy --build-dir "${{ runner.temp }}/build")
 
           if [[ "$ANALYZE_ALL" == "true" ]]; then
-            ARGS="$ARGS --all"
+            ARGS+=(--all)
           elif [[ -n "$INPUT_PATH" ]]; then
             if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
               echo "::error::Invalid path: must be relative, no '..'"
               exit 1
             fi
-            ARGS="$ARGS $INPUT_PATH"
+            ARGS+=("$INPUT_PATH")
           else
-            ARGS="$ARGS --all"
+            ARGS+=(--all)
           fi
 
-          echo "Running: python3 ./tools/analyze.py $ARGS"
-          python3 ./tools/analyze.py $ARGS
+          echo "Running: python3 ./tools/analyze.py ${ARGS[*]}"
+          python3 ./tools/analyze.py "${ARGS[@]}"
 
       - name: Run IWYU
         if: inputs.tool == 'iwyu'

@@ -1,0 +1,50 @@
+name: Attestation Condition Check
+description: Check if attestation should be performed (shared logic for attest actions)
+
+inputs:
+  subject-path:
+    description: "Path to the artifact to attest"
+    required: true
+  condition:
+    description: "Additional condition (for example matrix.build_type == Release)"
+    required: false
+    default: "true"
+
+outputs:
+  skip:
+    description: "Whether to skip attestation (true/false)"
+    value: ${{ steps.check.outputs.skip }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check attestation conditions
+      id: check
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # Skip for external PRs (no repo permissions for attestations).
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            echo "Skipping attestation for external PR"
+            exit 0
+          fi
+        fi
+
+        if [[ "${{ inputs.condition }}" != "true" ]]; then
+          echo "skip=true" >> "${GITHUB_OUTPUT}"
+          echo "Skipping attestation: condition not met"
+          exit 0
+        fi
+
+        subject_path="${{ inputs.subject-path }}"
+        if [[ ! -e "${subject_path}" ]]; then
+          echo "skip=true" >> "${GITHUB_OUTPUT}"
+          echo "::warning::Artifact not found: ${subject_path}"
+          exit 0
+        fi
+
+        echo "skip=false" >> "${GITHUB_OUTPUT}"
+        echo "Will attest: ${subject_path}"

@@ -87,7 +87,7 @@ runs:
       env:
         COVERAGE_XML: ${{ inputs.build-dir }}/coverage.xml
         BASELINE_XML: ${{ inputs.baseline-xml }}
-      run: python3 "${{ github.workspace }}/.github/scripts/coverage-comment.py"
+      run: python3 "${{ github.workspace }}/.github/scripts/coverage_comment.py"
 
     - name: Post PR comment
       if: inputs.pr-number != ''

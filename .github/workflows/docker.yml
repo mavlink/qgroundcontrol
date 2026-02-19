@@ -84,7 +84,7 @@ jobs:
         id: check
         run: |
           if [[ "${{ github.event_name }}" != "pull_request" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Not a PR - building all platforms"
             exit 0
           fi
@@ -95,16 +95,16 @@ jobs:
           PLATFORM="${{ matrix.platform }}"
 
           if [[ "$SHARED" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Shared files changed - building $PLATFORM"
           elif [[ "$PLATFORM" == "Linux" && "$LINUX" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Linux-specific files changed - building Linux"
           elif [[ "$PLATFORM" == "Android" && "$ANDROID" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
             echo "Android-specific files changed - building Android"
           else
-            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "should_build=false" >> "${GITHUB_OUTPUT}"
             echo "No relevant changes for $PLATFORM - skipping"
           fi
 
@@ -153,7 +153,7 @@ jobs:
           # Check if build directory exists
           if [ ! -d "${BUILD_DIR}" ]; then
             echo "::warning::Build directory does not exist: ${BUILD_DIR}"
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "found=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
@@ -166,11 +166,11 @@ jobs:
           ARTIFACT=$(find "${BUILD_DIR}" -name "${{ matrix.artifact_pattern }}" -type f -print -quit 2>/dev/null)
           if [ -z "$ARTIFACT" ]; then
             echo "::warning::No artifact matching ${{ matrix.artifact_pattern }} found"
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "found=false" >> "${GITHUB_OUTPUT}"
           else
             echo "Found artifact: $ARTIFACT"
-            echo "path=$ARTIFACT" >> $GITHUB_OUTPUT
-            echo "found=true" >> $GITHUB_OUTPUT
+            echo "path=$ARTIFACT" >> "${GITHUB_OUTPUT}"
+            echo "found=true" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Scan artifact for vulnerabilities

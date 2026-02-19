@@ -1,0 +1,69 @@
+name: Build Setup
+description: Common setup steps for platform builds
+
+inputs:
+  restore-timestamps:
+    description: Restore file timestamps from git (requires fetch-depth 0)
+    required: false
+    default: "false"
+  qt-host:
+    description: Qt host platform (linux, linux_arm64, windows, windows_arm64, mac)
+    required: true
+  qt-arch:
+    description: Qt target architecture
+    required: true
+  qt-modules:
+    description: Qt modules to install (overrides build-config)
+    required: false
+    default: ""
+  qt-version:
+    description: Qt version to install (overrides build-config)
+    required: false
+    default: ""
+  build-type:
+    description: Build type for cache key
+    required: false
+    default: "Release"
+  save-cache:
+    description: Whether to save cache (typically false for PRs)
+    required: false
+    default: "false"
+
+outputs:
+  gstreamer_windows_version:
+    description: GStreamer version for Windows
+    value: ${{ steps.config.outputs.gstreamer_windows_version }}
+  xcode_version:
+    description: Xcode version for macOS
+    value: ${{ steps.config.outputs.xcode_version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Restore file timestamps
+      if: inputs.restore-timestamps == 'true'
+      uses: chetan/git-restore-mtime-action@v2
+
+    - name: Get build config
+      id: config
+      uses: ./.github/actions/build-config
+
+    - name: Initial Setup
+      uses: ./.github/actions/common
+
+    - name: Setup Caching
+      uses: ./.github/actions/cache
+      with:
+        host: ${{ inputs.qt-host }}
+        target: ${{ inputs.qt-arch }}
+        build-type: ${{ inputs.build-type }}
+        cpm-modules: ${{ runner.temp }}/build/cpm_modules
+        save-cache: ${{ inputs.save-cache }}
+
+    - name: Install Qt
+      uses: ./.github/actions/qt-install
+      with:
+        version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
+        host: ${{ inputs.qt-host }}
+        arch: ${{ inputs.qt-arch }}
+        modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}

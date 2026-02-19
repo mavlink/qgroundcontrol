@@ -1,0 +1,87 @@
+name: CI Scripts
+
+on:
+  pull_request:
+    paths: &ci_paths
+      - '.github/scripts/**'
+      - '.github/actions/**'
+      - '.github/workflows/**'
+      - '.github/build-config.json'
+      - 'tools/setup/install_python.py'
+      - 'tools/setup/read_config.py'
+      - 'tools/tests/**'
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths: *ci_paths
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint-workflows:
+    name: Lint Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows
+            .github/actions
+          sparse-checkout-cone-mode: false
+
+      - name: Install actionlint
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSL "https://github.com/rhysd/actionlint/releases/download/v1.7.8/actionlint_1.7.8_linux_amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/bin" actionlint
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Run actionlint
+        run: actionlint .github/workflows/*.yml
+
+  test-ci-scripts:
+    name: Test CI Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/setup-python
+            .github/build-config.json
+            .github/scripts
+            tools/setup/install_python.py
+            tools/setup/read_config.py
+            tools/tests
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: test
+          python-version: '3.12'
+
+      - name: Run CI script tests
+        run: pytest -q tools/tests .github/scripts/tests

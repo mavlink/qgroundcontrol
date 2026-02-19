@@ -29,7 +29,6 @@ on:
         type: choice
         options:
           - Release
-          - Debug
   workflow_call:
 
 concurrency:
@@ -43,38 +42,66 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    outputs:
+      any: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/detect-changes
+          sparse-checkout-cone-mode: false
+
+      - name: Detect Changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: windows
+
+  setup:
+    name: Setup Matrix
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      always() &&
+      (needs.changes.result == 'skipped' ||
+       needs.changes.outputs.any == 'true')
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      timeout_minutes: ${{ steps.generate.outputs.timeout_minutes }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/generate-matrix
+            .github/scripts/generate_matrix.py
+            .github/build-config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Generate Matrix
+        id: generate
+        uses: ./.github/actions/generate-matrix
+        with:
+          platform: windows
+          build-type: ${{ inputs.build_type }}
+
   build:
-    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    name: Build ${{ matrix.name }} ${{ matrix.build_type }}
+    needs: [changes, setup]
+    if: always() && needs.setup.result == 'success'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    timeout-minutes: ${{ fromJSON(needs.setup.outputs.timeout_minutes) }}
 
     strategy:
       fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
-        variant: [amd64, arm64, arm64-cross]
-        include:
-          - variant: amd64
-            os: windows-2022
-            host: windows
-            arch: win64_msvc2022_64
-            package: QGroundControl-installer-AMD64
-
-          - variant: arm64
-            os: windows-11-arm
-            host: windows_arm64
-            arch: win64_msvc2022_arm64
-            package: QGroundControl-installer-ARM64
-
-          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
-          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
-          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
-          - variant: arm64-cross
-            os: windows-2022
-            host: windows
-            arch: win64_msvc2022_arm64_cross_compiled
-            package: QGroundControl-installer-AMD64-ARM64
-            qt_version: '6.10.0'
+        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
 
     defaults:
       run:
@@ -93,37 +120,21 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Common setup
-        uses: ./.github/actions/common
-
-      - name: Install GStreamer
-        if: matrix.arch == 'win64_msvc2022_64'
-        shell: pwsh
-        run: |
-          ./tools/setup/install-dependencies-windows.ps1 `
-            -GStreamerVersion ${{ steps.config.outputs.gstreamer_windows_version }} `
-            -SkipVulkan
-
-      - name: Setup cache
-        uses: ./.github/actions/cache
+      - name: Build Setup
+        id: build-setup
+        uses: ./.github/actions/build-setup
         with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          qt-version: ${{ matrix.qt_version || '' }}
           build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}\build\cpm_modules
           save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-        uses: ./.github/actions/qt-install
+      - name: Install Dependencies
+        if: matrix.gstreamer
+        uses: ./.github/actions/install-dependencies
         with:
-          version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
+          gstreamer-version: ${{ steps.build-setup.outputs.gstreamer_windows_version }}
 
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4
@@ -136,7 +147,7 @@ jobs:
           ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
             -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} ^
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }} ^
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }} ^
             -DQT_HOST_PATH=${{ (matrix.arch == 'win64_msvc2022_arm64_cross_compiled') && format('{0}\\..\\msvc2022_64', env.QT_ROOT_DIR) || '' }}
 
       - name: Build
@@ -145,18 +156,22 @@ jobs:
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
-        working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
-        run: QGroundControl.exe --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: QGroundControl.exe
+          working-dir: ${{ runner.temp }}/build/${{ matrix.build_type }}
 
       - name: Create Installer
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+      - name: Attest Build with SBOM
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: '${{ runner.temp }}\build\${{ matrix.package }}.exe'
+          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.exe
+          subject-name: ${{ matrix.package }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload artifact (installer)
         if: matrix.build_type == 'Release'

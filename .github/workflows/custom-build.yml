@@ -46,32 +46,16 @@ jobs:
       - name: Enable custom build
         uses: ./.github/actions/custom-build
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Setup Build Environment
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Dependencies
-        run: python3 ./tools/setup/install_dependencies.py --platform debian
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: linux
-          target: linux_gcc_64
-          build-type: Release
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: false
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+        uses: ./.github/actions/install-dependencies
 
       - name: Configure
         working-directory: ${{ runner.temp }}/build
@@ -79,13 +63,18 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config Release --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Create AppImage
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config Release
 
       - name: Verify Custom AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./Custom-QGroundControl-x86_64.AppImage --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: Custom-QGroundControl-x86_64.AppImage
+          type: appimage
+          working-dir: ${{ runner.temp }}/build

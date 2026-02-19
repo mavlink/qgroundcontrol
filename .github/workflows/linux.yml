@@ -45,30 +45,66 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    outputs:
+      any: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/detect-changes
+          sparse-checkout-cone-mode: false
+
+      - name: Detect Changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: linux
+
+  setup:
+    name: Setup Matrix
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      always() &&
+      (needs.changes.result == 'skipped' ||
+       needs.changes.outputs.any == 'true')
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      timeout_minutes: ${{ steps.generate.outputs.timeout_minutes }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/generate-matrix
+            .github/scripts/generate_matrix.py
+            .github/build-config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Generate Matrix
+        id: generate
+        uses: ./.github/actions/generate-matrix
+        with:
+          platform: linux
+          build-type: ${{ inputs.build_type }}
+
   build:
-    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    name: Build ${{ matrix.name }} ${{ matrix.build_type }}
+    needs: [changes, setup]
+    if: always() && needs.setup.result == 'success'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    timeout-minutes: ${{ fromJSON(needs.setup.outputs.timeout_minutes) }}
 
     strategy:
       fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Debug", "Release"]') }}
-        os: [ubuntu-24.04-arm, ubuntu-22.04]
-        include:
-          - os: ubuntu-24.04-arm
-            package: QGroundControl-aarch64
-            host: linux_arm64
-            arch: linux_gcc_arm64
-
-          - os: ubuntu-22.04
-            package: QGroundControl-x86_64
-            host: linux
-            arch: linux_gcc_64
-
-        exclude:
-          - os: ubuntu-24.04-arm
-            build_type: Debug
+        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
 
     defaults:
       run:
@@ -87,32 +123,16 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
-
-      - name: Install Dependencies
-        run: python3 ./tools/setup/install_dependencies.py --platform debian
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
         with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
           save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: Initialize CodeQL
         if: matrix.build_type == 'Debug'
@@ -144,34 +164,23 @@ jobs:
       # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
       - name: Run Unit Tests
         if: matrix.build_type == 'Debug'
-        id: tests
         working-directory: ${{ runner.temp }}/build
         run: |
           set +e
-          ctest --output-on-failure --parallel $(nproc) -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
+          ctest --output-on-failure --parallel "$(nproc)" -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
           TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-          exit $TEST_EXIT_CODE
+          exit "${TEST_EXIT_CODE}"
 
-      - name: Upload Test Results
+      - name: Report Test Results
         if: matrix.build_type == 'Debug' && always()
-        uses: actions/upload-artifact@v6
+        uses: ./.github/actions/test-report
         with:
-          name: test-results-${{ matrix.arch }}
-          path: |
-            ${{ runner.temp }}/build/test-output.txt
-            ${{ runner.temp }}/build/junit-results.xml
-            ${{ runner.temp }}/build/junit-results-*.xml
+          name: Unit Tests (${{ matrix.arch }})
+          build-dir: ${{ runner.temp }}/build
+          artifact-name: test-results-${{ matrix.arch }}
           retention-days: 7
-
-      - name: Upload to Trunk Flaky Tests
-        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-        continue-on-error: true
-        uses: trunk-io/analytics-uploader@v1
-        with:
-          junit-paths: ${{ runner.temp }}/build/junit-results*.xml
-          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-          token: ${{ secrets.TRUNK_TOKEN }}
+          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Coverage Report
         if: matrix.build_type == 'Debug'
@@ -181,8 +190,10 @@ jobs:
 
       - name: Verify Executable
         if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
-        run: xvfb-run -a ./QGroundControl --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: QGroundControl
+          working-dir: ${{ runner.temp }}/build/${{ matrix.build_type }}
 
       - name: Create AppImage
         working-directory: ${{ runner.temp }}/build
@@ -190,14 +201,18 @@ jobs:
 
       - name: Verify AppImage
         if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
-
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+        uses: ./.github/actions/verify-executable
         with:
-          subject-path: '${{ runner.temp }}/build/${{ matrix.package }}.AppImage'
+          binary-path: ${{ matrix.package }}.AppImage
+          working-dir: ${{ runner.temp }}/build
+
+      - name: Attest Build with SBOM
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          subject-name: ${{ matrix.package }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

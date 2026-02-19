@@ -20,54 +20,52 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Resolve Python command
+      id: python
+      shell: bash
+      run: |
+        if command -v python3 >/dev/null 2>&1; then
+          echo "cmd=python3" >> "${GITHUB_OUTPUT}"
+        else
+          echo "cmd=python" >> "${GITHUB_OUTPUT}"
+        fi
+
     - name: Get ccache config
       id: ccache-config
       shell: bash
       run: |
-        # Pin ccache version for reproducibility and to avoid API calls
-        # Update periodically via Dependabot or manually
+        # Keep pinned version for reproducibility.
         CCACHE_VERSION="4.10.2"
 
-        # Validate version format (defense in depth)
-        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
-          exit 1
-        fi
-        echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
-
-        # Read max_size from tools/configs/ccache.conf (single source of truth)
-        CCACHE_CONF_PATH="${{ github.workspace }}/tools/configs/ccache.conf"
-        CCACHE_MAX_SIZE="2G"  # Default
-        if [[ -f "$CCACHE_CONF_PATH" ]]; then
-          # Single awk pass to extract value (more robust than grep|sed)
-          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
-          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
+        # Determine Linux archive architecture for ccache binary.
+        if [[ "${{ inputs.target }}" == "linux_gcc_arm64" ]]; then
+          arch="aarch64"
         else
-          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
+          arch="x86_64"
         fi
-        echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
+
+        "${{ steps.python.outputs.cmd }}" "${{ github.workspace }}/.github/scripts/install_ccache.py" \
+          --version "$CCACHE_VERSION" \
+          --arch "$arch" \
+          --config "${{ github.workspace }}/tools/configs/ccache.conf" \
+          --output-only
 
     - name: Cache ccache binary (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
+      if: runner.os == 'Linux'
       id: ccache-binary
       uses: actions/cache@v5
       with:
         path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-x86_64
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-${{ steps.ccache-config.outputs.arch }}
 
     - name: Install ccache (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
       run: |
-        set -e
-        # Download pre-built binary (not source tarball)
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        # Copy pre-built binary directly (no compilation needed)
-        sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
-        sudo chmod +x /usr/local/bin/ccache
+        "${{ steps.python.outputs.cmd }}" "${{ github.workspace }}/.github/scripts/install_ccache.py" \
+          --version "${{ steps.ccache-config.outputs.version }}" \
+          --arch "${{ steps.ccache-config.outputs.arch }}" \
+          --install
 
     - name: Setup sccache (Windows x64 only)
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
@@ -77,7 +75,17 @@ runs:
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
       shell: bash
 
+    - name: Configure ccache environment (non-Windows)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        echo "CCACHE_DIR=${GITHUB_WORKSPACE}/.ccache" >> "$GITHUB_ENV"
+        echo "CCACHE_BASEDIR=${GITHUB_WORKSPACE}" >> "$GITHUB_ENV"
+        echo "CCACHE_CONFIGPATH=${GITHUB_WORKSPACE}/tools/configs/ccache.conf" >> "$GITHUB_ENV"
+        mkdir -p "${GITHUB_WORKSPACE}/.ccache"
+
     - name: Setup Build Cache
+      if: ${{ !(runner.os == 'Windows' && inputs.target == 'android') }}
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64' && 'sccache' || 'ccache' }}

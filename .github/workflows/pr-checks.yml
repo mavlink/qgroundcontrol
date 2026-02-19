@@ -17,6 +17,11 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Check PR title format
         id: title_check
         continue-on-error: true
@@ -223,6 +228,11 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Get current size label
         id: current
         run: |
@@ -278,7 +288,7 @@ jobs:
 
           if [[ "$LABEL_COUNT" -gt 1 && -n "$OLD_LABEL" ]]; then
             # Multiple size labels exist - remove the old one
-            ENCODED_LABEL=$(echo "$OLD_LABEL" | sed 's|/|%2F|g')
+            ENCODED_LABEL="${OLD_LABEL//\//%2F}"
             gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
               -X DELETE 2>/dev/null || true
           fi
@@ -293,9 +303,13 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Label PR by changed files
         uses: actions/labeler@v6
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           sync-labels: true
-

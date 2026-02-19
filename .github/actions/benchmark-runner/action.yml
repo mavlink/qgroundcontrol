@@ -15,25 +15,19 @@ inputs:
     description: 'Qt platform plugin (offscreen for headless)'
     default: 'offscreen'
 
-outputs:
-  has_results:
-    description: 'Whether benchmark results were found'
-    value: ${{ steps.parse.outputs.has_results }}
-  result_count:
-    description: 'Number of benchmark results parsed'
-    value: ${{ steps.parse.outputs.result_count }}
-  benchmark_file:
-    description: 'Path to the benchmark JSON file'
-    value: ${{ inputs.output-file }}
-
 runs:
   using: composite
   steps:
     - name: Run and parse benchmarks
-      id: parse
       shell: bash
       run: |
-        python3 "${{ github.workspace }}/.github/scripts/benchmark_runner.py" \
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        else
+          py_cmd="python"
+        fi
+
+        "${py_cmd}" "${{ github.workspace }}/.github/scripts/benchmark_runner.py" \
           --binary "${{ inputs.binary-path }}" \
           --filter "${{ inputs.test-filter }}" \
           --output "${{ inputs.output-file }}" \

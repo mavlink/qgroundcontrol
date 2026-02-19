@@ -139,12 +139,53 @@ elseif(ANDROID)
         # set(_gst_android_url_hash "be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485")
     endif()
 
-    CPMAddPackage(
-        NAME gstreamer
-        VERSION ${GStreamer_FIND_VERSION}
-        URL ${_gst_android_url}
-        # URL_HASH ${_gst_android_url_hash}
-    )
+    set(_gst_android_cache_root "${CMAKE_BINARY_DIR}/_deps/gstreamer-android")
+    set(_gst_android_archive "${_gst_android_cache_root}/gstreamer-android-${GStreamer_FIND_VERSION}.tar.xz")
+    set(_gst_android_extract_root "${_gst_android_cache_root}/src")
+    set(_gst_android_expected_dir "${_gst_android_extract_root}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}")
+
+    if(NOT EXISTS "${_gst_android_expected_dir}" AND NOT EXISTS "${_gst_android_extract_root}/arm64")
+        file(MAKE_DIRECTORY "${_gst_android_cache_root}")
+        file(MAKE_DIRECTORY "${_gst_android_extract_root}")
+
+        set(_gst_download_ok FALSE)
+        foreach(_attempt RANGE 1 3)
+            file(DOWNLOAD "${_gst_android_url}" "${_gst_android_archive}"
+                STATUS _dl_status
+                LOG _dl_log
+                SHOW_PROGRESS
+                TLS_VERIFY ON
+            )
+            list(GET _dl_status 0 _dl_code)
+            if(_dl_code EQUAL 0)
+                set(_gst_download_ok TRUE)
+                break()
+            endif()
+
+            if(_attempt LESS 3)
+                message(WARNING "GStreamer Android download failed (attempt ${_attempt}/3): ${_dl_status}. Retrying...")
+                execute_process(COMMAND "${CMAKE_COMMAND}" -E sleep 2)
+            endif()
+        endforeach()
+
+        if(NOT _gst_download_ok)
+            message(FATAL_ERROR "Failed to download GStreamer Android package from ${_gst_android_url}: ${_dl_status}\n${_dl_log}")
+        endif()
+
+        file(ARCHIVE_EXTRACT
+            INPUT "${_gst_android_archive}"
+            DESTINATION "${_gst_android_extract_root}"
+        )
+    endif()
+
+    if(EXISTS "${_gst_android_expected_dir}")
+        set(gstreamer_SOURCE_DIR "${_gst_android_expected_dir}")
+    elseif(EXISTS "${_gst_android_extract_root}/arm64")
+        # Some archives may extract directly to ABI folders without a top-level directory.
+        set(gstreamer_SOURCE_DIR "${_gst_android_extract_root}")
+    else()
+        message(FATAL_ERROR "Could not locate extracted GStreamer Android package under ${_gst_android_extract_root}")
+    endif()
 
     if(NOT DEFINED GStreamer_ROOT_DIR)
         if(CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a")

@@ -21,6 +21,11 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Welcome first-time contributor
         uses: actions/github-script@v8
         with:

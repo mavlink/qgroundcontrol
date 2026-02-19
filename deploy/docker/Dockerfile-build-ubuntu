@@ -32,18 +32,17 @@ ENV LANG=en_US.UTF-8 \
 # ---------- Bring in the helper scripts and config ----------
 COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install_dependencies.py /tmp/qt/
-COPY tools/setup/install-qt-debian.sh /tmp/qt/
-COPY tools/setup/read-config.sh /tmp/qt/
-RUN chmod +x /tmp/qt/*.sh && \
-    apt-get update && apt-get install -y --no-install-recommends python3 && \
+COPY tools/setup/read_config.py /tmp/qt/
+RUN apt-get update && apt-get install -y --no-install-recommends python3 pipx && \
     python3 /tmp/qt/install_dependencies.py --platform debian && \
-    /tmp/qt/install-qt-debian.sh
-
-# Extract Qt version and set environment (scripts install to /opt/Qt/<version>/gcc_64)
-RUN QT_VERSION=$(/tmp/qt/read-config.sh --get qt_version) && \
+    QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version) && \
+    QT_MODULES=$(python3 /tmp/qt/read_config.py --get qt_modules) && \
+    mkdir -p /opt/Qt && \
+    pipx run aqtinstall install-qt linux desktop "${QT_VERSION}" linux_gcc_64 -O /opt/Qt -m ${QT_MODULES} && \
     echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64" >> /etc/profile.d/qt.sh && \
     echo 'export PATH=$QT_ROOT_DIR/bin:$PATH' >> /etc/profile.d/qt.sh && \
     chmod +x /etc/profile.d/qt.sh && \
+    rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/qt
 
 # Source qt.sh in bash login shells; for non-login, find Qt dynamically

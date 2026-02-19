@@ -10,16 +10,10 @@ inputs:
     required: true
     default: artifact-sizes.json
 
-outputs:
-  has-artifacts:
-    description: Whether any artifacts were found
-    value: ${{ steps.collect.outputs.has_artifacts }}
-
 runs:
   using: composite
   steps:
     - name: Collect artifact sizes from API
-      id: collect
       uses: actions/github-script@v8
       env:
         HEAD_SHA: ${{ inputs.head-sha }}
@@ -90,8 +84,6 @@ runs:
             fs.writeFileSync(outputFile, JSON.stringify({ artifacts }, null, 2));
             console.log(`Wrote ${artifacts.length} artifacts to ${outputFile}`);
             console.log(JSON.stringify({ artifacts }, null, 2));
-            core.setOutput('has_artifacts', 'true');
           } else {
             console.log('No artifacts found');
-            core.setOutput('has_artifacts', 'false');
           }

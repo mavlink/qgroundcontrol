@@ -27,6 +27,8 @@ tags
 # Build System & CMake
 # ------------------------------------------------------------------------------
 build*/
+!.github/actions/build-setup/
+!.github/actions/build-setup/**
 cmake-build-*/
 out/
 CMakeFiles

@@ -228,6 +228,9 @@ qt_policy(
     SET QTP0005 NEW  # Enhanced deployment handling
 )
 
+# Disable QML cache generation in Debug builds across all targets.
+add_compile_definitions($<$<CONFIG:Debug>:QT_QML_NO_CACHEGEN>)
+
 # ============================================================================
 # Custom Build Subdirectory
 # ============================================================================

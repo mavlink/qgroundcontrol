@@ -28,7 +28,6 @@ on:
         type: choice
         options:
           - Release
-          - Debug
   workflow_call:
 
 concurrency:
@@ -42,13 +41,66 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    outputs:
+      any: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/detect-changes
+          sparse-checkout-cone-mode: false
+
+      - name: Detect Changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: macos
+
+  setup:
+    name: Setup Matrix
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      always() &&
+      (needs.changes.result == 'skipped' ||
+       needs.changes.outputs.any == 'true')
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      timeout_minutes: ${{ steps.generate.outputs.timeout_minutes }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/generate-matrix
+            .github/scripts/generate_matrix.py
+            .github/build-config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Generate Matrix
+        id: generate
+        uses: ./.github/actions/generate-matrix
+        with:
+          platform: macos
+          build-type: ${{ inputs.build_type }}
+
   build:
-    runs-on: macos-15
-    timeout-minutes: 120
+    name: Build ${{ matrix.name }} ${{ matrix.build_type }}
+    needs: [changes, setup]
+    if: always() && needs.setup.result == 'success'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ fromJSON(needs.setup.outputs.timeout_minutes) }}
 
     strategy:
+      fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
+        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
 
     defaults:
       run:
@@ -67,57 +119,43 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Restore file timestamps
-        uses: chetan/git-restore-mtime-action@v2
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        id: build-setup
+        uses: ./.github/actions/build-setup
+        with:
+          restore-timestamps: 'true'
+          qt-host: mac
+          qt-arch: clang_64
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ steps.config.outputs.xcode_version }}
+          xcode-version: ${{ steps.build-setup.outputs.xcode_version }}
 
       - name: Install Dependencies (include GStreamer)
-        env:
-          GSTREAMER_VERSION: ${{ steps.config.outputs.gstreamer_macos_version }}
-        run: python3 ./tools/setup/install_dependencies.py --platform macos
+        uses: ./.github/actions/install-dependencies
 
-      - name: Setup Caching
-        uses: ./.github/actions/cache
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
         with:
-          host: mac
-          target: clang_64
+          build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          arch: clang_64
-          modules: ${{ steps.config.outputs.qt_modules }}
-
-      - name: CMake configure
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
-              -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
       - name: Sanity check dev build executable
-        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS
-        run: ./QGroundControl --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: QGroundControl
+          working-dir: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -145,14 +183,18 @@ jobs:
           fi
 
       - name: Sanity check DMG executable
-        working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
-        run: ./QGroundControl --simple-boot-test
-
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+        uses: ./.github/actions/verify-executable
         with:
-          subject-path: '${{ runner.temp }}/build/QGroundControl.dmg'
+          binary-path: QGroundControl
+          working-dir: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
+
+      - name: Attest Build with SBOM
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ runner.temp }}/build/QGroundControl.dmg
+          subject-name: QGroundControl
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload Build File
         if: matrix.build_type == 'Release'

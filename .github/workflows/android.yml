@@ -30,7 +30,6 @@ on:
         type: choice
         options:
           - Release
-          - Debug
   workflow_call:
 
 concurrency:
@@ -44,44 +43,66 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    outputs:
+      any: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/detect-changes
+          sparse-checkout-cone-mode: false
+
+      - name: Detect Changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: android
+
+  setup:
+    name: Setup Matrix
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      always() &&
+      (needs.changes.result == 'skipped' ||
+       needs.changes.outputs.any == 'true')
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      timeout_minutes: ${{ steps.generate.outputs.timeout_minutes }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/generate-matrix
+            .github/scripts/generate_matrix.py
+            .github/build-config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Generate Matrix
+        id: generate
+        uses: ./.github/actions/generate-matrix
+        with:
+          platform: android
+          build-type: ${{ inputs.build_type }}
+
   build:
-    name: Android (${{ matrix.host }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 120
+    name: Android (${{ matrix.name }})
+    needs: [changes, setup]
+    if: always() && needs.setup.result == 'success'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ fromJSON(needs.setup.outputs.timeout_minutes) }}
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - host: linux
-            runner: ubuntu-latest
-            arch: linux_gcc_64
-            qt_host_path: gcc_64
-            shell: bash
-            primary: true
-            emulator: false
-          - host: mac
-            runner: macos-latest
-            arch: clang_64
-            qt_host_path: macos
-            shell: bash
-            primary: false
-            emulator: false
-          - host: windows
-            runner: windows-latest
-            arch: win64_msvc2022_64
-            qt_host_path: msvc2022_64
-            shell: pwsh
-            primary: false
-            emulator: false
-          - host: linux-emulator
-            qt_host: linux
-            runner: ubuntu-latest
-            arch: linux_gcc_64
-            qt_host_path: gcc_64
-            shell: bash
-            primary: false
-            emulator: true
+        include: ${{ fromJSON(needs.setup.outputs.matrix) }}
 
     defaults:
       run:
@@ -93,7 +114,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: ${{ matrix.emulator && 'x86_64' || matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+      QT_ANDROID_ABIS: ${{ matrix.abis }}
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
@@ -130,7 +151,7 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           modules: ${{ steps.config.outputs.qt_modules }}
           abis: ${{ env.QT_ANDROID_ABIS }}
-          build-type: ${{ inputs.build_type || 'Release' }}
+          build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
           ndk-full-version: ${{ steps.config.outputs.ndk_full_version }}
           java-version: ${{ steps.config.outputs.java_version }}
@@ -164,18 +185,18 @@ jobs:
           "${QT_DIR}/bin/qt-cmake" \
             -S "${WORKSPACE}" \
             -B . -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_WARN_DEPRECATED=FALSE \
             -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
             -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
-            -DQT_ANDROID_SIGN_APK=ON \
+            -DQT_ANDROID_SIGN_APK=${{ matrix.primary && 'ON' || 'OFF' }} \
             -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} \
             ${{ matrix.emulator && '-DQT_ANDROID_APPLICATION_ARGUMENTS="--simple-boot-test"' || '' }}
 
       - name: Build
         shell: bash
         working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ inputs.build_type || 'Release' }} --parallel
+        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
 
       - name: Prepare Artifact
         shell: bash
@@ -290,11 +311,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Attest Build Provenance
-        if: ${{ !matrix.emulator && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: actions/attest-build-provenance@v3
+      - name: Attest Build with SBOM
+        if: ${{ !matrix.emulator }}
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
+          subject-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload Build File
         if: ${{ !matrix.emulator }}
