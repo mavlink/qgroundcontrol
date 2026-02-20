@@ -2,6 +2,7 @@
 #include "QGCStateMachine.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMetaObject>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 
@@ -72,15 +73,34 @@ void RetryableRequestMessageState::_sendRequest()
     );
 }
 
+void RetryableRequestMessageState::_queueRetry()
+{
+    // Defer retries so Vehicle can finish command-list cleanup from the prior callback.
+    // Immediate resend from within the callback can hit duplicate-request rejection.
+    QMetaObject::invokeMethod(this, [this]() {
+        if (!_requestActive) {
+            return;
+        }
+        _sendRequest();
+    }, Qt::QueuedConnection);
+}
+
 void RetryableRequestMessageState::_handleResult(
     MAV_RESULT result,
     Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
     const mavlink_message_t& message)
 {
-    _lastResult = result;
-    _lastFailureCode = failureCode;
+    Vehicle::RequestMessageResultHandlerFailureCode_t effectiveFailureCode = failureCode;
+    if (failureCode == Vehicle::RequestMessageFailureDuplicate) {
+        // Retryable request flows can re-enter while Vehicle still tracks the prior
+        // request as active. Treat duplicate as an in-flight timeout-equivalent.
+        effectiveFailureCode = Vehicle::RequestMessageFailureMessageNotReceived;
+    }
 
-    if (failureCode == Vehicle::RequestMessageNoFailure) {
+    _lastResult = result;
+    _lastFailureCode = effectiveFailureCode;
+
+    if (effectiveFailureCode == Vehicle::RequestMessageNoFailure) {
         // Success
         qCDebug(QGCStateMachineLog) << stateName() << "Message received successfully";
 
@@ -93,18 +113,18 @@ void RetryableRequestMessageState::_handleResult(
     }
 
     // Failure - check if we should retry
-    qCDebug(QGCStateMachineLog) << stateName() << "Request failed, failureCode:" << failureCode;
+    qCDebug(QGCStateMachineLog) << stateName() << "Request failed, failureCode:" << effectiveFailureCode;
 
     if (_retryCount < _maxRetries) {
         _retryCount++;
         qCDebug(QGCStateMachineLog) << stateName() << "Retrying, attempt" << (_retryCount + 1);
-        _sendRequest();
+        _queueRetry();
     } else {
         // Max retries exhausted
         qCWarning(QGCStateMachineLog) << stateName() << "Max retries exhausted";
 
         if (_failureHandler) {
-            _failureHandler(failureCode, result);
+            _failureHandler(effectiveFailureCode, result);
         }
         emit retriesExhausted();
 
@@ -125,7 +145,7 @@ void RetryableRequestMessageState::onWaitTimeout()
     if (_retryCount < _maxRetries) {
         _retryCount++;
         qCDebug(QGCStateMachineLog) << stateName() << "Retrying after timeout, attempt" << (_retryCount + 1);
-        _sendRequest();
+        _queueRetry();
     } else {
         qCWarning(QGCStateMachineLog) << stateName() << "Max retries exhausted after timeout";
 

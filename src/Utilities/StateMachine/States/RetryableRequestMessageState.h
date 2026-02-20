@@ -86,6 +86,7 @@ protected:
 
 private:
     void _sendRequest();
+    void _queueRetry();
     void _handleResult(MAV_RESULT result,
                        Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
                        const mavlink_message_t& message);
