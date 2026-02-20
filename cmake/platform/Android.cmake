@@ -62,6 +62,22 @@ endif()
 set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}000")
 message(STATUS "QGC: Android version code: ${ANDROID_VERSION_CODE}")
 
+set(QGC_ANDROID_PROPERTIES_FILE "${CMAKE_BINARY_DIR}/qgc-android-config.properties")
+set(QGC_ANDROID_PROPERTIES_CONTENT
+    "QGC_ANDROID_COMPILE_SDK_VERSION=${QGC_QT_ANDROID_COMPILE_SDK_VERSION}\n"
+    "QGC_ANDROID_TARGET_SDK_VERSION=${QGC_QT_ANDROID_TARGET_SDK_VERSION}\n"
+    "QGC_ANDROID_MIN_SDK_VERSION=${QGC_QT_ANDROID_MIN_SDK_VERSION}\n"
+    "QGC_ANDROID_VERSION_CODE=${ANDROID_VERSION_CODE}\n"
+    "QGC_ANDROID_VERSION_NAME=${CMAKE_PROJECT_VERSION}\n"
+    "QGC_CPM_JAVA_SRC_DIR=${CMAKE_BINARY_DIR}/extra_java_sources\n"
+)
+string(JOIN "" QGC_ANDROID_PROPERTIES_CONTENT ${QGC_ANDROID_PROPERTIES_CONTENT})
+file(GENERATE
+    OUTPUT "${QGC_ANDROID_PROPERTIES_FILE}"
+    CONTENT "${QGC_ANDROID_PROPERTIES_CONTENT}"
+)
+message(STATUS "QGC: Android shared properties: ${QGC_ANDROID_PROPERTIES_FILE}")
+
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
         # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
@@ -74,7 +90,7 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
         QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
-        QT_ANDROID_APP_ICON "@drawable/icon"
+        QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
         # QT_QML_IMPORT_PATH
         QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
         # QT_ANDROID_SYSTEM_LIBS_PREFIX
@@ -84,7 +100,8 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 #     set(QT_ANDROID_APPLICATION_ARGUMENTS)
 # endif()
 
-list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
+set(QGC_CPM_JAVA_SRC_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
+list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH QGC_CPM_JAVA_SRC_DIR QGC_ANDROID_PROPERTIES_FILE)
 
 # ----------------------------------------------------------------------------
 # Android OpenSSL Libraries
@@ -120,20 +137,9 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME}
         usesPermissionFlags neverForLocation
 )
 
-if(NOT QGC_NO_SERIAL_LINK)
-    qt_add_android_permission(${CMAKE_PROJECT_NAME}
-        NAME android.permission.USB_PERMISSION
-    )
-endif()
-
 # Need MulticastLock to receive broadcast UDP packets
 qt_add_android_permission(${CMAKE_PROJECT_NAME}
     NAME android.permission.CHANGE_WIFI_MULTICAST_STATE
-)
-
-# Needed to keep working while 'asleep'
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.WAKE_LOCK
 )
 
 # Needed for read/write to SD Card Path in AppSettings
@@ -147,13 +153,27 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME}
     ATTRIBUTES
         maxSdkVersion 33
 )
-qt_add_android_permission(${CMAKE_PROJECT_NAME}
-    NAME android.permission.MANAGE_EXTERNAL_STORAGE
-)
+
+option(QGC_ANDROID_ENABLE_MANAGE_EXTERNAL_STORAGE "Request MANAGE_EXTERNAL_STORAGE (not Play Store compliant by default)" OFF)
+if(QGC_ANDROID_ENABLE_MANAGE_EXTERNAL_STORAGE)
+    qt_add_android_permission(${CMAKE_PROJECT_NAME}
+        NAME android.permission.MANAGE_EXTERNAL_STORAGE
+    )
+endif()
 
 # Joystick
 qt_add_android_permission(${CMAKE_PROJECT_NAME}
     NAME android.permission.VIBRATE
+)
+
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.INTERNET
+)
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.WAKE_LOCK
+)
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.ACCESS_NETWORK_STATE
 )
 
 message(STATUS "QGC: Android platform configuration applied")

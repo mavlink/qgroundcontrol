@@ -1,108 +1,116 @@
 #include "AndroidInterface.h"
 #include "QGCLoggingCategory.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
+#include "SettingsFact.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QJniObject>
 #include <QtCore/QJniEnvironment>
+#include <QtCore/QMetaObject>
+#include <QtCore/QSharedPointer>
+#include <QtCore/QStandardPaths>
+#include <QtAndroidHelpers/QAndroidPartialWakeLocker.h>
+#include <QtAndroidHelpers/QAndroidWiFiLocker.h>
+#include <QAndroidScreen.h>
 
 QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
 
 namespace AndroidInterface
 {
 
-bool cleanJavaException()
+static void jniLogDebug(JNIEnv *, jobject, jstring message)
 {
-    QJniEnvironment jniEnv;
-    const bool result = jniEnv.checkAndClearExceptions();
-    return result;
+    qCDebug(AndroidInterfaceLog) << QJniObject(message).toString();
 }
 
-jclass getActivityClass()
+static void jniLogWarning(JNIEnv *, jobject, jstring message)
 {
-    static jclass javaClass = nullptr;
+    qCWarning(AndroidInterfaceLog) << QJniObject(message).toString();
+}
 
-    if (!javaClass) {
-        QJniEnvironment env;
-        if (!env.isValid()) {
-            qCWarning(AndroidInterfaceLog) << "Invalid QJniEnvironment";
-            return nullptr;
-        }
-
-        if (!QJniObject::isClassAvailable(kJniQGCActivityClassName)) {
-            qCWarning(AndroidInterfaceLog) << "Class Not Available";
-            return nullptr;
-        }
-
-        javaClass = env.findClass(kJniQGCActivityClassName);
-        if (!javaClass) {
-            qCWarning(AndroidInterfaceLog) << "Class Not Found";
-            return nullptr;
-        }
-
-        env.checkAndClearExceptions();
+static void jniStoragePermissionsResult(JNIEnv *, jobject, jboolean granted)
+{
+    if (!granted) {
+        qCWarning(AndroidInterfaceLog) << "Storage permission request denied";
+        return;
     }
 
-    return javaClass;
+    if (!qgcApp()) {
+        return;
+    }
+
+    (void) QMetaObject::invokeMethod(qgcApp(), []() {
+        SettingsManager *const settingsManager = SettingsManager::instance();
+        if (!settingsManager) {
+            return;
+        }
+
+        AppSettings *const appSettings = settingsManager->appSettings();
+        if (!appSettings || appSettings->androidDontSaveToSDCard()->rawValue().toBool()) {
+            return;
+        }
+
+        SettingsFact *const savePathFact = qobject_cast<SettingsFact *>(appSettings->savePath());
+        if (!savePathFact) {
+            return;
+        }
+
+        const QString appName = QCoreApplication::applicationName();
+        const QString currentSavePath = savePathFact->rawValue().toString();
+        const QString internalBasePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        const QString internalSavePath = QDir(internalBasePath).filePath(appName);
+
+        if (!currentSavePath.isEmpty() && (currentSavePath != internalSavePath)) {
+            return;
+        }
+
+        const QString sdCardRootPath = getSDCardPath();
+        if (sdCardRootPath.isEmpty() || !QDir(sdCardRootPath).exists() || !QFileInfo(sdCardRootPath).isWritable()) {
+            return;
+        }
+
+        const QString sdSavePath = QDir(sdCardRootPath).filePath(appName);
+        if (currentSavePath != sdSavePath) {
+            qCDebug(AndroidInterfaceLog) << "Applying SD card save path after permission grant:" << sdSavePath;
+            savePathFact->setRawValue(sdSavePath);
+        }
+    }, Qt::QueuedConnection);
 }
 
 void setNativeMethods()
 {
     qCDebug(AndroidInterfaceLog) << "Registering Native Functions";
 
-    JNINativeMethod javaMethods[] {
+    const JNINativeMethod javaMethods[] {
         {"qgcLogDebug",   "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogDebug)},
-        {"qgcLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)}
+        {"qgcLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void *>(jniLogWarning)},
+        {"nativeStoragePermissionsResult", "(Z)V", reinterpret_cast<void *>(jniStoragePermissionsResult)}
     };
 
-    (void) AndroidInterface::cleanJavaException();
-
-    jclass objectClass = AndroidInterface::getActivityClass();
-    if(!objectClass) {
-        qCWarning(AndroidInterfaceLog) << "Couldn't find class:" << objectClass;
-        return;
-    }
-
-    QJniEnvironment jniEnv;
-    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, std::size(javaMethods));
-
-    if (val < 0) {
-        qCWarning(AndroidInterfaceLog) << "Error registering methods:" << val;
+    QJniEnvironment env;
+    if (!env.registerNativeMethods(kJniQGCActivityClassName, javaMethods, std::size(javaMethods))) {
+        qCWarning(AndroidInterfaceLog) << "Failed to register native methods for" << kJniQGCActivityClassName;
     } else {
         qCDebug(AndroidInterfaceLog) << "Native Functions Registered";
     }
-
-    (void) AndroidInterface::cleanJavaException();
-}
-
-void jniLogDebug(JNIEnv *envA, jobject thizA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char * const stringL = envA->GetStringUTFChars(messageA, nullptr);
-    const QString logMessage = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    (void) QJniEnvironment::checkAndClearExceptions(envA);
-    qCDebug(AndroidInterfaceLog) << logMessage;
-}
-
-void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char * const stringL = envA->GetStringUTFChars(messageA, nullptr);
-    const QString logMessage = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    (void) QJniEnvironment::checkAndClearExceptions(envA);
-    qCWarning(AndroidInterfaceLog) << logMessage;
 }
 
 bool checkStoragePermissions()
 {
-    // Call the Java method to check and request storage permissions
     const bool hasPermission = QJniObject::callStaticMethod<jboolean>(
         kJniQGCActivityClassName,
         "checkStoragePermissions",
         "()Z"
     );
+    QJniEnvironment env;
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidInterfaceLog) << "Exception in checkStoragePermissions";
+        return false;
+    }
 
     if (hasPermission) {
         qCDebug(AndroidInterfaceLog) << "Storage permissions granted";
@@ -121,6 +129,11 @@ QString getSDCardPath()
     }
 
     const QJniObject result = QJniObject::callStaticObjectMethod(kJniQGCActivityClassName, "getSDCardPath", "()Ljava/lang/String;");
+    QJniEnvironment env;
+    if (env.checkAndClearExceptions()) {
+        qCWarning(AndroidInterfaceLog) << "Exception in getSDCardPath";
+        return QString();
+    }
     if (!result.isValid()) {
         qCWarning(AndroidInterfaceLog) << "Call to java getSDCardPath failed: Invalid Result";
         return QString();
@@ -129,11 +142,23 @@ QString getSDCardPath()
     return result.toString();
 }
 
+static QSharedPointer<QLocks::QLockBase> s_partialWakeLock;
+static QSharedPointer<QLocks::QLockBase> s_wifiLock;
+
 void setKeepScreenOn(bool on)
 {
-    Q_UNUSED(on);
+    if (!QAndroidScreen::instance()) {
+        new QAndroidScreen(QCoreApplication::instance());
+    }
+    QAndroidScreen::instance()->keepScreenOn(on);
 
-    //-- Screen is locked on while QGC is running on Android
+    if (on) {
+        s_partialWakeLock = QAndroidPartialWakeLocker::instance().getLock();
+        s_wifiLock = QAndroidWiFiLocker::instance().getLock();
+    } else {
+        s_partialWakeLock.reset();
+        s_wifiLock.reset();
+    }
 }
 
 } // namespace AndroidInterface

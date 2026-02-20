@@ -48,9 +48,8 @@ bool AndroidEvents::handleActivityResult(jint requestCode, jint resultCode, jobj
     return true;
 }
 
-bool AndroidEvents::handleNewIntent(JNIEnv *env, jobject intent)
+bool AndroidEvents::handleNewIntent(JNIEnv *, jobject intent)
 {
-    Q_UNUSED(env);
     qCDebug(AndroidEventsLog) << "New intent received";
     emit newIntent(QJniObject(intent));
     return true;

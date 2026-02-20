@@ -58,6 +58,7 @@ jobs:
             arch: linux_gcc_64
             qt_host_path: gcc_64
             shell: bash
+            custom_gst_package: false
             primary: true
             emulator: false
           - host: mac
@@ -65,6 +66,7 @@ jobs:
             arch: clang_64
             qt_host_path: macos
             shell: bash
+            custom_gst_package: false
             primary: false
             emulator: false
           - host: windows
@@ -72,6 +74,7 @@ jobs:
             arch: win64_msvc2022_64
             qt_host_path: msvc2022_64
             shell: pwsh
+            custom_gst_package: false
             primary: false
             emulator: false
           - host: linux-emulator
@@ -136,7 +139,7 @@ jobs:
           android-platform: ${{ steps.config.outputs.android_platform }}
           android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
           android-build-tools: ${{ steps.config.outputs.android_build_tools }}
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: true
 
       - name: Create Debug Keystore
         if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
@@ -173,6 +176,18 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type || 'Release' }}
 
+      - name: Android Lint
+        if: ${{ matrix.host == 'linux' }}
+        shell: bash
+        working-directory: ${{ runner.temp }}/build/android-build
+        run: |
+          if [[ ! -x "./gradlew" ]]; then
+            echo "::error::Gradle wrapper not found in ${PWD}"
+            ls -la
+            exit 1
+          fi
+          ./gradlew lintRelease --no-daemon
+
       - name: Prepare Artifact
         shell: bash
         run: |
@@ -200,10 +215,16 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ runner.os }}-${{ runner.arch }}-api${{ steps.config.outputs.android_platform }}-x86_64-google_apis-pixel_6-qt${{ steps.config.outputs.qt_version }}-ndk${{ steps.config.outputs.ndk_full_version }}-v2
+          key: >-
+            avd-${{ runner.os }}-${{ runner.arch }}-api${{ steps.config.outputs.android_platform }}
+            -x86_64-google_apis-pixel_6-qt${{ steps.config.outputs.qt_version }}
+            -ndk${{ steps.config.outputs.ndk_full_version }}-v2
 
       - name: Create AVD Snapshot
+        id: avd-snapshot
         if: ${{ matrix.emulator && steps.avd-cache.outputs.cache-hit != 'true' }}
+        timeout-minutes: 15
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ steps.config.outputs.android_platform }}
@@ -222,8 +243,17 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: echo "Generated AVD snapshot for cache."
 
+      - name: Kill Stale Emulator
+        if: ${{ matrix.emulator && steps.avd-snapshot.outcome == 'failure' }}
+        shell: bash
+        run: |
+          pkill -9 -f qemu-system || true
+          adb kill-server 2>/dev/null || true
+          sleep 5
+
       - name: Emulator Boot Test
         if: ${{ matrix.emulator }}
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ steps.config.outputs.android_platform }}
@@ -243,7 +273,16 @@ jobs:
           script: |
             timeout 20s adb start-server >/dev/null 2>&1 || true
             timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
-            python3 .github/scripts/android_boot_test.py --apk "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk" --package org.mavlink.qgroundcontrol --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+            python3 .github/scripts/android_boot_test.py \
+              --apk "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk" \
+              --package org.mavlink.qgroundcontrol \
+              --timeout 120 \
+              --stability-window 20 \
+              --adb-ready-timeout 180 \
+              --install-retries 4 \
+              --install-retry-delay 5 \
+              --launch-retries 2 \
+              --log-output /tmp/qgc_emulator_boot.log
 
       - name: Collect Emulator Diagnostics
         if: ${{ failure() && matrix.emulator }}

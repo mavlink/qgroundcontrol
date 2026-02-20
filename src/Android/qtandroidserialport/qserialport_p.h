@@ -22,6 +22,8 @@
 #include <QtCore/QMutex>
 #include <QtCore/QWaitCondition>
 
+#include <atomic>
+
 #include "qserialport.h"
 #include "AndroidSerial.h"
 
@@ -30,16 +32,13 @@ constexpr int MIN_READ_TIMEOUT = 500;
 constexpr qint64 MAX_READ_SIZE = 16 * 1024;
 constexpr qint64 DEFAULT_READ_BUFFER_SIZE = MAX_READ_SIZE;
 constexpr qint64 DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
-constexpr int DEFAULT_WRITE_TIMEOUT = 0;
+constexpr int DEFAULT_WRITE_TIMEOUT = 5000;
 constexpr int DEFAULT_READ_TIMEOUT = 0;
 constexpr int EMIT_THRESHOLD = 64;
-constexpr int EMIT_INTERVAL_MS = 10;
 
 #ifndef QSERIALPORT_BUFFERSIZE
 #define QSERIALPORT_BUFFERSIZE DEFAULT_WRITE_BUFFER_SIZE
 #endif
-
-class QTimer;
 
 Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
@@ -128,27 +127,32 @@ public:
     QString systemLocation;
     qint32 inputBaudRate = QSerialPort::Baud9600;
     qint32 outputBaudRate = QSerialPort::Baud9600;
-    qint64 readBufferMaxSize = 0; // DEFAULT_READ_BUFFER_SIZE
+    qint64 readBufferMaxSize = DEFAULT_READ_BUFFER_SIZE;
     int descriptor = -1;
 
 private:
     qint64 _writeToPort(const char *data, qint64 maxSize, int timeout = DEFAULT_WRITE_TIMEOUT, bool async = false);
     bool _stopAsyncRead();
+    void _scheduleReadyRead();
+    qsizetype _pendingSizeLocked() const;
+    void _compactPendingDataLocked();
+    qint64 _drainPendingDataLocked(qint64 maxBytes = -1);
     bool _setParameters(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits, QSerialPort::Parity parity);
     bool _writeDataOneShot(int msecs = DEFAULT_WRITE_TIMEOUT);
 
-    static qint32 _settingFromBaudRate(qint32 baudRate);
     static int _stopBitsToAndroidStopBits(QSerialPort::StopBits stopBits);
     static int _dataBitsToAndroidDataBits(QSerialPort::DataBits dataBits);
     static int _parityToAndroidParity(QSerialPort::Parity parity);
     static int _flowControlToAndroidFlowControl(QSerialPort::FlowControl flowControl);
 
     int _deviceId = INVALID_DEVICE_ID;
-    // QString _serialNumber;
 
-    QTimer *_readTimer = nullptr;
+    std::atomic<bool> _readyReadPending{false};
+    std::atomic<qint64> _bufferBytesEstimate{0};
     QMutex _readMutex;
     QWaitCondition _readWaitCondition;
+    QByteArray _pendingData;
+    qsizetype _pendingDataOffset = 0;
 };
 
 QT_END_NAMESPACE
