@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FirmwareUpgradeControllerTest.h
         InitialConnectTest.cc
         InitialConnectTest.h
+        InitialConnectPeripheralStartupTest.cc
+        InitialConnectPeripheralStartupTest.h
         MAVLinkLogManagerTest.cc
         MAVLinkLogManagerTest.h
         APMAirframeComponentControllerTest.cc

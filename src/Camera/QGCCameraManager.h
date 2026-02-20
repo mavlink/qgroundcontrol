@@ -108,6 +108,7 @@ protected slots:
     void _toggleVideoRecording();
 
 private slots:
+    void _initialConnectCompleted();
     void _setCurrentZoomLevel(int level);
 
 private:
@@ -140,6 +141,7 @@ private:
     QTimer _camerasLostHeartbeatTimer;
     QMap<QString, CameraStruct*> _cameraInfoRequest;
     static QVariantList _cameraList;
+    bool _initialConnectComplete = false;
 
     QHash<int, double> _aspectByCompId;
 };
