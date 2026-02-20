@@ -1,7 +1,10 @@
 #include "ElevationMapProvider.h"
 #include "TerrainTileCopernicus.h"
+#include "TerrainTileArduPilot.h"
+#include "QGCCompression.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 
 int CopernicusElevationProvider::long2tileX(double lon, int z) const
@@ -50,4 +53,270 @@ QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon
 QByteArray CopernicusElevationProvider::serialize(const QByteArray &image) const
 {
     return TerrainTileCopernicus::serializeFromData(image);
+}
+
+/*===========================================================================*/
+
+int ArduPilotTerrainElevationProvider::long2tileX(double lon, int z) const
+{
+    Q_UNUSED(z)
+    return static_cast<int>(floor((lon + 180.0) / TerrainTileArduPilot::kTileSizeDegrees));
+}
+
+int ArduPilotTerrainElevationProvider::lat2tileY(double lat, int z) const
+{
+    Q_UNUSED(z)
+    return static_cast<int>(floor((lat + 90.0) / TerrainTileArduPilot::kTileSizeDegrees));
+}
+
+QString ArduPilotTerrainElevationProvider::_getURL(int x, int y, int zoom) const
+{
+    Q_UNUSED(zoom)
+
+    const int xForUrl = (static_cast<double>(x) * TerrainTileArduPilot::kTileSizeDegrees) - 180.0;
+    const int yForUrl = (static_cast<double>(y) * TerrainTileArduPilot::kTileSizeDegrees) - 90.0;
+
+    if ((xForUrl < -180) || (xForUrl > 180) || (yForUrl < -90) || (yForUrl > 90)) {
+        qCWarning(MapProviderLog) << "Invalid x or y values for URL generation:" << x << y;
+        return QString();
+    }
+
+    QString formattedYLat;
+    if (yForUrl >= 0) {
+        formattedYLat = QString("N%1").arg(QString::number(yForUrl).rightJustified(2, '0'));
+    } else {
+        formattedYLat = QString("S%1").arg(QString::number(-yForUrl).rightJustified(2, '0'));
+    }
+
+    QString formattedXLong;
+    if (xForUrl >= 0) {
+        formattedXLong = QString("E%1").arg(QString::number(xForUrl).rightJustified(3, '0'));
+    } else {
+        formattedXLong = QString("W%1").arg(QString::number(-xForUrl).rightJustified(3, '0'));
+    }
+
+    const QString url = _mapUrl.arg(formattedYLat, formattedXLong);
+    return url;
+}
+
+QGCTileSet ArduPilotTerrainElevationProvider::getTileCount(int zoom, double topleftLon,
+                                                           double topleftLat, double bottomRightLon,
+                                                           double bottomRightLat) const
+{
+    QGCTileSet set;
+    set.tileX0 = long2tileX(topleftLon, zoom);
+    set.tileY0 = lat2tileY(bottomRightLat, zoom);
+    set.tileX1 = long2tileX(bottomRightLon, zoom);
+    set.tileY1 = lat2tileY(topleftLat, zoom);
+
+    set.tileCount = (static_cast<quint64>(set.tileX1) -
+                     static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) -
+                     static_cast<quint64>(set.tileY0) + 1);
+
+    set.tileSize = getAverageSize() * set.tileCount;
+
+    return set;
+}
+
+QByteArray ArduPilotTerrainElevationProvider::serialize(const QByteArray &image) const
+{
+    QTemporaryFile tempFile;
+    tempFile.setFileTemplate(QDir::tempPath() + "/XXXXXX.zip");
+
+    if (!tempFile.open()) {
+        qCDebug(MapProviderLog) << "Could not create temporary file for zip data.";
+        return QByteArray();
+    }
+
+    if (tempFile.write(image) != image.size()) {
+        qCDebug(MapProviderLog) << "Incorrect number of bytes written.";
+    }
+    tempFile.close();
+
+    QTemporaryDir outputDir;
+    if (!outputDir.isValid()) {
+        qCDebug(MapProviderLog) << "Could not create temporary directory.";
+        return QByteArray();
+    }
+
+    const QString outputDirectoryPath = outputDir.path();
+
+    if (!QGCCompression::extractArchive(tempFile.fileName(), outputDirectoryPath)) {
+        qCDebug(MapProviderLog) << "Unzipping failed!";
+        return QByteArray();
+    }
+
+    const QStringList files = QDir(outputDirectoryPath).entryList({QStringLiteral("*.hgt")}, QDir::Files);
+    if (files.isEmpty()) {
+        qCDebug(MapProviderLog) << "No .hgt files found in the unzipped directory!";
+        return QByteArray();
+    }
+
+    const QString filename = files.constFirst();
+    const QString unzippedFilePath = outputDirectoryPath + "/" + filename;
+    QFile file(unzippedFilePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qCDebug(MapProviderLog) << "Could not open unzipped file for reading:" << unzippedFilePath;
+        return QByteArray();
+    }
+
+    const QByteArray result = file.readAll();
+    file.close();
+
+    return TerrainTileArduPilot::serializeFromData(filename, result);
+}
+
+/*===========================================================================*/
+
+int ArduPilotTerrainSRTM3ElevationProvider::long2tileX(double lon, int z) const
+{
+    Q_UNUSED(z)
+    return static_cast<int>(floor((lon + 180.0) / TerrainTileArduPilot::kTileSizeDegrees));
+}
+
+int ArduPilotTerrainSRTM3ElevationProvider::lat2tileY(double lat, int z) const
+{
+    Q_UNUSED(z)
+    return static_cast<int>(floor((lat + 90.0) / TerrainTileArduPilot::kTileSizeDegrees));
+}
+
+QString ArduPilotTerrainSRTM3ElevationProvider::_getURL(int x, int y, int zoom) const
+{
+    Q_UNUSED(zoom)
+
+    const int xForUrl = (static_cast<double>(x) * TerrainTileArduPilot::kTileSizeDegrees) - 180.0;
+    const int yForUrl = (static_cast<double>(y) * TerrainTileArduPilot::kTileSizeDegrees) - 90.0;
+
+    if ((xForUrl < -180) || (xForUrl > 180) || (yForUrl < -90) || (yForUrl > 90)) {
+        qCWarning(MapProviderLog) << "Invalid x or y values for URL generation:" << x << y;
+        return QString();
+    }
+
+    QString formattedYLat;
+    if (yForUrl >= 0) {
+        formattedYLat = QString("N%1").arg(QString::number(yForUrl).rightJustified(2, '0'));
+    } else {
+        formattedYLat = QString("S%1").arg(QString::number(-yForUrl).rightJustified(2, '0'));
+    }
+
+    QString formattedXLong;
+    if (xForUrl >= 0) {
+        formattedXLong = QString("E%1").arg(QString::number(xForUrl).rightJustified(3, '0'));
+    } else {
+        formattedXLong = QString("W%1").arg(QString::number(-xForUrl).rightJustified(3, '0'));
+    }
+
+    const QString url = _mapUrl.arg(formattedYLat, formattedXLong);
+    return url;
+}
+
+QGCTileSet ArduPilotTerrainSRTM3ElevationProvider::getTileCount(int zoom, double topleftLon,
+                                                                  double topleftLat, double bottomRightLon,
+                                                                  double bottomRightLat) const
+{
+    QGCTileSet set;
+    set.tileX0 = long2tileX(topleftLon, zoom);
+    set.tileY0 = lat2tileY(bottomRightLat, zoom);
+    set.tileX1 = long2tileX(bottomRightLon, zoom);
+    set.tileY1 = lat2tileY(topleftLat, zoom);
+
+    set.tileCount = (static_cast<quint64>(set.tileX1) -
+                     static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) -
+                     static_cast<quint64>(set.tileY0) + 1);
+
+    set.tileSize = getAverageSize() * set.tileCount;
+
+    return set;
+}
+
+QByteArray ArduPilotTerrainSRTM3ElevationProvider::serialize(const QByteArray &image) const
+{
+    QTemporaryFile tempFile;
+    tempFile.setFileTemplate(QDir::tempPath() + "/XXXXXX.zip");
+
+    if (!tempFile.open()) {
+        qCDebug(MapProviderLog) << "Could not create temporary file for zip data.";
+        return QByteArray();
+    }
+
+    if (tempFile.write(image) != image.size()) {
+        qCDebug(MapProviderLog) << "Incorrect number of bytes written.";
+    }
+    tempFile.close();
+
+    QTemporaryDir outputDir;
+    if (!outputDir.isValid()) {
+        qCDebug(MapProviderLog) << "Could not create temporary directory.";
+        return QByteArray();
+    }
+
+    const QString outputDirectoryPath = outputDir.path();
+
+    if (!QGCCompression::extractArchive(tempFile.fileName(), outputDirectoryPath)) {
+        qCDebug(MapProviderLog) << "Unzipping failed!";
+        return QByteArray();
+    }
+
+    const QStringList files = QDir(outputDirectoryPath).entryList({QStringLiteral("*.hgt")}, QDir::Files);
+    if (files.isEmpty()) {
+        qCDebug(MapProviderLog) << "No .hgt files found in the unzipped directory!";
+        return QByteArray();
+    }
+
+    const QString filename = files.constFirst();
+    const QString unzippedFilePath = outputDirectoryPath + "/" + filename;
+    QFile file(unzippedFilePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qCDebug(MapProviderLog) << "Could not open unzipped file for reading:" << unzippedFilePath;
+        return QByteArray();
+    }
+
+    const QByteArray result = file.readAll();
+    file.close();
+
+    return TerrainTileArduPilot::serializeFromData(filename, result);
+}
+
+/*===========================================================================*/
+
+int OpenElevationProvider::long2tileX(double lon, int z) const
+{
+    Q_UNUSED(z)
+    Q_UNUSED(lon)
+    return 0;
+}
+
+int OpenElevationProvider::lat2tileY(double lat, int z) const
+{
+    Q_UNUSED(z)
+    Q_UNUSED(lat)
+    return 0;
+}
+
+QString OpenElevationProvider::_getURL(int x, int y, int zoom) const
+{
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+    Q_UNUSED(zoom)
+    return QString();
+}
+
+QGCTileSet OpenElevationProvider::getTileCount(int zoom, double topleftLon,
+                                                double topleftLat, double bottomRightLon,
+                                                double bottomRightLat) const
+{
+    Q_UNUSED(zoom)
+    Q_UNUSED(topleftLon)
+    Q_UNUSED(topleftLat)
+    Q_UNUSED(bottomRightLon)
+    Q_UNUSED(bottomRightLat)
+    return QGCTileSet();
+}
+
+QByteArray OpenElevationProvider::serialize(const QByteArray &image) const
+{
+    Q_UNUSED(image)
+    return QByteArray();
 }

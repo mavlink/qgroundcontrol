@@ -5,9 +5,13 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QQueue>
+
+#include <memory>
 #include <QtPositioning/QGeoCoordinate>
 
+class ElevationProvider;
 class TerrainTile;
 class QNetworkAccessManager;
 class UnitTestTerrainQuery;
@@ -21,7 +25,7 @@ class TerrainTileManager : public QObject
     friend class UnitTestTerrainQuery;
 public:
     explicit TerrainTileManager(QObject *parent = nullptr);
-    ~TerrainTileManager();
+    ~TerrainTileManager() override;
 
     static TerrainTileManager *instance();
 
@@ -38,8 +42,10 @@ private slots:
     void _terrainDone();
 
 private:
+    /// Returns the currently selected elevation provider from settings
+    static std::shared_ptr<const ElevationProvider> _getElevationProvider();
     /// Returns a list of individual coordinates along the requested path spaced according to the terrain tile value spacing
-    static QList<QGeoCoordinate> _pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween);
+    static QList<QGeoCoordinate> _pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double spacingMeters, double &distanceBetween, double &finalDistanceBetween);
     void _tileFailed();
     void _cacheTile(const QByteArray &data, const QString &hash);
     TerrainTile *_getCachedTile(const QString &hash);

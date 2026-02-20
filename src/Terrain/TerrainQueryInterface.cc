@@ -3,6 +3,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QSslSocket>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "QGCNetworkHelper.h"

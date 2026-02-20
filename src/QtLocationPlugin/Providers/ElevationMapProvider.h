@@ -17,7 +17,11 @@ protected:
 public:
     bool isElevationProvider() const final { return true; }
     virtual QByteArray serialize(const QByteArray &image) const = 0;
+    virtual double tileValueSpacingDegrees() const = 0;
+    virtual double tileValueSpacingMeters() const = 0;
 };
+
+/*===========================================================================*/
 
 /// https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model
 class CopernicusElevationProvider : public ElevationProvider
@@ -39,14 +43,126 @@ public:
                             double bottomRightLat) const final;
 
     QByteArray serialize(const QByteArray &image) const final;
+    double tileValueSpacingDegrees() const final { return kValueSpacingDegrees; }
+    double tileValueSpacingMeters() const final { return kValueSpacingMeters; }
 
     static constexpr const char *kProviderKey = "Copernicus";
     static constexpr const char *kProviderNotice = "© Airbus Defence and Space GmbH";
     static constexpr const char *kProviderURL = "https://terrain-ce.suite.auterion.com";
     static constexpr quint32 kAvgElevSize = 2786;
+    static constexpr double kValueSpacingDegrees = (1.0 / 3600);
+    static constexpr double kValueSpacingMeters = 30.0;
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
     const QString _mapUrl = QString(kProviderURL) + QStringLiteral("/api/v1/carpet?points=%1,%2,%3,%4");
+};
+
+/*===========================================================================*/
+
+class ArduPilotTerrainElevationProvider : public ElevationProvider
+{
+public:
+    ArduPilotTerrainElevationProvider()
+        : ElevationProvider(
+            kProviderKey,
+            kProviderURL,
+            QStringLiteral("hgt"),
+            kAvgElevSize,
+            QGeoMapType::TerrainMap) {}
+
+    int long2tileX(double lon, int z) const final;
+    int lat2tileY(double lat, int z) const final;
+
+    QGCTileSet getTileCount(int zoom, double topleftLon,
+                            double topleftLat, double bottomRightLon,
+                            double bottomRightLat) const final;
+
+    QByteArray serialize(const QByteArray &image) const final;
+    double tileValueSpacingDegrees() const final { return kValueSpacingDegrees; }
+    double tileValueSpacingMeters() const final { return kValueSpacingMeters; }
+
+    static constexpr const char *kProviderKey = "ArduPilot SRTM1";
+    static constexpr const char *kProviderNotice = "© ArduPilot.org";
+    static constexpr const char *kProviderURL = "https://terrain.ardupilot.org/SRTM1";
+    static constexpr quint32 kAvgElevSize = 50000;
+    static constexpr double kValueSpacingDegrees = (1.0 / 3600);
+    static constexpr double kValueSpacingMeters = 30.0;
+
+private:
+    QString _getURL(int x, int y, int zoom) const final;
+
+    const QString _mapUrl = QString(kProviderURL) + QStringLiteral("/%1%2.hgt.zip");
+};
+
+/*===========================================================================*/
+
+class ArduPilotTerrainSRTM3ElevationProvider : public ElevationProvider
+{
+public:
+    ArduPilotTerrainSRTM3ElevationProvider()
+        : ElevationProvider(
+            kProviderKey,
+            kProviderURL,
+            QStringLiteral("hgt"),
+            kAvgElevSize,
+            QGeoMapType::TerrainMap) {}
+
+    int long2tileX(double lon, int z) const final;
+    int lat2tileY(double lat, int z) const final;
+
+    QGCTileSet getTileCount(int zoom, double topleftLon,
+                            double topleftLat, double bottomRightLon,
+                            double bottomRightLat) const final;
+
+    QByteArray serialize(const QByteArray &image) const final;
+    double tileValueSpacingDegrees() const final { return kValueSpacingDegrees; }
+    double tileValueSpacingMeters() const final { return kValueSpacingMeters; }
+
+    static constexpr const char *kProviderKey = "ArduPilot SRTM3";
+    static constexpr const char *kProviderNotice = "© ArduPilot.org";
+    static constexpr const char *kProviderURL = "https://terrain.ardupilot.org/SRTM3";
+    static constexpr quint32 kAvgElevSize = 5600;
+    static constexpr double kValueSpacingDegrees = (1.0 / 1200);
+    static constexpr double kValueSpacingMeters = 90.0;
+
+private:
+    QString _getURL(int x, int y, int zoom) const final;
+
+    const QString _mapUrl = QString(kProviderURL) + QStringLiteral("/%1%2.hgt.zip");
+};
+
+/*===========================================================================*/
+
+class OpenElevationProvider : public ElevationProvider
+{
+public:
+    OpenElevationProvider()
+        : ElevationProvider(
+            kProviderKey,
+            kProviderURL,
+            QStringLiteral("bin"),
+            kAvgElevSize,
+            QGeoMapType::TerrainMap) {}
+
+    int long2tileX(double lon, int z) const final;
+    int lat2tileY(double lat, int z) const final;
+
+    QGCTileSet getTileCount(int zoom, double topleftLon,
+                            double topleftLat, double bottomRightLon,
+                            double bottomRightLat) const final;
+
+    QByteArray serialize(const QByteArray &image) const final;
+    double tileValueSpacingDegrees() const final { return kValueSpacingDegrees; }
+    double tileValueSpacingMeters() const final { return kValueSpacingMeters; }
+
+    static constexpr const char *kProviderKey = "Open-Elevation";
+    static constexpr const char *kProviderURL = "https://api.open-elevation.com";
+    static constexpr quint32 kAvgElevSize = 1024;
+    static constexpr double kValueSpacingDegrees = (1.0 / 3600);
+    static constexpr double kValueSpacingMeters = 30.0;
+
+private:
+    QString _getURL(int x, int y, int zoom) const final;
 };
