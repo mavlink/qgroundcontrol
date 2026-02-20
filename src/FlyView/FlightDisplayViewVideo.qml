@@ -12,9 +12,11 @@ Item {
 
     property bool useSmallFont: true
 
-    property double _ar:                QGroundControl.videoManager.gstreamerEnabled
-                                            ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
-                                            : QGroundControl.videoManager.aspectRatio
+    property double _ar:                (cameraLoader.visible && cameraLoader.status === Loader.Ready)
+                                            ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight
+                                            : QGroundControl.videoManager.gstreamerEnabled
+                                                ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
+                                                : QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
     property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
     property bool   _connected:         globals.activeVehicle ? !globals.activeVehicle.communicationLost : false
@@ -23,6 +25,8 @@ Item {
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
+    property bool   _showStreamLoader:  QGroundControl.videoManager.decoding
+    property bool   _showUvcLoader:     QGroundControl.videoManager.isUvc
 
     property bool   _isMode_FIT_WIDTH:  _fitMode === 0
     property bool   _isMode_FIT_HEIGHT: _fitMode === 1
@@ -43,7 +47,7 @@ Item {
             anchors.fill:   parent
             source:         "/res/NoVideoBackground.jpg"
             fillMode:       Image.PreserveAspectCrop
-            visible:        !(QGroundControl.videoManager.decoding)
+            visible:        !_showStreamLoader && !_showUvcLoader
 
             Rectangle {
                 anchors.centerIn:   parent
@@ -68,7 +72,7 @@ Item {
         id:             videoBackground
         anchors.fill:   parent
         color:          "black"
-        visible:        QGroundControl.videoManager.decoding
+        visible:        _showStreamLoader || _showUvcLoader
         function getWidth() {
             if(_ar != 0.0){
                 if(_isMode_FIT_HEIGHT
@@ -116,47 +120,64 @@ Item {
                     }
                 }
 
-                Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
-                    height: parent.height
-                    width:  1
-                    x:      parent.width * 0.33
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
-                }
-                Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
-                    height: parent.height
-                    width:  1
-                    x:      parent.width * 0.66
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
-                }
-                Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
-                    width:  parent.width
-                    height: 1
-                    y:      parent.height * 0.33
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
-                }
-                Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
-                    width:  parent.width
-                    height: 1
-                    y:      parent.height * 0.66
-                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
-                }
             }
         }
         Loader {
             // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
             // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
             // code from running. Hence the Loader to completely remove it.
-            height:             parent.getHeight()
-            width:              parent.getWidth()
-            anchors.centerIn:   parent
-            visible:            QGroundControl.videoManager.decoding
+            id:                 videoStreamLoader
+            anchors.fill:       videoContentArea
+            visible:            _showStreamLoader
             sourceComponent:    videoBackgroundComponent
 
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
+        }
+        //-- UVC Video (USB Camera or Video Device)
+        Loader {
+            id:             cameraLoader
+            anchors.fill:   videoContentArea
+            visible:        _showUvcLoader
+            source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/QGroundControl/FlyView/FlightDisplayViewUVC.qml" : "qrc:/qml/QGroundControl/FlyView//FlightDisplayViewDummy.qml"
+        }
+
+        Item {
+            id:                 videoContentArea
+            height:             parent.getHeight()
+            width:              parent.getWidth()
+            anchors.centerIn:   parent
+            visible:           _showStreamLoader || _showUvcLoader
+
+            // grid lines
+            Item {
+                anchors.fill:   parent
+                visible:        _showGrid && !QGroundControl.videoManager.fullScreen
+
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    height: parent.height
+                    width:  1
+                    x:      parent.width * 0.33
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    height: parent.height
+                    width:  1
+                    x:      parent.width * 0.66
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    width:  parent.width
+                    height: 1
+                    y:      parent.height * 0.33
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    width:  parent.width
+                    height: 1
+                    y:      parent.height * 0.66
+                }
+            }
         }
 
         //-- Thermal Image
