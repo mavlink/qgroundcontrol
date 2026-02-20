@@ -127,13 +127,16 @@ public:
     QString systemLocation;
     qint32 inputBaudRate = QSerialPort::Baud9600;
     qint32 outputBaudRate = QSerialPort::Baud9600;
-    qint64 readBufferMaxSize = 0; // DEFAULT_READ_BUFFER_SIZE
+    qint64 readBufferMaxSize = DEFAULT_READ_BUFFER_SIZE;
     int descriptor = -1;
 
 private:
     qint64 _writeToPort(const char *data, qint64 maxSize, int timeout = DEFAULT_WRITE_TIMEOUT, bool async = false);
     bool _stopAsyncRead();
     void _scheduleReadyRead();
+    qsizetype _pendingSizeLocked() const;
+    void _compactPendingDataLocked();
+    qint64 _drainPendingDataLocked(qint64 maxBytes = -1);
     bool _setParameters(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits, QSerialPort::Parity parity);
     bool _writeDataOneShot(int msecs = DEFAULT_WRITE_TIMEOUT);
 
@@ -149,6 +152,7 @@ private:
     QMutex _readMutex;
     QWaitCondition _readWaitCondition;
     QByteArray _pendingData;
+    qsizetype _pendingDataOffset = 0;
 };
 
 QT_END_NAMESPACE

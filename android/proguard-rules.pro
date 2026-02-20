@@ -10,7 +10,6 @@
 }
 -keepclasseswithmembers class org.mavlink.qgroundcontrol.QGCUsbSerialManager {
     native <methods>;
-    public static *;
 }
 -keep class org.mavlink.qgroundcontrol.QGCUsbId { *; }
 -keep class org.mavlink.qgroundcontrol.QGCUsbSerialProber { *; }

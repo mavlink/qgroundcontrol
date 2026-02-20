@@ -11,6 +11,7 @@ import com.hoho.android.usbserial.util.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QGCUsbSerialManager {
     private static final String TAG = QGCUsbSerialManager.class.getSimpleName();
@@ -19,19 +20,73 @@ public class QGCUsbSerialManager {
     // getDeviceHandle() returns -1 for missing file descriptors.
     private static final int BAD_DEVICE_ID = 0;
     private static final int READ_BUF_SIZE = 2048;
+    private static final int MAX_NATIVE_CALLBACK_DATA_BYTES = 16 * 1024;
+    private static final String PORT_SUFFIX = "#p";
+    private static final Object lifecycleLock = new Object();
 
     private static UsbManager usbManager;
+    private static Context appContext;
     private static PendingIntent usbPermissionIntent;
     private static UsbSerialProber usbSerialProber;
     private static boolean receiverRegistered;
 
-    private static List<UsbSerialDriver> drivers = new CopyOnWriteArrayList<>();
-    private static ConcurrentHashMap<Integer, UsbDeviceResources> deviceResourcesMap = new ConcurrentHashMap<>();
+    private static final List<UsbSerialDriver> drivers = new CopyOnWriteArrayList<>();
+    private static final ConcurrentHashMap<Integer, UsbDeviceResources> deviceResourcesMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<PortAddress, Integer> portAddressToResourceId = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, PortAddress> resourceIdToPortAddress = new ConcurrentHashMap<>();
+    private static final AtomicInteger nextResourceId = new AtomicInteger(1);
+
+    interface NativeCallbacks {
+        void onDeviceHasDisconnected(long classPtr);
+        void onDeviceException(long classPtr, String message);
+        void onDeviceNewData(long classPtr, byte[] data);
+    }
+
+    private static final class JniNativeCallbacks implements NativeCallbacks {
+        @Override
+        public void onDeviceHasDisconnected(final long classPtr) {
+            nativeDeviceHasDisconnected(classPtr);
+        }
+
+        @Override
+        public void onDeviceException(final long classPtr, final String message) {
+            nativeDeviceException(classPtr, message);
+        }
+
+        @Override
+        public void onDeviceNewData(final long classPtr, final byte[] data) {
+            nativeDeviceNewData(classPtr, data);
+        }
+    }
+
+    private static volatile NativeCallbacks nativeCallbacks = new JniNativeCallbacks();
 
     // Native methods
     private static native void nativeDeviceHasDisconnected(final long classPtr);
-    public static native void nativeDeviceException(final long classPtr, final String message);
-    public static native void nativeDeviceNewData(final long classPtr, final byte[] data);
+    private static native void nativeDeviceException(final long classPtr, final String message);
+    private static native void nativeDeviceNewData(final long classPtr, final byte[] data);
+
+    static void setNativeCallbacksForTesting(final NativeCallbacks callbacks) {
+        nativeCallbacks = (callbacks != null) ? callbacks : new JniNativeCallbacks();
+    }
+
+    private static void emitDeviceHasDisconnected(final long classPtr) {
+        if (classPtr != 0) {
+            nativeCallbacks.onDeviceHasDisconnected(classPtr);
+        }
+    }
+
+    private static void emitDeviceException(final long classPtr, final String message) {
+        if (classPtr != 0) {
+            nativeCallbacks.onDeviceException(classPtr, message);
+        }
+    }
+
+    private static void emitDeviceNewData(final long classPtr, final byte[] data) {
+        if (classPtr != 0 && data != null && data.length > 0) {
+            nativeCallbacks.onDeviceNewData(classPtr, data);
+        }
+    }
 
     @SuppressWarnings("deprecation")
     private static UsbDevice getUsbDevice(Intent intent) {
@@ -39,6 +94,97 @@ public class QGCUsbSerialManager {
             return intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
         }
         return intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+    }
+
+    private static DevicePortSpec parseDevicePortSpec(final String deviceName) {
+        if (deviceName == null || deviceName.isEmpty()) {
+            return new DevicePortSpec("", 0);
+        }
+
+        final int split = deviceName.lastIndexOf(PORT_SUFFIX);
+        if (split <= 0) {
+            return new DevicePortSpec(deviceName, 0);
+        }
+
+        final String baseName = deviceName.substring(0, split);
+        final String suffix = deviceName.substring(split + PORT_SUFFIX.length());
+        try {
+            final int parsedIndex = Integer.parseInt(suffix);
+            return new DevicePortSpec(baseName, Math.max(0, parsedIndex));
+        } catch (final NumberFormatException e) {
+            QGCLogger.w(TAG, "Invalid device port suffix in " + deviceName + ", defaulting to port 0");
+            return new DevicePortSpec(deviceName, 0);
+        }
+    }
+
+    private static String buildPortDeviceName(final UsbDevice device, final int portIndex, final int portCount) {
+        final String baseName = device.getDeviceName();
+        if (portCount <= 1 && portIndex == 0) {
+            return baseName;
+        }
+        return baseName + PORT_SUFFIX + portIndex;
+    }
+
+    private static UsbSerialPort getPortFromDriver(final UsbSerialDriver driver, final int portIndex) {
+        if (driver == null) {
+            return null;
+        }
+
+        final List<UsbSerialPort> ports = driver.getPorts();
+        if (ports == null || ports.isEmpty()) {
+            return null;
+        }
+
+        for (final UsbSerialPort port : ports) {
+            if (port.getPortNumber() == portIndex) {
+                return port;
+            }
+        }
+
+        if (portIndex >= 0 && portIndex < ports.size()) {
+            return ports.get(portIndex);
+        }
+
+        return null;
+    }
+
+    private static int getOrCreateResourceId(final int physicalDeviceId, final int portIndex) {
+        final PortAddress address = new PortAddress(physicalDeviceId, portIndex);
+        final Integer existing = portAddressToResourceId.get(address);
+        if (existing != null) {
+            return existing;
+        }
+
+        final int candidateId = nextResourceId.getAndIncrement();
+        final Integer raced = portAddressToResourceId.putIfAbsent(address, candidateId);
+        final int resourceId = (raced != null) ? raced : candidateId;
+        if (raced == null) {
+            resourceIdToPortAddress.put(resourceId, address);
+        }
+        return resourceId;
+    }
+
+    private static void removeResourceMapping(final int resourceId) {
+        final PortAddress address = resourceIdToPortAddress.remove(resourceId);
+        if (address != null) {
+            portAddressToResourceId.remove(address);
+        }
+    }
+
+    private static List<Integer> findResourceIdsForPhysicalDevice(final int physicalDeviceId) {
+        final List<Integer> ids = new ArrayList<>();
+        for (Map.Entry<Integer, PortAddress> entry : resourceIdToPortAddress.entrySet()) {
+            if (entry.getValue().physicalDeviceId == physicalDeviceId) {
+                ids.add(entry.getKey());
+            }
+        }
+        return ids;
+    }
+
+    private static void removeAllResourcesForPhysicalDevice(final int physicalDeviceId) {
+        for (final Integer resourceId : findResourceIdsForPhysicalDevice(physicalDeviceId)) {
+            close(resourceId);
+        }
     }
 
     /**
@@ -49,9 +195,54 @@ public class QGCUsbSerialManager {
         SerialInputOutputManager ioManager;
         int fileDescriptor;
         long classPtr;
+        int portIndex;
+        int physicalDeviceId;
+        String baseDeviceName;
 
-        UsbDeviceResources(UsbSerialDriver driver) {
+        UsbDeviceResources(final UsbSerialDriver driver, final int portIndex) {
             this.driver = driver;
+            this.portIndex = portIndex;
+            if (driver != null && driver.getDevice() != null) {
+                this.physicalDeviceId = driver.getDevice().getDeviceId();
+                this.baseDeviceName = driver.getDevice().getDeviceName();
+            }
+        }
+    }
+
+    private static final class PortAddress {
+        final int physicalDeviceId;
+        final int portIndex;
+
+        PortAddress(final int physicalDeviceId, final int portIndex) {
+            this.physicalDeviceId = physicalDeviceId;
+            this.portIndex = portIndex;
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof PortAddress)) {
+                return false;
+            }
+            final PortAddress rhs = (PortAddress) other;
+            return (physicalDeviceId == rhs.physicalDeviceId) && (portIndex == rhs.portIndex);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(physicalDeviceId, portIndex);
+        }
+    }
+
+    private static final class DevicePortSpec {
+        final String baseDeviceName;
+        final int portIndex;
+
+        DevicePortSpec(final String baseDeviceName, final int portIndex) {
+            this.baseDeviceName = baseDeviceName;
+            this.portIndex = Math.max(0, portIndex);
         }
     }
 
@@ -61,21 +252,24 @@ public class QGCUsbSerialManager {
      * @param context The application context.
      */
     public static void initialize(Context context) {
-        if (usbManager != null) {
-            // Already initialized
-            return;
-        }
+        synchronized (lifecycleLock) {
+            if (usbManager != null) {
+                return;
+            }
 
-        usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
-        if (usbManager == null) {
-            QGCLogger.e(TAG, "Failed to get UsbManager");
-            return;
+            appContext = context.getApplicationContext();
+            usbManager = (UsbManager) appContext.getSystemService(Context.USB_SERVICE);
+            if (usbManager == null) {
+                QGCLogger.e(TAG, "Failed to get UsbManager");
+                return;
+            }
+
+            QGCFtdiDriver.initialize(appContext);
+            setupUsbPermissionIntent(appContext);
+            usbSerialProber = QGCUsbSerialProber.getQGCUsbSerialProber();
+            registerUsbReceiver(appContext);
+            updateCurrentDrivers();
         }
-        QGCFtdiDriver.initialize(context);
-        setupUsbPermissionIntent(context);
-        usbSerialProber = QGCUsbSerialProber.getQGCUsbSerialProber();
-        registerUsbReceiver(context);
-        updateCurrentDrivers();
     }
 
     /**
@@ -83,26 +277,33 @@ public class QGCUsbSerialManager {
      * Should be called when the manager is no longer needed, typically from QGCActivity.onDestroy().
      */
     public static void cleanup(Context context) {
-        for (Integer deviceId : new ArrayList<>(deviceResourcesMap.keySet())) {
-            close(deviceId);
-        }
-
-        try {
-            if (receiverRegistered) {
-                context.unregisterReceiver(usbReceiver);
-                receiverRegistered = false;
-                QGCLogger.i(TAG, "BroadcastReceiver unregistered successfully.");
+        synchronized (lifecycleLock) {
+            for (Integer deviceId : new ArrayList<>(deviceResourcesMap.keySet())) {
+                close(deviceId);
             }
-        } catch (final IllegalArgumentException e) {
-            QGCLogger.w(TAG, "Receiver not registered: " + e.getMessage());
-        }
 
-        usbPermissionIntent = null;
-        usbSerialProber = null;
-        QGCFtdiDriver.cleanup();
-        usbManager = null;
-        drivers.clear();
-        deviceResourcesMap.clear();
+            final Context unregisterContext = (appContext != null) ? appContext : context;
+            try {
+                if (receiverRegistered) {
+                    unregisterContext.unregisterReceiver(usbReceiver);
+                    receiverRegistered = false;
+                    QGCLogger.i(TAG, "BroadcastReceiver unregistered successfully.");
+                }
+            } catch (final IllegalArgumentException e) {
+                QGCLogger.w(TAG, "Receiver not registered: " + e.getMessage());
+            }
+
+            usbPermissionIntent = null;
+            usbSerialProber = null;
+            QGCFtdiDriver.cleanup();
+            usbManager = null;
+            appContext = null;
+            drivers.clear();
+            deviceResourcesMap.clear();
+            portAddressToResourceId.clear();
+            resourceIdToPortAddress.clear();
+            nextResourceId.set(1);
+        }
     }
 
     /**
@@ -182,15 +383,17 @@ public class QGCUsbSerialManager {
     private static void handleUsbPermission(final Intent intent) {
         UsbDevice device = getUsbDevice(intent);
         if (device != null) {
-            int deviceId = device.getDeviceId();
+            final int physicalDeviceId = device.getDeviceId();
             if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                 QGCLogger.i(TAG, "Permission granted to " + device.getDeviceName());
                 addOrUpdateDevice(device);
             } else {
                 QGCLogger.i(TAG, "Permission denied for " + device.getDeviceName());
-                UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
-                if (resources != null) {
-                    nativeDeviceException(resources.classPtr, "USB Permission Denied");
+                for (final Integer resourceId : findResourceIdsForPhysicalDevice(physicalDeviceId)) {
+                    final UsbDeviceResources resources = deviceResourcesMap.get(resourceId);
+                    if (resources != null) {
+                        emitDeviceException(resources.classPtr, "USB Permission Denied");
+                    }
                 }
             }
         }
@@ -204,14 +407,16 @@ public class QGCUsbSerialManager {
     private static void handleUsbDeviceDetached(final Intent intent) {
         UsbDevice device = getUsbDevice(intent);
         if (device != null) {
-            int deviceId = device.getDeviceId();
-            UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
-            if (resources != null) {
-                final long classPtr = resources.classPtr;
-                close(deviceId);
-                if (classPtr != 0) {
-                    nativeDeviceHasDisconnected(classPtr);
+            final int physicalDeviceId = device.getDeviceId();
+            final List<Integer> resourceIds = findResourceIdsForPhysicalDevice(physicalDeviceId);
+            for (final Integer resourceId : resourceIds) {
+                final UsbDeviceResources resources = deviceResourcesMap.get(resourceId);
+                if (resources == null) {
+                    continue;
                 }
+                final long classPtr = resources.classPtr;
+                close(resourceId);
+                emitDeviceHasDisconnected(classPtr);
             }
             QGCLogger.i(TAG, "Device detached: " + device.getDeviceName());
         }
@@ -254,7 +459,9 @@ public class QGCUsbSerialManager {
      * @return True if valid, false otherwise.
      */
     public static boolean isDeviceNameValid(final String name) {
-        return drivers.stream().anyMatch(driver -> driver.getDevice().getDeviceName().equals(name));
+        final DevicePortSpec spec = parseDevicePortSpec(name);
+        final UsbSerialDriver driver = findDriverByDeviceName(spec.baseDeviceName);
+        return getPortFromDriver(driver, spec.portIndex) != null;
     }
 
     /**
@@ -264,8 +471,13 @@ public class QGCUsbSerialManager {
      * @return True if open, false otherwise.
      */
     public static boolean isDeviceNameOpen(final String name) {
-        int deviceId = getDeviceId(name);
-        UsbSerialPort port = findPortByDeviceId(deviceId);
+        final DevicePortSpec spec = parseDevicePortSpec(name);
+        final UsbSerialDriver driver = findDriverByDeviceName(spec.baseDeviceName);
+        if (driver == null) {
+            return false;
+        }
+
+        final UsbSerialPort port = getPortFromDriver(driver, spec.portIndex);
         return (port != null && port.isOpen());
     }
 
@@ -276,14 +488,19 @@ public class QGCUsbSerialManager {
      * @return The device ID, or BAD_DEVICE_ID if not found.
      */
     public static int getDeviceId(final String deviceName) {
-        UsbSerialDriver driver = findDriverByDeviceName(deviceName);
+        final DevicePortSpec spec = parseDevicePortSpec(deviceName);
+        UsbSerialDriver driver = findDriverByDeviceName(spec.baseDeviceName);
         if (driver == null) {
             QGCLogger.w(TAG, "Attempt to get ID of unknown device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
-        UsbDevice device = driver.getDevice();
-        return device.getDeviceId();
+        if (getPortFromDriver(driver, spec.portIndex) == null) {
+            QGCLogger.w(TAG, "Attempt to get ID of unknown port index " + spec.portIndex + " for " + spec.baseDeviceName);
+            return BAD_DEVICE_ID;
+        }
+
+        return getOrCreateResourceId(driver.getDevice().getDeviceId(), spec.portIndex);
     }
 
     /**
@@ -320,13 +537,13 @@ public class QGCUsbSerialManager {
      */
     private static void removeStaleDrivers(final List<UsbSerialDriver> currentDrivers) {
         drivers.removeIf(existingDriver -> {
+            final int existingPhysicalDeviceId = existingDriver.getDevice().getDeviceId();
             boolean found = currentDrivers.stream()
                     .anyMatch(currentDriver -> currentDriver.getDevice().getDeviceId() == existingDriver.getDevice().getDeviceId());
 
             if (!found) {
-                int deviceId = existingDriver.getDevice().getDeviceId();
-                deviceResourcesMap.remove(deviceId);
-                QGCLogger.i(TAG, "Removed stale driver for device ID " + deviceId);
+                removeAllResourcesForPhysicalDevice(existingPhysicalDeviceId);
+                QGCLogger.i(TAG, "Removed stale driver for device ID " + existingPhysicalDeviceId);
                 return true;
             }
             return false;
@@ -356,16 +573,16 @@ public class QGCUsbSerialManager {
      */
     private static void addDriver(final UsbSerialDriver newDriver) {
         UsbDevice device = newDriver.getDevice();
-        int deviceId = device.getDeviceId();
         String deviceName = device.getDeviceName();
 
-        if (deviceResourcesMap.containsKey(deviceId)) {
-            QGCLogger.d(TAG, "Driver already tracked for device ID " + deviceId);
+        final boolean alreadyTracked = drivers.stream()
+            .anyMatch(existingDriver -> existingDriver.getDevice().getDeviceId() == device.getDeviceId());
+        if (alreadyTracked) {
+            QGCLogger.d(TAG, "Driver already tracked for device ID " + device.getDeviceId());
             return;
         }
 
         drivers.add(newDriver);
-        deviceResourcesMap.put(deviceId, new UsbDeviceResources(newDriver));
         QGCLogger.i(TAG, "Adding new driver for device ID " + device.getDeviceId() + ": " + deviceName);
 
         if (usbManager.hasPermission(device)) {
@@ -383,8 +600,12 @@ public class QGCUsbSerialManager {
      * @return The corresponding UsbSerialDriver or null if not found.
      */
     private static UsbSerialDriver findDriverByDeviceId(final int deviceId) {
-        UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
-        return (resources != null) ? resources.driver : null;
+        for (UsbSerialDriver driver : drivers) {
+            if (driver.getDevice().getDeviceId() == deviceId) {
+                return driver;
+            }
+        }
+        return null;
     }
 
     /**
@@ -414,19 +635,43 @@ public class QGCUsbSerialManager {
             return null;
         }
 
-        UsbSerialDriver driver = findDriverByDeviceId(deviceId);
-        if (driver == null) {
-            QGCLogger.w(TAG, "No driver found on device ID " + deviceId);
+        final UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
+        if (resources == null || resources.driver == null) {
+            QGCLogger.w(TAG, "No resources found for device ID " + deviceId);
             return null;
         }
 
-        List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            QGCLogger.w(TAG, "No ports available on device ID " + deviceId);
+        UsbSerialPort port = getPortFromDriver(resources.driver, resources.portIndex);
+        if (port == null) {
+            QGCLogger.w(TAG, "No port available on device ID " + deviceId + " at port index " + resources.portIndex);
             return null;
         }
 
-        return ports.get(0);
+        return port;
+    }
+
+    private static UsbSerialPort getPortOrWarn(final int deviceId, final String operation) {
+        final UsbSerialPort port = findPortByDeviceId(deviceId);
+        if (port == null) {
+            QGCLogger.w(TAG, "Attempted to " + operation + " on a null port for device ID " + deviceId);
+            return null;
+        }
+
+        return port;
+    }
+
+    private static UsbSerialPort getOpenPortOrWarn(final int deviceId, final String operation) {
+        final UsbSerialPort port = getPortOrWarn(deviceId, operation);
+        if (port == null) {
+            return null;
+        }
+
+        if (!port.isOpen()) {
+            QGCLogger.w(TAG, "Attempted to " + operation + " on a closed port for device ID " + deviceId);
+            return null;
+        }
+
+        return port;
     }
 
     /**
@@ -443,8 +688,18 @@ public class QGCUsbSerialManager {
 
         for (final UsbSerialDriver driver : drivers) {
             try {
-                final String deviceInfo = formatDeviceInfo(driver.getDevice());
-                deviceInfoList.add(deviceInfo);
+                final List<UsbSerialPort> ports = driver.getPorts();
+                if (ports == null || ports.isEmpty()) {
+                    continue;
+                }
+
+                final int portCount = ports.size();
+                for (final UsbSerialPort port : ports) {
+                    final int portIndex = port.getPortNumber();
+                    final String exposedDeviceName = buildPortDeviceName(driver.getDevice(), portIndex, portCount);
+                    final String deviceInfo = formatDeviceInfo(driver.getDevice(), exposedDeviceName);
+                    deviceInfoList.add(deviceInfo);
+                }
             } catch (SecurityException e) {
                 // On some integrated controllers like the Siyi UNIRC7 the usb device is used for video output.
                 // This in turn causes a security exception when trying to access device info without permission.
@@ -461,9 +716,9 @@ public class QGCUsbSerialManager {
      * @param device The UsbDevice to format.
      * @return A formatted string containing device information.
      */
-    private static String formatDeviceInfo(final UsbDevice device) {
+    private static String formatDeviceInfo(final UsbDevice device, final String exposedDeviceName) {
         StringBuilder deviceInfo = new StringBuilder();
-        deviceInfo.append(device.getDeviceName()).append("\t")
+        deviceInfo.append(exposedDeviceName).append("\t")
                  .append(device.getProductName()).append("\t")
                  .append(device.getManufacturerName()).append("\t")
                  .append(device.getSerialNumber()).append("\t")
@@ -483,47 +738,59 @@ public class QGCUsbSerialManager {
      * @return The device ID if successful, or BAD_DEVICE_ID if failed.
      */
     public static int open(final String deviceName, final long classPtr) {
-        UsbSerialDriver driver = findDriverByDeviceName(deviceName);
+        final DevicePortSpec spec = parseDevicePortSpec(deviceName);
+        UsbSerialDriver driver = findDriverByDeviceName(spec.baseDeviceName);
         if (driver == null) {
             QGCLogger.w(TAG, "Attempt to open unknown device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
         UsbDevice device = driver.getDevice();
-        int deviceId = device.getDeviceId();
-        if (!deviceResourcesMap.containsKey(deviceId)) {
-            deviceResourcesMap.put(deviceId, new UsbDeviceResources(driver));
+        final int physicalDeviceId = device.getDeviceId();
+        final int resourceId = getOrCreateResourceId(physicalDeviceId, spec.portIndex);
+        if (!deviceResourcesMap.containsKey(resourceId)) {
+            deviceResourcesMap.put(resourceId, new UsbDeviceResources(driver, spec.portIndex));
         }
 
-        final UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
+        final UsbDeviceResources resources = deviceResourcesMap.get(resourceId);
         if (resources != null) {
+            resources.driver = driver;
+            resources.portIndex = spec.portIndex;
+            resources.physicalDeviceId = physicalDeviceId;
+            resources.baseDeviceName = device.getDeviceName();
             resources.classPtr = classPtr;
         }
 
-        List<UsbSerialPort> ports = driver.getPorts();
-        if (ports.isEmpty()) {
-            QGCLogger.w(TAG, "No ports available on device " + deviceName);
+        final UsbSerialPort port = getPortFromDriver(driver, spec.portIndex);
+        if (port == null) {
+            QGCLogger.w(TAG, "No port " + spec.portIndex + " available on device " + deviceName);
             return BAD_DEVICE_ID;
         }
 
-        UsbSerialPort port = ports.get(0);
-        if (!openDriver(port, device, deviceId, classPtr)) {
+        if (!openDriver(port, device, resourceId, classPtr)) {
             QGCLogger.e(TAG, "Failed to open driver for device " + deviceName);
-            nativeDeviceException(classPtr, "Failed to open driver for device: " + deviceName);
+            emitDeviceException(classPtr, "Failed to open driver for device: " + deviceName);
+            final UsbDeviceResources failedResources = deviceResourcesMap.get(resourceId);
+            if (failedResources != null && failedResources.ioManager == null) {
+                deviceResourcesMap.remove(resourceId);
+                removeResourceMapping(resourceId);
+            }
             return BAD_DEVICE_ID;
         }
 
-        if (!createIoManager(deviceId, port, classPtr)) {
+        if (!createIoManager(resourceId, port, classPtr)) {
             try {
                 port.close();
             } catch (IOException e) {
                 QGCLogger.e(TAG, "Error closing port after IO manager failure", e);
             }
+            deviceResourcesMap.remove(resourceId);
+            removeResourceMapping(resourceId);
             return BAD_DEVICE_ID;
         }
 
         QGCLogger.d(TAG, "Port open successful: " + port.toString());
-        return deviceId;
+        return resourceId;
     }
 
     /**
@@ -538,14 +805,19 @@ public class QGCUsbSerialManager {
     private static boolean openDriver(final UsbSerialPort port, final UsbDevice device, final int deviceId, final long classPtr) {
         if (port == null) {
             QGCLogger.w(TAG, "Null UsbSerialPort for device " + device.getDeviceName());
-            nativeDeviceException(classPtr, "No serial port available for device: " + device.getDeviceName());
+            emitDeviceException(classPtr, "No serial port available for device: " + device.getDeviceName());
             return false;
+        }
+
+        if (port.isOpen()) {
+            QGCLogger.d(TAG, "Port already open for device ID " + deviceId);
+            return true;
         }
 
         UsbDeviceConnection connection = usbManager.openDevice(device);
         if (connection == null) {
             QGCLogger.w(TAG, "No Usb Device Connection");
-            nativeDeviceException(classPtr, "No USB device connection for device: " + device.getDeviceName());
+            emitDeviceException(classPtr, "No USB device connection for device: " + device.getDeviceName());
             return false;
         }
 
@@ -553,7 +825,8 @@ public class QGCUsbSerialManager {
             port.open(connection);
         } catch (final IOException ex) {
             QGCLogger.e(TAG, "Error opening driver for device " + device.getDeviceName(), ex);
-            nativeDeviceException(classPtr, "Error opening driver: " + ex.getMessage());
+            emitDeviceException(classPtr, "Error opening driver: " + ex.getMessage());
+            connection.close();
             return false;
         }
 
@@ -594,7 +867,12 @@ public class QGCUsbSerialManager {
         QGCSerialListener listener = new QGCSerialListener(classPtr);
         SerialInputOutputManager ioManager = new SerialInputOutputManager(port, listener);
 
-        ioManager.setReadBufferSize(Math.max(port.getReadEndpoint().getMaxPacketSize(), READ_BUF_SIZE));
+        int readBufferSize = READ_BUF_SIZE;
+        final UsbEndpoint readEndpoint = port.getReadEndpoint();
+        if (readEndpoint != null) {
+            readBufferSize = Math.max(readEndpoint.getMaxPacketSize(), READ_BUF_SIZE);
+        }
+        ioManager.setReadBufferSize(readBufferSize);
 
         QGCLogger.d(TAG, "Read Buffer Size: " + ioManager.getReadBufferSize());
         QGCLogger.d(TAG, "Write Buffer Size: " + ioManager.getWriteBufferSize());
@@ -703,6 +981,7 @@ public class QGCUsbSerialManager {
         UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
         if (resources == null) {
             QGCLogger.d(TAG, "Close requested for already cleaned device ID " + deviceId);
+            removeResourceMapping(deviceId);
             return true;
         }
 
@@ -710,14 +989,14 @@ public class QGCUsbSerialManager {
         if (port == null) {
             QGCLogger.w(TAG, "Attempted to close a null port for device ID " + deviceId);
             deviceResourcesMap.remove(deviceId);
-            drivers.removeIf(d -> d.getDevice().getDeviceId() == deviceId);
+            removeResourceMapping(deviceId);
             return true;
         }
 
         if (!port.isOpen()) {
             QGCLogger.d(TAG, "Close requested for already closed device ID " + deviceId);
             deviceResourcesMap.remove(deviceId);
-            drivers.removeIf(d -> d.getDevice().getDeviceId() == deviceId);
+            removeResourceMapping(deviceId);
             return true;
         }
 
@@ -732,7 +1011,7 @@ public class QGCUsbSerialManager {
             return false;
         } finally {
             deviceResourcesMap.remove(deviceId);
-            drivers.removeIf(d -> d.getDevice().getDeviceId() == deviceId);
+            removeResourceMapping(deviceId);
         }
     }
 
@@ -746,14 +1025,8 @@ public class QGCUsbSerialManager {
      * @return The number of bytes written, or -1 if failed.
      */
     public static int write(final int deviceId, final byte[] data, final int length, final int timeoutMSec) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "write");
         if (port == null) {
-            QGCLogger.w(TAG, "Attempted to write to a null port for device ID " + deviceId);
-            return -1;
-        }
-
-        if (!port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to write to a closed port for device ID " + deviceId);
             return -1;
         }
 
@@ -807,14 +1080,8 @@ public class QGCUsbSerialManager {
             QGCLogger.w(TAG, "Read with timeout less than recommended minimum of 200ms");
         }
 
-        UsbSerialPort port = findPortByDeviceId(deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "read");
         if (port == null) {
-            QGCLogger.w(TAG, "Attempted to read from a null port for device ID " + deviceId);
-            return new byte[]{};
-        }
-
-        if (!port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to read from a closed port for device ID " + deviceId);
             return new byte[]{};
         }
 
@@ -845,14 +1112,8 @@ public class QGCUsbSerialManager {
      * @return True if successful, false otherwise.
      */
     public static boolean setParameters(final int deviceId, final int baudRate, final int dataBits, final int stopBits, final int parity) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "set parameters");
         if (port == null) {
-            QGCLogger.w(TAG, "Attempted to set parameters to a null port for device ID " + deviceId);
-            return false;
-        }
-
-        if (!port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to set parameters on a closed port for device ID " + deviceId);
             return false;
         }
 
@@ -870,9 +1131,8 @@ public class QGCUsbSerialManager {
     }
 
     private static boolean getControlLine(int deviceId, UsbSerialPort.ControlLine controlLine) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "get " + controlLine);
         if (port == null) {
-            QGCLogger.w(TAG, "Attempted to get " + controlLine + " from a null port for device ID " + deviceId);
             return false;
         }
 
@@ -908,9 +1168,8 @@ public class QGCUsbSerialManager {
     }
 
     private static boolean setControlLine(int deviceId, UsbSerialPort.ControlLine controlLine, boolean on) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "set " + controlLine);
         if (port == null) {
-            QGCLogger.w(TAG, "Attempted to set " + controlLine + " on a null port for device ID " + deviceId);
             return false;
         }
 
@@ -1051,9 +1310,8 @@ public class QGCUsbSerialManager {
      * @return An array of control line ordinals.
      */
     public static int[] getControlLines(final int deviceId) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
-        if (port == null || !port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to get control lines from a null or closed port for device ID " + deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "get control lines");
+        if (port == null) {
             return new int[]{};
         }
 
@@ -1080,9 +1338,8 @@ public class QGCUsbSerialManager {
      * @return The flow control ordinal, or 0 if not supported.
      */
     public static int getFlowControl(final int deviceId) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
-        if (port == null || !port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to get flow control from a null or closed port for device ID " + deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "get flow control");
+        if (port == null) {
             return 0;
         }
 
@@ -1114,10 +1371,8 @@ public class QGCUsbSerialManager {
         }
 
         UsbSerialPort.FlowControl flowControlEnum = UsbSerialPort.FlowControl.values()[flowControl];
-        UsbSerialPort port = findPortByDeviceId(deviceId);
-
-        if (port == null || !port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to set flow control on a null or closed port for device ID " + deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "set flow control");
+        if (port == null) {
             return false;
         }
 
@@ -1148,9 +1403,8 @@ public class QGCUsbSerialManager {
      * @return True if successful, false otherwise.
      */
     public static boolean setBreak(final int deviceId, final boolean on) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
-        if (port == null || !port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to set break on a null or closed port for device ID " + deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "set break");
+        if (port == null) {
             return false;
         }
 
@@ -1176,9 +1430,8 @@ public class QGCUsbSerialManager {
      * @return True if successful, false otherwise.
      */
     public static boolean purgeBuffers(final int deviceId, final boolean input, final boolean output) {
-        UsbSerialPort port = findPortByDeviceId(deviceId);
-        if (port == null || !port.isOpen()) {
-            QGCLogger.w(TAG, "Attempted to purge buffers on a null or closed port for device ID " + deviceId);
+        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "purge buffers");
+        if (port == null) {
             return false;
         }
 
@@ -1208,15 +1461,27 @@ public class QGCUsbSerialManager {
         @Override
         public void onRunError(Exception e) {
             QGCLogger.e(TAG, "Runner stopped.", e);
-            nativeDeviceException(classPtr, "Runner stopped: " + e.getMessage());
+            emitDeviceException(classPtr, "Runner stopped: " + e.getMessage());
         }
 
         @Override
         public void onNewData(final byte[] data) {
-            if (isValidData(data)) {
-                nativeDeviceNewData(classPtr, data);
-            } else {
+            if (!isValidData(data)) {
                 QGCLogger.w(TAG, "Invalid data received: " + Arrays.toString(data));
+                return;
+            }
+
+            if (data.length <= MAX_NATIVE_CALLBACK_DATA_BYTES) {
+                emitDeviceNewData(classPtr, data);
+                return;
+            }
+
+            QGCLogger.w(TAG, "Large USB payload (" + data.length + " bytes), chunking before JNI callback");
+            int offset = 0;
+            while (offset < data.length) {
+                final int end = Math.min(offset + MAX_NATIVE_CALLBACK_DATA_BYTES, data.length);
+                emitDeviceNewData(classPtr, Arrays.copyOfRange(data, offset, end));
+                offset = end;
             }
         }
 

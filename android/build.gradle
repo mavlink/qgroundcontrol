@@ -28,8 +28,62 @@ dependencies {
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
 
-def resolveCpmJavaSourceDir() {
+def loadQgcAndroidConfig() {
+    final Properties props = new Properties()
     final List<File> candidates = []
+    if (project.hasProperty('QGC_ANDROID_PROPERTIES_FILE')) {
+        candidates.add(file(project.property('QGC_ANDROID_PROPERTIES_FILE').toString()))
+    }
+    final String envPath = System.getenv('QGC_ANDROID_PROPERTIES_FILE')
+    if (envPath != null && !envPath.isEmpty()) {
+        candidates.add(file(envPath))
+    }
+
+    for (File candidate : candidates) {
+        if (!candidate.exists()) {
+            continue
+        }
+
+        candidate.withInputStream { stream -> props.load(stream) }
+        println "qgcAndroidConfig: ${candidate.absolutePath}"
+        final List<String> requiredKeys = [
+            'QGC_ANDROID_COMPILE_SDK_VERSION',
+            'QGC_ANDROID_TARGET_SDK_VERSION',
+            'QGC_ANDROID_MIN_SDK_VERSION'
+        ]
+
+        for (String key : requiredKeys) {
+            final String value = props.getProperty(key)
+            if (value == null || value.isEmpty()) {
+                throw new GradleException("qgcAndroidConfig missing required key '${key}' in ${candidate.absolutePath}")
+            }
+        }
+
+        return props
+    }
+
+    throw new GradleException(
+        "Missing qgc-android-config.properties. Configure with CMake (qt-cmake) " +
+        "or pass -PQGC_ANDROID_PROPERTIES_FILE=/path/to/qgc-android-config.properties"
+    )
+}
+
+final Properties qgcAndroidConfig = loadQgcAndroidConfig()
+
+def qgcConfigOrDefault = { String key, Object fallback ->
+    final String value = qgcAndroidConfig.getProperty(key)
+    if (value != null && !value.isEmpty()) {
+        return value
+    }
+    return fallback
+}
+
+def resolveCpmJavaSourceDir = {
+    final List<File> candidates = []
+    final String sharedConfigPath = qgcAndroidConfig.getProperty('QGC_CPM_JAVA_SRC_DIR')
+    if (sharedConfigPath != null && !sharedConfigPath.isEmpty()) {
+        candidates.add(file(sharedConfigPath))
+    }
     if (project.hasProperty('QGC_CPM_JAVA_SRC_DIR')) {
         candidates.add(file(project.property('QGC_CPM_JAVA_SRC_DIR').toString()))
     }
@@ -40,8 +94,6 @@ def resolveCpmJavaSourceDir() {
     if (envPath != null && !envPath.isEmpty()) {
         candidates.add(file(envPath))
     }
-    candidates.add(new File(projectDir, '../extra_java_sources'))
-    candidates.add(new File(projectDir, '../../extra_java_sources'))
 
     for (File candidate : candidates) {
         if (candidate.exists()) {
@@ -69,7 +121,7 @@ android {
 
     // namespace = androidPackageName
     namespace = "org.mavlink.qgroundcontrol"
-    compileSdkVersion androidCompileSdkVersion
+    compileSdkVersion qgcConfigOrDefault('QGC_ANDROID_COMPILE_SDK_VERSION', androidCompileSdkVersion)
     buildToolsVersion androidBuildToolsVersion
     ndkVersion = androidNdkVersion
 
@@ -123,9 +175,15 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion qtMinSdkVersion
-        targetSdkVersion qtTargetSdkVersion
+        minSdkVersion qgcConfigOrDefault('QGC_ANDROID_MIN_SDK_VERSION', qtMinSdkVersion)
+        targetSdkVersion qgcConfigOrDefault('QGC_ANDROID_TARGET_SDK_VERSION', qtTargetSdkVersion)
         ndk.abiFilters = qtTargetAbiList.split(",")
+        if (qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_CODE')) {
+            versionCode Integer.parseInt(qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_CODE'))
+        }
+        if (qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_NAME')) {
+            versionName qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_NAME')
+        }
 
         println "timestamp: " + getTimestampStr()
         // println "applicationId: ${applicationId}"

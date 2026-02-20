@@ -1,5 +1,4 @@
 #include "AndroidSerial.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QHash>
 #include <QtCore/QJniEnvironment>
@@ -9,16 +8,17 @@
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QReadWriteLock>
 #include <QtCore/QThread>
-
-#include <utility>
-
 #include <qserialport_p.h>
 #include <qserialportinfo_p.h>
 
+#include <utility>
+
+#include "AndroidInterface.h"
+#include "QGCLoggingCategory.h"
+
 QGC_LOGGING_CATEGORY(AndroidSerialLog, "Android.AndroidSerial");
 
-namespace AndroidSerial
-{
+namespace AndroidSerial {
 
 // ----------------------------------------------------------------------------
 // Token-based pointer tracking (UAF protection)
@@ -34,7 +34,7 @@ static QReadWriteLock s_ptrLock;
 static QHash<jlong, QSerialPortPrivate*> s_tokenToPtr;
 static QHash<QSerialPortPrivate*, jlong> s_ptrToToken;
 
-void registerPointer(QSerialPortPrivate *ptr)
+void registerPointer(QSerialPortPrivate* ptr)
 {
     if (!ptr) {
         qCWarning(AndroidSerialLog) << "registerPointer called with null pointer";
@@ -58,7 +58,7 @@ void registerPointer(QSerialPortPrivate *ptr)
     s_ptrToToken.insert(ptr, token);
 }
 
-void unregisterPointer(QSerialPortPrivate *ptr)
+void unregisterPointer(QSerialPortPrivate* ptr)
 {
     if (!ptr) {
         return;
@@ -72,21 +72,21 @@ void unregisterPointer(QSerialPortPrivate *ptr)
     s_tokenToPtr.remove(token);
 }
 
-static QSerialPortPrivate *lookupByToken(jlong token)
+static QSerialPortPrivate* lookupByToken(jlong token)
 {
     QReadLocker locker(&s_ptrLock);
     return s_tokenToPtr.value(token, nullptr);
 }
 
-static jlong lookupToken(QSerialPortPrivate *ptr)
+static jlong lookupToken(QSerialPortPrivate* ptr)
 {
     QReadLocker locker(&s_ptrLock);
     return s_ptrToToken.value(ptr, 0);
 }
 
-static QSerialPort *lookupPortByTokenLocked(jlong token)
+static QSerialPort* lookupPortByTokenLocked(jlong token)
 {
-    QSerialPortPrivate *const serialPortPrivate = s_tokenToPtr.value(token, nullptr);
+    QSerialPortPrivate* const serialPortPrivate = s_tokenToPtr.value(token, nullptr);
     if (!serialPortPrivate) {
         return nullptr;
     }
@@ -94,15 +94,15 @@ static QSerialPort *lookupPortByTokenLocked(jlong token)
     return qobject_cast<QSerialPort*>(serialPortPrivate->q_ptr);
 }
 
-template<typename Functor>
-static bool dispatchToPortObject(QSerialPort *serialPort, Functor &&func, const char *context)
+template <typename Functor>
+static bool dispatchToPortObject(QSerialPort* serialPort, Functor&& func, const char* context)
 {
     if (!serialPort) {
         qCWarning(AndroidSerialLog) << context << ": null serial port";
         return false;
     }
 
-    QThread *const targetThread = serialPort->thread();
+    QThread* const targetThread = serialPort->thread();
     const bool sameThread = (targetThread == QThread::currentThread());
     const bool hasEventLoop = targetThread && targetThread->eventDispatcher();
 
@@ -112,7 +112,11 @@ static bool dispatchToPortObject(QSerialPort *serialPort, Functor &&func, const 
     }
 
     if (hasEventLoop) {
-        return QMetaObject::invokeMethod(serialPort, std::forward<Functor>(func), Qt::BlockingQueuedConnection);
+        const bool queued = QMetaObject::invokeMethod(serialPort, std::forward<Functor>(func), Qt::QueuedConnection);
+        if (!queued) {
+            qCWarning(AndroidSerialLog) << context << ": failed to queue method on target thread";
+        }
+        return queued;
     }
 
     qCWarning(AndroidSerialLog) << context << ": target thread has no event loop, running inline fallback";
@@ -124,7 +128,8 @@ static bool dispatchToPortObject(QSerialPort *serialPort, Functor &&func, const 
 // JNI method ID cache
 // ----------------------------------------------------------------------------
 
-struct JniMethodCache {
+struct JniMethodCache
+{
     jmethodID availableDevicesInfo = nullptr;
     jmethodID getDeviceId = nullptr;
     jmethodID getDeviceHandle = nullptr;
@@ -158,43 +163,49 @@ static bool s_methodsCached = false;
 static QMutex s_cacheLock;
 static jclass s_serialManagerClass = nullptr;
 
-static bool cacheMethodIds(JNIEnv *env, jclass javaClass)
+static bool cacheMethodIds(JNIEnv* env, jclass javaClass)
 {
-    struct MethodDef { jmethodID *target; const char *name; const char *sig; };
-    const MethodDef defs[] = {
-        { &s_methods.availableDevicesInfo,  "availableDevicesInfo",  "()[Ljava/lang/String;" },
-        { &s_methods.getDeviceId,           "getDeviceId",           "(Ljava/lang/String;)I" },
-        { &s_methods.getDeviceHandle,       "getDeviceHandle",       "(I)I" },
-        { &s_methods.open,                  "open",                  "(Ljava/lang/String;J)I" },
-        { &s_methods.close,                 "close",                 "(I)Z" },
-        { &s_methods.isDeviceNameOpen,      "isDeviceNameOpen",      "(Ljava/lang/String;)Z" },
-        { &s_methods.read,                  "read",                  "(III)[B" },
-        { &s_methods.write,                 "write",                 "(I[BII)I" },
-        { &s_methods.writeAsync,            "writeAsync",            "(I[BI)I" },
-        { &s_methods.setParameters,         "setParameters",         "(IIIII)Z" },
-        { &s_methods.getCarrierDetect,      "getCarrierDetect",      "(I)Z" },
-        { &s_methods.getClearToSend,        "getClearToSend",        "(I)Z" },
-        { &s_methods.getDataSetReady,       "getDataSetReady",       "(I)Z" },
-        { &s_methods.getDataTerminalReady,  "getDataTerminalReady",  "(I)Z" },
-        { &s_methods.setDataTerminalReady,  "setDataTerminalReady",  "(IZ)Z" },
-        { &s_methods.getRingIndicator,      "getRingIndicator",      "(I)Z" },
-        { &s_methods.getRequestToSend,      "getRequestToSend",      "(I)Z" },
-        { &s_methods.setRequestToSend,      "setRequestToSend",      "(IZ)Z" },
-        { &s_methods.getControlLines,       "getControlLines",       "(I)[I" },
-        { &s_methods.getFlowControl,        "getFlowControl",        "(I)I" },
-        { &s_methods.setFlowControl,        "setFlowControl",        "(II)Z" },
-        { &s_methods.purgeBuffers,          "purgeBuffers",          "(IZZ)Z" },
-        { &s_methods.setBreak,              "setBreak",              "(IZ)Z" },
-        { &s_methods.startIoManager,        "startIoManager",        "(I)Z" },
-        { &s_methods.stopIoManager,         "stopIoManager",         "(I)Z" },
-        { &s_methods.ioManagerRunning,      "ioManagerRunning",      "(I)Z" },
+    struct MethodDef
+    {
+        jmethodID* target;
+        const char* name;
+        const char* sig;
     };
 
-    for (const auto &def : defs) {
+    const MethodDef defs[] = {
+        {&s_methods.availableDevicesInfo, "availableDevicesInfo", "()[Ljava/lang/String;"},
+        {&s_methods.getDeviceId, "getDeviceId", "(Ljava/lang/String;)I"},
+        {&s_methods.getDeviceHandle, "getDeviceHandle", "(I)I"},
+        {&s_methods.open, "open", "(Ljava/lang/String;J)I"},
+        {&s_methods.close, "close", "(I)Z"},
+        {&s_methods.isDeviceNameOpen, "isDeviceNameOpen", "(Ljava/lang/String;)Z"},
+        {&s_methods.read, "read", "(III)[B"},
+        {&s_methods.write, "write", "(I[BII)I"},
+        {&s_methods.writeAsync, "writeAsync", "(I[BI)I"},
+        {&s_methods.setParameters, "setParameters", "(IIIII)Z"},
+        {&s_methods.getCarrierDetect, "getCarrierDetect", "(I)Z"},
+        {&s_methods.getClearToSend, "getClearToSend", "(I)Z"},
+        {&s_methods.getDataSetReady, "getDataSetReady", "(I)Z"},
+        {&s_methods.getDataTerminalReady, "getDataTerminalReady", "(I)Z"},
+        {&s_methods.setDataTerminalReady, "setDataTerminalReady", "(IZ)Z"},
+        {&s_methods.getRingIndicator, "getRingIndicator", "(I)Z"},
+        {&s_methods.getRequestToSend, "getRequestToSend", "(I)Z"},
+        {&s_methods.setRequestToSend, "setRequestToSend", "(IZ)Z"},
+        {&s_methods.getControlLines, "getControlLines", "(I)[I"},
+        {&s_methods.getFlowControl, "getFlowControl", "(I)I"},
+        {&s_methods.setFlowControl, "setFlowControl", "(II)Z"},
+        {&s_methods.purgeBuffers, "purgeBuffers", "(IZZ)Z"},
+        {&s_methods.setBreak, "setBreak", "(IZ)Z"},
+        {&s_methods.startIoManager, "startIoManager", "(I)Z"},
+        {&s_methods.stopIoManager, "stopIoManager", "(I)Z"},
+        {&s_methods.ioManagerRunning, "ioManagerRunning", "(I)Z"},
+    };
+
+    for (const auto& def : defs) {
         *def.target = env->GetStaticMethodID(javaClass, def.name, def.sig);
         if (!*def.target) {
             qCWarning(AndroidSerialLog) << "Failed to cache method:" << def.name << def.sig;
-            (void) QJniEnvironment::checkAndClearExceptions(env);
+            (void)QJniEnvironment::checkAndClearExceptions(env);
             return false;
         }
     }
@@ -236,7 +247,7 @@ static jclass getSerialManagerClass()
 
         if (!s_serialManagerClass) {
             qCWarning(AndroidSerialLog) << "Failed to create global ref for class:" << kJniUsbSerialManagerClassName;
-            (void) env.checkAndClearExceptions();
+            (void)env.checkAndClearExceptions();
             return nullptr;
         }
     }
@@ -246,12 +257,12 @@ static jclass getSerialManagerClass()
         env->DeleteGlobalRef(s_serialManagerClass);
         s_serialManagerClass = nullptr;
         s_methods = {};
-        (void) env.checkAndClearExceptions();
+        (void)env.checkAndClearExceptions();
         return nullptr;
     }
 
     s_methodsCached = true;
-    (void) env.checkAndClearExceptions();
+    (void)env.checkAndClearExceptions();
     return s_serialManagerClass;
 }
 
@@ -272,18 +283,18 @@ void cleanupJniCache()
 // ----------------------------------------------------------------------------
 
 // Forward declarations for JNI callbacks (defined below)
-static void jniDeviceHasDisconnected(JNIEnv *env, jobject obj, jlong token);
-static void jniDeviceNewData(JNIEnv *env, jobject obj, jlong token, jbyteArray data);
-static void jniDeviceException(JNIEnv *env, jobject obj, jlong token, jstring message);
+static void jniDeviceHasDisconnected(JNIEnv* env, jobject obj, jlong token);
+static void jniDeviceNewData(JNIEnv* env, jobject obj, jlong token, jbyteArray data);
+static void jniDeviceException(JNIEnv* env, jobject obj, jlong token, jstring message);
 
 void setNativeMethods()
 {
     qCDebug(AndroidSerialLog) << "Registering Native Functions";
 
-    const JNINativeMethod javaMethods[] {
-        {"nativeDeviceHasDisconnected", "(J)V",                     reinterpret_cast<void*>(jniDeviceHasDisconnected)},
-        {"nativeDeviceNewData",         "(J[B)V",                   reinterpret_cast<void*>(jniDeviceNewData)},
-        {"nativeDeviceException",       "(JLjava/lang/String;)V",   reinterpret_cast<void*>(jniDeviceException)},
+    const JNINativeMethod javaMethods[]{
+        {"nativeDeviceHasDisconnected", "(J)V", reinterpret_cast<void*>(jniDeviceHasDisconnected)},
+        {"nativeDeviceNewData", "(J[B)V", reinterpret_cast<void*>(jniDeviceNewData)},
+        {"nativeDeviceException", "(JLjava/lang/String;)V", reinterpret_cast<void*>(jniDeviceException)},
     };
 
     QJniEnvironment env;
@@ -304,7 +315,7 @@ void setNativeMethods()
 // JNI callbacks (called from Java threads)
 // ----------------------------------------------------------------------------
 
-static void jniDeviceHasDisconnected(JNIEnv *, jobject, jlong token)
+static void jniDeviceHasDisconnected(JNIEnv*, jobject, jlong token)
 {
     if (token == 0) {
         qCWarning(AndroidSerialLog) << "nativeDeviceHasDisconnected called with token=0";
@@ -322,27 +333,32 @@ static void jniDeviceHasDisconnected(JNIEnv *, jobject, jlong token)
         qCDebug(AndroidSerialLog) << "Device disconnected:" << serialPort->portName();
     }
 
-    if (!dispatchToPortObject(serialPort.data(), [token]() {
-        QSerialPortPrivate *const p = lookupByToken(token);
-        if (!p) {
-            qCDebug(AndroidSerialLog) << "Token already invalidated in nativeDeviceHasDisconnected";
-            return;
-        }
+    if (!dispatchToPortObject(
+            serialPort.data(),
+            [token]() {
+                QSerialPortPrivate* const p = lookupByToken(token);
+                if (!p) {
+                    qCDebug(AndroidSerialLog) << "Token already invalidated in nativeDeviceHasDisconnected";
+                    return;
+                }
 
-        QSerialPort *const port = qobject_cast<QSerialPort *>(p->q_ptr);
-        if (port && port->isOpen()) {
-            port->close();
-            qCDebug(AndroidSerialLog) << "Serial port closed in nativeDeviceHasDisconnected";
-        } else {
-            qCDebug(AndroidSerialLog) << "Serial port was already closed in nativeDeviceHasDisconnected";
-        }
-    }, "nativeDeviceHasDisconnected")) {
+                QSerialPort* const port = qobject_cast<QSerialPort*>(p->q_ptr);
+                if (port && port->isOpen()) {
+                    port->close();
+                    qCDebug(AndroidSerialLog) << "Serial port closed in nativeDeviceHasDisconnected";
+                } else {
+                    qCDebug(AndroidSerialLog) << "Serial port was already closed in nativeDeviceHasDisconnected";
+                }
+            },
+            "nativeDeviceHasDisconnected")) {
         qCWarning(AndroidSerialLog) << "nativeDeviceHasDisconnected: failed to dispatch cleanup";
     }
 }
 
-static void jniDeviceNewData(JNIEnv *env, jobject, jlong token, jbyteArray data)
+static void jniDeviceNewData(JNIEnv* env, jobject, jlong token, jbyteArray data)
 {
+    constexpr jsize kMaxNativePayloadBytes = static_cast<jsize>(MAX_READ_SIZE);
+
     if (token == 0) {
         qCWarning(AndroidSerialLog) << "nativeDeviceNewData called with token=0";
         return;
@@ -359,8 +375,14 @@ static void jniDeviceNewData(JNIEnv *env, jobject, jlong token, jbyteArray data)
         return;
     }
 
-    QByteArray payload(len, Qt::Uninitialized);
-    env->GetByteArrayRegion(data, 0, len, reinterpret_cast<jbyte*>(payload.data()));
+    const jsize cappedLen = (len > kMaxNativePayloadBytes) ? kMaxNativePayloadBytes : len;
+    if (cappedLen != len) {
+        qCWarning(AndroidSerialLog) << "nativeDeviceNewData payload exceeds limit, truncating from" << len << "to"
+                                    << cappedLen << "bytes";
+    }
+
+    QByteArray payload(cappedLen, Qt::Uninitialized);
+    env->GetByteArrayRegion(data, 0, cappedLen, reinterpret_cast<jbyte*>(payload.data()));
     if (QJniEnvironment::checkAndClearExceptions(env)) {
         qCWarning(AndroidSerialLog) << "nativeDeviceNewData failed to copy JNI byte array";
         return;
@@ -370,7 +392,7 @@ static void jniDeviceNewData(JNIEnv *env, jobject, jlong token, jbyteArray data)
         // Deliver inline while holding read lock so unregister/destroy cannot
         // invalidate the pointer until this handoff is complete.
         QReadLocker locker(&s_ptrLock);
-        QSerialPortPrivate *const serialPortPrivate = s_tokenToPtr.value(token, nullptr);
+        QSerialPortPrivate* const serialPortPrivate = s_tokenToPtr.value(token, nullptr);
         if (!serialPortPrivate) {
             qCWarning(AndroidSerialLog) << "nativeDeviceNewData: stale token, object already destroyed";
             return;
@@ -380,7 +402,7 @@ static void jniDeviceNewData(JNIEnv *env, jobject, jlong token, jbyteArray data)
     }
 }
 
-static void jniDeviceException(JNIEnv *, jobject, jlong token, jstring message)
+static void jniDeviceException(JNIEnv*, jobject, jlong token, jstring message)
 {
     if (token == 0) {
         qCWarning(AndroidSerialLog) << "nativeDeviceException called with token=0";
@@ -406,15 +428,18 @@ static void jniDeviceException(JNIEnv *, jobject, jlong token, jstring message)
 
     qCWarning(AndroidSerialLog) << "Exception from Java:" << exceptionMessage;
 
-    if (!dispatchToPortObject(serialPort.data(), [token, exceptionMessage]() {
-        QSerialPortPrivate *const p = lookupByToken(token);
-        if (!p) {
-            qCDebug(AndroidSerialLog) << "Token already invalidated in nativeDeviceException";
-            return;
-        }
+    if (!dispatchToPortObject(
+            serialPort.data(),
+            [token, exceptionMessage]() {
+                QSerialPortPrivate* const p = lookupByToken(token);
+                if (!p) {
+                    qCDebug(AndroidSerialLog) << "Token already invalidated in nativeDeviceException";
+                    return;
+                }
 
-        p->exceptionArrived(exceptionMessage);
-    }, "nativeDeviceException")) {
+                p->exceptionArrived(exceptionMessage);
+            },
+            "nativeDeviceException")) {
         qCWarning(AndroidSerialLog) << "nativeDeviceException: failed to dispatch exception callback";
     }
 }
@@ -423,13 +448,14 @@ static void jniDeviceException(JNIEnv *, jobject, jlong token, jstring message)
 // Helper: get env + class + check cached method in one shot
 // ----------------------------------------------------------------------------
 
-struct JniContext {
+struct JniContext
+{
     QJniEnvironment env;
     jclass cls = nullptr;
     bool valid = false;
 };
 
-static bool getContext(JniContext &ctx, const char *caller)
+static bool getContext(JniContext& ctx, const char* caller)
 {
     if (!ctx.env.isValid()) {
         qCWarning(AndroidSerialLog) << "Invalid QJniEnvironment in" << caller;
@@ -455,31 +481,33 @@ QList<QSerialPortInfo> availableDevices()
     QList<QSerialPortInfo> serialPortInfoList;
 
     JniContext ctx;
-    if (!getContext(ctx, "availableDevices")) return serialPortInfoList;
+    if (!getContext(ctx, "availableDevices"))
+        return serialPortInfoList;
 
-    jobjectArray objArray = static_cast<jobjectArray>(ctx.env->CallStaticObjectMethod(ctx.cls, s_methods.availableDevicesInfo));
-    if (!objArray) {
+    AndroidInterface::JniLocalRef<jobjectArray> objArray(
+        ctx.env.jniEnv(),
+        static_cast<jobjectArray>(ctx.env->CallStaticObjectMethod(ctx.cls, s_methods.availableDevicesInfo)));
+    if (!objArray.get()) {
         qCDebug(AndroidSerialLog) << "availableDevicesInfo returned null";
-        (void) ctx.env.checkAndClearExceptions();
+        (void)ctx.env.checkAndClearExceptions();
         return serialPortInfoList;
     }
 
     if (ctx.env.checkAndClearExceptions()) {
         qCWarning(AndroidSerialLog) << "Exception occurred while calling availableDevicesInfo";
-        ctx.env->DeleteLocalRef(objArray);
         return serialPortInfoList;
     }
 
-    const jsize count = ctx.env->GetArrayLength(objArray);
+    const jsize count = ctx.env->GetArrayLength(objArray.get());
     for (jsize i = 0; i < count; ++i) {
-        jstring jstr = static_cast<jstring>(ctx.env->GetObjectArrayElement(objArray, i));
-        if (!jstr) {
+        AndroidInterface::JniLocalRef<jstring> jstr(
+            ctx.env.jniEnv(), static_cast<jstring>(ctx.env->GetObjectArrayElement(objArray.get(), i)));
+        if (!jstr.get()) {
             qCWarning(AndroidSerialLog) << "Null string at index" << i;
             continue;
         }
 
-        const QStringList strList = QJniObject(jstr).toString().split(QLatin1Char('\t'));
-        ctx.env->DeleteLocalRef(jstr);
+        const QStringList strList = QJniObject(jstr.get()).toString().split(QLatin1Char('\t'));
 
         if (strList.size() < 6) {
             qCWarning(AndroidSerialLog) << "Invalid device info at index" << i << ":" << strList;
@@ -501,8 +529,7 @@ QList<QSerialPortInfo> availableDevices()
         serialPortInfoList.append(info);
     }
 
-    ctx.env->DeleteLocalRef(objArray);
-    (void) ctx.env.checkAndClearExceptions();
+    (void)ctx.env.checkAndClearExceptions();
 
     return serialPortInfoList;
 }
@@ -511,7 +538,7 @@ QList<QSerialPortInfo> availableDevices()
 // Device ID / handle lookup
 // ----------------------------------------------------------------------------
 
-int getDeviceId(const QString &portName)
+int getDeviceId(const QString& portName)
 {
     const QJniObject name = QJniObject::fromString(portName);
     if (!name.isValid()) {
@@ -520,11 +547,12 @@ int getDeviceId(const QString &portName)
     }
 
     JniContext ctx;
-    if (!getContext(ctx, "getDeviceId")) return -1;
+    if (!getContext(ctx, "getDeviceId"))
+        return -1;
 
-    const jint result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.getDeviceId, name.object<jstring>());
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling getDeviceId";
+    jint result = -1;
+    if (!AndroidInterface::callStaticIntMethod(ctx.env, ctx.cls, s_methods.getDeviceId, "getDeviceId",
+                                               AndroidSerialLog(), result, name.object<jstring>())) {
         return -1;
     }
 
@@ -534,11 +562,12 @@ int getDeviceId(const QString &portName)
 int getDeviceHandle(int deviceId)
 {
     JniContext ctx;
-    if (!getContext(ctx, "getDeviceHandle")) return -1;
+    if (!getContext(ctx, "getDeviceHandle"))
+        return -1;
 
-    const jint result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.getDeviceHandle, static_cast<jint>(deviceId));
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling getDeviceHandle";
+    jint result = -1;
+    if (!AndroidInterface::callStaticIntMethod(ctx.env, ctx.cls, s_methods.getDeviceHandle, "getDeviceHandle",
+                                               AndroidSerialLog(), result, static_cast<jint>(deviceId))) {
         return -1;
     }
 
@@ -549,7 +578,7 @@ int getDeviceHandle(int deviceId)
 // Open / close / isOpen
 // ----------------------------------------------------------------------------
 
-int open(const QString &portName, QSerialPortPrivate *classPtr)
+int open(const QString& portName, QSerialPortPrivate* classPtr)
 {
     if (!classPtr) {
         qCWarning(AndroidSerialLog) << "open called with null serialPort";
@@ -569,11 +598,12 @@ int open(const QString &portName, QSerialPortPrivate *classPtr)
     }
 
     JniContext ctx;
-    if (!getContext(ctx, "open")) return INVALID_DEVICE_ID;
+    if (!getContext(ctx, "open"))
+        return INVALID_DEVICE_ID;
 
-    const jint deviceId = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.open, name.object<jstring>(), token);
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling open";
+    jint deviceId = INVALID_DEVICE_ID;
+    if (!AndroidInterface::callStaticIntMethod(ctx.env, ctx.cls, s_methods.open, "open", AndroidSerialLog(), deviceId,
+                                               name.object<jstring>(), token)) {
         return INVALID_DEVICE_ID;
     }
 
@@ -583,18 +613,19 @@ int open(const QString &portName, QSerialPortPrivate *classPtr)
 bool close(int deviceId)
 {
     JniContext ctx;
-    if (!getContext(ctx, "close")) return false;
+    if (!getContext(ctx, "close"))
+        return false;
 
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, s_methods.close, static_cast<jint>(deviceId));
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling close";
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, s_methods.close, "close", AndroidSerialLog(),
+                                                   result, static_cast<jint>(deviceId))) {
         return false;
     }
 
     return (result == JNI_TRUE);
 }
 
-bool isOpen(const QString &portName)
+bool isOpen(const QString& portName)
 {
     const QJniObject name = QJniObject::fromString(portName);
     if (!name.isValid()) {
@@ -603,11 +634,12 @@ bool isOpen(const QString &portName)
     }
 
     JniContext ctx;
-    if (!getContext(ctx, "isOpen")) return false;
+    if (!getContext(ctx, "isOpen"))
+        return false;
 
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, s_methods.isDeviceNameOpen, name.object<jstring>());
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling isDeviceNameOpen";
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, s_methods.isDeviceNameOpen, "isDeviceNameOpen",
+                                                   AndroidSerialLog(), result, name.object<jstring>())) {
         return false;
     }
 
@@ -621,41 +653,39 @@ bool isOpen(const QString &portName)
 QByteArray read(int deviceId, int length, int timeout)
 {
     JniContext ctx;
-    if (!getContext(ctx, "read")) return QByteArray();
+    if (!getContext(ctx, "read"))
+        return QByteArray();
 
-    const jbyteArray jarray = static_cast<jbyteArray>(ctx.env->CallStaticObjectMethod(ctx.cls, s_methods.read,
-                                                                                       static_cast<jint>(deviceId),
-                                                                                       static_cast<jint>(length),
-                                                                                       static_cast<jint>(timeout)));
+    AndroidInterface::JniLocalRef<jbyteArray> jarray(
+        ctx.env.jniEnv(), static_cast<jbyteArray>(
+                              ctx.env->CallStaticObjectMethod(ctx.cls, s_methods.read, static_cast<jint>(deviceId),
+                                                              static_cast<jint>(length), static_cast<jint>(timeout))));
 
-    if (!jarray) {
+    if (!jarray.get()) {
         qCWarning(AndroidSerialLog) << "read method returned null";
-        (void) ctx.env.checkAndClearExceptions();
+        (void)ctx.env.checkAndClearExceptions();
         return QByteArray();
     }
 
     if (ctx.env.checkAndClearExceptions()) {
         qCWarning(AndroidSerialLog) << "Exception occurred while calling read";
-        ctx.env->DeleteLocalRef(jarray);
         return QByteArray();
     }
 
-    const jsize len = ctx.env->GetArrayLength(jarray);
-    jbyte *const bytes = ctx.env->GetByteArrayElements(jarray, nullptr);
+    const jsize len = ctx.env->GetArrayLength(jarray.get());
+    jbyte* const bytes = ctx.env->GetByteArrayElements(jarray.get(), nullptr);
     if (!bytes) {
         qCWarning(AndroidSerialLog) << "Failed to get byte array elements in read";
-        ctx.env->DeleteLocalRef(jarray);
         return QByteArray();
     }
 
     const QByteArray data(reinterpret_cast<char*>(bytes), len);
-    ctx.env->ReleaseByteArrayElements(jarray, bytes, JNI_ABORT);
-    ctx.env->DeleteLocalRef(jarray);
+    ctx.env->ReleaseByteArrayElements(jarray.get(), bytes, JNI_ABORT);
 
     return data;
 }
 
-int write(int deviceId, const char *data, int length, int timeout, bool async)
+int write(int deviceId, const char* data, int length, int timeout, bool async)
 {
     if (!data || length <= 0) {
         qCWarning(AndroidSerialLog) << "Invalid data or length in write";
@@ -663,42 +693,35 @@ int write(int deviceId, const char *data, int length, int timeout, bool async)
     }
 
     JniContext ctx;
-    if (!getContext(ctx, "write")) return -1;
+    if (!getContext(ctx, "write"))
+        return -1;
 
-    const jbyteArray jarray = ctx.env->NewByteArray(static_cast<jsize>(length));
-    if (!jarray) {
+    AndroidInterface::JniLocalRef<jbyteArray> jarray(ctx.env.jniEnv(),
+                                                     ctx.env->NewByteArray(static_cast<jsize>(length)));
+    if (!jarray.get()) {
         qCWarning(AndroidSerialLog) << "Failed to create jbyteArray in write";
         return -1;
     }
 
-    ctx.env->SetByteArrayRegion(jarray, 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data));
+    ctx.env->SetByteArrayRegion(jarray.get(), 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data));
     if (ctx.env.checkAndClearExceptions()) {
         qCWarning(AndroidSerialLog) << "Exception occurred while setting byte array region in write";
-        ctx.env->DeleteLocalRef(jarray);
         return -1;
     }
 
     jint result;
     if (async) {
-        result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.writeAsync,
-                                               static_cast<jint>(deviceId),
-                                               jarray,
-                                               static_cast<jint>(timeout));
+        result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.writeAsync, static_cast<jint>(deviceId), jarray.get(),
+                                              static_cast<jint>(timeout));
     } else {
-        result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.write,
-                                               static_cast<jint>(deviceId),
-                                               jarray,
-                                               static_cast<jint>(length),
-                                               static_cast<jint>(timeout));
+        result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.write, static_cast<jint>(deviceId), jarray.get(),
+                                              static_cast<jint>(length), static_cast<jint>(timeout));
     }
 
     if (ctx.env.checkAndClearExceptions()) {
         qCWarning(AndroidSerialLog) << "Exception occurred while calling write/writeAsync";
-        ctx.env->DeleteLocalRef(jarray);
         return -1;
     }
-
-    ctx.env->DeleteLocalRef(jarray);
 
     return static_cast<int>(result);
 }
@@ -710,17 +733,14 @@ int write(int deviceId, const char *data, int length, int timeout, bool async)
 bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity)
 {
     JniContext ctx;
-    if (!getContext(ctx, "setParameters")) return false;
+    if (!getContext(ctx, "setParameters"))
+        return false;
 
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, s_methods.setParameters,
-                                                              static_cast<jint>(deviceId),
-                                                              static_cast<jint>(baudRate),
-                                                              static_cast<jint>(dataBits),
-                                                              static_cast<jint>(stopBits),
-                                                              static_cast<jint>(parity));
-
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling setParameters";
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, s_methods.setParameters, "setParameters",
+                                                   AndroidSerialLog(), result, static_cast<jint>(deviceId),
+                                                   static_cast<jint>(baudRate), static_cast<jint>(dataBits),
+                                                   static_cast<jint>(stopBits), static_cast<jint>(parity))) {
         return false;
     }
 
@@ -731,29 +751,31 @@ bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int p
 // Control line helpers (DRY macro for bool getters)
 // ----------------------------------------------------------------------------
 
-static bool callBoolMethod(jmethodID method, int deviceId, const char *name)
+static bool callBoolMethod(jmethodID method, int deviceId, const char* name)
 {
     JniContext ctx;
-    if (!getContext(ctx, name)) return false;
+    if (!getContext(ctx, name))
+        return false;
 
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, method, static_cast<jint>(deviceId));
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling" << name;
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, method, name, AndroidSerialLog(), result,
+                                                   static_cast<jint>(deviceId))) {
         return false;
     }
 
     return (result == JNI_TRUE);
 }
 
-static bool callBoolSetMethod(jmethodID method, int deviceId, bool set, const char *name)
+static bool callBoolSetMethod(jmethodID method, int deviceId, bool set, const char* name)
 {
     JniContext ctx;
-    if (!getContext(ctx, name)) return false;
+    if (!getContext(ctx, name))
+        return false;
 
     const jboolean jSet = set ? JNI_TRUE : JNI_FALSE;
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, method, static_cast<jint>(deviceId), jSet);
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling" << name;
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, method, name, AndroidSerialLog(), result,
+                                                   static_cast<jint>(deviceId), jSet)) {
         return false;
     }
 
@@ -764,61 +786,103 @@ static bool callBoolSetMethod(jmethodID method, int deviceId, bool set, const ch
 // Control lines
 // ----------------------------------------------------------------------------
 
-bool getCarrierDetect(int deviceId)     { return callBoolMethod(s_methods.getCarrierDetect, deviceId, "getCarrierDetect"); }
-bool getClearToSend(int deviceId)       { return callBoolMethod(s_methods.getClearToSend, deviceId, "getClearToSend"); }
-bool getDataSetReady(int deviceId)      { return callBoolMethod(s_methods.getDataSetReady, deviceId, "getDataSetReady"); }
-bool getDataTerminalReady(int deviceId) { return callBoolMethod(s_methods.getDataTerminalReady, deviceId, "getDataTerminalReady"); }
-bool getRingIndicator(int deviceId)     { return callBoolMethod(s_methods.getRingIndicator, deviceId, "getRingIndicator"); }
-bool getRequestToSend(int deviceId)     { return callBoolMethod(s_methods.getRequestToSend, deviceId, "getRequestToSend"); }
+bool getCarrierDetect(int deviceId)
+{
+    return callBoolMethod(s_methods.getCarrierDetect, deviceId, "getCarrierDetect");
+}
 
-bool setDataTerminalReady(int deviceId, bool set) { return callBoolSetMethod(s_methods.setDataTerminalReady, deviceId, set, "setDataTerminalReady"); }
-bool setRequestToSend(int deviceId, bool set)     { return callBoolSetMethod(s_methods.setRequestToSend, deviceId, set, "setRequestToSend"); }
+bool getClearToSend(int deviceId)
+{
+    return callBoolMethod(s_methods.getClearToSend, deviceId, "getClearToSend");
+}
+
+bool getDataSetReady(int deviceId)
+{
+    return callBoolMethod(s_methods.getDataSetReady, deviceId, "getDataSetReady");
+}
+
+bool getDataTerminalReady(int deviceId)
+{
+    return callBoolMethod(s_methods.getDataTerminalReady, deviceId, "getDataTerminalReady");
+}
+
+bool getRingIndicator(int deviceId)
+{
+    return callBoolMethod(s_methods.getRingIndicator, deviceId, "getRingIndicator");
+}
+
+bool getRequestToSend(int deviceId)
+{
+    return callBoolMethod(s_methods.getRequestToSend, deviceId, "getRequestToSend");
+}
+
+bool setDataTerminalReady(int deviceId, bool set)
+{
+    return callBoolSetMethod(s_methods.setDataTerminalReady, deviceId, set, "setDataTerminalReady");
+}
+
+bool setRequestToSend(int deviceId, bool set)
+{
+    return callBoolSetMethod(s_methods.setRequestToSend, deviceId, set, "setRequestToSend");
+}
 
 QSerialPort::PinoutSignals getControlLines(int deviceId)
 {
     JniContext ctx;
-    if (!getContext(ctx, "getControlLines")) return QSerialPort::PinoutSignals();
+    if (!getContext(ctx, "getControlLines"))
+        return QSerialPort::PinoutSignals();
 
-    const jintArray jarray = static_cast<jintArray>(ctx.env->CallStaticObjectMethod(ctx.cls, s_methods.getControlLines, static_cast<jint>(deviceId)));
-    if (!jarray) {
+    AndroidInterface::JniLocalRef<jintArray> jarray(
+        ctx.env.jniEnv(), static_cast<jintArray>(ctx.env->CallStaticObjectMethod(ctx.cls, s_methods.getControlLines,
+                                                                                 static_cast<jint>(deviceId))));
+    if (!jarray.get()) {
         qCWarning(AndroidSerialLog) << "getControlLines returned null";
-        (void) ctx.env.checkAndClearExceptions();
+        (void)ctx.env.checkAndClearExceptions();
         return QSerialPort::PinoutSignals();
     }
 
     if (ctx.env.checkAndClearExceptions()) {
         qCWarning(AndroidSerialLog) << "Exception occurred while calling getControlLines";
-        ctx.env->DeleteLocalRef(jarray);
         return QSerialPort::PinoutSignals();
     }
 
-    jint *const ints = ctx.env->GetIntArrayElements(jarray, nullptr);
+    jint* const ints = ctx.env->GetIntArrayElements(jarray.get(), nullptr);
     if (!ints) {
         qCWarning(AndroidSerialLog) << "Failed to get int array elements in getControlLines";
-        ctx.env->DeleteLocalRef(jarray);
         return QSerialPort::PinoutSignals();
     }
 
-    const jsize len = ctx.env->GetArrayLength(jarray);
+    const jsize len = ctx.env->GetArrayLength(jarray.get());
     QSerialPort::PinoutSignals data = QSerialPort::PinoutSignals();
 
     for (jsize i = 0; i < len; ++i) {
         switch (ints[i]) {
-            case RtsControlLine: data |= QSerialPort::RequestToSendSignal;    break;
-            case CtsControlLine: data |= QSerialPort::ClearToSendSignal;      break;
-            case DtrControlLine: data |= QSerialPort::DataTerminalReadySignal; break;
-            case DsrControlLine: data |= QSerialPort::DataSetReadySignal;     break;
-            case CdControlLine:  data |= QSerialPort::DataCarrierDetectSignal; break;
-            case RiControlLine:  data |= QSerialPort::RingIndicatorSignal;    break;
+            case RtsControlLine:
+                data |= QSerialPort::RequestToSendSignal;
+                break;
+            case CtsControlLine:
+                data |= QSerialPort::ClearToSendSignal;
+                break;
+            case DtrControlLine:
+                data |= QSerialPort::DataTerminalReadySignal;
+                break;
+            case DsrControlLine:
+                data |= QSerialPort::DataSetReadySignal;
+                break;
+            case CdControlLine:
+                data |= QSerialPort::DataCarrierDetectSignal;
+                break;
+            case RiControlLine:
+                data |= QSerialPort::RingIndicatorSignal;
+                break;
             default:
                 qCWarning(AndroidSerialLog) << "Unknown ControlLine value:" << ints[i];
                 break;
         }
     }
 
-    ctx.env->ReleaseIntArrayElements(jarray, ints, JNI_ABORT);
-    ctx.env->DeleteLocalRef(jarray);
-    (void) ctx.env.checkAndClearExceptions();
+    ctx.env->ReleaseIntArrayElements(jarray.get(), ints, JNI_ABORT);
+    (void)ctx.env.checkAndClearExceptions();
 
     return data;
 }
@@ -830,11 +894,12 @@ QSerialPort::PinoutSignals getControlLines(int deviceId)
 int getFlowControl(int deviceId)
 {
     JniContext ctx;
-    if (!getContext(ctx, "getFlowControl")) return QSerialPort::NoFlowControl;
+    if (!getContext(ctx, "getFlowControl"))
+        return QSerialPort::NoFlowControl;
 
-    const jint flowControl = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.getFlowControl, static_cast<jint>(deviceId));
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling getFlowControl";
+    jint flowControl = QSerialPort::NoFlowControl;
+    if (!AndroidInterface::callStaticIntMethod(ctx.env, ctx.cls, s_methods.getFlowControl, "getFlowControl",
+                                               AndroidSerialLog(), flowControl, static_cast<jint>(deviceId))) {
         return QSerialPort::NoFlowControl;
     }
 
@@ -844,14 +909,13 @@ int getFlowControl(int deviceId)
 bool setFlowControl(int deviceId, int flowControl)
 {
     JniContext ctx;
-    if (!getContext(ctx, "setFlowControl")) return false;
+    if (!getContext(ctx, "setFlowControl"))
+        return false;
 
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, s_methods.setFlowControl,
-                                                              static_cast<jint>(deviceId),
-                                                              static_cast<jint>(flowControl));
-
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling setFlowControl";
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, s_methods.setFlowControl, "setFlowControl",
+                                                   AndroidSerialLog(), result, static_cast<jint>(deviceId),
+                                                   static_cast<jint>(flowControl))) {
         return false;
     }
 
@@ -865,18 +929,16 @@ bool setFlowControl(int deviceId, int flowControl)
 bool purgeBuffers(int deviceId, bool input, bool output)
 {
     JniContext ctx;
-    if (!getContext(ctx, "purgeBuffers")) return false;
+    if (!getContext(ctx, "purgeBuffers"))
+        return false;
 
     const jboolean jInput = input ? JNI_TRUE : JNI_FALSE;
     const jboolean jOutput = output ? JNI_TRUE : JNI_FALSE;
 
-    const jboolean result = ctx.env->CallStaticBooleanMethod(ctx.cls, s_methods.purgeBuffers,
-                                                              static_cast<jint>(deviceId),
-                                                              jInput,
-                                                              jOutput);
-
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling purgeBuffers";
+    jboolean result = JNI_FALSE;
+    if (!AndroidInterface::callStaticBooleanMethod(ctx.env, ctx.cls, s_methods.purgeBuffers, "purgeBuffers",
+                                                   AndroidSerialLog(), result, static_cast<jint>(deviceId), jInput,
+                                                   jOutput)) {
         return false;
     }
 
@@ -892,8 +954,19 @@ bool setBreak(int deviceId, bool set)
 // IO manager (read thread)
 // ----------------------------------------------------------------------------
 
-bool startReadThread(int deviceId) { return callBoolMethod(s_methods.startIoManager, deviceId, "startIoManager"); }
-bool stopReadThread(int deviceId)  { return callBoolMethod(s_methods.stopIoManager, deviceId, "stopIoManager"); }
-bool readThreadRunning(int deviceId) { return callBoolMethod(s_methods.ioManagerRunning, deviceId, "ioManagerRunning"); }
+bool startReadThread(int deviceId)
+{
+    return callBoolMethod(s_methods.startIoManager, deviceId, "startIoManager");
+}
 
-} // namespace AndroidSerial
+bool stopReadThread(int deviceId)
+{
+    return callBoolMethod(s_methods.stopIoManager, deviceId, "stopIoManager");
+}
+
+bool readThreadRunning(int deviceId)
+{
+    return callBoolMethod(s_methods.ioManagerRunning, deviceId, "ioManagerRunning");
+}
+
+}  // namespace AndroidSerial

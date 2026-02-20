@@ -9,6 +9,7 @@ import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -20,7 +21,14 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
 
     public QGCFtdiSerialDriver(final UsbDevice device) {
         _device = device;
-        _ports = Collections.singletonList(new QGCFtdiSerialPort(this, device, 0));
+
+        final int interfaceCount = Math.max(1, device.getInterfaceCount());
+        final List<UsbSerialPort> ports = new ArrayList<>(interfaceCount);
+        for (int i = 0; i < interfaceCount; i++) {
+            ports.add(new QGCFtdiSerialPort(this, device, i));
+        }
+
+        _ports = Collections.unmodifiableList(ports);
     }
 
     public static Map<Integer, int[]> getSupportedDevices() {
@@ -373,8 +381,8 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             UsbEndpoint read = null;
             UsbEndpoint write = null;
 
-            for (int i = 0; i < _device.getInterfaceCount(); i++) {
-                final UsbInterface usbInterface = _device.getInterface(i);
+            if (_portNumber < _device.getInterfaceCount()) {
+                final UsbInterface usbInterface = _device.getInterface(_portNumber);
                 for (int e = 0; e < usbInterface.getEndpointCount(); e++) {
                     final UsbEndpoint endpoint = usbInterface.getEndpoint(e);
                     if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_BULK) {
@@ -384,6 +392,29 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
                         read = endpoint;
                     } else if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT && write == null) {
                         write = endpoint;
+                    }
+                }
+            }
+
+            // Fallback to global endpoint scan for devices that don't expose
+            // interface-per-port semantics.
+            if (read == null || write == null) {
+                for (int i = 0; i < _device.getInterfaceCount(); i++) {
+                    final UsbInterface usbInterface = _device.getInterface(i);
+                    for (int e = 0; e < usbInterface.getEndpointCount(); e++) {
+                        final UsbEndpoint endpoint = usbInterface.getEndpoint(e);
+                        if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                            continue;
+                        }
+                        if (endpoint.getDirection() == UsbConstants.USB_DIR_IN && read == null) {
+                            read = endpoint;
+                        } else if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT && write == null) {
+                            write = endpoint;
+                        }
+                    }
+
+                    if (read != null && write != null) {
+                        break;
                     }
                 }
             }

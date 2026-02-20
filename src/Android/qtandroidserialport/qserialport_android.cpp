@@ -3,6 +3,7 @@
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
+#include <QtCore/QScopeGuard>
 #include <iterator>
 
 QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "Android.AndroidSerialPort")
@@ -14,12 +15,14 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
     qCDebug(AndroidSerialPortLog) << "Opening" << systemLocation;
 
     AndroidSerial::registerPointer(this);
+    auto tokenGuard = qScopeGuard([this]() {
+        AndroidSerial::unregisterPointer(this);
+    });
 
     _deviceId = AndroidSerial::open(systemLocation, this);
     if (_deviceId == INVALID_DEVICE_ID) {
         qCWarning(AndroidSerialPortLog) << "Error opening" << systemLocation;
         setError(QSerialPortErrorInfo(QSerialPort::DeviceNotFoundError));
-        AndroidSerial::unregisterPointer(this);
         return false;
     }
 
@@ -56,6 +59,7 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
     }
 
     (void) clear(QSerialPort::AllDirections);
+    tokenGuard.dismiss();
 
     return true;
 }
@@ -118,35 +122,98 @@ bool QSerialPortPrivate::_stopAsyncRead()
     return result;
 }
 
+qint64 QSerialPortPrivate::_drainPendingDataLocked(qint64 maxBytes)
+{
+    const qsizetype pendingSize = _pendingSizeLocked();
+    if (pendingSize <= 0) {
+        _pendingData.clear();
+        _pendingDataOffset = 0;
+        return 0;
+    }
+
+    qint64 toDrain = pendingSize;
+    if (maxBytes >= 0) {
+        toDrain = qMin(toDrain, maxBytes);
+    }
+
+    if (toDrain <= 0) {
+        return 0;
+    }
+
+    buffer.append(_pendingData.constData() + _pendingDataOffset, toDrain);
+    _pendingDataOffset += static_cast<qsizetype>(toDrain);
+
+    if (_pendingDataOffset >= _pendingData.size()) {
+        _pendingData.clear();
+        _pendingDataOffset = 0;
+    } else {
+        // Compact occasionally to keep append operations efficient without
+        // paying the cost on every drain.
+        constexpr qsizetype kCompactThreshold = 4096;
+        if (_pendingDataOffset >= kCompactThreshold
+            && (_pendingDataOffset * 2) >= _pendingData.size()) {
+            _compactPendingDataLocked();
+        }
+    }
+
+    _bufferBytesEstimate.store(buffer.size(), std::memory_order_relaxed);
+    return toDrain;
+}
+
+qsizetype QSerialPortPrivate::_pendingSizeLocked() const
+{
+    return qMax<qsizetype>(0, _pendingData.size() - _pendingDataOffset);
+}
+
+void QSerialPortPrivate::_compactPendingDataLocked()
+{
+    if (_pendingDataOffset <= 0) {
+        return;
+    }
+
+    if (_pendingDataOffset >= _pendingData.size()) {
+        _pendingData.clear();
+        _pendingDataOffset = 0;
+        return;
+    }
+
+    _pendingData.remove(0, _pendingDataOffset);
+    _pendingDataOffset = 0;
+}
+
 void QSerialPortPrivate::newDataArrived(const char *bytes, int length)
 {
     // qCDebug(AndroidSerialPortLog) << "newDataArrived" << length;
 
-    bool shouldStop = false;
+    qint64 droppedBytes = 0;
 
     QMutexLocker locker(&_readMutex);
     int bytesToRead = length;
     if (readBufferMaxSize) {
-        const qint64 totalBuffered = _pendingData.size()
+        const qint64 totalBuffered = _pendingSizeLocked()
             + _bufferBytesEstimate.load(std::memory_order_relaxed);
         const qint64 headroom = readBufferMaxSize - totalBuffered;
         if (bytesToRead > headroom) {
             bytesToRead = static_cast<int>(qMax(qint64(0), headroom));
-            if (bytesToRead <= 0) {
-                qCWarning(AndroidSerialPortLog) << "Read buffer exceeded maximum size. Stopping async read.";
-                shouldStop = true;
-            }
+            droppedBytes = static_cast<qint64>(length - bytesToRead);
         }
     }
 
-    if (!shouldStop) {
+    if (bytesToRead > 0) {
+        constexpr qsizetype kCompactBeforeAppendThreshold = 8192;
+        if (_pendingDataOffset >= kCompactBeforeAppendThreshold) {
+            _compactPendingDataLocked();
+        }
         _pendingData.append(bytes, bytesToRead);
         _readWaitCondition.wakeAll();
     }
     locker.unlock();
 
-    if (shouldStop) {
-        _stopAsyncRead();
+    if (droppedBytes > 0) {
+        qCWarning(AndroidSerialPortLog) << "Read buffer full, dropping" << droppedBytes << "bytes";
+    }
+
+    if (bytesToRead <= 0) {
         return;
     }
 
@@ -164,41 +231,23 @@ void QSerialPortPrivate::_scheduleReadyRead()
                 return;
             }
 
-            bool shouldStop = false;
             _readyReadPending.store(false);
             QMutexLocker locker(&_readMutex);
-            if (_pendingData.isEmpty()) {
+            if (_pendingSizeLocked() <= 0) {
                 return;
             }
 
             if (readBufferMaxSize > 0) {
                 const qint64 canAccept = readBufferMaxSize - buffer.size();
-                if (canAccept <= 0) {
-                    shouldStop = true;
-                } else {
-                    const qint64 toDrain = qMin(qint64(_pendingData.size()), canAccept);
-                    buffer.append(_pendingData.constData(), toDrain);
-                    if (toDrain >= _pendingData.size()) {
-                        _pendingData.clear();
-                    } else {
-                        _pendingData = _pendingData.mid(static_cast<int>(toDrain));
-                    }
-                    if (!_pendingData.isEmpty()) {
-                        shouldStop = true;
-                    }
+                if (canAccept > 0) {
+                    (void) _drainPendingDataLocked(canAccept);
                 }
             } else {
-                buffer.append(_pendingData.constData(), _pendingData.size());
-                _pendingData.clear();
+                (void) _drainPendingDataLocked();
             }
 
-            _bufferBytesEstimate.store(buffer.size(), std::memory_order_relaxed);
             _readWaitCondition.wakeAll();
             locker.unlock();
-
-            if (shouldStop) {
-                _stopAsyncRead();
-            }
 
             emit guard->readyRead();
         }, Qt::QueuedConnection);
@@ -212,15 +261,13 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
         return true;
     }
 
-    if (!_pendingData.isEmpty()) {
-        buffer.append(_pendingData.constData(), _pendingData.size());
-        _pendingData.clear();
-        _bufferBytesEstimate.store(buffer.size(), std::memory_order_relaxed);
+    if (_pendingSizeLocked() > 0) {
+        (void) _drainPendingDataLocked();
         return true;
     }
 
     QDeadlineTimer deadline(msecs);
-    while (buffer.isEmpty() && _pendingData.isEmpty()) {
+    while (buffer.isEmpty() && (_pendingSizeLocked() <= 0)) {
         if (!_readWaitCondition.wait(&_readMutex, deadline)) {
             break;
         }
@@ -229,10 +276,8 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
             return true;
         }
 
-        if (!_pendingData.isEmpty()) {
-            buffer.append(_pendingData.constData(), _pendingData.size());
-            _pendingData.clear();
-            _bufferBytesEstimate.store(buffer.size(), std::memory_order_relaxed);
+        if (_pendingSizeLocked() > 0) {
+            (void) _drainPendingDataLocked();
             return true;
         }
     }
