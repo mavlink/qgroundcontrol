@@ -199,7 +199,7 @@ jobs:
         id: config
         uses: ./.github/actions/build-config
 
-      - uses: lukka/get-cmake@v4.2.1
+      - uses: lukka/get-cmake@v4.2.3
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
@@ -213,7 +213,7 @@ jobs:
           modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Download Debug Build
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: debug-build-linux_gcc_64
           path: ${{ runner.temp }}/build
