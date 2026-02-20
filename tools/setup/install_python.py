@@ -25,6 +25,8 @@ PACKAGE_GROUPS: dict[str, list[str]] = {
     ],
     "test": [
         "pytest",
+        "jinja2",
+        "pyyaml",
     ],
     "ci": [
         "pre-commit",
@@ -161,7 +163,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         epilog="""
 Groups:
   precommit Pre-commit hooks only
-  test      Python test runner only
+  test      Python test tools (pytest, jinja2, pyyaml)
   ci        Pre-commit hooks, meson, ninja (default)
   qt        Qt installation tools (aqtinstall)
   coverage  Code coverage tools (gcovr)

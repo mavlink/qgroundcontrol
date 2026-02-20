@@ -83,7 +83,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
 
@@ -96,52 +95,154 @@ jobs:
           save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
-        run: python3 ./tools/setup/install_dependencies.py --platform debian
+        uses: ./.github/actions/install-dependencies
 
       - name: Initialize CodeQL
-        if: matrix.build_type == 'Debug'
+        if: matrix.build_type == 'Debug' && github.event_name != 'pull_request'
         uses: github/codeql-action/init@v4
         with:
           languages: c-cpp
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
-              -DQGC_ENABLE_COVERAGE=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
-              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          testing: ${{ matrix.build_type == 'Debug' && 'true' || 'false' }}
+          coverage: ${{ matrix.build_type == 'Debug' && 'true' || 'false' }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
       - name: Perform CodeQL Analysis
-        if: matrix.build_type == 'Debug'
+        if: matrix.build_type == 'Debug' && github.event_name != 'pull_request'
         continue-on-error: true
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:c-cpp"
 
-      - name: Run Unit Tests
+      - name: Upload Debug Build Artifacts
         if: matrix.build_type == 'Debug'
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug-build-${{ matrix.arch }}
+          path: ${{ runner.temp }}/build
+          retention-days: 1
+
+      - name: Verify Executable
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl
+
+      - name: Create AppImage
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config ${{ matrix.build_type }}
+
+      - name: Verify AppImage
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          type: appimage
+
+      - name: Attest Build with SBOM
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          subject-name: ${{ matrix.package }}
+          scan-path: ${{ runner.temp }}/build
+
+      - name: Upload Build File
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/upload
+        with:
+          artifact_name: ${{ matrix.package }}.AppImage
+          package_name: ${{ matrix.package }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+
+  test:
+    name: Test + Coverage linux_gcc_64 Debug
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Restore file timestamps
+        uses: chetan/git-restore-mtime-action@v2
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - uses: lukka/get-cmake@v4.2.1
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Install Qt for Linux
+        uses: ./.github/actions/qt-install
+        with:
+          host: linux
+          arch: linux_gcc_64
+          version: ${{ steps.config.outputs.qt_version }}
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Download Debug Build
+        uses: actions/download-artifact@v6
+        with:
+          name: debug-build-linux_gcc_64
+          path: ${{ runner.temp }}/build
+
+      - name: Restore executable permissions
+        run: |
+          find "${{ runner.temp }}/build" -name '*.so*' -exec chmod +x {} +
+          find "${{ runner.temp }}/build" -path '*/bin/*' -exec chmod +x {} +
+          find "${{ runner.temp }}/build" -path '*/Debug/*' -type f ! -name '*.o' ! -name '*.a' -exec chmod +x {} +
+          chmod -f +x "${{ runner.temp }}/build/Debug/QGroundControl" || true
+          find "${{ runner.temp }}/build" -name 'tst_*' -exec chmod +x {} +
+
+      - name: Run Unit Tests
         uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-linux-${{ matrix.arch }}.xml
-          ctest-output: test-output-linux-${{ matrix.arch }}.txt
+          junit-output: junit-results-linux-linux_gcc_64.xml
+          ctest-output: test-output-linux-linux_gcc_64.txt
           include-labels: 'Unit|Integration'
           exclude-labels: 'Flaky|Network'
-          parallel: '1'
+          parallel: auto
 
       - name: Analyze Unit Test Durations
-        if: matrix.build_type == 'Debug' && always()
+        if: always()
         uses: ./.github/actions/test-duration-report
         with:
-          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.arch }}.xml
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-linux_gcc_64.xml
           baseline-path: ${{ github.workspace }}/.github/test-duration-baseline.json
-          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.arch }}.json
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-linux_gcc_64.json
           top-n: '20'
           slow-threshold-seconds: '60'
           regression-factor: '1.5'
@@ -149,34 +250,42 @@ jobs:
           fail-on-regression: 'false'
 
       - name: Report Test Results
-        if: matrix.build_type == 'Debug' && always()
+        if: always()
         uses: ./.github/actions/test-report
         with:
-          name: Unit Tests (${{ matrix.arch }})
+          name: Unit Tests (linux_gcc_64)
           build-dir: ${{ runner.temp }}/build
-          junit-file: junit-results-linux-${{ matrix.arch }}.xml
-          output-file: test-output-linux-${{ matrix.arch }}.txt
-          artifact-name: test-results-${{ matrix.arch }}
+          junit-file: junit-results-linux-linux_gcc_64.xml
+          output-file: test-output-linux-linux_gcc_64.txt
+          artifact-name: test-results-linux_gcc_64
           retention-days: 7
           trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
           trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Upload Duration Report
-        if: matrix.build_type == 'Debug' && always()
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: test-duration-${{ matrix.arch }}
-          path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.arch }}.json
+          name: test-duration-linux_gcc_64
+          path: ${{ runner.temp }}/build/test-duration-linux-linux_gcc_64.json
           retention-days: 7
 
+      - name: Install coverage tools
+        run: |
+          sudo apt-get install -y --no-install-recommends ccache
+          # Ensure ccache is at /usr/local/bin where the build's ccache-launcher expects it
+          if [ ! -f /usr/local/bin/ccache ] && command -v ccache >/dev/null 2>&1; then
+            sudo ln -s "$(command -v ccache)" /usr/local/bin/ccache
+          fi
+          pipx install gcovr
+
       - name: Coverage Report
-        if: matrix.build_type == 'Debug'
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
+          mode: report-only
 
       - name: Verify Coverage Thresholds
-        if: matrix.build_type == 'Debug'
         working-directory: ${{ runner.temp }}/build
         run: |
           python3 - <<'PY'
@@ -207,39 +316,6 @@ jobs:
           sys.exit(1 if failed else 0)
           PY
 
-      - name: Verify Executable
-        if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
-        run: xvfb-run -a ./QGroundControl --simple-boot-test
-
-      - name: Create AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config ${{ matrix.build_type }}
-
-      - name: Verify AppImage
-        if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
-
-      - name: Attest Build with SBOM
-        if: matrix.build_type == 'Release'
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
-          subject-name: ${{ matrix.package }}
-          scan-path: ${{ runner.temp }}/build
-
-      - name: Upload Build File
-        if: matrix.build_type == 'Release'
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ matrix.package }}.AppImage
-          package_name: ${{ matrix.package }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-
   sanitizers:
     name: Sanitizers linux_gcc_64 Debug (ASan+UBSan)
     if: github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug'
@@ -259,50 +335,34 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 1
           fetch-tags: true
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: linux
-          target: linux_gcc_64
-          build-type: Debug
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
-
       - name: Configure (ASan+UBSan)
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=Debug
-              -DQGC_BUILD_TESTING=ON
-              -DQGC_ENABLE_COVERAGE=OFF
-              -DQGC_ENABLE_ASAN=ON
-              -DQGC_ENABLE_UBSAN=ON
-              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          testing: 'true'
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: -DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON
 
       - name: Build (ASan+UBSan)
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config Debug --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
 
       - name: Run Unit Tests (ASan+UBSan)
         uses: ./.github/actions/run-unit-tests

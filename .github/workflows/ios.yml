@@ -39,12 +39,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
-
-      - name: Restore file timestamps
-        uses: chetan/git-restore-mtime-action@v2
 
       - name: Get build config
         id: config
@@ -53,49 +49,30 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/common
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Install Qt (macOS host + iOS)
+        uses: ./.github/actions/qt-ios
         with:
+          version: ${{ steps.config.outputs.qt_version }}
+          modules: ${{ steps.config.outputs.qt_modules }}
+          ios-modules: ${{ steps.config.outputs.qt_modules_ios }}
           xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: mac
-          target: ios
-          build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          build-type: ${{ matrix.build_type }}
           save-cache: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install Qt for MacOS
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          arch: clang_64
-          modules: ${{ steps.config.outputs.qt_modules }}
-
-      - name: Install Qt for iOS
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          target: ios
-          arch: ios
-          modules: ${{ steps.config.outputs.qt_modules_ios }}
-
       - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          # shellcheck disable=SC2086
-          $QT_ROOT_DIR/bin/qt-cmake -S "$GITHUB_WORKSPACE" -B . -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DQT_HOST_PATH="$QT_ROOT_DIR/../macos" \
-            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../macos
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
       - name: Attest Build with SBOM
         if: matrix.build_type == 'Release'

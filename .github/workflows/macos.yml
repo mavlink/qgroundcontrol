@@ -63,63 +63,45 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Restore file timestamps
-        uses: chetan/git-restore-mtime-action@v2
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        id: setup
+        uses: ./.github/actions/build-setup
+        with:
+          restore-timestamps: 'true'
+          qt-host: mac
+          qt-arch: clang_64
+          build-type: ${{ matrix.build_type }}
+          save-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ steps.config.outputs.xcode_version }}
+          xcode-version: ${{ steps.setup.outputs.xcode_version }}
 
-      - name: Install Dependencies (include GStreamer)
-        env:
-          GSTREAMER_VERSION: ${{ steps.config.outputs.gstreamer_macos_version }}
-        run: python3 ./tools/setup/install_dependencies.py --platform macos
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: mac
-          target: clang_64
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          arch: clang_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
 
       - name: CMake configure
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          # shellcheck disable=SC2086
-          $QT_ROOT_DIR/bin/qt-cmake -S "$GITHUB_WORKSPACE" -B . -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} \
-            -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
-      - name: Sanity check dev build executable
-        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS
-        run: ./QGroundControl --simple-boot-test
+      - name: Verify dev build executable
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -146,9 +128,10 @@ jobs:
             exit 1
           fi
 
-      - name: Sanity check DMG executable
-        working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
-        run: ./QGroundControl --simple-boot-test
+      - name: Verify DMG executable
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl
 
       - name: Attest Build with SBOM
         if: matrix.build_type == 'Release'

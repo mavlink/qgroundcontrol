@@ -40,7 +40,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 1
 
       - name: Enable custom build
@@ -58,11 +57,10 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          # shellcheck disable=SC2086
-          $QT_ROOT_DIR/bin/qt-cmake -S "$GITHUB_WORKSPACE" -B . -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Build
         uses: ./.github/actions/cmake-build

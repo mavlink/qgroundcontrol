@@ -13,48 +13,9 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
-        HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-        REPO: ${{ github.repository }}
       run: |
-
-        if [ -z "$HEAD_SHA" ]; then
-          echo "Error: No head SHA available"
-          exit 1
-        fi
-
-        echo "Finding completed workflow runs for commit ${HEAD_SHA}..."
-
-        # Get run IDs and names in one query
-        RUNS=$(gh api "repos/${REPO}/actions/runs?head_sha=${HEAD_SHA}&per_page=100" \
-          --jq '.workflow_runs[] | select(.name == "Linux" or .name == "Windows" or .name == "MacOS" or .name == "Android") | select(.status == "completed" and .conclusion == "success") | "\(.id) \(.name)"')
-
-        if [ -z "$RUNS" ]; then
-          echo "No completed successful workflow runs found for SHA ${HEAD_SHA}"
-          echo "Checking what runs exist for this SHA..."
-          gh api "repos/${REPO}/actions/runs?head_sha=${HEAD_SHA}&per_page=20" \
-            --jq '.workflow_runs[] | "  \(.name): \(.status)/\(.conclusion)"' || true
-          exit 0
-        fi
-
-        echo "Found workflow runs:"
-        echo "$RUNS" | while read -r run_id workflow_name; do
-          echo "  - ${workflow_name} (${run_id})"
-        done
-
-        mkdir -p artifacts
-
-        echo "$RUNS" | while read -r run_id workflow_name; do
-          echo "Downloading artifacts from ${workflow_name} (run ${run_id})..."
-          gh run download "$run_id" --dir artifacts --repo "$REPO" || echo "  Warning: Some artifacts failed to download"
-        done
-
-        echo "Downloaded artifacts:"
-        ARTIFACT_FILES=$(find artifacts -type f \( -name "*.apk" -o -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.ipa" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" \) 2>/dev/null)
-        if [ -z "$ARTIFACT_FILES" ]; then
-          echo "  (no artifacts found)"
-        else
-          echo "$ARTIFACT_FILES" | while read -r f; do
-            SIZE=$(du -h "$f" | cut -f1)
-            echo "  - $(basename "$f"): $SIZE"
-          done
-        fi
+        python3 "${GITHUB_WORKSPACE}/tools/setup/download_artifacts.py" \
+          --repo "${{ github.repository }}" \
+          --head-sha "${{ github.event.workflow_run.head_sha }}" \
+          --output-dir artifacts \
+          --workflows "Linux,Windows,MacOS,Android"

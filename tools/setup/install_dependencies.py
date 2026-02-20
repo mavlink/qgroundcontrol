@@ -2,7 +2,7 @@
 """
 Install system dependencies for QGroundControl development.
 
-Supports Debian/Ubuntu and macOS. Auto-detects platform or allows override.
+Supports Debian/Ubuntu, macOS, and Windows. Auto-detects platform or allows override.
 
 Usage:
     python tools/setup/install_dependencies.py           # Auto-detect platform
@@ -128,6 +128,13 @@ MACOS_PACKAGES: list[str] = [
     "mold",
 ]
 
+# Windows GStreamer
+WINDOWS_GSTREAMER_BASE_URL = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows"
+WINDOWS_GSTREAMER_INSTALL_DIR = "C:\\gstreamer"
+WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
+WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
+WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
+
 # Pipx packages for Debian
 PIPX_PACKAGES: list[str] = [
     "cmake",
@@ -163,7 +170,9 @@ def get_config_value(key: str) -> str | None:
 
 def detect_platform() -> str | None:
     """Detect current platform."""
-    if sys.platform == "darwin":
+    if sys.platform == "win32":
+        return "windows"
+    elif sys.platform == "darwin":
         return "macos"
     elif sys.platform.startswith("linux"):
         # Check for Debian-based
@@ -238,6 +247,74 @@ def run_command(cmd: list[str], dry_run: bool = False, sudo: bool = False) -> bo
     print(f"  Running: {' '.join(cmd[:5])}{'...' if len(cmd) > 5 else ''}")
     result = subprocess.run(cmd)
     return result.returncode == 0
+
+
+def is_ci() -> bool:
+    """Check if running in a CI environment."""
+    return os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def _set_env_var_ci(name: str, value: str) -> None:
+    """Set an environment variable via GITHUB_ENV for CI."""
+    github_env = os.environ.get("GITHUB_ENV", "")
+    if github_env:
+        with open(github_env, "a", encoding="utf-8") as f:
+            f.write(f"{name}={value}\n")
+    os.environ[name] = value
+
+
+def _set_env_var_local(name: str, value: str) -> None:
+    """Set a machine-level environment variable via Windows registry."""
+    import winreg
+
+    key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE) as key:
+        winreg.SetValueEx(key, name, 0, winreg.REG_EXPAND_SZ, value)
+
+
+def set_env_var(name: str, value: str) -> None:
+    """Set an environment variable (CI or local)."""
+    if is_ci():
+        _set_env_var_ci(name, value)
+    else:
+        _set_env_var_local(name, value)
+
+
+def add_to_path(path_entry: str) -> None:
+    """Add a directory to the system PATH (CI or local)."""
+    if is_ci():
+        github_path = os.environ.get("GITHUB_PATH", "")
+        if github_path:
+            with open(github_path, "a", encoding="utf-8") as f:
+                f.write(f"{path_entry}\n")
+    else:
+        import winreg
+
+        key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+        with winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, key_path, 0,
+            winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE,
+        ) as key:
+            current, _ = winreg.QueryValueEx(key, "Path")
+            if path_entry not in current:
+                winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{current};{path_entry}")
+
+
+def download_file(url: str, dest: Path, dry_run: bool = False) -> bool:
+    """Download a file from a URL."""
+    import urllib.error
+    import urllib.request
+
+    if dry_run:
+        print(f"  Would download: {url} -> {dest.name}")
+        return True
+    print(f"  Downloading {dest.name}...")
+    try:
+        urllib.request.urlretrieve(url, str(dest))
+        return True
+    except (urllib.error.URLError, OSError) as e:
+        print(f"Failed to download {url}: {e}", file=sys.stderr)
+        return False
 
 
 def install_debian(dry_run: bool = False, category: str | None = None) -> bool:
@@ -371,6 +448,101 @@ def install_macos(dry_run: bool = False) -> bool:
     return True
 
 
+def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
+    """Install GStreamer on Windows (AMD64 only)."""
+    arch = os.environ.get("PROCESSOR_ARCHITECTURE", "")
+    if arch != "AMD64":
+        print(f"Skipping GStreamer: only supported on AMD64 (detected: {arch or 'unknown'})")
+        return True
+
+    base_url = f"{WINDOWS_GSTREAMER_BASE_URL}/{version}"
+    runtime_name = f"gstreamer-1.0-msvc-x86_64-{version}.msi"
+    devel_name = f"gstreamer-1.0-devel-msvc-x86_64-{version}.msi"
+
+    print(f"\nInstalling GStreamer {version}...")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        runtime_msi = tmp / runtime_name
+        devel_msi = tmp / devel_name
+
+        if not download_file(f"{base_url}/{runtime_name}", runtime_msi, dry_run):
+            return False
+        if not download_file(f"{base_url}/{devel_name}", devel_msi, dry_run):
+            return False
+
+        install_dir = WINDOWS_GSTREAMER_INSTALL_DIR
+        for label, msi in [("runtime", runtime_msi), ("devel", devel_msi)]:
+            print(f"  Installing GStreamer {label}...")
+            if not run_command([
+                "msiexec.exe", "/i", str(msi),
+                "/passive", f"INSTALLDIR={install_dir}", "ADDLOCAL=ALL",
+            ], dry_run):
+                return False
+
+    prefix = WINDOWS_GSTREAMER_PREFIX
+    set_env_var("GSTREAMER_1_0_ROOT_MSVC_X86_64", prefix)
+    set_env_var("GSTREAMER_1_0_ROOT_X86_64", prefix)
+    add_to_path(f"{prefix}\\bin")
+    print(f"GStreamer {version} installed to {prefix}")
+    return True
+
+
+def install_windows_vulkan(dry_run: bool = False) -> bool:
+    """Install Vulkan SDK on Windows."""
+    print("\nInstalling Vulkan SDK...")
+    install_dir = WINDOWS_VULKAN_INSTALL_DIR
+    with tempfile.TemporaryDirectory() as tmpdir:
+        installer = Path(tmpdir) / "vulkan-sdk.exe"
+        if not download_file(WINDOWS_VULKAN_URL, installer, dry_run):
+            return False
+
+        if not run_command([
+            str(installer),
+            "--root", install_dir,
+            "--accept-licenses", "--default-answer", "--confirm-command",
+            "install",
+            "com.lunarg.vulkan.glm", "com.lunarg.vulkan.volk",
+            "com.lunarg.vulkan.vma", "com.lunarg.vulkan.debug",
+        ], dry_run):
+            return False
+
+    set_env_var("VULKAN_SDK", install_dir)
+    add_to_path(f"{install_dir}\\Bin")
+    print("Vulkan SDK installed")
+    return True
+
+
+def install_windows(
+    dry_run: bool = False,
+    gstreamer_version: str | None = None,
+    skip_gstreamer: bool = False,
+    vulkan: bool = False,
+) -> bool:
+    """Install Windows dependencies."""
+    print("Installing Windows dependencies...")
+    arch = os.environ.get("PROCESSOR_ARCHITECTURE", "unknown")
+    print(f"Architecture: {arch}")
+
+    if not skip_gstreamer:
+        version = gstreamer_version or get_config_value("gstreamer_windows_version")
+        if not version:
+            print(
+                "Error: GStreamer version not found. "
+                "Use --gstreamer-version or check build-config.json",
+                file=sys.stderr,
+            )
+            return False
+        if not install_windows_gstreamer(version, dry_run):
+            return False
+
+    if vulkan:
+        if not install_windows_vulkan(dry_run):
+            return False
+
+    print("\nWindows dependencies installed!")
+    return True
+
+
 def list_packages(platform: str | None = None) -> None:
     """List packages by category."""
     if platform in (None, "debian"):
@@ -402,6 +574,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
 Platforms:
   debian    Debian/Ubuntu (apt-get)
   macos     macOS (Homebrew)
+  windows   Windows (MSI/exe installers)
 
 Categories (Debian only):
   core        Build tools (cmake, ninja, git, etc.)
@@ -417,6 +590,7 @@ Examples:
   %(prog)s --list               # List all packages
   %(prog)s --platform debian    # Force Debian installation
   %(prog)s --category qt        # Install only Qt dependencies
+  %(prog)s --platform windows --vulkan  # Windows with Vulkan SDK
 """,
     )
 
@@ -427,7 +601,7 @@ Examples:
     )
     parser.add_argument(
         "--platform",
-        choices=["debian", "macos"],
+        choices=["debian", "macos", "windows"],
         help="Override platform detection",
     )
     parser.add_argument(
@@ -439,6 +613,20 @@ Examples:
     parser.add_argument(
         "--category",
         help="Install only specific category (Debian only)",
+    )
+    parser.add_argument(
+        "--gstreamer-version",
+        help="GStreamer version to install (Windows only, overrides build-config.json)",
+    )
+    parser.add_argument(
+        "--skip-gstreamer",
+        action="store_true",
+        help="Skip GStreamer installation (Windows only)",
+    )
+    parser.add_argument(
+        "--vulkan",
+        action="store_true",
+        help="Install Vulkan SDK (Windows only)",
     )
 
     return parser.parse_args(args)
@@ -456,7 +644,7 @@ def main() -> int:
 
     if platform is None:
         print("Error: Could not detect platform", file=sys.stderr)
-        print("Use --platform to specify: debian, macos", file=sys.stderr)
+        print("Use --platform to specify: debian, macos, windows", file=sys.stderr)
         return 1
 
     print(f"Platform: {platform}")
@@ -469,6 +657,10 @@ def main() -> int:
         if args.category:
             print("Warning: --category is only supported for Debian", file=sys.stderr)
         success = install_macos(args.dry_run)
+    elif platform == "windows":
+        success = install_windows(
+            args.dry_run, args.gstreamer_version, args.skip_gstreamer, args.vulkan,
+        )
     else:
         print(f"Error: Unsupported platform: {platform}", file=sys.stderr)
         return 1

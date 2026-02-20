@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate coverage comment for PR from Cobertura XML."""
 
+import argparse
 import os
 import sys
 import xml.etree.ElementTree as ET
@@ -30,7 +31,7 @@ def parse_coverage(xml_path: str) -> dict | None:
                 }
 
         return None
-    except Exception as e:
+    except (ET.ParseError, OSError, ValueError) as e:
         print(f"Error parsing {xml_path}: {e}", file=sys.stderr)
         return None
 
@@ -58,13 +59,36 @@ def delta_str(old: float | None, new: float) -> str:
         return "No change"
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Generate coverage comment for PR from Cobertura XML.",
+    )
+    parser.add_argument(
+        "--coverage-xml",
+        default=os.environ.get("COVERAGE_XML", "coverage.xml"),
+        help="Path to coverage XML file (default: $COVERAGE_XML or coverage.xml)",
+    )
+    parser.add_argument(
+        "--baseline-xml",
+        default=os.environ.get("BASELINE_XML", ""),
+        help="Path to baseline coverage XML file (default: $BASELINE_XML)",
+    )
+    parser.add_argument(
+        "--output",
+        default="coverage-comment.md",
+        help="Output markdown file path (default: coverage-comment.md)",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
-    coverage_xml = os.environ.get("COVERAGE_XML", "")
-    baseline_xml = os.environ.get("BASELINE_XML", "")
+    args = parse_args()
+    coverage_xml = args.coverage_xml
+    baseline_xml = args.baseline_xml
 
     if not coverage_xml or not os.path.exists(coverage_xml):
         print("Coverage XML not found", file=sys.stderr)
-        with open("coverage-comment.md", "w") as f:
+        with open(args.output, "w") as f:
             f.write("## Code Coverage Report\n\n*Coverage data not available*\n")
         sys.exit(0)
 
@@ -114,7 +138,7 @@ def main() -> None:
         ]
     )
 
-    with open("coverage-comment.md", "w") as f:
+    with open(args.output, "w") as f:
         f.write("\n".join(lines))
 
     print("\n".join(lines))

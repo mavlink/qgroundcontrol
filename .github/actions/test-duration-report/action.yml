@@ -48,6 +48,15 @@ runs:
     - name: Analyze test durations
       id: analyze
       shell: bash
+      env:
+        INPUT_JUNIT_PATH: ${{ inputs.junit-path }}
+        INPUT_BASELINE_PATH: ${{ inputs.baseline-path }}
+        INPUT_REPORT_JSON_PATH: ${{ inputs.report-json-path }}
+        INPUT_TOP_N: ${{ inputs.top-n }}
+        INPUT_SLOW_THRESHOLD_SECONDS: ${{ inputs.slow-threshold-seconds }}
+        INPUT_REGRESSION_FACTOR: ${{ inputs.regression-factor }}
+        INPUT_MIN_DELTA_SECONDS: ${{ inputs.min-delta-seconds }}
+        INPUT_FAIL_ON_REGRESSION: ${{ inputs.fail-on-regression }}
       run: |
         python3 - <<'PY'
         import json
@@ -56,14 +65,14 @@ runs:
         import xml.etree.ElementTree as ET
         from pathlib import Path
 
-        junit_path = Path(r"${{ inputs.junit-path }}")
-        baseline_path = Path(r"${{ inputs.baseline-path }}")
-        report_json_path = Path(r"${{ inputs.report-json-path }}")
-        top_n = int(r"${{ inputs.top-n }}")
-        slow_threshold = float(r"${{ inputs.slow-threshold-seconds }}")
-        regression_factor = float(r"${{ inputs.regression-factor }}")
-        min_delta = float(r"${{ inputs.min-delta-seconds }}")
-        fail_on_regression = r"${{ inputs.fail-on-regression }}".lower() == "true"
+        junit_path = Path(os.environ["INPUT_JUNIT_PATH"])
+        baseline_path = Path(os.environ["INPUT_BASELINE_PATH"])
+        report_json_path = Path(os.environ["INPUT_REPORT_JSON_PATH"])
+        top_n = int(os.environ["INPUT_TOP_N"])
+        slow_threshold = float(os.environ["INPUT_SLOW_THRESHOLD_SECONDS"])
+        regression_factor = float(os.environ["INPUT_REGRESSION_FACTOR"])
+        min_delta = float(os.environ["INPUT_MIN_DELTA_SECONDS"])
+        fail_on_regression = os.environ["INPUT_FAIL_ON_REGRESSION"].lower() == "true"
 
         step_summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
         github_output = Path(os.environ["GITHUB_OUTPUT"])

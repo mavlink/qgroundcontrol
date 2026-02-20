@@ -32,9 +32,11 @@ runs:
     - name: Detect parallel jobs
       id: jobs
       shell: bash
+      env:
+        INPUT_PARALLEL: ${{ inputs.parallel }}
       run: |
-        if [[ "${{ inputs.parallel }}" != "auto" ]]; then
-          JOBS="${{ inputs.parallel }}"
+        if [[ "$INPUT_PARALLEL" != "auto" ]]; then
+          JOBS="$INPUT_PARALLEL"
         elif command -v nproc >/dev/null 2>&1; then
           JOBS="$(nproc)"
         elif command -v sysctl >/dev/null 2>&1; then
@@ -55,21 +57,27 @@ runs:
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
+      env:
+        INPUT_JUNIT_OUTPUT: ${{ inputs.junit-output }}
+        INPUT_CTEST_OUTPUT: ${{ inputs.ctest-output }}
+        INPUT_INCLUDE_LABELS: ${{ inputs.include-labels }}
+        INPUT_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+        INPUT_JOBS: ${{ steps.jobs.outputs.jobs }}
       run: |
         set -o pipefail
 
         CTEST_ARGS=(
           --output-on-failure
-          --output-junit "${{ inputs.junit-output }}"
-          --parallel "${{ steps.jobs.outputs.jobs }}"
+          --output-junit "$INPUT_JUNIT_OUTPUT"
+          --parallel "$INPUT_JOBS"
         )
 
-        if [[ -n "${{ inputs.include-labels }}" ]]; then
-          CTEST_ARGS+=(-L "${{ inputs.include-labels }}")
+        if [[ -n "$INPUT_INCLUDE_LABELS" ]]; then
+          CTEST_ARGS+=(-L "$INPUT_INCLUDE_LABELS")
         fi
 
-        if [[ -n "${{ inputs.exclude-labels }}" ]]; then
-          CTEST_ARGS+=(-LE "${{ inputs.exclude-labels }}")
+        if [[ -n "$INPUT_EXCLUDE_LABELS" ]]; then
+          CTEST_ARGS+=(-LE "$INPUT_EXCLUDE_LABELS")
         fi
 
-        ctest "${CTEST_ARGS[@]}" 2>&1 | tee "${{ inputs.ctest-output }}"
+        ctest "${CTEST_ARGS[@]}" 2>&1 | tee "$INPUT_CTEST_OUTPUT"

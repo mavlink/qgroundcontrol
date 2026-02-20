@@ -207,15 +207,16 @@ jobs:
           PRECOMMIT_STATUS: ${{ steps.builds.outputs.precommit_status }}
           PRECOMMIT_URL: ${{ steps.builds.outputs.precommit_url }}
           PRECOMMIT_RESULTS_PATH: artifacts/pre-commit-results/pre-commit-results.json
-          TEST_RESULTS_GLOB: artifacts/test-results-*/test-output.txt
+          TEST_RESULTS_GLOB: artifacts/test-results-*/test-output*.txt
           COVERAGE_XML: artifacts/coverage-report/coverage.xml
           BASELINE_COVERAGE_XML: baseline-coverage.xml
           PR_SIZES_JSON: pr-sizes.json
           BASELINE_SIZES_JSON: baseline-sizes.json
           TRIGGERED_BY: ${{ github.event.workflow_run.name }}
-          COMMENT_OUTPUT: comment.md
         run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_build_results_comment.py"
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_build_results_comment.py" \
+            --base-dir "${GITHUB_WORKSPACE}" \
+            --output comment.md
           cat comment.md
 
       - name: Deduplicate prior build-results comments

@@ -20,6 +20,11 @@ runs:
   steps:
     - name: Run and parse benchmarks
       shell: bash
+      env:
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_TEST_FILTER: ${{ inputs.test-filter }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_QT_PLATFORM: ${{ inputs.qt-platform }}
       run: |
         if command -v python3 >/dev/null 2>&1; then
           py_cmd="python3"
@@ -27,8 +32,8 @@ runs:
           py_cmd="python"
         fi
 
-        "${py_cmd}" "${{ github.workspace }}/.github/scripts/benchmark_runner.py" \
-          --binary "${{ inputs.binary-path }}" \
-          --filter "${{ inputs.test-filter }}" \
-          --output "${{ inputs.output-file }}" \
-          --platform "${{ inputs.qt-platform }}"
+        "${py_cmd}" "${GITHUB_WORKSPACE}/.github/scripts/benchmark_runner.py" \
+          --binary "$INPUT_BINARY_PATH" \
+          --filter "$INPUT_TEST_FILTER" \
+          --output "$INPUT_OUTPUT_FILE" \
+          --platform "$INPUT_QT_PLATFORM"

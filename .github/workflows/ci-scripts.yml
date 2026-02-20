@@ -7,9 +7,11 @@ on:
       - '.github/actions/**'
       - '.github/workflows/**'
       - '.github/build-config.json'
-      - 'tools/setup/install_python.py'
-      - 'tools/setup/read_config.py'
+      - 'tools/setup/**'
       - 'tools/tests/**'
+      - 'tools/common/**'
+      - 'tools/generators/**'
+      - 'tools/analyzers/**'
   push:
     branches:
       - master
@@ -19,9 +21,11 @@ on:
       - '.github/actions/**'
       - '.github/workflows/**'
       - '.github/build-config.json'
-      - 'tools/setup/install_python.py'
-      - 'tools/setup/read_config.py'
+      - 'tools/setup/**'
       - 'tools/tests/**'
+      - 'tools/common/**'
+      - 'tools/generators/**'
+      - 'tools/analyzers/**'
   workflow_dispatch:
 
 concurrency:
@@ -80,12 +84,11 @@ jobs:
             .github/actions/setup-python
             .github/build-config.json
             .github/scripts
-            tools/setup/install_python.py
-            tools/setup/read_config.py
-            tools/setup/gstreamer/build-gstreamer.py
-            tools/tests/test_build_gstreamer.py
-            tools/tests/test_install_python.py
-            tools/tests/test_read_config.py
+            tools/setup
+            tools/tests
+            tools/common
+            tools/generators
+            tools/analyzers
           sparse-checkout-cone-mode: false
 
       - name: Setup Python
@@ -94,10 +97,8 @@ jobs:
           groups: test
           python-version: '3.12'
 
+      - name: Python syntax smoke test
+        run: python3 -m compileall .github/scripts tools/setup
+
       - name: Run CI script tests
-        run: |
-          pytest -q \
-            tools/tests/test_build_gstreamer.py \
-            tools/tests/test_install_python.py \
-            tools/tests/test_read_config.py \
-            .github/scripts/tests
+        run: pytest -q tools/tests .github/scripts/tests

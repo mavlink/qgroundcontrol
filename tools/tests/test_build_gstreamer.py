@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for tools/setup/gstreamer/build-gstreamer.py."""
+"""Tests for tools/setup/build-gstreamer.py."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import pytest
 # Import module with a hyphen in the filename
 import sys as _sys
 
-_SCRIPT = Path(__file__).parent.parent / "setup" / "gstreamer" / "build-gstreamer.py"
+_SCRIPT = Path(__file__).parent.parent / "setup" / "build-gstreamer.py"
 _spec = importlib.util.spec_from_file_location("build_gstreamer", _SCRIPT)
 _mod = importlib.util.module_from_spec(_spec)
 _sys.modules["build_gstreamer"] = _mod

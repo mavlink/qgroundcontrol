@@ -32,19 +32,17 @@ runs:
       with:
         timeout_minutes: 10
         max_attempts: 3
-        shell: pwsh
+        shell: python
         command: |
-          $params = @{}
-          if ($env:INPUT_GSTREAMER_VERSION) {
-            $params['GStreamerVersion'] = $env:INPUT_GSTREAMER_VERSION
-          }
-          if ($env:INPUT_GSTREAMER -ne 'true') {
-            $params['SkipGStreamer'] = $true
-          }
-          if ($env:INPUT_VULKAN -eq 'true') {
-            $params['InstallVulkan'] = $true
-          }
-          & ./tools/setup/install-dependencies-windows.ps1 @params
+          import os, subprocess, sys
+          args = [sys.executable, './tools/setup/install_dependencies.py', '--platform', 'windows']
+          if os.environ.get('INPUT_GSTREAMER_VERSION'):
+              args += ['--gstreamer-version', os.environ['INPUT_GSTREAMER_VERSION']]
+          if os.environ.get('INPUT_GSTREAMER') != 'true':
+              args.append('--skip-gstreamer')
+          if os.environ.get('INPUT_VULKAN') == 'true':
+              args.append('--vulkan')
+          sys.exit(subprocess.run(args).returncode)
 
     - name: Install dependencies (Linux)
       if: runner.os == 'Linux'
@@ -53,7 +51,7 @@ runs:
         timeout_minutes: 10
         max_attempts: 3
         command: |
-          sudo python3 tools/setup/install_dependencies.py --platform debian
+          python3 tools/setup/install_dependencies.py --platform debian
 
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''

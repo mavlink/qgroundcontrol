@@ -112,3 +112,9 @@ jobs:
           name: pre-commit-results
           path: pre-commit-results
           retention-days: 7
+
+      - name: Fail if pre-commit failed
+        if: steps.pre-commit.outcome == 'failure'
+        run: |
+          echo "::error::Pre-commit checks failed. See logs above."
+          exit 1
