@@ -1,4 +1,5 @@
 #include "TestFixturesTest.h"
+#include "SignalEmitter.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -17,38 +18,6 @@
 #include "SettingsManager.h"
 #include "UnitTest.h"
 using namespace TestFixtures;
-
-// ============================================================================
-// Helper class for SignalSpyFixture tests
-// ============================================================================
-class SignalEmitter : public QObject
-{
-    Q_OBJECT
-public:
-    explicit SignalEmitter(QObject* parent = nullptr) : QObject(parent)
-    {
-    }
-
-    void emitValueChanged(int value)
-    {
-        emit valueChanged(value);
-    }
-
-    void emitStateChanged(bool state)
-    {
-        emit stateChanged(state);
-    }
-
-    void emitErrorOccurred(const QString& error)
-    {
-        emit errorOccurred(error);
-    }
-
-signals:
-    void valueChanged(int value);
-    void stateChanged(bool state);
-    void errorOccurred(const QString& error);
-};
 
 // ============================================================================
 // Coordinate Fixtures Tests
@@ -272,7 +241,7 @@ void TestFixturesTest::_testSingleInstanceLockFixture()
 // ============================================================================
 void TestFixturesTest::_testSignalSpyFixtureExpect()
 {
-    SignalEmitter emitter;
+    TestFixturesSignalEmitter emitter;
     SignalSpyFixture spy(&emitter);
     spy.expect("valueChanged");
     // Signal not yet emitted - should fail verification
@@ -286,7 +255,7 @@ void TestFixturesTest::_testSignalSpyFixtureExpect()
 
 void TestFixturesTest::_testSignalSpyFixtureExpectExactly()
 {
-    SignalEmitter emitter;
+    TestFixturesSignalEmitter emitter;
     SignalSpyFixture spy(&emitter);
     spy.expectExactly("valueChanged", 2);
     // Emit once - should fail (expecting 2)
@@ -302,7 +271,7 @@ void TestFixturesTest::_testSignalSpyFixtureExpectExactly()
 
 void TestFixturesTest::_testSignalSpyFixtureExpectNot()
 {
-    SignalEmitter emitter;
+    TestFixturesSignalEmitter emitter;
     SignalSpyFixture spy(&emitter);
     spy.expectNot("errorOccurred");
     // No error emitted - should pass
@@ -314,7 +283,7 @@ void TestFixturesTest::_testSignalSpyFixtureExpectNot()
 
 void TestFixturesTest::_testSignalSpyFixtureWaitAndVerify()
 {
-    SignalEmitter emitter;
+    TestFixturesSignalEmitter emitter;
     SignalSpyFixture spy(&emitter);
     spy.expect("stateChanged");
     // Schedule signal emission after 50ms
@@ -325,8 +294,8 @@ void TestFixturesTest::_testSignalSpyFixtureWaitAndVerify()
 
 void TestFixturesTest::_testWaitForSignalCountHelper()
 {
-    SignalEmitter emitter;
-    QSignalSpy spy(&emitter, &SignalEmitter::valueChanged);
+    TestFixturesSignalEmitter emitter;
+    QSignalSpy spy(&emitter, &TestFixturesSignalEmitter::valueChanged);
     QVERIFY(spy.isValid());
 
     QTimer::singleShot(20, &emitter, [&emitter]() { emitter.emitValueChanged(1); });
@@ -374,8 +343,5 @@ void TestFixturesTest::_testSettingsFixtureFactValue()
     // After fixture destruction, original value should be restored
     QCOMPARE(testFact->rawValue(), originalValue);
 }
-
-// Required for SignalEmitter Q_OBJECT
-#include "TestFixturesTest.moc"
 
 UT_REGISTER_TEST(TestFixturesTest, TestLabel::Unit)
