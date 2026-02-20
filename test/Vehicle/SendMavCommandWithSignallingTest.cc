@@ -6,17 +6,15 @@
 #include "MultiVehicleManager.h"
 
 namespace {
-constexpr int kCommandResultTimeoutMs = 10000;
-constexpr int kCommandSendObservedTimeoutMs = 100;
-
 bool _waitForExpectedCommandResult(QSignalSpy& spyResult, MAV_CMD expectedCommand, QList<QVariant>& arguments)
 {
+    const int commandResultTimeoutMs = TestTimeout::longMs();
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
 
     while (true) {
         const int elapsed = static_cast<int>(elapsedTimer.elapsed());
-        const int remainingMs = kCommandResultTimeoutMs - elapsed;
+        const int remainingMs = commandResultTimeoutMs - elapsed;
         if (remainingMs <= 0) {
             return false;
         }
@@ -89,8 +87,8 @@ void SendMavCommandWithSignallingTest::_duplicateCommand()
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, true /* showError */);
-    QVERIFY(QTest::qWaitFor(
-        [&]() { return _mockLink->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE) == 1; }, kCommandSendObservedTimeoutMs));
+    QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE) == 1,
+                      TestTimeout::shortMs());
     QSignalSpy spyResult(vehicle, &Vehicle::mavCommandResult);
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, true /* showError */);
     // Duplicate command returns immediately
