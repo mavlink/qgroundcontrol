@@ -1132,9 +1132,9 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
     _receivedMavCommandByCompCountMap[static_cast<MAV_CMD>(request.command)][request.target_component]++;
     if (request.command == MAV_CMD_REQUEST_MESSAGE) {
+        _receivedRequestMessageCountMap[static_cast<uint32_t>(request.param1)]++;
         _receivedRequestMessageByCompAndMsgCountMap[request.target_component][static_cast<int>(request.param1)]++;
     }
-
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
     switch (request.command) {

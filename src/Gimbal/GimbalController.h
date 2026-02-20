@@ -60,6 +60,7 @@ public slots:
     void gimbalYawStop();
 
 private slots:
+    void _initialConnectCompleted();
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _rateSenderTimeout();
 
@@ -115,6 +116,7 @@ private:
 
     QMap<GimbalPairId, Gimbal*> _potentialGimbals;
     QmlObjectListModel *_gimbals = nullptr;
+    bool _initialConnectComplete = false;
 
     static constexpr const char *_gimbalFactGroupNamePrefix = "gimbal";
 };
