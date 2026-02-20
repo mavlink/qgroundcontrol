@@ -82,7 +82,7 @@ private:
 
     // Self ID
     void        _sendSelfIDMsg ();
-    const char* _getSelfIDDescription();
+    QByteArray _getSelfIDDescription() const;
 
     // Operator ID
     void        _sendOperatorID ();

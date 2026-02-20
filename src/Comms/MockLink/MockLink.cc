@@ -1483,6 +1483,8 @@ void MockLink::_sendStatusTextMessages()
     mavlink_message_t msg{};
     for (size_t i = 0; i < std::size(rgMessages); i++) {
         const struct StatusMessage *status = &rgMessages[i];
+        char statusText[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] = {};
+        (void) std::strncpy(statusText, status->msg, sizeof(statusText) - 1);
 
         (void) mavlink_msg_statustext_pack_chan(
             _vehicleSystemId,
@@ -1490,7 +1492,7 @@ void MockLink::_sendStatusTextMessages()
             mavlinkChannel(),
             &msg,
             status->severity,
-            status->msg,
+            statusText,
             0, // Not a chunked sequence
             0  // Not a chunked sequence
         );
@@ -1599,6 +1601,9 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
         return;
     }
 
+    char statusText[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] = {};
+    (void) std::strncpy(statusText, pCalMessage, sizeof(statusText) - 1);
+
     mavlink_message_t msg{};
     (void) mavlink_msg_statustext_pack_chan(
         _vehicleSystemId,
@@ -1606,7 +1611,7 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
         mavlinkChannel(),
         &msg,
         MAV_SEVERITY_INFO,
-        pCalMessage,
+        statusText,
         0,
         0 // Not chunked
     );
@@ -1748,6 +1753,9 @@ void MockLink::_sendADSBVehicles()
         // Simulate slight variations in altitude
         _adsbVehicles[i].altitude += (i % 2 == 0 ? 0.5 : -0.5); // Increase or decrease altitude
 
+        QByteArray callsign = QString("N12345%1").arg(i, 2, 10, QChar('0')).toLatin1();
+        callsign.resize(MAVLINK_MSG_ADSB_VEHICLE_FIELD_CALLSIGN_LEN);
+
         // Prepare and send MAVLink message for each vehicle
         mavlink_message_t responseMsg{};
         (void) mavlink_msg_adsb_vehicle_pack_chan(
@@ -1763,7 +1771,7 @@ void MockLink::_sendADSBVehicles()
             // Use the current angle as heading
             static_cast<uint16_t>(_adsbVehicles[i].angle * 100), // Heading in centidegrees
             0, 0, // Horizontal/Vertical velocity
-            QString("N12345%1").arg(i, 2, 10, QChar('0')).toStdString().c_str(), // Unique callsign
+            callsign.constData(), // Unique callsign
             ADSB_EMITTER_TYPE_ROTOCRAFT,
             1, // Seconds since last communication
             ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
