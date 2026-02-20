@@ -490,8 +490,6 @@ bool Actuators::parseJson(const QJsonDocument &json)
                     function = ChannelConfig::Function::Minimum;
                 } else if (functionStr == "max") {
                     function = ChannelConfig::Function::Maximum;
-                } else if (functionStr == "center") {
-                    function = ChannelConfig::Function::Center;
                 } else if (functionStr == "failsafe") {
                     function = ChannelConfig::Function::Failsafe;
                 } else if (functionStr != "") {

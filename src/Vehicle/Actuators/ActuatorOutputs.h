@@ -55,7 +55,6 @@ public:
         Disarmed,
         Minimum,
         Maximum,
-        Center,
         Failsafe
     };
 
