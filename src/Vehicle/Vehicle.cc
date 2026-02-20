@@ -2631,6 +2631,20 @@ void Vehicle::_sendMavCommandWorker(
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCDebug(VehicleLog) << "_sendMavCommandWorker: primary link gone!";
+
+        const MavCmdResultFailureCode_t failureCode = MavCmdResultFailureNoResponseToCommand;
+        if (ackHandlerInfo && ackHandlerInfo->resultHandler) {
+            mavlink_command_ack_t ack = {};
+            ack.command = command;
+            ack.result = MAV_RESULT_FAILED;
+            (*ackHandlerInfo->resultHandler)(ackHandlerInfo->resultHandlerData, targetCompId, ack, failureCode);
+        } else {
+            emit mavCommandResult(_systemID, targetCompId, command, MAV_RESULT_FAILED, failureCode);
+        }
+
+        if (showError) {
+            qgcApp()->showAppMessage(tr("Unable to send command: Vehicle is not connected."));
+        }
         return;
     }
 
