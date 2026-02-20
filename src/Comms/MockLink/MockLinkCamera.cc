@@ -87,6 +87,9 @@ void MockLinkCamera::sendCameraHeartbeats()
 
 void MockLinkCamera::run10HzTasks()
 {
+    // Runs every 100ms (10Hz on worker thread). Reads and modifies camera state that main thread
+    // also modifies via command handlers. Protect entire state check-and-update to maintain consistency.
+    QMutexLocker locker(&_camerasMutex);
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
 
     for (uint8_t i = 0; i < kNumCameras; i++) {
@@ -130,6 +133,10 @@ bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t &msg)
 
 bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId)
 {
+    // Thread-safe access: Main thread modifying camera state that worker thread reads every 100ms.
+    // Serialize all camera state modifications to avoid worker seeing inconsistent state
+    // (e.g., trying to complete capture while main thread is starting a new one).
+    QMutexLocker locker(&_camerasMutex);
     CameraState *cam = _findCamera(targetCompId);
     if (!cam) {
         return false;

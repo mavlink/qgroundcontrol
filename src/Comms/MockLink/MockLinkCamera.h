@@ -3,6 +3,7 @@
 #include "MAVLinkLib.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkCameraLog)
 
@@ -108,4 +109,9 @@ private:
 
     MockLink   *_mockLink = nullptr;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras
+    /// Protects _cameras array from race conditions between:
+    ///   - Main thread: _handleCameraCommand() modifying camera state on MAVLink commands
+    ///   - Worker thread: run10HzTasks() reading capture status and updating capture counts
+    ///   Race example: Main sets singleShotStartMs while Worker checks it for completion
+    QMutex      _camerasMutex;
 };
