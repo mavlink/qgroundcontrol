@@ -3,6 +3,7 @@
 #include "MAVLinkLib.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkGimbalLog)
 
@@ -78,6 +79,11 @@ private:
     float     _pitch = 0.0f;
     float     _yaw = 0.0f;
     bool      _manualControl = false;  // true when under external control command
+    /// Protects gimbal state and intervals from race conditions between:
+    ///   - Main thread: _handleSetMessageInterval() and _handleGimbalManagerPitchYaw() modifying state
+    ///   - Worker thread: run1HzTasks() reading intervals and auto-updating attitude every 1s
+    ///   Race example: Main sets _manualControl=true, Worker reads false and overwrites manual commands
+    QMutex    _stateMutex;
 
     // Gimbal manager configuration
     uint8_t   _gimbalManagerSysidPrimary = 0;    // System ID for primary control

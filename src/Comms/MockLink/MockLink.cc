@@ -846,6 +846,8 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
     Q_ASSERT(request.target_component == MAV_COMP_ID_ALL);
 
     // Cache component IDs and first component's param names to avoid repeated keys() calls in worker
+    // Thread safety: Lock mutex before modifying shared state accessed by worker thread
+    QMutexLocker locker(&_paramRequestListMutex);
     _paramRequestListComponentIds = _mapParamName2Value.keys();
     if (!_paramRequestListComponentIds.isEmpty()) {
         _paramRequestListParamNames = _mapParamName2Value[_paramRequestListComponentIds.first()].keys();
@@ -862,6 +864,9 @@ void MockLink::_paramRequestListWorker()
         // Initial request complete
         return;
     }
+
+    // Thread safety: Lock mutex before accessing shared state modified by main thread
+    QMutexLocker locker(&_paramRequestListMutex);
 
     // Use cached lists instead of calling keys() on every iteration (500Hz)
     if (_currentParamRequestListComponentIndex >= _paramRequestListComponentIds.count()) {
@@ -1679,6 +1684,9 @@ void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
     }
 
     // This will trigger _logDownloadWorker to send data
+    // Thread-safe access: Main thread writes, worker thread reads every 2ms. Serialize to avoid
+    // worker reading inconsistent offset/count or using stale values while downloading.
+    QMutexLocker locker(&_logDownloadMutex);
     _logDownloadCurrentOffset = request.ofs;
     if (request.ofs + request.count > _logDownloadFileSize) {
         request.count = _logDownloadFileSize - request.ofs;
@@ -1688,6 +1696,9 @@ void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
 
 void MockLink::_logDownloadWorker()
 {
+    // Runs every 2ms (500Hz on worker thread). Must protect shared state modified by main thread.
+    // Without lock: main could write new offset/count while we're reading, causing corrupted downloads.
+    QMutexLocker locker(&_logDownloadMutex);
     if (_logDownloadBytesRemaining == 0) {
         return;
     }
@@ -1826,6 +1837,10 @@ void MockLink::_handleRequestMessageAvailableModes(const mavlink_command_long_t 
 {
     accepted = true;
 
+    // Thread-safe access: Check-then-set pattern must be atomic. Worker increments index every 2ms,
+    // so check for "already running" and start/stop operations must serialize to prevent race where
+    // main reads false, worker increments, main overwrites with different value -> lost update.
+    QMutexLocker locker(&_availableModesWorkerMutex);
     if (request.param2 == 0) {
         // Request for available modes to be streamed out
         if (_availableModesWorkerNextModeIndex != 0) {
@@ -1946,6 +1961,9 @@ void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 
 void MockLink::_availableModesWorker()
 {
+    // Runs every 2ms (500Hz on worker thread). Reads and increments shared index modified by main.
+    // Read-modify-write must be atomic to prevent lost updates or incorrect state transitions.
+    QMutexLocker locker(&_availableModesWorkerMutex);
     if (_availableModesWorkerNextModeIndex == 0) {
         //  Not active
         return;

@@ -30,6 +30,11 @@ MockLinkGimbal::MockLinkGimbal(
 
 void MockLinkGimbal::run1HzTasks()
 {
+    // Runs every 1s (1Hz on worker thread). Reads intervals and gimbal state main thread modifies.
+    // Must serialize access to prevent:
+    //   - Auto-movement overwriting manual control commands
+    //   - Reading stale/inconsistent interval values for status transmission
+    QMutexLocker locker(&_stateMutex);
     const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
 
     // Send GIMBAL_MANAGER_STATUS if interval is set
@@ -147,6 +152,9 @@ bool MockLinkGimbal::_handleSetMessageInterval(const mavlink_command_long_t &req
         return false;
     }
 
+    // Thread-safe access: Main thread writing interval while worker thread reads every 1s.
+    // Serialize to avoid worker using stale interval for message transmission logic.
+    QMutexLocker locker(&_stateMutex);
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS) {
         _managerStatusIntervalUs = effectiveInterval;
         qCDebug(MockLinkGimbalLog) << msgName << "interval set to" << effectiveInterval << "us";
@@ -198,6 +206,10 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
         return false;  // Nothing to do
     }
 
+    // Thread-safe access: Main thread setting manual control state that worker reads every 1s.
+    // Without lock: Worker could read _manualControl=false and auto-update pitch/yaw after main
+    // sets them to manual values, overwriting the manual control with auto-movement.
+    QMutexLocker locker(&_stateMutex);
     // Apply limits based on gimbal capabilities
     if (updatePitch && _hasPitchAxis) {
         _pitch = qBound(-45.0f, requestedPitch, 45.0f);
