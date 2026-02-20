@@ -29,16 +29,20 @@ runs:
     - name: Analyze binary size
       id: metrics
       shell: bash
+      env:
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_INSTALL_BLOATY: ${{ inputs.install-bloaty }}
       run: |
         args=(
-          --binary "${{ inputs.binary-path }}"
-          --output "${{ inputs.output-file }}"
+          --binary "$INPUT_BINARY_PATH"
+          --output "$INPUT_OUTPUT_FILE"
         )
-        [[ "${{ inputs.install-bloaty }}" == "true" ]] && args+=(--install-bloaty)
+        [[ "$INPUT_INSTALL_BLOATY" == "true" ]] && args+=(--install-bloaty)
 
         if command -v python3 >/dev/null 2>&1; then
           py_cmd="python3"
         else
           py_cmd="python"
         fi
-        "${py_cmd}" "${{ github.workspace }}/.github/scripts/size_analysis.py" "${args[@]}"
+        "${py_cmd}" "${GITHUB_WORKSPACE}/.github/scripts/size_analysis.py" "${args[@]}"

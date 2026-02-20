@@ -61,18 +61,23 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
     2. QT_ROOT_DIR environment variable
     3. Common installation paths (newest version first)
     """
+    # On Windows, prefer .bat variant since qt-cmake may be a bash script
+    suffixes = [".bat", ""] if sys.platform == "win32" else [""]
+
     # Check explicit qt_root
     if qt_root:
-        qt_cmake = qt_root / "bin" / "qt-cmake"
-        if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
-            return qt_cmake
+        for suffix in suffixes:
+            qt_cmake = qt_root / "bin" / f"qt-cmake{suffix}"
+            if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
+                return qt_cmake
 
     # Check QT_ROOT_DIR environment variable
     env_root = os.environ.get("QT_ROOT_DIR")
     if env_root:
-        qt_cmake = Path(env_root) / "bin" / "qt-cmake"
-        if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
-            return qt_cmake
+        for suffix in suffixes:
+            qt_cmake = Path(env_root) / "bin" / f"qt-cmake{suffix}"
+            if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
+                return qt_cmake
 
     # Common Qt installation patterns
     patterns = [

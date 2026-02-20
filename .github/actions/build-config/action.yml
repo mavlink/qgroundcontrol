@@ -11,6 +11,9 @@ outputs:
   qt_modules_ios:
     description: Qt modules (iOS, excludes qtserialport/qtscxml)
     value: ${{ steps.read.outputs.qt_modules_ios }}
+  gstreamer_version:
+    description: GStreamer version (generic/minimum)
+    value: ${{ steps.read.outputs.gstreamer_version }}
   gstreamer_macos_version:
     description: GStreamer version (macOS)
     value: ${{ steps.read.outputs.gstreamer_macos_version }}
@@ -41,6 +44,12 @@ outputs:
   xcode_ios_version:
     description: Xcode version (iOS)
     value: ${{ steps.read.outputs.xcode_ios_version }}
+  macos_deployment_target:
+    description: macOS deployment target version
+    value: ${{ steps.read.outputs.macos_deployment_target }}
+  ios_deployment_target:
+    description: iOS deployment target version
+    value: ${{ steps.read.outputs.ios_deployment_target }}
 
 runs:
   using: composite

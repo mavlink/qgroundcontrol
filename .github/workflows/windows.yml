@@ -89,7 +89,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
 
@@ -105,36 +104,50 @@ jobs:
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
-        shell: pwsh
-        env:
-          GST_VERSION: ${{ steps.build-setup.outputs.gstreamer_windows_version }}
-        run: |
-          ./tools/setup/install-dependencies-windows.ps1 `
-            -GStreamerVersion $env:GST_VERSION `
-            -SkipVulkan
+        uses: ./.github/actions/install-dependencies
+        with:
+          gstreamer-version: ${{ steps.build-setup.outputs.gstreamer_windows_version }}
 
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
-      - name: Configure
-        working-directory: ${{ runner.temp }}\build
+      - name: Fix Rust linker resolution (ARM64 native)
+        if: matrix.variant == 'arm64'
+        shell: bash
         run: |
-          ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
-            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} ^
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }} ^
-            -DQT_HOST_PATH=${{ (matrix.arch == 'win64_msvc2022_arm64_cross_compiled') && format('{0}\\..\\msvc2022_64', env.QT_ROOT_DIR) || '' }}
+          # Git for Windows ships /usr/bin/link (GNU coreutils) which shadows
+          # MSVC's link.exe on PATH, causing Rust/cargo builds to fail.
+          # Rename the conflicting binary so MSVC's linker is found instead.
+          git_link="/c/Program Files/Git/usr/bin/link.exe"
+          if [ -f "$git_link" ]; then
+            mv "$git_link" "${git_link}.bak"
+            echo "Renamed Git link.exe to prevent Rust linker conflict"
+          fi
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: >-
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }}
+            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}/../msvc2022_64', env.QT_ROOT_DIR) || '' }}
 
       - name: Build
-        working-directory: ${{ runner.temp }}\build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
-        working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
-        run: QGroundControl.exe --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.exe
+          type: exe
 
       - name: Create Installer
         working-directory: ${{ runner.temp }}\build

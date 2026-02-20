@@ -76,3 +76,17 @@ runs:
           echo "::error::Build failed after ${duration}s"
           [[ "$CONTINUE" != "true" ]] && exit $exit_code
         fi
+
+    - name: Compiler Cache Stats
+      if: always()
+      shell: bash
+      run: |
+        if command -v ccache >/dev/null 2>&1; then
+          echo "::group::ccache statistics"
+          ccache -s
+          echo "::endgroup::"
+        elif command -v sccache >/dev/null 2>&1; then
+          echo "::group::sccache statistics"
+          sccache --show-stats
+          echo "::endgroup::"
+        fi

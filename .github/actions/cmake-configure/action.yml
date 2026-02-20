@@ -88,9 +88,10 @@ runs:
           args+=(--unity --unity-batch "${INPUT_UNITY_BATCH_SIZE}")
         fi
 
-        # Add extra args if provided
+        # Add extra args if provided (after -- so argparse treats -D flags as positional)
         if [[ -n "$INPUT_EXTRA_ARGS" ]]; then
           read -ra extra <<< "$INPUT_EXTRA_ARGS"
+          args+=(--)
           args+=("${extra[@]}")
         fi
 

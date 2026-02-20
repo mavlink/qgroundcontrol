@@ -131,7 +131,6 @@ jobs:
         if: steps.check.outputs.should_build == 'true'
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 1
           fetch-tags: true
 
@@ -178,7 +177,7 @@ jobs:
 
       - name: Scan artifact for vulnerabilities
         if: steps.artifact.outputs.found == 'true'
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: 'fs'
           scan-ref: ${{ steps.artifact.outputs.path }}

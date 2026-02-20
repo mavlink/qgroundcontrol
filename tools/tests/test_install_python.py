@@ -16,7 +16,9 @@ from setup.install_python import get_packages_for_groups
 
 def test_test_group_contains_pytest() -> None:
     packages = get_packages_for_groups("test")
-    assert packages == ["pytest"]
+    assert "pytest" in packages
+    assert "jinja2" in packages
+    assert "pyyaml" in packages
 
 
 def test_multiple_groups_are_merged() -> None:

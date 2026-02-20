@@ -3,6 +3,7 @@
 #
 # Targets:
 #   coverage         - Run tests and generate XML + HTML reports
+#   coverage-report  - Generate XML + HTML reports from existing coverage data
 #   coverage-html    - Run tests and generate HTML report only
 #   coverage-clean   - Remove coverage data files
 #
@@ -75,6 +76,19 @@ if(GCOVR_EXECUTABLE)
     endif()
 
     if(QGC_BUILD_TESTING)
+        # coverage-report: Generate reports from existing coverage data only.
+        # Intended for CI flows that already ran tests separately.
+        add_custom_target(coverage-report
+            COMMAND ${GCOVR_EXECUTABLE}
+                ${GCOVR_COMMON_ARGS}
+                --xml coverage.xml
+                --html coverage.html
+                --html-details
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating coverage report from existing coverage data (XML + HTML)"
+            VERBATIM
+        )
+
         # coverage: Run tests and generate both XML (for Codecov) and HTML
         add_custom_target(coverage
             # Run tests

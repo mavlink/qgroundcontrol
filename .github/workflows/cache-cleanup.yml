@@ -36,14 +36,15 @@ jobs:
         env:
           INPUT_BRANCH: ${{ inputs.branch }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           echo "## Cache Summary" >> "$GITHUB_STEP_SUMMARY"
 
           if [[ -n "$INPUT_BRANCH" ]]; then
             echo "Branch filter: \`$INPUT_BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
-            CACHES=$(gh actions-cache list -R "${{ github.repository }}" -B "$INPUT_BRANCH" --order desc --limit 100)
+            CACHES=$(gh actions-cache list -R "$GH_REPO" -B "$INPUT_BRANCH" --order desc --limit 100)
           else
-            CACHES=$(gh actions-cache list -R "${{ github.repository }}" --order desc --limit 100)
+            CACHES=$(gh actions-cache list -R "$GH_REPO" --order desc --limit 100)
           fi
 
           if [[ -z "$CACHES" ]]; then
@@ -72,16 +73,17 @@ jobs:
         env:
           INPUT_BRANCH: ${{ inputs.branch }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## Deletion Results" >> "$GITHUB_STEP_SUMMARY"
 
           BRANCH_ARGS=()
           if [[ -n "$INPUT_BRANCH" ]]; then
-            KEYS=$(gh actions-cache list -R "${{ github.repository }}" -B "$INPUT_BRANCH" --limit 100 | cut -f1)
+            KEYS=$(gh actions-cache list -R "$GH_REPO" -B "$INPUT_BRANCH" --limit 100 | cut -f1)
             BRANCH_ARGS=(-B "$INPUT_BRANCH")
           else
-            KEYS=$(gh actions-cache list -R "${{ github.repository }}" --limit 100 | cut -f1)
+            KEYS=$(gh actions-cache list -R "$GH_REPO" --limit 100 | cut -f1)
           fi
 
           DELETED=0
@@ -89,7 +91,7 @@ jobs:
 
           while IFS= read -r KEY; do
             [[ -z "$KEY" ]] && continue
-            if gh actions-cache delete "$KEY" -R "${{ github.repository }}" "${BRANCH_ARGS[@]}" --confirm 2>/dev/null; then
+            if gh actions-cache delete "$KEY" -R "$GH_REPO" "${BRANCH_ARGS[@]}" --confirm 2>/dev/null; then
               ((DELETED++))
             else
               ((FAILED++))

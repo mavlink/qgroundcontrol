@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import os
@@ -50,7 +51,7 @@ def _parse_precommit_results(path: Path) -> tuple[str | None, str | None, str | 
     skipped = str(data.get("skipped", "0")).strip()
     run_url = str(data.get("run_url", "")).strip()
 
-    status = "Passed" if exit_code == "0" else "Failed (non-blocking)"
+    status = "Passed" if exit_code == "0" else "Failed"
     details = f"[View]({run_url})" if run_url else None
     note = f"Pre-commit hooks: {passed} passed, {failed or '0'} failed, {skipped or '0'} skipped."
     return status, details, note
@@ -273,10 +274,33 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     return "\n".join(lines).rstrip() + "\n"
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Generate Build Results PR comment markdown.",
+    )
+    parser.add_argument(
+        "--base-dir",
+        type=Path,
+        default=Path.cwd(),
+        help="Base directory for resolving relative paths (default: cwd)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output path for comment markdown (default: $COMMENT_OUTPUT or comment.md)",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
-    base_dir = Path.cwd()
+    args = parse_args()
+    base_dir = args.base_dir
     comment = generate_comment(os.environ, base_dir)
-    output_path = base_dir / _env(os.environ, "COMMENT_OUTPUT", "comment.md")
+    if args.output:
+        output_path = args.output
+    else:
+        output_path = base_dir / _env(os.environ, "COMMENT_OUTPUT", "comment.md")
     output_path.write_text(comment, encoding="utf-8")
     print(comment, end="")
     return 0

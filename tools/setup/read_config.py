@@ -76,6 +76,8 @@ EXPORT_KEYS = [
     "android_build_tools",
     "android_cmdline_tools",
     "cmake_minimum_version",
+    "macos_deployment_target",
+    "ios_deployment_target",
 ]
 
 

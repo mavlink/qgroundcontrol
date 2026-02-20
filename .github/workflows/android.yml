@@ -106,7 +106,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
 
@@ -156,26 +155,23 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Configure
-        shell: bash
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          QT_DIR="${QT_ROOT_DIR//\\//}"        # Convert backslashes for Windows
-          WORKSPACE="${GITHUB_WORKSPACE//\\//}"
-          "${QT_DIR}/bin/qt-cmake" \
-            -S "${WORKSPACE}" \
-            -B . -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
-            -DCMAKE_WARN_DEPRECATED=FALSE \
-            -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
-            -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
-            -DQT_ANDROID_SIGN_APK=ON \
-            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} \
-            ${{ matrix.emulator && '-DQT_ANDROID_APPLICATION_ARGUMENTS="--simple-boot-test"' || '' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ inputs.build_type || 'Release' }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: >-
+            -DCMAKE_WARN_DEPRECATED=FALSE
+            -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
+            -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../${{ matrix.qt_host_path }}
+            -DQT_ANDROID_SIGN_APK=ON
+            ${{ matrix.emulator && '-DQT_ANDROID_APPLICATION_ARGUMENTS=--simple-boot-test' || '' }}
 
       - name: Build
-        shell: bash
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ inputs.build_type || 'Release' }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ inputs.build_type || 'Release' }}
 
       - name: Prepare Artifact
         shell: bash

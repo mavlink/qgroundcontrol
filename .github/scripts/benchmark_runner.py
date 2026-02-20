@@ -48,7 +48,7 @@ def run_benchmarks(binary: Path, test_filter: str, platform: str) -> str:
     except subprocess.TimeoutExpired:
         print("::warning::Benchmark timed out after 5 minutes")
         return ""
-    except Exception as e:
+    except OSError as e:
         print(f"::warning::Benchmark failed: {e}")
         return ""
 
@@ -99,7 +99,7 @@ def fallback_startup_benchmark(binary: Path, platform: str) -> list[dict]:
         )
         elapsed_ms = (time.monotonic() - start) * 1000
         return [{"name": "Startup (list tests)", "unit": "usecs", "value": elapsed_ms * 1000}]
-    except Exception as e:
+    except (subprocess.TimeoutExpired, OSError) as e:
         print(f"Fallback benchmark failed: {e}")
         return []
 

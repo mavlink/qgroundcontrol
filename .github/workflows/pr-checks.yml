@@ -53,6 +53,7 @@ jobs:
           github.event.pull_request.user.type != 'Bot'
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           sparse-checkout: .github/prompts
           sparse-checkout-cone-mode: false
 

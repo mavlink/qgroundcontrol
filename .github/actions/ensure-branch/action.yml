@@ -1,0 +1,28 @@
+name: Ensure Branch Exists
+description: Create an orphan branch if it does not already exist on the remote.
+
+inputs:
+  branch:
+    description: Branch name to ensure exists
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Ensure branch exists
+      shell: bash
+      env:
+        BRANCH: ${{ inputs.branch }}
+      run: |
+        if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+          echo "Branch '$BRANCH' already exists."
+        else
+          echo "Branch '$BRANCH' not found. Creating orphan branch..."
+          git checkout --orphan "$BRANCH"
+          git reset --hard
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --allow-empty -m "Initialize $BRANCH branch"
+          git push origin "$BRANCH"
+          git checkout -
+          echo "Branch '$BRANCH' created."
+        fi

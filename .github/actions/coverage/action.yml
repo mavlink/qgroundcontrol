@@ -5,6 +5,10 @@ inputs:
   build-dir:
     description: Path to CMake build directory
     required: true
+  mode:
+    description: 'Coverage generation mode (full: run tests + report, report-only: report from existing coverage data)'
+    required: false
+    default: full
   codecov-token:
     description: Codecov upload token (optional for public repos)
     required: false
@@ -40,12 +44,25 @@ runs:
     - name: Generate Coverage Report
       working-directory: ${{ inputs.build-dir }}
       shell: bash
+      env:
+        INPUT_MODE: ${{ inputs.mode }}
       run: |
-        cmake --build . --target coverage 2>&1 | tee coverage-output.txt
+        case "${INPUT_MODE}" in
+          full) target="coverage" ;;
+          report-only) target="coverage-report" ;;
+          *)
+            echo "::error::Invalid coverage mode '${INPUT_MODE}'. Use 'full' or 'report-only'."
+            exit 1
+            ;;
+        esac
+
+        cmake --build . --target "${target}" 2>&1 | tee coverage-output.txt
 
         # Extract coverage summary for GitHub Step Summary
         {
           echo "## 📊 Code Coverage"
+          echo ""
+          echo "Mode: \`${INPUT_MODE}\`"
           echo ""
           if grep -q "lines:" coverage-output.txt; then
             LINE_COV=$(grep "lines:" coverage-output.txt | tail -1)
@@ -84,10 +101,11 @@ runs:
     - name: Generate PR comment
       if: inputs.pr-number != ''
       shell: bash
-      env:
-        COVERAGE_XML: ${{ inputs.build-dir }}/coverage.xml
-        BASELINE_XML: ${{ inputs.baseline-xml }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/coverage_comment.py"
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/coverage_comment.py" \
+          --coverage-xml "${{ inputs.build-dir }}/coverage.xml" \
+          --baseline-xml "${{ inputs.baseline-xml }}" \
+          --output coverage-comment.md
 
     - name: Post PR comment
       if: inputs.pr-number != ''
