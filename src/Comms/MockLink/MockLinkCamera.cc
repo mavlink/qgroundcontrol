@@ -440,6 +440,7 @@ void MockLinkCamera::_sendCameraInformation(uint8_t compId)
     const int cameraIndex = compId - MAV_COMP_ID_CAMERA;
 
     const uint8_t vendorName[32] = "MockLink";
+    const char cameraDefinitionUri[MAVLINK_MSG_CAMERA_INFORMATION_FIELD_CAM_DEFINITION_URI_LEN] = {};
     const QString model = QStringLiteral("MockCam %1").arg(cameraIndex + 1);
     QByteArray modelBA = model.toLocal8Bit();
     modelBA.resize(MAVLINK_MSG_CAMERA_INFORMATION_FIELD_MODEL_NAME_LEN);
@@ -462,7 +463,7 @@ void MockLinkCamera::_sendCameraInformation(uint8_t compId)
         0,                                              // lens_id
         cam->capFlags,                                  // flags
         0,                                              // cam_definition_version
-        "",                                             // cam_definition_uri
+        cameraDefinitionUri,                            // cam_definition_uri
         0,                                              // gimbal_device_id
         0);                                             // flags (reserved)
     _mockLink->respondWithMavlinkMessage(msg);
@@ -498,6 +499,8 @@ void MockLinkCamera::_sendCameraSettings(uint8_t compId)
 
 void MockLinkCamera::_sendStorageInformation(uint8_t compId)
 {
+    const char storageName[MAVLINK_MSG_STORAGE_INFORMATION_FIELD_NAME_LEN] = {};
+
     mavlink_message_t msg{};
     (void) mavlink_msg_storage_information_pack_chan(
         _mockLink->vehicleId(),
@@ -514,7 +517,7 @@ void MockLinkCamera::_sendStorageInformation(uint8_t compId)
         NAN,                                    // read_speed
         NAN,                                    // write_speed
         STORAGE_TYPE_SD,                        // type
-        "",                                     // name
+        storageName,                            // name
         0);                                     // storage_usage
     _mockLink->respondWithMavlinkMessage(msg);
 
@@ -564,6 +567,7 @@ void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
     const int32_t lon = static_cast<int32_t>(_mockLink->vehicleLongitude() * 1e7);
     const float alt = static_cast<float>(_mockLink->vehicleAltitudeAMSL());
     const float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};    // quaternion (not used in this mock, set to identity)
+    const char fileUrl[MAVLINK_MSG_CAMERA_IMAGE_CAPTURED_FIELD_FILE_URL_LEN] = {};
 
     mavlink_message_t msg{};
     (void) mavlink_msg_camera_image_captured_pack_chan(
@@ -581,7 +585,7 @@ void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
         q,                                              // q (quaternion, unused)
         cam->imagesCaptured,                            // image_index
         1,                                              // capture_result (1=success)
-        "");                                            // file_url
+        fileUrl);                                       // file_url
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent CAMERA_IMAGE_CAPTURED for compId:" << compId
