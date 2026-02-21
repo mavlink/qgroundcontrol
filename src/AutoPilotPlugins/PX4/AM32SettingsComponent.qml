@@ -153,7 +153,7 @@ Item {
         QGCLabel {
             id: escSelectionLabel
             Layout.alignment: Qt.AlignHCenter
-            text: qsTr("Select ESCS to configure")
+            text: qsTr("Select ESCs to configure")
             font.pointSize: ScreenTools.mediumFontPointSize
             font.italic: true
         }
