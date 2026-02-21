@@ -52,13 +52,6 @@ void AM32EepromSchema::fetchSchema()
         return;
     }
 
-    // TODO: Remove this debug block - forces built-in schema for testing
-    qCDebug(AM32EepromLog) << "DEBUG: Skipping download, using built-in schema";
-    if (!loadFromFile(QLatin1String(localSchemaPath))) {
-        emit schemaLoadError(QStringLiteral("Failed to load built-in schema"));
-    }
-    return;
-
     _fetching = true;
     qCDebug(AM32EepromLog) << "Fetching AM32 schema from" << schemaUrl;
 

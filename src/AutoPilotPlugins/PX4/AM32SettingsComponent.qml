@@ -106,7 +106,6 @@ Item {
             newSelection.sort(function(a, b) { return a - b })
         }
 
-        console.log("Updated selected");
         selectedEeproms = newSelection
     }
 
@@ -229,7 +228,6 @@ Item {
             // Action Buttons
             ColumnLayout {
                 Layout.fillWidth: true
-                // layoutDirection: Qt.RightToLeft
                 spacing: _margins / 2
 
                 QGCButton {
