@@ -46,10 +46,13 @@ void QGCMapPolygon::_init(void)
         emit centerChanged(_center);
     });
 
-    connect(this, &QGCMapPolygon::pathChanged,  this, &QGCMapPolygon::_updateCenter);
+//    connect(this, &QGCMapPolygon::pathChanged,  this, &QGCMapPolygon::_updateCenter);
     connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isValidChanged);
     connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isEmptyChanged);
-
+    connect(this, &QGCMapPolygon::pathChanged,  this, [this]() {
+        qDebug() << "QGCMapPolygon::pathChanged signalled";
+        _updateCenter();
+    });
 }
 
 const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
@@ -91,6 +94,7 @@ void QGCMapPolygon::clear(void)
 
 void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
+    qDebug() << "QGCMapPolygon::adjustVertex called for index" << vertexIndex << "to coordinate" << coordinate;
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
     _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     if (!_centerDrag) {
@@ -341,6 +345,7 @@ void QGCMapPolygon::_polygonModelCountChanged(int count)
 void QGCMapPolygon::_updateCenter(void)
 {
     if (!_ignoreCenterUpdates) {
+        qDebug() << "_updateCenter called";
         QGeoCoordinate center;
 
         if (_polygonPath.count() > 2) {
@@ -361,6 +366,7 @@ void QGCMapPolygon::_updateCenter(void)
 void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
 {
     if (newCenter != _center) {
+        qDebug() << "QGCMapPolygon::setCenter called";
         _ignoreCenterUpdates = true;
 
         // Adjust polygon vertices to new center
