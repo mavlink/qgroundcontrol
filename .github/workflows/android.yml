@@ -165,7 +165,7 @@ jobs:
             -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
             -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../${{ matrix.qt_host_path }}
             -DQT_ANDROID_SIGN_APK=ON
-            ${{ matrix.emulator && '-DQT_ANDROID_APPLICATION_ARGUMENTS=--simple-boot-test' || '' }}
+            ${{ matrix.emulator && '-DQT_ANDROID_APPLICATION_ARGUMENTS="--simple-boot-test"' || '' }}
 
       - name: Build
         uses: ./.github/actions/cmake-build

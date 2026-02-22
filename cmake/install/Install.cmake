@@ -146,7 +146,11 @@ elseif(MACOS)
         install(CODE "
             message(STATUS \"QGC: Signing macOS bundle (ad-hoc)\")
             execute_process(
-                COMMAND codesign --force --deep -s - \"\${QGC_STAGING_BUNDLE_PATH}\"
+                COMMAND codesign --deep --force -s - \"\${QGC_STAGING_BUNDLE_PATH}\"
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+            execute_process(
+                COMMAND codesign --verify --deep --verbose=2 \"\${QGC_STAGING_BUNDLE_PATH}\"
                 COMMAND_ERROR_IS_FATAL ANY
             )
         ")

@@ -60,6 +60,22 @@ if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
     )
 endif()
 
+# Sign GStreamer helper binaries (auto-downloaded SDK installs these outside the framework)
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0")
+    file(GLOB_RECURSE GSTREAMER_HELPER_CANDIDATES
+        LIST_DIRECTORIES false
+        "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0/*"
+    )
+    foreach(GSTREAMER_HELPER_FILE ${GSTREAMER_HELPER_CANDIDATES})
+        if(IS_EXECUTABLE "${GSTREAMER_HELPER_FILE}")
+            execute_process(
+                COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${GSTREAMER_HELPER_FILE}"
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+        endif()
+    endforeach()
+endif()
+
 # ----------------------------------------------------------------------------
 # Sign All Frameworks
 # ----------------------------------------------------------------------------
@@ -77,13 +93,59 @@ foreach(FRAMEWORK_DIR ${FRAMEWORK_DIRS})
             COMMAND_ERROR_IS_FATAL ANY
         )
     endif()
+    # Some frameworks (notably GStreamer) use versioned directories and symlinked
+    # entry points. Sign concrete version roots before signing the bundle path.
+    if(EXISTS "${FRAMEWORK_DIR}/Versions/Current")
+        execute_process(
+            COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}/Versions/Current"
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(EXISTS "${FRAMEWORK_DIR}/Versions/1.0")
+        execute_process(
+            COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}/Versions/1.0"
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(EXISTS "${FRAMEWORK_DIR}/Versions/A")
+        execute_process(
+            COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}/Versions/A"
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    # Framework bundles themselves must be signed after their internal binaries.
+    execute_process(
+        COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
 endforeach()
+
+# Re-sign and verify GStreamer.framework as the final framework step. This
+# avoids versioned/symlinked framework edge cases that can survive earlier passes.
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
+    execute_process(
+        COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(
+        COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(
+        COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endif()
 
 # ----------------------------------------------------------------------------
 # Sign Main Application Bundle
 # ----------------------------------------------------------------------------
 execute_process(
-    COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}"
+    COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}"
+    COMMAND_ERROR_IS_FATAL ANY
+)
+execute_process(
+    COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}"
     COMMAND_ERROR_IS_FATAL ANY
 )
 

@@ -47,6 +47,15 @@ fi
 
 unset QT_PLUGIN_PATH
 unset QML2_IMPORT_PATH
+# gst-plugin-scanner may use host Python; isolate it from virtualenv/conda paths
+# that often omit distro gi bindings needed by gst-python.
+unset PYTHONHOME
+unset PYTHONPATH
+unset VIRTUAL_ENV
+unset CONDA_PREFIX
+unset CONDA_DEFAULT_ENV
+unset PYTHONUSERBASE
+export PYTHONNOUSERSITE=1
 
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
@@ -85,19 +94,44 @@ fi
 export GST_REGISTRY_REUSE_PLUGIN_SCANNER="no"
 
 # GIO 2.76+ system modules require symbols missing from bundled GIO - use bundled modules only
+unset GIO_EXTRA_MODULES
+unset GIO_MODULE_DIR
+unset GIO_USE_VFS
 if [ -n "$SYSTEM_GIO" ] && nm -D "$SYSTEM_GIO" 2>/dev/null | grep -q g_task_set_static_name; then
     export GIO_MODULE_DIR="${APPDIR}/usr/lib/gio/modules"
     export GIO_USE_VFS="local"
 else
     export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
 fi
-export GST_PLUGIN_SCANNER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
-export GST_PLUGIN_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
-export GST_PTP_HELPER_1_0="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
-export GST_PTP_HELPER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
-export GST_PLUGIN_SYSTEM_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
-export GST_PLUGIN_SYSTEM_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
-export GST_PLUGIN_PATH_1_0="${APPDIR}/usr/lib/gstreamer-1.0"
-export GST_PLUGIN_PATH="${APPDIR}/usr/lib/gstreamer-1.0"
+
+GST_PLUGIN_DIR="${APPDIR}/usr/lib/gstreamer-1.0"
+GST_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+GST_PTP="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-ptp-helper"
+
+if [ -d "${GST_PLUGIN_DIR}" ]; then
+    export GST_PLUGIN_SYSTEM_PATH_1_0="${GST_PLUGIN_DIR}"
+    export GST_PLUGIN_SYSTEM_PATH="${GST_PLUGIN_DIR}"
+    export GST_PLUGIN_PATH_1_0="${GST_PLUGIN_DIR}"
+    export GST_PLUGIN_PATH="${GST_PLUGIN_DIR}"
+else
+    echo "Warning: bundled GStreamer plugin directory missing: ${GST_PLUGIN_DIR}" >&2
+    unset GST_PLUGIN_SYSTEM_PATH_1_0 GST_PLUGIN_SYSTEM_PATH GST_PLUGIN_PATH_1_0 GST_PLUGIN_PATH
+fi
+
+if [ -x "${GST_SCANNER}" ]; then
+    export GST_PLUGIN_SCANNER_1_0="${GST_SCANNER}"
+    export GST_PLUGIN_SCANNER="${GST_SCANNER}"
+else
+    echo "Warning: bundled gst-plugin-scanner missing or not executable: ${GST_SCANNER}" >&2
+    unset GST_PLUGIN_SCANNER_1_0 GST_PLUGIN_SCANNER
+fi
+
+if [ -x "${GST_PTP}" ]; then
+    export GST_PTP_HELPER_1_0="${GST_PTP}"
+    export GST_PTP_HELPER="${GST_PTP}"
+else
+    echo "Warning: bundled gst-ptp-helper missing or not executable: ${GST_PTP}" >&2
+    unset GST_PTP_HELPER_1_0 GST_PTP_HELPER
+fi
 
 exec "$QGC_BINARY" "$@"

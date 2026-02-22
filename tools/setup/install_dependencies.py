@@ -101,6 +101,8 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "gstreamer1.0-libav",
         "gstreamer1.0-rtsp",
         "gstreamer1.0-x",
+        "python3-gi",
+        "python3-gst-1.0",
     ],
     "gstreamer_optional": [
         "gstreamer1.0-qt6",

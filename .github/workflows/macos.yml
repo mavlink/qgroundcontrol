@@ -98,10 +98,9 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
 
-      - name: Verify dev build executable
-        uses: ./.github/actions/verify-executable
-        with:
-          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
+      - name: Sanity check dev build executable
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS
+        run: ./QGroundControl --simple-boot-test
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -111,6 +110,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
 
       - name: Create signed/notarized/stapled app bundle
+        if: github.event_name != 'pull_request'
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config ${{ matrix.build_type }}
         env:
@@ -118,6 +118,11 @@ jobs:
           QGC_MACOS_NOTARIZATION_USERNAME: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
           QGC_MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+
+      - name: Create unsigned app bundle
+        if: github.event_name == 'pull_request'
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Mount DMG
         working-directory: ${{ runner.temp }}/build
@@ -128,10 +133,9 @@ jobs:
             exit 1
           fi
 
-      - name: Verify DMG executable
-        uses: ./.github/actions/verify-executable
-        with:
-          binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl
+      - name: Sanity check DMG executable
+        working-directory: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS
+        run: ./QGroundControl --simple-boot-test
 
       - name: Attest Build with SBOM
         if: matrix.build_type == 'Release'

@@ -14,13 +14,16 @@ import java.io.OutputStream;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.system.Os;
+import android.util.Log;
 
 public class GStreamer {
+    private static final String TAG = "GStreamer";
+
     private static native void nativeInit(Context context) throws Exception;
 
     public static void init(Context context) throws Exception {
         //copyFonts(context);
-        //copyCaCertificates(context);
+        copyCaCertificates(context);
         nativeInit(context);
     }
 
@@ -42,7 +45,7 @@ public class GStreamer {
                 copyFile (assetManager, "fontconfig/fonts/truetype/" + filename, font);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to copy fonts", e);
         }
     }
 
@@ -59,47 +62,22 @@ public class GStreamer {
             /* Copy the certificates file */
             copyFile (assetManager, "ssl/certs/ca-certificates.crt", certs);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed to copy CA certificates", e);
         }
     }
 
     private static void copyFile(AssetManager assetManager, String assetPath, File outFile) throws IOException {
-        InputStream in = null;
-        OutputStream out = null;
-        IOException exception = null;
-
         if (outFile.exists())
             outFile.delete();
 
-        try {
-            in = assetManager.open(assetPath);
-            out = new FileOutputStream(outFile);
-
+        try (InputStream in = assetManager.open(assetPath);
+             OutputStream out = new FileOutputStream(outFile)) {
             byte[] buffer = new byte[1024];
             int read;
             while ((read = in.read(buffer)) != -1) {
                 out.write(buffer, 0, read);
             }
             out.flush();
-        } catch (IOException e) {
-            exception = e;
-        } finally {
-            if (in != null)
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    if (exception == null)
-                        exception = e;
-                }
-            if (out != null)
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    if (exception == null)
-                        exception = e;
-                }
-            if (exception != null)
-                throw exception;
         }
     }
 }

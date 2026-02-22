@@ -75,6 +75,7 @@ sudo apt remove --purge modemmanager
 1. On the command prompt, enter:
 ```sh
 sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+sudo apt install python3-gi python3-gst-1.0 -y
 sudo apt install libfuse2 -y
 sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
 ```
