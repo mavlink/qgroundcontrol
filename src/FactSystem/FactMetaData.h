@@ -447,4 +447,5 @@ private:
     static constexpr const char *_categoryJsonKey = "category";
     static constexpr const char *_groupJsonKey = "group";
     static constexpr const char *_volatileJsonKey = "volatile";
+    static constexpr const char *_readOnlyJsonKey = "readOnly";
 };

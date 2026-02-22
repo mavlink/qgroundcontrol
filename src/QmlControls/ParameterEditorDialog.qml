@@ -11,7 +11,7 @@ QGCPopupDialog {
     id:         root
     title:      fact.componentId > 0 ? fact.name : qsTr("Value Editor")
 
-    buttons:    Dialog.Save | (validate ? 0 : Dialog.Cancel)
+    buttons:    fact.readOnly ? Dialog.Close : (Dialog.Save | (validate ? 0 : Dialog.Cancel))
 
     property Fact   fact
     property bool   showRCToParam:  false
@@ -79,6 +79,13 @@ QGCPopupDialog {
         spacing:    globals.defaultTextHeight
 
         QGCLabel {
+            Layout.fillWidth:   true
+            wrapMode:           Text.WordWrap
+            text:               qsTr("This parameter is read-only and cannot be modified.")
+            visible:            fact.readOnly
+        }
+
+        QGCLabel {
             id:                 validationError
             Layout.fillWidth:   true
             wrapMode:           Text.WordWrap
@@ -89,6 +96,7 @@ QGCPopupDialog {
         RowLayout {
             id:         editRow
             spacing:    ScreenTools.defaultFontPixelWidth
+            visible:    !fact.readOnly
 
             QGCTextField {
                 id:                 valueField
@@ -137,10 +145,15 @@ QGCPopupDialog {
             }
         }
 
+        QGCLabel {
+            visible:            fact.readOnly
+            text:               qsTr("Value: ") + fact.valueString + (fact.units != "" ? (" " + fact.units) : "")
+        }
+
         Column {
             id:         bitmaskColumn
             spacing:    ScreenTools.defaultFontPixelHeight / 2
-            visible:    fact.bitmaskStrings.length > 0
+            visible:    fact.bitmaskStrings.length > 0 && !fact.readOnly
 
             Repeater {
                 id:     bitmaskRepeater
@@ -207,7 +220,7 @@ QGCPopupDialog {
             wrapMode:   Text.WordWrap
             text:       qsTr("Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. ") +
                         qsTr("Make sure you know what you are doing and double-check your values before Save!")
-            visible:    fact.componentId != -1
+            visible:    fact.componentId != -1 && !fact.readOnly
         }
 
         QGCCheckBox {
@@ -219,7 +232,7 @@ QGCPopupDialog {
         QGCCheckBox {
             id:         _advanced
             text:       qsTr("Advanced settings")
-            visible:    showRCToParam || factCombo.visible || bitmaskColumn.visible
+            visible:    !fact.readOnly && (showRCToParam || factCombo.visible || bitmaskColumn.visible)
         }
 
         // Checkbox to allow manual entry of enumerated or bitmask parameters
