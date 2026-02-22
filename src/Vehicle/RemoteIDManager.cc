@@ -186,6 +186,7 @@ void RemoteIDManager::_sendSelfIDMsg()
 
     if (sharedLink) {
         mavlink_message_t msg;
+        const QByteArray selfIdDescription = _getSelfIDDescription();
 
         mavlink_msg_open_drone_id_self_id_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                                     MAVLinkProtocol::getComponentId(),
@@ -195,13 +196,13 @@ void RemoteIDManager::_sendSelfIDMsg()
                                                     _targetComponent,
                                                     _id_or_mac_unknown,
                                                     _emergencyDeclared ? 1 : _settings->selfIDType()->rawValue().toInt(), // If emergency is delcared we send directly a 1 (1 = EMERGENCY)
-                                                    _getSelfIDDescription()); // Depending on the type of SelfID we send a different description
+                                                    selfIdDescription.constData()); // Depending on the type of SelfID we send a different description
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
 }
 
 // We need to return the correct description for the self ID type we have selected
-const char* RemoteIDManager::_getSelfIDDescription()
+QByteArray RemoteIDManager::_getSelfIDDescription() const
 {
     QString descriptionToSend;
 
@@ -226,7 +227,7 @@ const char* RemoteIDManager::_getSelfIDDescription()
 
     QByteArray descriptionBuffer = descriptionToSend.toLocal8Bit();
     descriptionBuffer.resize(MAVLINK_MSG_OPEN_DRONE_ID_SELF_ID_FIELD_DESCRIPTION_LEN);
-    return descriptionBuffer.constData();
+    return descriptionBuffer;
 }
 
 void RemoteIDManager::_sendOperatorID()

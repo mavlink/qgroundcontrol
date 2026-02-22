@@ -82,6 +82,8 @@ public:
     int receivedMavCommandCount(MAV_CMD command) const { return _receivedMavCommandCountMap.value(command, 0); }
     int receivedMavCommandCount(MAV_CMD command, int compId) const { return _receivedMavCommandByCompCountMap.value(command).value(compId, 0); }
     int receivedRequestMessageCount(int compId, int messageId) const { return _receivedRequestMessageByCompAndMsgCountMap.value(compId).value(messageId, 0); }
+    void clearReceivedRequestMessageCounts() { _receivedRequestMessageCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
+    int receivedRequestMessageCount(uint32_t messageId) const { return _receivedRequestMessageCountMap.value(messageId, 0); }
     void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); }
     int receivedMavlinkMessageCount(uint32_t messageId) const { return _receivedMavlinkMessageCountMap.value(messageId, 0); }
 
@@ -273,14 +275,26 @@ private:
     int _currentParamRequestListParamIndex = -1;        ///< Current parameter index for param request list workflow
     QList<int> _paramRequestListComponentIds;           ///< Cached component IDs for param list iteration (avoids repeated keys() calls)
     QStringList _paramRequestListParamNames;            ///< Cached param names for current component (avoids repeated keys() calls)
+    /// Protects _paramRequestListComponentIds and _paramRequestListParamNames from race conditions between:
+    ///   - Main thread: _handleParamRequestList() modifying cache on incoming MAV_CMD_PARAM_REQUEST_LIST
+    ///   - Worker thread: _paramRequestListWorker() reading cache every 2ms (500Hz)
+    QMutex _paramRequestListMutex;
 
     // Mavlink standard modes worker information
     int _availableModesWorkerNextModeIndex = 0;         ///< 0: not active, +index: next mode the send in sequence, -index: send a single mode (indices are 1-based)
+    /// Protects _availableModesWorkerNextModeIndex from check-then-set and read-modify-write races:
+    ///   - Main thread: _handleRequestMessageAvailableModes() checking/starting/stopping worker
+    ///   - Worker thread: _availableModesWorker() incrementing index every 2ms (500Hz)
+    QMutex _availableModesWorkerMutex;
     uint8_t _availableModesMonitorSeqNumber = 0;        ///< Sequence number for the next available mode message to send
 
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
+    /// Protects log download state from race conditions between:
+    ///   - Main thread: _handleLogRequestData() writing offset/count when new request arrives
+    ///   - Worker thread: _logDownloadWorker() reading/modifying offset/remaining every 2ms (500Hz)
+    QMutex _logDownloadMutex;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
     ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
@@ -290,6 +304,7 @@ private:
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<MAV_CMD, QMap<int, int>> _receivedMavCommandByCompCountMap;
+    QMap<uint32_t, int> _receivedRequestMessageCountMap;
     QMap<int, QMap<int, int>> _receivedRequestMessageByCompAndMsgCountMap;
     QMap<uint32_t, int> _receivedMavlinkMessageCountMap;
     QMap<int, QMap<QString, QVariant>> _mapParamName2Value;

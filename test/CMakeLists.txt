@@ -286,6 +286,7 @@ add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle SERIAL)
 add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
 add_qgc_test(InitialConnectTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(InitialConnectPeripheralStartupTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(RequestMessageTest LABELS Integration Vehicle RESOURCE_LOCK MockLink TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(RequestMetaDataTypeStateMachineTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
