@@ -54,7 +54,7 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
         { _takeoffFlightMode      , APMPlaneMode::TAKEOFF       , true , true },
         { _avoidADSBFlightMode    , APMPlaneMode::AVOID_ADSB    , true , true },
         { _guidedFlightMode       , APMPlaneMode::GUIDED        , true , true },
-        { _initializingFlightMode , APMPlaneMode::INITIALIZING  , true , true },
+        { _initializingFlightMode , APMPlaneMode::INITIALIZING  , false, true },
         { _qStabilizeFlightMode   , APMPlaneMode::QSTABILIZE    , true , true },
         { _qHoverFlightMode       , APMPlaneMode::QHOVER        , true , true },
         { _qLoiterFlightMode      , APMPlaneMode::QLOITER       , true , true },
