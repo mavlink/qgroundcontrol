@@ -5,6 +5,9 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        AM32EepromFactGroupListModel.cc
+        AM32EepromSchema.cc
+        AM32EepromSchema.h
         BatteryFactGroupListModel.cc
         BatteryFactGroupListModel.h
         EscStatusFactGroupListModel.cc
@@ -51,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 # Fact Group Definition Resources
 # ----------------------------------------------------------------------------
 set(JSON_FILES
+    AM32EepromFact.json
     RPMFact.json
     TemperatureFact.json
     GPSFact.json
@@ -80,6 +84,14 @@ set_source_files_properties(LocalPositionFact.json PROPERTIES QT_RESOURCE_ALIAS 
 qt_add_resources(${CMAKE_PROJECT_NAME} json_vehicle_fact_group_alias
     PREFIX "/json/Vehicle"
     FILES LocalPositionFact.json
+)
+
+# ----------------------------------------------------------------------------
+# AM32 EEPROM Schema (built-in fallback for offline use)
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} am32_eeprom_schema
+    PREFIX "/AM32"
+    FILES eeprom.json
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
