@@ -184,7 +184,7 @@ Item {
                     Layout.fillWidth:   true
                     text:               qsTr("Tilt 90")
                     onClicked: {
-                        gimbalController.sendPitchBodyYaw(-90, 0)
+                        gimbalController.tilt90Gimbal()
                         mainWindow.closeIndicatorDrawer()
                     }
                 }
@@ -302,6 +302,12 @@ Item {
                     Layout.fillWidth:   true
                     text:               qsTr("Show Acquire/Release control button")
                     fact:               _gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Preserve yaw lock status on tilt 90 and center commands, don't force yaw follow")
+                    fact:               _gimbalControllerSettings.preserveYawLockOnPositionCommands
                 }
             }
         }
