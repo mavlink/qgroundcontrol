@@ -32,6 +32,129 @@
     "default":     ""
 },
 {
+    "name":             "httpUrl",
+    "shortDesc": "HTTP Video URL",
+    "longDesc":  "HTTP/HTTPS URL for MJPEG video stream. Format: http://host:port/path (e.g., http://192.168.1.100:5077/video_feed for PixEagle, or http://camera-ip/mjpeg for IP cameras).",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "httpTimeout",
+    "shortDesc": "HTTP Stream Timeout",
+    "longDesc":  "Connection timeout for HTTP video streams in seconds.",
+    "type":             "uint32",
+    "min":              5,
+    "max":              60,
+    "units":            "s",
+    "default":     10
+},
+{
+    "name":             "httpRetryAttempts",
+    "shortDesc": "HTTP Retry Attempts",
+    "longDesc":  "Number of automatic retry attempts when HTTP stream connection fails.",
+    "type":             "uint32",
+    "min":              0,
+    "max":              10,
+    "default":     3
+},
+{
+    "name":             "httpBufferSize",
+    "shortDesc": "HTTP Buffer Size",
+    "longDesc":  "Size of HTTP read buffer in bytes. Larger values may improve throughput on high-bandwidth connections.",
+    "type":             "uint32",
+    "min":              1024,
+    "max":              1048576,
+    "units":            "bytes",
+    "default":     32768
+},
+{
+    "name":             "httpKeepAlive",
+    "shortDesc": "HTTP Keep-Alive",
+    "longDesc":  "Enable HTTP keep-alive for persistent connections. Recommended for better performance.",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "httpUserAgent",
+    "shortDesc": "HTTP User Agent",
+    "longDesc":  "User-Agent string sent with HTTP requests. Used for server-side logging and identification.",
+    "type":             "string",
+    "default":     "QGroundControl/4.x"
+},
+{
+    "name":             "websocketUrl",
+    "shortDesc": "WebSocket Video URL",
+    "longDesc":  "WebSocket URL for video stream. Format: ws://host:port/path (e.g., ws://192.168.1.100:5077/ws/video_feed for PixEagle).",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "websocketTimeout",
+    "shortDesc": "WebSocket Timeout",
+    "longDesc":  "Connection timeout for WebSocket video streams in seconds.",
+    "type":             "uint32",
+    "min":              5,
+    "max":              60,
+    "units":            "s",
+    "default":     10
+},
+{
+    "name":             "websocketReconnectDelay",
+    "shortDesc": "WebSocket Reconnect Delay",
+    "longDesc":  "Delay in milliseconds before attempting to reconnect after WebSocket disconnection.",
+    "type":             "uint32",
+    "min":              500,
+    "max":              10000,
+    "units":            "ms",
+    "default":     2000
+},
+{
+    "name":             "websocketHeartbeat",
+    "shortDesc": "WebSocket Heartbeat Interval",
+    "longDesc":  "Interval in milliseconds for sending heartbeat/ping messages to keep WebSocket connection alive.",
+    "type":             "uint32",
+    "min":              1000,
+    "max":              30000,
+    "units":            "ms",
+    "default":     5000
+},
+{
+    "name":             "adaptiveQuality",
+    "shortDesc": "Enable Adaptive Quality",
+    "longDesc":  "Automatically adjust video quality based on network conditions. Only applies to WebSocket streams.",
+    "type":             "bool",
+    "default":     true
+},
+{
+    "name":             "minQuality",
+    "shortDesc": "Minimum Video Quality",
+    "longDesc":  "Minimum JPEG quality percentage for adaptive quality control.",
+    "type":             "uint32",
+    "min":              1,
+    "max":              100,
+    "units":            "%",
+    "default":     60
+},
+{
+    "name":             "maxQuality",
+    "shortDesc": "Maximum Video Quality",
+    "longDesc":  "Maximum JPEG quality percentage for adaptive quality control.",
+    "type":             "uint32",
+    "min":              1,
+    "max":              100,
+    "units":            "%",
+    "default":     95
+},
+{
+    "name":             "websocketBufferFrames",
+    "shortDesc": "WebSocket Buffer Frames",
+    "longDesc":  "Number of frames to buffer in WebSocket receive queue. Lower values reduce latency, higher values improve stability.",
+    "type":             "uint32",
+    "min":              1,
+    "max":              10,
+    "default":     3
+},
+{
     "name":             "videoSavePath",
     "shortDesc": "Video save directory",
     "longDesc":  "Directory to save videos to.",

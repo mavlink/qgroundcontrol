@@ -18,6 +18,8 @@ SettingsPage {
     property bool   _isRTSP:                    _isStreamSource && (_videoSource === _videoSettings.rtspVideoSource)
     property bool   _isTCP:                     _isStreamSource && (_videoSource === _videoSettings.tcpVideoSource)
     property bool   _isMPEGTS:                  _isStreamSource && (_videoSource === _videoSettings.mpegtsVideoSource)
+    property bool   _isHTTP:                    _isStreamSource && (_videoSource === _videoSettings.httpVideoSource)
+    property bool   _isWebSocket:               _isStreamSource && (_videoSource === _videoSettings.websocketVideoSource)
     property bool   _videoAutoStreamConfig:     _videoManager.autoStreamConfigured
     property bool   _videoSourceDisabled:       _videoSource === _videoSettings.disabledVideoSource
     property real   _urlFieldWidth:             ScreenTools.defaultFontPixelWidth * 40
@@ -41,7 +43,7 @@ SettingsPage {
     SettingsGroupLayout {
         Layout.fillWidth:   true
         heading:            qsTr("Connection")
-        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP | _requiresUDPUrl)
+        visible:            !_videoSourceDisabled && !_videoAutoStreamConfig && (_isTCP || _isRTSP || _requiresUDPUrl || _isHTTP || _isWebSocket)
 
         LabelledFactTextField {
             Layout.fillWidth:           true
@@ -65,6 +67,70 @@ SettingsPage {
             label:                      qsTr("UDP URL")
             fact:                       _videoSettings.udpUrl
             visible:                    _requiresUDPUrl && _videoSettings.udpUrl.visible
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("HTTP URL")
+            fact:                       _videoSettings.httpUrl
+            visible:                    _isHTTP
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:           true
+            textFieldPreferredWidth:    _urlFieldWidth
+            label:                      qsTr("WebSocket URL")
+            fact:                       _videoSettings.websocketUrl
+            visible:                    _isWebSocket
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
+        heading:            qsTr("HTTP Stream Settings")
+        visible:            _isHTTP
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Connection Timeout")
+            fact:               _videoSettings.httpTimeout
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Retry Attempts")
+            fact:               _videoSettings.httpRetryAttempts
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Keep-Alive")
+            fact:               _videoSettings.httpKeepAlive
+        }
+    }
+
+    SettingsGroupLayout {
+        Layout.fillWidth:   true
+        heading:            qsTr("WebSocket Stream Settings")
+        visible:            _isWebSocket
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Connection Timeout")
+            fact:               _videoSettings.websocketTimeout
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Reconnect Delay")
+            fact:               _videoSettings.websocketReconnectDelay
+        }
+
+        LabelledFactTextField {
+            Layout.fillWidth:   true
+            label:              qsTr("Heartbeat Interval")
+            fact:               _videoSettings.websocketHeartbeat
         }
     }
 

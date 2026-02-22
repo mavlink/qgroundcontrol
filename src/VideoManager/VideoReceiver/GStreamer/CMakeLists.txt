@@ -51,6 +51,37 @@ if(TARGET gstqml6gl)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
 
     # ============================================================================
+    # GStreamer App Support (for WebSocket video via appsrc)
+    # Uses pkg_check_modules directly instead of FindGStreamer.cmake component
+    # to avoid IMPORTED target directory-scope visibility issues with autogen.
+    # ============================================================================
+
+    find_package(PkgConfig QUIET)
+    if(PKG_CONFIG_FOUND)
+        pkg_check_modules(GSTREAMER_APP QUIET IMPORTED_TARGET gstreamer-app-1.0)
+    endif()
+    if(TARGET PkgConfig::GSTREAMER_APP)
+        set_target_properties(PkgConfig::GSTREAMER_APP PROPERTIES IMPORTED_GLOBAL TRUE)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE PkgConfig::GSTREAMER_APP)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_APP_AVAILABLE)
+
+        target_sources(${CMAKE_PROJECT_NAME}
+            PRIVATE
+                QGCWebSocketVideoSource.cc
+                QGCWebSocketVideoSource.h
+        )
+
+        find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
+            COMPONENTS WebSockets
+        )
+        if(TARGET Qt6::WebSockets)
+            target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::WebSockets)
+        else()
+            message(WARNING "Qt6::WebSockets not found - WebSocket video streaming will not be available")
+        endif()
+    endif()
+
+    # ============================================================================
     # Platform-Specific GStreamer Installation
     # ============================================================================
 
