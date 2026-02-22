@@ -1,6 +1,10 @@
 #include "LogDownloadController.h"
 #include "AppSettings.h"
 #include "LogEntry.h"
+
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+#include "FTPManager.h"
+#endif
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
@@ -11,6 +15,7 @@
 #include "Vehicle.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
@@ -55,6 +60,34 @@ void LogDownloadController::_downloadToDirectory(const QString &dir)
     if (!_downloadPath.endsWith(QDir::separator())) {
         _downloadPath += QDir::separator();
     }
+
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+    if (_useMavftp) {
+        // Build queue of selected entries that have FTP paths
+        _ftpDownloadQueue.clear();
+        const int numLogs = _logEntriesModel->count();
+        for (int i = 0; i < numLogs; i++) {
+            QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(i);
+            if (entry && entry->selected() && !entry->ftpPath().isEmpty()) {
+                entry->setStatus(tr("Waiting"));
+                _ftpDownloadQueue.enqueue(entry);
+            }
+        }
+
+        if (_ftpDownloadQueue.isEmpty()) {
+            qCWarning(LogDownloadControllerLog) << "MAVFTP: no selected logs have FTP paths for download";
+            return;
+        }
+
+        qCDebug(LogDownloadControllerLog) << "MAVFTP: queued" << _ftpDownloadQueue.size() << "logs for download to" << _downloadPath;
+        _setDownloading(true);
+
+        // Start the first download
+        QGCLogEntry *first = _ftpDownloadQueue.dequeue();
+        _downloadLogMavftp(first);
+        return;
+    }
+#endif
 
     QGCLogEntry *const log = _getNextSelected();
     if (log) {
@@ -134,6 +167,20 @@ void LogDownloadController::_setActiveVehicle(Vehicle *vehicle)
         _logEntriesModel->clearAndDeleteContents();
         (void) disconnect(_vehicle, &Vehicle::logEntry, this, &LogDownloadController::_logEntry);
         (void) disconnect(_vehicle, &Vehicle::logData,  this, &LogDownloadController::_logData);
+
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+        // Disconnect MAVFTP signals and reset state
+        FTPManager *ftp = _vehicle->ftpManager();
+        (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &LogDownloadController::_mavftpListDirComplete);
+        (void) disconnect(ftp, &FTPManager::downloadComplete, this, &LogDownloadController::_ftpDownloadComplete);
+        (void) disconnect(ftp, &FTPManager::commandProgress, this, &LogDownloadController::_ftpDownloadProgress);
+        _useMavftp = false;
+        _mavftpListState = MavftpIdle;
+        _mavftpDirsToList.clear();
+        _mavftpLogIdCounter = 0;
+        _ftpDownloadQueue.clear();
+        _ftpCurrentDownloadEntry = nullptr;
+#endif
     }
 
     _vehicle = vehicle;
@@ -427,6 +474,23 @@ bool LogDownloadController::_prepareLogDownload()
 void LogDownloadController::refresh()
 {
     _logEntriesModel->clearAndDeleteContents();
+
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+    if (_vehicle
+        && _vehicle->px4Firmware()
+        && _vehicle->capabilitiesKnown()
+        && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP)) {
+        _useMavftp = true;
+        qCDebug(LogDownloadControllerLog) << "refresh: using MAVFTP (px4:" << _vehicle->px4Firmware()
+            << "capsKnown:" << _vehicle->capabilitiesKnown()
+            << "ftpCap:" << bool(_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP) << ")";
+        _requestLogListMavftp();
+        return;
+    }
+    _useMavftp = false;
+#endif
+
+    qCDebug(LogDownloadControllerLog) << "refresh: using legacy LOG_REQUEST protocol";
     _requestLogList(0, 0xffff);
 }
 
@@ -449,11 +513,42 @@ QGCLogEntry *LogDownloadController::_getNextSelected() const
 
 void LogDownloadController::cancel()
 {
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+    if (_useMavftp) {
+        qCDebug(LogDownloadControllerLog) << "cancel: mode=MAVFTP";
+
+        if (!_vehicle) {
+            return;
+        }
+
+        if (_requestingLogEntries) {
+            _vehicle->ftpManager()->cancelListDirectory();
+            _mavftpDirsToList.clear();
+            _mavftpListState = MavftpIdle;
+            _receivedAllEntries();
+        }
+
+        if (_downloadingLogs) {
+            _vehicle->ftpManager()->cancelDownload();
+            if (_ftpCurrentDownloadEntry) {
+                _ftpCurrentDownloadEntry->setStatus(tr("Canceled"));
+                _ftpCurrentDownloadEntry = nullptr;
+            }
+            _ftpDownloadQueue.clear();
+        }
+
+        _resetSelection(true);
+        _setDownloading(false);
+        return;
+    }
+#endif
+
+    qCDebug(LogDownloadControllerLog) << "cancel: mode=legacy";
     _requestLogEnd();
     _receivedAllEntries();
 
     if (_downloadData) {
-        _downloadData->entry->setStatus(QStringLiteral("Canceled"));
+        _downloadData->entry->setStatus(tr("Canceled"));
         if (_downloadData->file.exists()) {
             (void) _downloadData->file.remove();
         }
@@ -491,6 +586,13 @@ void LogDownloadController::eraseAll()
         qCWarning(LogDownloadControllerLog) << "Vehicle Unavailable";
         return;
     }
+
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+    if (_useMavftp) {
+        // TODO: Implement MAVFTP-based log erasure (FTP file removal)
+        qCWarning(LogDownloadControllerLog) << "eraseAll: MAVFTP erase not yet implemented, using legacy LOG_ERASE";
+    }
+#endif
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -630,6 +732,255 @@ void LogDownloadController::_setListing(bool active)
         emit requestingListChanged();
     }
 }
+
+#ifdef QGC_MAVFTP_LOG_DOWNLOAD
+
+// --- MAVFTP log listing ---
+
+static constexpr const char *kPx4LogRoot = "/fs/microsd/log";
+
+void LogDownloadController::_requestLogListMavftp()
+{
+    if (!_vehicle) {
+        qCWarning(LogDownloadControllerLog) << "Vehicle unavailable for MAVFTP listing";
+        return;
+    }
+
+    _mavftpDirsToList.clear();
+    _mavftpLogIdCounter = 0;
+    _mavftpListState = MavftpListingRoot;
+
+    FTPManager *ftp = _vehicle->ftpManager();
+    (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &LogDownloadController::_mavftpListDirComplete);
+    (void) connect(ftp, &FTPManager::listDirectoryComplete, this, &LogDownloadController::_mavftpListDirComplete);
+
+    qCDebug(LogDownloadControllerLog) << "MAVFTP: listing root" << kPx4LogRoot;
+    _setListing(true);
+
+    if (!ftp->listDirectory(MAV_COMP_ID_AUTOPILOT1, QString(kPx4LogRoot))) {
+        qCWarning(LogDownloadControllerLog) << "MAVFTP: failed to start root listing";
+        _mavftpListState = MavftpIdle;
+        _receivedAllEntries();
+    }
+}
+
+void LogDownloadController::_mavftpListDirComplete(const QStringList &dirList, const QString &errorMsg)
+{
+    if (!errorMsg.isEmpty()) {
+        qCWarning(LogDownloadControllerLog) << "MAVFTP listing error:" << errorMsg;
+        _mavftpListState = MavftpIdle;
+        _receivedAllEntries();
+        return;
+    }
+
+    if (_mavftpListState == MavftpListingRoot) {
+        // Root listing: collect date/session subdirectories
+        for (const QString &entry : dirList) {
+            if (entry.startsWith(QLatin1Char('D'))) {
+                const QString dirName = entry.mid(1);
+                if (!dirName.isEmpty()) {
+                    _mavftpDirsToList.append(dirName);
+                }
+            }
+        }
+
+        // Sort directories so logs appear in chronological order
+        _mavftpDirsToList.sort();
+        qCDebug(LogDownloadControllerLog) << "MAVFTP: root listing found" << _mavftpDirsToList.size() << "subdirectories";
+
+        _mavftpListState = MavftpListingSubdir;
+        _listNextMavftpSubdir();
+    } else {
+        // Subdirectory listing: parse file entries
+        const QString currentDir = _mavftpDirsToList.isEmpty() ? QString() : _mavftpDirsToList.first();
+
+        // Parse date from directory name
+        QDate dirDate = QDate::fromString(currentDir, QStringLiteral("yyyy-MM-dd"));
+        uint logsFoundInDir = 0;
+
+        for (const QString &entry : dirList) {
+            if (entry.startsWith(QLatin1Char('F'))) {
+                const QString fileInfo = entry.mid(1);
+                const int tabIdx = fileInfo.indexOf(QLatin1Char('\t'));
+                if (tabIdx < 0) {
+                    continue;
+                }
+
+                const QString fileName = fileInfo.left(tabIdx);
+                const QString sizeStr = fileInfo.mid(tabIdx + 1);
+
+                if (!fileName.endsWith(QStringLiteral(".ulg"), Qt::CaseInsensitive)) {
+                    continue;
+                }
+
+                bool sizeOk = false;
+                const uint fileSize = sizeStr.toUInt(&sizeOk);
+                if (!sizeOk) {
+                    continue;
+                }
+
+                // Parse time from filename (HH_MM_SS.ulg)
+                QDateTime dateTime;
+                if (dirDate.isValid()) {
+                    const QString baseName = fileName.left(fileName.lastIndexOf(QLatin1Char('.')));
+                    const QTime fileTime = QTime::fromString(baseName, QStringLiteral("HH_mm_ss"));
+                    if (fileTime.isValid()) {
+                        dateTime = QDateTime(dirDate, fileTime, QTimeZone::UTC);
+                    } else {
+                        dateTime = QDateTime(dirDate, QTime(), QTimeZone::UTC);
+                    }
+                }
+
+                const QString ftpPath = QString(kPx4LogRoot) + QStringLiteral("/") + currentDir + QStringLiteral("/") + fileName;
+
+                QGCLogEntry *logEntry = new QGCLogEntry(_mavftpLogIdCounter++, dateTime, fileSize, true, this);
+                logEntry->setFtpPath(ftpPath);
+                logEntry->setStatus(tr("Available"));
+                _logEntriesModel->append(logEntry);
+                logsFoundInDir++;
+            }
+        }
+
+        qCDebug(LogDownloadControllerLog) << "MAVFTP:" << currentDir << "->" << logsFoundInDir << "logs";
+
+        // Remove the directory we just processed and continue
+        if (!_mavftpDirsToList.isEmpty()) {
+            _mavftpDirsToList.removeFirst();
+        }
+
+        _listNextMavftpSubdir();
+    }
+}
+
+void LogDownloadController::_listNextMavftpSubdir()
+{
+    if (_mavftpDirsToList.isEmpty()) {
+        qCDebug(LogDownloadControllerLog) << "MAVFTP: listing complete, found" << _logEntriesModel->count() << "logs";
+        _mavftpListState = MavftpIdle;
+        _receivedAllEntries();
+        return;
+    }
+
+    const QString subdir = _mavftpDirsToList.first();
+    const QString path = QString(kPx4LogRoot) + QStringLiteral("/") + subdir;
+
+    qCDebug(LogDownloadControllerLog) << "MAVFTP: listing subdir" << path;
+
+    if (!_vehicle->ftpManager()->listDirectory(MAV_COMP_ID_AUTOPILOT1, path)) {
+        qCWarning(LogDownloadControllerLog) << "MAVFTP: failed to list subdir" << path;
+        _mavftpDirsToList.removeFirst();
+        _listNextMavftpSubdir();
+    }
+}
+
+// --- MAVFTP log download ---
+
+void LogDownloadController::_downloadLogMavftp(QGCLogEntry *entry)
+{
+    if (!entry || !_vehicle) {
+        return;
+    }
+
+    entry->setSelected(false);
+    emit selectionChanged();
+
+    _ftpCurrentDownloadEntry = entry;
+    _ftpDownloadBytesAtLastUpdate = 0;
+    _ftpDownloadRateAvg = 0.;
+    _ftpDownloadElapsed.start();
+
+    entry->setStatus(tr("Downloading"));
+
+    // Build local filename
+    QString localFilename;
+    if (entry->time().isValid() && entry->time().date().year() >= 2010) {
+        localFilename = entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss")) + QStringLiteral(".ulg");
+    } else {
+        localFilename = QStringLiteral("log_") + QString::number(entry->id()) + QStringLiteral(".ulg");
+    }
+
+    // Handle duplicate filenames
+    if (QFile::exists(_downloadPath + localFilename)) {
+        const QStringList parts = localFilename.split(QLatin1Char('.'));
+        uint numDups = 0;
+        do {
+            numDups++;
+            localFilename = parts[0] + QStringLiteral("_") + QString::number(numDups) + QStringLiteral(".") + parts[1];
+        } while (QFile::exists(_downloadPath + localFilename));
+    }
+
+    FTPManager *ftp = _vehicle->ftpManager();
+    (void) disconnect(ftp, &FTPManager::downloadComplete, this, &LogDownloadController::_ftpDownloadComplete);
+    (void) disconnect(ftp, &FTPManager::commandProgress, this, &LogDownloadController::_ftpDownloadProgress);
+    (void) connect(ftp, &FTPManager::downloadComplete, this, &LogDownloadController::_ftpDownloadComplete);
+    (void) connect(ftp, &FTPManager::commandProgress, this, &LogDownloadController::_ftpDownloadProgress);
+
+    qCDebug(LogDownloadControllerLog) << "MAVFTP: downloading" << entry->ftpPath() << "to" << _downloadPath + localFilename;
+
+    if (!ftp->download(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, localFilename, true)) {
+        qCWarning(LogDownloadControllerLog) << "MAVFTP: failed to start download for" << entry->ftpPath();
+        entry->setStatus(tr("Error"));
+        _ftpCurrentDownloadEntry = nullptr;
+
+        // Try next in queue
+        if (!_ftpDownloadQueue.isEmpty()) {
+            _downloadLogMavftp(_ftpDownloadQueue.dequeue());
+        } else {
+            _setDownloading(false);
+        }
+    }
+}
+
+void LogDownloadController::_ftpDownloadComplete(const QString &file, const QString &errorMsg)
+{
+    if (!_ftpCurrentDownloadEntry) {
+        return;
+    }
+
+    if (errorMsg.isEmpty()) {
+        _ftpCurrentDownloadEntry->setStatus(tr("Downloaded"));
+        qCDebug(LogDownloadControllerLog) << "MAVFTP: download complete" << file;
+    } else {
+        _ftpCurrentDownloadEntry->setStatus(tr("Error"));
+        qCWarning(LogDownloadControllerLog) << "MAVFTP: download error:" << errorMsg;
+    }
+
+    _ftpCurrentDownloadEntry = nullptr;
+
+    // Start next queued download
+    if (!_ftpDownloadQueue.isEmpty()) {
+        _downloadLogMavftp(_ftpDownloadQueue.dequeue());
+    } else {
+        _setDownloading(false);
+    }
+}
+
+void LogDownloadController::_ftpDownloadProgress(float value)
+{
+    if (!_ftpCurrentDownloadEntry) {
+        return;
+    }
+
+    if (_ftpDownloadElapsed.elapsed() < kGUIRateMs) {
+        return;
+    }
+
+    const size_t totalBytes = static_cast<size_t>(static_cast<qreal>(_ftpCurrentDownloadEntry->size()) * static_cast<qreal>(value));
+    const size_t bytesSinceLastUpdate = totalBytes - _ftpDownloadBytesAtLastUpdate;
+    const qreal elapsedSec = _ftpDownloadElapsed.elapsed() / 1000.0;
+    const qreal rate = (elapsedSec > 0) ? (bytesSinceLastUpdate / elapsedSec) : 0;
+    _ftpDownloadRateAvg = (_ftpDownloadRateAvg * 0.95) + (rate * 0.05);
+    _ftpDownloadBytesAtLastUpdate = totalBytes;
+    _ftpDownloadElapsed.start();
+
+    const QString status = QStringLiteral("%1 (%2/s)").arg(
+        qgcApp()->bigSizeToString(totalBytes),
+        qgcApp()->bigSizeToString(_ftpDownloadRateAvg));
+
+    _ftpCurrentDownloadEntry->setStatus(status);
+}
+
+#endif // QGC_MAVFTP_LOG_DOWNLOAD
 
 void LogDownloadController::setCompressLogs(bool compress)
 {
