@@ -225,99 +225,71 @@ void LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, c
         return;
     }
 
-    if ((ofs % MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN) != 0) {
-        qCWarning(LogDownloadControllerLog) << "Ignored misaligned incoming packet @" << ofs;
+    if (ofs > _downloadData->entry->size()) {
+        qCWarning(LogDownloadControllerLog) << "Received log offset greater than file size";
         return;
     }
 
-    bool result = false;
-    if (ofs <= _downloadData->entry->size()) {
-        const uint32_t chunk = ofs / LogDownloadData::kChunkSize;
-        // qCDebug(LogDownloadControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
-        if (chunk != _downloadData->current_chunk) {
-            qCWarning(LogDownloadControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
-            return;
-        }
-
-        const uint16_t bin = (ofs - (chunk * LogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
-        if (bin >= _downloadData->chunk_table.size()) {
-            qCWarning(LogDownloadControllerLog) << "Out of range bin received";
-        } else {
-            _downloadData->chunk_table.setBit(bin);
-        }
-
-        if (_downloadData->file.pos() != ofs) {
-            if (!_downloadData->file.seek(ofs)) {
-                qCWarning(LogDownloadControllerLog) << "Error while seeking log file offset";
-                return;
-            }
-        }
-
-        if (_downloadData->file.write(reinterpret_cast<const char*>(data), count)) {
-            _downloadData->written += count;
-            _downloadData->rate_bytes += count;
-            _updateDataRate();
-
-            result = true;
-            _retries = 0;
-
-            _timer->start(kTimeOutMs);
-            if (_logComplete()) {
-                _downloadData->entry->setStatus(tr("Downloaded"));
-                _receivedAllData();
-            } else if (_chunkComplete()) {
-                _downloadData->advanceChunk();
-                _requestLogData(_downloadData->ID,
-                                _downloadData->current_chunk * LogDownloadData::kChunkSize,
-                                _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-            } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
-                // Likely to be grabbing fragments and got to the end of a gap
-                _findMissingData();
-            }
-        } else {
-            qCWarning(LogDownloadControllerLog) << "Error while writing log file chunk";
-        }
-    } else {
-        qCWarning(LogDownloadControllerLog) << "Received log offset greater than expected";
+    // Detect gap: data arrived at an offset beyond what we expected
+    if (ofs > _downloadData->expectedOffset) {
+        _downloadData->recordGap(_downloadData->expectedOffset, ofs - _downloadData->expectedOffset);
     }
 
-    if (!result) {
+    // Data arriving within a known gap (from a retry request) — shrink/remove the gap
+    if (_downloadData->hasGaps()) {
+        _downloadData->fillGap(ofs, count);
+    }
+
+    if (_downloadData->file.pos() != ofs) {
+        if (!_downloadData->file.seek(ofs)) {
+            qCWarning(LogDownloadControllerLog) << "Error while seeking log file offset";
+            return;
+        }
+    }
+
+    if (!_downloadData->file.write(reinterpret_cast<const char*>(data), count)) {
+        qCWarning(LogDownloadControllerLog) << "Error while writing log file";
         _downloadData->entry->setStatus(tr("Error"));
+        return;
+    }
+
+    _downloadData->written += count;
+    _downloadData->rate_bytes += count;
+
+    // Advance expected offset if this packet extends the frontier
+    const uint32_t dataEnd = ofs + count;
+    if (dataEnd > _downloadData->expectedOffset) {
+        _downloadData->expectedOffset = dataEnd;
+    }
+
+    _updateDataRate();
+    _retries = 0;
+    _timer->start(kTimeOutMs);
+
+    if (_downloadData->isComplete()) {
+        _downloadData->entry->setStatus(tr("Downloaded"));
+        _receivedAllData();
     }
 }
 
 void LogDownloadController::_findMissingData()
 {
-    if (_logComplete()) {
+    if (_downloadData->isComplete()) {
         _receivedAllData();
         return;
     }
 
-    if (_chunkComplete()) {
-        _downloadData->advanceChunk();
-    }
-
     _retries++;
-
     _updateDataRate();
 
-    uint16_t start = 0, end = 0;
-    const int size = _downloadData->chunk_table.size();
-    for (; start < size; start++) {
-        if (!_downloadData->chunk_table.testBit(start)) {
-            break;
-        }
+    if (_downloadData->hasGaps()) {
+        // Re-request the first recorded gap
+        const GapRange &gap = _downloadData->gaps.constFirst();
+        _requestLogData(_downloadData->ID, gap.offset, gap.length, _retries);
+    } else if (_downloadData->expectedOffset < _downloadData->entry->size()) {
+        // Vehicle stopped streaming before end of file — resume from where we left off
+        _requestLogData(_downloadData->ID, _downloadData->expectedOffset, LogDownloadData::kMaxRequestCount, _retries);
     }
-
-    for (end = start; end < size; end++) {
-        if (_downloadData->chunk_table.testBit(end)) {
-            break;
-        }
-    }
-
-    const uint32_t pos = (_downloadData->current_chunk * LogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-    const uint32_t len = (end - start) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
-    _requestLogData(_downloadData->ID, pos, len, _retries);
 }
 
 void LogDownloadController::_updateDataRate()
@@ -350,21 +322,11 @@ void LogDownloadController::_updateDataRate()
     _downloadData->last_status_written = _downloadData->written;
 }
 
-bool LogDownloadController::_chunkComplete() const
-{
-    return _downloadData->chunkEquals(true);
-}
-
-bool LogDownloadController::_logComplete() const
-{
-    return (_chunkComplete() && ((_downloadData->current_chunk + 1) == _downloadData->numChunks()));
-}
-
 void LogDownloadController::_receivedAllData()
 {
     _timer->stop();
     if (_prepareLogDownload()) {
-        _requestLogData(_downloadData->ID, 0, _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+        _requestLogData(_downloadData->ID, 0, LogDownloadData::kMaxRequestCount);
         _timer->start(kTimeOutMs);
     } else {
         _resetSelection();
@@ -419,8 +381,8 @@ bool LogDownloadController::_prepareLogDownload()
     } else if (!_downloadData->file.resize(entry->size())) {
         qCWarning(LogDownloadControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
     } else {
-        _downloadData->current_chunk = 0;
-        _downloadData->chunk_table = QBitArray(_downloadData->chunkBins(), false);
+        _downloadData->expectedOffset = 0;
+        _downloadData->gaps.clear();
         _downloadData->elapsed.start();
         result = true;
     }

@@ -1,14 +1,19 @@
 #pragma once
 
-#include <QtCore/QBitArray>
 #include <QtCore/QDateTime>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkLib.h"
+
+struct GapRange {
+    uint32_t offset = 0;
+    uint32_t length = 0;
+};
 
 class QGCLogEntry;
 
@@ -19,22 +24,24 @@ struct LogDownloadData
     explicit LogDownloadData(QGCLogEntry * const logEntry);
     ~LogDownloadData();
 
-    void advanceChunk();
+    /// Record a gap in received data
+    void recordGap(uint32_t gapOffset, uint32_t gapLength);
 
-    /// The number of MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN bins in the current chunk
-    uint32_t chunkBins() const;
+    /// Remove or shrink a gap as retried data arrives
+    void fillGap(uint32_t dataOffset, uint32_t dataLength);
 
-    /// The number of kChunkSize chunks in the file
-    uint32_t numChunks() const;
+    /// True if there are any recorded gaps
+    bool hasGaps() const { return !gaps.isEmpty(); }
 
-    /// True if all bins in the chunk have been set to val
-    bool chunkEquals(const bool val) const;
+    /// True if all expected data has been received with no gaps
+    bool isComplete() const;
 
     uint ID = 0;
     QGCLogEntry *const entry = nullptr;
 
-    QBitArray chunk_table;
-    uint32_t current_chunk = 0;
+    uint32_t expectedOffset = 0;    ///< Next expected byte offset in the stream
+    QList<GapRange> gaps;           ///< Missing byte ranges detected during download
+
     QFile file;
     QString filename;
     uint written = 0;
@@ -43,8 +50,8 @@ struct LogDownloadData
     qreal rate_avg = 0.;
     QElapsedTimer elapsed;
 
-    static constexpr uint32_t kTableBins = 2048;  // 2048 packets = ~180 KB chunks (4x larger for better throughput)
-    static constexpr uint32_t kChunkSize = kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
+    /// Maximum bytes to request: largest multiple of packet size that fits in uint32_t
+    static constexpr uint32_t kMaxRequestCount = (UINT32_MAX / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
 };
 
 /*===========================================================================*/
