@@ -289,7 +289,7 @@ void RemoteIDManager::_sendSystem()
         // GPS position needs to be valid before checking other stuff
         if (geoPositionInfo.isValid()) {
             // If we dont have altitude for FAA then the GPS data is no good
-            if ((_settings->region()->rawValue().toInt() == Region::FAA) && !(gcsPosition.altitude() >= 0) && _gcsGPSGood) {
+            if ((_settings->region()->rawValue().toInt() == Region::FAA) && qIsNaN(gcsPosition.altitude()) && _gcsGPSGood) {
                 _gcsGPSGood = false;
                 emit gcsGPSGoodChanged();
                 qCDebug(RemoteIDManagerLog) << "GCS GPS data error (no altitude): Altitude data is mandatory for GCS GPS data in FAA regions.";
