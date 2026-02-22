@@ -18,6 +18,8 @@ AnalyzePage {
             width: availableWidth
             height: availableHeight
 
+            Component.onCompleted: LogDownloadController.refresh()
+
             QGCFlickable {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
