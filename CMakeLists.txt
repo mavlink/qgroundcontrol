@@ -169,6 +169,7 @@ find_package(Qt6
     REQUIRED
     COMPONENTS
         Charts
+        Graphs
         Concurrent
         Core
         Core5Compat

@@ -4,6 +4,7 @@
 # ============================================================================
 
 add_subdirectory(GeoTag)
+add_subdirectory(LogAnalysis)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -38,9 +39,12 @@ qt_add_qml_module(AnalyzeViewModule
     RESOURCE_PREFIX /qml
     QML_FILES
         AnalyzeView.qml
+        LogAnalysis/LogAnalysisPage.qml
         LogDownloadPage.qml
         MAVLinkConsolePage.qml
         MAVLinkInspectorPage.qml
         VibrationPage.qml
+    RESOURCES
+        LogAnalysis/LogAnalysisIcon.svg
     NO_PLUGIN
 )
