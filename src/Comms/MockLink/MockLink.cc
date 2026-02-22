@@ -1663,6 +1663,9 @@ void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
     mavlink_msg_log_request_data_decode(&msg, &request);
 
 #ifdef QGC_UNITTEST_BUILD
+    // Track request parameters for test verification
+    _logRequestDataHistory.append({request.ofs, request.count});
+
     if (_logDownloadFilename.isEmpty()) {
         _logDownloadFilename = _createRandomFile(_logDownloadFileSize);
     }
@@ -1678,12 +1681,20 @@ void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
         return;
     }
 
+    // Reset chunk counter if starting a new download from offset 0
+    if (request.ofs == 0) {
+        _logDownloadChunksSent = 0;
+    }
+
     // This will trigger _logDownloadWorker to send data
     _logDownloadCurrentOffset = request.ofs;
-    if (request.ofs + request.count > _logDownloadFileSize) {
-        request.count = _logDownloadFileSize - request.ofs;
+    uint32_t count = request.count;
+    if (request.ofs + count > _logDownloadFileSize) {
+        count = _logDownloadFileSize - request.ofs;
+        qCDebug(MockLinkLog) << "_handleLogRequestData: capping count from" << request.count << "to" << count << "at offset" << request.ofs;
     }
-    _logDownloadBytesRemaining = request.count;
+    _logDownloadBytesRemaining = count;
+    qCDebug(MockLinkLog) << "_handleLogRequestData: offset=" << _logDownloadCurrentOffset << "count=" << count << "remaining=" << _logDownloadBytesRemaining;
 }
 
 void MockLink::_logDownloadWorker()
@@ -1698,26 +1709,74 @@ void MockLink::_logDownloadWorker()
         return;
     }
 
+    const qint64 fileSize = file.size();
     uint8_t buffer[MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN]{};
 
     const qint64 bytesToRead = qMin(_logDownloadBytesRemaining, (uint32_t)MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-    Q_ASSERT(file.seek(_logDownloadCurrentOffset));
-    Q_ASSERT(file.read(reinterpret_cast<char*>(buffer), bytesToRead) == bytesToRead);
+
+    if (_logDownloadCurrentOffset >= static_cast<uint32_t>(fileSize)) {
+        qCWarning(MockLinkLog) << "_logDownloadWorker offset beyond file size:" << _logDownloadCurrentOffset << "fileSize:" << fileSize;
+        file.close();
+        return;
+    }
+
+    if (!file.seek(_logDownloadCurrentOffset)) {
+        qCWarning(MockLinkLog) << "_logDownloadWorker seek failed:" << _logDownloadCurrentOffset;
+        file.close();
+        return;
+    }
+
+    const qint64 actualBytesRead = file.read(reinterpret_cast<char*>(buffer), bytesToRead);
+    if (actualBytesRead != bytesToRead) {
+        qCWarning(MockLinkLog) << "_logDownloadWorker read failed: expected" << bytesToRead << "got" << actualBytesRead << "at offset" << _logDownloadCurrentOffset;
+        file.close();
+        return;
+    }
 
     qCDebug(MockLinkLog) << "_logDownloadWorker" << _logDownloadCurrentOffset << _logDownloadBytesRemaining;
 
-    mavlink_message_t responseMsg{};
-    (void) mavlink_msg_log_data_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        mavlinkChannel(),
-        &responseMsg,
-        _logDownloadLogId,
-        _logDownloadCurrentOffset,
-        bytesToRead,
-        &buffer[0]
-    );
-    respondWithMavlinkMessage(responseMsg);
+    // Increment chunk counter for failure mode tracking
+    _logDownloadChunksSent++;
+
+    // Apply failure mode logic
+    bool shouldSkipChunk = false;
+    if (_logDownloadFailureMode == FailLogDownloadDropEveryNth) {
+        // Skip every Nth chunk to create gaps
+        if (_logDownloadChunksSent % _logDownloadDropEveryNth == 0) {
+            shouldSkipChunk = true;
+            qCDebug(MockLinkLog) << "_logDownloadWorker: Dropping chunk" << _logDownloadChunksSent << "at offset" << _logDownloadCurrentOffset;
+        }
+    } else if (_logDownloadFailureMode == FailLogDownloadDropRange) {
+        // Drop a specific range of chunks to create a multi-chunk gap
+        if (_logDownloadChunksSent >= _logDownloadDropRangeStart && _logDownloadChunksSent <= _logDownloadDropRangeEnd) {
+            shouldSkipChunk = true;
+            qCDebug(MockLinkLog) << "_logDownloadWorker: Dropping chunk" << _logDownloadChunksSent << "(in range" << _logDownloadDropRangeStart << "-" << _logDownloadDropRangeEnd << ") at offset" << _logDownloadCurrentOffset;
+        }
+    } else if (_logDownloadFailureMode == FailLogDownloadStopMidstream) {
+        // Stop after 50% of file is downloaded
+        const uint32_t halfFileSize = _logDownloadFileSize / 2;
+        if (_logDownloadCurrentOffset >= halfFileSize) {
+            qCDebug(MockLinkLog) << "_logDownloadWorker: Stopping midstream at offset" << _logDownloadCurrentOffset;
+            _logDownloadBytesRemaining = 0;
+            file.close();
+            return;
+        }
+    }
+
+    if (!shouldSkipChunk) {
+        mavlink_message_t responseMsg{};
+        (void) mavlink_msg_log_data_pack_chan(
+            _vehicleSystemId,
+            _vehicleComponentId,
+            mavlinkChannel(),
+            &responseMsg,
+            _logDownloadLogId,
+            _logDownloadCurrentOffset,
+            bytesToRead,
+            &buffer[0]
+        );
+        respondWithMavlinkMessage(responseMsg);
+    }
 
     _logDownloadCurrentOffset += bytesToRead;
     _logDownloadBytesRemaining -= bytesToRead;

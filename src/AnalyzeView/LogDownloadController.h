@@ -72,9 +72,7 @@ private:
     bool _getRequestingList() const { return _requestingLogEntries; }
     bool _getDownloadingLogs() const { return _downloadingLogs; }
 
-    bool _chunkComplete() const;
     bool _entriesComplete() const;
-    bool _logComplete() const;
     bool _prepareLogDownload();
     void _downloadToDirectory(const QString &dir);
     void _findMissingData();

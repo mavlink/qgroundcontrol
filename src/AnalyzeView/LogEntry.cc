@@ -2,8 +2,6 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QtMath>
-
 QGC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.QGCLogEntry")
 
 LogDownloadData::LogDownloadData(QGCLogEntry * const logEntry)
@@ -18,27 +16,55 @@ LogDownloadData::~LogDownloadData()
     // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
 }
 
-void LogDownloadData::advanceChunk()
+void LogDownloadData::recordGap(uint32_t gapOffset, uint32_t gapLength)
 {
-    ++current_chunk;
-    chunk_table = QBitArray(chunkBins(), false);
+    if (gapLength == 0) {
+        return;
+    }
+
+    gaps.append({gapOffset, gapLength});
 }
 
-uint32_t LogDownloadData::chunkBins() const
+void LogDownloadData::fillGap(uint32_t dataOffset, uint32_t dataLength)
 {
-    const qreal num = static_cast<qreal>((entry->size() - (current_chunk * kChunkSize))) / static_cast<qreal>(MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-    return qMin(static_cast<uint32_t>(qCeil(num)), kTableBins);
+    for (int i = 0; i < gaps.size(); ) {
+        GapRange &gap = gaps[i];
+        const uint32_t gapEnd = gap.offset + gap.length;
+        const uint32_t dataEnd = dataOffset + dataLength;
+
+        // No overlap
+        if (dataEnd <= gap.offset || dataOffset >= gapEnd) {
+            ++i;
+            continue;
+        }
+
+        if (dataOffset <= gap.offset && dataEnd >= gapEnd) {
+            // Data fully covers this gap — remove it
+            gaps.removeAt(i);
+        } else if (dataOffset <= gap.offset) {
+            // Data covers the beginning of the gap — shrink from left
+            const uint32_t overlap = dataEnd - gap.offset;
+            gap.offset += overlap;
+            gap.length -= overlap;
+            ++i;
+        } else if (dataEnd >= gapEnd) {
+            // Data covers the end of the gap — shrink from right
+            gap.length = dataOffset - gap.offset;
+            ++i;
+        } else {
+            // Data splits the gap into two
+            const uint32_t rightOffset = dataEnd;
+            const uint32_t rightLength = gapEnd - dataEnd;
+            gap.length = dataOffset - gap.offset;
+            gaps.insert(i + 1, {rightOffset, rightLength});
+            i += 2;
+        }
+    }
 }
 
-uint32_t LogDownloadData::numChunks() const
+bool LogDownloadData::isComplete() const
 {
-    const qreal num = static_cast<qreal>(entry->size()) / static_cast<qreal>(kChunkSize);
-    return qCeil(num);
-}
-
-bool LogDownloadData::chunkEquals(const bool val) const
-{
-    return (chunk_table == QBitArray(chunk_table.size(), val));
+    return (expectedOffset >= entry->size()) && gaps.isEmpty();
 }
 
 /*===========================================================================*/
