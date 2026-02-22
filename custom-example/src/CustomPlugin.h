@@ -73,6 +73,8 @@ public:
     void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) final;
     /// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
     QQmlApplicationEngine *createQmlApplicationEngine(QObject *parent) final;
+    /// This allows to add custom items on the toolbar
+    const QVariantList &toolBarIndicators() final;
 
 private slots:
     void _advancedChanged(bool advanced);
@@ -84,6 +86,7 @@ private:
     QQmlApplicationEngine *_qmlEngine = nullptr;
     class CustomOverrideInterceptor *_selector = nullptr;
     QVariantList _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+    QVariantList _toolBarIndicatorList;
 };
 
 /*===========================================================================*/
