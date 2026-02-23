@@ -13,7 +13,6 @@
 void InitialConnectPeripheralStartupTest::init()
 {
     VehicleTestManualConnect::init();
-    LinkManager::instance()->setConnectionsAllowed();
     MAVLinkProtocol::deleteTempLogFiles();
 }
 
@@ -24,8 +23,7 @@ void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitial
     QSignalSpy activeVehicleSpy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     QVERIFY(activeVehicleSpy.isValid());
 
-    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, true /* enableCamera */, true /* enableGimbal */,
-                                           MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionLost);
+    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, true /* enableCamera */, true /* enableGimbal */);
     QVERIFY(_mockLink);
 
     QVERIFY_SIGNAL_WAIT(activeVehicleSpy, TestTimeout::longMs());
@@ -37,9 +35,6 @@ void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitial
 
     // Test pre-complete behavior only while initial connect is still in progress.
     QVERIFY2(!_vehicle->isInitialConnectComplete(), "Initial connect completed too quickly for pre-complete assertions");
-
-    _mockLink->clearReceivedMavCommandCounts();
-    _mockLink->clearReceivedRequestMessageCounts();
 
     const QDeadlineTimer preCompleteDeadline(TestTimeout::longMs());
     while (!_vehicle->isInitialConnectComplete() && (initialConnectCompleteSpy.count() == 0)) {

@@ -169,6 +169,8 @@ private:
     void _handleIncomingNSHBytes(const char *bytes, int cBytes);
     /// Handle incoming bytes which are meant to be handled by the mavlink protocol
     void _handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes);
+    /// Updates counters for received mavlink messages and commands
+    void _updateIncomingMessageCounts(const mavlink_message_t &msg);
     void _handleIncomingMavlinkMsg(const mavlink_message_t &msg);
     void _handleHeartBeat(const mavlink_message_t &msg);
     void _handleSetMode(const mavlink_message_t &msg);

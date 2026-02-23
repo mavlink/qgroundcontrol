@@ -627,9 +627,28 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
     }
 }
 
-void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
+void MockLink::_updateIncomingMessageCounts(const mavlink_message_t &msg)
 {
     _receivedMavlinkMessageCountMap[msg.msgid]++;
+
+    // Update command-specific counts if this is a COMMAND_LONG message
+    if (msg.msgid == MAVLINK_MSG_ID_COMMAND_LONG) {
+        mavlink_command_long_t request{};
+        mavlink_msg_command_long_decode(&msg, &request);
+
+        _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
+        _receivedMavCommandByCompCountMap[static_cast<MAV_CMD>(request.command)][request.target_component]++;
+
+        if (request.command == MAV_CMD_REQUEST_MESSAGE) {
+            _receivedRequestMessageCountMap[static_cast<uint32_t>(request.param1)]++;
+            _receivedRequestMessageByCompAndMsgCountMap[request.target_component][static_cast<int>(request.param1)]++;
+        }
+    }
+}
+
+void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
+{
+    _updateIncomingMessageCounts(msg);
 
     if (_missionItemHandler->handleMavlinkMessage(msg)) {
         return;
@@ -1129,12 +1148,6 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     mavlink_command_long_t request{};
     mavlink_msg_command_long_decode(&msg, &request);
 
-    _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
-    _receivedMavCommandByCompCountMap[static_cast<MAV_CMD>(request.command)][request.target_component]++;
-    if (request.command == MAV_CMD_REQUEST_MESSAGE) {
-        _receivedRequestMessageCountMap[static_cast<uint32_t>(request.param1)]++;
-        _receivedRequestMessageByCompAndMsgCountMap[request.target_component][static_cast<int>(request.param1)]++;
-    }
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
     switch (request.command) {
