@@ -54,6 +54,9 @@ signals:
 
 private:
     void _extractMetadata();
+    void _addHierarchyToList(const QString &nodePath,
+                            const QMap<QString, QSet<QString>> &hierarchyNodes,
+                            const QMap<QString, QString> &leafNodes);
 
     bool _loaded = false;
     QString _errorMessage;

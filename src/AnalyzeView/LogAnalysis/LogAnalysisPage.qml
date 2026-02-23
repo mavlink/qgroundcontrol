@@ -3,9 +3,12 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt.labs.qmlmodels
 import QtGraphs
+import QtLocation
+import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 AnalyzePage {
     id:                 root
@@ -19,6 +22,7 @@ AnalyzePage {
 
         onLoadedChanged: {
             treeState.rebuildTreeRows()
+            flightPath.loadFromLog()
 
             if (!logLoader.loaded) {
                 treeState.clearSelection()
@@ -63,28 +67,112 @@ AnalyzePage {
 
         function rebuildTreeRows() {
             const rows = []
+            const topicHierarchy = {}  // "path" -> { label, children }
+            const leafTopics = new Set()  // paths that are actual topics
 
             if (logLoader.loaded) {
-                for (const topicName of logLoader.topicNames) {
-                    const topicObj = logLoader.topic(topicName)
-                    const fieldRows = []
+                // First pass: collect all topics and identify leaf nodes
+                for (const encodedName of logLoader.topicNames) {
+                    const [levelStr, topicPath] = encodedName.split(':')
+                    const level = parseInt(levelStr)
 
-                    if (topicObj) {
-                        for (const fieldName of topicObj.fieldNames) {
-                            fieldRows.push({
-                                label: topicName + roleSep + fieldName,
-                            })
+                    const topicObj = logLoader.topic(topicPath)
+                    if (topicObj && topicObj.fieldNames.length > 0) {
+                        leafTopics.add(topicPath)
+                    }
+                }
+
+                // Second pass: build hierarchy
+                for (const encodedName of logLoader.topicNames) {
+                    const [levelStr, topicPath] = encodedName.split(':')
+                    const level = parseInt(levelStr)
+
+                    if (!topicHierarchy[topicPath]) {
+                        topicHierarchy[topicPath] = {
+                            label: topicPath.split('_').pop(),
+                            children: [],
+                            isLeaf: leafTopics.has(topicPath)
                         }
                     }
+                }
 
-                    rows.push({
-                        label: topicName + roleSep + (topicObj ? topicObj.sampleCount : 0),
-                        rows: fieldRows,
-                    })
+                // Third pass: build tree structure
+                for (const topicPath of Object.keys(topicHierarchy).sort()) {
+                    const parts = topicPath.split('_')
+                    const parentPath = parts.length > 1 ? parts.slice(0, -1).join('_') : null
+
+                    // Treat as root if no parent, or if parent doesn't exist in hierarchy (flattened)
+                    if (!parentPath || !topicHierarchy[parentPath]) {
+                        // Root level node
+                        const treeNode = _buildTreeNode(topicPath, topicHierarchy, leafTopics)
+                        if (treeNode) {
+                            rows.push(treeNode)
+                        }
+                    }
                 }
             }
 
             treeRows = rows
+        }
+
+        function _buildTreeNode(topicPath, topicHierarchy, leafTopics) {
+            const node = topicHierarchy[topicPath]
+            if (!node) return null
+
+            const topicObj = logLoader.topic(topicPath)
+            const isLeaf = leafTopics.has(topicPath)
+
+            // Collect children
+            const childPaths = []
+            for (const othePath of Object.keys(topicHierarchy)) {
+                const otherParts = othePath.split('_')
+                const currentParts = topicPath.split('_')
+
+                // Check if othePath is a direct child of topicPath
+                if (otherParts.length === currentParts.length + 1) {
+                    if (otherParts.slice(0, -1).join('_') === topicPath) {
+                        childPaths.push(othePath)
+                    }
+                }
+            }
+
+            childPaths.sort()
+
+            const children = []
+            for (const childPath of childPaths) {
+                const childNode = _buildTreeNode(childPath, topicHierarchy, leafTopics)
+                if (childNode) {
+                    children.push(childNode)
+                }
+            }
+
+            // Determine label and node info
+            // For leaf topics (actual topics), use full path. For hierarchy nodes, use last component.
+            const displayLabel = isLeaf ? topicPath : topicPath.split('_').pop()
+
+            // If this is a leaf topic, add fields as children
+            if (isLeaf && topicObj) {
+                for (const fieldName of topicObj.fieldNames) {
+                    children.push({
+                        label: fieldName,
+                        topic: topicPath
+                    })
+                }
+
+                // For leaf topics, include sample count in label
+                const fullLabel = displayLabel + roleSep + (topicObj.sampleCount || 0)
+                return {
+                    label: fullLabel,
+                    topic: topicPath,  // Include topic path for leaf nodes
+                    rows: children.length > 0 ? children : undefined
+                }
+            } else {
+                // For hierarchy nodes, just return the group label
+                return {
+                    label: displayLabel,
+                    rows: children.length > 0 ? children : undefined
+                }
+            }
         }
 
         function selectTopic(topicName) {
@@ -143,13 +231,70 @@ AnalyzePage {
             }
 
             const yPadding = (maxY - minY) * 0.05
-            seriesMinX = minX
-            seriesMaxX = maxX
+            seriesMinX = 0
+            seriesMaxX = maxX / 60.0
             seriesMinY = minY - yPadding
             seriesMaxY = maxY + yPadding
         }
 
         property var currentTopic: selectedTopic.length > 0 ? logLoader.topic(selectedTopic) : null
+    }
+
+    QtObject {
+        id: flightPath
+        property var coordinates: []
+        property var boundingBox: null
+
+        function loadFromLog() {
+            coordinates = []
+            boundingBox = null
+
+            if (!logLoader.loaded) {
+                return
+            }
+
+            const posTopic = logLoader.topic("vehicle_global_position")
+            if (!posTopic) {
+                return
+            }
+
+            // Get lat and lon field data
+            const latSeries = posTopic.fieldSeries("lat")
+            const lonSeries = posTopic.fieldSeries("lon")
+
+            if (!latSeries || !lonSeries || latSeries.length === 0) {
+                return
+            }
+
+            const pathCoords = []
+            let minLat = latSeries[0].y
+            let maxLat = minLat
+            let minLon = lonSeries[0].y
+            let maxLon = minLon
+
+            for (let i = 0; i < latSeries.length; i++) {
+                const lat = latSeries[i].y
+                const lon = lonSeries[i].y
+                pathCoords.push(QtPositioning.coordinate(lat, lon))
+
+                if (lat < minLat) minLat = lat
+                if (lat > maxLat) maxLat = lat
+                if (lon < minLon) minLon = lon
+                if (lon > maxLon) maxLon = lon
+            }
+
+            coordinates = pathCoords
+            boundingBox = QtPositioning.rectangle(
+                QtPositioning.coordinate(maxLat, minLon),
+                QtPositioning.coordinate(minLat, maxLon)
+            )
+        }
+
+        function zoomToPath(map) {
+            if (boundingBox && map.mapReady) {
+                map.visibleRegion = boundingBox
+            }
+        }
     }
 
     TreeModel {
@@ -168,18 +313,10 @@ AnalyzePage {
             height:     availableHeight
             spacing:    ScreenTools.defaultFontPixelHeight * 0.5
 
-            // --- File selection row ---
+            // --- Open/Clear buttons (always visible) ---
             RowLayout {
                 Layout.fillWidth: true
                 spacing: ScreenTools.defaultFontPixelWidth
-
-                QGCLabel {
-                    text: logLoader.loaded
-                          ? qsTr("Loaded: %1 topics, %2 parameters").arg(logLoader.topicNames.length).arg(Object.keys(logLoader.parameters).length)
-                          : qsTr("No log loaded")
-                }
-
-                Item { Layout.fillWidth: true }
 
                 QGCButton {
                     text: qsTr("Open Log...")
@@ -200,6 +337,8 @@ AnalyzePage {
                     enabled:    logLoader.loaded
                     onClicked:  logLoader.clear()
                 }
+
+                Item { Layout.fillWidth: true }
             }
 
             // --- Error display ---
@@ -211,63 +350,77 @@ AnalyzePage {
                 wrapMode:           Text.WordWrap
             }
 
-            // --- Main content ---
+            // --- Main content row ---
             RowLayout {
                 Layout.fillWidth:   true
                 Layout.fillHeight:  true
                 spacing:            ScreenTools.defaultFontPixelWidth
                 visible:            logLoader.loaded
 
-                // --- Unified topic/field tree ---
-                Rectangle {
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 35
+                // --- Left column: tree ---
+                ColumnLayout {
+                    Layout.fillWidth:       false
                     Layout.fillHeight:      true
-                    color:                  qgcPal.windowShade
-                    border.color:           qgcPal.groupBorder
-                    border.width:           1
+                    Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 25
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 35
+                    spacing:                ScreenTools.defaultFontPixelHeight * 0.25
 
-                    QGCFlickable {
-                        anchors.fill:       parent
-                        anchors.margins:    1
-                        clip:               true
+                    // --- Unified topic/field tree ---
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        Layout.fillHeight:  true
+                        color:              qgcPal.windowShade
+                        border.color:       qgcPal.groupBorder
+                        border.width:       1
 
-                        TreeView {
-                            id: treeView
-                            anchors.fill: parent
-                            clip: true
-                            model: topicTreeModel
+                        QGCFlickable {
+                            anchors.fill:       parent
+                            anchors.margins:    1
+                            clip:               true
 
-                            delegate: TreeViewDelegate {
-                                readonly property string encodedLabel: (model && model.display !== undefined) ? model.display : ""
-                                readonly property var parts: encodedLabel.split(treeState.roleSep)
-                                readonly property bool isTopicNode: depth === 0
-                                readonly property string topicName: parts.length > 0 ? parts[0] : ""
-                                readonly property string fieldName: (!isTopicNode && parts.length > 1) ? parts[1] : ""
-                                readonly property int sampleCount: (isTopicNode && parts.length > 1) ? Number(parts[1]) : 0
+                            TreeView {
+                                id: treeView
+                                anchors.fill: parent
+                                clip: true
+                                model: topicTreeModel
 
-                                text: isTopicNode
-                                      ? qsTr("%1 (%2)").arg(topicName).arg(sampleCount)
-                                      : fieldName
-                                font.bold: isTopicNode
-                                highlighted: isTopicNode
-                                             ? treeState.selectedTopic === topicName && treeState.selectedField.length === 0
-                                             : treeState.selectedTopic === topicName && treeState.selectedField === fieldName
+                                delegate: TreeViewDelegate {
+                                    readonly property string encodedLabel: (model && model.display !== undefined) ? model.display : ""
+                                    readonly property var parts: encodedLabel.split(treeState.roleSep)
+                                    readonly property string displayText: parts[0]
+                                    readonly property int sampleCount: parts.length > 1 ? Number(parts[1]) : 0
+                                    readonly property string topicPath: (model && model.topic !== undefined) ? model.topic : ""
+                                    readonly property bool isField: topicPath.length > 0 && sampleCount === 0  // Fields have topic path but no sample count
+                                    readonly property bool isTopic: sampleCount > 0  // Topics have sample count
 
-                                onClicked: {
-                                    if (isTopicNode) {
-                                        treeState.selectTopic(topicName)
-                                    } else if (topicName.length > 0 && fieldName.length > 0) {
-                                        treeState.selectField(topicName, fieldName)
-                                    }
-                                }
-
-                                TapHandler {
-                                    onTapped: {
-                                        if (isTopicNode) {
-                                            treeState.selectTopic(topicName)
-                                        } else if (topicName.length > 0 && fieldName.length > 0) {
-                                            treeState.selectField(topicName, fieldName)
+                                    text: {
+                                        if (isTopic) {
+                                            return displayText + " (" + sampleCount + ")"
+                                        } else {
+                                            return displayText
                                         }
+                                    }
+                                    font.bold: depth === 0 || isTopic
+                                    highlighted: {
+                                        if (isField) {
+                                            return treeState.selectedTopic === topicPath && treeState.selectedField === displayText
+                                        } else if (isTopic) {
+                                            return treeState.selectedTopic === topicPath && treeState.selectedField.length === 0
+                                        }
+                                        return false
+                                    }
+                                    leftPadding: depth === 0 ? 0 : ScreenTools.defaultFontPixelWidth * 1.5
+
+                                    onClicked: {
+                                        if (isField) {
+                                            treeState.selectField(topicPath, displayText)
+                                        } else if (isTopic) {
+                                            treeState.selectTopic(topicPath)
+                                        }
+                                    }
+
+                                    TapHandler {
+                                        onTapped: onClicked()
                                     }
                                 }
                             }
@@ -275,10 +428,11 @@ AnalyzePage {
                     }
                 }
 
-                // --- Detail / chart panel ---
+                // --- Right column: chart ---
                 ColumnLayout {
                     Layout.fillWidth:   true
                     Layout.fillHeight:  true
+                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
                     spacing:            ScreenTools.defaultFontPixelHeight * 0.25
 
                     QGCLabel {
@@ -317,8 +471,8 @@ AnalyzePage {
                                 id: xAxis
                                 min: treeState.seriesMinX
                                 max: treeState.seriesMaxX
-                                tickInterval: (treeState.seriesMaxX - treeState.seriesMinX) / 5.0
-                                labelFormat: "%.2f"
+                                tickInterval: 1.0
+                                labelFormat: "%.1f"
                             }
 
                             axisY: ValueAxis {
@@ -346,7 +500,7 @@ AnalyzePage {
                                 }
 
                                 for (let i = 0; i < points.length; i++) {
-                                    fieldSeries.append(points[i].x / 1000000.0, points[i].y)
+                                    fieldSeries.append(points[i].x / 60000000.0, points[i].y)
                                 }
                             }
 
@@ -371,21 +525,31 @@ AnalyzePage {
                         }
                     }
 
-                    // Log info summary
-                    GridLayout {
-                        columns:        2
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth
-                        rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
-                        visible:        logLoader.loaded
+                    // Map display
+                    FlightMap {
+                        id: logMap
+                        Layout.fillWidth:   true
+                        Layout.fillHeight:  true
+                        mapName:            'logAnalysisMap'
 
-                        QGCLabel { text: qsTr("Duration:") }
-                        QGCLabel { text: (logLoader.durationUs / 1000000.0).toFixed(1) + qsTr(" s") }
+                        onMapReadyChanged: {
+                            if (logMap.mapReady) {
+                                flightPath.zoomToPath(logMap)
+                            }
+                        }
 
-                        QGCLabel { text: qsTr("Log messages:") }
-                        QGCLabel { text: logLoader.logMessages.length }
+                        MapPolyline {
+                            line.color: "#e74c3c"
+                            line.width: 2
+                            path: flightPath.coordinates
+                        }
 
-                        QGCLabel { text: qsTr("Dropouts:") }
-                        QGCLabel { text: logLoader.dropoutCount }
+                        Connections {
+                            target: flightPath
+                            function onCoordinatesChanged() {
+                                flightPath.zoomToPath(logMap)
+                            }
+                        }
                     }
                 }
             }

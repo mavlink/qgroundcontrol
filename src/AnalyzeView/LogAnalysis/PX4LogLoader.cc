@@ -141,32 +141,66 @@ void PX4LogLoader::_extractMetadata()
     quint64 earliestTimestamp = std::numeric_limits<quint64>::max();
     quint64 latestTimestamp = 0;
 
+    // Map to track hierarchy nodes: "path" -> set of children
+    QMap<QString, QSet<QString>> hierarchyNodes;
+    // Track leaf nodes (actual topics): "path" -> full key
+    QMap<QString, QString> leafNodes;
+
     for (const auto &[nameAndId, sub] : subscriptions) {
         const QString topicName = QString::fromStdString(nameAndId.name);
         const int multiId = nameAndId.multi_id;
         const QString key = (multiId > 0) ? (topicName + QStringLiteral("/") + QString::number(multiId)) : topicName;
 
+        // Skip topics with no samples
+        if (sub->size() == 0) {
+            continue;
+        }
+
         auto *logTopic = new PX4LogTopic(nameAndId.name, sub, this);
         _topics.insert(key, logTopic);
 
-        if (!_topicNames.contains(key)) {
-            _topicNames.append(key);
+        // Parse topic name into hierarchy
+        QStringList components = topicName.split('_');
+        QString currentPath;
+
+        // Build hierarchy paths
+        for (int i = 0; i < components.size(); ++i) {
+            const QString component = components[i];
+            const QString parentPath = currentPath;
+            currentPath = parentPath.isEmpty() ? component : parentPath + "_" + component;
+
+            if (i < components.size() - 1) {
+                // Intermediate level - add to parent's children
+                hierarchyNodes[parentPath].insert(currentPath);
+            } else {
+                // Leaf node - the actual topic
+                hierarchyNodes[parentPath].insert(currentPath);
+                leafNodes[currentPath] = key;
+            }
         }
 
         // Track log duration from first/last timestamps
-        if (sub->size() > 0) {
-            try {
-                const auto firstTs = (*sub->begin()).at("timestamp").as<uint64_t>();
-                const auto lastTs = (*(sub->end() - 1)).at("timestamp").as<uint64_t>();
-                earliestTimestamp = std::min(earliestTimestamp, firstTs);
-                latestTimestamp = std::max(latestTimestamp, lastTs);
-            } catch (const ulog_cpp::AccessException &) {
-                // Some topics may not have a timestamp field
-            }
+        try {
+            const auto firstTs = (*sub->begin()).at("timestamp").as<uint64_t>();
+            const auto lastTs = (*(sub->end() - 1)).at("timestamp").as<uint64_t>();
+            earliestTimestamp = std::min(earliestTimestamp, firstTs);
+            latestTimestamp = std::max(latestTimestamp, lastTs);
+        } catch (const ulog_cpp::AccessException &) {
+            // Some topics may not have a timestamp field
         }
     }
 
-    _topicNames.sort();
+    // Build sorted topic names preserving hierarchy
+    // Add root-level nodes first
+    QStringList rootNodes;
+    for (const auto &node : hierarchyNodes[""]) {
+        rootNodes.append(node);
+    }
+    rootNodes.sort();
+
+    for (const auto &node : rootNodes) {
+        _addHierarchyToList(node, hierarchyNodes, leafNodes);
+    }
 
     if (latestTimestamp > earliestTimestamp) {
         _durationUs = latestTimestamp - earliestTimestamp;
@@ -217,4 +251,36 @@ void PX4LogLoader::_extractMetadata()
 
     // --- Dropouts ---
     _dropoutCount = static_cast<int>(_dataContainer->dropouts().size());
+}
+
+void PX4LogLoader::_addHierarchyToList(const QString &nodePath,
+                                       const QMap<QString, QSet<QString>> &hierarchyNodes,
+                                       const QMap<QString, QString> &leafNodes)
+{
+    // If this node has only one child, skip this level and go directly to the child
+    // This flattens single-branch hierarchies like battery_status (no battery_foo)
+    if (hierarchyNodes.contains(nodePath)) {
+        const auto &children = hierarchyNodes[nodePath];
+        if (children.size() == 1 && !leafNodes.contains(nodePath)) {
+            // Only skip if this is NOT a leaf node (actual topic)
+            const QString onlyChild = *children.begin();
+            _addHierarchyToList(onlyChild, hierarchyNodes, leafNodes);
+            return;
+        }
+    }
+
+    // Encode hierarchy level in the topic name for QML to parse
+    int level = nodePath.count('_');
+    QString encodedName = QString::number(level) + QStringLiteral(":") + nodePath;
+    _topicNames.append(encodedName);
+
+    // Process children in sorted order
+    if (hierarchyNodes.contains(nodePath)) {
+        QStringList children = hierarchyNodes[nodePath].values();
+        children.sort();
+
+        for (const auto &child : children) {
+            _addHierarchyToList(child, hierarchyNodes, leafNodes);
+        }
+    }
 }
