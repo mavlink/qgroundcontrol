@@ -125,6 +125,7 @@ public:
         FailLogDownloadDropEveryNth,        ///< Drop every Nth chunk (configurable)
         FailLogDownloadStopMidstream,       ///< Stop sending after 50% downloaded
         FailLogDownloadDropRange,           ///< Drop a specific range of chunks (creates multi-chunk gap)
+        FailLogDownloadNoResponse,          ///< Never respond to LOG_REQUEST_DATA
     };
     void setLogDownloadFailureMode(LogDownloadFailureMode_t mode, int nthChunk = 3) {
         _logDownloadFailureMode = mode;

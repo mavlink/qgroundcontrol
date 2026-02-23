@@ -1700,6 +1700,7 @@ void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
 void MockLink::_logDownloadWorker()
 {
     if (_logDownloadBytesRemaining == 0) {
+        _logDownloadFailureMode = FailLogDownloadNone; // Reset failure mode after completion of first request
         return;
     }
 
@@ -1753,14 +1754,19 @@ void MockLink::_logDownloadWorker()
             qCDebug(MockLinkLog) << "_logDownloadWorker: Dropping chunk" << _logDownloadChunksSent << "(in range" << _logDownloadDropRangeStart << "-" << _logDownloadDropRangeEnd << ") at offset" << _logDownloadCurrentOffset;
         }
     } else if (_logDownloadFailureMode == FailLogDownloadStopMidstream) {
-        // Stop after 50% of file is downloaded
+        // Stop when approximately 50% of file remains to be downloaded
         const uint32_t halfFileSize = _logDownloadFileSize / 2;
-        if (_logDownloadCurrentOffset >= halfFileSize) {
-            qCDebug(MockLinkLog) << "_logDownloadWorker: Stopping midstream at offset" << _logDownloadCurrentOffset;
+        if (_logDownloadBytesRemaining <= halfFileSize && _logDownloadBytesRemaining > 0) {
+            qCDebug(MockLinkLog) << "_logDownloadWorker: Stopping midstream at offset" << _logDownloadCurrentOffset << "with" << _logDownloadBytesRemaining << "bytes remaining";
             _logDownloadBytesRemaining = 0;
             file.close();
             return;
         }
+    } else if (_logDownloadFailureMode == FailLogDownloadNoResponse) {
+        // Never respond - silently drop all chunks
+        shouldSkipChunk = true;
+        _logDownloadBytesRemaining = 0;
+        qCDebug(MockLinkLog) << "_logDownloadWorker: No response mode - dropping chunk" << _logDownloadChunksSent << "at offset" << _logDownloadCurrentOffset;
     }
 
     if (!shouldSkipChunk) {

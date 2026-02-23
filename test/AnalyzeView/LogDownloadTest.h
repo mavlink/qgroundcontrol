@@ -12,4 +12,5 @@ private slots:
     void _downloadMultipleGapsTest();
     void _downloadStopMidstreamTest();
     void _downloadEfficientGapRetryTest();
+    void _downloadNoResponseTest();
 };

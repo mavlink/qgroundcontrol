@@ -632,20 +632,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleCameraFeedback(message);
         break;
 #endif
-    case MAVLINK_MSG_ID_LOG_ENTRY:
-    {
-        mavlink_log_entry_t log{};
-        mavlink_msg_log_entry_decode(&message, &log);
-        emit logEntry(log.time_utc, log.size, log.id, log.num_logs, log.last_log_num);
-        break;
-    }
-    case MAVLINK_MSG_ID_LOG_DATA:
-    {
-        mavlink_log_data_t log{};
-        mavlink_msg_log_data_decode(&message, &log);
-        emit logData(log.ofs, log.id, log.count, log.data);
-        break;
-    }
     case MAVLINK_MSG_ID_MESSAGE_INTERVAL:
     {
         _handleMessageInterval(message);

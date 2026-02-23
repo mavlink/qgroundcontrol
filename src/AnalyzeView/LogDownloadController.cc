@@ -14,6 +14,7 @@
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
+QGC_LOGGING_CATEGORY(LogDownloadControllerVerboseLog, "AnalyzeView.LogDownloadController:verbose")
 
 LogDownloadController::LogDownloadController(QObject *parent)
     : QObject(parent)
@@ -132,47 +133,58 @@ void LogDownloadController::_setActiveVehicle(Vehicle *vehicle)
 
     if (_vehicle) {
         _logEntriesModel->clearAndDeleteContents();
-        (void) disconnect(_vehicle, &Vehicle::logEntry, this, &LogDownloadController::_logEntry);
-        (void) disconnect(_vehicle, &Vehicle::logData,  this, &LogDownloadController::_logData);
+        (void) disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &LogDownloadController::_mavlinkMessageReceived);
     }
 
     _vehicle = vehicle;
 
     if (_vehicle) {
-        (void) connect(_vehicle, &Vehicle::logEntry, this, &LogDownloadController::_logEntry);
-        (void) connect(_vehicle, &Vehicle::logData,  this, &LogDownloadController::_logData);
+        (void) connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &LogDownloadController::_mavlinkMessageReceived);
     }
 }
 
-void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num)
+void LogDownloadController::_mavlinkMessageReceived(const mavlink_message_t &message)
 {
-    Q_UNUSED(last_log_num);
+    if (message.msgid == MAVLINK_MSG_ID_LOG_ENTRY) {
+        _handleLogEntry(message);
+    } else if (message.msgid == MAVLINK_MSG_ID_LOG_DATA) {
+        _handleLogData(message);
+    }
+}
+
+void LogDownloadController::_handleLogEntry(const mavlink_message_t &message)
+{
+    mavlink_log_entry_t log{};
+    mavlink_msg_log_entry_decode(&message, &log);
 
     if (!_requestingLogEntries) {
         return;
     }
 
-    if ((_logEntriesModel->count() == 0) && (num_logs > 0)) {
+    qCDebug(LogDownloadControllerVerboseLog) << "LOG_ENTRY: id=" << log.id << "num_logs=" << log.num_logs << "size=" << log.size << "time=" << log.time_utc;
+
+    if ((_logEntriesModel->count() == 0) && (log.num_logs > 0)) {
         if (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
             // APM ID starts at 1
             _apmOffset = 1;
         }
 
-        for (int i = 0; i < num_logs; i++) {
+        for (int i = 0; i < log.num_logs; i++) {
             QGCLogEntry *const entry = new QGCLogEntry(i);
             _logEntriesModel->append(entry);
         }
     }
 
-    if (num_logs > 0) {
-        if ((size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
-            id -= _apmOffset;
+    if (log.num_logs > 0) {
+        if ((log.size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
+            uint16_t id = log.id - _apmOffset;
             if (id < _logEntriesModel->count()) {
                 QGCLogEntry *const entry = _logEntriesModel->value<QGCLogEntry*>(id);
-                entry->setSize(size);
-                entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
+                entry->setSize(log.size);
+                entry->setTime(QDateTime::fromSecsSinceEpoch(log.time_utc));
                 entry->setReceived(true);
                 entry->setStatus(tr("Available"));
+                qCDebug(LogDownloadControllerVerboseLog) << "Updated log entry" << id << "size=" << log.size << "bytes";
             } else {
                 qCWarning(LogDownloadControllerLog) << "Received log entry for out-of-bound index:" << id;
             }
@@ -187,6 +199,77 @@ void LogDownloadController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t
         _receivedAllEntries();
     } else {
         _timer->start(kTimeOutMs);
+    }
+}
+
+void LogDownloadController::_handleLogData(const mavlink_message_t &message)
+{
+    mavlink_log_data_t log{};
+    mavlink_msg_log_data_decode(&message, &log);
+
+    if (!_downloadingLogs || !_downloadData) {
+        return;
+    }
+
+    //qCDebug(LogDownloadControllerVerboseLog) << "LOG_DATA: id=" << log.id << "ofs=" << log.ofs << "count=" << log.count;
+
+    uint16_t id = log.id - _apmOffset;
+    if (_downloadData->ID != id) {
+        qCWarning(LogDownloadControllerLog) << "Received log data for wrong log";
+        return;
+    }
+
+    if (log.ofs > _downloadData->entry->size()) {
+        qCWarning(LogDownloadControllerLog) << "Received log offset greater than file size";
+        return;
+    }
+
+    // Detect gap: data arrived at an offset beyond what we expected
+    if (log.ofs > _downloadData->expectedOffset) {
+        _downloadData->recordGap(_downloadData->expectedOffset, log.ofs - _downloadData->expectedOffset);
+        qCDebug(LogDownloadControllerLog) << "Gap detected: offset=" << _downloadData->expectedOffset << "gap_size=" << (log.ofs - _downloadData->expectedOffset) << "bytes";
+        _downloadingLogs = false;
+        return;
+    }
+
+    // Data arriving within a known gap (from a retry request) — shrink/remove the gap
+    if (_downloadData->hasGaps()) {
+        _downloadData->fillGap(log.ofs, log.count);
+        qCDebug(LogDownloadControllerLog) << "Filling gap at offset=" << log.ofs << "with" << log.count << "bytes";
+    }
+
+    if (_downloadData->file.pos() != log.ofs) {
+        if (!_downloadData->file.seek(log.ofs)) {
+            qCWarning(LogDownloadControllerLog) << "Error while seeking log file offset";
+            return;
+        }
+    }
+
+    if (!_downloadData->file.write(reinterpret_cast<const char*>(log.data), log.count)) {
+        qCWarning(LogDownloadControllerLog) << "Error while writing log file";
+        _downloadData->entry->setStatus(tr("Error"));
+        return;
+    }
+
+    _downloadData->written += log.count;
+    _downloadData->rate_bytes += log.count;
+
+    qCDebug(LogDownloadControllerVerboseLog) << "Progress:" << _downloadData->written << "/" << _downloadData->entry->size() << "bytes";
+
+    // Advance expected offset if this packet extends the frontier
+    const uint32_t dataEnd = log.ofs + log.count;
+    if (dataEnd > _downloadData->expectedOffset) {
+        _downloadData->expectedOffset = dataEnd;
+    }
+
+    _updateDataRate();
+    _retries = 0;
+    _timer->start(kTimeOutMs);
+
+    if (_downloadData->isComplete()) {
+        qCDebug(LogDownloadControllerVerboseLog) << "Log download complete:" << _downloadData->written << "bytes";
+        _downloadData->entry->setStatus(tr("Downloaded"));
+        _receivedAllData();
     }
 }
 
@@ -213,68 +296,10 @@ bool LogDownloadController::_entriesComplete() const
     return true;
 }
 
-void LogDownloadController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data)
-{
-    if (!_downloadingLogs || !_downloadData) {
-        return;
-    }
-
-    id -= _apmOffset;
-    if (_downloadData->ID != id) {
-        qCWarning(LogDownloadControllerLog) << "Received log data for wrong log";
-        return;
-    }
-
-    if (ofs > _downloadData->entry->size()) {
-        qCWarning(LogDownloadControllerLog) << "Received log offset greater than file size";
-        return;
-    }
-
-    // Detect gap: data arrived at an offset beyond what we expected
-    if (ofs > _downloadData->expectedOffset) {
-        _downloadData->recordGap(_downloadData->expectedOffset, ofs - _downloadData->expectedOffset);
-    }
-
-    // Data arriving within a known gap (from a retry request) — shrink/remove the gap
-    if (_downloadData->hasGaps()) {
-        _downloadData->fillGap(ofs, count);
-    }
-
-    if (_downloadData->file.pos() != ofs) {
-        if (!_downloadData->file.seek(ofs)) {
-            qCWarning(LogDownloadControllerLog) << "Error while seeking log file offset";
-            return;
-        }
-    }
-
-    if (!_downloadData->file.write(reinterpret_cast<const char*>(data), count)) {
-        qCWarning(LogDownloadControllerLog) << "Error while writing log file";
-        _downloadData->entry->setStatus(tr("Error"));
-        return;
-    }
-
-    _downloadData->written += count;
-    _downloadData->rate_bytes += count;
-
-    // Advance expected offset if this packet extends the frontier
-    const uint32_t dataEnd = ofs + count;
-    if (dataEnd > _downloadData->expectedOffset) {
-        _downloadData->expectedOffset = dataEnd;
-    }
-
-    _updateDataRate();
-    _retries = 0;
-    _timer->start(kTimeOutMs);
-
-    if (_downloadData->isComplete()) {
-        _downloadData->entry->setStatus(tr("Downloaded"));
-        _receivedAllData();
-    }
-}
-
 void LogDownloadController::_findMissingData()
 {
     if (_downloadData->isComplete()) {
+        qCDebug(LogDownloadControllerLog) << "Download pass complete, all data received";
         _receivedAllData();
         return;
     }
@@ -285,9 +310,12 @@ void LogDownloadController::_findMissingData()
     if (_downloadData->hasGaps()) {
         // Re-request the first recorded gap
         const GapRange &gap = _downloadData->gaps.constFirst();
+        qCDebug(LogDownloadControllerLog) << "Retrying gap:" << "offset=" << gap.offset << "length=" << gap.length << "retry=" << _retries;
         _requestLogData(_downloadData->ID, gap.offset, gap.length, _retries);
     } else if (_downloadData->expectedOffset < _downloadData->entry->size()) {
         // Vehicle stopped streaming before end of file — resume from where we left off
+        const uint32_t remainingBytes = _downloadData->entry->size() - _downloadData->expectedOffset;
+        qCDebug(LogDownloadControllerLog) << "Resuming download:" << "offset=" << _downloadData->expectedOffset << "remaining=" << remainingBytes << "bytes, retry=" << _retries;
         _requestLogData(_downloadData->ID, _downloadData->expectedOffset, LogDownloadData::kMaxRequestCount, _retries);
     }
 }

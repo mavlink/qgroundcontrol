@@ -5,6 +5,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerVerboseLog)
 
 struct LogDownloadData;
 class QGCLogEntry;
@@ -61,8 +62,9 @@ signals:
 
 private slots:
     void _setActiveVehicle(Vehicle *vehicle);
-    void _logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
-    void _logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data);
+    void _mavlinkMessageReceived(const mavlink_message_t &message);
+    void _handleLogEntry(const mavlink_message_t &message);
+    void _handleLogData(const mavlink_message_t &message);
     void _processDownload();
     void _handleCompressionProgress(qreal progress);
     void _handleCompressionFinished(bool success);

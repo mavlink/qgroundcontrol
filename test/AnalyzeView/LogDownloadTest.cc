@@ -221,4 +221,50 @@ void LogDownloadTest::_downloadEfficientGapRetryTest()
     _mockLink->setLogDownloadFailureMode(MockLink::FailLogDownloadNone);
 }
 
+void LogDownloadTest::_downloadNoResponseTest()
+{
+    // Configure MockLink to never respond to LOG_REQUEST_DATA
+    _mockLink->setLogDownloadFailureMode(MockLink::FailLogDownloadNoResponse);
+
+    LogDownloadController* const controller = new LogDownloadController(this);
+    MultiSignalSpy* multiSpyLogDownloadController = new MultiSignalSpy(this);
+    QVERIFY(multiSpyLogDownloadController->init(controller));
+
+    // Refresh to get log list
+    controller->refresh();
+    QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", TestTimeout::longMs()));
+    multiSpyLogDownloadController->clearAllSignals();
+    if (controller->_getRequestingList()) {
+        QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", TestTimeout::longMs()));
+        QCOMPARE(controller->_getRequestingList(), false);
+    }
+    multiSpyLogDownloadController->clearAllSignals();
+
+    // Select and attempt download
+    QmlObjectListModel* const model = controller->_getModel();
+    QVERIFY(model);
+    model->value<QGCLogEntry*>(0)->setSelected(true);
+    const QString downloadTo = QDir::currentPath();
+    controller->download(downloadTo);
+
+    // Wait for download to time out (timeout occurs after log entry times out waiting for data)
+    // The controller should eventually give up and mark the download as failed
+    QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", TestTimeout::longMs() * 3));
+    multiSpyLogDownloadController->clearAllSignals();
+    QCOMPARE(controller->_getDownloadingLogs(), false);
+
+    // Verify no file was created or file is incomplete
+    const QString downloadFile = QDir(downloadTo).filePath("log_0_UnknownDate.ulg");
+    const qint64 sourceFileSize = QFile(_mockLink->logDownloadFile()).size();
+    if (QFile::exists(downloadFile)) {
+        const qint64 downloadedFileSize = QFile(downloadFile).size();
+        // File should be empty or much smaller than the source log (which would indicate timeout)
+        QVERIFY(downloadedFileSize < sourceFileSize);
+        (void)QFile::remove(downloadFile);
+    }
+
+    // Reset failure mode
+    _mockLink->setLogDownloadFailureMode(MockLink::FailLogDownloadNone);
+}
+
 UT_REGISTER_TEST(LogDownloadTest, TestLabel::Integration, TestLabel::AnalyzeView, TestLabel::Vehicle)
