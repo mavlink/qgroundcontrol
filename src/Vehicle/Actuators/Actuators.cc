@@ -109,17 +109,27 @@ bool Actuators::isMultirotor() const
 
 void Actuators::load(const QString &json_file)
 {
+    _initError.clear();
+
     QFile file(json_file);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCWarning(ActuatorsConfigLog) << "Error opening json file" << file.fileName();
+        _initError = QStringLiteral("Could not open metadata file: %1").arg(file.fileName());
+        _jsonMetadata = {};
+        qCWarning(ActuatorsConfigLog) << _initError;
         return;
     }
 
-    const QString json_data = file.readAll();
+    const QByteArray json_data = file.readAll();
     file.close();
 
-    // store the metadata to be loaded later after all params are available
-    _jsonMetadata = QJsonDocument::fromJson(json_data.toUtf8());
+    QJsonParseError parseError;
+    _jsonMetadata = QJsonDocument::fromJson(json_data, &parseError);
+    if (_jsonMetadata.isNull()) {
+        _initError = QStringLiteral("Invalid JSON in metadata file %1: %2").arg(file.fileName(), parseError.errorString());
+        _jsonMetadata = {};
+        qCWarning(ActuatorsConfigLog) << _initError;
+        return;
+    }
 }
 
 void Actuators::init()
@@ -390,11 +400,22 @@ bool Actuators::parseJson(const QJsonDocument &json)
     QJsonValue functionsJson = obj.value("functions_v1");
     QJsonValue mixerJson = obj.value("mixer_v1");
     if (outputsJson.isNull() || functionsJson.isNull() || mixerJson.isNull()) {
-        qCWarning(ActuatorsConfigLog) << "Missing json section:" << outputsJson << "\n" << functionsJson << "\n" << mixerJson;
+        QStringList missing;
+        if (outputsJson.isNull()) missing << "outputs_v1";
+        if (functionsJson.isNull()) missing << "functions_v1";
+        if (mixerJson.isNull()) missing << "mixer_v1";
+        if (_initError.isEmpty()) {
+            _initError = QStringLiteral("Missing required JSON sections: %1").arg(missing.join(", "));
+        }
+        qCWarning(ActuatorsConfigLog) << _initError;
         return false;
     }
 
     // parse outputs
+    auto makeConditionFromValue = [this](const QJsonValue& val, const char* key) {
+        return Condition(val[key].toString(""), _vehicle->parameterManager(), key);
+    };
+
     QJsonArray outputs = outputsJson.toArray();
     for (const auto &&outputJson : outputs) {
         QJsonValue output = outputJson.toObject();
@@ -402,7 +423,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
 
         qCDebug(ActuatorsConfigLog) << "Actuator group:" << label;
 
-        Condition groupVisibilityCondition(output["show-subgroups-if"].toString(""), _vehicle->parameterManager());
+        Condition groupVisibilityCondition = makeConditionFromValue(output, "show-subgroups-if");
         subscribeFact(groupVisibilityCondition.fact());
 
         ActuatorOutput* currentActuatorOutput = new ActuatorOutput(this, label, groupVisibilityCondition);
@@ -462,7 +483,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
                         for (const auto&& type : actuatorTypesArr) {
                             action.actuatorTypes.insert(type.toString());
                         }
-                        action.condition = Condition(actionObj["supported-if"].toString(), _vehicle->parameterManager());
+                        action.condition = makeConditionFromValue(actionObj, "supported-if");
                         subscribeFact(action.condition.fact());
                         actuatorSubgroup->addAction(action);
                     }
@@ -496,7 +517,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
                     qCWarning(ActuatorsConfigLog) << "Unknown 'function':" << functionStr;
                 }
 
-                Condition visibilityCondition(channelParameter["show-if"].toString(""), _vehicle->parameterManager());
+                Condition visibilityCondition = makeConditionFromValue(channelParameter, "show-if");
                 subscribeFact(visibilityCondition.fact());
 
                 qCDebug(ActuatorsConfigLog) << "per-channel-param:" << param.label << "param:" << param.name;
@@ -516,7 +537,7 @@ bool Actuators::parseJson(const QJsonDocument &json)
         }
     }
 
-    _showUi = Condition(obj.value("show-ui-if").toString(""), _vehicle->parameterManager());
+    _showUi = makeConditionFromValue(QJsonValue(obj), "show-ui-if");
 
     // parse functions
     QMap<int, Mixer::Mixers::OutputFunction> outputFunctions;

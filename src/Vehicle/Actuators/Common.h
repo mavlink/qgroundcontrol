@@ -93,8 +93,10 @@ public:
      * Constructor
      * @param condition generic form: true|false|<param_name><operation><signed integer>
      *                  where: <operation>: [>,>=,==,!=,<,<=]
+     * @param parameterManager parameter manager to resolve parameter names
+     * @param label optional label for debug logging (e.g., "show-ui-if")
      */
-    Condition(const QString& condition, ParameterManager* parameterManager);
+    Condition(const QString& condition, ParameterManager* parameterManager, const QString& label = QString());
 
     bool evaluate() const;
 
@@ -104,6 +106,8 @@ public:
 
 private:
     QString _parameter{};
+    QString _label{};
+    QString _alwaysTrueReason{QStringLiteral("empty/default")};
     Operation _operation{Operation::AlwaysTrue};
     int32_t _value{0};
     Fact* _fact{nullptr};

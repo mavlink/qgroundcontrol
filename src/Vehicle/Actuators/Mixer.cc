@@ -395,7 +395,7 @@ void Mixers::reset(const ActuatorTypes& actuatorTypes, const MixerOptions& mixer
     _rules = rules;
     _mixerConditions.clear();
     for (const auto& mixerOption : _mixerOptions) {
-        _mixerConditions.append(Condition(mixerOption.option, _parameterManager));
+        _mixerConditions.append(Condition(mixerOption.option, _parameterManager, "mixer-option"));
     }
     update();
 }
