@@ -205,7 +205,7 @@ void AM32EepromFactGroupListModel::_sendEepromWrite(Vehicle* vehicle, uint8_t es
     eeprom.msg_count = 1;
     eeprom.esc_index = escIndex;
     memcpy(eeprom.write_mask, writeMask, sizeof(eeprom.write_mask));
-    eeprom.length = qMin(data.size(), static_cast<qsizetype>(sizeof(eeprom.data)));
+    eeprom.length = qMin<qsizetype>(data.size(), sizeof(eeprom.data));
     memcpy(eeprom.data, data.data(), eeprom.length);
 
     SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
