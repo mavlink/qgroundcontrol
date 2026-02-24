@@ -29,13 +29,13 @@ jobs:
             gh extension install actions/gh-actions-cache
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: List caches
         id: list
         env:
           INPUT_BRANCH: ${{ inputs.branch }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           echo "## Cache Summary" >> "$GITHUB_STEP_SUMMARY"
@@ -72,7 +72,7 @@ jobs:
         if: inputs['dry-run'] == false && steps.list.outputs.count != '0'
         env:
           INPUT_BRANCH: ${{ inputs.branch }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           echo "" >> "$GITHUB_STEP_SUMMARY"

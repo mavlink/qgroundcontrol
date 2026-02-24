@@ -8,6 +8,8 @@
 #   add_qgc_test(MyTest LABELS Unit)
 #   add_qgc_test(MyIntegrationTest LABELS Integration RESOURCE_LOCK MockLink)
 
+include_guard(GLOBAL)
+
 if(NOT QGC_BUILD_TESTING)
     return()
 endif()
@@ -104,6 +106,7 @@ endforeach()
 #   Slow        - Long-running tests (~120s timeout)
 #   Flaky       - Tests with intermittent failures (excluded from CI)
 #   Network     - Tests requiring network access (excluded from CI)
+#   NoSanitizer - Tests incompatible with ASan/UBSan (excluded from sanitizer CI)
 #
 # Example:
 #   add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL)

@@ -81,16 +81,16 @@ jobs:
         shell: cmd
 
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
+      # - name: Harden Runner
+      #   uses: step-security/harden-runner@v2
+      #   with:
+      #     egress-policy: audit
 
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Build Setup
         id: build-setup
@@ -100,7 +100,7 @@ jobs:
           qt-arch: ${{ matrix.arch }}
           qt-version: ${{ matrix.qt_version || '' }}
           build-type: ${{ matrix.build_type }}
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'

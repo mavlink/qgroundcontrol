@@ -49,19 +49,34 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get build config
+      - name: Get build config (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
         id: config
         uses: ./.github/actions/build-config
 
-      - name: Install Dependencies (clazy)
+      - name: Prepare apt repositories (clazy)
         if: inputs.tool == 'clazy'
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 3
           command: |
-            sudo apt-get update
-            sudo apt-get install -y clazy ninja-build
+            if ! grep -rEq --include='*.list' --include='*.sources' '^(deb|Components:).*universe' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+              sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y -qq software-properties-common
+              sudo add-apt-repository -y universe
+            fi
+            sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 update -y -qq
+
+      - name: Cache and install clazy packages
+        if: inputs.tool == 'clazy'
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: clazy ninja-build
+          version: clazy-linux-v1
+
+      - name: Initial Setup (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        uses: ./.github/actions/common
 
       - name: Install Dependencies (iwyu)
         if: inputs.tool == 'iwyu'
@@ -69,11 +84,17 @@ jobs:
         with:
           extra-packages: iwyu clang ninja-build
 
-      - name: Install Dependencies (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
-        uses: ./.github/actions/install-dependencies
+      - name: Setup Caching (iwyu)
+        if: inputs.tool == 'iwyu'
+        uses: ./.github/actions/cache
+        with:
+          host: linux
+          target: linux_gcc_64
+          build-type: Debug
+          save-cache: true
 
-      - name: Install Qt
+      - name: Install Qt (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
         uses: ./.github/actions/qt-install
         with:
           version: ${{ steps.config.outputs.qt_version }}
@@ -81,40 +102,41 @@ jobs:
           arch: linux_gcc_64
           modules: ${{ steps.config.outputs.qt_modules }}
 
-      - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        env:
-          CC: ${{ inputs.tool == 'iwyu' && 'clang' || '' }}
-          CXX: ${{ inputs.tool == 'iwyu' && 'clang++' || '' }}
-        run: |
-          CMAKE_ARGS=(
-            -S "${{ github.workspace }}"
-            -B .
-            -G Ninja
-            -DCMAKE_BUILD_TYPE=Debug
+      - name: Build Setup (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          save-cache: true
+
+      - name: Install Dependencies (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          extra-args: >-
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          )
+            ${{ inputs.tool == 'iwyu' && '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++' || '' }}
 
-          if [[ "${{ contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool) }}" == "true" ]]; then
-            CMAKE_ARGS+=(
-              -DQGC_BUILD_TESTING=ON
-              -DQGC_ENABLE_COVERAGE=OFF
-            )
-
-            case "${{ inputs.tool }}" in
-              asan)
-                CMAKE_ARGS+=(-DQGC_ENABLE_ASAN=ON)
-                ;;
-              ubsan)
-                CMAKE_ARGS+=(-DQGC_ENABLE_UBSAN=ON)
-                ;;
-              tsan)
-                CMAKE_ARGS+=(-DQGC_ENABLE_TSAN=ON)
-                ;;
-            esac
-          fi
-
-          "${QT_ROOT_DIR}/bin/qt-cmake" "${CMAKE_ARGS[@]}"
+      - name: Configure (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          testing: 'true'
+          extra-args: >-
+            -DQGC_ENABLE_COVERAGE=OFF
+            ${{ inputs.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}
+            ${{ inputs.tool == 'ubsan' && '-DQGC_ENABLE_UBSAN=ON' || '' }}
+            ${{ inputs.tool == 'tsan' && '-DQGC_ENABLE_TSAN=ON' || '' }}
 
       - name: Build (sanitizers only)
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
@@ -161,18 +183,14 @@ jobs:
               exit 1
             fi
 
-            FILES=$(find "${GITHUB_WORKSPACE}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
-            if [[ -z "$FILES" ]]; then
+            mapfile -t FILES < <(find "${GITHUB_WORKSPACE}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
+            if [[ ${#FILES[@]} -eq 0 ]]; then
               echo "::error::No source files found in $INPUT_PATH"
               exit 1
             fi
 
-            echo "Analyzing files in: $INPUT_PATH"
-            echo "$FILES" | while read -r file; do
-              echo "::group::$(basename "$file")"
-              iwyu_tool.py -p . "$file" 2>&1 || true
-              echo "::endgroup::"
-            done | tee iwyu-output.txt
+            echo "Analyzing ${#FILES[@]} files in: $INPUT_PATH"
+            iwyu_tool.py -p . -j "$(nproc)" "${FILES[@]}" 2>&1 | tee iwyu-output.txt || true
           else
             echo "Analyzing all source files..."
             cmake --build . --target all 2>&1 | tee iwyu-output.txt || true
@@ -188,14 +206,14 @@ jobs:
         env:
           ASAN_OPTIONS: ${{ inputs.tool == 'asan' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
           LSAN_OPTIONS: ${{ inputs.tool == 'asan' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
-          UBSAN_OPTIONS: ${{ inputs.tool == 'ubsan' && 'print_stacktrace=1:halt_on_error=1' || '' }}
+          UBSAN_OPTIONS: ${{ inputs.tool == 'ubsan' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
           TSAN_OPTIONS: ${{ inputs.tool == 'tsan' && format('second_deadlock_stack=1:halt_on_error=1:suppressions={0}/build/tsan_suppressions.txt', runner.temp) || '' }}
         with:
           build-dir: ${{ runner.temp }}/build
           junit-output: junit-results-analysis-${{ inputs.tool }}.xml
           ctest-output: sanitizer-output.txt
           include-labels: 'Unit|Integration'
-          exclude-labels: 'Flaky|Network'
+          exclude-labels: 'Flaky|Network|NoSanitizer'
           parallel: '1'
 
       - name: Upload Output

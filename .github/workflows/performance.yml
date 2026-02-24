@@ -1,35 +1,26 @@
-name: Performance Metrics
+name: Runtime Benchmarks
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-  pull_request:
-    branches: [master]
-    paths:
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
   workflow_dispatch:
     inputs:
       run_benchmarks:
         description: 'Run time-based benchmarks (noisy on shared runners)'
         required: false
-        default: false
+        default: true
         type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
+    if: github.event.inputs.run_benchmarks == 'true'
     timeout-minutes: 45
     outputs:
       binary_path: ${{ steps.find.outputs.binary_path }}
@@ -51,7 +42,7 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Release
-          save-cache: ${{ github.event_name == 'push' }}
+          save-cache: false
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
@@ -82,97 +73,13 @@ jobs:
             build/Release/QGroundControl
           if-no-files-found: error
           retention-days: 1
-          compression-level: 0  # Binary already compressed
-
-  size-metrics:
-    name: Size Metrics
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    needs: build
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            .github/actions/ensure-branch
-            .github/actions/size-analysis
-            .github/scripts/size_analysis.py
-          sparse-checkout-cone-mode: false
-
-      - name: Download binary
-        uses: actions/download-artifact@v7
-        with:
-          name: qgc-binary
-          path: build
-
-      - name: Make binary executable
-        run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
-
-      - name: Analyze binary size
-        uses: ./.github/actions/size-analysis
-        with:
-          binary-path: ${{ needs.build.outputs.binary_path }}
-          output-file: metrics.json
-
-      - name: Upload metrics artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: size-metrics
-          path: metrics.json
-          retention-days: 90
-
-      - name: Ensure gh-pages branch exists
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: ./.github/actions/ensure-branch
-        with:
-          branch: gh-pages
-
-      - name: Store size metrics
-        uses: benchmark-action/github-action-benchmark@v1
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        with:
-          tool: customSmallerIsBetter
-          output-file-path: metrics.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
-          benchmark-data-dir-path: dev/size
-          alert-threshold: '110%'
-          comment-on-alert: true
-          fail-on-alert: false
-
-      - name: Compare with base (PR only)
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: customSmallerIsBetter
-          output-file-path: metrics.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: false
-          benchmark-data-dir-path: dev/size
-          alert-threshold: '105%'
-          comment-on-alert: true
-          fail-on-alert: false
+          compression-level: 0
 
   benchmarks:
     name: Runtime Benchmarks
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    # Runtime benchmarks are noisy and expensive on shared runners.
-    # Run only on manual dispatch when explicitly requested.
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_benchmarks == 'true'
     needs: build
-    permissions:
-      contents: read
 
     steps:
       - name: Harden Runner
@@ -225,7 +132,7 @@ jobs:
         with:
           tool: customSmallerIsBetter
           output-file-path: benchmark.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
           auto-push: false
           benchmark-data-dir-path: dev/bench
           alert-threshold: '150%'

@@ -31,9 +31,12 @@ jobs:
   upload:
     name: Upload Sources
     if: >-
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      (github.event_name == 'workflow_dispatch' && inputs.action == 'upload')
+      github.repository_owner == 'mavlink' &&
+      (
+        github.event_name == 'push' ||
+        (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+        (github.event_name == 'workflow_dispatch' && inputs.action == 'upload')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -64,8 +67,11 @@ jobs:
   download:
     name: Download Translations
     if: >-
-      github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && inputs.action == 'download')
+      github.repository_owner == 'mavlink' &&
+      (
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && inputs.action == 'download')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

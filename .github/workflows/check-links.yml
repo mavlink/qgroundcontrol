@@ -41,16 +41,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Get cache date
-        id: cache-date
-        run: echo "date=$(date -u '+%Y-%m-%d')" >> "$GITHUB_OUTPUT"
-
       - name: Restore lychee cache (PR)
         if: github.event_name == 'pull_request'
         uses: actions/cache/restore@v5
         with:
           path: .lycheecache
-          key: cache-lychee-${{ steps.cache-date.outputs.date }}
+          key: cache-lychee-${{ hashFiles('.lychee.toml') }}
           restore-keys: cache-lychee-
 
       - name: Cache lychee (push)
@@ -58,7 +54,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .lycheecache
-          key: cache-lychee-${{ steps.cache-date.outputs.date }}
+          key: cache-lychee-${{ hashFiles('.lychee.toml') }}
           restore-keys: cache-lychee-
 
       - name: Check links

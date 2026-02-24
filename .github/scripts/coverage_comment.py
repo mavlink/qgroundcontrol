@@ -4,14 +4,32 @@
 import argparse
 import os
 import sys
-import xml.etree.ElementTree as ET
+from pathlib import Path
+
+try:
+    from defusedxml.ElementTree import ParseError as XMLParseError
+    from defusedxml.ElementTree import parse as _xml_parse_impl
+    _USING_DEFUSEDXML = True
+except ImportError:
+    from xml.etree.ElementTree import ParseError as XMLParseError
+    from xml.etree.ElementTree import parse as _xml_parse_impl
+    _USING_DEFUSEDXML = False
+
+
+def xml_parse(path: str):
+    if _USING_DEFUSEDXML:
+        return _xml_parse_impl(path)
+    # Harden stdlib fallback: reject XML with DTD/entities.
+    text = Path(path).read_text(encoding="utf-8", errors="replace")
+    if "<!DOCTYPE" in text or "<!ENTITY" in text:
+        raise XMLParseError("DOCTYPE/ENTITY declarations are not allowed")
+    return _xml_parse_impl(path)
 
 
 def parse_coverage(xml_path: str) -> dict | None:
     """Parse coverage.xml and return line/branch coverage percentages."""
     try:
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
+        root = xml_parse(xml_path).getroot()
 
         line_rate = root.get("line-rate")
         branch_rate = root.get("branch-rate")
@@ -31,7 +49,7 @@ def parse_coverage(xml_path: str) -> dict | None:
                 }
 
         return None
-    except (ET.ParseError, OSError, ValueError) as e:
+    except (XMLParseError, OSError, ValueError) as e:
         print(f"Error parsing {xml_path}: {e}", file=sys.stderr)
         return None
 
@@ -81,7 +99,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
+def main() -> int:
     args = parse_args()
     coverage_xml = args.coverage_xml
     baseline_xml = args.baseline_xml
@@ -90,7 +108,7 @@ def main() -> None:
         print("Coverage XML not found", file=sys.stderr)
         with open(args.output, "w") as f:
             f.write("## Code Coverage Report\n\n*Coverage data not available*\n")
-        sys.exit(0)
+        return 0
 
     pr_cov = parse_coverage(coverage_xml)
     baseline_cov = None
@@ -109,7 +127,7 @@ def main() -> None:
             line_delta = delta_str(baseline_cov["line"], pr_cov["line"])
             branch_delta = (
                 delta_str(baseline_cov.get("branch"), pr_cov.get("branch"))
-                if pr_cov.get("branch")
+                if pr_cov.get("branch") is not None
                 else "N/A"
             )
         else:
@@ -142,7 +160,8 @@ def main() -> None:
         f.write("\n".join(lines))
 
     print("\n".join(lines))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

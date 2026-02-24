@@ -4,11 +4,7 @@ FROM ubuntu:24.04
 # ---------- Non-interactive APT ----------
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ---------- System packages ----------
-#  * locales   – lets us generate UTF-8 locales
-#  * git       – you call `git config` later and most build scripts need it
-#  * ninja-build & cmake – required by your CMD
-#  * ca-certificates, build-essential, curl, unzip – common essentials
+# ---------- System packages & locale ----------
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         locales \
@@ -18,13 +14,13 @@ RUN apt-get update && \
         ca-certificates \
         build-essential \
         curl \
-        unzip && \
-    rm -rf /var/lib/apt/lists/*
-
-# ---------- UTF-8 locale ----------
-RUN sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
+        unzip \
+        python3 \
+        pipx && \
+    sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
     locale-gen && \
-    update-locale LANG=en_US.UTF-8
+    update-locale LANG=en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
@@ -33,8 +29,7 @@ ENV LANG=en_US.UTF-8 \
 COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install_dependencies.py /tmp/qt/
 COPY tools/setup/read_config.py /tmp/qt/
-RUN apt-get update && apt-get install -y --no-install-recommends python3 pipx && \
-    python3 /tmp/qt/install_dependencies.py --platform debian && \
+RUN python3 /tmp/qt/install_dependencies.py --platform debian && \
     QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version) && \
     QT_MODULES=$(python3 /tmp/qt/read_config.py --get qt_modules) && \
     mkdir -p /opt/Qt && \

@@ -43,6 +43,15 @@ def test_parse_coverage_invalid_xml_returns_none(tmp_path: Path) -> None:
     assert parse_coverage(str(xml)) is None
 
 
+def test_parse_coverage_rejects_doctype_entity_payload(tmp_path: Path) -> None:
+    xml = tmp_path / "coverage.xml"
+    _write_xml(
+        xml,
+        "<!DOCTYPE coverage [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><coverage line-rate=\"0.75\"/>",
+    )
+    assert parse_coverage(str(xml)) is None
+
+
 def test_coverage_badge() -> None:
     assert coverage_badge(85.0) == "Good"
     assert coverage_badge(70.0) == "Fair"
@@ -70,10 +79,8 @@ def test_main_missing_coverage_writes_placeholder(tmp_path: Path, monkeypatch: p
         ],
     )
 
-    with pytest.raises(SystemExit) as exc:
-        main()
-
-    assert exc.value.code == 0
+    rc = main()
+    assert rc == 0
     text = output.read_text(encoding="utf-8")
     assert "Coverage data not available" in text
 
@@ -105,3 +112,31 @@ def test_main_with_baseline_writes_delta_table(tmp_path: Path, monkeypatch: pyte
     text = output.read_text(encoding="utf-8")
     assert "| Good Lines | 80.00% | +10.00% |" in text
     assert "| Fair Branches | 60.00% | +10.00% |" in text
+
+
+def test_main_with_zero_branch_coverage_reports_delta(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    coverage_xml = tmp_path / "coverage.xml"
+    baseline_xml = tmp_path / "baseline.xml"
+    output = tmp_path / "coverage-comment.md"
+
+    _write_xml(coverage_xml, '<coverage line-rate="0.80" branch-rate="0.00"></coverage>')
+    _write_xml(baseline_xml, '<coverage line-rate="0.70" branch-rate="0.10"></coverage>')
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "coverage_comment.py",
+            "--coverage-xml",
+            str(coverage_xml),
+            "--baseline-xml",
+            str(baseline_xml),
+            "--output",
+            str(output),
+        ],
+    )
+
+    main()
+
+    text = output.read_text(encoding="utf-8")
+    assert "| Low Branches | 0.00% | -10.00% |" in text

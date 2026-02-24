@@ -59,15 +59,12 @@ def test_get_section_sizes_unavailable(tmp_path: Path) -> None:
         assert analyzer.get_section_sizes() == "Section sizes unavailable"
 
 
-def test_generate_metrics_json_with_patched_methods(tmp_path: Path) -> None:
+def test_generate_metrics_json_with_explicit_values(tmp_path: Path) -> None:
     binary = tmp_path / "QGroundControl"
     binary.write_bytes(b"abcd")
     analyzer = BinaryAnalyzer(binary)
 
-    with patch.object(BinaryAnalyzer, "get_stripped_size", return_value=3), patch.object(
-        BinaryAnalyzer, "get_symbol_count", return_value=42,
-    ):
-        metrics = analyzer.generate_metrics_json()
+    metrics = analyzer.generate_metrics_json(binary_size=4, stripped_size=3, symbol_count=42)
 
     names = [entry["name"] for entry in metrics]
     assert names == ["Binary Size", "Stripped Size", "Symbol Count"]

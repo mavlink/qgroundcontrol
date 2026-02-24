@@ -31,7 +31,7 @@ jobs:
         with:
           bundle: QGroundControl.flatpak
           manifest-path: deploy/linux/org.mavlink.qgroundcontrol.flatpak.yml
-          cache-key: flatpak-builder-${{ github.sha }}
+          cache-key: flatpak-builder-${{ hashFiles('deploy/linux/org.mavlink.qgroundcontrol.flatpak.yml') }}
 
       - name: Upload Flatpak
         uses: actions/upload-artifact@v6

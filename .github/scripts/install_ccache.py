@@ -39,7 +39,7 @@ class CcacheConfig(NamedTuple):
 class CcacheInstaller:
     """Handles ccache installation with signature verification."""
 
-    DEFAULT_VERSION = "4.12.2"
+    DEFAULT_VERSION = "4.12.3"
     DEFAULT_MAX_SIZE = "2G"
     MINISIGN_VERSION = "0.11"
     MINISIGN_KEY = "RWQX7yXbBedVfI4PNx6FLdFXu9GHUFsr28s4BVGxm4BeybtnX3P06saF"

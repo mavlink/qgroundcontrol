@@ -6,20 +6,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install_dependencies.py /tmp/qt/
 COPY tools/setup/read_config.py /tmp/qt/
-RUN apt-get update && apt-get install -y --no-install-recommends python3 && \
-    python3 /tmp/qt/install_dependencies.py --platform debian
 
-# Read all versions from centralized config
-RUN echo "export QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version)" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_MODULES=\"$(python3 /tmp/qt/read_config.py --get qt_modules)\"" >> /etc/profile.d/qgc.sh && \
-    echo "export JAVA_VERSION=$(python3 /tmp/qt/read_config.py --get java_version)" >> /etc/profile.d/qgc.sh && \
-    echo "export NDK_FULL_VERSION=$(python3 /tmp/qt/read_config.py --get ndk_full_version)" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_PLATFORM=$(python3 /tmp/qt/read_config.py --get android_platform)" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_BUILD_TOOLS=$(python3 /tmp/qt/read_config.py --get android_build_tools)" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_CMDLINE_TOOLS=$(python3 /tmp/qt/read_config.py --get android_cmdline_tools)" >> /etc/profile.d/qgc.sh && \
-    chmod +x /etc/profile.d/qgc.sh
-
-RUN . /etc/profile.d/qgc.sh && apt-get install -y openjdk-${JAVA_VERSION}-jdk
+# Install system packages, project dependencies, and read all config in one layer
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 pipx && \
+    python3 /tmp/qt/install_dependencies.py --platform debian && \
+    python3 /tmp/qt/read_config.py --export bash > /etc/profile.d/qgc.sh && \
+    chmod +x /etc/profile.d/qgc.sh && \
+    . /etc/profile.d/qgc.sh && \
+    apt-get install -y openjdk-${JAVA_VERSION}-jdk && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
@@ -53,7 +49,6 @@ ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
 # Install Qt for host and target architectures using aqtinstall
 # Note: aqtinstall uses linux_gcc_64 as arch param but creates gcc_64 directory
 RUN . /etc/profile.d/qgc.sh && \
-    apt-get update && apt-get install -y pipx && \
     mkdir -p $QT_PATH && \
     pipx run aqtinstall install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
     pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
@@ -66,7 +61,9 @@ RUN . /etc/profile.d/qgc.sh && \
 #     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh
 
 RUN . /etc/profile.d/qgc.sh && \
-    echo "export JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64" >> /etc/profile.d/qgc.sh
+    JAVA_BIN="$(readlink -f "$(command -v javac)")" && \
+    JAVA_HOME="$(dirname "$(dirname "${JAVA_BIN}")")" && \
+    echo "export JAVA_HOME=${JAVA_HOME}" >> /etc/profile.d/qgc.sh
 
 # Consolidate PATH settings
 # Note: Add $QT_ROOT_DIR_ARMV7 to enable ARMv7

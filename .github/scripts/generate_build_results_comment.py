@@ -11,13 +11,28 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Mapping
+from urllib.parse import quote, urlsplit, urlunsplit
 
 try:
-    from defusedxml.ElementTree import parse as _xml_parse
+    from defusedxml.ElementTree import ParseError as XMLParseError
+    from defusedxml.ElementTree import parse as _xml_parse_impl
+    _USING_DEFUSEDXML = True
 except ImportError:
-    from xml.etree.ElementTree import parse as _xml_parse
+    from xml.etree.ElementTree import ParseError as XMLParseError
+    from xml.etree.ElementTree import parse as _xml_parse_impl
+    _USING_DEFUSEDXML = False
 
 logger = logging.getLogger(__name__)
+
+
+def _xml_parse(path: Path):
+    if _USING_DEFUSEDXML:
+        return _xml_parse_impl(path)
+    # Harden stdlib fallback: reject XML with DTD/entities.
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if "<!DOCTYPE" in text or "<!ENTITY" in text:
+        raise XMLParseError("DOCTYPE/ENTITY declarations are not allowed")
+    return _xml_parse_impl(path)
 
 
 def _env(env: Mapping[str, str], key: str, default: str = "") -> str:
@@ -29,8 +44,10 @@ def _parse_coverage_percent(path: Path) -> float | None:
         return None
     try:
         root = _xml_parse(path).getroot()
+        if int(root.get("lines-valid", 0)) == 0:
+            return None
         return float(root.get("line-rate", 0.0)) * 100.0
-    except Exception:
+    except (XMLParseError, OSError, ValueError):
         logger.debug("Failed to parse coverage from %s", path, exc_info=True)
         return None
 
@@ -51,10 +68,34 @@ def _parse_precommit_results(path: Path) -> tuple[str | None, str | None, str | 
     skipped = str(data.get("skipped", "0")).strip()
     run_url = str(data.get("run_url", "")).strip()
 
-    status = "Passed" if exit_code == "0" else "Failed"
-    details = f"[View]({run_url})" if run_url else None
+    status = "Passed" if exit_code == "0" else "Failed (non-blocking)"
+    details = _view_link(run_url)
     note = f"Pre-commit hooks: {passed} passed, {failed or '0'} failed, {skipped or '0'} skipped."
     return status, details, note
+
+
+def _sanitize_external_url(url: str) -> str | None:
+    value = url.strip()
+    if not value:
+        return None
+    if any(ch in value for ch in ("\r", "\n", "\t")):
+        return None
+
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+
+    path = quote(parsed.path, safe="/-._~!$&'*,;=:@%+")
+    query = quote(parsed.query, safe="&=:@/?-._~!$'*,;%+")
+    fragment = quote(parsed.fragment, safe="-._~!$&'*,;=:@/?%+")
+    return urlunsplit((parsed.scheme, parsed.netloc, path, query, fragment))
+
+
+def _view_link(url: str) -> str | None:
+    safe_url = _sanitize_external_url(url)
+    if not safe_url:
+        return None
+    return f"[View]({safe_url})"
 
 
 def _count_test_results(content: str) -> tuple[int, int, int]:
@@ -158,6 +199,13 @@ def _format_delta_mb(delta_bytes: int) -> str:
     return "No change"
 
 
+def _format_size_human(size_bytes: int) -> str:
+    size_mb = size_bytes / 1024.0 / 1024.0
+    if size_mb >= 1024:
+        return f"{(size_mb / 1024):.2f} GB"
+    return f"{size_mb:.2f} MB"
+
+
 def _render_artifact_sizes(base_dir: Path, env: Mapping[str, str]) -> list[str]:
     pr_sizes_path = base_dir / _env(env, "PR_SIZES_JSON", "pr-sizes.json")
     if not pr_sizes_path.exists():
@@ -170,11 +218,20 @@ def _render_artifact_sizes(base_dir: Path, env: Mapping[str, str]) -> list[str]:
         return []
 
     baseline_path = base_dir / _env(env, "BASELINE_SIZES_JSON", "baseline-sizes.json")
-    baseline: dict[str, dict] = {}
+    baseline: dict[str, int] = {}
     if baseline_path.exists():
         try:
             baseline_data = json.loads(baseline_path.read_text(encoding="utf-8"))
-            baseline = {a["name"]: a for a in baseline_data.get("artifacts", [])}
+            for artifact in baseline_data.get("artifacts", []):
+                if not isinstance(artifact, dict):
+                    continue
+                name = str(artifact.get("name", "")).strip()
+                if not name:
+                    continue
+                try:
+                    baseline[name] = int(artifact.get("size_bytes", 0))
+                except (TypeError, ValueError):
+                    continue
         except Exception:
             logger.debug("Failed to parse baseline sizes from %s", baseline_path, exc_info=True)
             baseline = {}
@@ -188,13 +245,24 @@ def _render_artifact_sizes(base_dir: Path, env: Mapping[str, str]) -> list[str]:
         lines.append("|----------|------|")
 
     total_delta = 0
-    for artifact in pr_data.get("artifacts", []):
-        name = artifact["name"]
-        size_human = artifact["size_human"]
+    artifacts = pr_data.get("artifacts", [])
+    if not isinstance(artifacts, list):
+        return []
+
+    for artifact in artifacts:
+        if not isinstance(artifact, dict):
+            continue
+        name = str(artifact.get("name", "")).strip()
+        if not name:
+            continue
+        try:
+            new_size = int(artifact.get("size_bytes", 0))
+        except (TypeError, ValueError):
+            continue
+        size_human = str(artifact.get("size_human", "")).strip() or _format_size_human(new_size)
 
         if baseline and name in baseline:
-            old_size = int(baseline[name]["size_bytes"])
-            new_size = int(artifact["size_bytes"])
+            old_size = baseline[name]
             delta = new_size - old_size
             total_delta += delta
             lines.append(f"| {name} | {size_human} | {_format_delta_mb(delta)} |")
@@ -217,7 +285,7 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     precommit_url = _env(env, "PRECOMMIT_URL")
     triggered_by = _env(env, "TRIGGERED_BY", "Unknown")
 
-    precommit_details = f"[View]({precommit_url})" if precommit_url else "-"
+    precommit_details = _view_link(precommit_url) or "-"
     precommit_note = ""
 
     precommit_path = base_dir / _env(env, "PRECOMMIT_RESULTS_PATH", "artifacts/pre-commit-results/pre-commit-results.json")
@@ -243,6 +311,7 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
 
     lines.extend(
         [
+            "",
             f"**{summary}**",
             "",
             "### Pre-commit",

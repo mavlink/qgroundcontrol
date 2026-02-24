@@ -12,6 +12,10 @@ permissions:
   pull-requests: write
   issues: write
 
+env:
+  PLATFORM_WORKFLOWS: Linux,Windows,MacOS,Android
+  QGC_GH_API_MODE: http
+
 jobs:
   post-pr-comment:
     name: Post Build Results
@@ -28,15 +32,6 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            .github/actions/download-all-artifacts
-            .github/actions/collect-artifact-sizes
-            .github/scripts/generate_build_results_comment.py
-          sparse-checkout-cone-mode: false
-
       - name: Get PR number
         id: pr
         uses: actions/github-script@v8
@@ -48,130 +43,70 @@ jobs:
             }
             // For fork PRs, run.pull_requests is empty. Use head_repository owner.
             const headOwner = run.head_repository?.owner?.login || context.repo.owner;
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${headOwner}:${run.head_branch}`
-            });
-            return prs.data.length > 0 ? prs.data[0].number : null;
+            const prs = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${headOwner}:${run.head_branch}`,
+                per_page: 100
+              }
+            );
+            const exact = prs.find(pr => pr.head?.sha === run.head_sha);
+            return exact ? exact.number : null;
+
+      - name: Checkout
+        if: steps.pr.outputs.result != 'null'
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/download-all-artifacts
+            .github/actions/collect-artifact-sizes
+            .github/scripts/collect_build_status.py
+            .github/scripts/collect_artifact_sizes.py
+            .github/scripts/workflow_runs.py
+            .github/scripts/generate_build_results_comment.py
+            tools/common/gh_actions.py
+            tools/setup/download_artifacts.py
+          sparse-checkout-cone-mode: false
 
       - name: Collect build status
         if: steps.pr.outputs.result != 'null'
         id: builds
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const headSha = context.payload.workflow_run.head_sha;
-
-            const runs = await github.rest.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head_sha: headSha,
-              per_page: 100
-            });
-
-            const platforms = {
-              'Linux': { status: 'Pending', conclusion: 'pending', url: '' },
-              'Windows': { status: 'Pending', conclusion: 'pending', url: '' },
-              'MacOS': { status: 'Pending', conclusion: 'pending', url: '' },
-              'Android': { status: 'Pending', conclusion: 'pending', url: '' }
-            };
-            const preCommit = { status: 'Not Triggered', conclusion: 'not_triggered', url: '' };
-            const latestByName = {};
-
-            for (const run of runs.data.workflow_runs) {
-              if (run.event !== 'pull_request') {
-                continue;
-              }
-
-              if (!platforms[run.name] && run.name !== 'pre-commit') {
-                continue;
-              }
-
-              const existing = latestByName[run.name];
-              if (!existing || new Date(run.created_at) > new Date(existing.created_at)) {
-                latestByName[run.name] = run;
-              }
-            }
-
-            for (const name of Object.keys(platforms)) {
-              const run = latestByName[name];
-              if (!run) continue;
-
-              if (run.status === 'completed') {
-                platforms[name].status = run.conclusion === 'success' ? 'Passed' : 'Failed';
-                platforms[name].conclusion = run.conclusion || 'failure';
-                platforms[name].url = run.html_url;
-              } else if (run.status === 'in_progress') {
-                platforms[name].status = 'Running';
-                platforms[name].conclusion = 'in_progress';
-                platforms[name].url = run.html_url;
-              } else {
-                platforms[name].status = 'Pending';
-                platforms[name].conclusion = 'pending';
-                platforms[name].url = run.html_url;
-              }
-            }
-
-            const preCommitRun = latestByName['pre-commit'];
-            if (preCommitRun) {
-              if (preCommitRun.status === 'completed') {
-                preCommit.status = preCommitRun.conclusion === 'success' ? 'Passed' : 'Failed';
-                preCommit.conclusion = preCommitRun.conclusion || 'failure';
-                preCommit.url = preCommitRun.html_url;
-              } else if (preCommitRun.status === 'in_progress') {
-                preCommit.status = 'Running';
-                preCommit.conclusion = 'in_progress';
-                preCommit.url = preCommitRun.html_url;
-              } else {
-                preCommit.status = 'Pending';
-                preCommit.conclusion = 'pending';
-                preCommit.url = preCommitRun.html_url;
-              }
-            }
-
-            let table = '| Platform | Status | Details |\n|----------|--------|--------|\n';
-            for (const [name, info] of Object.entries(platforms)) {
-              const link = info.url ? `[View](${info.url})` : '-';
-              table += `| ${name} | ${info.status} | ${link} |\n`;
-            }
-
-            const allComplete = Object.values(platforms).every(p =>
-              ['success', 'failure', 'cancelled'].includes(p.conclusion)
-            );
-            const allSuccess = Object.values(platforms).every(p => p.conclusion === 'success');
-
-            let summary = '';
-            if (allComplete) {
-              summary = allSuccess
-                ? 'All builds passed.'
-                : 'Some builds failed.';
-            } else {
-              summary = 'Some builds still in progress.';
-            }
-
-            core.setOutput('table', table);
-            core.setOutput('summary', summary);
-            core.setOutput('all_complete', allComplete);
-            core.setOutput('precommit_status', preCommit.status);
-            core.setOutput('precommit_url', preCommit.url);
-            core.setOutput('precommit_conclusion', preCommit.conclusion);
-            core.setOutput('precommit_run_id', preCommitRun ? String(preCommitRun.id) : '');
-
-      - name: Collect artifact sizes
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
-        uses: ./.github/actions/collect-artifact-sizes
-        with:
-          head-sha: ${{ github.event.workflow_run.head_sha }}
-          output-file: pr-sizes.json
+        env:
+          PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/collect_build_status.py" \
+            --repo "$REPO" \
+            --head-sha "$HEAD_SHA" \
+            --platform-workflows "${PLATFORM_WORKFLOWS}" \
+            --event pull_request \
+            --runs-cache workflow-runs-cache.json
 
       - name: Download artifacts from all platform workflows
         if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          head-sha: ${{ github.event.workflow_run.head_sha }}
+          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          runs-file: workflow-runs-cache.json
+          artifact-prefixes: coverage-report,test-results-
+          artifact-metadata-file: workflow-artifacts.json
+
+      - name: Collect artifact sizes
+        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
+        uses: ./.github/actions/collect-artifact-sizes
+        with:
+          head-sha: ${{ github.event.workflow_run.head_sha }}
+          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          output-file: pr-sizes.json
+          runs-file: workflow-runs-cache.json
+          artifacts-file: workflow-artifacts.json
 
       - name: Download pre-commit results artifact
         if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true' && steps.builds.outputs.precommit_run_id != ''
@@ -179,7 +114,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           run-id: ${{ steps.builds.outputs.precommit_run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
           name: pre-commit-results
           path: artifacts/pre-commit-results
 
@@ -283,54 +218,76 @@ jobs:
           sparse-checkout: |
             .github/actions/download-all-artifacts
             .github/actions/collect-artifact-sizes
+            .github/scripts/collect_artifact_sizes.py
+            .github/scripts/check_baseline_ready.py
+            .github/scripts/workflow_runs.py
+            tools/common/gh_actions.py
+            tools/setup/download_artifacts.py
           sparse-checkout-cone-mode: false
 
+      - name: Verify all platform workflows succeeded for baseline SHA
+        id: ready
+        env:
+          PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/check_baseline_ready.py" \
+            --repo "$REPO" \
+            --head-sha "$HEAD_SHA" \
+            --platform-workflows "${PLATFORM_WORKFLOWS}" \
+            --event push \
+            --runs-cache workflow-runs-cache.json
+
       - name: Download artifacts from all platform workflows
+        if: steps.ready.outputs.ready == 'true'
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          head-sha: ${{ github.event.workflow_run.head_sha }}
+          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          runs-file: workflow-runs-cache.json
+          artifact-prefixes: coverage-report,test-results-
+          artifact-metadata-file: workflow-artifacts.json
 
       - name: Collect artifact sizes
+        if: steps.ready.outputs.ready == 'true'
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
+          workflows: ${{ env.PLATFORM_WORKFLOWS }}
           output-file: baseline-sizes.json
-
-      - name: Cache artifact sizes
-        if: hashFiles('baseline-sizes.json') != ''
-        uses: actions/cache/save@v5
-        with:
-          path: baseline-sizes.json
-          key: artifact-sizes-baseline-${{ github.run_id }}
+          runs-file: workflow-runs-cache.json
+          artifacts-file: workflow-artifacts.json
 
       - name: Delete stale artifact sizes baseline cache
-        if: hashFiles('baseline-sizes.json') != ''
+        if: steps.ready.outputs.ready == 'true' && hashFiles('baseline-sizes.json') != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh actions-cache delete artifact-sizes-baseline-latest -R "${GH_REPO}" --confirm || true
 
       - name: Cache artifact sizes as latest
-        if: hashFiles('baseline-sizes.json') != ''
+        if: steps.ready.outputs.ready == 'true' && hashFiles('baseline-sizes.json') != ''
         uses: actions/cache/save@v5
         with:
           path: baseline-sizes.json
           key: artifact-sizes-baseline-latest
 
       - name: Copy coverage to baseline path
-        if: hashFiles('artifacts/coverage-report/coverage.xml') != ''
+        if: steps.ready.outputs.ready == 'true' && hashFiles('artifacts/coverage-report/coverage.xml') != ''
         run: cp artifacts/coverage-report/coverage.xml baseline-coverage.xml
 
       - name: Delete stale coverage baseline cache
-        if: hashFiles('baseline-coverage.xml') != ''
+        if: steps.ready.outputs.ready == 'true' && hashFiles('baseline-coverage.xml') != ''
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh actions-cache delete coverage-baseline-latest -R "${GH_REPO}" --confirm || true
 
       - name: Save coverage baseline
-        if: hashFiles('baseline-coverage.xml') != ''
+        if: steps.ready.outputs.ready == 'true' && hashFiles('baseline-coverage.xml') != ''
         uses: actions/cache/save@v5
         with:
           path: baseline-coverage.xml

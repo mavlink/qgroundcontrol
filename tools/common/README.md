@@ -38,6 +38,19 @@ from tools.common.file_traversal import (
 )
 ```
 
+### gh_actions.py
+
+Shared GitHub Actions API helpers (via `gh`) used by CI scripts.
+
+```python
+from tools.common.gh_actions import (
+    gh,                        # Run gh command and capture output
+    parse_json_documents,      # Parse concatenated paginated JSON
+    list_workflow_runs_for_sha,# List workflow runs for commit SHA
+    list_run_artifacts,        # List artifacts for a workflow run
+)
+```
+
 ## Usage Example
 
 ```python

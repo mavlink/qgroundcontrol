@@ -27,11 +27,16 @@ inputs:
     description: Save cache (set to false for PR builds)
     required: false
     default: "true"
+  restore-timestamps:
+    description: Restore file timestamps from git history (requires fetch-depth 0)
+    required: false
+    default: "true"
 
 runs:
   using: composite
   steps:
     - name: Restore file timestamps
+      if: inputs.restore-timestamps == 'true'
       uses: chetan/git-restore-mtime-action@v2
 
     - name: Setup Xcode

@@ -47,10 +47,14 @@ runs:
         INPUT_PLATFORM: ${{ inputs.platform }}
         INPUT_ARCH: ${{ inputs.arch }}
       run: |
+        set -euo pipefail
         if command -v python3 >/dev/null 2>&1; then
           py_cmd="python3"
-        else
+        elif command -v python >/dev/null 2>&1; then
           py_cmd="python"
+        else
+          echo "Error: Python interpreter not found in PATH" >&2
+          exit 1
         fi
         echo "py_cmd=$py_cmd" >> "$GITHUB_OUTPUT"
 
@@ -72,20 +76,17 @@ runs:
 
     - name: Install dependencies (Linux)
       if: inputs.platform == 'linux'
-      uses: nick-fields/retry@v3
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
       with:
-        timeout_minutes: 10
-        max_attempts: 3
-        command: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential pkg-config git \
-            libx11-dev libxext-dev libxv-dev \
-            libwayland-dev wayland-protocols \
-            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
-            libdrm-dev libgbm-dev \
-            libasound2-dev libpulse-dev \
-            libva-dev nasm yasm
+        packages: >-
+          build-essential pkg-config git
+          libx11-dev libxext-dev libxv-dev
+          libwayland-dev wayland-protocols
+          libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev
+          libdrm-dev libgbm-dev
+          libasound2-dev libpulse-dev
+          libva-dev nasm yasm
+        version: gstreamer-linux-deps-v1
 
     - name: Install dependencies (macOS)
       if: inputs.platform == 'macos' || inputs.platform == 'ios'
@@ -97,15 +98,12 @@ runs:
 
     - name: Install dependencies (Android)
       if: inputs.platform == 'android'
-      uses: nick-fields/retry@v3
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
       with:
-        timeout_minutes: 10
-        max_attempts: 3
-        command: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3-pip git autoconf automake libtool \
-            pkg-config gettext bison flex cmake ninja-build
+        packages: >-
+          python3-pip git autoconf automake libtool
+          pkg-config gettext bison flex cmake ninja-build
+        version: gstreamer-android-deps-v1
 
     # ===== QT (for qml6 plugin) =====
 

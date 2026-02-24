@@ -269,6 +269,9 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
 # Apply optional sanitizer instrumentation to the main target.
 include(Sanitizers)
 
+# Apply optional coverage instrumentation and coverage targets.
+include(Coverage)
+
 # Apply compiler warning configuration to QGC target
 qgc_apply_warning_flags()
 

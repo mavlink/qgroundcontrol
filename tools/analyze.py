@@ -470,7 +470,7 @@ class QmlLintAnalyzer(AnalyzerBase):
 
         for file in files:
             result = subprocess.run(
-                ["qmllint", str(file)],
+                ["qmllint", "--bare", str(file)],
                 capture_output=True,
                 text=True,
             )

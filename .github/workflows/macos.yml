@@ -63,18 +63,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Build Setup
         id: setup
         uses: ./.github/actions/build-setup
         with:
-          restore-timestamps: 'true'
+          restore-timestamps: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
           qt-host: mac
           qt-arch: clang_64
           build-type: ${{ matrix.build_type }}
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -111,6 +111,7 @@ jobs:
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
 
       - name: Create signed/notarized/stapled app bundle
+        if: github.event_name != 'pull_request'
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config ${{ matrix.build_type }}
         env:
@@ -119,7 +120,13 @@ jobs:
           QGC_MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
 
+      - name: Create unsigned app bundle
+        if: github.event_name == 'pull_request'
+        working-directory: ${{ runner.temp }}/build
+        run: cmake --install . --config ${{ matrix.build_type }}
+
       - name: Mount DMG
+        if: github.event_name != 'pull_request'
         working-directory: ${{ runner.temp }}/build
         run: |
           if ! hdiutil attach QGroundControl.dmg; then
@@ -129,6 +136,7 @@ jobs:
           fi
 
       - name: Verify DMG executable
+        if: github.event_name != 'pull_request'
         uses: ./.github/actions/verify-executable
         with:
           binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl

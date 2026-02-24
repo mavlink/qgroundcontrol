@@ -106,8 +106,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Get build config
         id: config
@@ -136,7 +136,7 @@ jobs:
           android-platform: ${{ steps.config.outputs.android_platform }}
           android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
           android-build-tools: ${{ steps.config.outputs.android_build_tools }}
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Create Debug Keystore
         if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
@@ -165,13 +165,49 @@ jobs:
             -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
             -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../${{ matrix.qt_host_path }}
             -DQT_ANDROID_SIGN_APK=ON
-            ${{ matrix.emulator && '-DQT_ANDROID_APPLICATION_ARGUMENTS=--simple-boot-test' || '' }}
 
       - name: Build
+        id: build
+        continue-on-error: ${{ matrix.emulator }}
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type || 'Release' }}
+          parallel-jobs: ${{ matrix.emulator && '2' || '' }}
+          output-file: ${{ matrix.emulator && 'qgc-build.log' || '' }}
+
+      - name: Retry Build (emulator JSON truncation recovery)
+        if: ${{ matrix.emulator && steps.build.outcome == 'failure' }}
+        shell: bash
+        env:
+          BUILD_DIR: ${{ runner.temp }}/build
+          BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+        run: |
+          set -euo pipefail
+
+          log_file="${BUILD_DIR}/qgc-build.log"
+          settings_json="${BUILD_DIR}/android-QGroundControl-deployment-settings.json"
+          retry_log="${BUILD_DIR}/qgc-build-retry.log"
+
+          if [[ ! -f "${log_file}" ]]; then
+            echo "::error::Build failed and '${log_file}' is missing."
+            exit 1
+          fi
+
+          # Retry only for known intermittent Qt deployment-settings truncation.
+          if ! grep -Eq "Invalid json file: .*android-QGroundControl-deployment-settings\\.json\\. Reason: unterminated object" "${log_file}"; then
+            echo "::error::Initial build failed for a non-retriable reason; skipping retry."
+            exit 1
+          fi
+
+          echo "::warning::Detected truncated android deployment settings JSON. Retrying build with --parallel 1."
+
+          if [[ -f "${settings_json}" ]]; then
+            python3 -m json.tool "${settings_json}" >/dev/null 2>&1 || true
+            rm -f "${settings_json}"
+          fi
+
+          cmake --build "${BUILD_DIR}" --target all --config "${BUILD_TYPE}" --parallel 1 2>&1 | tee "${retry_log}"
 
       - name: Prepare Artifact
         shell: bash
@@ -251,9 +287,20 @@ jobs:
         shell: bash
         run: |
           OUT_DIR="${RUNNER_TEMP}/emulator-diagnostics"
+          BUILD_DIR="${RUNNER_TEMP}/build"
           mkdir -p "${OUT_DIR}"
 
           cp /tmp/qgc_emulator_boot.log "${OUT_DIR}/qgc_emulator_boot.log" 2>/dev/null || true
+          cp "${BUILD_DIR}/qgc-build.log" "${OUT_DIR}/qgc-build.log" 2>/dev/null || true
+          cp "${BUILD_DIR}/qgc-build-retry.log" "${OUT_DIR}/qgc-build-retry.log" 2>/dev/null || true
+          cp "${BUILD_DIR}/android-QGroundControl-deployment-settings.json" \
+            "${OUT_DIR}/android-QGroundControl-deployment-settings.json" 2>/dev/null || true
+
+          if [ -f "${OUT_DIR}/android-QGroundControl-deployment-settings.json" ]; then
+            python3 -m json.tool "${OUT_DIR}/android-QGroundControl-deployment-settings.json" \
+              > "${OUT_DIR}/android-QGroundControl-deployment-settings.pretty.json" \
+              2> "${OUT_DIR}/android-QGroundControl-deployment-settings.error.txt" || true
+          fi
 
           if command -v adb >/dev/null 2>&1; then
             timeout 20s adb start-server >/dev/null 2>&1 || true

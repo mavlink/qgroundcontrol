@@ -16,10 +16,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 # Package categories for Debian/Ubuntu
@@ -101,6 +104,10 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "gstreamer1.0-libav",
         "gstreamer1.0-rtsp",
         "gstreamer1.0-x",
+        "libblas3",
+        "libopenblas0",
+        "python3-gi",
+        "python3-gst-1.0",
     ],
     "gstreamer_optional": [
         "gstreamer1.0-qt6",
@@ -156,8 +163,12 @@ def load_build_config() -> dict:
     """Load build configuration from .github/build-config.json."""
     config_path = get_repo_root() / ".github" / "build-config.json"
     if config_path.exists():
-        with open(config_path) as f:
-            return json.load(f)
+        try:
+            with open(config_path) as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Error: invalid JSON in {config_path}: {e}", file=sys.stderr)
+            return {}
     return {}
 
 
@@ -187,15 +198,19 @@ def has_command(cmd: str) -> bool:
     return shutil.which(cmd) is not None
 
 
-def get_debian_packages(category: str | None = None) -> list[str]:
+def get_debian_packages(
+    category: str | None = None,
+    include_optional: bool = False,
+) -> list[str]:
     """Get Debian packages, optionally filtered by category."""
     if category:
         return list(DEBIAN_PACKAGES.get(category, []))
 
     packages = []
     for cat, pkgs in DEBIAN_PACKAGES.items():
-        if cat != "gstreamer_optional":
-            packages.extend(pkgs)
+        if cat.endswith("_optional") and not include_optional:
+            continue
+        packages.extend(pkgs)
     return list(dict.fromkeys(packages))  # Remove duplicates, preserve order
 
 
@@ -207,7 +222,13 @@ def get_macos_packages() -> list[str]:
 def get_apt_install_command(packages: list[str]) -> list[str]:
     """Build apt-get install command."""
     return [
-        "apt-get", "install", "-y", "-qq", "--no-install-recommends",
+        "apt-get",
+        "-o", "DPkg::Lock::Timeout=300",
+        "-o", "Acquire::Retries=3",
+        "install",
+        "-y",
+        "-qq",
+        "--no-install-recommends",
     ] + packages
 
 
@@ -241,10 +262,10 @@ def run_command(cmd: list[str], dry_run: bool = False, sudo: bool = False) -> bo
         cmd = ["sudo"] + cmd
 
     if dry_run:
-        print(f"  Would run: {' '.join(cmd)}")
+        print(f"  Would run: {shlex.join(cmd)}")
         return True
 
-    print(f"  Running: {' '.join(cmd[:5])}{'...' if len(cmd) > 5 else ''}")
+    print(f"  Running: {shlex.join(cmd[:5])}{'...' if len(cmd) > 5 else ''}")
     result = subprocess.run(cmd)
     return result.returncode == 0
 
@@ -265,6 +286,8 @@ def _set_env_var_ci(name: str, value: str) -> None:
 
 def _set_env_var_local(name: str, value: str) -> None:
     """Set a machine-level environment variable via Windows registry."""
+    if sys.platform != "win32":
+        raise RuntimeError("Local env var persistence is only supported on Windows")
     import winreg
 
     key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
@@ -288,6 +311,8 @@ def add_to_path(path_entry: str) -> None:
             with open(github_path, "a", encoding="utf-8") as f:
                 f.write(f"{path_entry}\n")
     else:
+        if sys.platform != "win32":
+            raise RuntimeError("Local PATH persistence is only supported on Windows")
         import winreg
 
         key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
@@ -300,7 +325,13 @@ def add_to_path(path_entry: str) -> None:
                 winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{current};{path_entry}")
 
 
-def download_file(url: str, dest: Path, dry_run: bool = False) -> bool:
+def download_file(
+    url: str,
+    dest: Path,
+    dry_run: bool = False,
+    timeout: float = 300.0,
+    retries: int = 3,
+) -> bool:
     """Download a file from a URL."""
     import urllib.error
     import urllib.request
@@ -308,67 +339,97 @@ def download_file(url: str, dest: Path, dry_run: bool = False) -> bool:
     if dry_run:
         print(f"  Would download: {url} -> {dest.name}")
         return True
-    print(f"  Downloading {dest.name}...")
-    try:
-        urllib.request.urlretrieve(url, str(dest))
-        return True
-    except (urllib.error.URLError, OSError) as e:
-        print(f"Failed to download {url}: {e}", file=sys.stderr)
-        return False
+
+    req = urllib.request.Request(url, headers={"User-Agent": "qgc-deps-installer/1.0"})
+    for attempt in range(1, retries + 1):
+        print(f"  Downloading {dest.name} (attempt {attempt}/{retries})...")
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as response, open(dest, "wb") as out:
+                shutil.copyfileobj(response, out)
+            return True
+        except (TimeoutError, urllib.error.URLError, OSError) as e:
+            if attempt == retries:
+                print(f"Failed to download {url}: {e}", file=sys.stderr)
+                return False
+            backoff_seconds = attempt * 2
+            print(
+                f"  Download attempt {attempt} failed for {dest.name}: {e}. "
+                f"Retrying in {backoff_seconds}s...",
+                file=sys.stderr,
+            )
+            time.sleep(backoff_seconds)
+    return False
 
 
-def install_debian(dry_run: bool = False, category: str | None = None) -> bool:
+def install_debian(
+    dry_run: bool = False,
+    category: str | None = None,
+    skip_system_packages: bool = False,
+) -> bool:
     """Install Debian/Ubuntu dependencies."""
     print("Installing Debian/Ubuntu dependencies...")
 
-    # Update package lists
-    if not run_command(["apt-get", "update", "-y", "-qq"], dry_run, sudo=True):
-        return False
-
-    bootstrap_packages = ["software-properties-common", "gnupg2", "ca-certificates"]
-
-    # Ensure "universe" is enabled before installing full package set.
-    if not category:
-        print("\nInstalling bootstrap packages...")
-        if not run_command(get_apt_install_command(bootstrap_packages), dry_run, sudo=True):
-            return False
-        if not run_command(["add-apt-repository", "-y", "universe"], dry_run, sudo=True):
-            return False
-        if not run_command(["apt-get", "update", "-y", "-qq"], dry_run, sudo=True):
+    if not skip_system_packages:
+        # Update package lists
+        apt_update_cmd = [
+            "apt-get",
+            "-o", "DPkg::Lock::Timeout=300",
+            "-o", "Acquire::Retries=3",
+            "update",
+            "-y",
+            "-qq",
+        ]
+        if not run_command(apt_update_cmd, dry_run, sudo=True):
             return False
 
-    # Get packages
-    if category:
-        packages = get_debian_packages(category)
-        if not packages:
-            print(f"Unknown category: {category}")
-            return False
-    else:
-        packages = get_debian_packages()
-        packages = [pkg for pkg in packages if pkg not in bootstrap_packages]
+        bootstrap_packages = ["software-properties-common", "gnupg2", "ca-certificates"]
 
-    # Install main packages
-    print(f"\nInstalling {len(packages)} packages...")
-    if not run_command(get_apt_install_command(packages), dry_run, sudo=True):
-        return False
+        # Ensure "universe" is enabled before installing full package set.
+        if not category:
+            print("\nInstalling bootstrap packages...")
+            if not run_command(get_apt_install_command(bootstrap_packages), dry_run, sudo=True):
+                return False
+            if not run_command(["add-apt-repository", "-y", "universe"], dry_run, sudo=True):
+                return False
+            if not run_command(apt_update_cmd, dry_run, sudo=True):
+                return False
 
-    # Check for optional packages
-    for pkg in DEBIAN_PACKAGES.get("gstreamer_optional", []):
-        if check_apt_package_available(pkg):
-            print(f"\nInstalling optional package: {pkg}")
-            run_command(get_apt_install_command([pkg]), dry_run, sudo=True)
+        # Get packages
+        if category:
+            packages = get_debian_packages(category)
+            if not packages:
+                print(f"Unknown category: {category}")
+                return False
         else:
-            print(f"\nSkipping optional package (not available): {pkg}")
+            packages = get_debian_packages()
+            packages = [pkg for pkg in packages if pkg not in bootstrap_packages]
+
+        # Install main packages
+        print(f"\nInstalling {len(packages)} packages...")
+        if not run_command(get_apt_install_command(packages), dry_run, sudo=True):
+            return False
+
+        # Check for optional packages
+        for pkg in DEBIAN_PACKAGES.get("gstreamer_optional", []):
+            if check_apt_package_available(pkg):
+                print(f"\nInstalling optional package: {pkg}")
+                run_command(get_apt_install_command([pkg]), dry_run, sudo=True)
+            else:
+                print(f"\nSkipping optional package (not available): {pkg}")
+    else:
+        print("\nSkipping apt package installation (--skip-system-packages)")
 
     # Install pipx packages
     if not category or category == "core":
         print("\nInstalling pipx packages...")
         run_command(["pipx", "ensurepath"], dry_run)
         for pkg in PIPX_PACKAGES:
-            run_command(["pipx", "install", pkg], dry_run)
+            if not run_command(["pipx", "install", pkg], dry_run):
+                print(f"Error: Failed to install pipx package: {pkg}", file=sys.stderr)
+                return False
 
     # Cleanup
-    if not category:
+    if not skip_system_packages and not category:
         print("\nCleaning up...")
         run_command(["apt-get", "clean"], dry_run, sudo=True)
 
@@ -424,24 +485,32 @@ def install_macos(dry_run: bool = False) -> bool:
             print("  Would run: sudo installer -pkg ... -target /")
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
-                for url in [runtime_url, devel_url]:
-                    pkg_name = url.split("/")[-1]
-                    pkg_path = Path(tmpdir) / pkg_name
+                runtime_pkg = Path(tmpdir) / runtime_url.split("/")[-1]
+                devel_pkg = Path(tmpdir) / devel_url.split("/")[-1]
+                download_targets = [
+                    ("runtime", runtime_url, runtime_pkg),
+                    ("devel", devel_url, devel_pkg),
+                ]
 
-                    print(f"  Downloading {pkg_name}...")
-                    result = subprocess.run(
-                        ["curl", "--retry", "3", "--retry-delay", "5", "-fSLo", str(pkg_path), url],
-                    )
-                    if result.returncode != 0:
-                        print(f"Failed to download {pkg_name}", file=sys.stderr)
-                        return False
+                print("  Downloading GStreamer packages in parallel...")
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = {
+                        executor.submit(download_file, url, pkg_path): label
+                        for label, url, pkg_path in download_targets
+                    }
+                    for future in as_completed(futures):
+                        label = futures[future]
+                        if not future.result():
+                            print(f"Failed to download GStreamer {label} package", file=sys.stderr)
+                            return False
 
-                    print(f"  Installing {pkg_name}...")
+                for label, _, pkg_path in download_targets:
+                    print(f"  Installing GStreamer {label} package...")
                     result = subprocess.run(
                         ["sudo", "installer", "-pkg", str(pkg_path), "-target", "/"],
                     )
                     if result.returncode != 0:
-                        print(f"Failed to install {pkg_name}", file=sys.stderr)
+                        print(f"Failed to install GStreamer {label} package", file=sys.stderr)
                         return False
 
     print("\nmacOS dependencies installed successfully!")
@@ -465,10 +534,29 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
         runtime_msi = tmp / runtime_name
         devel_msi = tmp / devel_name
 
-        if not download_file(f"{base_url}/{runtime_name}", runtime_msi, dry_run):
-            return False
-        if not download_file(f"{base_url}/{devel_name}", devel_msi, dry_run):
-            return False
+        download_targets = [
+            ("runtime", f"{base_url}/{runtime_name}", runtime_msi),
+            ("devel", f"{base_url}/{devel_name}", devel_msi),
+        ]
+        if dry_run:
+            for _, url, path in download_targets:
+                if not download_file(url, path, dry_run):
+                    return False
+        else:
+            print("  Downloading GStreamer installers in parallel...")
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = {
+                    executor.submit(download_file, url, path): label
+                    for label, url, path in download_targets
+                }
+                for future in as_completed(futures):
+                    label = futures[future]
+                    if not future.result():
+                        print(
+                            f"Failed to download GStreamer {label} installer",
+                            file=sys.stderr,
+                        )
+                        return False
 
         install_dir = WINDOWS_GSTREAMER_INSTALL_DIR
         for label, msi in [("runtime", runtime_msi), ("devel", devel_msi)]:
@@ -543,6 +631,17 @@ def install_windows(
     return True
 
 
+def print_packages(platform: str, category: str | None = None) -> None:
+    """Print packages as a single space-separated line (machine-readable)."""
+    if platform == "debian":
+        print(" ".join(get_debian_packages(category)))
+    elif platform == "macos":
+        print(" ".join(get_macos_packages()))
+    else:
+        print(f"Error: --print-packages not supported for {platform}", file=sys.stderr)
+        sys.exit(1)
+
+
 def list_packages(platform: str | None = None) -> None:
     """List packages by category."""
     if platform in (None, "debian"):
@@ -611,8 +710,18 @@ Examples:
         help="List packages by category",
     )
     parser.add_argument(
+        "--print-packages",
+        action="store_true",
+        help="Print space-separated package list (machine-readable, for CI caching)",
+    )
+    parser.add_argument(
         "--category",
         help="Install only specific category (Debian only)",
+    )
+    parser.add_argument(
+        "--skip-system-packages",
+        action="store_true",
+        help="Skip apt package installation (Debian only), useful when another step pre-installs system packages",
     )
     parser.add_argument(
         "--gstreamer-version",
@@ -642,6 +751,10 @@ def main() -> int:
 
     platform = args.platform or detect_platform()
 
+    if args.print_packages:
+        print_packages(platform or "debian", args.category)
+        return 0
+
     if platform is None:
         print("Error: Could not detect platform", file=sys.stderr)
         print("Use --platform to specify: debian, macos, windows", file=sys.stderr)
@@ -652,7 +765,7 @@ def main() -> int:
         print("Mode: DRY RUN (no changes will be made)\n")
 
     if platform == "debian":
-        success = install_debian(args.dry_run, args.category)
+        success = install_debian(args.dry_run, args.category, args.skip_system_packages)
     elif platform == "macos":
         if args.category:
             print("Warning: --category is only supported for Debian", file=sys.stderr)

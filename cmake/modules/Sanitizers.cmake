@@ -241,6 +241,18 @@ if(QGC_BUILD_TESTING)
         add_dependencies(check-asan ${CMAKE_PROJECT_NAME})
     endif()
 
+    if(QGC_ENABLE_UBSAN)
+        add_custom_target(check-ubsan
+            COMMAND ${CMAKE_COMMAND} -E env
+                "UBSAN_OPTIONS=${UBSAN_DEFAULT_OPTIONS}:suppressions=${CMAKE_BINARY_DIR}/ubsan_suppressions.txt"
+                ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running unit tests with UndefinedBehaviorSanitizer"
+            VERBATIM
+        )
+        add_dependencies(check-ubsan ${CMAKE_PROJECT_NAME})
+    endif()
+
     if(QGC_ENABLE_TSAN)
         add_custom_target(check-tsan
             COMMAND ${CMAKE_COMMAND} -E env
@@ -251,6 +263,18 @@ if(QGC_BUILD_TESTING)
             VERBATIM
         )
         add_dependencies(check-tsan ${CMAKE_PROJECT_NAME})
+    endif()
+
+    if(QGC_ENABLE_MSAN)
+        add_custom_target(check-msan
+            COMMAND ${CMAKE_COMMAND} -E env
+                "MSAN_OPTIONS=${MSAN_DEFAULT_OPTIONS}"
+                ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running unit tests with MemorySanitizer"
+            VERBATIM
+        )
+        add_dependencies(check-msan ${CMAKE_PROJECT_NAME})
     endif()
 endif()
 

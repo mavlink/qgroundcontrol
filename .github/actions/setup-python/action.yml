@@ -23,7 +23,9 @@ runs:
       uses: astral-sh/setup-uv@v4
       with:
         enable-cache: true
-        cache-dependency-glob: ""  # No uv.lock in this project
+        cache-dependency-glob: |
+          tools/setup/install_python.py
+          .pre-commit-config.yaml
 
     - name: Install dependencies
       shell: bash

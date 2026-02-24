@@ -43,7 +43,7 @@ jobs:
       - name: Run semantic-release
         id: release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           ./tools/release.sh --install
 
@@ -105,7 +105,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate SBOM (SPDX)
+      - name: Generate SBOMs (SPDX + CycloneDX)
         uses: anchore/sbom-action@v0
         with:
           path: .

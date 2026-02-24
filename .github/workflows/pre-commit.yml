@@ -67,7 +67,8 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+          modules: ''
+          archives: qtbase qtdeclarative icu
 
       - name: Run pre-commit
         id: pre-commit
@@ -83,6 +84,7 @@ jobs:
           PASSED: ${{ steps.pre-commit.outputs.passed }}
           FAILED: ${{ steps.pre-commit.outputs.failed }}
           SKIPPED: ${{ steps.pre-commit.outputs.skipped }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           mkdir -p pre-commit-results
 
@@ -91,15 +93,27 @@ jobs:
           : "${FAILED:=0}"
           : "${SKIPPED:=0}"
 
-          cat > pre-commit-results/pre-commit-results.json <<EOF
-          {
-            "exit_code": "${EXIT_CODE}",
-            "passed": "${PASSED}",
-            "failed": "${FAILED}",
-            "skipped": "${SKIPPED}",
-            "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          }
-          EOF
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          output_path = Path("pre-commit-results/pre-commit-results.json")
+          output_path.write_text(
+              json.dumps(
+                  {
+                      "exit_code": os.environ.get("EXIT_CODE", "1"),
+                      "passed": os.environ.get("PASSED", "0"),
+                      "failed": os.environ.get("FAILED", "0"),
+                      "skipped": os.environ.get("SKIPPED", "0"),
+                      "run_url": os.environ.get("RUN_URL", ""),
+                  },
+                  indent=2,
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
 
           if [[ -f pre-commit-output.txt ]]; then
             cp pre-commit-output.txt pre-commit-results/pre-commit-output.txt

@@ -3,8 +3,32 @@ description: Download artifacts from all completed platform workflow runs for th
 
 inputs:
   github-token:
-    description: GitHub token for API access
+    description: Optional GitHub token for API access (defaults to github.token)
+    required: false
+    default: ''
+  head-sha:
+    description: Commit SHA to fetch workflow artifacts from
     required: true
+  workflows:
+    description: Comma-separated workflow names to download artifacts from
+    required: false
+    default: Linux,Windows,MacOS,Android
+  output-dir:
+    description: Output directory for downloaded artifacts
+    required: false
+    default: artifacts
+  runs-file:
+    description: Path to cached workflow runs JSON (skips API call if provided)
+    required: false
+    default: ''
+  artifact-prefixes:
+    description: Comma-separated artifact name prefixes to download (optional)
+    required: false
+    default: ''
+  artifact-metadata-file:
+    description: Optional JSON path to write run artifact metadata (name + size_in_bytes)
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -12,10 +36,24 @@ runs:
     - name: Download artifacts from all platform workflows
       shell: bash
       env:
-        GH_TOKEN: ${{ inputs.github-token }}
+        GH_TOKEN: ${{ inputs.github-token || github.token }}
+        QGC_GH_API_MODE: http
+        RUNS_FILE: ${{ inputs.runs-file }}
+        INPUT_REPO: ${{ github.repository }}
+        INPUT_HEAD_SHA: ${{ inputs.head-sha }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        INPUT_WORKFLOWS: ${{ inputs.workflows }}
+        INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
+        INPUT_ARTIFACT_METADATA_FILE: ${{ inputs.artifact-metadata-file }}
       run: |
-        python3 "${GITHUB_WORKSPACE}/tools/setup/download_artifacts.py" \
-          --repo "${{ github.repository }}" \
-          --head-sha "${{ github.event.workflow_run.head_sha }}" \
-          --output-dir artifacts \
-          --workflows "Linux,Windows,MacOS,Android"
+        ARGS=(--repo "$INPUT_REPO" --head-sha "$INPUT_HEAD_SHA" --output-dir "$INPUT_OUTPUT_DIR" --workflows "$INPUT_WORKFLOWS")
+        if [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]]; then
+          ARGS+=(--runs-file "$RUNS_FILE")
+        fi
+        if [[ -n "$INPUT_ARTIFACT_PREFIXES" ]]; then
+          ARGS+=(--artifact-prefixes "$INPUT_ARTIFACT_PREFIXES")
+        fi
+        if [[ -n "$INPUT_ARTIFACT_METADATA_FILE" ]]; then
+          ARGS+=(--artifact-metadata-out "$INPUT_ARTIFACT_METADATA_FILE")
+        fi
+        python3 "${GITHUB_WORKSPACE}/tools/setup/download_artifacts.py" "${ARGS[@]}"

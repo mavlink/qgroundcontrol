@@ -55,7 +55,7 @@ jobs:
           retention-days: 1
 
   deploy:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.repository_owner == 'mavlink'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -92,5 +92,9 @@ jobs:
           git config user.email "bot@px4.io"
           git config user.name "PX4BuildBot"
           git add "${SAFE_BRANCH}"
+          if git diff --cached --quiet; then
+            echo "No documentation changes to deploy."
+            exit 0
+          fi
           git commit -m "QGC docs build update $(date -u +%Y-%m-%d)"
           git push origin master

@@ -39,8 +39,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Get build config
         id: config
@@ -58,7 +58,7 @@ jobs:
           xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
           build-type: ${{ matrix.build_type }}
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Configure
         uses: ./.github/actions/cmake-configure

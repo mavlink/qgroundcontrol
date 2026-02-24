@@ -63,13 +63,13 @@ Use clang-format to automatically format C++ code:
 
 ```bash
 # Format changed files
-./tools/format-check.sh
+./tools/analyze.py --tool clang-format --fix
 
 # Check formatting (CI mode)
-./tools/format-check.sh --check
+./tools/analyze.py --tool clang-format
 
 # Format all files
-./tools/format-check.sh --all
+./tools/analyze.py --tool clang-format --fix --all
 ```
 
 ## Static Analysis

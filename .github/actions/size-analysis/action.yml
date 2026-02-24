@@ -42,7 +42,10 @@ runs:
 
         if command -v python3 >/dev/null 2>&1; then
           py_cmd="python3"
-        else
+        elif command -v python >/dev/null 2>&1; then
           py_cmd="python"
+        else
+          echo "Error: Python interpreter not found in PATH" >&2
+          exit 1
         fi
         "${py_cmd}" "${GITHUB_WORKSPACE}/.github/scripts/size_analysis.py" "${args[@]}"

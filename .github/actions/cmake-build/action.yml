@@ -18,6 +18,10 @@ inputs:
     description: 'Enable parallel builds'
     required: false
     default: 'true'
+  parallel-jobs:
+    description: 'Optional max parallel jobs when parallel is enabled'
+    required: false
+    default: ''
   output-file:
     description: 'File to capture build output (optional)'
     required: false
@@ -26,6 +30,14 @@ inputs:
     description: 'Continue even if build fails'
     required: false
     default: 'false'
+  reviewdog:
+    description: 'Enable reviewdog to annotate compiler warnings on PRs'
+    required: false
+    default: 'false'
+  reviewdog-token:
+    description: 'GitHub token for reviewdog (typically github.token)'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -37,8 +49,10 @@ runs:
         BUILD_TYPE: ${{ inputs.build-type }}
         TARGET: ${{ inputs.target }}
         PARALLEL: ${{ inputs.parallel }}
+        PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
         OUTPUT_FILE: ${{ inputs.output-file }}
         CONTINUE: ${{ inputs.continue-on-error }}
+        REVIEWDOG: ${{ inputs.reviewdog }}
       run: |
         set -euo pipefail
 
@@ -52,7 +66,25 @@ runs:
         [[ -n "$BUILD_TYPE" ]] && cmd+=(--config "$BUILD_TYPE")
 
         # Add parallel flag
-        [[ "$PARALLEL" == "true" ]] && cmd+=(--parallel)
+        if [[ "$PARALLEL" == "true" ]]; then
+          if [[ -n "$PARALLEL_JOBS" ]]; then
+            if [[ ! "$PARALLEL_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::parallel-jobs must be a positive integer, got '$PARALLEL_JOBS'"
+              exit 1
+            fi
+            cmd+=(--parallel "$PARALLEL_JOBS")
+          else
+            cmd+=(--parallel)
+          fi
+        fi
+
+        # When reviewdog is enabled, force output capture for warning analysis
+        if [[ "$REVIEWDOG" == "true" && -z "$OUTPUT_FILE" ]]; then
+          OUTPUT_FILE="${RUNNER_TEMP:-.}/build-output.log"
+          echo "REVIEWDOG_LOG=${OUTPUT_FILE}" >> "$GITHUB_ENV"
+        elif [[ "$REVIEWDOG" == "true" ]]; then
+          echo "REVIEWDOG_LOG=${OUTPUT_FILE}" >> "$GITHUB_ENV"
+        fi
 
         echo "Running: ${cmd[*]}"
         start_time=$(date +%s)
@@ -76,6 +108,24 @@ runs:
           echo "::error::Build failed after ${duration}s"
           [[ "$CONTINUE" != "true" ]] && exit $exit_code
         fi
+
+    - name: Setup reviewdog
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      uses: reviewdog/action-setup@v1
+
+    - name: Annotate compiler warnings
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      shell: bash
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ inputs.reviewdog-token }}
+      run: |
+        reviewdog \
+          -f=gcc \
+          -reporter=github-pr-check \
+          -filter-mode=added \
+          -fail-level=none \
+          -name="compiler-warnings" \
+          < "$REVIEWDOG_LOG" || true
 
     - name: Compiler Cache Stats
       if: always()

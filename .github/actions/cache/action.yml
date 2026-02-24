@@ -20,32 +20,51 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup Python 3.12
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.12"
-
-    - name: Resolve Python command
-      id: python
+    - name: Determine cache scope
+      id: cache-scope
       shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        REF_NAME: ${{ github.ref_name }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
-        if command -v python3 >/dev/null 2>&1; then
-          echo "cmd=python3" >> "${GITHUB_OUTPUT}"
-        elif command -v python >/dev/null 2>&1; then
-          echo "cmd=python" >> "${GITHUB_OUTPUT}"
-        else
-          echo "Error: Python not found in PATH" >&2
-          exit 1
-        fi
+        scope="shared"
+        case "${EVENT_NAME}" in
+          pull_request)
+            scope="pr-${PR_NUMBER:-unknown}"
+            ;;
+          workflow_dispatch)
+            scope="manual-${REF_NAME}"
+            ;;
+          push)
+            if [[ "${REF_NAME}" != "master" ]]; then
+              scope="branch-${REF_NAME}"
+            fi
+            ;;
+          *)
+            scope="${EVENT_NAME}-${REF_NAME}"
+            ;;
+        esac
+        scope="${scope//\//-}"
+        echo "scope=${scope}" >> "$GITHUB_OUTPUT"
 
     - name: Get ccache config
       id: ccache-config
       shell: bash
       env:
         INPUT_TARGET: ${{ inputs.target }}
-        PY_CMD: ${{ steps.python.outputs.cmd }}
         WORKSPACE: ${{ github.workspace }}
       run: |
+        # Requires setup-python from common/action.yml
+        if command -v python3 >/dev/null 2>&1; then
+          PY_CMD="python3"
+        elif command -v python >/dev/null 2>&1; then
+          PY_CMD="python"
+        else
+          echo "Error: Python not found in PATH" >&2
+          exit 1
+        fi
+
         # Pin ccache version for reproducibility and to avoid API calls
         # Update periodically via Dependabot or manually
         CCACHE_VERSION="4.12.3"
@@ -80,11 +99,18 @@ runs:
       if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
       env:
-        PY_CMD: ${{ steps.python.outputs.cmd }}
         WORKSPACE: ${{ github.workspace }}
         CCACHE_VER: ${{ steps.ccache-config.outputs.version }}
         CCACHE_ARCH: ${{ steps.ccache-config.outputs.arch }}
       run: |
+        if command -v python3 >/dev/null 2>&1; then
+          PY_CMD="python3"
+        elif command -v python >/dev/null 2>&1; then
+          PY_CMD="python"
+        else
+          echo "Error: Python not found in PATH" >&2
+          exit 1
+        fi
         "${PY_CMD}" "${WORKSPACE}/.github/scripts/install_ccache.py" \
           --version "${CCACHE_VER}" \
           --arch "${CCACHE_ARCH}" \
@@ -99,8 +125,16 @@ runs:
       shell: bash
       run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
 
-    - name: Install ccache (Windows ARM64)
+    - name: Cache ccache binary (Windows ARM64)
       if: runner.os == 'Windows' && inputs.host == 'windows_arm64'
+      id: ccache-binary-win-arm64
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-aarch64/ccache.exe
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-windows-aarch64
+
+    - name: Install ccache (Windows ARM64)
+      if: runner.os == 'Windows' && inputs.host == 'windows_arm64' && steps.ccache-binary-win-arm64.outputs.cache-hit != 'true'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
@@ -115,6 +149,20 @@ runs:
         unzip -q "${temp_dir}/ccache.zip" -d "$temp_dir"
         mkdir -p "$install_dir"
         cp "${temp_dir}/ccache-${CCACHE_VERSION}-windows-aarch64/ccache.exe" "${install_dir}/ccache.exe"
+
+    - name: Add ccache to PATH (Windows ARM64)
+      if: runner.os == 'Windows' && inputs.host == 'windows_arm64'
+      shell: bash
+      env:
+        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+      run: |
+        set -euo pipefail
+        temp_root="${RUNNER_TEMP//\\//}"
+        install_dir="${temp_root}/ccache-${CCACHE_VERSION}-windows-aarch64"
+        if [ ! -f "${install_dir}/ccache.exe" ]; then
+          echo "Error: ccache.exe not found at ${install_dir}/ccache.exe" >&2
+          exit 1
+        fi
 
         echo "$install_dir" >> "$GITHUB_PATH"
         "${install_dir}/ccache.exe" --version
@@ -141,12 +189,80 @@ runs:
         echo "CPM_SOURCE_CACHE=${cpm_cache_path}" >> "$GITHUB_ENV"
         echo "path=${cpm_cache_path}" >> "$GITHUB_OUTPUT"
 
+    - name: Compute CPM dependency fingerprint
+      if: inputs.cpm-modules != ''
+      id: cpm-key
+      shell: bash
+      run: |
+        set -euo pipefail
+        if command -v python3 >/dev/null 2>&1; then
+          PY_CMD="python3"
+        elif command -v python >/dev/null 2>&1; then
+          PY_CMD="python"
+        else
+          echo "Error: Python not found in PATH" >&2
+          exit 1
+        fi
+        fingerprint="$("${PY_CMD}" - <<'PY'
+        import hashlib
+        import re
+        from pathlib import Path
+
+        root = Path(".")
+        declaration_re = re.compile(r"CPM(Add|Find)Package|FetchContent_Declare")
+
+        candidates: list[Path] = []
+        for exact in [Path("CMakeLists.txt"), Path("cmake/modules/CPM.cmake"), Path(".github/build-config.json")]:
+            if exact.exists():
+                candidates.append(exact)
+
+        if (root / "cmake").exists():
+            candidates.extend((root / "cmake").rglob("*.cmake"))
+        if (root / "src").exists():
+            candidates.extend((root / "src").rglob("CMakeLists.txt"))
+        if (root / "test").exists():
+            candidates.extend((root / "test").rglob("CMakeLists.txt"))
+
+        dep_files: list[Path] = []
+        for path in candidates:
+            if not path.is_file():
+                continue
+            if path.name == "build-config.json":
+                dep_files.append(path)
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            if declaration_re.search(text):
+                dep_files.append(path)
+
+        paths = sorted({str(path.as_posix()) for path in dep_files})
+        h = hashlib.sha256()
+        for rel in paths:
+            path = Path(rel)
+            try:
+                content = path.read_bytes()
+            except OSError:
+                continue
+            h.update(rel.encode("utf-8"))
+            h.update(b"\0")
+            h.update(content)
+            h.update(b"\0")
+
+        print(h.hexdigest())
+        PY
+        )"
+        echo "fingerprint=${fingerprint}" >> "$GITHUB_OUTPUT"
+
     - name: Setup Build Cache (ccache)
       if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64')"
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
         restore-keys: |
+          ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
           ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-
           ${{ inputs.host }}-${{ inputs.target }}-
           ${{ inputs.host }}-
@@ -160,13 +276,19 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
-        key: cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: cpm-modules-
+        key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
+        restore-keys: |
+          cpm-modules-${{ steps.cache-scope.outputs.scope }}-
+          cpm-modules-shared-
+          cpm-modules-
 
     - name: Cache CPM Modules (restore only)
       if: inputs.cpm-modules != '' && inputs.save-cache != 'true'
       uses: actions/cache/restore@v5
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
-        key: cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: cpm-modules-
+        key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
+        restore-keys: |
+          cpm-modules-${{ steps.cache-scope.outputs.scope }}-
+          cpm-modules-shared-
+          cpm-modules-
