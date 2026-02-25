@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -17,9 +17,12 @@ from setup.install_dependencies import (
     MACOS_PACKAGES,
     PIPX_PACKAGES,
     detect_platform,
+    get_apt_install_command,
+    get_apt_update_command,
     get_debian_packages,
     get_macos_packages,
     parse_args,
+    run_apt_install_with_retry,
 )
 
 
@@ -175,6 +178,31 @@ def test_download_file_network_error(tmp_path: Path) -> None:
     from setup.install_dependencies import download_file
 
     dest = tmp_path / "test.bin"
-    with patch("urllib.request.urlretrieve", side_effect=urllib.error.URLError("unreachable")):
+    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("unreachable")), \
+         patch("setup.install_dependencies.time.sleep", return_value=None):
         result = download_file("https://example.com/test.bin", dest, dry_run=False)
     assert result is False
+
+
+# ---------------------------------------------------------------------------
+# apt install retry behavior
+# ---------------------------------------------------------------------------
+
+def test_run_apt_install_with_retry_success_first_try() -> None:
+    with patch("setup.install_dependencies.run_command", return_value=True) as mock_run:
+        result = run_apt_install_with_retry(["cmake"], dry_run=False, sudo=True, max_attempts=2)
+
+    assert result is True
+    mock_run.assert_called_once_with(get_apt_install_command(["cmake"]), False, sudo=True)
+
+
+def test_run_apt_install_with_retry_refreshes_index_then_retries() -> None:
+    with patch("setup.install_dependencies.run_command", side_effect=[False, True, True]) as mock_run:
+        result = run_apt_install_with_retry(["cmake"], dry_run=False, sudo=True, max_attempts=2)
+
+    assert result is True
+    mock_run.assert_has_calls([
+        call(get_apt_install_command(["cmake"]), False, sudo=True),
+        call(get_apt_update_command(), False, sudo=True),
+        call(get_apt_install_command(["cmake"]), False, sudo=True),
+    ])

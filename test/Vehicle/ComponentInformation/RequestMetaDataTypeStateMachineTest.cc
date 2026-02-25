@@ -188,6 +188,7 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
 {
     auto* manager = vehicle()->compInfoManager();
     QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->isRunning(), TestTimeout::mediumMs());
 
     auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
@@ -213,6 +214,10 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
     QVERIFY(QFile::exists(cachedPath));
 
     _mockLink->clearReceivedMavCommandCounts();
+    const int initialCompMetadataRequests =
+        _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA);
+    const int initialCompInformationRequests =
+        _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_INFORMATION);
 
     RequestMetaDataTypeStateMachine requestMachine(manager, this);
     QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
@@ -224,7 +229,10 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
     }
 
     QCOMPARE(completeSpy.count(), 1);
-    QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_MESSAGE), 0);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA),
+             initialCompMetadataRequests);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_INFORMATION),
+             initialCompInformationRequests);
     QVERIFY(!requestMachine.active());
 
     FactMetaData* metadata = param->factMetaDataForName(QStringLiteral("CACHE_HIT_PARAM"), FactMetaData::valueTypeFloat);

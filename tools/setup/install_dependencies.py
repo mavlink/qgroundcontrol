@@ -149,6 +149,11 @@ PIPX_PACKAGES: list[str] = [
     "gcovr",
 ]
 
+APT_BASE_OPTIONS: list[str] = [
+    "-o", "DPkg::Lock::Timeout=300",
+    "-o", "Acquire::Retries=3",
+]
+
 
 def get_repo_root() -> Path:
     """Find repository root directory."""
@@ -223,13 +228,45 @@ def get_apt_install_command(packages: list[str]) -> list[str]:
     """Build apt-get install command."""
     return [
         "apt-get",
-        "-o", "DPkg::Lock::Timeout=300",
-        "-o", "Acquire::Retries=3",
+        *APT_BASE_OPTIONS,
         "install",
         "-y",
         "-qq",
         "--no-install-recommends",
     ] + packages
+
+
+def get_apt_update_command() -> list[str]:
+    """Build apt-get update command."""
+    return [
+        "apt-get",
+        *APT_BASE_OPTIONS,
+        "update",
+        "-y",
+        "-qq",
+    ]
+
+
+def run_apt_install_with_retry(
+    packages: list[str],
+    dry_run: bool = False,
+    sudo: bool = False,
+    max_attempts: int = 2,
+) -> bool:
+    """Install apt packages, refreshing package lists between attempts."""
+    install_cmd = get_apt_install_command(packages)
+    for attempt in range(1, max_attempts + 1):
+        if run_command(install_cmd, dry_run, sudo=sudo):
+            return True
+        if attempt >= max_attempts:
+            break
+        print(
+            f"  apt install failed (attempt {attempt}/{max_attempts}); "
+            "refreshing package lists and retrying..."
+        )
+        if not run_command(get_apt_update_command(), dry_run, sudo=sudo):
+            return False
+    return False
 
 
 def get_brew_install_command(packages: list[str]) -> list[str]:
@@ -371,14 +408,7 @@ def install_debian(
 
     if not skip_system_packages:
         # Update package lists
-        apt_update_cmd = [
-            "apt-get",
-            "-o", "DPkg::Lock::Timeout=300",
-            "-o", "Acquire::Retries=3",
-            "update",
-            "-y",
-            "-qq",
-        ]
+        apt_update_cmd = get_apt_update_command()
         if not run_command(apt_update_cmd, dry_run, sudo=True):
             return False
 
@@ -387,7 +417,7 @@ def install_debian(
         # Ensure "universe" is enabled before installing full package set.
         if not category:
             print("\nInstalling bootstrap packages...")
-            if not run_command(get_apt_install_command(bootstrap_packages), dry_run, sudo=True):
+            if not run_apt_install_with_retry(bootstrap_packages, dry_run, sudo=True):
                 return False
             if not run_command(["add-apt-repository", "-y", "universe"], dry_run, sudo=True):
                 return False
@@ -406,14 +436,14 @@ def install_debian(
 
         # Install main packages
         print(f"\nInstalling {len(packages)} packages...")
-        if not run_command(get_apt_install_command(packages), dry_run, sudo=True):
+        if not run_apt_install_with_retry(packages, dry_run, sudo=True):
             return False
 
         # Check for optional packages
         for pkg in DEBIAN_PACKAGES.get("gstreamer_optional", []):
             if check_apt_package_available(pkg):
                 print(f"\nInstalling optional package: {pkg}")
-                run_command(get_apt_install_command([pkg]), dry_run, sudo=True)
+                run_apt_install_with_retry([pkg], dry_run, sudo=True)
             else:
                 print(f"\nSkipping optional package (not available): {pkg}")
     else:
