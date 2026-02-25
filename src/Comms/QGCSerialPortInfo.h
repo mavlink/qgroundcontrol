@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QtSystemDetection>
 #ifdef Q_OS_ANDROID
     #include "qserialportinfo.h"
@@ -70,7 +71,7 @@ private:
     static QList<BoardInfo_t> _boardInfoList;
 
     struct BoardRegExpFallback_t {
-        QString regExp;
+        QRegularExpression regExp;
         BoardType_t boardType;
         bool androidOnly;
     };
