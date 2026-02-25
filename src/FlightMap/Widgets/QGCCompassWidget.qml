@@ -58,12 +58,7 @@ Rectangle {
     Item {
         id:             rotationParent
         anchors.fill:   parent
-
-        transform: Rotation {
-            origin.x:       rotationParent.width  / 2
-            origin.y:       rotationParent.height / 2
-            angle:         _lockNoseUpCompass ? -_heading : 0
-        }
+        rotation:           _lockNoseUpCompass ? -_heading : 0
 
         CompassDial {
             anchors.fill:   parent
@@ -84,12 +79,7 @@ Rectangle {
             anchors.fill:       parent
             sourceSize.height:  parent.height
             visible:            showCOG()
-
-            transform: Rotation {
-                origin.x:   cogPointer.width  / 2
-                origin.y:   cogPointer.height / 2
-                angle:      _courseOverGround
-            }
+            rotation:           _courseOverGround
         }
 
         Image {
@@ -100,12 +90,7 @@ Rectangle {
             anchors.fill:       parent
             sourceSize.height:  parent.height
             visible:            showHeadingToNextWP()
-
-            transform: Rotation {
-                origin.x:   nextWPPointer.width  / 2
-                origin.y:   nextWPPointer.height / 2
-                angle:      _headingToNextWP
-            }
+            rotation:           _headingToNextWP
         }
 
         // Launch location indicator
