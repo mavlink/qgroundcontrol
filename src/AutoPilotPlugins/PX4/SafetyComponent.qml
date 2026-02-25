@@ -213,7 +213,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    text:                   qsTr("Manual Controller Loss Failsafe Trigger")
+                    text:                   qsTr("Manual Control Loss Failsafe Trigger")
                 }
 
                 Rectangle {
