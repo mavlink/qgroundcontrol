@@ -253,7 +253,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:               qsTr("MC Loss Timeout:")
+                                text:               qsTr("Manual Control Loss Timeout:")
                                 Layout.fillWidth:   true
                             }
                             FactTextField {
