@@ -81,6 +81,7 @@ add_qgc_test(MavlinkLogTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK
 # ----------------------------------------------------------------------------
 add_subdirectory(Camera)
 add_qgc_test(QGCCameraManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(VehicleCameraControlTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(QGCVideoStreamInfoTest LABELS Unit Camera)
 add_qgc_test(VideoManagerTest LABELS Unit)
 

@@ -7,6 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCCameraManagerTest.cc
         QGCCameraManagerTest.h
+        VehicleCameraControlTest.cc
+        VehicleCameraControlTest.h
         QGCVideoStreamInfoTest.cc
         QGCVideoStreamInfoTest.h
         VideoManagerTest.cc
