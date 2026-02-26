@@ -13,7 +13,6 @@
 void InitialConnectPeripheralStartupTest::init()
 {
     VehicleTestManualConnect::init();
-    MAVLinkProtocol::deleteTempLogFiles();
 }
 
 void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitialConnectComplete()

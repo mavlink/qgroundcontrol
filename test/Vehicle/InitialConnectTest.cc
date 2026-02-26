@@ -20,8 +20,6 @@
 void InitialConnectTest::init()
 {
     VehicleTestManualConnect::init();
-    LinkManager::instance()->setConnectionsAllowed();
-    MAVLinkProtocol::deleteTempLogFiles();
 }
 
 void InitialConnectTest::_performTestCases_data()

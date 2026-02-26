@@ -25,8 +25,6 @@ void VehicleTest::init()
 
     // Initialize vehicle management systems
     MultiVehicleManager::instance()->init();
-    LinkManager::instance()->setConnectionsAllowed();
-    MAVLinkProtocol::deleteTempLogFiles();
 
     _connectMockLink(_autopilotType, _failureMode);
 
