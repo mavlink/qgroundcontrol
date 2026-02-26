@@ -493,6 +493,10 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
+            if (!context.issue.number) {
+              core.info('No PR number available; skipping size comparison comment.');
+              return;
+            }
             const fs = require('fs');
             const current = JSON.parse(fs.readFileSync('metrics.json', 'utf8'));
             const baseline = JSON.parse(fs.readFileSync('baseline/metrics.json', 'utf8'));

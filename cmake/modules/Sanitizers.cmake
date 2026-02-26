@@ -282,6 +282,9 @@ endif()
 # PART 2: VALGRIND RUNTIME ANALYSIS
 # ############################################################################
 # No rebuild required - runs existing binary under Valgrind
+# Valgrind is Linux/macOS only; skip entirely on Windows.
+
+if(NOT WIN32)
 
 # ----------------------------------------------------------------------------
 # Find Valgrind
@@ -471,3 +474,5 @@ if(VALGRIND_EXECUTABLE)
 else()
     message(STATUS "Valgrind not found - runtime analysis targets not available")
 endif()
+
+endif() # NOT WIN32

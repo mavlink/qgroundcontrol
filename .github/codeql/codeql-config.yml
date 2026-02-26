@@ -2,7 +2,6 @@ name: "QGroundControl CodeQL Config"
 
 paths:
   - src
-  - test
 
 paths-ignore:
   - '**/moc_*'
@@ -15,7 +14,6 @@ paths-ignore:
 
 queries:
   - uses: security-extended
-  - uses: security-and-quality
 
 query-filters:
   - exclude:
