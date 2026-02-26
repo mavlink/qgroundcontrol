@@ -1,0 +1,51 @@
+name: Binary Size Analysis
+description: Analyze binary size metrics using bloaty and standard tools
+
+inputs:
+  binary-path:
+    description: 'Path to the binary to analyze'
+    required: true
+  install-bloaty:
+    description: 'Install bloaty from source (takes ~2 min)'
+    default: 'true'
+  output-file:
+    description: 'Path for metrics JSON output'
+    default: 'size-metrics.json'
+
+outputs:
+  binary_size:
+    description: 'Size of the binary in bytes'
+    value: ${{ steps.metrics.outputs.binary_size }}
+  stripped_size:
+    description: 'Size of stripped binary in bytes'
+    value: ${{ steps.metrics.outputs.stripped_size }}
+  symbol_count:
+    description: 'Number of symbols in binary'
+    value: ${{ steps.metrics.outputs.symbol_count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Analyze binary size
+      id: metrics
+      shell: bash
+      env:
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_INSTALL_BLOATY: ${{ inputs.install-bloaty }}
+      run: |
+        args=(
+          --binary "$INPUT_BINARY_PATH"
+          --output "$INPUT_OUTPUT_FILE"
+        )
+        [[ "$INPUT_INSTALL_BLOATY" == "true" ]] && args+=(--install-bloaty)
+
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        elif command -v python >/dev/null 2>&1; then
+          py_cmd="python"
+        else
+          echo "Error: Python interpreter not found in PATH" >&2
+          exit 1
+        fi
+        "${py_cmd}" "${GITHUB_WORKSPACE}/.github/scripts/size_analysis.py" "${args[@]}"

@@ -4,11 +4,11 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 
+MissionControllerManagerTest::~MissionControllerManagerTest() = default;
 
 void MissionControllerManagerTest::cleanup()
 {
-    delete _multiSpyMissionManager;
-    _multiSpyMissionManager = nullptr;
+    _multiSpyMissionManager.reset();
     VehicleTestManualConnect::cleanup();
 }
 
@@ -18,15 +18,14 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     // Wait for the Mission Manager to finish it's initial load
     _missionManager = MultiVehicleManager::instance()->activeVehicle()->missionManager();
     QVERIFY(_missionManager);
-    _multiSpyMissionManager = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpyMissionManager);
-    QCOMPARE(_multiSpyMissionManager->init(_missionManager), true);
+    _multiSpyMissionManager = std::make_unique<MultiSignalSpy>();
+    QVERIFY(_multiSpyMissionManager);
+    QVERIFY(_multiSpyMissionManager->init(_missionManager));
     if (_missionManager->inProgress()) {
-        _multiSpyMissionManager->waitForSignal(SIGNAL(newMissionItemsAvailable(bool)), _missionManagerSignalWaitTime);
-        _multiSpyMissionManager->waitForSignal(SIGNAL(inProgressChanged(bool)), _missionManagerSignalWaitTime);
-        QCOMPARE(_multiSpyMissionManager->emittedByMask(_multiSpyMissionManager->mask(
-                     SIGNAL(newMissionItemsAvailable(bool)), SIGNAL(inProgressChanged(bool)))),
-                 true);
+        QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "newMissionItemsAvailable", _missionManagerSignalWaitTime);
+        QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "inProgressChanged", _missionManagerSignalWaitTime);
+        QVERIFY(_multiSpyMissionManager->emittedByMask(
+            _multiSpyMissionManager->mask("newMissionItemsAvailable", "inProgressChanged")));
     }
     QVERIFY(!_missionManager->inProgress());
     QCOMPARE(_missionManager->missionItems().count(), 0);
@@ -37,7 +36,7 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
 void MissionControllerManagerTest::_checkInProgressValues(bool inProgress)
 {
     QCOMPARE(_missionManager->inProgress(), inProgress);
-    QCOMPARE(_multiSpyMissionManager->argument<bool>(SIGNAL(inProgressChanged(bool))), inProgress);
+    QCOMPARE(_multiSpyMissionManager->argument<bool>("inProgressChanged"), inProgress);
 }
 
 #include "UnitTest.h"

@@ -27,6 +27,8 @@ tags
 # Build System & CMake
 # ------------------------------------------------------------------------------
 build*/
+!.github/actions/build-setup/
+!.github/actions/build-setup/action.yml
 cmake-build-*/
 out/
 CMakeFiles
@@ -35,6 +37,7 @@ CMakeUserPresets.json
 compile_commands.json
 cpm_modules
 .cache/
+.ccache/
 
 # ------------------------------------------------------------------------------
 # Qt Generated Files
@@ -115,6 +118,7 @@ ios/iOSForAppStore-Info.plist
 
 # Android
 android/local.properties
+.gradle/
 *.class
 
 # Linux

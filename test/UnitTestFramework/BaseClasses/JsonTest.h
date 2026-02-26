@@ -30,7 +30,9 @@ class JsonTest : public UnitTest
     Q_OBJECT
 
 public:
-    explicit JsonTest(QObject* parent = nullptr) : UnitTest(parent) {}
+    explicit JsonTest(QObject* parent = nullptr) : UnitTest(parent)
+    {
+    }
 
 protected:
     /// Loads JSON from a Qt resource path and returns as QJsonDocument

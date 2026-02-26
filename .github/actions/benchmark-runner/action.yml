@@ -1,0 +1,42 @@
+name: Qt Benchmark Runner
+description: Run Qt Test benchmarks and parse output to JSON
+
+inputs:
+  binary-path:
+    description: 'Path to the QGC binary'
+    required: true
+  test-filter:
+    description: 'Test filter (e.g., MAVLinkBenchmark)'
+    default: 'MAVLinkBenchmark'
+  output-file:
+    description: 'Path for benchmark JSON output'
+    default: 'benchmark.json'
+  qt-platform:
+    description: 'Qt platform plugin (offscreen for headless)'
+    default: 'offscreen'
+
+runs:
+  using: composite
+  steps:
+    - name: Run and parse benchmarks
+      shell: bash
+      env:
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_TEST_FILTER: ${{ inputs.test-filter }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_QT_PLATFORM: ${{ inputs.qt-platform }}
+      run: |
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        elif command -v python >/dev/null 2>&1; then
+          py_cmd="python"
+        else
+          echo "Error: Python interpreter not found in PATH" >&2
+          exit 1
+        fi
+
+        "${py_cmd}" "${GITHUB_WORKSPACE}/.github/scripts/benchmark_runner.py" \
+          --binary "$INPUT_BINARY_PATH" \
+          --filter "$INPUT_TEST_FILTER" \
+          --output "$INPUT_OUTPUT_FILE" \
+          --platform "$INPUT_QT_PLATFORM"

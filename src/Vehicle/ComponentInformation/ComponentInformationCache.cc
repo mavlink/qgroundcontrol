@@ -79,10 +79,16 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
         return data.fileName();
     }
 
-    // move the file to the cache location
+    // move the file to the cache location (fall back to copy+remove for cross-device)
     if (!fileToCache.rename(data.fileName())) {
-        qCWarning(ComponentInformationCacheLog) << "File rename failed from:to" << fileName << data.fileName();
-        return "";
+        qCDebug(ComponentInformationCacheLog) << "File rename failed from:to" << fileName << data.fileName() << fileToCache.errorString();
+        if (!fileToCache.copy(data.fileName())) {
+            qCWarning(ComponentInformationCacheLog) << "File copy failed from:to" << fileName << data.fileName() << fileToCache.errorString();
+            return "";
+        }
+        if (!fileToCache.remove()) {
+            qCWarning(ComponentInformationCacheLog) << "File remove failed after copy for" << fileToCache.fileName() << fileToCache.errorString();
+        }
     }
 
     // write meta data

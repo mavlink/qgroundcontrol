@@ -6,13 +6,13 @@
 # Profile QGroundControl using various tools
 #
 # Usage:
-#   ./tools/profile.sh                     # Run with perf (default)
-#   ./tools/profile.sh --memcheck          # Check for memory leaks (valgrind)
-#   ./tools/profile.sh --callgrind         # CPU profiling (valgrind)
-#   ./tools/profile.sh --massif            # Heap profiling (valgrind)
-#   ./tools/profile.sh --heaptrack         # Heap profiling (heaptrack)
-#   ./tools/profile.sh --perf              # CPU profiling (perf)
-#   ./tools/profile.sh --sanitize          # Build with sanitizers
+#   ./tools/debuggers/profile.sh                     # Run with perf (default)
+#   ./tools/debuggers/profile.sh --memcheck          # Check for memory leaks (valgrind)
+#   ./tools/debuggers/profile.sh --callgrind         # CPU profiling (valgrind)
+#   ./tools/debuggers/profile.sh --massif            # Heap profiling (valgrind)
+#   ./tools/debuggers/profile.sh --heaptrack         # Heap profiling (heaptrack)
+#   ./tools/debuggers/profile.sh --perf              # CPU profiling (perf)
+#   ./tools/debuggers/profile.sh --sanitize          # Build with sanitizers
 #
 # Requirements:
 #   - valgrind (for memcheck, callgrind, massif)

@@ -106,6 +106,6 @@ private:
     float _compressionProgress = 0.0F;
 
     static constexpr uint32_t kTimeOutMs = 500;
-    static constexpr uint32_t kGUIRateMs = 17; ///< 1000ms / 60fps
+    static constexpr uint32_t kGUIRateMs = 500; ///< Update download rate twice per second
     static constexpr uint32_t kRequestLogListTimeoutMs = 5000;
 };

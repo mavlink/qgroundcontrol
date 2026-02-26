@@ -9,7 +9,6 @@ import QGroundControl.FlyView
 
 Item {
     required property var guidedValueSlider
-    required property bool utmspSliderTrigger
 
     id:     control
     width:  parent.width
@@ -119,7 +118,6 @@ Item {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     guidedController:           control._guidedController
                     guidedValueSlider:          control.guidedValueSlider
-                    utmspSliderTrigger:         control.utmspSliderTrigger
                     messageDisplay:             guidedActionMessageDisplay
                 }
             }

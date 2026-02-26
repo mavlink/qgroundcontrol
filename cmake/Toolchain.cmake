@@ -24,11 +24,21 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+if(NOT DEFINED CMAKE_AUTOGEN_PARALLEL)
+    cmake_host_system_information(RESULT _nproc QUERY NUMBER_OF_LOGICAL_CORES)
+    set(CMAKE_AUTOGEN_PARALLEL ${_nproc})
+endif()
+
 # ----------------------------------------------------------------------------
 # Build Configuration
 # ----------------------------------------------------------------------------
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Include compiler warnings configuration
+include(CompilerWarnings)
+
 # set(CMAKE_EXPORT_BUILD_DATABASE ON)
 
 if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32)

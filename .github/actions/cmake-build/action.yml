@@ -1,0 +1,142 @@
+name: CMake Build
+description: Build QGroundControl with consistent options
+
+inputs:
+  build-dir:
+    description: 'Build directory'
+    required: false
+    default: 'build'
+  build-type:
+    description: 'Build configuration (Release, Debug, RelWithDebInfo)'
+    required: false
+    default: 'Release'
+  target:
+    description: 'Build target'
+    required: false
+    default: 'all'
+  parallel:
+    description: 'Enable parallel builds'
+    required: false
+    default: 'true'
+  parallel-jobs:
+    description: 'Optional max parallel jobs when parallel is enabled'
+    required: false
+    default: ''
+  output-file:
+    description: 'File to capture build output (optional)'
+    required: false
+    default: ''
+  continue-on-error:
+    description: 'Continue even if build fails'
+    required: false
+    default: 'false'
+  reviewdog:
+    description: 'Enable reviewdog to annotate compiler warnings on PRs'
+    required: false
+    default: 'false'
+  reviewdog-token:
+    description: 'GitHub token for reviewdog (typically github.token)'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.build-dir }}
+      env:
+        BUILD_TYPE: ${{ inputs.build-type }}
+        TARGET: ${{ inputs.target }}
+        PARALLEL: ${{ inputs.parallel }}
+        PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
+        CONTINUE: ${{ inputs.continue-on-error }}
+        REVIEWDOG: ${{ inputs.reviewdog }}
+      run: |
+        set -euo pipefail
+
+        # Build command
+        cmd=(cmake --build .)
+
+        # Add target
+        [[ -n "$TARGET" ]] && cmd+=(--target "$TARGET")
+
+        # Add config for multi-config generators
+        [[ -n "$BUILD_TYPE" ]] && cmd+=(--config "$BUILD_TYPE")
+
+        # Add parallel flag
+        if [[ "$PARALLEL" == "true" ]]; then
+          if [[ -n "$PARALLEL_JOBS" ]]; then
+            if [[ ! "$PARALLEL_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::parallel-jobs must be a positive integer, got '$PARALLEL_JOBS'"
+              exit 1
+            fi
+            cmd+=(--parallel "$PARALLEL_JOBS")
+          else
+            cmd+=(--parallel)
+          fi
+        fi
+
+        # When reviewdog is enabled, force output capture for warning analysis
+        if [[ "$REVIEWDOG" == "true" && -z "$OUTPUT_FILE" ]]; then
+          OUTPUT_FILE="${RUNNER_TEMP:-.}/build-output.log"
+          echo "REVIEWDOG_LOG=${OUTPUT_FILE}" >> "$GITHUB_ENV"
+        elif [[ "$REVIEWDOG" == "true" ]]; then
+          echo "REVIEWDOG_LOG=${OUTPUT_FILE}" >> "$GITHUB_ENV"
+        fi
+
+        echo "Running: ${cmd[*]}"
+        start_time=$(date +%s)
+
+        set +e
+        if [[ -n "$OUTPUT_FILE" ]]; then
+          "${cmd[@]}" 2>&1 | tee "$OUTPUT_FILE"
+          exit_code=${PIPESTATUS[0]}
+        else
+          "${cmd[@]}"
+          exit_code=$?
+        fi
+        set -e
+
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+
+        if [[ $exit_code -eq 0 ]]; then
+          echo "✓ Build completed in ${duration}s"
+        else
+          echo "::error::Build failed after ${duration}s"
+          [[ "$CONTINUE" != "true" ]] && exit $exit_code
+        fi
+
+    - name: Setup reviewdog
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      uses: reviewdog/action-setup@v1
+
+    - name: Annotate compiler warnings
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      shell: bash
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ inputs.reviewdog-token }}
+      run: |
+        reviewdog \
+          -f=gcc \
+          -reporter=github-pr-check \
+          -filter-mode=added \
+          -fail-level=none \
+          -name="compiler-warnings" \
+          < "$REVIEWDOG_LOG" || true
+
+    - name: Compiler Cache Stats
+      if: always()
+      shell: bash
+      run: |
+        if command -v ccache >/dev/null 2>&1; then
+          echo "::group::ccache statistics"
+          ccache -s
+          echo "::endgroup::"
+        elif command -v sccache >/dev/null 2>&1; then
+          echo "::group::sccache statistics"
+          sccache --show-stats
+          echo "::endgroup::"
+        fi

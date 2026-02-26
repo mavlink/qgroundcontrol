@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QFile>
 #include <QtCore/QTemporaryDir>
 
 #include <memory>
@@ -30,7 +31,9 @@ class TempDirectoryTest : public UnitTest
     Q_OBJECT
 
 public:
-    explicit TempDirectoryTest(QObject* parent = nullptr) : UnitTest(parent) {}
+    explicit TempDirectoryTest(QObject* parent = nullptr) : UnitTest(parent)
+    {
+    }
 
     /// Returns the path to the temporary directory
     QString tempDirPath() const
@@ -66,6 +69,19 @@ public:
         return QString();
     }
 
+    /// Creates a symlink and skips the test if symlinks are unavailable.
+    /// @param targetPath Existing target path
+    /// @param linkPath Symlink path to create
+    /// @param skipReason Optional skip reason
+    void createSymlinkOrSkip(const QString& targetPath, const QString& linkPath,
+                             const QString& skipReason = QStringLiteral("Symlinks are not supported in this environment"))
+    {
+        (void) QFile::remove(linkPath);
+        if (!QFile::link(targetPath, linkPath)) {
+            QSKIP(qPrintable(skipReason));
+        }
+    }
+
     /// Creates a file with the given content in the temp directory
     /// @param relativePath Path relative to temp directory
     /// @param content File content
@@ -89,6 +105,7 @@ public:
     }
 
 protected slots:
+
     void init() override
     {
         UnitTest::init();

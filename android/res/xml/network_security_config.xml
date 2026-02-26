@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    QGC connects to arbitrary local devices (autopilots, video streams)
+    whose IPs are unknown at build time.  Android's domain-config does
+    not support CIDR notation, so we allow cleartext globally.
+
+    MAVLink over UDP/TCP uses raw sockets (unaffected by this config).
+    This primarily enables cleartext HTTP/RTSP for local video streams
+    and self-hosted map tile servers.
+-->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true"/>
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

@@ -113,6 +113,7 @@ void Fact::forceSetRawValue(const QVariant &value)
             {
                 QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
                 _rawValue = typedValue;
+                _rawValueIsNotSet = false;
             }
 
             const QVariant cooked = _metaData->rawTranslator()(typedValue);

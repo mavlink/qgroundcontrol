@@ -25,7 +25,7 @@ public:
     /// Called to handle mission item related messages. All messages should be passed to this method.
     /// It will handle the appropriate set.
     ///     @return true: message handled
-    bool handleMessage(const mavlink_message_t &msg);
+    bool handleMavlinkMessage(const mavlink_message_t &msg);
 
     enum FailureMode_t {
         FailNone,                           // No failures

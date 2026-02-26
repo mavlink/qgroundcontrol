@@ -32,6 +32,7 @@ option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" O
 option(QGC_USE_CACHE "Enable compiler caching (ccache/sccache)" ON)
 option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
 option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
+option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 
 # Debug-dependent options
 cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
@@ -53,13 +54,6 @@ set(QGC_COVERAGE_BRANCH_THRESHOLD 20 CACHE STRING "Minimum branch coverage perce
 set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valgrind")
 
 # ============================================================================
-# Feature Flags
-# ============================================================================
-
-option(QGC_UTM_ADAPTER "Enable UTM (Unmanned Traffic Management) Adapter" OFF)
-option(QGC_VIEWER3D "Enable 3D Viewer (requires Qt Quick 3D)" ON)
-
-# ============================================================================
 # Compression Format Options
 # ============================================================================
 # Core formats (gzip, xz, zstd, zip) are always enabled.
@@ -75,9 +69,7 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 # Communication Options
 # ============================================================================
 
-option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth communication links" ON)
 option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
-option(QGC_AIRLINK_DISABLED "Disable AIRLink support" ON)
 option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 # ============================================================================

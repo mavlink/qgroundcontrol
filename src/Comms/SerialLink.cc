@@ -10,7 +10,6 @@ QGC_LOGGING_CATEGORY(SerialLinkLog, "Comms.SerialLink")
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 1000;
     constexpr int DISCONNECT_TIMEOUT_MS = 3000;
-    constexpr int READ_TIMEOUT_MS = 100;
 }
 
 /*===========================================================================*/

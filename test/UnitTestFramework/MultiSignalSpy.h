@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include "UnitTest.h"
+
 Q_DECLARE_LOGGING_CATEGORY(MultiSignalSpyLog)
 
 /// Multi-signal spy for unit testing.
@@ -100,7 +102,7 @@ public:
     // Wait methods
     // ------------------------------------------------------------------------
 
-    bool waitForSignal(const char* signalName, int msec = 5000);
+    bool waitForSignal(const char* signalName, int msec = TestTimeout::mediumMs());
 
     // ------------------------------------------------------------------------
     // Access methods
@@ -181,7 +183,7 @@ public:
             return _spy.onlyEmittedOnceByMask(_mask);
         }
 
-        bool wait(int msec = 5000) const
+        bool wait(int msec = TestTimeout::mediumMs()) const
         {
             return _spy.waitForSignal(_signalName, msec);
         }

@@ -3,6 +3,16 @@
 namespace TestFixtures {
 namespace Coord {
 
+QList<QGeoCoordinate> missionTestRectangle()
+{
+    return {
+        QGeoCoordinate(47.635638361473475, -122.09269407980834),
+        QGeoCoordinate(47.635638361473475, -122.08545246602667),
+        QGeoCoordinate(47.63057923872075, -122.08545246602667),
+        QGeoCoordinate(47.63057923872075, -122.09269407980834),
+    };
+}
+
 QList<QGeoCoordinate> polygon(const QGeoCoordinate& center, int sides, double radiusMeters)
 {
     QList<QGeoCoordinate> coords;

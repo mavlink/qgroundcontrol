@@ -50,7 +50,7 @@ QImage QGCImageProvider::requestImage(const QString &id, QSize *size, const QSiz
         return _dummy;
     }
 
-    const uint8_t index = url[1].toUInt(&ok);
+    const uint8_t index [[maybe_unused]] = url[1].toUInt(&ok);
     if (!ok) {
         return _dummy;
     }

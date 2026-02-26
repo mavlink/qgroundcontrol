@@ -14,15 +14,18 @@ JoystickConfigController::JoystickConfigController(QObject *parent)
     : RemoteControlCalibrationController(parent)
 {
     // Channel values are based on -32768:32767 range from SDL
+
     _calCenterPoint =       0;
-    _calValidMinValue =     -32768;     ///< Largest valid minimum axis value
-    _calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
     _calDefaultMinValue =   -32768;     ///< Default value for Min if not set
     _calDefaultMaxValue =   32767;      ///< Default value for Max if not set
     _calRoughCenterDelta =  700;        ///< Delta around center point which is considered to be roughly centered (Note: PS5 controller has very noisy center, hence 700)
     _calMoveDelta =         32768/2;    ///< Amount of delta past center which is considered stick movement
     _calSettleDelta =       1000;       ///< Amount of delta which is considered no stick movement (increased for noisy joysticks at extreme positions)
     _stickDetectSettleMSecs = 300;      ///< Reduced settle time for joysticks (faster response than RC transmitters)
+
+    int valueRange = _calDefaultMaxValue - _calDefaultMinValue;
+    _calValidMinValue = _calDefaultMinValue + (valueRange * 0.3f);
+    _calValidMaxValue = _calDefaultMaxValue - (valueRange * 0.3f);
 }
 
 JoystickConfigController::~JoystickConfigController()
@@ -58,6 +61,41 @@ void JoystickConfigController::_setJoystick(Joystick* joystick)
     _joystick = joystick;
     _readStoredCalibrationValues();
     connect(_joystick, &Joystick::rawChannelValuesChanged, this, &JoystickConfigController::rawChannelValuesChanged);
+
+    // Connect to settings changes to emit extension enabled signals
+    connect(_joystick->settings()->enableManualControlPitchExtension(), &Fact::rawValueChanged, this, [this]() {
+        emit pitchExtensionEnabledChanged(pitchExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlRollExtension(), &Fact::rawValueChanged, this, [this]() {
+        emit rollExtensionEnabledChanged(rollExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlAux1(), &Fact::rawValueChanged, this, [this]() {
+        emit aux1ExtensionEnabledChanged(aux1ExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlAux2(), &Fact::rawValueChanged, this, [this]() {
+        emit aux2ExtensionEnabledChanged(aux2ExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlAux3(), &Fact::rawValueChanged, this, [this]() {
+        emit aux3ExtensionEnabledChanged(aux3ExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlAux4(), &Fact::rawValueChanged, this, [this]() {
+        emit aux4ExtensionEnabledChanged(aux4ExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlAux5(), &Fact::rawValueChanged, this, [this]() {
+        emit aux5ExtensionEnabledChanged(aux5ExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+    connect(_joystick->settings()->enableManualControlAux6(), &Fact::rawValueChanged, this, [this]() {
+        emit aux6ExtensionEnabledChanged(aux6ExtensionEnabled());
+        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    });
+
     emit joystickChanged(_joystick);
 }
 
@@ -68,26 +106,34 @@ void JoystickConfigController::_saveStoredCalibrationValues()
         return;
     }
 
+    qCDebug(JoystickConfigControllerLog) << _joystick->name();
+
     _validateAndAdjustCalibrationValues();
 
     _joystick->settings()->calibrated()->setRawValue(true);
     _joystick->settings()->transmitterMode()->setRawValue(transmitterMode());
 
     for (int chan = 0; chan < _joystick->axisCount(); chan++) {
-        ChannelInfo *const info = &_rgChannelInfo[chan];
+        ChannelInfo *const channelInfo = &_rgChannelInfo[chan];
         Joystick::AxisCalibration_t joystickAxisInfo;
 
-        joystickAxisInfo.center = info->channelTrim;
-        joystickAxisInfo.min = info->channelMin;
-        joystickAxisInfo.max = info->channelMax;
-        joystickAxisInfo.reversed = info->channelReversed;
-        joystickAxisInfo.deadband = info->deadband;
-        _joystick->setAxisCalibration(chan, joystickAxisInfo);
-    }
+        qCDebug(JoystickConfigControllerLog)
+            << "chan:" <<       chan
+            << "function:" <<   _stickFunctionToString(channelInfo->stickFunction)
+            << "min:" <<        channelInfo->channelMin
+            << "max:" <<        channelInfo->channelMax
+            << "trim:" <<       channelInfo->channelTrim
+            << "reversed:" <<   channelInfo->channelReversed
+            << "deadband:" <<   channelInfo->deadband;
 
-    // Write function mapping parameters
-    for (size_t stickFunctionIndex = 0; stickFunctionIndex < stickFunctionMax; stickFunctionIndex++) {
-        _joystick->setFunctionForChannel(static_cast<RemoteControlCalibrationController::StickFunction>(stickFunctionIndex), _rgFunctionChannelMapping[stickFunctionIndex]);
+        joystickAxisInfo.center = channelInfo->channelTrim;
+        joystickAxisInfo.min = channelInfo->channelMin;
+        joystickAxisInfo.max = channelInfo->channelMax;
+        joystickAxisInfo.reversed = channelInfo->channelReversed;
+        joystickAxisInfo.deadband = channelInfo->deadband;
+        _joystick->setAxisCalibration(chan, joystickAxisInfo);
+
+        _joystick->setFunctionForChannel(channelInfo->stickFunction, chan);
     }
 
     _joystick->_saveFromCalibrationDataIntoSettings();
@@ -125,11 +171,8 @@ void JoystickConfigController::_readStoredCalibrationValues()
         info->deadband  = calibration.deadband;
     }
 
-    for (int axisFunction = 0; axisFunction < Joystick::maxAxisFunction; axisFunction++) {
-        if (axisFunction == Joystick::gimbalPitchFunction || axisFunction == Joystick::gimbalYawFunction) {
-            continue;
-        }
-        StickFunction stickFunction = _joystick->mapAxisFunctionToRCCStickFunction(static_cast<Joystick::AxisFunction_t>(axisFunction));
+    for (int stickFunctionInt = 0; stickFunctionInt < Joystick::maxAxisFunction; stickFunctionInt++) {
+        auto stickFunction = static_cast<StickFunction>(stickFunctionInt);
         int functionChannel = _joystick->getChannelForFunction(stickFunction);
         if (functionChannel >= 0 && functionChannel < _chanMax) {
             _rgFunctionChannelMapping[stickFunction] = functionChannel;
@@ -138,4 +181,41 @@ void JoystickConfigController::_readStoredCalibrationValues()
     }
 
     _signalAllAttitudeValueChanges();
+}
+
+
+bool JoystickConfigController::_stickFunctionEnabled(StickFunction stickFunction)
+{
+    if (RemoteControlCalibrationController::_stickFunctionEnabled(stickFunction)) {
+        return true;
+    }
+
+    switch (stickFunction) {
+    case stickFunctionRollExtension:
+        return _joystick->settings()->enableManualControlRollExtension()->rawValue().toBool();
+    case stickFunctionPitchExtension:
+        return _joystick->settings()->enableManualControlPitchExtension()->rawValue().toBool();
+    case stickFunctionAux1Extension:
+        return _joystick->settings()->enableManualControlAux1()->rawValue().toBool();
+    case stickFunctionAux2Extension:
+        return _joystick->settings()->enableManualControlAux2()->rawValue().toBool();
+    case stickFunctionAux3Extension:
+        return _joystick->settings()->enableManualControlAux3()->rawValue().toBool();
+    case stickFunctionAux4Extension:
+        return _joystick->settings()->enableManualControlAux4()->rawValue().toBool();
+    case stickFunctionAux5Extension:
+        return _joystick->settings()->enableManualControlAux5()->rawValue().toBool();
+    case stickFunctionAux6Extension:
+        return _joystick->settings()->enableManualControlAux6()->rawValue().toBool();
+    case stickFunctionRoll:
+    case stickFunctionPitch:
+    case stickFunctionYaw:
+    case stickFunctionThrottle:
+        return RemoteControlCalibrationController::_stickFunctionEnabled(stickFunction);
+    case stickFunctionMax:
+        qCWarning(JoystickConfigControllerLog) << "Invalid stick function requested: stickFunctionMax";
+        break;
+    }
+
+    return false;
 }

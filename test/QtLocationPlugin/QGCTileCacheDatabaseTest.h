@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
-
 #include <memory>
+
+#include "BaseClasses/TempDirectoryTest.h"
 
 class QGCTileCacheDatabase;
 
@@ -57,7 +57,7 @@ private slots:
 
 private:
     std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB();
-    void _insertTileSet(QGCTileCacheDatabase *db, const QString &name, quint64 &outSetID);
-    void _insertDownloadRecord(QGCTileCacheDatabase *db, quint64 setID, const QString &hash, int state = 0);
-    void _linkTileToSet(QGCTileCacheDatabase *db, quint64 tileID, quint64 setID);
+    void _insertTileSet(QGCTileCacheDatabase* db, const QString& name, quint64& outSetID);
+    void _insertDownloadRecord(QGCTileCacheDatabase* db, quint64 setID, const QString& hash, int state = 0);
+    void _linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID);
 };

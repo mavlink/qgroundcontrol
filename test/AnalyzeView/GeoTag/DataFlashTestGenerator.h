@@ -4,8 +4,7 @@
 #include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
 
-namespace DataFlashTestGenerator
-{
+namespace DataFlashTestGenerator {
 
 struct CameraCaptureEvent
 {
@@ -21,7 +20,7 @@ struct CameraCaptureEvent
 /// @param filename Output file path
 /// @param events List of camera capture events
 /// @return true if successful
-bool generateDataFlashLog(const QString &filename, const QList<CameraCaptureEvent> &events);
+bool generateDataFlashLog(const QString& filename, const QList<CameraCaptureEvent>& events);
 
 /// Generate sample events for testing
 /// @param count Number of events to generate
@@ -29,6 +28,6 @@ bool generateDataFlashLog(const QString &filename, const QList<CameraCaptureEven
 /// @param intervalSec Interval between events in seconds
 /// @return List of generated events
 QList<CameraCaptureEvent> generateSampleEvents(int count, uint64_t startTimestamp_us = 1000000,
-                                                double intervalSec = 2.0);
+                                               double intervalSec = 2.0);
 
 }  // namespace DataFlashTestGenerator

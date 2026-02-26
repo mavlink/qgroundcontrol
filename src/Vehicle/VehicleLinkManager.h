@@ -28,7 +28,9 @@ class VehicleLinkManager : public QObject
     Q_PROPERTY(bool         autoDisconnect              MEMBER _autoDisconnect                                              NOTIFY autoDisconnectChanged)
 
     friend class Vehicle;
+#ifdef QGC_UNITTEST_BUILD
     friend class VehicleLinkManagerTest;
+#endif
 
 public:
     VehicleLinkManager(Vehicle *vehicle);

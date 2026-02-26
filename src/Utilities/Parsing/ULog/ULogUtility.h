@@ -1,9 +1,7 @@
 #pragma once
 
-#include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
-#include <QtCore/QStringList>
 
 #include <cstdint>
 #include <functional>
@@ -52,22 +50,6 @@ int getVersion(const char *data, qint64 size);
 uint64_t getHeaderTimestamp(const char *data, qint64 size);
 
 // ============================================================================
-// Convenience Functions
-// ============================================================================
-
-/// Check if data appears to be a ULog file (convenience for QByteArray)
-inline bool isValidHeader(const QByteArray &data)
-{
-    return isValidHeader(data.constData(), data.size());
-}
-
-/// Get ULog version (convenience for QByteArray)
-inline int getVersion(const QByteArray &data)
-{
-    return getVersion(data.constData(), data.size());
-}
-
-// ============================================================================
 // Message Iteration
 // ============================================================================
 
@@ -87,6 +69,7 @@ public:
     explicit MessageHandler(const std::string &messageName,
                            const MessageCallback &callback,
                            QString &errorMsg);
+    virtual ~MessageHandler() = default;
 
     // DataHandlerInterface overrides
     void error(const std::string &msg, bool is_recoverable) override;
@@ -129,14 +112,5 @@ bool iterateMessages(const char *data, qint64 size,
                      const std::string &messageName,
                      const MessageCallback &callback,
                      QString &errorMessage);
-
-/// Convenience overload for QByteArray
-inline bool iterateMessages(const QByteArray &data,
-                            const std::string &messageName,
-                            const MessageCallback &callback,
-                            QString &errorMessage)
-{
-    return iterateMessages(data.constData(), data.size(), messageName, callback, errorMessage);
-}
 
 } // namespace ULogUtility

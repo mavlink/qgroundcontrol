@@ -9,7 +9,8 @@
 #
 # This script removes:
 #   - build/           CMake build directory
-#   - .cache/          Local caches (ccache, clangd index)
+#   - .cache/          Local caches (CPM, clangd index)
+#   - .ccache/         ccache storage
 #   - *.user           Qt Creator user files
 #   - CMakeUserPresets.json
 
@@ -98,6 +99,7 @@ clean_build() {
 
 clean_cache() {
     remove_if_exists ".cache" "local cache directory"
+    remove_if_exists ".ccache" "ccache directory"
 
     # clangd index
     remove_if_exists ".clangd" "clangd index"

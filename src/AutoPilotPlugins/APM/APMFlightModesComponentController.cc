@@ -61,7 +61,7 @@ void APMFlightModesComponentController::channelValuesChanged(QVector<int> channe
         flightModeChannel = getParameterFact(ParameterManager::defaultComponentId, _modeChannelParam)->rawValue().toInt() - 1;
     }
 
-    if (flightModeChannel >= channelValues.size()) {
+    if (flightModeChannel >= static_cast<int>(channelValues.size())) {
         return;
     }
 
@@ -70,9 +70,9 @@ void APMFlightModesComponentController::channelValuesChanged(QVector<int> channe
     if (channelValue != -1) {
         bool found = false;
         static constexpr const int rgThreshold[] = { 1230, 1360, 1490, 1620, 1749 };
-        for (int i = 0; i < std::size(rgThreshold); i++) {
-            if (channelValue <= rgThreshold[i]) {
-                _activeFlightMode = i + 1;
+        for (size_t i = 0; i < std::size(rgThreshold); i++) {
+            if (channelValue <= rgThreshold[static_cast<size_t>(i)]) {
+                _activeFlightMode = static_cast<int>(i) + 1;
                 found = true;
                 break;
             }

@@ -107,6 +107,20 @@ int handleTestOptions(const QGCCommandLineParser::CommandLineParseResult& args)
     // Parse label filter if provided
     TestLabels labelFilter;
     if (args.labelFilter.has_value() && !args.labelFilter->isEmpty()) {
+        const QStringList requestedLabels = args.labelFilter->split(',', Qt::SkipEmptyParts);
+        QStringList invalidLabels;
+        invalidLabels.reserve(requestedLabels.size());
+        for (const QString& labelName : requestedLabels) {
+            if (labelFromString(labelName) == TestLabel::None) {
+                invalidLabels.append(labelName.trimmed());
+            }
+        }
+        if (!invalidLabels.isEmpty()) {
+            qCWarning(UnitTestListLog) << "Invalid label(s):" << invalidLabels.join(", ");
+            qCWarning(UnitTestListLog) << "Available labels:" << availableLabelNames().join(", ");
+            return -1;
+        }
+
         labelFilter = parseLabels(args.labelFilter.value());
         if (labelFilter == TestLabels()) {
             qCWarning(UnitTestListLog) << "Invalid label filter:" << args.labelFilter.value();

@@ -61,14 +61,9 @@ QHash<int, QByteArray> ParameterTableModel::roleNames() const
 
 void ParameterTableModel::clear()
 {
-    if (!_externalBeginResetModel) {
-        beginResetModel();
-    }
+    beginReset();
     _tableData.clear();
-    if (!_externalBeginResetModel) {
-        endResetModel();
-        emit rowCountChanged(0);
-    }
+    endReset();
 }
 
 void ParameterTableModel::append(Fact* fact)
@@ -88,29 +83,36 @@ void ParameterTableModel::insert(int row, Fact* fact)
     colData[ValueColumn] = QVariant::fromValue(fact);
     colData[DescriptionColumn] = fact->shortDescription();
 
-    beginInsertRows(QModelIndex(), row, row);
+    if (!_isResetting()) {
+        beginInsertRows(QModelIndex(), row, row);
+    }
     _tableData.insert(row, colData);
-    endInsertRows();
-
-    emit rowCountChanged(rowCount());
+    if (!_isResetting()) {
+        endInsertRows();
+        emit rowCountChanged(rowCount());
+    }
 }
 
 void ParameterTableModel::beginReset()
 {
-    if (_externalBeginResetModel) {
-        qWarning() << "ParameterTableModel::beginReset already set";
+    _resetNestingCount++;
+
+    if (_resetNestingCount == 1) {
+        beginResetModel();
     }
-    _externalBeginResetModel = true;
-    beginResetModel();
 }
 
 void ParameterTableModel::endReset()
 {
-    if (!_externalBeginResetModel) {
-        qWarning() << "ParameterTableModel::endReset begin not set";
+    if (_resetNestingCount == 0) {
+        qWarning() << "ParameterTableModel::endReset called without prior beginReset";
+        return;
     }
-    _externalBeginResetModel = false;
-    endResetModel();
+    _resetNestingCount--;
+    if (_resetNestingCount == 0) {
+        endResetModel();
+        emit rowCountChanged(rowCount());
+    }
 }
 
 Fact* ParameterTableModel::factAt(int row) const

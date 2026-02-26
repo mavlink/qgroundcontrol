@@ -1,5 +1,6 @@
 #include "QGCArchiveModel.h"
 #include "QGCCompression.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QCollator>
@@ -31,7 +32,14 @@ void QGCArchiveModel::setArchivePath(const QString &path)
 
 void QGCArchiveModel::setArchiveUrl(const QUrl &url)
 {
-    setArchivePath(QGCCompression::toLocalPath(url));
+    const QString path = QGCFileHelper::toLocalPath(url);
+    if (!path.isEmpty() && !QGCFileHelper::isLocalPath(path)) {
+        qCWarning(QGCArchiveModelLog) << "Unsupported archive URL:" << url;
+        setArchivePath({});
+        return;
+    }
+
+    setArchivePath(path);
 }
 
 void QGCArchiveModel::setFilterMode(FilterMode mode)

@@ -92,7 +92,11 @@ public:
     // These are public for creating unit tests
     static constexpr int kParamSetRetryCount = 2;                   ///< Number of retries for PARAM_SET
     static constexpr int kParamRequestReadRetryCount = 2;           ///< Number of retries for PARAM_REQUEST_READ
-    static constexpr int kWaitForParamValueAckMs = 1000;    ///< Time to wait for param value ack after set param
+    static constexpr int kWaitForParamValueAckMs = 1000;            ///< Time to wait for param value ack after set param
+    static constexpr int kMaxInitialRequestListRetry = 4;           ///< Maximum retries for initial parameter request list
+    static constexpr int kTestInitialRequestIntervalMs = 500;       ///< Timer interval for initial request in test mode
+    /// Maximum time to wait for initial request retries to exhaust in tests
+    static constexpr int kTestMaxInitialRequestTimeMs = (kMaxInitialRequestListRetry + 1) * kTestInitialRequestIntervalMs + 1000;
 
 signals:
     void parametersReadyChanged(bool parametersReady);
@@ -174,7 +178,7 @@ private:
 
     bool _readParamIndexProgressActive = false;
 
-    static constexpr int _maxInitialRequestListRetry = 4;       ///< Maximum retries for request list
+    static constexpr int _maxInitialRequestListRetry = kMaxInitialRequestListRetry;
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
     static constexpr int _maxInitialLoadRetrySingleParam = 5;   ///< Maximum retries for initial index based load of a single param
     bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)

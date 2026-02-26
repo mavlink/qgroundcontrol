@@ -20,6 +20,7 @@ on:
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'translations/*'
+  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -58,18 +59,29 @@ jobs:
             qt_host_path: gcc_64
             shell: bash
             primary: true
+            emulator: false
           - host: mac
             runner: macos-latest
             arch: clang_64
             qt_host_path: macos
             shell: bash
             primary: false
+            emulator: false
           - host: windows
             runner: windows-latest
             arch: win64_msvc2022_64
             qt_host_path: msvc2022_64
             shell: pwsh
             primary: false
+            emulator: false
+          - host: linux-emulator
+            qt_host: linux
+            runner: ubuntu-latest
+            arch: linux_gcc_64
+            qt_host_path: gcc_64
+            shell: bash
+            primary: false
+            emulator: true
 
     defaults:
       run:
@@ -81,7 +93,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: ${{ matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
+      QT_ANDROID_ABIS: ${{ matrix.emulator && 'x86_64' || matrix.primary && 'arm64-v8a;armeabi-v7a' || 'arm64-v8a' }}
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
@@ -94,9 +106,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Get build config
         id: config
@@ -105,43 +116,110 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/common
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
       - name: Install Qt for Android
         uses: ./.github/actions/qt-android
         with:
-          host: ${{ matrix.host }}
+          host: ${{ matrix.qt_host || matrix.host }}
           arch: ${{ matrix.arch }}
           version: ${{ steps.config.outputs.qt_version }}
           modules: ${{ steps.config.outputs.qt_modules }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           build-type: ${{ inputs.build_type || 'Release' }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          ndk-version: ${{ steps.config.outputs.ndk_version }}
+          ndk-full-version: ${{ steps.config.outputs.ndk_full_version }}
           java-version: ${{ steps.config.outputs.java_version }}
           android-platform: ${{ steps.config.outputs.android_platform }}
           android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
           android-build-tools: ${{ steps.config.outputs.android_build_tools }}
-          save-cache: ${{ github.event_name != 'pull_request' }}
+          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+
+      - name: Create Debug Keystore
+        if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
+        shell: bash
+        run: |
+          keytool -genkey -v \
+            -keystore "${RUNNER_TEMP}/debug.keystore" \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          {
+            echo "QT_ANDROID_KEYSTORE_PATH=${RUNNER_TEMP}/debug.keystore"
+            echo "QT_ANDROID_KEYSTORE_ALIAS=androiddebugkey"
+            echo "QT_ANDROID_KEYSTORE_STORE_PASS=android"
+            echo "QT_ANDROID_KEYSTORE_KEY_PASS=android"
+          } >> "$GITHUB_ENV"
 
       - name: Configure
-        shell: bash
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          QT_DIR="${QT_ROOT_DIR//\\//}"        # Convert backslashes for Windows
-          WORKSPACE="${GITHUB_WORKSPACE//\\//}"
-          "${QT_DIR}/bin/qt-cmake" \
-            -S "${WORKSPACE}" \
-            -B . -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
-            -DCMAKE_WARN_DEPRECATED=FALSE \
-            -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}" \
-            -DQT_HOST_PATH="${QT_DIR}/../${{ matrix.qt_host_path }}" \
-            -DQT_ANDROID_SIGN_APK=${{ matrix.primary && env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }} \
-            -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ inputs.build_type || 'Release' }}
+          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          extra-args: >-
+            -DCMAKE_WARN_DEPRECATED=FALSE
+            -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
+            -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../${{ matrix.qt_host_path }}
+            -DQT_ANDROID_SIGN_APK=ON
 
       - name: Build
+        id: build
+        continue-on-error: ${{ matrix.emulator }}
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ inputs.build_type || 'Release' }}
+          parallel-jobs: ${{ matrix.emulator && '2' || '' }}
+          output-file: ${{ matrix.emulator && 'qgc-build.log' || '' }}
+
+      - name: Retry Build (emulator JSON truncation recovery)
+        if: ${{ matrix.emulator && steps.build.outcome == 'failure' }}
         shell: bash
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ inputs.build_type || 'Release' }} --parallel
+        env:
+          BUILD_DIR: ${{ runner.temp }}/build
+          BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+        run: |
+          set -euo pipefail
+
+          log_file="${BUILD_DIR}/qgc-build.log"
+          settings_json="${BUILD_DIR}/android-QGroundControl-deployment-settings.json"
+          retry_log="${BUILD_DIR}/qgc-build-retry.log"
+
+          if [[ ! -f "${log_file}" ]]; then
+            echo "::error::Build failed and '${log_file}' is missing."
+            exit 1
+          fi
+
+          # Retry only for known intermittent Qt deployment-settings truncation.
+          if ! grep -Eq "Invalid json file: .*android-QGroundControl-deployment-settings\\.json\\. Reason: unterminated object" "${log_file}"; then
+            echo "::error::Initial build failed for a non-retriable reason; skipping retry."
+            exit 1
+          fi
+
+          echo "::warning::Detected truncated android deployment settings JSON. Retrying build with --parallel 1."
+
+          if [[ -f "${settings_json}" ]]; then
+            python3 -m json.tool "${settings_json}" >/dev/null 2>&1 || true
+            rm -f "${settings_json}"
+          fi
+
+          cmake --build "${BUILD_DIR}" --target all --config "${BUILD_TYPE}" --parallel 1 2>&1 | tee "${retry_log}"
+
+      - name: Android Lint
+        if: ${{ matrix.host == 'linux' }}
+        shell: bash
+        working-directory: ${{ runner.temp }}/build/android-build
+        run: |
+          if [[ ! -x "./gradlew" ]]; then
+            echo "::error::Gradle wrapper not found in ${PWD}"
+            ls -la
+            exit 1
+          fi
+          ./gradlew lintRelease --no-daemon
 
       - name: Prepare Artifact
         shell: bash
@@ -155,24 +233,155 @@ jobs:
           fi
           cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
 
-      - name: Attest Build Provenance
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/attest-build-provenance@v3
+      - name: Enable KVM
+        if: ${{ matrix.emulator }}
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: AVD Cache
+        if: ${{ matrix.emulator }}
+        id: avd-cache
+        uses: actions/cache@v5
         with:
-          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.apk'
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: >-
+            avd-${{ runner.os }}-${{ runner.arch }}-api${{ steps.config.outputs.android_platform }}
+            -x86_64-google_apis-pixel_6-qt${{ steps.config.outputs.qt_version }}
+            -ndk${{ steps.config.outputs.ndk_full_version }}-v2
+
+      - name: Create AVD Snapshot
+        id: avd-snapshot
+        if: ${{ matrix.emulator && steps.avd-cache.outputs.cache-hit != 'true' }}
+        timeout-minutes: 15
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ steps.config.outputs.android_platform }}
+          system-image-api-level: ${{ steps.config.outputs.android_platform }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          cores: 4
+          ram-size: 4096M
+          heap-size: 1024M
+          avd-name: qgc-ci
+          force-avd-creation: false
+          emulator-boot-timeout: 420
+          disable-animations: true
+          disable-spellchecker: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: echo "Generated AVD snapshot for cache."
+
+      - name: Kill Stale Emulator
+        if: ${{ matrix.emulator && steps.avd-snapshot.outcome == 'failure' }}
+        shell: bash
+        run: |
+          pkill -9 -f qemu-system || true
+          adb kill-server 2>/dev/null || true
+          sleep 5
+
+      - name: Emulator Boot Test
+        if: ${{ matrix.emulator }}
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ steps.config.outputs.android_platform }}
+          system-image-api-level: ${{ steps.config.outputs.android_platform }}
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          cores: 4
+          ram-size: 4096M
+          heap-size: 1024M
+          avd-name: qgc-ci
+          force-avd-creation: false
+          emulator-boot-timeout: 420
+          disable-animations: true
+          disable-spellchecker: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
+          script: |
+            timeout 20s adb start-server >/dev/null 2>&1 || true
+            timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
+            python3 .github/scripts/android_boot_test.py --apk "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk" --package org.mavlink.qgroundcontrol --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+
+      - name: Collect Emulator Diagnostics
+        if: ${{ failure() && matrix.emulator }}
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          OUT_DIR="${RUNNER_TEMP}/emulator-diagnostics"
+          BUILD_DIR="${RUNNER_TEMP}/build"
+          mkdir -p "${OUT_DIR}"
+
+          cp /tmp/qgc_emulator_boot.log "${OUT_DIR}/qgc_emulator_boot.log" 2>/dev/null || true
+          cp "${BUILD_DIR}/qgc-build.log" "${OUT_DIR}/qgc-build.log" 2>/dev/null || true
+          cp "${BUILD_DIR}/qgc-build-retry.log" "${OUT_DIR}/qgc-build-retry.log" 2>/dev/null || true
+          cp "${BUILD_DIR}/android-QGroundControl-deployment-settings.json" \
+            "${OUT_DIR}/android-QGroundControl-deployment-settings.json" 2>/dev/null || true
+
+          if [ -f "${OUT_DIR}/android-QGroundControl-deployment-settings.json" ]; then
+            python3 -m json.tool "${OUT_DIR}/android-QGroundControl-deployment-settings.json" \
+              > "${OUT_DIR}/android-QGroundControl-deployment-settings.pretty.json" \
+              2> "${OUT_DIR}/android-QGroundControl-deployment-settings.error.txt" || true
+          fi
+
+          if command -v adb >/dev/null 2>&1; then
+            timeout 20s adb start-server >/dev/null 2>&1 || true
+            timeout 20s adb devices > "${OUT_DIR}/adb-devices.txt" 2>&1 || true
+
+            if grep -Eq '^emulator-[0-9]+\s+device$' "${OUT_DIR}/adb-devices.txt"; then
+              timeout 30s adb -e logcat -d > "${OUT_DIR}/adb-logcat-full.txt" 2>/dev/null || true
+              timeout 30s adb -e shell dumpsys activity > "${OUT_DIR}/dumpsys-activity.txt" 2>/dev/null || true
+              timeout 30s adb -e shell getprop > "${OUT_DIR}/getprop.txt" 2>/dev/null || true
+            else
+              echo "No online emulator device found; skipping adb diagnostics." > "${OUT_DIR}/adb-skipped.txt"
+            fi
+          else
+            echo "adb not found; skipping adb diagnostics." > "${OUT_DIR}/adb-skipped.txt"
+          fi
+
+          if [ -d "${HOME}/.android/avd" ]; then
+            find "${HOME}/.android/avd" -maxdepth 3 -type f \( -name "*.log" -o -name "*.ini" \) \
+              -exec cp --parents {} "${OUT_DIR}" \; 2>/dev/null || true
+          fi
+
+          ls -la "${OUT_DIR}" || true
+
+      - name: Upload Emulator Diagnostics
+        if: ${{ failure() && matrix.emulator }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: emulator-diagnostics-${{ matrix.host }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/emulator-diagnostics
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Attest Build with SBOM
+        if: ${{ !matrix.emulator }}
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
+          scan-path: ${{ runner.temp }}/build
 
       - name: Upload Build File
+        if: ${{ !matrix.emulator }}
         uses: ./.github/actions/upload
         with:
           artifact_name: ${{ env.PACKAGE }}.apk
           package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           upload_aws: ${{ matrix.primary }}
 
       - name: Deploy to Play Store
-        if: matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true'
+        if: ${{ !matrix.emulator && matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true' }}
         uses: ./.github/actions/playstore
         with:
           artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk

@@ -50,10 +50,17 @@ file(GLOB GPS_DRIVERS_SOURCES
     "${px4-gpsdrivers_SOURCE_DIR}/src/*.cpp"
     "${px4-gpsdrivers_SOURCE_DIR}/src/*.h"
 )
+
+add_library(px4-gpsdrivers OBJECT ${GPS_DRIVERS_SOURCES})
+target_include_directories(px4-gpsdrivers SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)
+target_compile_definitions(px4-gpsdrivers PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
+target_link_libraries(px4-gpsdrivers PRIVATE Qt6::Core)
+qgc_disable_dependency_warnings(px4-gpsdrivers)
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         definitions.h
-        ${GPS_DRIVERS_SOURCES}
+        $<TARGET_OBJECTS:px4-gpsdrivers>
 )
 
 # ----------------------------------------------------------------------------
@@ -66,4 +73,4 @@ qt_add_resources(${CMAKE_PROJECT_NAME} json_gps_drivers
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)
+target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)

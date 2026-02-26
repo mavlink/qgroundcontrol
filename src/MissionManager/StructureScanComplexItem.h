@@ -154,5 +154,7 @@ private:
 
     static constexpr const char* _entranceAltName = "EntranceAltitude"; // This value cannot be overriden
 
+#ifdef QGC_UNITTEST_BUILD
     friend class StructureScanComplexItemTest;
+#endif
 };

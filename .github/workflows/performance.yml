@@ -1,0 +1,140 @@
+name: Runtime Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_benchmarks:
+        description: 'Run time-based benchmarks (noisy on shared runners)'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    if: github.event.inputs.run_benchmarks == 'true'
+    timeout-minutes: 45
+    outputs:
+      binary_path: ${{ steps.find.outputs.binary_path }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: false
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: build
+          build-type: Release
+          stable: true
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: build
+          build-type: Release
+
+      - name: Find binary
+        id: find
+        run: python3 ./.github/scripts/find_binary.py --build-dir build --build-type Release
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v6
+        with:
+          name: qgc-binary
+          path: |
+            build/QGroundControl
+            build/Release/QGroundControl
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  benchmarks:
+    name: Runtime Benchmarks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: build
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/benchmark-runner
+            .github/actions/build-config
+            .github/actions/qt-install
+            .github/scripts/benchmark_runner.py
+            tools/setup/read_config.py
+            .github/build-config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Get build config
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Install Qt (runtime only)
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Download binary
+        uses: actions/download-artifact@v7
+        with:
+          name: qgc-binary
+          path: build
+
+      - name: Make binary executable
+        run: chmod +x build/QGroundControl build/Release/QGroundControl 2>/dev/null || true
+
+      - name: Run benchmarks
+        uses: ./.github/actions/benchmark-runner
+        with:
+          binary-path: ${{ needs.build.outputs.binary_path }}
+          test-filter: MAVLinkBenchmark
+          output-file: benchmark.json
+
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: customSmallerIsBetter
+          output-file-path: benchmark.json
+          github-token: ${{ github.token }}
+          auto-push: false
+          benchmark-data-dir-path: dev/bench
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false

@@ -20,7 +20,6 @@ protected:
     void init() final;
     void cleanup() final;
 
-#if 1
 private slots:
     void _testDirty();
     void _testGridAngle();
@@ -28,18 +27,6 @@ private slots:
     void _testItemGeneration();
     void _testItemCount();
     void _testHoverCaptureItemGeneration();
-#else
-    // Handy mechanism to to a single test
-private slots:
-    void _testItemCount();
-
-private:
-    void _testDirty();
-    void _testGridAngle();
-    void _testEntryLocation();
-    void _testItemGeneration();
-    void _testHoverCaptureItemGeneration();
-#endif
 
 private:
     double _clampGridAngle180(double gridAngle);

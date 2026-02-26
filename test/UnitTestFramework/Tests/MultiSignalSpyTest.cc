@@ -496,7 +496,7 @@ void MultiSignalSpyTest::_testExpectWait()
 
     // Emit first, then wait should return immediately
     emitter.emitSignal1();
-    QVERIFY(spy.expect("signal1").wait(100));
+    QVERIFY(spy.expect("signal1").wait(TestTimeout::shortMs()));
 }
 
 void MultiSignalSpyTest::_testExpectClear()

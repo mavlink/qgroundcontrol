@@ -1,6 +1,7 @@
 #include "QGCMapPolyline.h"
 #include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
@@ -165,7 +166,7 @@ bool QGCMapPolyline::loadFromJson(const QJsonObject& json, bool required, QStrin
     clear();
 
     if (required) {
-        if (!JsonHelper::validateRequiredKeys(json, QStringList(jsonPolylineKey), errorString)) {
+        if (!JsonParsing::validateRequiredKeys(json, QStringList(jsonPolylineKey), errorString)) {
             return false;
         }
     } else if (!json.contains(jsonPolylineKey)) {
@@ -352,11 +353,16 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
 {
     QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    if (!ShapeFileHelper::loadPolylineFromFile(file, rgCoords, errorString)) {
+    QList<QList<QGeoCoordinate>> polylines;
+    if (!ShapeFileHelper::loadPolylinesFromFile(file, polylines, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
+    if (polylines.isEmpty()) {
+        qgcApp()->showAppMessage(tr("No polylines found in file"));
+        return false;
+    }
+    const QList<QGeoCoordinate>& rgCoords = polylines.first();
 
     beginReset();
     clear();

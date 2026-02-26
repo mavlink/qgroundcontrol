@@ -1,6 +1,7 @@
 #include "QGCMapPolygon.h"
 #include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
@@ -205,7 +206,7 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
     clear();
 
     if (required) {
-        if (!JsonHelper::validateRequiredKeys(json, QStringList(jsonPolygonKey), errorString)) {
+        if (!JsonParsing::validateRequiredKeys(json, QStringList(jsonPolygonKey), errorString)) {
             return false;
         }
     } else if (!json.contains(jsonPolygonKey)) {
@@ -505,11 +506,16 @@ void QGCMapPolygon::offset(double distance)
 bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
 {
     QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    if (!ShapeFileHelper::loadPolygonFromFile(file, rgCoords, errorString)) {
+    QList<QList<QGeoCoordinate>> polygons;
+    if (!ShapeFileHelper::loadPolygonsFromFile(file, polygons, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
+    if (polygons.isEmpty()) {
+        qgcApp()->showAppMessage(tr("No polygons found in file"));
+        return false;
+    }
+    const QList<QGeoCoordinate>& rgCoords = polygons.first();
 
     beginReset();
     clear();

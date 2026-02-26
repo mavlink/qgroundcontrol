@@ -67,6 +67,7 @@ Item {
             width:              1
             height:             ScreenTools.defaultFontPixelHeight * 0.5
             color:              qgcPal.text
+            antialiasing:       true
 
             transform: Rotation {
                 origin.x:   0
@@ -86,6 +87,7 @@ Item {
             width:              1
             height:             _margin
             color:              qgcPal.text
+            antialiasing:       true
 
             property real _margin: ScreenTools.defaultFontPixelHeight * 0.25
 

@@ -125,6 +125,7 @@ public:
     QString outputPath() const { return _outputPath; }
     QString expectedHash() const { return _expectedHash; }
     State state() const { return _state; }
+    bool lastResultFromCache() const { return _lastResultFromCache; }
 
     // Property setters
     void setAutoDecompress(bool enabled);
@@ -154,12 +155,6 @@ public slots:
 
     /// Cancel current download
     void cancel();
-
-    // Legacy API compatibility
-    /// @deprecated Use start() instead
-    bool download(const QString &remoteFile,
-                  const QList<QPair<QNetworkRequest::Attribute, QVariant>> &requestAttributes = {},
-                  bool autoDecompress = false);
 
 signals:
     /// Emitted when download progress changes
@@ -201,10 +196,6 @@ signals:
     /// @param errorMessage Error message (empty on success)
     void finished(bool success, const QString &localPath, const QString &errorMessage);
 
-    /// Legacy signal for backward compatibility
-    /// @deprecated Use finished() instead
-    void downloadComplete(const QString &remoteFile, const QString &localFile, const QString &errorMsg);
-
     /// Emitted during download with byte counts
     void downloadProgress(qint64 bytesReceived, qint64 totalBytes);
 
@@ -224,6 +215,8 @@ private:
     void _setErrorString(const QString &error);
     void _cleanup();
     void _emitFinished(bool success, const QString &localPath, const QString &errorMessage);
+    bool _writeReplyData(const QByteArray &data);
+    bool _failForWriteError(const QString &context);
     QString _generateOutputPath(const QString &remoteUrl) const;
     bool _verifyHash();
     void _startDecompression();
@@ -247,7 +240,6 @@ private:
 
     State _state = State::Idle;
     bool _autoDecompress = false;
-
-    // Legacy compatibility
-    QList<QPair<QNetworkRequest::Attribute, QVariant>> _legacyAttributes;
+    bool _finishEmitted = false;
+    bool _lastResultFromCache = false;
 };

@@ -126,7 +126,7 @@ void GeoTest::_convertGeodeticToEcef_test()
 
 void GeoTest::_convertEcefToGeodetic_test()
 {
-    const QVector3D ecef(4278990.18, 643172.29, 4670276.60);
+    const QVector3D ecef(4278990.18f, 643172.29f, 4670276.60f);
     const QGeoCoordinate coord = QGCGeo::convertEcefToGeodetic(ecef);
     QVERIFY(coord.isValid());
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude(), 0.0001));
@@ -146,7 +146,7 @@ void GeoTest::_convertGpsToEnu_test()
 
 void GeoTest::_convertEnuToGps_test()
 {
-    const QVector3D enu(3497.22, -1280.96, 48.91);
+    const QVector3D enu(3497.22f, -1280.96f, 48.91f);
     const QGeoCoordinate coord = QGCGeo::convertEnuToGps(enu, m_origin);
     QVERIFY(coord.isValid());
     QVERIFY(compareDoubles(coord.latitude(), 47.364869, 0.0001));
@@ -169,7 +169,7 @@ void GeoTest::_convertEcefToEnu_test()
 
 void GeoTest::_convertEnuToEcef_test()
 {
-    const QVector3D enu(3497.22, -1280.96, 48.91);
+    const QVector3D enu(3497.22f, -1280.96f, 48.91f);
     const QVector3D ecef = QGCGeo::convertEnuToEcef(enu, m_origin);
     // Convert back to geodetic to verify
     // Note: QVector3D uses float, so ECEF round-trips have reduced precision
@@ -466,7 +466,8 @@ void GeoTest::_qbenchmarkGeodesicDistance()
     const QGeoCoordinate coord(47.364869, 8.594398, 100.0);
     double dist = 0;
 
-    QBENCHMARK {
+    QBENCHMARK
+    {
         dist = QGCGeo::geodesicDistance(m_origin, coord);
         QT_BENCHMARK_KEEP(dist);
     }

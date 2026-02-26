@@ -10,7 +10,7 @@
 #include "QGCTileCacheTypes.h"
 #include "QGCTile.h"
 
-class QGCCacheTile;
+struct QGCCacheTile;
 
 class QGCTileCacheDatabase
 {

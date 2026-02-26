@@ -65,7 +65,7 @@ cmake --build build --target RunQtCreator
 ## Directory Structure
 
 ```
-cpp/
+plugin/
 ├── CMakeLists.txt           # Build configuration
 ├── QGCPlugin.json.in        # Plugin metadata template
 ├── README.md

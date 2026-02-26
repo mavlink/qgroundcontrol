@@ -50,7 +50,6 @@ add_subdirectory(QmlControls)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
 add_subdirectory(UI)
-add_subdirectory(UTMSP)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
@@ -109,6 +108,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Qml
         Qt6::QmlIntegration
         Qt6::Quick
+        Qt6::Quick3D
         Qt6::QuickControls2
 
         # Qt6 Location
@@ -133,7 +133,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlControlsModule
         QGroundControlModule
         ToolbarModule
-        UTMSPModule
         VehicleSetupModule
 )
 
@@ -148,13 +147,7 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 endif()
 
-if(QGC_VIEWER3D)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
-endif()
-
-if(NOT QGC_AIRLINK_DISABLED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 
 # ============================================================================
 # Compile Definitions

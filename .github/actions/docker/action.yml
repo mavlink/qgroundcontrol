@@ -94,4 +94,14 @@ runs:
         if [[ "$ENABLE_FUSE" == "true" ]]; then
           FUSE_FLAG="--fuse"
         fi
-        ./deploy/docker/docker-run.sh ${FUSE_FLAG:+"$FUSE_FLAG"} qgc-builder:latest "$BUILD_TYPE"
+        max_attempts=2
+        attempt=1
+        until ./deploy/docker/docker-run.sh ${FUSE_FLAG:+"$FUSE_FLAG"} qgc-builder:latest "$BUILD_TYPE"; do
+          if (( attempt >= max_attempts )); then
+            echo "Docker build failed after ${attempt} attempt(s)." >&2
+            exit 1
+          fi
+          echo "Docker build failed on attempt ${attempt}. Retrying in 30 seconds..."
+          sleep 30
+          attempt=$((attempt + 1))
+        done

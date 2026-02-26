@@ -43,10 +43,10 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
 
         MissionCommandUIInfo* uiInfo = new MissionCommandUIInfo(this);
 
-        QString errorString;
-        if (!uiInfo->loadJsonInfo(info.toObject(), baseCommandList, errorString)) {
+        QString uiInfoErrorString;
+        if (!uiInfo->loadJsonInfo(info.toObject(), baseCommandList, uiInfoErrorString)) {
             uiInfo->deleteLater();
-            qWarning() << jsonFilename << errorString;
+            qWarning() << jsonFilename << uiInfoErrorString;
             return;
         }
 

@@ -4,8 +4,10 @@
 # Helps identify unnecessary includes and suggest proper forward declarations
 # ============================================================================
 
+include_guard(GLOBAL)
+
 # IWYU only works with Clang
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     find_program(INCLUDE_WHAT_YOU_USE_PROGRAM include-what-you-use)
     if(INCLUDE_WHAT_YOU_USE_PROGRAM)
         message(STATUS "QGC: Found include-what-you-use: ${INCLUDE_WHAT_YOU_USE_PROGRAM}")

@@ -3,6 +3,7 @@
 
 #include "MissionItem.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "VisualMissionItem.h"
 
 MissionItem::MissionItem(QObject* parent)
@@ -286,13 +287,13 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
     setSequenceNumber(sequenceNumber);
     setAutoContinue(convertedJson[_jsonAutoContinueKey].toBool());
 
-    setParam1(JsonHelper::possibleNaNJsonValue(rgParams[0]));
-    setParam2(JsonHelper::possibleNaNJsonValue(rgParams[1]));
-    setParam3(JsonHelper::possibleNaNJsonValue(rgParams[2]));
-    setParam4(JsonHelper::possibleNaNJsonValue(rgParams[3]));
-    setParam5(JsonHelper::possibleNaNJsonValue(rgParams[4]));
-    setParam6(JsonHelper::possibleNaNJsonValue(rgParams[5]));
-    setParam7(JsonHelper::possibleNaNJsonValue(rgParams[6]));
+    setParam1(JsonParsing::possibleNaNJsonValue(rgParams[0]));
+    setParam2(JsonParsing::possibleNaNJsonValue(rgParams[1]));
+    setParam3(JsonParsing::possibleNaNJsonValue(rgParams[2]));
+    setParam4(JsonParsing::possibleNaNJsonValue(rgParams[3]));
+    setParam5(JsonParsing::possibleNaNJsonValue(rgParams[4]));
+    setParam6(JsonParsing::possibleNaNJsonValue(rgParams[5]));
+    setParam7(JsonParsing::possibleNaNJsonValue(rgParams[6]));
 
     return true;
 }

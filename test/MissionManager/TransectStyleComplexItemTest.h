@@ -22,7 +22,6 @@ private slots:
     void _testRebuildTransects();
     void _testDistanceSignalling();
     void _testAltitudes();
-    // void _testFollowTerrain(void);
 
 private:
     MultiSignalSpy* _multiSpy = nullptr;

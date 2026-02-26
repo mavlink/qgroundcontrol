@@ -674,7 +674,7 @@ bool Bootloader::_verifyCRC(void)
 {
     uint8_t buf[2] = { PROTO_GET_CRC, PROTO_EOC };
 
-    quint32 flashCRC;
+    quint32 flashCRC = 0;
 
     bool failed = true;
     if (_write(buf, 2)) {

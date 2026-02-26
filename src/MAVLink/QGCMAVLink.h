@@ -77,6 +77,15 @@ public:
 
     // Expose mavlink enums to Qml. I've tried various way to make this work without duping, but haven't found anything that works.
 
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4456)
+#endif
+
     enum MAV_BATTERY_FUNCTION {
         MAV_BATTERY_FUNCTION_UNKNOWN=0, /* Battery function is unknown | */
         MAV_BATTERY_FUNCTION_ALL=1, /* Battery supports all flight systems | */
@@ -98,6 +107,13 @@ public:
        MAV_BATTERY_CHARGE_STATE_CHARGING=7, /* Battery is charging. | */
     };
     Q_ENUM(MAV_BATTERY_CHARGE_STATE)
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
     /// Sensor bits from sensors*Bits properties
     enum MavlinkSysStatus {

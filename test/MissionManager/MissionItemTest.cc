@@ -4,9 +4,12 @@
 #include <QtTest/QSignalSpy>
 
 #include "MissionItem.h"
-#include "MultiSignalSpy.h"
+#include "Fact.h"
 #include "PlanMasterController.h"
 #include "SimpleMissionItem.h"
+#include "TestFixtures.h"
+
+using namespace TestFixtures;
 
 // Test property get/set
 void MissionItemTest::_testSetGet()
@@ -51,29 +54,29 @@ void MissionItemTest::_testSignals()
                             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // params
                             true,                               // autoContinue
                             true);                              // isCurrentItem
-    MultiSignalSpy* multiSpyMissionItem = new MultiSignalSpy();
-    Q_CHECK_PTR(multiSpyMissionItem);
-    QCOMPARE(multiSpyMissionItem->init(&missionItem), true);
+    SignalSpyFixture missionItemSignals(&missionItem);
+    QVERIFY(missionItemSignals.spy());
     // Validate isCurrentItemChanged signalling
+    missionItemSignals.expectExactly("isCurrentItemChanged", 1);
     missionItem.setIsCurrentItem(true);
-    QVERIFY(multiSpyMissionItem->noneEmitted());
+    QVERIFY(!missionItemSignals.wasEmitted("isCurrentItemChanged"));
     missionItem.setIsCurrentItem(false);
-    QVERIFY(multiSpyMissionItem->onlyEmittedOnce(SIGNAL(isCurrentItemChanged(bool))));
-    QSignalSpy* spy = multiSpyMissionItem->spy(SIGNAL(isCurrentItemChanged(bool)));
+    QVERIFY(missionItemSignals.verify());
+    QSignalSpy* spy = missionItemSignals.spy()->spy("isCurrentItemChanged");
     QList<QVariant> signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QCOMPARE(signalArgs[0].toBool(), false);
-    multiSpyMissionItem->clearAllSignals();
+    missionItemSignals.clear();
     // Validate sequenceNumberChanged signalling
+    missionItemSignals.expectExactly("sequenceNumberChanged", 1);
     missionItem.setSequenceNumber(1);
-    QVERIFY(multiSpyMissionItem->noneEmitted());
+    QVERIFY(!missionItemSignals.wasEmitted("sequenceNumberChanged"));
     missionItem.setSequenceNumber(2);
-    QVERIFY(multiSpyMissionItem->onlyEmittedOnce(SIGNAL(sequenceNumberChanged(int))));
-    spy = multiSpyMissionItem->spy(SIGNAL(sequenceNumberChanged(int)));
+    QVERIFY(missionItemSignals.verify());
+    spy = missionItemSignals.spy()->spy("sequenceNumberChanged");
     signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QCOMPARE(signalArgs[0].toInt(), 2);
-    delete multiSpyMissionItem;
 }
 
 // Test signalling associated with contained facts
@@ -86,7 +89,7 @@ void MissionItemTest::_testFactSignals()
                             true,                               // autoContinue
                             true);                              // isCurrentItem
     // command
-    QSignalSpy commandSpy(&missionItem._commandFact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy commandSpy(&missionItem._commandFact, &Fact::valueChanged);
     missionItem.setCommand(MAV_CMD_NAV_WAYPOINT);
     QCOMPARE(commandSpy.count(), 0);
     missionItem.setCommand(MAV_CMD_NAV_LAND);
@@ -95,7 +98,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE((MAV_CMD)arguments.at(0).toInt(), MAV_CMD_NAV_LAND);
     // frame
-    QSignalSpy frameSpy(&missionItem._frameFact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy frameSpy(&missionItem._frameFact, &Fact::valueChanged);
     missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
     QCOMPARE(frameSpy.count(), 0);
     missionItem.setFrame(MAV_FRAME_BODY_NED);
@@ -104,7 +107,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE((MAV_FRAME)arguments.at(0).toInt(), MAV_FRAME_BODY_NED);
     // param1
-    QSignalSpy param1Spy(&missionItem._param1Fact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy param1Spy(&missionItem._param1Fact, &Fact::valueChanged);
     missionItem.setParam1(1.0);
     QCOMPARE(param1Spy.count(), 0);
     missionItem.setParam1(2.0);
@@ -113,7 +116,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 2.0);
     // param2
-    QSignalSpy param2Spy(&missionItem._param2Fact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy param2Spy(&missionItem._param2Fact, &Fact::valueChanged);
     missionItem.setParam2(2.0);
     QCOMPARE(param2Spy.count(), 0);
     missionItem.setParam2(3.0);
@@ -122,7 +125,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 3.0);
     // param3
-    QSignalSpy param3Spy(&missionItem._param3Fact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy param3Spy(&missionItem._param3Fact, &Fact::valueChanged);
     missionItem.setParam3(3.0);
     QCOMPARE(param3Spy.count(), 0);
     missionItem.setParam3(4.0);
@@ -131,7 +134,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 4.0);
     // param4
-    QSignalSpy param4Spy(&missionItem._param4Fact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy param4Spy(&missionItem._param4Fact, &Fact::valueChanged);
     missionItem.setParam4(4.0);
     QCOMPARE(param4Spy.count(), 0);
     missionItem.setParam4(5.0);
@@ -140,7 +143,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 5.0);
     // param6
-    QSignalSpy param6Spy(&missionItem._param6Fact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy param6Spy(&missionItem._param6Fact, &Fact::valueChanged);
     missionItem.setParam6(6.0);
     QCOMPARE(param6Spy.count(), 0);
     missionItem.setParam6(7.0);
@@ -149,7 +152,7 @@ void MissionItemTest::_testFactSignals()
     QCOMPARE(arguments.count(), 1);
     QCOMPARE(arguments.at(0).toDouble(), 7.0);
     // param7
-    QSignalSpy param7Spy(&missionItem._param7Fact, SIGNAL(valueChanged(QVariant)));
+    QSignalSpy param7Spy(&missionItem._param7Fact, &Fact::valueChanged);
     missionItem.setParam7(7.0);
     QCOMPARE(param7Spy.count(), 0);
     missionItem.setParam7(8.0);
@@ -219,12 +222,12 @@ void MissionItemTest::_testLoadFromJsonV1()
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
         QVERIFY(!errorString.isEmpty());
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
     }
     // Test good load
     bool success = missionItem.load(jsonObject, _seq, errorString);
     if (!success) {
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
     }
     QVERIFY(success);
     _checkExpectedMissionItem(missionItem);
@@ -243,7 +246,7 @@ void MissionItemTest::_testLoadFromJsonV2()
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
         QVERIFY(!errorString.isEmpty());
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
     }
     // Test bad coordinate variations
     QJsonObject badObject = jsonObject;
@@ -251,7 +254,7 @@ void MissionItemTest::_testLoadFromJsonV2()
     badObject["coordinate"] = 10;
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
-    qDebug() << errorString;
+    TEST_DEBUG(errorString);
     QJsonArray badCoordinateArray;
     badCoordinateArray << -10.0 << -20.0;
     badObject = jsonObject;
@@ -259,7 +262,7 @@ void MissionItemTest::_testLoadFromJsonV2()
     badObject["coordinate"] = badCoordinateArray;
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
-    qDebug() << errorString;
+    TEST_DEBUG(errorString);
     QJsonArray badCoordinateArray_second;
     badCoordinateArray_second << -10.0 << -20.0 << true;
     badObject = jsonObject;
@@ -267,7 +270,7 @@ void MissionItemTest::_testLoadFromJsonV2()
     badObject["coordinate"] = badCoordinateArray_second;
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
-    qDebug() << errorString;
+    TEST_DEBUG(errorString);
     QJsonArray badCoordinateArray2;
     badCoordinateArray2 << 1 << 2;
     QJsonArray badCoordinateArray_third;
@@ -277,11 +280,11 @@ void MissionItemTest::_testLoadFromJsonV2()
     badObject["coordinate"] = badCoordinateArray_third;
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
-    qDebug() << errorString;
+    TEST_DEBUG(errorString);
     // Test good load
     bool result = missionItem.load(jsonObject, _seq, errorString);
     if (!result) {
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
         QVERIFY(result);
     }
     _checkExpectedMissionItem(missionItem);
@@ -301,14 +304,14 @@ void MissionItemTest::_testLoadFromJsonV3()
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
         QVERIFY(!errorString.isEmpty());
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
     }
     // Bad type
     QJsonObject badObject = jsonObject;
     badObject[VisualMissionItem::jsonTypeKey] = "foo";
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
-    qDebug() << errorString;
+    TEST_DEBUG(errorString);
     // Incorrect param count
     badObject = jsonObject;
     QJsonArray rgParam = badObject[MissionItem::_jsonParamsKey].toArray();
@@ -316,11 +319,11 @@ void MissionItemTest::_testLoadFromJsonV3()
     badObject[MissionItem::_jsonParamsKey] = rgParam;
     QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
     QVERIFY(!errorString.isEmpty());
-    qDebug() << errorString;
+    TEST_DEBUG(errorString);
     // Test good load
     bool result = missionItem.load(jsonObject, _seq, errorString);
     if (!result) {
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
         QVERIFY(result);
     }
     _checkExpectedMissionItem(missionItem);
@@ -333,7 +336,7 @@ void MissionItemTest::_testLoadFromJsonV3NaN()
     QJsonObject jsonObject = _createV3Json(true /* allNaNs */);
     bool result = missionItem.load(jsonObject, _seq, errorString);
     if (!result) {
-        qDebug() << errorString;
+        TEST_DEBUG(errorString);
         QVERIFY(result);
     }
     _checkExpectedMissionItem(missionItem, true /* allNaNs */);

@@ -7,10 +7,18 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         FTPManagerTest.cc
         FTPManagerTest.h
+        FTPControllerTest.cc
+        FTPControllerTest.h
+        FirmwareUpgradeControllerTest.cc
+        FirmwareUpgradeControllerTest.h
         InitialConnectTest.cc
         InitialConnectTest.h
+        InitialConnectPeripheralStartupTest.cc
+        InitialConnectPeripheralStartupTest.h
         MAVLinkLogManagerTest.cc
         MAVLinkLogManagerTest.h
+        APMAirframeComponentControllerTest.cc
+        APMAirframeComponentControllerTest.h
         RequestMessageTest.cc
         RequestMessageTest.h
         SendMavCommandWithHandlerTest.cc

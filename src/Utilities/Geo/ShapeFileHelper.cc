@@ -42,38 +42,6 @@ ShapeFileHelper::ShapeType ShapeFileHelper::determineShapeType(const QString &fi
     }
 }
 
-bool ShapeFileHelper::loadPolygonFromFile(const QString &file, QList<QGeoCoordinate> &vertices, QString &errorString, double filterMeters)
-{
-    errorString.clear();
-    vertices.clear();
-
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::loadPolygonFromFile(file, vertices, errorString, filterMeters);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::loadPolygonFromFile(file, vertices, errorString, filterMeters);
-    case ShapeFileType::None:
-    default:
-        return false;
-    }
-}
-
-bool ShapeFileHelper::loadPolylineFromFile(const QString &file, QList<QGeoCoordinate> &coords, QString &errorString, double filterMeters)
-{
-    errorString.clear();
-    coords.clear();
-
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::loadPolylineFromFile(file, coords, errorString, filterMeters);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::loadPolylineFromFile(file, coords, errorString, filterMeters);
-    case ShapeFileType::None:
-    default:
-        return false;
-    }
-}
-
 int ShapeFileHelper::getEntityCount(const QString &file, QString &errorString)
 {
     errorString.clear();

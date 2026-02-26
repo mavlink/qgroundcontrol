@@ -43,6 +43,19 @@ private slots:
     // Request configuration tests
     void _testDefaultUserAgent();
     void _testRequestConfigDefaults();
+    void _testRequestConfigAttributes();
+    void _testSetJsonHeaders();
+    void _testCreateBasicAuthCredentials();
+    void _testSetBasicAuthHeader();
+    void _testSetBearerTokenHeader();
+    void _testLooksLikeJson();
+    void _testErrorMessageNullReply();
+    void _testRedirectUrlResolvesRelativeTarget();
+    void _testErrorMessagePrefersNetworkErrorOverHttpStatus();
+    void _testParseJsonValid();
+    void _testParseJsonInvalid();
+    void _testParseJsonReplyNull();
+    void _testReplyHelpersNullReply();
 
     // Network availability tests
     void _testIsNetworkAvailable();

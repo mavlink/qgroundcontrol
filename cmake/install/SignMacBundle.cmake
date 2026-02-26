@@ -28,26 +28,19 @@ file(REMOVE "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/
 file(REMOVE "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/Commands")
 
 # ----------------------------------------------------------------------------
-# Sign All Libraries and Executables
+# Sign All Shared Libraries (.dylib and .so) Outside Frameworks
 # ----------------------------------------------------------------------------
-# Sign all dynamic libraries
 execute_process(
-    COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents" -type f -name "*.dylib" -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-    COMMAND_ERROR_IS_FATAL ANY
-)
-
-# Sign all shared objects
-execute_process(
-    COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents" -type f -name "*.so" -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
+    COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents" -path "*/Frameworks/*.framework" -prune -o -type f "(" -name "*.dylib" -o -name "*.so" ")" -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" {} +
     COMMAND_ERROR_IS_FATAL ANY
 )
 
 # ----------------------------------------------------------------------------
-# Sign GStreamer Framework Components
+# Sign GStreamer Helpers
 # ----------------------------------------------------------------------------
 if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
     execute_process(
-        COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
+        COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" {} +
         COMMAND_ERROR_IS_FATAL ANY
     )
     execute_process(
@@ -60,30 +53,48 @@ if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
     )
 endif()
 
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0")
+    execute_process(
+        COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0" -type f -perm /111 -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" {} +
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endif()
+
 # ----------------------------------------------------------------------------
 # Sign All Frameworks
 # ----------------------------------------------------------------------------
 file(GLOB FRAMEWORK_DIRS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/*.framework")
 foreach(FRAMEWORK_DIR ${FRAMEWORK_DIRS})
-    if(EXISTS "${FRAMEWORK_DIR}/Versions/1.0")
-        execute_process(
-            COMMAND find "${FRAMEWORK_DIR}/Versions/1.0" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    endif()
-    if(EXISTS "${FRAMEWORK_DIR}/Versions/A")
-        execute_process(
-            COMMAND find "${FRAMEWORK_DIR}/Versions/A" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    endif()
+    # Sign all files inside the framework in one batched pass
+    execute_process(
+        COMMAND find "${FRAMEWORK_DIR}" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" {} +
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    # Seal the framework bundle
+    execute_process(
+        COMMAND codesign --deep --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
 endforeach()
+
+# Verify GStreamer framework signing
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
+    execute_process(
+        COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endif()
 
 # ----------------------------------------------------------------------------
 # Sign Main Application Bundle
 # ----------------------------------------------------------------------------
 execute_process(
     COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}"
+    COMMAND_ERROR_IS_FATAL ANY
+)
+
+execute_process(
+    COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}"
     COMMAND_ERROR_IS_FATAL ANY
 )
 

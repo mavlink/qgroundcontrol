@@ -9,8 +9,8 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "SpeedSection.h"
+#include "UnitTest.h"
 #include "Vehicle.h"
-
 
 void SimpleMissionItemTest::init()
 {
@@ -24,17 +24,17 @@ void SimpleMissionItemTest::init()
     _simpleItem = new SimpleMissionItem(planController(), false /* flyView */, missionItem);
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be.
-    _spySimpleItem = new MultiSignalSpy();
+    _spySimpleItem = std::make_unique<MultiSignalSpy>();
     QVERIFY(_spySimpleItem->init(_simpleItem));
-    VisualMissionItemTest::_createSpy(_simpleItem, &_spyVisualItem);
+    MultiSignalSpy* visualSpy = nullptr;
+    VisualMissionItemTest::_createSpy(_simpleItem, &visualSpy);
+    _spyVisualItem.reset(visualSpy);
 }
 
 void SimpleMissionItemTest::cleanup()
 {
-    delete _spySimpleItem;
-    delete _spyVisualItem;
-    _spySimpleItem = nullptr;
-    _spyVisualItem = nullptr;
+    _spySimpleItem.reset();
+    _spyVisualItem.reset();
     VisualMissionItemTest::cleanup();
     // _simpleItem is deleted when planController() is deleted
     _simpleItem = nullptr;
@@ -48,8 +48,9 @@ bool SimpleMissionItemTest::_classMatch(QGCMAVLink::VehicleClass_t vehicleClass,
 void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass,
                                                    QGCMAVLink::VehicleClass_t vtolMode)
 {
-    qDebug() << "vehicleClass:vtolMode" << QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass)
-             << QGCMAVLink::vehicleClassToUserVisibleString(vtolMode);
+    TEST_DEBUG(QStringLiteral("vehicleClass:vtolMode %1 %2")
+                   .arg(QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass),
+                        QGCMAVLink::vehicleClassToUserVisibleString(vtolMode)));
 
     typedef struct
     {
@@ -74,12 +75,12 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
     QGCMAVLink::VehicleClass_t commandVehicleClass =
         vtolMode == QGCMAVLink::VehicleClassGeneric ? vehicleClass : vtolMode;
     QScopedPointer<Vehicle> vehicle(new Vehicle(MAV_AUTOPILOT_PX4, QGCMAVLink::vehicleClassToMavType(vehicleClass)));
-    for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); i++) {
-        auto& testCase = testCases[i];
+    for (size_t testIdx = 0; testIdx < sizeof(testCases) / sizeof(testCases[0]); testIdx++) {
+        auto& testCase = testCases[testIdx];
         auto* missionCommandTree = MissionCommandTree::instance();
         const MissionCommandUIInfo* uiInfo =
             missionCommandTree->getUIInfo(vehicle.data(), commandVehicleClass, testCase.command);
-        qDebug() << "Command" << missionCommandTree->rawName(testCase.command);
+        TEST_DEBUG(QStringLiteral("Command %1").arg(missionCommandTree->rawName(testCase.command)));
         typedef QPair<int, QString> FactInfoPair_t;
         QList<FactInfoPair_t> cExpectedTextFieldInfo;
         QList<FactInfoPair_t> cExpectedComboBoxInfo;
@@ -124,46 +125,46 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
         missionFlightStatus.gimbalPitch = qQNaN();
         simpleMissionItem.setMissionFlightStatus(missionFlightStatus);
         QCOMPARE(simpleMissionItem.textFieldFacts()->count(), cExpectedTextFieldInfo.count());
-        for (int i = 0; i < simpleMissionItem.textFieldFacts()->count(); i++) {
-            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.textFieldFacts()->get(i));
-            qDebug() << "textFieldFact" << fact->name();
-            QCOMPARE(fact->name(), cExpectedTextFieldInfo[i].second);
-            QCOMPARE(fact->rawValue().toDouble(), (cExpectedTextFieldInfo[i].first * 10.0) + 0.1234567);
+        for (int j = 0; j < simpleMissionItem.textFieldFacts()->count(); j++) {
+            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.textFieldFacts()->get(j));
+            TEST_DEBUG(QStringLiteral("textFieldFact %1").arg(fact->name()));
+            QCOMPARE(fact->name(), cExpectedTextFieldInfo[j].second);
+            QCOMPARE(fact->rawValue().toDouble(), (cExpectedTextFieldInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.comboboxFacts()->count(), cExpectedComboBoxInfo.count());
-        for (int i = 0; i < simpleMissionItem.comboboxFacts()->count(); i++) {
-            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.comboboxFacts()->get(i));
-            qDebug() << "comboBoxFact" << fact->name();
-            QCOMPARE(fact->name(), cExpectedComboBoxInfo[i].second);
-            QCOMPARE(fact->rawValue().toDouble(), (cExpectedComboBoxInfo[i].first * 10.0) + 0.1234567);
+        for (int j = 0; j < simpleMissionItem.comboboxFacts()->count(); j++) {
+            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.comboboxFacts()->get(j));
+            TEST_DEBUG(QStringLiteral("comboBoxFact %1").arg(fact->name()));
+            QCOMPARE(fact->name(), cExpectedComboBoxInfo[j].second);
+            QCOMPARE(fact->rawValue().toDouble(), (cExpectedComboBoxInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.nanFacts()->count(), cExpectedNaNFieldInfo.count());
-        for (int i = 0; i < simpleMissionItem.nanFacts()->count(); i++) {
-            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.nanFacts()->get(i));
-            qDebug() << "nanFieldFact" << fact->name();
-            QCOMPARE(fact->name(), cExpectedNaNFieldInfo[i].second);
+        for (int j = 0; j < simpleMissionItem.nanFacts()->count(); j++) {
+            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.nanFacts()->get(j));
+            TEST_DEBUG(QStringLiteral("nanFieldFact %1").arg(fact->name()));
+            QCOMPARE(fact->name(), cExpectedNaNFieldInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), qQNaN());
         }
         QCOMPARE(simpleMissionItem.textFieldFactsAdvanced()->count(), cExpectedAdvancedTextFieldInfo.count());
-        for (int i = 0; i < simpleMissionItem.textFieldFactsAdvanced()->count(); i++) {
-            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.textFieldFactsAdvanced()->get(i));
-            qDebug() << "advancedTextFieldFact" << fact->name();
-            QCOMPARE(fact->name(), cExpectedAdvancedTextFieldInfo[i].second);
-            QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedTextFieldInfo[i].first * 10.0) + 0.1234567);
+        for (int j = 0; j < simpleMissionItem.textFieldFactsAdvanced()->count(); j++) {
+            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.textFieldFactsAdvanced()->get(j));
+            TEST_DEBUG(QStringLiteral("advancedTextFieldFact %1").arg(fact->name()));
+            QCOMPARE(fact->name(), cExpectedAdvancedTextFieldInfo[j].second);
+            QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedTextFieldInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.comboboxFactsAdvanced()->count(), cExpectedAdvancedComboBoxInfo.count());
-        for (int i = 0; i < simpleMissionItem.comboboxFactsAdvanced()->count(); i++) {
-            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.comboboxFactsAdvanced()->get(i));
-            qDebug() << "advancedComboBoxFact" << fact->name();
-            QCOMPARE(fact->name(), cExpectedAdvancedComboBoxInfo[i].second);
-            QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedComboBoxInfo[i].first * 10.0) + 0.1234567);
+        for (int j = 0; j < simpleMissionItem.comboboxFactsAdvanced()->count(); j++) {
+            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.comboboxFactsAdvanced()->get(j));
+            TEST_DEBUG(QStringLiteral("advancedComboBoxFact %1").arg(fact->name()));
+            QCOMPARE(fact->name(), cExpectedAdvancedComboBoxInfo[j].second);
+            QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedComboBoxInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.nanFactsAdvanced()->count(), cExpectedAdvancedNaNFieldInfo.count());
-        for (int i = 0; i < simpleMissionItem.nanFactsAdvanced()->count(); i++) {
-            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.nanFactsAdvanced()->get(i));
-            qDebug() << "advancedNaNFieldFact" << fact->name();
-            QCOMPARE(fact->name(), cExpectedAdvancedNaNFieldInfo[i].second);
-            QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedNaNFieldInfo[i].first * 10.0) + 0.1234567);
+        for (int j = 0; j < simpleMissionItem.nanFactsAdvanced()->count(); j++) {
+            Fact* fact = qobject_cast<Fact*>(simpleMissionItem.nanFactsAdvanced()->get(j));
+            TEST_DEBUG(QStringLiteral("advancedNaNFieldFact %1").arg(fact->name()));
+            QCOMPARE(fact->name(), cExpectedAdvancedNaNFieldInfo[j].second);
+            QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedNaNFieldInfo[j].first * 10.0) + 0.1234567);
         }
         if (!qIsNaN(testCase.altValue)) {
             QCOMPARE(simpleMissionItem.altitudeMode(), testCase.altMode);

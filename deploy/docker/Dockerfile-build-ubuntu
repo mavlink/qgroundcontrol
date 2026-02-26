@@ -4,11 +4,7 @@ FROM ubuntu:24.04
 # ---------- Non-interactive APT ----------
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ---------- System packages ----------
-#  * locales   – lets us generate UTF-8 locales
-#  * git       – you call `git config` later and most build scripts need it
-#  * ninja-build & cmake – required by your CMD
-#  * ca-certificates, build-essential, curl, unzip – common essentials
+# ---------- System packages & locale ----------
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         locales \
@@ -18,31 +14,30 @@ RUN apt-get update && \
         ca-certificates \
         build-essential \
         curl \
-        unzip && \
-    rm -rf /var/lib/apt/lists/*
-
-# ---------- UTF-8 locale ----------
-RUN sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
+        unzip \
+        python3 \
+        pipx && \
+    sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
     locale-gen && \
-    update-locale LANG=en_US.UTF-8
+    update-locale LANG=en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
 # ---------- Bring in the helper scripts and config ----------
 COPY .github/build-config.json /tmp/qt/
-COPY tools/setup/install-dependencies-debian.sh /tmp/qt/
-COPY tools/setup/install-qt-debian.sh /tmp/qt/
-COPY tools/setup/read-config.sh /tmp/qt/
-RUN chmod +x /tmp/qt/*.sh && \
-    /tmp/qt/install-dependencies-debian.sh && \
-    /tmp/qt/install-qt-debian.sh
-
-# Extract Qt version and set environment (scripts install to /opt/Qt/<version>/gcc_64)
-RUN QT_VERSION=$(/tmp/qt/read-config.sh --get qt_version) && \
+COPY tools/setup/install_dependencies.py /tmp/qt/
+COPY tools/setup/read_config.py /tmp/qt/
+RUN python3 /tmp/qt/install_dependencies.py --platform debian && \
+    QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version) && \
+    QT_MODULES=$(python3 /tmp/qt/read_config.py --get qt_modules) && \
+    mkdir -p /opt/Qt && \
+    pipx run aqtinstall==3.3.0 install-qt linux desktop "${QT_VERSION}" linux_gcc_64 -O /opt/Qt -m ${QT_MODULES} && \
     echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64" >> /etc/profile.d/qt.sh && \
     echo 'export PATH=$QT_ROOT_DIR/bin:$PATH' >> /etc/profile.d/qt.sh && \
     chmod +x /etc/profile.d/qt.sh && \
+    rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/qt
 
 # Source qt.sh in bash login shells; for non-login, find Qt dynamically

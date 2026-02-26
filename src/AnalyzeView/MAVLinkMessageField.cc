@@ -107,12 +107,12 @@ void QGCMAVLinkMessageField::updateValue(const QString &newValue, qreal v)
     qreal vmin = std::numeric_limits<qreal>::max();
     qreal vmax = std::numeric_limits<qreal>::min();
     for (const QPointF &point : _values) {
-        const qreal v = point.y();
-        if (vmax < v) {
-            vmax = v;
+        const qreal value = point.y();
+        if (vmax < value) {
+            vmax = value;
         }
-        if (vmin > v) {
-            vmin = v;
+        if (vmin > value) {
+            vmin = value;
         }
     }
 

@@ -6,6 +6,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionManager.h"
 #include "KMLPlanDomDocument.h"
 #include "SurveyPlanCreator.h"
@@ -352,7 +353,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
 
-        if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorString)) {
+        if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
             qgcApp()->showAppMessage(errorMessage.arg(errorString));
             return;
         }

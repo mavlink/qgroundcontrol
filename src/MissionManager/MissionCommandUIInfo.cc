@@ -1,5 +1,5 @@
 #include "MissionCommandUIInfo.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "FactMetaData.h"
 #include "QGCLoggingCategory.h"
 
@@ -218,7 +218,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     if (requireFullObject) {
         requiredKeys << _rawNameJsonKey;
     }
-    if (!JsonHelper::validateRequiredKeys(jsonObject, requiredKeys, internalError)) {
+    if (!JsonParsing::validateRequiredKeys(jsonObject, requiredKeys, internalError)) {
         errorString = _loadErrorString(internalError);
         return false;
     }
@@ -234,8 +234,8 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
     QList<QJsonValue::Type> types;
     types << QJsonValue::Double << QJsonValue::String << QJsonValue::String<< QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool
           << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object << QJsonValue::Object
-          << QJsonValue::String << QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool;
-    if (!JsonHelper::validateKeyTypes(jsonObject, allKeys, types, internalError)) {
+          << QJsonValue::String << QJsonValue::String << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool << QJsonValue::Bool;
+    if (!JsonParsing::validateKeyTypes(jsonObject, allKeys, types, internalError)) {
         errorString = _loadErrorString(internalError);
         return false;
     }
@@ -357,12 +357,12 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             }
 
             // Validate key types
-            QList<QJsonValue::Type> types;
-            types << QJsonValue::Null << QJsonValue::Double << QJsonValue::String << QJsonValue::String
-                  << QJsonValue::String << QJsonValue::String << QJsonValue::Bool
-                                    << QJsonValue::Bool
-                  << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
-            if (!JsonHelper::validateKeyTypes(paramObject, allParamKeys, types, internalError)) {
+            QList<QJsonValue::Type> paramTypes;
+            paramTypes << QJsonValue::Null << QJsonValue::Double << QJsonValue::String << QJsonValue::String
+                       << QJsonValue::String << QJsonValue::String << QJsonValue::Bool
+                       << QJsonValue::Bool
+                       << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double << QJsonValue::Double;
+            if (!JsonParsing::validateKeyTypes(paramObject, allParamKeys, paramTypes, internalError)) {
                 errorString = _loadErrorString(internalError);
                 return false;
             }
@@ -401,7 +401,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
 
             if (paramObject.contains(_defaultJsonKey)) {
                 if (paramInfo->_nanUnchanged) {
-                    paramInfo->_defaultValue = JsonHelper::possibleNaNJsonValue(paramObject[_defaultJsonKey]);
+                    paramInfo->_defaultValue = JsonParsing::possibleNaNJsonValue(paramObject[_defaultJsonKey]);
                 } else {
                     if (paramObject[_defaultJsonKey].type() == QJsonValue::Null) {
                         errorString = QString("Param %1 default value was null/NaN but NaN is not allowed");

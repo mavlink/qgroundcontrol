@@ -26,7 +26,6 @@ bool fuzzyCompareLatLon(const QGeoCoordinate& coord1, const QGeoCoordinate& coor
 const char* SimpleLandingComplexItem::settingsGroup = "SimpleLandingComplexItemUnitTest";
 const char* SimpleLandingComplexItem::jsonComplexItemTypeValue = "utSimpleLandingPattern";
 
-
 void LandingComplexItemTest::init()
 {
     VisualMissionItemTest::init();

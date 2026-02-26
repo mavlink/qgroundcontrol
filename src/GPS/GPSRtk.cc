@@ -143,7 +143,7 @@ void GPSRtk::_satelliteInfoUpdate(const satellite_info_s &msg)
     _gpsRtkFactGroup->numSatellites()->setRawValue(msg.count);
 }
 
-void GPSRtk::_sensorGnssRelativeUpdate(const sensor_gnss_relative_s &msg)
+void GPSRtk::_sensorGnssRelativeUpdate(const sensor_gnss_relative_s &/*msg*/)
 {
     qCDebug(GPSRtkLog) << Q_FUNC_INFO;
 }

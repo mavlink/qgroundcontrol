@@ -3,6 +3,8 @@
 # Extracts version information and metadata from Git repository
 # ----------------------------------------------------------------------------
 
+include_guard(GLOBAL)
+
 find_package(Git QUIET)
 
 if(NOT GIT_FOUND OR NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
@@ -42,38 +44,30 @@ if(GIT_SUBMODULE)
     message(STATUS "Git submodules updated successfully")
 endif()
 
-include(CMakePrintHelpers)
-
 # ----------------------------------------------------------------------------
-# Extract Git Branch
+# Extract Git Branch and Commit Hash
 # ----------------------------------------------------------------------------
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref @
+    COMMAND ${GIT_EXECUTABLE} log -1 --format=%D%n%h
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    OUTPUT_VARIABLE QGC_GIT_BRANCH
+    OUTPUT_VARIABLE _git_info
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET
 )
-if(NOT QGC_GIT_BRANCH)
+if(_git_info)
+    string(REGEX REPLACE "\n.*" "" _git_refs "${_git_info}")
+    string(REGEX REPLACE ".*\n" "" QGC_GIT_HASH "${_git_info}")
+    # Extract branch from refs: "HEAD -> branch, origin/branch" → "branch"
+    if(_git_refs MATCHES "HEAD -> ([^,]+)")
+        set(QGC_GIT_BRANCH "${CMAKE_MATCH_1}")
+    else()
+        set(QGC_GIT_BRANCH "HEAD")
+    endif()
+else()
     set(QGC_GIT_BRANCH "unknown")
-endif()
-# cmake_print_variables(QGC_GIT_BRANCH)
-
-# ----------------------------------------------------------------------------
-# Extract Git Commit Hash
-# ----------------------------------------------------------------------------
-execute_process(
-    COMMAND ${GIT_EXECUTABLE} rev-parse --short @
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    OUTPUT_VARIABLE QGC_GIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-)
-if(NOT QGC_GIT_HASH)
     set(QGC_GIT_HASH "0000000")
 endif()
-# cmake_print_variables(QGC_GIT_HASH)
 
 # ----------------------------------------------------------------------------
 # Extract Version String from Git Tags
@@ -94,7 +88,7 @@ endif()
 # Extract Clean Version Tag
 # ----------------------------------------------------------------------------
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --abbrev=0
+    COMMAND ${GIT_EXECUTABLE} describe --always --tags --abbrev=0
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE QGC_APP_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE

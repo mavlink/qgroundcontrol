@@ -2,9 +2,34 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtTest/QSignalSpy>
 
 #include "QGCFileWatcher.h"
+
+namespace {
+
+QString _normalizedPath(const QString& path)
+{
+    const QFileInfo info(path);
+    const QString canonicalPath = info.canonicalFilePath();
+    if (!canonicalPath.isEmpty()) {
+        return QDir::cleanPath(canonicalPath);
+    }
+
+    return QDir::cleanPath(info.absoluteFilePath());
+}
+
+bool _pathsEquivalent(const QString& lhs, const QString& rhs)
+{
+#if defined(Q_OS_WIN)
+    return _normalizedPath(lhs).compare(_normalizedPath(rhs), Qt::CaseInsensitive) == 0;
+#else
+    return _normalizedPath(lhs) == _normalizedPath(rhs);
+#endif
+}
+
+} // namespace
 
 // ============================================================================
 // File watching tests
@@ -18,7 +43,7 @@ void QGCFileWatcherTest::_testWatchFile()
     file.write("initial content");
     file.close();
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchFile(filePath));
+    QVERIFY(watcher.watchFile(filePath, nullptr));
     QVERIFY(watcher.isWatchingFile(filePath));
     QCOMPARE(watcher.watchedFiles().size(), 1);
 }
@@ -33,6 +58,7 @@ void QGCFileWatcherTest::_testWatchFileWithCallback()
     file.close();
     QGCFileWatcher watcher;
     watcher.setDebounceDelay(0);  // No debounce for testing
+    QSignalSpy fileChangedSpy(&watcher, &QGCFileWatcher::fileChanged);
     QString changedPath;
     bool callbackCalled = false;
     QVERIFY(watcher.watchFile(filePath, [&](const QString& path) {
@@ -44,11 +70,17 @@ void QGCFileWatcherTest::_testWatchFileWithCallback()
     QVERIFY(modifyFile.open(QIODevice::WriteOnly));
     modifyFile.write("modified content");
     modifyFile.close();
-    // Give filesystem watcher time to detect change
-    QTest::qWait(200);
-    // Note: File system notifications are platform-dependent and may not always fire
-    // in a test environment. The important thing is that the watch was registered.
-    QVERIFY(watcher.isWatchingFile(filePath));
+
+    if (!UnitTest::waitForSignal(fileChangedSpy, TestTimeout::longMs(), QStringLiteral("fileChanged"))) {
+        QSKIP("File change notifications were not delivered in this environment");
+    }
+    if (!UnitTest::waitForCondition([&callbackCalled]() { return callbackCalled; },
+                                    TestTimeout::longMs(),
+                                    QStringLiteral("file watcher callback"))) {
+        QSKIP("File watcher callback was not delivered in this environment");
+    }
+    QVERIFY2(_pathsEquivalent(changedPath, filePath),
+             qPrintable(QStringLiteral("Path mismatch: actual=%1 expected=%2").arg(changedPath, filePath)));
 }
 
 void QGCFileWatcherTest::_testUnwatchFile()
@@ -60,7 +92,7 @@ void QGCFileWatcherTest::_testUnwatchFile()
     file.write("content");
     file.close();
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchFile(filePath));
+    QVERIFY(watcher.watchFile(filePath, nullptr));
     QVERIFY(watcher.isWatchingFile(filePath));
     QVERIFY(watcher.unwatchFile(filePath));
     QVERIFY(!watcher.isWatchingFile(filePath));
@@ -79,8 +111,8 @@ void QGCFileWatcherTest::_testWatchedFiles()
         file.close();
     }
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchFile(file1));
-    QVERIFY(watcher.watchFile(file2));
+    QVERIFY(watcher.watchFile(file1, nullptr));
+    QVERIFY(watcher.watchFile(file2, nullptr));
     const QStringList watched = watcher.watchedFiles();
     QCOMPARE(watched.size(), 2);
     QVERIFY(watched.contains(QFileInfo(file1).absoluteFilePath()));
@@ -93,7 +125,7 @@ void QGCFileWatcherTest::_testWatchedFiles()
 void QGCFileWatcherTest::_testWatchDirectory()
 {
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchDirectory(tempDir()->path()));
+    QVERIFY(watcher.watchDirectory(tempDir()->path(), nullptr));
     QVERIFY(watcher.isWatchingDirectory(tempDir()->path()));
     QCOMPARE(watcher.watchedDirectories().size(), 1);
 }
@@ -102,6 +134,7 @@ void QGCFileWatcherTest::_testWatchDirectoryWithCallback()
 {
     QGCFileWatcher watcher;
     watcher.setDebounceDelay(0);
+    QSignalSpy directoryChangedSpy(&watcher, &QGCFileWatcher::directoryChanged);
     QString changedPath;
     QVERIFY(watcher.watchDirectory(tempDir()->path(), [&](const QString& path) { changedPath = path; }));
     // Create a file in the directory
@@ -110,15 +143,18 @@ void QGCFileWatcherTest::_testWatchDirectoryWithCallback()
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("content");
     file.close();
-    // Give filesystem watcher time to detect change
-    QTest::qWait(200);
-    QVERIFY(watcher.isWatchingDirectory(tempDir()->path()));
+
+    if (!UnitTest::waitForSignal(directoryChangedSpy, TestTimeout::longMs(), QStringLiteral("directoryChanged"))) {
+        QSKIP("Directory change notifications were not delivered in this environment");
+    }
+    QVERIFY2(_pathsEquivalent(changedPath, tempDir()->path()),
+             qPrintable(QStringLiteral("Path mismatch: actual=%1 expected=%2").arg(changedPath, tempDir()->path())));
 }
 
 void QGCFileWatcherTest::_testUnwatchDirectory()
 {
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchDirectory(tempDir()->path()));
+    QVERIFY(watcher.watchDirectory(tempDir()->path(), nullptr));
     QVERIFY(watcher.isWatchingDirectory(tempDir()->path()));
     QVERIFY(watcher.unwatchDirectory(tempDir()->path()));
     QVERIFY(!watcher.isWatchingDirectory(tempDir()->path()));
@@ -133,8 +169,8 @@ void QGCFileWatcherTest::_testWatchedDirectories()
     QVERIFY(QDir().mkdir(dir1));
     QVERIFY(QDir().mkdir(dir2));
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchDirectory(dir1));
-    QVERIFY(watcher.watchDirectory(dir2));
+    QVERIFY(watcher.watchDirectory(dir1, nullptr));
+    QVERIFY(watcher.watchDirectory(dir2, nullptr));
     const QStringList watched = watcher.watchedDirectories();
     QCOMPARE(watched.size(), 2);
 }
@@ -186,8 +222,8 @@ void QGCFileWatcherTest::_testClear()
     const QString dir1 = tempDir()->filePath("clear_dir");
     QVERIFY(QDir().mkdir(dir1));
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchFile(file1));
-    QVERIFY(watcher.watchDirectory(dir1));
+    QVERIFY(watcher.watchFile(file1, nullptr));
+    QVERIFY(watcher.watchDirectory(dir1, nullptr));
     QVERIFY(!watcher.watchedFiles().isEmpty());
     QVERIFY(!watcher.watchedDirectories().isEmpty());
     watcher.clear();
@@ -219,19 +255,44 @@ void QGCFileWatcherTest::_testDebounceDelay()
 // ============================================================================
 void QGCFileWatcherTest::_testWatchFilePersistent()
 {
-    // This test verifies persistent watching setup, not the full re-watch behavior
-    // which is hard to test reliably in unit tests
     const QString filePath = tempDir()->filePath("persistent.txt");
     QFile file(filePath);
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write("content");
     file.close();
     QGCFileWatcher watcher;
-    QVERIFY(watcher.watchFilePersistent(filePath, [](const QString&) {}));
+    watcher.setDebounceDelay(0);
+    int callbackCount = 0;
+    QString lastCallbackPath;
+    QVERIFY(watcher.watchFilePersistent(filePath, [&](const QString& path) {
+        callbackCount++;
+        lastCallbackPath = path;
+    }));
     QVERIFY(watcher.isWatchingFile(filePath));
     // Parent directory should also be watched
     const QString parentDir = QFileInfo(filePath).absolutePath();
     QVERIFY(watcher.isWatchingDirectory(parentDir));
+
+    // Delete and recreate file; persistent watcher should re-add and notify.
+    QVERIFY(QFile::remove(filePath));
+    QVERIFY_TRUE_WAIT(!watcher.isWatchingFile(filePath), TestTimeout::shortMs());
+    QFile recreated(filePath);
+    QVERIFY(recreated.open(QIODevice::WriteOnly));
+    recreated.write("recreated");
+    recreated.close();
+
+    if (!UnitTest::waitForCondition([&watcher, &filePath]() { return watcher.isWatchingFile(filePath); },
+                                    TestTimeout::longMs(),
+                                    QStringLiteral("persistent file watch restored"))) {
+        QSKIP("Persistent file watch was not restored in this environment");
+    }
+    if (!UnitTest::waitForCondition([&callbackCount]() { return callbackCount > 0; },
+                                    TestTimeout::longMs(),
+                                    QStringLiteral("persistent callback"))) {
+        QSKIP("Persistent callback was not delivered in this environment");
+    }
+    QVERIFY2(_pathsEquivalent(lastCallbackPath, filePath),
+             qPrintable(QStringLiteral("Path mismatch: actual=%1 expected=%2").arg(lastCallbackPath, filePath)));
 }
 
 // ============================================================================
@@ -240,22 +301,22 @@ void QGCFileWatcherTest::_testWatchFilePersistent()
 void QGCFileWatcherTest::_testWatchNonExistentFile()
 {
     QGCFileWatcher watcher;
-    QVERIFY(!watcher.watchFile("/nonexistent/path/to/file.txt"));
+    QVERIFY(!watcher.watchFile("/nonexistent/path/to/file.txt", nullptr));
     QVERIFY(watcher.watchedFiles().isEmpty());
 }
 
 void QGCFileWatcherTest::_testWatchNonExistentDirectory()
 {
     QGCFileWatcher watcher;
-    QVERIFY(!watcher.watchDirectory("/nonexistent/path/to/directory"));
+    QVERIFY(!watcher.watchDirectory("/nonexistent/path/to/directory", nullptr));
     QVERIFY(watcher.watchedDirectories().isEmpty());
 }
 
 void QGCFileWatcherTest::_testWatchEmptyPath()
 {
     QGCFileWatcher watcher;
-    QVERIFY(!watcher.watchFile(QString()));
-    QVERIFY(!watcher.watchDirectory(QString()));
+    QVERIFY(!watcher.watchFile(QString(), nullptr));
+    QVERIFY(!watcher.watchDirectory(QString(), nullptr));
 }
 
 UT_REGISTER_TEST(QGCFileWatcherTest, TestLabel::Unit, TestLabel::Utilities)

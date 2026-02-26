@@ -1,185 +1,119 @@
-import QGroundControl
-import QGroundControl.Viewer3D
+import QtPositioning
+import QtQuick3D
 
-Node{
+import QGroundControl
+import QGroundControl.Controls
+
+Node {
     id: body
 
-    property alias modelScale: innerNode.scale
+    function finiteOr(value, fallback) {
+        return Number.isFinite(value) ? value : fallback;
+    }
 
-    property var    vehicle
+    property int _angleAnimationDuration: 100
+    property int _poseAnimationDuration: 200
     property double altitudeBias: 0
     property var gpsRef: QtPositioning.coordinate(0, 0, 0)
-
-    property double roll:        vehicle ? vehicle.roll.value : 0
-    property double pitch:        vehicle ? vehicle.pitch.value : 0
-    property double heading:        vehicle ? vehicle.heading.value : 0
-
-    property double pose_y: (geo2Enu.localCoordinate.y)?(geo2Enu.localCoordinate.y * 10) : (0)
-    property double pose_z: (vehicle.altitudeRelative.value)?((vehicle.altitudeRelative.value + altitudeBias) * 10 ): (0)
-    property double pose_x: (geo2Enu.localCoordinate.x)? (geo2Enu.localCoordinate.x * 10) : (0)
-
-    property int _poseAnimationDuration: 200
-    property int _angleAnimationDuration: 100
-
-
-    GeoCoordinateType{
-        id: geo2Enu
-        gpsRef: body.gpsRef
-        coordinate: body.vehicle.coordinate
-    }
-
-    Node{
-        id: lableText
-
-        Node
-        {
-            Text {
-                color: "red"
-                text: Number(vehicle.id)
-                font.pixelSize: 25
-            }
-        }
-
-        eulerRotation{
-            x:90
-            y:0
-            z:0
-        }
-
-        position{
-            z: 30
-            x:-10
-        }
-
-    }
+    property double heading: vehicle ? finiteOr(vehicle.heading.value, 0) : 0
+    property alias modelScale: innerNode.scale
+    property double pitch: vehicle ? finiteOr(vehicle.pitch.value, 0) : 0
+    property double pose_x: finiteOr(geo2Enu.localCoordinate.x, 0) * 10
+    property double pose_y: finiteOr(geo2Enu.localCoordinate.y, 0) * 10
+    property double pose_z: (finiteOr((vehicle ? vehicle.altitudeRelative.value : 0), 0) + altitudeBias) * 10
+    property double roll: vehicle ? finiteOr(vehicle.roll.value, 0) : 0
+    property var vehicle
 
     rotation: Quaternion.fromEulerAngles(Qt.vector3d(0, 0, (90 - body.heading)))
 
     Behavior on rotation {
-        QuaternionAnimation{
-            easing.type: Easing.Linear
+        QuaternionAnimation {
+            duration: _angleAnimationDuration
             easing.amplitude: 3.0
             easing.period: 2.0
-            duration: _angleAnimationDuration
+            easing.type: Easing.Linear
         }
     }
 
-    position{
-        x: body.pose_x
-        y: body.pose_y
-        z: body.pose_z
+    Viewer3DGeoCoordinateType {
+        id: geo2Enu
 
-        Behavior on  x {
-            NumberAnimation {
-                easing.type: Easing.Linear
-                easing.amplitude: 3.0
-                easing.period: 2.0
-                duration: _poseAnimationDuration
-            }
-        }
+        coordinate: vehicle ? vehicle.coordinate : QtPositioning.coordinate(0, 0, 0)
+        gpsRef: body.gpsRef
+    }
 
-        Behavior on  y {
-            NumberAnimation {
-                easing.type: Easing.Linear
-                easing.amplitude: 3.0
-                easing.period: 2.0
-                duration: _poseAnimationDuration
-            }
-        }
+    Node {
+        id: labelText
 
-        Behavior on  z {
-            NumberAnimation {
-                easing.type: Easing.Linear
-                easing.amplitude: 3.0
-                easing.period: 2.0
-                duration: _poseAnimationDuration
-            }
+        eulerRotation.x: 90
+        position.x: -10
+        position.z: 30
+
+        QGCLabel {
+            color: "red"
+            font.pixelSize: 25
+            text: vehicle ? Number(vehicle.id) : ""
         }
     }
 
+    position: Qt.vector3d(body.pose_x, body.pose_y, body.pose_z)
 
-    Node
-    {
+    Behavior on position {
+        Vector3dAnimation {
+            duration: _poseAnimationDuration
+            easing.type: Easing.Linear
+        }
+    }
+
+    Node {
         id: rollPitchRotationNode
 
         rotation: Quaternion.fromEulerAngles(Qt.vector3d(body.roll, -body.pitch, 0))
 
         Behavior on rotation {
-            QuaternionAnimation{
-                easing.type: Easing.Linear
+            QuaternionAnimation {
+                duration: _angleAnimationDuration
                 easing.amplitude: 3.0
                 easing.period: 2.0
-                duration: _angleAnimationDuration
+                easing.type: Easing.Linear
             }
         }
 
-        Node
-        {
-            eulerRotation{
-                x:90
+        Node {
+            eulerRotation {
+                x: 90
             }
-            Node
-            {
+
+            Node {
                 id: innerNode
+
                 eulerRotation: Qt.vector3d(0, 90, 0)
-                Node{
-                    position: Qt.vector3d(-640, -360, -155)
+
+                Node {
                     eulerRotation: Qt.vector3d(0, 45, 0)
+                    position: Qt.vector3d(-640, -360, -155)
 
-                    DroneModel_arm_1 {
+                    // Arms
+                    DronePart { meshSource: "Djif450/DroneModel_arm_1/node.mesh"; baseColor: "white"; metalness: 0.2 }
+                    DronePart { meshSource: "Djif450/DroneModel_arm_2/node.mesh"; baseColor: "red"; metalness: 0.2 }
+                    DronePart { meshSource: "Djif450/DroneModel_arm_3/node.mesh"; baseColor: "red"; metalness: 0.2 }
+                    DronePart { meshSource: "Djif450/DroneModel_arm_4/node.mesh"; baseColor: "red"; metalness: 0.2 }
 
-                    }
+                    // Motors
+                    DronePart { meshSource: "Djif450/DroneModel_BLDC_1/node.mesh"; baseColor: "black"; indexOfRefraction: 2.0; metalness: 0.9 }
+                    DronePart { meshSource: "Djif450/DroneModel_BLDC_2/node.mesh"; baseColor: "black"; indexOfRefraction: 2.0; metalness: 0.9 }
+                    DronePart { meshSource: "Djif450/DroneModel_BLDC_3/node.mesh"; baseColor: "black"; indexOfRefraction: 2.0; metalness: 0.9 }
+                    DronePart { meshSource: "Djif450/DroneModel_BLDC_4/node.mesh"; baseColor: "black"; indexOfRefraction: 2.0; metalness: 0.9 }
 
-                    DroneModel_arm_2 {
+                    // Frame
+                    DronePart { meshSource: "Djif450/DroneModel_Base_Top_1/node.mesh"; baseColor: "black"; indexOfRefraction: 2.0; metalness: 0.9 }
+                    DronePart { meshSource: "Djif450/DroneModel_Base_bottom_1/node.mesh"; baseColor: "gray"; indexOfRefraction: 2.0; metalness: 0.9 }
 
-                    }
-
-                    DroneModel_arm_3 {
-
-                    }
-
-                    DroneModel_arm_4 {
-
-                    }
-
-                    DroneModel_BLDC_1{
-
-                    }
-
-                    DroneModel_BLDC_2{
-
-                    }
-
-                    DroneModel_BLDC_3{
-
-                    }
-
-                    DroneModel_BLDC_4{
-
-                    }
-
-                    DroneModel_Base_Top_1{
-
-                    }
-
-                    DroneModel_Base_bottom_1{
-
-                    }
-
-                    DroneModel_propeller22_1{
-                        flightMode: vehicle.armed + vehicle.flying
-                    }
-                    DroneModel_propeller22_2{
-                        flightMode: vehicle.armed + vehicle.flying
-                    }
-
-                    DroneModel_propeller2_2{
-                        flightMode: vehicle.armed + vehicle.flying
-                    }
-
-                    DroneModel_propeller2_7{
-                        flightMode: vehicle.armed + vehicle.flying
-                    }
+                    // Propellers — counter-rotating pairs
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller22_1/node.mesh"; pivotPoint: Qt.vector3d(343.50, 404.07, 783.00); rotationTarget: -360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller22_2/node.mesh"; pivotPoint: Qt.vector3d(343.42, 404.16, 333.06); rotationTarget: -360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller2_2/node.mesh"; pivotPoint: Qt.vector3d(119.51, 402.66, 557.75); rotationTarget: 360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
+                    AnimatedPropeller { meshSource: "Djif450/DroneModel_propeller2_7/node.mesh"; pivotPoint: Qt.vector3d(567.97, 404.00, 558.26); rotationTarget: 360; flightMode: vehicle ? (vehicle.armed + vehicle.flying) : 0 }
                 }
             }
         }

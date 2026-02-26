@@ -40,6 +40,12 @@ Rectangle {
     QGCPalette { id: qgcPal }
     Component { id: altModeDialogComponent; AltModeDialog { } }
 
+    QGCPopupDialogFactory {
+        id: altModeDialogFactory
+
+        dialogComponent: altModeDialogComponent
+    }
+
     Connections {
         target: _controllerVehicle
         function onSupportsTerrainFrameChanged() {
@@ -82,7 +88,7 @@ Rectangle {
                         removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
                     }
                 }
-                altModeDialogComponent.createObject(mainWindow, { rgRemoveModes: removeModes, updateAltModeFn: updateFunction }).open()
+                altModeDialogFactory.open({ rgRemoveModes: removeModes, updateAltModeFn: updateFunction })
             }
         }
 
@@ -98,7 +104,7 @@ Rectangle {
             text: qsTr("Apply New Altitude")
             visible: false
 
-            onClicked: mainWindow.showMessageDialog(qsTr("Apply New Altitude"),
+            onClicked: QGroundControl.showMessageDialog(root, qsTr("Apply New Altitude"),
                             qsTr("You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?"),
                             Dialog.Yes | Dialog.No,
                             function() { applyDefaultAltitudeButton.visible = false; _missionController.applyDefaultMissionAltitude() })

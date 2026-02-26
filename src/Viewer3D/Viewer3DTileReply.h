@@ -1,44 +1,57 @@
 #pragma once
 
+#include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QString>
 
-class QNetworkReply;
+Q_DECLARE_LOGGING_CATEGORY(Viewer3DTileReplyLog)
+
+struct QGCCacheTile;
 class QNetworkAccessManager;
+class QNetworkReply;
 class QTimer;
 
 class Viewer3DTileReply : public QObject
 {
-public:
-
-    typedef struct tileInfo_s{
-        int x, y, zoomLevel;
-        QByteArray data;
-        int mapId;
-    } tileInfo_t;
-
     Q_OBJECT
+
 public:
-    explicit Viewer3DTileReply(int zoomLevel, int tileX, int tileY, int mapId, QObject *parent = nullptr);
+    struct TileInfo_t {
+        QByteArray data;
+        int x = 0;
+        int y = 0;
+        int zoomLevel = 0;
+        int mapId = 0;
+    };
+
+    explicit Viewer3DTileReply(int zoomLevel, int tileX, int tileY, int mapId, const QString &mapType, QNetworkAccessManager *networkManager, QObject *parent = nullptr);
     ~Viewer3DTileReply();
 
-private:
-
-    QNetworkAccessManager* _networkManager;
-    QNetworkReply* _reply;
-    tileInfo_t _tile;
-    QTimer* _timeoutTimer;
-    int _mapId;
-    int _timeoutCounter;
-    static QByteArray       _bingNoTileImage;
-
-    void prepareDownload();
-    void requestFinished();
-    void requestError();
-    void timeoutTimerEvent();
-
 signals:
-    void tileDone(tileInfo_t);
-    void tileEmpty(tileInfo_t);
-    void tileError(tileInfo_t);
-    void tileGiveUp(tileInfo_t);
+    void tileDone(TileInfo_t);
+    void tileEmpty(TileInfo_t);
+    void tileGiveUp(TileInfo_t);
+
+private:
+    void _prepareDownload();
+    void _onRequestFinished();
+    void _onRequestError();
+    void _onTimeout();
+    void _onCacheHit(QGCCacheTile *tile);
+    void _onCacheMiss();
+    void _disconnectReply();
+    bool _isBingEmptyTile() const;
+
+    static constexpr int kTimeoutMs   = 10000;
+    static constexpr int kMaxRetries  = 5;
+
+    QNetworkAccessManager *_networkManager = nullptr;
+    QNetworkReply *_reply = nullptr;
+    QTimer *_timeoutTimer = nullptr;
+
+    TileInfo_t _tile;
+    int _timeoutCounter = 0;
+
+    static QByteArray _bingNoTileImage;
 };

@@ -17,9 +17,9 @@ class CompInfoParam : public CompInfo
     Q_OBJECT
 
 public:
-    CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent = nullptr);
+    CompInfoParam(uint8_t compId_, Vehicle* vehicle_, QObject* parent = nullptr);
 
-    FactMetaData* factMetaDataForName(const QString& name, FactMetaData::ValueType_t type);
+    FactMetaData* factMetaDataForName(const QString& name, FactMetaData::ValueType_t valueType);
 
     // Overrides from CompInfo
     void setJson(const QString& metadataJsonFileName) override;

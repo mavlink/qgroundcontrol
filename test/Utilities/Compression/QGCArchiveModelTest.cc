@@ -1,5 +1,6 @@
 #include "QGCArchiveModelTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
@@ -342,7 +343,7 @@ void QGCArchiveModelTest::_testArchiveUrl()
     const QUrl fileUrl = QUrl::fromLocalFile(tempZipPath);
     model.setArchiveUrl(fileUrl);
     QCOMPARE(pathSpy.count(), 1);
-    QCOMPARE(model.archivePath(), tempZipPath);
+    QCOMPARE(QDir::cleanPath(model.archivePath()), QDir::cleanPath(tempZipPath));
     QVERIFY(loadingSpy.count() >= 1);
     QVERIFY(model.count() > 0);
     // Test that plain Qt resource path works (already tested in other tests)
@@ -354,6 +355,25 @@ void QGCArchiveModelTest::_testArchiveUrl()
     model.setArchiveUrl(resourcePathUrl);
     QCOMPARE(pathSpy.count(), 1);
     QVERIFY(model.count() > 0);
+}
+
+void QGCArchiveModelTest::_testArchiveUrlRejectsRemote()
+{
+    QGCArchiveModel model;
+    model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
+    QVERIFY(model.count() > 0);
+
+    QSignalSpy pathSpy(&model, &QGCArchiveModel::archivePathChanged);
+    QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
+
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*Unsupported archive URL.*"));
+    model.setArchiveUrl(QUrl(QStringLiteral("https://example.com/archive.zip")));
+
+    QCOMPARE(pathSpy.count(), 1);
+    QVERIFY(model.archivePath().isEmpty());
+    QCOMPARE(model.count(), 0);
+    QCOMPARE(loadingSpy.count(), 1);
+    QCOMPARE(loadingSpy.first().first().toBool(), true);
 }
 
 // ============================================================================

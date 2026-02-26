@@ -28,9 +28,9 @@ Q_DECLARE_LOGGING_CATEGORY(UDPLinkLog)
 
 struct UDPClient
 {
-    UDPClient(const QHostAddress &address, quint16 port)
-        : address(address)
-        , port(port)
+    UDPClient(const QHostAddress &addr, quint16 portNum)
+        : address(addr)
+        , port(portNum)
     {}
 
     explicit UDPClient(const UDPClient *other)

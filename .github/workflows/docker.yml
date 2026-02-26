@@ -10,16 +10,8 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/docker.yml'
-      - '.github/actions/docker/**'
-      - '.github/build-config.json'
-      - 'deploy/docker/**'
-      - 'deploy/linux/**'
-      - 'tools/setup/**'
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
@@ -28,55 +20,141 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
   security-events: write
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+    outputs:
+      linux: ${{ steps.filter.outputs.linux }}
+      android: ${{ steps.filter.outputs.android }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'src/**'
+              - 'cmake/**'
+              - 'CMakeLists.txt'
+              - 'tools/setup/**'
+              - '.github/workflows/docker.yml'
+              - '.github/actions/docker/**'
+              - '.github/build-config.json'
+            linux:
+              - 'deploy/linux/**'
+              - 'deploy/docker/Dockerfile-build-ubuntu'
+            android:
+              - 'android/**'
+              - 'deploy/android/**'
+              - 'deploy/docker/Dockerfile-build-android'
+
+  plan-builds:
+    name: Plan Docker Builds
+    runs-on: ubuntu-latest
+    needs: changes
+    if: always() && !cancelled()
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_jobs: ${{ steps.plan.outputs.has_jobs }}
+    steps:
+      - name: Plan matrix
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SHARED: ${{ needs.changes.outputs.shared }}
+          LINUX: ${{ needs.changes.outputs.linux }}
+          ANDROID: ${{ needs.changes.outputs.android }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          event_name = os.environ.get("EVENT_NAME", "")
+          shared = os.environ.get("SHARED", "") == "true"
+          linux_changed = os.environ.get("LINUX", "") == "true"
+          android_changed = os.environ.get("ANDROID", "") == "true"
+
+          include: list[dict[str, object]] = []
+
+          linux_selected = event_name != "pull_request" or shared or linux_changed
+          android_selected = event_name != "pull_request" or shared or android_changed
+
+          if linux_selected:
+            include.append(
+              {
+                "platform": "Linux",
+                "dockerfile": "Dockerfile-build-ubuntu",
+                "fuse": True,
+                "artifact_pattern": "*.AppImage",
+              }
+            )
+          if android_selected:
+            include.append(
+              {
+                "platform": "Android",
+                "dockerfile": "Dockerfile-build-android",
+                "fuse": False,
+                "artifact_pattern": "*.apk",
+              }
+            )
+
+          matrix = {"include": include}
+          has_jobs = "true" if include else "false"
+          matrix_json = json.dumps(matrix, separators=(",", ":"))
+
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
+          with output_path.open("a", encoding="utf-8") as f:
+            f.write(f"matrix={matrix_json}\n")
+            f.write(f"has_jobs={has_jobs}\n")
+          PY
+
   build:
     name: Docker ${{ matrix.platform }}
     runs-on: ubuntu-latest
+    needs: [changes, plan-builds]
+    if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
 
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: Linux
-            dockerfile: Dockerfile-build-ubuntu
-            fuse: true
-            artifact_pattern: "*.AppImage"
-
-          - platform: Android
-            dockerfile: Dockerfile-build-android
-            fuse: false
-            artifact_pattern: "*.apk"
+      matrix: ${{ fromJSON(needs.plan-builds.outputs.matrix) }}
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: true
-          android: ${{ matrix.platform != 'Android' }}
-          dotnet: true
-          haskell: true
-          large-packages: false  # Slowest option (~5min) - disabled for faster builds
-          docker-images: true
-          swap-storage: true
-
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 1
-          fetch-tags: true
-
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v3
+        with:
+          remove_android: ${{ matrix.platform != 'Android' }}
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+          remove_swap: true
+          remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+          remove_packages_one_command: true
+          remove_folders: /usr/local/lib/docker/overlay2
+          rm_cmd: rmz
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Build with Docker
         uses: ./.github/actions/docker
@@ -87,15 +165,17 @@ jobs:
 
       - name: Find build artifact
         id: artifact
+        env:
+          BUILD_DIR: ${{ github.workspace }}/build
+          ARTIFACT_PATTERN: ${{ matrix.artifact_pattern }}
         run: |
           set +o pipefail  # Disable pipefail to handle find | head gracefully
-          BUILD_DIR="${{ github.workspace }}/build"
-          echo "Searching for ${{ matrix.artifact_pattern }} in ${BUILD_DIR}"
+          echo "Searching for ${ARTIFACT_PATTERN} in ${BUILD_DIR}"
 
           # Check if build directory exists
           if [ ! -d "${BUILD_DIR}" ]; then
             echo "::warning::Build directory does not exist: ${BUILD_DIR}"
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "found=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
@@ -105,26 +185,42 @@ jobs:
 
           # Find the produced artifact (APK or AppImage)
           # Use -quit for efficiency and to avoid broken pipe with head
-          ARTIFACT=$(find "${BUILD_DIR}" -name "${{ matrix.artifact_pattern }}" -type f -print -quit 2>/dev/null)
+          ARTIFACT=$(find "${BUILD_DIR}" -name "${ARTIFACT_PATTERN}" -type f -print -quit 2>/dev/null)
           if [ -z "$ARTIFACT" ]; then
-            echo "::warning::No artifact matching ${{ matrix.artifact_pattern }} found"
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "::warning::No artifact matching ${ARTIFACT_PATTERN} found"
+            echo "found=false" >> "${GITHUB_OUTPUT}"
           else
             echo "Found artifact: $ARTIFACT"
-            echo "path=$ARTIFACT" >> $GITHUB_OUTPUT
-            echo "found=true" >> $GITHUB_OUTPUT
+            echo "path=$ARTIFACT" >> "${GITHUB_OUTPUT}"
+            echo "found=true" >> "${GITHUB_OUTPUT}"
           fi
+
+      - name: Compute Trivy cache key
+        if: steps.artifact.outputs.found == 'true'
+        id: trivy-cache-key
+        shell: bash
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Trivy DB cache
+        if: steps.artifact.outputs.found == 'true'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-v1-${{ runner.os }}-${{ matrix.platform }}-${{ steps.trivy-cache-key.outputs.week }}-${{ hashFiles('.github/trivy.yaml') }}
+          restore-keys: |
+            trivy-db-v1-${{ runner.os }}-${{ matrix.platform }}-
+            trivy-db-v1-${{ runner.os }}-
 
       - name: Scan artifact for vulnerabilities
         if: steps.artifact.outputs.found == 'true'
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: 'fs'
           scan-ref: ${{ steps.artifact.outputs.path }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           trivy-config: '.github/trivy.yaml'
-          cache-dir: ${{ runner.temp }}/.cache/trivy
+          cache-dir: ~/.cache/trivy
 
       - name: Upload Trivy results to GitHub Security
         if: steps.artifact.outputs.found == 'true'

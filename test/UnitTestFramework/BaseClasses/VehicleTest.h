@@ -145,6 +145,7 @@ protected:
 
     /// Compares two MissionItems for equality using QCOMPARE/QVERIFY
     static void _missionItemsEqual(const MissionItem& actual, const MissionItem& expected);
+    QString failureContextSummary() const override;
 
     MockLink* _mockLink = nullptr;
     Vehicle* _vehicle = nullptr;

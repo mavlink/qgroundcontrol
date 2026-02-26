@@ -42,6 +42,15 @@ MissionCommandTree::MissionCommandTree(bool unitTest, QObject *parent)
 
 MissionCommandTree::~MissionCommandTree()
 {
+    for (const auto &vehicleMap : std::as_const(_allCommands)) {
+        for (const auto &commandMap : vehicleMap) {
+            for (MissionCommandUIInfo *const uiInfo : commandMap) {
+                delete uiInfo;
+            }
+        }
+    }
+    _allCommands.clear();
+
     qCDebug(MissionCommandTreeLog) << this;
 }
 
