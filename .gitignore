@@ -131,6 +131,7 @@ android/local.properties
 node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+docs/api/
 
 # Python
 *.pyc
