@@ -27,7 +27,7 @@ void AsyncFunctionState::onWaitEntered()
     }
 
     if (!_completionConnection && timeoutMsecs() == 0) {
-        qCWarning(QGCStateMachineLog) << stateName()
+        qCCritical(QGCStateMachineLog) << stateName()
             << "has no completion connection and no timeout - state may hang indefinitely";
     }
 }
