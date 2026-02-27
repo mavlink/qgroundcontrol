@@ -7,6 +7,8 @@
  *
  ****************************************************************************/
 
+#define GRIPPER_ACTION_RELEASE GRIPPER_ACTION_OPEN
+#define GRIPPER_ACTION_GRAB GRIPPER_ACTION_CLOSE
 #include "Vehicle.h"
 #include "Actuators.h"
 #include "ADSBVehicleManager.h"
