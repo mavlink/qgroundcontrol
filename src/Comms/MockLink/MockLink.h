@@ -10,6 +10,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
+#include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
 
 #include <atomic>
@@ -94,6 +95,16 @@ public:
         FailRequestMessageCommandNoResponse,
     };
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
+
+    /// Block or unblock REQUEST_MESSAGE responses for a specific message ID.
+    /// When blocked, MockLink silently drops the request (no ACK, no message).
+    void setRequestMessageNoResponse(uint32_t messageId, bool noResponse = true) {
+        if (noResponse) {
+            _requestMessageNoResponseIds.insert(messageId);
+        } else {
+            _requestMessageNoResponseIds.remove(messageId);
+        }
+    }
 
     enum ParamSetFailureMode_t {
         FailParamSetNone,               ///< Normal behavior
@@ -299,6 +310,7 @@ private:
     QMutex _logDownloadMutex;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
+    QSet<uint32_t> _requestMessageNoResponseIds;
     ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
     bool _paramSetFailureFirstAttemptPending = false;
     ParamRequestReadFailureMode_t _paramRequestReadFailureMode = FailParamRequestReadNone;
