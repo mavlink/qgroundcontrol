@@ -1982,6 +1982,14 @@ void MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool
     accepted = false;
     noAck = false;
 
+    const uint32_t requestedMessageId = static_cast<uint32_t>(request.param1);
+
+    // Per-message-ID no-response injection: silently drop the request (no ACK, no message)
+    if (_requestMessageNoResponseIds.contains(requestedMessageId)) {
+        noAck = true;
+        return;
+    }
+
     switch (static_cast<int>(request.param1)) {
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
         _handleRequestMessageAutopilotVersion(request, accepted);
