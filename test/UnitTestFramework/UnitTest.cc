@@ -19,6 +19,7 @@
 #include "MultiVehicleManager.h"
 #include "QGC.h"
 #include "QGCApplication.h"
+#include "QGCLogging.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -626,21 +627,55 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
     return ret;
 }
 
+// ============================================================================
+// Test‑time capture handler
+// ============================================================================
+// QTest::qExec() replaces the application message handler with its own.
+// Our QGCLogging::msgHandler is therefore NOT called during test execution.
+// We work around this by installing a thin wrapper ON TOP of QTest's handler
+// inside initTestCase() and restoring it in cleanupTestCase().
+// The wrapper captures messages for the test log‑capture API and then chains
+// to QTest's handler so QWARN / QCRITICAL output keeps working.
+
+static QtMessageHandler s_qtestHandler = nullptr;
+
+static void testCaptureHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    // Capture for unit‑test introspection
+    QGCLogging::captureIfEnabled(type, context, msg);
+
+    // Chain to QTest's handler for normal test output
+    if (s_qtestHandler) {
+        s_qtestHandler(type, context, msg);
+    }
+}
+
 void UnitTest::initTestCase()
 {
     // Reset test tracking state at start of each test class
     _resetTestState();
+
+    // Install the capture wrapper on top of QTest's handler
+    s_qtestHandler = qInstallMessageHandler(testCaptureHandler);
 }
 
 void UnitTest::cleanupTestCase()
 {
-    // Override in derived classes for one-time teardown
+    // Restore QTest's handler so qExec teardown stays consistent
+    if (s_qtestHandler) {
+        (void) qInstallMessageHandler(s_qtestHandler);
+        s_qtestHandler = nullptr;
+    }
 }
 
 void UnitTest::init()
 {
     _initCalled = true;
     _failureContextDumped = false;
+
+    // Start capturing log messages for this test (cleared from previous test)
+    QGCLogging::clearCapturedMessages();
+    QGCLogging::setCaptureEnabled(true);
 
     // Force offline vehicle back to defaults
     AppSettings* const appSettings = SettingsManager::instance()->appSettings();
@@ -654,6 +689,9 @@ void UnitTest::cleanup()
 {
     _cleanupCalled = true;
     dumpFailureContextIfTestFailed(QStringLiteral("cleanup"));
+
+    // Stop capturing log messages after the test finishes
+    QGCLogging::setCaptureEnabled(false);
 
     _cleanupTempFiles();
 
