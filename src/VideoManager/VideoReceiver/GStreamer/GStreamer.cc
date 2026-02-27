@@ -120,9 +120,9 @@ void _registerPlugins()
     #endif
 #endif
 
-// #if !defined(GST_PLUGIN_qml6_FOUND) && defined(QGC_GST_STATIC_BUILD)
+#if !defined(GST_PLUGIN_qml6_FOUND) && defined(QGC_GST_STATIC_BUILD)
     GST_PLUGIN_STATIC_REGISTER(qml6);
-// #endif
+#endif
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
