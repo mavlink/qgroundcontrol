@@ -57,6 +57,7 @@ endif()
 #===========================================================================#
 
 if(QGC_ZEROCONF_ENABLED)
+    if(NOT USE_SYSTEM_QMDNSENGINE)
     CPMAddPackage(
         NAME qmdnsengine
         GITHUB_REPOSITORY nitroshare/qmdnsengine
@@ -70,6 +71,11 @@ if(QGC_ZEROCONF_ENABLED)
     if(TARGET qmdnsengine)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
         target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
+    endif()
+    else()
+    find_package(qmdnsengine REQUIRED)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
     endif()
 endif()
 

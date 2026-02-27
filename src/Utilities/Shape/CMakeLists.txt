@@ -14,6 +14,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 #===========================================================================#
 
+if(NOT USE_SYSTEM_SHAPE)
 CPMAddPackage(
     NAME Shapelib
     VERSION 1.6.1
@@ -23,5 +24,6 @@ CPMAddPackage(
         "BUILD_APPS OFF"
         "BUILD_TESTING OFF"
 )
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)

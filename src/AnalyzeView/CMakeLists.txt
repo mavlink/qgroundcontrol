@@ -48,6 +48,7 @@ qt_add_qml_module(AnalyzeViewModule
 
 #===========================================================================#
 
+if(NOT USE_SYSTEM_ULOG_CPP)
 CPMAddPackage(
     NAME ulog_cpp
     GITHUB_REPOSITORY PX4/ulog_cpp
@@ -59,3 +60,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp::ulog_cpp)
+else()
+find_package(ulog_cpp REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp)
+endif()

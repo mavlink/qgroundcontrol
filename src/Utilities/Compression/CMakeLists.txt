@@ -19,6 +19,7 @@ if(WIN32)
     )
 endif()
 
+if(NOT USE_SYSTEM_ZLIB)
 CPMAddPackage(
     NAME zlib
     GITHUB_REPOSITORY madler/zlib
@@ -35,8 +36,12 @@ CPMAddPackage(
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ZLIB::ZLIBSTATIC)
 
+else()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE z)
+endif()
 #===========================================================================#
 
+if(NOT USE_SYSTEM_XZ-EMBEDDED)
 CPMAddPackage(
     NAME xz-embedded
     VERSION 2024-12-30
@@ -75,3 +80,23 @@ target_compile_definitions(xz
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE xz)
+else()
+
+add_library(xz STATIC ${LIB_PREFIX}/libxz.a)
+set_target_properties(xz PROPERTIES
+    IMPORTED_LOCATION "${LIB_PREFIX}/libxz.a"
+    INTERFACE_INCLUDE_DIRECTORIES "/usr/include/xz-embedded"
+)
+
+target_compile_definitions(xz
+    PUBLIC
+        XZ_USE_CRC64
+        XZ_USE_CRC32
+        XZ_DEC_ANY_CHECK
+)
+
+
+target_include_directories(xz INTERFACE /usr/include/xz-embedded)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE xz)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${LIB_PREFIX}/libxz.a")
+endif()

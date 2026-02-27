@@ -33,12 +33,27 @@ message(STATUS "Building MAVLink")
 #         "MAVLINK_VERSION 2.0"
 # )
 
+if(NOT USE_SYSTEM_MAVLINK)
 CPMAddPackage(
     NAME mavlink
     GIT_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
 )
+else()
+set(mavlink_SOURCE_DIR /usr/include/c_library_v2)
+file(GLOB MAVLINK_SOURCES1 ${mavlink_SOURCE_DIR}/*)
+file(GLOB MAVLINK_SOURCES2 ${mavlink_SOURCE_DIR}/all/*)
+file(GLOB MAVLINK_SOURCES3 ${mavlink_SOURCE_DIR}/common/*)
+file(GLOB MAVLINK_SOURCES4 ${mavlink_SOURCE_DIR}/development/*)
 
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${MAVLINK_SOURCES1}
+        ${MAVLINK_SOURCES2}
+        ${MAVLINK_SOURCES3}
+        ${MAVLINK_SOURCES4}
+)
+endif()
 # For QGC all dialects means common and development. Though use of development mavlink code should be restricted to debug builds only.
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE

@@ -25,6 +25,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 #===========================================================================#
 
+if(NOT USE_SYSTEM_PX4-GPSDRIVERS)
 CPMAddPackage(
     NAME px4-gpsdrivers
     GITHUB_REPOSITORY PX4/PX4-GPSDrivers
@@ -32,6 +33,9 @@ CPMAddPackage(
     SOURCE_SUBDIR src
 )
 
+else()
+set(px4-gpsdrivers_SOURCE_DIR /usr/src/PX4-GPSDrivers)
+endif()
 file(GLOB GPS_DRIVERS_SOURCES "${px4-gpsdrivers_SOURCE_DIR}/src/*")
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE

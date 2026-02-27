@@ -27,12 +27,16 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_SDL_JOYSTICK)
 
 #===========================================================================#
 
+if(NOT USE_SYSTEM_SDL_GAMECONTROLLERDB)
 CPMAddPackage(
     NAME sdl_gamecontrollerdb
     GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
     GIT_TAG master
 )
 
+else()
+set(sdl_gamecontrollerdb_SOURCE_DIR /usr/share/SDL_GameControllerDB)
+endif()
 set(SDL_GAMECONTROLLERDB_PATH "${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt" CACHE FILEPATH "SDL GameControllerDB Path")
 
 #===========================================================================#
@@ -45,6 +49,7 @@ if(WIN32)
     )
 endif()
 
+if(NOT USE_SYSTEM_SDL2)
 CPMAddPackage(
     NAME SDL2
     VERSION 2.32.4
@@ -86,6 +91,11 @@ CPMAddPackage(
 
 target_compile_definitions(SDL2-static PRIVATE SDL_MAIN_HANDLED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+else()
+find_package(SDL2 2.32.4 REQUIRED CONFIG)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE SDL2)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()
 
 # Default list of config overrides - TODO: Add to Custom Build Options
 # set(ENV{SDL_GAMECONTROLLERCONFIG}
