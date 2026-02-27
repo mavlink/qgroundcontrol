@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -33,7 +24,7 @@ public:
     QGCMAVLinkSystem(quint8 id, QObject *parent = nullptr);
     ~QGCMAVLinkSystem();
 
-    quint8 id() const { return _id; }
+    quint8 id() const { return _systemID; }
     QmlObjectListModel *messages() const { return _messages; }
     QList<int> compIDs() const { return _compIDs; }
     QStringList compIDsStr() const { return _compIDsStr; }
@@ -54,7 +45,7 @@ private:
     void _resetSelection();
 
 private:
-    quint8 _id = 0;
+    quint8 _systemID = 0;
     QmlObjectListModel *_messages = nullptr; ///< List of QGCMAVLinkMessage
     QList<int> _compIDs;
     QStringList _compIDsStr;

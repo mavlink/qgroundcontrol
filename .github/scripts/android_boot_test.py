@@ -1,0 +1,438 @@
+#!/usr/bin/env python3
+"""Run Android emulator boot smoke test for QGroundControl."""
+
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+
+def _decode(value: bytes) -> str:
+    return value.decode("utf-8", errors="replace")
+
+
+def run_command(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess[bytes]:
+    result = subprocess.run(cmd, capture_output=True)
+    if check and result.returncode != 0:
+        stdout = _decode(result.stdout)
+        stderr = _decode(result.stderr)
+        raise RuntimeError(
+            f"Command failed ({result.returncode}): {' '.join(cmd)}\n"
+            f"stdout:\n{stdout}\n"
+            f"stderr:\n{stderr}"
+        )
+    return result
+
+
+def wait_for_adb_ready(timeout: int) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        state = run_command(["adb", "get-state"])
+        if state.returncode == 0 and _decode(state.stdout).strip() == "device":
+            boot_completed = run_command(["adb", "shell", "getprop", "sys.boot_completed"])
+            if boot_completed.returncode == 0 and _decode(boot_completed.stdout).strip() == "1":
+                return True
+        time.sleep(2)
+    return False
+
+
+def install_with_retries(apk_path: Path, retries: int, retry_delay: int) -> bool:
+    for attempt in range(1, retries + 1):
+        result = run_command(["adb", "install", "-r", str(apk_path)])
+        if result.returncode == 0:
+            return True
+
+        stdout = _decode(result.stdout).strip()
+        stderr = _decode(result.stderr).strip()
+        print(
+            f"::warning::adb install attempt {attempt}/{retries} failed."
+            f" stdout={stdout!r} stderr={stderr!r}"
+        )
+        if attempt < retries:
+            time.sleep(retry_delay)
+    return False
+
+
+def read_logcat() -> str:
+    result = run_command(["adb", "logcat", "-d"])
+    if result.returncode != 0:
+        return ""
+    return _decode(result.stdout)
+
+
+def write_log(path: Path, content: str) -> None:
+    path.write_text(content, encoding="utf-8")
+
+
+def print_log_group(content: str, pattern: re.Pattern[str], max_lines: int = 80) -> None:
+    matches = [line for line in content.splitlines() if pattern.search(line)]
+    print("::group::Application logcat")
+    for line in matches[-max_lines:]:
+        print(line)
+    print("::endgroup::")
+
+
+_LOGCAT_TIME_PATTERN = re.compile(r"^(?P<timestamp>\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})")
+
+
+def _extract_logcat_timestamp(line: str) -> str | None:
+    match = _LOGCAT_TIME_PATTERN.match(line)
+    if not match:
+        return None
+    return match.group("timestamp")
+
+
+class LogcatPoller:
+    """Incrementally poll logcat output to avoid re-reading full buffers."""
+
+    def __init__(self) -> None:
+        self._last_timestamp = ""
+        self._seen_lines_at_last_timestamp: set[str] = set()
+        self._all_lines: list[str] = []
+
+    def poll(self) -> tuple[str, str]:
+        cmd = ["adb", "logcat", "-d", "-v", "time"]
+        if self._last_timestamp:
+            cmd.extend(["-T", self._last_timestamp])
+
+        result = run_command(cmd)
+        if result.returncode != 0:
+            content = "\n".join(self._all_lines)
+            return content, ""
+
+        new_lines: list[str] = []
+        latest_timestamp = self._last_timestamp
+        latest_timestamp_lines = set(self._seen_lines_at_last_timestamp)
+
+        for line in _decode(result.stdout).splitlines():
+            timestamp = _extract_logcat_timestamp(line)
+            if timestamp and self._last_timestamp and timestamp < self._last_timestamp:
+                continue
+            if timestamp == self._last_timestamp and line in self._seen_lines_at_last_timestamp:
+                continue
+
+            new_lines.append(line)
+            if not timestamp:
+                continue
+
+            if not latest_timestamp or timestamp > latest_timestamp:
+                latest_timestamp = timestamp
+                latest_timestamp_lines = {line}
+            elif timestamp == latest_timestamp:
+                latest_timestamp_lines.add(line)
+
+        if new_lines:
+            self._all_lines.extend(new_lines)
+        if latest_timestamp:
+            self._last_timestamp = latest_timestamp
+            self._seen_lines_at_last_timestamp = latest_timestamp_lines
+
+        content = "\n".join(self._all_lines)
+        delta = "\n".join(new_lines)
+        return content, delta
+
+
+def get_process_table() -> str:
+    result = run_command(["adb", "shell", "ps", "-A"])
+    if result.returncode != 0:
+        return ""
+    return _decode(result.stdout)
+
+
+def app_running_from_process_table(package_name: str, process_table: str) -> bool:
+    package_prefix = f"{package_name}:"
+    for line in process_table.splitlines():
+        fields = line.split()
+        if any(f == package_name or f.startswith(package_prefix) for f in fields):
+            return True
+    return False
+
+
+def emit_failure(
+    message: str,
+    log_output: Path,
+    log_pattern: re.Pattern[str],
+    notice: str | None = None,
+) -> int:
+    print(f"::error::{message}")
+    if notice:
+        print(f"::notice::{notice}")
+    logcat_content = read_logcat()
+    write_log(log_output, logcat_content)
+    print_log_group(logcat_content, log_pattern)
+    return 1
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run Android emulator boot smoke test for QGroundControl."
+    )
+    parser.add_argument("--apk", required=True, type=Path, help="Path to APK file")
+    parser.add_argument(
+        "--package",
+        default="org.mavlink.qgroundcontrol",
+        help="Android package name",
+    )
+    parser.add_argument("--timeout", type=int, default=90, help="Timeout in seconds")
+    parser.add_argument(
+        "--stability-window",
+        type=int,
+        default=20,
+        help="Seconds app must remain alive after launch",
+    )
+    parser.add_argument(
+        "--log-output",
+        type=Path,
+        default=Path("/tmp/qgc_emulator_boot.log"),
+        help="Path to store full logcat output",
+    )
+    parser.add_argument(
+        "--adb-ready-timeout",
+        type=int,
+        default=120,
+        help="Timeout in seconds for adb device and boot readiness",
+    )
+    parser.add_argument(
+        "--install-retries",
+        type=int,
+        default=3,
+        help="Number of retries for adb install",
+    )
+    parser.add_argument(
+        "--install-retry-delay",
+        type=int,
+        default=4,
+        help="Delay in seconds between adb install retries",
+    )
+    parser.add_argument(
+        "--launch-retries",
+        type=int,
+        default=2,
+        help="Number of launch attempts before failing the boot test",
+    )
+    return parser.parse_args()
+
+
+def run_boot_attempt(
+    package_name: str,
+    timeout: int,
+    stability_window: int,
+    app_launch_pattern: re.Pattern[str],
+    app_log_pattern: re.Pattern[str],
+    crash_signature_pattern: re.Pattern[str],
+    crash_context_pattern: re.Pattern[str],
+    crash_log_pattern: re.Pattern[str],
+) -> tuple[bool, str | None, str | None, str, re.Pattern[str]]:
+    run_command(["adb", "shell", "am", "force-stop", package_name])
+    run_command(["adb", "logcat", "-c"])
+    logcat_poller = LogcatPoller()
+
+    launch_result = run_command(
+        [
+            "adb",
+            "shell",
+            "monkey",
+            "-p",
+            package_name,
+            "-c",
+            "android.intent.category.LAUNCHER",
+            "1",
+        ]
+    )
+    if launch_result.returncode != 0:
+        return (
+            False,
+            f"Failed to launch app via monkey (exit code {launch_result.returncode})",
+            None,
+            read_logcat(),
+            app_log_pattern,
+        )
+
+    print(f"Waiting for boot test to complete (timeout: {timeout}s)...")
+    app_launched = False
+    app_launched_at = 0
+    app_seen_running_once = False
+    consecutive_not_running = 0
+
+    for second in range(1, timeout + 1):
+        logcat_content, logcat_delta = logcat_poller.poll()
+        saw_app_logs = bool(app_log_pattern.search(logcat_delta))
+
+        if "Simple boot test completed" in logcat_delta:
+            print(f"Boot test completed successfully in {second}s")
+            return True, None, None, logcat_content, app_log_pattern
+
+        process_table = get_process_table()
+        is_running = app_running_from_process_table(package_name, process_table)
+        if is_running:
+            app_seen_running_once = True
+            consecutive_not_running = 0
+
+        launch_detected_in_log = bool(app_launch_pattern.search(logcat_delta))
+        if not app_launched and (launch_detected_in_log or is_running or saw_app_logs):
+            app_launched = True
+            app_launched_at = second
+            if launch_detected_in_log:
+                launch_source = "logcat marker"
+            elif is_running:
+                launch_source = "running process"
+            else:
+                launch_source = "application logs"
+            print(
+                f"App launch detected ({launch_source}); waiting for "
+                f"{stability_window}s stability window or simple boot completion marker."
+            )
+
+        has_relevant_crash = any(
+            crash_signature_pattern.search(line)
+            and crash_context_pattern.search(line)
+            for line in logcat_delta.splitlines()
+        )
+        if has_relevant_crash:
+            return (
+                False,
+                "Crash detected during boot test",
+                None,
+                logcat_content,
+                crash_log_pattern,
+            )
+
+        if app_launched:
+            if app_seen_running_once and not is_running:
+                consecutive_not_running += 1
+            if app_seen_running_once and consecutive_not_running >= 5:
+                return (
+                    False,
+                    "App process exited during stability check",
+                    None,
+                    logcat_content,
+                    crash_log_pattern,
+                )
+
+            if second - app_launched_at >= stability_window:
+                print(
+                    "Boot test passed: app remained running for "
+                    f"{stability_window}s after launch."
+                )
+                return True, None, None, logcat_content, app_log_pattern
+
+        if second == timeout:
+            timeout_notice = None
+            if app_launched:
+                timeout_notice = "App launched but did not satisfy the stability/marker checks."
+            return (
+                False,
+                f"Boot test timed out after {timeout}s",
+                timeout_notice,
+                logcat_content,
+                app_log_pattern,
+            )
+
+        time.sleep(1)
+
+    return (
+        False,
+        "Boot test did not reach a passing condition",
+        None,
+        read_logcat(),
+        app_log_pattern,
+    )
+
+
+def main() -> int:
+    args = parse_args()
+
+    package_escaped = re.escape(args.package)
+    app_launch_pattern = re.compile(
+        rf"(ActivityTaskManager|ActivityManager): (Displayed|Start proc).+{package_escaped}",
+        re.IGNORECASE,
+    )
+    crash_signature_pattern = re.compile(
+        r"FATAL EXCEPTION|Fatal signal|UnsatisfiedLinkError|dlopen failed",
+        re.IGNORECASE,
+    )
+    crash_context_pattern = re.compile(
+        rf"{package_escaped}|org\.qtproject|qtMainLoopThread|QGroundControl",
+        re.IGNORECASE,
+    )
+    app_log_pattern = re.compile(
+        rf"{package_escaped}|QGroundControl|qtMainLoopThread|org\.qtproject|qt\.qml|SDL",
+        re.IGNORECASE,
+    )
+    crash_log_pattern = re.compile(
+        rf"{package_escaped}|QGroundControl|qtMainLoopThread|org\.qtproject|qt\.qml|SDL|FATAL|Fatal|dlopen",
+        re.IGNORECASE,
+    )
+
+    print(
+        "Waiting for emulator boot completion "
+        f"(timeout: {args.adb_ready_timeout}s) before install..."
+    )
+    if not wait_for_adb_ready(args.adb_ready_timeout):
+        return emit_failure(
+            f"Emulator did not reach ready state within {args.adb_ready_timeout}s",
+            args.log_output,
+            app_log_pattern,
+        )
+
+    if not install_with_retries(args.apk, args.install_retries, args.install_retry_delay):
+        return emit_failure(
+            f"adb install failed after {args.install_retries} attempts",
+            args.log_output,
+            app_log_pattern,
+        )
+
+    final_error_message = "Boot test did not reach a passing condition"
+    final_notice = None
+    final_logcat = ""
+    final_log_pattern = app_log_pattern
+
+    for attempt in range(1, args.launch_retries + 1):
+        print(f"Starting boot test attempt {attempt}/{args.launch_retries}...")
+        passed, message, notice, logcat_content, log_pattern = run_boot_attempt(
+            package_name=args.package,
+            timeout=args.timeout,
+            stability_window=args.stability_window,
+            app_launch_pattern=app_launch_pattern,
+            app_log_pattern=app_log_pattern,
+            crash_signature_pattern=crash_signature_pattern,
+            crash_context_pattern=crash_context_pattern,
+            crash_log_pattern=crash_log_pattern,
+        )
+
+        if passed:
+            write_log(args.log_output, logcat_content)
+            print_log_group(logcat_content, app_log_pattern)
+            print(f"Emulator boot test passed for {args.package}")
+            return 0
+
+        if message:
+            final_error_message = message
+        final_notice = notice
+        final_logcat = logcat_content
+        final_log_pattern = log_pattern
+
+        if attempt < args.launch_retries:
+            print(
+                f"::warning::{final_error_message} on attempt "
+                f"{attempt}/{args.launch_retries}; retrying..."
+            )
+            time.sleep(2)
+
+    if not final_logcat:
+        final_logcat = read_logcat()
+
+    write_log(args.log_output, final_logcat)
+    print(f"::error::{final_error_message}")
+    if final_notice:
+        print(f"::notice::{final_notice}")
+    print_log_group(final_logcat, final_log_pattern)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

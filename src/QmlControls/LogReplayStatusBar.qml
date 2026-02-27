@@ -4,10 +4,10 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 
 import QGroundControl
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 Rectangle {
+    id:     _root
     height: visible ? (rowLayout.height + (_margins * 2)) : 0
     color: qgcPal.window
 
@@ -16,7 +16,7 @@ Rectangle {
 
     function pickLogFile() {
         if (globals.activeVehicle) {
-            mainWindow.showMessageDialog(qsTr("Log Replay"), qsTr("You must close all connections prior to replaying a log."))
+            QGroundControl.showMessageDialog(_root, qsTr("Log Replay"), qsTr("You must close all connections prior to replaying a log."))
             return
         }
 

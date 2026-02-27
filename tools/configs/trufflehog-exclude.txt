@@ -1,0 +1,25 @@
+# TruffleHog exclusion patterns (regex format)
+# https://trufflesecurity.com/trufflehog
+
+# Test fixture data (not test code - secrets in test code should be caught)
+.*/testdata/.*
+.*/fixtures/.*
+
+# Generated documentation (not handwritten - READMEs should still be scanned)
+docs/.*\.md$
+CHANGELOG\.md$
+
+# Dependencies
+.*/vendor/.*
+.*/node_modules/.*
+.*/\.git/.*
+
+# Lock files and minified assets
+.*\.lock$
+.*package-lock\.json$
+.*\.min\.js$
+.*\.min\.css$
+
+# Build artifacts
+.*/build/.*
+.*/dist/.*

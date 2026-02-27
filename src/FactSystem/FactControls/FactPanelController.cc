@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "FactPanelController.h"
 #include "AutoPilotPlugin.h"
 #include "MultiVehicleManager.h"
@@ -17,7 +8,7 @@
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(FactPanelControllerLog, "qgc.factsystem.factcontrols.factpanelcontroller")
+QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactSystem.FactPanelController")
 
 FactPanelController::FactPanelController(QObject *parent)
     : QObject(parent)

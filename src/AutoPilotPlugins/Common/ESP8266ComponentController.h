@@ -1,16 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "MAVLinkLib.h"
@@ -23,6 +15,7 @@ class Vehicle;
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(int          componentID     READ componentID                                    CONSTANT)
     Q_PROPERTY(QString      version         READ version                                        NOTIFY versionChanged)
@@ -74,10 +67,10 @@ signals:
 
 private slots:
     void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);
-    void _ssidChanged(QVariant value) { emit wifiSSIDChanged(); }
-    void _passwordChanged(QVariant value) { emit wifiPasswordChanged(); }
-    void _baudChanged(QVariant value) { emit baudIndexChanged(); }
-    void _versionChanged(QVariant value) { emit versionChanged(); }
+    void _ssidChanged(QVariant /*value*/) { emit wifiSSIDChanged(); }
+    void _passwordChanged(QVariant /*value*/) { emit wifiPasswordChanged(); }
+    void _baudChanged(QVariant /*value*/) { emit baudIndexChanged(); }
+    void _versionChanged(QVariant /*value*/) { emit versionChanged(); }
 
 private:
     void _reboot() const;

@@ -1,11 +1,20 @@
+# ============================================================================
+# Common AutoPilot Plugins
+# Components shared across different autopilot types
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ESP8266Component.cc
         ESP8266Component.h
         ESP8266ComponentController.cc
         ESP8266ComponentController.h
+        ScriptingComponent.cc
+        ScriptingComponent.h
         MotorComponent.cc
         MotorComponent.h
+        JoystickComponent.cc
+        JoystickComponent.h
         RadioComponentController.cc
         RadioComponentController.h
         SyslinkComponent.cc
@@ -16,6 +25,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# Common AutoPilot Plugins QML Module
+# ----------------------------------------------------------------------------
 qt_add_library(AutoPilotPluginsCommonModule STATIC)
 
 qt_add_qml_module(AutoPilotPluginsCommonModule
@@ -25,8 +37,10 @@ qt_add_qml_module(AutoPilotPluginsCommonModule
     QML_FILES
         ESP8266Component.qml
         ESP8266ComponentSummary.qml
+        ScriptingComponent.qml
+        JoystickComponentSummary.qml
         MotorComponent.qml
         RadioComponent.qml
         SyslinkComponent.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
 )

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "SubtitleWriter.h"
 #include "Fact.h"
 #include "FactValueGrid.h"
@@ -19,7 +10,7 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QString>
 
-QGC_LOGGING_CATEGORY(SubtitleWriterLog, "qgc.videomanager.subtitlewriter")
+QGC_LOGGING_CATEGORY(SubtitleWriterLog, "Video.SubtitleWriter")
 
 SubtitleWriter::SubtitleWriter(QObject *parent)
     : QObject(parent)

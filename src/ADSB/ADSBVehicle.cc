@@ -1,19 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "ADSBVehicle.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QtNumeric>
 
-QGC_LOGGING_CATEGORY(ADSBVehicleLog, "qgc.adsb.adsbvehicle")
+QGC_LOGGING_CATEGORY(ADSBVehicleLog, "ADSB.ADSBVehicle")
 
 ADSBVehicle::ADSBVehicle(const ADSB::VehicleInfo_t &vehicleInfo, QObject *parent)
     : QObject(parent)
@@ -36,7 +27,7 @@ void ADSBVehicle::update(const ADSB::VehicleInfo_t &vehicleInfo)
         return;
     }
 
-    qCDebug(ADSBVehicleLog) << "Updating" << QStringLiteral("%1 Flags: %2").arg(QLatin1StringView(QByteArray::number(vehicleInfo.icaoAddress, 16))).arg(QLatin1StringView(QByteArray::number(vehicleInfo.availableFlags, 2)));
+    qCDebug(ADSBVehicleLog) << "Updating" << QStringLiteral("%1 Flags: %2").arg(vehicleInfo.icaoAddress, 0, 16).arg(vehicleInfo.availableFlags.toInt(), 0, 2);
 
     if (vehicleInfo.availableFlags & ADSB::LocationAvailable) {
         if (!QGC::fuzzyCompare(vehicleInfo.location.latitude(), coordinate().latitude()) || !QGC::fuzzyCompare(vehicleInfo.location.longitude(), coordinate().longitude())) {

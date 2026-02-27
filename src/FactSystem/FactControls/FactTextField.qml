@@ -2,10 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 
-import QGroundControl.FactSystem
-import QGroundControl.Palette
+import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
 
 QGCTextField {
     id:                 control
@@ -20,7 +18,7 @@ QGCTextField {
     property Fact fact: null
 
     onEditingFinished: _onEditingFinished()
-    
+
     function _onEditingFinished() {
         var errorString = fact.validate(text, false /* convertOnly */)
         if (errorString === "") {
@@ -32,7 +30,13 @@ QGCTextField {
         }
     }
 
-    onHelpClicked: helpDialogComponent.createObject(mainWindow).open()
+    onHelpClicked: helpDialogFactory.open()
+
+    QGCPopupDialogFactory {
+        id: helpDialogFactory
+
+        dialogComponent: helpDialogComponent
+    }
 
     Component {
         id: helpDialogComponent

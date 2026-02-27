@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtGui/QColor>
@@ -23,8 +14,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCFlyViewOptionsLog)
 class QGCFlyViewOptions : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(bool showMultiVehicleList        READ showMultiVehicleList       CONSTANT)
     Q_PROPERTY(bool showInstrumentPanel         READ showInstrumentPanel        CONSTANT)
     Q_PROPERTY(bool showMapScale                READ showMapScale               CONSTANT)
@@ -59,13 +50,11 @@ Q_DECLARE_LOGGING_CATEGORY(QGCOptionsLog)
 class QGCOptions : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(bool allowJoystickSelection          READ allowJoystickSelection         NOTIFY allowJoystickSelectionChanged)
     Q_PROPERTY(bool checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
     Q_PROPERTY(bool combineSettingsAndSetup         READ combineSettingsAndSetup        CONSTANT)
-    Q_PROPERTY(bool disableVehicleConnection        READ disableVehicleConnection       CONSTANT)
-    Q_PROPERTY(bool enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(bool enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
     Q_PROPERTY(bool guidedActionsRequireRCRSSI      READ guidedActionsRequireRCRSSI     CONSTANT)
     Q_PROPERTY(bool missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
@@ -84,7 +73,6 @@ class QGCOptions : public QObject
     Q_PROPERTY(bool showSensorCalibrationLevel      READ showSensorCalibrationLevel     NOTIFY showSensorCalibrationLevelChanged)
     Q_PROPERTY(bool showSimpleMissionStart          READ showSimpleMissionStart         NOTIFY showSimpleMissionStartChanged)
     Q_PROPERTY(bool useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
-    Q_PROPERTY(bool wifiReliableForCalibration      READ wifiReliableForCalibration     CONSTANT)
     Q_PROPERTY(double toolbarHeightMultiplier       READ toolbarHeightMultiplier        CONSTANT)
     Q_PROPERTY(float devicePixelDensity             READ devicePixelDensity             NOTIFY devicePixelDensityChanged)
     Q_PROPERTY(float devicePixelRatio               READ devicePixelRatio               NOTIFY devicePixelRatioChanged)
@@ -105,16 +93,12 @@ public:
     /// @return Factor to use when computing toolbar height
     virtual double toolbarHeightMultiplier() const { return 1.0; }
 
-    /// Enable Plan View Selector (Mission, Fence or Rally)
-    /// @return True or false
-    virtual bool enablePlanViewSelector() const { return true; }
-
     /// Should the mission status indicator (Plan View) be shown?
     /// @return Yes or no
     virtual bool showMissionStatus() const { return true; }
 
     /// Provides an optional, custom preflight checklist
-    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/FlightDisplay/PreFlightCheckList.qml")); }
+    virtual QUrl preFlightChecklistUrl() const { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/FlyView/PreFlightCheckList.qml")); }
 
     /// Allows replacing the toolbar Light Theme color
     virtual QColor toolbarBackgroundLight() const { return QColorConstants::White; }
@@ -134,9 +118,6 @@ public:
 
     virtual bool checkFirmwareVersion() const { return true; }
 
-    /// @return true: vehicle connection is disabled
-    virtual bool disableVehicleConnection() const { return false; }
-
     /// @return true: Guided actions will be disabled is there is no RC RSSI
     virtual bool guidedActionsRequireRCRSSI() const { return false; }
 
@@ -154,8 +135,6 @@ public:
     virtual bool showOfflineMapImport() const { return true; }
     virtual bool showPX4LogTransferOptions() const { return true; }
     virtual bool showSimpleMissionStart() const { return false; }
-
-    virtual bool wifiReliableForCalibration() const { return false; }
 
     /// Desktop builds save the main application size and position on close (and restore it on open)
     virtual bool enableSaveMainWindowPosition() const { return true; }

@@ -1,18 +1,12 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutexLocker>
 #include <QtCore/QObject>
+#include <QtCore/QRecursiveMutex>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactMetaData.h"
 
@@ -24,6 +18,8 @@ Q_DECLARE_LOGGING_CATEGORY(FactLog)
 class Fact : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    Q_MOC_INCLUDE("FactValueSliderListModel.h")
     Q_PROPERTY(int          componentId             READ componentId                                            CONSTANT)
     Q_PROPERTY(QStringList  bitmaskStrings          READ bitmaskStrings                                         NOTIFY bitmaskStringsChanged)
     Q_PROPERTY(QVariantList bitmaskValues           READ bitmaskValues                                          NOTIFY bitmaskValuesChanged)
@@ -45,6 +41,10 @@ class Fact : public QObject
     Q_PROPERTY(QVariant     min                     READ cookedMin                                              CONSTANT)
     Q_PROPERTY(QString      minString               READ cookedMinString                                        CONSTANT)
     Q_PROPERTY(bool         minIsDefaultForType     READ minIsDefaultForType                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMin                 READ cookedUserMin                                          CONSTANT)
+    Q_PROPERTY(QString      userMinString           READ cookedUserMinString                                    CONSTANT)
+    Q_PROPERTY(QVariant     userMax                 READ cookedUserMax                                          CONSTANT)
+    Q_PROPERTY(QString      userMaxString           READ cookedUserMaxString                                    CONSTANT)
     Q_PROPERTY(QString      name                    READ name                                                   CONSTANT)
     Q_PROPERTY(bool         vehicleRebootRequired   READ vehicleRebootRequired                                  CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
@@ -53,6 +53,7 @@ class Fact : public QObject
     Q_PROPERTY(QVariant     value                   READ cookedValue                WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(QVariant     rawValue                READ rawValue                   WRITE setRawValue           NOTIFY rawValueChanged)
     Q_PROPERTY(bool         valueEqualsDefault      READ valueEqualsDefault                                     NOTIFY valueChanged)
+    Q_PROPERTY(QString      invalidValueString      READ invalidValueString                                     CONSTANT)
     Q_PROPERTY(QString      valueString             READ cookedValueString                                      NOTIFY valueChanged)
     Q_PROPERTY(QString      enumOrValueString       READ enumOrValueString                                      NOTIFY valueChanged)
     Q_PROPERTY(double       increment               READ cookedIncrement                                        CONSTANT)
@@ -68,7 +69,7 @@ public:
     explicit Fact(int componentId, const QString &name, FactMetaData::ValueType_t type, QObject *parent = nullptr);
     explicit Fact(const Fact &other, QObject *parent = nullptr);
 
-    /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
+    /// Creates a Fact using the name and type from metaData. Also calls SettingsManager::adjustSettingMetaData allowing
     /// custom builds to override the metadata.
     explicit Fact(const QString &settingsGroup, FactMetaData *metaData, QObject *parent = nullptr);
     virtual ~Fact();
@@ -82,7 +83,11 @@ public:
     /// Convert and clamp value
     Q_INVOKABLE QVariant clamp(const QString &cookedValue);
     QVariant cookedValue() const; /// Value after translation
-    QVariant rawValue() const { return _rawValue; }  /// value prior to translation, careful
+    QVariant rawValue() const
+    {
+        QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+        return _rawValue;
+    }
     int componentId() const { return _componentId; }
     int decimalPlaces() const;
     QVariant rawDefaultValue() const;
@@ -108,11 +113,19 @@ public:
     QVariant cookedMin() const;
     QString cookedMinString() const;
     bool minIsDefaultForType() const;
+    QVariant rawUserMin() const;
+    QVariant cookedUserMin() const;
+    QString cookedUserMinString() const;
+    QVariant rawUserMax() const;
+    QVariant cookedUserMax() const;
+    QString cookedUserMaxString() const;
     QString name() const { return _name; }
     QString shortDescription() const;
     FactMetaData::ValueType_t type() const { return _type; }
     QString cookedUnits() const;
     QString rawUnits() const;
+    QString invalidValueString(int decimalPlaces) const;
+    QString invalidValueString() const { return invalidValueString(decimalPlaces()); }
     QString rawValueString() const;
     QString cookedValueString() const;
     bool valueEqualsDefault() const;
@@ -188,7 +201,9 @@ protected:
 
     QString _name;
     int _componentId = -1;
-    QVariant _rawValue = 0;
+    QVariant _rawValue{0};
+    bool _rawValueIsNotSet = true;
+    mutable QRecursiveMutex _rawValueMutex;
     FactMetaData::ValueType_t _type = FactMetaData::valueTypeInt32;
     FactMetaData *_metaData = nullptr;
     bool _sendValueChangedSignals = true;

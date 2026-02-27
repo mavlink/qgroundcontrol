@@ -1,29 +1,12 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
-#include <QtCore/QtTypes>
 #include <QtCore/QMetaType>
+#include <QtCore/QtTypes>
 
-class QGCTileSet
+struct QGCTileSet
 {
-public:
-    QGCTileSet() = default;
-    ~QGCTileSet() = default;
-
     QGCTileSet &operator+=(const QGCTileSet &other)
     {
-        tileX0 += other.tileX0;
-        tileX1 += other.tileX1;
-        tileY0 += other.tileY0;
-        tileY1 += other.tileY1;
         tileCount += other.tileCount;
         tileSize += other.tileSize;
         return *this;
@@ -47,3 +30,4 @@ public:
     quint64 tileSize = 0;
 };
 Q_DECLARE_METATYPE(QGCTileSet)
+Q_DECLARE_METATYPE(QGCTileSet*)

@@ -1,0 +1,229 @@
+name: Code Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 'Analysis tool to run'
+        required: true
+        default: 'clazy'
+        type: choice
+        options:
+          - clazy
+          - iwyu
+          - asan
+          - ubsan
+          - tsan
+      path:
+        description: 'Path to analyze (clazy/iwyu only, e.g., src/Vehicle/)'
+        required: false
+        default: ''
+        type: string
+      analyze_all:
+        description: 'Analyze all source files (clazy/iwyu only)'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.tool }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: ${{ inputs.tool }} Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.tool == 'clazy' && 60 || 120 }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Get build config (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        id: config
+        uses: ./.github/actions/build-config
+
+      - name: Prepare apt repositories (clazy)
+        if: inputs.tool == 'clazy'
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: |
+            if ! grep -rEq --include='*.list' --include='*.sources' '^(deb|Components:).*universe' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+              sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y -qq software-properties-common
+              sudo add-apt-repository -y universe
+            fi
+            sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 update -y -qq
+
+      - name: Cache and install clazy packages
+        if: inputs.tool == 'clazy'
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: clazy ninja-build
+          version: clazy-linux-v1
+
+      - name: Initial Setup (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        uses: ./.github/actions/common
+
+      - name: Install Dependencies (iwyu)
+        if: inputs.tool == 'iwyu'
+        uses: ./.github/actions/install-dependencies
+        with:
+          extra-packages: iwyu clang ninja-build
+
+      - name: Setup Caching (iwyu)
+        if: inputs.tool == 'iwyu'
+        uses: ./.github/actions/cache
+        with:
+          host: linux
+          target: linux_gcc_64
+          build-type: Debug
+          save-cache: true
+
+      - name: Install Qt (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          arch: linux_gcc_64
+          modules: ${{ steps.config.outputs.qt_modules }}
+
+      - name: Build Setup (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          save-cache: true
+
+      - name: Install Dependencies (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure (clazy/iwyu)
+        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          extra-args: >-
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            ${{ inputs.tool == 'iwyu' && '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++' || '' }}
+
+      - name: Configure (sanitizers)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          testing: 'true'
+          extra-args: >-
+            -DQGC_ENABLE_COVERAGE=OFF
+            ${{ inputs.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}
+            ${{ inputs.tool == 'ubsan' && '-DQGC_ENABLE_UBSAN=ON' || '' }}
+            ${{ inputs.tool == 'tsan' && '-DQGC_ENABLE_TSAN=ON' || '' }}
+
+      - name: Build (sanitizers only)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+
+      - name: Run Clazy
+        if: inputs.tool == 'clazy'
+        working-directory: ${{ github.workspace }}
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+          ANALYZE_ALL: ${{ inputs.analyze_all }}
+        run: |
+          ARGS=(--tool clazy --build-dir "${RUNNER_TEMP}/build")
+
+          if [[ "$ANALYZE_ALL" == "true" ]]; then
+            ARGS+=(--all)
+          elif [[ -n "$INPUT_PATH" ]]; then
+            if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
+              echo "::error::Invalid path: must be relative, no '..'"
+              exit 1
+            fi
+            ARGS+=("$INPUT_PATH")
+          else
+            ARGS+=(--all)
+          fi
+
+          echo "Running: python3 ./tools/analyze.py ${ARGS[*]}"
+          python3 ./tools/analyze.py "${ARGS[@]}"
+
+      - name: Run IWYU
+        if: inputs.tool == 'iwyu'
+        working-directory: ${{ runner.temp }}/build
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+        run: |
+          set +e
+
+          if [[ -n "$INPUT_PATH" ]]; then
+            if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
+              echo "::error::Invalid path: must be relative, no '..'"
+              exit 1
+            fi
+
+            mapfile -t FILES < <(find "${GITHUB_WORKSPACE}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
+            if [[ ${#FILES[@]} -eq 0 ]]; then
+              echo "::error::No source files found in $INPUT_PATH"
+              exit 1
+            fi
+
+            echo "Analyzing ${#FILES[@]} files in: $INPUT_PATH"
+            iwyu_tool.py -p . -j "$(nproc)" "${FILES[@]}" 2>&1 | tee iwyu-output.txt || true
+          else
+            echo "Analyzing all source files..."
+            cmake --build . --target all 2>&1 | tee iwyu-output.txt || true
+          fi
+
+          echo ""
+          echo "=== IWYU Summary ==="
+          grep -E "^(${GITHUB_WORKSPACE}/src/.*should (add|remove)|The full include-list)" iwyu-output.txt | head -200 || echo "No suggestions found"
+
+      - name: Run Sanitizer Tests
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        uses: ./.github/actions/run-unit-tests
+        env:
+          ASAN_OPTIONS: ${{ inputs.tool == 'asan' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
+          LSAN_OPTIONS: ${{ inputs.tool == 'asan' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
+          UBSAN_OPTIONS: ${{ inputs.tool == 'ubsan' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
+          TSAN_OPTIONS: ${{ inputs.tool == 'tsan' && format('second_deadlock_stack=1:halt_on_error=1:suppressions={0}/build/tsan_suppressions.txt', runner.temp) || '' }}
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-analysis-${{ inputs.tool }}.xml
+          ctest-output: sanitizer-output.txt
+          include-labels: 'Unit|Integration'
+          exclude-labels: 'Flaky|Network|NoSanitizer'
+          parallel: '1'
+
+      - name: Upload Output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.tool }}-output
+          path: |
+            ${{ runner.temp }}/build/iwyu-output.txt
+            ${{ runner.temp }}/build/sanitizer-output.txt
+            ${{ runner.temp }}/build/junit-results-analysis-${{ inputs.tool }}.xml
+          if-no-files-found: ignore
+          retention-days: 7

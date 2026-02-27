@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtLocation
@@ -15,13 +6,8 @@ import QtQuick.Dialogs
 import Qt.labs.animation
 
 import QGroundControl
-import QGroundControl.FactSystem
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Vehicle
-import QGroundControl.QGCPositionManager
 
 Map {
     id: _map
@@ -64,7 +50,13 @@ Map {
     }
 
     function centerToSpecifiedLocation() {
-        specifyMapPositionDialog.createObject(mainWindow).open()
+        specifyMapPositionDialogFactory.open()
+    }
+
+    QGCPopupDialogFactory {
+        id: specifyMapPositionDialogFactory
+
+        dialogComponent: specifyMapPositionDialog
     }
 
     Component {
@@ -121,7 +113,9 @@ Map {
     signal mapPanStart
     signal mapPanStop
     signal mapClicked(var position)
-    
+    signal mapRightClicked(var position)
+    signal mapPressAndHold(var position)
+
     PinchHandler {
         id:     pinchHandler
         target: null
@@ -155,6 +149,7 @@ Map {
     // Causes all sorts of crazy problems where dragging/scrolling  no longerr works on items above in the hierarchy.
     // Since we are using a MouseArea we also can't use TapHandler for clicks. So we handle that here as well.
     MultiPointTouchArea {
+        id: multiTouchArea
         anchors.fill: parent
         maximumTouchPoints: 1
         mouseEnabled: true
@@ -162,10 +157,15 @@ Map {
         property bool dragActive: false
         property real lastMouseX
         property real lastMouseY
+        property bool isPressed: false
+        property bool pressAndHold: false
 
         onPressed: (touchPoints) => {
             lastMouseX = touchPoints[0].x
             lastMouseY = touchPoints[0].y
+            isPressed = true
+            pressAndHold = false
+            pressAndHoldTimer.start()
         }
 
         onGestureStarted: (gesture) => {
@@ -187,12 +187,40 @@ Map {
         }
 
         onReleased: (touchPoints) => {
+            isPressed = false
+            pressAndHoldTimer.stop()
             if (dragActive) {
                 _map.pan(lastMouseX - touchPoints[0].x, lastMouseY - touchPoints[0].y)
                 dragActive = false
                 mapPanStop()
-            } else {
+            } else if (!pressAndHold) {
                 mapClicked(Qt.point(touchPoints[0].x, touchPoints[0].y))
+            }
+            pressAndHold = false
+        }
+
+        Timer {
+            id: pressAndHoldTimer
+            interval: 600        // hold duration in ms
+            repeat: false
+
+            onTriggered: {
+                if (multiTouchArea.isPressed && !multiTouchArea.dragActive) {
+                    multiTouchArea.pressAndHold = true
+                    mapPressAndHold(Qt.point(multiTouchArea.lastMouseX, multiTouchArea.lastMouseY))
+                }
+            }
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        propagateComposedEvents: true
+
+        onPressed: (mouseEvent) => {
+            if (mouseEvent.button === Qt.RightButton) {
+                mapRightClicked(Qt.point(mouseEvent.x, mouseEvent.y))
             }
         }
     }

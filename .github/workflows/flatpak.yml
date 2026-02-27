@@ -1,16 +1,42 @@
-name: flatpak
-on: [workflow_dispatch]
+name: Flatpak
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  flatpak-builder:
+  flatpak:
     name: Flatpak
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      # flatpak-builder requires namespace operations not available in an unprivileged container.
+      # This workflow is manual-trigger only and runner egress is audited as mitigation.
       options: --privileged
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
         with:
-          bundle: org.mavlink.qgroundcontrol.flatpak
-          manifest-path: ./deploy/flatpak/org.mavlink.qgroundcontrol.yml
-          cache-key: flatpak-builder-${{ github.sha }}
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build Flatpak
+        uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: QGroundControl.flatpak
+          manifest-path: deploy/linux/org.mavlink.qgroundcontrol.flatpak.yml
+          cache-key: flatpak-builder-${{ hashFiles('deploy/linux/org.mavlink.qgroundcontrol.flatpak.yml') }}
+
+      - name: Upload Flatpak
+        uses: actions/upload-artifact@v6
+        with:
+          name: QGroundControl-flatpak
+          path: QGroundControl.flatpak
+          retention-days: 14
+          compression-level: 0

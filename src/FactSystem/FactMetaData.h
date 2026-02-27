@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -15,8 +6,11 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
+
+class SettingsManager;
 
 /// Holds the meta data associated with a Fact. This is kept in a separate object from the Fact itself
 /// since you may have multiple instances of the same Fact. But there is only ever one FactMetaData
@@ -24,6 +18,9 @@ Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
 class FactMetaData : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+
+    friend class SettingsManager;
 
 public:
     enum ValueType_t {
@@ -136,6 +133,10 @@ public:
     QVariant rawMin() const { return _rawMin; }
     QVariant cookedMin() const;
     bool minIsDefaultForType() const { return (_rawMin == _minForType()); }
+    QVariant rawUserMin() const { return _rawUserMin; }
+    QVariant rawUserMax() const { return _rawUserMax; }
+    QVariant cookedUserMin() const;
+    QVariant cookedUserMax() const;
     QString name() const { return _name; }
     QString shortDescription() const { return _shortDescription; }
     ValueType_t type() const { return _type; }
@@ -174,6 +175,8 @@ public:
     void setLongDescription(const QString &longDescription) { _longDescription = longDescription;}
     void setRawMax(const QVariant &rawMax);
     void setRawMin(const QVariant &rawMin);
+    void setRawUserMin(const QVariant &rawUserMin);
+    void setRawUserMax(const QVariant &rawUserMax);
     void setName(const QString &name) { _name = name; }
     void setShortDescription(const QString &shortDescription) { _shortDescription = shortDescription; }
     void setRawUnits(const QString &rawUnits);
@@ -185,7 +188,7 @@ public:
     void setWriteOnly(bool bValue) { _writeOnly = bValue; }
     void setVolatileValue(bool bValue);
 
-    void setTranslators(Translator rawTranslator, Translator cookedTranslator);
+    void setTranslators(Translator rawTranslator_, Translator cookedTranslator_);
 
     /// Set the translators to the standard built in versions
     void setBuiltInTranslator();
@@ -264,6 +267,8 @@ private:
     static QVariant _radiansToDegrees(const QVariant &radians);
     static QVariant _centiDegreesToDegrees(const QVariant &centiDegrees);
     static QVariant _degreesToCentiDegrees(const QVariant &degrees);
+    static QVariant _centiCelsiusToCelsius(const QVariant &centiCelsius);
+    static QVariant _celsiusToCentiCelsius(const QVariant &celsius);
     static QVariant _userGimbalDegreesToMavlinkGimbalDegrees(const QVariant &userGimbalDegrees);
     static QVariant _mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant &mavlinkGimbalDegrees);
     static QVariant _metersToFeet(const QVariant &meters);
@@ -332,6 +337,8 @@ private:
     QString _longDescription;
     QVariant _rawMax = _maxForType();
     QVariant _rawMin = _minForType();
+    QVariant _rawUserMin;   // Specifically left as unset by default to indicate no user min
+    QVariant _rawUserMax;   // Specifically left as unset by default to indicate no user max
     QString _name;
     QString _shortDescription;
     QString _rawUnits;
@@ -431,6 +438,8 @@ private:
     static constexpr const char *_mobileDefaultValueJsonKey = "mobileDefault";
     static constexpr const char *_minJsonKey = "min";
     static constexpr const char *_maxJsonKey = "max";
+    static constexpr const char *_userMinJsonKey = "userMin";
+    static constexpr const char *_userMaxJsonKey = "userMax";
     static constexpr const char *_incrementJsonKey = "increment";
     static constexpr const char *_hasControlJsonKey = "control";
     static constexpr const char *_qgcRebootRequiredJsonKey = "qgcRebootRequired";

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "MavlinkCameraControl.h"
@@ -43,16 +34,15 @@ public:
     QVariantList optVariants;
 };
 
-//-----------------------------------------------------------------------------
-/// MAVLink Camera API controller
+/// MAVLink Camera API controller - connected to a real mavlink v2 camera
 class VehicleCameraControl : public MavlinkCameraControl
 {
 public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     virtual ~VehicleCameraControl();
 
-    Q_INVOKABLE virtual void setCameraModeVideo     ();
-    Q_INVOKABLE virtual void setCameraModePhoto     ();
+    Q_INVOKABLE virtual void setCameraModeVideo();
+    Q_INVOKABLE virtual void setCameraModePhoto();
     Q_INVOKABLE virtual void toggleCameraMode       ();
     Q_INVOKABLE virtual bool takePhoto              ();
     Q_INVOKABLE virtual bool stopTakePhoto          ();
@@ -70,82 +60,78 @@ public:
     Q_INVOKABLE virtual void startTracking          (QPointF point, double radius);
     Q_INVOKABLE virtual void stopTracking           ();
 
-    virtual int         version             () { return _version; }
-    virtual QString     modelName           () { return _modelName; }
-    virtual QString     vendor              () { return _vendor; }
-    virtual QString     firmwareVersion     ();
-    virtual qreal       focalLength         () { return static_cast<qreal>(_info.focal_length); }
-    virtual QSizeF      sensorSize          () { return QSizeF(static_cast<qreal>(_info.sensor_size_h), static_cast<qreal>(_info.sensor_size_v)); }
-    virtual QSize       resolution          () { return QSize(_info.resolution_h, _info.resolution_v); }
-    virtual bool        capturesVideo       () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO; }
-    virtual bool        capturesPhotos      () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE; }
-    virtual bool        hasModes            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
-    virtual bool        hasZoom             () { return _info.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
-    virtual bool        hasFocus            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
-    virtual bool        hasTracking         () { return _trackingStatus & TRACKING_SUPPORTED; }
-    virtual bool        hasVideoStream      () { return _info.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
-    virtual bool        photosInVideoMode   () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
-    virtual bool        videoInPhotoMode    () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
+    virtual int         version             () const { return _version; }
+    virtual QString     modelName           () const { return _modelName; }
+    virtual QString     vendor              () const { return _vendor; }
+    virtual QString     firmwareVersion     () const;
+    virtual qreal       focalLength         () const { return static_cast<qreal>(_mavlinkCameraInfo.focal_length); }
+    virtual QSizeF      sensorSize          () const { return QSizeF(static_cast<qreal>(_mavlinkCameraInfo.sensor_size_h), static_cast<qreal>(_mavlinkCameraInfo.sensor_size_v)); }
+    virtual QSize       resolution          () const { return QSize(_mavlinkCameraInfo.resolution_h, _mavlinkCameraInfo.resolution_v); }
+    virtual bool        capturesVideo       () const;
+    virtual bool        capturesPhotos      () const;
+    virtual bool        hasModes            () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
+    virtual bool        hasZoom             () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
+    virtual bool        hasFocus            () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
+    virtual bool        hasTracking         () const { return _trackingStatus & TRACKING_SUPPORTED; }
+    virtual bool        hasVideoStream      () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
+    virtual bool        photosInVideoMode   () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
+    virtual bool        videoInPhotoMode    () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
+    virtual CaptureVideoState captureVideoState() const;
+    virtual CapturePhotosState capturePhotosState() const;
 
-    virtual int                 compID              () { return _compID; }
-    virtual bool                isBasic             () { return _settings.size() == 0; }
-    virtual VideoCaptureStatus  videoCaptureStatus  ();
-    virtual PhotoCaptureStatus  photoCaptureStatus  ();
-    virtual PhotoCaptureMode    photoCaptureMode    () { return _photoMode; }
-    virtual qreal               photoLapse          () { return _photoLapse; }
-    virtual int                 photoLapseCount     () { return _photoLapseCount; }
-    virtual CameraMode          cameraMode          () { return _cameraMode; }
-    virtual StorageStatus       storageStatus       () { return _storageStatus; }
-    virtual QStringList         activeSettings      ();
-    virtual quint32             storageFree         () { return _storageFree;  }
-    virtual QString             storageFreeStr      ();
-    virtual quint32             storageTotal        () { return _storageTotal; }
-    virtual int                 batteryRemaining    () { return _batteryRemaining; }
-    virtual QString             batteryRemainingStr ();
-    virtual bool                paramComplete       () { return _paramComplete; }
-    virtual qreal               zoomLevel           () { return _zoomLevel; }
-    virtual qreal               focusLevel          () { return _focusLevel; }
+    virtual int                 compID              () const { return _compID; }
+    virtual bool                isBasic             () const { return _settings.size() == 0; }
+    virtual StorageStatus       storageStatus       () const { return _storageStatus; }
+    virtual QStringList         activeSettings      () const;
+    virtual quint32             storageFree         () const { return _storageFree;  }
+    virtual QString             storageFreeStr      () const;
+    virtual quint32             storageTotal        () const { return _storageTotal; }
+    virtual int                 batteryRemaining    () const { return _batteryRemaining; }
+    virtual QString             batteryRemainingStr () const;
+    virtual bool                paramComplete       () const { return _paramComplete; }
+    virtual qreal               zoomLevel           () const { return _zoomLevel; }
+    virtual qreal               focusLevel          () const { return _focusLevel; }
 
     virtual QmlObjectListModel* streams             () { return &_streams; }
     virtual QGCVideoStreamInfo* currentStreamInstance();
     virtual QGCVideoStreamInfo* thermalStreamInstance();
-    virtual int                 currentStream       () { return _currentStream; }
+    virtual int                 currentStream       () const { return _currentStream; }
     virtual void                setCurrentStream    (int stream);
-    virtual bool                autoStream          ();
-    virtual quint32             recordTime          () { return _recordTime; }
-    virtual QString             recordTimeStr       ();
+    virtual bool                autoStream          () const;
+    virtual quint32             recordTime          () const { return _recordTime; }
+    virtual QString             recordTimeStr       () const;
 
-    virtual QStringList streamLabels        () { return _streamLabels; }
+    virtual QStringList streamLabels        () const { return _streamLabels; }
 
-    virtual ThermalViewMode thermalMode     () { return _thermalMode; }
+    virtual ThermalViewMode thermalMode     () const { return _thermalMode; }
     virtual void        setThermalMode      (ThermalViewMode mode);
-    virtual double      thermalOpacity      () { return _thermalOpacity; }
+    virtual double      thermalOpacity      () const { return _thermalOpacity; }
     virtual void        setThermalOpacity   (double val);
 
     virtual void        setZoomLevel        (qreal level);
     virtual void        setFocusLevel       (qreal level);
-    virtual void        setCameraMode       (CameraMode mode);
+    virtual void        setCameraMode(CameraMode cameraMode);
     virtual void        setPhotoCaptureMode        (PhotoCaptureMode mode);
     virtual void        setPhotoLapse       (qreal interval);
     virtual void        setPhotoLapseCount  (int count);
 
-    virtual void        handleSettings      (const mavlink_camera_settings_t& settings);
-    virtual void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus);
-    virtual void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
-    virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
-    virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
+    virtual void        handleCameraSettings(const mavlink_camera_settings_t& settings);
+    virtual void        handleCameraCaptureStatus(const mavlink_camera_capture_status_t& cameraCaptureStatus);
+    virtual void        handleParamExtAck   (const mavlink_param_ext_ack_t& paramExtAck);
+    virtual void        handleParamExtValue (const mavlink_param_ext_value_t& paramExtValue);
+    virtual void        handleStorageInformation(const mavlink_storage_information_t& storageInformation);
     virtual void        handleBatteryStatus (const mavlink_battery_status_t& bs);
-    virtual void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t *tis);
-    virtual void        handleVideoInfo     (const mavlink_video_stream_information_t *vi);
-    virtual void        handleVideoStatus   (const mavlink_video_stream_status_t *vs);
+    virtual void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus);
+    virtual void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation);
+    virtual void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus);
 
-    virtual bool        trackingEnabled     () { return _trackingStatus & TRACKING_ENABLED; }
+    virtual bool        trackingEnabled     () const { return _trackingStatus & TRACKING_ENABLED; }
     virtual void        setTrackingEnabled  (bool set);
 
-    virtual TrackingStatus trackingStatus   () { return _trackingStatus; }
+    virtual TrackingStatus trackingStatus   () const { return _trackingStatus; }
 
-    virtual bool trackingImageStatus() { return _trackingImageStatus.tracking_status == 1; }
-    virtual QRectF trackingImageRect() { return _trackingImageRect; }
+    virtual bool trackingImageStatus() const { return _trackingImageStatus.tracking_status == 1; }
+    virtual QRectF trackingImageRect() const { return _trackingImageRect; }
 
     virtual Fact*   exposureMode        ();
     virtual Fact*   ev                  ();
@@ -210,8 +196,8 @@ public:
     static constexpr const char* kCAM_MODE        = "CAM_MODE";
 
 protected:
-    virtual void    _setVideoStatus         (VideoCaptureStatus status);
-    virtual void    _setPhotoStatus         (PhotoCaptureStatus status);
+    virtual void    _setVideoCaptureStatus  (VideoCaptureStatus captureStatus);
+    virtual void    _setPhotoCaptureStatus  (PhotoCaptureStatus captureStatus);
     virtual void    _setCameraMode          (CameraMode mode);
     virtual void    _requestStreamInfo      (uint8_t streamID);
     virtual void    _requestStreamStatus    (uint8_t streamID);
@@ -236,6 +222,7 @@ protected slots:
     virtual void    _storageInfoTimeout     ();
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
+    virtual void    _onVideoManagerRecordingChanged  (bool recording);
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
@@ -259,9 +246,8 @@ private:
     QString         _getParamName           (const char* param_id);
 
 protected:
-    Vehicle*                            _vehicle            = nullptr;
     int                                 _compID             = 0;
-    mavlink_camera_information_t        _info;
+    mavlink_camera_information_t        _mavlinkCameraInfo;
     int                                 _version            = 0;
     bool                                _cached             = false;
     bool                                _paramComplete      = false;
@@ -274,13 +260,7 @@ protected:
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
-    CameraMode                          _cameraMode         = CAM_MODE_UNDEFINED;
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
-    PhotoCaptureMode                    _photoMode          = PHOTO_CAPTURE_SINGLE;
-    qreal                               _photoLapse         = 1.0;
-    int                                 _photoLapseCount    = 0;
-    VideoCaptureStatus                  _video_status       = VIDEO_CAPTURE_STATUS_UNDEFINED;
-    PhotoCaptureStatus                  _photo_status       = PHOTO_CAPTURE_STATUS_UNDEFINED;
     QStringList                         _activeSettings;
     QStringList                         _settings;
     QTimer                              _captureStatusTimer;
@@ -294,7 +274,6 @@ protected:
     int                                 _storageInfoRetries = 0;
     int                                 _captureInfoRetries = 0;
     bool                                _resetting          = false;
-    QTimer                              _recTimer;
     QTime                               _recTime;
     uint32_t                            _recordTime         = 0;
     //-- Parameters that require a full update

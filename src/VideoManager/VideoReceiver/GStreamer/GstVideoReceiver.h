@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -90,6 +81,7 @@ private:
     bool _unlinkBranch(GstElement *from);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
+    void _logDecodebin3SelectedCodec(GstElement *decodebin3);
 
     bool _needDispatch();
     void _dispatchSignal(Task emitter);

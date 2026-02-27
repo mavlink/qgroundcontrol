@@ -2,16 +2,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
+import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
 
 Rectangle {
     id:     root
     height: _currentItem ? valuesRect.y + valuesRect.height + (_margin * 2) : titleBar.y - titleBar.height + _margin
-    color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    color:  _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
     radius: _radius
 
     signal clicked()

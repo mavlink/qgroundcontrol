@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "VTOLLandingComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
@@ -20,7 +11,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "VTOLLandingComplexItemLog")
+QGC_LOGGING_CATEGORY(VTOLLandingComplexItemLog, "Plan.VTOLLandingComplexItem")
 
 const QString VTOLLandingComplexItem::name(VTOLLandingComplexItem::tr("VTOL Landing"));
 

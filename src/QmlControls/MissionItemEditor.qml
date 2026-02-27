@@ -5,18 +5,14 @@ import QtQml
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
-
 
 /// Mission item edit control
 Rectangle {
     id:             _root
     height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
-    color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    color:          _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
     border.width:   _readyForSave ? 0 : 2
@@ -34,7 +30,7 @@ Rectangle {
     property var    _masterController:          masterController
     property var    _missionController:         _masterController.missionController
     property bool   _currentItem:               missionItem.isCurrentItem
-    property color  _outerTextColor:            _currentItem ? qgcPal.primaryButtonText : qgcPal.text
+    property color  _outerTextColor:            _currentItem ? qgcPal.buttonHighlightText : qgcPal.text
     property bool   _noMissionItemsAdded:       ListView.view.model.count === 1
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
@@ -66,6 +62,12 @@ Rectangle {
                 }
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: editPositionDialogFactory
+
+        dialogComponent: editPositionDialog
     }
 
     Component {
@@ -114,7 +116,7 @@ Rectangle {
             fillMode:               Image.PreserveAspectFit
             mipmap:                 true
             smooth:                 true
-            color:                  qgcPal.text
+            color:                  qgcPal.buttonHighlightText
             visible:                _currentItem && missionItem.sequenceNumber !== 0
             source:                 "/res/TrashDelete.svg"
 
@@ -153,7 +155,13 @@ Rectangle {
 
             QGCMouseArea {
                 fillItem:   parent
-                onClicked:  commandDialog.createObject(mainWindow).open()
+                onClicked:  commandDialogFactory.open()
+            }
+
+            QGCPopupDialogFactory {
+                id: commandDialogFactory
+
+                dialogComponent: commandDialog
             }
 
             Component {
@@ -219,7 +227,7 @@ Rectangle {
                         text:               qsTr("Edit position...")
                         enabled:            missionItem.specifiesCoordinate
                         onClicked: {
-                            editPositionDialog.createObject(mainWindow).open()
+                            editPositionDialogFactory.open()
                             hamburgerMenuDropPanel.close()
                         }
                     }
@@ -242,7 +250,7 @@ Rectangle {
                             if (missionItem.rawEdit && !missionItem.friendlyEditAllowed) {
                                 missionItem.rawEdit = false
                                 checked = false
-                                mainWindow.showMessageDialog(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
+                                QGroundControl.showMessageDialog(_root, qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
                             }
                             hamburgerMenuDropPanel.close()
                         }
@@ -254,8 +262,8 @@ Rectangle {
                         color:                  qgcPal.groupBorder
                     }
 
-                    QGCLabel { 
-                        text:       qsTr("Item #%1").arg(missionItem.sequenceNumber) 
+                    QGCLabel {
+                        text:       qsTr("Item #%1").arg(missionItem.sequenceNumber)
                         enabled:    false
                     }
                 }
@@ -274,7 +282,7 @@ Rectangle {
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
         visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
-        color:                  qgcPal.text
+        color:                  qgcPal.buttonHighlightText
 
         QGCMouseArea {
             fillItem:   hamburger
@@ -319,4 +327,4 @@ Rectangle {
         property real   availableWidth:     _root.width - (anchors.margins * 2) ///< How wide the editor should be
         property var    editorRoot:         _root
     }
-} // Rectangle
+}

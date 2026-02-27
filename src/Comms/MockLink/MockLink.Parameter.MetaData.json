@@ -6689,13 +6689,6 @@
       "longDesc": "If set to 1 incoming HIL GPS messages are parsed."
     },
     {
-      "name": "COM_OBS_AVOID",
-      "type": "Int32",
-      "default": 0,
-      "group": "Mission",
-      "shortDesc": "Flag to enable obstacle avoidance"
-    },
-    {
       "name": "COM_TAKEOFF_ACT",
       "type": "Int32",
       "default": 0,

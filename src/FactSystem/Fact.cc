@@ -1,19 +1,11 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(FactLog, "qgc.factsystem.fact")
+QGC_LOGGING_CATEGORY(FactLog, "FactSystem.Fact")
 
 Fact::Fact(QObject *parent)
     : QObject(parent)
@@ -48,8 +40,19 @@ Fact::Fact(const QString& settingsGroup, FactMetaData *metaData, QObject *parent
 {
     // qCDebug(FactLog) << Q_FUNC_INFO << this;
 
-    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, *metaData);
+    bool visible = true;
+    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, visible);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
+
+    if (!qgcApp()->runningUnitTests()) {
+        if (metaData->defaultValueAvailable() && !visible) {
+            // If setting is not visible, we force to default value
+            const QVariant defaultValue = metaData->rawDefaultValue();
+            QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+            _rawValue = defaultValue;
+            _rawValueIsNotSet = false;
+        }
+    }
 
     _init();
 }
@@ -76,9 +79,17 @@ void Fact::_init()
 
 const Fact &Fact::operator=(const Fact& other)
 {
+    if (this == &other) {
+        return *this;
+    }
+
+    QMutexLocker<QRecursiveMutex> otherLocker(&other._rawValueMutex);
+    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+
     _name = other._name;
     _componentId = other._componentId;
     _rawValue = other._rawValue;
+    _rawValueIsNotSet = other._rawValueIsNotSet;
     _type = other._type;
     _sendValueChangedSignals = other._sendValueChangedSignals;
     _deferredValueChangeSignal = other._deferredValueChangeSignal;
@@ -99,11 +110,17 @@ void Fact::forceSetRawValue(const QVariant &value)
         QString errorString;
 
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
-            _rawValue.setValue(typedValue);
-            _sendValueChangedSignal(cookedValue());
+            {
+                QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+                _rawValue = typedValue;
+                _rawValueIsNotSet = false;
+            }
+
+            const QVariant cooked = _metaData->rawTranslator()(typedValue);
+            _sendValueChangedSignal(cooked);
             //-- Must be in this order
-            emit containerRawValueChanged(rawValue());
-            emit rawValueChanged(_rawValue);
+            emit containerRawValueChanged(typedValue);
+            emit rawValueChanged(typedValue);
         }
     } else {
         qCWarning(FactLog) << kMissingMetadata << name();
@@ -117,12 +134,22 @@ void Fact::setRawValue(const QVariant &value)
         QString errorString;
 
         if (_metaData->convertAndValidateRaw(value, true /* convertOnly */, typedValue, errorString)) {
-            if (typedValue != _rawValue) {
-                _rawValue.setValue(typedValue);
-                _sendValueChangedSignal(cookedValue());
+            bool changed = false;
+            {
+                QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+                if (typedValue != _rawValue) {
+                    _rawValue = typedValue;
+                    _rawValueIsNotSet = false;
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                const QVariant cooked = _metaData->rawTranslator()(typedValue);
+                _sendValueChangedSignal(cooked);
                 //-- Must be in this order
-                emit containerRawValueChanged(rawValue());
-                emit rawValueChanged(_rawValue);
+                emit containerRawValueChanged(typedValue);
+                emit rawValueChanged(typedValue);
             }
         }
     } else {
@@ -167,24 +194,42 @@ void Fact::setEnumIndex(int index)
 
 void Fact::containerSetRawValue(const QVariant &value)
 {
-    if (_rawValue != value) {
-        _rawValue = value;
-        _sendValueChangedSignal(cookedValue());
-        emit rawValueChanged(_rawValue);
+    QVariant cooked;
+    QVariant currentRaw = value;
+    bool changed = false;
+    {
+        QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+        if (_rawValue != value) {
+            _rawValue = value;
+            _rawValueIsNotSet = false;
+            changed = true;
+        }
+        currentRaw = _rawValue;
+        if (_metaData) {
+            cooked = _metaData->rawTranslator()(_rawValue);
+        } else {
+            cooked = _rawValue;
+        }
+    }
+
+    if (changed) {
+        _sendValueChangedSignal(cooked);
+        emit rawValueChanged(currentRaw);
     }
 
     // This always need to be signalled in order to support forceSetRawValue usage and waiting for vehicleUpdated signal
-    emit vehicleUpdated(_rawValue);
+    emit vehicleUpdated(currentRaw);
 }
 
 QVariant Fact::cookedValue() const
 {
+    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
     if (_metaData) {
         return _metaData->rawTranslator()(_rawValue);
-    } else {
-        qCWarning(FactLog) << kMissingMetadata << name();
-        return _rawValue;
     }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return _rawValue;
 }
 
 QString Fact::enumStringValue()
@@ -312,16 +357,31 @@ QStringList Fact::selectedBitmaskStrings() const
 
 QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
 {
+    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
+    if (_rawValueIsNotSet) {
+        return invalidValueString(decimalPlaces);
+    }
+    locker.unlock();
+
     QString valueString;
+
+    const auto stripNegativeZero = [](QString &candidate) {
+        static const QRegularExpression reNegativeZero(QStringLiteral("^-0\\.0+$"));
+        const auto match = reNegativeZero.match(candidate);
+        if (match.hasMatch() || candidate == QStringLiteral("-0")) {
+            candidate = candidate.mid(1);
+        }
+    };
 
     switch (type()) {
     case FactMetaData::valueTypeFloat:
     {
         const float fValue = variant.toFloat();
         if (qIsNaN(fValue)) {
-            valueString = QStringLiteral("--.--");
+            valueString = invalidValueString(decimalPlaces);
         } else {
             valueString = QStringLiteral("%1").arg(fValue, 0, 'f', decimalPlaces);
+            stripNegativeZero(valueString);
         }
     }
         break;
@@ -329,9 +389,10 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     {
         const double dValue = variant.toDouble();
         if (qIsNaN(dValue)) {
-            valueString = QStringLiteral("--.--");
+            valueString = invalidValueString(decimalPlaces);
         } else {
             valueString = QStringLiteral("%1").arg(dValue, 0, 'f', decimalPlaces);
+            stripNegativeZero(valueString);
         }
         break;
     }
@@ -342,7 +403,7 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     {
         const double dValue = variant.toDouble();
         if (qIsNaN(dValue)) {
-            valueString = QStringLiteral("--:--:--");
+            valueString = invalidValueString(decimalPlaces);
         } else {
             QTime time(0, 0, 0, 0);
             time = time.addSecs(dValue);
@@ -356,6 +417,22 @@ QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
     }
 
     return valueString;
+}
+
+QString Fact::invalidValueString(int decimalPlaces) const {
+    switch (type()) {
+    case FactMetaData::valueTypeFloat:
+    case FactMetaData::valueTypeDouble:
+        if (decimalPlaces <= 0) {
+            return QStringLiteral("–");
+        }
+        return QStringLiteral("–.") +
+               QString(decimalPlaces, QChar(u'–'));
+    case FactMetaData::valueTypeElapsedTimeInSeconds:
+        return QStringLiteral("––:––:––");
+    default:
+        return QStringLiteral("–");
+    }
 }
 
 QString Fact::rawValueStringFullPrecision() const
@@ -464,9 +541,34 @@ QVariant Fact::cookedMin() const
     }
 }
 
+QVariant Fact::rawUserMin() const
+{
+    if (_metaData) {
+        return _metaData->rawUserMin();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
+QVariant Fact::cookedUserMin() const
+{
+    if (_metaData) {
+        return _metaData->cookedUserMin();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
 QString Fact::cookedMinString() const
 {
     return _variantToString(cookedMin(), decimalPlaces());
+}
+
+QString Fact::cookedUserMinString() const
+{
+    return _variantToString(cookedUserMin(), decimalPlaces());
 }
 
 QVariant Fact::rawMax() const
@@ -489,9 +591,34 @@ QVariant Fact::cookedMax() const
     }
 }
 
+QVariant Fact::rawUserMax() const
+{
+    if (_metaData) {
+        return _metaData->rawUserMax();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
+QVariant Fact::cookedUserMax() const
+{
+    if (_metaData) {
+        return _metaData->cookedUserMax();
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return QVariant(0);
+}
+
 QString Fact::cookedMaxString() const
 {
     return _variantToString(cookedMax(), decimalPlaces());
+}
+
+QString Fact::cookedUserMaxString() const
+{
+    return _variantToString(cookedUserMax(), decimalPlaces());
 }
 
 bool Fact::minIsDefaultForType() const

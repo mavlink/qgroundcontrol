@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
 import QGroundControl.Controls
 
 GridLayout {
@@ -15,7 +15,7 @@ GridLayout {
     Repeater {
         model: parent.factList
 
-        QGCLabel { 
+        QGCLabel {
             text: {
                 if (factLabels) {
                     return factLabels[index]

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -29,10 +20,8 @@ class GPSRtk : public QObject
     Q_OBJECT
 
 public:
-    GPSRtk(QObject *parent = nullptr);
+    explicit GPSRtk(QObject *parent = nullptr);
     ~GPSRtk();
-
-    static void registerQmlTypes();
 
     void connectGPS(const QString &device, QStringView gps_type);
     void disconnectGPS();

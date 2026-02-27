@@ -1,3 +1,8 @@
+# ============================================================================
+# API Module
+# Core plugin architecture and QML component interfaces
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGCCorePlugin.cc

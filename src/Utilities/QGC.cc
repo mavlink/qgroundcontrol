@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "QGC.h"
 
 #include <QtCore/QDateTime>
@@ -123,6 +113,41 @@ bool fuzzyCompare(double value1, double value2)
         return true;
     } else {
         return qFuzzyCompare(value1, value2);
+    }
+}
+
+bool fuzzyCompare(double value1, double value2, double tolerance)
+{
+    if (qIsNaN(value1) && qIsNaN(value2)) {
+        return true;
+    } else if (qIsNaN(value1) || qIsNaN(value2)) {
+        return false;
+    } else {
+        return fabs(value1 - value2) <= tolerance;
+    }
+}
+
+bool fuzzyCompare(float value1, float value2)
+{
+    if (qIsNaN(value1) && qIsNaN(value2)) {
+        return true;
+    } else if (qIsNaN(value1) || qIsNaN(value2)) {
+        return false;
+    } else if (value1 == value2) {
+        return true;
+    } else {
+        return qFuzzyCompare(value1, value2);
+    }
+}
+
+bool fuzzyCompare(float value1, float value2, float tolerance)
+{
+    if (qIsNaN(value1) && qIsNaN(value2)) {
+        return true;
+    } else if (qIsNaN(value1) || qIsNaN(value2)) {
+        return false;
+    } else {
+        return fabsf(value1 - value2) <= tolerance;
     }
 }
 

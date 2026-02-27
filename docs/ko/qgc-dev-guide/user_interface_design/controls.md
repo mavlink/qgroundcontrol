@@ -3,7 +3,7 @@
 QGC provides a base set of controls for building user interface. In general they tend to be thin layers above the base QML Controls supported by Qt which respect the QGC color palette.
 
 ```
-import QGroundControl.Controls 1.0
+import QGroundControl.Controls
 ```
 
 ## Qt Controls

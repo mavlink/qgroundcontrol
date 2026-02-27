@@ -1,0 +1,154 @@
+# ----------------------------------------------------------------------------
+# QGroundControl Git Configuration
+# Extracts version information and metadata from Git repository
+# ----------------------------------------------------------------------------
+
+include_guard(GLOBAL)
+
+find_package(Git QUIET)
+
+if(NOT GIT_FOUND OR NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    message(WARNING "QGC: Git not found or not a git repository. Using fallback version info.")
+    set(QGC_GIT_BRANCH "unknown")
+    set(QGC_GIT_HASH "0000000")
+    set(QGC_APP_VERSION_STR "v0.0.0")
+    set(QGC_APP_VERSION "0.0.0")
+    set(QGC_APP_VERSION_MAJOR "0")
+    set(QGC_APP_VERSION_MINOR "0")
+    set(QGC_APP_VERSION_PATCH "0")
+    string(TIMESTAMP QGC_APP_DATE "%Y-%m-%dT%H:%M:%S%z" UTC)
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/src/qgc_version.h.in"
+        "${CMAKE_BINARY_DIR}/qgc_version.h"
+        @ONLY
+    )
+    return()
+endif()
+
+# Optionally update submodules during configuration
+if(GIT_SUBMODULE)
+    message(STATUS "Updating Git submodules...")
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE GIT_SUBMODULE_RESULT
+        OUTPUT_VARIABLE GIT_SUBMODULE_OUTPUT
+        ERROR_VARIABLE GIT_SUBMODULE_ERROR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT GIT_SUBMODULE_RESULT EQUAL 0)
+        include(CMakePrintHelpers)
+        cmake_print_variables(GIT_SUBMODULE_RESULT GIT_SUBMODULE_OUTPUT GIT_SUBMODULE_ERROR)
+        message(FATAL_ERROR "Git submodule update failed with code ${GIT_SUBMODULE_RESULT}")
+    endif()
+    message(STATUS "Git submodules updated successfully")
+endif()
+
+# ----------------------------------------------------------------------------
+# Extract Git Branch and Commit Hash
+# ----------------------------------------------------------------------------
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} log -1 --format=%D%n%h
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE _git_info
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(_git_info)
+    string(REGEX REPLACE "\n.*" "" _git_refs "${_git_info}")
+    string(REGEX REPLACE ".*\n" "" QGC_GIT_HASH "${_git_info}")
+    # Extract branch from refs: "HEAD -> branch, origin/branch" → "branch"
+    if(_git_refs MATCHES "HEAD -> ([^,]+)")
+        set(QGC_GIT_BRANCH "${CMAKE_MATCH_1}")
+    else()
+        set(QGC_GIT_BRANCH "HEAD")
+    endif()
+else()
+    set(QGC_GIT_BRANCH "unknown")
+    set(QGC_GIT_HASH "0000000")
+endif()
+
+# ----------------------------------------------------------------------------
+# Extract Version String from Git Tags
+# ----------------------------------------------------------------------------
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} describe --always --tags
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE QGC_APP_VERSION_STR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT QGC_APP_VERSION_STR)
+    set(QGC_APP_VERSION_STR "v0.0.0")
+endif()
+# cmake_print_variables(QGC_APP_VERSION_STR)
+
+# ----------------------------------------------------------------------------
+# Extract Clean Version Tag
+# ----------------------------------------------------------------------------
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} describe --always --tags --abbrev=0
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE QGC_APP_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT QGC_APP_VERSION)
+    set(QGC_APP_VERSION "v0.0.0")
+endif()
+# cmake_print_variables(QGC_APP_VERSION)
+
+# ----------------------------------------------------------------------------
+# Extract Commit Date for Version Timestamp
+# ----------------------------------------------------------------------------
+
+if(QGC_STABLE_BUILD)
+    set(QGC_APP_DATE_VERSION "${QGC_APP_VERSION}")
+else()
+    # Daily builds use date of last commit
+    set(QGC_APP_DATE_VERSION "")
+endif()
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} log -1 --format=%aI ${QGC_APP_DATE_VERSION}
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE QGC_APP_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT QGC_APP_DATE)
+    string(TIMESTAMP QGC_APP_DATE "%Y-%m-%dT%H:%M:%S%z" UTC)
+endif()
+# cmake_print_variables(QGC_APP_DATE)
+
+# ----------------------------------------------------------------------------
+# Parse Version Components (Major.Minor.Patch)
+# ----------------------------------------------------------------------------
+# Strip 'v' prefix if present (e.g., v1.2.3 -> 1.2.3)
+string(REGEX REPLACE "^v" "" QGC_APP_VERSION_CLEAN "${QGC_APP_VERSION}")
+
+# Extract version components using regex
+if(QGC_APP_VERSION_CLEAN MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+    set(QGC_APP_VERSION "${QGC_APP_VERSION_CLEAN}")
+    set(QGC_APP_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    set(QGC_APP_VERSION_MINOR "${CMAKE_MATCH_2}")
+    set(QGC_APP_VERSION_PATCH "${CMAKE_MATCH_3}")
+else()
+    # Fallback if version doesn't match expected format
+    message(WARNING "QGC: Could not parse semantic version from Git tag: '${QGC_APP_VERSION_CLEAN}'. Using fallback 0.0.0")
+    set(QGC_APP_VERSION "0.0.0")
+    set(QGC_APP_VERSION_MAJOR "0")
+    set(QGC_APP_VERSION_MINOR "0")
+    set(QGC_APP_VERSION_PATCH "0")
+endif()
+# cmake_print_variables(QGC_APP_VERSION QGC_APP_VERSION_MAJOR QGC_APP_VERSION_MINOR QGC_APP_VERSION_PATCH)
+
+# ----------------------------------------------------------------------------
+# Generate Version Header
+# ----------------------------------------------------------------------------
+configure_file(
+    "${CMAKE_SOURCE_DIR}/src/qgc_version.h.in"
+    "${CMAKE_BINARY_DIR}/qgc_version.h"
+    @ONLY
+)

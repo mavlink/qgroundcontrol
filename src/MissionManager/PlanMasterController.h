@@ -1,16 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MissionController.h"
 #include "GeoFenceController.h"
@@ -18,6 +10,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
+class QGCCompressionJob;
 class QmlObjectListModel;
 class MultiVehicleManager;
 class Vehicle;
@@ -26,9 +19,10 @@ class Vehicle;
 class PlanMasterController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
-    
+
 public:
     PlanMasterController(QObject* parent = nullptr);
 #ifdef QT_DEBUG
@@ -54,6 +48,7 @@ public:
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
+    Q_PROPERTY(bool                     manualCreation          READ manualCreation WRITE setManualCreation NOTIFY manualCreationChanged)   ///< true: User is not using a template to create the plan
 
     /// Should be called immediately upon Component.onCompleted.
     Q_INVOKABLE void start(void);
@@ -78,6 +73,12 @@ public:
     Q_INVOKABLE void loadFromVehicle(void);
     Q_INVOKABLE void sendToVehicle(void);
     Q_INVOKABLE void loadFromFile(const QString& filename);
+
+    /// Load a plan from an archive file (.zip, .tar.gz, etc.)
+    /// Extracts the archive and loads the first .plan file found.
+    /// @param archivePath Path to the archive file
+    Q_INVOKABLE void loadFromArchive(const QString& archivePath);
+
     Q_INVOKABLE void saveToCurrent();
     Q_INVOKABLE void saveToFile(const QString& filename);
     Q_INVOKABLE void saveToKml(const QString& filename);
@@ -99,8 +100,10 @@ public:
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
+    bool        manualCreation  (void) const { return _manualCreation; }
 
     void        setFlyView(bool flyView) { _flyView = flyView; }
+    void        setManualCreation(bool manualCreation);
 
     QJsonDocument saveToJson    ();
 
@@ -114,7 +117,7 @@ public:
     static constexpr const char* kJsonRallyPointsObjectKey =   "rallyPoints";
 
 signals:
-    void containsItemsChanged               (bool containsItems);
+    void containsItemsChanged               ();
     void syncInProgressChanged              (void);
     void dirtyChanged                       (bool dirty);
     void offlineChanged                     (bool offlineEditing);
@@ -122,6 +125,7 @@ signals:
     void planCreatorsChanged                (QmlObjectListModel* planCreators);
     void managerVehicleChanged              (Vehicle* managerVehicle);
     void promptForPlanUsageOnVehicleChange  (void);
+    void manualCreationChanged              ();
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);
@@ -133,6 +137,7 @@ private slots:
     void _sendRallyPointsComplete   (void);
     void _updateOverallDirty        (void);
     void _updatePlanCreatorsList    (void);
+    void _handleExtractionFinished  (bool success);
 
 private:
     void _commonInit                (void);
@@ -154,4 +159,7 @@ private:
     bool                    _deleteWhenSendCompleted =  false;
     bool                    _previousOverallDirty =     false;
     QmlObjectListModel*     _planCreators =             nullptr;
+    bool                    _manualCreation =           false;
+    QGCCompressionJob*      _extractionJob =            nullptr;
+    QString                 _extractionOutputDir;
 };

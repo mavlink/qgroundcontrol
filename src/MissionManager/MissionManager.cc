@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MissionManager.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
@@ -16,16 +7,7 @@
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
 
-#include "CameraCalc.h"
-#include "GeoFenceController.h"
-#include "MissionController.h"
-#include "VisualMissionItem.h"
-#include "RallyPointController.h"
-#include "PlanMasterController.h"
-
-#include <QtQml/qqml.h>
-
-QGC_LOGGING_CATEGORY(MissionManagerLog, "MissionManagerLog")
+QGC_LOGGING_CATEGORY(MissionManagerLog, "PlanManager.MissionManager")
 
 MissionManager::MissionManager(Vehicle* vehicle)
     : PlanManager               (vehicle, MAV_MISSION_TYPE_MISSION)
@@ -37,18 +19,6 @@ MissionManager::MissionManager(Vehicle* vehicle)
 MissionManager::~MissionManager()
 {
 
-}
-
-void MissionManager::registerQmlTypes()
-{
-    qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",              1, 0, "CameraCalc",           "Reference only");
-    qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",  1, 0, "GeoFenceController",   "Reference only");
-    qmlRegisterUncreatableType<MissionController>   ("QGroundControl.Controllers",  1, 0, "MissionController",    "Reference only");
-    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl",              1, 0, "MissionItem",          "Reference only");
-    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",      1, 0, "MissionManager",       "Reference only");
-    qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",  1, 0, "RallyPointController", "Reference only");
-    qmlRegisterUncreatableType<VisualMissionItem>   ("QGroundControl",              1, 0, "VisualMissionItem",    "Reference only");
-    qmlRegisterType<PlanMasterController>           ("QGroundControl.Controllers",  1, 0, "PlanMasterController");
 }
 
 void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly)
@@ -157,8 +127,8 @@ void MissionManager::generateResumeMission(int resumeIndex)
     int prefixCommandCount = 0;
     for (int i=0; i<_missionItems.count(); i++) {
         MissionItem* oldItem = _missionItems[i];
-        const MissionCommandUIInfo* uiInfo = MissionCommandTree::instance()->getUIInfo(_vehicle, _vehicle->vehicleClass(), oldItem->command());
-        if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command()) || (uiInfo && uiInfo->isTakeoffCommand())) {
+        const MissionCommandUIInfo* loopUiInfo = MissionCommandTree::instance()->getUIInfo(_vehicle, _vehicle->vehicleClass(), oldItem->command());
+        if ((i == 0 && addHomePosition) || i >= resumeIndex || includedResumeCommands.contains(oldItem->command()) || (loopUiInfo && loopUiInfo->isTakeoffCommand())) {
             if (i < resumeIndex) {
                 prefixCommandCount++;
             }
@@ -279,14 +249,14 @@ void MissionManager::_updateMissionIndex(int index)
     }
 }
 
-void MissionManager::_handleHighLatency(const mavlink_message_t& message) 
+void MissionManager::_handleHighLatency(const mavlink_message_t& message)
 {
     mavlink_high_latency_t highLatency;
     mavlink_msg_high_latency_decode(&message, &highLatency);
     _updateMissionIndex(highLatency.wp_num);
 }
 
-void MissionManager::_handleHighLatency2(const mavlink_message_t& message) 
+void MissionManager::_handleHighLatency2(const mavlink_message_t& message)
 {
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
@@ -311,4 +281,3 @@ void MissionManager::_handleHeartbeat(const mavlink_message_t& message)
         emit lastCurrentIndexChanged(_lastCurrentIndex);
     }
 }
-

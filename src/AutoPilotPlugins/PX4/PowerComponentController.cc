@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "PowerComponentController.h"
 #include "Vehicle.h"
 
@@ -45,12 +36,14 @@ void PowerComponentController::_stopBusConfig(void)
     _stopCalibration();
 }
 
-void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text)
+void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
 {
+    Q_UNUSED(description);
+
     if (vehicleId != _vehicle->id()) {
         return;
     }
-    
+
     // All calibration messages start with [cal]
     QString calPrefix("[cal] ");
     if (!text.startsWith(calPrefix)) {
@@ -62,17 +55,17 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
     QString calStartPrefix("calibration started: ");
     if (text.startsWith(calStartPrefix)) {
         text = text.right(text.length() - calStartPrefix.length());
-        
+
         // Split version number and cal type
         QStringList parts = text.split(" ");
         if (parts.count() != 2) {
             emit incorrectFirmwareRevReporting();
             return;
         }
-        
+
 #if 0
         // FIXME: Cal version check is not working. Needs to be able to cancel, calibration
-        
+
         int firmwareRev = parts[0].toInt();
         if (firmwareRev < _neededFirmwareRev) {
             emit oldFirmware();
@@ -89,13 +82,13 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
         emit connectBattery();
         return;
     }
-    
+
     if (text == "Battery connected") {
         emit batteryConnected();
         return;
     }
 
-    
+
     QString failedPrefix("calibration failed: ");
     if (text.startsWith(failedPrefix)) {
         QString failureText = text.right(text.length() - failedPrefix.length());
@@ -104,18 +97,18 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
             emit disconnectBattery();
             return;
         }
-        
+
         emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
         return;
     }
-    
+
     QString calCompletePrefix("calibration done:");
     if (text.startsWith(calCompletePrefix)) {
         _stopCalibration();
         emit calibrationSuccess(_warningMessages);
         return;
     }
-    
+
     QString warningPrefix("config warning: ");
     if (text.startsWith(warningPrefix)) {
         _warningMessages << text.right(text.length() - warningPrefix.length());

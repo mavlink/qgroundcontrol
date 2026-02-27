@@ -1,0 +1,117 @@
+name: Coverage Report
+description: Generate and upload code coverage reports
+
+inputs:
+  build-dir:
+    description: Path to CMake build directory
+    required: true
+  mode:
+    description: 'Coverage generation mode (full: run tests + report, report-only: report from existing coverage data)'
+    required: false
+    default: full
+  codecov-token:
+    description: Codecov upload token (optional for public repos)
+    required: false
+    default: ''
+  artifact-name:
+    description: Name for coverage artifact
+    required: false
+    default: coverage-report
+  retention-days:
+    description: Days to retain coverage artifact
+    required: false
+    default: '14'
+  flags:
+    description: Codecov flags (comma-separated)
+    required: false
+    default: unittests
+  pr-number:
+    description: Pull request number to post comment (optional)
+    required: false
+    default: ''
+  baseline-xml:
+    description: Path to baseline coverage XML for comparison (optional)
+    required: false
+    default: ''
+  comment-tag:
+    description: Tag for updating existing PR comment
+    required: false
+    default: coverage-report
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Coverage Report
+      working-directory: ${{ inputs.build-dir }}
+      shell: bash
+      env:
+        INPUT_MODE: ${{ inputs.mode }}
+      run: |
+        case "${INPUT_MODE}" in
+          full) target="coverage" ;;
+          report-only) target="coverage-report" ;;
+          *)
+            echo "::error::Invalid coverage mode '${INPUT_MODE}'. Use 'full' or 'report-only'."
+            exit 1
+            ;;
+        esac
+
+        cmake --build . --target "${target}" 2>&1 | tee coverage-output.txt
+
+        # Extract coverage summary for GitHub Step Summary
+        {
+          echo "## 📊 Code Coverage"
+          echo ""
+          echo "Mode: \`${INPUT_MODE}\`"
+          echo ""
+          if grep -q "lines:" coverage-output.txt; then
+            LINE_COV=$(grep "lines:" coverage-output.txt | tail -1)
+            BRANCH_COV=$(grep "branches:" coverage-output.txt | tail -1 || echo "branches: N/A")
+            echo "| Metric | Coverage |"
+            echo "|--------|----------|"
+            echo "| Lines | ${LINE_COV#*: } |"
+            echo "| Branches | ${BRANCH_COV#*: } |"
+          else
+            echo "Coverage data not available"
+          fi
+          echo ""
+          echo "[View detailed report](coverage.html)"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ${{ inputs.build-dir }}/coverage.xml
+        flags: ${{ inputs.flags }}
+        name: qgc-coverage
+        token: ${{ inputs.codecov-token }}
+        fail_ci_if_error: false
+        verbose: true
+
+    - name: Upload Coverage Artifact
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.build-dir }}/coverage-output.txt
+          ${{ inputs.build-dir }}/coverage.xml
+          ${{ inputs.build-dir }}/coverage.html
+          ${{ inputs.build-dir }}/coverage.*.html
+        retention-days: ${{ inputs.retention-days }}
+
+    - name: Generate PR comment
+      if: inputs.pr-number != ''
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/coverage_comment.py" \
+          --coverage-xml "${{ inputs.build-dir }}/coverage.xml" \
+          --baseline-xml "${{ inputs.baseline-xml }}" \
+          --output coverage-comment.md
+
+    - name: Post PR comment
+      if: inputs.pr-number != ''
+      uses: thollander/actions-comment-pull-request@v3
+      with:
+        pr-number: ${{ inputs.pr-number }}
+        comment-tag: ${{ inputs.comment-tag }}
+        file-path: coverage-comment.md

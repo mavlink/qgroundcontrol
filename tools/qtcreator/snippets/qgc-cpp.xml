@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    QGroundControl C++ Snippets for QtCreator
+
+    Installation:
+    - Linux: ~/.config/QtProject/qtcreator/snippets/
+    - macOS: ~/Library/Application Support/QtProject/qtcreator/snippets/
+    - Windows: %APPDATA%\QtProject\qtcreator\snippets\
+
+    Usage: Type trigger keyword and press Tab
+-->
+<snippets>
+    <!-- Fact System Snippets -->
+
+    <snippet group="C++" trigger="factprop" id="qgc_fact_property">
+        <text><![CDATA[Q_PROPERTY(Fact *$name$ READ $name$ CONSTANT)]]></text>
+        <description>QGC Fact Q_PROPERTY declaration</description>
+    </snippet>
+
+    <snippet group="C++" trigger="factmember" id="qgc_fact_member">
+        <text><![CDATA[Fact _$name$Fact = Fact(0, QStringLiteral("$name$"), FactMetaData::valueType$Type$);]]></text>
+        <description>QGC Fact member variable with initialization</description>
+    </snippet>
+
+    <snippet group="C++" trigger="factaccessor" id="qgc_fact_accessor">
+        <text><![CDATA[Fact *$name$() { return &_$name$Fact; }]]></text>
+        <description>QGC Fact accessor method</description>
+    </snippet>
+
+    <snippet group="C++" trigger="factinit" id="qgc_fact_init">
+        <text><![CDATA[_addFact(&_$name$Fact);
+_$name$Fact.setRawValue(qQNaN());]]></text>
+        <description>QGC Fact initialization in constructor</description>
+    </snippet>
+
+    <snippet group="C++" trigger="factfull" id="qgc_fact_full">
+        <text><![CDATA[// In header - property
+Q_PROPERTY(Fact *$name$ READ $name$ CONSTANT)
+
+// In header - accessor
+Fact *$name$() { return &_$name$Fact; }
+
+// In header - member
+Fact _$name$Fact = Fact(0, QStringLiteral("$name$"), FactMetaData::valueType$Type$);
+
+// In constructor
+_addFact(&_$name$Fact);
+_$name$Fact.setRawValue(qQNaN());]]></text>
+        <description>QGC Complete Fact declaration (all parts)</description>
+    </snippet>
+
+    <!-- MAVLink Handler Snippets -->
+
+    <snippet group="C++" trigger="mavhandle" id="qgc_mavlink_handler">
+        <text><![CDATA[void $ClassName$::_handle$MessageName$(const mavlink_message_t &message)
+{
+    mavlink_$message_lower$_t $msgVar${};
+    mavlink_msg_$message_lower$_decode(&message, &$msgVar$);
+
+    $cursor$
+
+    _setTelemetryAvailable(true);
+}]]></text>
+        <description>QGC MAVLink message handler function</description>
+    </snippet>
+
+    <snippet group="C++" trigger="mavswitch" id="qgc_mavlink_switch">
+        <text><![CDATA[switch (message.msgid) {
+case MAVLINK_MSG_ID_$MESSAGE_NAME$:
+    _handle$MessageName$(message);
+    break;
+default:
+    break;
+}]]></text>
+        <description>QGC MAVLink message switch statement</description>
+    </snippet>
+
+    <snippet group="C++" trigger="mavcase" id="qgc_mavlink_case">
+        <text><![CDATA[case MAVLINK_MSG_ID_$MESSAGE_NAME$:
+    _handle$MessageName$(message);
+    break;]]></text>
+        <description>QGC MAVLink switch case</description>
+    </snippet>
+
+    <snippet group="C++" trigger="mavdecode" id="qgc_mavlink_decode">
+        <text><![CDATA[mavlink_$message_lower$_t $msgVar${};
+mavlink_msg_$message_lower$_decode(&message, &$msgVar$);]]></text>
+        <description>QGC MAVLink message decode</description>
+    </snippet>
+
+    <!-- Vehicle Safety Snippets -->
+
+    <snippet group="C++" trigger="vehiclenull" id="qgc_vehicle_null">
+        <text><![CDATA[Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();
+if (!vehicle) {
+    return$returnValue$;
+}
+$cursor$]]></text>
+        <description>QGC Safe vehicle null check pattern</description>
+    </snippet>
+
+    <snippet group="C++" trigger="vehiclenullv" id="qgc_vehicle_null_void">
+        <text><![CDATA[Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();
+if (!vehicle) {
+    return;
+}
+$cursor$]]></text>
+        <description>QGC Safe vehicle null check (void return)</description>
+    </snippet>
+
+    <snippet group="C++" trigger="paramnull" id="qgc_param_null">
+        <text><![CDATA[Fact *$paramName$ = vehicle->parameterManager()->getParameter(-1, QStringLiteral("$PARAM_NAME$"));
+if (!$paramName$) {
+    qCWarning($LogCategory$) << "Parameter $PARAM_NAME$ not found";
+    return$returnValue$;
+}
+$cursor$]]></text>
+        <description>QGC Safe parameter access with null check</description>
+    </snippet>
+
+    <!-- FactGroup Snippets -->
+
+    <snippet group="C++" trigger="factgroupctor" id="qgc_factgroup_ctor">
+        <text><![CDATA[$ClassName$::$ClassName$(QObject *parent)
+    : FactGroup(1000, QStringLiteral(":/json/Vehicle/$Domain$Fact.json"), parent)
+{
+    $cursor$
+}]]></text>
+        <description>QGC FactGroup constructor</description>
+    </snippet>
+
+    <snippet group="C++" trigger="factgroupprop" id="qgc_factgroup_property">
+        <text><![CDATA[Q_PROPERTY(FactGroup *$name$FactGroup READ $name$FactGroup CONSTANT)]]></text>
+        <description>QGC FactGroup Q_PROPERTY</description>
+    </snippet>
+
+    <snippet group="C++" trigger="handlemsg" id="qgc_handle_message">
+        <text><![CDATA[void $ClassName$::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
+{
+    Q_UNUSED(vehicle);
+
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_$MESSAGE_NAME$:
+        _handle$MessageName$(message);
+        break;
+    default:
+        break;
+    }
+}]]></text>
+        <description>QGC handleMessage override implementation</description>
+    </snippet>
+
+    <!-- Logging Snippets -->
+
+    <snippet group="C++" trigger="qcwarn" id="qgc_log_warning">
+        <text><![CDATA[qCWarning($Category$) << "$message$";]]></text>
+        <description>QGC categorized warning log</description>
+    </snippet>
+
+    <snippet group="C++" trigger="qcdebug" id="qgc_log_debug">
+        <text><![CDATA[qCDebug($Category$) << "$message$";]]></text>
+        <description>QGC categorized debug log</description>
+    </snippet>
+</snippets>

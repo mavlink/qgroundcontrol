@@ -1,13 +1,6 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
+
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "SettingsFact.h"
@@ -15,7 +8,7 @@
 class APMFollowComponentController : public FactPanelController
 {
     Q_OBJECT
-
+    QML_ELEMENT
     Q_PROPERTY(Fact *angle          READ angleFact      CONSTANT)
     Q_PROPERTY(Fact *distance       READ distanceFact   CONSTANT)
     Q_PROPERTY(Fact *height         READ heightFact     CONSTANT)

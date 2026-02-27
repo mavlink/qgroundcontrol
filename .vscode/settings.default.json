@@ -1,0 +1,53 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["**/FactGroups/*Fact.json"],
+      "url": "./tools/schemas/factmetadata.schema.json"
+    }
+  ],
+  "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+  "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.formatting.clangFormatStyle": "file",
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  },
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=never",
+    "--completion-style=detailed",
+    "--function-arg-placeholders=false"
+  ],
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.configureOnOpen": true,
+  "cmake.generator": "Ninja",
+  "cmake.parallelJobs": 0,
+  "editor.formatOnSave": false,
+  "editor.insertSpaces": true,
+  "editor.rulers": [
+    120
+  ],
+  "editor.tabSize": 4,
+  "files.associations": {
+    "*.FactMetaData.json": "json",
+    "*.SettingsGroup.json": "json",
+    "*.qml": "qml",
+    "CMakePresets.json": "jsonc"
+  },
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.watcherExclude": {
+    "**/.cache/**": true,
+    "**/build/**": true
+  },
+  "git.ignoreLimitWarning": true,
+  "python.defaultInterpreterPath": "python3",
+  "qml.format.enabled": true,
+  "search.exclude": {
+    "**/.cache": true,
+    "**/build": true,
+    "**/libs": true
+  }
+}

@@ -1,16 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 
@@ -18,6 +10,7 @@
 class QGCMapCircle : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     QGCMapCircle(QObject* parent = nullptr);

@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: QGroundControl
+version: "5.0"
+message: >-
+  If you use QGroundControl in your research, please cite it using
+  the metadata from this file.
+type: software
+authors:
+  - name: QGroundControl Development Team
+    website: https://qgroundcontrol.com
+repository-code: https://github.com/mavlink/qgroundcontrol
+url: https://qgroundcontrol.com
+abstract: >-
+  QGroundControl is an intuitive and powerful ground control station
+  for UAVs. It provides full flight control and mission planning for
+  any MAVLink-enabled drone, including PX4 and ArduPilot vehicles.
+keywords:
+  - ground-control-station
+  - uav
+  - drone
+  - mavlink
+  - px4
+  - ardupilot
+  - flight-planning
+  - telemetry
+license: Apache-2.0 AND GPL-3.0-only

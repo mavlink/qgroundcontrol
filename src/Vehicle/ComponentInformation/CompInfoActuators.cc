@@ -1,17 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "CompInfoActuators.h"
 #include "Vehicle.h"
 
-CompInfoActuators::CompInfoActuators(uint8_t compId, Vehicle* vehicle, QObject* parent)
-    : CompInfo(COMP_METADATA_TYPE_ACTUATORS, compId, vehicle, parent)
+CompInfoActuators::CompInfoActuators(uint8_t compId_, Vehicle* vehicle_, QObject* parent)
+    : CompInfo(COMP_METADATA_TYPE_ACTUATORS, compId_, vehicle_, parent)
 {
 
 }
@@ -22,4 +13,3 @@ void CompInfoActuators::setJson(const QString& metadataJsonFileName)
         vehicle->setActuatorsMetadata(compId, metadataJsonFileName);
     }
 }
-

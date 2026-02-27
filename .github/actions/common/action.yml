@@ -1,12 +1,26 @@
 name: Common Setup
 description: Common Setup for All Runners
 runs:
-  using: "composite"
+  using: composite
   steps:
-    - uses: lukka/get-cmake@latest
-    - uses: actions/setup-python@v5
+    - name: Free Disk Space
+      if: runner.os == 'Linux'
+      uses: endersonmenezes/free-disk-space@v3
       with:
-        python-version: '>=3.9.x'
+        remove_android: false
+        remove_dotnet: true
+        remove_haskell: true
+        remove_tool_cache: false
+        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+        remove_packages_one_command: true
+        rm_cmd: rmz
 
-    - run: mkdir $RUNNER_TEMP/shadow_build_dir
+    - uses: lukka/get-cmake@v4.2.1
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: Create build directory
       shell: bash
+      run: mkdir -p "$RUNNER_TEMP/build"

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "ESP8266ComponentController.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
@@ -14,7 +5,7 @@
 
 #include <QtNetwork/QHostAddress>
 
-QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "qgc.autopilotplugins.common.esp8266componentcontroller")
+QGC_LOGGING_CATEGORY(ESP8266ComponentControllerLog, "AutoPilotPlugins.ESP8266ComponentController")
 
 #define MAX_RETRIES 5
 
@@ -99,7 +90,7 @@ void ESP8266ComponentController::setWifiSSID(const QString &ssid) const
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string sid = ssid.toStdString();
-    (void) strncpy(tmp, sid.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, sid.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));
@@ -133,7 +124,7 @@ void ESP8266ComponentController::setWifiPassword(const QString &password) const
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string pwd = password.toStdString();
-    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));
@@ -175,7 +166,7 @@ void ESP8266ComponentController::setWifiSSIDSta(const QString &ssid) const
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string sid = ssid.toStdString();
-    (void) strncpy(tmp, sid.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, sid.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));
@@ -217,7 +208,7 @@ void ESP8266ComponentController::setWifiPasswordSta(const QString &password) con
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string pwd = password.toStdString();
-    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));

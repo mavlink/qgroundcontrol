@@ -1,16 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "QGCOptions.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "qgc.api.qgcflyviewoptions");
+QGC_LOGGING_CATEGORY(QGCFlyViewOptionsLog, "API.QGCFlyViewOptions");
 
 QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions *options, QObject *parent)
     : QObject(parent)
@@ -26,7 +17,7 @@ QGCFlyViewOptions::~QGCFlyViewOptions()
 
 /*===========================================================================*/
 
-QGC_LOGGING_CATEGORY(QGCOptionsLog, "qgc.api.qgcoptions");
+QGC_LOGGING_CATEGORY(QGCOptionsLog, "API.QGCOptions");
 
 QGCOptions::QGCOptions(QObject *parent)
     : QObject(parent)

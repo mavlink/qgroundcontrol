@@ -1,0 +1,220 @@
+// This is an example class c++ file which is used to describe the QGroundControl
+// coding style. In general almost everything in here has some coding style meaning.
+// Not all style choices are explained.
+//
+// QGroundControl requires C++20. Use modern C++ features where appropriate.
+
+#include "CodingStyle.h"
+
+#include <QtCore/QDebug>
+#include <QtCore/QFile>
+
+#include <algorithm>
+#include <cmath>
+#include <ranges>
+
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+
+// Note how the Qt headers, System headers, and the QGroundControl headers above are kept in separate groups
+// with blank lines between them. Within each group, headers are sorted alphabetically.
+
+// Use QGC_LOGGING_CATEGORY instead of Q_LOGGING_CATEGORY for runtime log configuration support
+QGC_LOGGING_CATEGORY(CodingStyleLog, "Example.CodingStyle")
+
+CodingStyle::CodingStyle(QObject* parent) : QObject(parent)
+{
+    // Constructor body - use member initializer list above for initialization
+    _commonInit();
+}
+
+CodingStyle::~CodingStyle()
+{
+    // Cleanup code here
+    // Qt parent/child ownership handles most cleanup automatically
+}
+
+void CodingStyle::_commonInit()
+{
+    // Common initialization code
+    qCDebug(CodingStyleLog) << "CodingStyle initialized";
+}
+
+void CodingStyle::setExampleProperty(int value)
+{
+    if (_exampleProperty != value) {
+        _exampleProperty = value;
+        emit examplePropertyChanged(value);  // Always emit signals when properties change
+    }
+}
+
+bool CodingStyle::publicMethod1()
+{
+    // Implementation here
+    return true;
+}
+
+void CodingStyle::performAction(const QString& param)
+{
+    // Defensive coding: validate inputs early
+    if (param.isEmpty()) {
+        qCWarning(CodingStyleLog) << "performAction called with empty parameter";
+        return;
+    }
+
+    // Always null-check pointers before dereferencing
+    if (!_vehicle) {
+        qCWarning(CodingStyleLog) << "No vehicle available";
+        return;
+    }
+
+    qCDebug(CodingStyleLog) << "performAction:" << param;
+}
+
+/// Document non-obvious private methods in the code file.
+void CodingStyle::_privateMethod()
+{
+    // Defensive coding example: validate preconditions and return early on errors
+    if (!_vehicle) {
+        qCWarning(CodingStyleLog) << "Vehicle not set, cannot proceed";
+        return;
+    }
+
+    // Always include braces even for single line if/for/while/etc
+    if (_exampleProperty == 0) {
+        return;
+    }
+
+    // Note the brace placement
+    if (_privateVariable1 == -1) {
+        _privateVariable1 = 42;
+    } else {
+        // Use defensive checks instead of Q_ASSERT in production code
+        // Q_ASSERT is compiled out in release builds
+        if (_privateVariable1 != 42) {
+            qCWarning(CodingStyleLog) << "Unexpected value:" << _privateVariable1;
+        }
+    }
+}
+
+void CodingStyle::_privateSlot()
+{
+    // Example: handling Fact value changes
+    Fact* fact = qobject_cast<Fact*>(sender());
+    if (!fact) {
+        qCWarning(CodingStyleLog) << "Invalid sender in _privateSlot";
+        return;
+    }
+
+    // Use Fact System properly: cookedValue for display, rawValue for storage
+    const QVariant cookedValue = fact->cookedValue();
+    const QVariant rawValue = fact->rawValue();
+
+    qCDebug(CodingStyleLog) << "Fact changed:" << fact->name() << "cooked:" << cookedValue << "raw:" << rawValue;
+
+    // Example switch statement with proper formatting
+    QVariant typedValue;
+    switch (fact->type()) {
+        case FactMetaData::valueTypeInt8:
+        case FactMetaData::valueTypeInt16:
+        case FactMetaData::valueTypeInt32:
+            typedValue.setValue(cookedValue.toInt());
+            break;
+        case FactMetaData::valueTypeUint8:
+        case FactMetaData::valueTypeUint16:
+        case FactMetaData::valueTypeUint32:
+            typedValue.setValue(cookedValue.toUInt());
+            break;
+        case FactMetaData::valueTypeFloat: {
+            // Use braces for local variable scope in case statements
+            const int localScopedVar = 1;
+            Q_UNUSED(localScopedVar);  // OK to use Q_UNUSED for intentionally unused variables
+            typedValue.setValue(cookedValue.toFloat());
+            break;
+        }
+        case FactMetaData::valueTypeDouble:
+            typedValue.setValue(cookedValue.toDouble());
+            break;
+        default:
+            qCWarning(CodingStyleLog) << "Unhandled fact type:" << fact->type();
+            break;
+    }
+}
+
+void CodingStyle::_methodWithManyArguments(QObject* parent, const QString& caption, const QString& dir, int options1,
+                                           int /* options2 */,  // Unused arguments: comment out name but keep type
+                                           int options3)
+{
+    // Do not use Q_UNUSED for method parameters - comment out the parameter name instead
+    // This makes it clear the parameter is intentionally unused
+    // Implementation here...
+}
+
+// =============================================================================
+// C++20 Features Examples
+// =============================================================================
+
+bool CodingStyle::validateInput(std::string_view input) const
+{
+    // C++20: std::string_view avoids allocations for read-only string operations
+    // Use when interfacing with non-Qt code or performance-critical paths
+    if (input.empty()) {
+        return false;
+    }
+
+    // C++20: Use std::ranges algorithms for cleaner code
+    return std::ranges::all_of(input, [](char c) { return std::isalnum(static_cast<unsigned char>(c)) || c == '_'; });
+}
+
+void CodingStyle::processData(std::span<const int> data)
+{
+    // C++20: std::span provides safe, bounds-checked view of contiguous data
+    // Replaces (int* ptr, size_t size) parameter pairs
+    if (data.empty()) {
+        qCDebug(CodingStyleLog) << "No data to process";
+        return;
+    }
+
+    // C++20: Range-based for with init-statement
+    for (int sum = 0; const int value : data) {
+        sum += value;
+        qCDebug(CodingStyleLog) << "Running sum:" << sum;
+    }
+
+    // C++20: Use ranges for transformations
+    // Example: filter and transform in a pipeline
+    auto positiveDoubled =
+        data | std::views::filter([](int n) { return n > 0; }) | std::views::transform([](int n) { return n * 2; });
+
+    for (const int value : positiveDoubled) {
+        qCDebug(CodingStyleLog) << "Positive doubled:" << value;
+    }
+}
+
+// C++20: Use designated initializers for aggregate types (defined in header or locally)
+namespace {
+struct ConfigOptions
+{
+    int timeout = 30;
+    bool enabled = true;
+    int retryCount = 3;
+};
+
+void exampleDesignatedInitializers()
+{
+    // C++20: Designated initializers make struct initialization clear
+    const ConfigOptions config{.timeout = 60, .enabled = true, .retryCount = 5};
+    Q_UNUSED(config);
+}
+
+// C++20: Concepts can constrain template parameters (use sparingly, prefer concrete types)
+template <typename T>
+concept Numeric = std::integral<T> || std::floating_point<T>;
+
+template <Numeric T>
+T clampValue(T value, T min, T max)
+{
+    return std::clamp(value, min, max);
+}
+}  // anonymous namespace

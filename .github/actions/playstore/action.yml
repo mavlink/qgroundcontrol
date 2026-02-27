@@ -1,5 +1,5 @@
 name: Publish Android Build to Play Store
-description: Checks out the QGC repo with all the correct settings
+description: Uploads Android APK to Google Play Store
 inputs:
   artifact:
     description: Build File To Upload
@@ -11,8 +11,8 @@ runs:
   using: "composite"
   steps:
     - name: Deploy to Play Store
-      if: ${{ github.event_name != 'pull_request' && github.ref_name == 'master' }}
-      uses: r0adkll/upload-google-play@v1
+      if: github.event_name != 'pull_request' && (github.ref_name == 'master' || github.ref_type == 'tag')
+      uses: r0adkll/upload-google-play@v1.1.3
       with:
         serviceAccountJsonPlainText: ${{ inputs.service_account_json }}
         packageName: com.mavlink.qgroundcontrol

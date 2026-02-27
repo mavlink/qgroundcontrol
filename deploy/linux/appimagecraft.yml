@@ -8,7 +8,8 @@ build:
   cmake:
     source_dir: src/
     extra_variables:
-     - Qt6_ROOT=/home/runner/work/_temp/Qt/6.8.3/gcc_64
+      # Qt6_ROOT should be set via environment variable from centralized config
+      - Qt6_ROOT=${QT_ROOT_DIR:-/opt/Qt/gcc_64}
   environment:
     BUILD_TYPE: Release
 
@@ -17,7 +18,7 @@ appimage:
     plugins:
       - qt
     raw_environment:
-      QML_SOURCES_PATHS: "\"$PROJECT_ROOT\"/src/qmlcomponents/"
+      QML_SOURCES_PATHS: "\"$PROJECT_ROOT\"/src"
     environment:
-      EXTRA_PLATFORM_PLUGINS: "libqwayland-egl.so;libqwayland-generic.so"
-      EXTRA_QT_PLUGINS: "waylandcompositor"
+      # Qt 6.10+ renamed wayland plugins: libqwayland-egl.so/libqwayland-generic.so -> libqwayland.so
+      EXTRA_PLATFORM_PLUGINS: "libqwayland.so"

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "RallyPointController.h"
 #include "RallyPoint.h"
 #include "Vehicle.h"
@@ -20,14 +11,14 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(RallyPointControllerLog, "RallyPointControllerLog")
+QGC_LOGGING_CATEGORY(RallyPointControllerLog, "PlanManager.RallyPointController")
 
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
     : PlanElementController (masterController, parent)
     , _managerVehicle               (masterController->managerVehicle())
     , _rallyPointManager    (masterController->managerVehicle()->rallyPointManager())
 {
-    connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
+    connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::containsItemsChanged);
 }
 
 RallyPointController::~RallyPointController()
@@ -66,14 +57,8 @@ void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::removeAllComplete,  this, &RallyPointController::_managerRemoveAllComplete);
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
-    //-- RallyPointController::supported() tests both the capability bit AND the protocol version.
     (void) connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, [this](uint64_t capabilityBits) {
         Q_UNUSED(capabilityBits);
-        emit supportedChanged(supported());
-    });
-
-    (void) connect(_managerVehicle, &Vehicle::requestProtocolVersion, this, [this](unsigned version) {
-        Q_UNUSED(version);
         emit supportedChanged(supported());
     });
 
@@ -261,7 +246,7 @@ void RallyPointController::addPoint(QGeoCoordinate point)
 
 bool RallyPointController::supported(void) const
 {
-    return (_managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY) && (_managerVehicle->maxProtoVersion() >= 200);
+    return _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
 }
 
 void RallyPointController::removePoint(QObject* rallyPoint)
@@ -299,11 +284,6 @@ void RallyPointController::_setFirstPointCurrent(void)
 bool RallyPointController::containsItems(void) const
 {
     return _points.count() > 0;
-}
-
-void RallyPointController::_updateContainsItems(void)
-{
-    emit containsItemsChanged(containsItems());
 }
 
 bool RallyPointController::showPlanFromManagerVehicle (void)

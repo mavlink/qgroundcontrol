@@ -1,37 +1,20 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/**
- * @file
- *   @brief Map Tile Cache Data
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
 
-#include "QGCTile.h"
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
+#include "QGCTileCacheTypes.h"
+#include "QGCTile.h"
 
 class QGCMapTask : public QObject
 {
     Q_OBJECT
 
 public:
-    enum TaskType {
+    enum class TaskType {
         taskInit,
         taskCacheTile,
         taskFetchTile,
@@ -75,8 +58,8 @@ class QGCFetchTileSetTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    QGCFetchTileSetTask(QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskFetchTileSets, parent)
+    explicit QGCFetchTileSetTask(QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskFetchTileSets, parent)
     {}
     ~QGCFetchTileSetTask() = default;
 
@@ -97,7 +80,7 @@ class QGCCreateTileSetTask : public QGCMapTask
 
 public:
     explicit QGCCreateTileSetTask(QGCCachedTileSet *tileSet, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskCreateTileSet, parent)
+        : QGCMapTask(TaskType::taskCreateTileSet, parent)
         , m_tileSet(tileSet)
         , m_saved(false)
     {}
@@ -132,7 +115,7 @@ class QGCFetchTileTask : public QGCMapTask
 
 public:
     explicit QGCFetchTileTask(const QString &hash, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskFetchTile, parent)
+        : QGCMapTask(TaskType::taskFetchTile, parent)
         , m_hash(hash)
     {}
     ~QGCFetchTileTask() = default;
@@ -159,7 +142,7 @@ class QGCSaveTileTask : public QGCMapTask
 
 public:
     explicit QGCSaveTileTask(QGCCacheTile *tile, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskCacheTile, parent)
+        : QGCMapTask(TaskType::taskCacheTile, parent)
         , m_tile(tile)
     {}
     ~QGCSaveTileTask()
@@ -167,6 +150,7 @@ public:
         delete m_tile;
     }
 
+    const QGCCacheTile *tile() const { return m_tile; }
     QGCCacheTile *tile() { return m_tile; }
 
 private:
@@ -181,7 +165,7 @@ class QGCGetTileDownloadListTask : public QGCMapTask
 
 public:
     QGCGetTileDownloadListTask(quint64 setID, int count, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskGetTileDownloadList, parent)
+        : QGCMapTask(TaskType::taskGetTileDownloadList, parent)
         , m_setID(setID)
         , m_count(count)
     {}
@@ -211,7 +195,7 @@ class QGCUpdateTileDownloadStateTask : public QGCMapTask
 
 public:
     QGCUpdateTileDownloadStateTask(quint64 setID, QGCTile::TileState state, const QString &hash, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskUpdateTileDownloadState, parent)
+        : QGCMapTask(TaskType::taskUpdateTileDownloadState, parent)
         , m_setID(setID)
         , m_state(state)
         , m_hash(hash)
@@ -236,7 +220,7 @@ class QGCDeleteTileSetTask : public QGCMapTask
 
 public:
     explicit QGCDeleteTileSetTask(quint64 setID, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskDeleteTileSet, parent)
+        : QGCMapTask(TaskType::taskDeleteTileSet, parent)
         , m_setID(setID)
     {}
     ~QGCDeleteTileSetTask() = default;
@@ -263,7 +247,7 @@ class QGCRenameTileSetTask : public QGCMapTask
 
 public:
     QGCRenameTileSetTask(quint64 setID, const QString &newName, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskRenameTileSet, parent)
+        : QGCMapTask(TaskType::taskRenameTileSet, parent)
         , m_setID(setID)
         , m_newName(newName)
     {}
@@ -285,7 +269,7 @@ class QGCPruneCacheTask : public QGCMapTask
 
 public:
     explicit QGCPruneCacheTask(quint64 amount, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskPruneCache, parent)
+        : QGCMapTask(TaskType::taskPruneCache, parent)
         , m_amount(amount)
     {}
     ~QGCPruneCacheTask() = default;
@@ -311,8 +295,8 @@ class QGCResetTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    QGCResetTask(QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskReset, parent)
+    explicit QGCResetTask(QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskReset, parent)
     {}
     ~QGCResetTask() = default;
 
@@ -332,14 +316,14 @@ class QGCExportTileTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    explicit QGCExportTileTask(const QVector<QGCCachedTileSet*> &sets, const QString &path, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskExport, parent)
+    explicit QGCExportTileTask(const QList<TileSetRecord> &sets, const QString &path, QObject *parent = nullptr)
+        : QGCMapTask(TaskType::taskExport, parent)
         , m_sets(sets)
         , m_path(path)
     {}
     ~QGCExportTileTask() = default;
 
-    QVector<QGCCachedTileSet*> sets() const { return m_sets; }
+    const QList<TileSetRecord> &sets() const { return m_sets; }
     QString path() const { return m_path; }
 
     void setExportCompleted()
@@ -357,7 +341,7 @@ signals:
     void actionProgress(int percentage);
 
 private:
-    const QVector<QGCCachedTileSet*> m_sets;
+    const QList<TileSetRecord> m_sets;
     const QString m_path;
 };
 
@@ -369,7 +353,7 @@ class QGCImportTileTask : public QGCMapTask
 
 public:
     QGCImportTileTask(const QString &path, bool replace, QObject *parent = nullptr)
-        : QGCMapTask(QGCMapTask::taskImport, parent)
+        : QGCMapTask(TaskType::taskImport, parent)
         , m_path(path)
         , m_replace(replace)
     {}
@@ -377,6 +361,7 @@ public:
 
     QString path() const { return m_path; }
     bool replace() const { return m_replace; }
+    int progress() const { return m_progress; }
 
     void setImportCompleted()
     {
@@ -385,6 +370,7 @@ public:
 
     void setProgress(int percentage)
     {
+        m_progress = percentage;
         emit actionProgress(percentage);
     }
 
@@ -395,6 +381,7 @@ signals:
 private:
     const QString m_path;
     const bool m_replace = false;
+    int m_progress = 0;
 };
 
 //-----------------------------------------------------------------------------

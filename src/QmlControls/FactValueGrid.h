@@ -1,27 +1,20 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
+
+#include <QtCore/QSettings>
+#include <QtQuick/QQuickItem>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlObjectListModel.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
-
-#include <QtCore/QSettings>
-#include <QtQuick/QQuickItem>
 
 class InstrumentValueData;
 
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT
-
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 public:
     FactValueGrid(QQuickItem *parent = nullptr);
     ~FactValueGrid();

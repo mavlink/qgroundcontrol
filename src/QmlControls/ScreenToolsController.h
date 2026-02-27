@@ -1,16 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/// @file
-///     @author Gus Grubba <gus@auterion.com>
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -23,8 +10,8 @@ Q_DECLARE_LOGGING_CATEGORY(ScreenToolsControllerLog)
 class ScreenToolsController : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // TODO: Q_NAMESPACE
+    QML_ELEMENT
+    QML_SINGLETON
     Q_PROPERTY(bool     isAndroid           READ isAndroid          CONSTANT)
     Q_PROPERTY(bool     isiOS               READ isiOS              CONSTANT)
     Q_PROPERTY(bool     isMobile            READ isMobile           CONSTANT)

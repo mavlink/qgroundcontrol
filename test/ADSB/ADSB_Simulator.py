@@ -1,8 +1,9 @@
 import socket
 import threading
-import numpy as np
-import datetime
 import time
+
+import numpy as np
+
 
 class Aircraft:
     def __init__(self):
@@ -12,18 +13,18 @@ class Aircraft:
         self.lat = np.random.uniform(34.8, 41.8)  # Latitude range for Greece
         self.lon = np.random.uniform(19.8, 29.6)  # Longitude range for Greece
         self.altitude = np.random.randint(0, 40000)
-        self.velocity = np.random.randint(50, 600)  
+        self.velocity = np.random.randint(50, 600)
         self.heading = np.random.randint(0, 360)
         self.verticalRate = np.random.randint(-3000, 3000)  # Vertical rate in feet per minute
         # Generate a valid squawk code as a four-digit octal number ranging from 0000 to 7777.
         # Squawk codes are assigned by ATC and represent a specific aircraft's transponder setting.
-        # We use `np.random.randint(0, 4096)` to generate values from 0 to 4095 (decimal), 
+        # We use `np.random.randint(0, 4096)` to generate values from 0 to 4095 (decimal),
         # and then format it as an octal string with `{value:04o}` to ensure the correct 4-digit format.
         self.squawk = f"{np.random.randint(0, 4096):04o}"
 
     def generate_icao_address(self):
         # Generate a random ICAO address in the format of 6 hexadecimal digits
-        return '{:06X}'.format(np.random.randint(0, 0x1000000))  # Generates a number from 0 to 16777215
+        return f"{np.random.randint(0, 0x1000000):06X}"  # Generates a number from 0 to 16777215
 
     def update(self):
         # Update position to move in a more linear direction
@@ -47,19 +48,16 @@ class Aircraft:
         heading_change = np.random.uniform(-1, 1)  # Slightly adjust heading
         self.heading = (self.heading + heading_change) % 360  # Keep heading in 0-360 range
 
-
     def generate_adsb_message(self):
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-
         # Format message as "MSG,1,..."
         msg_type = np.random.choice([1, 3, 4, 5, 6, 8])
         msg_parts = [
             "MSG",  # Field 1: Message type
-            str(msg_type), # Field 2: Transmission Type
+            str(msg_type),  # Field 2: Transmission Type
             "",  # Index 2 | Field 3: Session ID
             "",  # Index 3 | Field 4: Aircraft ID
             self.icao_address,  # Field 5: HexIdent
-            "",  # Index 4 | Field 6: Flight ID   
+            "",  # Index 4 | Field 6: Flight ID
             "",  # Index 5 | Field 7: Date message generated
             "",  # Index 6 | Field 8: Time message generated
             "",  # Index 7 | Field 9: Date message logged
@@ -90,31 +88,31 @@ class Aircraft:
             msg_parts[21] = "0"  # Field 22: IsOnGround (0 means the aircraft is airborne)
         if msg_type == 4:
             msg_parts[12] = str(int(self.velocity))  # GroundSpeed as an integer
-            msg_parts[13] = str(int(self.heading))   # Track (Heading) as an integer
+            msg_parts[13] = str(int(self.heading))  # Track (Heading) as an integer
             msg_parts[16] = str(self.verticalRate)
-            msg_parts[18] = "0"  
-            msg_parts[19] = "0"  
-            msg_parts[20] = "0"  
+            msg_parts[18] = "0"
+            msg_parts[19] = "0"
+            msg_parts[20] = "0"
             msg_parts[21] = "0"
         if msg_type == 5:
-            msg_parts[11] = str(self.altitude)  
-            msg_parts[18] = "0"  
-            msg_parts[19] = "0"  
-            msg_parts[20] = "0"  
+            msg_parts[11] = str(self.altitude)
+            msg_parts[18] = "0"
+            msg_parts[19] = "0"
+            msg_parts[20] = "0"
             msg_parts[21] = "0"
         if msg_type == 6:
             msg_parts[17] = str(self.squawk)
-            msg_parts[18] = "0"  
-            msg_parts[19] = "0"  
-            msg_parts[20] = "0"  
+            msg_parts[18] = "0"
+            msg_parts[19] = "0"
+            msg_parts[20] = "0"
             msg_parts[21] = "0"
         if msg_type == 8:
             msg_parts[21] = "0"
-                 
 
         # Join the message parts correctly
-        message = ','.join(msg_parts)
+        message = ",".join(msg_parts)
         return message
+
 
 def handle_client(client_socket, aircrafts):
     try:
@@ -122,17 +120,18 @@ def handle_client(client_socket, aircrafts):
             # Update aircraft positions before generating messages
             for aircraft in aircrafts:
                 aircraft.update()
-                
+
             messages = [aircraft.generate_adsb_message() for aircraft in aircrafts]
             for message in messages:
-                client_socket.sendall(message.encode('utf-8') + b'\n')
+                client_socket.sendall(message.encode("utf-8") + b"\n")
             time.sleep(1)  # Simulate a delay between message batches
     except (ConnectionResetError, BrokenPipeError):
         print("Client disconnected.")
     finally:
         client_socket.close()
 
-def start_server(host='0.0.0.0', port=30003):
+
+def start_server(host="0.0.0.0", port=30003):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(5)
@@ -146,6 +145,7 @@ def start_server(host='0.0.0.0', port=30003):
         print(f"Accepted connection from {addr}")
         client_handler = threading.Thread(target=handle_client, args=(client_socket, aircrafts))
         client_handler.start()
+
 
 if __name__ == "__main__":
     start_server()

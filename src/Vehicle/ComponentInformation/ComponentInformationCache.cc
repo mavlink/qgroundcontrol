@@ -1,20 +1,12 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "ComponentInformationCache.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QDirIterator>
 #include <QtCore/QStandardPaths>
 
-QGC_LOGGING_CATEGORY(ComponentInformationCacheLog, "ComponentInformationCacheLog")
+QGC_LOGGING_CATEGORY(ComponentInformationCacheLog, "ComponentInformation.ComponentInformationCache")
 
 ComponentInformationCache::ComponentInformationCache(const QDir& path, int maxNumFiles)
     : _path(path), _maxNumFiles(maxNumFiles)
@@ -87,10 +79,16 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
         return data.fileName();
     }
 
-    // move the file to the cache location
+    // move the file to the cache location (fall back to copy+remove for cross-device)
     if (!fileToCache.rename(data.fileName())) {
-        qCWarning(ComponentInformationCacheLog) << "File rename failed from:to" << fileName << data.fileName();
-        return "";
+        qCDebug(ComponentInformationCacheLog) << "File rename failed from:to" << fileName << data.fileName() << fileToCache.errorString();
+        if (!fileToCache.copy(data.fileName())) {
+            qCWarning(ComponentInformationCacheLog) << "File copy failed from:to" << fileName << data.fileName() << fileToCache.errorString();
+            return "";
+        }
+        if (!fileToCache.remove()) {
+            qCWarning(ComponentInformationCacheLog) << "File remove failed after copy for" << fileToCache.fileName() << fileToCache.errorString();
+        }
     }
 
     // write meta data
@@ -115,11 +113,8 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
 
 void ComponentInformationCache::initializeDirectory()
 {
-    if (!_path.exists()) {
-        QDir d;
-        if (!d.mkpath(_path.path())) {
-            qCWarning(ComponentInformationCacheLog) << "Failed to create dir" << _path.path();
-        }
+    if (!QGCFileHelper::ensureDirectoryExists(_path.path())) {
+        qCWarning(ComponentInformationCacheLog) << "Failed to create dir" << _path.path();
     }
 
     QDir::Filters filters = QDir::Files | QDir::NoDotAndDotDot;

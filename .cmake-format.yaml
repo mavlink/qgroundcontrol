@@ -1,0 +1,277 @@
+# QGroundControl CMake Format Configuration
+# Used by cmake-format for consistent CMake file formatting
+# Install: pip install cmakelang
+# Usage: cmake-format -i CMakeLists.txt
+
+# -----------------------------------------------------------------------------
+# Formatting
+# -----------------------------------------------------------------------------
+format:
+  line_width: 120
+  tab_size: 4
+  use_tabchars: false
+
+  # Indentation
+  max_prefix_chars: 40
+  min_prefix_chars: 4
+
+  # Line wrapping
+  max_subgroups_hwrap: 2
+  max_pargs_hwrap: 6
+  max_rows_cmdline: 2
+
+  # Parentheses
+  dangle_parens: true
+  dangle_align: prefix
+
+  # Spacing
+  separate_ctrl_name_with_space: false
+  separate_fn_name_with_space: false
+  always_wrap: []
+
+  # Case
+  command_case: canonical
+  keyword_case: upper
+
+# -----------------------------------------------------------------------------
+# Parsing - Custom Commands
+# -----------------------------------------------------------------------------
+parse:
+  additional_commands:
+    # -------------------------------------------------------------------------
+    # CPM Package Manager (https://github.com/cpm-cmake/CPM.cmake)
+    # -------------------------------------------------------------------------
+    cpmaddpackage:
+      pargs:
+        nargs: '*'
+        flags: []
+      spelling: CPMAddPackage
+      kwargs: &cpm_kwargs
+        NAME: 1
+        FORCE: 1
+        VERSION: 1
+        GIT_TAG: 1
+        DOWNLOAD_ONLY: 1
+        GITHUB_REPOSITORY: 1
+        GITLAB_REPOSITORY: 1
+        BITBUCKET_REPOSITORY: 1
+        GIT_REPOSITORY: 1
+        SVN_REPOSITORY: 1
+        SVN_REVISION: 1
+        SOURCE_DIR: 1
+        BINARY_DIR: 1
+        DOWNLOAD_COMMAND: 1
+        FIND_PACKAGE_ARGUMENTS: 1
+        NO_CACHE: 1
+        SYSTEM: 1
+        GIT_SHALLOW: 1
+        EXCLUDE_FROM_ALL: 1
+        SOURCE_SUBDIR: 1
+        URL: 1
+        URL_HASH: 1
+        URL_MD5: 1
+        DOWNLOAD_NAME: 1
+        DOWNLOAD_NO_EXTRACT: 1
+        HTTP_USERNAME: 1
+        HTTP_PASSWORD: 1
+        PATCHES: +
+        OPTIONS: +
+
+    cpmfindpackage:
+      pargs:
+        nargs: '*'
+        flags: []
+      spelling: CPMFindPackage
+      kwargs: *cpm_kwargs
+
+    cpmdeclarepackage:
+      pargs:
+        nargs: '*'
+        flags: []
+      spelling: CPMDeclarePackage
+      kwargs: *cpm_kwargs
+
+    cpmgetpackageversion:
+      pargs:
+        nargs: 2
+      spelling: CPMGetPackageVersion
+
+    cpmusepackagelock:
+      pargs:
+        nargs: 1
+      spelling: CPMUsePackageLock
+
+    # -------------------------------------------------------------------------
+    # Qt6 Commands
+    # -------------------------------------------------------------------------
+    qt_add_executable:
+      pargs:
+        nargs: '1+'
+        flags: [WIN32, MACOSX_BUNDLE, MANUAL_FINALIZATION]
+      kwargs:
+        SOURCES: +
+        OUTPUT_DIRECTORY: 1
+
+    qt_add_library:
+      pargs:
+        nargs: '1+'
+        flags: [STATIC, SHARED, MODULE, INTERFACE, MANUAL_FINALIZATION]
+      kwargs:
+        SOURCES: +
+        OUTPUT_DIRECTORY: 1
+
+    qt_add_qml_module:
+      pargs:
+        nargs: 1
+        flags: [STATIC, SHARED, NO_PLUGIN, NO_GENERATE_PLUGIN_SOURCE, NO_CACHEGEN, NO_LINT, NO_RESOURCE_TARGET_PATH]
+      kwargs:
+        URI: 1
+        VERSION: 1
+        CLASS_NAME: 1
+        PLUGIN_TARGET: 1
+        OUTPUT_DIRECTORY: 1
+        RESOURCE_PREFIX: 1
+        IMPORT_PATH: 1
+        TYPEINFO: 1
+        QML_FILES: +
+        SOURCES: +
+        RESOURCES: +
+        IMPORTS: +
+        OPTIONAL_IMPORTS: +
+        DEPENDENCIES: +
+        PAST_MAJOR_VERSIONS: +
+
+    qt_add_resources:
+      pargs:
+        nargs: 2
+        flags: [BIG_RESOURCES]
+      kwargs:
+        PREFIX: 1
+        BASE: 1
+        OUTPUT_TARGETS: 1
+        FILES: +
+
+    qt_add_translations:
+      pargs:
+        nargs: '1+'
+        flags: [IMMEDIATE_CALL]
+      kwargs:
+        TS_FILES: +
+        TS_FILE_BASE: 1
+        TS_FILE_DIR: 1
+        PLURALS_TS_FILE: 1
+        RESOURCE_PREFIX: 1
+        OUTPUT_TARGETS: 1
+        QM_FILES_OUTPUT_VARIABLE: 1
+        SOURCES: +
+        SOURCE_TARGETS: +
+        INCLUDE_DIRECTORIES: +
+        LUPDATE_OPTIONS: +
+        LRELEASE_OPTIONS: +
+
+    qt_standard_project_setup:
+      pargs:
+        nargs: 0
+        flags: [REQUIRES_PERMISSIONS]
+      kwargs:
+        I18N_SOURCE_LANGUAGE: 1
+        I18N_TRANSLATED_LANGUAGES: +
+
+    qt_finalize_executable:
+      pargs:
+        nargs: 1
+
+    qt_finalize_target:
+      pargs:
+        nargs: 1
+
+    qt_policy:
+      pargs:
+        nargs: '1+'
+        flags: [SET, OLD, NEW]
+
+    qt_extract_metatypes:
+      pargs:
+        nargs: 1
+      kwargs:
+        OUTPUT_FILES: 1
+
+    qt_deploy_runtime_dependencies:
+      pargs:
+        nargs: 0
+      kwargs:
+        EXECUTABLE: 1
+        GENERATE_QT_CONF: 1
+        BIN_DIR: 1
+        LIB_DIR: 1
+        PLUGINS_DIR: 1
+        QML_DIR: 1
+
+    # -------------------------------------------------------------------------
+    # Common Third-Party
+    # -------------------------------------------------------------------------
+    fetchcontent_declare:
+      pargs:
+        nargs: 1
+        flags: [SYSTEM, OVERRIDE_FIND_PACKAGE]
+      spelling: FetchContent_Declare
+      kwargs:
+        URL: 1
+        URL_HASH: 1
+        GIT_REPOSITORY: 1
+        GIT_TAG: 1
+        GIT_SHALLOW: 1
+        SOURCE_DIR: 1
+        BINARY_DIR: 1
+        SOURCE_SUBDIR: 1
+        DOWNLOAD_COMMAND: +
+        PATCH_COMMAND: +
+        FIND_PACKAGE_ARGS: +
+
+    fetchcontent_makeavailable:
+      pargs:
+        nargs: '+'
+      spelling: FetchContent_MakeAvailable
+
+    fetchcontent_getproperties:
+      pargs:
+        nargs: 1
+      spelling: FetchContent_GetProperties
+      kwargs:
+        SOURCE_DIR: 1
+        BINARY_DIR: 1
+        POPULATED: 1
+
+# -----------------------------------------------------------------------------
+# Markup (Comments)
+# -----------------------------------------------------------------------------
+markup:
+  enable_markup: false
+  first_comment_is_literal: true
+  literal_comment_pattern: null
+  fence_pattern: '^\s*([`~]{3}[`~]*)(.*)$'
+  ruler_pattern: '^\s*[^\w\s]{3}.*[^\w\s]{3}$'
+  hashruler_min_length: 10
+  canonical_bullet: '*'
+
+# -----------------------------------------------------------------------------
+# Linting
+# -----------------------------------------------------------------------------
+lint:
+  disabled_codes: []
+  function_pattern: '[0-9a-z_]+'
+  macro_pattern: '[0-9A-Z_]+'
+  global_var_pattern: '[A-Z][0-9A-Z_]+'
+  internal_var_pattern: '_[A-Z][0-9A-Z_]+'
+  local_var_pattern: '[a-z][a-z0-9_]+'
+  private_var_pattern: '_[0-9a-z_]+'
+  public_var_pattern: '[A-Z][0-9A-Z_]+'
+  keyword_pattern: '[A-Z][0-9A-Z_]+'
+  max_conditionals_custom_parser: 2
+  min_statement_spacing: 1
+  max_statement_spacing: 2
+  max_returns: 6
+  max_branches: 12
+  max_arguments: 5
+  max_localvars: 15
+  max_statements: 50

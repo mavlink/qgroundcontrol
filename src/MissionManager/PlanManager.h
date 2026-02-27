@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QObject>
@@ -68,10 +59,13 @@ public:
 
     // These values are public so the unit test can set appropriate signal wait times
     // When passively waiting for a mission process, use a longer timeout.
-    static const int _ackTimeoutMilliseconds = 1500;
+    static constexpr int _ackTimeoutMilliseconds = 1500;
     // When actively retrying to request mission items, use a shorter timeout instead.
-    static const int _retryTimeoutMilliseconds = 250;
-    static const int _maxRetryCount = 5;
+    static constexpr int _retryTimeoutMilliseconds = 250;
+    static constexpr int _maxRetryCount = 5;
+
+    /// Ack timeout used in unit tests (much shorter for faster tests)
+    static constexpr int kTestAckTimeoutMs = 50;
 
 signals:
     void newMissionItemsAvailable   (bool removeAllRequested);

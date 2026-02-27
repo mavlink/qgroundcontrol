@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QByteArray>
@@ -17,6 +8,7 @@
 #include <QtCore/QThread>
 
 #include <gps_helper.h>
+#include "Settings/RTKSettings.h"
 
 #include "satellite_info.h"
 #include "sensor_gnss_relative.h"
@@ -42,7 +34,7 @@ public:
     struct rtk_data_s {
         double surveyInAccMeters = 0;
         int surveyInDurationSecs = 0;
-        bool useFixedBaseLoction = false;
+        BaseModeDefinition::Mode useFixedBaseLocation = BaseModeDefinition::Mode::BaseSurveyIn;
         double fixedBaseLatitude = 0.;
         double fixedBaseLongitude = 0.;
         float fixedBaseAltitudeMeters = 0.f;

@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -17,11 +8,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
 import QGroundControl.FlightMap
-import QGroundControl.QGCMapEngineManager
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 FlightMap {
@@ -38,6 +25,7 @@ FlightMap {
     property var    _settings:          _settingsManager ? _settingsManager.offlineMapsSettings : null
     property var    _fmSettings:        _settingsManager ? _settingsManager.flightMapSettings : null
     property var    _appSettings:       _settingsManager.appSettings
+    property Fact   _tiandituFact:      _settingsManager ? _settingsManager.appSettings.tiandituToken : null
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
@@ -83,7 +71,7 @@ FlightMap {
 
     Connections {
         target:                 QGroundControl.mapEngineManager
-        onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
+        onErrorMessageChanged:  errorDialogFactory.open()
     }
 
     function handleChanges() {
@@ -194,7 +182,6 @@ FlightMap {
         anchors.left:           parent.left
         anchors.bottom:         parent.bottom
         mapControl:             _map
-        buttonsOnLeft:          true
     }
 
     //-----------------------------------------------------------------
@@ -333,7 +320,7 @@ FlightMap {
                     QGCButton {
                         text:       qsTr("Delete")
                         width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
-                        onClicked:  deleteConfirmationDialogComponent.createObject(mainWindow).open()
+                        onClicked:  deleteConfirmationDialogFactory.open()
                         enabled:    tileSet ? (tileSet.savedTileSize > 0) : false
                     }
                     QGCButton {
@@ -399,7 +386,6 @@ FlightMap {
                         anchors.left:           parent.left
                         anchors.bottom:         parent.bottom
                         mapControl:             parent
-                        zoomButtonsVisible:     false
                     }
 
                     Rectangle {
@@ -438,7 +424,6 @@ FlightMap {
                         anchors.left:           parent.left
                         anchors.bottom:         parent.bottom
                         mapControl:             parent
-                        zoomButtonsVisible:     false
                     }
 
                     Rectangle {
@@ -722,7 +707,7 @@ FlightMap {
                         }
                     }
                 }
-            } 
+            }
         }
     }
 
@@ -738,6 +723,12 @@ FlightMap {
         visible:            _addNewSetViewObject
     }
 
+    QGCPopupDialogFactory {
+        id: errorDialogFactory
+
+        dialogComponent: errorDialogComponent
+    }
+
     Component {
         id: errorDialogComponent
 
@@ -746,6 +737,12 @@ FlightMap {
             text:       _mapEngineManager.errorMessage
             buttons:    Dialog.Close
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: deleteConfirmationDialogFactory
+
+        dialogComponent: deleteConfirmationDialogComponent
     }
 
     Component {
@@ -765,4 +762,3 @@ FlightMap {
         }
     }
 }
-

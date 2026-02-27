@@ -1,0 +1,132 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "calibrated",
+            "shortDesc": "Joystick calibrated",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "circleCorrection",
+            "shortDesc": "Enable circle correction for joystick input",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "useDeadband",
+            "shortDesc": "Use deadband for joystick input",
+            "type": "bool",
+            "default": true
+        },
+        {
+            "name": "negativeThrust",
+            "shortDesc": "Enable negative thrust (reverse) on throttle axis",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "throttleSmoothing",
+            "shortDesc": "Enable throttle accumulator mode",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "axisFrequencyHz",
+            "shortDesc": "Axis Update Frequency",
+            "type": "double",
+            "default": 25,
+            "units": "Hz",
+            "min": 0.25,
+            "max": 200,
+            "userMin": 0.25,
+            "userMax": 200,
+            "decimalPlaces": 2
+        },
+        {
+            "name": "buttonFrequencyHz",
+            "shortDesc": "Button Repeat Frequency",
+            "type": "double",
+            "default": 5,
+            "units": "Hz",
+            "min": 0.25,
+            "max": 50,
+            "userMin": 0.25,
+            "userMax": 50,
+            "decimalPlaces": 2
+        },
+        {
+            "name": "throttleModeCenterZero",
+            "shortDesc": "Enable center zero throttle mode",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "transmitterMode",
+            "shortDesc": "Transmitter mode (1-4)",
+            "type": "uint32",
+            "default": 2
+        },
+        {
+            "name": "exponentialPct",
+            "shortDesc": "Stick Exponential",
+            "type": "double",
+            "default": 0,
+            "units": "%",
+            "decimalPlaces": 1,
+            "min": 0,
+            "max": 50,
+            "userMin": 0,
+            "userMax": 50
+        },
+        {
+            "name": "enableManualControlAux1",
+            "shortDesc": "Enable manual control for Aux 1",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux2",
+            "shortDesc": "Enable manual control for Aux 2",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux3",
+            "shortDesc": "Enable manual control for Aux 3",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux4",
+            "shortDesc": "Enable manual control for Aux 4",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux5",
+            "shortDesc": "Enable manual control for Aux 5",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlAux6",
+            "shortDesc": "Enable manual control for Aux 6",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlPitchExtension",
+            "shortDesc": "Enable manual control pitch extension",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "enableManualControlRollExtension",
+            "shortDesc": "Enable manual control roll extension",
+            "type": "bool",
+            "default": false
+        }
+    ]
+}

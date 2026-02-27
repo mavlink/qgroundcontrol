@@ -1,0 +1,60 @@
+# Example FactGroup specification for Wind data
+#
+# Usage:
+#   python -m tools.generators.factgroup.cli --spec tools/generators/factgroup/examples/wind.yaml --dry-run
+#
+# This example demonstrates:
+# - Fact definitions with min/max constraints
+# - MAVLink message handlers with field mappings
+# - Scaling factors and transforms
+# - ArduPilot dialect conditional
+
+domain: Wind
+update_rate_ms: 1000
+
+facts:
+  - name: direction
+    type: double
+    units: deg
+    short_desc: Wind Direction
+    decimal_places: 1
+    min: 0
+    max: 360
+
+  - name: speed
+    type: double
+    units: m/s
+    short_desc: Wind Spd
+    decimal_places: 1
+    min: 0
+
+  - name: verticalSpeed
+    type: double
+    units: m/s
+    short_desc: Wind Spd (vert)
+    decimal_places: 1
+
+mavlink_messages:
+  # Simple message - just ID, no field mappings (generates TODO)
+  - WIND_COV
+
+  # Message with scaling factors
+  - id: HIGH_LATENCY2
+    mappings:
+      - fact: direction
+        field: wind_heading
+        scaling: "* 2.0"
+      - fact: speed
+        field: windspeed
+        scaling: "/ 5.0"
+
+  # ArduPilot-specific message with direct field mapping
+  - id: WIND
+    dialect: ardupilot
+    mappings:
+      - fact: direction
+        field: direction
+      - fact: speed
+        field: speed
+      - fact: verticalSpeed
+        field: speed_z

@@ -1,17 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MavlinkAction.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MavlinkActionLog, "qgc.qmlcontrols.mavlinkaction")
+QGC_LOGGING_CATEGORY(MavlinkActionLog, "QMLControls.MavlinkAction")
 
 MavlinkAction::MavlinkAction(QObject *parent)
     : QObject(parent)

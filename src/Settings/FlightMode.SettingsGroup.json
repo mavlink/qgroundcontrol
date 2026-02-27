@@ -80,6 +80,12 @@
     "shortDesc":    "Comma separated list of hidden flight modes for Airship",
     "type":         "string",
     "default":      ""
+},
+{
+    "name":         "requireModeChangeConfirmation",
+    "shortDesc":    "Require confirmation when changing flight modes",
+    "type":         "bool",
+    "default":      true
 }
 ]
 }

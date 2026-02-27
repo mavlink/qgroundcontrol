@@ -1,16 +1,6 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "VideoSettings.h"
 #include "VideoManager.h"
 
-#include <QtQml/QQmlEngine>
 #include <QtCore/QVariantList>
 
 #ifdef QGC_GST_STREAMING
@@ -22,8 +12,6 @@
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
-    qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
-
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
 #if defined(QGC_GST_STREAMING) || defined(QGC_QT_STREAMING)
@@ -43,7 +31,10 @@ DECLARE_SETTINGGROUP(Video, "Video")
     #endif
 #endif
 #ifndef QGC_DISABLE_UVC
-    videoSourceList.append(UVCReceiver::getDeviceNameList());
+    QStringList uvcDevices = UVCReceiver::getDeviceNameList();
+    for (const QString& device : uvcDevices) {
+        videoSourceList.append(device);
+    }
 #endif
     if (videoSourceList.count() == 0) {
         _noVideo = true;

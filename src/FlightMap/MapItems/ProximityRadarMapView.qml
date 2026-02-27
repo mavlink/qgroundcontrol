@@ -1,21 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtLocation
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
 import QGroundControl.Controls
-import QGroundControl.FlightDisplay
+import QGroundControl.FlyView
 
 MapQuickItem {
     id:             _root
@@ -47,9 +36,9 @@ MapQuickItem {
 
     Connections {
         target:             map
-        onWidthChanged:     scaleTimer.restart()
-        onHeightChanged:    scaleTimer.restart()
-        onZoomLevelChanged: scaleTimer.restart()
+        function onWidthChanged() { scaleTimer.restart() }
+        function onHeightChanged() { scaleTimer.restart() }
+        function onZoomLevelChanged() { scaleTimer.restart() }
     }
 
     Timer {
@@ -121,4 +110,3 @@ MapQuickItem {
 
     }
 }
-

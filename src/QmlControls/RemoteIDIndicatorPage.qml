@@ -1,21 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 ToolIndicatorPage {
@@ -29,7 +16,7 @@ ToolIndicatorPage {
     property bool   commsFlag:          _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.commsGood          : false
     property bool   emergencyDeclared:  _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.emergencyDeclared  : false
     property bool   operatorIDFlag:     _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.operatorIDGood     : false
-    
+
     property int    _regionOperation:   QGroundControl.settingsManager.remoteIDSettings.region.value
 
     // Flags visual properties
@@ -142,7 +129,7 @@ ToolIndicatorPage {
                             onClicked:      goToSettings()
                         }
                     }
-                    
+
                     Image {
                         id:                 gpsFlagImage
                         width:              flagsWidth
@@ -340,19 +327,30 @@ ToolIndicatorPage {
                 }
 
                 SettingsGroupLayout {
-                    heading:                qsTr("Self ID")
-                    headingDescription:     qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
+                    heading:            qsTr("Self ID")
                     Layout.fillWidth:       true
-                    Layout.preferredWidth:  textLabelWidth + textFieldWidth
 
-                    FactCheckBoxSlider {
-                        id:                 sendSelfIDSlider
-                        text:               qsTr("Broadcast")
-                        fact:               _fact
-                        visible:            _fact.visible
+                    ColumnLayout {
                         Layout.fillWidth:   true
+                        spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-                        property Fact _fact: remoteIDSettings.sendSelfID
+                        FactCheckBoxSlider {
+                            id:                 sendSelfIDSlider
+                            text:               qsTr("Broadcast")
+                            fact:               _fact
+                            visible:            _fact.visible
+                            Layout.fillWidth:   true
+
+                            property Fact _fact: remoteIDSettings.sendSelfID
+                        }
+
+                        QGCLabel {
+                            text:                   qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            wrapMode:               Text.WordWrap
+                            Layout.preferredWidth:  sendSelfIDSlider.width
+                            visible:                !sendSelfIDSlider._fact.rawValue
+                        }
                     }
 
                     LabelledFactComboBox {

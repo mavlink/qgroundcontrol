@@ -1,26 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/**
- * @file
- *   @brief Map Tile Cache
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
-#include <QtCore/QString>
-#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QObject>
+#include <QtCore/QString>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMapEngineLog)
 
@@ -45,11 +27,12 @@ signals:
 
 private slots:
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
-    void _pruned() { m_prunning = false; }
+    void _pruned() { m_pruning = false; }
 
 private:
     QGCCacheWorker *m_worker = nullptr;
-    bool m_prunning = false;
+    bool m_pruning = false;
+    std::atomic<bool> m_initialized = false;
 };
 
 extern QGCMapEngine *getQGCMapEngine();

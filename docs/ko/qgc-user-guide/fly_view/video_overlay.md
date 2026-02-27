@@ -1,6 +1,6 @@
 # 비디오 오버레이
 
-QGroundControl이 비디오 스트림을 파일에 기록할 때 재생하는 동안 비디오에 원격 측정을 오버레이하는 데 사용할 수 있는 원격 측정 데이터가 포함된 자막 파일도 내보냅니다. 원격 측정 [값 위젯](FlyView.md#values-telemetry)에 표시하기 위해 선택한 원격 측정 값도 오버레이로 내보내집니다. 오버레이 값은 1Hz에서 업데이트됩니다.
+QGroundControl이 비디오 스트림을 파일에 기록할 때 재생하는 동안 비디오에 원격 측정을 오버레이하는 데 사용할 수 있는 원격 측정 데이터가 포함된 자막 파일도 내보냅니다. Whichever telemetry values are selected for display in the telemetry [values widget](fly_view.md#values-telemetry) will also be exported to the overlay. 오버레이 값은 1Hz에서 업데이트됩니다.
 
 ![값 위젯](../../../assets/fly/overlay_widget.png)
 

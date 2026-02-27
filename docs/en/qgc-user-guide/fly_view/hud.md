@@ -39,7 +39,7 @@ The screenshot above shows the main elements of the fly view:
   - Press the element to switch _Video_ and _Map_ to foreground.
   - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
     It also supports directly connected UVC devices.
-    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
+    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md).
   - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
 - **Confirmation Slider:** Context sensitive slider to confirm requested actions. Slide to confirm operation. You can also hold the spacebar to confirm. Press **X** to cancel.
 
@@ -118,7 +118,7 @@ The Vehicle Messages Indicator dropdown shows you messages which come from the v
 
 ![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/gps_indicator.png)
 
-The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings. 
+The GPS Indicator shows you the satellite count and the HDOP in the toolbar icon. The dropdown shows you additional GPS status. The expanded page give you access to RTK settings.
 ### Battery Indicator
 
 ![Vehicle state - ready to fly green/ready background](../../../assets/fly/toolbar/battery_indicator.png)

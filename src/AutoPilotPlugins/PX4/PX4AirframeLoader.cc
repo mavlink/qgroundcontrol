@@ -1,16 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PX4AirframeLoader.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
@@ -24,7 +11,7 @@
 #include <QtCore/QXmlStreamReader>
 #include <QtCore/QSettings>
 
-QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "PX4AirframeLoaderLog")
+QGC_LOGGING_CATEGORY(PX4AirframeLoaderLog, "AutoPilotPlugins.PX4AirframeLoader")
 
 bool PX4AirframeLoader::_airframeMetaDataLoaded = false;
 

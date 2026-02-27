@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -14,10 +5,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 
 Item {
@@ -56,7 +43,7 @@ Item {
         }
         QGCMenuItem {
             text:           qsTr("Reset all to firmware's defaults")
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
+            onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations."),
                                                          Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToDefaults() })
@@ -64,7 +51,7 @@ Item {
         QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
             visible:        !_activeVehicle.apmFirmware
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reset All"),
+            onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults."),
                                                          Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToVehicleConfiguration() })
@@ -93,7 +80,7 @@ Item {
         QGCMenuSeparator { }
         QGCMenuItem {
             text:           qsTr("Reboot Vehicle")
-            onTriggered:    mainWindow.showMessageDialog(qsTr("Reboot Vehicle"),
+            onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reboot Vehicle"),
                                                          qsTr("Select Ok to reboot vehicle."),
                                                          Dialog.Cancel | Dialog.Ok,
                                                          function() { _activeVehicle.rebootVehicle() })
@@ -114,9 +101,15 @@ Item {
         onAcceptedForLoad: (file) => {
             close()
             if (controller.buildDiffFromFile(file)) {
-                parameterDiffDialog.createObject(mainWindow).open()
+                parameterDiffDialogFactory.open()
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: editorDialogFactory
+
+        dialogComponent: editorDialogComponent
     }
 
     Component {
@@ -126,6 +119,12 @@ Item {
             fact:           _editorDialogFact
             showRCToParam:  _showRCToParam
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: parameterDiffDialogFactory
+
+        dialogComponent: parameterDiffDialog
     }
 
     Component {
@@ -310,7 +309,7 @@ Item {
                 anchors.fill: parent
                 onClicked: mouse => {
                     _editorDialogFact = fact
-                    editorDialogComponent.createObject(mainWindow).open()
+                    editorDialogFactory.open()
                 }
             }
         }

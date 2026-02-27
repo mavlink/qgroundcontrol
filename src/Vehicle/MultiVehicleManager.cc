@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MultiVehicleManager.h"
 #include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
@@ -19,11 +10,7 @@
 #include "LinkManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "Autotune.h"
 #include "LinkInterface.h"
-#include "RemoteIDManager.h"
-#include "VehicleObjectAvoidance.h"
-#include "TrajectoryPoints.h"
 #include "QmlObjectListModel.h"
 #ifdef Q_OS_IOS
 #include "MobileScreenMgr.h"
@@ -32,11 +19,10 @@
 #endif
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
-#include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "qgc.vehicle.multivehiclemanager")
+QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "Vehicle.MultiVehicleManager")
 
 Q_APPLICATION_STATIC(MultiVehicleManager, _multiVehicleManagerInstance);
 
@@ -46,29 +32,19 @@ MultiVehicleManager::MultiVehicleManager(QObject *parent)
     , _vehicles(new QmlObjectListModel(this))
     , _selectedVehicles(new QmlObjectListModel(this))
 {
-    // qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(MultiVehicleManagerLog) << this;
+
+    (void) qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 }
 
 MultiVehicleManager::~MultiVehicleManager()
 {
-    // qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(MultiVehicleManagerLog) << this;
 }
 
 MultiVehicleManager *MultiVehicleManager::instance()
 {
     return _multiVehicleManagerInstance();
-}
-
-void MultiVehicleManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<MultiVehicleManager>      ("QGroundControl.MultiVehicleManager",  1, 0, "MultiVehicleManager",    "Reference only");
-    (void) qmlRegisterUncreatableType<Vehicle>                  ("QGroundControl.Vehicle",              1, 0, "Vehicle",                "Reference only");
-    (void) qmlRegisterUncreatableType<VehicleLinkManager>       ("QGroundControl.Vehicle",              1, 0, "VehicleLinkManager",     "Reference only");
-    (void) qmlRegisterUncreatableType<Autotune>                 ("QGroundControl.Vehicle",              1, 0, "Autotune",               "Reference only");
-    (void) qmlRegisterUncreatableType<RemoteIDManager>          ("QGroundControl.Vehicle",              1, 0, "RemoteIDManager",        "Reference only");
-    (void) qmlRegisterUncreatableType<TrajectoryPoints>         ("QGroundControl.FlightMap",            1, 0, "TrajectoryPoints",       "Reference only");
-    (void) qmlRegisterUncreatableType<VehicleObjectAvoidance>   ("QGroundControl.Vehicle",              1, 0, "VehicleObjectAvoidance", "Reference only");
-    (void) qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("MavCmdResultFailureCode_t");
 }
 
 void MultiVehicleManager::init()
@@ -142,7 +118,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 
     Vehicle *const vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, this);
-    (void) connect(vehicle, &Vehicle::requestProtocolVersion, this, &MultiVehicleManager::_requestProtocolVersion);
     (void) connect(vehicle->vehicleLinkManager(), &VehicleLinkManager::allLinksRemoved, this, &MultiVehicleManager::_deleteVehiclePhase1);
     (void) connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 
@@ -173,26 +148,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 #endif
 }
 
-void MultiVehicleManager::_requestProtocolVersion(unsigned version) const
-{
-    if (_vehicles->count() == 0) {
-        MAVLinkProtocol::instance()->setVersion(version);
-        return;
-    }
-
-    unsigned maxversion = 0;
-    for (int i = 0; i < _vehicles->count(); i++) {
-        const Vehicle *const vehicle = qobject_cast<const Vehicle*>(_vehicles->get(i));
-        if (vehicle && (vehicle->maxProtoVersion() > maxversion)) {
-            maxversion = vehicle->maxProtoVersion();
-        }
-    }
-
-    if (MAVLinkProtocol::instance()->getCurrentVersion() != maxversion) {
-        MAVLinkProtocol::instance()->setVersion(maxversion);
-    }
-}
-
 void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
@@ -216,7 +171,6 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
     _setActiveVehicleAvailable(false);
     _setParameterReadyVehicleAvailable(false);
     emit vehicleRemoved(vehicle);
-    vehicle->prepareDelete();
 
 #if defined(Q_OS_ANDROID) || defined (Q_OS_IOS)
     if (_vehicles->count() == 0) {
@@ -319,7 +273,7 @@ void MultiVehicleManager::_sendGCSHeartbeat()
     }
 
     const QList<SharedLinkInterfacePtr> sharedLinks = LinkManager::instance()->links();
-    for (const SharedLinkInterfacePtr link: sharedLinks) {
+    for (const SharedLinkInterfacePtr &link: sharedLinks) {
         if (!link->isConnected()) {
             continue;
         }

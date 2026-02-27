@@ -1,16 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "GPSRTKFactGroup.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "qgc.gps.gpsrtkfactgroup")
+QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "GPS.GPSRTKFactGroup")
 
 GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSRTKFact.json"), parent)

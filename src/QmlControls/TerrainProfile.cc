@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "TerrainProfile.h"
 #include "MissionController.h"
 #include "QmlObjectListModel.h"
@@ -17,7 +8,7 @@
 
 #include <QtQuick/QSGFlatColorMaterial>
 
-QGC_LOGGING_CATEGORY(TerrainProfileLog, "TerrainProfileLog")
+QGC_LOGGING_CATEGORY(TerrainProfileLog, "Terrain.TerrainProfile")
 
 TerrainProfile::TerrainProfile(QQuickItem* parent)
     : QQuickItem(parent)

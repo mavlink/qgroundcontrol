@@ -1,0 +1,122 @@
+name: Detect Changes
+description: Detect source, test, and CI changes for a platform
+
+inputs:
+  platform:
+    description: "Platform (linux, windows, macos, android, ios)"
+    required: true
+
+outputs:
+  any:
+    description: "Any relevant files changed"
+    value: ${{ steps.check.outputs.any }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check for changes
+      id: check
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+        PUSH_BEFORE_SHA: ${{ github.event.before || '' }}
+        MERGE_BASE_SHA: ${{ github.event.merge_group.base_sha || '' }}
+        CURRENT_SHA: ${{ github.sha }}
+        INPUT_PLATFORM: ${{ inputs.platform }}
+      run: |
+        set -euo pipefail
+
+        platform="${INPUT_PLATFORM}"
+        changed=""
+
+        # Ensure a specific commit object exists locally. With shallow checkouts
+        # we fetch only the SHAs needed for diff calculation.
+        ensure_commit() {
+          local sha="$1"
+          [[ -z "${sha}" ]] && return 0
+          if ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "${sha}" >/dev/null 2>&1 || true
+          fi
+          git cat-file -e "${sha}^{commit}" 2>/dev/null
+        }
+
+        force_all_true() {
+          echo "::warning::Unable to compute changed files reliably; forcing build for safety."
+          echo "any=true" >> "${GITHUB_OUTPUT}"
+          exit 0
+        }
+
+        if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+          base_sha="${PR_BASE_SHA}"
+          head_sha="${PR_HEAD_SHA}"
+
+          ensure_commit "${base_sha}" || force_all_true
+          ensure_commit "${head_sha}" || force_all_true
+
+          changed="$(git diff --name-only "${base_sha}" "${head_sha}" 2>/dev/null)" || force_all_true
+        elif [[ "${EVENT_NAME}" == "push" ]]; then
+          before_sha="${PUSH_BEFORE_SHA}"
+          if [[ -n "${before_sha}" && "${before_sha}" != "0000000000000000000000000000000000000000" ]]; then
+            ensure_commit "${before_sha}" || force_all_true
+            ensure_commit "${CURRENT_SHA}" || force_all_true
+            changed="$(git diff --name-only "${before_sha}" "${CURRENT_SHA}" 2>/dev/null)" || force_all_true
+          else
+            changed="$(git diff-tree --no-commit-id --name-only -r "${CURRENT_SHA}")"
+          fi
+        elif [[ "${EVENT_NAME}" == "merge_group" && -n "${MERGE_BASE_SHA}" ]]; then
+          ensure_commit "${MERGE_BASE_SHA}" || force_all_true
+          ensure_commit "${CURRENT_SHA}" || force_all_true
+          changed="$(git diff --name-only "${MERGE_BASE_SHA}" "${CURRENT_SHA}" 2>/dev/null)" || force_all_true
+        else
+          changed="$(git diff-tree --no-commit-id --name-only -r "${CURRENT_SHA}")"
+        fi
+
+        echo "Changed files:"
+        echo "${changed}"
+
+        relevant_patterns=(
+          "^src/"
+          "^CMakeLists.txt$"
+          "^cmake/"
+          "^libs/"
+          "^translations/"
+          "^deploy/${platform}/"
+          "^test/"
+          "^\\.github/workflows/${platform}\\.yml$"
+          "^\\.github/actions/"
+          "^\\.github/scripts/"
+          "^\\.github/build-config\\.json$"
+        )
+
+        case "${platform}" in
+          android) relevant_patterns+=("^android/") ;;
+        esac
+
+        case "${platform}" in
+          linux)   relevant_patterns+=("^tools/setup/.*debian" "^tools/setup/install_dependencies\\.py$") ;;
+          windows) relevant_patterns+=("^tools/setup/.*windows") ;;
+          macos)   relevant_patterns+=("^tools/setup/.*macos") ;;
+          android) relevant_patterns+=("^tools/setup/") ;;
+          ios)     relevant_patterns+=("^tools/setup/.*ios" "^tools/setup/.*macos") ;;
+        esac
+
+        any_changed="false"
+
+        while IFS= read -r file; do
+          [[ -z "${file}" ]] && continue
+
+          for pattern in "${relevant_patterns[@]}"; do
+            if [[ "${file}" =~ ${pattern} ]]; then
+              any_changed="true"
+              break
+            fi
+          done
+
+          [[ "${any_changed}" == "true" ]] && break
+        done <<< "${changed}"
+
+        echo "any=${any_changed}" >> "${GITHUB_OUTPUT}"
+
+        echo "Results: any=${any_changed}"

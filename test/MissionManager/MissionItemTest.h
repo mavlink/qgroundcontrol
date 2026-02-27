@@ -1,49 +1,32 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/MissionTest.h"
 
 class MissionItem;
-class PlanMasterController;
 
 /// Unit test for the MissionItem Object
-class MissionItemTest : public UnitTest
+class MissionItemTest : public OfflineMissionTest
 {
     Q_OBJECT
-    
-public:
-    MissionItemTest(void);
-    
-    void init(void) override;
-    void cleanup(void) override;
 
 private slots:
-    void _testSetGet(void);
-    void _testSignals(void);
-    void _testFactSignals(void);
-    void _testLoadFromStream(void);
-    void _testSimpleLoadFromStream(void);
-    void _testLoadFromJsonV1(void);
-    void _testLoadFromJsonV2(void);
-    void _testLoadFromJsonV3(void);
-    void _testLoadFromJsonV3NaN(void);
-    void _testSimpleLoadFromJson(void);
-    void _testSaveToJson(void);
+    void _testSetGet();
+    void _testSignals();
+    void _testFactSignals();
+    void _testLoadFromStream();
+    void _testSimpleLoadFromStream();
+    void _testLoadFromJsonV1();
+    void _testLoadFromJsonV2();
+    void _testLoadFromJsonV3();
+    void _testLoadFromJsonV3NaN();
+    void _testSimpleLoadFromJson();
+    void _testSaveToJson();
 
 private:
     void _checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs = false) const;
-    QJsonObject _createV1Json(void);
-    QJsonObject _createV2Json(void);
+    QJsonObject _createV1Json();
+    QJsonObject _createV2Json();
     QJsonObject _createV3Json(bool allNaNs = false);
 
-    int                     _seq = 10;
-    PlanMasterController*   _masterController = nullptr;
+    int _seq = 10;
 };

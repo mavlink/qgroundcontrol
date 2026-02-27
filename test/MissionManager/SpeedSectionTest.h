@@ -1,15 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
+#include "MultiSignalSpy.h"
 #include "SectionTest.h"
+
+#include <memory>
 
 class SpeedSection;
 
@@ -17,38 +11,24 @@ class SpeedSection;
 class SpeedSectionTest : public SectionTest
 {
     Q_OBJECT
-    
-public:
-    SpeedSectionTest(void);
 
-    void init(void) override;
-    void cleanup(void) override;
+public:
+    void init() override;
+    void cleanup() override;
 
 private slots:
-    void _testDirty                         (void);
-    void _testSettingsAvailable             (void);
-    void _checkAvailable                    (void);
-    void _testItemCount                     (void);
-    void _testAppendSectionItems            (void);
-    void _testScanForSection                (void);
-    void _testSpecifiedFlightSpeedChanged   (void);
+    void _testDirty();
+    void _testSettingsAvailable();
+    void _checkAvailable();
+    void _testItemCount();
+    void _testAppendSectionItems();
+    void _testScanForSection();
+    void _testSpecifiedFlightSpeedChanged();
 
 private:
     void _createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy);
 
-    enum {
-        specifyFlightSpeedChangedIndex = 0,
-        maxSignalIndex,
-    };
-
-    enum {
-        specifyFlightSpeedChangedMask = 1 << specifyFlightSpeedChangedIndex
-    };
-
-    static const size_t cSpeedSignals = maxSignalIndex;
-    const char*         rgSpeedSignals[cSpeedSignals];
-
-    MultiSignalSpy* _spySpeed;
-    MultiSignalSpy* _spySection;
-    SpeedSection*   _speedSection;
+    std::unique_ptr<MultiSignalSpy> _spySpeed;
+    std::unique_ptr<MultiSignalSpy> _spySection;
+    SpeedSection* _speedSection = nullptr;
 };

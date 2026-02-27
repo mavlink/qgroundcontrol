@@ -1,0 +1,24 @@
+name: "QGroundControl CodeQL Config"
+
+paths:
+  - src
+
+paths-ignore:
+  - '**/moc_*'
+  - '**/qrc_*'
+  - '**/ui_*'
+  - '**/*_autogen/**'
+  - '**/libs/**'
+  - '**/3rdparty/**'
+  - '**/build/**'
+
+queries:
+  - uses: security-extended
+
+query-filters:
+  - exclude:
+      # Excluded due to frequent false positives with Qt/moc-heavy call patterns.
+      # Re-evaluate before enabling if CodeQL signal quality improves.
+      id: cpp/mistyped-function-arguments
+
+trap-caching: true

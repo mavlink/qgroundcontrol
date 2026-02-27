@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "FactGroup.h"
@@ -32,6 +23,7 @@ class VehicleEFIFactGroup : public FactGroup
     Q_PROPERTY(Fact *throttleOut    READ throttleOut    CONSTANT)
     Q_PROPERTY(Fact *ptComp         READ ptComp         CONSTANT)
     Q_PROPERTY(Fact *ignVoltage     READ ignVoltage     CONSTANT)
+    Q_PROPERTY(Fact *fuelPressure   READ fuelPressure   CONSTANT)
 
 public:
     explicit VehicleEFIFactGroup(QObject *parent = nullptr);
@@ -54,6 +46,7 @@ public:
     Fact *throttleOut() { return &_throttleOutFact; }
     Fact *ptComp() { return &_ptCompFact; }
     Fact *ignVoltage() { return &_ignVoltageFact; }
+    Fact *fuelPressure() { return &_fuelPressureFact; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
@@ -79,4 +72,5 @@ private:
     Fact _throttleOutFact = Fact(0, QStringLiteral("throttleOut"), FactMetaData::valueTypeFloat);
     Fact _ptCompFact = Fact(0, QStringLiteral("ptComp"), FactMetaData::valueTypeFloat);
     Fact _ignVoltageFact = Fact(0, QStringLiteral("ignVoltage"), FactMetaData::valueTypeFloat);
+    Fact _fuelPressureFact = Fact(0, QStringLiteral("fuelPressure"), FactMetaData::valueTypeFloat);
 };

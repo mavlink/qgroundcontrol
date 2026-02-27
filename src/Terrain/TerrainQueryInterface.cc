@@ -1,44 +1,36 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "TerrainQueryInterface.h"
 #include "TerrainTileManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkProxy>
 #include <QtPositioning/QGeoCoordinate>
 
-QGC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "qgc.terrain.terrainqueryinterface")
+#include "QGCNetworkHelper.h"
+
+QGC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "Terrain.TerrainQueryInterface")
 
 TerrainQueryInterface::TerrainQueryInterface(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
 TerrainQueryInterface::~TerrainQueryInterface()
 {
-    // qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
 void TerrainQueryInterface::requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates)
 {
     Q_UNUSED(coordinates);
-    qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "Not Supported";
+    qCWarning(TerrainQueryInterfaceLog) << "Not Supported";
 }
 
 void TerrainQueryInterface::requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
 {
     Q_UNUSED(fromCoord);
     Q_UNUSED(toCoord);
-    qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "Not Supported";
+    qCWarning(TerrainQueryInterfaceLog) << "Not Supported";
 }
 
 void TerrainQueryInterface::requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly)
@@ -46,7 +38,7 @@ void TerrainQueryInterface::requestCarpetHeights(const QGeoCoordinate &swCoord, 
     Q_UNUSED(swCoord);
     Q_UNUSED(neCoord);
     Q_UNUSED(statsOnly);
-    qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "Not Supported";
+    qCWarning(TerrainQueryInterfaceLog) << "Not Supported";
 }
 
 void TerrainQueryInterface::signalCoordinateHeights(bool success, const QList<double> &heights)
@@ -77,7 +69,7 @@ void TerrainQueryInterface::_requestFailed()
         emit carpetHeightsReceived(false, qQNaN(), qQNaN(), QList<QList<double>>());
         break;
     default:
-        qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "Query Mode Not Supported";
+        qCWarning(TerrainQueryInterfaceLog) << "Query Mode Not Supported";
         break;
     }
 }
@@ -87,12 +79,12 @@ void TerrainQueryInterface::_requestFailed()
 TerrainOfflineQuery::TerrainOfflineQuery(QObject *parent)
     : TerrainQueryInterface(parent)
 {
-    // qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
 TerrainOfflineQuery::~TerrainOfflineQuery()
 {
-    // qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
 void TerrainOfflineQuery::requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates)
@@ -111,54 +103,59 @@ void TerrainOfflineQuery::requestPathHeights(const QGeoCoordinate &fromCoord, co
     TerrainTileManager::instance()->addPathQuery(this, fromCoord, toCoord);
 }
 
+void TerrainOfflineQuery::requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly)
+{
+    _queryMode = TerrainQuery::QueryModeCarpet;
+    TerrainTileManager::instance()->addCarpetQuery(this, swCoord, neCoord, statsOnly);
+}
+
 /*===========================================================================*/
 
 TerrainOnlineQuery::TerrainOnlineQuery(QObject *parent)
     : TerrainQueryInterface(parent)
     , _networkManager(new QNetworkAccessManager(this))
 {
-    // qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryInterfaceLog) << this;
 
     qCDebug(TerrainQueryInterfaceLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    QNetworkProxy proxy = _networkManager->proxy();
-    proxy.setType(QNetworkProxy::DefaultProxy);
-    _networkManager->setProxy(proxy);
-#endif
+    QGCNetworkHelper::configureProxy(_networkManager);
 }
 
 TerrainOnlineQuery::~TerrainOnlineQuery()
 {
-    // qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << this;
+    qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
 void TerrainOnlineQuery::_requestFinished()
 {
     QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
     if (!reply) {
-        qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "null reply";
+        qCWarning(TerrainQueryInterfaceLog) << "null reply";
         return;
     }
 
     if (reply->error() != QNetworkReply::NoError) {
-        qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "error:url:data" << reply->error() << reply->url() << reply->readAll();
+        qCWarning(TerrainQueryInterfaceLog) << "error:url:data" << reply->error() << reply->url() << reply->readAll();
         reply->deleteLater();
         _requestFailed();
         return;
     }
 
-    const QByteArray responseBytes = reply->readAll();
     reply->deleteLater();
 
-    qCDebug(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "success";
+    qCDebug(TerrainQueryInterfaceLog) << "success (base class handler - response not processed)";
 }
 
 void TerrainOnlineQuery::_requestError(QNetworkReply::NetworkError code)
 {
     if (code != QNetworkReply::NoError) {
         QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
-        qCWarning(TerrainQueryInterfaceLog) << Q_FUNC_INFO << "error:url:data" << reply->error() << reply->url() << reply->readAll();
+        if (!reply) {
+            qCWarning(TerrainQueryInterfaceLog) << "error:" << code << "(null reply)";
+            return;
+        }
+        qCWarning(TerrainQueryInterfaceLog) << "error:url:data" << reply->error() << reply->url() << reply->readAll();
     }
 }
 

@@ -1,16 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
@@ -26,6 +18,8 @@ class Vehicle;
 class GeoFenceController : public PlanElementController
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QGCFencePolygon.h")
     Q_MOC_INCLUDE("QGCFenceCircle.h")
 
@@ -52,7 +46,7 @@ public:
     Q_INVOKABLE void addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     /// Deletes the specified polygon from the polygon list
-    ///     @param index: Index of poygon to delete
+    ///     @param index: Index of polygon to delete
     Q_INVOKABLE void deletePolygon(int index);
 
     /// Deletes the specified circle from the circle list
@@ -61,10 +55,6 @@ public:
 
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
-
-#ifdef QGC_UTM_ADAPTER
-    Q_INVOKABLE void loadFlightPlanData(void);
-#endif
 
     double  paramCircularFence  (void);
     Fact*   breachReturnAltitude(void) { return &_breachReturnAltitudeFact; }
@@ -97,18 +87,12 @@ signals:
     void loadComplete                   (void);
     void paramCircularFenceChanged      (void);
 
-#ifdef QGC_UTM_ADAPTER
-    void uploadFlagSent         (bool flag);
-    void polygonBoundarySent    (QList<QGeoCoordinate> coords);
-#endif
-
 private slots:
     void _polygonDirtyChanged       (bool dirty);
     void _setDirty                  (void);
     void _setFenceFromManager       (const QList<QGCFencePolygon>& polygons, const QList<QGCFenceCircle>&  circles);
     void _setReturnPointFromManager (QGeoCoordinate breachReturnPoint);
     void _managerLoadComplete       (void);
-    void _updateContainsItems       (void);
     void _managerSendComplete       (bool error);
     void _managerRemoveAllComplete  (bool error);
     void _parametersReady           (void);

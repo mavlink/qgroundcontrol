@@ -1,39 +1,110 @@
-name: cleanup-branch-caches
+name: Cache Cleanup
+
 on:
-  pull_request_target:
-    types:
-      - closed
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to clean (leave empty for all branches)'
+        required: false
+        type: string
+      dry-run:
+        description: 'List caches without deleting'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
 
 jobs:
   cleanup:
+    name: Cleanup Caches
     runs-on: ubuntu-latest
-    permissions:
-      # `actions:write` permission is required to delete caches
-      #   See also: https://docs.github.com/en/rest/actions/cache?apiVersion=2022-11-28#delete-a-github-actions-cache-for-a-repository-using-a-cache-id
-      actions: write
-      contents: read
+    timeout-minutes: 30
+
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Cleanup
+      - name: Install gh-actions-cache
         run: |
-          gh extension install actions/gh-actions-cache
-
-          REPO="${{ github.repository }}"
-          BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
-
-          echo "Fetching list of cache key"
-          cacheKeysForPR=$(gh actions-cache list -R "$REPO" -B "$BRANCH" | cut -f 1 )
-
-          # set this to not fail the workflow while deleting cache keys
-          set +e
-          echo "Deleting caches..."
-          for cacheKey in $cacheKeysForPR
-          do
-            gh actions-cache delete "$cacheKey" -R "$REPO" -B "$BRANCH" --confirm
-          done
-          echo "Done"
+          if ! gh extension list | awk '{print $1}' | grep -qx 'actions/gh-actions-cache'; then
+            gh extension install actions/gh-actions-cache
+          fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+
+      - name: List caches
+        id: list
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          echo "## Cache Summary" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -n "$INPUT_BRANCH" ]]; then
+            echo "Branch filter: \`$INPUT_BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+            CACHES=$(gh actions-cache list -R "$GH_REPO" -B "$INPUT_BRANCH" --order desc --limit 100)
+          else
+            CACHES=$(gh actions-cache list -R "$GH_REPO" --order desc --limit 100)
+          fi
+
+          if [[ -z "$CACHES" ]]; then
+            echo "No caches found" >> "$GITHUB_STEP_SUMMARY"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COUNT=$(echo "$CACHES" | wc -l)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          # shellcheck disable=SC2129
+          {
+            echo ""
+            echo "| Key | Size | Branch |"
+            echo "|-----|------|--------|"
+            echo "$CACHES" | while read -r KEY SIZE BRANCH; do
+              echo "| \`${KEY:0:50}\` | $SIZE | $BRANCH |"
+            done
+            echo ""
+            echo "**Total: $COUNT caches**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Delete caches
+        if: inputs['dry-run'] == false && steps.list.outputs.count != '0'
+        env:
+          INPUT_BRANCH: ${{ inputs.branch }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Deletion Results" >> "$GITHUB_STEP_SUMMARY"
+
+          BRANCH_ARGS=()
+          if [[ -n "$INPUT_BRANCH" ]]; then
+            KEYS=$(gh actions-cache list -R "$GH_REPO" -B "$INPUT_BRANCH" --limit 100 | cut -f1)
+            BRANCH_ARGS=(-B "$INPUT_BRANCH")
+          else
+            KEYS=$(gh actions-cache list -R "$GH_REPO" --limit 100 | cut -f1)
+          fi
+
+          DELETED=0
+          FAILED=0
+
+          while IFS= read -r KEY; do
+            [[ -z "$KEY" ]] && continue
+            if gh actions-cache delete "$KEY" -R "$GH_REPO" "${BRANCH_ARGS[@]}" --confirm 2>/dev/null; then
+              ((DELETED++))
+            else
+              ((FAILED++))
+            fi
+          done <<< "$KEYS"
+
+          echo "Deleted: $DELETED" >> "$GITHUB_STEP_SUMMARY"
+          if [[ $FAILED -gt 0 ]]; then
+            echo "Failed: $FAILED" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Dry run notice
+        if: inputs['dry-run'] == true
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> **Dry run** - no caches were deleted. Uncheck 'dry-run' to delete." >> "$GITHUB_STEP_SUMMARY"

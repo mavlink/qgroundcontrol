@@ -1,19 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
+import QGroundControl
+import QGroundControl.Controls
 import QGroundControl.FactControls
 
 /// Controt that allows the user to select from a list of controls to display.
@@ -28,7 +18,7 @@ Control {
     bottomPadding:  0
     leftPadding:    0
     rightPadding:   0
-    
+
     property Fact selectedControl               ///< Fact which has enumStrings/Values where values are the qml file for the control
     property bool selectionUIRightAnchor: false
     property var  innerControl:           loader.item

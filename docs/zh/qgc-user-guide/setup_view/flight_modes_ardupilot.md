@@ -6,7 +6,7 @@ _飞行模式_ 部分允许您配置由遥控发射器上特定 开关 / 扳机�
 In order to set up flight modes you must already have
 
 > - [配置您的无线电](../setup_view/radio.md)以设置飞行模式。
-> - [设置遥控发射机](../setup_view/FlightModes.md#transmitter-setup) (飞行模式 > 发射器设置)> ::
+> - [Setup the RC transmitter](flight_modes.md#transmitter-setup) (Flight Modes > Transmitter Setup)> :::
 
 若要访问本部分，请在顶部工具栏中选择**齿轮** 图标(载具设置)，然后在侧边栏中选择**飞行模式**。
 

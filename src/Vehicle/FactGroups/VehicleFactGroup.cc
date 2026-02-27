@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "VehicleFactGroup.h"
 #include "Vehicle.h"
 #include "QGC.h"
@@ -42,12 +33,14 @@ VehicleFactGroup::VehicleFactGroup(QObject *parent)
     _addFact(&_headingToNextWPFact);
     _addFact(&_distanceToNextWPFact);
     _addFact(&_headingToHomeFact);
+    _addFact(&_headingFromHomeFact);
+    _addFact(&_headingFromGCSFact);
     _addFact(&_distanceToGCSFact);
     _addFact(&_hobbsFact);
     _addFact(&_throttlePctFact);
     _addFact(&_imuTempFact);
 
-    _hobbsFact.setRawValue(QStringLiteral("0000:00:00"));
+    _hobbsFact.setRawValue(QStringLiteral("––––:––:––"));
 }
 
 void VehicleFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)

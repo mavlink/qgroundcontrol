@@ -1,24 +1,16 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QObject>
 #include <QtQml/QQmlListProperty>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class ToolStripActionList : public QObject
 {
     Q_OBJECT
-    
+    QML_ELEMENT
 public:
-    ToolStripActionList(QObject* parent = nullptr);
-    
+    explicit ToolStripActionList(QObject* parent = nullptr);
+
     Q_PROPERTY(QQmlListProperty<QObject> model READ model NOTIFY modelChanged)
 
     QQmlListProperty<QObject> model();

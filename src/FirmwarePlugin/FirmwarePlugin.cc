@@ -1,13 +1,4 @@
-  /****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-#include "FirmwarePlugin.h"
+  #include "FirmwarePlugin.h"
 #include "AutoPilotPlugin.h"
 #include "Autotune.h"
 #include "GenericAutoPilotPlugin.h"
@@ -16,28 +7,25 @@
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
-#include "RadioComponentController.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginLog, "qgc.firmwareplugin.firmwareplugin")
+QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePlugin.FirmwarePlugin")
 
 static const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 FirmwarePlugin::FirmwarePlugin(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterType<RadioComponentController>("QGroundControl.Controllers", 1, 0, "RadioComponentController");
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 FirmwarePlugin::~FirmwarePlugin()
 {
-    // qCDebug(FirmwarePluginLog) << Q_FUNC_INFO << this;
+    qCDebug(FirmwarePluginLog) << this;
 }
 
 AutoPilotPlugin *FirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
@@ -177,7 +165,7 @@ void FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, do
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const
+void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &/*headingCoord*/) const
 {
     Q_UNUSED(vehicle);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
@@ -206,34 +194,24 @@ const QVariantList &FirmwarePlugin::toolIndicators(const Vehicle*)
     //-- Default list of indicators for all vehicles.
     if (_toolIndicatorList.isEmpty()) {
         _toolIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/VehicleGPSIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GPSResilienceIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/TelemetryRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RemoteIDIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GimbalIndicator.qml")),
-// ControlIndicator is only available in debug builds for the moment
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/EscIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/JoystickIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
 #ifdef QT_DEBUG
+            // ControlIndicator is only available in debug builds for the moment
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GCSControlIndicator.qml")),
 #endif
         });
     }
 
     return _toolIndicatorList;
-}
-
-const QVariantList &FirmwarePlugin::modeIndicators(const Vehicle*)
-{
-    //-- Default list of indicators for all vehicles.
-    if (_modeIndicatorList.isEmpty()) {
-        _modeIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/LinkIndicator.qml")),
-        });
-    }
-
-    return _modeIndicatorList;
 }
 
 bool FirmwarePlugin::_armVehicleAndValidate(Vehicle *vehicle) const
@@ -328,17 +306,17 @@ void FirmwarePlugin::checkIfIsLatestStable(Vehicle *vehicle) const
 
     const QString versionFile = _getLatestVersionFileUrl(vehicle);
     qCDebug(FirmwarePluginLog) << "Downloading" << versionFile;
-    QGCFileDownload *const downloader = new QGCFileDownload(nullptr);
-    (void) connect(downloader, &QGCFileDownload::downloadComplete, this, [vehicle, this](const QString &remoteFile, const QString &localFile, const QString &errorMsg) {
-        if (errorMsg.isEmpty()) {
-            _versionFileDownloadFinished(remoteFile, localFile, vehicle);
-        } else {
+    QGCFileDownload *const downloader = new QGCFileDownload(vehicle);
+    (void) connect(downloader, &QGCFileDownload::finished, this, [vehicle, this, versionFile](bool success, const QString &localFile, const QString &errorMsg) {
+        if (success) {
+            _versionFileDownloadFinished(versionFile, localFile, vehicle);
+        } else if (!errorMsg.isEmpty()) {
             qCDebug(FirmwarePluginLog) << "Failed to download the latest fw version file. Error:" << errorMsg;
         }
         sender()->deleteLater();
     });
 
-    if (!downloader->download(versionFile)) {
+    if (!downloader->start(versionFile)) {
         downloader->deleteLater();
     }
 }

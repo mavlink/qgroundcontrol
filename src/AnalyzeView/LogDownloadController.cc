@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "LogDownloadController.h"
 #include "AppSettings.h"
 #include "LogEntry.h"
@@ -19,19 +10,17 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-#include <QtCore/qapplicationstatic.h>
+#include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "qgc.analyzeview.logdownloadcontroller")
-
-Q_APPLICATION_STATIC(LogDownloadController, _logDownloadControllerInstance);
+QGC_LOGGING_CATEGORY(LogDownloadControllerLog, "AnalyzeView.LogDownloadController")
 
 LogDownloadController::LogDownloadController(QObject *parent)
     : QObject(parent)
     , _timer(new QTimer(this))
     , _logEntriesModel(new QmlObjectListModel(this))
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogDownloadControllerLog) << this;
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &LogDownloadController::_setActiveVehicle);
     (void) connect(_timer, &QTimer::timeout, this, &LogDownloadController::_processDownload);
@@ -43,12 +32,7 @@ LogDownloadController::LogDownloadController(QObject *parent)
 
 LogDownloadController::~LogDownloadController()
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
-}
-
-LogDownloadController *LogDownloadController::instance()
-{
-    return _logDownloadControllerInstance();
+    qCDebug(LogDownloadControllerLog) << this;
 }
 
 void LogDownloadController::download(const QString &path)
@@ -338,19 +322,32 @@ void LogDownloadController::_findMissingData()
 
 void LogDownloadController::_updateDataRate()
 {
-    if (_downloadData->elapsed.elapsed() < kGUIRateMs) {
+    constexpr uint kSizeUpdateThreshold = 102400; // 0.1 MB
+    const bool timeThresholdMet = _downloadData->elapsed.elapsed() >= kGUIRateMs;
+    const bool sizeThresholdMet = (_downloadData->written - _downloadData->last_status_written) >= kSizeUpdateThreshold;
+
+    if (!timeThresholdMet && !sizeThresholdMet) {
         return;
     }
 
-    const qreal rate = _downloadData->rate_bytes / (_downloadData->elapsed.elapsed() / 1000.0);
-    _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
-    _downloadData->rate_bytes = 0;
+    QString status;
+    if (timeThresholdMet) {
+        // Update both rate and size
+        const qreal rate = _downloadData->rate_bytes / (_downloadData->elapsed.elapsed() / 1000.0);
+        _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
+        _downloadData->rate_bytes = 0;
 
-    const QString status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
-                                                           qgcApp()->bigSizeToString(_downloadData->rate_avg));
+        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
+                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
+        _downloadData->elapsed.start();
+    } else {
+        // Update size only, keep previous rate
+        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
+                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
+    }
 
     _downloadData->entry->setStatus(status);
-    _downloadData->elapsed.start();
+    _downloadData->last_status_written = _downloadData->written;
 }
 
 bool LogDownloadController::_chunkComplete() const
@@ -645,4 +642,36 @@ void LogDownloadController::_setListing(bool active)
         _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(!active);
         emit requestingListChanged();
     }
+}
+
+void LogDownloadController::setCompressLogs(bool compress)
+{
+    if (_compressLogs != compress) {
+        _compressLogs = compress;
+        emit compressLogsChanged();
+    }
+}
+
+bool LogDownloadController::compressLogFile(const QString &logPath)
+{
+    Q_UNUSED(logPath)
+    qCWarning(LogDownloadControllerLog) << "Log compression not yet implemented (decompression-only API)";
+    return false;
+}
+
+void LogDownloadController::cancelCompression()
+{
+    // Not implemented - compression API is decompression-only
+}
+
+void LogDownloadController::_handleCompressionProgress(qreal progress)
+{
+    Q_UNUSED(progress)
+    // Not implemented - compression API is decompression-only
+}
+
+void LogDownloadController::_handleCompressionFinished(bool success)
+{
+    Q_UNUSED(success)
+    // Not implemented - compression API is decompression-only
 }

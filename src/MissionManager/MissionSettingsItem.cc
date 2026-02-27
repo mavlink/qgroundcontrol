@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MissionSettingsItem.h"
 #include "PlanMasterController.h"
 #include "MissionItem.h"
@@ -16,7 +7,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "MissionSettingsItemLog")
+QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "Plan.MissionSettingsItem")
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 

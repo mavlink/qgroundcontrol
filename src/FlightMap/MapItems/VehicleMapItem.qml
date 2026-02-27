@@ -1,20 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Effects
 import QtLocation
 import QtPositioning
 
 import QGroundControl
-import QGroundControl.ScreenTools
-import QGroundControl.Vehicle
 import QGroundControl.Controls
 
 /// Marker for displaying a vehicle location on the map
@@ -56,10 +45,10 @@ MapQuickItem {
             blurMax: 32
             blurMultiplier: .1
         }
-            
+
         Repeater {
-            model: vehicle ? vehicle.gimbalController.gimbals : [] 
-            
+            model: vehicle ? vehicle.gimbalController.gimbals : []
+
             Item {
                 id:                           canvasItem
                 anchors.centerIn:             vehicleItem

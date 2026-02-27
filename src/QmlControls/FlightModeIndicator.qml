@@ -1,61 +1,66 @@
-/****************************************************************************
- *
- * (c) 2009-2022 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
-import QGroundControl.AutoPilotPlugin
 
-RowLayout {
-    id:         control
-    spacing:    0
+Item {
+    id:                     control
+    Layout.preferredWidth:  mainLayout.width
 
     property bool   showIndicator:          true
-    property var    expandedPageComponent
-    property bool   waitForParameters:      false
+    property bool   waitForParameters:      true   // UI won't show until parameters are ready
 
     property real fontPointSize:    ScreenTools.largeFontPointSize
     property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
     property bool allowEditMode:    true
     property bool editMode:         false
 
+    property bool _isVTOL:          activeVehicle ? activeVehicle.vtol : false
+    property bool _vtolInFWDFlight: activeVehicle ? activeVehicle.vtolInFwdFlight : false
+    property var  _vehicleInAir:    activeVehicle ? activeVehicle.flying || activeVehicle.landing : false
+
+    QGCPalette { id: qgcPal }
+
     RowLayout {
-        Layout.fillWidth: true
+        id:                     mainLayout
+        anchors.verticalCenter: parent.verticalCenter
+        spacing:                ScreenTools.defaultFontPixelWidth / 2
 
         QGCColoredImage {
-            id:         flightModeIcon
-            width:      ScreenTools.defaultFontPixelWidth * 3
-            height:     ScreenTools.defaultFontPixelHeight
-            fillMode:   Image.PreserveAspectFit
-            mipmap:     true
-            color:      qgcPal.text
-            source:     "/qmlimages/FlightModesComponentIcon.png"
+            id:                     flightModeIcon
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 3
+            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight
+            fillMode:               Image.PreserveAspectFit
+            mipmap:                 true
+            color:                  qgcPal.windowTransparentText
+            source:                 "/qmlimages/FlightModesComponentIcon.png"
         }
 
         QGCLabel {
+            id:                 flightModeLabel
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
+            color:              qgcPal.windowTransparentText
             font.pointSize:     fontPointSize
-            Layout.alignment:   Qt.AlignCenter
 
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
-            }
         }
+
+        QGCLabel {
+            id:                     vtolModeLabel
+            Layout.alignment:       Qt.AlignVCenter
+            horizontalAlignment:    Text.AlignHCenter
+            text:                   _vtolInFWDFlight ? qsTr("FW\nVTOL") : qsTr("MR\nVTOL")
+            font.pointSize:         ScreenTools.smallFontPointSize
+            wrapMode:               Text.WordWrap
+            visible:                _isVTOL
+        }
+    }
+
+    MouseArea {
+        anchors.fill:   mainLayout
+        onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
     }
 
     Component {
@@ -86,7 +91,7 @@ RowLayout {
             property var    activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
             property var    flightModeSettings:       QGroundControl.settingsManager.flightModeSettings
             property var    hiddenFlightModesFact:    null
-            property var    hiddenFlightModesList:    [] 
+            property var    hiddenFlightModesList:    []
 
             Component.onCompleted: {
                 // Hidden flight modes are classified by firmware and vehicle class
@@ -115,7 +120,7 @@ RowLayout {
 
             Connections {
                 target: control
-                onEditModeChanged: {
+                function onEditModeChanged() {
                     if (editMode) {
                         for (var i=0; i<modeRepeater.count; i++) {
                             var button      = modeRepeater.itemAt(i).children[0]
@@ -127,6 +132,18 @@ RowLayout {
                 }
             }
 
+            QGCDelayButton {
+                id:                 vtolTransitionButton
+                Layout.fillWidth:   true
+                text:               _vtolInFWDFlight ? qsTr("Transition to Multi-Rotor") : qsTr("Transition to Fixed Wing")
+                visible:            _isVTOL && _vehicleInAir
+
+                onActivated: {
+                    _activeVehicle.vtolInFwdFlight = !_vtolInFWDFlight
+                    mainWindow.closeIndicatorDrawer()
+                }
+            }
+
             Repeater {
                 id:     modeRepeater
                 model:  activeVehicle ? activeVehicle.flightModes : []
@@ -135,12 +152,13 @@ RowLayout {
                     spacing: ScreenTools.defaultFontPixelWidth
                     visible: editMode || !hiddenFlightModesList.find(item => { return item === modelData } )
 
-                    QGCButton {
+                    QGCDelayButton {
                         id:                 modeButton
                         text:               modelData
+                        delay:              flightModeSettings.requireModeChangeConfirmation.rawValue ? defaultDelay : 0
                         Layout.fillWidth:   true
 
-                        onClicked: {
+                        onActivated: {
                             if (editMode) {
                                 parent.children[1].toggle()
                                 parent.children[1].clicked()
@@ -193,15 +211,23 @@ RowLayout {
             Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 60
             spacing:                margins / 2
 
-            property var  qgcPal:   QGroundControl.globalPalette
-            property real margins:  ScreenTools.defaultFontPixelHeight
+            property var  qgcPal:               QGroundControl.globalPalette
+            property real margins:              ScreenTools.defaultFontPixelHeight
+            property var  flightModeSettings:   QGroundControl.settingsManager.flightModeSettings
 
             Loader {
-                sourceComponent: expandedPageComponent
+                Layout.fillWidth:   true
+                source:             _activeVehicle.expandedToolbarIndicatorSource("FlightMode")
             }
 
             SettingsGroupLayout {
                 Layout.fillWidth:  true
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Click and Hold to Confirm Mode Change")
+                    fact:               flightModeSettings.requireModeChangeConfirmation
+                }
 
                 RowLayout {
                     Layout.fillWidth:   true

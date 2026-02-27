@@ -1,3 +1,8 @@
+# ============================================================================
+# MAVLink Module
+# MAVLink protocol implementation and communication handling
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         ImageProtocolManager.cc
@@ -19,25 +24,20 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-#===========================================================================#
+# ============================================================================
+# MAVLink Protocol Library Integration
+# ============================================================================
 
-message(STATUS "Building MAVLink")
-
-# TODO:
-# CPMAddPackage(
-#     NAME mavlink
-#     GITHUB_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
-#     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
-#     OPTIONS
-#         "MAVLINK_DIALECT all"
-#         "MAVLINK_VERSION 2.0"
-# )
+message(STATUS "QGC: Building MAVLink")
 
 if(NOT USE_SYSTEM_MAVLINK)
 CPMAddPackage(
     NAME mavlink
     GIT_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
+    OPTIONS
+        "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
+        "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
 )
 else()
 set(mavlink_SOURCE_DIR /usr/include/c_library_v2)
@@ -67,4 +67,7 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 #   target_compile_options(comm PRIVATE -Wno-address-of-packed-member)
 # endif()
 
+# ----------------------------------------------------------------------------
+# LibEvents - MAVLink event handling
+# ----------------------------------------------------------------------------
 add_subdirectory(LibEvents)

@@ -8,7 +8,7 @@ The tuning UI also supports manual tuning of all controllers.
 ![Tuning Setup > Autotune](../../../assets/setup/tuning/px4_autotune_hero.png)
 
 ::: info
-During [Airframe Setup](../config/airframe.md) you should have selected the frame that most closely matches your vehicle.
+During [Airframe Setup](airframe.md) you should have selected the frame that most closely matches your vehicle.
 This will usually be tuned well enough to fly, and it _may_ also be sufficiently well tuned to run autotuning.
 :::
 

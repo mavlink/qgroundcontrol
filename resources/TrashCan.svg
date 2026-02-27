@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-labelledby="title" role="img">
+  <title>Trash Can Icon</title>
+  <g fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Lid with rounded corners -->
+    <path d="M12 16 H52 Q56 16 56 20 V24 H8 V20 Q8 16 12 16 Z" />
+    <!-- Handle on top of lid -->
+    <path d="M24 8 Q32 2 40 8" />
+    <!-- Body -->
+    <rect x="12" y="24" width="40" height="36" rx="4" ry="4" />
+    <!-- Vertical ribs -->
+    <path d="M22 28 V56" />
+    <path d="M32 28 V56" />
+    <path d="M42 28 V56" />
+  </g>
+</svg>

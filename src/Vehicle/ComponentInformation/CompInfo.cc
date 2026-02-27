@@ -1,19 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "CompInfo.h"
 
-CompInfo::CompInfo(COMP_METADATA_TYPE type, uint8_t compId, Vehicle* vehicle, QObject* parent)
+CompInfo::CompInfo(COMP_METADATA_TYPE type_, uint8_t compId_, Vehicle* vehicle_, QObject* parent)
     : QObject   (parent)
-    , type      (type)
-    , vehicle   (vehicle)
-    , compId    (compId)
+    , type      (type_)
+    , vehicle   (vehicle_)
+    , compId    (compId_)
 {
 
 }

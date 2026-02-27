@@ -1,21 +1,19 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "QGCVideoStreamInfo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(QGCVideoStreamInfoLog, "qgc.camera.qgcvideostreaminfo")
+QGC_LOGGING_CATEGORY(QGCVideoStreamInfoLog, "Camera.QGCVideoStreamInfo")
 
 QGCVideoStreamInfo::QGCVideoStreamInfo(const mavlink_video_stream_information_t &info, QObject *parent)
     : QObject(parent)
 {
+    qCDebug(QGCVideoStreamInfoLog) << this;
+
     (void) memcpy(&_streamInfo, &info, sizeof(mavlink_video_stream_information_t));
+}
+
+QGCVideoStreamInfo::~QGCVideoStreamInfo()
+{
+
 }
 
 qreal QGCVideoStreamInfo::aspectRatio() const

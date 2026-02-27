@@ -1,20 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
 
 // Used as the base class control for nboth VehicleGPSIndicator and RTKGPSIndicator
 
@@ -26,6 +14,8 @@ Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _rtkConnected:  QGroundControl.gpsRtk.connected.value
+
+    QGCPalette { id: qgcPal }
 
     Row {
         id:             gpsIndicatorRow
@@ -42,7 +32,7 @@ Item {
                 id:                     gpsLabel
                 rotation:               90
                 text:                   qsTr("RTK")
-                color:                  qgcPal.buttonText
+                color:                  qgcPal.windowTransparentText
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                _rtkConnected
             }
@@ -56,7 +46,7 @@ Item {
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
                 opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
-                color:              qgcPal.buttonText
+                color:              qgcPal.windowTransparentText
             }
         }
 
@@ -68,13 +58,13 @@ Item {
 
             QGCLabel {
                 anchors.horizontalCenter:   hdopValue.horizontalCenter
-                color:              qgcPal.buttonText
+                color:              qgcPal.windowTransparentText
                 text:               _activeVehicle ? _activeVehicle.gps.count.valueString : ""
             }
 
             QGCLabel {
                 id:     hdopValue
-                color:  qgcPal.buttonText
+                color:  qgcPal.windowTransparentText
                 text:   _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
             }
         }

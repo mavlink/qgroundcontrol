@@ -1,0 +1,69 @@
+name: Build Config
+description: Read build toolchain versions from .github/build-config.json
+
+outputs:
+  qt_version:
+    description: Qt version
+    value: ${{ steps.read.outputs.qt_version }}
+  qt_modules:
+    description: Qt modules (desktop)
+    value: ${{ steps.read.outputs.qt_modules }}
+  qt_modules_ios:
+    description: Qt modules (iOS, excludes qtserialport/qtscxml)
+    value: ${{ steps.read.outputs.qt_modules_ios }}
+  gstreamer_version:
+    description: GStreamer version (generic/minimum)
+    value: ${{ steps.read.outputs.gstreamer_version }}
+  gstreamer_macos_version:
+    description: GStreamer version (macOS)
+    value: ${{ steps.read.outputs.gstreamer_macos_version }}
+  gstreamer_android_version:
+    description: GStreamer version (Android)
+    value: ${{ steps.read.outputs.gstreamer_android_version }}
+  gstreamer_windows_version:
+    description: GStreamer version (Windows)
+    value: ${{ steps.read.outputs.gstreamer_windows_version }}
+  ndk_full_version:
+    description: Android NDK version (full form for sdkmanager)
+    value: ${{ steps.read.outputs.ndk_full_version }}
+  java_version:
+    description: Java version
+    value: ${{ steps.read.outputs.java_version }}
+  android_platform:
+    description: Android platform/API level
+    value: ${{ steps.read.outputs.android_platform }}
+  android_build_tools:
+    description: Android build tools version
+    value: ${{ steps.read.outputs.android_build_tools }}
+  android_cmdline_tools:
+    description: Android command line tools version
+    value: ${{ steps.read.outputs.android_cmdline_tools }}
+  xcode_version:
+    description: Xcode version (macOS)
+    value: ${{ steps.read.outputs.xcode_version }}
+  xcode_ios_version:
+    description: Xcode version (iOS)
+    value: ${{ steps.read.outputs.xcode_ios_version }}
+  macos_deployment_target:
+    description: macOS deployment target version
+    value: ${{ steps.read.outputs.macos_deployment_target }}
+  ios_deployment_target:
+    description: iOS deployment target version
+    value: ${{ steps.read.outputs.ios_deployment_target }}
+
+runs:
+  using: composite
+  steps:
+    - name: Read build config
+      id: read
+      shell: bash
+      run: |
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        elif command -v python >/dev/null 2>&1; then
+          py_cmd="python"
+        else
+          echo "Error: Python interpreter not found in PATH" >&2
+          exit 1
+        fi
+        "${py_cmd}" ./tools/setup/read_config.py --github-output

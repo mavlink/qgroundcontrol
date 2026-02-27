@@ -1,17 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 // ToolIndicatorPage
 //      The base control for all Toolbar Indicator drop down pages. It supports a normal and expanded view.
@@ -22,6 +13,7 @@ RowLayout {
 
     property bool       showExpand:         false   // Controls whether the expand widget is shown or not
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
+    property bool       expandedComponentWaitForParameters: false   // If true, the expanded component won't show until parameters are ready
     property Component  contentComponent            // Item for the normal view portion of the page
     property Component  expandedComponent           // Item for the expanded portion of the page
     property var        pageProperties              // Allows you to share a QtObject full of properties between pages
@@ -33,7 +25,8 @@ RowLayout {
     property var    activeVehicle:      QGroundControl.multiVehicleManager.vehicle
     property bool   parametersReady:    QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
 
-    property bool _loadPages: !waitForParameters || parametersReady
+    property bool _showMainComponent: !waitForParameters || parametersReady
+    property bool _showExpand: showExpand && expandedComponent !== undefined && (!expandedComponentWaitForParameters || parametersReady)
 
     QGCLabel {
         text:       qsTr("Waiting for parameters...")
@@ -43,7 +36,7 @@ RowLayout {
     Loader {
         id:                 contentItemLoader
         Layout.alignment:   Qt.AlignTop
-        sourceComponent:    _loadPages ? contentComponent : undefined
+        sourceComponent:    _showMainComponent ? contentComponent : undefined
 
         property var pageProperties: control.pageProperties
     }
@@ -55,7 +48,7 @@ RowLayout {
         color:                  QGroundControl.globalPalette.groupBorder
         visible:                expanded
     }
-    
+
     Loader {
         id:                     expandedItemLoader
         Layout.alignment:       Qt.AlignTop

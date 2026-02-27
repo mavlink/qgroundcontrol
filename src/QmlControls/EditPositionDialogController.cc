@@ -1,19 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "EditPositionDialogController.h"
 #include "QGCGeo.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "qgc.qmlcontrols.editpositiondialogcontroller")
+QGC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "QMLControls.EditPositionDialogController")
 
 QMap<QString, FactMetaData*> EditPositionDialogController::_metaDataMap;
 
@@ -106,4 +97,3 @@ void EditPositionDialogController::setFromVehicle()
 {
     setCoordinate(MultiVehicleManager::instance()->activeVehicle()->coordinate());
 }
-

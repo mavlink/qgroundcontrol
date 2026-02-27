@@ -1,3 +1,11 @@
+# ============================================================================
+# Utilities Module
+# Core utilities, logging, file system helpers, and platform abstractions
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Core Utility Sources
+# ----------------------------------------------------------------------------
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         DeviceInfo.cc
@@ -8,41 +16,42 @@ target_sources(${CMAKE_PROJECT_NAME}
         FileSystem/QGCCachedFileDownload.h
         FileSystem/QGCFileDownload.cc
         FileSystem/QGCFileDownload.h
+        FileSystem/QGCFileHelper.cc
+        FileSystem/QGCFileHelper.h
+        FileSystem/QGCArchiveWatcher.cc
+        FileSystem/QGCArchiveWatcher.h
+        FileSystem/QGCFileWatcher.cc
+        FileSystem/QGCFileWatcher.h
         QGC.cc
         QGC.h
+        QGCCommandLineParser.cc
+        QGCCommandLineParser.h
         QGCLogging.cc
         QGCLogging.h
         QGCLoggingCategory.cc
         QGCLoggingCategory.h
-        FileSystem/QGCTemporaryFile.cc
-        FileSystem/QGCTemporaryFile.h
-        StateMachine.cc
-        StateMachine.h
 )
-
-if(LINUX)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            SignalHandler.cc
-            SignalHandler.h
-    )
-elseif(IOS)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            MobileScreenMgr.mm
-            MobileScreenMgr.h
-    )
-endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        Compression
         FileSystem
+        Parsing
+        Parsing/DataFlash
+        Parsing/Exif
+        Parsing/ULog
 )
 
-#===========================================================================#
+# ============================================================================
+# Utility Subdirectories
+# ============================================================================
 
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Geo)
-add_subdirectory(Shape)
+add_subdirectory(Network)
+add_subdirectory(Parsing)
+add_subdirectory(Platform)
+add_subdirectory(SDL)
+add_subdirectory(StateMachine)

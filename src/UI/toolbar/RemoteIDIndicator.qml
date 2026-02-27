@@ -1,20 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2022 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.MultiVehicleManager
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
 
 //-------------------------------------------------------------------------
 //-- Remote ID Indicator
@@ -36,7 +24,7 @@ Item {
     property bool   emergencyDeclared:  activeVehicle && remoteIDManager ? remoteIDManager.emergencyDeclared  : false
     property bool   operatorIDFlag:     activeVehicle && remoteIDManager ? remoteIDManager.operatorIDGood     : false
     property int    remoteIDState:      getRemoteIDState()
-    
+
     property int    regionOperation:    QGroundControl.settingsManager.remoteIDSettings.region.value
 
     enum RIDState {
@@ -53,16 +41,16 @@ Item {
 
     function getRidColor() {
         switch (remoteIDState) {
-            case RemoteIDIndicator.RIDState.HEALTHY: 
+            case RemoteIDIndicator.RIDState.HEALTHY:
                 return qgcPal.colorGreen
                 break
-            case RemoteIDIndicator.RIDState.WARNING: 
+            case RemoteIDIndicator.RIDState.WARNING:
                 return qgcPal.colorYellow
                 break
-            case RemoteIDIndicator.RIDState.ERROR: 
+            case RemoteIDIndicator.RIDState.ERROR:
                 return qgcPal.colorRed
                 break
-            case RemoteIDIndicator.RIDState.UNAVAILABLE: 
+            case RemoteIDIndicator.RIDState.UNAVAILABLE:
                 return qgcPal.colorGrey
                 break
             default:
@@ -95,6 +83,8 @@ Item {
             mainWindow.showSettingsTool()
         }
     }
+
+    QGCPalette { id: qgcPal }
 
     QGCColoredImage {
         id:                 remoteIDIcon

@@ -25,6 +25,7 @@
         <file alias="Airframe/QuadRotorWide.svg">src/AutoPilotPlugins/Common/Images/QuadRotorWide.svg</file>
         <file alias="Airframe/QuadRotorX.svg">src/AutoPilotPlugins/Common/Images/QuadRotorX.svg</file>
         <file alias="Airframe/Rover.svg">src/AutoPilotPlugins/Common/Images/Rover.svg</file>
+        <file alias="Airframe/FreeFlyer.svg">src/AutoPilotPlugins/Common/Images/FreeFlyer.svg</file>
         <file alias="Airframe/Vectored6DofUUV.svg">src/AutoPilotPlugins/Common/Images/Vectored6DofUUV.svg</file>
         <file alias="Airframe/VTOLDuoRotorTailSitter.svg">src/AutoPilotPlugins/Common/Images/VTOLDuoRotorTailSitter.svg</file>
         <file alias="Airframe/VTOLPlane.svg">src/AutoPilotPlugins/Common/Images/VTOLPlane.svg</file>
@@ -86,6 +87,7 @@
         <file alias="DatalinkLossLight.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLossLight.svg</file>
         <file alias="Disarmed.svg">src/UI/toolbar/Images/Disarmed.svg</file>
         <file alias="Disconnect.svg">src/UI/toolbar/Images/Disconnect.svg</file>
+        <file alias="EscIndicator.svg">src/UI/toolbar/Images/EscIndicator.svg</file>
         <file alias="FirmwareUpgradeIcon.png">src/Vehicle/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FollowComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
@@ -99,8 +101,10 @@
         <file alias="Gears.svg">src/UI/toolbar/Images/Gears.svg</file>
         <file alias="GeoFence.svg">src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
-        <file alias="GeoTagIcon.svg">src/AnalyzeView/GeoTagIcon.svg</file>
+        <file alias="GeoTagIcon.svg">src/AnalyzeView/GeoTag/GeoTagIcon.svg</file>
         <file alias="Gps.svg">src/UI/toolbar/Images/Gps.svg</file>
+        <file alias="GpsAuthentication.svg">src/UI/toolbar/Images/GpsAuthentication.svg</file>
+        <file alias="GpsInterference.svg">src/UI/toolbar/Images/GpsInterference.svg</file>
         <file alias="Hamburger.svg">src/UI/toolbar/Images/Hamburger.svg</file>
         <file alias="HamburgerThin.svg">src/UI/toolbar/Images/HamburgerThin.svg</file>
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
@@ -213,6 +217,5 @@
         <file alias="Yield.svg">src/UI/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
-        <file alias="Viewer3D/City3DMapIcon.svg">src/Viewer3D/Images/city_3d_map_icon.svg</file>
     </qresource>
 </RCC>

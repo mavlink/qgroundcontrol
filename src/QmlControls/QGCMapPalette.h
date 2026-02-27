@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #pragma once
 
 #include <QtCore/QObject>
@@ -21,7 +11,7 @@
 
  Usage:
 
-        import QGroundControl.Palette 1.0
+         1.0
 
         FlightMap {
             id:             map
@@ -39,27 +29,27 @@
 class QGCMapPalette : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    
+    QML_ELEMENT
+
     Q_PROPERTY(bool lightColors READ lightColors WRITE setLightColors NOTIFY paletteChanged)
 
     Q_PROPERTY(QColor text          READ text          NOTIFY paletteChanged)
     Q_PROPERTY(QColor textOutline   READ textOutline   NOTIFY paletteChanged)
 
-public:    
+public:
     QGCMapPalette(QObject* parent = nullptr);
-    
+
     /// Text color
     QColor text(void)           const { return _text[_lightColors ? 0 : 1]; }
     QColor textOutline(void)    const { return _textOutline[_lightColors ? 0 : 1]; }
 
     bool lightColors(void) const { return _lightColors; }
-    void setLightColors(bool lightColors);    
+    void setLightColors(bool lightColors);
 
 signals:
     void paletteChanged(void);
     void lightColorsChanged(bool lightColors);
-    
+
 private:
     bool _lightColors = false;
 

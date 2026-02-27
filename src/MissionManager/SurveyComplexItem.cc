@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "SurveyComplexItem.h"
 #include "JsonHelper.h"
 #include "QGCGeo.h"
@@ -24,7 +14,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QLineF>
 
-QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
+QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
 const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
 
@@ -76,12 +66,12 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
     planItems.append(saveObject);
 }
 
-void SurveyComplexItem::savePreset(const QString& name)
+void SurveyComplexItem::savePreset(const QString& presetName)
 {
     QJsonObject saveObject;
 
     _saveCommon(saveObject);
-    _savePresetJson(name, saveObject);
+    _savePresetJson(presetName, saveObject);
 }
 
 void SurveyComplexItem::_saveCommon(QJsonObject& saveObject)
@@ -100,13 +90,13 @@ void SurveyComplexItem::_saveCommon(QJsonObject& saveObject)
     _surveyAreaPolygon.saveToJson(saveObject);
 }
 
-void SurveyComplexItem::loadPreset(const QString& name)
+void SurveyComplexItem::loadPreset(const QString& presetName)
 {
     QString errorString;
 
-    QJsonObject presetObject = _loadPresetJson(name);
+    QJsonObject presetObject = _loadPresetJson(presetName);
     if (!_loadV4V5(presetObject, 0, errorString, 5, true /* forPresets */)) {
-        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(name).arg(errorString));
+        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
     }
     _rebuildTransects();
 }
@@ -357,7 +347,7 @@ void SurveyComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& tran
     transects = rgReversedTransects;
 }
 
-/// Reverse the order of all points withing each transect, First point becomes last and so forth.
+/// Reverse the order of all points within each transect, First point becomes last and so forth.
 void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects)
 {
     for (int i=0; i<transects.count(); i++) {
@@ -554,14 +544,14 @@ void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
             QPointF secondPoint;
             double currentMaxDistance = 0;
 
-            for (int i=0; i<intersections.count(); i++) {
-                for (int j=0; j<intersections.count(); j++) {
-                    QLineF lineTest(intersections[i], intersections[j]);
+            for (int intersectionIndex=0; intersectionIndex<intersections.count(); intersectionIndex++) {
+                for (int compareIndex=0; compareIndex<intersections.count(); compareIndex++) {
+                    QLineF lineTest(intersections[intersectionIndex], intersections[compareIndex]);
                     \
                     double newMaxDistance = lineTest.length();
                     if (newMaxDistance > currentMaxDistance) {
-                        firstPoint = intersections[i];
-                        secondPoint = intersections[j];
+                        firstPoint = intersections[intersectionIndex];
+                        secondPoint = intersections[compareIndex];
                         currentMaxDistance = newMaxDistance;
                     }
                 }
@@ -674,11 +664,11 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
 
     double gridAngle = _gridAngleFact.rawValue().toDouble();
     double gridSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
-    if (gridSpacing < 0.5) {
-        // We can't let gridSpacing get too small otherwise we will end up with too many transects.
-        // So we limit to 0.5 meter spacing as min and set to huge value which will cause a single
-        // transect to be added.
-        gridSpacing = 100000;
+    if (gridSpacing < _minimumTransectSpacingMeters) {
+        // We can't let spacing get too small otherwise we will end up with too many transects.
+        // So we limit the spacing to be above a small increment and below that value we set to huge spacing
+        // which will cause a single transect to be added instead of having things blow up.
+        gridSpacing = _forceLargeTransectSpacingMeters;
     }
 
     gridAngle = _clampGridAngle90(gridAngle);
@@ -822,8 +812,8 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
                 qCDebug(SurveyComplexItemLog) << "cInnerHoverPoints" << cInnerHoverPoints;
                 for (int i=0; i<cInnerHoverPoints; i++) {
                     QGeoCoordinate hoverCoord = transect[0].atDistanceAndAzimuth(triggerDistance() * (i + 1), transectAzimuth);
-                    TransectStyleComplexItem::CoordInfo_t coordInfo = { hoverCoord, CoordTypeInteriorHoverTrigger };
-                    coordInfoTransect.insert(1 + i, coordInfo);
+                    TransectStyleComplexItem::CoordInfo_t hoverCoordInfo = { hoverCoord, CoordTypeInteriorHoverTrigger };
+                    coordInfoTransect.insert(1 + i, hoverCoordInfo);
                 }
             }
         }
@@ -836,8 +826,8 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
             double azimuth = transect[0].azimuthTo(transect[1]);
             turnaroundCoord = transect[0].atDistanceAndAzimuth(-turnAroundDistance, azimuth);
             turnaroundCoord.setAltitude(qQNaN());
-            TransectStyleComplexItem::CoordInfo_t coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-            coordInfoTransect.prepend(coordInfo);
+            TransectStyleComplexItem::CoordInfo_t turnaroundCoordInfo = { turnaroundCoord, CoordTypeTurnaround };
+            coordInfoTransect.prepend(turnaroundCoordInfo);
 
             azimuth = transect.last().azimuthTo(transect[transect.count() - 2]);
             turnaroundCoord = transect.last().atDistanceAndAzimuth(-turnAroundDistance, azimuth);
@@ -1229,8 +1219,8 @@ void SurveyComplexItem::_rebuildTransectsFromPolygon(bool refly, const QPolygonF
                 qCDebug(SurveyComplexItemLog) << "cInnerHoverPoints" << cInnerHoverPoints;
                 for (int i=0; i<cInnerHoverPoints; i++) {
                     QGeoCoordinate hoverCoord = transect[0].atDistanceAndAzimuth(triggerDistance() * (i + 1), transectAzimuth);
-                    TransectStyleComplexItem::CoordInfo_t coordInfo = { hoverCoord, CoordTypeInteriorHoverTrigger };
-                    coordInfoTransect.insert(1 + i, coordInfo);
+                    TransectStyleComplexItem::CoordInfo_t hoverCoordInfo = { hoverCoord, CoordTypeInteriorHoverTrigger };
+                    coordInfoTransect.insert(1 + i, hoverCoordInfo);
                 }
             }
         }
@@ -1243,8 +1233,8 @@ void SurveyComplexItem::_rebuildTransectsFromPolygon(bool refly, const QPolygonF
             double azimuth = transect[0].azimuthTo(transect[1]);
             turnaroundCoord = transect[0].atDistanceAndAzimuth(-turnAroundDistance, azimuth);
             turnaroundCoord.setAltitude(qQNaN());
-            TransectStyleComplexItem::CoordInfo_t coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-            coordInfoTransect.prepend(coordInfo);
+            TransectStyleComplexItem::CoordInfo_t turnaroundCoordInfo = { turnaroundCoord, CoordTypeTurnaround };
+            coordInfoTransect.prepend(turnaroundCoordInfo);
 
             azimuth = transect.last().azimuthTo(transect[transect.count() - 2]);
             turnaroundCoord = transect.last().atDistanceAndAzimuth(-turnAroundDistance, azimuth);

@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://qgroundcontrol.com/schemas/factmetadata.schema.json",
+  "title": "QGC FactMetaData",
+  "description": "Schema for QGroundControl FactMetaData JSON files",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer",
+      "description": "Schema version number"
+    },
+    "QGC.MetaData.Facts": {
+      "type": "array",
+      "description": "Array of Fact metadata definitions",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique identifier for this Fact within the FactGroup",
+            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+          },
+          "type": {
+            "enum": [
+              "uint8",
+              "int8",
+              "uint16",
+              "int16",
+              "uint32",
+              "int32",
+              "uint64",
+              "int64",
+              "float",
+              "double",
+              "string",
+              "bool",
+              "elapsedTimeInSeconds",
+              "custom"
+            ],
+            "description": "Data type of the Fact value"
+          },
+          "units": {
+            "type": "string",
+            "description": "Display units for the value (e.g., 'm', 'm/s', 'deg', 'rad', '%', 'degE7')"
+          },
+          "min": {
+            "type": "number",
+            "description": "Minimum valid value (inclusive)"
+          },
+          "max": {
+            "type": "number",
+            "description": "Maximum valid value (inclusive)"
+          },
+          "default": {
+            "description": "Default value when not set"
+          },
+          "decimalPlaces": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15,
+            "description": "Number of decimal places for display"
+          },
+          "enumStrings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Display strings for enumerated values"
+          },
+          "enumValues": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Numeric values corresponding to enumStrings"
+          },
+          "bitmaskStrings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Display strings for bitmask values"
+          },
+          "bitmaskValues": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Numeric values corresponding to bitmaskStrings"
+          },
+          "shortDesc": {
+            "type": "string",
+            "description": "Brief description (shown in UI)"
+          },
+          "longDesc": {
+            "type": "string",
+            "description": "Detailed description (shown in tooltips/help)"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category for grouping in UI"
+          },
+          "group": {
+            "type": "string",
+            "description": "Sub-group within category"
+          },
+          "volatileValue": {
+            "type": "boolean",
+            "description": "True if value changes frequently (affects UI refresh)"
+          },
+          "hasControl": {
+            "type": "boolean",
+            "description": "True if this Fact has an associated UI control"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "True if value cannot be modified by user"
+          },
+          "writeOnly": {
+            "type": "boolean",
+            "description": "True if value is write-only (e.g., commands)"
+          },
+          "increment": {
+            "type": "number",
+            "description": "Step increment for UI controls"
+          },
+          "nanUnchanged": {
+            "type": "boolean",
+            "description": "True if NaN means 'unchanged' (for MAVLink params)"
+          },
+          "rebootRequired": {
+            "type": "boolean",
+            "description": "True if changing this parameter requires reboot"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": true
+}

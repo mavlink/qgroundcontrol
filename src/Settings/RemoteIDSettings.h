@@ -1,20 +1,35 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
+
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "SettingsGroup.h"
 
 class RemoteIDSettings : public SettingsGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+
 public:
+    enum class RegionOperation {
+        FAA,
+        EU
+    };
+    Q_ENUM(RegionOperation)
+
+    enum class LocationType {
+        TAKEOFF,
+        LIVE,
+        FIXED
+    };
+    Q_ENUM(LocationType)
+
+    enum class ClassificationType {
+        UNDEFINED,
+        EU
+    };
+    Q_ENUM(ClassificationType)
+
     RemoteIDSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
 

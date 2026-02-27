@@ -1,19 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "FirmwarePluginFactory.h"
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QGlobalStatic>
 
-QGC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "qgc.firmwareplugin.firmwarepluginfactory");
+QGC_LOGGING_CATEGORY(FirmwarePluginFactoryLog, "FirmwarePlugin.FirmwarePluginFactory");
 
 /*===========================================================================*/
 

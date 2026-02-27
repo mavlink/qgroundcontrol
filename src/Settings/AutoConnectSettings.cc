@@ -1,21 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "AutoConnectSettings.h"
 #include "LinkManager.h"
 
-#include <QtQml/QQmlEngine>
-
 DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
 {
-    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only");
-
     // Settings group name was changed from "LinkManager" to "AutoConnect" in v5.0.0
     // Copy over an old settings to the new name
     QSettings settings;

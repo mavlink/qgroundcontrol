@@ -1,25 +1,11 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.MultiVehicleManager
-import QGroundControl.Palette
 
 SettingsPage {
     property var    _settingsManager:           QGroundControl.settingsManager
@@ -65,10 +51,9 @@ SettingsPage {
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
-            text:       qsTr("Save application data to SD Card")
-            fact:       _androidSaveToSDCard
-            visible:    _androidSaveToSDCard.visible
-            property Fact _androidSaveToSDCard: _appSettings.androidSaveToSDCard
+            text:       fact.shortDescription
+            fact:       _appSettings.androidDontSaveToSDCard
+            visible:    fact.visible
         }
 
         QGCCheckBoxSlider {
@@ -89,9 +74,9 @@ SettingsPage {
             spacing:            ScreenTools.defaultFontPixelWidth * 2
             visible:            _appFontPointSize.visible
 
-            QGCLabel { 
+            QGCLabel {
                 Layout.fillWidth:   true
-                text:               qsTr("UI Scaling") 
+                text:               qsTr("UI Scaling")
             }
 
             RowLayout {
@@ -137,7 +122,7 @@ SettingsPage {
                 spacing:            0
 
                 QGCLabel { text: qsTr("Application Load/Save Path") }
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
                     text:               _appSavePath.rawValue === "" ? qsTr("<default location>") : _appSavePath.value
@@ -179,7 +164,7 @@ SettingsPage {
         Layout.fillWidth:   true
         heading:            qsTr("Brand Image")
         visible:            _brandImageSettings.visible && !ScreenTools.isMobile
-        
+
         RowLayout {
             Layout.fillWidth:   true
             spacing:            ScreenTools.defaultFontPixelWidth * 2
@@ -189,14 +174,14 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
-                    text:               qsTr("Indoor Image") 
+                    text:               qsTr("Indoor Image")
                 }
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               _userBrandImageIndoor.valueString.replace("file:///", "") 
+                    text:               _userBrandImageIndoor.valueString.replace("file:///", "")
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageIndoor.valueString.length > 0
                 }
@@ -225,14 +210,14 @@ SettingsPage {
                 Layout.fillWidth:   true
                 spacing:            0
 
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
-                    text:               qsTr("Outdoor Image") 
+                    text:               qsTr("Outdoor Image")
                 }
-                QGCLabel { 
+                QGCLabel {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               _userBrandImageOutdoor.valueString.replace("file:///", "") 
+                    text:               _userBrandImageOutdoor.valueString.replace("file:///", "")
                     elide:              Text.ElideMiddle
                     visible:            _userBrandImageOutdoor.valueString.length > 0
                 }

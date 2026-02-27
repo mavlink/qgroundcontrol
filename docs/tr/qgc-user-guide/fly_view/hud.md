@@ -39,7 +39,7 @@ The screenshot above shows the main elements of the fly view:
   - Press the element to switch _Video_ and _Map_ to foreground.
   - _QGroundControl_ supports RTP and RTSP video streaming over your vehicles UDP connection.
     It also supports directly connected UVC devices.
-    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md).
+    QGC video support is further discussed in the [Video README](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md).
   - A [Telemetry Overlay](../fly_view/video_overlay.md) is automatically generated as a subtitle file
 - **Confirmation Slider:** Context sensitive slider to confirm requested actions. Slide to confirm operation. You can also hold the spacebar to confirm. Press **X** to cancel.
 
@@ -309,13 +309,13 @@ To start a mission from landed:
 
 2. Select the _Start Mission_ action from the dialog.
 
-  ![Start mission action](../../../assets/fly/start_mission_action.jpg)
+   ![Start mission action](../../../assets/fly/start_mission_action.jpg)
 
-  (to display the confirmation slider)
+   (to display the confirmation slider)
 
 3. When the confirmation slider appears, drag it to start the mission.
 
-  ![Start mission](../../../assets/fly/start_mission.jpg)
+   ![Start mission](../../../assets/fly/start_mission.jpg)
 
 #### Continue Mission {#continue_mission}
 
@@ -333,11 +333,11 @@ You can continue the current mission while (unless already in a mission!):
 
 2. Select the _Continue Mission_ action from the dialog.
 
-  ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
+   ![Continue Mission/Change Altitude action](../../../assets/fly/continue_mission_change_altitude_action.jpg)
 
 3. Drag the confirmation slider to continue the mission.
 
-  ![Continue Mission](../../../assets/fly/continue_mission.jpg)
+   ![Continue Mission](../../../assets/fly/continue_mission.jpg)
 
 #### Resume Mission {#resume_mission}
 

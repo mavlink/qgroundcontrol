@@ -1,23 +1,6 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
-/**
- * @file
- *   @brief Map Tile Cache Worker Thread
- *
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #pragma once
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
@@ -26,11 +9,12 @@
 #include <QtCore/QWaitCondition>
 #include <QElapsedTimer>
 
+#include <memory>
+
 Q_DECLARE_LOGGING_CATEGORY(QGCTileCacheWorkerLog)
 
 class QGCMapTask;
-class QGCCachedTileSet;
-class QSqlDatabase;
+class QGCTileCacheDatabase;
 
 class QGCCacheWorker : public QThread
 {
@@ -40,7 +24,7 @@ public:
     explicit QGCCacheWorker(QObject *parent = nullptr);
     ~QGCCacheWorker();
 
-    void setDatabaseFile(const QString &path) { _databasePath = path; }
+    void setDatabaseFile(const QString &path) { if (isRunning()) { return; } _databasePath = path; }
 
 public slots:
     bool enqueueTask(QGCMapTask *task);
@@ -68,36 +52,18 @@ private:
     void _importSets(QGCMapTask *task);
     void _exportSets(QGCMapTask *task);
     bool _testTask(QGCMapTask *task);
+    void _emitTotals();
 
-    bool _connectDB();
-    void _disconnectDB();
-    bool _createDB(QSqlDatabase &db, bool createDefault = true);
-    bool _findTileSetID(const QString &name, quint64 &setID);
-    bool _init();
-    quint64 _findTile(const QString &hash);
-    quint64 _getDefaultTileSet();
-    void _deleteBingNoTileTiles();
-    void _deleteTileSet(quint64 id);
-    void _updateSetTotals(QGCCachedTileSet *set);
-    void _updateTotals();
-
-    std::shared_ptr<QSqlDatabase> _db = nullptr;
+    std::unique_ptr<QGCTileCacheDatabase> _database;
     QMutex _taskQueueMutex;
     QQueue<QGCMapTask*> _taskQueue;
     QWaitCondition _waitc;
     QString _databasePath;
-    quint32 _defaultCount = 0;
-    quint32 _totalCount = 0;
-    quint64 _defaultSet = UINT64_MAX;
-    quint64 _defaultSize = 0;
-    quint64 _totalSize = 0;
     QElapsedTimer _updateTimer;
-    int _updateTimeout = kShortTimeout;
-    std::atomic_bool _failed = false;
-    std::atomic_bool _valid = false;
+    int _updateTimeout = kShortTimeoutMs;
+    std::atomic_bool _dbValid = false;
+    std::atomic_bool _stopRequested = false;
 
-    static constexpr const char *kSession = "QGeoTileWorkerSession";
-    static constexpr const char *kExportSession = "QGeoTileExportSession";
-    static constexpr int kShortTimeout = 2;
-    static constexpr int kLongTimeout = 5;
+    static constexpr int kShortTimeoutMs = 2000;
+    static constexpr int kLongTimeoutMs = 5000;
 };

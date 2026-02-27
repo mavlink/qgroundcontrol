@@ -1,24 +1,15 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtCore
 
 import QGroundControl
-import QGroundControl.ScreenTools
+import QGroundControl.Controls
 
 Item {
     property Window window
 
-    property bool _enabled: !ScreenTools.isMobile && !ScreenTools.fakeMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
+    property bool _enabled: !ScreenTools.isMobile && !ScreenTools.isFakeMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
 
     Settings {
         id:         s
@@ -37,7 +28,7 @@ Item {
     }
 
     Component.onCompleted: {
-        if (ScreenTools.fakeMobile) {
+        if (ScreenTools.isFakeMobile) {
             window.width = ScreenTools.screenWidth
             window.height = ScreenTools.screenHeight
         } else if (ScreenTools.isMobile) {

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/pyrightconfig.json",
+  "exclude": [
+    "build",
+    "**/__pycache__"
+  ],
+  "include": [
+    "tools/**/*.py",
+    "test/**/*.py"
+  ],
+  "pythonVersion": "3.10",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": false,
+  "reportUnusedImport": "warning",
+  "reportUnusedVariable": "warning",
+  "typeCheckingMode": "basic"
+}

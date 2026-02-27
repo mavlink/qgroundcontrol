@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Dialogs
 import QtQuick.Layouts
@@ -14,11 +5,7 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
-import QGroundControl.Controllers
-import QGroundControl.Palette
 
 QGCPopupDialog {
     id:         root
@@ -137,7 +124,7 @@ QGCPopupDialog {
                                     enabled:    iconRadio.checked
                                     onClicked: {
                                         var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                                        iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction }).open()
+                                        iconPickerDialogFactory.open({ iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
                                     }
                                 }
                             }
@@ -161,16 +148,16 @@ QGCPopupDialog {
                             QGCTextField {
                                 enabled:                textRadio.checked
                                 Layout.minimumWidth:    iconOptionInputs.width
-                                text:                   textRadio.checked 
+                                text:                   textRadio.checked
                                                             ? instrumentValueData.text
                                                             : instrumentValueData.fact ? instrumentValueData.fact.shortDescription : qsTr("Label")
-                                onEditingFinished:      instrumentValueData.text = text 
+                                onEditingFinished:      instrumentValueData.text = text
                             }
                         }
                     }
 
                     LabelledComboBox {
-                        label:          qsTr("Size") 
+                        label:          qsTr("Size")
                         model:          instrumentValueData.factValueGrid.fontSizeNames
                         currentIndex:   instrumentValueData.factValueGrid.fontSize
                         onActivated:    (index) => { instrumentValueData.factValueGrid.fontSize = index }
@@ -178,7 +165,7 @@ QGCPopupDialog {
 
                     QGCCheckBoxSlider {
                         Layout.fillWidth: true
-                        text:       qsTr("Show Units") 
+                        text:       qsTr("Show Units")
                         checked:    instrumentValueData.showUnits
                         onClicked:  instrumentValueData.showUnits = checked
                     }
@@ -198,7 +185,7 @@ QGCPopupDialog {
 
                         QGCLabel {
                             Layout.fillWidth:       true
-                            text:                   qsTr("Type") 
+                            text:                   qsTr("Type")
                         }
 
                         QGCComboBox {
@@ -467,7 +454,7 @@ QGCPopupDialog {
                                     anchors.fill:   parent
                                     onClicked: {
                                         var updateFunction = function(icon){ updateIconValue(index, icon) }
-                                        iconPickerDialog.createObject(mainWindow, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction }).open()
+                                        iconPickerDialogFactory.open({ iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction })
                                     }
                                 }
                             }
@@ -572,6 +559,12 @@ QGCPopupDialog {
                 }
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: iconPickerDialogFactory
+
+        dialogComponent: iconPickerDialog
     }
 
     Component {

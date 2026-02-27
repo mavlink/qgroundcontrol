@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "ArduRoverFirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "Vehicle.h"
@@ -39,7 +30,7 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
         // Mode Name              , Custom Mode                CanBeSet  adv
         { _manualFlightMode       , APMRoverMode::MANUAL       , true , true},
         { _acroFlightMode         , APMRoverMode::ACRO         , true , true},
-        { _learningFlightMode     , APMRoverMode::LEARNING     , true , true},
+        { _learningFlightMode     , APMRoverMode::LEARNING     , false, true},
         { _steeringFlightMode     , APMRoverMode::STEERING     , true , true},
         { _holdFlightMode         , APMRoverMode::HOLD         , true , true},
         { _loiterFlightMode       , APMRoverMode::LOITER       , true , true},
@@ -51,16 +42,11 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
         { _rtlFlightMode          , APMRoverMode::RTL          , true , true},
         { _smartRtlFlightMode     , APMRoverMode::SMART_RTL    , true , true},
         { _guidedFlightMode       , APMRoverMode::GUIDED       , true , true},
-        { _initializingFlightMode , APMRoverMode::INITIALIZING , true , true},
+        { _initializingFlightMode , APMRoverMode::INITIALIZING , false, true},
     };
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
-
-        remapV3_5["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
-        remapV3_5["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
-
         _remapParamNameIntialized = true;
     }
 }
@@ -70,10 +56,10 @@ ArduRoverFirmwarePlugin::~ArduRoverFirmwarePlugin()
 
 }
 
-int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const
 {
-    // Remapping supports up to 3.5
-    return ((majorVersionNumber == 3) ? 5 : Vehicle::versionNotSetValue);
+    // Remapping not supported
+    return Vehicle::versionNotSetValue;
 }
 
 void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* /*vehicle*/, double /*altitudeChange*/, bool /*pauseVehicle*/)

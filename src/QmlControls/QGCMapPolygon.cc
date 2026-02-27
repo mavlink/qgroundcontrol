@@ -1,15 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "QGCMapPolygon.h"
 #include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
@@ -104,7 +96,7 @@ void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinat
     if (!_centerDrag) {
         // When dragging center we don't signal path changed until all vertices are updated
         if (!_deferredPathChanged) {
-            // Only update the path once per event loop, to prevent lag-spikes 
+            // Only update the path once per event loop, to prevent lag-spikes
             _deferredPathChanged = true;
             QTimer::singleShot(0, this, [this]() {
                 emit pathChanged();
@@ -214,7 +206,7 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
     clear();
 
     if (required) {
-        if (!JsonHelper::validateRequiredKeys(json, QStringList(jsonPolygonKey), errorString)) {
+        if (!JsonParsing::validateRequiredKeys(json, QStringList(jsonPolygonKey), errorString)) {
             return false;
         }
     } else if (!json.contains(jsonPolygonKey)) {
@@ -397,7 +389,7 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
 
         _center = newCenter;
         if (!_deferredPathChanged) {
-            // Only update the center once per event loop, to prevent lag-spikes 
+            // Only update the center once per event loop, to prevent lag-spikes
             _deferredPathChanged = true;
             QTimer::singleShot(0, this, [this, newCenter]() {
                 emit centerChanged(newCenter);
@@ -514,11 +506,16 @@ void QGCMapPolygon::offset(double distance)
 bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
 {
     QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    if (!ShapeFileHelper::loadPolygonFromFile(file, rgCoords, errorString)) {
+    QList<QList<QGeoCoordinate>> polygons;
+    if (!ShapeFileHelper::loadPolygonsFromFile(file, polygons, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
+    if (polygons.isEmpty()) {
+        qgcApp()->showAppMessage(tr("No polygons found in file"));
+        return false;
+    }
+    const QList<QGeoCoordinate>& rgCoords = polygons.first();
 
     beginReset();
     clear();

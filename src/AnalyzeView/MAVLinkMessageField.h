@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -53,7 +44,7 @@ public:
     void setSelectable(bool sel);
     void updateValue(const QString &newValue, qreal v);
 
-    void addSeries(MAVLinkChartController *chart, QAbstractSeries *series);
+    void addSeries(MAVLinkChartController *chartController, QAbstractSeries *series);
     void delSeries();
     void updateSeries();
 
@@ -75,5 +66,5 @@ private:
     QList<QPointF> _values;
 
     QAbstractSeries *_pSeries = nullptr;
-    MAVLinkChartController *_chart = nullptr;
+    MAVLinkChartController *_chartController = nullptr;
 };

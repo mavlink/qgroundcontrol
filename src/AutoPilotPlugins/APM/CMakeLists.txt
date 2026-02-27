@@ -1,3 +1,8 @@
+# ============================================================================
+# APM AutoPilot Plugin
+# ArduPilot-specific vehicle configuration and setup
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         APMAirframeComponent.cc
@@ -6,8 +11,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMAirframeComponentController.h
         APMAutoPilotPlugin.cc
         APMAutoPilotPlugin.h
-        APMCameraComponent.cc
-        APMCameraComponent.h
         APMFlightModesComponent.cc
         APMFlightModesComponent.h
         APMFlightModesComponentController.cc
@@ -16,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMFollowComponent.h
         APMFollowComponentController.cc
         APMFollowComponentController.h
+        APMGimbalComponent.cc
+        APMGimbalComponent.h
         APMHeliComponent.cc
         APMHeliComponent.h
         APMLightsComponent.cc
@@ -44,6 +49,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# APM QML Module
+# ----------------------------------------------------------------------------
 qt_add_library(AutoPilotPluginsAPMModule STATIC)
 
 qt_add_qml_module(AutoPilotPluginsAPMModule
@@ -53,13 +61,13 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
     QML_FILES
         APMAirframeComponent.qml
         APMAirframeComponentSummary.qml
-        APMCameraComponent.qml
-        APMCameraComponentSummary.qml
-        APMCameraSubComponent.qml
         APMFlightModesComponent.qml
         APMFlightModesComponentSummary.qml
         APMFollowComponent.qml
         APMFollowComponentSummary.qml
+        APMGimbalComponent.qml
+        APMGimbalInstance.qml
+        APMGimbalParams.qml
         APMHeliComponent.qml
         APMLightsComponent.qml
         APMLightsComponentSummary.qml
@@ -70,14 +78,8 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMRadioComponentSummary.qml
         APMRemoteSupportComponent.qml
         APMSafetyComponent.qml
-        APMSafetyComponentCopter.qml
-        APMSafetyComponentPlane.qml
-        APMSafetyComponentRover.qml
         APMSafetyComponentSub.qml
         APMSafetyComponentSummary.qml
-        APMSafetyComponentSummaryCopter.qml
-        APMSafetyComponentSummaryPlane.qml
-        APMSafetyComponentSummaryRover.qml
         APMSafetyComponentSummarySub.qml
         APMSensorsComponent.qml
         APMSensorsComponentSummary.qml
@@ -88,5 +90,13 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMSubMotorComponent.qml
         APMTuningComponentCopter.qml
         APMTuningComponentSub.qml
-    NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.
+    NO_PLUGIN
+)
+
+# ----------------------------------------------------------------------------
+# APM Component Metadata
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
+    PREFIX "/json"
+    FILES APMFollowComponent.FactMetaData.json
 )

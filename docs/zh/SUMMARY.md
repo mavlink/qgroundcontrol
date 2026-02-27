@@ -2,7 +2,7 @@
 
 - [总览](qgc-user-guide/index.md)
   - [快速开始](qgc-user-guide/getting_started/quick_start.md)
-  - [下载并安装(Daily 5.0)](qgc-user-guide/releases/daily_builds.md)
+  - [Download and Install](qgc-user-guide/getting_started/download_and_install.md)
   - [技术支持](qgc-user-guide/support/support.md)
 
 - [飞行视图](qgc-user-guide/fly_view/fly_view.md)
@@ -112,7 +112,7 @@
     - [模拟链接](qgc-dev-guide/tools/mock_link.md)
   - [命令行选项](qgc-dev-guide/command_line_options.md)
   - [自定义构建](qgc-dev-guide/custom_build/custom_build.md)
-    - [自定义构建的初始仓库设置](qgc-dev-guide/custom_build/create_repos.md)
+    - [Initial Repository Setup For Custom Build](qgc-dev-guide/custom_build/fork_repo.md)
     - [自定义构建插件](qgc-dev-guide/custom_build/plugins.md)
     - [资源覆盖](qgc-dev-guide/custom_build/resource_override.md)
     - [客制化](qgc-dev-guide/custom_build/customization.md)

@@ -1,23 +1,11 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Controllers
 import QGroundControl.AutoPilotPlugins.PX4
 
 // Note: Only the _SOURCE parameter can be assumed to be always available. The remainder of the parameters
@@ -52,10 +40,10 @@ SetupPage {
 
             PowerComponentController {
                 id:                     controller
-                onOldFirmware:          mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName))
-                onNewerFirmware:        mainWindow.showMessageDialog(qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName))
-                onDisconnectBattery:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"),    qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."))
-                onConnectBattery:       escCalibrationDlgComponent.createObject(mainWindow).open()
+                onOldFirmware:          QGroundControl.showMessageDialog(powerPage, qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName))
+                onNewerFirmware:        QGroundControl.showMessageDialog(powerPage, qsTr("ESC Calibration"),           qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName))
+                onDisconnectBattery:    QGroundControl.showMessageDialog(powerPage, qsTr("ESC Calibration failed"),    qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."))
+                onConnectBattery:       escCalibrationDlgFactory.open()
             }
 
             ColumnLayout {
@@ -289,14 +277,14 @@ SetupPage {
                                 visible:                battNumCellsAvailable && battLowVoltAvailable && battHighVoltAvailable
                             }
 
-                            Item { 
+                            Item {
                                 width:              1
                                 height:             1
                                 Layout.columnSpan:  battImage.visible ? 2 : 3
                             }
 
-                            QGCLabel { 
-                                text:  qsTr("Number of Cells (in Series)") 
+                            QGCLabel {
+                                text:  qsTr("Number of Cells (in Series)")
                                 visible: battNumCellsAvailable
                             }
                             FactTextField {
@@ -305,23 +293,23 @@ SetupPage {
                                 showUnits:  true
                                 visible:    battNumCellsAvailable
                             }
-                            QGCLabel { 
+                            QGCLabel {
                                 text:       qsTr("Battery Max:")
-                                visible:    battImage.visible 
+                                visible:    battImage.visible
                             }
-                            QGCLabel { 
+                            QGCLabel {
                                 text:       visible ? (battNumCells.value * battHighVolt.value).toFixed(1) + ' V' : ""
-                                visible:    battImage.visible 
+                                visible:    battImage.visible
                             }
-                            Item { 
+                            Item {
                                 width:              1
                                 height:             1
                                 Layout.columnSpan:  3
                                 visible:            !battImage.visible
                             }
 
-                            QGCLabel { 
-                                text:       qsTr("Empty Voltage (per cell)") 
+                            QGCLabel {
+                                text:       qsTr("Empty Voltage (per cell)")
                                 visible:    battLowVoltAvailable
                             }
                             FactTextField {
@@ -330,23 +318,23 @@ SetupPage {
                                 showUnits:  true
                                 visible:    battLowVoltAvailable
                             }
-                            QGCLabel { 
-                                text:       qsTr("Battery Min:") 
+                            QGCLabel {
+                                text:       qsTr("Battery Min:")
                                 visible:    battImage.visible
                             }
-                            QGCLabel { 
+                            QGCLabel {
                                 text:       visible ? (battNumCells.value * battLowVolt.value).toFixed(1) + ' V' : ""
                                 visible:    battImage.visible
                             }
-                            Item { 
+                            Item {
                                 width:              1
                                 height:             1
                                 Layout.columnSpan:  3
                                 visible:            battLowVoltAvailable && !battImage.visible
                             }
 
-                            QGCLabel { 
-                                text:       qsTr("Full Voltage (per cell)") 
+                            QGCLabel {
+                                text:       qsTr("Full Voltage (per cell)")
                                 visible:    battHighVoltAvailable
                             }
                             FactTextField {
@@ -355,7 +343,7 @@ SetupPage {
                                 showUnits:  true
                                 visible:    battHighVoltAvailable
                             }
-                            Item { 
+                            Item {
                                 width:              1
                                 height:             1
                                 Layout.columnSpan:  battImage.visible ? 2 : 3
@@ -373,7 +361,7 @@ SetupPage {
                             QGCButton {
                                 text:       qsTr("Calculate")
                                 visible:    battVoltageDividerAvailable
-                                onClicked:  calcVoltageDividerDlgComponent.createObject(mainWindow, { batteryIndex: _batteryIndex }).open()
+                                onClicked:  calcVoltageDividerDlgFactory.open({ batteryIndex: _batteryIndex })
                             }
                             Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battVoltageDividerAvailable }
 
@@ -397,7 +385,7 @@ SetupPage {
                             QGCButton {
                                 text:       qsTr("Calculate")
                                 visible:    battAmpsPerVoltAvailable
-                                onClicked:  calcAmpsPerVoltDlgComponent.createObject(mainWindow, { batteryIndex: _batteryIndex }).open()
+                                onClicked:  calcAmpsPerVoltDlgFactory.open({ batteryIndex: _batteryIndex })
                             }
                             Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battAmpsPerVoltAvailable }
 
@@ -454,6 +442,12 @@ SetupPage {
                     }
                 } // QGCGroupBox - Battery settings
             } // Component - batterySetupComponent
+
+            QGCPopupDialogFactory {
+                id: calcVoltageDividerDlgFactory
+
+                dialogComponent: calcVoltageDividerDlgComponent
+            }
 
             Component {
                 id: calcVoltageDividerDlgComponent
@@ -513,6 +507,12 @@ SetupPage {
                 }
             }
 
+            QGCPopupDialogFactory {
+                id: calcAmpsPerVoltDlgFactory
+
+                dialogComponent: calcAmpsPerVoltDlgComponent
+            }
+
             Component {
                 id: calcAmpsPerVoltDlgComponent
 
@@ -569,6 +569,12 @@ SetupPage {
                         }
                     }
                 }
+            }
+
+            QGCPopupDialogFactory {
+                id: escCalibrationDlgFactory
+
+                dialogComponent: escCalibrationDlgComponent
             }
 
             Component {

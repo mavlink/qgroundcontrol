@@ -1,24 +1,13 @@
-/****************************************************************************
- *
- * (c) 2009-2021 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-import QGroundControl.FactSystem
+import QGroundControl
 import QGroundControl.FactControls
-import QGroundControl.Controllers
-import QGroundControl.Palette
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
 
 ColumnLayout {
+    id:        _root
     spacing: ScreenTools.defaultFontPixelHeight
 
     property var  _activeVehicle:   globals.activeVehicle
@@ -31,7 +20,7 @@ ColumnLayout {
         text:      qsTr("Start AutoTune")
         enabled:   _activeVehicle.flying && !_activeVehicle.landing && !_autotuneManager.autotuneInProgress
 
-        onClicked: mainWindow.showMessageDialog(autotuneButton.text,
+        onClicked: QGroundControl.showMessageDialog(_root, autotuneButton.text,
                                                 qsTr("WARNING!\
         \n\nThe auto-tuning procedure should be executed with caution and requires the vehicle to fly stable enough before attempting the procedure! \
         \n\nBefore starting the auto-tuning process, make sure that: \

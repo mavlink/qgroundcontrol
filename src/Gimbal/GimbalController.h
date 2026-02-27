@@ -1,16 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Gimbal.h"
 #include "MAVLinkLib.h"
@@ -23,9 +15,12 @@ class Vehicle;
 class GimbalController : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
-    Q_PROPERTY(Gimbal *activeGimbal READ activeGimbal WRITE setActiveGimbal NOTIFY activeGimbalChanged)
-    Q_PROPERTY(QmlObjectListModel *gimbals READ gimbals CONSTANT)
+
+    Q_PROPERTY(Gimbal*              activeGimbal    READ activeGimbal WRITE setActiveGimbal NOTIFY activeGimbalChanged)
+    Q_PROPERTY(QmlObjectListModel*  gimbals         READ gimbals                            CONSTANT)
 
 public:
     GimbalController(Vehicle *vehicle);
@@ -40,11 +35,16 @@ public:
     Q_INVOKABLE void gimbalOnScreenControl(float panpct, float tiltpct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract = false, bool neutral = false, bool yawlock = false);
     Q_INVOKABLE void sendPitchBodyYaw(float pitch, float yaw, bool showError = true);
     Q_INVOKABLE void sendPitchAbsoluteYaw(float pitch, float yaw, bool showError = true);
-    Q_INVOKABLE void toggleGimbalRetracted(bool set = false);
-    Q_INVOKABLE void toggleGimbalYawLock(bool set = false);
+    Q_INVOKABLE void setGimbalRetract(bool set);
+    Q_INVOKABLE void setGimbalYawLock(bool set);
     Q_INVOKABLE void acquireGimbalControl();
     Q_INVOKABLE void releaseGimbalControl();
     Q_INVOKABLE void sendRate();
+
+    /// Send gimbal attitude rates directly without using active gimbal's rate properties
+    /// @param pitch_rate_deg_s Pitch rate in degrees per second
+    /// @param yaw_rate_deg_s Yaw rate in degrees per second
+    Q_INVOKABLE void sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s);
 
 signals:
     void activeGimbalChanged();
@@ -52,7 +52,7 @@ signals:
 
 public slots:
     // These slots are conected with joysticks for button control
-    void gimbalYawLock(bool yawLock) { toggleGimbalYawLock(yawLock); }
+    void gimbalYawLock(bool yawLock) { setGimbalYawLock(yawLock); }
     Q_INVOKABLE void centerGimbal();
     void gimbalPitchStart(int direction);
     void gimbalYawStart(int direction);
@@ -60,6 +60,7 @@ public slots:
     void gimbalYawStop();
 
 private slots:
+    void _initialConnectCompleted();
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _rateSenderTimeout();
 
@@ -101,18 +102,21 @@ private:
     bool _tryGetGimbalControl();
     bool _yawInVehicleFrame(uint32_t flags);
 
+    void _sendGimbalAttitudeRates(float pitch_rate_deg_s, float yaw_rate_deg_s);
+
     QTimer _rateSenderTimer;
     Vehicle *_vehicle = nullptr;
     Gimbal *_activeGimbal = nullptr;
 
     struct PotentialGimbalManager {
         unsigned requestGimbalManagerInformationRetries = 6;
-        bool receivedInformation = false;
+        bool receivedGimbalManagerInformation = false;
     };
     QMap<uint8_t, PotentialGimbalManager> _potentialGimbalManagers; // key is compid
 
     QMap<GimbalPairId, Gimbal*> _potentialGimbals;
     QmlObjectListModel *_gimbals = nullptr;
+    bool _initialConnectComplete = false;
 
     static constexpr const char *_gimbalFactGroupNamePrefix = "gimbal";
 };

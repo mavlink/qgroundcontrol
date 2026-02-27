@@ -1,13 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
+
+#include "LinkConfiguration.h"
+#include "LinkInterface.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
@@ -16,15 +10,14 @@
 #include <QtCore/QString>
 #include <QtNetwork/QHostAddress>
 
+#include <atomic>
+
 #ifdef QGC_ZEROCONF_ENABLED
 #ifdef Q_OS_WIN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <dns_sd.h>
 #endif
-
-#include "LinkConfiguration.h"
-#include "LinkInterface.h"
 
 class QUdpSocket;
 class QThread;
@@ -35,9 +28,9 @@ Q_DECLARE_LOGGING_CATEGORY(UDPLinkLog)
 
 struct UDPClient
 {
-    UDPClient(const QHostAddress &address, quint16 port)
-        : address(address)
-        , port(port)
+    UDPClient(const QHostAddress &addr, quint16 portNum)
+        : address(addr)
+        , port(portNum)
     {}
 
     explicit UDPClient(const UDPClient *other)
@@ -189,4 +182,5 @@ private:
     const UDPConfiguration *_udpConfig = nullptr;
     UDPWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _disconnectedEmitted{false};
 };

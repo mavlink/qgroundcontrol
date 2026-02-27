@@ -1,17 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "FlightPathSegment.h"
 #include "QGC.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "FlightPathSegmentLog")
+QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "Plan.FlightPathSegment")
 
 FlightPathSegment::FlightPathSegment(SegmentType segmentType, const QGeoCoordinate& coord1, double amslCoord1Alt, const QGeoCoordinate& coord2, double amslCoord2Alt, bool queryTerrainData, QObject* parent)
     : QObject           (parent)

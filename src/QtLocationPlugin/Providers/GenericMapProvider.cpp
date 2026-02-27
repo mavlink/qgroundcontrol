@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "GenericMapProvider.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -29,6 +20,19 @@ QString CyberJapanMapProvider::_getURL(int x, int y, int zoom) const
 QString LINZBasemapMapProvider::_getURL(int x, int y, int zoom) const
 {
     return _mapUrl.arg(zoom).arg(x).arg(y).arg(_imageFormat);
+}
+
+QString OpenAIPMapProvider::_getURL(int x, int y, int zoom) const
+{
+    const QString apiKey = SettingsManager::instance()->appSettings()->openaipToken()->rawValue().toString();
+
+    QString url = _mapUrl.arg(zoom).arg(x).arg(y);
+
+    if (!apiKey.isEmpty()) {
+        url += QStringLiteral("?apiKey=%1").arg(apiKey);
+    }
+
+    return url;
 }
 
 QString OpenStreetMapProvider::_getURL(int x, int y, int zoom) const

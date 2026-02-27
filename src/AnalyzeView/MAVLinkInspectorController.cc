@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MAVLinkInspectorController.h"
 #include "MAVLinkChartController.h"
 #include "MAVLinkMessage.h"
@@ -20,7 +11,7 @@
 
 #include <QtQml/QQmlEngine>
 
-QGC_LOGGING_CATEGORY(MAVLinkInspectorControllerLog, "qgc.analyzeview.mavlinkinspectorcontroller")
+QGC_LOGGING_CATEGORY(MAVLinkInspectorControllerLog, "AnalyzeView.MAVLinkInspectorController")
 
 MAVLinkInspectorController::TimeScale_st::TimeScale_st(const QString &label_, uint32_t timeScale_)
     : label(label_)
@@ -44,7 +35,6 @@ MAVLinkInspectorController::MAVLinkInspectorController(QObject *parent)
     : QObject(parent)
     , _updateFrequencyTimer(new QTimer(this))
     , _systems(new QmlObjectListModel(this))
-    , _charts(new QmlObjectListModel(this))
 {
     // qCDebug(MAVLinkInspectorControllerLog) << Q_FUNC_INFO << this;
 
@@ -84,7 +74,6 @@ MAVLinkInspectorController::~MAVLinkInspectorController()
 {
     qDeleteAll(_timeScaleSt);
     qDeleteAll(_rangeSt);
-    _charts->clearAndDeleteContents();
     _systems->clearAndDeleteContents();
 
     // qCDebug(MAVLinkInspectorControllerLog) << Q_FUNC_INFO << this;
@@ -148,8 +137,8 @@ void MAVLinkInspectorController::_refreshFrequency()
             continue;
         }
 
-        for (int i = 0; i < system->messages()->count(); i++) {
-            QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(system->messages()->get(i));
+        for (int messageIndex = 0; messageIndex < system->messages()->count(); messageIndex++) {
+            QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(system->messages()->get(messageIndex));
             if (msg) {
                 msg->updateFreq();
             }
@@ -224,39 +213,6 @@ void MAVLinkInspectorController::_receiveMessage(LinkInterface *link, const mavl
         system->append(msg);
     } else {
         msg->update(message);
-    }
-}
-
-MAVLinkChartController *MAVLinkInspectorController::createChart()
-{
-    MAVLinkChartController *const pChart = new MAVLinkChartController(this, _charts->count());
-    QQmlEngine::setObjectOwnership(pChart, QQmlEngine::CppOwnership);
-
-    _charts->append(pChart);
-    emit chartsChanged();
-
-    return pChart;
-}
-
-void MAVLinkInspectorController::deleteChart(MAVLinkChartController *chart)
-{
-    if (!chart) {
-        return;
-    }
-
-    bool found = false;
-    for (int i = 0; i < _charts->count(); i++) {
-        MAVLinkChartController *const controller = qobject_cast<MAVLinkChartController*>(_charts->get(i));
-        if (controller && (controller == chart)) {
-            found = true;
-            _charts->removeOne(controller);
-            delete controller;
-            break;
-        }
-    }
-
-    if (found) {
-        emit chartsChanged();
     }
 }
 

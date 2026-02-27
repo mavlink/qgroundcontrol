@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -28,6 +19,16 @@ public:
 
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)
+
+    // Note1: These values are persisted to plan files so they cannot be changed with breaking plan file back compat
+    // Note2: rotateEntryPoint expects these values in this order
+    enum EntryPointLocation {
+        EntryPointDefaultOrder = 0,                 // Standard transect generation order
+        EntryPointStartSameEndOppositeSide = 1,     // Start at same end, opposite side of center
+        EntryPointStartOppositeEndSameSide = 2,     // Start at opposite end, same side
+        EntryPointStartOppositeEndOppositeSide = 3, // Start at opposite end, opposite side
+    };
+    Q_ENUM(EntryPointLocation)
 
     Fact*           corridorWidth   (void) { return &_corridorWidthFact; }
     QGCMapPolyline* corridorPolyline(void) { return &_corridorPolyline; }
@@ -79,7 +80,7 @@ private:
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
 
-    int                             _entryPoint;
+    EntryPointLocation              _entryPointLocation;
 
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;

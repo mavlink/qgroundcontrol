@@ -1,9 +1,7 @@
-# QGroundControl Guide (Daily Build 5.0)
+# QGroundControl Guide (Daily Builds)
 
 [![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage)
 [![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
-
-_You are viewing the docs for the upcoming 5.0 release of QGroundControl. If you want docs for a Stable build select from the Version dropdown above._
 
 _QGroundControl_을 이용하여 PX4나 ArduPilot 구동 차량을 설정하고 운행할 수 있습니다.
 초보자를 위한 쉽고 간편한 기능 뿐만 아니라 숙련자를 위한 고급 기능들도 제공합니다.

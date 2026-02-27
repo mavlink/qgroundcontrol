@@ -5,9 +5,9 @@ The Fly View is designed in such a way that it can be cusomtized in multiple way
 ## Layers
 
 - There are three layers to the fly view from top to bottom visually:
-  - [`FlyView.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlightDisplay/FlyView.qml) 这是控制地图和视频切换的 ui 和业务逻辑的基层。
-  - [`FlyViewWidgetsOverlay.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlightDisplay/FlyViewWidgetLayer.qml) This layer includes all the remaining widgets for the fly view.
-  - [`FlyViewCustomLayer.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlightDisplay/FlyViewCustomLayer.qml) This is a layer you override using resource override to add your own custom layer.
+  - [`FlyView.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlyView/FlyView.qml) This is the base layer of ui and business logic to control map and video switching.
+  - [`FlyViewWidgetsOverlay.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlyView/FlyViewWidgetLayer.qml) This layer includes all the remaining widgets for the fly view.
+  - [`FlyViewCustomLayer.qml`](https://github.com/mavlink/qgroundcontrol/blob/master/src/FlyView/FlyViewCustomLayer.qml) This is a layer you override using resource override to add your own custom layer.
 
 ### Inset Negotiation using `QGCToolInsets`
 
@@ -21,7 +21,7 @@ The base layer for the view is also the most complex from ui interactions and bu
 
 ### `FlyViewWidgetsOverlay.qml`
 
-This layer contains all the remaining controls of the fly view. You have the ability to hide the controls through use of [`QGCFlyViewOptions`](https://github.com/mavlink/qgroundcontrol/blob/master/src/api/QGCOptions.h). But in order to change the layout of the upstream controls you must use a resource override. If you look at the source you'll see that the controls themselves are well encapsulated such that it should not be that difficult to create your own override which repositions them and/or adds your own ui. While maintaining a connection to the upstream implementaions of the controls.
+This layer contains all the remaining controls of the fly view. You have the ability to hide the controls through use of [`QGCFlyViewOptions`](https://github.com/mavlink/qgroundcontrol/blob/master/src/API/QGCOptions.h). But in order to change the layout of the upstream controls you must use a resource override. If you look at the source you'll see that the controls themselves are well encapsulated such that it should not be that difficult to create your own override which repositions them and/or adds your own ui. While maintaining a connection to the upstream implementaions of the controls.
 
 ### `FlyViewCustomLayer.qml`
 

@@ -1,3 +1,8 @@
+# ============================================================================
+# Vehicle Setup Subsystem
+# Vehicle configuration, calibration, and firmware upgrade
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickConfigController.cc
@@ -6,6 +11,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# ----------------------------------------------------------------------------
+# Firmware Upgrade (requires serial link)
+# ----------------------------------------------------------------------------
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -17,9 +25,14 @@ if(NOT QGC_NO_SERIAL_LINK)
             FirmwareUpgradeController.h
             PX4FirmwareUpgradeThread.cc
             PX4FirmwareUpgradeThread.h
+            RemoteControlCalibrationController.cc
+            RemoteControlCalibrationController.h
     )
 endif()
 
+# ----------------------------------------------------------------------------
+# Vehicle Setup QML Module
+# ----------------------------------------------------------------------------
 qt_add_library(VehicleSetupModule STATIC)
 
 qt_add_qml_module(VehicleSetupModule
@@ -28,12 +41,14 @@ qt_add_qml_module(VehicleSetupModule
     RESOURCE_PREFIX /qml
     QML_FILES
         FirmwareUpgrade.qml
-        JoystickConfig.qml
-        JoystickConfigAdvanced.qml
-        JoystickConfigButtons.qml
-        JoystickConfigCalibration.qml
-        JoystickConfigGeneral.qml
+        JoystickComponent.qml
+        JoystickComponentButtons.qml
+        JoystickComponentButtonMonitor.qml
+        JoystickComponentSettings.qml
         OpticalFlowSensor.qml
+        RemoteControlCalibration.qml
+        RemoteControlChannelMonitor.qml
+        RemoteControlChannelValueDisplay.qml
         SetupParameterEditor.qml
         SetupView.qml
         VehicleSummary.qml

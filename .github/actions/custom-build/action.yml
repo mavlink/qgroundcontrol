@@ -1,0 +1,23 @@
+name: Enable Custom Build
+description: Copies custom-example folder to enable custom build configuration
+
+runs:
+  using: composite
+  steps:
+    - name: Enable custom build (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        if not exist ".\custom-example" (
+          echo Directory ".\custom-example" does not exist. && exit /b 1
+        )
+        xcopy /E /I ".\custom-example" ".\custom"
+
+    - name: Enable custom build (Unix)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        if [ ! -d "./custom-example" ]; then
+          echo "Directory ./custom-example does not exist." && exit 1
+        fi
+        cp -r ./custom-example ./custom

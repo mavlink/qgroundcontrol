@@ -1,10 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 
-import QGroundControl.FactSystem
+import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
-import QGroundControl.Palette
 
 Item {
     anchors.fill:   parent
@@ -35,9 +34,18 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("Arming Checks:")
-            valueText: fact ? (fact.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")) : ""
+            valueText: {
+                if (_armingCheckFact) {
+                    return _armingCheckFact.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
+                } else if (_armingSkipCheckFact) {
+                    return _armingSkipCheckFact.value === 0 ? qsTr("Enabled") : qsTr("Some disabled")
+                }
+                return ""
+            }
 
-            property Fact fact: controller.getParameterFact(-1, "ARMING_CHECK")
+            // Older firmwares use ARMING_CHECK. Newer firmwares use ARMING_SKIPCHK.
+            property Fact _armingCheckFact:     controller.getParameterFact(-1, "ARMING_CHECK", false /* reportMissing */)
+            property Fact _armingSkipCheckFact: controller.getParameterFact(-1, "ARMING_SKIPCHK", false /* reportMissing */)
         }
 
         VehicleSummaryRow {
@@ -146,7 +154,7 @@ Item {
             valueText:  fact ? (fact.value < 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
             visible:    controller.vehicle.fixedWing
 
-            property Fact fact: controller.getParameterFact(-1, "ALT_HOLD_RTL", false /* reportMissing */)
+            property Fact fact: controller.getParameterFact(-1, "r.RTL_ALTITUDE", false /* reportMissing */)
         }
     }
 }

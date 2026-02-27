@@ -73,6 +73,6 @@ GPS指示器在工具栏图标中向您显示卫星计数和HDOP。 下拉菜单
 
 - 遥测信号强度指示
 - 遥控信号强度指示
-- 云台
+- Gimbal - Only displayed if the vehicle supports the [Mavlink Gimbal Protocol](https://mavlink.io/en/services/gimbal_v2.html)
 - 垂直起降转换
 - 从多个连接的载具中选择

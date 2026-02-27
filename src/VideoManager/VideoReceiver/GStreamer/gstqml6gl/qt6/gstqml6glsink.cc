@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 /*
  * GStreamer
  * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
@@ -528,7 +519,7 @@ gst_qml6_gl_sink_propose_allocation (GstBaseSink * bsink, GstQuery * query)
   }
 
   if (pool == NULL && need_pool) {
-  
+
     GST_DEBUG_OBJECT (qt_sink, "create new pool");
     pool = gst_gl_buffer_pool_new (qt_sink->context);
 

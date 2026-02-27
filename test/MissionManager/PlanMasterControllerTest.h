@@ -1,33 +1,20 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/VehicleTest.h"
 
 class PlanMasterController;
 
-class PlanMasterControllerTest : public UnitTest
+class PlanMasterControllerTest : public VehicleTest
 {
     Q_OBJECT
 
-public:
-    PlanMasterControllerTest(void);
-
 private slots:
-    void init(void) final;
-    void cleanup(void) final;
+    void init() final;
+    void cleanup() final;
 
-    void _testMissionFileLoad(void);
-    void _testMissionPlannerFileLoad(void);
-    void _testActiveVehicleChanged(void);
+    void _testMissionPlannerFileLoad();
+    void _testActiveVehicleChanged();
 
 private:
-    PlanMasterController*   _masterController;
+    PlanMasterController* _masterController = nullptr;
 };

@@ -1,18 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MapProvider.h"
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/QLocale>
 
-QGC_LOGGING_CATEGORY(MapProviderLog, "qgc.qtlocationplugin.mapprovider")
+QGC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
 
 // QtLocation expects MapIds to start at 1 and be sequential.
 int MapProvider::_mapIdIndex = 1;
@@ -101,6 +92,17 @@ int MapProvider::long2tileX(double lon, int z) const
 int MapProvider::lat2tileY(double lat, int z) const
 {
     return static_cast<int>(floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
+}
+
+double MapProvider::tileX2long(int x, int z) const
+{
+    return x / std::pow(2.0, z) * 360.0 - 180.0;
+}
+
+double MapProvider::tileY2lat(int y, int z) const
+{
+    const double n = M_PI - 2.0 * M_PI * y / std::pow(2.0, z);
+    return qRadiansToDegrees(std::atan(std::sinh(n)));
 }
 
 QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,

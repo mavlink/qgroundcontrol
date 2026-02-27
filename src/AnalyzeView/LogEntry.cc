@@ -1,23 +1,14 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "LogEntry.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(LogEntryLog, "test.analyzeview.logentry")
+QGC_LOGGING_CATEGORY(LogEntryLog, "AnalyzeView.QGCLogEntry")
 
-LogDownloadData::LogDownloadData(QGCLogEntry * const entry)
-    : ID(entry->id())
-    , entry(entry)
+LogDownloadData::LogDownloadData(QGCLogEntry * const logEntry)
+    : ID(logEntry->id())
+    , entry(logEntry)
 {
     // qCDebug(LogEntryLog) << Q_FUNC_INFO << this;
 }

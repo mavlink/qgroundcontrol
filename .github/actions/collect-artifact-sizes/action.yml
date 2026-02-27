@@ -1,0 +1,48 @@
+name: Collect Artifact Sizes
+description: Query artifact sizes from GitHub API for all platform workflow runs
+
+inputs:
+  head-sha:
+    description: The commit SHA to find workflow runs for
+    required: true
+  workflows:
+    description: Comma-separated workflow names to collect artifact sizes for
+    required: false
+    default: Linux,Windows,MacOS,Android
+  output-file:
+    description: Output JSON file path
+    required: true
+    default: artifact-sizes.json
+  runs-file:
+    description: Path to cached workflow runs JSON (skips API call if provided)
+    required: false
+    default: ''
+  artifacts-file:
+    description: Optional path to run artifact metadata JSON (skips per-run artifact API calls)
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Collect artifact sizes from API
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        QGC_GH_API_MODE: http
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+        REPO: ${{ github.repository }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        WORKFLOWS: ${{ inputs.workflows }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
+        RUNS_FILE: ${{ inputs.runs-file }}
+        ARTIFACTS_FILE: ${{ inputs.artifacts-file }}
+      run: |
+        ARGS=(--repo "${REPO}" --head-sha "${HEAD_SHA}" --platform-workflows "${WORKFLOWS}" --output-file "${OUTPUT_FILE}")
+        if [[ -n "${RUNS_FILE}" && -f "${RUNS_FILE}" ]]; then
+          ARGS+=(--runs-file "${RUNS_FILE}")
+        fi
+        if [[ -n "${ARTIFACTS_FILE}" && -f "${ARTIFACTS_FILE}" ]]; then
+          ARGS+=(--artifacts-file "${ARTIFACTS_FILE}")
+        fi
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/collect_artifact_sizes.py" "${ARGS[@]}"

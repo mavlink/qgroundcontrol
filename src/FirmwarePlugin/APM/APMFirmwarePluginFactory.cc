@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "APMFirmwarePluginFactory.h"
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduPlaneFirmwarePlugin.h"
@@ -14,11 +5,11 @@
 #include "ArduSubFirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "qgc.firmwareplugin.apmfirmwarepluginfactory");
+QGC_LOGGING_CATEGORY(APMFirmwarePluginFactoryLog, "FirmwarePlugin.APMFirmwarePluginFactory");
 
 APMFirmwarePluginFactory APMFirmwarePluginFactory(nullptr);
 
-APMFirmwarePluginFactory::APMFirmwarePluginFactory(QObject *parent)
+APMFirmwarePluginFactory::APMFirmwarePluginFactory(QObject */*parent*/)
 {
     // qCDebug(FirmwarePluginFactoryLog) << Q_FUNC_INFO << this;
 }

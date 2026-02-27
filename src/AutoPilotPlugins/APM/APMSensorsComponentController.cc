@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "APMSensorsComponentController.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMSensorsComponent.h"
@@ -18,8 +9,8 @@
 
 #include <QtCore/QVariant>
 
-QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "qgc.autopilotplugins.apm.apmsensorscomponentcontroller")
-QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "qgc.autopilotplugins.apm.apmsensorscomponentcontroller:verbose")
+QGC_LOGGING_CATEGORY(APMSensorsComponentControllerLog, "AutoPilotPlugins.APMSensorsComponentController")
+QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "AutoPilotPlugins.APMSensorsComponentController:verbose")
 
 APMSensorsComponentController::APMSensorsComponentController(QObject *parent)
     : FactPanelController(parent)
@@ -361,7 +352,7 @@ void APMSensorsComponentController::calibrateGyro()
 
 void APMSensorsComponentController::_handleTextMessage(int sysid, int componentid, int severity, const QString &text, const QString &description)
 {
-    Q_UNUSED(severity); Q_UNUSED(description);
+    Q_UNUSED(componentid); Q_UNUSED(severity); Q_UNUSED(description);
 
     if (sysid != _vehicle->id()) {
         return;

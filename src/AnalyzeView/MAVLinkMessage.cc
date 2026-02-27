@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MAVLinkMessage.h"
 #include "MAVLinkMessageField.h"
 #include "QGCLoggingCategory.h"
@@ -14,7 +5,7 @@
 
 #include <QtCore/QTimeZone>
 
-QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "qgc.analyzeview.mavlinkmessage")
+QGC_LOGGING_CATEGORY(MAVLinkMessageLog, "AnalyzeView.MAVLinkMessage")
 
 QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *parent)
     : QObject(parent)
@@ -22,7 +13,7 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *
     , _fields(new QmlObjectListModel(this))
 
 {
-    // qCDebug(LogDownloadControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(MAVLinkMessageLog) << this;
 
     const mavlink_message_info_t *const msgInfo = mavlink_get_message_info(&message);
     if (!msgInfo) {
@@ -57,6 +48,8 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *
 QGCMAVLinkMessage::~QGCMAVLinkMessage()
 {
     _fields->clearAndDeleteContents();
+
+    qCDebug(MAVLinkMessageLog) << this;
 }
 
 void QGCMAVLinkMessage::updateFieldSelection()

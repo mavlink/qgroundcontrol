@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtCore/QLoggingCategory>
@@ -87,6 +78,7 @@ public:
 
     void requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates) override;
     void requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord) override;
+    void requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly) override;
 };
 
 /*===========================================================================*/

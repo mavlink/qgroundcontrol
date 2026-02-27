@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "StructureScanComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
@@ -20,7 +11,7 @@
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
+QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
 const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
 
@@ -29,7 +20,7 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
     , _entryVertex              (0)
-    , _ignoreRecalc             (false)
+, _ignoreRecalc             (false)
     , _scanDistance             (0.0)
     , _cameraShots              (0)
     , _cameraCalc               (masterController, settingsGroup)
@@ -754,4 +745,3 @@ void StructureScanComplexItem::_segmentTerrainCollisionChanged(bool terrainColli
     ComplexMissionItem::_segmentTerrainCollisionChanged(terrainCollision);
     _structurePolygon.setShowAltColor(_cTerrainCollisionSegments != 0);
 }
-

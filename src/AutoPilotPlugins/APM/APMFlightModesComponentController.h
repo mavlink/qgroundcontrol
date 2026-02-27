@@ -1,17 +1,8 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #pragma once
 
 #include <QtCore/QStringList>
 #include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"
@@ -20,6 +11,7 @@
 class APMFlightModesComponentController : public FactPanelController
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(QString      modeParamPrefix         MEMBER _modeParamPrefix         CONSTANT)
     Q_PROPERTY(QString      modeChannelParam        MEMBER _modeChannelParam        CONSTANT)
     Q_PROPERTY(int          activeFlightMode        READ activeFlightMode           NOTIFY activeFlightModeChanged)
@@ -56,7 +48,7 @@ signals:
     void superSimpleModeEnabledChanged();
 
 private slots:
-    void _rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels]);
+    void channelValuesChanged(QVector<int> pwmValues);
     void _updateSimpleParamsFromSimpleMode();
     void _setupSimpleModeEnabled();
 

@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "PX4AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
 #include "QGCApplication.h"
@@ -21,10 +11,6 @@
 #include "Vehicle.h"
 #include "Actuators.h"
 #include "ActuatorComponent.h"
-
-/// @file
-///     @brief This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_PX4 type.
-///     @author Don Gagne <don@thegagnes.com>
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
@@ -41,6 +27,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _tuningComponent(nullptr)
     , _flightBehavior(nullptr)
     , _syslinkComponent(nullptr)
+    , _joystickComponent(nullptr)
 {
     if (!vehicle) {
         qWarning() << "Internal error";
@@ -88,12 +75,31 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 if (_vehicle->actuators()) {
                     _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators
                 }
-                if (_vehicle->actuators() && _vehicle->actuators()->showUi()) {
+
+                // Decide between new Actuators page or legacy Motor page
+                bool showActuatorsPage = false;
+                if (!_vehicle->actuators()) {
+                    qCDebug(ActuatorsConfigLog) << "Actuators page will NOT show because:";
+                    qCDebug(ActuatorsConfigLog) << "  - Vehicle did not provide actuators metadata via component information";
+                } else if (!_vehicle->actuators()->showUi()) {
+                    qCDebug(ActuatorsConfigLog) << "Actuators page will NOT show because:";
+                    if (!_vehicle->actuators()->isInitialized()) {
+                        qCDebug(ActuatorsConfigLog) << "  - Actuators initialization failed:" << _vehicle->actuators()->initializationError();
+                    } else {
+                        qCDebug(ActuatorsConfigLog) << "  - Condition 'show-ui-if' evaluated to false";
+                        qCDebug(ActuatorsConfigLog) << "    (see 'Evaluating [show-ui-if]' log above for details)";
+                    }
+                } else {
+                    showActuatorsPage = true;
+                    qCDebug(ActuatorsConfigLog) << "Actuators page WILL show (all conditions passed)";
+                }
+
+                if (showActuatorsPage) {
                     _actuatorComponent = new ActuatorComponent(_vehicle, this, this);
                     _actuatorComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_actuatorComponent)));
                 } else {
-                    // show previous motor UI instead
+                    qCDebug(ActuatorsConfigLog) << "  → Using legacy Motor page instead";
                     _motorComponent = new MotorComponent(_vehicle, this, this);
                     _motorComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_motorComponent)));
@@ -119,6 +125,11 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                     _esp8266Component->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_esp8266Component)));
                 }
+
+                _joystickComponent = new JoystickComponent(_vehicle, this, this);
+                _joystickComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_joystickComponent)));
+
             } else {
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
             }
@@ -165,7 +176,7 @@ QString PX4AutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
         }
     } else if (qobject_cast<const PX4RadioComponent*>(component)) {
         if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() != 1) {
-            requiresAirframeCheck = true;
+            //requiresAirframeCheck = true;
         }
     } else if (qobject_cast<const PX4TuningComponent*>(component)) {
         requiresAirframeCheck = true;

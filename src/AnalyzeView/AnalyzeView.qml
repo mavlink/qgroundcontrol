@@ -1,21 +1,9 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.Palette
 import QGroundControl.Controls
-import QGroundControl.Controllers
-import QGroundControl.ScreenTools
 
 Rectangle {
     id:     _root
@@ -63,7 +51,7 @@ Rectangle {
             // I don't know why this does not work
             Connections {
                 target:         QGroundControl.settingsManager.appSettings.appFontPointSize
-                onValueChanged: buttonColumn.reflowWidths()
+                function onValueChanged(value) { buttonColumn.reflowWidths() }
             }
 
             function reflowWidths() {
@@ -126,7 +114,7 @@ Rectangle {
 
         Connections {
             target:     panelLoader.item
-            onPopout:   mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source)
+            function onPopout() { mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source) }
         }
     }
 }

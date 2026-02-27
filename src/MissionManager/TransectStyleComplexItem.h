@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "ComplexMissionItem.h"
@@ -211,6 +202,8 @@ protected:
 
     static constexpr int _terrainQueryTimeoutMsecs=     1000;
     static constexpr int _hoverAndCaptureDelaySeconds = 4;
+    static constexpr double _minimumTransectSpacingMeters = 0.3;
+    static constexpr double _forceLargeTransectSpacingMeters = 100000;
 
 private slots:
     void _reallyQueryTransectsPathHeightInfo        (void);
@@ -245,5 +238,5 @@ private:
     QTimer                      _terrainPolyPathQueryTimer;
 
     // Deprecated json keys
-    static constexpr const char* _jsonTerrainFollowKeyDeprecated       = "FollowTerrain";
+    static constexpr const char* _jsonTerrainFollowKeyDeprecated = "FollowTerrain";
 };

@@ -1,19 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "FactValueSliderListModel.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QtMath>
 
-QGC_LOGGING_CATEGORY(FactValueSliderListModelLog, "qgc.factsystem.factvaluesliderlistmodel")
+QGC_LOGGING_CATEGORY(FactValueSliderListModelLog, "FactSystem.FactValueSliderListModel")
 
 FactValueSliderListModel::FactValueSliderListModel(const Fact &fact, QObject *parent)
     : QAbstractListModel(parent)

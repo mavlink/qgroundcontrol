@@ -1,3 +1,8 @@
+# ============================================================================
+# Camera Module
+# MAVLink camera control and video stream management
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CameraMetaData.cc
@@ -18,8 +23,10 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# qt_add_resources(${CMAKE_PROJECT_NAME} "Camera_res"
-#     PREFIX "/"
-#     FILES
-#         CameraMetaData.json
-# )
+# ----------------------------------------------------------------------------
+# Camera Metadata Resources
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} json_mavlink_camera
+    PREFIX "/json"
+    FILES CameraMetaData.json
+)

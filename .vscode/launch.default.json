@@ -1,0 +1,118 @@
+{
+  "configurations": [
+    {
+      "MIMode": "gdb",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "QT_QPA_PLATFORM",
+          "value": "xcb"
+        },
+        {
+          "name": "QML_IMPORT_TRACE",
+          "value": "0"
+        }
+      ],
+      "externalConsole": false,
+      "name": "Launch QGroundControl",
+      "preLaunchTask": "CMake: Build",
+      "program": "${workspaceFolder}/build/QGroundControl",
+      "request": "launch",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "ignoreFailures": true,
+          "text": "-enable-pretty-printing"
+        },
+        {
+          "description": "Load Qt pretty printers",
+          "ignoreFailures": true,
+          "text": "source ${workspaceFolder}/tools/gdb-pretty-printers/qt6.py"
+        }
+      ],
+      "stopAtEntry": false,
+      "type": "cppdbg"
+    },
+    {
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "QML_IMPORT_TRACE": "0",
+        "QT_QPA_PLATFORM": "cocoa"
+      },
+      "name": "Launch QGroundControl (LLDB)",
+      "preLaunchTask": "CMake: Build",
+      "program": "${workspaceFolder}/build/QGroundControl",
+      "request": "launch",
+      "type": "lldb"
+    },
+    {
+      "MIMode": "gdb",
+      "args": [
+        "--unittest"
+      ],
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "name": "Run Unit Tests (Debug)",
+      "preLaunchTask": "CMake: Build",
+      "program": "${workspaceFolder}/build/QGroundControl",
+      "request": "launch",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "ignoreFailures": true,
+          "text": "-enable-pretty-printing"
+        }
+      ],
+      "stopAtEntry": false,
+      "type": "cppdbg"
+    },
+    {
+      "MIMode": "gdb",
+      "args": [
+        "--unittest:${input:testClass}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "name": "Debug Specific Test",
+      "preLaunchTask": "CMake: Build",
+      "program": "${workspaceFolder}/build/QGroundControl",
+      "request": "launch",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "ignoreFailures": true,
+          "text": "-enable-pretty-printing"
+        }
+      ],
+      "stopAtEntry": false,
+      "type": "cppdbg"
+    },
+    {
+      "MIMode": "gdb",
+      "name": "Attach to QGroundControl",
+      "processId": "${command:pickProcess}",
+      "program": "${workspaceFolder}/build/QGroundControl",
+      "request": "attach",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "ignoreFailures": true,
+          "text": "-enable-pretty-printing"
+        }
+      ],
+      "type": "cppdbg"
+    }
+  ],
+  "inputs": [
+    {
+      "description": "Test class name (e.g., FactSystemTest)",
+      "id": "testClass",
+      "type": "promptString"
+    }
+  ],
+  "version": "0.2.0"
+}

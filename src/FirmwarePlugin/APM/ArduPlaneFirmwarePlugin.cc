@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "ArduPlaneFirmwarePlugin.h"
 #include "Vehicle.h"
 
@@ -43,7 +34,7 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
         { APMPlaneMode::THERMAL       , _thermalFlightMode      },
         { APMPlaneMode::LOITER2QLAND  , _loiter2qlandFlightMode },
         { APMPlaneMode::AUTOLAND      , _autolandFlightMode     },
-        
+
     });
 
     static FlightModeList availableFlightModes = {
@@ -63,7 +54,7 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
         { _takeoffFlightMode      , APMPlaneMode::TAKEOFF       , true , true },
         { _avoidADSBFlightMode    , APMPlaneMode::AVOID_ADSB    , true , true },
         { _guidedFlightMode       , APMPlaneMode::GUIDED        , true , true },
-        { _initializingFlightMode , APMPlaneMode::INITIALIZING  , true , true },
+        { _initializingFlightMode , APMPlaneMode::INITIALIZING  , false, true },
         { _qStabilizeFlightMode   , APMPlaneMode::QSTABILIZE    , true , true },
         { _qHoverFlightMode       , APMPlaneMode::QHOVER        , true , true },
         { _qLoiterFlightMode      , APMPlaneMode::QLOITER       , true , true },
@@ -78,15 +69,12 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t &remapV3_10 = _remapParamName[3][10];
-
-        remapV3_10["BATT_ARM_VOLT"] = QStringLiteral("ARMING_VOLT_MIN");
-        remapV3_10["BATT2_ARM_VOLT"] = QStringLiteral("ARMING_VOLT2_MIN");
-
         FirmwarePlugin::remapParamNameMap_t &remapV4_5 = _remapParamName[4][5];
 
         remapV4_5["AIRSPEED_MIN"] = QStringLiteral("ARSPD_FBW_MIN");
         remapV4_5["AIRSPEED_MAX"] = QStringLiteral("ARSPD_FBW_MAX");
+        remapV4_5["RTL_ALTITUDE"] = QStringLiteral("ALT_HOLD_RTL");
+        // LAND_SPEED is only used in a Copter component
 
         _remapParamNameIntialized = true;
     }

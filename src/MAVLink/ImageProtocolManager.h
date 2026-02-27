@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "MAVLinkLib.h"
@@ -43,7 +34,7 @@ public slots:
 private:
     QImage _getImage();
 
-    mavlink_data_transmission_handshake_t _imageHandshake{0};
+    mavlink_data_transmission_handshake_t _imageHandshake = {};
     QByteArray _imageBytes;
     uint32_t _flowImageIndex = 0;
 };

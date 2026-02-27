@@ -1,3 +1,8 @@
+# ============================================================================
+# Joystick Module
+# Game controller and joystick input support
+# ============================================================================
+
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Joystick.cc
@@ -8,15 +13,9 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-if(ANDROID)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            JoystickAndroid.cc
-            JoystickAndroid.h
-    )
-    return()
-endif()
-
+# ----------------------------------------------------------------------------
+# SDL Joystick Implementation (All Platforms)
+# ----------------------------------------------------------------------------
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickSDL.cc

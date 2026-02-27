@@ -1,0 +1,18 @@
+{
+    "version":      1,
+    "fileType":     "FactMetaData",
+    "QGC.MetaData.Facts": [
+{% for fact in spec.facts %}
+        {
+            "name":             "{{ fact.name }}",
+            "shortDesc":        "{{ fact.short_desc }}",
+            "type":             "{{ fact.value_type }}"{% if fact.decimal_places != 2 %},
+            "decimalPlaces":    {{ fact.decimal_places }}{% endif %}{% if fact.units %},
+            "units":            "{{ fact.units }}"{% endif %}{% if fact.min_value is not none %},
+            "min":              {{ fact.min_value }}{% endif %}{% if fact.max_value is not none %},
+            "max":              {{ fact.max_value }}{% endif %}
+
+        }{{ "," if not loop.last else "" }}
+{% endfor %}
+    ]
+}

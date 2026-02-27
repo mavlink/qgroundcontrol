@@ -1,13 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
-
 #include "PX4SimpleFlightModesController.h"
 #include "Fact.h"
 #include "Vehicle.h"
@@ -15,7 +5,6 @@
 
 PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
     : _activeFlightMode(0)
-    , _channelCount(QGCMAVLink::maxRcChannels)
 
 {
     QStringList usedParams;
@@ -26,17 +15,24 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
         return;
     }
 
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::_rcChannelsChanged);
+    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::channelValuesChanged);
 }
 
 /// Connected to Vehicle::rcChannelsChanged signal
-void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pwmValues[QGCMAVLink::maxRcChannels])
+void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues)
 {
+    int channelCount = pwmValues.size();
+
     _rcChannelValues.clear();
     for (int i=0; i<channelCount; i++) {
         _rcChannelValues.append(pwmValues[i]);
     }
     emit rcChannelValuesChanged();
+
+    if (channelCount != _channelCount) {
+        _channelCount = channelCount;
+        emit channelCountChanged();
+    }
 
     Fact* pFact = getParameterFact(-1, "RC_MAP_FLTMODE");
     if(!pFact) {
@@ -104,18 +100,6 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
     int pwmTrim = pFact->rawValue().toInt();
 
-    pFact = getParameterFact(-1, QString("RC%1_DZ").arg(flightModeChannel + 1));
-    if(!pFact) {
-#if defined _MSC_VER
-        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << "Fact is NULL in" << __FILE__ << __LINE__;
-#else
-        qCritical() << QString("RC%1_DZ").arg(flightModeChannel + 1) << " Fact is NULL in" << __func__ << __FILE__ << __LINE__;
-#endif
-        return;
-    }
-
-    int pwmDz = pFact->rawValue().toInt();
-
     if (flightModeChannel < 0 || flightModeChannel > channelCount) {
         return;
     }
@@ -144,16 +128,14 @@ void PX4SimpleFlightModesController::_rcChannelsChanged(int channelCount, int pw
 
         float calibrated_value;
 
-        if (channelValue > (pwmTrim + pwmDz)) {
-            calibrated_value = (channelValue - pwmTrim - pwmDz) / (float)(
-                          pwmMax - pwmTrim - pwmDz);
+        if (channelValue > pwmTrim) {
+            calibrated_value = (channelValue - pwmTrim) / (float)(pwmMax - pwmTrim);
 
-        } else if (channelValue < (pwmTrim - pwmDz)) {
-            calibrated_value = (channelValue - pwmTrim + pwmDz) / (float)(
-                          pwmTrim - pwmMin - pwmDz);
+        } else if (channelValue < pwmTrim) {
+            calibrated_value = (channelValue - pwmTrim) / (float)(pwmTrim - pwmMin);
 
         } else {
-            /* in the configured dead zone, output zero */
+            /* at the trim position, output zero */
             calibrated_value = 0.0f;
         }
 

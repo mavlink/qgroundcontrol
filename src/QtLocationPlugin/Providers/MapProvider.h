@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include <QtLocation/private/qgeomaptype_p.h>
@@ -34,14 +25,14 @@ Q_DECLARE_LOGGING_CATEGORY(MapProviderLog)
     CustomMap = 100
 };*/
 
-#define MAX_MAP_ZOOM 23.0
-static constexpr const quint32 AVERAGE_TILE_SIZE = 13652;
+#define QGC_MAX_MAP_ZOOM 23
+static constexpr const quint32 QGC_AVERAGE_TILE_SIZE = 13652;
 
 // TODO: Inherit from QGeoMapType
 class MapProvider
 {
 public:
-    MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = AVERAGE_TILE_SIZE,
+    MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = QGC_AVERAGE_TILE_SIZE,
                 QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap);
     virtual ~MapProvider();
 
@@ -60,6 +51,8 @@ public:
 
     virtual int long2tileX(double lon, int z) const;
     virtual int lat2tileY(double lat, int z) const;
+    virtual double tileX2long(int x, int z) const;
+    virtual double tileY2lat(int y, int z) const;
 
     virtual bool isElevationProvider() const { return false; }
     virtual bool isBingProvider() const { return false; }

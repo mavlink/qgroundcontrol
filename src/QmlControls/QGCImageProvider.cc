@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "QGCImageProvider.h"
 
 #include <QtGui/QPainter>
@@ -59,7 +50,7 @@ QImage QGCImageProvider::requestImage(const QString &id, QSize *size, const QSiz
         return _dummy;
     }
 
-    const uint8_t index = url[1].toUInt(&ok);
+    const uint8_t index [[maybe_unused]] = url[1].toUInt(&ok);
     if (!ok) {
         return _dummy;
     }

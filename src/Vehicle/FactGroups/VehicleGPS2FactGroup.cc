@@ -1,15 +1,7 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "VehicleGPS2FactGroup.h"
 #include "Vehicle.h"
 #include "QGCGeo.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
 
@@ -20,6 +12,9 @@ void VehicleGPS2FactGroup::handleMessage(Vehicle *vehicle, const mavlink_message
     switch (message.msgid) {
     case MAVLINK_MSG_ID_GPS2_RAW:
         _handleGps2Raw(message);
+        break;
+    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+        _handleGnssIntegrity(message);
         break;
     default:
         break;
@@ -38,6 +33,7 @@ void VehicleGPS2FactGroup::_handleGps2Raw(const mavlink_message_t &message)
     hdop()->setRawValue((gps2Raw.eph == UINT16_MAX) ? qQNaN() : (gps2Raw.eph / 100.0));
     vdop()->setRawValue((gps2Raw.epv == UINT16_MAX) ? qQNaN() : (gps2Raw.epv / 100.0));
     courseOverGround()->setRawValue((gps2Raw.cog == UINT16_MAX) ? qQNaN() : (gps2Raw.cog / 100.0));
+    yaw()->setRawValue((gps2Raw.yaw == UINT16_MAX) ? qQNaN() : (gps2Raw.yaw / 100.0));
     lock()->setRawValue(gps2Raw.fix_type);
 
     _setTelemetryAvailable(true);

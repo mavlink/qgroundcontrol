@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "QGCMAVLink.h"
@@ -44,11 +35,13 @@ class Vehicle;
 class MissionCommandTree : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
 
+#ifdef QGC_UNITTEST_BUILD
     friend class MissionCommandTreeTest;
+#endif
 
 public:
     /// Constructs an MissionCommandTree object.

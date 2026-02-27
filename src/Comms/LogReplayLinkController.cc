@@ -1,26 +1,17 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "LogReplayLinkController.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "qgc.comms.logreplaylink")
+QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "Comms.LogReplayLinkController")
 
 LogReplayLinkController::LogReplayLinkController(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(LogReplayLinkControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogReplayLinkControllerLog) << this;
 }
 
 LogReplayLinkController::~LogReplayLinkController()
 {
-    // qCDebug(LogReplayLinkControllerLog) << Q_FUNC_INFO << this;
+    qCDebug(LogReplayLinkControllerLog) << this;
 }
 
 void LogReplayLinkController::setLink(LogReplayLink *link)
@@ -63,6 +54,10 @@ void LogReplayLinkController::setLink(LogReplayLink *link)
 
 void LogReplayLinkController::setIsPlaying(bool isPlaying) const
 {
+    if (!_link) {
+        return;
+    }
+
     if (isPlaying) {
         _link->play();
     } else {
@@ -72,6 +67,10 @@ void LogReplayLinkController::setIsPlaying(bool isPlaying) const
 
 void LogReplayLinkController::setPercentComplete(qreal percentComplete) const
 {
+    if (!_link) {
+        return;
+    }
+
     _link->movePlayhead(percentComplete);
 }
 

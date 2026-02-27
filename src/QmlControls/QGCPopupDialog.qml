@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -14,26 +5,29 @@ import QtQuick.Dialogs
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Palette
-import QGroundControl.ScreenTools
 
 // Provides the standard dialog mechanism for QGC. Works 99% like Qml Dialog.
 //
 // Example usage:
+//      QGCPopupDialogFactory {
+//          id: myDialogFactory
+//          dialogComponent: myDialogComponent
+//      }
+//
 //      Component {
-//          id: dialogComponent
+//          id: myDialogComponent
 //
 //          QGCPopupDialog {
 //              ...
 //          }
 //      }
 //
-//      onFoo: dialogComponent.createObject(mainWindow).open()
+//      onFoo: myDialogFactory.open()
+//      onBar: myDialogFactory.open({ title: "My Title", myProp: someValue })
 //
 // Notes:
-//  * QGCPopupDialog should be created from a component to limit the memory usage of the dialog
-//      to only when it is displayed.
-//  * Parent for createObject should always be mainWindow.
+//  * Use QGCPopupDialogFactory to create and open dialogs. The factory handles correct parenting and cleanup of the dialog instances.
+//  * The dialog automatically reparents itself to Overlay.overlay on creation, while tracking the original parent's lifetime to prevent orphaned dialogs.
 // Differences from standard Qml Dialog:
 //  * The QGCPopupDialog object will automatically be destroyed when it closed. You can override this
 //      behaviour by setting destroyOnClose to false if it was not created dynamically.
@@ -43,10 +37,11 @@ Popup {
     id:                 root
     width:  mainWindow.width
     height: mainWindow.height
-    parent:             Overlay.overlay
     modal:              true
     focus:              true
     margins:            0
+
+    default property alias dialogContent: dialogContentParent.data
 
     property string title
     property var    buttons:                Dialog.Ok
@@ -55,8 +50,11 @@ Popup {
     property var    dialogProperties
     property bool   destroyOnClose:         true
     property bool   preventClose:           false
-    
-    readonly property real headerMinWidth: titleLable.implicitWidth + rejectButton.width + acceptButton.width + titleRowLayout.spacing * 2
+
+    property real maxContentAvailableWidth:    mainWindow.width - _contentMargin * 6
+    property real maxContentAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 7
+
+    readonly property real headerMinWidth: titleLabel.implicitWidth + rejectButton.width + acceptButton.width + titleRowLayout.spacing * 2
 
     signal accepted
     signal rejected
@@ -79,10 +77,17 @@ Popup {
         }
     }
 
+    // We use this to track when the original parent of the dialog is destroyed. This allows us to automatically close the dialog when that happens which prevents
+    // orphaned dialogs which cause crashes.
+    Connections {
+        id: originalParentConnections
+        ignoreUnknownSignals: true // Prevents warning from initial connection when parent is null
+        onDestroyed: root.close()
+    }
+
     Component.onCompleted: {
-        // The last child item will be the true dialog content.
-        // Re-Parent it to the right place in the ui hierarchy.
-        contentChildren[contentChildren.length - 1].parent = dialogContentParent
+        originalParentConnections.target = parent
+        parent = Overlay.overlay
     }
 
     onAboutToShow: {
@@ -207,9 +212,9 @@ Popup {
     ColumnLayout {
         id:                 mainLayout
         anchors.centerIn:   parent
-        x:          _contentMargin
-        y:          _contentMargin
-        spacing:    _contentMargin
+        x:                  _contentMargin
+        y:                  _contentMargin
+        spacing:            _contentMargin
 
         RowLayout {
             id:                     titleRowLayout
@@ -217,7 +222,7 @@ Popup {
             spacing:                _contentMargin
 
             QGCLabel {
-                id: titleLable
+                id:                 titleLabel
                 Layout.fillWidth:   true
                 text:               root.title
                 font.pointSize:     ScreenTools.mediumFontPointSize
@@ -244,10 +249,10 @@ Popup {
             Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
             color:                  _qgcPal.window
 
-            property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
-            property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5
             property real totalContentWidth:    dialogContentParent.childrenRect.width + _contentMargin * 2
             property real totalContentHeight:   dialogContentParent.childrenRect.height + _contentMargin * 2
+            property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
+            property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5
 
             QGCFlickable {
                 anchors.margins:    _contentMargin

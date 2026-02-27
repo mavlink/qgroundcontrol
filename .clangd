@@ -1,3 +1,32 @@
+# QGroundControl Clangd Configuration
+# Language server for C++ code completion and navigation
+
+CompileFlags:
+  Add:
+    - "-std=c++20"
+    - "-Wall"
+    - "-Wextra"
+  Remove:
+    - "-m*"  # Remove machine-specific flags
+
 Diagnostics:
+  # Qt macros and moc generate code that triggers false positives
   UnusedIncludes: None
   MissingIncludes: None
+  # Suppress common Qt-related warnings
+  Suppress:
+    - "unknown_typename"
+    - "expansion_to_defined"
+
+Index:
+  Background: Build
+  StandardLibrary: Yes
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  Designators: Yes
+
+Hover:
+  ShowAKA: Yes

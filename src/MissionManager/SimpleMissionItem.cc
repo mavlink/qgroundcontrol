@@ -1,14 +1,6 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "SimpleMissionItem.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
@@ -153,7 +145,7 @@ void SimpleMissionItem::_connectSignals(void)
     // For NAV_LOITER_X commands, they must emit a radiusChanged signal
     connect(&_missionItem._param2Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
-    
+
     // Exit coordinate is the same as entrance coordinate
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::exitCoordinateChanged);
 
@@ -203,7 +195,9 @@ void SimpleMissionItem::_setupMetaData(void)
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
         _altitudeMetaData->setRawUnits("m");
         _altitudeMetaData->setRawIncrement(1);
-        _altitudeMetaData->setDecimalPlaces(2);
+        _altitudeMetaData->setDecimalPlaces(1);
+        _altitudeMetaData->setRawUserMin(0.0);
+        _altitudeMetaData->setRawUserMax(121.92); // 400 feet
 
         enumStrings.clear();
         enumValues.clear();
@@ -245,7 +239,7 @@ void SimpleMissionItem::_setupMetaData(void)
 }
 
 SimpleMissionItem::~SimpleMissionItem()
-{    
+{
 }
 
 void SimpleMissionItem::save(QJsonArray&  missionItems)
@@ -300,15 +294,15 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
             QList<JsonHelper::KeyValidateInfo> keyInfoList = {
                 { _jsonAltitudeModeKey,         QJsonValue::Double, true },
                 { _jsonAltitudeKey,             QJsonValue::Double, true },
-                { _jsonAMSLAltAboveTerrainKey,  QJsonValue::Double, true },
+                { _jsonAMSLAltAboveTerrainKey,  QJsonValue::Null, true },
             };
             if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
                 return false;
             }
 
             _altitudeMode = (QGroundControlQmlGlobal::AltMode)(int)json[_jsonAltitudeModeKey].toDouble();
-            _altitudeFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
-            _amslAltAboveTerrainFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
+            _altitudeFact.setRawValue(JsonParsing::possibleNaNJsonValue(json[_jsonAltitudeKey]));
+            _amslAltAboveTerrainFact.setRawValue(JsonParsing::possibleNaNJsonValue(json[_jsonAltitudeKey]));
         } else {
             _altitudeMode = _missionItem.relativeAltitude() ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute;
             _altitudeFact.setRawValue(_missionItem._param7Fact.rawValue());
@@ -406,7 +400,8 @@ QString SimpleMissionItem::abbreviation() const
 void SimpleMissionItem::_rebuildTextFieldFacts(void)
 {
     _textFieldFacts.clear();
-    
+    _textFieldFactsAdvanced.clear();
+
     if (rawEdit()) {
         _missionItem._param1Fact.setName("Param1");
         _missionItem._param1Fact.setMetaData(_defaultParamMetaData);
@@ -459,8 +454,21 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
                     paramMetaData->setRawMin(paramInfo->min());
                     paramMetaData->setRawMax(paramInfo->max());
+                    const double userMin = paramInfo->userMin();
+                    const double userMax = paramInfo->userMax();
+                    // if user min/max are NaN, we leave them unchanged (invalid)
+                    if (!qIsNaN(userMin)) {
+                        paramMetaData->setRawUserMin(userMin);
+                    }
+                    if (!qIsNaN(userMax)) {
+                        paramMetaData->setRawUserMax(userMax);
+                    }
                     paramFact->setMetaData(paramMetaData);
-                    _textFieldFacts.append(paramFact);
+                    if (paramInfo->advanced()) {
+                        _textFieldFactsAdvanced.append(paramFact);
+                    } else {
+                        _textFieldFacts.append(paramFact);
+                    }
                 }
             }
         }
@@ -472,6 +480,7 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
 void SimpleMissionItem::_rebuildNaNFacts(void)
 {
     _nanFacts.clear();
+    _nanFactsAdvanced.clear();
 
     if (!rawEdit()) {
         _ignoreDirtyChangeSignals = true;
@@ -510,8 +519,21 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                     paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
                     paramMetaData->setRawMin(paramInfo->min());
                     paramMetaData->setRawMax(paramInfo->max());
+                    const double userMin = paramInfo->userMin();
+                    const double userMax = paramInfo->userMax();
+                    // if user min/max are NaN, we leave them unchanged (invalid)
+                    if (!qIsNaN(userMin)) {
+                        paramMetaData->setRawUserMin(userMin);
+                    }
+                    if (!qIsNaN(userMax)) {
+                        paramMetaData->setRawUserMax(userMax);
+                    }
                     paramFact->setMetaData(paramMetaData);
-                    _nanFacts.append(paramFact);
+                    if (paramInfo->advanced()) {
+                        _nanFactsAdvanced.append(paramFact);
+                    } else {
+                        _nanFacts.append(paramFact);
+                    }
                 }
             }
         }
@@ -564,6 +586,7 @@ double SimpleMissionItem::loiterRadius() const
 void SimpleMissionItem::_rebuildComboBoxFacts(void)
 {
     _comboboxFacts.clear();
+    _comboboxFactsAdvanced.clear();
 
     if (rawEdit()) {
         _comboboxFacts.append(&_missionItem._commandFact);
@@ -596,8 +619,21 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
                 paramMetaData->setRawDefaultValue(paramInfo->defaultValue());
                 paramMetaData->setRawMin(paramInfo->min());
                 paramMetaData->setRawMax(paramInfo->max());
+                const double userMin = paramInfo->userMin();
+                const double userMax = paramInfo->userMax();
+                // if user min/max are NaN, we leave them unchanged (invalid)
+                if (!qIsNaN(userMin)) {
+                    paramMetaData->setRawUserMin(userMin);
+                }
+                if (!qIsNaN(userMax)) {
+                    paramMetaData->setRawUserMax(userMax);
+                }
                 paramFact->setMetaData(paramMetaData);
-                _comboboxFacts.append(paramFact);
+                if (paramInfo->advanced()) {
+                    _comboboxFactsAdvanced.append(paramFact);
+                } else {
+                    _comboboxFacts.append(paramFact);
+                }
             }
         }
 

@@ -1,19 +1,10 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MockLinkMissionItemHandler.h"
 
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "qgc.comms.mocklink.mocklinkmissionitemhandler")
+QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "Comms.MockLink.MockLinkMissionItemHandler")
 
 MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink *mockLink)
     : QObject(mockLink)
@@ -36,7 +27,7 @@ void MockLinkMissionItemHandler::_startMissionItemResponseTimer()
     _missionItemResponseTimer.start(500);
 }
 
-bool MockLinkMissionItemHandler::handleMessage(const mavlink_message_t &msg)
+bool MockLinkMissionItemHandler::handleMavlinkMessage(const mavlink_message_t &msg)
 {
     switch (msg.msgid) {
     case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:

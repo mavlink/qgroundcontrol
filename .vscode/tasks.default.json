@@ -1,0 +1,129 @@
+{
+  "inputs": [
+    {
+      "description": "Test class name (e.g., FactSystemTest)",
+      "id": "testClass",
+      "type": "promptString"
+    }
+  ],
+  "tasks": [
+    {
+      "args": [
+        "--preset",
+        "default"
+      ],
+      "command": "cmake",
+      "group": "build",
+      "label": "CMake: Configure (Debug)",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "--preset",
+        "default-release"
+      ],
+      "command": "cmake",
+      "group": "build",
+      "label": "CMake: Configure (Release)",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "--build",
+        "build",
+        "--parallel"
+      ],
+      "command": "cmake",
+      "group": {
+        "isDefault": true,
+        "kind": "build"
+      },
+      "label": "CMake: Build",
+      "problemMatcher": "$gcc",
+      "type": "shell"
+    },
+    {
+      "args": [
+        "--build",
+        "build",
+        "--target",
+        "clean"
+      ],
+      "command": "cmake",
+      "group": "build",
+      "label": "CMake: Clean",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "--unittest"
+      ],
+      "command": "${workspaceFolder}/build/QGroundControl",
+      "dependsOn": "CMake: Build",
+      "group": {
+        "isDefault": true,
+        "kind": "test"
+      },
+      "label": "Run Unit Tests",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "--unittest:${input:testClass}"
+      ],
+      "command": "${workspaceFolder}/build/QGroundControl",
+      "dependsOn": "CMake: Build",
+      "group": "test",
+      "label": "Run Specific Test",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "--check"
+      ],
+      "command": "${workspaceFolder}/tools/format-check.sh",
+      "group": "none",
+      "label": "Format: Check Changed Files",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [],
+      "command": "${workspaceFolder}/tools/format-check.sh",
+      "group": "none",
+      "label": "Format: Fix Changed Files",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "command": "${workspaceFolder}/tools/analyze.sh",
+      "group": "none",
+      "label": "Static Analysis",
+      "problemMatcher": "$gcc",
+      "type": "shell"
+    },
+    {
+      "command": "${workspaceFolder}/tools/clean.sh",
+      "group": "none",
+      "label": "Clean All",
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "${workspaceFolder}/tools/translations/qgc-lupdate.sh"
+      ],
+      "command": "source",
+      "group": "none",
+      "label": "Update Translations",
+      "problemMatcher": [],
+      "type": "shell"
+    }
+  ],
+  "version": "2.0.0"
+}

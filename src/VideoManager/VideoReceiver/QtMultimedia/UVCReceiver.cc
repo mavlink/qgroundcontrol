@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "UVCReceiver.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
@@ -23,7 +14,7 @@
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickItem>
 
-QGC_LOGGING_CATEGORY(UVCReceiverLog, "qgc.videomanager.videoreceiver.qtmultimedia.uvcreceiver")
+QGC_LOGGING_CATEGORY(UVCReceiverLog, "Video.UVCReceiver")
 
 UVCReceiver::UVCReceiver(QObject *parent)
     : QtMultimediaReceiver(parent)
@@ -39,11 +30,6 @@ UVCReceiver::UVCReceiver(QObject *parent)
 
     (void) connect(_captureSession, &QMediaCaptureSession::cameraChanged, this, [this] {
         adjustAspectRatio();
-    });
-
-    // QMediaDevices::defaultVideoInput()
-    (void) connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, [this] {
-
     });
 
     checkPermission();
@@ -76,9 +62,11 @@ void UVCReceiver::adjustAspectRatio()
 
     const QSize resolution = cameraFormat.resolution();
     if (resolution.isValid()) {
-        const qreal aspectRatio = resolution.width() / resolution.height();
-        const qreal height = height * aspectRatio;
-        _videoOutput->setHeight(height * aspectRatio);
+        const qreal aspectRatio = static_cast<qreal>(resolution.width()) / resolution.height();
+        const qreal width = _videoOutput->width();
+        if (width > 0.0) {
+            _videoOutput->setHeight(width / aspectRatio);
+        }
     }
 }
 

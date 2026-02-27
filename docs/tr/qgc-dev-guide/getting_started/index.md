@@ -1,5 +1,5 @@
 ---
-qt_version: 6.8.3
+qt_version: 6.10.1
 ---
 
 # Getting Started with Source and Builds
@@ -14,22 +14,22 @@ Versions are provided for all platforms.
 
 ## Source Code
 
-Source code for _QGroundControl_ is kept on GitHub here: https://github.com/mavlink/qgroundcontrol.
+Source code for _QGroundControl_ is kept on [GitHub](https://github.com/mavlink/qgroundcontrol).
 It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
 To get the source files:
 
 1. Clone the repo (or your fork) including submodules:
 
-  ```sh
-  git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
-  ```
+   ```sh
+   git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
+   ```
 
 2. Update submodules (required each time you pull new source code):
 
-  ```sh
-  git submodule update --recursive
-  ```
+   ```sh
+   git submodule update --recursive
+   ```
 
 :::tip
 Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
@@ -66,18 +66,17 @@ You **must install Qt as described below** instead of using pre-built packages f
 To install Qt:
 
 1. Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
-  - **Ubuntu:**
-    - Set the downloaded file to executable using: `chmod +x`.
-    - You may also need to install libxcb-cursor0
+   - **Ubuntu:**
+     - Set the downloaded file to executable using: `chmod +x`.
+     - It may also be necessary to install _libxcb-cursor0_.
 
 2. On the _Installation Folder_ page select "Custom Installation"
 
 3. On the _Select Components_ page:
 
-  - I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
-
+- I you don't see _Qt {{ $frontmatter.qt_version }}_ listed check the _Archive_ checkbox and click _Filter_.
 - Under Qt -> _Qt {{ $frontmatter.qt_version }}_ select:
-  - **Windows**: MSVC 2022 _arch_ - where _arch_ is the architecture of your machine
+  - **Windows**: MSVC 2022 \<_arch_\> - where \<_arch_\> is the architecture of your machine
   - **Mac**: Desktop
   - **Linux**: Desktop gcc 64-bit
   - **Android**: Android
@@ -86,22 +85,22 @@ To install Qt:
 
 1. Install Additional Packages (Platform Specific)
 
-  - **Ubuntu:** `sudo bash ./qgroundcontrol/tools/setup/install-dependencies-debian.sh`
-  - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
-  - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-  - **Mac** `sh qgroundcontrol/tools/setup/macos-dependencies.sh`
-  - **Android** [Setup](https://doc.qt.io/qt-6/android-getting-started.html). JDK17 is required for the latest updated versions. NDK Version: 25.1.8937393
-    You can confirm it is being used by reviewing the project setting: **Projects > Manage Kits > Devices > Android (tab) > Android Settings > _JDK location_**.
-    Note: Visit here for more detailed configurations [android.yml](.github/workflows/android.yml)
+   - **Ubuntu:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform debian`
+   - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
+   - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
+   - **Mac:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform macos`
+   - **Windows:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform windows`
+   - **Android:** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Read [Qt 6 for Android](https://doc.qt.io/qt-6/android.html) carefully to the extend. Continue with [Gettting Started with Qt 6 for Android](https://doc.qt.io/qt-6/android-getting-started.html).
 
-2. Install Optional/OS-Specific Functionality
+2. Install OS-Specific Functionalities
 
-  ::: info
-  Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
-  These features can be forcibly enabled/disabled by specifying additional values to qmake.
-  :::
+   ::: info
+   Optional features that are dependent on the operating system and user-installed libraries are linked/described below.
+   These features can be forcibly enabled/disabled by specifying additional values to qmake.
+   :::
 
-  - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
+   - **Video Streaming/Gstreamer:** - see [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md)
+   - **Scripting Install:** - to build the installation file at Windows, install [NSIS](https://nsis.sourceforge.io/Download).
 
 #### Install Visual Studio (Windows Only) {#vs}
 
@@ -111,7 +110,7 @@ When installing, select _Desktop development with C++_ as shown:
 
 ![Visual Studio 2019 - Select Desktop Environment with C++](../../../assets/dev_getting_started/visual_studio_select_features.png)
 
-:::info
+::: info
 Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is done using [Qt Creator](#qt-creator) or [cmake](#cmake) directly as outlined below.
 :::
 
@@ -121,9 +120,13 @@ Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is don
 
 2. On the _Configure Project_ page it should default to the version of Qt you just installed using the instruction above. If not select that kit from the list and click _Configure Project_.
 
-3. Build using the "hammer" (or "play") icons or the menus:
+   :::tip
+   Don't forget to check boxes in case you want to build a Release instead of Debug, or check the other types. To create the installation file go to the "Deploy Settings" Tab, click in the menu button "Add Deploy Step", select "CMake Install" and as argument you must set at least `--config Release`.
+   :::
 
-  ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
+3. Build using the "hammer" icon. After that, in order to deploy the build, use the "play" icon. Or use the menu Build on top for a detailed alternative.
+
+   ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
 
 #### Build using CMake on CLI {#cmake}
 
@@ -131,29 +134,36 @@ Example commands to build a default QGC and run it afterwards:
 
 1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder:
 
-  ```sh
-  cd qgroundcontrol
-  ```
+   ```sh
+   cd qgroundcontrol
+   ```
 
 2. Configure:
 
-  ```sh
-  ~/Qt/6.8.3/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-  ```
+   ```sh
+   ~/Qt/{{ qt_version }}/gcc_64/bin/qt-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ```
 
-  Change the directory for qt-cmake to match your install location for Qt and the kit you want to use.
+   Change the directory for `qt-cmake` to match your install location for Qt and the kit you want to use.
+
+   **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
+
+   - `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
+   - `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
+   - `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
+   - `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
 
 3. Build
 
-  ```sh
-  cmake --build build --config Debug
-  ```
+   ```sh
+   cmake --build build --config Debug
+   ```
 
 4. Run the QGroundcontrol binary that was just built:
 
-  ```sh
-  ./build/Debug/QGroundControl
-  ```
+   ```sh
+   ./build/Debug/QGroundControl
+   ```
 
 ### Vagrant
 

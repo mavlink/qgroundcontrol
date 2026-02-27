@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "CompInfo.h"
@@ -22,7 +13,7 @@ class CompInfoActuators : public CompInfo
     Q_OBJECT
 
 public:
-    CompInfoActuators(uint8_t compId, Vehicle* vehicle, QObject* parent = nullptr);
+    CompInfoActuators(uint8_t compId_, Vehicle* vehicle_, QObject* parent = nullptr);
 
     // Overrides from CompInfo
     void setJson(const QString& metadataJsonFileName) override;

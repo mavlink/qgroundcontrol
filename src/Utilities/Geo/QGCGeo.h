@@ -7,106 +7,189 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Coordinate transformation math functions.
-///     @link https://github.com/PX4/Firmware/blob/master/src/lib/geo/geo.c
-///     @link http://psas.pdx.edu/CoordinateSystem/Latitude_to_LocalTangent.pdf
-///     @link http://dspace.dsto.defence.gov.au/dspace/bitstream/1947/3538/1/DSTO-TN-0432.pdf
-///     @author David Goodman <dagoodma@gmail.com>
-
 #pragma once
 
-#include <QtPositioning/QGeoCoordinate>
+/// @file
+/// @brief Geographic coordinate conversion utilities using GeographicLib.
+///
+/// Provides coordinate transformations between various reference frames:
+/// - Geodetic (lat/lon/alt) - WGS84 ellipsoid
+/// - NED (North/East/Down) - Local tangent plane
+/// - ENU (East/North/Up) - Local tangent plane
+/// - ECEF (Earth-Centered Earth-Fixed) - Cartesian
+/// - UTM (Universal Transverse Mercator)
+/// - MGRS (Military Grid Reference System)
+///
+/// All conversions use the WGS84 ellipsoid model for accuracy.
+
 #include <QtCore/QLoggingCategory>
+#include <QtGui/QVector3D>
+#include <QtPositioning/QGeoCoordinate>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCGeoLog)
 
-namespace QGCGeo {
+namespace QGCGeo
+{
 
-/**
- * @brief Project a geodetic coordinate on to local tangential plane (LTP) as coordinate with East,
- * North, and Down components in meters.
- * @param[in] coord Geodetic coordinate to project onto LTP.
- * @param[in] origin Geoedetic origin for LTP projection.
- * @param[out] x North component of coordinate in local plane.
- * @param[out] y East component of coordinate in local plane.
- * @param[out] z Down component of coordinate in local plane.
- */
+// ============================================================================
+// NED (North-East-Down) Local Tangent Plane
+// ============================================================================
+
+/// Convert geodetic coordinate to NED (North-East-Down) relative to origin.
+/// @param coord Geodetic coordinate to convert.
+/// @param origin Reference point for local tangent plane.
+/// @param[out] x North component in meters.
+/// @param[out] y East component in meters.
+/// @param[out] z Down component in meters (positive = below origin).
+/// @note NaN altitudes are treated as 0.0 (sea level).
 void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, double &x, double &y, double &z);
 
-/**
- * @brief Transform a local (East, North, and Down) coordinate into a geodetic coordinate.
- * @param[in] x North component of local coordinate in meters.
- * @param[in] x East component of local coordinate in meters.
- * @param[in] x Down component of local coordinate in meters.
- * @param[in] origin Geoedetic origin for LTP.
- * @param[out] coord Geodetic coordinate to hold result.
- */
+/// Convert NED (North-East-Down) coordinate to geodetic.
+/// @param x North component in meters.
+/// @param y East component in meters.
+/// @param z Down component in meters (positive = below origin).
+/// @param origin Reference point for local tangent plane.
+/// @param[out] coord Resulting geodetic coordinate.
 void convertNedToGeo(double x, double y, double z, const QGeoCoordinate &origin, QGeoCoordinate &coord);
 
-// LatLonToUTMXY
-// Converts a latitude/longitude pair to x and y coordinates in the
-// Universal Transverse Mercator projection.
-//
-// Inputs:
-//   lat - Latitude of the point, in radians.
-//   lon - Longitude of the point, in radians.
-//   zone - UTM zone to be used for calculating values for x and y.
-//          If zone is less than 1 or greater than 60, the routine
-//          will determine the appropriate zone from the value of lon.
-//
-// Outputs:
-//   x - The x coordinate (easting) of the computed point. (in meters)
-//   y - The y coordinate (northing) of the computed point. (in meters)
-//
-// Returns:
-//   The UTM zone used for calculating the values of x and y.
-//   If conversion failed the function returns 0
-int convertGeoToUTM(const QGeoCoordinate& coord, double &easting, double &northing);
+// ============================================================================
+// ENU (East-North-Up) Local Tangent Plane
+// ============================================================================
 
-// UTMXYToLatLon
-//
-// Converts x and y coordinates in the Universal Transverse Mercator//   The UTM zone parameter should be in the range [1,60].
+/// Convert geodetic coordinate to ENU (East-North-Up) relative to reference.
+/// @param coord Geodetic coordinate to convert.
+/// @param ref Reference point for local tangent plane.
+/// @return ENU vector in meters (x=East, y=North, z=Up).
+/// @note Uses float precision (QVector3D). For high precision, use NED functions.
+QVector3D convertGpsToEnu(const QGeoCoordinate &coord, const QGeoCoordinate &ref);
 
-// projection to a latitude/longitude pair.
-//
-// Inputs:
-// x - The easting of the point, in meters.
-// y - The northing of the point, in meters.
-// zone - The UTM zone in which the point lies.
-// southhemi - True if the point is in the southern hemisphere;
-//               false otherwise.
-//
-// Outputs:
-// lat - The latitude of the point, in radians.
-// lon - The longitude of the point, in radians.
-//
-// Returns:
-// The function returns true if conversion succeeded.
+/// Convert ENU (East-North-Up) coordinate to geodetic.
+/// @param enu ENU vector in meters (x=East, y=North, z=Up).
+/// @param ref Reference point for local tangent plane.
+/// @return Geodetic coordinate.
+QGeoCoordinate convertEnuToGps(const QVector3D &enu, const QGeoCoordinate &ref);
+
+// ============================================================================
+// ECEF (Earth-Centered Earth-Fixed)
+// ============================================================================
+
+/// Convert geodetic coordinate to ECEF (Earth-Centered Earth-Fixed).
+/// @param coord Geodetic coordinate (lat/lon/alt).
+/// @return ECEF vector in meters.
+/// @note Uses float precision (QVector3D). Large coordinates may lose precision.
+QVector3D convertGeodeticToEcef(const QGeoCoordinate &coord);
+
+/// Convert ECEF (Earth-Centered Earth-Fixed) to geodetic coordinate.
+/// @param ecef ECEF vector in meters.
+/// @return Geodetic coordinate (lat/lon/alt).
+QGeoCoordinate convertEcefToGeodetic(const QVector3D &ecef);
+
+/// Convert ECEF to ENU relative to a reference point.
+/// @param ecef ECEF vector in meters.
+/// @param ref Reference point for local tangent plane.
+/// @return ENU vector in meters.
+QVector3D convertEcefToEnu(const QVector3D &ecef, const QGeoCoordinate &ref);
+
+/// Convert ENU to ECEF relative to a reference point.
+/// @param enu ENU vector in meters.
+/// @param ref Reference point for local tangent plane.
+/// @return ECEF vector in meters.
+QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref);
+
+// ============================================================================
+// UTM (Universal Transverse Mercator)
+// ============================================================================
+
+/// Convert geodetic coordinate to UTM.
+/// @param coord Geodetic coordinate to convert.
+/// @param[out] easting UTM easting in meters.
+/// @param[out] northing UTM northing in meters.
+/// @return UTM zone (1-60), or 0 on failure.
+int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northing);
+
+/// Convert UTM to geodetic coordinate.
+/// @param easting UTM easting in meters.
+/// @param northing UTM northing in meters.
+/// @param zone UTM zone (1-60).
+/// @param southhemi True if southern hemisphere.
+/// @param[out] coord Resulting geodetic coordinate (altitude = 0).
+/// @return True on success, false on failure.
 bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate &coord);
 
-// Converts a latitude/longitude pair to MGRS string
-//
-// Inputs:
-//   coord - Latitude, Longiture coordinate
-//
-// Returns:
-//   The MGRS coordinate string
-//   If conversion fails the function returns empty string
+// ============================================================================
+// MGRS (Military Grid Reference System)
+// ============================================================================
+
+/// Convert geodetic coordinate to MGRS string.
+/// @param coord Geodetic coordinate to convert.
+/// @return MGRS string (e.g., "32TMT 65886 47092"), or empty string on failure.
 QString convertGeoToMGRS(const QGeoCoordinate &coord);
 
-// Converts MGRS string to a latitude/longitude pair.
-//
-// Inputs:
-// mgrs - MGRS coordinate string
-//
-// Outputs:
-// lat - The latitude of the point, in radians.
-// lon - The longitude of the point, in radians.
-//
-// Returns:
-// The function returns true if conversion succeeded.
+/// Convert MGRS string to geodetic coordinate.
+/// @param mgrs MGRS string (spaces optional, e.g., "32TMT6588647092" or "32T MT 65886 47092").
+/// @param[out] coord Resulting geodetic coordinate (altitude = 0).
+/// @return True on success, false on failure.
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord);
+
+// ============================================================================
+// Geodesic Calculations (Great Circle on Ellipsoid)
+// ============================================================================
+
+/// Calculate geodesic distance between two coordinates using WGS84 ellipsoid.
+/// @param from Starting coordinate.
+/// @param to Ending coordinate.
+/// @return Distance in meters.
+/// @note More accurate than QGeoCoordinate::distanceTo() which uses spherical approximation.
+double geodesicDistance(const QGeoCoordinate &from, const QGeoCoordinate &to);
+
+/// Calculate geodesic azimuth (bearing) from one coordinate to another using WGS84 ellipsoid.
+/// @param from Starting coordinate.
+/// @param to Ending coordinate.
+/// @return Forward azimuth in degrees [0, 360), clockwise from north.
+/// @note More accurate than QGeoCoordinate::azimuthTo() which uses spherical approximation.
+double geodesicAzimuth(const QGeoCoordinate &from, const QGeoCoordinate &to);
+
+/// Calculate destination coordinate given start point, azimuth, and distance using WGS84 ellipsoid.
+/// @param from Starting coordinate.
+/// @param azimuth Forward azimuth in degrees, clockwise from north.
+/// @param distance Distance in meters.
+/// @return Destination coordinate (altitude copied from start).
+QGeoCoordinate geodesicDestination(const QGeoCoordinate &from, double azimuth, double distance);
+
+// ============================================================================
+// Path and Polygon Calculations
+// ============================================================================
+
+/// Calculate total geodesic length of a path using WGS84 ellipsoid.
+/// @param path List of coordinates defining the path.
+/// @return Total path length in meters, or 0 if fewer than 2 points.
+double pathLength(const QList<QGeoCoordinate> &path);
+
+/// Calculate geodesic area of a polygon using WGS84 ellipsoid.
+/// @param polygon List of coordinates defining the polygon vertices (automatically closed).
+/// @return Absolute area in square meters, or 0 if fewer than 3 points.
+/// @note More accurate than planar projection methods, especially for large polygons.
+double polygonArea(const QList<QGeoCoordinate> &polygon);
+
+/// Calculate geodesic perimeter of a polygon using WGS84 ellipsoid.
+/// @param polygon List of coordinates defining the polygon vertices (automatically closed).
+/// @return Perimeter in meters, or 0 if fewer than 2 points.
+double polygonPerimeter(const QList<QGeoCoordinate> &polygon);
+
+/// Interpolate evenly-spaced points along a geodesic path using WGS84 ellipsoid.
+/// @param from Starting coordinate.
+/// @param to Ending coordinate.
+/// @param numPoints Number of points to generate (must be >= 2).
+/// @return List of coordinates including start and end points, evenly spaced along the geodesic.
+/// @note Uses GeodesicLine internally for efficiency. Altitude is linearly interpolated.
+QList<QGeoCoordinate> interpolatePath(const QGeoCoordinate &from, const QGeoCoordinate &to, int numPoints);
+
+/// Get the coordinate at a specific distance along a geodesic path using WGS84 ellipsoid.
+/// @param from Starting coordinate.
+/// @param to Ending coordinate.
+/// @param distance Distance from start in meters (clamped to path length).
+/// @return Coordinate at the specified distance along the geodesic. Altitude is linearly interpolated.
+/// @note Useful for midpoint: interpolateAtDistance(from, to, geodesicDistance(from, to) / 2)
+QGeoCoordinate interpolateAtDistance(const QGeoCoordinate &from, const QGeoCoordinate &to, double distance);
 
 } // namespace QGCGeo

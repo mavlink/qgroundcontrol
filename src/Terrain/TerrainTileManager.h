@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "TerrainQueryInterface.h"
@@ -41,6 +32,7 @@ public:
 
     void addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates);
     void addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint);
+    void addCarpetQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly);
 
 private slots:
     void _terrainDone();
@@ -51,13 +43,18 @@ private:
     void _tileFailed();
     void _cacheTile(const QByteArray &data, const QString &hash);
     TerrainTile *_getCachedTile(const QString &hash);
+    static void _processCarpetResults(const QList<double> &altitudes, int gridSizeLat, int gridSizeLon,
+                                      bool statsOnly, double &minHeight, double &maxHeight, QList<QList<double>> &carpet);
 
     struct QueuedRequestInfo_t {
-        TerrainQueryInterface *terrainQueryInterface;
+        QPointer<TerrainQueryInterface> terrainQueryInterface;
         TerrainQuery::QueryMode queryMode;
         double distanceBetween;                         ///< Distance between each returned height
         double finalDistanceBetween;                    ///< Distance between for final height
         QList<QGeoCoordinate> coordinates;
+        bool carpetStatsOnly;                           ///< For carpet queries: return only stats
+        int carpetGridSizeLat;                          ///< For carpet queries: number of rows
+        int carpetGridSizeLon;                          ///< For carpet queries: number of columns
     };
 
     QQueue<QueuedRequestInfo_t> _requestQueue;

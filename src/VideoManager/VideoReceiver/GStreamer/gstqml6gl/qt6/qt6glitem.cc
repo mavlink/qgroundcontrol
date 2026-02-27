@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 /*
  * GStreamer
  * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
@@ -126,8 +117,7 @@ Qt6GLVideoItem::Qt6GLVideoItem()
 
   this->priv->display = gst_qml6_get_gl_display(TRUE);
 
-  connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
-          SLOT(handleWindowChanged(QQuickWindow*)));
+  connect(this, &QQuickItem::windowChanged, this, &Qt6GLVideoItem::handleWindowChanged);
 
   this->proxy = QSharedPointer<Qt6GLVideoItemInterface>(new Qt6GLVideoItemInterface(this));
 
@@ -761,4 +751,3 @@ Qt6GLVideoItemInterface::invalidateRef()
   QMutexLocker locker(&lock);
   qt_item = NULL;
 }
-

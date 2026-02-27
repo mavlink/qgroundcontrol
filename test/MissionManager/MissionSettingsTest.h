@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #pragma once
 
 #include "VisualMissionItemTest.h"
@@ -17,17 +8,15 @@ class MissionSettingsItem;
 class MissionSettingsTest : public VisualMissionItemTest
 {
     Q_OBJECT
-    
-public:
-    MissionSettingsTest(void);
 
-    void init(void) override;
-    void cleanup(void) override;
+public:
+    void init() override;
+    void cleanup() override;
 
 private slots:
-    void _testCameraSectionDirty(void);
-    void _testSpeedSectionDirty(void);
+    void _testCameraSectionDirty();
+    void _testSpeedSectionDirty();
 
 private:
-    MissionSettingsItem* _settingsItem;
+    MissionSettingsItem* _settingsItem = nullptr;
 };

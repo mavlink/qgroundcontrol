@@ -1,7 +1,143 @@
+# QGroundControl Pre-Commit Configuration
+# Install: pre-commit install
+# Run: pre-commit run --all-files
+# Update: pre-commit autoupdate
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+  # Basic file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
     hooks:
-    -   id: check-yaml
+      - id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
-    -   id: check-json
+      - id: check-json
+      - id: pretty-format-json
+        args: ['--indent=2', '--no-ensure-ascii']
+        exclude: ^(translations/|package-lock\.json|src/|test/|resources/|deploy/|cmake/)
+      - id: check-xml
+        exclude: ^test/
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: trailing-whitespace
+        args: ['--markdown-linebreak-ext=md']
+        exclude: ^translations/
+      - id: end-of-file-fixer
+        exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat))$
+      - id: mixed-line-ending
+        args: ['--fix=no']
+        exclude: \.(bat|ps1)$
+
+  # Secret detection
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.92.4
+    hooks:
+      - id: trufflehog
+        args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
+
+  # C++ formatting (check-only, use 'clang-format -i' to fix)
+  # Note: Install matching clang-format version locally to avoid formatting differences
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.7
+    hooks:
+      - id: clang-format
+        args: ['--dry-run', '--Werror']
+        types_or: [c++, c]
+        exclude: ^(build/|libs/)
+
+  # C++ static analysis (requires compile_commands.json - run 'make configure' first)
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.3.5
+    hooks:
+      - id: clang-tidy
+        args: ['-p=build', '--use-color']
+        types_or: [c++, c]
+        exclude: ^(build/|libs/|test/)
+
+  # Python formatting (report-only)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.8
+    hooks:
+      - id: ruff
+      - id: ruff-format
+        args: [--check]
+
+  # Python type checking
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.407
+    hooks:
+      - id: pyright
+        files: ^(tools|test)/.*\.py$
+
+  # Shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        args: ['-e', 'SC1091']  # Don't warn about not following sourced files
+
+  # CMake formatting (report-only)
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        args: [--check]
+      - id: cmake-lint
+        exclude: ^(build/|libs/)
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.9
+    hooks:
+      - id: actionlint
+
+  # GitHub Actions security scanning
+  - repo: local
+    hooks:
+      - id: zizmor
+        name: zizmor (GitHub Actions security)
+        entry: zizmor
+        language: python
+        additional_dependencies: ['zizmor>=1.19.0']
+        files: ^\.github/(workflows|actions)/.*\.ya?ml$
+        types: [yaml]
+
+  # YAML validation
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        args: ['-d', '{extends: default, rules: {line-length: {max: 200}, document-start: disable, truthy: {check-keys: false}, comments: {min-spaces-from-content: 1}}}']
+
+  # Markdown linting (report-only, doesn't auto-fix)
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.47.0
+    hooks:
+      - id: markdownlint
+        exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
+
+  # Prose linting (documentation quality)
+  - repo: https://github.com/errata-ai/vale
+    rev: v3.13.0
+    hooks:
+      - id: vale
+        files: ^docs/
+        args: ['--no-exit']  # Don't fail on warnings, just report
+
+  # Spell checking (report-only, doesn't auto-fix)
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.40.0
+    hooks:
+      - id: typos
+        args: []  # Empty args disables auto-fix mode
+
+  # QGC-specific checks (defined in .pre-commit-hooks.yaml)
+  - repo: .
+    rev: HEAD
+    hooks:
+      - id: qmllint
+      - id: clazy
+      - id: check-no-qassert
+      - id: vehicle-null-check
+
+exclude: ^build/

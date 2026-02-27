@@ -1,12 +1,3 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "MissionCommandTree.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
@@ -15,19 +6,16 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
-#include <QtCore/qapplicationstatic.h>
-#include <QtQml/qqml.h>
+#include <QtCore/QApplicationStatic>
 
-QGC_LOGGING_CATEGORY(MissionCommandTreeLog, "qgc.missionmanager.missioncommandtree");
+QGC_LOGGING_CATEGORY(MissionCommandTreeLog, "Plan.MissionCommandTree");
 
 Q_APPLICATION_STATIC(MissionCommandTree, _missionCommandTreeInstance);
 
 MissionCommandTree::MissionCommandTree(bool unitTest, QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(MissionCommandTreeLog) << Q_FUNC_INFO << this;
-
-    (void) qmlRegisterUncreatableType<MissionCommandTree>("QGroundControl", 1, 0, "MissionCommandTree", "Reference only");
+    qCDebug(MissionCommandTreeLog) << this;
 
     if (unitTest) {
         // Load unit testing tree
@@ -54,7 +42,16 @@ MissionCommandTree::MissionCommandTree(bool unitTest, QObject *parent)
 
 MissionCommandTree::~MissionCommandTree()
 {
-    // qCDebug(MissionCommandTreeLog) << Q_FUNC_INFO << this;
+    for (const auto &vehicleMap : std::as_const(_allCommands)) {
+        for (const auto &commandMap : vehicleMap) {
+            for (MissionCommandUIInfo *const uiInfo : commandMap) {
+                delete uiInfo;
+            }
+        }
+    }
+    _allCommands.clear();
+
+    qCDebug(MissionCommandTreeLog) << this;
 }
 
 MissionCommandTree *MissionCommandTree::instance()
