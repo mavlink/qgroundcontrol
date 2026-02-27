@@ -2,6 +2,9 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+import QGroundControl
+import QGroundControl.Controls
+
 RowLayout {
     id: root
 
@@ -17,7 +20,7 @@ RowLayout {
     }
     QGCLabel {
         text:                   root.valueText
-        color:                  root.valueColor !== "" ? root.valueColor : palette.text
+        color:                  root.valueColor !== "" ? root.valueColor : QGroundControl.globalPalette.text
         elide:                  Text.ElideRight
         horizontalAlignment:    Text.AlignRight
         Layout.fillWidth:       true
