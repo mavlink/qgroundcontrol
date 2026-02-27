@@ -6,14 +6,25 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QGlobalStatic>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
 #include <QtCore/QStringListModel>
 #include <QtCore/QTextStream>
+
+#include <atomic>
 
 QGC_LOGGING_CATEGORY(QGCLoggingLog, "Utilities.QGCLogging")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
 
 static QtMessageHandler defaultHandler = nullptr;
+
+// ---------------------------------------------------------------------------
+// Test‐log‐capture storage (thread‐safe, lightweight when disabled)
+// ---------------------------------------------------------------------------
+static std::atomic<bool> s_captureEnabled{false};
+static QMutex s_captureMutex;
+static QList<CapturedLogMessage> s_capturedMessages;
 
 static void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -29,6 +40,9 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
 
     // Filter out Qt Quick internals
     if (QGCLogging::instance() && !QString(context.category).startsWith("qt.quick")) {
+        // Capture for unit-test introspection
+        QGCLogging::captureIfEnabled(type, context, msg);
+
         QGCLogging::instance()->log(message);
     }
 }
@@ -69,6 +83,84 @@ void QGCLogging::installHandler()
 
     // Install our custom handler
     defaultHandler = qInstallMessageHandler(msgHandler);
+}
+
+// ---------------------------------------------------------------------------
+// Test‑log‑capture API
+// ---------------------------------------------------------------------------
+
+void QGCLogging::setCaptureEnabled(bool enabled)
+{
+    s_captureEnabled.store(enabled, std::memory_order_relaxed);
+}
+
+void QGCLogging::clearCapturedMessages()
+{
+    const QMutexLocker locker(&s_captureMutex);
+    s_capturedMessages.clear();
+}
+
+QList<CapturedLogMessage> QGCLogging::capturedMessages(const QString &category)
+{
+    const QMutexLocker locker(&s_captureMutex);
+
+    if (category.isEmpty()) {
+        return s_capturedMessages;
+    }
+
+    QList<CapturedLogMessage> filtered;
+    for (const auto &msg : std::as_const(s_capturedMessages)) {
+        if (msg.category == category) {
+            filtered.append(msg);
+        }
+    }
+    return filtered;
+}
+
+bool QGCLogging::hasCapturedMessage(const QString &category, QtMsgType type)
+{
+    const QMutexLocker locker(&s_captureMutex);
+
+    for (const auto &msg : std::as_const(s_capturedMessages)) {
+        if (msg.category == category && msg.type == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool QGCLogging::hasCapturedWarning(const QString &category)
+{
+    return hasCapturedMessage(category, QtWarningMsg);
+}
+
+bool QGCLogging::hasCapturedCritical(const QString &category)
+{
+    return hasCapturedMessage(category, QtCriticalMsg);
+}
+
+bool QGCLogging::hasCapturedUncategorizedMessage()
+{
+    const QMutexLocker locker(&s_captureMutex);
+
+    for (const auto &msg : std::as_const(s_capturedMessages)) {
+        if (msg.category.isEmpty() || msg.category == QStringLiteral("default")) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void QGCLogging::captureIfEnabled(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    if (!s_captureEnabled.load(std::memory_order_relaxed)) {
+        return;
+    }
+
+    const QMutexLocker locker(&s_captureMutex);
+    s_capturedMessages.append({type,
+                               context.category ? QString::fromLatin1(context.category) : QString(),
+                               msg});
 }
 
 void QGCLogging::log(const QString &message)
