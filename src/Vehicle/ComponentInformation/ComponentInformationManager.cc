@@ -178,7 +178,13 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
     _requestAllCompleteFn       = requestAllCompletFn;
     _requestAllCompleteFnData   = requestAllCompleteFnData;
 
-    start();
+    // Guard against double-start: when InitialConnectStateMachine's CompInfo
+    // state times out, the retry callback re-invokes this method while the CIM
+    // state machine is still running. Only start if not already in progress;
+    // the updated callback pointers above are sufficient for the retry path.
+    if (!isRunning()) {
+        start();
+    }
     emit progressUpdate(progress());
 }
 
