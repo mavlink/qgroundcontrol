@@ -8,6 +8,7 @@ class InitialConnectTest : public VehicleTestManualConnect
 
 private slots:
     void init() override;
+    void cleanup() override;
     void _performTestCases_data();
     void _performTestCases();
     void _boardVendorProductId();
@@ -16,6 +17,8 @@ private slots:
     void _genericAutopilotVersionFailureSkipsUnsupportedPlanTypes();
     void _multipleReconnects();
     void _rallyTimeoutPathDoesNotLeakCompletionHandler();
+    void _stateTimeoutFallsThrough_data();
+    void _stateTimeoutFallsThrough();
     void _stateRunMatrix_data();
     void _stateRunMatrix();
 };
