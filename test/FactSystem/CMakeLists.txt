@@ -19,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactTest.h
         FactValueSliderListModelTest.cc
         FactValueSliderListModelTest.h
+        HashCheckTest.cc
+        HashCheckTest.h
         ParameterManagerTest.cc
         ParameterManagerTest.h
 )

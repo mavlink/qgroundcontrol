@@ -1035,6 +1035,18 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
 
     qCDebug(MockLinkLog) << "_handleParamSet" << componentId << paramId << request.param_type;
 
+    // PX4 special case: _HASH_CHECK is a virtual parameter used by ParameterManager
+    // to signal cache-hit and stop parameter streaming. It is intentionally not part
+    // of the normal parameter maps.
+    if ((_firmwareType == MAV_AUTOPILOT_PX4) && (strncmp(paramId, "_HASH_CHECK", MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN) == 0)) {
+        QMutexLocker locker(&_paramRequestListMutex);
+        _currentParamRequestListComponentIndex = -1;
+        _paramRequestListComponentIds.clear();
+        _paramRequestListParamNames.clear();
+        qCDebug(MockLinkLog) << "Received _HASH_CHECK PARAM_SET, stopping parameter stream";
+        return;
+    }
+
     Q_ASSERT(_mapParamName2Value.contains(componentId));
     Q_ASSERT(_mapParamName2MavParamType.contains(componentId));
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
