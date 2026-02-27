@@ -84,7 +84,7 @@ public:
     int receivedRequestMessageCount(int compId, int messageId) const { return _receivedRequestMessageByCompAndMsgCountMap.value(compId).value(messageId, 0); }
     void clearReceivedRequestMessageCounts() { _receivedRequestMessageCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
     int receivedRequestMessageCount(uint32_t messageId) const { return _receivedRequestMessageCountMap.value(messageId, 0); }
-    void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); }
+    void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); _hashCheckRequestCount = 0; }
     int receivedMavlinkMessageCount(uint32_t messageId) const { return _receivedMavlinkMessageCountMap.value(messageId, 0); }
 
     enum RequestMessageFailureMode_t {
@@ -114,6 +114,14 @@ public:
         _paramRequestReadFailureMode = mode;
         _paramRequestReadFailureFirstAttemptPending = (mode == FailParamRequestReadFirstAttemptNoResponse);
     }
+
+    void setHashCheckNoResponse(bool noResponse) { _hashCheckNoResponse = noResponse; }
+
+    /// Returns the number of standalone PARAM_REQUEST_READ requests for _HASH_CHECK received
+    int hashCheckRequestCount() const { return _hashCheckRequestCount; }
+
+    /// Change a float parameter value directly on MockLink (for testing cache invalidation)
+    void setMockParamValue(int componentId, const QString &paramName, float value);
 
     static MockLink *startPX4MockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startGenericMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -163,6 +171,7 @@ private:
 
     /// Convert from a parameter variant to the float value from mavlink_param_union_t
     float _floatUnionForParam(int componentId, const QString &paramName);
+    uint32_t _computeParamHash(int componentId) const;
     void _setParamFloatUnionIntoMap(int componentId, const QString &paramName, float paramFloat);
 
     /// Handle incoming bytes which are meant to be interpreted by the NuttX shell
@@ -303,6 +312,9 @@ private:
     bool _paramSetFailureFirstAttemptPending = false;
     ParamRequestReadFailureMode_t _paramRequestReadFailureMode = FailParamRequestReadNone;
     bool _paramRequestReadFailureFirstAttemptPending = false;
+    bool _hashCheckNoResponse = false;
+    int _hashCheckRequestCount = 0;
+    bool _paramRequestListHashCheckSent = false;
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<MAV_CMD, QMap<int, int>> _receivedMavCommandByCompCountMap;

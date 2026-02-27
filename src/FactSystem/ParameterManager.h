@@ -94,6 +94,8 @@ public:
     static constexpr int kParamRequestReadRetryCount = 2;           ///< Number of retries for PARAM_REQUEST_READ
     static constexpr int kWaitForParamValueAckMs = 1000;            ///< Time to wait for param value ack after set param
     static constexpr int kMaxInitialRequestListRetry = 4;           ///< Maximum retries for initial parameter request list
+    static constexpr int kHashCheckTimeoutMs = 1000;                ///< Timeout for standalone _HASH_CHECK request
+    static constexpr int kParamRequestListTimeoutMs = 5000;        ///< Timeout for PARAM_REQUEST_LIST response
     static constexpr int kTestInitialRequestIntervalMs = 500;       ///< Timer interval for initial request in test mode
     /// Maximum time to wait for initial request retries to exhaust in tests
     static constexpr int kTestMaxInitialRequestTimeMs = (kMaxInitialRequestListRetry + 1) * kTestInitialRequestIntervalMs + 1000;
@@ -121,10 +123,12 @@ private:
     void _mavlinkParamSet(int componentId, const QString &name, FactMetaData::ValueType_t valueType, const QVariant &rawValue);
     void _waitingParamTimeout();
     void _tryCacheLookup();
-    void _initialRequestTimeout();
+    void _hashCheckTimeout();
+    void _paramRequestListTimeout();
     /// Translates ParameterManager::defaultComponentId to real component id if needed
     int _actualComponentId(int componentId) const;
     void _mavlinkParamRequestRead(int componentId, const QString &paramName, int paramIndex, bool notifyFailure);
+    void _requestHashCheck(uint8_t componentId);
     void _writeLocalParamCache(int vehicleId, int componentId);
     void _tryCacheHashLoad(int vehicleId, int componentId, const QVariant &hashValue);
     void _loadMetaData();
@@ -165,6 +169,7 @@ private:
     bool _waitingForDefaultComponent = false;   ///< true: last chance wait for default component params
     bool _metaDataAddedToFacts = false;         ///< true: FactMetaData has been adde to the default component facts
     bool _logReplay = false;                    ///< true: running with log replay link
+    bool _hashCheckDone = false;                ///< true: _HASH_CHECK has been attempted, go straight to PARAM_REQUEST_LIST
 
     typedef QPair<int /* FactMetaData::ValueType_t */, QVariant /* Fact::rawValue */> ParamTypeVal;
     typedef QMap<QString /* parameter name */, ParamTypeVal> CacheMapName2ParamTypeVal;
@@ -193,7 +198,8 @@ private:
     int _totalParamCount = 0;                   ///< Number of parameters across all components
     int _pendingWritesCount = 0;                ///< Number of parameters with pending writes
 
-    QTimer _initialRequestTimeoutTimer;
+    QTimer _hashCheckTimer;
+    QTimer _paramRequestListTimer;
     QTimer _waitingParamTimeoutTimer;
 
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
