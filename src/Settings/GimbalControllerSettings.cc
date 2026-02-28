@@ -15,3 +15,4 @@ DECLARE_SETTINGSFACT(GimbalControllerSettings, toolbarIndicatorShowAcquireReleas
 DECLARE_SETTINGSFACT(GimbalControllerSettings, joystickButtonsSpeed)
 DECLARE_SETTINGSFACT(GimbalControllerSettings, zoomMaxSpeed)
 DECLARE_SETTINGSFACT(GimbalControllerSettings, zoomMinSpeed)
+DECLARE_SETTINGSFACT(GimbalControllerSettings, preserveYawLockOnPositionCommands)
