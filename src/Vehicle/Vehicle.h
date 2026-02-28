@@ -1149,8 +1149,8 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
         RequestMessageResultHandler resultHandler       = nullptr;
         void*                       resultHandlerData   = nullptr;
         bool                        commandAckReceived  = false;    // We keep track of the ack/message being received since the order in which this will come in is random
-        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
-        QElapsedTimer               messageWaitElapsedTimer;        // Elapsed time since we started waiting for the message to show up
+        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both the message is received and we get the ack
+        QElapsedTimer               messageWaitElapsedTimer;        // Elapsed time since we started waiting message to show up
         mavlink_message_t           message;
     } RequestMessageInfo_t;
 

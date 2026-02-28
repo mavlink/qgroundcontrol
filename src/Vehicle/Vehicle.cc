@@ -2544,7 +2544,7 @@ int Vehicle::_mavCommandResponseCheckTimeoutMSecs()
 int Vehicle::_mavCommandAckTimeoutMSecs()
 {
     // Use shorter ack timeout during unit tests for faster test execution
-    return qgcApp()->runningUnitTests() ? kTestMavCommandAckTimeoutMs : 3000;
+    return qgcApp()->runningUnitTests() ? kTestMavCommandAckTimeoutMs : 1200;
 }
 
 bool Vehicle::_sendMavCommandShouldRetry(MAV_CMD command)
@@ -3028,6 +3028,9 @@ void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message
         auto resultHandler      = pInfo->resultHandler;
         auto resultHandlerData  = pInfo->resultHandlerData;
 
+        pInfo->messageReceived = true;
+        pInfo->message = message;
+
         const mavlink_message_info_t *info = mavlink_get_message_info_by_id(message.msgid);
         QString msgName = info ? QString(info->name) : QString::number(message.msgid);
         const int activeCount = _requestMessageInfoMap.contains(message.compid) ? _requestMessageInfoMap[message.compid].count() : 0;
@@ -3041,12 +3044,10 @@ void Vehicle::_waitForMavlinkMessageMessageReceivedHandler(const mavlink_message
                     << "queueDepth"
                     << queueDepth;
 
-        if (!pInfo->commandAckReceived) {
-            return;
+        if (pInfo->commandAckReceived) {
+            _removeRequestMessageInfo(message.compid, message.msgid);
+            (*resultHandler)(resultHandlerData, MAV_RESULT_ACCEPTED, RequestMessageNoFailure, message);
         }
-        _removeRequestMessageInfo(message.compid, message.msgid);
-
-        (*resultHandler)(resultHandlerData, MAV_RESULT_ACCEPTED, RequestMessageNoFailure, message);
     } else {
         // We use any incoming message as a trigger to check timeouts on message requests
 
@@ -3087,7 +3088,6 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData_, [[maybe_
     auto resultHandler      = requestMessageInfo->resultHandler;
     auto resultHandlerData  = requestMessageInfo->resultHandlerData;
     Vehicle* vehicle        = requestMessageInfo->vehicle;  // QPointer converts to raw pointer, null if Vehicle destroyed
-    auto message [[maybe_unused]]            = requestMessageInfo->message;
 
     // Vehicle was destroyed before callback fired - clean up and return without accessing vehicle
     if (!vehicle) {
@@ -3126,12 +3126,19 @@ void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData_, [[maybe_
 
         vehicle->_removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
 
-        (*resultHandler)(resultHandlerData, static_cast<MAV_RESULT>(ack.result),  requestMessageFailureCode, ackMessage);
+        (*resultHandler)(resultHandlerData, static_cast<MAV_RESULT>(ack.result), requestMessageFailureCode, ackMessage);
 
         return;
     }
 
-    // Now that the request has been acked we start the timer to wait for the message
+    if (requestMessageInfo->messageReceived) {
+        auto message = requestMessageInfo->message;
+        vehicle->_removeRequestMessageInfo(requestMessageInfo->compId, requestMessageInfo->msgId);
+        (*resultHandler)(resultHandlerData, MAV_RESULT_ACCEPTED, RequestMessageNoFailure, message);
+        return;
+    }
+
+    // We have the ack, but we are still waiting for the message. Start the timer to wait for the message
     requestMessageInfo->messageWaitElapsedTimer.start();
 }
 
