@@ -207,11 +207,13 @@ Item {
 
         onAcceptedForSave: (file) => {
             if (planFiles) {
-                _planMasterController.saveToFile(file)
+                if (_planMasterController.saveToFile(file)) {
+                    close()
+                }
             } else {
                 _planMasterController.saveToKml(file)
+                close()
             }
-            close()
         }
 
         onAcceptedForLoad: (file) => {
@@ -675,7 +677,7 @@ Item {
 
                 QGCButton {
                     Layout.fillWidth: true
-                    text: _planMasterController.dirty ?
+                    text: (_planMasterController.dirtyForSave) ?
                                             (_planMasterController.managerVehicle.isOfflineEditingVehicle ?
                                                  qsTr("Discard Unsaved Changes") : qsTr("Discard Unsaved Changes, Load New Plan From Vehicle")) : qsTr("Load New Plan From Vehicle")
                     onClicked: {
@@ -690,9 +692,6 @@ Item {
                     text: _planMasterController.managerVehicle.isOfflineEditingVehicle ?
                                             qsTr("Keep Current Plan") : qsTr("Keep Current Plan, Don't Update From Vehicle")
                     onClicked: {
-                        if (!_planMasterController.managerVehicle.isOfflineEditingVehicle) {
-                            _planMasterController.dirty = true
-                        }
                         _promptForPlanUsageShowing = false
                         close()
                     }

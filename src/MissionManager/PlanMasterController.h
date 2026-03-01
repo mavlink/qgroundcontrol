@@ -14,6 +14,9 @@ class QGCCompressionJob;
 class QmlObjectListModel;
 class MultiVehicleManager;
 class Vehicle;
+#ifdef QGC_UNITTEST_BUILD
+class PlanMasterControllerTest;
+#endif
 
 /// Master controller for mission, fence, rally
 class PlanMasterController : public QObject
@@ -22,6 +25,10 @@ class PlanMasterController : public QObject
     QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
+
+#ifdef QGC_UNITTEST_BUILD
+    friend class PlanMasterControllerTest;
+#endif
 
 public:
     PlanMasterController(QObject* parent = nullptr);
@@ -41,7 +48,8 @@ public:
     Q_PROPERTY(bool                     offline                 READ offline                                NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
     Q_PROPERTY(bool                     containsItems           READ containsItems                          NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool                     syncInProgress          READ syncInProgress                         NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool                     dirty                   READ dirty                  WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
+    Q_PROPERTY(bool                     dirtyForSave            READ dirtyForSave                           NOTIFY dirtyForSaveChanged)     ///< true: Unsaved changes to disk are present, false: no changes since last save to disk
+    Q_PROPERTY(bool                     dirtyForUpload          READ dirtyForUpload                         NOTIFY dirtyForUploadChanged)   ///< true: Unsent changes are present, false: no changes since last upload/download sync
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
     Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)
@@ -79,8 +87,8 @@ public:
     /// @param archivePath Path to the archive file
     Q_INVOKABLE void loadFromArchive(const QString& archivePath);
 
-    Q_INVOKABLE void saveToCurrent();
-    Q_INVOKABLE void saveToFile(const QString& filename);
+    Q_INVOKABLE bool saveToCurrent();
+    Q_INVOKABLE bool saveToFile(const QString& filename);
     Q_INVOKABLE void saveToKml(const QString& filename);
     Q_INVOKABLE void removeAll(void);                       ///< Removes all from controller only, synce required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void);            ///< Removes all from vehicle and controller
@@ -92,8 +100,8 @@ public:
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
     bool        syncInProgress  (void) const;
-    bool        dirty           (void) const;
-    void        setDirty        (bool dirty);
+    bool        dirtyForSave    (void) const { return _dirtyForSave; }
+    bool        dirtyForUpload  (void) const { return _dirtyForUpload; }
     QString     fileExtension   (void) const;
     QString     kmlFileExtension(void) const;
     QString     currentPlanFile (void) const { return _currentPlanFile; }
@@ -119,7 +127,8 @@ public:
 signals:
     void containsItemsChanged               ();
     void syncInProgressChanged              (void);
-    void dirtyChanged                       (bool dirty);
+    void dirtyForSaveChanged                (bool dirtyForSave);
+    void dirtyForUploadChanged              (bool dirtyForUpload);
     void offlineChanged                     (bool offlineEditing);
     void currentPlanFileChanged             (void);
     void planCreatorsChanged                (QmlObjectListModel* planCreators);
@@ -142,6 +151,14 @@ private slots:
 private:
     void _commonInit                (void);
     void _showPlanFromManagerVehicle(void);
+    void _setDirtyForSave(bool dirtyForSave);
+    void _setDirtyForUpload(bool dirtyForUpload);
+
+#ifdef QGC_UNITTEST_BUILD
+    // Used by unit tests to set dirty flags for initial state
+    void _setDirtyForSaveUnitTest(bool dirtyForSave) { _dirtyForSave = dirtyForSave; }
+    void _setDirtyForUploadUnitTest(bool dirtyForUpload) { _dirtyForUpload = dirtyForUpload; }
+#endif
 
     MultiVehicleManager*    _multiVehicleMgr =          nullptr;
     Vehicle*                _controllerVehicle =        nullptr;    ///< Offline controller vehicle
@@ -157,7 +174,9 @@ private:
     bool                    _sendRallyPoints =          false;
     QString                 _currentPlanFile;
     bool                    _deleteWhenSendCompleted =  false;
-    bool                    _previousOverallDirty =     false;
+    bool                    _dirtyForSave =             false;
+    bool                    _dirtyForUpload =           false;
+    bool                    _suppressOverallDirtyUpdate = false;
     QmlObjectListModel*     _planCreators =             nullptr;
     bool                    _manualCreation =           false;
     QGCCompressionJob*      _extractionJob =            nullptr;

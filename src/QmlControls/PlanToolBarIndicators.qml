@@ -19,7 +19,8 @@ RowLayout {
     property var _geoFenceController: _planMasterController.geoFenceController
     property var _rallyPointController: _planMasterController.rallyPointController
     property bool _controllerOffline: _planMasterController.offline
-    property var _controllerDirty: _planMasterController.dirty
+    property var _saveDirty: _planMasterController.dirtyForSave
+    property var _uploadDirty: _planMasterController.dirtyForUpload
     property var _syncInProgress: _planMasterController.syncInProgress
     property var _visualItems: _missionController.visualItems
     property bool _hasPlanItems: _planMasterController.containsItems
@@ -31,9 +32,9 @@ RowLayout {
     }
 
     function _downloadClicked() {
-        if (_planMasterController.dirty) {
+        if (_saveDirty) {
             QGroundControl.showMessageDialog(root, qsTr("Download"),
-                                         qsTr("You have unsaved/unsent changes. Downloading from the Vehicle will lose these changes. Are you sure?"),
+                                         qsTr("You have unsaved changes. Downloading from the Vehicle will lose these changes. Are you sure?"),
                                          Dialog.Yes | Dialog.Cancel,
                                          function() { _planMasterController.loadFromVehicle() })
         } else {
@@ -42,7 +43,7 @@ RowLayout {
     }
 
     function _openButtonClicked() {
-        if (_planMasterController.dirty) {
+        if (_saveDirty || _uploadDirty) {
             QGroundControl.showMessageDialog(root, qsTr("Open Plan"),
                                         qsTr("You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?"),
                                         Dialog.Yes | Dialog.Cancel,
@@ -54,10 +55,11 @@ RowLayout {
 
     function _saveButtonClicked() {
         if(_planMasterController.currentPlanFile !== "") {
-            _planMasterController.saveToCurrent()
-            QGroundControl.showMessageDialog(root, qsTr("Save"),
-                                        qsTr("Plan saved to `%1`").arg(_planMasterController.currentPlanFile),
-                                        Dialog.Ok)
+            if (_planMasterController.saveToCurrent()) {
+                QGroundControl.showMessageDialog(root, qsTr("Save"),
+                                            qsTr("Plan saved to `%1`").arg(_planMasterController.currentPlanFile),
+                                            Dialog.Ok)
+            }
         } else {
             _planMasterController.saveToSelectedFile()
         }
@@ -107,7 +109,7 @@ RowLayout {
         text: _planMasterController.currentPlanFile === "" ? qsTr("Save As") : qsTr("Save")
         iconSource: "/res/SaveToDisk.svg"
         enabled: !_syncInProgress && _hasPlanItems
-        primary: _controllerDirty
+        primary: _saveDirty
         onClicked: _saveButtonClicked()
     }
 
@@ -117,7 +119,7 @@ RowLayout {
         iconSource: "/res/UploadToVehicle.svg"
         enabled: !_syncInProgress && _hasPlanItems
         visible: !_syncInProgress
-        primary: _controllerDirty
+        primary: _uploadDirty
         onClicked: _uploadClicked()
     }
 
