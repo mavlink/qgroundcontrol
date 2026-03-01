@@ -153,6 +153,7 @@ private:
     void _showPlanFromManagerVehicle(void);
     void _setDirtyForSave(bool dirtyForSave);
     void _setDirtyForUpload(bool dirtyForUpload);
+    void _setDirtyStates(bool dirtyForSave, bool dirtyForUpload);
 
 #ifdef QGC_UNITTEST_BUILD
     // Used by unit tests to set dirty flags for initial state

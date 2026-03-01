@@ -178,8 +178,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
             }
         } else {
             // There is no previous Plan in the view
-            _setDirtyForSave(false);
-            _setDirtyForUpload(false);
+            _setDirtyStates(false, false);
             if (newOffline) {
                 // Nothing special to do in this case
                 qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, no longer connected to vehicle, nothing to do";
@@ -261,8 +260,7 @@ void PlanMasterController::_loadGeoFenceComplete(void)
 void PlanMasterController::_loadRallyPointsComplete(void)
 {
     qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadRallyPointsComplete";
-    _setDirtyForSave(true);
-    _setDirtyForUpload(false);
+    _setDirtyStates(true /* dirtyForSave */, false /* dirtyForUpload */);
 }
 
 void PlanMasterController::_sendMissionComplete(void)
@@ -394,8 +392,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
     if(success){
         _currentPlanFile = QString::asprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
-        _setDirtyForSave(false);
-        _setDirtyForUpload(true);
+        _setDirtyStates(false /* dirtyForSave */, true /* dirtyForUpload */);
     } else {
         _currentPlanFile.clear();
     }
@@ -503,8 +500,7 @@ void PlanMasterController::removeAll(void)
     _rallyPointController.setDirty(false);
     _suppressOverallDirtyUpdate = false;
 
-    _setDirtyForSave(false);
-    _setDirtyForUpload(false);
+    _setDirtyStates(false, false);
     if (_offline) {
         _currentPlanFile.clear();
         emit currentPlanFileChanged();
@@ -589,8 +585,7 @@ void PlanMasterController::_showPlanFromManagerVehicle(void)
     _missionController.setDirty(false);
     _geoFenceController.setDirty(false);
     _rallyPointController.setDirty(false);
-    _setDirtyForSave(false);
-    _setDirtyForUpload(false);
+    _setDirtyStates(false, false);
 }
 
 bool PlanMasterController::syncInProgress(void) const
@@ -635,6 +630,22 @@ void PlanMasterController::_setDirtyForUpload(bool dirtyForUpload)
 {
     if (_dirtyForUpload != dirtyForUpload) {
         _dirtyForUpload = dirtyForUpload;
+        emit dirtyForUploadChanged(_dirtyForUpload);
+    }
+}
+
+void PlanMasterController::_setDirtyStates(bool dirtyForSave, bool dirtyForUpload)
+{
+    const bool saveChanged = (_dirtyForSave != dirtyForSave);
+    const bool uploadChanged = (_dirtyForUpload != dirtyForUpload);
+
+    _dirtyForSave = dirtyForSave;
+    _dirtyForUpload = dirtyForUpload;
+
+    if (saveChanged) {
+        emit dirtyForSaveChanged(_dirtyForSave);
+    }
+    if (uploadChanged) {
         emit dirtyForUploadChanged(_dirtyForUpload);
     }
 }
