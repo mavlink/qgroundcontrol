@@ -203,9 +203,9 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
 void MissionController::loadFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::loadFromVehicle called while offline";
+        qCCritical(MissionControllerLog) << "MissionControllerLog::loadFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::loadFromVehicle called while syncInProgress";
+        qCCritical(MissionControllerLog) << "MissionControllerLog::loadFromVehicle called while syncInProgress";
     } else {
         _itemsRequested = true;
         _managerVehicle->missionManager()->loadFromVehicle();
@@ -215,9 +215,9 @@ void MissionController::loadFromVehicle(void)
 void MissionController::sendToVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while offline";
+        qCCritical(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while syncInProgress";
+        qCCritical(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(MissionControllerLog) << "MissionControllerLog::sendToVehicle";
         if (_visualItems->count() == 1) {
@@ -2203,9 +2203,9 @@ bool MissionController::containsItems(void) const
 void MissionController::removeAllFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while offline";
+        qCCritical(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while syncInProgress";
+        qCCritical(MissionControllerLog) << "MissionControllerLog::removeAllFromVehicle called while syncInProgress";
     } else {
         _itemsRequested = true;
         _missionManager->removeAll();
@@ -2272,7 +2272,7 @@ bool MissionController::showPlanFromManagerVehicle (void)
 {
     qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
-        qCWarning(MissionControllerLog) << "MissionController::showPlanFromManagerVehicle called while offline";
+        qCCritical(MissionControllerLog) << "MissionController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         if (!_managerVehicle->initialPlanRequestComplete()) {

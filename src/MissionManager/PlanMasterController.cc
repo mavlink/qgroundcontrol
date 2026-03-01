@@ -317,9 +317,9 @@ void PlanMasterController::sendToVehicle(void)
     }
 
     if (offline()) {
-        qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while offline";
+        qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
+        qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
         _sendGeoFence = true;
@@ -524,7 +524,7 @@ void PlanMasterController::removeAllFromVehicle(void)
         }
         _setDirtyForUpload(false);
     } else {
-        qWarning() << "PlanMasterController::removeAllFromVehicle called while offline";
+        qCCritical(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle called while offline";
     }
     setManualCreation(false);
 }

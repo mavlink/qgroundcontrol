@@ -215,9 +215,9 @@ void GeoFenceController::removeAll(void)
 void GeoFenceController::removeAllFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
     } else {
         _geoFenceManager->removeAll();
     }
@@ -226,9 +226,9 @@ void GeoFenceController::removeAllFromVehicle(void)
 void GeoFenceController::loadFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
     } else {
         _itemsRequested = true;
         _geoFenceManager->loadFromVehicle();
@@ -238,9 +238,9 @@ void GeoFenceController::loadFromVehicle(void)
 void GeoFenceController::sendToVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
         _geoFenceManager->sendToVehicle(_breachReturnPoint, _polygons, _circles);
@@ -357,7 +357,7 @@ bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
     qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         _itemsRequested = true;
