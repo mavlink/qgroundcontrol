@@ -1009,7 +1009,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const Q
 
         // Hide 500ms after animation finishes
         connect(ani, &QVariantAnimation::finished, this, [this] {
-            QTimer::singleShot(500, [this] {
+            QTimer::singleShot(500, this, [this] {
                 _setLoadProgress(0);
             });
         });
