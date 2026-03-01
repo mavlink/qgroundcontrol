@@ -15,6 +15,7 @@ FlightMap {
     allowGCSLocationCenter:     true
     allowVehicleLocationCenter: !_keepVehicleCentered
     planView:                   false
+    tilt:                       45
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 

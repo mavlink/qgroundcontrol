@@ -39,5 +39,17 @@ qt_add_qml_module(FlightMapModule
         Widgets/VerticalCompassAttitude.qml
         FlightMap.qml
         MapScale.qml
+        TerrainMeshOverlay.qml
     NO_PLUGIN
+)
+
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/TerrainMeshData.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/TerrainMeshData.h
+)
+
+target_include_directories(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )

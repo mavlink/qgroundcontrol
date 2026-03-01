@@ -238,7 +238,7 @@ void QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
     // Gstreamer video playback requires OpenGL
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    //QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 #endif
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup

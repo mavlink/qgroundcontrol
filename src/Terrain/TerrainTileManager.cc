@@ -10,6 +10,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCGeo.h"
 
+#include <QtCore/QtNumeric>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
@@ -54,6 +55,12 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> 
     const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
     const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(elevationProviderName);
     for (const QGeoCoordinate &coordinate: coordinates) {
+        if (!coordinate.isValid() || std::isnan(coordinate.latitude()) || std::isnan(coordinate.longitude())) {
+            qCWarning(TerrainTileManagerLog) << "Skipping invalid/NaN coordinate in terrain query";
+            altitudes.push_back(qQNaN());
+            error = true;
+            continue;
+        }
         const QString tileHash = UrlFactory::getTileHash(
             provider->getMapName(),
             provider->long2tileX(coordinate.longitude(), 1),

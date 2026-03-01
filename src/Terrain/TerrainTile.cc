@@ -4,6 +4,8 @@
 #include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
 
+#include <cmath>
+
 QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
 
 TerrainTile::TerrainTile(const QByteArray &byteArray)
@@ -76,6 +78,11 @@ double TerrainTile::elevation(const QGeoCoordinate &coordinate) const
 {
     if (!_isValid) {
         qCWarning(TerrainTileLog) << this << "Request for elevation, but tile is invalid.";
+        return qQNaN();
+    }
+
+    if (!coordinate.isValid() || std::isnan(coordinate.latitude()) || std::isnan(coordinate.longitude())) {
+        qCWarning(TerrainTileLog) << this << "Request for elevation with invalid/NaN coordinate";
         return qQNaN();
     }
 

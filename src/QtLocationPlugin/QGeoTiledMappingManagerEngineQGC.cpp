@@ -42,10 +42,10 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     cameraCaps.setMaximumZoomLevel(QGC_MAX_MAP_ZOOM);
     cameraCaps.setSupportsBearing(true);
     cameraCaps.setSupportsRolling(false);
-    cameraCaps.setSupportsTilting(false);
+    cameraCaps.setSupportsTilting(true);
     cameraCaps.setMinimumTilt(0.0);
-    cameraCaps.setMaximumTilt(0.0);
-    cameraCaps.setMinimumFieldOfView(45.0);
+    cameraCaps.setMaximumTilt(89.0);
+    cameraCaps.setMinimumFieldOfView(25.0);
     cameraCaps.setMaximumFieldOfView(45.0);
     cameraCaps.setOverzoomEnabled(true);
     setCameraCapabilities(cameraCaps);

@@ -82,6 +82,28 @@ Item {
             visible:                !_is3DMode
         }
 
+        TerrainMeshOverlay {
+            id:             terrainOverlay
+            anchors.fill:   mapControl
+            z:              QGroundControl.zOrderWidgets
+            mapControl:     mapControl
+            enabled:        !_is3DMode && !QGroundControl.videoManager.fullScreen && !mapControl.pipMode
+            heightScale:    3.0
+            terrainOpacity: 0.5
+            gridSize:       40
+        }
+
+        QGCLabel {
+            anchors.left:           mapControl.left
+            anchors.bottom:         mapControl.bottom
+            anchors.leftMargin:     _toolsMargin
+            anchors.bottomMargin:   _toolsMargin
+            z:                      QGroundControl.zOrderWidgets + 1
+            color:                  "white"
+            text:                   terrainOverlay.terrainMeshDisableReason
+            visible:                terrainOverlay.enabled && !terrainOverlay.terrainMeshSupported
+        }
+
         FlyViewVideo {
             id:         videoControl
             pipView:    _pipView
