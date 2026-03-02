@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QFileInfo>
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -52,7 +53,8 @@ public:
     Q_PROPERTY(bool                     dirtyForUpload          READ dirtyForUpload                         NOTIFY dirtyForUploadChanged)   ///< true: Unsent changes are present, false: no changes since last upload/download sync
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
-    Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)
+    Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)  ///< Fully qualified path, empty if not yet saved
+    Q_PROPERTY(QString                  currentPlanFileName     READ currentPlanFileName                    NOTIFY currentPlanFileChanged)  ///< File name only, no path or extension
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
@@ -104,7 +106,8 @@ public:
     bool        dirtyForUpload  (void) const { return _dirtyForUpload; }
     QString     fileExtension   (void) const;
     QString     kmlFileExtension(void) const;
-    QString     currentPlanFile (void) const { return _currentPlanFile; }
+    QString     currentPlanFile     (void) const { return _currentPlanFile; }
+    QString     currentPlanFileName (void) const { return QFileInfo(_currentPlanFile).completeBaseName(); }
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
