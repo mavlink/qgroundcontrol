@@ -120,6 +120,25 @@ void TransectStyleComplexItem::setDirty(bool dirty)
     }
 }
 
+void TransectStyleComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (!coordinate.isValid() || !_entryCoordinate.isValid() || _surveyAreaPolygon.count() < 3) {
+        return;
+    }
+
+    const double distanceMeters = _entryCoordinate.distanceTo(coordinate);
+    const double azimuthDegrees = _entryCoordinate.azimuthTo(coordinate);
+    const QList<QGeoCoordinate> vertices = _surveyAreaPolygon.coordinateList();
+
+    QList<QGeoCoordinate> translatedVertices;
+    translatedVertices.reserve(vertices.count());
+    for (const QGeoCoordinate& vertex: vertices) {
+        translatedVertices.append(vertex.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+    }
+
+    _surveyAreaPolygon.setPath(translatedVertices);
+}
+
 void TransectStyleComplexItem::_save(QJsonObject& complexObject)
 {
     QJsonObject innerObject;

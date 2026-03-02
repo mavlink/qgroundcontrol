@@ -83,7 +83,7 @@ public:
     ReadyForSaveState   readyForSaveState           (void) const final;
     bool                exitCoordinateSameAsEntry   (void) const final { return true; }
     void                setDirty                    (bool dirty) final;
-    void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
+    void                setCoordinate               (const QGeoCoordinate& coordinate) final;
     void                setSequenceNumber           (int sequenceNumber) final;
     void                save                        (QJsonArray&  missionItems) final;
     double              editableAlt                 (void) const final;

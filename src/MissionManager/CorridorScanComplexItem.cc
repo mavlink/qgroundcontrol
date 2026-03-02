@@ -154,6 +154,25 @@ bool CorridorScanComplexItem::specifiesCoordinate(void) const
     return _corridorPolyline.count() > 1;
 }
 
+void CorridorScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (!coordinate.isValid() || !_entryCoordinate.isValid() || _corridorPolyline.count() < 2) {
+        return;
+    }
+
+    const double distanceMeters = _entryCoordinate.distanceTo(coordinate);
+    const double azimuthDegrees = _entryCoordinate.azimuthTo(coordinate);
+    const QList<QGeoCoordinate> vertices = _corridorPolyline.coordinateList();
+
+    QList<QGeoCoordinate> translatedVertices;
+    translatedVertices.reserve(vertices.count());
+    for (const QGeoCoordinate& vertex: vertices) {
+        translatedVertices.append(vertex.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+    }
+
+    _corridorPolyline.setPath(translatedVertices);
+}
+
 int CorridorScanComplexItem::_calcTransectCount(void) const
 {
     double fullWidth = _corridorWidthFact.rawValue().toDouble();

@@ -95,7 +95,7 @@ public:
     QString             abbreviation                (void) const override { return tr("T"); }
     bool                exitCoordinateSameAsEntry   (void) const final { return false; }
     void                setDirty                    (bool dirty) final;
-    void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
+    void                setCoordinate               (const QGeoCoordinate& coordinate) override;
     void                setSequenceNumber           (int sequenceNumber) final;
     double              editableAlt                 (void) const final;
     double              amslEntryAlt                (void) const final;
