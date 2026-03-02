@@ -468,6 +468,26 @@ void StructureScanComplexItem::applyNewAltitude(double newAltitude)
     _entranceAltFact.setRawValue(newAltitude);
 }
 
+void StructureScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    const QGeoCoordinate oldCoordinate = this->coordinate();
+    if (!oldCoordinate.isValid() || !coordinate.isValid() || _structurePolygon.count() < 3) {
+        return;
+    }
+
+    const double distanceMeters = oldCoordinate.distanceTo(coordinate);
+    const double azimuthDegrees = oldCoordinate.azimuthTo(coordinate);
+    const QList<QGeoCoordinate> vertices = _structurePolygon.coordinateList();
+
+    QList<QGeoCoordinate> translatedVertices;
+    translatedVertices.reserve(vertices.count());
+    for (const QGeoCoordinate& vertex: vertices) {
+        translatedVertices.append(vertex.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+    }
+
+    _structurePolygon.setPath(translatedVertices);
+}
+
 void StructureScanComplexItem::_polygonDirtyChanged(bool dirty)
 {
     if (dirty) {
