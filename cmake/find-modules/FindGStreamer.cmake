@@ -60,6 +60,14 @@ endif()
 # Platform-Specific Configuration
 # ============================================================================
 
+macro(_gst_normalize_and_validate_root)
+    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        message(FATAL_ERROR "GStreamer: SDK not found at '${GStreamer_ROOT_DIR}' — "
+            "check installation or set GStreamer_ROOT_DIR")
+    endif()
+endmacro()
+
 set(PKG_CONFIG_ARGN)
 
 # ----------------------------------------------------------------------------
@@ -80,17 +88,16 @@ if(WIN32)
         endif()
     endif()
 
-    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
-    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
-    endif()
+    _gst_normalize_and_validate_root()
 
     set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
 
-    set(PKG_CONFIG_EXECUTABLE "${GStreamer_ROOT_DIR}/bin/pkg-config.exe")
-    set(ENV{PKG_CONFIG} "${PKG_CONFIG_EXECUTABLE}")
+    set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/bin/pkg-config.exe")
+    # CACHE FORCE ensures find_package(PkgConfig) sees the bundled exe even when
+    # no system pkg-config is on PATH (common in CI containers).
+    set(PKG_CONFIG_EXECUTABLE "$ENV{PKG_CONFIG}" CACHE FILEPATH "pkg-config executable" FORCE)
     set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig;${GSTREAMER_PLUGIN_PATH}/pkgconfig;$ENV{PKG_CONFIG_PATH}")
     list(APPEND PKG_CONFIG_ARGN
         --dont-define-prefix
@@ -109,17 +116,16 @@ elseif(LINUX)
         endif()
     endif()
 
-    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
-    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
-    endif()
+    _gst_normalize_and_validate_root()
 
-    if((EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu" ) AND (EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu/gstreamer-1.0"))
+    if((EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu") AND (EXISTS "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu/gstreamer-1.0"))
         set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
-    elseif(EXISTS "${GStreamer_ROOT_DIR}/lib")
+    elseif((EXISTS "${GStreamer_ROOT_DIR}/lib64") AND (EXISTS "${GStreamer_ROOT_DIR}/lib64/gstreamer-1.0"))
+        set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib64")
+    elseif((EXISTS "${GStreamer_ROOT_DIR}/lib") AND (EXISTS "${GStreamer_ROOT_DIR}/lib/gstreamer-1.0"))
         set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
     else()
-        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+        message(FATAL_ERROR "Could not locate GStreamer libraries - check installation or set environment/cmake variables")
     endif()
 
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
@@ -131,46 +137,166 @@ elseif(LINUX)
 # Android Platform
 # ----------------------------------------------------------------------------
 elseif(ANDROID)
+    set(_gst_freedesktop_url "https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz")
+    set(_gst_s3_url "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/android/qgc-android-gstreamer-${GStreamer_FIND_VERSION}.tar.xz")
+
+    set(_gst_android_hash "")
+
     if(QGC_CUSTOM_GST_PACKAGE)
-        set(_gst_android_url "https://qgroundcontrol.s3.us-west-2.amazonaws.com/android-gstreamer/qgc-android-gstreamer-${GStreamer_FIND_VERSION}.tar.xz")
+        set(_gst_android_urls "${_gst_s3_url}")
+        set(_gst_source_variant "custom")
+    elseif(CMAKE_ANDROID_ARCH_ABI MATCHES "^(x86|x86_64)$")
+        # S3 custom package only contains ARM architectures; use freedesktop universal tarball for x86
+        set(_gst_android_urls "${_gst_freedesktop_url}")
+        set(_gst_source_variant "universal")
+        # Fetch checksum only for freedesktop-only downloads where it can be verified
+        set(_gst_checksum_url "${_gst_freedesktop_url}.sha256sum")
+        if(DEFINED ENV{CPM_SOURCE_CACHE})
+            set(_gst_checksum_dir "$ENV{CPM_SOURCE_CACHE}")
+        else()
+            set(_gst_checksum_dir "${CMAKE_BINARY_DIR}/_deps")
+        endif()
+        set(_gst_checksum_file "${_gst_checksum_dir}/gstreamer-android-${GStreamer_FIND_VERSION}.sha256sum")
+        if(NOT EXISTS "${_gst_checksum_file}")
+            file(MAKE_DIRECTORY "${_gst_checksum_dir}")
+            file(DOWNLOAD "${_gst_checksum_url}" "${_gst_checksum_file}"
+                STATUS _checksum_status TIMEOUT 30 TLS_VERIFY ON)
+            list(GET _checksum_status 0 _checksum_code)
+            if(NOT _checksum_code EQUAL 0)
+                file(REMOVE "${_gst_checksum_file}")
+            endif()
+        endif()
+        if(EXISTS "${_gst_checksum_file}")
+            file(READ "${_gst_checksum_file}" _checksum_content)
+            string(STRIP "${_checksum_content}" _checksum_content)
+            string(REGEX MATCH "([0-9a-fA-F]{64})" _checksum_match "${_checksum_content}")
+            if(_checksum_match)
+                set(_gst_android_hash "SHA256=${CMAKE_MATCH_1}")
+            endif()
+        endif()
     else()
-        set(_gst_android_url "https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz")
-        # https://gstreamer.freedesktop.org/data/pkg/android/${GStreamer_FIND_VERSION}/gstreamer-1.0-android-universal-${GStreamer_FIND_VERSION}.tar.xz.sha256sum
-        # set(_gst_android_url_hash "be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485")
+        set(_gst_android_urls "${_gst_freedesktop_url}" "${_gst_s3_url}")
+        set(_gst_source_variant "universal")
+    endif()
+
+    # Download with retry before passing to CPM (avoids FetchContent timeout failures)
+    if(DEFINED ENV{CPM_SOURCE_CACHE})
+        set(_gst_download_dir "$ENV{CPM_SOURCE_CACHE}/gstreamer-android")
+    else()
+        set(_gst_download_dir "${CMAKE_BINARY_DIR}/_deps/gstreamer-android")
+    endif()
+    set(_gst_archive_name "gstreamer-android-${_gst_source_variant}-${GStreamer_FIND_VERSION}.tar.xz")
+    set(_gst_archive_path "${_gst_download_dir}/${_gst_archive_name}")
+
+    # Extract raw hash from "SHA256=<hex>" format
+    set(_gst_expected_hash "")
+    if(_gst_android_hash)
+        string(REGEX MATCH "=([0-9a-fA-F]+)$" _gst_hash_match "${_gst_android_hash}")
+        if(_gst_hash_match)
+            set(_gst_expected_hash "${CMAKE_MATCH_1}")
+        endif()
+    endif()
+
+    # Verify cached archive integrity
+    set(_gst_need_download TRUE)
+    if(EXISTS "${_gst_archive_path}")
+        if(_gst_expected_hash)
+            file(SHA256 "${_gst_archive_path}" _gst_cached_hash)
+            if(_gst_cached_hash STREQUAL "${_gst_expected_hash}")
+                message(STATUS "GStreamer: Using cached ${_gst_archive_path} (SHA256 verified)")
+                set(_gst_need_download FALSE)
+            else()
+                message(STATUS "GStreamer: Cached archive failed SHA256 check, re-downloading")
+                file(REMOVE "${_gst_archive_path}")
+            endif()
+        else()
+            message(STATUS "GStreamer: Using cached ${_gst_archive_path}")
+            set(_gst_need_download FALSE)
+        endif()
+    endif()
+
+    if(_gst_need_download)
+        file(MAKE_DIRECTORY "${_gst_download_dir}")
+        set(_gst_downloaded FALSE)
+        foreach(_gst_url IN LISTS _gst_android_urls)
+            message(STATUS "GStreamer: Downloading from ${_gst_url}")
+            file(DOWNLOAD "${_gst_url}" "${_gst_archive_path}.tmp"
+                STATUS _gst_dl_status
+                SHOW_PROGRESS
+                TIMEOUT 600
+                INACTIVITY_TIMEOUT 60
+                TLS_VERIFY ON
+            )
+            list(GET _gst_dl_status 0 _gst_dl_code)
+            if(_gst_dl_code EQUAL 0)
+                if(_gst_expected_hash)
+                    file(SHA256 "${_gst_archive_path}.tmp" _gst_actual_hash)
+                    if(NOT _gst_actual_hash STREQUAL "${_gst_expected_hash}")
+                        message(WARNING "GStreamer: SHA256 mismatch from ${_gst_url}, trying next URL")
+                        file(REMOVE "${_gst_archive_path}.tmp")
+                        continue()
+                    endif()
+                endif()
+                file(RENAME "${_gst_archive_path}.tmp" "${_gst_archive_path}")
+                set(_gst_downloaded TRUE)
+                break()
+            endif()
+            list(GET _gst_dl_status 1 _gst_dl_error)
+            message(WARNING "GStreamer: Download failed from ${_gst_url}: ${_gst_dl_error}")
+            file(REMOVE "${_gst_archive_path}.tmp")
+        endforeach()
+        if(NOT _gst_downloaded)
+            message(FATAL_ERROR "GStreamer: All download URLs failed for ${_gst_archive_name}.\n"
+                "Tried: ${_gst_android_urls}\n"
+                "Set GStreamer_ROOT_DIR to use a local installation.")
+        endif()
     endif()
 
     CPMAddPackage(
         NAME gstreamer
         VERSION ${GStreamer_FIND_VERSION}
-        URL ${_gst_android_url}
-        # URL_HASH ${_gst_android_url_hash}
+        URL "file://${_gst_archive_path}"
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
     )
 
     if(NOT DEFINED GStreamer_ROOT_DIR)
         if(CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a")
-            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/armv7")
+            set(_gst_arch "armv7")
         elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
-            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/arm64")
+            set(_gst_arch "arm64")
         elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86")
-            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86")
+            set(_gst_arch "x86")
         elseif(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
-            set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/x86_64")
+            set(_gst_arch "x86_64")
+        else()
+            message(FATAL_ERROR "GStreamer: Unsupported Android ABI: ${CMAKE_ANDROID_ARCH_ABI}")
         endif()
+
+        set(GStreamer_ROOT_DIR "${gstreamer_SOURCE_DIR}/${_gst_arch}")
     endif()
 
     cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
     if(NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
+        file(GLOB _gst_extracted_dirs LIST_DIRECTORIES true "${gstreamer_SOURCE_DIR}/*")
+        message(FATAL_ERROR
+            "Could not locate GStreamer for ${CMAKE_ANDROID_ARCH_ABI}\n"
+            "  Expected: ${GStreamer_ROOT_DIR}\n"
+            "  Source dir: ${gstreamer_SOURCE_DIR}\n"
+            "  Contents: ${_gst_extracted_dirs}\n"
+            "  Check that the GStreamer tarball contains an '${_gst_arch}' directory."
+        )
     endif()
 
     set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
 
+    # Clear host PKG_CONFIG_PATH to prevent host .pc files contaminating cross-builds.
+    # Use PKG_CONFIG_LIBDIR instead to restrict search to GStreamer SDK paths only.
     set(ENV{PKG_CONFIG_PATH} "")
     if(CMAKE_HOST_WIN32)
-        set(PKG_CONFIG_EXECUTABLE "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/tools/windows/pkg-config.exe")
-        set(ENV{PKG_CONFIG} "${PKG_CONFIG_EXECUTABLE}")
+        set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/tools/windows/pkg-config.exe")
+        set(PKG_CONFIG_EXECUTABLE "$ENV{PKG_CONFIG}" CACHE FILEPATH "pkg-config executable" FORCE)
         set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_LIB_PATH}/pkgconfig;${GSTREAMER_PLUGIN_PATH}/pkgconfig")
         list(APPEND PKG_CONFIG_ARGN --dont-define-prefix)
     elseif(CMAKE_HOST_UNIX)
@@ -186,7 +312,7 @@ elseif(ANDROID)
                 find_program(PKG_CONFIG_EXECUTABLE pkg-config)
             endif()
             if(NOT PKG_CONFIG_EXECUTABLE)
-                message(FATAL_ERROR "Could not find pkg-config. Please install pkg-config using tools/setup/install-dependencies-osx.sh.")
+                message(FATAL_ERROR "Could not find pkg-config. Please install pkg-config using tools/setup/install_dependencies.py --platform macos.")
             endif()
         endif()
         set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig")
@@ -206,29 +332,40 @@ elseif(MACOS)
             set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")
         elseif(EXISTS "/opt/homebrew/opt/gstreamer")
             set(GStreamer_ROOT_DIR "/opt/homebrew/opt/gstreamer")
+            set(GStreamer_USE_FRAMEWORK OFF)
         elseif(EXISTS "/usr/local/opt/gstreamer")
             set(GStreamer_ROOT_DIR "/usr/local/opt/gstreamer")
+            set(GStreamer_USE_FRAMEWORK OFF)
         endif()
     endif()
 
-    cmake_path(CONVERT "${GStreamer_ROOT_DIR}" TO_CMAKE_PATH_LIST GStreamer_ROOT_DIR NORMALIZE)
-    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
-        message(FATAL_ERROR "Could not locate GStreamer - check installation or set environment/cmake variables")
-    endif()
+    _gst_normalize_and_validate_root()
 
-    if(GStreamer_USE_FRAMEWORK)
+    if(GStreamer_USE_FRAMEWORK AND NOT DEFINED GSTREAMER_FRAMEWORK_PATH)
         set(GSTREAMER_FRAMEWORK_PATH "${GStreamer_ROOT_DIR}/../..")
+        cmake_path(NORMAL_PATH GSTREAMER_FRAMEWORK_PATH)
     endif()
 
     set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
     set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
     set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
 
-    set(PKG_CONFIG_EXECUTABLE "${GStreamer_ROOT_DIR}/bin/pkg-config")
-    set(ENV{PKG_CONFIG} "${PKG_CONFIG_EXECUTABLE}")
-    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    if(GStreamer_USE_FRAMEWORK)
+        set(ENV{PKG_CONFIG} "${GStreamer_ROOT_DIR}/bin/pkg-config")
+        set(PKG_CONFIG_EXECUTABLE "$ENV{PKG_CONFIG}" CACHE FILEPATH "pkg-config executable" FORCE)
+        set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    else()
+        find_program(PKG_CONFIG_EXECUTABLE NAMES pkg-config pkgconf
+            PATHS /opt/homebrew/bin /usr/local/bin
+            NO_DEFAULT_PATH
+        )
+        if(NOT PKG_CONFIG_EXECUTABLE)
+            find_program(PKG_CONFIG_EXECUTABLE NAMES pkg-config pkgconf)
+        endif()
+        set(ENV{PKG_CONFIG_PATH} "")
+        set(ENV{PKG_CONFIG_LIBDIR} "${GSTREAMER_LIB_PATH}/pkgconfig:${GSTREAMER_PLUGIN_PATH}/pkgconfig")
+    endif()
     list(APPEND PKG_CONFIG_ARGN
-        --dont-define-prefix
         --define-variable=prefix=${GStreamer_ROOT_DIR}
         --define-variable=libdir=${GSTREAMER_LIB_PATH}
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
@@ -357,6 +494,8 @@ endif()
 # ============================================================================
 # Package Discovery
 # ============================================================================
+
+set(GStreamer_ROOT_DIR "${GStreamer_ROOT_DIR}" CACHE PATH "GStreamer SDK root directory" FORCE)
 
 if(GStreamer_USE_FRAMEWORK)
     list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")

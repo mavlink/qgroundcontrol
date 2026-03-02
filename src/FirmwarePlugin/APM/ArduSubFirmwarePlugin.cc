@@ -119,7 +119,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(QObject *parent)
         { _circleFlightMode         , APMSubMode::CIRCLE            , true , true },
         { _surfaceFlightMode        , APMSubMode::SURFACE           , true , true },
         { _posHoldFlightMode        , APMSubMode::POSHOLD           , true , true },
-        { _motorDetectionFlightMode , APMSubMode::MOTORDETECTION    , true , true },
+        { _motorDetectionFlightMode , APMSubMode::MOTORDETECTION    , false, true },
         { _surftrakFlightMode       , APMSubMode::SURFTRAK          , true , true },
     };
     updateAvailableFlightModes(availableFlightModes);
@@ -142,7 +142,7 @@ ArduSubFirmwarePlugin::~ArduSubFirmwarePlugin()
 
 }
 
-int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const
 {
     // Remapping not supported
     return Vehicle::versionNotSetValue;

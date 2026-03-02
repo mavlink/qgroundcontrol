@@ -18,24 +18,12 @@ protected:
     void init() final;
     void cleanup() final;
 
-#if 1
 private slots:
     void _testDirty();
     void _testCameraTrigger();
     void _testPathChanges();
     void _testItemGeneration();
     void _testItemCount();
-#else
-    // Used to debug a single test
-private slots:
-    void _testItemGeneration();
-
-private:
-    void _testDirty();
-    void _testCameraTrigger();
-    void _testPathChanges();
-    void _testItemCount();
-#endif
 
 private:
     void _waitForReadyForSave();

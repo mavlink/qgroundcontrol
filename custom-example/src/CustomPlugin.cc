@@ -287,9 +287,8 @@ CustomOverrideInterceptor::CustomOverrideInterceptor()
 QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterceptor::DataType type)
 {
     switch (type) {
-    using DataType = QQmlAbstractUrlInterceptor::DataType;
-    case DataType::QmlFile:
-    case DataType::UrlString:
+    case QQmlAbstractUrlInterceptor::QmlFile:
+    case QQmlAbstractUrlInterceptor::UrlString:
         if (url.scheme() == QStringLiteral("qrc")) {
             const QString origPath = url.path();
             const QString overrideRes = QStringLiteral(":/Custom%1").arg(origPath);

@@ -10,16 +10,26 @@
     "default":          false
 },
 {
+    "name":             "mapProvider",
+    "shortDesc":        "3D map data provider",
+    "type":             "uint32",
+    "enumStrings":      "OpenStreetMap",
+    "enumValues":       "0",
+    "default":          0
+},
+{
     "name":             "osmFilePath",
     "shortDesc":        "Path to the OSM file for the 3D viewer.",
     "type":             "string",
-    "default":          "Please select an OSM file"
+    "default":          ""
 },
 {
     "name":             "buildingLevelHeight",
     "shortDesc":        "Average Height for each level of the buildings",
     "type":             "double",
     "units":            "m",
+    "min":              0.5,
+    "max":              20,
     "default":          3
 },
 {
@@ -27,6 +37,8 @@
     "shortDesc":        "Altitude bias for vehicles in the 3D View",
     "type":             "double",
     "units":            "m",
+    "min":              -1000,
+    "max":              1000,
     "default":          0
 }
 ]

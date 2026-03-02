@@ -49,11 +49,17 @@ TextArea {
             var paramName = link.substr(8);
             _fact = controller.getParameterFact(-1, paramName, true)
             if (_fact != null) {
-                paramEditorDialogComponent.createObject(mainWindow).open()
+                paramEditorDialogFactory.open()
             }
         } else {
             Qt.openUrlExternally(link);
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: paramEditorDialogFactory
+
+        dialogComponent: paramEditorDialogComponent
     }
 
     Component {

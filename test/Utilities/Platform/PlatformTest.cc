@@ -1,7 +1,44 @@
 #include "PlatformTest.h"
 
+#include <QtCore/QByteArray>
+
+#include "Fixtures/RAIIFixtures.h"
 #include "Platform.h"
+#include "QGCCommandLineParser.h"
 #include "UnitTest.h"
+#include "qgc_version.h"
+
+namespace {
+
+class ScopedEnvVarRestore
+{
+public:
+    explicit ScopedEnvVarRestore(const char *name)
+        : _name(name)
+        , _hadValue(qEnvironmentVariableIsSet(name))
+    {
+        if (_hadValue) {
+            _value = qgetenv(name);
+        }
+    }
+
+    ~ScopedEnvVarRestore()
+    {
+        if (_hadValue) {
+            (void) qputenv(_name, _value);
+        } else {
+            (void) qunsetenv(_name);
+        }
+    }
+
+private:
+    const char *_name = nullptr;
+    bool _hadValue = false;
+    QByteArray _value;
+};
+
+} // namespace
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 void PlatformTest::_testCheckSingleInstanceAllowMultiple()
 {
@@ -14,17 +51,16 @@ void PlatformTest::_testCheckSingleInstanceAllowMultiple()
 
 void PlatformTest::_testCheckSingleInstanceBlocks()
 {
-    // First call with allowMultiple=false should succeed (we're the first instance)
-    // Note: This test assumes no other instance of QGC is running with the same key
-    // The actual RunGuard is static, so this tests the current application state
-    const bool firstResult = Platform::checkSingleInstance(false);
-    // The result depends on whether this is actually the first instance
-    // In a test environment, it should typically be true
-    // We just verify it returns a boolean without crashing
-    Q_UNUSED(firstResult);
-    QVERIFY(true);  // Test passes if we get here without crashing
+    const QString lockKey = QStringLiteral("%1 RunGuardKey").arg(QLatin1String(QGC_APP_NAME));
+    TestFixtures::SingleInstanceLockFixture heldLock(lockKey);
+    if (!heldLock.isLocked()) {
+        QSKIP("Single-instance lock is already held by another process.");
+    }
+
+    // With the lock already held, Platform guard should refuse startup.
+    QVERIFY(!Platform::checkSingleInstance(false));
 }
-#endif              // !Q_OS_ANDROID && !Q_OS_IOS
+#endif  // !Q_OS_ANDROID && !Q_OS_IOS
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 void PlatformTest::_testIsRunningAsRootNormal()
 {
@@ -34,5 +70,31 @@ void PlatformTest::_testIsRunningAsRootNormal()
     QVERIFY2(!Platform::isRunningAsRoot(), "Tests should not be run as root. Running QGC as root is dangerous.");
 }
 #endif  // Q_OS_LINUX && !Q_OS_ANDROID
+
+#if defined(QGC_UNITTEST_BUILD)
+void PlatformTest::_testInitializeSetsUnitTestEnvironment()
+{
+    ScopedEnvVarRestore restoreConsole("QT_ASSUME_STDERR_HAS_CONSOLE");
+    ScopedEnvVarRestore restoreLogging("QT_FORCE_STDERR_LOGGING");
+    ScopedEnvVarRestore restoreQpa("QT_QPA_PLATFORM");
+
+    (void) qunsetenv("QT_ASSUME_STDERR_HAS_CONSOLE");
+    (void) qunsetenv("QT_FORCE_STDERR_LOGGING");
+    (void) qunsetenv("QT_QPA_PLATFORM");
+
+    QGCCommandLineParser::CommandLineParseResult args;
+    args.runningUnitTests = true;
+    args.allowMultiple = true;
+
+    char appName[] = "qgc-unit-test";
+    char *argv[] = { appName };
+    const std::optional<int> initResult = Platform::initialize(1, argv, args);
+
+    QVERIFY(!initResult.has_value());
+    QCOMPARE(qgetenv("QT_ASSUME_STDERR_HAS_CONSOLE"), QByteArray("1"));
+    QCOMPARE(qgetenv("QT_FORCE_STDERR_LOGGING"), QByteArray("1"));
+    QCOMPARE(qgetenv("QT_QPA_PLATFORM"), QByteArray("offscreen"));
+}
+#endif
 
 UT_REGISTER_TEST(PlatformTest, TestLabel::Unit, TestLabel::Utilities)

@@ -38,6 +38,7 @@ private slots:
 
     // QUrl support
     void _testArchiveUrl();
+    void _testArchiveUrlRejectsRemote();
 
     // Model invariants (QAbstractItemModelTester)
     void _testModelTesterEmpty();

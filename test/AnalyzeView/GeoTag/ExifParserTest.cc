@@ -1,10 +1,11 @@
 #include "ExifParserTest.h"
-#include "ExifParser.h"
-#include "ExifUtility.h"
-#include "GeoTagData.h"
 
 #include <QtCore/QFile>
 #include <QtTest/QTest>
+
+#include "ExifParser.h"
+#include "ExifUtility.h"
+#include "GeoTagData.h"
 
 void ExifParserTest::_readTimeTest()
 {
@@ -86,16 +87,16 @@ void ExifParserTest::_writeAndReadBackTest()
     QVERIFY(ExifParser::write(buffer, geotag));
 
     // Read back using low-level API to verify
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
     ExifByteOrder order = exif_data_get_byte_order(data);
-    ExifContent *gpsIfd = data->ifd[EXIF_IFD_GPS];
+    ExifContent* gpsIfd = data->ifd[EXIF_IFD_GPS];
     QVERIFY(gpsIfd != nullptr);
 
     // Read latitude
-    ExifEntry *latEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE));
-    ExifEntry *latRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF));
+    ExifEntry* latEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE));
+    ExifEntry* latRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF));
     QVERIFY(latEntry != nullptr);
     QVERIFY(latRefEntry != nullptr);
 
@@ -105,8 +106,8 @@ void ExifParserTest::_writeAndReadBackTest()
     }
 
     // Read longitude
-    ExifEntry *lonEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE));
-    ExifEntry *lonRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE_REF));
+    ExifEntry* lonEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE));
+    ExifEntry* lonRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE_REF));
     QVERIFY(lonEntry != nullptr);
     QVERIFY(lonRefEntry != nullptr);
 
@@ -116,8 +117,8 @@ void ExifParserTest::_writeAndReadBackTest()
     }
 
     // Read altitude
-    ExifEntry *altEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE));
-    ExifEntry *altRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF));
+    ExifEntry* altEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE));
+    ExifEntry* altRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF));
     QVERIFY(altEntry != nullptr);
     QVERIFY(altRefEntry != nullptr);
 
@@ -156,15 +157,15 @@ void ExifParserTest::_writeNegativeCoordinatesTest()
     QVERIFY(ExifParser::write(buffer, geotag));
 
     // Verify using low-level API
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
-    ExifContent *gpsIfd = data->ifd[EXIF_IFD_GPS];
+    ExifContent* gpsIfd = data->ifd[EXIF_IFD_GPS];
     QVERIFY(gpsIfd != nullptr);
 
     // Check reference values
-    ExifEntry *latRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF));
-    ExifEntry *lonRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE_REF));
+    ExifEntry* latRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF));
+    ExifEntry* lonRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE_REF));
 
     QVERIFY(latRefEntry != nullptr);
     QVERIFY(lonRefEntry != nullptr);
@@ -189,13 +190,13 @@ void ExifParserTest::_writeNegativeAltitudeTest()
     QVERIFY(ExifParser::write(buffer, geotag));
 
     // Verify using low-level API
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
 
-    ExifContent *gpsIfd = data->ifd[EXIF_IFD_GPS];
+    ExifContent* gpsIfd = data->ifd[EXIF_IFD_GPS];
     QVERIFY(gpsIfd != nullptr);
 
-    ExifEntry *altRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF));
+    ExifEntry* altRefEntry = exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF));
     QVERIFY(altRefEntry != nullptr);
     QCOMPARE(altRefEntry->data[0], static_cast<unsigned char>(1));  // 1 = below sea level
 

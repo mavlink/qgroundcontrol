@@ -39,8 +39,6 @@ class MavlinkCameraControl : public FactGroup
     Q_PROPERTY(qreal                focalLength             READ focalLength                                        NOTIFY infoChanged)
     Q_PROPERTY(QSizeF               sensorSize              READ sensorSize                                         NOTIFY infoChanged)
     Q_PROPERTY(QSize                resolution              READ resolution                                         NOTIFY infoChanged)
-    Q_PROPERTY(bool                 capturesVideo           READ capturesVideo                                      NOTIFY infoChanged)
-    Q_PROPERTY(bool                 capturesPhotos          READ capturesPhotos                                     NOTIFY infoChanged)
     Q_PROPERTY(bool                 hasModes                READ hasModes                                           NOTIFY infoChanged)
     Q_PROPERTY(bool                 hasZoom                 READ hasZoom                                            NOTIFY infoChanged)
     Q_PROPERTY(bool                 hasFocus                READ hasFocus                                           NOTIFY infoChanged)
@@ -49,6 +47,9 @@ class MavlinkCameraControl : public FactGroup
     Q_PROPERTY(bool                 photosInVideoMode       READ photosInVideoMode                                  NOTIFY infoChanged)
     Q_PROPERTY(bool                 videoInPhotoMode        READ videoInPhotoMode                                   NOTIFY infoChanged)
     Q_PROPERTY(bool                 isBasic                 READ isBasic                                            NOTIFY infoChanged)
+
+
+    Q_PROPERTY(CameraMode           cameraMode              READ cameraMode             WRITE setCameraMode         NOTIFY cameraModeChanged)
 
     Q_PROPERTY(quint32              storageFree             READ storageFree                                        NOTIFY storageFreeChanged)
     Q_PROPERTY(QString              storageFreeStr          READ storageFreeStr                                     NOTIFY storageFreeChanged)
@@ -59,9 +60,6 @@ class MavlinkCameraControl : public FactGroup
     Q_PROPERTY(qreal                zoomLevel               READ zoomLevel              WRITE setZoomLevel          NOTIFY zoomLevelChanged)
     Q_PROPERTY(qreal                focusLevel              READ focusLevel             WRITE setFocusLevel         NOTIFY focusLevelChanged)
     Q_PROPERTY(QStringList          activeSettings          READ activeSettings                                     NOTIFY activeSettingsChanged)
-    Q_PROPERTY(VideoCaptureStatus   videoCaptureStatus      READ videoCaptureStatus                                 NOTIFY videoCaptureStatusChanged)
-    Q_PROPERTY(PhotoCaptureStatus   photoCaptureStatus      READ photoCaptureStatus                                 NOTIFY photoCaptureStatusChanged)
-    Q_PROPERTY(CameraMode           cameraMode              READ cameraMode             WRITE setCameraMode         NOTIFY cameraModeChanged)
     Q_PROPERTY(StorageStatus        storageStatus           READ storageStatus                                      NOTIFY storageStatusChanged)
     Q_PROPERTY(qreal                photoLapse              READ photoLapse             WRITE setPhotoLapse         NOTIFY photoLapseChanged)
     Q_PROPERTY(int                  photoLapseCount         READ photoLapseCount        WRITE setPhotoLapseCount    NOTIFY photoLapseCountChanged)
@@ -81,6 +79,17 @@ class MavlinkCameraControl : public FactGroup
     Q_PROPERTY(bool                 trackingImageStatus     READ trackingImageStatus                                NOTIFY trackingImageStatusChanged)
     Q_PROPERTY(QRectF               trackingImageRect       READ trackingImageRect                                  NOTIFY trackingImageStatusChanged)
 
+    // These properties are used to determine what controls to show in the UI and are based on both the camera capabilities as well as the video manager status.
+    // They are not necessarily directly related to the MAVLink camera capabilities.
+    Q_PROPERTY(bool                 capturesVideo           READ capturesVideo                                      NOTIFY infoChanged)
+    Q_PROPERTY(bool                 capturesPhotos          READ capturesPhotos                                     NOTIFY infoChanged)
+
+    // These are "virtual" states which take into account both the mavlink camera capabilities as well as the gstreamer ability to locally record video
+    // as well as to do a photo grab from the video stream. These are what the UI should use to determine what options to present to the user and are updated
+    // based on both the camera info as well as the video manager status.
+    Q_PROPERTY(CaptureVideoState    captureVideoState       READ captureVideoState                                  NOTIFY captureVideoStateChanged)
+    Q_PROPERTY(CapturePhotosState   capturePhotosState      READ capturePhotosState                                 NOTIFY capturePhotosStateChanged)
+
     friend class QGCCameraParamIO;
 
 public:
@@ -95,29 +104,26 @@ public:
     };
     Q_ENUM(CameraMode)
 
-    enum VideoCaptureStatus {
-        VIDEO_CAPTURE_STATUS_STOPPED = 0,
-        VIDEO_CAPTURE_STATUS_RUNNING,
-        VIDEO_CAPTURE_STATUS_LAST,
-        VIDEO_CAPTURE_STATUS_UNDEFINED = 255
-    };
-    Q_ENUM(VideoCaptureStatus)
-
-    enum PhotoCaptureStatus {
-        PHOTO_CAPTURE_IDLE = 0,
-        PHOTO_CAPTURE_IN_PROGRESS,
-        PHOTO_CAPTURE_INTERVAL_IDLE,
-        PHOTO_CAPTURE_INTERVAL_IN_PROGRESS,
-        PHOTO_CAPTURE_LAST,
-        PHOTO_CAPTURE_STATUS_UNDEFINED = 255
-    };
-    Q_ENUM(PhotoCaptureStatus)
-
     enum PhotoCaptureMode {
         PHOTO_CAPTURE_SINGLE = 0,
         PHOTO_CAPTURE_TIMELAPSE,
     };
     Q_ENUM(PhotoCaptureMode)
+
+    enum CaptureVideoState {
+        CaptureVideoStateDisabled = 0,
+        CaptureVideoStateIdle,
+        CaptureVideoStateCapturing,
+    };
+    Q_ENUM(CaptureVideoState)
+
+    enum CapturePhotosState {
+        CapturePhotosStateDisabled = 0,
+        CapturePhotosStateIdle,
+        CapturePhotosStateCapturingSinglePhoto,
+        CapturePhotosStateCapturingMultiplePhotos,
+    };
+    Q_ENUM(CapturePhotosState)
 
     enum StorageStatus {
         STORAGE_EMPTY = STORAGE_STATUS_EMPTY,
@@ -179,11 +185,11 @@ public:
     virtual bool hasVideoStream() const = 0;
     virtual bool photosInVideoMode() const = 0;
     virtual bool videoInPhotoMode() const = 0;
+    virtual CaptureVideoState captureVideoState() const = 0;
+    virtual CapturePhotosState capturePhotosState() const = 0;
 
     virtual int compID() const = 0;
     virtual bool isBasic() const = 0;
-    virtual VideoCaptureStatus videoCaptureStatus() const { return _videoCaptureStatus; }
-    virtual PhotoCaptureStatus photoCaptureStatus() const { return _photoCaptureStatus; }
     virtual PhotoCaptureMode photoCaptureMode() const { return _photoCaptureMode; }
     virtual qreal photoLapse() const { return _photoLapse; }
     virtual int photoLapseCount() const { return _photoLapseCount; }
@@ -225,7 +231,7 @@ public:
 
     virtual void setZoomLevel(qreal level) = 0;
     virtual void setFocusLevel(qreal level) = 0;
-    virtual void setCameraMode(CameraMode mode) = 0;
+    virtual void setCameraMode(CameraMode cameraMode) = 0;
     virtual void setPhotoCaptureMode(PhotoCaptureMode mode) = 0;
     virtual void setPhotoLapse(qreal interval) = 0;
     virtual void setPhotoLapseCount(int count) = 0;
@@ -243,14 +249,14 @@ public:
     virtual bool validateParameter(Fact *pFact, QVariant &newValue) = 0;    ///< Allow controller to modify or invalidate parameter change
 
     virtual void handleBatteryStatus(const mavlink_battery_status_t &bs) = 0;
-    virtual void handleCaptureStatus(const mavlink_camera_capture_status_t &capStatus) = 0;
-    virtual void handleParamAck(const mavlink_param_ext_ack_t &ack) = 0;
-    virtual void handleParamValue(const mavlink_param_ext_value_t &value) = 0;
-    virtual void handleSettings(const mavlink_camera_settings_t &settings) = 0;
-    virtual void handleStorageInfo(const mavlink_storage_information_t &st) = 0;
-    virtual void handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t *tis) = 0;
-    virtual void handleVideoInfo(const mavlink_video_stream_information_t *vi) = 0;
-    virtual void handleVideoStatus(const mavlink_video_stream_status_t *vs) = 0;
+    virtual void handleCameraCaptureStatus(const mavlink_camera_capture_status_t &cameraCaptureStatus) = 0;
+    virtual void handleParamExtAck(const mavlink_param_ext_ack_t &paramExtAck) = 0;
+    virtual void handleParamExtValue(const mavlink_param_ext_value_t &paramExtValue) = 0;
+    virtual void handleCameraSettings(const mavlink_camera_settings_t &settings) = 0;
+    virtual void handleStorageInformation(const mavlink_storage_information_t &storageInformation) = 0;
+    virtual void handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus) = 0;
+    virtual void handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation) = 0;
+    virtual void handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus) = 0;
 
     QString cameraModeToStr(CameraMode mode);
     QString captureImageStatusToStr(uint8_t image_status);
@@ -284,15 +290,36 @@ signals:
     void thermalModeChanged();
     void thermalOpacityChanged();
     void storageStatusChanged();
+    void captureVideoStateChanged();
+    void capturePhotosStateChanged();
 
 protected slots:
     virtual void _paramDone() = 0;
 
 protected:
+    enum VideoCaptureStatus {
+        VIDEO_CAPTURE_STATUS_STOPPED = 0,
+        VIDEO_CAPTURE_STATUS_RUNNING,
+        VIDEO_CAPTURE_STATUS_LAST,
+        VIDEO_CAPTURE_STATUS_UNDEFINED = 255
+    };
+
+    enum PhotoCaptureStatus {
+        PHOTO_CAPTURE_IDLE = 0,
+        PHOTO_CAPTURE_IN_PROGRESS,
+        PHOTO_CAPTURE_INTERVAL_IDLE,
+        PHOTO_CAPTURE_INTERVAL_IN_PROGRESS,
+        PHOTO_CAPTURE_LAST,
+        PHOTO_CAPTURE_STATUS_UNDEFINED = 255
+    };
+
+    VideoCaptureStatus _videoCaptureStatus() const { return _videoCaptureStatusValue; }
+    PhotoCaptureStatus _photoCaptureStatus() const { return _photoCaptureStatusValue; }
+
     Vehicle *_vehicle = nullptr;
     CameraMode _cameraMode = CAM_MODE_UNDEFINED;
-    VideoCaptureStatus _videoCaptureStatus = VIDEO_CAPTURE_STATUS_STOPPED;
-    PhotoCaptureStatus _photoCaptureStatus = PHOTO_CAPTURE_IDLE;
+    VideoCaptureStatus _videoCaptureStatusValue = VIDEO_CAPTURE_STATUS_STOPPED;
+    PhotoCaptureStatus _photoCaptureStatusValue = PHOTO_CAPTURE_IDLE;
     PhotoCaptureMode _photoCaptureMode = PHOTO_CAPTURE_SINGLE;
     qreal _photoLapse = 1.0;
     int _photoLapseCount = 0;

@@ -13,23 +13,7 @@ Item {
 
     property bool showIndicator:    _activeJoystick
     property var  _activeJoystick:  joystickManager.activeJoystick
-    property bool _joystickEnabled: false
-
-    function _updateJoystickEnabled() {
-        _joystickEnabled = globals.activeVehicle ? joystickManager.joystickEnabledForVehicle(globals.activeVehicle) : false
-    }
-
-    Connections {
-        target: joystickManager
-        function onJoystickEnabledChanged() { _updateJoystickEnabled() }
-    }
-
-    Connections {
-        target: globals
-        function onActiveVehicleChanged() { _updateJoystickEnabled() }
-    }
-
-    Component.onCompleted: _updateJoystickEnabled()
+    property bool _joystickEnabled: globals.activeVehicle && joystickManager.activeJoystickEnabledForActiveVehicle
 
     QGCPalette { id: qgcPal }
 

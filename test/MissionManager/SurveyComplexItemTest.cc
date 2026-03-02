@@ -1,5 +1,6 @@
 #include "SurveyComplexItemTest.h"
 
+#include "CoordFixtures.h"
 #include "MultiSignalSpy.h"
 #include "PlanViewSettings.h"
 #include "SurveyComplexItem.h"
@@ -8,7 +9,7 @@ SurveyComplexItemTest::SurveyComplexItemTest()
 {
     // We use a 100m by 100m square test polygon
     const double edgeDistance = 100;
-    _polyVertices.append(QGeoCoordinate(47.633550640000003, -122.08982199));
+    _polyVertices.append(TestFixtures::Coord::missionTestOrigin());
     _polyVertices.append(_polyVertices[0].atDistanceAndAzimuth(edgeDistance, 90));
     _polyVertices.append(_polyVertices[1].atDistanceAndAzimuth(edgeDistance, 180));
     _polyVertices.append(_polyVertices[2].atDistanceAndAzimuth(edgeDistance, -90.0));
@@ -34,7 +35,7 @@ void SurveyComplexItemTest::init()
     // It's also important to check that things are not being over-signalled when they should not be, since that can
     // lead to incorrect ui or perf impact of uneeded signals propogating ui change.
     _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
+    QVERIFY(_multiSpy);
     QCOMPARE(_multiSpy->init(_surveyItem), true);
 }
 
@@ -208,18 +209,10 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
     _planViewSettings->useConditionGate()->setRawValue(useConditionGate);
     QList<MissionItem*> items;
     _surveyItem->appendMissionItems(items, this);
-#if 0
-    // Handy for debugging failures
-    _printItemCommands(items);
-#endif
     QCOMPARE(items.count(), expectedCommands.count());
     for (int i = 0; i < expectedCommands.count(); i++) {
         int actualCommand = items[i]->command();
         int expectedCommand = expectedCommands[i];
-#if 0
-        // Handy for debugging failures
-        qDebug() << "Index" << i;
-#endif
         QCOMPARE(actualCommand, expectedCommand);
     }
 }

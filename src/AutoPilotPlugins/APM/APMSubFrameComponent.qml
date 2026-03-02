@@ -170,7 +170,7 @@ SetupPage {
                                         setFrameConfig(frameModelSelected.paramValue)
                                         return
                                     }
-                                    confirmFrameComponent.createObject(mainWindow).open()
+                                    confirmFrameDialogFactory.open()
                                 }
                             }
                         }
@@ -179,6 +179,12 @@ SetupPage {
             }// Flow
         } // Column
     } // Component
+
+    QGCPopupDialogFactory {
+        id: confirmFrameDialogFactory
+
+        dialogComponent: confirmFrameComponent
+    }
 
     Component {
         id: confirmFrameComponent

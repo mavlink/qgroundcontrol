@@ -14,7 +14,28 @@ private slots:
 
     void _testMissionPlannerFileLoad();
     void _testActiveVehicleChanged();
+    void _testDirtyFlagsMatrix_data();
+    void _testDirtyFlagsMatrix();
 
 private:
+    enum DirtyScenario {
+        UploadPreservesSaveDirtyTrue,
+        UploadPreservesSaveDirtyFalse,
+        UploadFalseOnPlanClear,
+        UploadTrueWhenSaveTrue,
+        UploadTrueOnNewPlanLoad,
+        SaveToFilePreservesUploadDirtyTrue,
+        SaveToFilePreservesUploadDirtyFalse,
+        SaveFalseOnSuccessfulLoad,
+        ClearSaveDirtyPreservesUploadTrue,
+        ClearSaveDirtyPreservesUploadFalse,
+    };
+
+    enum DirtyState {
+        DirtyStateFalse,
+        DirtyStateTrue,
+        DirtyStateUnchanged
+    };
+
     PlanMasterController* _masterController = nullptr;
 };

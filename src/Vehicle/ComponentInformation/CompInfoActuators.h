@@ -13,7 +13,7 @@ class CompInfoActuators : public CompInfo
     Q_OBJECT
 
 public:
-    CompInfoActuators(uint8_t compId, Vehicle* vehicle, QObject* parent = nullptr);
+    CompInfoActuators(uint8_t compId_, Vehicle* vehicle_, QObject* parent = nullptr);
 
     // Overrides from CompInfo
     void setJson(const QString& metadataJsonFileName) override;

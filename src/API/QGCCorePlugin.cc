@@ -101,6 +101,10 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
 
 void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
 {
+#ifdef Q_OS_ANDROID
+    Q_UNUSED(visible);
+#endif
+
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::indoorPaletteName) {
             QVariant outdoorPalette;

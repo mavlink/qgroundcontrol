@@ -4,6 +4,10 @@ on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened, closed]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: write
@@ -17,12 +21,17 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Check PR title format
         id: title_check
         continue-on-error: true
         uses: amannn/action-semantic-pull-request@v6
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           types: |
             feat
@@ -48,6 +57,7 @@ jobs:
           github.event.pull_request.user.type != 'Bot'
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           sparse-checkout: .github/prompts
           sparse-checkout-cone-mode: false
 
@@ -60,13 +70,23 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 50
-            });
-            return files.map(f => `${f.filename} (+${f.additions}/-${f.deletions})`).join('\n');
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                per_page: 100
+              }
+            );
+            const maxFiles = 200;
+            const lines = files
+              .slice(0, maxFiles)
+              .map(f => `${f.filename} (+${f.additions}/-${f.deletions})`);
+            if (files.length > maxFiles) {
+              lines.push(`... (${files.length - maxFiles} more files)`);
+            }
+            return lines.join('\n');
 
       - name: Sanitize inputs for AI
         id: sanitize
@@ -84,17 +104,20 @@ jobs:
           SAFE_BODY=$(echo "$PR_BODY" | head -c 2000 | tr -d '\r')
           SAFE_FILES=$(echo "$CHANGED_FILES" | head -30)
 
-          # Write to outputs using heredoc with unique delimiters
+          # Write to outputs using heredoc with dynamic delimiters to prevent injection
+          TITLE_DELIM="TITLE_EOF_$(echo "$SAFE_TITLE" | sha256sum | head -c 16)"
+          BODY_DELIM="BODY_EOF_$(echo "$SAFE_BODY" | sha256sum | head -c 16)"
+          FILES_DELIM="FILES_EOF_$(echo "$SAFE_FILES" | sha256sum | head -c 16)"
           {
-            echo "title<<TITLE_END_7f3a9c2e"
+            echo "title<<${TITLE_DELIM}"
             echo "$SAFE_TITLE"
-            echo "TITLE_END_7f3a9c2e"
-            echo "body<<BODY_END_8b4d1e6f"
+            echo "${TITLE_DELIM}"
+            echo "body<<${BODY_DELIM}"
             echo "$SAFE_BODY"
-            echo "BODY_END_8b4d1e6f"
-            echo "files<<FILES_END_2c5a8d9b"
+            echo "${BODY_DELIM}"
+            echo "files<<${FILES_DELIM}"
             echo "$SAFE_FILES"
-            echo "FILES_END_2c5a8d9b"
+            echo "${FILES_DELIM}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Suggest title with GitHub Models
@@ -113,7 +136,7 @@ jobs:
             changed_files: ${{ steps.sanitize.outputs.files }}
 
       - name: Comment title suggestion
-        if: steps.title_check.outcome == 'failure' && steps.suggest.outputs.response
+        if: steps.title_check.outcome == 'failure' && github.event.pull_request.user.type != 'Bot' && steps.suggest.outputs.response
         uses: actions/github-script@v8
         env:
           SUGGESTED_TITLE: ${{ steps.suggest.outputs.response }}
@@ -139,32 +162,37 @@ jobs:
             const currentTitle = escapeHtml(pr.title);
             suggestedTitle = escapeHtml(suggestedTitle);
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100
-            });
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                per_page: 100
+              }
+            );
 
             const botComment = comments.find(c =>
               c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
             );
 
-            const commentBody = `<!-- pr-title-suggestion -->
-            ## PR Title Suggestion
-
-            Your PR title doesn't follow the [conventional commit](https://www.conventionalcommits.org/) format.
-
-            | Current Title | Suggested Title |
-            |---------------|-----------------|
-            | \`${currentTitle}\` | \`${suggestedTitle}\` |
-
-            ### Format
-            \`<type>(<scope>): <description>\`
-
-            **Types:** \`feat\` \`fix\` \`docs\` \`refactor\` \`perf\` \`test\` \`ci\` \`chore\` \`build\` \`style\` \`revert\`
-
-            *Suggested by GitHub Models. Update your title to dismiss this suggestion.*`;
+            const commentBody = [
+              '<!-- pr-title-suggestion -->',
+              '## PR Title Suggestion',
+              '',
+              "Your PR title doesn't follow the [conventional commit](https://www.conventionalcommits.org/) format.",
+              '',
+              '| Current Title | Suggested Title |',
+              '|---------------|-----------------|',
+              `| \`${currentTitle}\` | \`${suggestedTitle}\` |`,
+              '',
+              '### Format',
+              '`<type>(<scope>): <description>`',
+              '',
+              '**Types:** `feat` `fix` `docs` `refactor` `perf` `test` `ci` `chore` `build` `style` `revert`',
+              '',
+              '*Suggested by GitHub Models. Update your title to dismiss this suggestion.*'
+            ].join('\n');
 
             if (botComment) {
               await github.rest.issues.updateComment({
@@ -189,24 +217,29 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100
-            });
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                per_page: 100
+              }
+            );
 
             const botComment = comments.find(c =>
               c.user?.type === 'Bot' && c.body?.includes('<!-- pr-title-suggestion -->')
             );
 
             if (botComment && !botComment.body.includes('(resolved)')) {
-              const minimizedBody = `<!-- pr-title-suggestion -->
-            <details>
-            <summary>PR Title Suggestion (resolved)</summary>
-
-            ${botComment.body.replace('<!-- pr-title-suggestion -->', '')}
-            </details>`;
+              const minimizedBody = [
+                '<!-- pr-title-suggestion -->',
+                '<details>',
+                '<summary>PR Title Suggestion (resolved)</summary>',
+                '',
+                botComment.body.replace('<!-- pr-title-suggestion -->', '').trim(),
+                '</details>'
+              ].join('\n');
 
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -223,21 +256,27 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Get current size label
         id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          CURRENT_LABEL=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels" \
+          CURRENT_LABEL=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
             --jq '.[] | select(.name | startswith("size/")) | .name' | head -1)
           echo "label=${CURRENT_LABEL}" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Label PR by size
         continue-on-error: true
         uses: codelytv/pr-size-labeler@v1
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           xs_label: 'size/XS'
           xs_max_size: 150
           s_label: 'size/S'
@@ -265,12 +304,14 @@ jobs:
             translations/*
 
       - name: Remove outdated size labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OLD_LABEL: ${{ steps.current.outputs.label }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          OLD_LABEL="${{ steps.current.outputs.label }}"
-
           # Get all current size labels
-          CURRENT_LABELS=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels" \
+          CURRENT_LABELS=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
             --jq '.[] | select(.name | startswith("size/")) | .name')
 
           # Count size labels - if more than one, remove the old one
@@ -278,13 +319,11 @@ jobs:
 
           if [[ "$LABEL_COUNT" -gt 1 && -n "$OLD_LABEL" ]]; then
             # Multiple size labels exist - remove the old one
-            ENCODED_LABEL=$(echo "$OLD_LABEL" | sed 's|/|%2F|g')
-            gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
+            ENCODED_LABEL="${OLD_LABEL//\//%2F}"
+            gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
               -X DELETE 2>/dev/null || true
           fi
           # If only one label exists, size didn't change - nothing to remove
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   label:
     name: Label PR by Files
@@ -293,9 +332,13 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Label PR by changed files
         uses: actions/labeler@v6
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ github.token }}
           sync-labels: true
-

@@ -1,17 +1,18 @@
 #include "ULogParserTest.h"
-#include "ULogParser.h"
-#include "ULogTestGenerator.h"
-#include "GeoTagData.h"
 
-#include <QtCore/QTemporaryDir>
+#include <QtCore/QDir>
 #include <QtCore/QTemporaryFile>
 #include <QtTest/QTest>
 
+#include "GeoTagData.h"
+#include "ULogParser.h"
+#include "ULogTestGenerator.h"
+
 namespace {
 
-QByteArray generateTestULog(int numEvents = 20)
+QByteArray generateTestULog(const QString& tempDirPath, int numEvents = 20)
 {
-    QTemporaryFile tempFile;
+    QTemporaryFile tempFile(QDir(tempDirPath).filePath(QStringLiteral("ulog_parser_XXXXXX.ulg")));
     tempFile.setAutoRemove(false);  // Don't auto-remove on close
     if (!tempFile.open()) {
         return QByteArray();
@@ -36,11 +37,11 @@ QByteArray generateTestULog(int numEvents = 20)
     return data;
 }
 
-} // namespace
+}  // namespace
 
 void ULogParserTest::_getTagsFromLogTest()
 {
-    const QByteArray logBuffer = generateTestULog(20);
+    const QByteArray logBuffer = generateTestULog(tempDirPath(), 20);
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
@@ -77,7 +78,7 @@ void ULogParserTest::_getTagsFromLogInvalidTest()
 
 void ULogParserTest::_parseGeoTagDataFieldsTest()
 {
-    const QByteArray logBuffer = generateTestULog(20);
+    const QByteArray logBuffer = generateTestULog(tempDirPath(), 20);
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
@@ -86,7 +87,7 @@ void ULogParserTest::_parseGeoTagDataFieldsTest()
     QVERIFY(!cameraFeedback.isEmpty());
 
     // Verify parsed fields are reasonable
-    for (const GeoTagData &data : cameraFeedback) {
+    for (const GeoTagData& data : cameraFeedback) {
         // Timestamp should be positive
         QVERIFY(data.timestamp >= 0);
 
@@ -112,21 +113,15 @@ void ULogParserTest::_generatedULogTest()
     const auto events = ULogTestGenerator::generateSampleEvents(numEvents);
     QCOMPARE(events.size(), numEvents);
 
-    // Write to temporary file
-    QTemporaryFile tempFile;
-    tempFile.setAutoRemove(false);  // Don't auto-remove on close
-    QVERIFY(tempFile.open());
-    const QString tempPath = tempFile.fileName();
-    tempFile.close();
-
-    QVERIFY(ULogTestGenerator::generateULog(tempPath, events));
+    const QString generatedPath = tempPath(QStringLiteral("generated.ulg"));
+    QVERIFY(ULogTestGenerator::generateULog(generatedPath, events));
 
     // Read back and verify
-    QFile file(tempPath);
+    QFile file(generatedPath);
     QVERIFY(file.open(QIODevice::ReadOnly));
     const QByteArray logBuffer = file.readAll();
     file.close();
-    QFile::remove(tempPath);  // Clean up after reading
+    QFile::remove(generatedPath);  // Clean up after reading
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
@@ -136,7 +131,7 @@ void ULogParserTest::_generatedULogTest()
 
     // Verify all events are valid
     int validCount = 0;
-    for (const GeoTagData &data : cameraFeedback) {
+    for (const GeoTagData& data : cameraFeedback) {
         QVERIFY(data.coordinate.isValid());
         QCOMPARE(data.captureResult, GeoTagData::CaptureResult::Success);
         QVERIFY(data.isValid());
@@ -146,8 +141,8 @@ void ULogParserTest::_generatedULogTest()
 
     // Verify coordinates match what we generated
     for (int i = 0; i < numEvents; ++i) {
-        const GeoTagData &parsed = cameraFeedback[i];
-        const auto &original = events[i];
+        const GeoTagData& parsed = cameraFeedback[i];
+        const auto& original = events[i];
 
         QVERIFY(qAbs(parsed.coordinate.latitude() - original.coordinate.latitude()) < 0.0001);
         QVERIFY(qAbs(parsed.coordinate.longitude() - original.coordinate.longitude()) < 0.0001);
@@ -157,16 +152,17 @@ void ULogParserTest::_generatedULogTest()
 
 void ULogParserTest::_benchmarkGetTagsFromLog()
 {
-    const QByteArray logBuffer = generateTestULog(50);
+    const QByteArray logBuffer = generateTestULog(tempDirPath(), 50);
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
     QString errorMessage;
 
-    QBENCHMARK {
+    QBENCHMARK
+    {
         cameraFeedback.clear();
         errorMessage.clear();
-        (void) ULogParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage);
+        (void)ULogParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage);
     }
 
     QVERIFY(!cameraFeedback.isEmpty());

@@ -1,6 +1,7 @@
 #include "SendMavCommandWithHandlerTest.h"
 
 #include "MultiVehicleManager.h"
+
 SendMavCommandWithHandlerTest::TestCase_t SendMavCommandWithHandlerTest::_rgTestCases[] = {
     {MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED, MAV_RESULT_ACCEPTED, false,
      Vehicle::MavCmdResultCommandResultOnly, 1},
@@ -51,7 +52,6 @@ void SendMavCommandWithHandlerTest::_mavCmdProgressHandler(void* progressHandler
 
 void SendMavCommandWithHandlerTest::_testCaseWorker(TestCase_t& testCase)
 {
-    _connectMockLinkNoInitialConnectSequence();
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
@@ -64,12 +64,11 @@ void SendMavCommandWithHandlerTest::_testCaseWorker(TestCase_t& testCase)
     _mockLink->clearReceivedMavCommandCounts();
     vehicle->sendMavCommandWithHandler(&handlerInfo, MAV_COMP_ID_AUTOPILOT1, testCase.command);
     if (testCase.expectInProgressResult) {
-        QVERIFY(QTest::qWaitFor([&]() { return _progressHandlerCalled; }, 10000));
+        QVERIFY_TRUE_WAIT(_progressHandlerCalled, TestTimeout::longMs());
     }
-    QVERIFY(QTest::qWaitFor([&]() { return _resultHandlerCalled; }, 10000));
+    QVERIFY_TRUE_WAIT(_resultHandlerCalled, TestTimeout::longMs());
     QCOMPARE(_mockLink->receivedMavCommandCount(testCase.command), testCase.expectedSendCount);
     QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, testCase.command), -1);
-    _disconnectMockLink();
 }
 
 void SendMavCommandWithHandlerTest::_performTestCases()
@@ -83,7 +82,6 @@ void SendMavCommandWithHandlerTest::_performTestCases()
 
 void SendMavCommandWithHandlerTest::_duplicateCommand()
 {
-    _connectMockLinkNoInitialConnectSequence();
     SendMavCommandWithHandlerTest::TestCase_t testCase = {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, 0,
                                                           Vehicle::MavCmdResultFailureDuplicateCommand, 1};
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
@@ -97,7 +95,7 @@ void SendMavCommandWithHandlerTest::_duplicateCommand()
     _progressHandlerCalled = false;
     _mockLink->clearReceivedMavCommandCounts();
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, testCase.command, true /* showError */);
-    QVERIFY(QTest::qWaitFor([&]() { return _mockLink->receivedMavCommandCount(testCase.command) == 1; }, 10));
+    QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(testCase.command) == 1, TestTimeout::shortMs());
     QVERIFY(!_resultHandlerCalled);
     QVERIFY(!_progressHandlerCalled);
     vehicle->sendMavCommandWithHandler(&handlerInfo, MAV_COMP_ID_AUTOPILOT1, testCase.command);
@@ -119,7 +117,6 @@ void SendMavCommandWithHandlerTest::_compIdAllFailureMavCmdResultHandler(void* /
 
 void SendMavCommandWithHandlerTest::_compIdAllFailure()
 {
-    _connectMockLinkNoInitialConnectSequence();
     SendMavCommandWithHandlerTest::TestCase_t testCase = {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, 0,
                                                           Vehicle::MavCmdResultFailureDuplicateCommand, 0};
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
@@ -132,7 +129,6 @@ void SendMavCommandWithHandlerTest::_compIdAllFailure()
     QCOMPARE(_resultHandlerCalled, true);
     QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_ALL, testCase.command), -1);
     QCOMPARE(_mockLink->receivedMavCommandCount(testCase.command), testCase.expectedSendCount);
-    _disconnectMockLink();
 }
 
 UT_REGISTER_TEST(SendMavCommandWithHandlerTest, TestLabel::Integration, TestLabel::Vehicle)

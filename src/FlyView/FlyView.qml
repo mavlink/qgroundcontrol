@@ -17,6 +17,8 @@ import QGroundControl.Viewer3D
 Item {
     id: _root
 
+    readonly property bool _is3DMode: QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D
+
     // These should only be used by MainRootWindow
     property var planController:    _planController
     property var guidedController:  _guidedController
@@ -76,7 +78,8 @@ Item {
             pipMode:                !_mainWindowIsMap
             toolInsets:             customOverlay.totalToolInsets
             mapName:                "FlightDisplayView"
-            enabled:                !viewer3DWindow.isOpen
+            enabled:                !_is3DMode
+            visible:                !_is3DMode
         }
 
         FlyViewVideo {
@@ -108,11 +111,10 @@ Item {
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
             anchors.margins:        _widgetMargin
             anchors.topMargin:      toolbar.height + _widgetMargin
-            z:                      _fullItemZorder + 2 // we need to add one extra layer for map 3d viewer (normally was 1)
+            z:                      _fullItemZorder + 2
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             visible:                !QGroundControl.videoManager.fullScreen
-            isViewer3DOpen:         viewer3DWindow.isOpen
         }
 
         FlyViewCustomLayer {
@@ -153,9 +155,18 @@ Item {
             visible:            false
         }
 
-        Viewer3D {
-            id: viewer3DWindow
-            anchors.fill: parent
+        Loader {
+            id:             viewer3DLoader
+            z:              1
+            anchors.fill:   parent
+            active:         _is3DMode
+
+            onActiveChanged: {
+                if (active) {
+                    setSource("qrc:/qml/QGroundControl/Viewer3D/Models3D/Viewer3DModel.qml",
+)
+                }
+            }
         }
     }
 

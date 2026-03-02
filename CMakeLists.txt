@@ -106,7 +106,11 @@ endif()
 # CPM (CMake Package Manager) Configuration
 # ----------------------------------------------------------------------------
 if(NOT CPM_SOURCE_CACHE)
-    set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cache/CPM" CACHE PATH "CPM source cache directory")
+    if(DEFINED ENV{CPM_SOURCE_CACHE} AND NOT "$ENV{CPM_SOURCE_CACHE}" STREQUAL "")
+        set(CPM_SOURCE_CACHE "$ENV{CPM_SOURCE_CACHE}" CACHE PATH "CPM source cache directory")
+    else()
+        set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cache/CPM" CACHE PATH "CPM source cache directory")
+    endif()
 endif()
 include(CPM)
 
@@ -187,12 +191,12 @@ find_package(Qt6
         TextToSpeech
         Widgets
         Xml
+        Quick3D
         StateMachine
     OPTIONAL_COMPONENTS
         Bluetooth
         MultimediaQuickPrivate
         OpenGL
-        Quick3D
         QuickTest
         SerialPort
         Test
@@ -228,6 +232,9 @@ qt_policy(
     SET QTP0005 NEW  # Enhanced deployment handling
 )
 
+# Disable QML cache generation in Debug builds across all targets.
+add_compile_definitions($<$<CONFIG:Debug>:QT_QML_NO_CACHEGEN>)
+
 # ============================================================================
 # Custom Build Subdirectory
 # ============================================================================
@@ -258,6 +265,15 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     MACOSX_BUNDLE  # macOS application bundle
     ${QGC_RESOURCES}
 )
+
+# Apply optional sanitizer instrumentation to the main target.
+include(Sanitizers)
+
+# Apply optional coverage instrumentation and coverage targets.
+include(Coverage)
+
+# Apply compiler warning configuration to QGC target
+qgc_apply_warning_flags()
 
 # ----------------------------------------------------------------------------
 # Platform-Specific Configuration

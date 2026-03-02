@@ -3,9 +3,16 @@
 #include "BaseClasses/VehicleTest.h"
 #include "Vehicle.h"
 
-class SendMavCommandWithSignallingTest : public VehicleTest
+class SendMavCommandWithSignallingTest : public VehicleTestNoInitialConnect
 {
     Q_OBJECT
+
+public:
+    explicit SendMavCommandWithSignallingTest(QObject* parent = nullptr)
+        : VehicleTestNoInitialConnect(parent)
+    {
+        setAutopilotType(MAV_AUTOPILOT_INVALID);
+    }
 
 private slots:
     void _performTestCases();

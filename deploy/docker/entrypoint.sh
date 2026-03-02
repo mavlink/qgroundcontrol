@@ -27,6 +27,7 @@ if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
         -DQT_HOST_PATH="${QT_HOST_PATH}" \
         -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
         -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
+        -DQGC_CUSTOM_GST_PACKAGE=OFF \
         -DQT_ANDROID_SIGN_APK=OFF
     cmake --build /project/build --target all --config "${BUILD_TYPE}" --parallel
 else

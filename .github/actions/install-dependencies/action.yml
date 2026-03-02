@@ -24,56 +24,160 @@ runs:
   steps:
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
-      shell: pwsh
+      uses: nick-fields/retry@v3
       env:
-        GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
-        INSTALL_GSTREAMER: ${{ inputs.gstreamer }}
-        INSTALL_VULKAN: ${{ inputs.vulkan }}
-      run: |
-        $params = @{}
-        if ($env:GSTREAMER_VERSION) {
-          $params['GStreamerVersion'] = $env:GSTREAMER_VERSION
-        }
-        if ($env:INSTALL_GSTREAMER -ne 'true') {
-          $params['SkipGStreamer'] = $true
-        }
-        if ($env:INSTALL_VULKAN -eq 'true') {
-          $params['InstallVulkan'] = $true
-        }
-        $workspace = $env:GITHUB_WORKSPACE
-        if (-not $workspace) {
-          $workspace = Resolve-Path "$PSScriptRoot/../.."
-        }
-        $scriptPath = Join-Path $workspace 'tools/setup/install-dependencies-windows.ps1'
-        & $scriptPath @params
+        INPUT_GSTREAMER: ${{ inputs.gstreamer }}
+        INPUT_GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
+        INPUT_VULKAN: ${{ inputs.vulkan }}
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        shell: python
+        command: |
+          import os, subprocess, sys
+          args = [sys.executable, './tools/setup/install_dependencies.py', '--platform', 'windows']
+          if os.environ.get('INPUT_GSTREAMER_VERSION'):
+              args += ['--gstreamer-version', os.environ['INPUT_GSTREAMER_VERSION']]
+          if os.environ.get('INPUT_GSTREAMER') != 'true':
+              args.append('--skip-gstreamer')
+          if os.environ.get('INPUT_VULKAN') == 'true':
+              args.append('--vulkan')
+          sys.exit(subprocess.run(args).returncode)
 
-    - name: Install dependencies (Linux)
+    - name: Get system package list (Linux)
+      if: runner.os == 'Linux'
+      id: linux-deps
+      shell: bash
+      run: |
+        packages=$(python3 tools/setup/install_dependencies.py --platform debian --print-packages)
+        echo "packages=${packages}" >> "$GITHUB_OUTPUT"
+
+    - name: Enable universe repository (Linux)
       if: runner.os == 'Linux'
       shell: bash
+      run: |
+        if ! grep -rEq --include='*.list' --include='*.sources' '^(deb|Components:).*universe' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+          sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y -qq software-properties-common
+          sudo add-apt-repository -y universe
+        fi
+        sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 update -y -qq
+
+    - name: Cache and install apt packages (Linux)
+      if: runner.os == 'Linux'
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+      with:
+        packages: ${{ steps.linux-deps.outputs.packages }}
+        version: linux-deps-v2-${{ hashFiles('tools/setup/install_dependencies.py', '.github/build-config.json', '.github/actions/install-dependencies/action.yml') }}
+
+    - name: Fix apt alternatives after cache restore (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        # cache-apt-pkgs-action restores .deb tarballs but may not re-run
+        # postinst scripts that register update-alternatives entries.
+        # This leaves symlinks like libblas.so.3 missing even though the
+        # backing library (e.g. libopenblas) is installed.
+        if ! sudo dpkg --configure -a; then
+          echo "::warning::dpkg --configure -a failed; package state may be inconsistent"
+        fi
+
+        multiarch="$(dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || true)"
+        blas_link=""
+        if [[ -n "${multiarch}" ]]; then
+          blas_link="/usr/lib/${multiarch}/libblas.so.3"
+        fi
+
+        # Ensure BLAS SONAME is resolvable before AppImage dependency bundling.
+        if ! ldconfig -p | grep -qE '\blibblas\.so\.3\b'; then
+          echo "::warning::libblas.so.3 missing from linker cache; attempting repair"
+          sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y -qq --reinstall libblas3 libopenblas0 || true
+          if [[ -n "${multiarch}" ]]; then
+            sudo update-alternatives --auto "libblas.so.3-${multiarch}" || true
+          fi
+
+          if [[ -n "${blas_link}" && ! -e "${blas_link}" ]]; then
+            candidate="$(find /usr/lib -type f -name 'libblas.so.3' 2>/dev/null | head -n1 || true)"
+            if [[ -n "${candidate}" ]]; then
+              echo "::warning::Creating compatibility symlink ${blas_link} -> ${candidate}"
+              sudo ln -sf "${candidate}" "${blas_link}"
+            fi
+          fi
+          sudo ldconfig
+        fi
+
+        if ! ldconfig -p | grep -qE '\blibblas\.so\.3\b'; then
+          echo "::error::libblas.so.3 is still missing after repair attempt"
+          exit 1
+        fi
+
+    - name: Install optional apt packages (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        optional=$(python3 tools/setup/install_dependencies.py --platform debian --category gstreamer_optional --print-packages)
+        if [ -n "$optional" ]; then
+          available=()
+          for pkg in $optional; do
+            if apt-cache show "$pkg" >/dev/null 2>&1; then
+              available+=("$pkg")
+            else
+              echo "Skipping unavailable optional package: $pkg"
+            fi
+          done
+          if [ ${#available[@]} -gt 0 ]; then
+            echo "Installing optional packages: ${available[*]}"
+            sudo apt-get -o DPkg::Lock::Timeout=300 install -y -qq "${available[@]}" || true
+          fi
+        fi
+
+    - name: Detect Python version for pipx cache (Linux)
+      if: runner.os == 'Linux'
+      id: python-version
+      shell: bash
+      run: |
+        py_minor="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+        echo "minor=${py_minor}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache pipx and pip downloads (Linux)
+      if: runner.os == 'Linux'
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.local/pipx
+        key: pipx-linux-v2-py${{ steps.python-version.outputs.minor }}-${{ hashFiles('tools/setup/install_dependencies.py', '.github/actions/install-dependencies/action.yml') }}
+        restore-keys: |
+          pipx-linux-v2-py${{ steps.python-version.outputs.minor }}-
+          pipx-linux-v2-
+
+    - name: Install pipx packages (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: python3 tools/setup/install_dependencies.py --platform debian --skip-system-packages
+
+    - name: Install extra packages (Linux)
+      if: runner.os == 'Linux' && inputs.extra-packages != ''
+      uses: nick-fields/retry@v3
       env:
         EXTRA_PACKAGES: ${{ inputs.extra-packages }}
-      run: |
-        if [ -f "./tools/setup/install-dependencies-debian.sh" ]; then
-          chmod a+x ./tools/setup/install-dependencies-debian.sh
-          sudo ./tools/setup/install-dependencies-debian.sh
-        fi
-        if [ -n "$EXTRA_PACKAGES" ]; then
-          # Validate package names to prevent command injection
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        command: |
           for pkg in $EXTRA_PACKAGES; do
             if [[ ! "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9.+-]*$ ]]; then
               echo "Error: Invalid package name '$pkg'" >&2
               exit 1
             fi
           done
-          # shellcheck disable=SC2086  # Word splitting is intentional for package list
+          # shellcheck disable=SC2086
           sudo apt-get install -y $EXTRA_PACKAGES
-        fi
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
-      shell: bash
-      run: |
-        if [ -f "./tools/setup/install-dependencies-macos.sh" ]; then
-          chmod a+x ./tools/setup/install-dependencies-macos.sh
-          ./tools/setup/install-dependencies-macos.sh
-        fi
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        command: |
+          python3 tools/setup/install_dependencies.py --platform macos

@@ -26,7 +26,7 @@ SetupPage {
                 nextButton: remoteControlCalibration.nextButton
                 joystickMode: false
 
-                onThrottleReversedCalFailure: mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
+                onThrottleReversedCalFailure: QGroundControl.showMessageDialog(radioPage, qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
             }
 
             Component.onCompleted: controller.start()
@@ -65,12 +65,12 @@ SetupPage {
                     QGCButton {
                         id: bindButton
                         text: qsTr("Spektrum Bind")
-                        onClicked: spektrumBindDialogComponent.createObject(mainWindow).open()
+                        onClicked: spektrumBindDialogFactory.open()
                     }
 
                     QGCButton {
                         text: qsTr("CRSF Bind")
-                        onClicked: mainWindow.showMessageDialog(qsTr("CRSF Bind"),
+                        onClicked: QGroundControl.showMessageDialog(radioPage, qsTr("CRSF Bind"),
                                                                 qsTr("Click Ok to place your CRSF receiver in the bind mode."),
                                                                 Dialog.Ok | Dialog.Cancel,
                                                                 function() { controller.crsfBindMode() })
@@ -78,11 +78,17 @@ SetupPage {
 
                     QGCButton {
                         text: qsTr("Copy Trims")
-                        onClicked: mainWindow.showMessageDialog(qsTr("Copy Trims"),
+                        onClicked: QGroundControl.showMessageDialog(radioPage, qsTr("Copy Trims"),
                                                                 qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
                                                                 Dialog.Ok | Dialog.Cancel,
                                                                 function() { controller.copyTrims() })
                     }
+                }
+
+                QGCPopupDialogFactory {
+                    id: spektrumBindDialogFactory
+
+                    dialogComponent: spektrumBindDialogComponent
                 }
 
                 Component {

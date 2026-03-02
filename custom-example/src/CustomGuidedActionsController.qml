@@ -2,7 +2,10 @@
 
 import QtQml
 
+import QGroundControl
+
 QtObject {
+    id: _root
     readonly property int actionCustomButton: _guidedController.customActionStart + 0
     readonly property string customButtonTitle: qsTr("Custom")
     readonly property string customButtonMessage: qsTr("Example of a custom action.")
@@ -24,7 +27,7 @@ QtObject {
     function customExecuteAction(actionCode, actionData, sliderOutputValue, optionCheckedode) {
         switch (actionCode) {
         case actionCustomButton:
-            mainWindow.showMessageDialog("Custom Action", "Custom action executed.")
+            QGroundControl.showMessageDialog(mainWindow, "Custom Action", "Custom action executed.")
             break
         default:
             return false // false = action not handled here

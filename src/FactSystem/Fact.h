@@ -202,7 +202,6 @@ protected:
     QString _name;
     int _componentId = -1;
     QVariant _rawValue{0};
-    bool _rawValueIsNotSet = true;
     mutable QRecursiveMutex _rawValueMutex;
     FactMetaData::ValueType_t _type = FactMetaData::valueTypeInt32;
     FactMetaData *_metaData = nullptr;

@@ -34,6 +34,11 @@ endif()
 # ----------------------------------------------------------------------------
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Include compiler warnings configuration
+include(CompilerWarnings)
+
 # set(CMAKE_EXPORT_BUILD_DATABASE ON)
 
 if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32)

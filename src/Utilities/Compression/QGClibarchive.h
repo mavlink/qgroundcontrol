@@ -156,14 +156,13 @@ bool extractAnyArchive(const QString &archivePath, const QString &outputDirector
 
 /// Extract archive atomically using a temporary staging directory
 /// Provides all-or-nothing semantics: if extraction fails, no partial files remain.
-/// Uses QTemporaryDir to stage files, then moves them to the final destination.
+/// Uses a staging directory and atomic rename/swap in the output parent directory.
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param outputDirectoryPath Path where files will be extracted
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
 /// @return true on success, false on failure (no partial files left on failure)
 /// @note Requires ~2x disk space during extraction for staging
-/// @note Cross-filesystem moves may be slower (requires copy + delete)
 bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirectoryPath,
                           ProgressCallback progress = nullptr,
                           qint64 maxBytes = 0);

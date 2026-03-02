@@ -133,9 +133,9 @@ void RallyPointController::removeAll(void)
 void RallyPointController::removeAllFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while offline";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while syncInProgress";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::removeAllFromVehicle called while syncInProgress";
     } else {
         _rallyPointManager->removeAll();
     }
@@ -144,9 +144,9 @@ void RallyPointController::removeAllFromVehicle(void)
 void RallyPointController::loadFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle called while offline";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::loadFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::loadFromVehicle called while syncInProgress";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::loadFromVehicle called while syncInProgress";
     } else {
         _itemsRequested = true;
         _rallyPointManager->loadFromVehicle();
@@ -156,9 +156,9 @@ void RallyPointController::loadFromVehicle(void)
 void RallyPointController::sendToVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while offline";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while syncInProgress";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(RallyPointControllerLog) << "RallyPointController::sendToVehicle";
         setDirty(false);
@@ -290,7 +290,7 @@ bool RallyPointController::showPlanFromManagerVehicle (void)
 {
     qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
-        qCWarning(RallyPointControllerLog) << "RallyPointController::showPlanFromManagerVehicle called while offline";
+        qCCritical(RallyPointControllerLog) << "RallyPointController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         if (!_managerVehicle->initialPlanRequestComplete()) {

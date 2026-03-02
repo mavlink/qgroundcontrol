@@ -322,19 +322,32 @@ void LogDownloadController::_findMissingData()
 
 void LogDownloadController::_updateDataRate()
 {
-    if (_downloadData->elapsed.elapsed() < kGUIRateMs) {
+    constexpr uint kSizeUpdateThreshold = 102400; // 0.1 MB
+    const bool timeThresholdMet = _downloadData->elapsed.elapsed() >= kGUIRateMs;
+    const bool sizeThresholdMet = (_downloadData->written - _downloadData->last_status_written) >= kSizeUpdateThreshold;
+
+    if (!timeThresholdMet && !sizeThresholdMet) {
         return;
     }
 
-    const qreal rate = _downloadData->rate_bytes / (_downloadData->elapsed.elapsed() / 1000.0);
-    _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
-    _downloadData->rate_bytes = 0;
+    QString status;
+    if (timeThresholdMet) {
+        // Update both rate and size
+        const qreal rate = _downloadData->rate_bytes / (_downloadData->elapsed.elapsed() / 1000.0);
+        _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
+        _downloadData->rate_bytes = 0;
 
-    const QString status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
-                                                           qgcApp()->bigSizeToString(_downloadData->rate_avg));
+        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
+                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
+        _downloadData->elapsed.start();
+    } else {
+        // Update size only, keep previous rate
+        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
+                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
+    }
 
     _downloadData->entry->setStatus(status);
-    _downloadData->elapsed.start();
+    _downloadData->last_status_written = _downloadData->written;
 }
 
 bool LogDownloadController::_chunkComplete() const

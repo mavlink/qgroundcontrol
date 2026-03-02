@@ -4,10 +4,15 @@
 #include "MockJoystick.h"
 #include "SDLJoystick.h"
 
+void MockJoystickTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    QVERIFY(JoystickSDL::init());
+}
+
 void MockJoystickTest::init()
 {
     UnitTest::init();
-    QVERIFY(JoystickSDL::init());
 }
 
 void MockJoystickTest::cleanup()

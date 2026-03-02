@@ -257,13 +257,13 @@ Item {
         QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        _circleMode
-            onTriggered:    editCenterPositionDialog.createObject(mainWindow).open()
+            onTriggered:    editCenterPositionDialogFactory.open()
         }
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        !_circleMode && menu._editingVertexIndex >= 0
-            onTriggered:    editVertexPositionDialog.createObject(mainWindow).open()
+            onTriggered:    editVertexPositionDialogFactory.open()
         }
     }
 
@@ -505,6 +505,12 @@ Item {
         }
     }
 
+    QGCPopupDialogFactory {
+        id: editCenterPositionDialogFactory
+
+        dialogComponent: editCenterPositionDialog
+    }
+
     Component {
         id: editCenterPositionDialog
 
@@ -519,6 +525,12 @@ Item {
                 mapPolygon.centerDrag = false
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: editVertexPositionDialogFactory
+
+        dialogComponent: editVertexPositionDialog
     }
 
     Component {

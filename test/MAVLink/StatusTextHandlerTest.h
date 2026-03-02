@@ -9,4 +9,10 @@ class StatusTextHandlerTest : public UnitTest
 private slots:
     void _testGetMessageText();
     void _testHandleTextMessage();
+    void _testHandleErrorMessageAndMultiComponentPrefix();
+    void _testResetErrorLevelMessages();
+    void _testChunkedStatusTextMissingChunk();
+    void _testChunkedStatusTextTimeoutAddsEllipsis();
+    void _testChunkedStatusTextResetsWhenChunkIdChanges();
+    void _testMavlinkMessageReceivedIgnoresNonStatusText();
 };

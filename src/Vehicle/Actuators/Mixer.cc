@@ -234,9 +234,9 @@ MixerChannel::MixerChannel(QObject *parent, const QString &label, int actuatorFu
                     _currentSelectIdentifierValue = fact->rawValue().toInt();
                 }
             } else {
-                for (int i = 0; i < rule->applyIdentifiers.size(); ++i) {
-                    if (channelConfig->identifier() == rule->applyIdentifiers[i]) {
-                        instance->setRuleApplyIdentifierIdx(i);
+                for (int applyIndex = 0; applyIndex < rule->applyIdentifiers.size(); ++applyIndex) {
+                    if (channelConfig->identifier() == rule->applyIdentifiers[applyIndex]) {
+                        instance->setRuleApplyIdentifierIdx(applyIndex);
                     }
                 }
             }
@@ -395,7 +395,7 @@ void Mixers::reset(const ActuatorTypes& actuatorTypes, const MixerOptions& mixer
     _rules = rules;
     _mixerConditions.clear();
     for (const auto& mixerOption : _mixerOptions) {
-        _mixerConditions.append(Condition(mixerOption.option, _parameterManager));
+        _mixerConditions.append(Condition(mixerOption.option, _parameterManager, "mixer-option"));
     }
     update();
 }

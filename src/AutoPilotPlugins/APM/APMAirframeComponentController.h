@@ -19,6 +19,9 @@ class APMAirframeComponentController : public FactPanelController
     QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QmlObjectListModel *frameClassModel MEMBER _frameClassModel CONSTANT)
+#ifdef QGC_UNITTEST_BUILD
+    friend class APMAirframeComponentControllerTest; // Unit test
+#endif
 
 public:
     explicit APMAirframeComponentController(QObject *parent = nullptr);
@@ -28,8 +31,8 @@ public:
     Q_INVOKABLE void loadParameters(const QString &paramFile);
 
 private slots:
-    void _githubJsonDownloadComplete(const QString &remoteFile, const QString &localFile, const QString &errorMsg);
-    void _paramFileDownloadComplete(const QString &remoteFile, const QString &localFile, const QString &errorMsg);
+    void _githubJsonDownloadComplete(bool success, const QString &localFile, const QString &errorMsg);
+    void _paramFileDownloadComplete(bool success, const QString &localFile, const QString &errorMsg);
 
 private:
     void _fillFrameClasses();

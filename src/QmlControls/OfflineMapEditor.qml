@@ -71,7 +71,7 @@ FlightMap {
 
     Connections {
         target:                 QGroundControl.mapEngineManager
-        onErrorMessageChanged:  errorDialogComponent.createObject(mainWindow).open()
+        onErrorMessageChanged:  errorDialogFactory.open()
     }
 
     function handleChanges() {
@@ -320,7 +320,7 @@ FlightMap {
                     QGCButton {
                         text:       qsTr("Delete")
                         width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
-                        onClicked:  deleteConfirmationDialogComponent.createObject(mainWindow).open()
+                        onClicked:  deleteConfirmationDialogFactory.open()
                         enabled:    tileSet ? (tileSet.savedTileSize > 0) : false
                     }
                     QGCButton {
@@ -723,6 +723,12 @@ FlightMap {
         visible:            _addNewSetViewObject
     }
 
+    QGCPopupDialogFactory {
+        id: errorDialogFactory
+
+        dialogComponent: errorDialogComponent
+    }
+
     Component {
         id: errorDialogComponent
 
@@ -731,6 +737,12 @@ FlightMap {
             text:       _mapEngineManager.errorMessage
             buttons:    Dialog.Close
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: deleteConfirmationDialogFactory
+
+        dialogComponent: deleteConfirmationDialogComponent
     }
 
     Component {

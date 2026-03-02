@@ -39,7 +39,9 @@ class MissionCommandTree : public QObject
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
 
+#ifdef QGC_UNITTEST_BUILD
     friend class MissionCommandTreeTest;
+#endif
 
 public:
     /// Constructs an MissionCommandTree object.

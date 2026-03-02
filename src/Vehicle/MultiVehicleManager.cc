@@ -273,7 +273,7 @@ void MultiVehicleManager::_sendGCSHeartbeat()
     }
 
     const QList<SharedLinkInterfacePtr> sharedLinks = LinkManager::instance()->links();
-    for (const SharedLinkInterfacePtr link: sharedLinks) {
+    for (const SharedLinkInterfacePtr &link: sharedLinks) {
         if (!link->isConnected()) {
             continue;
         }

@@ -6,7 +6,7 @@
 
 #include <QtCore/qiodevice.h>
 
-#include <QtSerialPort/qserialportglobal.h>
+#include "qserialportglobal.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -19,25 +19,23 @@ class Q_SERIALPORT_EXPORT QSerialPort : public QIODevice
     Q_DECLARE_PRIVATE(QSerialPort)
 
     Q_PROPERTY(qint32 baudRate READ baudRate WRITE setBaudRate NOTIFY baudRateChanged)
-    Q_PROPERTY(DataBits dataBits READ dataBits WRITE setDataBits NOTIFY dataBitsChanged
-                BINDABLE bindableDataBits)
+    Q_PROPERTY(DataBits dataBits READ dataBits WRITE setDataBits NOTIFY dataBitsChanged BINDABLE bindableDataBits)
     Q_PROPERTY(Parity parity READ parity WRITE setParity NOTIFY parityChanged BINDABLE bindableParity)
-    Q_PROPERTY(StopBits stopBits READ stopBits WRITE setStopBits NOTIFY stopBitsChanged
-                BINDABLE bindableStopBits)
-    Q_PROPERTY(FlowControl flowControl READ flowControl WRITE setFlowControl NOTIFY flowControlChanged
-                BINDABLE bindableFlowControl)
-    Q_PROPERTY(bool dataTerminalReady READ isDataTerminalReady WRITE setDataTerminalReady
-                NOTIFY dataTerminalReadyChanged)
+    Q_PROPERTY(StopBits stopBits READ stopBits WRITE setStopBits NOTIFY stopBitsChanged BINDABLE bindableStopBits)
+    Q_PROPERTY(FlowControl flowControl READ flowControl WRITE setFlowControl NOTIFY flowControlChanged BINDABLE
+                   bindableFlowControl)
+    Q_PROPERTY(
+        bool dataTerminalReady READ isDataTerminalReady WRITE setDataTerminalReady NOTIFY dataTerminalReadyChanged)
     Q_PROPERTY(bool requestToSend READ isRequestToSend WRITE setRequestToSend NOTIFY requestToSendChanged)
     Q_PROPERTY(SerialPortError error READ error RESET clearError NOTIFY errorOccurred BINDABLE bindableError)
-    Q_PROPERTY(bool breakEnabled READ isBreakEnabled WRITE setBreakEnabled NOTIFY breakEnabledChanged
-                BINDABLE bindableIsBreakEnabled)
+    Q_PROPERTY(bool breakEnabled READ isBreakEnabled WRITE setBreakEnabled NOTIFY breakEnabledChanged BINDABLE
+                   bindableIsBreakEnabled)
 
     typedef int Handle;
 
 public:
-
-    enum Direction  {
+    enum Direction
+    {
         Input = 1,
         Output = 2,
         AllDirections = Input | Output
@@ -45,7 +43,8 @@ public:
     Q_FLAG(Direction)
     Q_DECLARE_FLAGS(Directions, Direction)
 
-    enum BaudRate {
+    enum BaudRate
+    {
         Baud1200 = 1200,
         Baud2400 = 2400,
         Baud4800 = 4800,
@@ -57,7 +56,8 @@ public:
     };
     Q_ENUM(BaudRate)
 
-    enum DataBits {
+    enum DataBits
+    {
         Data5 = 5,
         Data6 = 6,
         Data7 = 7,
@@ -65,7 +65,8 @@ public:
     };
     Q_ENUM(DataBits)
 
-    enum Parity {
+    enum Parity
+    {
         NoParity = 0,
         EvenParity = 2,
         OddParity = 3,
@@ -74,21 +75,24 @@ public:
     };
     Q_ENUM(Parity)
 
-    enum StopBits {
+    enum StopBits
+    {
         OneStop = 1,
         OneAndHalfStop = 3,
         TwoStop = 2
     };
     Q_ENUM(StopBits)
 
-    enum FlowControl {
+    enum FlowControl
+    {
         NoFlowControl,
         HardwareControl,
         SoftwareControl
     };
     Q_ENUM(FlowControl)
 
-    enum PinoutSignal {
+    enum PinoutSignal
+    {
         NoSignal = 0x00,
         DataTerminalReadySignal = 0x04,
         DataCarrierDetectSignal = 0x08,
@@ -102,7 +106,8 @@ public:
     Q_FLAG(PinoutSignal)
     Q_DECLARE_FLAGS(PinoutSignals, PinoutSignal)
 
-    enum SerialPortError {
+    enum SerialPortError
+    {
         NoError,
         DeviceNotFoundError,
         PermissionError,
@@ -117,15 +122,15 @@ public:
     };
     Q_ENUM(SerialPortError)
 
-    explicit QSerialPort(QObject *parent = nullptr);
-    explicit QSerialPort(const QString &name, QObject *parent = nullptr);
-    explicit QSerialPort(const QSerialPortInfo &info, QObject *parent = nullptr);
+    explicit QSerialPort(QObject* parent = nullptr);
+    explicit QSerialPort(const QString& name, QObject* parent = nullptr);
+    explicit QSerialPort(const QSerialPortInfo& info, QObject* parent = nullptr);
     virtual ~QSerialPort();
 
-    void setPortName(const QString &name);
+    void setPortName(const QString& name);
     QString portName() const;
 
-    void setPort(const QSerialPortInfo &info);
+    void setPort(const QSerialPortInfo& info);
 
     bool open(OpenMode mode) override;
     void close() override;
@@ -143,7 +148,7 @@ public:
 
     bool setStopBits(StopBits stopBits);
     StopBits stopBits() const;
-    QBindable<bool> bindableStopBits();
+    QBindable<StopBits> bindableStopBits();
 
     bool setFlowControl(FlowControl flowControl);
     FlowControl flowControl() const;
@@ -194,9 +199,9 @@ Q_SIGNALS:
     void breakEnabledChanged(bool set);
 
 protected:
-    qint64 readData(char *data, qint64 maxSize) override;
-    qint64 readLineData(char *data, qint64 maxSize) override;
-    qint64 writeData(const char *data, qint64 maxSize) override;
+    qint64 readData(char* data, qint64 maxSize) override;
+    qint64 readLineData(char* data, qint64 maxSize) override;
+    qint64 writeData(const char* data, qint64 maxSize) override;
 
 private:
     Q_DISABLE_COPY(QSerialPort)

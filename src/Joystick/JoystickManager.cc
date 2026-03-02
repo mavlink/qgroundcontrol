@@ -44,11 +44,13 @@ JoystickManager::JoystickManager(QObject *parent)
         auto multiVehicleManager = MultiVehicleManager::instance();
         auto activeVehicle = multiVehicleManager->activeVehicle();
         if (activeVehicle && _activeJoystick) {
-            if (joystickEnabledForVehicle(activeVehicle)) {
-                _activeJoystick->_startPollingForVehicle(*activeVehicle);
+            if (_joystickEnabledForVehicle(activeVehicle)) {
+                _activeJoystick->_startPollingForActiveVehicle();
+            } else {
+                _activeJoystick->_stopAllPolling();
             }
         }
-        emit joystickEnabledChanged();
+        emit activeJoystickEnabledForActiveVehicleChanged();
     });
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &JoystickManager::_activeVehicleChanged);
@@ -69,7 +71,9 @@ JoystickManager::~JoystickManager()
         delete it->second;
     }
 
-    JoystickBackend::shutdown();
+    // Cache contains the same joystick instances tracked in _name2JoystickMap.
+    // We already deleted those above, so clear cache pointers only.
+    JoystickBackend::shutdown(false);
 
     qCDebug(JoystickManagerLog) << this;
 }
@@ -97,8 +101,18 @@ void JoystickManager::_checkForAddedOrRemovedJoysticks()
 
     qCDebug(JoystickManagerLog) << "Discovery returned" << newJoystickMap.size() << "joysticks";
 
-    if (_activeJoystick && !newJoystickMap.contains(_activeJoystick->name())) {
-        qCInfo(JoystickManagerLog) << "Active joystick removed:" << _activeJoystick->name();
+    QString activeJoystickName;
+    if (_activeJoystick) {
+        for (auto it = _name2JoystickMap.keyValueBegin(); it != _name2JoystickMap.keyValueEnd(); ++it) {
+            if (it->second == _activeJoystick) {
+                activeJoystickName = it->first;
+                break;
+            }
+        }
+    }
+
+    if (_activeJoystick && (activeJoystickName.isEmpty() || !newJoystickMap.contains(activeJoystickName))) {
+        qCInfo(JoystickManagerLog) << "Active joystick removed:" << (activeJoystickName.isEmpty() ? QStringLiteral("<stale>") : activeJoystickName);
         _setActiveJoystick(nullptr);
     }
 
@@ -154,6 +168,23 @@ Joystick *JoystickManager::activeJoystick()
     return _activeJoystick;
 }
 
+bool JoystickManager::activeJoystickEnabledForActiveVehicle() const
+{
+    Vehicle *activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (!activeVehicle || !_activeJoystick) {
+        return false;
+    }
+    return _joystickEnabledForVehicle(activeVehicle);
+}
+
+void JoystickManager::setActiveJoystickEnabledForActiveVehicle(bool enabled)
+{
+    Vehicle *activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (activeVehicle) {
+        _setJoystickEnabledForVehicle(activeVehicle, enabled);
+    }
+}
+
 void JoystickManager::_setActiveJoystick(Joystick *newActiveJoystick)
 {
     if (newActiveJoystick && !_name2JoystickMap.contains(newActiveJoystick->name())) {
@@ -165,6 +196,7 @@ void JoystickManager::_setActiveJoystick(Joystick *newActiveJoystick)
         return;
     }
 
+    // Cleanup old active joystick
     if (_activeJoystick) {
         _activeJoystick->_stopAllPolling();
         _activeJoystick = nullptr;
@@ -179,11 +211,17 @@ void JoystickManager::_setActiveJoystick(Joystick *newActiveJoystick)
         auto multiVehicleManager = MultiVehicleManager::instance();
         auto activeVehicle = multiVehicleManager->activeVehicle();
 
-        if (activeVehicle && joystickEnabledForVehicle(activeVehicle)) {
-            _activeJoystick->_startPollingForVehicle(*activeVehicle);
+        if (activeVehicle) {
+            if (_activeJoystick->requiresCalibration() && _joystickEnabledForVehicle(activeVehicle)) {
+                qCWarning(JoystickManagerLog) << "Active joystick not calibrated but enabled, cannot start polling for active vehicle. Setting joystick for vehicle to disabled.";
+                setActiveJoystickEnabledForActiveVehicle(false);
+            } else if (_joystickEnabledForVehicle(activeVehicle)) {
+                _activeJoystick->_startPollingForActiveVehicle();
+            }
         }
 
         emit activeJoystickChanged(_activeJoystick);
+        emit activeJoystickEnabledForActiveVehicleChanged();
     }
 }
 
@@ -205,18 +243,25 @@ void JoystickManager::_activeVehicleChanged(Vehicle *activeVehicle)
 
     _activeJoystick->_stopAllPolling();
 
-    if (activeVehicle && joystickEnabledForVehicle(activeVehicle)) {
-        _activeJoystick->_startPollingForVehicle(*activeVehicle);
+    if (activeVehicle && _joystickEnabledForVehicle(activeVehicle)) {
+        if (!_activeJoystick->settings()->calibrated()->rawValue().toBool()) {
+            qCWarning(JoystickManagerLog) << "Active joystick not calibrated but enabled, cannot start polling for active vehicle. Setting joystick to disabled.";
+            setActiveJoystickEnabledForActiveVehicle(false);
+            return;
+        }
+        _activeJoystick->_startPollingForActiveVehicle();
     }
+
+    emit activeJoystickEnabledForActiveVehicleChanged();
 }
 
-bool JoystickManager::joystickEnabledForVehicle(Vehicle *vehicle) const
+bool JoystickManager::_joystickEnabledForVehicle(Vehicle *vehicle) const
 {
     const QStringList vehicleIds = _joystickManagerSettings->joystickEnabledVehiclesIds()->rawValue().toString().split(",", Qt::SkipEmptyParts);
     return vehicleIds.contains(QString::number(vehicle->id()));
 }
 
-void JoystickManager::setJoystickEnabledForVehicle(Vehicle *vehicle, bool enabled)
+void JoystickManager::_setJoystickEnabledForVehicle(Vehicle *vehicle, bool enabled)
 {
     QStringList vehicleIds = _joystickManagerSettings->joystickEnabledVehiclesIds()->rawValue().toString().split(",", Qt::SkipEmptyParts);
     const QString vehicleIdStr = QString::number(vehicle->id());
@@ -328,4 +373,3 @@ void JoystickManager::_updatePollingTimer()
         _pollTimer.start();
     }
 }
-

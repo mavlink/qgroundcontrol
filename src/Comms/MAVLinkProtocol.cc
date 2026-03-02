@@ -93,7 +93,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
         return;
     }
 
-    for (const uint8_t &byte: data) {
+    for (uint8_t byte: data) {
         const uint8_t mavlinkChannel = link->mavlinkChannel();
         mavlink_message_t message{};
         mavlink_status_t status{};
@@ -203,8 +203,8 @@ void MAVLinkProtocol::_logData(LinkInterface *link, const mavlink_message_t &mes
         const qsizetype len = mavlink_msg_to_send_buffer(buf + sizeof(timestamp), &message) + sizeof(timestamp);
         const QByteArray log_data(reinterpret_cast<const char*>(buf), len);
         if (_tempLogFile->write(log_data) != len) {
-            const QString message = QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile->fileName());
-            qgcApp()->showAppMessage(message, getName());
+            const QString logErrorMessage = QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile->fileName());
+            qgcApp()->showAppMessage(logErrorMessage, getName());
             _stopLogging();
             _logSuspendError = true;
         }

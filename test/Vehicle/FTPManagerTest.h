@@ -7,6 +7,10 @@ class FTPManagerTest : public VehicleTestManualConnect
     Q_OBJECT
 
 private slots:
+    void _performTestCases_data();
+    void _performTestCases();
+    void _performSizeBasedTestCases_data();
+    void _performSizeBasedTestCases();
     void _testLostPackets();
     void _testListDirectory();
     void _testListDirectoryNoResponse();
@@ -22,9 +26,6 @@ private slots:
     void cleanup() override;
 
 private:
-    void _performSizeBasedTestCases();
-    void _performTestCases();
-
     typedef struct
     {
         const char* file;

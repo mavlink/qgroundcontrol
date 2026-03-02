@@ -57,6 +57,17 @@ inline QGeoCoordinate dateLineMinus()
     return QGeoCoordinate(0.0, -180.0, 0.0);
 }
 
+/// Common origin used by mission manager transect tests (Survey, Corridor, StructureScan)
+/// Seattle area, no altitude (2D)
+inline QGeoCoordinate missionTestOrigin()
+{
+    return QGeoCoordinate(47.633550640000003, -122.08982199);
+}
+
+/// Axis-aligned rectangle used by QGCMapPolygon and QGCMapPolyline tests
+/// Seattle area, no altitude (2D)
+QList<QGeoCoordinate> missionTestRectangle();
+
 /// Generate a regular polygon centered at a coordinate
 /// @param center Center point of the polygon
 /// @param sides Number of sides (3 = triangle, 4 = square, etc.)

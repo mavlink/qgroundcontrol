@@ -153,7 +153,7 @@ public:
     virtual QString takeControlFlightMode() const { return QString(); }
 
     /// Returns whether the vehicle is in guided mode or not.
-    virtual bool isGuidedMode(const Vehicle *vehicle) const { return false; }
+    virtual bool isGuidedMode(const Vehicle * /*vehicle*/) const { return false; }
 
     /// Returns the flight mode which the vehicle will be in if it is performing a goto location
     virtual QString gotoFlightMode() const { return QString(); }
@@ -308,7 +308,7 @@ public:
     virtual const remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const;
 
     /// Returns the highest major version number that is known to the remap for this specified major version.
-    virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const { return 0; }
+    virtual int remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const { return 0; }
 
     /// @return true: Motors are coaxial like an X8 config, false: Quadcopter for example
     virtual bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) const { return false; }
@@ -448,7 +448,7 @@ public:
     // anyVersionSupportsCommand returns true if any version of the
     // firmware has supported cmd.  Used so that extra round-trips to
     // the autopilot to probe for command support are not required.
-    virtual CommandSupportedResult anyVersionSupportsCommand(MAV_CMD cmd) const { return CommandSupportedResult::UNKNOWN; }
+    virtual CommandSupportedResult anyVersionSupportsCommand(MAV_CMD /*cmd*/) const { return CommandSupportedResult::UNKNOWN; }
 
     // support for detecting whether the firmware a vehicle is running
     // supports a given MAV_CMD:

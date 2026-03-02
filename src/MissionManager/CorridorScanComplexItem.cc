@@ -51,12 +51,12 @@ void CorridorScanComplexItem::save(QJsonArray&  planItems)
     planItems.append(saveObject);
 }
 
-void CorridorScanComplexItem::savePreset(const QString& name)
+void CorridorScanComplexItem::savePreset(const QString& presetName)
 {
     QJsonObject saveObject;
 
     _saveCommon(saveObject);
-    _savePresetJson(name, saveObject);
+    _savePresetJson(presetName, saveObject);
 }
 
 void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
@@ -72,13 +72,13 @@ void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
     _corridorPolyline.saveToJson(saveObject);
 }
 
-void CorridorScanComplexItem::loadPreset(const QString& name)
+void CorridorScanComplexItem::loadPreset(const QString& presetName)
 {
     QString errorString;
 
-    QJsonObject presetObject = _loadPresetJson(name);
+    QJsonObject presetObject = _loadPresetJson(presetName);
     if (!_loadWorker(presetObject, 0, errorString, true /* forPresets */)) {
-        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(name).arg(errorString));
+        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
     }
     _rebuildTransects();
 }
@@ -264,8 +264,8 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
                 double azimuth = transectCoords[0].azimuthTo(transectCoords[1]);
                 turnaroundCoord = transectCoords[0].atDistanceAndAzimuth(-turnAroundDistance, azimuth);
                 turnaroundCoord.setAltitude(qQNaN());
-                TransectStyleComplexItem::CoordInfo_t coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-                transect.prepend(coordInfo);
+                TransectStyleComplexItem::CoordInfo_t turnaroundCoordInfo = { turnaroundCoord, CoordTypeTurnaround };
+                transect.prepend(turnaroundCoordInfo);
 
                 azimuth = transectCoords.last().azimuthTo(transectCoords[transectCoords.count() - 2]);
                 turnaroundCoord = transectCoords.last().atDistanceAndAzimuth(-turnAroundDistance, azimuth);

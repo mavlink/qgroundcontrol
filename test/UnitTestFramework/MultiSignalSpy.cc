@@ -359,7 +359,8 @@ bool MultiSignalSpy::waitForSignal(const char* signalName, int msec)
         return true;
     }
 
-    return s->wait(msec);
+    const QString normalizedName = normalizeSignalName(signalName);
+    return UnitTest::waitForSignal(*s, msec, normalizedName);
 }
 
 QSignalSpy* MultiSignalSpy::spy(const char* signalName) const

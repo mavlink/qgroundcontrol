@@ -378,7 +378,7 @@ quint64 LogReplayWorker::_findLastTimestamp()
 
     quint64 lastTimestamp = 0;
 
-    while (_logFile.bytesAvailable() > kTimestamp) {
+    while (_logFile.bytesAvailable() > static_cast<qint64>(kTimestamp)) {
         lastTimestamp = _parseTimestamp(_logFile.read(kTimestamp));
 
         bool endOfMessage = false;

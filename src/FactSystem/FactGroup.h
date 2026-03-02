@@ -49,7 +49,7 @@ public:
     const QMap<QString, FactGroup*> &factGroups() const { return _nameToFactGroupMap; }
 
     /// Allows a FactGroup to parse incoming messages and fill in values
-    virtual void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) {}
+    virtual void handleMessage(Vehicle * /*vehicle*/, const mavlink_message_t & /*message*/) {}
 
 signals:
     void factNamesChanged();

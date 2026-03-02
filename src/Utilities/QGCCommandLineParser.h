@@ -80,9 +80,11 @@ std::optional<int> handleParseResult(const CommandLineParseResult& result);
 /// @brief Application execution mode
 enum class AppMode {
     Gui,        ///< Normal GUI application
-    Test,       ///< Run unit tests
     BootTest,   ///< Initialize and exit (for CI validation)
+#ifdef QGC_UNITTEST_BUILD
+    Test,       ///< Run unit tests
     ListTests   ///< List available tests and exit
+#endif
 };
 
 /// @brief Determine the application mode from parsed arguments

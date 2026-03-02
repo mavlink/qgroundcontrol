@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QtPositioning/QGeoCoordinate>
 
 #include "BaseClasses/VehicleTestManualConnect.h"
@@ -11,6 +13,9 @@ class MultiSignalSpy;
 class MissionControllerManagerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
+
+public:
+    ~MissionControllerManagerTest() override;
 
 protected slots:
     void cleanup() override;
@@ -41,7 +46,7 @@ protected:
         const ItemInfo_t expectedItem;
     } TestCase_t;
 
-    MultiSignalSpy* _multiSpyMissionManager;
+    std::unique_ptr<MultiSignalSpy> _multiSpyMissionManager;
 
     static const int _missionManagerSignalWaitTime =
         MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;

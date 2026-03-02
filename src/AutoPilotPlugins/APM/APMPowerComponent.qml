@@ -461,7 +461,7 @@ SetupPage {
                 QGCButton {
                     text:       qsTr("Calculate")
                     visible:    _showAdvanced
-                    onClicked:  calcVoltageMultiplierDlgComponent.createObject(mainWindow, { vehicleVoltageFact: vehicleVoltage, battVoltMultFact: battVoltMult }).open()
+                    onClicked:  calcVoltageMultiplierDlgFactory.open({ vehicleVoltageFact: vehicleVoltage, battVoltMultFact: battVoltMult })
                 }
 
                 QGCLabel {
@@ -487,7 +487,7 @@ SetupPage {
                 QGCButton {
                     text:       qsTr("Calculate")
                     visible:    _showAdvanced
-                    onClicked:  calcAmpsPerVoltDlgComponent.createObject(mainWindow, { vehicleCurrentFact: vehicleCurrent, battAmpPerVoltFact: battAmpPerVolt }).open()
+                    onClicked:  calcAmpsPerVoltDlgFactory.open({ vehicleCurrentFact: vehicleCurrent, battAmpPerVoltFact: battAmpPerVolt })
                 }
 
                 QGCLabel {
@@ -522,6 +522,12 @@ SetupPage {
             } // GridLayout
         } // Column
     } // Component - powerSetupComponent
+
+    QGCPopupDialogFactory {
+        id: calcVoltageMultiplierDlgFactory
+
+        dialogComponent: calcVoltageMultiplierDlgComponent
+    }
 
     Component {
         id: calcVoltageMultiplierDlgComponent
@@ -576,6 +582,12 @@ SetupPage {
         }
     }
 
+    QGCPopupDialogFactory {
+        id: calcAmpsPerVoltDlgFactory
+
+        dialogComponent: calcAmpsPerVoltDlgComponent
+    }
+
     Component {
         id: calcAmpsPerVoltDlgComponent
 
@@ -628,4 +640,5 @@ SetupPage {
             }
         }
     }
+
 } // SetupPage

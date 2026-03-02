@@ -6,7 +6,7 @@ QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "AnalyzeView.MAVLinkSystem")
 
 QGCMAVLinkSystem::QGCMAVLinkSystem(quint8 id, QObject *parent)
     : QObject(parent)
-    , _id(id)
+    , _systemID(id)
     , _messages(new QmlObjectListModel(this))
 {
     qCDebug(MAVLinkSystemLog) << "New Vehicle:" << id;

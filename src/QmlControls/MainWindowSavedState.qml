@@ -9,7 +9,7 @@ import QGroundControl.Controls
 Item {
     property Window window
 
-    property bool _enabled: !ScreenTools.isMobile && !ScreenTools.fakeMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
+    property bool _enabled: !ScreenTools.isMobile && !ScreenTools.isFakeMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
 
     Settings {
         id:         s
@@ -28,7 +28,7 @@ Item {
     }
 
     Component.onCompleted: {
-        if (ScreenTools.fakeMobile) {
+        if (ScreenTools.isFakeMobile) {
             window.width = ScreenTools.screenWidth
             window.height = ScreenTools.screenHeight
         } else if (ScreenTools.isMobile) {

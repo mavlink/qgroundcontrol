@@ -1,5 +1,6 @@
 #include "CommsTest.h"
 
+#include <QtCore/QElapsedTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -25,10 +26,12 @@ void CommsTest::init()
     // Ensure clean state
     QCOMPARE(LinkManager::instance()->links().count(), 0);
     QCOMPARE(MultiVehicleManager::instance()->vehicles()->count(), 0);
+    QCOMPARE(MultiVehicleManager::instance()->activeVehicle(), nullptr);
 }
 
 void CommsTest::cleanup()
 {
+    dumpFailureContextIfTestFailed(QStringLiteral("before CommsTest teardown"));
     disconnectAllLinks();
 
     _createdLinks.clear();
@@ -82,7 +85,7 @@ Vehicle* CommsTest::createMockLinkAndWaitForVehicle(const QString& name, MAV_AUT
         _createdLinks.append(link);
     }
 
-    if (!spy.wait(TestTimeout::longMs())) {
+    if (!UnitTest::waitForSignal(spy, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged"))) {
         qCWarning(CommsTestLog) << "createMockLinkAndWaitForVehicle: Timeout waiting for vehicle";
         return nullptr;
     }
@@ -96,8 +99,11 @@ void CommsTest::disconnectAllLinks()
         QSignalSpy spy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
         LinkManager::instance()->disconnectAll();
 
-        if (MultiVehicleManager::instance()->vehicles()->count() > 0) {
-            spy.wait(TestTimeout::mediumMs());
+        while ((MultiVehicleManager::instance()->vehicles()->count() > 0) ||
+               (MultiVehicleManager::instance()->activeVehicle() != nullptr)) {
+            if (!UnitTest::waitForSignal(spy, TestTimeout::mediumMs(), QStringLiteral("activeVehicleChanged"))) {
+                break;
+            }
         }
     }
 }
@@ -108,13 +114,28 @@ Vehicle* CommsTest::waitForVehicleConnect(int timeoutMs)
         timeoutMs = TestTimeout::longMs();
     }
 
-    if (MultiVehicleManager::instance()->activeVehicle()) {
+    if ((MultiVehicleManager::instance()->vehicles()->count() > 0) && MultiVehicleManager::instance()->activeVehicle()) {
         return MultiVehicleManager::instance()->activeVehicle();
     }
 
     QSignalSpy spy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-    if (spy.wait(timeoutMs)) {
-        return MultiVehicleManager::instance()->activeVehicle();
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    while (waitTimer.elapsed() < timeoutMs) {
+        const int remaining = timeoutMs - static_cast<int>(waitTimer.elapsed());
+        if (remaining <= 0) {
+            break;
+        }
+
+        if (!UnitTest::waitForSignal(spy, remaining, QStringLiteral("activeVehicleChanged"))) {
+            break;
+        }
+
+        if ((MultiVehicleManager::instance()->vehicles()->count() > 0) &&
+            (MultiVehicleManager::instance()->activeVehicle() != nullptr)) {
+            return MultiVehicleManager::instance()->activeVehicle();
+        }
     }
 
     return nullptr;
@@ -126,17 +147,31 @@ bool CommsTest::waitForAllVehiclesDisconnect(int timeoutMs)
         timeoutMs = TestTimeout::longMs();
     }
 
-    if (MultiVehicleManager::instance()->vehicles()->count() == 0) {
+    if ((MultiVehicleManager::instance()->vehicles()->count() == 0) &&
+        (MultiVehicleManager::instance()->activeVehicle() == nullptr)) {
         return true;
     }
 
     QSignalSpy spy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
+    QElapsedTimer waitTimer;
+    waitTimer.start();
 
-    while (MultiVehicleManager::instance()->vehicles()->count() > 0) {
-        if (!spy.wait(timeoutMs)) {
-            return false;
+    while (waitTimer.elapsed() < timeoutMs) {
+        if ((MultiVehicleManager::instance()->vehicles()->count() == 0) &&
+            (MultiVehicleManager::instance()->activeVehicle() == nullptr)) {
+            return true;
+        }
+
+        const int remaining = timeoutMs - static_cast<int>(waitTimer.elapsed());
+        if (remaining <= 0) {
+            break;
+        }
+
+        if (!UnitTest::waitForSignal(spy, remaining, QStringLiteral("activeVehicleChanged"))) {
+            break;
         }
     }
 
-    return true;
+    return (MultiVehicleManager::instance()->vehicles()->count() == 0) &&
+           (MultiVehicleManager::instance()->activeVehicle() == nullptr);
 }

@@ -2,6 +2,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QHash>
 #include <QtCore/QTextStream>
 #include <QtCore/QStandardPaths>
 
@@ -14,6 +15,8 @@ namespace SDLJoystick {
 // ============================================================================
 // Internal Helpers
 // ============================================================================
+
+static QHash<int, QString> s_virtualJoystickNames;
 
 static void loadGamepadMappings()
 {
@@ -129,6 +132,7 @@ bool init()
 void shutdown()
 {
     qCDebug(SDLJoystickLog) << "Shutting down SDL joystick subsystem";
+    s_virtualJoystickNames.clear();
     SDL_QuitSubSystem(SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK);
 }
 
@@ -471,11 +475,16 @@ int getInstanceIdFromPlayerIndex(int playerIndex)
 QString getNameForInstanceId(int instanceId)
 {
     const char *name = SDL_GetGamepadNameForID(static_cast<SDL_JoystickID>(instanceId));
-    if (name) {
+    if (name && *name) {
         return QString::fromUtf8(name);
     }
     name = SDL_GetJoystickNameForID(static_cast<SDL_JoystickID>(instanceId));
-    return name ? QString::fromUtf8(name) : QString();
+    if (name && *name) {
+        return QString::fromUtf8(name);
+    }
+
+    // SDL may report an empty name for freshly-created virtual devices on some platforms.
+    return s_virtualJoystickNames.value(instanceId);
 }
 
 QString getPathForInstanceId(int instanceId)
@@ -566,13 +575,16 @@ int createVirtualJoystick(const QString &name, int axisCount, int buttonCount, i
     desc.naxes = static_cast<Uint16>(axisCount);
     desc.nbuttons = static_cast<Uint16>(buttonCount);
     desc.nhats = static_cast<Uint16>(hatCount);
-    desc.name = qPrintable(name);
+    const QByteArray utf8Name = name.toUtf8();
+    desc.name = utf8Name.constData();
 
     SDL_JoystickID instanceId = SDL_AttachVirtualJoystick(&desc);
     if (instanceId == 0) {
         qCWarning(SDLJoystickLog) << "Failed to create virtual joystick:" << SDL_GetError();
         return -1;
     }
+
+    s_virtualJoystickNames.insert(static_cast<int>(instanceId), name);
 
     qCDebug(SDLJoystickLog) << "Created virtual joystick" << name << "with instance ID" << instanceId;
     return static_cast<int>(instanceId);
@@ -588,6 +600,8 @@ bool destroyVirtualJoystick(int instanceId)
         qCWarning(SDLJoystickLog) << "Failed to destroy virtual joystick" << instanceId << ":" << SDL_GetError();
         return false;
     }
+
+    s_virtualJoystickNames.remove(instanceId);
 
     qCDebug(SDLJoystickLog) << "Destroyed virtual joystick" << instanceId;
     return true;

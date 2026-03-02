@@ -16,6 +16,7 @@ private slots:
     void testJsonLoad();
     void testOverride();
     void testAllTrees();
+    void testUnknownCommandFallbacks();
 
 private:
     QString _rawName(int id) const;

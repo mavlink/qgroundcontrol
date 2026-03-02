@@ -19,6 +19,7 @@ GimbalController::GimbalController(Vehicle *vehicle)
 {
     qCDebug(GimbalControllerLog) << this;
 
+    (void) connect(_vehicle, &Vehicle::initialConnectComplete, this, &GimbalController::_initialConnectCompleted, Qt::UniqueConnection);
     (void) connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
 
     _rateSenderTimer.setInterval(500);
@@ -28,6 +29,11 @@ GimbalController::GimbalController(Vehicle *vehicle)
 GimbalController::~GimbalController()
 {
     qCDebug(GimbalControllerLog) << this;
+}
+
+void GimbalController::_initialConnectCompleted()
+{
+    _initialConnectComplete = true;
 }
 
 void GimbalController::setActiveGimbal(Gimbal *gimbal)
@@ -46,9 +52,7 @@ void GimbalController::setActiveGimbal(Gimbal *gimbal)
 
 void GimbalController::_mavlinkMessageReceived(const mavlink_message_t &message)
 {
-    // Don't proceed until parameters are ready, otherwise the gimbal controller handshake
-    // could potentially not work due to the high traffic for parameters, mission download, etc
-    if (!_vehicle->parameterManager()->parametersReady()) {
+    if (!_initialConnectComplete) {
         return;
     }
 
@@ -197,7 +201,7 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
 
         // We do a reverse lookup here
         const auto foundGimbal = std::find_if(_potentialGimbals.begin(), _potentialGimbals.end(),
-                     [this, pairId](Gimbal *gimbal) { return (gimbal->deviceId()->rawValue().toUInt() == pairId.deviceId); });
+                     [pairId](Gimbal *gimbal) { return (gimbal->deviceId()->rawValue().toUInt() == pairId.deviceId); });
 
         if (foundGimbal == _potentialGimbals.constEnd()) {
             qCDebug(GimbalControllerLog) << "_handleGimbalDeviceAttitudeStatus for unknown device id:"
@@ -424,7 +428,7 @@ void GimbalController::centerGimbal()
     sendPitchBodyYaw(0.0, 0.0, true);
 }
 
-void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool rateControl, bool retract, bool neutral, bool yawlock)
+void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool clickAndPoint, bool clickAndDrag, bool /*rateControl*/, bool /*retract*/, bool /*neutral*/, bool /*yawlock*/)
 {
     // Pan and tilt comes as +-(0-1)
 

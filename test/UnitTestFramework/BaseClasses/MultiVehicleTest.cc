@@ -18,6 +18,7 @@ MultiVehicleTest::MultiVehicleTest(QObject* parent) : UnitTest(parent)
 
 void MultiVehicleTest::cleanup()
 {
+    dumpFailureContextIfTestFailed(QStringLiteral("before MultiVehicleTest teardown"));
     disconnectAllVehicles();
 
     _links.clear();
@@ -37,6 +38,7 @@ Vehicle* MultiVehicleTest::vehicleAt(int index) const
     if (index >= 0 && index < vehicles->count()) {
         return vehicles->value<Vehicle*>(index);
     }
+    qCWarning(MultiVehicleTestLog) << "vehicleAt: index" << index << "out of range (count:" << vehicles->count() << ")";
     return nullptr;
 }
 
@@ -94,7 +96,7 @@ Vehicle* MultiVehicleTest::createVehicle(int systemId, MAV_AUTOPILOT autopilot)
 
     // Wait for vehicle to be added
     if (vehicleCount() <= previousCount) {
-        if (!spy.wait(TestTimeout::longMs())) {
+        if (!UnitTest::waitForSignal(spy, TestTimeout::longMs(), QStringLiteral("vehicleAdded"))) {
             qCWarning(MultiVehicleTestLog) << "createVehicle: Timeout waiting for vehicle";
             return nullptr;
         }
@@ -124,18 +126,12 @@ void MultiVehicleTest::disconnectAllVehicles()
         // Wait for all vehicles to disconnect
         QSignalSpy spy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
         while (vehicleCount() > 0) {
-            if (!spy.wait(TestTimeout::mediumMs())) {
+            if (!UnitTest::waitForSignal(spy, TestTimeout::mediumMs(), QStringLiteral("activeVehicleChanged"))) {
                 break;
             }
         }
 
-        // Process cleanup events including deferred deletions
-        for (int i = 0; i < 5; ++i) {
-            QCoreApplication::processEvents(QEventLoop::AllEvents);
-            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-            if (i < 4) {
-                QTest::qWait(20);
-            }
-        }
+        // Process cleanup events including deferred deletions.
+        UnitTest::settleEventLoopForCleanup(5, 20);
     }
 }
