@@ -111,7 +111,7 @@ jobs:
       - name: Download pre-commit results artifact
         if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true' && steps.builds.outputs.precommit_run_id != ''
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           run-id: ${{ steps.builds.outputs.precommit_run_id }}
           github-token: ${{ github.token }}

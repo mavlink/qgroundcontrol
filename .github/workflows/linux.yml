@@ -143,7 +143,7 @@ jobs:
 
       - name: Upload metrics artifact
         if: matrix.build_type == 'Release' && matrix.os == 'ubuntu-22.04'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: size-metrics
           path: ${{ runner.temp }}/build/metrics.json
@@ -336,7 +336,7 @@ jobs:
 
       - name: Upload Duration Report
         if: always() && !cancelled() && matrix.mode == 'coverage'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-duration-linux_gcc_64
           path: ${{ runner.temp }}/build/test-duration-linux-linux_gcc_64.json
@@ -344,7 +344,7 @@ jobs:
 
       - name: Upload Test Results (Sanitizers)
         if: always() && !cancelled() && matrix.mode == 'sanitizers'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-linux-sanitizers
           path: |
@@ -458,7 +458,7 @@ jobs:
           egress-policy: audit
 
       - name: Download metrics artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: size-metrics
           path: .
