@@ -99,6 +99,7 @@ public:
     /// Block or unblock REQUEST_MESSAGE responses for a specific message ID.
     /// When blocked, MockLink silently drops the request (no ACK, no message).
     void setRequestMessageNoResponse(uint32_t messageId, bool noResponse = true) {
+        QMutexLocker locker(&_requestMessageNoResponseMutex);
         if (noResponse) {
             _requestMessageNoResponseIds.insert(messageId);
         } else {
@@ -310,6 +311,7 @@ private:
     QMutex _logDownloadMutex;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
+    mutable QMutex _requestMessageNoResponseMutex;
     QSet<uint32_t> _requestMessageNoResponseIds;
     ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
     bool _paramSetFailureFirstAttemptPending = false;

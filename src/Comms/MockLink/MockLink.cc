@@ -1891,9 +1891,12 @@ void MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool
     const uint32_t requestedMessageId = static_cast<uint32_t>(request.param1);
 
     // Per-message-ID no-response injection: silently drop the request (no ACK, no message)
-    if (_requestMessageNoResponseIds.contains(requestedMessageId)) {
-        noAck = true;
-        return;
+    {
+        QMutexLocker locker(&_requestMessageNoResponseMutex);
+        if (_requestMessageNoResponseIds.contains(requestedMessageId)) {
+            noAck = true;
+            return;
+        }
     }
 
     switch (static_cast<int>(request.param1)) {
