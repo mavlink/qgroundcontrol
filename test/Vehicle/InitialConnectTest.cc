@@ -30,7 +30,9 @@ void InitialConnectTest::init()
 
 void InitialConnectTest::cleanup()
 {
-    // Snapshot log violations before parent cleanup disables capture
+    // Disable capture first so no new messages arrive while we analyze
+    QGCLogging::setCaptureEnabled(false);
+
     QString uncategorizedDetails;
     QString criticalDetails;
 
@@ -404,7 +406,9 @@ void InitialConnectTest::_stateTimeoutFallsThrough()
     }
 
     QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    QVERIFY(initialConnectCompleteSpy.wait(60000) || _vehicle->isInitialConnectComplete());
+    if (!_vehicle->isInitialConnectComplete()) {
+        QVERIFY(initialConnectCompleteSpy.wait(60000));
+    }
     QCOMPARE(_vehicle->parameterManager()->parametersReady(), expectParametersReady);
     QCOMPARE(_vehicle->initialPlanRequestComplete(), expectPlanRequestComplete);
 
