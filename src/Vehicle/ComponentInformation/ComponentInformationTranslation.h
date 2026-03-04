@@ -26,7 +26,7 @@ public:
     ///     @param toTranslateJsonFile json file to be translated
     ///     @param maxCacheAgeSec Maximum age of cached item in seconds
     /// @return true: Asynchronous download has started, false: Download initialization failed
-    bool downloadAndTranslate(const QString& summaryJsonFile, const QString& toTranslateJsonFile, int maxCacheAgeSec);
+    bool downloadAndTranslate(const QString& summaryJsonFile, const QString& toTranslateJsonFile, int maxCacheAgeSec, const QString& componentName);
 
     QString translateJsonUsingTS(const QString& toTranslateJsonFile, const QString& tsFile);
 
@@ -36,7 +36,7 @@ signals:
 private slots:
     void onDownloadCompleted(bool success, const QString &localFile, QString errorMsg, bool fromCache);
 private:
-    QString getUrlFromSummaryJson(const QString& summaryJsonFile, const QString& locale);
+    QString getUrlFromSummaryJson(const QString& summaryJsonFile, const QString& locale, const QString& componentName);
 
     static QJsonObject translate(const QJsonObject& translationObj, const QHash<QString, QString>& translations, QJsonObject doc);
 
