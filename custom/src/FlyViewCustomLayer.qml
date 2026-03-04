@@ -26,10 +26,10 @@ Item {
     property var mapControl
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    
+
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
-
-
+    
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     QGCToolInsets {
         id:                     _totalToolInsets
@@ -48,14 +48,5 @@ Item {
     }
 
 
-    
-
-    CustomProximitySensor {
-        id:                 proximitySensor
-        anchors.top:        parent.top
-        anchors.right:      parent.right
-
-        vehicle:            _activeVehicle
-        size:               ScreenTools.defaultFontPixelHeight * 6
-    }
 }
+    

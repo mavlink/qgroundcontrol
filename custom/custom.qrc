@@ -25,6 +25,7 @@
     <file alias="QGroundControl/FlightDisplay/FlyViewToolStripActionList.qml">src/FlyViewToolStripActionList.qml</file>
     <file alias="QGroundControl/Controls/SprayItemEditor.qml">src/SprayPattern/SprayItemEditor.qml</file>
     <file alias="QGroundControl/Controls/SprayMapVisuals.qml">src/SprayPattern/SprayMapVisuals.qml</file>
+    <file alias="QGroundControl/FlightDisplay/FlyViewWidgetLayer.qml">src/FlyViewWidgetLayer.qml</file>
   </qresource>
   <qresource prefix="/Custom/res">
     <file alias="QGCLogoFull.svg">res/QGCLogoFull.svg</file>
