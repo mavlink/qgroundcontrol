@@ -17,24 +17,11 @@ Versions are provided for all platforms.
 Source code for _QGroundControl_ is kept on [GitHub](https://github.com/mavlink/qgroundcontrol).
 It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
-To get the source files:
+To get the source files, clone the repo (or your fork):
 
-1. Clone the repo (or your fork) including submodules:
-
-   ```sh
-   git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
-   ```
-
-2. Update submodules (required each time you pull new source code):
-
-   ```sh
-   git submodule update --recursive
-   ```
-
-:::tip
-Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
-You must use git!
-:::
+```sh
+git clone -j8 https://github.com/mavlink/qgroundcontrol.git
+```
 
 ## Build QGroundControl
 
@@ -127,7 +114,7 @@ When installing, select _Desktop development with C++_.
 
 Example commands to build a default QGC and run it afterwards:
 
-1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder:
+1. Make sure you cloned the repository before, see chapter _Source Code_ above and switch into the repository folder:
 
    ```sh
    cd qgroundcontrol
