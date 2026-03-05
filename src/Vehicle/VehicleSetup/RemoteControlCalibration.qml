@@ -228,11 +228,16 @@ ColumnLayout {
             onClicked: {
                 if (text === qsTr("Calibrate")) {
                     if (controller.channelCount < controller.minChannelCount) {
-                        QGroundControl.showMessageDialog(root, qsTr("Remote Not Ready"),
-                                                        controller.channelCount == 0 ? qsTr("Please turn on remote.") :
-                                                                                    (controller.channelCount < controller.minChannelCount ?
-                                                                                            qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
-                                                                                            qsTr("Ready to calibrate.")))
+                        let errorMessage = ""
+                        let title = ""
+                        if (controller.joystickMode) {
+                            title = qsTr("Joystick Not Ready")
+                            errorMessage = qsTr("%1 axes or more are needed to fly. Joystick is reporting %2 axes.").arg(controller.minChannelCount).arg(controller.channelCount)
+                        } else {
+                            title = qsTr("Not Ready")
+                            errorMessage = controller.channelCount === 0 ? qsTr("Please turn on RC transmitter.") : qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount)
+                        }
+                        QGroundControl.showMessageDialog(root, title, errorMessage)
                         return
                     } else if (!controller.joystickMode) {
                         QGroundControl.showMessageDialog(root, qsTr("Zero Trims"),
