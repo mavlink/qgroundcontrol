@@ -26,6 +26,13 @@ TreeView {
     selectionBehavior: TableView.SelectionDisabled
     rowSpacing: 2
 
+    // After collapseRecursively() groups are always at these row indices
+    readonly property int _rowPlanFile: 0
+    readonly property int _rowDefaults: 1
+    readonly property int _rowMission:  2
+    readonly property int _rowFence:    3
+    readonly property int _rowRally:    4
+
     // QGCFlickableScrollIndicator expects parent to have indicatorColor (provided by QGCFlickable/QGCListView)
     property color indicatorColor: qgcPal.text
 
@@ -33,14 +40,6 @@ TreeView {
 
     QGCFlickableScrollIndicator { parent: root; orientation: QGCFlickableScrollIndicator.Horizontal }
     QGCFlickableScrollIndicator { parent: root; orientation: QGCFlickableScrollIndicator.Vertical }
-
-    // After full collapse, top-level group rows are:
-    //   0 = Plan File, 1 = Defaults, 2 = Mission Items, 3 = GeoFence, 4 = Rally Points
-    readonly property int _rowPlanFile: 0
-    readonly property int _rowDefaults: 1
-    readonly property int _rowMission:  2
-    readonly property int _rowFence:    3
-    readonly property int _rowRally:    4
 
     Component.onCompleted: {
         // Expand only Mission Items by default
@@ -80,7 +79,7 @@ TreeView {
         if (targetRow >= 0) {
             root.expand(targetRow)
             root.forceLayout()
-            root.positionViewAtRow(targetRow, Qt.AlignTop)
+            root.positionViewAtRow(targetRow, TableView.AlignTop)
         }
     }
 
@@ -117,7 +116,7 @@ TreeView {
         if (alreadyActive) {
             _editingLayer = -1
             root.forceLayout()
-            root.positionViewAtRow(0, Qt.AlignTop)
+            root.positionViewAtRow(0, TableView.AlignTop)
             return
         }
 
@@ -151,7 +150,7 @@ TreeView {
             // After collapse/expand the view may still be scrolled past the new content.
             // Force layout then scroll so the expanded group header is at the top.
             root.forceLayout()
-            root.positionViewAtRow(targetRow, Qt.AlignTop)
+            root.positionViewAtRow(targetRow, TableView.AlignTop)
         }
     }
 
