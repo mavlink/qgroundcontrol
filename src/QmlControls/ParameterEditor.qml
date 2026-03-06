@@ -166,6 +166,12 @@ Item {
                 onClicked:  controller.showModifiedOnly = checked
                 visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
             }
+
+            QGCCheckBox {
+                text:       qsTr("Hide read-only")
+                checked:    controller.hideReadOnly
+                onClicked:  controller.hideReadOnly = checked
+            }
         }
 
         QGCButton {
@@ -266,41 +272,49 @@ Item {
         }
 
         delegate: Item {
-            implicitWidth:  label.contentWidth
+            implicitWidth:  row.implicitWidth
             implicitHeight: label.contentHeight
             clip:           true
 
-            QGCLabel {
-                id:                 label
-                width:              column == 1 ? ScreenTools.defaultFontPixelWidth * 15 : contentWidth
-                text:               column == 1 ? col1String() : display
-                color:              column == 1 ? col1Color() : qgcPal.text
-                maximumLineCount:   1
-                elide:              column == 1 ? Text.ElideRight : Text.ElideNone
+            Row {
+                id:         row
+                spacing:    lockIcon.visible ? ScreenTools.defaultFontPixelWidth / 3 : 0
 
-                Component.onCompleted: {
-                    return
-                    if (tableView.columnWidth(column) < width) {
-                        console.log("setColumnWidth", column, width)
-                        tableView.setColumnWidth(column, width)
-                    }
+                QGCColoredImage {
+                    id:                 lockIcon
+                    visible:            column === 0 && fact.readOnly
+                    source:             "qrc:/InstrumentValueIcons/lock-closed.svg"
+                    color:              qgcPal.text
+                    width:              ScreenTools.defaultFontPixelHeight * 0.8
+                    height:             width
+                    sourceSize.width:   width
+                    anchors.verticalCenter: parent.verticalCenter
                 }
 
-                function col1String() {
-                    if (fact.enumStrings.length === 0) {
-                        return fact.valueString + " " + fact.units
-                    }
-                    if (fact.bitmaskStrings.length != 0) {
-                        return fact.selectedBitmaskStrings.join(',')
-                    }
-                    return fact.enumStringValue
-                }
+                QGCLabel {
+                    id:                 label
+                    width:              column == 1 ? ScreenTools.defaultFontPixelWidth * 15 : contentWidth
+                    text:               column == 1 ? col1String() : display
+                    color:              column == 1 ? col1Color() : qgcPal.text
+                    maximumLineCount:   1
+                    elide:              column == 1 ? Text.ElideRight : Text.ElideNone
 
-                function col1Color() {
-                    if (fact.defaultValueAvailable) {
-                        return fact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText
-                    } else {
-                        return qgcPal.text
+                    function col1String() {
+                        if (fact.enumStrings.length === 0) {
+                            return fact.valueString + " " + fact.units
+                        }
+                        if (fact.bitmaskStrings.length != 0) {
+                            return fact.selectedBitmaskStrings.join(',')
+                        }
+                        return fact.enumStringValue
+                    }
+
+                    function col1Color() {
+                        if (fact.defaultValueAvailable) {
+                            return fact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText
+                        } else {
+                            return qgcPal.text
+                        }
                     }
                 }
             }

@@ -131,6 +131,7 @@ class ParameterEditorController : public FactPanelController
     Q_PROPERTY(QObject*             currentGroup            READ currentGroup               WRITE setCurrentGroup       NOTIFY currentGroupChanged)
     Q_PROPERTY(QAbstractTableModel* parameters              MEMBER _parameters                                          NOTIFY parametersChanged)
     Q_PROPERTY(bool                 showModifiedOnly        MEMBER _showModifiedOnly                                    NOTIFY showModifiedOnlyChanged)
+    Q_PROPERTY(bool                 hideReadOnly            MEMBER _hideReadOnly                                        NOTIFY hideReadOnlyChanged)
 
     // These property are related to the diff associated with a load from file
     Q_PROPERTY(bool                 diffOtherVehicle        MEMBER _diffOtherVehicle                                    NOTIFY diffOtherVehicleChanged)
@@ -161,6 +162,7 @@ signals:
     void currentCategoryChanged         (void);
     void currentGroupChanged            (void);
     void showModifiedOnlyChanged        (void);
+    void hideReadOnlyChanged            (void);
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
     void parametersChanged              (void);
@@ -169,6 +171,7 @@ private slots:
     void _currentCategoryChanged(void);
     void _currentGroupChanged   (void);
     void _searchTextChanged     (void);
+    void _hideReadOnlyChanged   (void);
     void _buildLists            (void);
     void _buildListsForComponent(int compId);
     void _factAdded             (int compId, Fact* fact);
@@ -184,6 +187,7 @@ private:
     ParameterEditorCategory*    _currentCategory        = nullptr;
     ParameterEditorGroup*       _currentGroup           = nullptr;
     bool                        _showModifiedOnly       = false;
+    bool                        _hideReadOnly           = false;
     bool                        _diffOtherVehicle       = false;
     bool                        _diffMultipleComponents = false;
 
