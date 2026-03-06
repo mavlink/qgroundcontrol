@@ -4,6 +4,7 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QSslError>
 
 class QGeoCoordinate;
 class QNetworkAccessManager;

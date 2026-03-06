@@ -73,7 +73,9 @@ UnitTestTerrainQuery::PathHeightInfo_t UnitTestTerrainQuery::_requestPathHeights
                                                                                  const QGeoCoordinate& toCoord)
 {
     PathHeightInfo_t pathHeights;
-    pathHeights.rgCoords = TerrainTileManager::_pathQueryToCoords(fromCoord, toCoord, pathHeights.distanceBetween,
+    constexpr double defaultSpacingMeters = 30.0;
+    pathHeights.rgCoords = TerrainTileManager::_pathQueryToCoords(fromCoord, toCoord, defaultSpacingMeters,
+                                                                  pathHeights.distanceBetween,
                                                                   pathHeights.finalDistanceBetween);
     pathHeights.rgHeights = _requestCoordinateHeights(pathHeights.rgCoords);
     return pathHeights;

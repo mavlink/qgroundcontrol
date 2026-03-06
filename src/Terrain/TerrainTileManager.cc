@@ -1,6 +1,5 @@
 #include "TerrainTileManager.h"
 #include "TerrainTile.h"
-#include "TerrainTileCopernicus.h"
 #include "QGeoTileFetcherQGC.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGCMapUrlEngine.h"
@@ -47,12 +46,17 @@ TerrainTileManager::~TerrainTileManager()
     qCDebug(TerrainTileManagerLog) << this;
 }
 
+std::shared_ptr<const ElevationProvider> TerrainTileManager::_getElevationProvider()
+{
+    const QString name = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+    return std::dynamic_pointer_cast<const ElevationProvider>(UrlFactory::getMapProviderFromProviderType(name));
+}
+
 bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> &coordinates, QList<double> &altitudes, bool &error)
 {
     error = false;
 
-    const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(elevationProviderName);
+    const auto provider = _getElevationProvider();
     for (const QGeoCoordinate &coordinate: coordinates) {
         const QString tileHash = UrlFactory::getTileHash(
             provider->getMapName(),
@@ -134,9 +138,12 @@ void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface *terrainQueryI
 
 void TerrainTileManager::addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint)
 {
+    const auto elevProvider = _getElevationProvider();
+    const double spacingMeters = elevProvider ? elevProvider->tileValueSpacingMeters() : 30.0;
+
     double distanceBetween;
     double finalDistanceBetween;
-    const QList<QGeoCoordinate> coordinates = _pathQueryToCoords(startPoint, endPoint, distanceBetween, finalDistanceBetween);
+    const QList<QGeoCoordinate> coordinates = _pathQueryToCoords(startPoint, endPoint, spacingMeters, distanceBetween, finalDistanceBetween);
 
     bool error;
     QList<double> altitudes;
@@ -175,8 +182,11 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
         return;
     }
 
-    const int gridSizeLat = qCeil((neCoord.latitude() - swCoord.latitude()) / TerrainTileCopernicus::kTileValueSpacingDegrees);
-    const int gridSizeLon = qCeil((neCoord.longitude() - swCoord.longitude()) / TerrainTileCopernicus::kTileValueSpacingDegrees);
+    const auto elevProvider = _getElevationProvider();
+    const double spacingDeg = elevProvider ? elevProvider->tileValueSpacingDegrees() : (1.0 / 3600);
+
+    const int gridSizeLat = qCeil((neCoord.latitude() - swCoord.latitude()) / spacingDeg);
+    const int gridSizeLon = qCeil((neCoord.longitude() - swCoord.longitude()) / spacingDeg);
 
     if (gridSizeLat <= 0 || gridSizeLon <= 0) {
         qCWarning(TerrainTileManagerLog) << "Carpet area too small";
@@ -195,9 +205,9 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
 
     QList<QGeoCoordinate> coordinates;
     for (int latIdx = 0; latIdx <= gridSizeLat; latIdx++) {
-        const double lat = swCoord.latitude() + (latIdx * TerrainTileCopernicus::kTileValueSpacingDegrees);
+        const double lat = swCoord.latitude() + (latIdx * spacingDeg);
         for (int lonIdx = 0; lonIdx <= gridSizeLon; lonIdx++) {
-            const double lon = swCoord.longitude() + (lonIdx * TerrainTileCopernicus::kTileValueSpacingDegrees);
+            const double lon = swCoord.longitude() + (lonIdx * spacingDeg);
             (void) coordinates.append(QGeoCoordinate(lat, lon));
         }
     }
@@ -234,11 +244,10 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
     terrainQueryInterface->signalCarpetHeights(true, minHeight, maxHeight, carpet);
 }
 
-QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween)
+QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double spacingMeters, double &distanceBetween, double &finalDistanceBetween)
 {
     const double totalDistance = QGCGeo::geodesicDistance(fromCoord, toCoord);
-    // TODO: get spacing from terrainQueryInterface
-    const int numPoints = qMax(2, qCeil(totalDistance / TerrainTileCopernicus::kTileValueSpacingMeters) + 1);
+    const int numPoints = qMax(2, qCeil(totalDistance / spacingMeters) + 1);
 
     QList<QGeoCoordinate> coordinates = QGCGeo::interpolatePath(fromCoord, toCoord, numPoints);
 
