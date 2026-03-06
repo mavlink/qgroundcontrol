@@ -29,12 +29,12 @@ Item {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RC Loss Failsafe")
+            labelText: qsTr("Manual Control Loss Failsafe")
             valueText: rcLossAction ? rcLossAction.enumStringValue : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RC Loss Timeout")
+            labelText: qsTr("Manual Control Loss Timeout")
             valueText: commRCLossFact ? commRCLossFact.valueString + " " + commRCLossFact.units : ""
         }
 
