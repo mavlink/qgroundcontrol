@@ -668,10 +668,16 @@ void UnitTest::cleanupTestCase()
     }
 }
 
+void UnitTest::expectLogMessage(QtMsgType type, const QRegularExpression &pattern)
+{
+    _expectedLogMessages.append({type, pattern});
+}
+
 void UnitTest::init()
 {
     _initCalled = true;
     _failureContextDumped = false;
+    _expectedLogMessages.clear();
 
     // Start capturing log messages for this test (cleared from previous test)
     QGCLogging::clearCapturedMessages();
@@ -697,6 +703,51 @@ void UnitTest::cleanup()
 
     // Process any lingering events to prevent cross-test contamination
     settleEventLoopForCleanup(3, 0);
+
+    // Fail the test if any uncategorized or critical log messages were captured.
+    // Skip if the test already failed to avoid noisy double-failure reports.
+    if (!QTest::currentTestFailed()) {
+        QString uncategorizedDetails;
+        QString criticalDetails;
+
+        auto isExpected = [this](const CapturedLogMessage &m) {
+            for (const auto &e : _expectedLogMessages) {
+                if (e.type == m.type && e.pattern.match(m.message).hasMatch()) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const auto allMsgs = QGCLogging::capturedMessages();
+        for (const auto &m : allMsgs) {
+            if (isExpected(m)) {
+                continue;
+            }
+            if (m.category.isEmpty() || m.category == QStringLiteral("default")) {
+                const char *level = (m.type == QtDebugMsg)   ? "debug"
+                                  : (m.type == QtWarningMsg) ? "warning"
+                                  : (m.type == QtInfoMsg)    ? "info"
+                                                             : "other";
+                uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(level), m.message);
+            }
+            if (m.type == QtCriticalMsg) {
+                criticalDetails += QStringLiteral("  [%1] %2\n").arg(m.category, m.message);
+            }
+        }
+
+        if (!uncategorizedDetails.isEmpty() || !criticalDetails.isEmpty()) {
+            QString msg;
+            if (!uncategorizedDetails.isEmpty()) {
+                msg += QStringLiteral("Uncategorized log messages (use qCDebug/qCWarning with a category):\n%1")
+                           .arg(uncategorizedDetails);
+            }
+            if (!criticalDetails.isEmpty()) {
+                msg += QStringLiteral("Critical log messages:\n%1").arg(criticalDetails);
+            }
+            QFAIL(qPrintable(msg));
+        }
+    }
 }
 
 void UnitTest::dumpFailureContextIfTestFailed(QStringView reason)

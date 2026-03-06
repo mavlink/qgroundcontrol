@@ -4,6 +4,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTextStream>
 
 #include "QGCArchiveFile.h"
@@ -123,6 +124,7 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceErrors()
     // Test writeData returns -1
     QGCDecompressDevice device4(":/unittest/manifest.json.gz");
     QVERIFY(device4.open(QIODevice::ReadOnly));
+    expectLogMessage(QtWarningMsg, QRegularExpression("ReadOnly device"));
     QCOMPARE(device4.write("test", 4), qint64(-1));
     device4.close();
 }
@@ -238,6 +240,7 @@ void QGCStreamingDecompressionTest::_testArchiveFileErrors()
     // Test writeData returns -1
     QGCArchiveFile device4(":/unittest/manifest.json.zip", "manifest.json");
     QVERIFY(device4.open(QIODevice::ReadOnly));
+    expectLogMessage(QtWarningMsg, QRegularExpression("ReadOnly device"));
     QCOMPARE(device4.write("test", 4), qint64(-1));
     device4.close();
 }

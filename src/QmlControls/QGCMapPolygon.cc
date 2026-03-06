@@ -4,11 +4,14 @@
 #include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 #include "ShapeFileHelper.h"
 #include "KMLDomDocument.h"
 
 #include <QtCore/QLineF>
 #include <QMetaMethod>
+
+QGC_LOGGING_CATEGORY(QGCMapPolygonLog, "QMLControls.QGCMapPolygon")
 
 QGCMapPolygon::QGCMapPolygon(QObject* parent)
     : QObject               (parent)
@@ -311,8 +314,8 @@ void QGCMapPolygon::_polygonModelDirtyChanged(bool dirty)
 
 void QGCMapPolygon::removeVertex(int vertexIndex)
 {
-    if (vertexIndex < 0 && vertexIndex > _polygonPath.length() - 1) {
-        qWarning() << "Call to removePolygonCoordinate with bad vertexIndex:count" << vertexIndex << _polygonPath.length();
+    if (vertexIndex < 0 || vertexIndex >= _polygonPath.length()) {
+        qCWarning(QGCMapPolygonLog) << "Call to removePolygonCoordinate with bad vertexIndex:count" << vertexIndex << _polygonPath.length();
         return;
     }
 
@@ -420,7 +423,7 @@ QGeoCoordinate QGCMapPolygon::vertexCoordinate(int vertex) const
     if (vertex >= 0 && vertex < _polygonPath.count()) {
         return _polygonPath[vertex].value<QGeoCoordinate>();
     } else {
-        qWarning() << "QGCMapPolygon::vertexCoordinate bad vertex requested:count" << vertex << _polygonPath.count();
+        qCWarning(QGCMapPolygonLog) << "QGCMapPolygon::vertexCoordinate bad vertex requested:count" << vertex << _polygonPath.count();
         return QGeoCoordinate();
     }
 }
@@ -487,7 +490,7 @@ void QGCMapPolygon::offset(double distance)
             auto intersect = rgOffsetEdges[prevIndex].intersects(rgOffsetEdges[i], &newVertex);
             if (intersect == QLineF::NoIntersection) {
                 // FIXME: Better error handling?
-                qWarning("Intersection failed");
+                qCWarning(QGCMapPolygonLog, "Intersection failed");
                 return;
             }
             QGeoCoordinate coord;
@@ -649,10 +652,8 @@ void QGCMapPolygon::selectVertex(int index)
     if(-1 <= index && index < count()) {
         _selectedVertexIndex = index;
     } else {
-        if (!qgcApp()->runningUnitTests()) {
-            qWarning() << QString("QGCMapPolygon: Selected vertex index (%1) is out of bounds! "
-                                  "Polygon vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
-        }
+        qCWarning(QGCMapPolygonLog) << QString("QGCMapPolygon: Selected vertex index (%1) is out of bounds! "
+                              "Polygon vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
         _selectedVertexIndex = -1;   // deselect vertex
     }
 

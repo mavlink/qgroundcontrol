@@ -214,8 +214,8 @@ void OsmParserThread::BuildingType_t::append(const std::vector<QVector2D> &newPo
 // OsmParserThread
 // ============================================================================
 
-OsmParserThread::OsmParserThread(QObject *parent)
-    : QObject{parent}
+OsmParserThread::OsmParserThread(QObject * /*parent*/)
+    : QObject{nullptr}
     , _workerThread(new QThread())
 {
     connect(this, &OsmParserThread::startThread, this, &OsmParserThread::_parseOsmFile);
