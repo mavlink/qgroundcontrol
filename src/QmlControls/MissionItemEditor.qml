@@ -31,7 +31,7 @@ Rectangle {
     property var    _missionController:         _masterController.missionController
     property bool   _currentItem:               missionItem.isCurrentItem
     property color  _outerTextColor:            _currentItem ? qgcPal.buttonHighlightText : qgcPal.text
-    property bool   _noMissionItemsAdded:       ListView.view.model.count === 1
+    property bool   _noMissionItemsAdded:       _missionController.visualItems ? _missionController.visualItems.count <= 1 : true
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
     property bool   _readyForSave:              missionItem.readyForSaveState === VisualMissionItem.ReadyForSave

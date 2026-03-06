@@ -11,22 +11,11 @@ Item {
 
     id: root
 
-    // These must match the indices of _editingToolComponents
-    readonly property int _editingToolMission:  0
-    readonly property int _editingToolFence:    1
-    readonly property int _editingToolRally:    2
-
-    property int _editingTool:              _editingToolMission
-    property var _missionController:        planMasterController.missionController
-    property var _geoFenceController:       planMasterController.geoFenceController
-    property var _rallyPointController:     planMasterController.rallyPointController
-    property var _visualItems:              _missionController.visualItems
-    property var _editingToolComponents:    [ missionToolComponent, fenceToolComponent, rallyToolComponent ]
-    property real _toolsMargin:             ScreenTools.defaultFontPixelWidth * 0.75
+    property var  _missionController: planMasterController.missionController
+    property real _toolsMargin:       ScreenTools.defaultFontPixelWidth * 0.75
 
     function selectNextNotReady() {
-        var foundCurrent = false
-        for (var i=0; i<_missionController.visualItems.count; i++) {
+        for (var i = 0; i < _missionController.visualItems.count; i++) {
             var vmi = _missionController.visualItems.get(i)
             if (vmi.readyForSaveState === VisualMissionItem.NotReadyForSaveData) {
                 _missionController.setCurrentPlanViewSeqNum(vmi.sequenceNumber, true)
@@ -99,112 +88,10 @@ Item {
             anchors.fill:   parent
         }
 
-        ColumnLayout {
-            anchors.fill:   parent
-            spacing:        ScreenTools.defaultFontPixelHeight * 0.5
-
-            QGCTabBar {
-                Layout.fillWidth: true
-
-                QGCTabButton {
-                    text:       qsTr("Mission")
-                    onClicked:  { root._editingTool = root._editingToolMission; _editingLayer = _layerMission }
-                }
-
-                QGCTabButton {
-                    text:       qsTr("Fence")
-                    onClicked:  { root._editingTool = root._editingToolFence; _editingLayer = _layerFence }
-                }
-
-                QGCTabButton {
-                    text:       qsTr("Rally")
-                    onClicked:  { root._editingTool = root._editingToolRally; _editingLayer = _layerRally }
-                }
-            }
-
-            Loader {
-                id:                 editingToolLoader
-                Layout.fillWidth:   true
-                Layout.fillHeight:  true
-                sourceComponent:    root._editingToolComponents[root._editingTool]
-            }
+        MissionItemTreeView {
+            anchors.fill:           parent
+            editorMap:              root.editorMap
+            planMasterController:   root.planMasterController
         }
-
-        Component {
-            id: missionToolComponent
-
-            ColumnLayout {
-                spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                QGCListView {
-                    id:                 missionItemEditorListView
-                    Layout.fillWidth:   true
-                    Layout.fillHeight:  true
-                    spacing:            ScreenTools.defaultFontPixelHeight / 4
-                    orientation:        ListView.Vertical
-                    model:              _missionController.visualItems
-                    cacheBuffer:        Math.max(height * 2, 0)
-                    clip:               true
-                    currentIndex:       _missionController.currentPlanViewSeqNum
-                    highlightMoveDuration: 250
-
-                    delegate: MissionItemEditor {
-                        map:                editorMap
-                        masterController:   planMasterController
-                        missionItem:        object
-                        width:              missionItemEditorListView.width
-                        readOnly:           false
-
-                        onClicked: _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
-
-                        onRemove: {
-                            var removeVIIndex = index
-                            _missionController.removeVisualItem(removeVIIndex)
-                            if (removeVIIndex >= _missionController.visualItems.count) {
-                                removeVIIndex--
-                            }
-                        }
-
-                        onSelectNextNotReadyItem: selectNextNotReady()
-                    }
-                }
-            }
-        }
-
-        Component {
-            id: fenceToolComponent
-
-            Column {
-                spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                GeoFenceEditor {
-                    width:                  parent.width
-                    myGeoFenceController:   root._geoFenceController
-                    flightMap:              root.editorMap
-                }
-            }
-        }
-
-
-        Component {
-            id: rallyToolComponent
-
-            Column {
-                spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                RallyPointEditorHeader {
-                    width:              parent.width
-                    controller:         root._rallyPointController
-                }
-
-                RallyPointItemEditor {
-                    width:              parent.width
-                    visible:            root._rallyPointController.points.count
-                    rallyPoint:         root._rallyPointController.currentRallyPoint
-                    controller:         root._rallyPointController
-                }
-            }
-        }
-
     }
 }
