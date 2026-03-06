@@ -565,7 +565,7 @@ Item {
                         color:              QGroundControl.globalPalette.buttonHighlightText
                     }
 
-                    MouseArea {
+                    QGCMouseArea {
                         anchors.fill: parent
                         onClicked:    layerSwitcher.toggle()
                     }
@@ -594,7 +594,7 @@ Item {
                             color:              QGroundControl.globalPalette.buttonText
                         }
 
-                        MouseArea {
+                        QGCMouseArea {
                             anchors.fill: parent
                             onClicked:    layerSwitcher.choose(modelData.nodeType)
                         }
