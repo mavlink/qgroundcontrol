@@ -3,10 +3,12 @@
 #include <QtCore/QHash>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QPersistentModelIndex>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
 #include "QmlObjectListModel.h"
+#include "QmlObjectTreeModel.h"
 #include "QGCGeoBoundingCube.h"
 #include "QGroundControlQmlGlobal.h"
 #include "QGCMAVLink.h"
@@ -71,6 +73,7 @@ public:
     } MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
+    Q_PROPERTY(QmlObjectTreeModel*  visualItemsTree                 READ visualItemsTree                CONSTANT)                               ///< Tree-structured view of visualItems for TreeView
     Q_PROPERTY(QmlObjectListModel*  simpleFlightPathSegments        READ simpleFlightPathSegments       CONSTANT)                               ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
@@ -114,6 +117,9 @@ public:
     Q_PROPERTY(QGroundControlQmlGlobal::AltMode globalAltitudeModeDefault  READ globalAltitudeModeDefault  NOTIFY globalAltitudeModeChanged)                               ///< Default to use for newly created items
 
     Q_INVOKABLE void removeVisualItem(int viIndex);
+
+    /// Returns the visual item index for the given VisualMissionItem object, or -1 if not found
+    Q_INVOKABLE int visualItemIndexForObject(QObject* object) const;
 
     /// Add a new simple mission item to the list
     ///     @param coordinate: Coordinate for item
@@ -220,6 +226,7 @@ public:
     // Property accessors
 
     QmlObjectListModel* visualItems                 (void) { return _visualItems; }
+    QmlObjectTreeModel* visualItemsTree             (void) { return &_visualItemsTree; }
     QmlObjectListModel* simpleFlightPathSegments    (void) { return &_simpleFlightPathSegments; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QStringList         complexMissionItemNames     (void) const;
@@ -320,9 +327,16 @@ private slots:
     void _recalcAll                             (void);
     void _managerVehicleChanged                 (Vehicle* managerVehicle);
     void _forceRecalcOfAllowedBits              (void);
-
+    // Incremental tree model sync slots
+    void _onMissionItemsInserted                (const QModelIndex& parent, int first, int last);
+    void _onMissionItemsAboutToBeRemoved         (const QModelIndex& parent, int first, int last);
+    void _onMissionItemsReset                   (void);
+    void _onRallyPointsInserted                 (const QModelIndex& parent, int first, int last);
+    void _onRallyPointsAboutToBeRemoved          (const QModelIndex& parent, int first, int last);
+    void _onRallyPointsReset                    (void);
 private:
     void                    _init                               (void);
+    void                    _setupTreeModel                     (void);
     void                    _recalcSequence                     (void);
     void                    _recalcChildItems                   (void);
     void                    _recalcAllWithCoordinate            (const QGeoCoordinate& coordinate);
@@ -370,6 +384,15 @@ private:
     MissionManager*             _missionManager =               nullptr;
     int                         _missionItemCount =             0;
     QmlObjectListModel*         _visualItems =                  nullptr;
+    QmlObjectTreeModel          _visualItemsTree;
+    QPersistentModelIndex       _missionGroupIndex;             ///< Persistent index for "Mission Items" group in tree
+    QPersistentModelIndex       _fenceGroupIndex;               ///< Persistent index for "GeoFence" group in tree
+    QPersistentModelIndex       _rallyGroupIndex;               ///< Persistent index for "Rally Points" group in tree
+    QObject                     _missionItemsGroupNode;         ///< Group node for "Mission Items" in tree view
+    QObject                     _fenceGroupNode;                ///< Group node for "GeoFence" in tree view
+    QObject                     _rallyGroupNode;                ///< Group node for "Rally Points" in tree view
+    QObject                     _fenceEditorMarker;             ///< Marker child for GeoFenceEditor delegate
+    QObject                     _rallyHeaderMarker;             ///< Marker child for RallyPointEditorHeader delegate
     MissionSettingsItem*        _settingsItem =                 nullptr;
     PlanViewSettings*           _planViewSettings =             nullptr;
     QmlObjectListModel          _simpleFlightPathSegments;
