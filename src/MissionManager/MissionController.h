@@ -267,6 +267,14 @@ public:
     QGroundControlQmlGlobal::AltMode globalAltitudeModeDefault(void);
     void setGlobalAltitudeMode(QGroundControlQmlGlobal::AltMode altMode);
 
+    // Top-level group row indices in _visualItemsTree (must match _setupTreeModel order)
+    static constexpr int kPlanFileGroupRow = 0;
+    static constexpr int kDefaultsGroupRow = 1;
+    static constexpr int kMissionGroupRow  = 2;
+    static constexpr int kFenceGroupRow    = 3;
+    static constexpr int kRallyGroupRow    = 4;
+    static constexpr int kGroupCount       = 5;
+
 signals:
     void visualItemsChanged                 (void);
     void splitSegmentChanged                (void);
@@ -385,9 +393,15 @@ private:
     int                         _missionItemCount =             0;
     QmlObjectListModel*         _visualItems =                  nullptr;
     QmlObjectTreeModel          _visualItemsTree;
+    QPersistentModelIndex       _planFileGroupIndex;            ///< Persistent index for "Plan File" group in tree
+    QPersistentModelIndex       _defaultsGroupIndex;            ///< Persistent index for "Defaults" group in tree
     QPersistentModelIndex       _missionGroupIndex;             ///< Persistent index for "Mission Items" group in tree
     QPersistentModelIndex       _fenceGroupIndex;               ///< Persistent index for "GeoFence" group in tree
     QPersistentModelIndex       _rallyGroupIndex;               ///< Persistent index for "Rally Points" group in tree
+    QObject                     _planFileGroupNode;             ///< Group node for "Plan File" in tree view
+    QObject                     _planFileInfoMarker;            ///< Marker child for plan file info delegate
+    QObject                     _defaultsGroupNode;             ///< Group node for "Defaults" in tree view
+    QObject                     _defaultsInfoMarker;            ///< Marker child for defaults editor delegate
     QObject                     _missionItemsGroupNode;         ///< Group node for "Mission Items" in tree view
     QObject                     _fenceGroupNode;                ///< Group node for "GeoFence" in tree view
     QObject                     _rallyGroupNode;                ///< Group node for "Rally Points" in tree view
