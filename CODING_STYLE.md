@@ -130,8 +130,24 @@ Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
 QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
 
 // Use categorized logging
+
+// qCDebug is used for general logging. These logs only display when turned on.
+// Do not use qCInfo, always use qCDebug.
 qCDebug(MyComponentLog) << "Debug message";
+
+// qCWarning is used for logging of error flows which are handled but unusual.
+// For example the vehicle failed to respond to a request.
+// These logs will display even when the category is not enabled to display.
 qCWarning(MyComponentLog) << "Warning message";
+
+// qCCritical is used to indicate a coding error.
+// Example: An internal  Fact is using an unsupported Fact type.
+// These logs will cause unit tests to fail if they are hit.
+// These logs will display even when the category is not enabled to display.
+qCCritical(MyComponentLog) << "Internal Error: ...";
+
+// Never use uncategorized logging
+qDebug() << "..."; // This is wrong
 ```
 
 ## Qt6 / QML Integration
