@@ -1,12 +1,17 @@
 #include "AsyncFunctionStateTest.h"
 #include "StateTestCommon.h"
 
+#include <QtCore/QRegularExpression>
+
 
 void AsyncFunctionStateTest::_testAsyncFunctionState()
 {
     QStateMachine machine;
     bool setupCalled = false;
     AsyncFunctionState* capturedState = nullptr;
+
+    // Expected: async state has no completion connection and no timeout
+    expectLogMessage(QtCriticalMsg, QRegularExpression("has no completion connection"));
 
     auto* asyncState = new AsyncFunctionState(
         QStringLiteral("TestAsync"),
@@ -75,6 +80,9 @@ void AsyncFunctionStateTest::_testErrorTransition()
 {
     QStateMachine machine;
     bool errorHandled = false;
+
+    // Expected: async state has no completion connection and no timeout
+    expectLogMessage(QtCriticalMsg, QRegularExpression("has no completion connection"));
 
     auto* asyncState = new AsyncFunctionState(
         QStringLiteral("TestError"),

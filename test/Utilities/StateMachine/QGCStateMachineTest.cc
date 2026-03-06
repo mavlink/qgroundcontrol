@@ -4,6 +4,7 @@
 #include "QGCStateMachine.h"
 #include "WaitStateBase.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -75,6 +76,9 @@ void QGCStateMachineTest::_testGlobalErrorState()
     });
     machine.setGlobalErrorState(errorState);
 
+    // The async state has no completion connection and no timeout — expected critical
+    expectLogMessage(QtCriticalMsg, QRegularExpression("has no completion connection"));
+
     auto* asyncState = machine.addAsyncFunctionState(QStringLiteral("Async"), [](AsyncFunctionState* state) {
         QTimer::singleShot(50, state, [state]() { state->fail(); });
     });
@@ -140,6 +144,9 @@ void QGCStateMachineTest::_testLocalErrorState()
     auto* localErrorState = new FunctionState(QStringLiteral("LocalError"), &machine, [&localErrorHandled]() {
         localErrorHandled = true;
     });
+
+    // The async state has no completion connection and no timeout — expected critical
+    expectLogMessage(QtCriticalMsg, QRegularExpression("has no completion connection"));
 
     auto* asyncState = new AsyncFunctionState(QStringLiteral("Async"), &machine, [](AsyncFunctionState* state) {
         QTimer::singleShot(50, state, [state]() { state->fail(); });
@@ -319,6 +326,10 @@ void QGCStateMachineTest::_testErrorHandlerFactories()
         auto* errorState = machine.addLogAndContinueErrorState(QStringLiteral("ErrorContinue"), finalState);
         machine.setGlobalErrorState(errorState);
 
+        // Expected: async state critical (no completion connection) + error handler warning
+        expectLogMessage(QtCriticalMsg, QRegularExpression("has no completion connection"));
+        expectLogMessage(QtWarningMsg, QRegularExpression("error handled in"));
+
         auto* failingState = machine.addAsyncFunctionState(QStringLiteral("Failing"), [](AsyncFunctionState* state) {
             QTimer::singleShot(0, state, [state]() { state->fail(); });
         });
@@ -335,6 +346,10 @@ void QGCStateMachineTest::_testErrorHandlerFactories()
 
         auto* errorState = machine.addLogAndStopErrorState(QStringLiteral("ErrorStop"));
         machine.setGlobalErrorState(errorState);
+
+        // Expected: async state critical (no completion connection) + error handler warning
+        expectLogMessage(QtCriticalMsg, QRegularExpression("has no completion connection"));
+        expectLogMessage(QtWarningMsg, QRegularExpression("stopping due to error in"));
 
         auto* failingState = machine.addAsyncFunctionState(QStringLiteral("Failing"), [](AsyncFunctionState* state) {
             QTimer::singleShot(0, state, [state]() { state->fail(); });

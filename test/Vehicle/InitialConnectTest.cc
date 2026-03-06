@@ -13,7 +13,6 @@
 #include "MockLink.h"
 #include "MockLinkMissionItemHandler.h"
 #include "MissionManager.h"
-#include "QGCLogging.h"
 #include "ParameterManager.h"
 #include "RallyPointManager.h"
 #include "StandardModes.h"
@@ -22,50 +21,6 @@
 #include "ComponentInformationManager.h"
 
 #include <QtTest/QTest>
-
-void InitialConnectTest::init()
-{
-    VehicleTestManualConnect::init();
-}
-
-void InitialConnectTest::cleanup()
-{
-    // Disable capture first so no new messages arrive while we analyze
-    QGCLogging::setCaptureEnabled(false);
-
-    QString uncategorizedDetails;
-    QString criticalDetails;
-
-    const auto allMsgs = QGCLogging::capturedMessages();
-    for (const auto &m : allMsgs) {
-        if (m.category.isEmpty() || m.category == QStringLiteral("default")) {
-            const char *level = (m.type == QtDebugMsg)   ? "debug"
-                              : (m.type == QtWarningMsg) ? "warning"
-                              : (m.type == QtInfoMsg)    ? "info"
-                                                         : "other";
-            uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(level), m.message);
-        }
-        if (m.type == QtCriticalMsg) {
-            criticalDetails += QStringLiteral("  [%1] %2\n").arg(m.category, m.message);
-        }
-    }
-
-    // Always perform parent cleanup for proper teardown
-    VehicleTestManualConnect::cleanup();
-
-    // Report failures after teardown so test infrastructure stays consistent
-    if (!uncategorizedDetails.isEmpty() || !criticalDetails.isEmpty()) {
-        QString msg;
-        if (!uncategorizedDetails.isEmpty()) {
-            msg += QStringLiteral("Uncategorized log messages (use qCDebug/qCWarning with a category):\n%1")
-                       .arg(uncategorizedDetails);
-        }
-        if (!criticalDetails.isEmpty()) {
-            msg += QStringLiteral("Critical log messages:\n%1").arg(criticalDetails);
-        }
-        QFAIL(qPrintable(msg));
-    }
-}
 
 void InitialConnectTest::_performTestCases_data()
 {

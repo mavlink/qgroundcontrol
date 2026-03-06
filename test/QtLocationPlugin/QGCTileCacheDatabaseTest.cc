@@ -2,6 +2,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
@@ -59,6 +60,9 @@ void QGCTileCacheDatabaseTest::_testInitWithValidPath()
 
 void QGCTileCacheDatabaseTest::_testInitWithEmptyPath()
 {
+    // Expected: critical about missing cache directory
+    expectLogMessage(QtCriticalMsg, QRegularExpression("Could not find suitable cache directory"));
+
     const QString emptyPath;
     QGCTileCacheDatabase db(emptyPath);
     QVERIFY(!db.init());
