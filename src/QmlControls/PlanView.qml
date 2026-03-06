@@ -257,6 +257,11 @@ Item {
             onMapClicked: (mouse) => {
                 // Take focus to close any previous editing
                 editorMap.focus = true
+
+                // Collapse layer switcher on any map click
+                layerSwitcher.expanded = false
+                collapseTimer.stop()
+
                 if (!mainWindow.allowViewSwitch()) {
                     return
                 }
@@ -494,6 +499,108 @@ Item {
             width: _rightPanelWidth
             planMasterController: _planMasterController
             editorMap: editorMap
+        }
+
+        // Layer switching icons — only active icon visible; click to expand choices leftward
+        Item {
+            id:                     layerSwitcher
+            anchors.right:          rightPanel.left
+            anchors.rightMargin:    _toolsMargin
+            anchors.top:            parent.top
+            anchors.topMargin:      _toolsMargin
+            width:                  layerRow.width
+            height:                 _layerButtonSize
+            z:                      QGroundControl.zOrderWidgets
+
+            property bool   expanded: false
+            property real   _layerButtonSize: ScreenTools.defaultFontPixelHeight * 2.0
+            property real   _spacing: ScreenTools.defaultFontPixelHeight * 0.25
+
+            readonly property var _layers: [
+                { layer: _layerMission, icon: "/res/waypoint.svg",      nodeType: "missionGroup" },
+                { layer: _layerFence,   icon: "/res/GeoFence.svg",      nodeType: "fenceGroup" },
+                { layer: _layerRally,   icon: "/res/RallyPoint.svg",    nodeType: "rallyGroup" }
+            ]
+
+            Timer {
+                id: collapseTimer
+                interval: 5000
+                onTriggered: layerSwitcher.expanded = false
+            }
+
+            function toggle() {
+                expanded = !expanded
+                if (expanded) {
+                    collapseTimer.restart()
+                } else {
+                    collapseTimer.stop()
+                }
+            }
+
+            function choose(nodeType) {
+                expanded = false
+                collapseTimer.stop()
+                rightPanel.selectLayer(nodeType)
+            }
+
+            // Row laid out right-to-left: active icon on the right, choices expand left
+            Row {
+                id:             layerRow
+                anchors.right:  parent.right
+                spacing:        layerSwitcher._spacing
+                layoutDirection: Qt.RightToLeft
+
+                // Active layer button (always visible)
+                Rectangle {
+                    width:  layerSwitcher._layerButtonSize
+                    height: width
+                    radius: ScreenTools.defaultBorderRadius
+                    color:  QGroundControl.globalPalette.buttonHighlight
+
+                    QGCColoredImage {
+                        anchors.centerIn:   parent
+                        width:              parent.width * 0.6
+                        height:             width
+                        source:             layerSwitcher._layers.find(l => l.layer === _editingLayer)?.icon ?? "/res/waypoint.svg"
+                        color:              QGroundControl.globalPalette.buttonHighlightText
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked:    layerSwitcher.toggle()
+                    }
+                }
+
+                // Choice buttons (only layers that are NOT the current one)
+                Repeater {
+                    model: layerSwitcher._layers.filter(l => l.layer !== _editingLayer)
+
+                    Rectangle {
+                        required property var modelData
+                        width:   layerSwitcher._layerButtonSize
+                        height:  width
+                        radius:  ScreenTools.defaultBorderRadius
+                        color:   QGroundControl.globalPalette.button
+                        visible: opacity > 0
+                        opacity: layerSwitcher.expanded ? 1 : 0
+
+                        Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                        QGCColoredImage {
+                            anchors.centerIn:   parent
+                            width:              parent.width * 0.6
+                            height:             width
+                            source:             modelData.icon
+                            color:              QGroundControl.globalPalette.buttonText
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked:    layerSwitcher.choose(modelData.nodeType)
+                        }
+                    }
+                }
+            }
         }
 
         RowLayout {
