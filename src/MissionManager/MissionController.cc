@@ -1819,6 +1819,22 @@ void MissionController::_setupTreeModel(void)
     // We use incremental inserts so QPersistentModelIndex stays valid.
     _visualItemsTree.clear();
 
+    // ── Plan File group ──
+    _planFileGroupNode.setObjectName(tr("Plan File"));
+    _planFileGroupIndex = QPersistentModelIndex(
+        _visualItemsTree.appendItem(&_planFileGroupNode, QModelIndex(), QStringLiteral("planFileGroup")));
+
+    _planFileInfoMarker.setObjectName(QStringLiteral("planFileInfo"));
+    _visualItemsTree.appendItem(&_planFileInfoMarker, _planFileGroupIndex, QStringLiteral("planFileInfo"));
+
+    // ── Defaults group ──
+    _defaultsGroupNode.setObjectName(tr("Defaults"));
+    _defaultsGroupIndex = QPersistentModelIndex(
+        _visualItemsTree.appendItem(&_defaultsGroupNode, QModelIndex(), QStringLiteral("defaultsGroup")));
+
+    _defaultsInfoMarker.setObjectName(QStringLiteral("defaultsInfo"));
+    _visualItemsTree.appendItem(&_defaultsInfoMarker, _defaultsGroupIndex, QStringLiteral("defaultsInfo"));
+
     // ── Mission Items group ──
     _missionItemsGroupNode.setObjectName(tr("Mission Items"));
     _missionGroupIndex = QPersistentModelIndex(
