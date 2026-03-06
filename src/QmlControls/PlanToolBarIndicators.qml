@@ -54,14 +54,28 @@ RowLayout {
     }
 
     function _saveButtonClicked() {
-        if(_planMasterController.currentPlanFile !== "") {
-            if (_planMasterController.saveToCurrent()) {
-                QGroundControl.showMessageDialog(root, qsTr("Save"),
-                                            qsTr("Plan saved to `%1`").arg(_planMasterController.currentPlanFile),
-                                            Dialog.Ok)
+        if (_planMasterController.currentPlanFileName === "") {
+            if (_planMasterController.currentPlanFile === "") {
+                // No file and no name typed — open the file dialog
+                _planMasterController.saveToSelectedFile()
+            } else {
+                // Have a file but name was cleared — save to the existing file
+                _planMasterController.saveToCurrent()
             }
+            return
+        }
+
+        if (_planMasterController.currentPlanFile === "" || _planMasterController.planFileRenamed) {
+            // First save with a typed name, or name was changed since last save
+            let fullName = _planMasterController.currentPlanFileName + "." + _planMasterController.fileExtension
+            let msg = _planMasterController.resolvedPlanFileExists()
+                ? qsTr("'%1' already exists. Overwrite?").arg(fullName)
+                : qsTr("Save as '%1'?").arg(fullName)
+            QGroundControl.showMessageDialog(root, qsTr("Save"), msg,
+                Dialog.Yes | Dialog.No,
+                function() { _planMasterController.saveWithCurrentName() })
         } else {
-            _planMasterController.saveToSelectedFile()
+            _planMasterController.saveToCurrent()
         }
     }
 
@@ -106,7 +120,7 @@ RowLayout {
     }
 
     QGCButton {
-        text: _planMasterController.currentPlanFile === "" ? qsTr("Save As") : _planMasterController.currentPlanFileName
+        text: qsTr("Save")
         iconSource: "/res/SaveToDisk.svg"
         enabled: !_syncInProgress && _hasPlanItems
         primary: _saveDirty

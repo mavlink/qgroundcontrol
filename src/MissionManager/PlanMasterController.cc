@@ -22,8 +22,9 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
-#include <QtCore/QJsonDocument>
 #include <QtCore/QFileInfo>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanManager.PlanMasterController")
 
@@ -390,13 +391,45 @@ void PlanMasterController::loadFromFile(const QString& filename)
         }
     }
 
-    if(success){
+    if (success){
+        const bool oldRenamed = planFileRenamed();
         _currentPlanFile = QString::asprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
+        const bool currentNameChanged = (_currentPlanFileName != fileInfo.completeBaseName());
+        const bool originalNameChanged = (_originalPlanFileName != fileInfo.completeBaseName());
+        _currentPlanFileName = fileInfo.completeBaseName();
+        _originalPlanFileName = _currentPlanFileName;
         _setDirtyStates(false /* dirtyForSave */, true /* dirtyForUpload */);
+        emit currentPlanFileChanged();
+        if (currentNameChanged) {
+            emit currentPlanFileNameChanged();
+        }
+        if (originalNameChanged) {
+            emit originalPlanFileNameChanged();
+        }
+        if (oldRenamed != planFileRenamed()) {
+            emit planFileRenamedChanged();
+        }
     } else {
+        const bool hadFile = !_currentPlanFile.isEmpty();
+        const bool hadCurrentName = !_currentPlanFileName.isEmpty();
+        const bool hadOriginalName = !_originalPlanFileName.isEmpty();
+        const bool wasRenamed = planFileRenamed();
         _currentPlanFile.clear();
+        _currentPlanFileName.clear();
+        _originalPlanFileName.clear();
+        if (hadFile) {
+            emit currentPlanFileChanged();
+        }
+        if (hadCurrentName) {
+            emit currentPlanFileNameChanged();
+        }
+        if (hadOriginalName) {
+            emit originalPlanFileNameChanged();
+        }
+        if (wasRenamed != planFileRenamed()) {
+            emit planFileRenamedChanged();
+        }
     }
-    emit currentPlanFileChanged();
 }
 
 QJsonDocument PlanMasterController::saveToJson()
@@ -459,6 +492,19 @@ bool PlanMasterController::saveToFile(const QString& filename)
             _currentPlanFile = planFilename;
             emit currentPlanFileChanged();
         }
+        const bool wasRenamed = planFileRenamed();
+        const QString savedBaseName = QFileInfo(planFilename).completeBaseName();
+        if (_currentPlanFileName != savedBaseName) {
+            _currentPlanFileName = savedBaseName;
+            emit currentPlanFileNameChanged();
+        }
+        if (_originalPlanFileName != savedBaseName) {
+            _originalPlanFileName = savedBaseName;
+            emit originalPlanFileNameChanged();
+        }
+        if (wasRenamed != planFileRenamed()) {
+            emit planFileRenamedChanged();
+        }
         _setDirtyForSave(false);
     }
 
@@ -502,8 +548,7 @@ void PlanMasterController::removeAll(void)
 
     _setDirtyStates(false, false);
     if (_offline) {
-        _currentPlanFile.clear();
-        emit currentPlanFileChanged();
+        _clearFileNames();
     }
     setManualCreation(false);
 }
@@ -519,6 +564,7 @@ void PlanMasterController::removeAllFromVehicle(void)
             _rallyPointController.removeAllFromVehicle();
         }
         _setDirtyForUpload(false);
+        _clearFileNames();
     } else {
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle called while offline";
     }
@@ -533,6 +579,78 @@ bool PlanMasterController::containsItems(void) const
 QString PlanMasterController::fileExtension(void) const
 {
     return AppSettings::planFileExtension;
+}
+
+void PlanMasterController::setCurrentPlanFileName(const QString& name)
+{
+    // Normalize to a base name: trim whitespace, strip known extension, remove illegal characters
+    QString sanitized = name.trimmed();
+    const QString ext = QStringLiteral(".") + fileExtension();
+    if (sanitized.endsWith(ext, Qt::CaseInsensitive)) {
+        sanitized.chop(ext.length());
+        sanitized = sanitized.trimmed();
+    }
+    sanitized.remove(QRegularExpression(QStringLiteral("[/\\\\:*?\"<>|]")));
+    if (_currentPlanFileName != sanitized) {
+        const bool wasRenamed = planFileRenamed();
+        _currentPlanFileName = sanitized;
+        emit currentPlanFileNameChanged();
+        if (wasRenamed != planFileRenamed()) {
+            emit planFileRenamedChanged();
+        }
+    }
+}
+
+bool PlanMasterController::saveWithCurrentName()
+{
+    if (_currentPlanFileName.isEmpty()) {
+        return false;
+    }
+    return saveToFile(_resolvedPlanFilePath());
+}
+
+bool PlanMasterController::planFileRenamed() const
+{
+    return !_originalPlanFileName.isEmpty() && _currentPlanFileName != _originalPlanFileName;
+}
+
+bool PlanMasterController::resolvedPlanFileExists() const
+{
+    if (_currentPlanFileName.isEmpty()) {
+        return false;
+    }
+    return QFile::exists(_resolvedPlanFilePath());
+}
+
+QString PlanMasterController::_resolvedPlanFilePath() const
+{
+    const QString dir = _currentPlanFile.isEmpty()
+        ? SettingsManager::instance()->appSettings()->missionSavePath()
+        : QFileInfo(_currentPlanFile).path();
+    return QStringLiteral("%1/%2.%3").arg(dir, _currentPlanFileName, fileExtension());
+}
+
+void PlanMasterController::_clearFileNames()
+{
+    const bool hadFile = !_currentPlanFile.isEmpty();
+    const bool hadCurrentName = !_currentPlanFileName.isEmpty();
+    const bool hadOriginalName = !_originalPlanFileName.isEmpty();
+    const bool wasRenamed = planFileRenamed();
+    _currentPlanFile.clear();
+    _currentPlanFileName.clear();
+    _originalPlanFileName.clear();
+    if (hadFile) {
+        emit currentPlanFileChanged();
+    }
+    if (hadCurrentName) {
+        emit currentPlanFileNameChanged();
+    }
+    if (hadOriginalName) {
+        emit originalPlanFileNameChanged();
+    }
+    if (wasRenamed != planFileRenamed()) {
+        emit planFileRenamedChanged();
+    }
 }
 
 QString PlanMasterController::kmlFileExtension(void) const
