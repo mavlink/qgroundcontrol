@@ -54,7 +54,9 @@ public:
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
     Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)  ///< Fully qualified path, empty if not yet saved
-    Q_PROPERTY(QString                  currentPlanFileName     READ currentPlanFileName                    NOTIFY currentPlanFileChanged)  ///< File name only, no path or extension
+    Q_PROPERTY(QString                  currentPlanFileName     READ currentPlanFileName WRITE setCurrentPlanFileName NOTIFY currentPlanFileNameChanged)  ///< Editable base name, no path or extension
+    Q_PROPERTY(QString                  originalPlanFileName    READ originalPlanFileName                   NOTIFY originalPlanFileNameChanged) ///< On-disk name when last loaded/saved
+    Q_PROPERTY(bool                     planFileRenamed         READ planFileRenamed                        NOTIFY planFileRenamedChanged)   ///< true if currentPlanFileName differs from originalPlanFileName
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
@@ -92,6 +94,9 @@ public:
     Q_INVOKABLE bool saveToCurrent();
     Q_INVOKABLE bool saveToFile(const QString& filename);
     Q_INVOKABLE void saveToKml(const QString& filename);
+
+    Q_INVOKABLE bool saveWithCurrentName();                 ///< Save using the (possibly renamed) currentPlanFileName
+    Q_INVOKABLE bool resolvedPlanFileExists() const;        ///< true if a file at the renamed path already exists on disk
     Q_INVOKABLE void removeAll(void);                       ///< Removes all from controller only, synce required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void);            ///< Removes all from vehicle and controller
 
@@ -107,7 +112,10 @@ public:
     QString     fileExtension   (void) const;
     QString     kmlFileExtension(void) const;
     QString     currentPlanFile     (void) const { return _currentPlanFile; }
-    QString     currentPlanFileName (void) const { return QFileInfo(_currentPlanFile).completeBaseName(); }
+    QString     currentPlanFileName (void) const { return _currentPlanFileName; }
+    void        setCurrentPlanFileName(const QString& name);
+    QString     originalPlanFileName(void) const { return _originalPlanFileName; }
+    bool        planFileRenamed(void) const;
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
@@ -134,6 +142,9 @@ signals:
     void dirtyForUploadChanged              (bool dirtyForUpload);
     void offlineChanged                     (bool offlineEditing);
     void currentPlanFileChanged             (void);
+    void currentPlanFileNameChanged         (void);
+    void originalPlanFileNameChanged        (void);
+    void planFileRenamedChanged              (void);
     void planCreatorsChanged                (QmlObjectListModel* planCreators);
     void managerVehicleChanged              (Vehicle* managerVehicle);
     void promptForPlanUsageOnVehicleChange  (void);
@@ -157,6 +168,8 @@ private:
     void _setDirtyForSave(bool dirtyForSave);
     void _setDirtyForUpload(bool dirtyForUpload);
     void _setDirtyStates(bool dirtyForSave, bool dirtyForUpload);
+    QString _resolvedPlanFilePath() const;
+    void    _clearFileNames();
 
 #ifdef QGC_UNITTEST_BUILD
     // Used by unit tests to set dirty flags for initial state
@@ -177,6 +190,11 @@ private:
     bool                    _sendGeoFence =             false;
     bool                    _sendRallyPoints =          false;
     QString                 _currentPlanFile;
+    // NOTE: _currentPlanFileName and _originalPlanFileName must be kept in sync
+    // with _currentPlanFile across all code paths that modify any of them:
+    // loadFromFile, saveToFile, removeAll, removeAllFromVehicle, _clearFileNames.
+    QString                 _currentPlanFileName;
+    QString                 _originalPlanFileName;
     bool                    _deleteWhenSendCompleted =  false;
     bool                    _dirtyForSave =             false;
     bool                    _dirtyForUpload =           false;
