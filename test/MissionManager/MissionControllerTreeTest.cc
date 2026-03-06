@@ -52,20 +52,36 @@ void MissionControllerTreeTest::_testTreeStructureAfterInit()
     QmlObjectTreeModel* tree = _missionController->visualItemsTree();
     QVERIFY(tree);
 
-    // Root should have 3 top-level groups: Mission Items, GeoFence, Rally Points
-    QCOMPARE(tree->rowCount(), 3);
+    // Root should have all expected top-level groups
+    QCOMPARE(tree->rowCount(), kGroupCount);
 
     // Verify group node types
-    const QModelIndex missionGroup = tree->index(0, 0);
-    const QModelIndex fenceGroup   = tree->index(1, 0);
-    const QModelIndex rallyGroup   = tree->index(2, 0);
+    const QModelIndex planFileGroup = tree->index(kPlanFileGroupRow, 0);
+    const QModelIndex defaultsGroup = tree->index(kDefaultsGroupRow, 0);
+    const QModelIndex missionGroup  = tree->index(kMissionGroupRow, 0);
+    const QModelIndex fenceGroup    = tree->index(kFenceGroupRow, 0);
+    const QModelIndex rallyGroup    = tree->index(kRallyGroupRow, 0);
+    QVERIFY(planFileGroup.isValid());
+    QVERIFY(defaultsGroup.isValid());
     QVERIFY(missionGroup.isValid());
     QVERIFY(fenceGroup.isValid());
     QVERIFY(rallyGroup.isValid());
 
+    QCOMPARE(tree->data(planFileGroup, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("planFileGroup"));
+    QCOMPARE(tree->data(defaultsGroup, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("defaultsGroup"));
     QCOMPARE(tree->data(missionGroup, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("missionGroup"));
     QCOMPARE(tree->data(fenceGroup, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("fenceGroup"));
     QCOMPARE(tree->data(rallyGroup, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("rallyGroup"));
+
+    // Plan File group should have 1 child (planFileInfo marker)
+    QCOMPARE(tree->rowCount(planFileGroup), 1);
+    const QModelIndex planFileChild = tree->index(0, 0, planFileGroup);
+    QCOMPARE(tree->data(planFileChild, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("planFileInfo"));
+
+    // Defaults group should have 1 child (defaultsInfo marker)
+    QCOMPARE(tree->rowCount(defaultsGroup), 1);
+    const QModelIndex defaultsChild = tree->index(0, 0, defaultsGroup);
+    QCOMPARE(tree->data(defaultsChild, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("defaultsInfo"));
 
     // Mission group should contain 1 child (the MissionSettingsItem)
     QCOMPARE(tree->rowCount(missionGroup), 1);
@@ -90,7 +106,7 @@ void MissionControllerTreeTest::_testInsertWaypointUpdatesTree()
     _initForTest();
 
     QmlObjectTreeModel* tree = _missionController->visualItemsTree();
-    const QModelIndex missionGroup = tree->index(0, 0);
+    const QModelIndex missionGroup = tree->index(kMissionGroupRow, 0);
 
     // Before insert: 1 mission item (MissionSettingsItem)
     const int initialMissionChildren = tree->rowCount(missionGroup);
@@ -126,7 +142,7 @@ void MissionControllerTreeTest::_testRemoveWaypointUpdatesTree()
     _initForTest();
 
     QmlObjectTreeModel* tree = _missionController->visualItemsTree();
-    const QModelIndex missionGroup = tree->index(0, 0);
+    const QModelIndex missionGroup = tree->index(kMissionGroupRow, 0);
 
     // Insert 3 waypoints
     const QList<QGeoCoordinate> waypoints = Coord::waypointPath(Coord::zurich(), 3);
@@ -166,17 +182,17 @@ void MissionControllerTreeTest::_testRemoveAllRebuildsTree()
         _missionController->insertSimpleMissionItem(waypoints[i], i + 1);
     }
 
-    const QModelIndex missionGroupBefore = tree->index(0, 0);
+    const QModelIndex missionGroupBefore = tree->index(kMissionGroupRow, 0);
     QCOMPARE(tree->rowCount(missionGroupBefore), 4);
 
     // Remove all
     _missionController->removeAll();
 
-    // After removeAll, tree should still have 3 groups
-    QCOMPARE(tree->rowCount(), 3);
+    // After removeAll, tree should still have all groups
+    QCOMPARE(tree->rowCount(), kGroupCount);
 
     // Mission group should have 1 child (the new MissionSettingsItem)
-    const QModelIndex missionGroupAfter = tree->index(0, 0);
+    const QModelIndex missionGroupAfter = tree->index(kMissionGroupRow, 0);
     QCOMPARE(tree->rowCount(missionGroupAfter), 1);
 
     // That child should be the new settings item
@@ -196,9 +212,11 @@ void MissionControllerTreeTest::_testPersistentGroupIndexes()
     QmlObjectTreeModel* tree = _missionController->visualItemsTree();
 
     // Capture persistent indexes for each group
-    QPersistentModelIndex missionPersist(tree->index(0, 0));
-    QPersistentModelIndex fencePersist(tree->index(1, 0));
-    QPersistentModelIndex rallyPersist(tree->index(2, 0));
+    QPersistentModelIndex planFilePersist(tree->index(kPlanFileGroupRow, 0));
+    QPersistentModelIndex defaultsPersist(tree->index(kDefaultsGroupRow, 0));
+    QPersistentModelIndex missionPersist(tree->index(kMissionGroupRow, 0));
+    QPersistentModelIndex fencePersist(tree->index(kFenceGroupRow, 0));
+    QPersistentModelIndex rallyPersist(tree->index(kRallyGroupRow, 0));
 
     // Insert waypoints
     const QList<QGeoCoordinate> waypoints = Coord::waypointPath(Coord::zurich(), 5);
@@ -207,20 +225,26 @@ void MissionControllerTreeTest::_testPersistentGroupIndexes()
     }
 
     // All persistent indexes should still be valid
+    QVERIFY(planFilePersist.isValid());
+    QVERIFY(defaultsPersist.isValid());
     QVERIFY(missionPersist.isValid());
     QVERIFY(fencePersist.isValid());
     QVERIFY(rallyPersist.isValid());
 
     // They should still be at the same rows (group structure didn't change)
-    QCOMPARE(missionPersist.row(), 0);
-    QCOMPARE(fencePersist.row(), 1);
-    QCOMPARE(rallyPersist.row(), 2);
+    QCOMPARE(planFilePersist.row(), kPlanFileGroupRow);
+    QCOMPARE(defaultsPersist.row(), kDefaultsGroupRow);
+    QCOMPARE(missionPersist.row(), kMissionGroupRow);
+    QCOMPARE(fencePersist.row(), kFenceGroupRow);
+    QCOMPARE(rallyPersist.row(), kRallyGroupRow);
 
     // Remove some waypoints
     _missionController->removeVisualItem(3);
     _missionController->removeVisualItem(2);
 
     // Persistent indexes should still be valid
+    QVERIFY(planFilePersist.isValid());
+    QVERIFY(defaultsPersist.isValid());
     QVERIFY(missionPersist.isValid());
     QVERIFY(fencePersist.isValid());
     QVERIFY(rallyPersist.isValid());
@@ -241,14 +265,14 @@ void MissionControllerTreeTest::_testRecalcChildItemsNoCrash()
     }
 
     QmlObjectTreeModel* tree = _missionController->visualItemsTree();
-    const QModelIndex missionGroup = tree->index(0, 0);
+    const QModelIndex missionGroup = tree->index(kMissionGroupRow, 0);
 
     // Tree should be consistent — recalcChildItems happens automatically during insert
     QCOMPARE(tree->rowCount(missionGroup), _missionController->visualItems()->count());
 
     // Verify no crash and tree is still functional
     QVERIFY(tree->index(0, 0, missionGroup).isValid());
-    QCOMPARE(tree->rowCount(), 3); // 3 groups
+    QCOMPARE(tree->rowCount(), kGroupCount);
 }
 
 #include "UnitTest.h"
