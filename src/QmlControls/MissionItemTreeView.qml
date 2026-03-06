@@ -57,6 +57,33 @@ TreeView {
         }
     }
 
+    // Public API: select a layer and expand its group (no toggle — always selects).
+    function selectLayer(nodeType) {
+        root.collapseRecursively()
+
+        let targetRow = -1
+        switch (nodeType) {
+        case "missionGroup":
+            targetRow = _rowMission
+            _editingLayer = _layerMission
+            break
+        case "fenceGroup":
+            targetRow = _rowFence
+            _editingLayer = _layerFence
+            break
+        case "rallyGroup":
+            targetRow = _rowRally
+            _editingLayer = _layerRally
+            break
+        }
+
+        if (targetRow >= 0) {
+            root.expand(targetRow)
+            root.forceLayout()
+            root.positionViewAtRow(targetRow, Qt.AlignTop)
+        }
+    }
+
     // Switching editing layer on group expand — exclusive: only one group expanded at a time.
     // Clicking an already-expanded group collapses it (toggle behavior).
     function _expandExclusive(clickedNodeType) {
