@@ -103,6 +103,7 @@ OptionOutput("Enable Qt video backend               " QGC_ENABLE_QT_VIDEOSTREAMI
 OptionOutput("Disable APM MAVLink dialect           " QGC_DISABLE_APM_MAVLINK)
 OptionOutput("Disable APM plugin                    " QGC_DISABLE_APM_PLUGIN)
 OptionOutput("Disable PX4 plugin                    " QGC_DISABLE_PX4_PLUGIN)
+OptionOutput("Enable MAVLink FTP log download        " QGC_ENABLE_MAVFTP_LOG_DOWNLOAD)
 OptionOutput("Enable code coverage                  " QGC_ENABLE_COVERAGE)
 OptionOutput("Enable AddressSanitizer               " QGC_ENABLE_ASAN)
 OptionOutput("Enable UndefinedBehaviorSanitizer     " QGC_ENABLE_UBSAN)
