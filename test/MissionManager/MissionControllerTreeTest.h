@@ -3,8 +3,7 @@
 #include <memory>
 
 #include "MissionControllerManagerTest.h"
-
-class MissionController;
+#include "MissionController.h"
 class PlanMasterController;
 
 /// Tests for the MissionController incremental tree model sync (PlanTreeView branch).
@@ -40,6 +39,14 @@ private slots:
 
 private:
     void _initForTest();
+
+    // Use canonical constants from MissionController
+    static constexpr int kPlanFileGroupRow = MissionController::kPlanFileGroupRow;
+    static constexpr int kDefaultsGroupRow = MissionController::kDefaultsGroupRow;
+    static constexpr int kMissionGroupRow  = MissionController::kMissionGroupRow;
+    static constexpr int kFenceGroupRow    = MissionController::kFenceGroupRow;
+    static constexpr int kRallyGroupRow    = MissionController::kRallyGroupRow;
+    static constexpr int kGroupCount       = MissionController::kGroupCount;
 
     std::unique_ptr<PlanMasterController> _masterController;
     MissionController* _missionController = nullptr;
