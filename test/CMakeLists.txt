@@ -150,6 +150,7 @@ add_qgc_test(MissionCommandTreeEditorTest LABELS Unit MissionManager TIMEOUT ${Q
 add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)
 add_qgc_test(MissionControllerManagerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
 add_qgc_test(MissionControllerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
+add_qgc_test(MissionControllerTreeTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
 add_qgc_test(MissionItemTest LABELS Unit MissionManager)
 add_qgc_test(MissionManagerTest LABELS Integration MissionManager SERIAL)
 add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)
@@ -180,7 +181,10 @@ add_qgc_test(UrlFactoryTest LABELS Unit)
 # QmlControls
 # ----------------------------------------------------------------------------
 add_subdirectory(QmlControls)
+add_qgc_test(ObjectItemModelBaseTest LABELS Unit)
+add_qgc_test(ObjectListModelBaseTest LABELS Unit)
 add_qgc_test(QmlObjectListModelTest LABELS Unit)
+add_qgc_test(QmlObjectTreeModelTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
 # Terrain
