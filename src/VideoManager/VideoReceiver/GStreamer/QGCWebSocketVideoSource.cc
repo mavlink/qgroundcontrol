@@ -40,23 +40,11 @@ void QGCWebSocketVideoSource::start()
 
     qCDebug(QGCWebSocketVideoSourceLog) << "Starting WebSocket connection to" << _url.toString();
 
-    _webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
-
-    (void) connect(_webSocket, &QWebSocket::connected, this, &QGCWebSocketVideoSource::_onConnected);
-    (void) connect(_webSocket, &QWebSocket::disconnected, this, &QGCWebSocketVideoSource::_onDisconnected);
-    (void) connect(_webSocket, &QWebSocket::binaryMessageReceived, this, &QGCWebSocketVideoSource::_onBinaryMessageReceived);
-    (void) connect(_webSocket, &QWebSocket::textMessageReceived, this, &QGCWebSocketVideoSource::_onTextMessageReceived);
-    (void) connect(_webSocket, &QWebSocket::errorOccurred, this, &QGCWebSocketVideoSource::_onError);
-    (void) connect(_webSocket, &QWebSocket::sslErrors, this, &QGCWebSocketVideoSource::_onSslErrors);
-
     (void) connect(&_heartbeatTimer, &QTimer::timeout, this, &QGCWebSocketVideoSource::_sendHeartbeat);
     (void) connect(&_connectionTimeoutTimer, &QTimer::timeout, this, &QGCWebSocketVideoSource::_checkConnectionTimeout);
     (void) connect(&_reconnectTimer, &QTimer::timeout, this, &QGCWebSocketVideoSource::_reconnect);
 
-    _connectionTimeoutTimer.setSingleShot(true);
-    _connectionTimeoutTimer.start(_timeoutSec * 1000);
-
-    _webSocket->open(_url);
+    _createAndConnectWebSocket();
 }
 
 void QGCWebSocketVideoSource::stop()
@@ -113,7 +101,6 @@ void QGCWebSocketVideoSource::_onDisconnected()
 
     _connected = false;
     _heartbeatTimer.stop();
-    _expectingBinaryFrame = false;
 
     emit disconnected();
 
@@ -126,21 +113,22 @@ void QGCWebSocketVideoSource::_onDisconnected()
 
 void QGCWebSocketVideoSource::_onBinaryMessageReceived(const QByteArray &message)
 {
-    if (message.isEmpty()) {
+    if (message.size() < 2) {
+        return;
+    }
+
+    if (static_cast<uint8_t>(message[0]) != 0xFF ||
+        static_cast<uint8_t>(message[1]) != 0xD8) {
+        qCDebug(QGCWebSocketVideoSourceLog) << "Ignoring non-JPEG binary message, size:" << message.size();
         return;
     }
 
     _pushFrameToAppsrc(message);
-    _expectingBinaryFrame = false;
 }
 
 void QGCWebSocketVideoSource::_onTextMessageReceived(const QString &message)
 {
-    // Text messages are JSON metadata from PixEagle-compatible servers
-    // Format: {"type":"frame","size":N,"quality":Q}
-    if (message.contains(QStringLiteral("frame"))) {
-        _expectingBinaryFrame = true;
-    }
+    qCDebug(QGCWebSocketVideoSourceLog) << "Metadata:" << message;
 }
 
 void QGCWebSocketVideoSource::_onError()
@@ -190,7 +178,11 @@ void QGCWebSocketVideoSource::_reconnect()
     qCDebug(QGCWebSocketVideoSourceLog) << "Reconnecting to" << _url.toString();
 
     _cleanupWebSocket();
+    _createAndConnectWebSocket();
+}
 
+void QGCWebSocketVideoSource::_createAndConnectWebSocket()
+{
     _webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
 
     (void) connect(_webSocket, &QWebSocket::connected, this, &QGCWebSocketVideoSource::_onConnected);
@@ -228,9 +220,9 @@ void QGCWebSocketVideoSource::_pushFrameToAppsrc(const QByteArray &jpegData)
         return;
     }
 
-    GST_BUFFER_PTS(buffer) = gst_util_uint64_scale(_framesReceived, GST_SECOND, 30);
-    GST_BUFFER_DTS(buffer) = GST_BUFFER_PTS(buffer);
-    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 30);
+    GST_BUFFER_PTS(buffer) = GST_CLOCK_TIME_NONE;
+    GST_BUFFER_DTS(buffer) = GST_CLOCK_TIME_NONE;
+    GST_BUFFER_DURATION(buffer) = GST_CLOCK_TIME_NONE;
 
     const GstFlowReturn ret = gst_app_src_push_buffer(GST_APP_SRC(_appsrc), buffer);
     if (ret != GST_FLOW_OK) {
@@ -243,7 +235,6 @@ void QGCWebSocketVideoSource::_pushFrameToAppsrc(const QByteArray &jpegData)
 void QGCWebSocketVideoSource::_cleanupWebSocket()
 {
     _connected = false;
-    _expectingBinaryFrame = false;
 
     if (_webSocket) {
         _webSocket->disconnect(this);

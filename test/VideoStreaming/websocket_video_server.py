@@ -13,6 +13,7 @@ Default: ws://0.0.0.0:5078/ws/video_feed
 
 import argparse
 import asyncio
+import functools
 import json
 import time
 import math
@@ -52,11 +53,10 @@ def generate_test_frame(width, height, frame_number, fps):
     return frame
 
 
-async def video_handler(websocket):
+async def video_handler(websocket, fps=30):
     """Handle a single WebSocket video client."""
     print(f"Client connected: {websocket.remote_address}")
     frame_number = 0
-    fps = 30
     quality = 85
     frame_interval = 1.0 / fps
 
@@ -92,9 +92,10 @@ async def video_handler(websocket):
         print(f"Client disconnected: {websocket.remote_address}")
 
 
-async def main(port):
-    print(f"Starting WebSocket video server on ws://0.0.0.0:{port}/ws/video_feed")
-    async with websockets.serve(video_handler, "0.0.0.0", port):
+async def main(port, fps):
+    handler = functools.partial(video_handler, fps=fps)
+    print(f"Starting WebSocket video server on ws://0.0.0.0:{port}/ws/video_feed ({fps} FPS)")
+    async with websockets.serve(handler, "0.0.0.0", port):
         await asyncio.Future()
 
 
@@ -104,4 +105,4 @@ if __name__ == '__main__':
     parser.add_argument('--fps', type=int, default=30, help='Frames per second (default: 30)')
     args = parser.parse_args()
 
-    asyncio.run(main(args.port))
+    asyncio.run(main(args.port, args.fps))

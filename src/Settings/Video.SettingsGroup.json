@@ -58,28 +58,11 @@
     "default":     3
 },
 {
-    "name":             "httpBufferSize",
-    "shortDesc": "HTTP Buffer Size",
-    "longDesc":  "Size of HTTP read buffer in bytes. Larger values may improve throughput on high-bandwidth connections.",
-    "type":             "uint32",
-    "min":              1024,
-    "max":              1048576,
-    "units":            "bytes",
-    "default":     32768
-},
-{
     "name":             "httpKeepAlive",
     "shortDesc": "HTTP Keep-Alive",
     "longDesc":  "Enable HTTP keep-alive for persistent connections. Recommended for better performance.",
     "type":             "bool",
     "default":     true
-},
-{
-    "name":             "httpUserAgent",
-    "shortDesc": "HTTP User Agent",
-    "longDesc":  "User-Agent string sent with HTTP requests. Used for server-side logging and identification.",
-    "type":             "string",
-    "default":     "QGroundControl/4.x"
 },
 {
     "name":             "websocketUrl",
@@ -117,42 +100,6 @@
     "max":              30000,
     "units":            "ms",
     "default":     5000
-},
-{
-    "name":             "adaptiveQuality",
-    "shortDesc": "Enable Adaptive Quality",
-    "longDesc":  "Automatically adjust video quality based on network conditions. Only applies to WebSocket streams.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "minQuality",
-    "shortDesc": "Minimum Video Quality",
-    "longDesc":  "Minimum JPEG quality percentage for adaptive quality control.",
-    "type":             "uint32",
-    "min":              1,
-    "max":              100,
-    "units":            "%",
-    "default":     60
-},
-{
-    "name":             "maxQuality",
-    "shortDesc": "Maximum Video Quality",
-    "longDesc":  "Maximum JPEG quality percentage for adaptive quality control.",
-    "type":             "uint32",
-    "min":              1,
-    "max":              100,
-    "units":            "%",
-    "default":     95
-},
-{
-    "name":             "websocketBufferFrames",
-    "shortDesc": "WebSocket Buffer Frames",
-    "longDesc":  "Number of frames to buffer in WebSocket receive queue. Lower values reduce latency, higher values improve stability.",
-    "type":             "uint32",
-    "min":              1,
-    "max":              10,
-    "default":     3
 },
 {
     "name":             "videoSavePath",

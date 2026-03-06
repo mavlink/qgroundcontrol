@@ -50,6 +50,7 @@ GstVideoReceiver::~GstVideoReceiver()
 void GstVideoReceiver::start(uint32_t timeout)
 {
     if (_needDispatch()) {
+        _captureStreamSettings();
         _worker->dispatch([this, timeout]() { start(timeout); });
         return;
     }
@@ -138,8 +139,6 @@ void GstVideoReceiver::start(uint32_t timeout)
         g_object_set(_pipeline,
                      "message-forward", TRUE,
                      nullptr);
-
-        _captureStreamSettings();
 
         _source = _makeSource(_uri);
         if (!_source) {
@@ -967,13 +966,17 @@ GstElement *GstVideoReceiver::_makeWebSocketSource(const QString &uri)
     g_object_set_data_full(G_OBJECT(bin), "ws-source", _wsSource,
         +[](gpointer data) {
             auto *wsSource = static_cast<QGCWebSocketVideoSource *>(data);
-            QMetaObject::invokeMethod(wsSource, &QGCWebSocketVideoSource::stop, Qt::QueuedConnection);
-            wsSource->deleteLater();
+            QMetaObject::invokeMethod(wsSource, [wsSource]() {
+                wsSource->stop();
+                wsSource->deleteLater();
+            }, Qt::QueuedConnection);
         });
 
-    gst_object_unref(appsrc);
-
     QMetaObject::invokeMethod(_wsSource, &QGCWebSocketVideoSource::start, Qt::QueuedConnection);
+
+    _wsSource = nullptr;
+
+    gst_object_unref(appsrc);
 
     return bin;
 }
@@ -985,9 +988,7 @@ void GstVideoReceiver::_captureStreamSettings()
 
     _httpSettings.timeout = settings->httpTimeout()->rawValue().toUInt();
     _httpSettings.retryAttempts = settings->httpRetryAttempts()->rawValue().toUInt();
-    _httpSettings.bufferSize = settings->httpBufferSize()->rawValue().toUInt();
     _httpSettings.keepAlive = settings->httpKeepAlive()->rawValue().toBool();
-    _httpSettings.userAgent = settings->httpUserAgent()->rawValue().toString();
 
     _wsSettings.timeout = settings->websocketTimeout()->rawValue().toUInt();
     _wsSettings.reconnectDelay = settings->websocketReconnectDelay()->rawValue().toUInt();

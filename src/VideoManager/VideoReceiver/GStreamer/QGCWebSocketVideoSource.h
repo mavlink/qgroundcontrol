@@ -1,10 +1,14 @@
 #pragma once
 
+#include <QtCore/QAtomicInt>
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
-#include <QtCore/QAtomicInt>
+#include <QtNetwork/QSslError>
 
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
@@ -46,6 +50,7 @@ private slots:
     void _reconnect();
 
 private:
+    void _createAndConnectWebSocket();
     void _pushFrameToAppsrc(const QByteArray &jpegData);
     void _cleanupWebSocket();
 
@@ -65,7 +70,4 @@ private:
     bool _running = false;
     bool _connected = false;
     uint64_t _framesReceived = 0;
-
-    bool _expectingBinaryFrame = false;
-    int _expectedFrameSize = 0;
 };
