@@ -14,6 +14,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         MissionCommandTreeTest.cc MissionCommandTreeTest.h
         MissionControllerManagerTest.cc MissionControllerManagerTest.h
         MissionControllerTest.cc MissionControllerTest.h
+        MissionControllerTreeTest.cc MissionControllerTreeTest.h
         MissionItemTest.cc MissionItemTest.h
         MissionManagerTest.cc MissionManagerTest.h
         MissionSettingsTest.cc MissionSettingsTest.h
