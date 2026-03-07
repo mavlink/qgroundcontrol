@@ -109,6 +109,7 @@ private:
     QString _armStatusError;
     bool    _commsGood;
     bool    _gcsGPSGood;
+    QString _gcsGPSError;
     bool    _basicIDGood;
     bool    _GCSBasicIDValid;
     bool    _operatorIDGood;
