@@ -81,4 +81,10 @@ private slots:
 
     // Null object edge case
     void _insertNullObject();
+
+    // Destructor safe when external objects outlive the model
+    void _destructorSafeWithExternalObjects();
+
+    // Destructor safe when objects destroyed before the model
+    void _destructorSafeWithDestroyedObjects();
 };

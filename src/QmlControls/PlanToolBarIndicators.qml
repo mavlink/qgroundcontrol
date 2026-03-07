@@ -10,6 +10,7 @@ import QGroundControl.FactControls
 // Toolbar for Plan View
 RowLayout {
     required property var planMasterController
+    property bool showRallyPointsHelp: false
 
     id: root
     spacing: ScreenTools.defaultFontPixelWidth
@@ -154,6 +155,12 @@ RowLayout {
             var dropPanel = hamburgerDropPanelComponent.createObject(mainWindow, { clickRect: Qt.rect(position.x, position.y, 0, 0) })
             dropPanel.open()
         }
+    }
+
+    QGCLabel {
+        text:    qsTr("Click in map to add rally points")
+        visible: root.showRallyPointsHelp
+        Layout.alignment: Qt.AlignVCenter
     }
 
     Component {

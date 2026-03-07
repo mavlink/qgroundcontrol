@@ -5,6 +5,7 @@
 #include "MissionSettingsItem.h"
 #include "PlanMasterController.h"
 #include "QmlObjectTreeModel.h"
+#include "RallyPointController.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "TestFixtures.h"
@@ -273,6 +274,99 @@ void MissionControllerTreeTest::_testRecalcChildItemsNoCrash()
     // Verify no crash and tree is still functional
     QVERIFY(tree->index(0, 0, missionGroup).isValid());
     QCOMPARE(tree->rowCount(), kGroupCount);
+}
+
+// ===========================================================================
+// Exposed Q_PROPERTY persistent index getters match tree model indices
+// ===========================================================================
+
+void MissionControllerTreeTest::_testExposedPersistentIndexGettersMatchTree()
+{
+    _initForTest();
+
+    QmlObjectTreeModel* tree = _missionController->visualItemsTree();
+
+    QCOMPARE(QModelIndex(_missionController->planFileGroupIndex()), tree->index(kPlanFileGroupRow, 0));
+    QCOMPARE(QModelIndex(_missionController->defaultsGroupIndex()), tree->index(kDefaultsGroupRow, 0));
+    QCOMPARE(QModelIndex(_missionController->missionGroupIndex()),  tree->index(kMissionGroupRow, 0));
+    QCOMPARE(QModelIndex(_missionController->fenceGroupIndex()),    tree->index(kFenceGroupRow, 0));
+    QCOMPARE(QModelIndex(_missionController->rallyGroupIndex()),    tree->index(kRallyGroupRow, 0));
+}
+
+// ===========================================================================
+// Exposed persistent indexes survive removeAll rebuild
+// ===========================================================================
+
+void MissionControllerTreeTest::_testExposedIndexesSurviveRemoveAll()
+{
+    _initForTest();
+
+    // Insert some waypoints then removeAll to trigger tree rebuild
+    const QList<QGeoCoordinate> waypoints = Coord::waypointPath(Coord::zurich(), 3);
+    for (int i = 0; i < waypoints.count(); ++i) {
+        _missionController->insertSimpleMissionItem(waypoints[i], i + 1);
+    }
+
+    _missionController->removeAll();
+
+    // The CONSTANT Q_PROPERTY persistent indexes must still be valid
+    QVERIFY(_missionController->planFileGroupIndex().isValid());
+    QVERIFY(_missionController->defaultsGroupIndex().isValid());
+    QVERIFY(_missionController->missionGroupIndex().isValid());
+    QVERIFY(_missionController->fenceGroupIndex().isValid());
+    QVERIFY(_missionController->rallyGroupIndex().isValid());
+
+    // They should still point to the correct rows
+    QCOMPARE(_missionController->planFileGroupIndex().row(), kPlanFileGroupRow);
+    QCOMPARE(_missionController->defaultsGroupIndex().row(), kDefaultsGroupRow);
+    QCOMPARE(_missionController->missionGroupIndex().row(),  kMissionGroupRow);
+    QCOMPARE(_missionController->fenceGroupIndex().row(),    kFenceGroupRow);
+    QCOMPARE(_missionController->rallyGroupIndex().row(),    kRallyGroupRow);
+}
+
+// ===========================================================================
+// Rally header appears when no points, disappears when points added, reappears when removed
+// ===========================================================================
+
+void MissionControllerTreeTest::_testRallyHeaderDynamicVisibility()
+{
+    _initForTest();
+
+    QmlObjectTreeModel* tree = _missionController->visualItemsTree();
+    const QPersistentModelIndex rallyGroup(_missionController->rallyGroupIndex());
+    auto* rallyController = _masterController->rallyPointController();
+    QVERIFY(rallyController);
+
+    // Initially: rally group has 1 child — the header marker
+    QCOMPARE(tree->rowCount(rallyGroup), 1);
+    QCOMPARE(tree->data(tree->index(0, 0, rallyGroup), QmlObjectTreeModel::NodeTypeRole).toString(),
+             QStringLiteral("rallyHeader"));
+
+    // Add a rally point → header removed, replaced by rallyItem
+    rallyController->addPoint(QGeoCoordinate(47.3977, 8.5456));
+    QCOMPARE(tree->rowCount(rallyGroup), 1);
+    QCOMPARE(tree->data(tree->index(0, 0, rallyGroup), QmlObjectTreeModel::NodeTypeRole).toString(),
+             QStringLiteral("rallyItem"));
+
+    // Add a second rally point
+    rallyController->addPoint(QGeoCoordinate(47.3980, 8.5460));
+    QCOMPARE(tree->rowCount(rallyGroup), 2);
+    QCOMPARE(tree->data(tree->index(0, 0, rallyGroup), QmlObjectTreeModel::NodeTypeRole).toString(),
+             QStringLiteral("rallyItem"));
+    QCOMPARE(tree->data(tree->index(1, 0, rallyGroup), QmlObjectTreeModel::NodeTypeRole).toString(),
+             QStringLiteral("rallyItem"));
+
+    // Remove the first rally point — still 1 rallyItem, no header
+    rallyController->removePoint(rallyController->points()->get(0));
+    QCOMPARE(tree->rowCount(rallyGroup), 1);
+    QCOMPARE(tree->data(tree->index(0, 0, rallyGroup), QmlObjectTreeModel::NodeTypeRole).toString(),
+             QStringLiteral("rallyItem"));
+
+    // Remove the last rally point → header marker reappears
+    rallyController->removePoint(rallyController->points()->get(0));
+    QCOMPARE(tree->rowCount(rallyGroup), 1);
+    QCOMPARE(tree->data(tree->index(0, 0, rallyGroup), QmlObjectTreeModel::NodeTypeRole).toString(),
+             QStringLiteral("rallyHeader"));
 }
 
 #include "UnitTest.h"
