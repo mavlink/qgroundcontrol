@@ -68,6 +68,7 @@ class TerrainAtCoordinateQuery;
 class TerrainProtocolHandler;
 class TrajectoryPoints;
 class VehicleObjectAvoidance;
+class VehicleSupports;
 
 namespace events {
 namespace parser {
@@ -91,6 +92,7 @@ class Vehicle : public VehicleFactGroup
     Q_MOC_INCLUDE("Actuators.h")
     Q_MOC_INCLUDE("MAVLinkLogManager.h")
     Q_MOC_INCLUDE("LinkInterface.h")
+    Q_MOC_INCLUDE("VehicleSupports.h")
 
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
@@ -159,11 +161,7 @@ public:
     Q_PROPERTY(bool                 vtol                        READ vtol                                                           NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 rover                       READ rover                                                          NOTIFY vehicleTypeChanged)
     Q_PROPERTY(bool                 sub                         READ sub                                                            NOTIFY vehicleTypeChanged)
-    Q_PROPERTY(bool        supportsThrottleModeCenterZero       READ supportsThrottleModeCenterZero                                 CONSTANT)
-    Q_PROPERTY(bool                supportsNegativeThrust       READ supportsNegativeThrust                                         CONSTANT)
-    Q_PROPERTY(bool                 supportsJSButton            READ supportsJSButton                                               CONSTANT)
-    Q_PROPERTY(bool                 supportsRadio               READ supportsRadio                                                  CONSTANT)
-    Q_PROPERTY(bool               supportsMotorInterference     READ supportsMotorInterference                                      CONSTANT)
+    Q_PROPERTY(VehicleSupports*     supports                    READ supports                                                       CONSTANT)
     Q_PROPERTY(QString              prearmError                 READ prearmError                WRITE setPrearmError                NOTIFY prearmErrorChanged)
     Q_PROPERTY(int                  motorCount                  READ motorCount                                                     CONSTANT)
     Q_PROPERTY(bool                 coaxialMotors               READ coaxialMotors                                                  CONSTANT)
@@ -179,7 +177,6 @@ public:
     Q_PROPERTY(QString              pauseFlightMode             READ pauseFlightMode                                                CONSTANT)
     Q_PROPERTY(QString              rtlFlightMode               READ rtlFlightMode                                                  CONSTANT)
     Q_PROPERTY(QString              smartRTLFlightMode          READ smartRTLFlightMode                                             CONSTANT)
-    Q_PROPERTY(bool                 supportsSmartRTL            READ supportsSmartRTL                                               CONSTANT)
     Q_PROPERTY(QString              landFlightMode              READ landFlightMode                                                 CONSTANT)
     Q_PROPERTY(QString              takeControlFlightMode       READ takeControlFlightMode                                          CONSTANT)
     Q_PROPERTY(QString              followFlightMode            READ followFlightMode                                               CONSTANT)
@@ -201,7 +198,6 @@ public:
     Q_PROPERTY(QString              hobbsMeter                  READ hobbsMeter                                                     NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 inFwdFlight                 READ inFwdFlight                                                    NOTIFY inFwdFlightChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight             READ vtolInFwdFlight            WRITE setVtolInFwdFlight            NOTIFY vtolInFwdFlightChanged)
-    Q_PROPERTY(bool                 supportsTerrainFrame        READ supportsTerrainFrame                                           NOTIFY firmwareTypeChanged)
     Q_PROPERTY(quint64              mavlinkSentCount            READ mavlinkSentCount                                               NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkReceivedCount        READ mavlinkReceivedCount                                           NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkLossCount            READ mavlinkLossCount                                               NOTIFY mavlinkStatusChanged)
@@ -226,13 +222,6 @@ public:
     Q_PROPERTY(bool     flying                  READ flying                                         NOTIFY flyingChanged)       ///< Vehicle is flying
     Q_PROPERTY(bool     landing                 READ landing                                        NOTIFY landingChanged)      ///< Vehicle is in landing pattern (DO_LAND_START)
     Q_PROPERTY(bool     guidedMode              READ guidedMode                 WRITE setGuidedMode NOTIFY guidedModeChanged)   ///< Vehicle is in Guided mode and can respond to guided commands
-    Q_PROPERTY(bool     guidedModeSupported     READ guidedModeSupported                            CONSTANT)                   ///< Guided mode commands are supported by this vehicle
-    Q_PROPERTY(bool     pauseVehicleSupported   READ pauseVehicleSupported                          CONSTANT)                   ///< Pause vehicle command is supported
-    Q_PROPERTY(bool     orbitModeSupported      READ orbitModeSupported                             CONSTANT)                   ///< Orbit mode is supported by this vehicle
-    Q_PROPERTY(bool     roiModeSupported        READ roiModeSupported                               CONSTANT)                   ///< Orbit mode is supported by this vehicle
-    Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Takeoff supported
-    Q_PROPERTY(bool     guidedTakeoffSupported  READ guidedTakeoffSupported                         CONSTANT)                   ///< Guided takeoff supported
-    Q_PROPERTY(bool     changeHeadingSupported  READ changeHeadingSupported                         CONSTANT)                   ///< Change Heading supported
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
     Q_PROPERTY(bool     haveMRSpeedLimits       READ haveMRSpeedLimits                              NOTIFY haveMRSpeedLimChanged)
     Q_PROPERTY(bool     haveFWSpeedLimits       READ haveFWSpeedLimits                              NOTIFY haveFWSpeedLimChanged)
@@ -411,14 +400,9 @@ public:
     Q_INVOKABLE QVariant expandedToolbarIndicatorSource(const QString& indicatorName);
 
     bool    isInitialConnectComplete() const;
-    bool    guidedModeSupported     () const;
-    bool    pauseVehicleSupported   () const;
-    bool    orbitModeSupported      () const;
-    bool    roiModeSupported        () const;
-    bool    takeoffVehicleSupported () const;
-    bool    guidedTakeoffSupported  () const;
-    bool    changeHeadingSupported  () const;
     QString gotoFlightMode          () const;
+
+    VehicleSupports* supports() { return _vehicleSupports; }
     bool    hasGripper              () const;
     bool haveMRSpeedLimits() const { return _multirotor_speed_limits_available; }
     bool haveFWSpeedLimits() const { return _fixed_wing_airspeed_limits_available; }
@@ -482,12 +466,7 @@ public:
     bool sub() const;
     bool spacecraft() const;
 
-    bool supportsThrottleModeCenterZero () const;
-    bool supportsNegativeThrust         ();
-    bool supportsRadio                  () const;
-    bool supportsJSButton               () const;
-    bool supportsMotorInterference      () const;
-    bool supportsTerrainFrame           () const;
+
 
     void setGuidedMode(bool guidedMode);
 
@@ -537,7 +516,6 @@ public:
     QString         pauseFlightMode             () const;
     QString         rtlFlightMode               () const;
     QString         smartRTLFlightMode          () const;
-    bool            supportsSmartRTL            () const;
     QString         landFlightMode              () const;
     QString         takeControlFlightMode       () const;
     QString         followFlightMode            () const;
@@ -1050,6 +1028,7 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
     Autotune*                       _autotune                       = nullptr;
     GimbalController*               _gimbalController               = nullptr;
+    VehicleSupports*                _vehicleSupports                = nullptr;
 
     bool    _armed = false;         ///< true: vehicle is armed
     uint8_t _base_mode = 0;     ///< base_mode from HEARTBEAT

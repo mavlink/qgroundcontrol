@@ -1,5 +1,6 @@
 #include "Vehicle.h"
 #include "Actuators.h"
+#include "VehicleSupports.h"
 #include "ADSBVehicleManager.h"
 #include "AudioOutput.h"
 #include "AutoPilotPlugin.h"
@@ -342,6 +343,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     }
 
     _gimbalController = new GimbalController(this);
+    _vehicleSupports = new VehicleSupports(this);
 
     _createCameraManager();
 }
@@ -1869,36 +1871,6 @@ bool Vehicle::vtol() const
     return QGCMAVLink::isVTOL(vehicleType());
 }
 
-bool Vehicle::supportsThrottleModeCenterZero() const
-{
-    return _firmwarePlugin->supportsThrottleModeCenterZero();
-}
-
-bool Vehicle::supportsNegativeThrust()
-{
-    return _firmwarePlugin->supportsNegativeThrust(this);
-}
-
-bool Vehicle::supportsRadio() const
-{
-    return _firmwarePlugin->supportsRadio();
-}
-
-bool Vehicle::supportsJSButton() const
-{
-    return _firmwarePlugin->supportsJSButton();
-}
-
-bool Vehicle::supportsMotorInterference() const
-{
-    return _firmwarePlugin->supportsMotorInterference();
-}
-
-bool Vehicle::supportsTerrainFrame() const
-{
-    return !px4Firmware();
-}
-
 QString Vehicle::vehicleTypeString() const
 {
     return QGCMAVLink::mavTypeToString(_vehicleType);
@@ -1951,41 +1923,6 @@ void Vehicle::_setLanding(bool landing)
     }
 }
 
-bool Vehicle::guidedModeSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::GuidedModeCapability);
-}
-
-bool Vehicle::pauseVehicleSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::PauseVehicleCapability);
-}
-
-bool Vehicle::orbitModeSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::OrbitModeCapability);
-}
-
-bool Vehicle::roiModeSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::ROIModeCapability);
-}
-
-bool Vehicle::takeoffVehicleSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
-}
-
-bool Vehicle::guidedTakeoffSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::GuidedTakeoffCapability);
-}
-
-bool Vehicle::changeHeadingSupported() const
-{
-    return _firmwarePlugin->isCapable(this, FirmwarePlugin::ChangeHeadingCapability);
-}
-
 QString Vehicle::gotoFlightMode() const
 {
     return _firmwarePlugin->gotoFlightMode();
@@ -1993,7 +1930,7 @@ QString Vehicle::gotoFlightMode() const
 
 void Vehicle::guidedModeRTL(bool smartRTL)
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2002,7 +1939,7 @@ void Vehicle::guidedModeRTL(bool smartRTL)
 
 void Vehicle::guidedModeLand()
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2011,7 +1948,7 @@ void Vehicle::guidedModeLand()
 
 void Vehicle::guidedModeTakeoff(double altitudeRelative)
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2058,7 +1995,7 @@ void Vehicle::startMission()
 
 void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius)
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2075,7 +2012,7 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord, double for
 
 void Vehicle::guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle)
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2085,7 +2022,7 @@ void Vehicle::guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle)
 void
 Vehicle::guidedModeChangeGroundSpeedMetersSecond(double groundspeed)
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2095,7 +2032,7 @@ Vehicle::guidedModeChangeGroundSpeedMetersSecond(double groundspeed)
 void
 Vehicle::guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed)
 {
-    if (!guidedModeSupported()) {
+    if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
@@ -2104,7 +2041,7 @@ Vehicle::guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed)
 
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)
 {
-    if (!orbitModeSupported()) {
+    if (!_vehicleSupports->orbitMode()) {
         qgcApp()->showAppMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
         return;
     }
@@ -2139,7 +2076,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
     if (!centerCoord.isValid()) {
         return;
     }
-    if (!roiModeSupported()) {
+    if (!_vehicleSupports->roiMode()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
     }
@@ -2228,7 +2165,7 @@ void Vehicle::_sendROICommand(const QGeoCoordinate& coord, MAV_FRAME frame, floa
 
 void Vehicle::stopGuidedModeROI()
 {
-    if (!roiModeSupported()) {
+    if (!_vehicleSupports->roiMode()) {
         qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
     }
@@ -2262,7 +2199,7 @@ void Vehicle::stopGuidedModeROI()
 
 void Vehicle::guidedModeChangeHeading(const QGeoCoordinate &headingCoord)
 {
-    if (!changeHeadingSupported()) {
+    if (!_vehicleSupports->changeHeading()) {
         qgcApp()->showAppMessage(tr("Change Heading not supported by Vehicle."));
         return;
     }
@@ -2272,7 +2209,7 @@ void Vehicle::guidedModeChangeHeading(const QGeoCoordinate &headingCoord)
 
 void Vehicle::pauseVehicle()
 {
-    if (!pauseVehicleSupported()) {
+    if (!_vehicleSupports->pauseVehicle()) {
         qgcApp()->showAppMessage(QStringLiteral("Pause not supported by vehicle."));
         return;
     }
@@ -3514,11 +3451,6 @@ QString Vehicle::rtlFlightMode() const
 QString Vehicle::smartRTLFlightMode() const
 {
     return _firmwarePlugin->smartRTLFlightMode();
-}
-
-bool Vehicle::supportsSmartRTL() const
-{
-    return _firmwarePlugin->supportsSmartRTL();
 }
 
 QString Vehicle::landFlightMode() const

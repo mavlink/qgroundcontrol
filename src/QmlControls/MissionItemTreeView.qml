@@ -315,7 +315,7 @@ TreeView {
                 Connections {
                     target: defaultsRect._controllerVehicle
                     function onFirmwareTypeChanged() {
-                        if (!defaultsRect._controllerVehicle.supportsTerrainFrame
+                        if (!defaultsRect._controllerVehicle.supports.terrainFrame
                                 && defaultsRect._missionController.globalAltitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
                             defaultsRect._missionController.globalAltitudeMode = QGroundControl.AltitudeModeCalcAboveTerrain
                         }
@@ -345,7 +345,7 @@ TreeView {
                         onClicked: {
                             let removeModes = []
                             let updateFunction = function(altMode) { defaultsRect._missionController.globalAltitudeMode = altMode }
-                            if (!defaultsRect._controllerVehicle.supportsTerrainFrame) {
+                            if (!defaultsRect._controllerVehicle.supports.terrainFrame) {
                                 removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
                             }
                             if (!defaultsRect._noMissionItemsAdded) {

@@ -1,5 +1,6 @@
 #include "MissionController.h"
 #include "Vehicle.h"
+#include "VehicleSupports.h"
 #include "MissionManager.h"
 #include "FlightPathSegment.h"
 #include "FirmwarePlugin.h"
@@ -2521,7 +2522,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _previousCoordinate =           QGeoCoordinate();
 
         bool noItemsAddedYet = _visualItems->count() == 1;
-        if (_masterController->controllerVehicle()->takeoffVehicleSupported() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
+        if (_masterController->controllerVehicle()->supports()->takeoffMissionCommand() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
             _onlyInsertTakeoffValid = true;
         }
 
