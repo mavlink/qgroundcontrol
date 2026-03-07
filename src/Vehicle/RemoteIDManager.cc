@@ -261,8 +261,9 @@ void RemoteIDManager::_updateGcsGpsStatus(bool gpsGood, const QString& error)
     if (_gcsGPSGood != gpsGood) {
         _gcsGPSGood = gpsGood;
         emit gcsGPSGoodChanged();
-        if (!gpsGood && !error.isEmpty()) {
-            qCDebug(RemoteIDManagerLog) << error;
+        if (!error.isEmpty() && _gcsGPSError != error) {
+            _gcsGPSError = error;
+            qCWarning(RemoteIDManagerLog) << "GCS GPS error:" << error;
         }
     }
 }
