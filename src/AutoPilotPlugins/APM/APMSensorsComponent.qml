@@ -738,7 +738,7 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("CompassMot")
-                        visible:    globals.activeVehicle ? globals.activeVehicle.supportsMotorInterference : false
+                        visible:    globals.activeVehicle ? globals.activeVehicle.supports.motorInterference : false
                         onClicked:  compassMotDialogFactory.open()
                     }
 

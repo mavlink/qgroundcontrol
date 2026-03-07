@@ -41,7 +41,7 @@ QGCComboBox {
         if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && altitudeMode != QGroundControl.AltitudeModeAbsolute) {
             removeModes.push(QGroundControl.AltitudeModeAbsolute)
         }
-        if (!vehicle.supportsTerrainFrame) {
+        if (!vehicle.supports.terrainFrame) {
             removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
         }
 

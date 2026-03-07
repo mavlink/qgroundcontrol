@@ -19,6 +19,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleSupports.h"
 #include "VehicleComponent.h"
 #ifdef QT_DEBUG
 #include "APMFollowComponent.h"
@@ -55,7 +56,7 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_airframeComponent)));
 
-            if (_vehicle->supportsRadio()) {
+            if (_vehicle->supports()->radio()) {
                 _radioComponent = new APMRadioComponent(_vehicle, this);
                 _radioComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_radioComponent)));

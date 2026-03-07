@@ -20,7 +20,7 @@ ColumnLayout {
             var removeModes = []
             var updateFunction = function(altMode){ missionItem.cameraCalc.distanceMode = altMode }
             removeModes.push(QGroundControl.AltitudeModeMixed)
-            if (!missionItem.masterController.controllerVehicle.supportsTerrainFrame) {
+            if (!missionItem.masterController.controllerVehicle.supports.terrainFrame) {
                 removeModes.push(QGroundControl.AltitudeModeTerrainFrame)
             }
             if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || !_missionItem.cameraCalc.isManualCamera) {
