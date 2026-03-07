@@ -4,6 +4,7 @@
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
+#include <QtPositioning/QGeoPositionInfoSource>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(QGCPositionManagerLog)
@@ -35,6 +36,9 @@ public:
     qreal gcsHeading() const { return _gcsHeading; }
     qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
+    QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
+    QGeoCoordinate::CoordinateType lastCoordinateType() const { return _lastCoordinateType; }
+
     int updateInterval() const { return _updateInterval; }
 
     void setNmeaSourceDevice(QIODevice *device);
@@ -47,6 +51,7 @@ signals:
 
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
+    void _positionError(QGeoPositionInfoSource::Error gcsPositioningError);
 
 private:
     enum QGCPositionSource {
@@ -68,6 +73,9 @@ private:
     int _updateInterval = 0;
 
     QGeoPositionInfo _geoPositionInfo;
+    QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;
+    QGeoCoordinate::CoordinateType _lastCoordinateType = QGeoCoordinate::InvalidCoordinate;
+
     QGeoCoordinate _gcsPosition;
     qreal _gcsHeading = qQNaN();
     qreal _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();

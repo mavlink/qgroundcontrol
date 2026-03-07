@@ -283,14 +283,25 @@ void RemoteIDManager::_sendSystem()
             }
         }
     } else {
+        const QGeoPositionInfoSource::Error gcsPositioningError = QGCPositionManager::instance()->gcsPositioningError();
+        const QGeoCoordinate::CoordinateType lastCoordinateType = QGCPositionManager::instance()->lastCoordinateType();
         // For Live GNSS we take QGC GPS data
         gcsPosition = QGCPositionManager::instance()->gcsPosition();
         geoPositionInfo = QGCPositionManager::instance()->geoPositionInfo();
 
         // GPS position needs to be valid before checking other stuff
         if (geoPositionInfo.isValid()) {
-            // If we dont have altitude for FAA then the GPS data is no good
-            if ((_settings->region()->rawValue().toInt() == Region::FAA) && !(gcsPosition.altitude() >= 0) && _gcsGPSGood) {
+            if(gcsPositioningError != QGeoPositionInfoSource::NoError) {
+                if (_gcsGPSGood) {
+                    _gcsGPSGood = false;
+                    emit gcsGPSGoodChanged();
+                    qCDebug(RemoteIDManagerLog) << "GCS GPS data error:" << gcsPositioningError;
+                }
+                return;
+            }
+
+            // If we dont have altitude for FAA (3D position) then the GPS data is no good
+            if ((_settings->region()->rawValue().toInt() == Region::FAA) && lastCoordinateType != QGeoCoordinate::Coordinate3D && _gcsGPSGood) {
                 _gcsGPSGood = false;
                 emit gcsGPSGoodChanged();
                 qCDebug(RemoteIDManagerLog) << "GCS GPS data error (no altitude): Altitude data is mandatory for GCS GPS data in FAA regions.";
