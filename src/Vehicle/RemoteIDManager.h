@@ -94,6 +94,9 @@ private:
     // Basic ID
     void        _sendBasicID();
 
+    // GCS GPS status
+    void        _updateGcsGpsStatus(bool gpsGood, const QString& error = QString());
+
     bool _isEUOperatorIDValid(const QString& operatorID) const;
     QChar _calculateLuhnMod36(const QString& input) const;
 
