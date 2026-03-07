@@ -9,7 +9,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCPositionManagerLog)
 
-class QGeoPositionInfoSource;
 class QNmeaPositionInfoSource;
 class QGCCompass;
 
