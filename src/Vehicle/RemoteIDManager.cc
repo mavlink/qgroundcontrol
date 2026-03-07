@@ -297,7 +297,6 @@ void RemoteIDManager::_sendSystem()
                     emit gcsGPSGoodChanged();
                     qCDebug(RemoteIDManagerLog) << "GCS GPS data error:" << gcsPositioningError;
                 }
-                return;
             }
 
             // If we dont have altitude for FAA (3D position) then the GPS data is no good
@@ -305,7 +304,6 @@ void RemoteIDManager::_sendSystem()
                 _gcsGPSGood = false;
                 emit gcsGPSGoodChanged();
                 qCDebug(RemoteIDManagerLog) << "GCS GPS data error (no altitude): Altitude data is mandatory for GCS GPS data in FAA regions.";
-                return;
             }
 
             // If the GPS data is older than ALLOWED_GPS_DELAY we cannot use this data
