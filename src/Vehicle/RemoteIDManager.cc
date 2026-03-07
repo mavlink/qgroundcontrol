@@ -294,7 +294,7 @@ void RemoteIDManager::_sendSystem()
 
         if (!geoPositionInfo.isValid()) {
             _updateGcsGpsStatus(false, "GCS GPS data is not valid.");
-        } else if (positionManager->gcsPositioningError() != QGeoPositionInfoSource::NoError) {
+        } else if (positionManager->gcsPositioningError() != QGeoPositionInfoSource::NoError && positionManager->gcsPositioningError() != QGeoPositionInfoSource::UpdateTimeoutError) {
             _updateGcsGpsStatus(false, QString("GCS GPS data error: %1").arg(positionManager->gcsPositioningError()));
         } else if (!gcsPosition.isValid() || gcsPosition.type() == QGeoCoordinate::InvalidCoordinate) {
             _updateGcsGpsStatus(false, "GCS GPS data error: Invalid coordinate type.");
