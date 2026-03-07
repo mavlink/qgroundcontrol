@@ -37,7 +37,6 @@ public:
     qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
-    QGeoCoordinate::CoordinateType lastCoordinateType() const { return _lastCoordinateType; }
 
     int updateInterval() const { return _updateInterval; }
 
@@ -74,7 +73,6 @@ private:
 
     QGeoPositionInfo _geoPositionInfo;
     QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;
-    QGeoCoordinate::CoordinateType _lastCoordinateType = QGeoCoordinate::InvalidCoordinate;
 
     QGeoCoordinate _gcsPosition;
     qreal _gcsHeading = qQNaN();

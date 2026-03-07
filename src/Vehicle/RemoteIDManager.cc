@@ -296,9 +296,9 @@ void RemoteIDManager::_sendSystem()
             _updateGcsGpsStatus(false, "GCS GPS data is not valid.");
         } else if (positionManager->gcsPositioningError() != QGeoPositionInfoSource::NoError) {
             _updateGcsGpsStatus(false, QString("GCS GPS data error: %1").arg(positionManager->gcsPositioningError()));
-        } else if (positionManager->lastCoordinateType() == QGeoCoordinate::InvalidCoordinate) {
+        } else if (!gcsPosition.isValid() || gcsPosition.type() == QGeoCoordinate::InvalidCoordinate) {
             _updateGcsGpsStatus(false, "GCS GPS data error: Invalid coordinate type.");
-        } else if (_settings->region()->rawValue().toInt() == Region::FAA && positionManager->lastCoordinateType() != QGeoCoordinate::Coordinate3D) {
+        } else if (_settings->region()->rawValue().toInt() == Region::FAA && gcsPosition.type() != QGeoCoordinate::Coordinate3D) {
             // FAA requires altitude data, or else the GPS data is not good
             _updateGcsGpsStatus(false, "GCS GPS data error: Altitude data is mandatory for FAA regions.");
         } else if (_lastGeoPositionTimeStamp.msecsTo(QDateTime::currentDateTime().currentDateTimeUtc()) > ALLOWED_GPS_DELAY) {
