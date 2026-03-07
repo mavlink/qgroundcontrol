@@ -106,6 +106,8 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice *device)
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
     _geoPositionInfo = update;
+    _lastCoordinateType = update.coordinate().type();
+    _gcsPositioningError = QGeoPositionInfoSource::NoError;
 
     QGeoCoordinate newGCSPosition(_gcsPosition);
 
@@ -141,6 +143,12 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
     }
 
     emit positionInfoUpdated(update);
+}
+
+void QGCPositionManager::_positionError(QGeoPositionInfoSource::Error gcsPositioningError)
+{
+    qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "Positioning error:" << gcsPositioningError;
+    _gcsPositioningError = gcsPositioningError;
 }
 
 void QGCPositionManager::_setGCSHeading(qreal newGCSHeading)
@@ -202,9 +210,7 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
             _currentSource->setUpdateInterval(_updateInterval);
         #endif
         (void) connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this, &QGCPositionManager::_positionUpdated);
-        (void) connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this, [](QGeoPositionInfoSource::Error positioningError) {
-            qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << positioningError;
-        });
+        (void) connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this, &QGCPositionManager::_positionError);
 
         // (void) connect(QGCCompass::instance(), &QGCCompass::positionUpdated, this, &QGCPositionManager::_positionUpdated);
 
