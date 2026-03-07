@@ -1910,36 +1910,50 @@ void MissionController::_onRallyPointsInserted(const QModelIndex& parent, int fi
     auto* rallyController = _masterController->rallyPointController();
     if (!rallyController) return;
 
+    // If this is the first rally point, remove the header marker
+    if (first == 0 && _visualItemsTree.rowCount(_rallyGroupIndex) == 1) {
+        const QModelIndex child = _visualItemsTree.index(0, 0, _rallyGroupIndex);
+        if (_visualItemsTree.data(child, QmlObjectTreeModel::NodeTypeRole).toString() == QStringLiteral("rallyHeader")) {
+            _visualItemsTree.removeItem(child);
+        }
+    }
+
     auto* pts = rallyController->points();
-    // Rally children: index 0 is the rallyHeader marker, rally items start at index 1
     for (int i = first; i <= last; i++) {
-        _visualItemsTree.insertItem(i + 1, (*pts)[i], _rallyGroupIndex, QStringLiteral("rallyItem"));
+        _visualItemsTree.insertItem(i, (*pts)[i], _rallyGroupIndex, QStringLiteral("rallyItem"));
     }
 }
 
 void MissionController::_onRallyPointsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
     Q_UNUSED(parent);
-    // Rally children: index 0 is header marker, rally items start at index 1
     for (int i = last; i >= first; i--) {
-        _visualItemsTree.removeAt(_rallyGroupIndex, i + 1);
+        _visualItemsTree.removeAt(_rallyGroupIndex, i);
+    }
+
+    // If all rally points are being removed, re-add the header marker
+    auto* rallyController = _masterController->rallyPointController();
+    if (rallyController && (rallyController->points()->count() - (last - first + 1)) == 0) {
+        _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
+        _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
     }
 }
 
 void MissionController::_onRallyPointsReset(void)
 {
-    // Remove all rally children except the header marker (index 0)
-    while (_visualItemsTree.rowCount(_rallyGroupIndex) > 1) {
-        _visualItemsTree.removeAt(_rallyGroupIndex, _visualItemsTree.rowCount(_rallyGroupIndex) - 1);
-    }
+    // Remove all rally children
+    _visualItemsTree.removeChildren(_rallyGroupIndex);
 
-    // Repopulate
+    // Repopulate — either rally items or the header marker
     auto* rallyController = _masterController->rallyPointController();
-    if (rallyController) {
+    if (rallyController && rallyController->points()->count() > 0) {
         auto* pts = rallyController->points();
         for (int i = 0; i < pts->count(); i++) {
             _visualItemsTree.appendItem((*pts)[i], _rallyGroupIndex, QStringLiteral("rallyItem"));
         }
+    } else {
+        _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
+        _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
     }
 }
 

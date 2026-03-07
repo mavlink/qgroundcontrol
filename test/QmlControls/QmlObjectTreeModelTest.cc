@@ -680,6 +680,38 @@ void QmlObjectTreeModelTest::_insertNullObject()
     QVERIFY(!model.data(idx, Qt::UserRole).isValid()); // null object → invalid variant
 }
 
+// ---------------------------------------------------------------------------
+// Destructor safety: external objects outlive the model
+// ---------------------------------------------------------------------------
+
+void QmlObjectTreeModelTest::_destructorSafeWithExternalObjects()
+{
+    QObject externalObj;
+    {
+        QmlObjectTreeModel model;
+        model.appendItem(&externalObj, QModelIndex(), QStringLiteral("test"));
+        // model destroyed here — must not crash or double-free externalObj
+    }
+    // externalObj still alive — reaching here means no crash
+    QVERIFY(true);
+}
+
+// ---------------------------------------------------------------------------
+// Destructor safety: objects destroyed before the model (shutdown scenario)
+// ---------------------------------------------------------------------------
+
+void QmlObjectTreeModelTest::_destructorSafeWithDestroyedObjects()
+{
+    QmlObjectTreeModel model;
+    {
+        QObject tempObj;
+        model.appendItem(&tempObj, QModelIndex(), QStringLiteral("test"));
+        // tempObj destroyed here while model still holds a pointer to it
+    }
+    // model destroyed after tempObj — must not crash during ~QmlObjectTreeModel
+    QVERIFY(true);
+}
+
 UT_REGISTER_TEST(QmlObjectTreeModelTest, TestLabel::Unit)
 
 #include "QmlObjectTreeModelTest.moc"

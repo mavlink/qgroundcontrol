@@ -75,6 +75,11 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectTreeModel*  visualItemsTree                 READ visualItemsTree                CONSTANT)                               ///< Tree-structured view of visualItems for TreeView
+    Q_PROPERTY(QPersistentModelIndex planFileGroupIndex              READ planFileGroupIndex              CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex defaultsGroupIndex              READ defaultsGroupIndex              CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex missionGroupIndex               READ missionGroupIndex               CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex fenceGroupIndex                 READ fenceGroupIndex                 CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex rallyGroupIndex                 READ rallyGroupIndex                 CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  simpleFlightPathSegments        READ simpleFlightPathSegments       CONSTANT)                               ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
@@ -271,6 +276,11 @@ public:
 
     QmlObjectListModel* visualItems                 (void) { return _visualItems; }
     QmlObjectTreeModel* visualItemsTree             (void) { return &_visualItemsTree; }
+    QPersistentModelIndex planFileGroupIndex         (void) const { return _planFileGroupIndex; }
+    QPersistentModelIndex defaultsGroupIndex         (void) const { return _defaultsGroupIndex; }
+    QPersistentModelIndex missionGroupIndex          (void) const { return _missionGroupIndex; }
+    QPersistentModelIndex fenceGroupIndex            (void) const { return _fenceGroupIndex; }
+    QPersistentModelIndex rallyGroupIndex            (void) const { return _rallyGroupIndex; }
     QmlObjectListModel* simpleFlightPathSegments    (void) { return &_simpleFlightPathSegments; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QStringList         complexMissionItemNames     (void) const;
@@ -436,7 +446,6 @@ private:
     MissionManager*             _missionManager =               nullptr;
     int                         _missionItemCount =             0;
     QmlObjectListModel*         _visualItems =                  nullptr;
-    QmlObjectTreeModel          _visualItemsTree;
     QPersistentModelIndex       _planFileGroupIndex;            ///< Persistent index for "Plan File" group in tree
     QPersistentModelIndex       _defaultsGroupIndex;            ///< Persistent index for "Defaults" group in tree
     QPersistentModelIndex       _missionGroupIndex;             ///< Persistent index for "Mission Items" group in tree
@@ -451,6 +460,7 @@ private:
     QObject                     _rallyGroupNode;                ///< Group node for "Rally Points" in tree view
     QObject                     _fenceEditorMarker;             ///< Marker child for GeoFenceEditor delegate
     QObject                     _rallyHeaderMarker;             ///< Marker child for RallyPointEditorHeader delegate
+    QmlObjectTreeModel          _visualItemsTree;               // Must be declared after group nodes so it's destroyed first
     MissionSettingsItem*        _settingsItem =                 nullptr;
     PlanViewSettings*           _planViewSettings =             nullptr;
     QmlObjectListModel          _simpleFlightPathSegments;

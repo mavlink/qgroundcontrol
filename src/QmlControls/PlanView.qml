@@ -217,6 +217,7 @@ Item {
     PlanViewToolBar {
         id: planToolBar
         planMasterController: _planMasterController
+        showRallyPointsHelp: _editingLayer === _layerRally
     }
 
     Item {
@@ -499,6 +500,7 @@ Item {
             width: _rightPanelWidth
             planMasterController: _planMasterController
             editorMap: editorMap
+            onEditingLayerChangeRequested: (layer) => _editingLayer = layer
         }
 
         // Layer switching icons — only active icon visible; click to expand choices leftward
