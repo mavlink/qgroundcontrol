@@ -24,7 +24,7 @@ GstVideoReceiver::GstVideoReceiver(QObject *parent)
     : VideoReceiver(parent)
     , _worker(new GstVideoWorker(this))
 {
-    // qCDebug(GstVideoReceiverLog) << this;
+    qCDebug(GstVideoReceiverLog) << this;
 
     _worker->start();
     (void) connect(&_watchdogTimer, &QTimer::timeout, this, &GstVideoReceiver::_watchdog);
@@ -36,7 +36,7 @@ GstVideoReceiver::~GstVideoReceiver()
     stop();
     _worker->shutdown();
 
-    // qCDebug(GstVideoReceiverLog) << this;
+    qCDebug(GstVideoReceiverLog) << this;
 }
 
 void GstVideoReceiver::start(uint32_t timeout)
@@ -367,6 +367,8 @@ void GstVideoReceiver::startDecoding(void *sink)
         return;
     }
 
+    _ensureVideoSinkInPipeline();
+
     if (!_addDecoder(_decoderValve)) {
         qCCritical(GstVideoReceiverLog) << "_addDecoder() failed" << _uri;
         _dispatchSignal([this]() { emit onStartDecodingComplete(STATUS_FAIL); });
@@ -641,7 +643,7 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
 
     do {
         if (isRtsp) {
-            if (!GStreamer::is_valid_rtsp_uri(input.toUtf8().constData())) {
+            if (!GStreamer::isValidRtspUri(input.toUtf8().constData())) {
                 qCCritical(GstVideoReceiverLog) << "Invalid RTSP URI:" << input;
                 break;
             }
@@ -791,15 +793,12 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
     return srcbin;
 }
 
-GstElement *GstVideoReceiver::_makeDecoder(GstCaps *caps, GstElement *videoSink)
+GstElement *GstVideoReceiver::_makeDecoder()
 {
-    Q_UNUSED(caps); Q_UNUSED(videoSink)
-
     GstElement *decoder = gst_element_factory_make("decodebin3", nullptr);
     if (!decoder) {
         qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('decodebin3') failed";
     }
-
     return decoder;
 }
 
@@ -899,6 +898,8 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-source-pad");
 
+    _ensureVideoSinkInPipeline();
+
     if (!_addDecoder(_decoderValve)) {
         qCCritical(GstVideoReceiverLog) << "_addDecoder() failed";
         return;
@@ -928,7 +929,7 @@ void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3)
                 GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
                 const gchar *featureName = gst_plugin_feature_get_name(feature);
                 const guint rank = gst_plugin_feature_get_rank(feature);
-                bool isHardwareDecoder = GStreamer::is_hardware_decoder_factory(factory);
+                bool isHardwareDecoder = GStreamer::isHardwareDecoderFactory(factory);
 
                 QString pluginName = featureName;
                 GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
@@ -937,6 +938,13 @@ void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3)
                     gst_object_unref(plugin);
                 }
                 qCDebug(GstVideoReceiverLog) << "Decodebin3 selected codec:rank -" << pluginName << "/" << featureName << "-" << decoderKlass << (isHardwareDecoder ? "(HW)" : "(SW)") << ":" << rank;
+
+                // Disable QoS on the internal decoder to prevent cascading
+                // frame drops on live streams.  The videodecoder base class
+                // aggressively advances earliest_time after the first late
+                // frame, causing all subsequent frames to be dropped.
+                g_object_set(child, "qos", FALSE, nullptr);
+                qCDebug(GstVideoReceiverLog) << "Disabled QoS on internal decoder" << featureName;
             }
         }
         g_value_reset(&value);
@@ -962,31 +970,13 @@ void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 
 bool GstVideoReceiver::_addDecoder(GstElement *src)
 {
-    GstPad *srcpad = gst_element_get_static_pad(src, "src");
-    if (!srcpad) {
-        qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad() failed";
-        return false;
-    }
-
-    GstCaps *caps = gst_pad_query_caps(srcpad, nullptr);
-    if (!caps) {
-        qCCritical(GstVideoReceiverLog) << "gst_pad_query_caps() failed";
-        gst_clear_object(&srcpad);
-        return false;
-    }
-
-    gst_clear_object(&srcpad);
-
     _decoder = _makeDecoder();
     if (!_decoder) {
         qCCritical(GstVideoReceiverLog) << "_makeDecoder() failed";
-        gst_clear_caps(&caps);
         return false;
     }
 
     (void) gst_object_ref(_decoder);
-
-    gst_clear_caps(&caps);
 
     (void) gst_bin_add(GST_BIN(_pipeline), _decoder);
     (void) gst_element_sync_state_with_parent(_decoder);
@@ -1026,18 +1016,16 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
     return true;
 }
 
-bool GstVideoReceiver::_addVideoSink(GstPad *pad)
+void GstVideoReceiver::_ensureVideoSinkInPipeline()
 {
-    GstCaps *caps = gst_pad_query_caps(pad, nullptr);
+    if (!_videoSink || !_pipeline) {
+        return;
+    }
 
-    (void) gst_object_ref(_videoSink); // gst_bin_add() will steal one reference
-    (void) gst_bin_add(GST_BIN(_pipeline), _videoSink);
-
-    if (!gst_element_link(_decoder, _videoSink)) {
-        (void) gst_bin_remove(GST_BIN(_pipeline), _videoSink);
-        qCCritical(GstVideoReceiverLog) << "Unable to link video sink";
-        gst_clear_caps(&caps);
-        return false;
+    GstObject *parent = gst_element_get_parent(_videoSink);
+    if (parent) {
+        gst_object_unref(parent);
+        return;
     }
 
     g_object_set(_videoSink,
@@ -1045,7 +1033,49 @@ bool GstVideoReceiver::_addVideoSink(GstPad *pad)
                  "sync", (_buffer >= 0),
                  NULL);
 
+    (void) gst_object_ref(_videoSink);
+    (void) gst_bin_add(GST_BIN(_pipeline), _videoSink);
+
+    // PAUSED (not READY) triggers gst_gl_ensure_element_data in qml6glsink,
+    // which creates GstGLDisplay/GstGLContext from Qt's EGL context and posts
+    // HAVE_CONTEXT on the bus. Downstream GL elements and decoders acquire
+    // this context via the pipeline's context store.
+    (void) gst_element_set_state(_videoSink, GST_STATE_PAUSED);
+}
+
+bool GstVideoReceiver::_addVideoSink(GstPad *pad)
+{
+    GstCaps *caps = gst_pad_query_caps(pad, nullptr);
+
+    _ensureVideoSinkInPipeline();
+
+    GstPad *sinkPad = gst_element_get_static_pad(_videoSink, "sink");
+    GstPadLinkReturn linkRet = sinkPad ? gst_pad_link(pad, sinkPad) : GST_PAD_LINK_WRONG_HIERARCHY;
+    if (linkRet != GST_PAD_LINK_OK) {
+        qCCritical(GstVideoReceiverLog) << "Unable to link decoder pad to video sink, result:" << linkRet;
+
+        // Keep retry behavior by fully detaching the sink when link fails.
+        // _ensureVideoSinkInPipeline() adds it before linking.
+        GstObject *parent = gst_element_get_parent(_videoSink);
+        if (parent) {
+            (void) gst_element_set_state(_videoSink, GST_STATE_NULL);
+            (void) gst_bin_remove(GST_BIN(_pipeline), _videoSink);
+            gst_clear_object(&parent);
+        }
+
+        gst_clear_object(&sinkPad);
+        gst_clear_caps(&caps);
+        return false;
+    }
+    gst_clear_object(&sinkPad);
+
     (void) gst_element_sync_state_with_parent(_videoSink);
+
+    // qml6glsink resets max-lateness=0 during state transitions (it renders
+    // on QML's paint cycle).  For live streams with hardware decoders that
+    // have startup latency, this causes all frames to be silently dropped
+    // after the first one.  Override after state sync so it sticks.
+    g_object_set(_videoSink, "sync", FALSE, "max-lateness", G_GINT64_CONSTANT(-1), nullptr);
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 
@@ -1472,12 +1502,12 @@ GstPadProbeReturn GstVideoReceiver::_keyframeWatch(GstPad *pad, GstPadProbeInfo 
 GstVideoWorker::GstVideoWorker(QObject *parent)
     : QThread(parent)
 {
-    // qCDebug(GstVideoReceiverLog) << this;
+    qCDebug(GstVideoReceiverLog) << this;
 }
 
 GstVideoWorker::~GstVideoWorker()
 {
-    // qCDebug(GstVideoReceiverLog) << this;
+    qCDebug(GstVideoReceiverLog) << this;
 }
 
 bool GstVideoWorker::needDispatch() const

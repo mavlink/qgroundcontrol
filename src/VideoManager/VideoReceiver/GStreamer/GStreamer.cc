@@ -1,43 +1,31 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerLogging.h"
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
-#include "QGCLoggingCategory.h"
-#include "SettingsManager.h"
-#include "VideoSettings.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
+#include <QtCore/QMutex>
 #include <QtCore/QSettings>
 #include <QtCore/QStringList>
 #include <QtQuick/QQuickItem>
 
+#include <atomic>
+
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamerDecoderRanks")
-QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
-
-// TODO: Clean These up with Macros or CMake
 G_BEGIN_DECLS
-GST_PLUGIN_STATIC_DECLARE(androidmedia);
-GST_PLUGIN_STATIC_DECLARE(applemedia);
+#ifdef QGC_GST_STATIC_BUILD
 GST_PLUGIN_STATIC_DECLARE(coreelements);
-GST_PLUGIN_STATIC_DECLARE(d3d);
-GST_PLUGIN_STATIC_DECLARE(d3d11);
-GST_PLUGIN_STATIC_DECLARE(d3d12);
-GST_PLUGIN_STATIC_DECLARE(dav1d);
-GST_PLUGIN_STATIC_DECLARE(dxva);
 GST_PLUGIN_STATIC_DECLARE(isomp4);
 GST_PLUGIN_STATIC_DECLARE(libav);
 GST_PLUGIN_STATIC_DECLARE(matroska);
 GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
-GST_PLUGIN_STATIC_DECLARE(msdk);
-GST_PLUGIN_STATIC_DECLARE(nvcodec);
 GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(openh264);
 GST_PLUGIN_STATIC_DECLARE(playback);
-GST_PLUGIN_STATIC_DECLARE(qml6);
-GST_PLUGIN_STATIC_DECLARE(qsv);
 GST_PLUGIN_STATIC_DECLARE(rtp);
 GST_PLUGIN_STATIC_DECLARE(rtpmanager);
 GST_PLUGIN_STATIC_DECLARE(rtsp);
@@ -45,207 +33,471 @@ GST_PLUGIN_STATIC_DECLARE(sdpelem);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
 GST_PLUGIN_STATIC_DECLARE(udp);
-GST_PLUGIN_STATIC_DECLARE(va);
+GST_PLUGIN_STATIC_DECLARE(videoconvertscale);
 GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
 GST_PLUGIN_STATIC_DECLARE(vpx);
-GST_PLUGIN_STATIC_DECLARE(vulkan);
 
+#ifdef GST_PLUGIN_applemedia_FOUND
+GST_PLUGIN_STATIC_DECLARE(applemedia);
+#endif
+#ifdef GST_PLUGIN_d3d_FOUND
+GST_PLUGIN_STATIC_DECLARE(d3d);
+#endif
+#ifdef GST_PLUGIN_d3d11_FOUND
+GST_PLUGIN_STATIC_DECLARE(d3d11);
+#endif
+#ifdef GST_PLUGIN_d3d12_FOUND
+GST_PLUGIN_STATIC_DECLARE(d3d12);
+#endif
+#ifdef GST_PLUGIN_dav1d_FOUND
+GST_PLUGIN_STATIC_DECLARE(dav1d);
+#endif
+#ifdef GST_PLUGIN_dxva_FOUND
+GST_PLUGIN_STATIC_DECLARE(dxva);
+#endif
+#ifdef GST_PLUGIN_nvcodec_FOUND
+GST_PLUGIN_STATIC_DECLARE(nvcodec);
+#endif
+#ifdef GST_PLUGIN_qsv_FOUND
+GST_PLUGIN_STATIC_DECLARE(qsv);
+#endif
+#ifdef GST_PLUGIN_va_FOUND
+GST_PLUGIN_STATIC_DECLARE(va);
+#endif
+#ifdef GST_PLUGIN_vulkan_FOUND
+GST_PLUGIN_STATIC_DECLARE(vulkan);
+#endif
+#endif
+
+GST_PLUGIN_STATIC_DECLARE(qml6);
 GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
 namespace GStreamer
 {
 
+// Written by prepareEnvironment() on the main thread, read by _initGstRuntime()
+// on a QtConcurrent worker thread. The atomic bool provides the happens-before
+// guarantee; the mutex guards the non-atomic QString.
+static std::atomic<bool> s_envPathsValid{true};
+static QMutex s_envPathsMutex;
+static QString s_envPathsError;
+
+// Android and iOS platform plugins (e.g. androidmedia, applemedia) are
+// registered by the generated gst_init_static_plugins() in
+// gstreamer_android-1.0.c / gst_ios_init.m — not by this function.
+// QGC_GST_STATIC_BUILD covers desktop static builds only.
 void _registerPlugins()
 {
 #ifdef QGC_GST_STATIC_BUILD
-    #ifdef GST_PLUGIN_androidmedia_FOUND
-        GST_PLUGIN_STATIC_REGISTER(androidmedia);
-    #endif
-    #ifdef GST_PLUGIN_applemedia_FOUND
-        GST_PLUGIN_STATIC_REGISTER(applemedia);
-    #endif
-        GST_PLUGIN_STATIC_REGISTER(coreelements);
-    #ifdef GST_PLUGIN_d3d_FOUND
-        GST_PLUGIN_STATIC_REGISTER(d3d);
-    #endif
-    #ifdef GST_PLUGIN_d3d11_FOUND
-        GST_PLUGIN_STATIC_REGISTER(d3d11);
-    #endif
-    #ifdef GST_PLUGIN_d3d12_FOUND
-        GST_PLUGIN_STATIC_REGISTER(d3d12);
-    #endif
-    #ifdef GST_PLUGIN_dav1d_FOUND
-        GST_PLUGIN_STATIC_REGISTER(dav1d);
-    #endif
-    #ifdef GST_PLUGIN_dxva_FOUND
-        GST_PLUGIN_STATIC_REGISTER(dxva);
-    #endif
-        GST_PLUGIN_STATIC_REGISTER(isomp4);
-        GST_PLUGIN_STATIC_REGISTER(libav);
-        GST_PLUGIN_STATIC_REGISTER(matroska);
-        GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
-    #ifdef GST_PLUGIN_msdk_FOUND
-        GST_PLUGIN_STATIC_REGISTER(msdk);
-    #endif
-    #ifdef GST_PLUGIN_nvcodec_FOUND
-        GST_PLUGIN_STATIC_REGISTER(nvcodec);
-    #endif
-        GST_PLUGIN_STATIC_REGISTER(opengl);
-        GST_PLUGIN_STATIC_REGISTER(openh264);
-        GST_PLUGIN_STATIC_REGISTER(playback);
-    #ifdef GST_PLUGIN_qsv_FOUND
-        GST_PLUGIN_STATIC_REGISTER(qsv);
-    #endif
-        GST_PLUGIN_STATIC_REGISTER(rtp);
-        GST_PLUGIN_STATIC_REGISTER(rtpmanager);
-        GST_PLUGIN_STATIC_REGISTER(rtsp);
-        GST_PLUGIN_STATIC_REGISTER(sdpelem);
-        GST_PLUGIN_STATIC_REGISTER(tcp);
-        GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
-        GST_PLUGIN_STATIC_REGISTER(udp);
-    #ifdef GST_PLUGIN_va_FOUND
-        GST_PLUGIN_STATIC_REGISTER(va);
-    #endif
-        GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
-        GST_PLUGIN_STATIC_REGISTER(vpx);
-    #ifdef GST_PLUGIN_vulkan_FOUND
-        GST_PLUGIN_STATIC_REGISTER(vulkan);
-    #endif
+    GST_PLUGIN_STATIC_REGISTER(coreelements);
+    GST_PLUGIN_STATIC_REGISTER(isomp4);
+    GST_PLUGIN_STATIC_REGISTER(libav);
+    GST_PLUGIN_STATIC_REGISTER(matroska);
+    GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
+    GST_PLUGIN_STATIC_REGISTER(opengl);
+    GST_PLUGIN_STATIC_REGISTER(openh264);
+    GST_PLUGIN_STATIC_REGISTER(playback);
+    GST_PLUGIN_STATIC_REGISTER(rtp);
+    GST_PLUGIN_STATIC_REGISTER(rtpmanager);
+    GST_PLUGIN_STATIC_REGISTER(rtsp);
+    GST_PLUGIN_STATIC_REGISTER(sdpelem);
+    GST_PLUGIN_STATIC_REGISTER(tcp);
+    GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
+    GST_PLUGIN_STATIC_REGISTER(udp);
+    GST_PLUGIN_STATIC_REGISTER(videoconvertscale);
+    GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
+    GST_PLUGIN_STATIC_REGISTER(vpx);
+
+#ifdef GST_PLUGIN_applemedia_FOUND
+    GST_PLUGIN_STATIC_REGISTER(applemedia);
+#endif
+#ifdef GST_PLUGIN_d3d_FOUND
+    GST_PLUGIN_STATIC_REGISTER(d3d);
+#endif
+#ifdef GST_PLUGIN_d3d11_FOUND
+    GST_PLUGIN_STATIC_REGISTER(d3d11);
+#endif
+#ifdef GST_PLUGIN_d3d12_FOUND
+    GST_PLUGIN_STATIC_REGISTER(d3d12);
+#endif
+#ifdef GST_PLUGIN_dav1d_FOUND
+    GST_PLUGIN_STATIC_REGISTER(dav1d);
+#endif
+#ifdef GST_PLUGIN_dxva_FOUND
+    GST_PLUGIN_STATIC_REGISTER(dxva);
+#endif
+#ifdef GST_PLUGIN_nvcodec_FOUND
+    GST_PLUGIN_STATIC_REGISTER(nvcodec);
+#endif
+#ifdef GST_PLUGIN_qsv_FOUND
+    GST_PLUGIN_STATIC_REGISTER(qsv);
+#endif
+#ifdef GST_PLUGIN_va_FOUND
+    GST_PLUGIN_STATIC_REGISTER(va);
+#endif
+#ifdef GST_PLUGIN_vulkan_FOUND
+    GST_PLUGIN_STATIC_REGISTER(vulkan);
+#endif
 #endif
 
-// #if !defined(GST_PLUGIN_qml6_FOUND) && defined(QGC_GST_STATIC_BUILD)
+    // qml6 and qgc are QGC-built plugins, always registered explicitly.
+    // Platform plugins come from gst_init_static_plugins() (Android/iOS) or dynamic loading.
     GST_PLUGIN_STATIC_REGISTER(qml6);
-// #endif
-
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 
-void _qtGstLog(GstDebugCategory *category,
-               GstDebugLevel level,
-               const gchar *file,
-               const gchar *function,
-               gint line,
-               GObject *object,
-               GstDebugMessage *message,
-               gpointer data)
+void _resetEnvValidation()
 {
-    Q_UNUSED(data);
+    const QMutexLocker locker(&s_envPathsMutex);
+    s_envPathsError.clear();
+    s_envPathsValid.store(true, std::memory_order_release);
+}
 
-    if (level > gst_debug_category_get_threshold(category)) {
-        return;
+void _setEnvValidationError(const QString &error)
+{
+    const QMutexLocker locker(&s_envPathsMutex);
+    s_envPathsError = error;
+    s_envPathsValid.store(false, std::memory_order_release);
+    qCCritical(GStreamerLog) << error;
+}
+
+QString _cleanJoin(const QString &base, const QString &relative)
+{
+    return QDir::cleanPath(QDir(base).filePath(relative));
+}
+
+void _setGstEnv(const char *name, const QString &value)
+{
+    qputenv(name, value.toUtf8());
+    qCDebug(GStreamerLog) << "  " << name << "=" << value;
+}
+
+void _unsetEnv(const char *name)
+{
+    if (qEnvironmentVariableIsSet(name)) {
+        qunsetenv(name);
+        qCDebug(GStreamerLog) << "  unset" << name;
+    }
+}
+
+void _setGstEnvIfExists(const char *name, const QString &path)
+{
+    if (QFileInfo::exists(path)) {
+        _setGstEnv(name, path);
+    }
+}
+
+bool _isExecutableFile(const QString &path)
+{
+    const QFileInfo fileInfo(path);
+    return fileInfo.exists() && fileInfo.isFile() && fileInfo.isExecutable();
+}
+
+QString _firstExistingPath(const QStringList &paths)
+{
+    for (const QString &path : paths) {
+        if (QFileInfo::exists(path)) {
+            return path;
+        }
     }
 
-    QMessageLogger log(file, line, function);
+    return {};
+}
 
-    char *object_info = gst_info_strdup_printf("%" GST_PTR_FORMAT, static_cast<void*>(object));
+QString _joinExistingPaths(const QStringList &paths)
+{
+    QStringList existing;
+    existing.reserve(paths.size());
 
-    switch (level) {
-    case GST_LEVEL_ERROR:
-        log.critical(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    case GST_LEVEL_WARNING:
-        log.warning(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    case GST_LEVEL_FIXME:
-    case GST_LEVEL_INFO:
-        log.info(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    case GST_LEVEL_DEBUG:
-#ifdef QT_DEBUG
-    case GST_LEVEL_LOG:
-    case GST_LEVEL_TRACE:
-    case GST_LEVEL_MEMDUMP:
-#endif
-        log.debug(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    default:
-        break;
+    for (const QString &path : paths) {
+        if (QFileInfo::exists(path) && !existing.contains(path)) {
+            existing.append(path);
+        }
     }
 
-    g_clear_pointer(&object_info, g_free);
+    return existing.join(QDir::listSeparator());
+}
+
+void _clearManagedGstEnvVars()
+{
+    static constexpr const char *varsToUnset[] = {
+        "GIO_EXTRA_MODULES",
+        "GIO_MODULE_DIR",
+        "GIO_USE_VFS",
+        "GST_PTP_HELPER_1_0",
+        "GST_PTP_HELPER",
+        "GST_PLUGIN_SCANNER_1_0",
+        "GST_PLUGIN_SCANNER",
+        "GST_PLUGIN_SYSTEM_PATH_1_0",
+        "GST_PLUGIN_SYSTEM_PATH",
+        "GST_PLUGIN_PATH_1_0",
+        "GST_PLUGIN_PATH",
+    };
+
+    for (const char *name : varsToUnset) {
+        _unsetEnv(name);
+    }
+}
+
+void _setGstEnvIfExecutable(const char *name, const QString &path)
+{
+    if (_isExecutableFile(path)) {
+        _setGstEnv(name, path);
+    } else {
+        _unsetEnv(name);
+    }
+}
+
+void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
+                      const QString &scannerPath, const QString &ptpPath)
+{
+    qCDebug(GStreamerLog) << "Applying GStreamer environment:";
+
+    _clearManagedGstEnvVars();
+    _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
+    _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
+    _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
+    _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
+    _setGstEnvIfExecutable("GST_PLUGIN_SCANNER_1_0", scannerPath);
+    _setGstEnvIfExecutable("GST_PLUGIN_SCANNER", scannerPath);
+    _setGstEnv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir);
+    _setGstEnv("GST_PLUGIN_SYSTEM_PATH", pluginDir);
+    _setGstEnv("GST_PLUGIN_PATH_1_0", pluginDir);
+    _setGstEnv("GST_PLUGIN_PATH", pluginDir);
+}
+
+void _sanitizePythonEnvForScanner()
+{
+    // gst-plugin-scanner may initialize Python (gst-python). Virtualenv/conda
+    // environment variables frequently point to interpreters without gi.
+    static constexpr const char *varsToUnset[] = {
+        "PYTHONHOME",
+        "PYTHONPATH",
+        "VIRTUAL_ENV",
+        "CONDA_PREFIX",
+        "CONDA_DEFAULT_ENV",
+        "PYTHONUSERBASE",
+    };
+
+    for (const char *name : varsToUnset) {
+        if (qEnvironmentVariableIsSet(name)) {
+            qunsetenv(name);
+            qCDebug(GStreamerLog) << "  unset" << name;
+        }
+    }
+
+    // Keep scanner imports deterministic and avoid user-site packages.
+    _setGstEnv("PYTHONNOUSERSITE", QStringLiteral("1"));
+}
+
+bool _validateMacBundlePaths(const QString &bundleFrameworkRoot,
+                             const QString &pluginDirs,
+                             const QString &scannerPath)
+{
+    if (pluginDirs.isEmpty()) {
+        _setEnvValidationError(QStringLiteral(
+            "GStreamer: bundled macOS framework found but plugin directory is missing under %1")
+            .arg(bundleFrameworkRoot));
+        return false;
+    }
+
+    if (scannerPath.isEmpty()) {
+        _setEnvValidationError(QStringLiteral(
+            "GStreamer: bundled macOS framework found but gst-plugin-scanner is missing under %1")
+            .arg(bundleFrameworkRoot));
+        return false;
+    }
+
+    if (!_isExecutableFile(scannerPath)) {
+        _setEnvValidationError(QStringLiteral(
+            "GStreamer: gst-plugin-scanner is not executable: %1")
+            .arg(scannerPath));
+        return false;
+    }
+
+    return true;
+}
+
+bool _validateBundledDesktopPaths(const QString &platformLabel,
+                                  const QString &pluginDirs,
+                                  const QString &scannerPath)
+{
+    if (pluginDirs.isEmpty()) {
+        _setEnvValidationError(QStringLiteral(
+            "GStreamer: %1 bundled plugin directory is missing.")
+            .arg(platformLabel));
+        return false;
+    }
+
+    if (scannerPath.isEmpty()) {
+        _setEnvValidationError(QStringLiteral(
+            "GStreamer: %1 bundled gst-plugin-scanner is missing.")
+            .arg(platformLabel));
+        return false;
+    }
+
+    if (!_isExecutableFile(scannerPath)) {
+        _setEnvValidationError(QStringLiteral(
+            "GStreamer: %1 gst-plugin-scanner is not executable: %2")
+            .arg(platformLabel, scannerPath));
+        return false;
+    }
+
+    return true;
 }
 
 void _setGstEnvVars()
 {
+    _resetEnvValidation();
+    _sanitizePythonEnvForScanner();
+
     const QString appDir = QCoreApplication::applicationDirPath();
-    qCDebug(GStreamerLog) << "App Directory:" << appDir;
+    qCDebug(GStreamerLog) << "App directory:" << appDir;
 
-#if defined(Q_OS_MACOS) && defined(QGC_GST_MACOS_FRAMEWORK)
-    const QString frameworkDir = QDir(appDir).filePath("../Frameworks/GStreamer.framework");
-    const QString rootDir = QDir(frameworkDir).filePath("Versions/1.0");
-    const QString libDir = QDir(rootDir).filePath("../lib");
-    const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
-    const QString gioMod = QDir(libDir).filePath("gio/modules");
-    const QString libexecDir = QDir(appDir).filePath("../libexec");
-    const QString scanner = QDir(libexecDir).filePath("gstreamer-1.0/gst-plugin-scanner");
-    const QString ptp = QDir(libexecDir).filePath("gstreamer-1.0/gst-ptp-helper");
-
-    if (QFileInfo::exists(frameworkDir)) {
-        qputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-        qputenv("GIO_EXTRA_MODULES", gioMod.toUtf8().constData());
-        qputenv("GST_PTP_HELPER_1_0", ptp.toUtf8().constData());
-        qputenv("GST_PTP_HELPER", ptp.toUtf8().constData());
-        qputenv("GST_PLUGIN_SCANNER_1_0", scanner.toUtf8().constData());
-        qputenv("GST_PLUGIN_SCANNER", scanner.toUtf8().constData());
-        qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_SYSTEM_PATH", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_PATH_1_0", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_PATH", pluginDir.toUtf8().constData());
-        qputenv("GTK_PATH", rootDir.toUtf8().constData());
+#if defined(Q_OS_MACOS)
+#if defined(QGC_GST_MACOS_FRAMEWORK)
+    const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
+    QString rootDir = _firstExistingPath({
+        _cleanJoin(frameworkDir, "Versions/1.0"),
+        _cleanJoin(frameworkDir, "Versions/Current"),
+        frameworkDir,
+    });
+    if (rootDir.isEmpty()) {
+        rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
     }
-#elif defined(Q_OS_WIN)
-    const QString binDir = appDir;
-    const QString libDir = QDir(binDir).filePath("../lib");
-    const QString pluginDir = QDir(libDir).filePath("gstreamer-1.0");
-    const QString gioMod = QDir(libDir).filePath("gio/modules");
-    const QString libexecDir = QDir(binDir).filePath("../libexec");
-    const QString scanner = QDir(libexecDir).filePath("gstreamer-1.0/gst-plugin-scanner");
-    const QString ptp = QDir(libexecDir).filePath("gstreamer-1.0/gst-ptp-helper");
+    const QString pluginDirs = _joinExistingPaths({
+        _cleanJoin(rootDir, "lib/gstreamer-1.0"),
+        _cleanJoin(appDir, "../lib/gstreamer-1.0"),
+    });
+    const QString gioMod = _firstExistingPath({
+        _cleanJoin(rootDir, "lib/gio/modules"),
+        _cleanJoin(appDir, "../lib/gio/modules"),
+    });
+    const QString scanner = _firstExistingPath({
+        _cleanJoin(appDir, "../libexec/gstreamer-1.0/gst-plugin-scanner"),
+        _cleanJoin(rootDir, "libexec/gstreamer-1.0/gst-plugin-scanner"),
+    });
+    const QString ptp = _firstExistingPath({
+        _cleanJoin(appDir, "../libexec/gstreamer-1.0/gst-ptp-helper"),
+        _cleanJoin(rootDir, "libexec/gstreamer-1.0/gst-ptp-helper"),
+    });
+    const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
 
-    if (QFileInfo::exists(pluginDir)) {
-        qputenv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", "no");
-        qputenv("GIO_EXTRA_MODULES", gioMod.toUtf8().constData());
-        qputenv("GST_PTP_HELPER_1_0", ptp.toUtf8().constData());
-        qputenv("GST_PTP_HELPER", ptp.toUtf8().constData());
-        qputenv("GST_PLUGIN_SCANNER_1_0", scanner.toUtf8().constData());
-        qputenv("GST_PLUGIN_SCANNER", scanner.toUtf8().constData());
-        qputenv("GST_PLUGIN_SYSTEM_PATH_1_0", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_SYSTEM_PATH", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_PATH_1_0", pluginDir.toUtf8().constData());
-        qputenv("GST_PLUGIN_PATH", pluginDir.toUtf8().constData());
+    bool validBundlePaths = true;
+    if (!pluginDirs.isEmpty()) {
+        validBundlePaths = _validateBundledDesktopPaths(QStringLiteral("macOS"), pluginDirs, scanner);
+    }
+    if (hasBundledFramework) {
+        validBundlePaths = validBundlePaths && _validateMacBundlePaths(rootDir, pluginDirs, scanner);
+    }
+
+    if (!pluginDirs.isEmpty() && validBundlePaths) {
+        _applyGstEnvVars(pluginDirs, gioMod, scanner, ptp);
+    }
+
+    if (hasBundledFramework) {
+        _setGstEnv("GTK_PATH", rootDir);
+    }
+#else
+    const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
+    QString frameworkRoot = _firstExistingPath({
+        _cleanJoin(frameworkDir, "Versions/1.0"),
+        _cleanJoin(frameworkDir, "Versions/Current"),
+        frameworkDir,
+    });
+    if (frameworkRoot.isEmpty()) {
+        frameworkRoot = _cleanJoin(frameworkDir, "Versions/1.0");
+    }
+    const QString pluginDirs = _joinExistingPaths({
+        _cleanJoin(appDir, "../lib/gstreamer-1.0"),
+        _cleanJoin(frameworkRoot, "lib/gstreamer-1.0"),
+    });
+    const QString gioMod = _firstExistingPath({
+        _cleanJoin(appDir, "../lib/gio/modules"),
+        _cleanJoin(frameworkRoot, "lib/gio/modules"),
+    });
+    const QString scanner = _firstExistingPath({
+        _cleanJoin(appDir, "../libexec/gstreamer-1.0/gst-plugin-scanner"),
+        _cleanJoin(frameworkRoot, "libexec/gstreamer-1.0/gst-plugin-scanner"),
+    });
+    const QString ptp = _firstExistingPath({
+        _cleanJoin(appDir, "../libexec/gstreamer-1.0/gst-ptp-helper"),
+        _cleanJoin(frameworkRoot, "libexec/gstreamer-1.0/gst-ptp-helper"),
+    });
+    const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
+
+    bool validBundlePaths = true;
+    if (!pluginDirs.isEmpty()) {
+        validBundlePaths = _validateBundledDesktopPaths(QStringLiteral("macOS"), pluginDirs, scanner);
+    }
+    if (hasBundledFramework) {
+        validBundlePaths = validBundlePaths && _validateMacBundlePaths(frameworkRoot, pluginDirs, scanner);
+    }
+
+    if (!pluginDirs.isEmpty() && validBundlePaths) {
+        _applyGstEnvVars(pluginDirs, gioMod, scanner, ptp);
+    }
+#endif
+
+#elif defined(Q_OS_WIN)
+    const QString libDir = _cleanJoin(appDir, "../lib");
+    const QString pluginDir = _cleanJoin(libDir, "gstreamer-1.0");
+    const QString gioMod = _cleanJoin(libDir, "gio/modules");
+    const QString libexecDir = _cleanJoin(appDir, "../libexec");
+    const QString scanner = _cleanJoin(libexecDir, "gstreamer-1.0/gst-plugin-scanner.exe");
+    const QString ptp = _cleanJoin(libexecDir, "gstreamer-1.0/gst-ptp-helper.exe");
+
+    if (QFileInfo::exists(pluginDir)
+        && _validateBundledDesktopPaths(QStringLiteral("Windows"), pluginDir, scanner)) {
+        _applyGstEnvVars(pluginDir, gioMod, scanner, ptp);
+    }
+
+#elif defined(Q_OS_LINUX)
+    // AppRun sets GStreamer env vars before launch (including GIO compatibility
+    // logic). Only apply fallback paths for non-AppImage builds.
+    if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0")) {
+        const QString libDir = _cleanJoin(appDir, "../lib");
+        const QString pluginDir = _cleanJoin(libDir, "gstreamer-1.0");
+        const QString gioMod = _cleanJoin(libDir, "gio/modules");
+        const QString scanner = _cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0/gst-plugin-scanner");
+        const QString ptp = _cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0/gst-ptp-helper");
+
+        if (QFileInfo::exists(pluginDir)
+            && _validateBundledDesktopPaths(QStringLiteral("Linux"), pluginDir, scanner)) {
+            _applyGstEnvVars(pluginDir, gioMod, scanner, ptp);
+        }
     }
 #endif
 }
 
-void _logPlugin(gpointer data, gpointer /*user_data*/)
-{
-    GstPlugin *plugin = static_cast<GstPlugin*>(data);
-    if (!plugin) {
-        return;
-    }
-
-    const gchar *name = gst_plugin_get_name(plugin);
-    const gchar *version = gst_plugin_get_version(plugin);
-    qCDebug(GStreamerLog) << "  " << name << "-" << version;
-}
-
 bool _verifyPlugins()
 {
-    bool result = true;
-
     GstRegistry *registry = gst_registry_get();
+    if (!registry) {
+        qCCritical(GStreamerLog) << "Failed to get GStreamer registry";
+        return false;
+    }
 
-    qCDebug(GStreamerLog) << "Installed GStreamer Plugins:";
     GList *plugins = gst_registry_get_plugin_list(registry);
-    g_list_foreach(plugins, _logPlugin, NULL);
-    g_list_free(plugins);
+    if (plugins) {
+        qCDebug(GStreamerLog) << "Installed GStreamer plugins:";
+        for (GList *node = plugins; node != nullptr; node = node->next) {
+            GstPlugin *plugin = static_cast<GstPlugin*>(node->data);
+            if (plugin) {
+                qCDebug(GStreamerLog) << "  " << gst_plugin_get_name(plugin)
+                                      << gst_plugin_get_version(plugin);
+            }
+        }
+        gst_plugin_list_free(plugins);
+    }
 
-    static constexpr const char *pluginNames[2] = {"qml6", "qgc"};
-    for (const char *name : pluginNames) {
+    bool result = true;
+    static constexpr const char *requiredPlugins[] = {"qml6", "qgc", "coreelements"};
+    for (const char *name : requiredPlugins) {
         GstPlugin *plugin = gst_registry_find_plugin(registry, name);
         if (!plugin) {
-            qCCritical(GStreamerLog) << name << "plugin NOT found.";
+            qCCritical(GStreamerLog) << "Required QGC plugin not found:" << name;
             result = false;
             continue;
         }
@@ -253,22 +505,15 @@ bool _verifyPlugins()
     }
 
     if (!result) {
-        QString pluginPath;
-        if (qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0")) {
-            pluginPath = qgetenv("GST_PLUGIN_PATH_1_0");
-        } else if (qEnvironmentVariableIsSet("GST_PLUGIN_PATH")) {
-            pluginPath = qgetenv("GST_PLUGIN_PATH");
-        }
+        const QByteArray pluginPath = qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0")
+            ? qgetenv("GST_PLUGIN_PATH_1_0")
+            : qgetenv("GST_PLUGIN_PATH");
 
-#ifdef QGC_GST_STATIC_BUILD
-        qCCritical(GStreamerLog) << "Please update the list of static plugins in GStreamer.cc";
-#else
         if (!pluginPath.isEmpty()) {
-            qCCritical(GStreamerLog) << "Please check in GST_PLUGIN_PATH=" << pluginPath;
+            qCCritical(GStreamerLog) << "Check GST_PLUGIN_PATH=" << pluginPath;
         } else {
-            qCCritical(GStreamerLog) << "Please set GST_PLUGIN_PATH to the path of your plugin";
+            qCCritical(GStreamerLog) << "GST_PLUGIN_PATH is not set";
         }
-#endif
     }
 
     return result;
@@ -276,279 +521,173 @@ bool _verifyPlugins()
 
 void _logDecoderRanks()
 {
-    GList *decoderFactories = gst_element_factory_list_get_elements(
+    GList *factories = gst_element_factory_list_get_elements(
         static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
         GST_RANK_NONE);
 
-    if (!decoderFactories) {
-        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found.";
+    if (!factories) {
+        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
         return;
     }
 
-    decoderFactories = g_list_sort(decoderFactories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
-        GstElementFactory *lhsFactory = GST_ELEMENT_FACTORY(lhs);
-        GstElementFactory *rhsFactory = GST_ELEMENT_FACTORY(rhs);
-
-        if (!lhsFactory && !rhsFactory) {
-            return 0;
+    factories = g_list_sort(factories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
+        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhs));
+        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhs));
+        if (lhsRank != rhsRank) {
+            return (lhsRank > rhsRank) ? -1 : 1;
         }
-        if (!lhsFactory) {
-            return 1;
-        }
-        if (!rhsFactory) {
-            return -1;
-        }
-
-        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhsFactory));
-        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhsFactory));
-        if (lhsRank == rhsRank) {
-            const gchar *lhsName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhsFactory));
-            const gchar *rhsName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhsFactory));
-            return g_strcmp0(lhsName, rhsName);
-        }
-
-        return lhsRank > rhsRank ? -1 : 1;
+        return g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhs)),
+                         gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhs)));
     });
 
-    qCDebug(GStreamerDecoderRanksLog) << "Video decoder plugin ranks:";
-    for (GList *node = decoderFactories; node != nullptr; node = node->next) {
+    qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
+    for (GList *node = factories; node != nullptr; node = node->next) {
         GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory) {
-            continue;
-        }
-
-        const gchar *decoderKlass = gst_element_factory_get_klass(factory);
         GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
         const gchar *featureName = gst_plugin_feature_get_name(feature);
         const guint rank = gst_plugin_feature_get_rank(feature);
+        const gchar *klass = gst_element_factory_get_klass(factory);
+        const bool isHw = GStreamer::isHardwareDecoderFactory(factory);
 
         GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
+        const gchar *pluginName = plugin ? gst_plugin_get_name(plugin) : "?";
+
+        qCDebug(GStreamerDecoderRanksLog).noquote()
+            << QStringLiteral("  [%1] %2/%3 rank=%4 (%5)")
+                   .arg(isHw ? QStringLiteral("HW") : QStringLiteral("SW"),
+                        QString::fromUtf8(pluginName),
+                        QString::fromUtf8(featureName))
+                   .arg(rank)
+                   .arg(QString::fromUtf8(klass));
+
         if (plugin) {
-            qCDebug(GStreamerDecoderRanksLog) << "  " << gst_plugin_get_name(plugin) << "/" << featureName << "-" << decoderKlass << ":" << rank;
             gst_object_unref(plugin);
-        } else {
-            qCDebug(GStreamerDecoderRanksLog) << "  " << featureName << "-" << decoderKlass << ":" << rank;
         }
     }
 
-    gst_plugin_feature_list_free(decoderFactories);
+    gst_plugin_feature_list_free(factories);
 }
 
-void _lowerSoftwareDecoderRanks(GstRegistry *registry)
+
+void _configureDebugLogging()
 {
-    static constexpr uint16_t NewRank  = GST_RANK_NONE;
-    if (!registry) {
-        qCCritical(GStreamerLog) << "Invalid registry!";
+    gst_debug_remove_log_function(gst_debug_log_default);
+    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
+
+    if (!qEnvironmentVariableIsEmpty("GST_DEBUG")) {
         return;
     }
 
-    const char* softDecoders[] = {"avdec_h264", "avdec_h265", "avdec_mjpeg", "avdec_mpeg2video", "avdec_mpeg4",
-                                  "avdec_vp8", "avdec_vp9", "dav1ddec", "vp8dec", "vp9dec"};
-
-    for (const char *name : softDecoders) {
-        GstPluginFeature *feature = gst_registry_lookup_feature(registry, name);
-        if (feature) {
-            qCDebug(GStreamerLog) << "Setting software decoder rank low:" << name << " rank:" << NewRank;
-            gst_plugin_feature_set_rank(feature, NewRank);
-            gst_object_unref(feature);
-        } else {
-            qCDebug(GStreamerLog) << "Software decoder not found:" << name;
-        }
+    QSettings settings;
+    if (settings.contains(AppSettings::gstDebugLevelName)) {
+        const int level = qBound(0, settings.value(AppSettings::gstDebugLevelName).toInt(),
+                                 static_cast<int>(GST_LEVEL_MEMDUMP));
+        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(level));
     }
 }
 
-void _changeFeatureRank(GstRegistry *registry, const char *featureName, uint16_t rank)
-{
-    if (!registry || !featureName) {
-        return;
-    }
-
-    GstPluginFeature *feature = gst_registry_lookup_feature(registry, featureName);
-    if (!feature) {
-        qCDebug(GStreamerLog) << "Failed to change ranking of feature. Feature does not exist:" << featureName;
-        return;
-    }
-
-    qCDebug(GStreamerLog) << "  Changing feature (" << featureName << ") to use rank:" << rank;
-    gst_plugin_feature_set_rank(feature, rank);
-    gst_clear_object(&feature);
-}
-
-void _prioritizeByHardwareClass(GstRegistry *registry, uint16_t prioritizedRank, bool requireHardware)
-{
-    if (!registry) {
-        qCCritical(GStreamerLog) << "Failed to get gstreamer registry.";
-        return;
-    }
-
-    GList *decoderFactories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!decoderFactories) {
-        qCDebug(GStreamerLog) << "No decoder factories available while prioritizing"
-                              << (requireHardware ? "hardware" : "software") << "decoders";
-        return;
-    }
-
-    qCDebug(GStreamerLog) << "Prioritizing" << (requireHardware ? "hardware" : "software")
-                           << "video decoders with rank:" << prioritizedRank;
-    int matchedFactories = 0;
-    for (GList *node = decoderFactories; node != nullptr; node = node->next) {
-        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory) {
-            continue;
-        }
-
-        if (GStreamer::is_hardware_decoder_factory(factory) != requireHardware) {
-            continue;
-        }
-
-        const gchar *featureName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        if (!featureName) {
-            continue;
-        }
-
-        _changeFeatureRank(registry, featureName, prioritizedRank);
-        ++matchedFactories;
-    }
-
-    if (matchedFactories == 0) {
-        qCWarning(GStreamerLog) << "No" << (requireHardware ? "hardware" : "software")
-                               << "video decoder factories found to reprioritize.";
-    }
-
-   // Lower software decoder rank when using hardware decoders
-    if(requireHardware) {
-        qCCritical(GstVideoReceiverLog) << "Set the software decoder rank low.";
-        _lowerSoftwareDecoderRanks(registry);
-    }
-
-    gst_plugin_feature_list_free(decoderFactories);
-}
-
-void _setCodecPriorities(GStreamer::VideoDecoderOptions option)
-{
-    GstRegistry *registry = gst_registry_get();
-
-    if (!registry) {
-        qCCritical(GStreamerLog) << "Failed to get gstreamer registry.";
-        return;
-    }
-
-    static constexpr uint16_t PrioritizedRank = GST_RANK_PRIMARY + 1;
-
-    // TODO: ForceVideoDecoderCustom in VideoSettings with textbox in QML
-
-    switch (option) {
-    case GStreamer::ForceVideoDecoderDefault:
-        break;
-    case GStreamer::ForceVideoDecoderSoftware:
-        _prioritizeByHardwareClass(registry, PrioritizedRank, false);
-        break;
-    case GStreamer::ForceVideoDecoderHardware:
-        _prioritizeByHardwareClass(registry, PrioritizedRank, true);
-        break;
-    case GStreamer::ForceVideoDecoderVAAPI:
-        for (const char *name : {"vaav1dec", "vah264dec", "vah265dec", "vajpegdec", "vampeg2dec", "vavp8dec", "vavp9dec"}) {
-            _changeFeatureRank(registry, name, PrioritizedRank);
-        }
-        break;
-    case GStreamer::ForceVideoDecoderNVIDIA:
-        for (const char *name : {"nvav1dec", "nvh264dec", "nvh265dec", "nvjpegdec", "nvmpeg2videodec", "nvmpeg4videodec", "nvmpegvideodec", "nvvp8dec", "nvvp9dec"}) {
-            _changeFeatureRank(registry, name, PrioritizedRank);
-        }
-        break;
-    case GStreamer::ForceVideoDecoderDirectX3D:
-        for (const char *name : {"d3d11av1dec", "d3d11h264dec", "d3d11h265dec", "d3d11mpeg2dec", "d3d11vp8dec", "d3d11vp9dec",
-                                 "d3d12av1dec", "d3d12h264dec", "d3d12h265dec", "d3d12mpeg2dec", "d3d12vp8dec", "d3d12vp9dec",
-                                 "dxvaav1decoder", "dxvah264decoder", "dxvah265decoder", "dxvampeg2decoder", "dxvavp8decoder", "dxvavp9decoder" }) {
-            _changeFeatureRank(registry, name, PrioritizedRank);
-        }
-        break;
-    case GStreamer::ForceVideoDecoderVideoToolbox:
-        for (const char *name : {"vtdec_hw", "vtdec"}) {
-            _changeFeatureRank(registry, name, PrioritizedRank);
-        }
-        break;
-    case GStreamer::ForceVideoDecoderIntel:
-        for (const char *name : {"qsvh264dec", "qsvh265dec", "qsvjpegdec", "qsvvp9dec", "msdkav1dec", "msdkh264dec", "msdkh265dec", "msdkmjpegdec", "msdkmpeg2dec", "msdkvc1dec", "msdkvp8dec", "msdkvp9dec"}) {
-            _changeFeatureRank(registry, name, PrioritizedRank);
-        }
-        break;
-    case GStreamer::ForceVideoDecoderVulkan:
-        for (const char *name : {"vulkanh264dec", "vulkanh265dec"}) {
-            _changeFeatureRank(registry, name, PrioritizedRank);
-        }
-        break;
-    default:
-        qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
-        break;
-    }
-}
-
-bool initialize()
+void prepareEnvironment()
 {
     _setGstEnvVars();
+}
 
-    if (qEnvironmentVariableIsEmpty("GST_DEBUG")) {
-        int gstDebugLevel = 0;
-        QSettings settings;
-        if (settings.contains(AppSettings::gstDebugLevelName)) {
-            gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
-        }
-        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(gstDebugLevel));
+bool _initGstRuntime()
+{
+    if (!s_envPathsValid.load(std::memory_order_acquire)) {
+        const QMutexLocker locker(&s_envPathsMutex);
+        qCCritical(GStreamerLog) << "Invalid GStreamer environment configuration:" << s_envPathsError;
+        return false;
     }
 
-    gst_debug_remove_log_function(gst_debug_log_default);
-    gst_debug_add_log_function(_qtGstLog, nullptr, nullptr);
-
-    const QStringList args = QCoreApplication::arguments();
-    int gstArgc = args.size();
-
-    QByteArrayList argData;
-    argData.reserve(gstArgc);
-
-    QVarLengthArray<char*, 16> rawArgv;
-    rawArgv.reserve(gstArgc);
-
-    for (const QString &arg : args) {
-        argData.append(arg.toUtf8());
-        rawArgv.append(argData.last().data());
+    QByteArrayList argStorage;
+    for (const QString &arg : QCoreApplication::arguments()) {
+        argStorage.append(arg.toUtf8());
     }
 
-    char **argvPtr = rawArgv.data();
+    QVarLengthArray<char*, 16> argv;
+    for (QByteArray &arg : argStorage) {
+        argv.append(arg.data());
+    }
+
+    int argc = argv.size();
+    char **argvPtr = argv.data();
     GError *error = nullptr;
-    const gboolean ok = gst_init_check(&gstArgc, &argvPtr, &error);
-    if (!ok) {
-        qCritical(GStreamerLog) << "Failed to initialize GStreamer:" << error->message;
+
+    if (!gst_init_check(&argc, &argvPtr, &error)) {
+        qCCritical(GStreamerLog) << "Failed to initialize GStreamer:"
+                                  << (error ? error->message : "unknown error");
         g_clear_error(&error);
         return false;
     }
 
-    const gchar *version = gst_version_string();
-    qCDebug(GStreamerLog) << QString("GStreamer Initialized (Version: %1)").arg(version);
+    return true;
+}
+
+bool completeInit()
+{
+    if (!gst_is_initialized()) {
+        qCCritical(GStreamerLog) << "completeInit called but gst_init() has not been called";
+        return false;
+    }
+
+    _configureDebugLogging();
+
+    gchar *version = gst_version_string();
+    qCDebug(GStreamerLog) << "GStreamer initialized:" << version;
+    g_free(version);
 
     _registerPlugins();
 
     if (!_verifyPlugins()) {
-        qCCritical(GStreamerLog) << "Failed to verify plugins - Check your GStreamer setup";
+        qCCritical(GStreamerLog) << "Plugin verification failed";
         return false;
     }
 
     _logDecoderRanks();
-    _setCodecPriorities(static_cast<GStreamer::VideoDecoderOptions>(SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
 
-    GstElement *sink = gst_element_factory_make("qml6glsink", nullptr);
-    if (!sink) {
-        qCCritical(GStreamerLog) << "failed to init qml6glsink";
+    GstElementFactory *sinkFactory = gst_element_factory_find("qml6glsink");
+    if (!sinkFactory) {
+        qCCritical(GStreamerLog) << "qml6glsink factory not found";
+        return false;
+    }
+    gst_object_unref(sinkFactory);
+
+    GstElementFactory *playbinFactory = gst_element_factory_find("playbin");
+    if (!playbinFactory) {
+        qCCritical(GStreamerLog) << "playbin factory not found";
+        return false;
+    }
+    gst_object_unref(playbinFactory);
+
+    if (GStreamer::didExternalPluginLoaderFail()) {
+        qCCritical(GStreamerLog)
+            << "GStreamer external plugin loader failed. Check GST_PLUGIN_SCANNER and bundled runtime paths.";
         return false;
     }
 
-    gst_clear_object(&sink);
     return true;
 }
 
+bool initialize()
+{
+    // Capture GLib errors emitted during gst_init_check(), including
+    // external plugin loader failures.
+    GStreamer::resetExternalPluginLoaderFailure();
+    GStreamer::redirectGLibLogging();
+
+    if (!_initGstRuntime()) {
+        return false;
+    }
+
+    return completeInit();
+}
+
+// Ownership protocol for the video sink element:
+//   createVideoSink  — returns a floating-ref element (refcount conceptually 1).
+//   startDecoding     — calls gst_object_ref (sinks float, refcount=1).
+//   _ensureVideoSinkInPipeline — gst_object_ref (+1=2), gst_bin_add (+1=3).
+//   _shutdownDecodingBranch   — gst_bin_remove (-1=2), gst_clear_object (-1=1).
+//   releaseVideoSink  — gst_clear_object (-1=0, freed).
 void *createVideoSink(QQuickItem *widget, QObject * /*parent*/)
 {
     GstElement *videoSinkBin = gst_element_factory_make("qgcvideosinkbin", NULL);
@@ -565,6 +704,7 @@ void *createVideoSink(QQuickItem *widget, QObject * /*parent*/)
 
 void releaseVideoSink(void *sink)
 {
+    if (!sink) return;
     GstElement *videoSink = GST_ELEMENT(sink);
     gst_clear_object(&videoSink);
 }

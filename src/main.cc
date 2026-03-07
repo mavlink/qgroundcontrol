@@ -4,6 +4,10 @@
 #include "QGCLoggingCategory.h"
 #include "Platform.h"
 
+#ifdef Q_OS_ANDROID
+    #include <android/log.h>
+#endif
+
 #ifdef QGC_UNITTEST_BUILD
     #include "UnitTestList.h"
 #endif
@@ -42,6 +46,9 @@ int main(int argc, char *argv[])
 #endif
         case AppMode::BootTest:
             qCInfo(MainLog) << "Simple boot test completed";
+#ifdef Q_OS_ANDROID
+            __android_log_print(ANDROID_LOG_INFO, "QGroundControl", "Simple boot test completed");
+#endif
             return 0;
         case AppMode::Gui:
             qCInfo(MainLog) << "Starting application event loop";

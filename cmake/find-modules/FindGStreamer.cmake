@@ -433,62 +433,50 @@ endif()
 # ============================================================================
 
 if(GStreamer_USE_STATIC_LIBS)
-    set(GSTREAMER_EXTRA_DEPS
-        gstreamer-base-1.0
-        gstreamer-video-1.0
-        gstreamer-gl-1.0
-        gstreamer-gl-prototypes-1.0
-        gstreamer-rtsp-1.0
-        # gstreamer-gl-egl-1.0
-        # gstreamer-gl-wayland-1.0
-        # gstreamer-gl-x11-1.0
-    )
-
-    set(GSTREAMER_PLUGINS
-        coreelements
-        dav1d
-        isomp4
-        libav
-        matroska
-        mpegtsdemux
-        opengl
-        openh264
-        playback
-        rtp
-        rtpmanager
-        rtsp
-        sdpelem
-        tcp
-        typefindfunctions
-        udp
-        videoparsersbad
-        vpx
-    )
-    if(ANDROID)
-        list(APPEND GSTREAMER_PLUGINS androidmedia) # vulkan
-    elseif(APPLE)
-        list(APPEND GSTREAMER_PLUGINS applemedia vulkan)
-    elseif(WIN32)
-        list(APPEND GSTREAMER_PLUGINS d3d d3d11 d3d12 dxva nvcodec)
-    elseif(LINUX)
-        list(APPEND GSTREAMER_PLUGINS nvcodec qsv va vulkan) # qml6 - GStreamer provided qml6 is xcb only
+    # These lists may already be set by FindGStreamerQGC.cmake (the
+    # orchestrating module) with a more complete, per-platform configuration.
+    # Only provide defaults when called standalone / without the orchestrator.
+    if(NOT DEFINED GSTREAMER_EXTRA_DEPS)
+        set(GSTREAMER_EXTRA_DEPS
+            gstreamer-base-1.0
+            gstreamer-video-1.0
+            gstreamer-gl-1.0
+            gstreamer-gl-prototypes-1.0
+            gstreamer-rtsp-1.0
+        )
     endif()
-endif()
 
-if(ANDROID)
-    set(GStreamer_Mobile_MODULE_NAME gstreamer_android)
-    set(G_IO_MODULES openssl)
-    set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
-
-    set(GStreamer_NDK_BUILD_PATH  "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build/")
-    set(GSTREAMER_ANDROID_MODULE_NAME gstreamer_android)
-    set(GSTREAMER_JAVA_SRC_DIR "${CMAKE_BINARY_DIR}/android-build-${CMAKE_PROJECT_NAME}/src")
-    set(GSTREAMER_ASSETS_DIR "${CMAKE_BINARY_DIR}/android-build-${CMAKE_PROJECT_NAME}/assets")
-
-    configure_file(
-        "${GStreamer_NDK_BUILD_PATH}/gstreamer_android-1.0.c.in"
-        "${GStreamer_Mobile_MODULE_NAME}.c"
-    )
+    if(NOT DEFINED GSTREAMER_PLUGINS)
+        set(GSTREAMER_PLUGINS
+            coreelements
+            dav1d
+            isomp4
+            libav
+            matroska
+            mpegtsdemux
+            opengl
+            openh264
+            playback
+            rtp
+            rtpmanager
+            rtsp
+            sdpelem
+            tcp
+            typefindfunctions
+            udp
+            videoparsersbad
+            vpx
+        )
+        if(ANDROID)
+            list(APPEND GSTREAMER_PLUGINS androidmedia) # vulkan
+        elseif(APPLE)
+            list(APPEND GSTREAMER_PLUGINS applemedia vulkan)
+        elseif(WIN32)
+            list(APPEND GSTREAMER_PLUGINS d3d d3d11 d3d12 dxva nvcodec)
+        elseif(LINUX)
+            list(APPEND GSTREAMER_PLUGINS nvcodec qsv va vulkan) # qml6 - GStreamer provided qml6 is xcb only
+        endif()
+    endif()
 endif()
 
 # ============================================================================
@@ -509,9 +497,9 @@ find_package(PkgConfig REQUIRED QUIET)
 
 list(PREPEND CMAKE_PREFIX_PATH ${GStreamer_ROOT_DIR})
 if(LINUX)
-    pkg_check_modules(PC_GSTREAMER REQUIRED gstreamer-1.0>=${GStreamer_FIND_VERSION})
+    pkg_check_modules(PC_GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0>=${GStreamer_FIND_VERSION})
 else()
-    pkg_check_modules(PC_GSTREAMER REQUIRED gstreamer-1.0=${GStreamer_FIND_VERSION})
+    pkg_check_modules(PC_GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0=${GStreamer_FIND_VERSION})
 endif()
 set(GStreamer_VERSION "${PC_GSTREAMER_VERSION}")
 
@@ -647,15 +635,41 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
         target_link_directories(GStreamer::Plugins INTERFACE ${GSTREAMER_PLUGIN_PATH})
 
         foreach(plugin IN LISTS GSTREAMER_PLUGINS)
-            pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET gst${plugin})
+            # Use pkg-config to check if the plugin exists and to learn its
+            # transitive deps.  For cross-compilation with static linking, the
+            # IMPORTED_TARGET can mis-resolve system libraries (e.g. -lunwind)
+            # to host paths, so we only use it for non-cross or shared builds.
+            # In the static cross-compilation case we locate the archive ourselves
+            # and let GStreamer::deps (linked last) satisfy transitive references.
+            if(CMAKE_CROSSCOMPILING)
+                pkg_check_modules(GST_PLUGIN_${plugin} QUIET gst${plugin})
+            else()
+                pkg_check_modules(GST_PLUGIN_${plugin} QUIET IMPORTED_TARGET gst${plugin})
+            endif()
+
             if(GST_PLUGIN_${plugin}_FOUND)
-                target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+                if(NOT CMAKE_CROSSCOMPILING AND TARGET PkgConfig::GST_PLUGIN_${plugin})
+                    target_link_libraries(GStreamer::Plugins INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+                else()
+                    # Cross-compiling or no imported target: find the archive directly
+                    find_library(GST_PLUGIN_${plugin}_LIBRARY
+                        NAMES gst${plugin}
+                        PATHS
+                            ${GSTREAMER_LIB_PATH}
+                            ${GSTREAMER_PLUGIN_PATH}
+                        NO_DEFAULT_PATH
+                    )
+                    if(GST_PLUGIN_${plugin}_LIBRARY)
+                        target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+                    endif()
+                endif()
             else()
                 find_library(GST_PLUGIN_${plugin}_LIBRARY
                     NAMES gst${plugin}
                     PATHS
                         ${GSTREAMER_LIB_PATH}
                         ${GSTREAMER_PLUGIN_PATH}
+                    NO_DEFAULT_PATH
                 )
                 if(GST_PLUGIN_${plugin}_LIBRARY)
                     target_link_libraries(GStreamer::Plugins INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
@@ -664,9 +678,98 @@ if(GStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
             endif()
             if(GST_PLUGIN_${plugin}_FOUND)
                 target_compile_definitions(GStreamer::Plugins INTERFACE GST_PLUGIN_${plugin}_FOUND)
+                # Propagate to GStreamer_<plugin>_FOUND for FindGStreamerMobile plugin discovery
+                set(GStreamer_${plugin}_FOUND TRUE)
+                # Create per-plugin INTERFACE target for FindGStreamerMobile.
+                # For cross-compiled static builds, link the archive directly instead
+                # of wrapping the PkgConfig target (which can contain host paths).
+                if(NOT TARGET GStreamer::${plugin})
+                    if(NOT CMAKE_CROSSCOMPILING AND TARGET PkgConfig::GST_PLUGIN_${plugin})
+                        qt_add_library(GStreamer::${plugin} INTERFACE IMPORTED)
+                        target_link_libraries(GStreamer::${plugin} INTERFACE PkgConfig::GST_PLUGIN_${plugin})
+                    elseif(GST_PLUGIN_${plugin}_LIBRARY)
+                        qt_add_library(GStreamer::${plugin} INTERFACE IMPORTED)
+                        target_link_libraries(GStreamer::${plugin} INTERFACE ${GST_PLUGIN_${plugin}_LIBRARY})
+                    endif()
+                endif()
             endif()
         endforeach()
 
         target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::Plugins)
+
+        # GStreamer::deps carries the full set of transitive static dependencies.
+        # FindGStreamerMobile links this LAST so that references from core archives
+        # and plugin archives (linked with --whole-archive) are satisfied.
+        #
+        # We build this manually instead of using PkgConfig::PC_GSTREAMER because
+        # IMPORTED_TARGET can mis-resolve system libraries (e.g. -lunwind) to host
+        # paths during cross-compilation.
+        #
+        # Collect transitive deps from:
+        #   1. gstreamer-1.0 itself (PC_GSTREAMER_LIBRARIES)
+        #   2. Every discovered plugin's pkg-config output (GST_PLUGIN_*_LIBRARIES)
+        #   3. Extra API deps (GSTREAMER_EXTRA_DEPS) queried individually
+        qt_add_library(GStreamer::deps INTERFACE IMPORTED)
+        target_link_directories(GStreamer::deps INTERFACE ${GSTREAMER_LIB_PATH})
+
+        # System/toolchain libs that the linker resolves automatically.
+        # These must NOT be resolved via find_library (which can pick up host copies).
+        set(_gst_deps_system_libs c c++ unwind m dl atomic)
+        if(ANDROID)
+            list(APPEND _gst_deps_system_libs log GLESv2 EGL OpenSLES android vulkan)
+        elseif(APPLE)
+            list(APPEND _gst_deps_system_libs iconv resolv System)
+        endif()
+
+        # Accumulate all transitive library names from every source.
+        set(_gst_all_transitive_libs ${PC_GSTREAMER_LIBRARIES})
+
+        # Add transitive deps from each plugin's pkg-config output.
+        foreach(plugin IN LISTS GSTREAMER_PLUGINS)
+            if(GST_PLUGIN_${plugin}_FOUND AND DEFINED GST_PLUGIN_${plugin}_LIBRARIES)
+                list(APPEND _gst_all_transitive_libs ${GST_PLUGIN_${plugin}_LIBRARIES})
+            endif()
+        endforeach()
+
+        # Query extra API deps (gstreamer-video-1.0, gio-2.0, etc.) for their
+        # transitive libraries, since plugins reference symbols from these.
+        foreach(_extra_dep IN LISTS GSTREAMER_EXTRA_DEPS)
+            string(MAKE_C_IDENTIFIER "PC_EXTRA_${_extra_dep}" _extra_prefix)
+            pkg_check_modules(${_extra_prefix} QUIET ${_extra_dep})
+            if(${_extra_prefix}_FOUND)
+                list(APPEND _gst_all_transitive_libs ${${_extra_prefix}_LIBRARIES})
+            endif()
+        endforeach()
+
+        list(REMOVE_DUPLICATES _gst_all_transitive_libs)
+
+        set(_gst_deps_save_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
+        set(_gst_deps_save_prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+        set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
+
+        foreach(_dep_lib IN LISTS _gst_all_transitive_libs)
+            if("${_dep_lib}" IN_LIST _gst_deps_system_libs)
+                target_link_libraries(GStreamer::deps INTERFACE "${_dep_lib}")
+            else()
+                string(MAKE_C_IDENTIFIER "_gst_dep_${_dep_lib}" _dep_cache_var)
+                if(NOT DEFINED ${_dep_cache_var})
+                    find_library(${_dep_cache_var}
+                        NAMES ${_dep_lib}
+                        HINTS ${GSTREAMER_LIB_PATH}
+                        NO_DEFAULT_PATH
+                    )
+                endif()
+                if(${_dep_cache_var})
+                    target_link_libraries(GStreamer::deps INTERFACE "${${_dep_cache_var}}")
+                else()
+                    # Fall back to link by name; the linker will resolve it
+                    target_link_libraries(GStreamer::deps INTERFACE "${_dep_lib}")
+                endif()
+            endif()
+        endforeach()
+
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ${_gst_deps_save_suffixes})
+        set(CMAKE_FIND_LIBRARY_PREFIXES ${_gst_deps_save_prefixes})
     endif()
 endif()
