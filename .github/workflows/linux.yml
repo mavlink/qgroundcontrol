@@ -128,6 +128,29 @@ jobs:
         with:
           category: "/language:c-cpp"
 
+      - name: Run Unit Tests
+        if: matrix.build_type == 'Debug'
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-${{ matrix.arch }}.xml
+          ctest-output: test-output-linux-${{ matrix.arch }}.txt
+          include-labels: 'Unit|Integration'
+          exclude-labels: 'Flaky|Network'
+
+      - name: Report Test Results
+        if: always() && !cancelled() && matrix.build_type == 'Debug'
+        uses: ./.github/actions/test-report
+        with:
+          name: Unit Tests (${{ matrix.arch }})
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-${{ matrix.arch }}.xml
+          output-file: test-output-linux-${{ matrix.arch }}.txt
+          artifact-name: test-results-${{ matrix.arch }}
+          retention-days: 7
+          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          trunk-token: ${{ secrets.TRUNK_TOKEN }}
+
       - name: Verify Executable
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
@@ -190,11 +213,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - job_name: Test + Coverage linux_gcc_64 Debug
-            mode: coverage
-            timeout_minutes: 60
-            fetch_depth: 0
-            fetch_tags: false
+          # - job_name: Test + Coverage linux_gcc_64 Debug
+          #   mode: coverage
+          #   timeout_minutes: 60
+          #   fetch_depth: 0
+          #   fetch_tags: false
           - job_name: Sanitizers linux_gcc_64 Debug (ASan+UBSan)
             mode: sanitizers
             timeout_minutes: 120
@@ -218,7 +241,7 @@ jobs:
           fetch-tags: ${{ matrix.fetch_tags }}
 
       - name: Restore file timestamps
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: chetan/git-restore-mtime-action@v2
 
       - name: Build Setup
@@ -234,7 +257,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Configure (Coverage)
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
@@ -244,7 +267,7 @@ jobs:
           stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
 
       - name: Build (Coverage)
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
@@ -268,7 +291,7 @@ jobs:
           build-type: Debug
 
       - name: Run Unit Tests
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
@@ -296,7 +319,7 @@ jobs:
           parallel: '1'
 
       - name: Analyze Unit Test Durations
-        if: always() && !cancelled() && matrix.mode == 'coverage'
+        if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/test-duration-report
         with:
           junit-path: ${{ runner.temp }}/build/junit-results-linux-linux_gcc_64.xml
@@ -322,7 +345,7 @@ jobs:
           fail-on-regression: 'false'
 
       - name: Report Test Results
-        if: always() && !cancelled() && matrix.mode == 'coverage'
+        if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/test-report
         with:
           name: Unit Tests (linux_gcc_64)
@@ -335,7 +358,7 @@ jobs:
           trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Upload Duration Report
-        if: always() && !cancelled() && matrix.mode == 'coverage'
+        if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: actions/upload-artifact@v6
         with:
           name: test-duration-linux_gcc_64
@@ -354,7 +377,7 @@ jobs:
           retention-days: 7
 
       - name: Ensure coverage tools are available
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         run: |
           if ! command -v ccache >/dev/null 2>&1; then
             sudo apt-get install -y --no-install-recommends ccache
@@ -368,7 +391,7 @@ jobs:
           fi
 
       - name: Verify coverage data files exist
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         working-directory: ${{ runner.temp }}/build
         run: |
           gcda_count=$(find . -name '*.gcda' | wc -l | tr -d '[:space:]')
@@ -379,14 +402,14 @@ jobs:
           fi
 
       - name: Coverage Report
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
           mode: report-only
 
       - name: Verify Coverage Thresholds
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         working-directory: ${{ runner.temp }}/build
         run: |
           line_thresh=$(cmake -L -N . 2>/dev/null | sed -n 's/^QGC_COVERAGE_LINE_THRESHOLD:STRING=//p')

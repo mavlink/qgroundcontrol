@@ -121,7 +121,7 @@ jobs:
     name: Docker ${{ matrix.platform }}
     runs-on: ubuntu-latest
     needs: [changes, plan-builds]
-    if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
+    if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true' && vars.DOCKER_BUILD_ENABLED == 'true'
     timeout-minutes: 120
 
     strategy:
