@@ -256,66 +256,57 @@ void RemoteIDManager::_sendOperatorID()
     }
 }
 
+void RemoteIDManager::_updateGcsGpsStatus(bool gpsGood, const QString& error)
+{
+    if (_gcsGPSGood != gpsGood) {
+        _gcsGPSGood = gpsGood;
+        emit gcsGPSGoodChanged();
+        if (!error.isEmpty() && _gcsGPSError != error) {
+            _gcsGPSError = error;
+            qCWarning(RemoteIDManagerLog) << "GCS GPS error:" << error;
+        }
+    }
+}
+
 void RemoteIDManager::_sendSystem()
 {
-    QGeoCoordinate      gcsPosition;
-    QGeoPositionInfo    geoPositionInfo;
+    QGeoCoordinate gcsPosition(0, 0, 0);
+    const uint32_t locationType = _settings->locationType()->rawValue().toUInt();
     // Location types:
     // 0 -> TAKEOFF (not supported yet)
     // 1 -> LIVE GNNS
     // 2 -> FIXED
-    if (_settings->locationType()->rawValue().toUInt() == LocationTypes::FIXED) {
+    if (locationType == LocationTypes::FIXED) {
+        const double lat = _settings->latitudeFixed()->rawValue().toDouble();
+        const double lon = _settings->longitudeFixed()->rawValue().toDouble();
+        const double alt = _settings->altitudeFixed()->rawValue().toDouble();
+
         // For FIXED location, we first check that the values are valid. Then we populate our position
-        if (_settings->latitudeFixed()->rawValue().toFloat() >= -90 && _settings->latitudeFixed()->rawValue().toFloat() <= 90 && _settings->longitudeFixed()->rawValue().toFloat() >= -180 && _settings->longitudeFixed()->rawValue().toFloat() <= 180) {
-            gcsPosition = QGeoCoordinate(_settings->latitudeFixed()->rawValue().toFloat(), _settings->longitudeFixed()->rawValue().toFloat(), _settings->altitudeFixed()->rawValue().toFloat());
-            geoPositionInfo = QGeoPositionInfo(gcsPosition, QDateTime::currentDateTime().currentDateTimeUtc());
-            if (!_gcsGPSGood) {
-                _gcsGPSGood = true;
-                emit gcsGPSGoodChanged();
-            }
+        if (lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
+            gcsPosition = QGeoCoordinate(lat, lon, alt);
+            _updateGcsGpsStatus(true);
         } else {
-            gcsPosition = QGeoCoordinate(0,0,0);
-            geoPositionInfo = QGeoPositionInfo(gcsPosition, QDateTime::currentDateTime().currentDateTimeUtc());
-            if (_gcsGPSGood) {
-                _gcsGPSGood = false;
-                emit gcsGPSGoodChanged();
-                qCDebug(RemoteIDManagerLog) << "The provided coordinates for FIXED position are invalid.";
-            }
+            _updateGcsGpsStatus(false, "The provided coordinates for FIXED position are invalid.");
         }
     } else {
-        // For Live GNSS we take QGC GPS data
-        gcsPosition = QGCPositionManager::instance()->gcsPosition();
-        geoPositionInfo = QGCPositionManager::instance()->geoPositionInfo();
+        QGCPositionManager* positionManager = QGCPositionManager::instance();
+        QGeoPositionInfo geoPositionInfo = positionManager->geoPositionInfo();
+        gcsPosition = positionManager->gcsPosition();
 
-        // GPS position needs to be valid before checking other stuff
-        if (geoPositionInfo.isValid()) {
-            // If we dont have altitude for FAA then the GPS data is no good
-            if ((_settings->region()->rawValue().toInt() == Region::FAA) && !(gcsPosition.altitude() >= 0) && _gcsGPSGood) {
-                _gcsGPSGood = false;
-                emit gcsGPSGoodChanged();
-                qCDebug(RemoteIDManagerLog) << "GCS GPS data error (no altitude): Altitude data is mandatory for GCS GPS data in FAA regions.";
-                return;
-            }
-
-            // If the GPS data is older than ALLOWED_GPS_DELAY we cannot use this data
-            if (_lastGeoPositionTimeStamp.msecsTo(QDateTime::currentDateTime().currentDateTimeUtc()) > ALLOWED_GPS_DELAY) {
-                if (_gcsGPSGood) {
-                    _gcsGPSGood = false;
-                    emit gcsGPSGoodChanged();
-                    qCDebug(RemoteIDManagerLog) << "GCS GPS data is older than 5 seconds";
-                }
-            } else {
-                if (!_gcsGPSGood) {
-                    _gcsGPSGood = true;
-                    emit gcsGPSGoodChanged();
-                }
-            }
+        if (!geoPositionInfo.isValid()) {
+            _updateGcsGpsStatus(false, "GCS GPS data is not valid.");
+        } else if (positionManager->gcsPositioningError() != QGeoPositionInfoSource::NoError && positionManager->gcsPositioningError() != QGeoPositionInfoSource::UpdateTimeoutError) {
+            _updateGcsGpsStatus(false, QString("GCS GPS data error: %1").arg(positionManager->gcsPositioningError()));
+        } else if (!gcsPosition.isValid() || gcsPosition.type() == QGeoCoordinate::InvalidCoordinate) {
+            _updateGcsGpsStatus(false, "GCS GPS data error: Invalid coordinate type.");
+        } else if (_settings->region()->rawValue().toInt() == Region::FAA && gcsPosition.type() != QGeoCoordinate::Coordinate3D) {
+            // FAA requires altitude data, or else the GPS data is not good
+            _updateGcsGpsStatus(false, "GCS GPS data error: Altitude data is mandatory for FAA regions.");
+        } else if (_lastGeoPositionTimeStamp.msecsTo(QDateTime::currentDateTime().currentDateTimeUtc()) > ALLOWED_GPS_DELAY) {
+            _updateGcsGpsStatus(false, "GCS GPS data is older than 5 seconds");
         } else {
-            _gcsGPSGood = false;
-            emit gcsGPSGoodChanged();
-            qCDebug(RemoteIDManagerLog) << "GCS GPS data is not valid.";
+            _updateGcsGpsStatus(true);
         }
-
     }
 
     WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
