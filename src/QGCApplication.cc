@@ -677,6 +677,38 @@ void QGCApplication::shutdown()
 
     QGCCorePlugin::instance()->cleanup();
 
+    if (_runningUnitTests || _simpleBootTest) {
+        const QSettings settings;
+        const QString settingsFile = settings.fileName();
+        if (QFile::exists(settingsFile)) {
+            if (QFile::remove(settingsFile)) {
+                qCDebug(QGCApplicationLog) << "Removed test run settings file:" << settingsFile;
+            } else {
+                qCWarning(QGCApplicationLog) << "Failed to remove test run settings file:" << settingsFile;
+            }
+        }
+
+        // Remove the app-specific settings directory (parent of ParamCache)
+        QDir settingsAppDir(ParameterManager::parameterCacheDir());
+        settingsAppDir.cdUp();
+        if (settingsAppDir.exists()) {
+            if (settingsAppDir.removeRecursively()) {
+                qCDebug(QGCApplicationLog) << "Removed test run settings directory:" << settingsAppDir.absolutePath();
+            } else {
+                qCWarning(QGCApplicationLog) << "Failed to remove test run settings directory:" << settingsAppDir.absolutePath();
+            }
+        }
+
+        QDir appDir(SettingsManager::instance()->appSettings()->savePath()->rawValue().toString());
+        if (appDir.exists()) {
+            if (appDir.removeRecursively()) {
+                qCDebug(QGCApplicationLog) << "Removed test run app data directory:" << appDir.absolutePath();
+            } else {
+                qCWarning(QGCApplicationLog) << "Failed to remove test run app data directory:" << appDir.absolutePath();
+            }
+        }
+    }
+
     // This is bad, but currently qobject inheritances are incorrect and cause crashes on exit without
     delete _qmlAppEngine;
 }

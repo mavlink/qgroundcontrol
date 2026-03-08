@@ -7,6 +7,7 @@
 #include <QtBluetooth/QBluetoothAddress>
 #include <QtBluetooth/QBluetoothDeviceInfo>
 #include <QtCore/QMetaProperty>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtTest/QSignalSpy>
 #include <memory>
@@ -101,6 +102,9 @@ void BluetoothConfigurationTest::_testBleUuidGetSet()
 
 void BluetoothConfigurationTest::_testBluetoothAvailabilityConsistency()
 {
+    // Qt's Bluetooth module may emit an uncategorized warning when BlueZ is not running (e.g. on headless CI).
+    expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
+
     QCOMPARE(BluetoothConfiguration::isBluetoothAvailable(), LinkManager::isBluetoothAvailable());
 }
 

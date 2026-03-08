@@ -6,6 +6,7 @@
 #include "BluetoothWorker.h"
 
 #include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 
@@ -22,6 +23,9 @@ static QTimer *_findServiceDiscoveryTimer(const BluetoothWorker *worker)
 
 void BluetoothWorkerTest::_testFactoryCreatesClassicWorker()
 {
+    // Qt's Bluetooth module may emit an uncategorized warning when BlueZ is not running (e.g. on headless CI).
+    expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
+
     BluetoothConfiguration config("TestBT_factoryClassic");
     config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
 

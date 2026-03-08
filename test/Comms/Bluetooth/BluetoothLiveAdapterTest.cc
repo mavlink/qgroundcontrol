@@ -5,6 +5,7 @@
 #include <QtBluetooth/QBluetoothHostInfo>
 #include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -45,6 +46,9 @@ static QString _firstAdapterAddressOrEmpty(const QVariantList &adapters)
 
 void BluetoothLiveAdapterTest::_testLiveAdapterSelectionAndState()
 {
+    // Qt's Bluetooth module may emit an uncategorized warning when BlueZ is not running (e.g. on headless CI).
+    expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
+
     const QList<QBluetoothHostInfo> localHosts = _localAdaptersOrSkip();
     if (localHosts.isEmpty()) {
         QSKIP("No local Bluetooth adapter detected on this host");
