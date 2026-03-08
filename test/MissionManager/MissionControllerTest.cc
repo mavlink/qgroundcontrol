@@ -202,7 +202,7 @@ void MissionControllerTest::_testMissionReposition()
     QVERIFY(settingsItem);
 
     const QGeoCoordinate home = Coord::zurich();
-    settingsItem->setInitialHomePositionFromUser(home);
+    settingsItem->setCoordinate(home);
 
     const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(150.0, 15.0);
     const QGeoCoordinate wp2 = home.atDistanceAndAzimuth(320.0, 120.0);
@@ -245,7 +245,7 @@ void MissionControllerTest::_testMissionOffset()
     QVERIFY(settingsItem);
 
     const QGeoCoordinate home = Coord::zurich();
-    settingsItem->setInitialHomePositionFromUser(home);
+    settingsItem->setCoordinate(home);
 
     const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(150.0, 15.0);
     const QGeoCoordinate wp2 = home.atDistanceAndAzimuth(320.0, 120.0);
@@ -280,7 +280,7 @@ void MissionControllerTest::_testMissionRotate()
     QVERIFY(settingsItem);
 
     const QGeoCoordinate home = Coord::zurich();
-    settingsItem->setInitialHomePositionFromUser(home);
+    settingsItem->setCoordinate(home);
 
     const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(180.0, 20.0);
     const QGeoCoordinate wp2 = home.atDistanceAndAzimuth(260.0, 135.0);
@@ -324,7 +324,7 @@ void MissionControllerTest::_testMissionTransformsInvalidHome()
     QVERIFY(settingsItem);
 
     const QGeoCoordinate home = Coord::zurich();
-    settingsItem->setInitialHomePositionFromUser(home);
+    settingsItem->setCoordinate(home);
 
     const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(180.0, 45.0);
     _missionController->insertSimpleMissionItem(wp1, 1);

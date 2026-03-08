@@ -50,8 +50,8 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
 
     connect(&_plannedHomePositionAltitudeFact,  &Fact::rawValueChanged,                 this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
-    connect(_managerVehicle, &Vehicle::homePositionChanged, this, &MissionSettingsItem::_updateHomePosition);
-    _updateHomePosition(_managerVehicle->homePosition());
+    connect(_managerVehicle, &Vehicle::homePositionChanged, this, &MissionSettingsItem::_updateFlyViewHomePosition);
+    _updateFlyViewHomePosition(_managerVehicle->homePosition());
 }
 
 int MissionSettingsItem::lastSequenceNumber(void) const
@@ -173,52 +173,11 @@ void MissionSettingsItem::_setDirty(void)
     setDirty(true);
 }
 
-void MissionSettingsItem::_setCoordinateWorker(const QGeoCoordinate& coordinate)
+void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_plannedHomePositionCoordinate != coordinate) {
         _plannedHomePositionCoordinate = coordinate;
         emit coordinateChanged(coordinate);
-        if (_plannedHomePositionFromVehicle) {
-            _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
-        }
-    }
-}
-
-void MissionSettingsItem::setHomePositionFromVehicle(Vehicle* vehicle)
-{
-    // If the user hasn't moved the planned home position manually we use the value from the vehicle
-    if (!_plannedHomePositionMovedByUser) {
-        QGeoCoordinate coordinate = vehicle->homePosition();
-        // ArduPilot tends to send crap home positions at initial vehicle boot, discard them
-        if (coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0)) {
-            _plannedHomePositionFromVehicle = true;
-            _setCoordinateWorker(coordinate);
-        }
-    }
-}
-
-void MissionSettingsItem::setInitialHomePosition(const QGeoCoordinate& coordinate)
-{
-    _plannedHomePositionMovedByUser = false;
-    _plannedHomePositionFromVehicle = false;
-    _setCoordinateWorker(coordinate);
-}
-
-void MissionSettingsItem::setInitialHomePositionFromUser(const QGeoCoordinate& coordinate)
-{
-    _plannedHomePositionMovedByUser = true;
-    _plannedHomePositionFromVehicle = false;
-    _setCoordinateWorker(coordinate);
-}
-
-
-void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
-{
-    if (coordinate != this->coordinate()) {
-        // The user is moving the planned home position manually. Stop tracking vehicle home position.
-        _plannedHomePositionMovedByUser = true;
-        _plannedHomePositionFromVehicle = false;
-        _setCoordinateWorker(coordinate);
     }
 }
 
@@ -267,7 +226,7 @@ double MissionSettingsItem::specifiedFlightSpeed(void)
 
 void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 {
-    if (!_plannedHomePositionFromVehicle && !qIsNaN(terrainAltitude)) {
+    if (!qIsNaN(terrainAltitude)) {
         qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::_setHomeAltFromTerrain" << terrainAltitude;
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
     }
@@ -278,7 +237,7 @@ QString MissionSettingsItem::abbreviation(void) const
     return _flyView ? tr("L") : tr("Launch");
 }
 
-void MissionSettingsItem::_updateHomePosition(const QGeoCoordinate& homePosition)
+void MissionSettingsItem::_updateFlyViewHomePosition(const QGeoCoordinate& homePosition)
 {
     if (_flyView) {
         setCoordinate(homePosition);

@@ -33,6 +33,8 @@ Item {
     property bool   _promptForPlanUsageShowing: false
     property bool   _addROIOnClick: false
     property bool   _addWaypointOnClick: false
+    property bool   _homeTrackingMapCenter: true
+    property bool   _updatingHomeFromMapCenter: false
 
     readonly property int _layerMission: 1
     readonly property int _layerFence: 2
@@ -160,6 +162,29 @@ Item {
         }
     }
 
+    // Stop tracking map center when the home position is changed externally (e.g. drag, file load)
+    Connections {
+        target: _visualItems.get(0)
+        function onCoordinateChanged() {
+            if (!_updatingHomeFromMapCenter && !_planMasterController.containsItems) {
+                _homeTrackingMapCenter = false
+            }
+        }
+    }
+
+    // Resume tracking when the plan becomes empty again
+    Connections {
+        target: _planMasterController
+        function onContainsItemsChanged() {
+            if (!_planMasterController.containsItems) {
+                _homeTrackingMapCenter = true
+                _updatingHomeFromMapCenter = true
+                _visualItems.get(0).coordinate = editorMap.center
+                _updatingHomeFromMapCenter = false
+            }
+        }
+    }
+
     function insertSimpleItemAfterCurrent(coordinate) {
         var nextIndex = _missionController.currentPlanViewVIIndex + 1
         _missionController.insertSimpleMissionItem(coordinate, nextIndex, true /* makeCurrentItem */)
@@ -254,6 +279,11 @@ Item {
             }
             onCenterChanged: {
                 QGroundControl.flightMapPosition = editorMap.center
+                if (_homeTrackingMapCenter && !_planMasterController.containsItems) {
+                    _updatingHomeFromMapCenter = true
+                    _visualItems.get(0).coordinate = editorMap.center
+                    _updatingHomeFromMapCenter = false
+                }
             }
 
             onMapClicked: (mouse) => {

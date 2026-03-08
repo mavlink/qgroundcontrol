@@ -19,15 +19,17 @@ qt_add_qml_module(PlanViewModule
         FWLandingPatternMapVisual.qml
         GeoFenceEditor.qml
         GeoFenceMapVisuals.qml
+        MissionDefaultsEditor.qml
         MissionItemEditor.qml
         MissionItemIndexLabel.qml
         MissionItemMapVisual.qml
         MissionItemStatus.qml
-        MissionItemTreeView.qml
         MissionSettingsEditor.qml
         MissionStats.qml
         PlanEditToolbar.qml
+        PlanInfoEditor.qml
         PlanToolBarIndicators.qml
+        PlanTreeView.qml
         PlanView.qml
         PlanViewRightPanel.qml
         RallyPointEditorHeader.qml

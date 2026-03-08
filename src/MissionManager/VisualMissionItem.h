@@ -42,6 +42,7 @@ public:
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate             NOTIFY coordinateChanged)                           ///< Does not include altitude
     Q_PROPERTY(double           amslEntryAlt                        READ amslEntryAlt                                                       NOTIFY amslEntryAltChanged)
     Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                    NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
+    Q_PROPERTY(bool             terrainQueryFailed                  READ terrainQueryFailed                                                 NOTIFY terrainQueryFailedChanged)                    ///< true: Last terrain query failed
     Q_PROPERTY(QGeoCoordinate   entryCoordinate                     READ entryCoordinate                                                    NOTIFY entryCoordinateChanged)                      ///< Does not include altitude
     Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                     NOTIFY exitCoordinateChanged)                       ///< Does not include altitude
     Q_PROPERTY(double           amslExitAlt                         READ amslExitAlt                                                        NOTIFY amslExitAltChanged)
@@ -101,6 +102,7 @@ public:
     bool    isCurrentItem       (void) const { return _isCurrentItem; }
     bool    hasCurrentChildItem (void) const { return _hasCurrentChildItem; }
     double  terrainAltitude     (void) const { return _terrainAltitude; }
+    bool    terrainQueryFailed   (void) const { return _terrainQueryFailed; }
     bool    flyView             (void) const { return _flyView; }
     bool    wizardMode          (void) const { return _wizardMode; }
     VisualMissionItem* parentItem(void) { return _parentItem; }
@@ -227,6 +229,7 @@ signals:
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);
     void terrainAltitudeChanged         (double terrainAltitude);
+    void terrainQueryFailedChanged       (bool terrainQueryFailed);
     void additionalTimeDelayChanged     (void);
     void boundingCubeChanged            (void);
     void readyForSaveStateChanged       (void);
@@ -251,6 +254,7 @@ protected:
     bool                        _homePositionSpecialCase    = false;                            ///< true: This item is being used as a ui home position indicator
     bool                        _wizardMode                 = false;                            ///< true: Item editor is showing wizard completion panel
     double                      _terrainAltitude            = qQNaN();                          ///< Altitude of terrain at coordinate position, NaN for not known
+    bool                        _terrainQueryFailed         = false;                            ///< true: Last terrain query failed
     double                      _altDifference              = 0;                                ///< Difference in altitude from previous waypoint
     double                      _altPercent                 = 0;                                ///< Percent of total altitude change in mission
     double                      _terrainPercent             = qQNaN();                          ///< Percent of terrain altitude for coordinate

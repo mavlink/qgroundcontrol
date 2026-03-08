@@ -92,7 +92,7 @@ TreeView {
     // Subtitle text shown on group headers, varies by node type
     function _groupSubtitle(nodeType) {
         switch (nodeType) {
-        case "planFileGroup":   return planMasterController.currentPlanFileName
+        case "planFileGroup":   return planMasterController.currentPlanFileName === "" ? qsTr("<Untitled>") : planMasterController.currentPlanFileName
         case "missionGroup":    return _missionController.visualItems ? (_missionController.visualItems.count - 1) + qsTr(" items") : ""
         case "rallyGroup":      return _rallyPointController.points ? _rallyPointController.points.count + qsTr(" points") : ""
         default:                return ""
@@ -165,34 +165,36 @@ TreeView {
                 height: ScreenTools.implicitComboBoxHeight + ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.windowShade
 
-                Row {
+                RowLayout {
                     id: groupHeaderRow
                     spacing: ScreenTools.defaultFontPixelWidth * 0.5
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                    anchors.right: parent.right
+                    anchors.margins: ScreenTools.defaultFontPixelWidth * 0.5
 
                     QGCColoredImage {
-                        width: ScreenTools.defaultFontPixelHeight * 0.75
-                        height: width
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.75
+                        Layout.preferredHeight: Layout.preferredWidth
                         source: "/InstrumentValueIcons/cheveron-right.svg"
                         color: qgcPal.text
-                        anchors.verticalCenter: parent.verticalCenter
                         rotation: delegateRoot.expanded ? 90 : 0
                     }
 
                     QGCLabel {
+                        Layout.alignment: Qt.AlignBaseline
                         text: delegateRoot.nodeObject ? delegateRoot.nodeObject.objectName : ""
                         font.bold: true
-                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     QGCLabel {
+                        Layout.alignment: Qt.AlignBaseline
+                        Layout.fillWidth: true
                         text: root._groupSubtitle(delegateRoot.nodeType)
+                        elide: Text.ElideRight
                         font.pointSize: ScreenTools.smallFontPointSize
                         color: qgcPal.colorGrey
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: text !== ""
                     }
                 }
 

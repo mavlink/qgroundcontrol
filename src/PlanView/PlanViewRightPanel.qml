@@ -90,8 +90,8 @@ Item {
             anchors.fill:   parent
         }
 
-        MissionItemTreeView {
-            id:                     missionItemTreeView
+        PlanTreeView {
+            id:                     planTreeView
             anchors.fill:           parent
             editorMap:              root.editorMap
             planMasterController:   root.planMasterController
@@ -105,6 +105,6 @@ Item {
             root.anchors.left = undefined
             root.anchors.right = root.parent.right
         }
-        missionItemTreeView.selectLayer(nodeType)
+        planTreeView.selectLayer(nodeType)
     }
 }
