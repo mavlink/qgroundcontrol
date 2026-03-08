@@ -80,6 +80,7 @@ public:
     Q_PROPERTY(QPersistentModelIndex missionGroupIndex               READ missionGroupIndex               CONSTANT)
     Q_PROPERTY(QPersistentModelIndex fenceGroupIndex                 READ fenceGroupIndex                 CONSTANT)
     Q_PROPERTY(QPersistentModelIndex rallyGroupIndex                 READ rallyGroupIndex                 CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex transformGroupIndex              READ transformGroupIndex              CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  simpleFlightPathSegments        READ simpleFlightPathSegments       CONSTANT)                               ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
@@ -201,9 +202,7 @@ public:
                                        bool repositionLandingItems = true);
 
     /// Offsets all mission items which specify a coordinate by the specified
-    /// ENU amounts in meters. Home altitude remains unchanged. Requires a valid
-    /// planned home position; otherwise the mission is not modified and a
-    /// warning is logged.
+    /// ENU amounts in meters. Home altitude remains unchanged.
     /// @param eastMeters Distance to offset items to the east, in meters
     /// @param northMeters Distance to offset items to the north, in meters
     /// @param upMeters Distance to offset items upwards, in meters
@@ -281,6 +280,7 @@ public:
     QPersistentModelIndex missionGroupIndex          (void) const { return _missionGroupIndex; }
     QPersistentModelIndex fenceGroupIndex            (void) const { return _fenceGroupIndex; }
     QPersistentModelIndex rallyGroupIndex            (void) const { return _rallyGroupIndex; }
+    QPersistentModelIndex transformGroupIndex         (void) const { return _transformGroupIndex; }
     QmlObjectListModel* simpleFlightPathSegments    (void) { return &_simpleFlightPathSegments; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QStringList         complexMissionItemNames     (void) const;
@@ -327,7 +327,8 @@ public:
     static constexpr int kMissionGroupRow  = 2;
     static constexpr int kFenceGroupRow    = 3;
     static constexpr int kRallyGroupRow    = 4;
-    static constexpr int kGroupCount       = 5;
+    static constexpr int kTransformGroupRow = 5;
+    static constexpr int kGroupCount       = 6;
 
 signals:
     void visualItemsChanged                 (void);
@@ -451,6 +452,7 @@ private:
     QPersistentModelIndex       _missionGroupIndex;             ///< Persistent index for "Mission Items" group in tree
     QPersistentModelIndex       _fenceGroupIndex;               ///< Persistent index for "GeoFence" group in tree
     QPersistentModelIndex       _rallyGroupIndex;               ///< Persistent index for "Rally Points" group in tree
+    QPersistentModelIndex       _transformGroupIndex;            ///< Persistent index for "Transform" group in tree
     QObject                     _planFileGroupNode;             ///< Group node for "Plan File" in tree view
     QObject                     _planFileInfoMarker;            ///< Marker child for plan file info delegate
     QObject                     _defaultsGroupNode;             ///< Group node for "Defaults" in tree view
@@ -458,8 +460,10 @@ private:
     QObject                     _missionItemsGroupNode;         ///< Group node for "Mission Items" in tree view
     QObject                     _fenceGroupNode;                ///< Group node for "GeoFence" in tree view
     QObject                     _rallyGroupNode;                ///< Group node for "Rally Points" in tree view
+    QObject                     _transformGroupNode;             ///< Group node for "Transform" in tree view
     QObject                     _fenceEditorMarker;             ///< Marker child for GeoFenceEditor delegate
     QObject                     _rallyHeaderMarker;             ///< Marker child for RallyPointEditorHeader delegate
+    QObject                     _transformEditorMarker;          ///< Marker child for TransformEditor delegate
     QmlObjectTreeModel          _visualItemsTree;               // Must be declared after group nodes so it's destroyed first
     MissionSettingsItem*        _settingsItem =                 nullptr;
     PlanViewSettings*           _planViewSettings =             nullptr;

@@ -1,14 +1,14 @@
-#include "EditPositionDialogController.h"
+#include "TransformPositionController.h"
 #include "QGCGeo.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(EditPositionDialogControllerLog, "QMLControls.EditPositionDialogController")
+QGC_LOGGING_CATEGORY(TransformPositionControllerLog, "QMLControls.TransformPositionController")
 
-QMap<QString, FactMetaData*> EditPositionDialogController::_metaDataMap;
+QMap<QString, FactMetaData*> TransformPositionController::_metaDataMap;
 
-EditPositionDialogController::EditPositionDialogController(QObject *parent)
+TransformPositionController::TransformPositionController(QObject *parent)
     : QObject(parent)
     , _latitudeFact(new Fact(0, _latitudeFactName, FactMetaData::valueTypeDouble, this))
     , _longitudeFact(new Fact(0, _longitudeFactName, FactMetaData::valueTypeDouble, this))
@@ -17,11 +17,15 @@ EditPositionDialogController::EditPositionDialogController(QObject *parent)
     , _eastingFact(new Fact(0, _eastingFactName, FactMetaData::valueTypeDouble, this))
     , _northingFact(new Fact(0, _northingFactName, FactMetaData::valueTypeDouble, this))
     , _mgrsFact(new Fact(0, _mgrsFactName, FactMetaData::valueTypeString, this))
+    , _offsetEastFact(new Fact(0, _offsetEastFactName, FactMetaData::valueTypeDouble, this))
+    , _offsetNorthFact(new Fact(0, _offsetNorthFactName, FactMetaData::valueTypeDouble, this))
+    , _offsetUpFact(new Fact(0, _offsetUpFactName, FactMetaData::valueTypeDouble, this))
+    , _rotateDegreesCWFact(new Fact(0, _rotateDegreesCWFactName, FactMetaData::valueTypeDouble, this))
 {
-    // qCDebug(EditPositionDialogControllerLog) << Q_FUNC_INFO << this;
+    // qCDebug(TransformPositionControllerLog) << Q_FUNC_INFO << this;
 
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/EditPositionDialog.FactMetaData.json"), nullptr /* QObject parent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransformPositionController.FactMetaData.json"), nullptr /* QObject parent */);
     }
 
     _latitudeFact->setMetaData(_metaDataMap[_latitudeFactName]);
@@ -31,17 +35,21 @@ EditPositionDialogController::EditPositionDialogController(QObject *parent)
     _eastingFact->setMetaData(_metaDataMap[_eastingFactName]);
     _northingFact->setMetaData(_metaDataMap[_northingFactName]);
     _mgrsFact->setMetaData(_metaDataMap[_mgrsFactName]);
+    _offsetEastFact->setMetaData(_metaDataMap[_offsetEastFactName]);
+    _offsetNorthFact->setMetaData(_metaDataMap[_offsetNorthFactName]);
+    _offsetUpFact->setMetaData(_metaDataMap[_offsetUpFactName]);
+    _rotateDegreesCWFact->setMetaData(_metaDataMap[_rotateDegreesCWFactName]);
 }
 
-EditPositionDialogController::~EditPositionDialogController()
+TransformPositionController::~TransformPositionController()
 {
-    // qCDebug(EditPositionDialogControllerLog) << Q_FUNC_INFO << this;
+    // qCDebug(TransformPositionControllerLog) << Q_FUNC_INFO << this;
 }
 
-void EditPositionDialogController::setCoordinate(QGeoCoordinate coordinate)
+void TransformPositionController::setCoordinate(QGeoCoordinate coordinate)
 {
     if (!coordinate.isValid()) {
-        qCWarning(EditPositionDialogControllerLog) << "Attempt to set invalid coordinate";
+        qCWarning(TransformPositionControllerLog) << "Attempt to set invalid coordinate";
         return;
     }
 
@@ -59,7 +67,7 @@ void EditPositionDialogController::setCoordinate(QGeoCoordinate coordinate)
     }
 }
 
-void EditPositionDialogController::initValues()
+void TransformPositionController::initValues()
 {
     if (!_coordinate.isValid()) {
         return;
@@ -83,7 +91,7 @@ void EditPositionDialogController::initValues()
     }
 }
 
-void EditPositionDialogController::setFromGeo()
+void TransformPositionController::setFromGeo()
 {
     QGeoCoordinate newCoordinate = _coordinate;
     newCoordinate.setLatitude(_latitudeFact->rawValue().toDouble());
@@ -91,19 +99,19 @@ void EditPositionDialogController::setFromGeo()
     setCoordinate(newCoordinate);
 }
 
-void EditPositionDialogController::setFromUTM()
+void TransformPositionController::setFromUTM()
 {
-    qCDebug(EditPositionDialogControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1);
+    qCDebug(TransformPositionControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1);
     QGeoCoordinate newCoordinate;
     if (QGCGeo::convertUTMToGeo(_eastingFact->rawValue().toDouble(), _northingFact->rawValue().toDouble(), _zoneFact->rawValue().toInt(), _hemisphereFact->rawValue().toInt() == 1, newCoordinate)) {
-        qCDebug(EditPositionDialogControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1) << newCoordinate;
+        qCDebug(TransformPositionControllerLog) << _eastingFact->rawValue().toDouble() << _northingFact->rawValue().toDouble() << _zoneFact->rawValue().toInt() << (_hemisphereFact->rawValue().toInt() == 1) << newCoordinate;
         setCoordinate(newCoordinate);
     } else {
         initValues();
     }
 }
 
-void EditPositionDialogController::setFromMGRS()
+void TransformPositionController::setFromMGRS()
 {
     QGeoCoordinate newCoordinate;
     if (QGCGeo::convertMGRSToGeo(_mgrsFact->rawValue().toString(), newCoordinate)) {
@@ -113,7 +121,13 @@ void EditPositionDialogController::setFromMGRS()
     }
 }
 
-void EditPositionDialogController::setFromVehicle()
+void TransformPositionController::setFromVehicle()
 {
-    setCoordinate(MultiVehicleManager::instance()->activeVehicle()->coordinate());
+    Vehicle* activeVehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (!activeVehicle) {
+        qCWarning(TransformPositionControllerLog) << "Cannot set coordinate from vehicle: no active vehicle";
+        return;
+    }
+
+    setCoordinate(activeVehicle->coordinate());
 }

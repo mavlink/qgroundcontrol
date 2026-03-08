@@ -132,12 +132,14 @@ TreeView {
                 case "missionGroup":    return groupHeaderComponent
                 case "fenceGroup":      return groupHeaderComponent
                 case "rallyGroup":      return groupHeaderComponent
+                case "transformGroup":  return groupHeaderComponent
                 case "planFileInfo":    return planFileInfoComponent
                 case "defaultsInfo":    return defaultsEditorComponent
                 case "missionItem":     return delegateRoot.nodeObject ? missionItemComponent  : null
                 case "fenceEditor":     return delegateRoot.nodeObject ? fenceEditorComponent  : null
                 case "rallyHeader":     return delegateRoot.nodeObject ? rallyHeaderComponent  : null
                 case "rallyItem":       return delegateRoot.nodeObject ? rallyItemComponent    : null
+                case "transformEditor": return transformEditorComponent
                 default:                return null
                 }
             }
@@ -511,6 +513,16 @@ TreeView {
                 width: delegateRoot.width
                 rallyPoint: delegateRoot.nodeObject
                 controller: root._rallyPointController
+            }
+        }
+
+        // ── Transform editor (single child of transform group) ──
+        Component {
+            id: transformEditorComponent
+
+            TransformEditor {
+                width: delegateRoot.width
+                missionController: root._missionController
             }
         }
     }
