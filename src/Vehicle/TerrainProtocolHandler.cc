@@ -1,4 +1,5 @@
 #include "TerrainProtocolHandler.h"
+#include "TerrainFactGroup.h"
 #include "TerrainQuery.h"
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
