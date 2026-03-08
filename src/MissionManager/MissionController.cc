@@ -171,7 +171,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             // First item is fake home position
             MissionItem* fakeHomeItem = newMissionItems[0];
             if (fakeHomeItem->coordinate().latitude() != 0 || fakeHomeItem->coordinate().longitude() != 0) {
-                settingsItem->setInitialHomePosition(fakeHomeItem->coordinate());
+                settingsItem->setCoordinate(fakeHomeItem->coordinate());
             }
             i = 1;
         }
@@ -670,7 +670,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     if (json.contains(_jsonPlannedHomePositionKey)) {
         SimpleMissionItem* item = new SimpleMissionItem(_masterController, _flyView, true /* forLoad */);
         if (item->load(json[_jsonPlannedHomePositionKey].toObject(), 0, errorString)) {
-            settingsItem->setInitialHomePositionFromUser(item->coordinate());
+            settingsItem->setCoordinate(item->coordinate());
             item->deleteLater();
         } else {
             return false;
@@ -957,7 +957,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
             SimpleMissionItem* item = new SimpleMissionItem(_masterController, _flyView, true /* forLoad */);
             if (item->load(stream)) {
                 if (firstItem && plannedHomePositionInFile) {
-                    settingsItem->setInitialHomePositionFromUser(item->coordinate());
+                    settingsItem->setCoordinate(item->coordinate());
                 } else {
                     if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(item->command()))) {
                         // This needs to be a TakeoffMissionItem
@@ -1823,7 +1823,7 @@ void MissionController::_setupTreeModel(void)
     _visualItemsTree.clear();
 
     // ── Plan File group ──
-    _planFileGroupNode.setObjectName(tr("Plan File"));
+    _planFileGroupNode.setObjectName(tr("Plan Info"));
     _planFileGroupIndex = QPersistentModelIndex(
         _visualItemsTree.appendItem(&_planFileGroupNode, QModelIndex(), QStringLiteral("planFileGroup")));
 
@@ -1995,7 +1995,7 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoo
     if (firstCoordinate.isValid()) {
         QGeoCoordinate plannedHomeCoord = firstCoordinate.atDistanceAndAzimuth(30, 0);
         plannedHomeCoord.setAltitude(0);
-        _settingsItem->setInitialHomePositionFromUser(plannedHomeCoord);
+        _settingsItem->setCoordinate(plannedHomeCoord);
     }
 }
 
@@ -2253,43 +2253,6 @@ MissionSettingsItem* MissionController::_addMissionSettings(QmlObjectListModel* 
     }
 
     return settingsItem;
-}
-
-void MissionController::_centerHomePositionOnMissionItems(QmlObjectListModel *visualItems)
-{
-    qCDebug(MissionControllerLog) << "_centerHomePositionOnMissionItems";
-
-    if (visualItems->count() > 1) {
-        double north = 0.0;
-        double south = 0.0;
-        double east  = 0.0;
-        double west  = 0.0;
-        bool firstCoordSet = false;
-
-        for (int i=1; i<visualItems->count(); i++) {
-            VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
-            if (item->specifiesCoordinate()) {
-                if (firstCoordSet) {
-                    double lat = _normalizeLat(item->entryCoordinate().latitude());
-                    double lon = _normalizeLon(item->entryCoordinate().longitude());
-                    north = fmax(north, lat);
-                    south = fmin(south, lat);
-                    east  = fmax(east, lon);
-                    west  = fmin(west, lon);
-                } else {
-                    firstCoordSet = true;
-                    north = _normalizeLat(item->entryCoordinate().latitude());
-                    south = north;
-                    east  = _normalizeLon(item->entryCoordinate().longitude());
-                    west  = east;
-                }
-            }
-        }
-
-        if (firstCoordSet) {
-            _settingsItem->setInitialHomePositionFromUser(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
-        }
-    }
 }
 
 int MissionController::resumeMissionIndex(void) const

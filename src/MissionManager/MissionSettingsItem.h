@@ -38,15 +38,6 @@ public:
     /// @return true: Mission end action was added
     bool addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent);
 
-    /// Called to update home position coordinate when it comes from a connected vehicle
-    void setHomePositionFromVehicle(Vehicle* vehicle);
-
-    // Called to set the initial home position. Vehicle can still update home position after this.
-    void setInitialHomePosition(const QGeoCoordinate& coordinate);
-
-    // Called to set the initial home position specified by user. Vehicle will no longer affect home position.
-    void setInitialHomePositionFromUser(const QGeoCoordinate& coordinate);
-
     // Overrides from ComplexMissionItem
     QString patternName         (void) const final { return QString(); }
     double  complexDistance     (void) const final;
@@ -96,16 +87,13 @@ private slots:
     void _sectionDirtyChanged                   (bool dirty);
     void _updateAltitudeInCoordinate            (QVariant value);
     void _setHomeAltFromTerrain                 (double terrainAltitude);
-    void _setCoordinateWorker                   (const QGeoCoordinate& coordinate);
-    void _updateHomePosition                    (const QGeoCoordinate& homePosition);
+    void _updateFlyViewHomePosition             (const QGeoCoordinate& homePosition);
 
 private:
     Vehicle*        _managerVehicle =                   nullptr;
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
     int             _sequenceNumber =                   0;
-    bool            _plannedHomePositionFromVehicle =   false;
-    bool            _plannedHomePositionMovedByUser =   false;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
 
