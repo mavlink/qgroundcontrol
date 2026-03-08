@@ -1860,6 +1860,15 @@ void MissionController::_setupTreeModel(void)
     // Marker child for the rally header / instructions
     _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
     _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
+
+    // ── Transform group ──
+    _transformGroupNode.setObjectName(tr("Transform"));
+    _transformGroupIndex = QPersistentModelIndex(
+        _visualItemsTree.appendItem(&_transformGroupNode, QModelIndex(), QStringLiteral("transformGroup")));
+
+    // Single marker child — delegate loads the inline TransformEditor
+    _transformEditorMarker.setObjectName(QStringLiteral("transformEditor"));
+    _visualItemsTree.appendItem(&_transformEditorMarker, _transformGroupIndex, QStringLiteral("transformEditor"));
 }
 
 //-----------------------------------------------------------------------------
@@ -2742,22 +2751,34 @@ void MissionController::offsetMission(double eastMeters,
                                       bool offsetTakeoffItems,
                                       bool offsetLandingItems)
 {
-    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
-        qCWarning(MissionControllerLog) << "Cannot offset mission while home is invalid";
-        return;
-    }
-
     if (!qFuzzyIsNull(eastMeters) || !qFuzzyIsNull(northMeters)) {
-        double distanceMeters = qSqrt(eastMeters * eastMeters + northMeters * northMeters);
+        const double distanceMeters = qSqrt(eastMeters * eastMeters + northMeters * northMeters);
         double azimuthDegrees = 0.0;
         if (!qFuzzyIsNull(distanceMeters)) {
             const double azimuthRadians = qAtan2(eastMeters, northMeters);
             azimuthDegrees = qRadiansToDegrees(azimuthRadians);
         }
 
-        const QGeoCoordinate oldHome = _settingsItem->coordinate();
-        QGeoCoordinate newHome = oldHome.atDistanceAndAzimuth(distanceMeters, azimuthDegrees);
-        repositionMission(newHome, offsetTakeoffItems, offsetLandingItems);
+        for (int i = 0; i < _visualItems->count(); ++i) {
+            auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            if (!item || !item->specifiesCoordinate() || item->isStandaloneCoordinate()) {
+                continue;
+            }
+
+            if ((!offsetTakeoffItems && item->isTakeoffItem()) ||
+                (!offsetLandingItems && item->isLandCommand())) {
+                continue;
+            }
+
+            const QGeoCoordinate oldCoord = item->coordinate();
+            if (!oldCoord.isValid()) {
+                continue;
+            }
+
+            item->setCoordinate(oldCoord.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+        }
+
+        setDirty(true);
     }
 
     if (!qFuzzyIsNull(upMeters)) {
@@ -2780,6 +2801,8 @@ void MissionController::offsetMission(double eastMeters,
                 item->applyNewAltitude(item->editableAlt() + upMeters);
             }
         }
+
+        setDirty(true);
     }
 }
 
