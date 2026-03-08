@@ -37,6 +37,15 @@ private slots:
     // recalcChildItems is a no-op for tree (no crash)
     void _testRecalcChildItemsNoCrash();
 
+    // Exposed Q_PROPERTY persistent index getters match tree model indices
+    void _testExposedPersistentIndexGettersMatchTree();
+
+    // Exposed persistent indexes survive removeAll rebuild
+    void _testExposedIndexesSurviveRemoveAll();
+
+    // Rally header appears/disappears as rally points are added/removed
+    void _testRallyHeaderDynamicVisibility();
+
 private:
     void _initForTest();
 

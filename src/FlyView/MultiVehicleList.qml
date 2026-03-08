@@ -51,7 +51,7 @@ Item {
     function pauseAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             var vehicle = selectedVehicles.get(i)
-            if (vehicle.armed === true && vehicle.pauseVehicleSupported) {
+            if (vehicle.armed === true && vehicle.supports.pauseVehicle) {
                 return true
             }
         }

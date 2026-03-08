@@ -23,6 +23,10 @@ private slots:
     void _testGlobalAltMode();
     void _testGimbalRecalc();
     void _testVehicleYawRecalc();
+    void _testMissionReposition();
+    void _testMissionOffset();
+    void _testMissionRotate();
+    void _testMissionTransformsInvalidHome();
 
     // Parameterized tests - runs once per autopilot type
     UT_PARAMETERIZED_TEST(_testEmptyVehicle);

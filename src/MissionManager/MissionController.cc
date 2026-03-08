@@ -1,5 +1,6 @@
 #include "MissionController.h"
 #include "Vehicle.h"
+#include "VehicleSupports.h"
 #include "MissionManager.h"
 #include "FlightPathSegment.h"
 #include "FirmwarePlugin.h"
@@ -26,6 +27,7 @@
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
+#include <QtMath>
 
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
@@ -1113,7 +1115,7 @@ void MissionController::save(QJsonObject& json)
 
 void MissionController::_calcPrevWaypointValues(VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
 {
-    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  currentCoord =  currentItem->entryCoordinate();
     QGeoCoordinate  prevCoord =     prevItem->exitCoordinate();
 
     // Convert to fixed altitudes
@@ -1125,7 +1127,7 @@ void MissionController::_calcPrevWaypointValues(VisualMissionItem* currentItem, 
 
 double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem)
 {
-    QGeoCoordinate  currentCoord =  currentItem->coordinate();
+    QGeoCoordinate  currentCoord =  currentItem->entryCoordinate();
     QGeoCoordinate  homeCoord =     homeItem->exitCoordinate();
     bool            distanceOk =    false;
 
@@ -1141,7 +1143,7 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     bool                takeoffStraightUp   = pair.second->isTakeoffItem() && !_controllerVehicle->fixedWing();
 
     QGeoCoordinate      coord1              = pair.first->exitCoordinate();
-    QGeoCoordinate      coord2              = pair.second->coordinate();
+    QGeoCoordinate      coord2              = pair.second->entryCoordinate();
     double              coord2AMSLAlt       = pair.second->amslEntryAlt();
     double              coord1AMSLAlt       = takeoffStraightUp ? coord2AMSLAlt : pair.first->amslExitAlt();
 
@@ -1159,11 +1161,12 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     } else {
         connect(pair.first, &VisualMissionItem::amslExitAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
     }
-    connect(pair.first,  &VisualMissionItem::exitCoordinateChanged, segment,    &FlightPathSegment::setCoordinate1);
-    connect(pair.second, &VisualMissionItem::coordinateChanged,     segment,    &FlightPathSegment::setCoordinate2);
-    connect(pair.second, &VisualMissionItem::amslEntryAltChanged,   segment,    &FlightPathSegment::setCoord2AMSLAlt);
+    connect(pair.first,  &VisualMissionItem::exitCoordinateChanged,     segment,    &FlightPathSegment::setCoordinate1);
+    connect(pair.second, &VisualMissionItem::entryCoordinateChanged,    segment,    &FlightPathSegment::setCoordinate2);
+    connect(pair.second, &VisualMissionItem::amslEntryAltChanged,       segment,    &FlightPathSegment::setCoord2AMSLAlt);
 
-    connect(pair.second, &VisualMissionItem::coordinateChanged,         this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(pair.second, &VisualMissionItem::entryCoordinateChanged,    this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(pair.second, &VisualMissionItem::exitCoordinateChanged,     this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
 
     connect(segment,    &FlightPathSegment::totalDistanceChanged,       this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::coord1AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
@@ -1385,9 +1388,9 @@ void MissionController::_recalcFlightPathSegments(void)
             // Create a new segment. Since this is the fly view there is no need to wire change signals or worry about correct SegmentType
             coordVector = new FlightPathSegment(
                         FlightPathSegment::SegmentTypeGeneric,
-                        lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
+                        lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->entryCoordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
                         lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->amslEntryAlt() : lastSegmentVisualItemPair.first->amslExitAlt(),
-                        lastSegmentVisualItemPair.second->coordinate(),
+                        lastSegmentVisualItemPair.second->entryCoordinate(),
                         lastSegmentVisualItemPair.second->amslEntryAlt(),
                         !_flyView /* queryTerrainData */,
                         this);
@@ -1593,7 +1596,7 @@ void MissionController::_recalcMissionFlightStatus()
                         if (qIsNaN(newVehicleYaw)) {
                             // No specific vehicle yaw set. Current vehicle yaw is determined from flight path segment direction.
                             if (simpleItem != lastFlyThroughVI) {
-                                _missionFlightStatus.vehicleYaw = lastFlyThroughVI->exitCoordinate().azimuthTo(simpleItem->coordinate());
+                                _missionFlightStatus.vehicleYaw = lastFlyThroughVI->exitCoordinate().azimuthTo(simpleItem->entryCoordinate());
                             }
                         } else {
                             _missionFlightStatus.vehicleYaw = newVehicleYaw;
@@ -1908,36 +1911,50 @@ void MissionController::_onRallyPointsInserted(const QModelIndex& parent, int fi
     auto* rallyController = _masterController->rallyPointController();
     if (!rallyController) return;
 
+    // If this is the first rally point, remove the header marker
+    if (first == 0 && _visualItemsTree.rowCount(_rallyGroupIndex) == 1) {
+        const QModelIndex child = _visualItemsTree.index(0, 0, _rallyGroupIndex);
+        if (_visualItemsTree.data(child, QmlObjectTreeModel::NodeTypeRole).toString() == QStringLiteral("rallyHeader")) {
+            _visualItemsTree.removeItem(child);
+        }
+    }
+
     auto* pts = rallyController->points();
-    // Rally children: index 0 is the rallyHeader marker, rally items start at index 1
     for (int i = first; i <= last; i++) {
-        _visualItemsTree.insertItem(i + 1, (*pts)[i], _rallyGroupIndex, QStringLiteral("rallyItem"));
+        _visualItemsTree.insertItem(i, (*pts)[i], _rallyGroupIndex, QStringLiteral("rallyItem"));
     }
 }
 
 void MissionController::_onRallyPointsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
     Q_UNUSED(parent);
-    // Rally children: index 0 is header marker, rally items start at index 1
     for (int i = last; i >= first; i--) {
-        _visualItemsTree.removeAt(_rallyGroupIndex, i + 1);
+        _visualItemsTree.removeAt(_rallyGroupIndex, i);
+    }
+
+    // If all rally points are being removed, re-add the header marker
+    auto* rallyController = _masterController->rallyPointController();
+    if (rallyController && (rallyController->points()->count() - (last - first + 1)) == 0) {
+        _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
+        _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
     }
 }
 
 void MissionController::_onRallyPointsReset(void)
 {
-    // Remove all rally children except the header marker (index 0)
-    while (_visualItemsTree.rowCount(_rallyGroupIndex) > 1) {
-        _visualItemsTree.removeAt(_rallyGroupIndex, _visualItemsTree.rowCount(_rallyGroupIndex) - 1);
-    }
+    // Remove all rally children
+    _visualItemsTree.removeChildren(_rallyGroupIndex);
 
-    // Repopulate
+    // Repopulate — either rally items or the header marker
     auto* rallyController = _masterController->rallyPointController();
-    if (rallyController) {
+    if (rallyController && rallyController->points()->count() > 0) {
         auto* pts = rallyController->points();
         for (int i = 0; i < pts->count(); i++) {
             _visualItemsTree.appendItem((*pts)[i], _rallyGroupIndex, QStringLiteral("rallyItem"));
         }
+    } else {
+        _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
+        _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
     }
 }
 
@@ -1954,9 +1971,9 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoo
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
-        if (item->specifiesCoordinate() && item->coordinate().isValid()) {
+        if (item->specifiesCoordinate() && item->entryCoordinate().isValid()) {
             foundFirstCoordinate = true;
-            firstCoordinate = item->coordinate();
+            firstCoordinate = item->entryCoordinate();
             break;
         }
     }
@@ -2244,17 +2261,17 @@ void MissionController::_centerHomePositionOnMissionItems(QmlObjectListModel *vi
             VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
             if (item->specifiesCoordinate()) {
                 if (firstCoordSet) {
-                    double lat = _normalizeLat(item->coordinate().latitude());
-                    double lon = _normalizeLon(item->coordinate().longitude());
+                    double lat = _normalizeLat(item->entryCoordinate().latitude());
+                    double lon = _normalizeLon(item->entryCoordinate().longitude());
                     north = fmax(north, lat);
                     south = fmin(south, lat);
                     east  = fmax(east, lon);
                     west  = fmin(west, lon);
                 } else {
                     firstCoordSet = true;
-                    north = _normalizeLat(item->coordinate().latitude());
+                    north = _normalizeLat(item->entryCoordinate().latitude());
                     south = north;
-                    east  = _normalizeLon(item->coordinate().longitude());
+                    east  = _normalizeLon(item->entryCoordinate().longitude());
                     west  = east;
                 }
             }
@@ -2519,7 +2536,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _previousCoordinate =           QGeoCoordinate();
 
         bool noItemsAddedYet = _visualItems->count() == 1;
-        if (_masterController->controllerVehicle()->takeoffVehicleSupported() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
+        if (_masterController->controllerVehicle()->supports()->takeoffMissionCommand() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
             _onlyInsertTakeoffValid = true;
         }
 
@@ -2677,6 +2694,139 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
     }
 }
 
+void MissionController::repositionMission(const QGeoCoordinate& newHome,
+                                          bool repositionTakeoffItems,
+                                          bool repositionLandingItems)
+{
+    if (!newHome.isValid()) {
+        qCWarning(MissionControllerLog) << "Cannot reposition mission to an invalid coordinate";
+        return;
+    }
+
+    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
+        qCWarning(MissionControllerLog) << "Cannot reposition mission while home is invalid";
+        return;
+    }
+
+    const QGeoCoordinate oldHome = _settingsItem->coordinate();
+
+    for (int i = 0; i < _visualItems->count(); ++i) {
+        auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        if (!item || !item->specifiesCoordinate() || item->isStandaloneCoordinate()) {
+            continue;
+        }
+
+        if ((!repositionTakeoffItems && item->isTakeoffItem()) ||
+            (!repositionLandingItems && item->isLandCommand())) {
+            continue;
+        }
+
+        const QGeoCoordinate oldCoord = item->coordinate();
+        if (!oldCoord.isValid()) {
+            continue;
+        }
+
+        const double distanceMeters = oldHome.distanceTo(oldCoord);
+        const double azimuthDegrees = oldHome.azimuthTo(oldCoord);
+
+        QGeoCoordinate newCoord = newHome.atDistanceAndAzimuth(distanceMeters, azimuthDegrees);
+        item->setCoordinate(newCoord);
+    }
+
+    setDirty(true);
+}
+
+void MissionController::offsetMission(double eastMeters,
+                                      double northMeters,
+                                      double upMeters,
+                                      bool offsetTakeoffItems,
+                                      bool offsetLandingItems)
+{
+    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
+        qCWarning(MissionControllerLog) << "Cannot offset mission while home is invalid";
+        return;
+    }
+
+    if (!qFuzzyIsNull(eastMeters) || !qFuzzyIsNull(northMeters)) {
+        double distanceMeters = qSqrt(eastMeters * eastMeters + northMeters * northMeters);
+        double azimuthDegrees = 0.0;
+        if (!qFuzzyIsNull(distanceMeters)) {
+            const double azimuthRadians = qAtan2(eastMeters, northMeters);
+            azimuthDegrees = qRadiansToDegrees(azimuthRadians);
+        }
+
+        const QGeoCoordinate oldHome = _settingsItem->coordinate();
+        QGeoCoordinate newHome = oldHome.atDistanceAndAzimuth(distanceMeters, azimuthDegrees);
+        repositionMission(newHome, offsetTakeoffItems, offsetLandingItems);
+    }
+
+    if (!qFuzzyIsNull(upMeters)) {
+        for (int i = 0; i < _visualItems->count(); ++i) {
+            auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+            if (!item || item == _settingsItem) {
+                continue;
+            }
+
+            if ((!offsetTakeoffItems && item->isTakeoffItem()) ||
+                (!offsetLandingItems && item->isLandCommand())) {
+                continue;
+            }
+
+            if (!item->specifiesCoordinate() && !item->specifiesAltitudeOnly()) {
+                continue;
+            }
+
+            if (!qIsNaN(item->editableAlt())) {
+                item->applyNewAltitude(item->editableAlt() + upMeters);
+            }
+        }
+    }
+}
+
+void MissionController::rotateMission(double degreesCW,
+                                      bool rotateTakeoffItems,
+                                      bool rotateLandingItems)
+{
+    if (qFuzzyIsNull(degreesCW)) {
+        return;
+    }
+
+    if (!_settingsItem || !_settingsItem->coordinate().isValid()) {
+        qCWarning(MissionControllerLog) << "Cannot rotate mission while home is invalid";
+        return;
+    }
+
+    const QGeoCoordinate home = _settingsItem->coordinate();
+
+    for (int i = 0; i < _visualItems->count(); ++i) {
+        auto* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        if (!item || !item->specifiesCoordinate() || item->isStandaloneCoordinate()) {
+            continue;
+        }
+
+        if ((!rotateTakeoffItems && item->isTakeoffItem()) ||
+            (!rotateLandingItems && item->isLandCommand())) {
+            continue;
+        }
+
+        const QGeoCoordinate oldCoord = item->coordinate();
+        if (!oldCoord.isValid()) {
+            continue;
+        }
+
+        const double distanceMeters = home.distanceTo(oldCoord);
+        if (qFuzzyIsNull(distanceMeters)) {
+            continue;
+        }
+        const double azimuthDegrees = home.azimuthTo(oldCoord);
+
+        QGeoCoordinate newCoord = home.atDistanceAndAzimuth(distanceMeters, azimuthDegrees + degreesCW);
+        item->setCoordinate(newCoord);
+    }
+
+    setDirty(true);
+}
+
 void MissionController::_updateTimeout()
 {
     QGeoCoordinate firstCoordinate;
@@ -2728,8 +2878,8 @@ void MissionController::_updateTimeout()
             if(pComplexItem) {
                 QGCGeoBoundingCube bc = pComplexItem->boundingCube();
                 if(bc.isValid()) {
-                    if(!firstCoordinate.isValid() && pComplexItem->coordinate().isValid()) {
-                        firstCoordinate = pComplexItem->coordinate();
+                    if(!firstCoordinate.isValid() && pComplexItem->entryCoordinate().isValid()) {
+                        firstCoordinate = pComplexItem->entryCoordinate();
                     }
                     north  = fmax(north, bc.pointNW.latitude()  + 90.0);
                     south  = fmin(south, bc.pointSE.latitude()  + 90.0);

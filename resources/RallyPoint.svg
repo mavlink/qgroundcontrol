@@ -1,3 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-    <path fill-rule="evenodd" d="M0 0h2v20h-2Z M3 0h15v11.25h-15Z M6 0h3v2.25h-3Z M12 0h3v2.25h-3Z M3 2.25h3v2.25h-3Z M9 2.25h3v2.25h-3Z M15 2.25h3v2.25h-3Z M6 4.5h3v2.25h-3Z M12 4.5h3v2.25h-3Z M3 6.75h3v2.25h-3Z M9 6.75h3v2.25h-3Z M15 6.75h3v2.25h-3Z M6 9h3v2.25h-3Z M12 9h3v2.25h-3Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24">
+    <!-- Pole -->
+    <path d="M0 0h2v20h-2Z" fill="#000000"/>
+    <!-- Triangular banner (1px gap from pole) -->
+    <polygon points="3,0 19,5.5 3,11" fill="#000000"/>
 </svg>

@@ -64,7 +64,8 @@ QmlObjectTreeModel::QmlObjectTreeModel(QObject* parent)
 
 QmlObjectTreeModel::~QmlObjectTreeModel()
 {
-    _disconnectSubtree(&_rootNode);
+    // Skip disconnect — objects may already be destroyed during application shutdown.
+    // Just delete the tree nodes.
     _deleteSubtree(&_rootNode, false);
 }
 

@@ -111,7 +111,9 @@ public:
     QString         commandName                 (void) const final;
     QString         abbreviation                (void) const final;
     QGeoCoordinate  coordinate                  (void) const final;
+    QGeoCoordinate  entryCoordinate             (void) const final { return coordinate(); }
     QGeoCoordinate  exitCoordinate              (void) const final { return coordinate(); }
+    double          editableAlt                 (void) const final;
     double          amslEntryAlt                (void) const final;
     double          amslExitAlt                 (void) const final { return amslEntryAlt(); }
     int             sequenceNumber              (void) const final { return _missionItem.sequenceNumber(); }

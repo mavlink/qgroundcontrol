@@ -4,6 +4,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QPersistentModelIndex>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "PlanElementController.h"
@@ -74,6 +75,11 @@ public:
 
     Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectTreeModel*  visualItemsTree                 READ visualItemsTree                CONSTANT)                               ///< Tree-structured view of visualItems for TreeView
+    Q_PROPERTY(QPersistentModelIndex planFileGroupIndex              READ planFileGroupIndex              CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex defaultsGroupIndex              READ defaultsGroupIndex              CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex missionGroupIndex               READ missionGroupIndex               CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex fenceGroupIndex                 READ fenceGroupIndex                 CONSTANT)
+    Q_PROPERTY(QPersistentModelIndex rallyGroupIndex                 READ rallyGroupIndex                 CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  simpleFlightPathSegments        READ simpleFlightPathSegments       CONSTANT)                               ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
@@ -182,6 +188,49 @@ public:
     ///     @param force - true: reset internals even if specified item is already selected
     Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);
 
+    /// Repositions all mission items which specify a coordinate around a new
+    /// home coordinate. Requires a valid planned home position; otherwise the
+    /// mission is not modified and a warning is logged.
+    /// @param newHome New coordinate for the home item
+    /// @param repositionTakeoffItems If true, items identified as takeoff items
+    ///                               (isTakeoffItem) will be repositioned
+    /// @param repositionLandingItems If true, items identified as landing items
+    ///                               (isLandCommand) will be repositioned
+    Q_INVOKABLE void repositionMission(const QGeoCoordinate& newHome,
+                                       bool repositionTakeoffItems = true,
+                                       bool repositionLandingItems = true);
+
+    /// Offsets all mission items which specify a coordinate by the specified
+    /// ENU amounts in meters. Home altitude remains unchanged. Requires a valid
+    /// planned home position; otherwise the mission is not modified and a
+    /// warning is logged.
+    /// @param eastMeters Distance to offset items to the east, in meters
+    /// @param northMeters Distance to offset items to the north, in meters
+    /// @param upMeters Distance to offset items upwards, in meters
+    /// @param offsetTakeoffItems If true, items identified as takeoff items
+    ///                           (isTakeoffItem) will be offset
+    /// @param offsetLandingItems If true, items identified as landing items
+    ///                           (isLandCommand) will be offset
+    Q_INVOKABLE void offsetMission(double eastMeters,
+                                   double northMeters,
+                                   double upMeters = 0.0,
+                                   bool offsetTakeoffItems = false,
+                                   bool offsetLandingItems = false);
+
+    /// Rotates all mission items which specify a coordinate around the up axis
+    /// of the home position. Complex items are rotated by moving their
+    /// reference coordinate: their geometry and orientation are not modified.
+    /// Requires a valid planned home position; otherwise the mission is not
+    /// modified and a warning is logged.
+    /// @param degreesCW Angle to rotate items by, in degrees clockwise
+    /// @param rotateTakeoffItems If true, items identified as takeoff items
+    ///                           (isTakeoffItem) will be rotated
+    /// @param rotateLandingItems If true, items identified as landing items
+    ///                           (isLandCommand) will be rotated
+    Q_INVOKABLE void rotateMission(double degreesCW,
+                                   bool rotateTakeoffItems = false,
+                                   bool rotateLandingItems = false);
+
     enum SendToVehiclePreCheckState {
         SendToVehiclePreCheckStateOk,                       // Ok to send plan to vehicle
         SendToVehiclePreCheckStateNoActiveVehicle,          // There is no active vehicle
@@ -227,6 +276,11 @@ public:
 
     QmlObjectListModel* visualItems                 (void) { return _visualItems; }
     QmlObjectTreeModel* visualItemsTree             (void) { return &_visualItemsTree; }
+    QPersistentModelIndex planFileGroupIndex         (void) const { return _planFileGroupIndex; }
+    QPersistentModelIndex defaultsGroupIndex         (void) const { return _defaultsGroupIndex; }
+    QPersistentModelIndex missionGroupIndex          (void) const { return _missionGroupIndex; }
+    QPersistentModelIndex fenceGroupIndex            (void) const { return _fenceGroupIndex; }
+    QPersistentModelIndex rallyGroupIndex            (void) const { return _rallyGroupIndex; }
     QmlObjectListModel* simpleFlightPathSegments    (void) { return &_simpleFlightPathSegments; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QStringList         complexMissionItemNames     (void) const;
@@ -392,7 +446,6 @@ private:
     MissionManager*             _missionManager =               nullptr;
     int                         _missionItemCount =             0;
     QmlObjectListModel*         _visualItems =                  nullptr;
-    QmlObjectTreeModel          _visualItemsTree;
     QPersistentModelIndex       _planFileGroupIndex;            ///< Persistent index for "Plan File" group in tree
     QPersistentModelIndex       _defaultsGroupIndex;            ///< Persistent index for "Defaults" group in tree
     QPersistentModelIndex       _missionGroupIndex;             ///< Persistent index for "Mission Items" group in tree
@@ -407,6 +460,7 @@ private:
     QObject                     _rallyGroupNode;                ///< Group node for "Rally Points" in tree view
     QObject                     _fenceEditorMarker;             ///< Marker child for GeoFenceEditor delegate
     QObject                     _rallyHeaderMarker;             ///< Marker child for RallyPointEditorHeader delegate
+    QmlObjectTreeModel          _visualItemsTree;               // Must be declared after group nodes so it's destroyed first
     MissionSettingsItem*        _settingsItem =                 nullptr;
     PlanViewSettings*           _planViewSettings =             nullptr;
     QmlObjectListModel          _simpleFlightPathSegments;
