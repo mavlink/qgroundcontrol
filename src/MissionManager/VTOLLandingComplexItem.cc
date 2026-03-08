@@ -30,7 +30,7 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
     , _stopTakingPhotosFact     (settingsGroup, _metaDataMap[stopTakingPhotosName])
     , _stopTakingVideoFact      (settingsGroup, _metaDataMap[stopTakingVideoName])
 {
-    _editorQml      = "qrc:/qml/QGroundControl/Controls/VTOLLandingPatternEditor.qml";
+    _editorQml      = "qrc:/qml/QGroundControl/PlanView/VTOLLandingPatternEditor.qml";
     _isIncomplete   = false;
 
     _init();

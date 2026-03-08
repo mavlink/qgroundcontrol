@@ -7,6 +7,7 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 
 /// QGCMapPolyline map visuals
 Item {

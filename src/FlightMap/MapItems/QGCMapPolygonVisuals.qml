@@ -8,6 +8,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 
 /// QGCMapPolygon map visuals
 Item {

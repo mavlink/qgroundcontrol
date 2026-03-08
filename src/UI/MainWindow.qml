@@ -9,6 +9,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 import QGroundControl.Toolbar
 
 /// @brief Native QML top level window
