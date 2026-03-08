@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
+import QGroundControl.PlanView
 
 /// Unified plan tree view showing Mission Items, GeoFence, and Rally Points
 /// as collapsible sections using a real TreeView with type-discriminating delegates.

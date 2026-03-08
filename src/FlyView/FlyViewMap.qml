@@ -9,6 +9,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 
 FlightMap {
     id:                         _root
