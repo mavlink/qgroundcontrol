@@ -338,15 +338,16 @@ void MissionControllerTest::_testMissionTransformsInvalidHome()
     settingsItem->setCoordinate(QGeoCoordinate());
     QVERIFY_TRUE_WAIT(!settingsItem->coordinate().isValid(), TestTimeout::shortMs());
 
+    // repositionMission and rotateMission require a valid home — they should be no-ops
     _missionController->repositionMission(home.atDistanceAndAzimuth(100.0, 0.0), true, true);
-    _missionController->offsetMission(10.0, 5.0, 8.0, true, true);
     _missionController->rotateMission(45.0, true, true);
-    QVERIFY_TRUE_WAIT((item1->coordinate().distanceTo(oldItemCoord) <= kCoordToleranceMeters) &&
-                          (qAbs(item1->editableAlt() - oldItemAlt) <= kAltToleranceMeters),
-                      TestTimeout::shortMs());
-
     QCOMPARE_COORDS(item1->coordinate(), oldItemCoord, kCoordToleranceMeters);
     QCOMPARE_FUZZY(item1->editableAlt(), oldItemAlt, kAltToleranceMeters);
+
+    // offsetMission does not depend on home — it should still apply
+    _missionController->offsetMission(10.0, 5.0, 8.0, true, true);
+    QVERIFY(item1->coordinate().distanceTo(oldItemCoord) > kCoordToleranceMeters);
+    QCOMPARE_FUZZY(item1->editableAlt(), oldItemAlt + 8.0, kAltToleranceMeters);
 }
 
 void MissionControllerTest::_testLoadJsonSectionAvailable()
