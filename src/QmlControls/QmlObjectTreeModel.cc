@@ -137,6 +137,16 @@ QVariant QmlObjectTreeModel::data(const QModelIndex& index, int role) const
         return node->object ? QVariant::fromValue(node->object->objectName()) : QVariant{};
     case NodeTypeRole:
         return QVariant::fromValue(node->nodeType);
+    case SeparatorRole: {
+        if (!node->children.isEmpty()) {
+            return false;
+        }
+        const TreeNode* parentNode = node->parentNode;
+        if (!parentNode) {
+            return false;
+        }
+        return node->row() < parentNode->children.size() - 1;
+    }
     default:
         return {};
     }
@@ -183,7 +193,8 @@ bool QmlObjectTreeModel::removeRows(int /*row*/, int /*count*/, const QModelInde
 QHash<int, QByteArray> QmlObjectTreeModel::roleNames() const
 {
     auto roles = ObjectItemModelBase::roleNames();
-    roles[NodeTypeRole] = "nodeType";
+    roles[NodeTypeRole]  = "nodeType";
+    roles[SeparatorRole] = "separator";
     return roles;
 }
 
@@ -264,6 +275,7 @@ QModelIndex QmlObjectTreeModel::insertItem(int row, QObject* object, const QMode
         beginInsertRows(parentIndex, row, row);
         parentNode->children.insert(row, node);
         endInsertRows();
+        _emitSeparatorChanged(parentIndex, row > 0 ? row - 1 : 0);
         _signalCountChangedIfNotNested();
     }
 
@@ -315,6 +327,9 @@ QObject* QmlObjectTreeModel::removeItem(const QModelIndex& index)
     delete node;
 
     _totalCount -= removedCount;
+    if (!parentNode->children.isEmpty()) {
+        _emitSeparatorChanged(parentIdx, parentNode->children.count() - 1);
+    }
     _signalCountChangedIfNotNested();
     setDirty(true);
 
@@ -511,4 +526,22 @@ void QmlObjectTreeModel::_disconnectDirtyChanged(QObject* object)
     if (signal.isValid() && slot.isValid()) {
         disconnect(object, signal, this, slot);
     }
+}
+
+void QmlObjectTreeModel::_emitSeparatorChanged(const QModelIndex& parentIdx, int fromRow)
+{
+    const TreeNode* parentNode = parentIdx.isValid() ? _nodeFromIndex(parentIdx) : &_rootNode;
+    if (!parentNode) {
+        return;
+    }
+    const int last = parentNode->children.count() - 1;
+    if (fromRow > last) {
+        fromRow = last;
+    }
+    if (fromRow < 0) {
+        return;
+    }
+    const QModelIndex first = index(fromRow, 0, parentIdx);
+    const QModelIndex end = index(last, 0, parentIdx);
+    emit dataChanged(first, end, {SeparatorRole});
 }

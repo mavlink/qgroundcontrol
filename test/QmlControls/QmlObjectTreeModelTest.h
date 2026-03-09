@@ -52,6 +52,7 @@ private slots:
     void _dataObjectRole();
     void _dataTextRole();
     void _dataNodeTypeRole();
+    void _dataSeparatorRole();
     void _dataInvalidIndexReturnsEmpty();
     void _setDataReplacesObject();
     void _setDataNonObjectRoleReturnsFalse();

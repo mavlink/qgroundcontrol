@@ -54,6 +54,7 @@ void QmlObjectTreeModelTest::_roleNamesIncludeNodeType()
     QVERIFY(roles.values().contains("object"));
     QVERIFY(roles.values().contains("text"));
     QVERIFY(roles.values().contains("nodeType"));
+    QVERIFY(roles.values().contains("separator"));
 }
 
 // ===========================================================================
@@ -433,6 +434,52 @@ void QmlObjectTreeModelTest::_dataNodeTypeRole()
     const QModelIndex idx = model.appendItem(&obj, QModelIndex(), QStringLiteral("missionItem"));
 
     QCOMPARE(model.data(idx, QmlObjectTreeModel::NodeTypeRole).toString(), QStringLiteral("missionItem"));
+}
+
+void QmlObjectTreeModelTest::_dataSeparatorRole()
+{
+    QmlObjectTreeModel model;
+
+    // Build a parent with three leaf children
+    QObject parent;
+    QObject child1, child2, child3;
+    const QModelIndex parentIdx = model.appendItem(&parent, QModelIndex(), QStringLiteral("group"));
+    const QModelIndex c1 = model.appendItem(&child1, parentIdx, QStringLiteral("item"));
+    const QModelIndex c2 = model.appendItem(&child2, parentIdx, QStringLiteral("item"));
+    const QModelIndex c3 = model.appendItem(&child3, parentIdx, QStringLiteral("item"));
+
+    // First two children are not last → separator = true
+    QCOMPARE(model.data(c1, QmlObjectTreeModel::SeparatorRole).toBool(), true);
+    QCOMPARE(model.data(c2, QmlObjectTreeModel::SeparatorRole).toBool(), true);
+    // Last child → separator = false
+    QCOMPARE(model.data(c3, QmlObjectTreeModel::SeparatorRole).toBool(), false);
+
+    // Parent node has children → separator = false regardless of position
+    QCOMPARE(model.data(parentIdx, QmlObjectTreeModel::SeparatorRole).toBool(), false);
+
+    // Remove last child — c2 is now last and should emit dataChanged with SeparatorRole
+    QSignalSpy dataChangedSpy(&model, &QAbstractItemModel::dataChanged);
+    model.removeItem(c3);
+
+    // c2 should now be the last child → separator = false
+    const QModelIndex c2New = model.index(1, 0, parentIdx);
+    QCOMPARE(model.data(c2New, QmlObjectTreeModel::SeparatorRole).toBool(), false);
+
+    // Verify dataChanged was emitted with SeparatorRole
+    bool foundSeparatorChange = false;
+    for (const auto& call : dataChangedSpy) {
+        const QList<int> roles = call.at(2).value<QList<int>>();
+        if (roles.contains(QmlObjectTreeModel::SeparatorRole)) {
+            foundSeparatorChange = true;
+            break;
+        }
+    }
+    QVERIFY(foundSeparatorChange);
+
+    // Insert a new child at the end — c2 should flip back to separator = true
+    QObject child4;
+    model.appendItem(&child4, parentIdx, QStringLiteral("item"));
+    QCOMPARE(model.data(c2New, QmlObjectTreeModel::SeparatorRole).toBool(), true);
 }
 
 void QmlObjectTreeModelTest::_dataInvalidIndexReturnsEmpty()
