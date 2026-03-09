@@ -207,10 +207,11 @@ ApplicationWindow {
             description:"Exposure Up"
             sequence:"Ctrl+E"
             action:function(){
+                let goldenRatio = 1.61803398875
                 let compId = globalShortcuts.currentComputerId
                 let paramSetter = globalShortcuts.parameterSetter
                 let exposure = Math.floor(paramSetter.getParameter(compId, "CAM_EXPOSURE"))
-                let newExposure = exposure + 100
+                let newExposure = exposure * Math.ceil(exposure * goldenRatio)
                 if( newExposure > 20000){
                     return
                 }
@@ -224,10 +225,11 @@ ApplicationWindow {
             description:"Exposure Down"
             sequence:"Ctrl+Shift+E"
             action:function(){
+                let goldenRatio = 1.61803398875
                 let compId = globalShortcuts.currentComputerId
                 let paramSetter = globalShortcuts.parameterSetter
                 let exposure = Math.floor(paramSetter.getParameter(compId, "CAM_EXPOSURE"))
-                let newExposure = exposure - 100
+                let newExposure = exposure / Math.ceil(exposure / goldenRatio)
                 if( newExposure < 0){
                     return
                 }

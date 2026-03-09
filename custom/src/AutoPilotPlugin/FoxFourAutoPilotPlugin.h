@@ -20,6 +20,8 @@ public:
     QString storageCapacity();
     /// Reboot all onboard computers
     Q_INVOKABLE void rebootOnboardComputers();
+    Q_INVOKABLE void setEK3Source(int index);
+
     OnboardComputersManager* onboardComputersManager();
 signals:
     void storageCapacityChanged();

@@ -49,6 +49,12 @@ void FoxFourAutoPilotPlugin::rebootOnboardComputers(){
         _onboardComputersMngr->rebootAllOnboardComputers();
 }
 
+void FoxFourAutoPilotPlugin::setEK3Source(int index)
+{
+    //sending command to set new index for ekf source
+    _vehicle->sendCommand(_vehicle->defaultComponentId(),MAV_CMD_SET_EKF_SOURCE_SET,false,index);
+}
+
 OnboardComputersManager *FoxFourAutoPilotPlugin::onboardComputersManager(){
     return _onboardComputersMngr;
 }
