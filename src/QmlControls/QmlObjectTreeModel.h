@@ -93,7 +93,8 @@ public:
     void    clearAndDeleteContents(); ///< Clears the tree and calls deleteLater on every QObject
     bool    contains(QObject* object) const;
 
-    static constexpr int NodeTypeRole = Qt::UserRole + 2;
+    static constexpr int NodeTypeRole  = Qt::UserRole + 2;
+    static constexpr int SeparatorRole = Qt::UserRole + 3;
 
 private:
     struct TreeNode {
@@ -114,6 +115,7 @@ private:
     void        _deleteSubtree(TreeNode* node, bool deleteObjects);
     void        _connectDirtyChanged(QObject* object);
     void        _disconnectDirtyChanged(QObject* object);
+    void        _emitSeparatorChanged(const QModelIndex& parentIdx, int fromRow);
 
     TreeNode _rootNode; ///< Invisible root; top-level items are its children
     int      _totalCount = 0; ///< Cached total node count (all nodes in tree)

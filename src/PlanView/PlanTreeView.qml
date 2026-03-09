@@ -11,6 +11,13 @@ import QGroundControl.PlanView
 /// as collapsible sections using a real TreeView with type-discriminating delegates.
 TreeView {
     id: root
+    model: _missionController.visualItemsTree
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
+    reuseItems: false
+    pointerNavigationEnabled: false
+    selectionBehavior: TableView.SelectionDisabled
+    rowSpacing: 2
 
     required property var editorMap
     required property var planMasterController
@@ -24,14 +31,6 @@ TreeView {
     property var _missionController: planMasterController.missionController
     property var _geoFenceController: planMasterController.geoFenceController
     property var _rallyPointController: planMasterController.rallyPointController
-
-    model: _missionController.visualItemsTree
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    reuseItems: false
-    pointerNavigationEnabled: false
-    selectionBehavior: TableView.SelectionDisabled
-    rowSpacing: 2
 
     // Helper: convert a persistent model index to the current visual row
     function _rowFor(modelIndex) { return root.rowAtIndex(modelIndex) }
@@ -110,6 +109,10 @@ TreeView {
 
     delegate: Item {
         id: delegateRoot
+        implicitWidth: root.width
+        implicitHeight: (loader.item ? loader.item.height : 1) + (separatorLine.visible ? separatorLine.height + root.rowSpacing : 0)
+        width: root.width
+        height: implicitHeight
 
         required property TreeView treeView
         required property bool isTreeNode
@@ -121,11 +124,8 @@ TreeView {
 
         readonly property var nodeObject: model.object
         readonly property string nodeType: model.nodeType
+        readonly property bool separator: model.separator ?? false
 
-        implicitWidth: root.width
-        implicitHeight: loader.item ? loader.item.height : 1
-        width: root.width
-        height: implicitHeight
 
         onImplicitHeightChanged: layoutTimer.restart()
 
@@ -154,6 +154,18 @@ TreeView {
                 default:                return null
                 }
             }
+        }
+
+        Rectangle {
+            id: separatorLine
+            anchors.margins: ScreenTools.defaultFontPixelWidth * 0.5
+            anchors.topMargin: root.rowSpacing
+            anchors.top: loader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 1
+            color: qgcPal.groupBorder
+            visible: delegateRoot.separator
         }
 
         // ── Group header (Mission Items / GeoFence / Rally Points) ──
