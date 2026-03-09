@@ -944,10 +944,14 @@ private slots:
     void _altitudeAboveTerrainReceived      (bool sucess, QList<double> heights);
 
 private:
+    void _loadLocalParameters();
+    void _saveParameters();
+
     void _loadJoystickSettings          ();
     void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     void _captureJoystick               ();
     void _handlePing                    (LinkInterface* link, mavlink_message_t& message);
+    void _handleAutoPilotVersion        (mavlink_message_t& message);
     void _handleHomePosition            (mavlink_message_t& message);
     void _handleHeartbeat               (mavlink_message_t& message);
     void _handleCurrentMode             (mavlink_message_t& message);
@@ -999,6 +1003,7 @@ private:
     void _deleteGimbalController();
     void _deleteCameraManager();
 
+    QString _parameterFilePath;
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing

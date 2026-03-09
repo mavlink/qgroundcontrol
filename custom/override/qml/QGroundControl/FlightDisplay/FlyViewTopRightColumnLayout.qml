@@ -17,7 +17,13 @@ import QGroundControl.FlightMap
 
 
 ColumnLayout {
-    width: _rightPanelWidth
+    // width: _rightPanelWidth
+
+    FlyViewInstrumentPanel {
+        id:                 instrumentPanel
+        Layout.alignment:   Qt.AlignRight | Qt.AlignTop
+        visible:            QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI
+    }
 
     TerrainProgress {
         Layout.alignment:       Qt.AlignTop
@@ -28,9 +34,11 @@ ColumnLayout {
     // to be null all over the place
     Loader {
         id:                 photoVideoControlLoader
+        Layout.topMargin:   ScreenTools.defaultFontPixelHeight / 2
         Layout.alignment:   Qt.AlignTop | Qt.AlignRight
         sourceComponent:    globals.activeVehicle && globals.activeVehicle.cameraManager ? photoVideoControlComponent : undefined
-
+        // height: visible ? implicitHeight : 0
+        // Layout.maximumHeight: 0
         property real rightEdgeCenterInset: visible ? parent.width - x : 0
 
         Component {
@@ -40,4 +48,5 @@ ColumnLayout {
             }
         }
     }
+
 }

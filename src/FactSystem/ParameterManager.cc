@@ -903,6 +903,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const Q
     CacheMapName2ParamTypeVal cacheMap;
     QFile cacheFile(parameterCacheFile(vehicleId, componentId));
     if (!cacheFile.exists()) {
+        qCDebug(ParameterManagerLog) << "cache do not exist";
         /* no local cache, just wait for them to come in*/
         return;
     }
@@ -996,8 +997,12 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const Q
     }
 }
 
-QString ParameterManager::readParametersFromStream(QTextStream &stream)
+QString ParameterManager::readParametersFromStream(QTextStream &stream, bool force)
 {
+    if (force) {
+        _waitingParamTimeoutTimer.stop();
+    }
+
     QString missingErrors;
     QString typeErrors;
 
@@ -1016,11 +1021,33 @@ QString ParameterManager::readParametersFromStream(QTextStream &stream)
                 const QString valStr = wpParams.at(3);
                 const uint mavType = wpParams.at(4).toUInt();
 
-                if (!parameterExists(componentId, paramName)) {
+                bool paramExist = parameterExists(componentId, paramName);
+
+                if (!paramExist && !force) {
                     QString error;
                     error += QStringLiteral("%1:%2").arg(componentId).arg(paramName);
                     missingErrors += error;
                     qCDebug(ParameterManagerLog) << "Skipped due to missing:" << error;
+                    continue;
+                }
+
+                //creating new parameter
+                if (!paramExist && force) {
+                    Fact *fact = nullptr;
+                    if (_mapCompId2FactMap.contains(componentId) && _mapCompId2FactMap[componentId].contains(paramName)) {
+                        fact = _mapCompId2FactMap[componentId][paramName];
+                    } else {
+                        qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "Adding new fact" << paramName;
+                        fact = new Fact(componentId, paramName, mavTypeToFactType(MAV_PARAM_TYPE(mavType)), this);
+                        FactMetaData *const factMetaData = _vehicle->compInfoManager()->compInfoParam(componentId)->factMetaDataForName(paramName, fact->type());
+                        fact->setMetaData(factMetaData);
+                        _mapCompId2FactMap[componentId][paramName] = fact;
+                                // We need to know when the fact value changes so we can update the vehicle
+                        (void) connect(fact, &Fact::containerRawValueChanged, this, &ParameterManager::_factRawValueUpdated);
+                        emit factAdded(componentId, fact);
+                    }
+                    fact->containerSetRawValue(valStr);
+                    _paramCountMap[componentId]++;
                     continue;
                 }
 
@@ -1037,6 +1064,15 @@ QString ParameterManager::readParametersFromStream(QTextStream &stream)
                 fact->setRawValue(valStr);
             }
         }
+    }
+
+    //we load all parameters, now emitting signal that we are done
+    if (force) {
+        _missingParameters = false;
+        _parametersReady = true;
+        _vehicle->autopilotPlugin()->parametersReadyPreChecks();
+        emit parametersReadyChanged(_parametersReady);
+        emit missingParametersChanged(_missingParameters);
     }
 
     QString errors;

@@ -282,6 +282,13 @@ void Vehicle::_commonInit(LinkInterface* link)
     _ftpManager                     = new FTPManager                    (this);
 
     _vehicleLinkManager = new VehicleLinkManager(this);
+    connect(_vehicleLinkManager, &VehicleLinkManager::allLinksRemoved, this, [this](){
+        if (_parameterFilePath.isEmpty()) {
+            return;
+        }
+        qCDebug(VehicleLog) << "saving parameters";
+        _saveParameters();
+    });
     if (link) {
         _vehicleLinkManager->_addLink(link);
     }
@@ -520,6 +527,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     this->handleMessage(this, message);
 
     switch (message.msgid) {
+    case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
+        _handleAutoPilotVersion(message);
+        break;
     case MAVLINK_MSG_ID_HOME_POSITION:
         _handleHomePosition(message);
         break;
@@ -1154,6 +1164,28 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
                                    message.compid);
         sendMessageOnLinkThreadSafe(link, msg);
     }
+}
+
+void Vehicle::_handleAutoPilotVersion(mavlink_message_t &message)
+{
+    mavlink_autopilot_version_t version;
+    mavlink_msg_autopilot_version_decode(&message,&version);
+    qCDebug(VehicleLog)<<"handling autopilot version message";
+    QString fileName="";
+    if (version.uid != 0) {
+        fileName+=QString::number(version.uid);
+    } else {
+        for(int i = 0;i < 18; i++){
+            fileName+=QString::number(version.uid2[i]);
+        }
+    }
+    if (fileName.isEmpty()) {
+        return;
+    }
+    _parameterFilePath = _parameterManager->parameterCacheDir().absolutePath() +
+                         QDir::separator() + fileName + ".params";
+    _loadLocalParameters();
+
 }
 
 void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event)
@@ -3744,6 +3776,27 @@ void Vehicle::_altitudeAboveTerrainReceived(bool success, QList<double> heights)
     }
     // Clean up
     _altitudeAboveTerrTerrainAtCoordinateQuery = nullptr;
+}
+
+void Vehicle::_loadLocalParameters()
+{
+    QFile file(_parameterFilePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    QTextStream stream(&file);
+    _parameterManager->readParametersFromStream(stream,true);
+}
+
+void Vehicle::_saveParameters()
+{
+    QFile file(_parameterFilePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return;
+    }
+    QTextStream stream(&file);
+    _parameterManager->writeParametersToStream(stream);
+    file.close();
 }
 
 void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)

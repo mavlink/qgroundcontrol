@@ -14,25 +14,35 @@
     </qresource>
     <qresource prefix="/Custom/qml">
         <file alias="QGroundControl/AppSettings/VideoSettings.qml">override/qml/QGroundControl/AppSettings/VideoSettings.qml</file>
-        <file alias="QGroundControl/AppSettings/VideoSettings.qml">override/qml/QGroundControl/AppSettings/VideoSettings.qml</file>
         <file alias="QGroundControl/AppSettings/FlyViewSettings.qml">override/qml/QGroundControl/AppSettings/FlyViewSettings.qml</file>
         <file alias="QGroundControl/AppSettings/SettingsPage.qml">override/qml/QGroundControl/AppSettings/SettingsPage.qml</file>
         <file alias="QGroundControl/AppSettings/SettingsPagesModel.qml">override/qml/QGroundControl/AppSettings/SettingsPagesModel.qml</file>
         <file alias="QGroundControl/AppSettings/ShortcutSettings.qml">override/qml/QGroundControl/AppSettings/ShortcutSettings.qml</file>
+
         <file alias="QGroundControl/Controls/AppSettings.qml">override/qml/QGroundControl/Controls/AppSettings.qml</file>
         <file alias="QGroundControl/Controls/FlyViewToolBar.qml">override/qml/QGroundControl/Controls/FlyViewToolBar.qml</file>
         <file alias="QGroundControl/Controls/MainStatusIndicator.qml">override/qml/QGroundControl/Controls/MainStatusIndicator.qml</file>
         <file alias="QGroundControl/Controls/VehicleMessageList.qml">override/qml/QGroundControl/Controls/VehicleMessageList.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditor.qml">override/qml/QGroundControl/Controls/ParameterEditor.qml</file>
+        <file alias="QGroundControl/Controls/InstrumentValueValue.qml">override/qml/QGroundControl/QmlControls/InstrumentValueValue.qml</file>
+        <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">override/qml/QGroundControl/QmlControls/InstrumentValueLabel.qml</file>
+
         <file alias="QGroundControl/MainWindow.qml">override/qml/MainWindow.qml</file>
+
         <file alias="QGroundControl/FlightDisplay/FlyViewVideo.qml">override/qml/QGroundControl/FlightDisplay/FlyViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewTopRightColumnLayout.qml">override/qml/QGroundControl/FlightDisplay/FlyViewTopRightColumnLayout.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewMap.qml">override/qml/QGroundControl/FlightDisplay/FlyViewMap.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">override/qml/QGroundControl/FlightDisplay/FlyViewCustomLayer.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">override/qml/QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionsController.qml">override/qml/QGroundControl/FlightDisplay/GuidedActionsController.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewBottomRightRowLayout.qml">override/qml/QGroundControl/FlightDisplay/FlyViewBottomRightRowLayout.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewWidgetLayer.qml">override/qml/QGroundControl/FlightDisplay/FlyViewWidgetLayer.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewInstrumentPanel.qml">override/qml/QGroundControl/FlightDisplay/FlyViewInstrumentPanel.qml</file>
+
         <file alias="QGroundControl/FlightMap/Widgets/PhotoVideoControl.qml">override/qml/QGroundControl/FlightMap/Widgets/PhotoVideoControl.qml</file>
+
         <file alias="QGroundControl/VehicleSetup/SetupView.qml">override/qml/QGroundControl/VehicleSetup/SetupView.qml</file>
+
         <file alias="OnboardComputers/OnboardComputersInfo.qml">res/Custom/OnboardComputers/OnboardComputersInfo.qml</file>
         <file alias="Toolbar/VioIndicator.qml">res/Toolbar/VioIndicator.qml</file>
     </qresource>

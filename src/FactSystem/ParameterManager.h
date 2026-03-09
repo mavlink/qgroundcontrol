@@ -85,7 +85,7 @@ public:
     Fact *getParameter(int componentId, const QString &paramName);
 
     /// Returns error messages from loading
-    QString readParametersFromStream(QTextStream &stream);
+    QString readParametersFromStream(QTextStream &stream, bool force = false);
 
     void writeParametersToStream(QTextStream &stream) const;
     void removeComponent(uint8_t compId);
