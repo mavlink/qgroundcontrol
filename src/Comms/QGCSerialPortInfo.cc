@@ -110,8 +110,15 @@ bool QGCSerialPortInfo::_loadJsonData()
             return false;
         }
 
+        const QRegularExpression regExp(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption);
+        if (!regExp.isValid()) {
+            qCWarning(QGCSerialPortInfoLog) << "Invalid regular expression in board description fallback:"
+                                             << regExp.errorString()
+                                             << "pattern:" << fallbackObject[_jsonRegExpKey].toString();
+            return false;
+        }
         const BoardRegExpFallback_t boardFallback = {
-            QRegularExpression(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption),
+            regExp,
             _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
             fallbackObject[_jsonAndroidOnlyKey].toBool(false)
         };
@@ -136,8 +143,15 @@ bool QGCSerialPortInfo::_loadJsonData()
             return false;
         }
 
+        const QRegularExpression regExp(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption);
+        if (!regExp.isValid()) {
+            qCWarning(QGCSerialPortInfoLog) << "Invalid regular expression in board manufacturer fallback:"
+                                             << regExp.errorString()
+                                             << "pattern:" << fallbackObject[_jsonRegExpKey].toString();
+            return false;
+        }
         const BoardRegExpFallback_t boardFallback = {
-            QRegularExpression(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption),
+            regExp,
             _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
             fallbackObject[_jsonAndroidOnlyKey].toBool(false)
         };
