@@ -18,7 +18,7 @@ The main elements of the UI are:
   Click on the indicators to select them (for editing) or drag them around to reposition them.
   Flight path lines and direction arrows show the planned route between waypoints.
 - **Plan Toolbar:** Located at the top of the view with buttons for **Open**, **Save**, **Upload**, and **Clear**.
-  A hamburger menu (⋮) provides additional options such as _Save as KML_ and _Download_ (load plan from vehicle).
+  A hamburger menu (☰) provides additional options such as _Save as KML_ and _Download_ (load plan from vehicle).
   The **Save** and **Upload** buttons are highlighted when there are unsaved or un-uploaded changes.
 - **[Plan Tools](#plan_tools):** A vertical tool strip on the left side of the map used to add mission items (Takeoff, Waypoint, Pattern, ROI, Return/Land) and toggle the stats panel.
 - **[Plan Editor Panel](#plan_editor_panel):** A collapsible tree view on the right side containing the plan file info, mission items, GeoFence, and rally point editors.
@@ -90,7 +90,7 @@ File operations are located in the **Plan Toolbar** at the top of the view:
 - **Save** — Save the current plan to a file. Highlighted when there are unsaved changes.
 - **Upload** — Upload the plan to the vehicle. Highlighted when the plan has un-uploaded changes.
 - **Clear** — Remove all mission items, geofence, and rally points. If connected to a vehicle, also clears them from the vehicle.
-- **Hamburger menu** (⋮) — Additional options:
+- **Hamburger menu** (☰) — Additional options:
   - _Save as KML_ — Export the plan as a KML file.
   - _Download_ — Download the current plan from the vehicle (only available when connected).
 
@@ -115,7 +115,7 @@ The Plan Info section contains general plan-level settings:
 
 - **Plan File** — An editable name for the plan file.
 - **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
-- **Expected Home Position** — The altitude (AMSL) for the planned home position. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
+- **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
 ### Defaults {#mission_settings}
 
@@ -133,7 +133,7 @@ Each item can be expanded to edit its parameters.
 
 - Click an item to select it on the map and expand its editor.
 - Click the **command name** dropdown to change the item type. A dialog shows "Basic Commands" by default; use the **Category** dropdown to see all available commands.
-- Each item has a **hamburger menu** (⋮) with options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
+- Each item has a **hamburger menu** (☰) with options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
 - A **delete button** (trash icon) removes the item.
 - Items that are incomplete or missing required values show a **?** status indicator.
 
