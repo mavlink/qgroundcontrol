@@ -5,7 +5,7 @@ _계획 뷰_에서는 차량에 대한 _자율 임무_를 계획하고 차량에
 펌웨어에서 지원하는 경우 [지오 펜스](plan_geofence.md)와 [랠리 포인트](plan_rally_points.md)를 설정할 수 있습니다.
 
 <span id="plan_screenshot"></span>
-![계획 뷰 ](../../../assets/plan/plan_view_overview.jpg)
+![계획 뷰 ](../../../assets/plan/plan_view_overview.png)
 
 ## UI 개요 {#ui_overview}
 
