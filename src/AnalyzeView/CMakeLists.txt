@@ -27,6 +27,10 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(QGC_ENABLE_MAVFTP_LOG_DOWNLOAD)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_MAVFTP_LOG_DOWNLOAD)
+endif()
+
 # ----------------------------------------------------------------------------
 # QML Module for Analyze View UI
 # ----------------------------------------------------------------------------
