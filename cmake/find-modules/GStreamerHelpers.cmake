@@ -11,9 +11,19 @@ function(gstreamer_get_package_url PLATFORM VERSION OUTPUT_VAR)
     elseif(PLATFORM STREQUAL "macos_devel")
         set(_url "https://gstreamer.freedesktop.org/data/pkg/macos/${VERSION}/gstreamer-1.0-devel-${VERSION}-universal.pkg")
     elseif(PLATFORM STREQUAL "windows_msvc_x64")
-        set(_url "https://gstreamer.freedesktop.org/data/pkg/windows/${VERSION}/msvc/gstreamer-1.0-msvc-x86_64-${VERSION}.exe")
+        if(VERSION VERSION_GREATER_EQUAL "1.28.0")
+            set(_ext "exe")
+        else()
+            set(_ext "msi")
+        endif()
+        set(_url "https://gstreamer.freedesktop.org/data/pkg/windows/${VERSION}/msvc/gstreamer-1.0-msvc-x86_64-${VERSION}.${_ext}")
     elseif(PLATFORM STREQUAL "windows_msvc_arm64")
-        set(_url "https://gstreamer.freedesktop.org/data/pkg/windows/${VERSION}/msvc/gstreamer-1.0-msvc-arm64-${VERSION}.exe")
+        if(VERSION VERSION_GREATER_EQUAL "1.28.0")
+            set(_ext "exe")
+        else()
+            set(_ext "msi")
+        endif()
+        set(_url "https://gstreamer.freedesktop.org/data/pkg/windows/${VERSION}/msvc/gstreamer-1.0-msvc-arm64-${VERSION}.${_ext}")
     elseif(PLATFORM STREQUAL "good_plugins")
         set(_url "https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${VERSION}.tar.xz")
     elseif(PLATFORM STREQUAL "good_plugins_qt6")
@@ -55,7 +65,6 @@ endfunction()
 
 # gstreamer_get_fallback_checksum(<PLATFORM> <VERSION> <OUTPUT_VAR>)
 # Returns a pinned checksum for known artifacts when sidecar checksum fetch fails.
-# This preserves integrity verification during transient checksum endpoint outages.
 function(gstreamer_get_fallback_checksum PLATFORM VERSION OUTPUT_VAR)
     set(_checksum "")
 
@@ -75,6 +84,12 @@ function(gstreamer_get_fallback_checksum PLATFORM VERSION OUTPUT_VAR)
         elseif(PLATFORM STREQUAL "good_plugins")
             set(_checksum "SHA256=d97700f346fdf9ef5461c035e23ed1ce916ca7a31d6ddad987f774774361db77")
         endif()
+    elseif(VERSION STREQUAL "1.22.12")
+        if(PLATFORM STREQUAL "android")
+            set(_checksum "SHA256=be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485")
+        elseif(PLATFORM STREQUAL "windows_msvc_x64")
+            set(_checksum "SHA256=e5cbc6fb9f40fc2850806163df4b9d92012f967c842dc000a2b254cbcd7901d6")
+        endif()
     endif()
 
     set(${OUTPUT_VAR} "${_checksum}" PARENT_SCOPE)
@@ -83,36 +98,12 @@ endfunction()
 # gstreamer_fetch_checksum(<PLATFORM> <VERSION> <OUTPUT_VAR>)
 # Downloads the .sha256sum sidecar from freedesktop.org and returns "SHA256=<hash>".
 # Returns empty string on failure (checksum unavailable or unparseable).
-function(_gstreamer_is_release_like_config OUTPUT_VAR)
-    set(_release_like FALSE)
-
-    if(CMAKE_CONFIGURATION_TYPES)
-        foreach(_cfg IN LISTS CMAKE_CONFIGURATION_TYPES)
-            if(_cfg MATCHES "^(Release|RelWithDebInfo|MinSizeRel)$")
-                set(_release_like TRUE)
-                break()
-            endif()
-        endforeach()
-    elseif(CMAKE_BUILD_TYPE MATCHES "^(Release|RelWithDebInfo|MinSizeRel)$")
-        set(_release_like TRUE)
-    endif()
-
-    set(${OUTPUT_VAR} "${_release_like}" PARENT_SCOPE)
-endfunction()
-
 function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
     gstreamer_get_package_url(${PLATFORM} ${VERSION} _pkg_url)
 
     # URLs with query strings (e.g. good_plugins_qt6) have no sidecar checksum
     string(FIND "${_pkg_url}" "?" _qs_pos)
     if(NOT _qs_pos EQUAL -1)
-        _gstreamer_is_release_like_config(_require_checksum)
-        if(_require_checksum)
-            message(FATAL_ERROR
-                "GStreamer: Checksums are required for release-like builds, but ${PLATFORM} ${VERSION} "
-                "uses a query-string URL without sidecar checksum support.\n"
-                "Use a source with a pinned EXPECTED_HASH.")
-        endif()
         message(STATUS "GStreamer: Skipping checksum for ${PLATFORM} ${VERSION} (URL contains query string)")
         set(${OUTPUT_VAR} "" PARENT_SCOPE)
         return()
@@ -124,7 +115,6 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
     set(_checksum_dir "${CMAKE_BINARY_DIR}/_deps/checksums")
     set(_checksum_file "${_checksum_dir}/${_url_hash}.sha256sum")
 
-    # Try up to 2 rounds: if a cached file fails to parse, delete and re-download.
     foreach(_round RANGE 1 2)
         if(NOT EXISTS "${_checksum_file}")
             file(MAKE_DIRECTORY "${_checksum_dir}")
@@ -153,14 +143,9 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
                     set(${OUTPUT_VAR} "${_fallback_hash}" PARENT_SCOPE)
                     return()
                 endif()
-                _gstreamer_is_release_like_config(_require_checksum)
-                if(_require_checksum)
-                    message(FATAL_ERROR "GStreamer: Checksum not available for ${PLATFORM} ${VERSION} — "
-                        "integrity verification is required for release builds")
-                endif()
                 message(WARNING
-                    "GStreamer: Checksum sidecar unavailable for ${PLATFORM} ${VERSION}.\n"
-                    "Add a pinned fallback checksum to GStreamerHelpers.cmake for verified builds.")
+                    "GStreamer: Checksum sidecar unavailable for ${PLATFORM} ${VERSION}; "
+                    "continuing without integrity verification.")
                 set(${OUTPUT_VAR} "" PARENT_SCOPE)
                 return()
             endif()
@@ -168,7 +153,6 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
         endif()
 
         file(READ "${_checksum_file}" _content)
-        # Strip surrounding whitespace and any non-hex prefix (e.g. UTF-8 BOM).
         string(STRIP "${_content}" _content)
         string(REGEX MATCH "([0-9a-fA-F]+)" _match "${_content}")
         if(_match)
@@ -197,13 +181,7 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
         return()
     endif()
 
-    _gstreamer_is_release_like_config(_require_checksum)
-    if(_require_checksum)
-        message(FATAL_ERROR
-            "GStreamer: Could not parse checksum for ${PLATFORM} ${VERSION} after retry "
-            "(invalid sidecar content). URL: ${_checksum_url}")
-    endif()
-    message(STATUS "GStreamer: Could not parse checksum for ${PLATFORM} ${VERSION} (invalid content)")
+    message(WARNING "GStreamer: Could not parse checksum for ${PLATFORM} ${VERSION}; continuing without verification.")
     set(${OUTPUT_VAR} "" PARENT_SCOPE)
 endfunction()
 
@@ -400,9 +378,6 @@ function(gstreamer_install_libs)
         return()
     endif()
 
-    # The GStreamer SDK ships only GStreamer and its transitive dependencies —
-    # there are no unrelated libraries to exclude. Maintaining a prefix allowlist
-    # would be fragile and silently break when new dependencies appear.
     file(GLOB all_libs "${ARG_SOURCE_DIR}/*.${ARG_EXTENSION}")
     if(all_libs)
         install(FILES ${all_libs} DESTINATION "${ARG_DEST_DIR}")

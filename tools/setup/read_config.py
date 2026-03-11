@@ -124,6 +124,10 @@ def main() -> int:
         if key in config:
             print(config[key])
             return 0
+        # Legacy alias: gstreamer_version -> gstreamer_default_version
+        if key == "gstreamer_version" and "gstreamer_default_version" in config:
+            print(config["gstreamer_default_version"])
+            return 0
         else:
             print(f"Error: Key '{key}' not found in config", file=sys.stderr)
             print(f"Available keys: {', '.join(sorted(config.keys()))}", file=sys.stderr)

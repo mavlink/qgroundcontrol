@@ -11,6 +11,7 @@ GST_DEBUG_CATEGORY_STATIC(GST_CAT_DEFAULT);
 #define DEFAULT_PAR_N 0
 #define DEFAULT_PAR_D 1
 #define DEFAULT_SYNC TRUE
+#define DEFAULT_MAX_LATENESS G_GINT64_CONSTANT(-1)
 
 #define PROP_ENABLE_LAST_SAMPLE_NAME    "enable-last-sample"
 #define PROP_LAST_SAMPLE_NAME           "last-sample"
@@ -18,6 +19,7 @@ GST_DEBUG_CATEGORY_STATIC(GST_CAT_DEFAULT);
 #define PROP_FORCE_ASPECT_RATIO_NAME    "force-aspect-ratio"
 #define PROP_PIXEL_ASPECT_RATIO_NAME    "pixel-aspect-ratio"
 #define PROP_SYNC_NAME                  "sync"
+#define PROP_MAX_LATENESS_NAME          "max-lateness"
 
 enum
 {
@@ -28,6 +30,7 @@ enum
     PROP_FORCE_ASPECT_RATIO,
     PROP_PIXEL_ASPECT_RATIO,
     PROP_SYNC,
+    PROP_MAX_LATENESS,
     PROP_LAST
 };
 
@@ -118,6 +121,14 @@ gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass *klass)
         (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
     );
 
+    properties[PROP_MAX_LATENESS] = g_param_spec_int64(
+        "max-lateness", "Max lateness",
+        "Maximum number of nanoseconds a buffer can be late before it is dropped (-1 unlimited)",
+        -1, G_MAXINT64,
+        DEFAULT_MAX_LATENESS,
+        (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+    );
+
     g_object_class_install_properties(object_class, PROP_LAST, properties);
 
     gst_qgc_video_sink_bin_signals[SIGNAL_CREATE_ELEMENT] = g_signal_new(
@@ -194,38 +205,50 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
 
     switch (prop_id) {
     case PROP_ENABLE_LAST_SAMPLE:
-        g_object_set(self->glsinkbin,
-                     PROP_ENABLE_LAST_SAMPLE_NAME,
-                     g_value_get_boolean(value),
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_set(self->glsinkbin,
+                         PROP_ENABLE_LAST_SAMPLE_NAME,
+                         g_value_get_boolean(value),
+                         NULL);
         break;
     case PROP_WIDGET:
-        g_object_set(self->qmlglsink,
-                     PROP_WIDGET_NAME,
-                     g_value_get_pointer(value),
-                     NULL);
+        if (G_LIKELY(self->qmlglsink))
+            g_object_set(self->qmlglsink,
+                         PROP_WIDGET_NAME,
+                         g_value_get_pointer(value),
+                         NULL);
         break;
     case PROP_FORCE_ASPECT_RATIO:
-        g_object_set(self->glsinkbin,
-                     PROP_FORCE_ASPECT_RATIO_NAME,
-                     g_value_get_boolean(value),
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_set(self->glsinkbin,
+                         PROP_FORCE_ASPECT_RATIO_NAME,
+                         g_value_get_boolean(value),
+                         NULL);
         break;
     case PROP_PIXEL_ASPECT_RATIO: {
         const gint num = gst_value_get_fraction_numerator(value);
         const gint den = gst_value_get_fraction_denominator(value);
-        g_object_set(self->qmlglsink,
-                     PROP_PIXEL_ASPECT_RATIO_NAME,
-                     num,
-                     den,
-                     NULL);
+        if (G_LIKELY(self->qmlglsink))
+            g_object_set(self->qmlglsink,
+                         PROP_PIXEL_ASPECT_RATIO_NAME,
+                         num,
+                         den,
+                         NULL);
         break;
     }
     case PROP_SYNC:
-        g_object_set(self->glsinkbin,
-                     PROP_SYNC_NAME,
-                     g_value_get_boolean(value),
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_set(self->glsinkbin,
+                         PROP_SYNC_NAME,
+                         g_value_get_boolean(value),
+                         NULL);
+        break;
+    case PROP_MAX_LATENESS:
+        if (G_LIKELY(self->qmlglsink))
+            g_object_set(self->qmlglsink,
+                         PROP_MAX_LATENESS_NAME,
+                         g_value_get_int64(value),
+                         NULL);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -241,19 +264,21 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
     switch (prop_id) {
     case PROP_ENABLE_LAST_SAMPLE: {
         gboolean enable = FALSE;
-        g_object_get(self->glsinkbin,
-                     PROP_ENABLE_LAST_SAMPLE_NAME,
-                     &enable,
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_get(self->glsinkbin,
+                         PROP_ENABLE_LAST_SAMPLE_NAME,
+                         &enable,
+                         NULL);
         g_value_set_boolean(value, enable);
         break;
     }
     case PROP_LAST_SAMPLE: {
         GstSample *sample = NULL;
-        g_object_get(self->glsinkbin,
-                     PROP_LAST_SAMPLE_NAME,
-                     &sample,
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_get(self->glsinkbin,
+                         PROP_LAST_SAMPLE_NAME,
+                         &sample,
+                         NULL);
         gst_value_set_sample(value, sample);
         if (sample) {
             gst_sample_unref(sample);
@@ -262,38 +287,52 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
     }
     case PROP_WIDGET: {
         gpointer widget = NULL;
-        g_object_get(self->qmlglsink,
-                     PROP_WIDGET_NAME,
-                     &widget,
-                     NULL);
+        if (G_LIKELY(self->qmlglsink))
+            g_object_get(self->qmlglsink,
+                         PROP_WIDGET_NAME,
+                         &widget,
+                         NULL);
         g_value_set_pointer(value, widget);
         break;
     }
     case PROP_FORCE_ASPECT_RATIO: {
         gboolean enable = FALSE;
-        g_object_get(self->glsinkbin,
-                     PROP_FORCE_ASPECT_RATIO_NAME,
-                     &enable,
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_get(self->glsinkbin,
+                         PROP_FORCE_ASPECT_RATIO_NAME,
+                         &enable,
+                         NULL);
         g_value_set_boolean(value, enable);
         break;
     }
     case PROP_PIXEL_ASPECT_RATIO: {
         gint num = 0, den = 1;
-        g_object_get(self->qmlglsink,
-                     PROP_PIXEL_ASPECT_RATIO_NAME,
-                     &num, &den,
-                     NULL);
+        if (G_LIKELY(self->qmlglsink))
+            g_object_get(self->qmlglsink,
+                         PROP_PIXEL_ASPECT_RATIO_NAME,
+                         &num, &den,
+                         NULL);
         gst_value_set_fraction(value, num, den);
         break;
     }
     case PROP_SYNC: {
         gboolean enable = FALSE;
-        g_object_get(self->glsinkbin,
-                     PROP_SYNC_NAME,
-                     &enable,
-                     NULL);
+        if (G_LIKELY(self->glsinkbin))
+            g_object_get(self->glsinkbin,
+                         PROP_SYNC_NAME,
+                         &enable,
+                         NULL);
         g_value_set_boolean(value, enable);
+        break;
+    }
+    case PROP_MAX_LATENESS: {
+        gint64 lateness = DEFAULT_MAX_LATENESS;
+        if (G_LIKELY(self->qmlglsink))
+            g_object_get(self->qmlglsink,
+                         PROP_MAX_LATENESS_NAME,
+                         &lateness,
+                         NULL);
+        g_value_set_int64(value, lateness);
         break;
     }
     default:

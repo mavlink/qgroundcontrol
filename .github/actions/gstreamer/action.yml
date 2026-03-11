@@ -258,6 +258,10 @@ runs:
         $libCount = (Get-ChildItem (Join-Path $prefix 'lib') -Filter '*.lib' | Measure-Object).Count
         Write-Host "$libCount library files found"
 
+        $env:PATH = (Join-Path $prefix 'bin') + ";" + $env:PATH
+        $env:GST_PLUGIN_PATH = Join-Path $prefix 'lib' 'gstreamer-1.0'
+        & (Join-Path $prefix 'bin' 'gst-launch-1.0.exe') --version
+
     # ===== ARCHIVE & UPLOAD =====
 
     - name: Configure AWS Credentials (OIDC)

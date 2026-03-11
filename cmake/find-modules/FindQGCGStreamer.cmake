@@ -50,8 +50,6 @@ endif()
 
 include(GStreamerHelpers)
 
-# PKG_CONFIG_ARGN is consumed by CMake's FindPkgConfig module (3.22+).
-# Extra flags appended here are forwarded to every pkg_check_modules() call.
 set(PKG_CONFIG_ARGN)
 
 function(_qgc_find_apple_pkg_config OUT_VAR)
@@ -540,21 +538,26 @@ if(QGCGStreamer_FOUND AND NOT TARGET GStreamer::GStreamer)
 
     target_link_directories(GStreamer::GStreamer INTERFACE ${GSTREAMER_LIB_PATH})
 
-    target_link_libraries(GStreamer::GStreamer
-        INTERFACE
-            GStreamer::Core
-            GStreamer::Base
-            GStreamer::Video
-            GStreamer::Gl
-            GStreamer::GlPrototypes
-            GStreamer::Rtsp
-    )
+    # On macOS with framework, the umbrella library already provides all component
+    # symbols. Linking individual component dylibs would add @rpath/libgst*.dylib
+    # load commands that cannot be resolved inside the app bundle.
+    if(NOT (MACOS AND GStreamer_USE_FRAMEWORK AND GSTREAMER_FRAMEWORK))
+        target_link_libraries(GStreamer::GStreamer
+            INTERFACE
+                GStreamer::Core
+                GStreamer::Base
+                GStreamer::Video
+                GStreamer::Gl
+                GStreamer::GlPrototypes
+                GStreamer::Rtsp
+        )
 
-    foreach(component IN LISTS QGCGStreamer_FIND_COMPONENTS)
-        if(GStreamer_${component}_FOUND)
-            target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::${component})
-        endif()
-    endforeach()
+        foreach(component IN LISTS QGCGStreamer_FIND_COMPONENTS)
+            if(GStreamer_${component}_FOUND)
+                target_link_libraries(GStreamer::GStreamer INTERFACE GStreamer::${component})
+            endif()
+        endforeach()
+    endif()
 
     if(GStreamer_USE_STATIC_LIBS)
         qt_add_library(GStreamer::Plugins INTERFACE IMPORTED)
