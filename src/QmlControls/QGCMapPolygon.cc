@@ -406,11 +406,11 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter) {
         _ignoreCenterUpdates = false;
         _center = newCenter;
 
-        if (!_deferredCenterChanged) {
-            _deferredCenterChanged = true;
+        if (!_deferredPathChanged) {
+            _deferredPathChanged = true;
             QTimer::singleShot(0, this, [this]() {
                 emit centerChanged(_center);
-                _deferredCenterChanged = false;
+                _deferredPathChanged = false;
             });
         }
     }
