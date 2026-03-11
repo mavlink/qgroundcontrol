@@ -14,7 +14,7 @@ DEFAULT_EXPORT_KEYS = [
     "qt_minimum_version",
     "qt_modules",
     "gstreamer_minimum_version",
-    "gstreamer_version",
+    "gstreamer_default_version",
     "gstreamer_macos_version",
     "gstreamer_android_version",
     "gstreamer_windows_version",
@@ -98,6 +98,11 @@ def derive_ios_qt_modules(qt_modules: str) -> str:
     return " ".join(modules)
 
 
+_EXPORT_KEY_ALIASES: dict[str, str] = {
+    "gstreamer_default_version": "GSTREAMER_VERSION",
+}
+
+
 def export_build_config_values(
     config: dict[str, Any],
     *,
@@ -107,7 +112,8 @@ def export_build_config_values(
     exported: dict[str, str] = {}
     for key in keys or DEFAULT_EXPORT_KEYS:
         if key in config:
-            exported[key.upper()] = str(config[key])
+            export_name = _EXPORT_KEY_ALIASES.get(key, key.upper())
+            exported[export_name] = str(config[key])
     return exported
 
 

@@ -8,8 +8,6 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
     )
 
-    # Expose GST_PLUGIN_<name>_FOUND for each discovered plugin so that
-    # GStreamer.cc can conditionally register static plugin declarations.
     if(GStreamer_USE_STATIC_LIBS)
         foreach(_plugin IN LISTS GSTREAMER_PLUGINS)
             if(GST_PLUGIN_${_plugin}_FOUND)
@@ -33,6 +31,8 @@ if(TARGET gstqml6gl)
             GStreamer.h
             GStreamerHelpers.cc
             GStreamerHelpers.h
+            GStreamerLogging.cc
+            GStreamerLogging.h
             GstVideoReceiver.cc
             GstVideoReceiver.h
     )
@@ -82,6 +82,7 @@ if(TARGET gstqml6gl)
             install(PROGRAMS "${_GST_PTP_HELPER}"
                 DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
         endif()
+
     elseif(WIN32)
         gstreamer_install_libs(
             SOURCE_DIR "${GStreamer_ROOT_DIR}/bin"
@@ -109,9 +110,8 @@ if(TARGET gstqml6gl)
             FILES_MATCHING
                 PATTERN "*.exe"
         )
+
     elseif(MACOS)
-        # Framework install preserves internal structure/symlinks required for codesigning.
-        # Plugin filtering not applied to avoid breaking the framework bundle.
         if(GSTREAMER_FRAMEWORK)
             # Resolve the framework real path before install. Some SDK layouts expose
             # the framework as a symlink; copying through the symlink can leave an
@@ -138,4 +138,5 @@ if(TARGET gstqml6gl)
                 "https://gstreamer.freedesktop.org/download/")
         endif()
     endif()
+
 endif()
