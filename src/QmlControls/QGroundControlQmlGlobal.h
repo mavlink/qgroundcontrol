@@ -49,15 +49,15 @@ public:
     explicit QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
 
-    enum AltMode {
-        AltitudeModeMixed,              // Used by global altitude mode for mission planning
-        AltitudeModeRelative,           // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        AltitudeModeAbsolute,           // MAV_FRAME_GLOBAL
-        AltitudeModeCalcAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
-        AltitudeModeTerrainFrame,       // MAV_FRAME_GLOBAL_TERRAIN_ALT
-        AltitudeModeNone,               // Being used as distance value unrelated to ground (for example distance to structure)
+    enum AltitudeFrame {
+        AltitudeFrameMixed,              // Used by global altitude frame for mission planning
+        AltitudeFrameRelative,           // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        AltitudeFrameAbsolute,           // MAV_FRAME_GLOBAL
+        AltitudeFrameCalcAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
+        AltitudeFrameTerrain,       // MAV_FRAME_GLOBAL_TERRAIN_ALT
+        AltitudeFrameNone,               // Being used as distance value unrelated to ground (for example distance to structure)
     };
-    Q_ENUM(AltMode)
+    Q_ENUM(AltitudeFrame)
 
     Q_PROPERTY(QString              appName                 READ    appName                 CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
@@ -136,8 +136,8 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
-    Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
-    Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
+    Q_INVOKABLE QString altitudeFrameExtraUnits(AltitudeFrame altFrame);        ///< String shown in the FactTextField.extraUnits ui
+    Q_INVOKABLE QString altitudeFrameShortDescription(AltitudeFrame altFrame);  ///< String shown when a user needs to select an altitude frame
 
     /// Shows a simple message dialog. The dialog is parented to owner and will automatically close
     /// if the owner is destroyed, preventing orphaned dialogs that can cause crashes.
@@ -237,7 +237,7 @@ private:
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;
 
-    QStringList             _altitudeModeEnumString;
+    QStringList             _altitudeFrameEnumString;
 
     static QGeoCoordinate   _coord;
     static double           _zoom;

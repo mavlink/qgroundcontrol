@@ -57,19 +57,19 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
         MAV_CMD command;
         MAV_FRAME frame;
         double altValue;
-        QGroundControlQmlGlobal::AltMode altMode;
+        QGroundControlQmlGlobal::AltitudeFrame altFrame;
     } TestCase_t;
 
     TestCase_t testCases[] = {
         {MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567,
-         QGroundControlQmlGlobal::AltitudeModeRelative},
-        {MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute},
+         QGroundControlQmlGlobal::AltitudeFrameRelative},
+        {MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameAbsolute},
         {MAV_CMD_NAV_LOITER_TURNS, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567,
-         QGroundControlQmlGlobal::AltitudeModeRelative},
-        {MAV_CMD_NAV_LOITER_TIME, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute},
-        {MAV_CMD_NAV_LAND, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567, QGroundControlQmlGlobal::AltitudeModeRelative},
-        {MAV_CMD_NAV_TAKEOFF, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute},
-        {MAV_CMD_DO_JUMP, MAV_FRAME_MISSION, qQNaN(), QGroundControlQmlGlobal::AltitudeModeRelative},
+         QGroundControlQmlGlobal::AltitudeFrameRelative},
+        {MAV_CMD_NAV_LOITER_TIME, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameAbsolute},
+        {MAV_CMD_NAV_LAND, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameRelative},
+        {MAV_CMD_NAV_TAKEOFF, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameAbsolute},
+        {MAV_CMD_DO_JUMP, MAV_FRAME_MISSION, qQNaN(), QGroundControlQmlGlobal::AltitudeFrameRelative},
     };
     PlanMasterController planController(MAV_AUTOPILOT_PX4, QGCMAVLink::vehicleClassToMavType(vehicleClass));
     QGCMAVLink::VehicleClass_t commandVehicleClass =
@@ -167,7 +167,7 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
             QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedNaNFieldInfo[j].first * 10.0) + 0.1234567);
         }
         if (!qIsNaN(testCase.altValue)) {
-            QCOMPARE(simpleMissionItem.altitudeMode(), testCase.altMode);
+            QCOMPARE(simpleMissionItem.altitudeFrame(), testCase.altFrame);
             QCOMPARE(simpleMissionItem.altitude()->rawValue().toDouble(), testCase.altValue);
         }
     }
@@ -240,12 +240,12 @@ void SimpleMissionItemTest::_testSignals()
     missionItem.setParam1(missionItem.param4() + 1);
     QVERIFY(_spyVisualItem->emitted("dirtyChanged"));
     _spyVisualItem->clearAllSignals();
-    // Changing altitude mode should emit these signals (may also emit other related signals)
-    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative
-                                     ? QGroundControlQmlGlobal::AltitudeModeAbsolute
-                                     : QGroundControlQmlGlobal::AltitudeModeRelative);
+    // Changing altitude frame should emit these signals (may also emit other related signals)
+    _simpleItem->setAltitudeFrame(_simpleItem->altitudeFrame() == QGroundControlQmlGlobal::AltitudeFrameRelative
+                                     ? QGroundControlQmlGlobal::AltitudeFrameAbsolute
+                                     : QGroundControlQmlGlobal::AltitudeFrameRelative);
     QVERIFY(_spySimpleItem->emittedByMask(
-        _spySimpleItem->mask("dirtyChanged", "friendlyEditAllowedChanged", "altitudeModeChanged")));
+        _spySimpleItem->mask("dirtyChanged", "friendlyEditAllowedChanged", "altitudeFrameChanged")));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
     // Check commandChanged signalling. Call setCommand should trigger:
@@ -318,11 +318,11 @@ void SimpleMissionItemTest::_testSpeedSection()
 void SimpleMissionItemTest::_testAltitudePropogation()
 {
     // Make sure that changes to altitude propogate to param 7 of the mission item
-    _simpleItem->setAltitudeMode(QGroundControlQmlGlobal::AltitudeModeRelative);
+    _simpleItem->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameRelative);
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    _simpleItem->setAltitudeMode(QGroundControlQmlGlobal::AltitudeModeAbsolute);
+    _simpleItem->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameAbsolute);
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);

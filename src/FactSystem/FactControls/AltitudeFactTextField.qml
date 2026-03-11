@@ -7,17 +7,17 @@ import QGroundControl.Controls
 
 FactTextField {
     unitsLabel:                 fact ? fact.units : ""
-    extraUnitsLabel:            fact ? _altitudeModeExtraUnits : ""
+    extraUnitsLabel:            fact ? qsTr("%1").arg(_altitudeFrameExtraUnits) : ""
     showUnits:                  true
     showHelp:                   true
 
-    property int altitudeMode: QGroundControl.AltitudeModeNone
+    property int altitudeFrame: QGroundControl.AltitudeFrameNone
 
-    property string _altitudeModeExtraUnits
+    property string _altitudeFrameExtraUnits
 
-    onAltitudeModeChanged: updateAltitudeModeExtraUnits()
+    onAltitudeFrameChanged: updateAltitudeFrameExtraUnits()
 
-    function updateAltitudeModeExtraUnits() {
-        _altitudeModeExtraUnits = QGroundControl.altitudeModeExtraUnits(altitudeMode);
+    function updateAltitudeFrameExtraUnits() {
+        _altitudeFrameExtraUnits = QGroundControl.altitudeFrameExtraUnits(altitudeFrame);
     }
 }

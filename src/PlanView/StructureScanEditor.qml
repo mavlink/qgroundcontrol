@@ -140,14 +140,14 @@ Rectangle {
                         QGCLabel { text: qsTr("Scan Bottom Alt") }
                         AltitudeFactTextField {
                             fact:               missionItem.scanBottomAlt
-                            altitudeMode:       QGroundControl.AltitudeModeRelative
+                            altitudeFrame:       QGroundControl.AltitudeFrameRelative
                             Layout.fillWidth:   true
                         }
 
                         QGCLabel { text: qsTr("Entrance/Exit Alt") }
                         AltitudeFactTextField {
                             fact:               missionItem.entranceAlt
-                            altitudeMode:       QGroundControl.AltitudeModeRelative
+                            altitudeFrame:       QGroundControl.AltitudeFrameRelative
                             Layout.fillWidth:   true
                         }
 

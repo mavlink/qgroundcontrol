@@ -18,8 +18,8 @@ Rectangle {
     property real _margin: ScreenTools.defaultFontPixelHeight / 2
     property real _altRectMargin: ScreenTools.defaultFontPixelWidth / 2
     property var _controllerVehicle: missionItem.masterController.controllerVehicle
-    property int _globalAltMode: missionItem.masterController.missionController.globalAltitudeMode
-    property bool _globalAltModeIsMixed: _globalAltMode == QGroundControl.AltitudeModeMixed
+    property int _globalAltFrame: missionItem.masterController.missionController.globalAltitudeFrame
+    property bool _globalAltFrameIsMixed: _globalAltFrame == QGroundControl.AltitudeFrameMixed
     property real _radius: ScreenTools.defaultFontPixelWidth / 2
     property real _fieldSpacing: ScreenTools.defaultFontPixelHeight / 2
 
@@ -144,17 +144,17 @@ Rectangle {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        visible: _globalAltModeIsMixed
+                        visible: _globalAltFrameIsMixed
 
                         QGCLabel {
                             Layout.fillWidth: true
-                            text: qsTr("Altitude Mode")
+                            text: qsTr("Alt Frame")
                         }
 
-                        AltModeCombo {
-                            altitudeMode: missionItem.altitudeMode
+                        AltFrameCombo {
+                            altitudeFrame: missionItem.altitudeFrame
                             vehicle: _controllerVehicle
-                            onAltitudeModeChanged: missionItem.altitudeMode = altitudeMode
+                            onAltitudeFrameChanged: missionItem.altitudeFrame = altitudeFrame
                         }
                     }
 
@@ -165,18 +165,14 @@ Rectangle {
                         fact: missionItem.altitude
 
                         function _extraLabelText() {
-                            if (!_globalAltModeIsMixed && missionItem.altitudeMode !== QGroundControl.AltitudeModeRelative) {
-                                return qsTr(" (%1)").arg(QGroundControl.altitudeModeShortDescription(missionItem.altitudeMode))
-                            } else {
-                                return ""
-                            }
+                            return qsTr(" (%1)").arg(QGroundControl.altitudeFrameExtraUnits(missionItem.altitudeFrame))
                         }
                     }
 
                     QGCLabel {
                         font.pointSize: ScreenTools.smallFontPointSize
                         text: qsTr("Actual AMSL alt sent: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
-                        visible: missionItem.altitudeMode === QGroundControl.AltitudeModeCalcAboveTerrain
+                        visible: missionItem.altitudeFrame === QGroundControl.AltitudeFrameCalcAboveTerrain
                     }
                 }
 
