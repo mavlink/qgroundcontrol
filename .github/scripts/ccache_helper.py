@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """
-Install and configure ccache with signature verification.
+Ccache helper for CI: install, configure, and report.
 
-Usage:
-    install_ccache.py [--version VERSION] [--arch ARCH] [--config PATH] [--prefix PATH]
+Subcommands:
+    config   Output ccache configuration for GitHub Actions
+    install  Download and install a pinned ccache binary (Linux only)
+    summary  Write a build cache hit/miss summary to GitHub Step Summary
 
-Outputs (for GitHub Actions):
-    version, arch, max_size
+Examples:
+    ccache_helper.py config  --version 4.13.1 --arch x86_64 --conf ccache.conf
+    ccache_helper.py install --version 4.13.1 --arch x86_64
+    ccache_helper.py summary
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import platform
 import re
@@ -25,8 +30,12 @@ import time
 from pathlib import Path
 from typing import NamedTuple
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, urlretrieve
+from urllib.request import urlretrieve
 
+
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
 
 class CcacheConfig(NamedTuple):
     """Configuration values extracted for ccache setup."""
@@ -36,10 +45,14 @@ class CcacheConfig(NamedTuple):
     max_size: str
 
 
+# ---------------------------------------------------------------------------
+# Installer
+# ---------------------------------------------------------------------------
+
 class CcacheInstaller:
     """Handles ccache installation with signature verification."""
 
-    DEFAULT_VERSION = "4.12.3"
+    DEFAULT_VERSION = "4.13.1"
     DEFAULT_MAX_SIZE = "2G"
     MINISIGN_VERSION = "0.11"
     MINISIGN_KEY = "RWQX7yXbBedVfI4PNx6FLdFXu9GHUFsr28s4BVGxm4BeybtnX3P06saF"
@@ -132,7 +145,7 @@ class CcacheInstaller:
 
     def download_with_verify(self, temp_dir: Path) -> Path | None:
         """Download ccache archive and verify its signature."""
-        archive_name = f"ccache-{self.version}-linux-{self.arch}.tar.xz"
+        archive_name = f"ccache-{self.version}-linux-{self.arch}-glibc.tar.xz"
         archive_path = temp_dir / archive_name
         sig_path = temp_dir / f"{archive_name}.minisig"
 
@@ -211,7 +224,7 @@ class CcacheInstaller:
     def install(self, archive: Path) -> bool:
         """Extract and install ccache binary."""
         temp_dir = archive.parent
-        extract_dir = temp_dir / f"ccache-{self.version}-linux-{self.arch}"
+        extract_dir = temp_dir / f"ccache-{self.version}-linux-{self.arch}-glibc"
 
         try:
             with tarfile.open(archive, "r:xz") as tar:
@@ -326,6 +339,120 @@ class CcacheInstaller:
             pass
 
 
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+def get_ccache_json_stats() -> dict | None:
+    """Run ``ccache --print-stats --format=json`` and return parsed dict.
+
+    Returns None when ccache is unavailable or too old (< 4.10).
+    """
+    ccache_bin = shutil.which("ccache")
+    if not ccache_bin:
+        return None
+
+    try:
+        result = subprocess.run(
+            [ccache_bin, "--print-stats", "--format=json"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return None
+        return json.loads(result.stdout)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def build_summary_markdown(stats: dict) -> str:
+    """Build a GitHub-flavoured markdown summary table from ccache JSON stats."""
+    direct = int(stats.get("direct_cache_hit", 0))
+    preprocessed = int(stats.get("preprocessed_cache_hit", 0))
+    misses = int(stats.get("cache_miss", 0))
+    hits = direct + preprocessed
+    total = hits + misses
+    pct = f"{hits / total * 100:.1f}" if total > 0 else "0.0"
+
+    lines = [
+        "### CCache Statistics",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| Cache hits | {hits} / {total} ({pct}%) |",
+        f"| Direct hits | {direct} |",
+        f"| Preprocessed hits | {preprocessed} |",
+        f"| Misses | {misses} |",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def write_step_summary(markdown: str) -> bool:
+    """Append *markdown* to ``$GITHUB_STEP_SUMMARY``.
+
+    Returns True on success, False when the env var is unset or write fails.
+    """
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        print(markdown)
+        return True
+
+    try:
+        with open(summary_path, "a") as f:
+            f.write(markdown)
+        return True
+    except OSError as e:
+        print(f"Warning: Failed to write step summary: {e}", file=sys.stderr)
+        return False
+
+
+def get_ccache_verbose_stats() -> str | None:
+    """Run ``ccache -s -vv`` and return its output."""
+    ccache_bin = shutil.which("ccache")
+    if not ccache_bin:
+        return None
+
+    try:
+        result = subprocess.run(
+            [ccache_bin, "-s", "-vv"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip()
+    except OSError:
+        return None
+
+
+def run_summary() -> int:
+    """Collect ccache stats and write a job summary table."""
+    parts: list[str] = []
+
+    stats = get_ccache_json_stats()
+    if stats is not None:
+        parts.append(build_summary_markdown(stats))
+    else:
+        print("ccache JSON stats unavailable (ccache missing or < 4.10)", file=sys.stderr)
+
+    verbose = get_ccache_verbose_stats()
+    if verbose:
+        parts.append(
+            "<details>\n<summary>Verbose stats</summary>\n\n"
+            f"```\n{verbose}\n```\n\n</details>\n"
+        )
+
+    if parts:
+        write_step_summary("\n".join(parts))
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# GitHub Actions output helper
+# ---------------------------------------------------------------------------
+
 def output_github_actions(config: CcacheConfig) -> None:
     """Write outputs for GitHub Actions."""
     github_output = os.environ.get("GITHUB_OUTPUT")
@@ -341,77 +468,139 @@ def output_github_actions(config: CcacheConfig) -> None:
         print(f"Warning: Failed to write GitHub output: {e}", file=sys.stderr)
 
 
-def parse_args() -> argparse.Namespace:
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+TARGET_ARCH_MAP: dict[str, str] = {
+    "linux_gcc_arm64": "aarch64",
+}
+
+
+def resolve_arch(args: argparse.Namespace) -> str | None:
+    """Return architecture from --arch, --target, or None for auto-detect."""
+    if getattr(args, "arch", None):
+        return args.arch
+    target = getattr(args, "target", None)
+    if target:
+        return TARGET_ARCH_MAP.get(target)
+    return None
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Install and configure ccache with signature verification",
+        description="Ccache helper for CI: install, configure, and report",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
+    sub = parser.add_subparsers(dest="command")
+
+    # -- config --------------------------------------------------------
+    cfg = sub.add_parser("config", help="Output ccache configuration for GitHub Actions")
+    cfg.add_argument(
         "--version",
         default=CcacheInstaller.DEFAULT_VERSION,
         help=f"ccache version (default: {CcacheInstaller.DEFAULT_VERSION})",
     )
-    parser.add_argument(
+    cfg_arch = cfg.add_mutually_exclusive_group()
+    cfg_arch.add_argument(
         "--arch",
         choices=["x86_64", "aarch64"],
         help="Architecture (default: auto-detect)",
     )
-    parser.add_argument(
-        "--config",
+    cfg_arch.add_argument(
+        "--target",
+        metavar="CI_TARGET",
+        help="CI build target — resolved to arch (e.g. linux_gcc_arm64 → aarch64)",
+    )
+    cfg.add_argument(
+        "--conf",
         type=Path,
         metavar="PATH",
         help="Path to ccache.conf for max_size",
     )
-    parser.add_argument(
+
+    # -- install -------------------------------------------------------
+    inst = sub.add_parser("install", help="Install a pinned ccache binary (Linux)")
+    inst.add_argument(
+        "--version",
+        default=CcacheInstaller.DEFAULT_VERSION,
+        help=f"ccache version (default: {CcacheInstaller.DEFAULT_VERSION})",
+    )
+    inst_arch = inst.add_mutually_exclusive_group()
+    inst_arch.add_argument(
+        "--arch",
+        choices=["x86_64", "aarch64"],
+        help="Architecture (default: auto-detect)",
+    )
+    inst_arch.add_argument(
+        "--target",
+        metavar="CI_TARGET",
+        help="CI build target — resolved to arch (e.g. linux_gcc_arm64 → aarch64)",
+    )
+    inst.add_argument(
         "--prefix",
         type=Path,
         default=None,
         help="Installation prefix (default: $CCACHE_PREFIX or /usr/local)",
     )
-    parser.add_argument(
-        "--install",
-        action="store_true",
-        help="Install ccache binary (Linux only)",
-    )
-    parser.add_argument(
-        "--output-only",
-        action="store_true",
-        help="Only output config, don't install",
-    )
 
-    return parser.parse_args()
+    # -- summary -------------------------------------------------------
+    sub.add_parser("summary", help="Write cache hit/miss summary to GitHub Step Summary")
+
+    return parser.parse_args(argv)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
-    args = parse_args()
+    args = parse_args(argv)
 
-    if not CcacheInstaller.validate_version(args.version):
-        print(f"Error: Invalid ccache version format: {args.version}", file=sys.stderr)
-        return 1
-
-    installer = CcacheInstaller(
-        version=args.version,
-        arch=args.arch,
-        config_path=args.config,
-        prefix=args.prefix,
-    )
-
-    config = installer.get_config()
-
-    print("ccache configuration:")
-    print(f"  Version: {config.version}")
-    print(f"  Arch: {config.arch}")
-    print(f"  Max Size: {config.max_size}")
-
-    output_github_actions(config)
-
-    if args.install and not args.output_only:
-        if not installer.run_install():
+    if args.command == "config":
+        if not CcacheInstaller.validate_version(args.version):
+            print(f"Error: Invalid ccache version format: {args.version}", file=sys.stderr)
             return 1
 
-    return 0
+        installer = CcacheInstaller(
+            version=args.version,
+            arch=resolve_arch(args),
+            config_path=args.conf,
+        )
+        config = installer.get_config()
+
+        print("ccache configuration:")
+        print(f"  Version: {config.version}")
+        print(f"  Arch: {config.arch}")
+        print(f"  Max Size: {config.max_size}")
+
+        output_github_actions(config)
+        return 0
+
+    if args.command == "install":
+        if not CcacheInstaller.validate_version(args.version):
+            print(f"Error: Invalid ccache version format: {args.version}", file=sys.stderr)
+            return 1
+
+        installer = CcacheInstaller(
+            version=args.version,
+            arch=resolve_arch(args),
+            prefix=args.prefix,
+        )
+
+        config = installer.get_config()
+        print("ccache configuration:")
+        print(f"  Version: {config.version}")
+        print(f"  Arch: {config.arch}")
+        print(f"  Max Size: {config.max_size}")
+
+        if not installer.run_install():
+            return 1
+        return 0
+
+    if args.command == "summary":
+        return run_summary()
+
+    print("Error: a subcommand is required (config, install, summary)", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":

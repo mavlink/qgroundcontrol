@@ -379,13 +379,16 @@ jobs:
       - name: Ensure coverage tools are available
         if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         run: |
-          if ! command -v ccache >/dev/null 2>&1; then
-            sudo apt-get install -y --no-install-recommends ccache
+          ccache_path="$(command -v ccache 2>/dev/null)" || {
+            echo "Error: ccache not found — expected pinned binary from cache action" >&2
+            exit 1
+          }
+          echo "ccache found at: ${ccache_path}"
+          if [[ "${ccache_path}" != "/usr/local/bin/ccache" ]]; then
+            echo "Warning: ccache resolved to ${ccache_path}, expected /usr/local/bin/ccache" >&2
           fi
-          # Ensure ccache is at /usr/local/bin where the build's ccache-launcher expects it
-          if [ ! -f /usr/local/bin/ccache ] && command -v ccache >/dev/null 2>&1; then
-            sudo ln -s "$(command -v ccache)" /usr/local/bin/ccache
-          fi
+          ccache_ver="$(ccache --version | head -1)"
+          echo "ccache version: ${ccache_ver}"
           if ! command -v gcovr >/dev/null 2>&1; then
             pipx install gcovr
           fi
