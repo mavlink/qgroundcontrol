@@ -143,10 +143,10 @@ void FirmwarePlugin::guidedModeTakeoff(Vehicle *vehicle, double takeoffAltRel) c
 
 void FirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
 {
-    Q_UNUSED(vehicle);
     Q_UNUSED(gotoCoord);
     Q_UNUSED(forwardFlightLoiterRadius);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    emit vehicle->goToWaypointAccepted(false);
 }
 
 void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicle)

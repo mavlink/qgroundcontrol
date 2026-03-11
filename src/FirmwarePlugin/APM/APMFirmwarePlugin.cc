@@ -779,9 +779,8 @@ static void _MAV_CMD_DO_REPOSITION_ResultHandler(void *resultHandlerData, int /*
     auto *vehicle = data->vehicle;
     auto *instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
 
-    if (instanceData->MAV_CMD_DO_REPOSITION_supported ||
-        instanceData->MAV_CMD_DO_REPOSITION_unsupported) {
-        // we never change out minds once set
+    if (instanceData->MAV_CMD_DO_REPOSITION_supported || instanceData->MAV_CMD_DO_REPOSITION_unsupported) {
+        emit vehicle->goToWaypointAccepted(ack.result == MAV_RESULT_ACCEPTED);
         goto out;
     }
 
@@ -796,6 +795,7 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        emit vehicle->goToWaypointAccepted(false);
         return;
     }
 
@@ -854,6 +854,7 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
     QGeoCoordinate coordWithAltitude = gotoCoord;
     coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
     vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
+    emit vehicle->goToWaypointAccepted(true);
 }
 
 void APMFirmwarePlugin::guidedModeRTL(Vehicle *vehicle, bool smartRTL) const

@@ -829,7 +829,7 @@ signals:
     void haveMRSpeedLimChanged          ();
     void haveFWSpeedLimChanged          ();
     void hasGripperChanged              ();
-
+    void goToWaypointAccepted           (bool accepted);
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
     void gitHashChanged                 (QString hash);

@@ -443,6 +443,19 @@ FlightMap {
 
         property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
 
+        Connections {
+            target: _activeVehicle
+
+            function onGoToWaypointAccepted(accepted) {
+                if (accepted) {
+                    gotoLocationItem._commitCoordinate()
+                    fwdFlightGotoMapCircle.actionConfirmed()
+                } else {
+                    gotoLocationItem.actionCancelled()
+                }
+            }
+        }
+
         property var _committedCoordinate: null
 
         onInGotoFlightModeChanged: {
@@ -462,12 +475,8 @@ FlightMap {
         }
 
         function actionConfirmed() {
-            _commitCoordinate()
-
-            // Commit the new radius which possibly changed
-            fwdFlightGotoMapCircle.actionConfirmed()
-
-            // We leave the indicator visible. The handling for onInGuidedModeChanged will hide it.
+            // Intentionally empty. Required by GuidedActionConfirm which calls actionConfirmed() on the map indicator.
+            // The actual commit logic is handled in onGoToWaypointAccepted when the vehicle accepts the command.
         }
 
         function actionCancelled() {
@@ -681,8 +690,7 @@ FlightMap {
                             gotoLocationItem.show(mapClickCoord)
 
                             if ((_activeVehicle.flightMode == _activeVehicle.gotoFlightMode) && !_flyViewSettings.goToLocationRequiresConfirmInGuided.value) {
-                                globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
-                                gotoLocationItem.actionConfirmed() // Still need to call this to commit the new coordinate and radius
+                                globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, null)
                             } else {
                                 globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
                             }

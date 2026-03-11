@@ -2034,14 +2034,17 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord, double for
 {
     if (!_vehicleSupports->guidedMode()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+        emit goToWaypointAccepted(false);
         return;
     }
     if (!coordinate().isValid()) {
+        emit goToWaypointAccepted(false);
         return;
     }
     double maxDistance = SettingsManager::instance()->flyViewSettings()->maxGoToLocationDistance()->rawValue().toDouble();
     if (coordinate().distanceTo(gotoCoord) > maxDistance) {
         qgcApp()->showAppMessage(QString("New location is too far. Must be less than %1 %2.").arg(qRound(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString()));
+        emit goToWaypointAccepted(false);
         return;
     }
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord, forwardFlightLoiterRadius);
