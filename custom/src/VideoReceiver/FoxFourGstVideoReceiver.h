@@ -48,6 +48,7 @@ private:
     bool _createRtspSource();
     bool _createMpegtsSource();
     bool _createRtpSource();
+    bool _createRtp265Source();
     bool _buildPipeline();
 
     // Callback methods
@@ -94,6 +95,7 @@ private:
     bool _isRtsp = false;
     bool _isMpegts = false;
     bool _isRtp = false;
+    bool _isRtp265 = false;
     QSize _videoSize{};
 
     // Settings

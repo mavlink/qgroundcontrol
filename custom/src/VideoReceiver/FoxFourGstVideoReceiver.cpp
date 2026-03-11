@@ -184,6 +184,7 @@ bool FoxFourGstVideoReceiver::_createSource()
     _isRtsp = sourceUrl.scheme().startsWith("rtsp", Qt::CaseInsensitive);
     _isMpegts = _uri.startsWith("mpegts://", Qt::CaseInsensitive);
     _isRtp = _uri.startsWith("udp://", Qt::CaseInsensitive);
+    _isRtp265 = _uri.startsWith("udp265://",Qt::CaseInsensitive);
 
     if (_isRtsp) {
         return _createRtspSource();
@@ -191,6 +192,8 @@ bool FoxFourGstVideoReceiver::_createSource()
         return _createMpegtsSource();
     } else if (_isRtp) {
         return _createRtpSource();
+    } else if (_isRtp265) {
+        return _createRtp265Source();
     }
 
     qCCritical(GstVideoReceiverLog) << "Unknown URI format:" << _uri;
@@ -275,7 +278,7 @@ bool FoxFourGstVideoReceiver::_createRtpSource()
 
     // install caps for RTP
     GstCaps *caps = gst_caps_from_string(
-                "application/x-rtp,media=video,clock-rate=90000,encoding-name=H264,payload=96"
+                "application/x-rtp,media=(string)video,clock-rate=90000,encoding-name=(string)H264"
                 );
     if (!caps) {
         qCCritical(GstVideoReceiverLog) << "gst_caps_from_string() failed";
@@ -300,6 +303,52 @@ bool FoxFourGstVideoReceiver::_createRtpSource()
     _depay = gst_element_factory_make("rtph264depay", "depay");
     if (!_depay) {
         qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('rtph264depay') failed";
+        return false;
+    }
+
+    return true;
+}
+
+bool FoxFourGstVideoReceiver::_createRtp265Source()
+{
+    // udpsrc port=8080 ! application/x-rtp,...
+    _source = gst_element_factory_make("udpsrc", "source");
+    if (!_source) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('udpsrc') failed";
+        return false;
+    }
+
+    QString uri = QString("udp://0.0.0.0:%1").arg(_uri.split('/').last());
+
+    g_object_set(_source,
+                 "uri", uri.toUtf8().constData(),
+                 nullptr);
+
+    GstCaps *caps = gst_caps_from_string(
+        "application/x-rtp,media=(string)video,clock-rate=90000,encoding-name=(string)H265"
+        );
+
+    if (!caps) {
+        qCCritical(GstVideoReceiverLog) << "gst_caps_from_string() failed";
+        return false;
+    }
+
+    g_object_set(_source, "caps", caps, nullptr);
+    gst_clear_caps(&caps);
+
+    _queue = gst_element_factory_make("queue", "queue");
+    if (!_queue) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('queue') failed";
+        return false;
+    }
+
+    g_object_set(_queue,
+                 "leaky", 2,
+                 nullptr);
+
+    _depay = gst_element_factory_make("rtph265depay", "depay");
+    if (!_depay) {
+        qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('rtph265depay') failed";
         return false;
     }
 
@@ -343,6 +392,26 @@ bool FoxFourGstVideoReceiver::_buildPipeline()
     } else if (_isRtsp) {
         // RTSP source wil add elements dynamically on pad-added
         gst_bin_add(GST_BIN(_pipeline), _source);
+
+    } else if (_isRtp265) {
+
+        // h265parse config-interval=-1
+        _parser = gst_element_factory_make("h265parse", "parser");
+        if (!_parser) {
+            qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('h265parse') failed";
+            return false;
+        }
+
+        g_object_set(_parser,
+                     "config-interval", -1,
+                     nullptr);
+
+        gst_bin_add_many(GST_BIN(_pipeline), _source, _depay, _parser, nullptr);
+
+        if (!gst_element_link_many(_source, _depay, _parser, _tee, nullptr)) {
+            qCCritical(GstVideoReceiverLog) << "Failed to link RTP pipeline";
+            return false;
+        }
     }
 
     return true;
@@ -538,7 +607,11 @@ void FoxFourGstVideoReceiver::startDecoding(void *sink)
     }
 
     // avdec_h264
-    _decoder = gst_element_factory_make("avdec_h264", "decoder");
+    if (_isRtp265) {
+        _decoder = gst_element_factory_make("avdec_h265", "decoder");
+    } else {
+        _decoder = gst_element_factory_make("avdec_h264", "decoder");
+    }
     if (!_decoder) {
         qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('avdec_h264') failed";
         _dispatchSignal([this]() { emit onStartDecodingComplete(STATUS_FAIL); });
@@ -563,9 +636,11 @@ void FoxFourGstVideoReceiver::startDecoding(void *sink)
         GstEvent* event = GST_PAD_PROBE_INFO_EVENT(info);
         auto self = static_cast<FoxFourGstVideoReceiver*>(user_data);
         // emit decodingChanged, only when we actually have recieve any data
-        if( !self->_decoding){
-            self->_decoding=true;
-            self->decodingChanged(self->_decoding);
+        if (!self->_decoding) {
+            self->_decoding = true;
+            self->_dispatchSignal([self]() {
+                emit self->decodingChanged(self->_decoding);
+            });
         }
 
         if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
