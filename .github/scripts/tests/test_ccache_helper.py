@@ -13,8 +13,13 @@ from ccache_helper import (
     CcacheConfig,
     CcacheInstaller,
     build_summary_markdown,
+    configure_ccache_environment,
+    configure_cpm_cache,
+    compute_cpm_fingerprint,
+    determine_cache_scope,
     main,
     resolve_arch,
+    resolve_windows_binary_config,
     parse_args,
     write_step_summary,
 )
@@ -242,3 +247,66 @@ class TestCLI:
         assert "12 / 17" in content
         assert "<details>" in content
         assert "cache hit (direct): 10" in content
+
+
+class TestCacheScope:
+    """Tests for workflow cache scope helper."""
+
+    def test_pull_request_scope(self):
+        assert determine_cache_scope("pull_request", "feature/test", "42") == "pr-42"
+
+    def test_push_non_master_scope(self):
+        assert determine_cache_scope("push", "feature/test") == "branch-feature-test"
+
+
+class TestFingerprint:
+    """Tests for CPM fingerprint helper."""
+
+    def test_fingerprint_changes_when_dependency_file_changes(self, tmp_path):
+        (tmp_path / "cmake/modules").mkdir(parents=True)
+        (tmp_path / ".github").mkdir()
+        (tmp_path / "CMakeLists.txt").write_text("project(QGC)\nCPMAddPackage(NAME foo)\n")
+        (tmp_path / "cmake/modules/CPM.cmake").write_text("# helper\n")
+        (tmp_path / ".github/build-config.json").write_text("{}\n")
+
+        before = compute_cpm_fingerprint(tmp_path)
+        (tmp_path / "CMakeLists.txt").write_text("project(QGC)\nCPMAddPackage(NAME bar)\n")
+        after = compute_cpm_fingerprint(tmp_path)
+
+        assert before != after
+
+
+class TestWindowsConfig:
+    """Tests for Windows ccache binary resolution."""
+
+    def test_windows_arm64_uses_aarch64_binary(self):
+        values = resolve_windows_binary_config("windows_arm64", "windows")
+        assert values["arch"] == "aarch64"
+
+    def test_android_windows_uses_x86_64_binary(self):
+        values = resolve_windows_binary_config("windows", "android")
+        assert values["arch"] == "x86_64"
+
+
+class TestEnvironmentConfig:
+    """Tests for environment configuration helpers."""
+
+    def test_configure_ccache_environment_writes_env(self, tmp_path):
+        github_env = tmp_path / "env.txt"
+        workspace = tmp_path / "workspace"
+        with patch.dict(os.environ, {"GITHUB_ENV": str(github_env)}):
+            ccache_dir = configure_ccache_environment(workspace)
+        assert ccache_dir == workspace / ".ccache"
+        content = github_env.read_text()
+        assert "CCACHE_DIR=" in content
+        assert "CCACHE_CONFIGPATH=" in content
+
+    def test_configure_cpm_cache_writes_outputs(self, tmp_path):
+        github_env = tmp_path / "env.txt"
+        github_output = tmp_path / "output.txt"
+        cache = tmp_path / "cpm-cache"
+        with patch.dict(os.environ, {"GITHUB_ENV": str(github_env), "GITHUB_OUTPUT": str(github_output)}):
+            configured = configure_cpm_cache(str(cache))
+        assert configured == cache
+        assert "CPM_SOURCE_CACHE=" in github_env.read_text()
+        assert "path=" in github_output.read_text()

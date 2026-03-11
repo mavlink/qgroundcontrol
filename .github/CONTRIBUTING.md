@@ -89,7 +89,7 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 
    ```bash
    git add .
-   git commit -m "Add feature: brief description"
+   git commit -m "feat: brief description"
    ```
 
 6. **Push to your fork**

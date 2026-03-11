@@ -55,7 +55,7 @@ def test_main_writes_expected_outputs(tmp_path: Path, monkeypatch: pytest.Monkey
         _run("Android", html_url="https://example.test/android"),
         _run("pre-commit", run_id=99, html_url="https://example.test/precommit"),
     ]
-    monkeypatch.setattr(mod, "list_workflow_runs", lambda repo, sha: runs)
+    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", lambda repo, sha: runs)
 
     rc = mod.main(
         [

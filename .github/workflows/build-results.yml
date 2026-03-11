@@ -65,9 +65,18 @@ jobs:
             .github/actions/collect-artifact-sizes
             .github/scripts/collect_build_status.py
             .github/scripts/collect_artifact_sizes.py
-            .github/scripts/workflow_runs.py
+            .github/scripts/ci_bootstrap.py
             .github/scripts/generate_build_results_comment.py
+            .github/scripts/xml_utils.py
+            .github/actions/setup-python
+            tools/common/build_config.py
+            tools/common/file_traversal.py
             tools/common/gh_actions.py
+            tools/common/github_runs.py
+            tools/pyproject.toml
+            tools/uv.lock
+            tools/setup/setup_bootstrap.py
+            tools/setup/install_python.py
             tools/setup/download_artifacts.py
           sparse-checkout-cone-mode: false
 
@@ -94,6 +103,7 @@ jobs:
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          event: pull_request
           runs-file: workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
           artifact-metadata-file: workflow-artifacts.json
@@ -104,6 +114,7 @@ jobs:
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          event: pull_request
           output-file: pr-sizes.json
           runs-file: workflow-runs-cache.json
           artifacts-file: workflow-artifacts.json
@@ -133,6 +144,12 @@ jobs:
         with:
           path: baseline-coverage.xml
           key: coverage-baseline-latest
+
+      - name: Setup Python dependencies
+        if: steps.pr.outputs.result != 'null'
+        uses: ./.github/actions/setup-python
+        with:
+          groups: scripts
 
       - name: Generate combined report
         if: steps.pr.outputs.result != 'null'
@@ -218,10 +235,18 @@ jobs:
           sparse-checkout: |
             .github/actions/download-all-artifacts
             .github/actions/collect-artifact-sizes
+            .github/actions/setup-python
             .github/scripts/collect_artifact_sizes.py
             .github/scripts/check_baseline_ready.py
-            .github/scripts/workflow_runs.py
+            .github/scripts/ci_bootstrap.py
+            tools/common/build_config.py
+            tools/common/file_traversal.py
             tools/common/gh_actions.py
+            tools/common/github_runs.py
+            tools/pyproject.toml
+            tools/uv.lock
+            tools/setup/setup_bootstrap.py
+            tools/setup/install_python.py
             tools/setup/download_artifacts.py
           sparse-checkout-cone-mode: false
 
@@ -247,6 +272,7 @@ jobs:
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          event: push
           runs-file: workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
           artifact-metadata-file: workflow-artifacts.json
@@ -257,6 +283,7 @@ jobs:
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          event: push
           output-file: baseline-sizes.json
           runs-file: workflow-runs-cache.json
           artifacts-file: workflow-artifacts.json

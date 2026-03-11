@@ -61,15 +61,6 @@ runs:
           run_binary="${PWD}/${binary_name}"
         fi
 
-        if command -v python3 >/dev/null 2>&1; then
-          py_cmd="python3"
-        elif command -v python >/dev/null 2>&1; then
-          py_cmd="python"
-        else
-          echo "Error: Python interpreter not found in PATH" >&2
-          exit 1
-        fi
-
         set +e
         args=(
           --binary "${run_binary}"
@@ -80,7 +71,7 @@ runs:
         if [[ "${run_headless}" == "true" ]]; then
           args+=(--headless)
         fi
-        "${py_cmd}" "${GITHUB_WORKSPACE}/tools/run_tests.py" "${args[@]}"
+        python3 "${GITHUB_WORKSPACE}/tools/run_tests.py" "${args[@]}"
         exit_code=$?
         set -e
 

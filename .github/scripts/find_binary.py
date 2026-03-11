@@ -135,7 +135,7 @@ def output_github_actions(info: BinaryInfo) -> None:
     """Write outputs for GitHub Actions."""
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
-        with open(github_output, "a") as f:
+        with open(github_output, "a", encoding="utf-8") as f:
             f.write(f"binary_path={info.path}\n")
             f.write(f"binary_name={info.name}\n")
             f.write(f"binary_dir={info.directory}\n")

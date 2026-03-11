@@ -14,61 +14,50 @@ This script uses uv (fast) if available, otherwise falls back to pip.
 from __future__ import annotations
 
 import argparse
+import functools
+import os
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
-PACKAGE_GROUPS: dict[str, list[str]] = {
-    "precommit": [
-        "pre-commit",
-    ],
-    "test": [
-        "pytest",
-        "jinja2",
-        "pyyaml",
-    ],
-    "ci": [
-        "pre-commit",
-        "meson",
-        "ninja",
-    ],
-    "qt": [
-        "aqtinstall",
-    ],
-    "coverage": [
-        "gcovr",
-    ],
-    "dev": [
-        "jinja2",
-        "pyyaml",
-        "pymavlink",
-    ],
-    "lsp": [
-        "pygls",
-        "lsprotocol",
-    ],
-    "all": [],  # Populated below
-}
+try:
+    from .setup_bootstrap import ensure_setup_imports
+except ImportError:
+    setup_dir = Path(__file__).resolve().parent
+    if str(setup_dir) not in sys.path:
+        sys.path.insert(0, str(setup_dir))
+    from setup_bootstrap import ensure_setup_imports
 
-# 'all' includes everything from other groups
-PACKAGE_GROUPS["all"] = list(
-    set(
-        pkg
-        for group, packages in PACKAGE_GROUPS.items()
-        if group != "all"
-        for pkg in packages
+ensure_setup_imports()
+
+from common.file_traversal import find_repo_root
+
+
+@functools.lru_cache(maxsize=1)
+def load_package_groups() -> dict[str, list[str]]:
+    """Load dependency groups from tools/pyproject.toml."""
+    pyproject_path = find_repo_root() / "tools" / "pyproject.toml"
+    data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    optional = data.get("project", {}).get("optional-dependencies", {})
+    if not isinstance(optional, dict):
+        raise ValueError("project.optional-dependencies is missing from tools/pyproject.toml")
+
+    groups: dict[str, list[str]] = {}
+    for group, packages in optional.items():
+        if isinstance(packages, list):
+            groups[group] = [str(pkg) for pkg in packages]
+
+    groups["all"] = sorted(
+        {
+            package
+            for group, packages in groups.items()
+            if group != "all"
+            for package in packages
+        }
     )
-)
-
-
-def get_repo_root() -> Path:
-    """Find repository root directory."""
-    current = Path(__file__).resolve()
-    for parent in [current] + list(current.parents):
-        if (parent / ".git").exists():
-            return parent
-    return Path.cwd()
+    return groups
 
 
 def has_uv() -> bool:
@@ -76,9 +65,19 @@ def has_uv() -> bool:
     return shutil.which("uv") is not None
 
 
+def get_lockfile_path() -> Path:
+    """Return the uv lockfile path for the tools project."""
+    return find_repo_root() / "tools" / "uv.lock"
+
+
+def get_project_path() -> Path:
+    """Return the tools project path."""
+    return find_repo_root() / "tools"
+
+
 def get_venv_path() -> Path:
     """Get path to virtual environment."""
-    return get_repo_root() / ".venv"
+    return find_repo_root() / ".venv"
 
 
 def get_activate_script(venv_path: Path) -> Path:
@@ -132,25 +131,52 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
+def sync_groups_with_uv(venv_path: Path, group_spec: str) -> None:
+    """Sync dependency groups from the locked tools project into the repo venv."""
+    lockfile_path = get_lockfile_path()
+    if not lockfile_path.exists():
+        raise FileNotFoundError(f"uv lockfile not found at {lockfile_path}")
+
+    groups = [group.strip() for group in group_spec.split(",") if group.strip()]
+    cmd = [
+        "uv",
+        "sync",
+        "--project",
+        str(get_project_path()),
+        "--active",
+        "--no-install-project",
+        "--frozen",
+    ]
+
+    if "all" in groups:
+        cmd.append("--all-extras")
+    else:
+        for group in groups:
+            cmd.extend(["--extra", group])
+
+    env = os.environ.copy()
+    env["VIRTUAL_ENV"] = str(venv_path)
+    scripts_dir = venv_path / ("Scripts" if sys.platform == "win32" else "bin")
+    env["PATH"] = f"{scripts_dir}{os.pathsep}{env.get('PATH', '')}"
+    subprocess.run(cmd, check=True, env=env)
+
+
 def list_packages(venv_path: Path) -> None:
     """List installed packages."""
     python = get_python_executable(venv_path)
-
-    if has_uv():
-        subprocess.run(["uv", "pip", "list", "--python", str(python)])
-    else:
-        subprocess.run([str(python), "-m", "pip", "list"])
+    subprocess.run([str(python), "-m", "pip", "list"])
 
 
 def get_packages_for_groups(group_spec: str) -> list[str]:
     """Get packages for comma-separated group specification."""
+    package_groups = load_package_groups()
     groups = [g.strip() for g in group_spec.split(",")]
     packages: set[str] = set()
 
     for group in groups:
-        if group not in PACKAGE_GROUPS:
-            raise ValueError(f"Unknown group: {group}. Valid groups: {', '.join(PACKAGE_GROUPS.keys())}")
-        packages.update(PACKAGE_GROUPS[group])
+        if group not in package_groups:
+            raise ValueError(f"Unknown group: {group}. Valid groups: {', '.join(package_groups.keys())}")
+        packages.update(package_groups[group])
 
     return sorted(packages)
 
@@ -206,8 +232,9 @@ def main() -> int:
     args = parse_args()
 
     if args.list_groups:
+        package_groups = load_package_groups()
         print("Available package groups:")
-        for group, packages in sorted(PACKAGE_GROUPS.items()):
+        for group, packages in sorted(package_groups.items()):
             print(f"  {group}:")
             for pkg in sorted(packages):
                 print(f"    - {pkg}")
@@ -230,9 +257,16 @@ def main() -> int:
 
     try:
         create_venv(venv_path)
-        install_packages(venv_path, packages)
+        if has_uv():
+            print("Using uv sync (locked mode)")
+            sync_groups_with_uv(venv_path, args.group)
+        else:
+            install_packages(venv_path, packages)
     except subprocess.CalledProcessError as e:
         print(f"Error: Command failed with exit code {e.returncode}", file=sys.stderr)
+        return 1
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
         return 1
 
     print()

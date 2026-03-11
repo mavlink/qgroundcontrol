@@ -285,7 +285,7 @@ def generate_json_output(params: list[Parameter]) -> str:
     return json.dumps(output, indent=2)
 
 
-def main():
+def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate parameter documentation from FactMetaData JSON files",
         formatter_class=argparse.RawDescriptionHelpFormatter,

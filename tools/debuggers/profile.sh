@@ -23,19 +23,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$REPO_ROOT/tools/common/shell-utils.sh"
 
 # Defaults
 BUILD_DIR="$REPO_ROOT/build"
@@ -122,8 +111,8 @@ run_memcheck() {
         --track-origins=yes \
         --verbose \
         --log-file="$output" \
-        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" 2>/dev/null || true \
-        "$EXECUTABLE" $EXTRA_ARGS
+        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" \
+        "$EXECUTABLE" $EXTRA_ARGS || true
 
     log_ok "Memcheck complete. Results: $output"
 

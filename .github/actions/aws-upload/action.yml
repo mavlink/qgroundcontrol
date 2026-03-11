@@ -46,14 +46,14 @@ runs:
 
     - name: Configure AWS Credentials (OIDC)
       if: inputs.aws_role_arn != ''
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.aws_region }}
 
     - name: Configure AWS Credentials (Static)
       if: inputs.aws_role_arn == '' && inputs.aws_key_id != ''
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ inputs.aws_key_id }}
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}

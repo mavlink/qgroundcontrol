@@ -34,6 +34,22 @@ from .gh_actions import (
     parse_json_documents,
     list_workflow_runs_for_sha,
     list_run_artifacts,
+    write_github_output,
+)
+
+from .build_config import (
+    find_build_config,
+    load_build_config,
+    get_build_config_value,
+    export_build_config_values,
+    derive_ios_qt_modules,
+)
+
+from .github_runs import (
+    parse_created_at,
+    is_newer_run,
+    select_latest_runs_by_name,
+    group_runs_by_name,
 )
 
 from .logging import (
@@ -89,6 +105,16 @@ __all__ = [
     'parse_json_documents',
     'list_workflow_runs_for_sha',
     'list_run_artifacts',
+    'write_github_output',
+    'find_build_config',
+    'load_build_config',
+    'get_build_config_value',
+    'export_build_config_values',
+    'derive_ios_qt_modules',
+    'parse_created_at',
+    'is_newer_run',
+    'select_latest_runs_by_name',
+    'group_runs_by_name',
     # Logging
     'Color',
     'Colors',

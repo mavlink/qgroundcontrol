@@ -132,19 +132,6 @@ runs:
       shell: bash
       run: |
         if command -v ccache >/dev/null 2>&1; then
-          # Evict entries not touched during this job
-          if [[ -n "${CCACHE_START_TIME:-}" ]]; then
-            elapsed=$(( $(date +%s) - CCACHE_START_TIME ))
-            if [[ $elapsed -gt 0 ]]; then
-              echo "Evicting ccache entries older than ${elapsed}s"
-              ccache --evict-older-than "${elapsed}s" || true
-            fi
-          fi
-
-          # Job summary: hit/miss table + verbose stats (ccache 4.10+)
+          ccache -c
           python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
-        elif command -v sccache >/dev/null 2>&1; then
-          echo "::group::sccache statistics"
-          sccache --show-stats
-          echo "::endgroup::"
         fi

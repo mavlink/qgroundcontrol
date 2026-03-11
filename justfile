@@ -2,7 +2,7 @@
 # Install: cargo install just, brew install just, or apt install just
 
 # Configuration from build-config.json
-qt_version := `./tools/setup/read-config.sh qt_version 2>/dev/null || echo "6.10.1"`
+qt_version := `python3 ./tools/setup/read_config.py --get qt_version 2>/dev/null || echo "6.10.1"`
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
@@ -81,7 +81,7 @@ analyze:
 
 # Generate coverage report
 coverage:
-    ./tools/coverage.sh
+    python3 ./tools/coverage.py
 
 # Run lint + test
 check: lint test
@@ -115,7 +115,7 @@ info:
 
 # Check dependency versions
 check-deps:
-    ./tools/check-deps.sh
+    python3 ./tools/check_deps.py
 
 # Clean all caches and build artifacts
 distclean: clean

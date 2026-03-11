@@ -1,7 +1,11 @@
 name: Release
 
-# Disabled: semantic-release blocked by branch protection (can't push CHANGELOG.md)
-# To fix: either remove @semantic-release/git plugin or use a PAT from allowed pusher
+# TODO: Disabled — semantic-release blocked by branch protection (can't push CHANGELOG.md)
+# Fix options:
+#   1. Remove @semantic-release/git plugin (skip CHANGELOG commit)
+#   2. Use a PAT from an allowed pusher
+#   3. Use a GitHub App token with bypass permissions
+# Until fixed, this workflow only runs via manual workflow_dispatch.
 on:
   workflow_dispatch:
 

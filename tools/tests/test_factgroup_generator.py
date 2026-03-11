@@ -8,11 +8,7 @@ from pathlib import Path
 
 import pytest
 
-TOOLS_DIR = Path(__file__).parent.parent
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
-
-# Add tools to path for imports
-sys.path.insert(0, str(TOOLS_DIR))
 
 from generators.factgroup.generator import (
     FactSpec,
@@ -281,7 +277,8 @@ class TestCLI:
     def run_cli(self, *args):
         """Run the CLI and return result."""
         cmd = [sys.executable, "-m", "tools.generators.factgroup.cli"] + list(args)
-        return subprocess.run(cmd, capture_output=True, text=True, cwd=TOOLS_DIR.parent)
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        return subprocess.run(cmd, capture_output=True, text=True, cwd=repo_root)
 
     def test_cli_help(self):
         """--help should show usage."""

@@ -12,7 +12,6 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-
 def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run a gh CLI command and return the process result."""
     return subprocess.run(
@@ -181,3 +180,12 @@ def list_run_artifacts(repo: str, run_id: int | str) -> list[dict[str, Any]]:
         if isinstance(items, list):
             artifacts.extend(item for item in items if isinstance(item, dict))
     return artifacts
+
+
+def write_github_output(outputs: dict[str, str]) -> None:
+    """Write key=value pairs to $GITHUB_OUTPUT for GitHub Actions."""
+    github_output = os.environ.get('GITHUB_OUTPUT')
+    if github_output:
+        with open(github_output, 'a', encoding="utf-8") as f:
+            for key, value in outputs.items():
+                f.write(f"{key}={value}\n")

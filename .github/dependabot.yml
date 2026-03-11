@@ -1,6 +1,10 @@
 # Dependabot configuration
 # To merge dependabot PRs, comment "@dependabot merge" after CI passes
 # See: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-pull-requests-for-dependency-updates
+#
+# Dependency management split:
+#   - Dependabot: GitHub Actions (this file)
+#   - Renovate:   npm, git-submodules, pip, pre-commit (see renovate.json)
 
 version: 2
 updates:
@@ -17,4 +21,3 @@ updates:
       github-actions:
         patterns:
           - "*"
-    # npm dependencies managed by Renovate (see renovate.json)

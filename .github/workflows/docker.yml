@@ -10,8 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
@@ -29,31 +27,26 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     timeout-minutes: 5
+    permissions:
+      contents: read
     outputs:
-      linux: ${{ steps.filter.outputs.linux }}
-      android: ${{ steps.filter.outputs.android }}
-      shared: ${{ steps.filter.outputs.shared }}
+      linux: ${{ steps.detect-linux.outputs.any }}
+      android: ${{ steps.detect-android.outputs.any }}
     steps:
-      - name: Detect changed paths
-        uses: dorny/paths-filter@v3
-        id: filter
+      - name: Checkout repo
+        uses: actions/checkout@v6
         with:
-          filters: |
-            shared:
-              - 'src/**'
-              - 'cmake/**'
-              - 'CMakeLists.txt'
-              - 'tools/setup/**'
-              - '.github/workflows/docker.yml'
-              - '.github/actions/docker/**'
-              - '.github/build-config.json'
-            linux:
-              - 'deploy/linux/**'
-              - 'deploy/docker/Dockerfile-build-ubuntu'
-            android:
-              - 'android/**'
-              - 'deploy/android/**'
-              - 'deploy/docker/Dockerfile-build-android'
+          fetch-depth: 0
+      - name: Detect Linux changes
+        id: detect-linux
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: docker-linux
+      - name: Detect Android changes
+        id: detect-android
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: docker-android
 
   plan-builds:
     name: Plan Docker Builds
@@ -65,57 +58,21 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       has_jobs: ${{ steps.plan.outputs.has_jobs }}
     steps:
+      - name: Checkout planner
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/scripts/plan_docker_builds.py
+          sparse-checkout-cone-mode: false
+
       - name: Plan matrix
         id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
-          SHARED: ${{ needs.changes.outputs.shared }}
           LINUX: ${{ needs.changes.outputs.linux }}
           ANDROID: ${{ needs.changes.outputs.android }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          event_name = os.environ.get("EVENT_NAME", "")
-          shared = os.environ.get("SHARED", "") == "true"
-          linux_changed = os.environ.get("LINUX", "") == "true"
-          android_changed = os.environ.get("ANDROID", "") == "true"
-
-          include: list[dict[str, object]] = []
-
-          linux_selected = event_name != "pull_request" or shared or linux_changed
-          android_selected = event_name != "pull_request" or shared or android_changed
-
-          if linux_selected:
-            include.append(
-              {
-                "platform": "Linux",
-                "dockerfile": "Dockerfile-build-ubuntu",
-                "fuse": True,
-                "artifact_pattern": "*.AppImage",
-              }
-            )
-          if android_selected:
-            include.append(
-              {
-                "platform": "Android",
-                "dockerfile": "Dockerfile-build-android",
-                "fuse": False,
-                "artifact_pattern": "*.apk",
-              }
-            )
-
-          matrix = {"include": include}
-          has_jobs = "true" if include else "false"
-          matrix_json = json.dumps(matrix, separators=(",", ":"))
-
-          output_path = Path(os.environ["GITHUB_OUTPUT"])
-          with output_path.open("a", encoding="utf-8") as f:
-            f.write(f"matrix={matrix_json}\n")
-            f.write(f"has_jobs={has_jobs}\n")
-          PY
+        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"
 
   build:
     name: Docker ${{ matrix.platform }}
