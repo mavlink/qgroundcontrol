@@ -24,6 +24,7 @@ VERSION_KEYS = {
     "macos": "gstreamer_macos_version",
     "windows": "gstreamer_windows_version",
     "android": "gstreamer_android_version",
+    "ios": "gstreamer_ios_version",
 }
 
 
@@ -31,7 +32,7 @@ def resolve_version(platform_name: str, requested_version: str) -> str:
     """Return explicit version override or platform-specific config version."""
     if requested_version:
         return requested_version
-    version_key = VERSION_KEYS.get(platform_name, "gstreamer_version")
+    version_key = VERSION_KEYS.get(platform_name, "gstreamer_default_version")
     return get_build_config_value(version_key, start=Path(__file__).resolve())
 
 

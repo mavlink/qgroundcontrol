@@ -605,8 +605,8 @@ def main() -> int:
 
     # Resolve defaults
     version = args.version or get_build_config_value(
-        'gstreamer_version',
-        '1.24.10',
+        'gstreamer_default_version',
+        '1.24.13',
         start=Path(__file__).resolve(),
     )
     arch = args.arch or get_default_arch(args.platform)
