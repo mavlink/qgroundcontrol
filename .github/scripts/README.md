@@ -15,7 +15,7 @@ Python helper scripts used by workflows and composite actions in this repository
 | `find_binary.py` | Locate produced binaries/artifacts in build trees |
 | `generate_build_results_comment.py` | Generate consolidated PR build-results comment |
 | `gstreamer_archive.py` | Package GStreamer builds and optionally upload to S3 |
-| `install_ccache.py` | Resolve ccache config and install pinned Linux binary |
+| `ccache_helper.py` | Ccache CI helper: config output, binary install, build summary |
 | `size_analysis.py` | Analyze binary size changes |
 | `workflow_runs.py` | Shared helpers for listing workflow runs via GitHub API |
 

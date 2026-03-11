@@ -51,41 +51,10 @@ runs:
     - name: Get ccache config
       id: ccache-config
       shell: bash
-      env:
-        INPUT_TARGET: ${{ inputs.target }}
-        WORKSPACE: ${{ github.workspace }}
       run: |
-        # Requires setup-python from common/action.yml
-        if command -v python3 >/dev/null 2>&1; then
-          PY_CMD="python3"
-        elif command -v python >/dev/null 2>&1; then
-          PY_CMD="python"
-        else
-          echo "Error: Python not found in PATH" >&2
-          exit 1
-        fi
-
-        # Pin ccache version for reproducibility and to avoid API calls
-        # Update periodically via Dependabot or manually
-        CCACHE_VERSION="4.12.3"
-
-        # Validate version format (defense in depth)
-        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
-          exit 1
-        fi
-
-        if [[ "${INPUT_TARGET}" == "linux_gcc_arm64" ]]; then
-          arch="aarch64"
-        else
-          arch="x86_64"
-        fi
-
-        "${PY_CMD}" "${WORKSPACE}/.github/scripts/install_ccache.py" \
-          --version "${CCACHE_VERSION}" \
-          --arch "${arch}" \
-          --config "${WORKSPACE}/tools/configs/ccache.conf" \
-          --output-only
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" config \
+          --target "${{ inputs.target }}" \
+          --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
 
     - name: Cache ccache binary (Linux)
       if: runner.os == 'Linux'
@@ -98,23 +67,19 @@ runs:
     - name: Install ccache (Linux)
       if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        WORKSPACE: ${{ github.workspace }}
-        CCACHE_VER: ${{ steps.ccache-config.outputs.version }}
-        CCACHE_ARCH: ${{ steps.ccache-config.outputs.arch }}
       run: |
-        if command -v python3 >/dev/null 2>&1; then
-          PY_CMD="python3"
-        elif command -v python >/dev/null 2>&1; then
-          PY_CMD="python"
-        else
-          echo "Error: Python not found in PATH" >&2
-          exit 1
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
+          --version "${{ steps.ccache-config.outputs.version }}" \
+          --arch "${{ steps.ccache-config.outputs.arch }}"
+
+    - name: Install ccache (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        if ! command -v ccache >/dev/null 2>&1; then
+          brew install ccache
         fi
-        "${PY_CMD}" "${WORKSPACE}/.github/scripts/install_ccache.py" \
-          --version "${CCACHE_VER}" \
-          --arch "${CCACHE_ARCH}" \
-          --install
+        ccache --version
 
     - name: Setup sccache (Windows x64)
       if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
@@ -125,40 +90,63 @@ runs:
       shell: bash
       run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
 
-    - name: Cache ccache binary (Windows ARM64)
-      if: runner.os == 'Windows' && inputs.host == 'windows_arm64'
-      id: ccache-binary-win-arm64
+    - name: Determine Windows ccache arch
+      if: runner.os == 'Windows' && (inputs.target == 'android' || inputs.host == 'windows_arm64')
+      id: win-ccache
+      shell: bash
+      run: |
+        if [[ "${{ inputs.host }}" == "windows_arm64" ]]; then
+          echo "arch=aarch64" >> "$GITHUB_OUTPUT"
+          echo "sha256=5907c8f74dcfff920ee57df55a5cb98164630665926b2ba9085e9f5fb701c58f" >> "$GITHUB_OUTPUT"
+        else
+          echo "arch=x86_64" >> "$GITHUB_OUTPUT"
+          echo "sha256=1c78a0b816a3174d4b170b96294e016a21fb4a577dfd8361e7322f77f85c6348" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Cache ccache binary (Windows)
+      if: runner.os == 'Windows' && (inputs.target == 'android' || inputs.host == 'windows_arm64')
+      id: ccache-binary-win
       uses: actions/cache@v5
       with:
-        path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-aarch64/ccache.exe
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-windows-aarch64
+        path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}/ccache.exe
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}
 
-    - name: Install ccache (Windows ARM64)
-      if: runner.os == 'Windows' && inputs.host == 'windows_arm64' && steps.ccache-binary-win-arm64.outputs.cache-hit != 'true'
+    - name: Install ccache (Windows)
+      if: runner.os == 'Windows' && (inputs.target == 'android' || inputs.host == 'windows_arm64') && steps.ccache-binary-win.outputs.cache-hit != 'true'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_ARCH: ${{ steps.win-ccache.outputs.arch }}
+        # Update hashes when bumping CCACHE_VERSION
+        CCACHE_WIN_SHA256: ${{ steps.win-ccache.outputs.sha256 }}
       run: |
         set -euo pipefail
-        ccache_url="https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-windows-aarch64.zip"
+        ccache_url="https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-windows-${CCACHE_ARCH}.zip"
         temp_dir="$(mktemp -d)"
         temp_root="${RUNNER_TEMP//\\//}"
-        install_dir="${temp_root}/ccache-${CCACHE_VERSION}-windows-aarch64"
+        install_dir="${temp_root}/ccache-${CCACHE_VERSION}-windows-${CCACHE_ARCH}"
 
         curl --fail --location --silent --show-error "$ccache_url" -o "${temp_dir}/ccache.zip"
+        actual=$(python3 -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" "${temp_dir}/ccache.zip")
+        if [[ "$actual" != "${CCACHE_WIN_SHA256}" ]]; then
+          echo "SHA256 mismatch: ${actual} != ${CCACHE_WIN_SHA256}" >&2
+          exit 1
+        fi
+        echo "SHA256 verified"
         unzip -q "${temp_dir}/ccache.zip" -d "$temp_dir"
         mkdir -p "$install_dir"
-        cp "${temp_dir}/ccache-${CCACHE_VERSION}-windows-aarch64/ccache.exe" "${install_dir}/ccache.exe"
+        cp "${temp_dir}/ccache-${CCACHE_VERSION}-windows-${CCACHE_ARCH}/ccache.exe" "${install_dir}/ccache.exe"
 
-    - name: Add ccache to PATH (Windows ARM64)
-      if: runner.os == 'Windows' && inputs.host == 'windows_arm64'
+    - name: Add ccache to PATH (Windows)
+      if: runner.os == 'Windows' && (inputs.target == 'android' || inputs.host == 'windows_arm64')
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_ARCH: ${{ steps.win-ccache.outputs.arch }}
       run: |
         set -euo pipefail
         temp_root="${RUNNER_TEMP//\\//}"
-        install_dir="${temp_root}/ccache-${CCACHE_VERSION}-windows-aarch64"
+        install_dir="${temp_root}/ccache-${CCACHE_VERSION}-windows-${CCACHE_ARCH}"
         if [ ! -f "${install_dir}/ccache.exe" ]; then
           echo "Error: ccache.exe not found at ${install_dir}/ccache.exe" >&2
           exit 1
@@ -167,8 +155,8 @@ runs:
         echo "$install_dir" >> "$GITHUB_PATH"
         "${install_dir}/ccache.exe" --version
 
-    - name: Configure ccache environment (non-Windows)
-      if: runner.os != 'Windows'
+    - name: Configure ccache environment
+      if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64')"
       shell: bash
       run: |
         workspace_path="${GITHUB_WORKSPACE//\\//}"
@@ -195,15 +183,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        if command -v python3 >/dev/null 2>&1; then
-          PY_CMD="python3"
-        elif command -v python >/dev/null 2>&1; then
-          PY_CMD="python"
-        else
-          echo "Error: Python not found in PATH" >&2
-          exit 1
-        fi
-        fingerprint="$("${PY_CMD}" - <<'PY'
+        fingerprint="$(python3 - <<'PY'
         import hashlib
         import re
         from pathlib import Path
@@ -255,21 +235,38 @@ runs:
         )"
         echo "fingerprint=${fingerprint}" >> "$GITHUB_OUTPUT"
 
-    - name: Setup Build Cache (ccache)
-      if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64')"
-      uses: hendrikmuhs/ccache-action@v1.2
+    - name: Restore Build Cache (ccache, save)
+      if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64') && inputs.save-cache == 'true'"
+      uses: actions/cache@v5
       with:
-        key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        path: ${{ github.workspace }}/.ccache
+        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}-${{ github.run_id }}
         restore-keys: |
-          ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
-          ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
-          ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-
-          ${{ inputs.host }}-${{ inputs.target }}-
-          ${{ inputs.host }}-
-        max-size: ${{ steps.ccache-config.outputs.max_size }}
-        verbose: 2
-        evict-old-files: job
-        save: ${{ inputs.save-cache == 'true' }}
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-
+          ccache-${{ inputs.host }}-
+
+    - name: Restore Build Cache (ccache, read-only)
+      if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64') && inputs.save-cache != 'true'"
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ github.workspace }}/.ccache
+        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}-${{ github.run_id }}
+        restore-keys: |
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-
+          ccache-${{ inputs.host }}-
+
+    - name: Initialize ccache stats
+      if: "!(runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64')"
+      shell: bash
+      run: |
+        ccache -z
+        echo "CCACHE_START_TIME=$(date +%s)" >> "$GITHUB_ENV"
 
     - name: Cache CPM Modules (restore and save)
       if: inputs.cpm-modules != '' && inputs.save-cache == 'true'
