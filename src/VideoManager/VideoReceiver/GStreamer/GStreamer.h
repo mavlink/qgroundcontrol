@@ -4,6 +4,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(GStreamerLog)
 Q_DECLARE_LOGGING_CATEGORY(GStreamerAPILog)
+Q_DECLARE_LOGGING_CATEGORY(GStreamerDecoderRanksLog)
 
 class QQuickItem;
 class VideoReceiver;

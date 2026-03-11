@@ -33,6 +33,8 @@ if(TARGET gstqml6gl)
             GStreamer.h
             GStreamerHelpers.cc
             GStreamerHelpers.h
+            GStreamerLogging.cc
+            GStreamerLogging.h
             GstVideoReceiver.cc
             GstVideoReceiver.h
     )

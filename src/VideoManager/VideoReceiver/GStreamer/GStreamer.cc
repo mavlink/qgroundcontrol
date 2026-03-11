@@ -1,8 +1,8 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerLogging.h"
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
-#include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
 
@@ -12,10 +12,6 @@
 #include <QtQuick/QQuickItem>
 
 #include <gst/gst.h>
-
-QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamerDecoderRanks")
-QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
 
 // TODO: Clean These up with Macros or CMake
 G_BEGIN_DECLS
@@ -119,51 +115,6 @@ void _registerPlugins()
 // #endif
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
-}
-
-void _qtGstLog(GstDebugCategory *category,
-               GstDebugLevel level,
-               const gchar *file,
-               const gchar *function,
-               gint line,
-               GObject *object,
-               GstDebugMessage *message,
-               gpointer data)
-{
-    Q_UNUSED(data);
-
-    if (level > gst_debug_category_get_threshold(category)) {
-        return;
-    }
-
-    QMessageLogger log(file, line, function);
-
-    char *object_info = gst_info_strdup_printf("%" GST_PTR_FORMAT, static_cast<void*>(object));
-
-    switch (level) {
-    case GST_LEVEL_ERROR:
-        log.critical(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    case GST_LEVEL_WARNING:
-        log.warning(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    case GST_LEVEL_FIXME:
-    case GST_LEVEL_INFO:
-        log.info(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    case GST_LEVEL_DEBUG:
-#ifdef QT_DEBUG
-    case GST_LEVEL_LOG:
-    case GST_LEVEL_TRACE:
-    case GST_LEVEL_MEMDUMP:
-#endif
-        log.debug(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
-        break;
-    default:
-        break;
-    }
-
-    g_clear_pointer(&object_info, g_free);
 }
 
 void _setGstEnvVars()
@@ -501,7 +452,7 @@ bool initialize()
     }
 
     gst_debug_remove_log_function(gst_debug_log_default);
-    gst_debug_add_log_function(_qtGstLog, nullptr, nullptr);
+    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
 
     const QStringList args = QCoreApplication::arguments();
     int gstArgc = args.size();
@@ -525,6 +476,8 @@ bool initialize()
         g_clear_error(&error);
         return false;
     }
+
+    GStreamer::redirectGLibLogging();
 
     const gchar *version = gst_version_string();
     qCDebug(GStreamerLog) << QString("GStreamer Initialized (Version: %1)").arg(version);
