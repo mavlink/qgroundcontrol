@@ -28,17 +28,20 @@ public:
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
     SprayComplexItem(PlanMasterController* masterController, bool flyView);
 
-    Q_PROPERTY(QGCMapPolygon*   sprayAreaPolygon   READ sprayAreaPolygon   CONSTANT)
-    Q_PROPERTY(Fact*            speed              READ speed              CONSTANT)
-    Q_PROPERTY(Fact*            altitude           READ altitude           CONSTANT)
-    Q_PROPERTY(Fact*            sprayWidth         READ sprayWidth         CONSTANT)
-
+    Q_PROPERTY(QGCMapPolygon*   sprayAreaPolygon       READ sprayAreaPolygon       CONSTANT)
+    Q_PROPERTY(Fact*            speed                  READ speed                  CONSTANT)
+    Q_PROPERTY(Fact*            altitude               READ altitude               CONSTANT)
+    Q_PROPERTY(Fact*            sprayWidth             READ sprayWidth             CONSTANT)
+    Q_PROPERTY(Fact*            gridAngle              READ gridAngle              CONSTANT)
+    Q_PROPERTY(Fact*            turnAroundDistance     READ turnAroundDistance     CONSTANT)
 
     Q_PROPERTY(QList<QGeoCoordinate>     visualTransectPoints READ visualTransectPoints NOTIFY visualTransectPointsChanged)
 
-    Fact* speed         (void) { return &_speedFact; }
-    Fact* altitude      (void) { return &_altitudeFact; }
-    Fact* sprayWidth    (void) { return &_sprayWidthFact; }
+    Fact* speed                 (void) { return &_speedFact; }
+    Fact* altitude              (void) { return &_altitudeFact; }
+    Fact* sprayWidth            (void) { return &_sprayWidthFact; }
+    Fact* gridAngle             (void) { return &_gridAngleFact; }
+    Fact* turnAroundDistance    (void) { return &_turnAroundDistanceFact; }
 
     QGCMapPolygon* sprayAreaPolygon (void) { return &_sprayAreaPolygon; }
     QList<QGeoCoordinate> visualTransectPoints(void) { return _visualTransectPoints; }
@@ -104,6 +107,8 @@ public:
     static constexpr const char* speedName =                  "Speed";
     static constexpr const char* altitudeName =               "Altitude";
     static constexpr const char* sprayWidthName =             "SprayWidth";
+    static constexpr const char* gridAngleName =              "GridAngle";
+    static constexpr const char* turnAroundDistanceName =     "TurnAroundDistance";
 
 signals:
     void visualTransectPointsChanged                    (void); //emitted by _rebuildTransects, must call: complexDistanceChanged, greatestDistanceToChanged, coordinateChanged, exitCoordinateChanged
@@ -119,16 +124,21 @@ private slots:
 
 private:
 
+    QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
     void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
-    
+    bool _hasTurnaround(void) const;
+    double _turnAroundDistance(void) const;
+
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    QList<QGeoCoordinate>   _visualTransectPoints;              ///< Used to draw the flight path visuals on the screen
+    QList<QGeoCoordinate>   _visualTransectPoints;              ///< Used to draw the flight path visuals on the screen (2 or 4 points per transect when turnaround)
 
     SettingsFact    _speedFact;
     SettingsFact    _altitudeFact;
     SettingsFact    _sprayWidthFact;
+    SettingsFact    _gridAngleFact;
+    SettingsFact    _turnAroundDistanceFact;
     QGCMapPolygon   _sprayAreaPolygon;
 
     int             _sequenceNumber = 0;
@@ -137,4 +147,6 @@ private:
     static constexpr const char* _jsonSpeedKey =              "speed";
     static constexpr const char* _jsonAltitudeKey =           "altitude";
     static constexpr const char* _jsonSprayWidthKey =         "sprayWidth";
+    static constexpr const char* _jsonGridAngleKey =          "gridAngle";
+    static constexpr const char* _jsonTurnAroundDistanceKey = "turnAroundDistance";
 };

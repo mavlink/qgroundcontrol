@@ -32,6 +32,25 @@
     "max":              50.0,
     "decimalPlaces":    2,
     "default":     5.0
+},
+{
+    "name":             "GridAngle",
+    "shortDesc": "Angle for parallel transect lines (deg).",
+    "type":             "double",
+    "units":            "deg",
+    "min":              -360.0,
+    "max":              360.0,
+    "decimalPlaces":    1,
+    "default":     0
+},
+{
+    "name":             "TurnAroundDistance",
+    "shortDesc": "Additional distance outside the field for vehicle turn around (m).",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "default":     30
 }
 ]
 }
