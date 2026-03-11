@@ -118,7 +118,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                     checked:            _missionItem.isCurrentItem
-                    label:              qsTr("Launch")
+                    label:              qsTr("Home")
                     highlightSelected:  true
                     onClicked:          _root.clicked(_missionItem.sequenceNumber)
                     visible:            _root.interactive
