@@ -3,7 +3,7 @@ description: Detect source, test, and CI changes for a platform
 
 inputs:
   platform:
-    description: "Platform (linux, windows, macos, android, ios)"
+    description: "Platform (linux, windows, macos, android, ios, docker-linux, docker-android)"
     required: true
 
 outputs:
@@ -76,15 +76,23 @@ runs:
         echo "Changed files:"
         echo "${changed}"
 
+        # Map platform to its workflow file name
+        case "${platform}" in
+          docker-*) workflow_name="docker" ;;
+          *)        workflow_name="${platform}" ;;
+        esac
+
         relevant_patterns=(
           "^src/"
           "^CMakeLists.txt$"
           "^cmake/"
           "^libs/"
+          "^resources/"
           "^translations/"
+          "^.*\\.qrc$"
           "^deploy/${platform}/"
           "^test/"
-          "^\\.github/workflows/${platform}\\.yml$"
+          "^\\.github/workflows/${workflow_name}\\.yml$"
           "^\\.github/actions/"
           "^\\.github/scripts/"
           "^\\.github/build-config\\.json$"
@@ -92,14 +100,22 @@ runs:
 
         case "${platform}" in
           android) relevant_patterns+=("^android/") ;;
+          docker-linux)
+            relevant_patterns+=("^deploy/docker/Dockerfile-build-ubuntu$" "^deploy/linux/")
+            ;;
+          docker-android)
+            relevant_patterns+=("^deploy/docker/Dockerfile-build-android$" "^android/" "^deploy/android/")
+            ;;
         esac
 
         case "${platform}" in
-          linux)   relevant_patterns+=("^tools/setup/.*debian" "^tools/setup/install_dependencies\\.py$") ;;
-          windows) relevant_patterns+=("^tools/setup/.*windows") ;;
-          macos)   relevant_patterns+=("^tools/setup/.*macos") ;;
-          android) relevant_patterns+=("^tools/setup/") ;;
-          ios)     relevant_patterns+=("^tools/setup/.*ios" "^tools/setup/.*macos") ;;
+          linux)          relevant_patterns+=("^tools/setup/.*debian" "^tools/setup/install_dependencies\\.py$") ;;
+          windows)        relevant_patterns+=("^tools/setup/.*windows") ;;
+          macos)          relevant_patterns+=("^tools/setup/.*macos") ;;
+          android)        relevant_patterns+=("^tools/setup/") ;;
+          ios)            relevant_patterns+=("^tools/setup/.*ios" "^tools/setup/.*macos") ;;
+          docker-linux)   relevant_patterns+=("^tools/setup/") ;;
+          docker-android) relevant_patterns+=("^tools/setup/") ;;
         esac
 
         any_changed="false"

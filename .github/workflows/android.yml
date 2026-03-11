@@ -10,16 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/android.yml'
-      - '.github/actions/**'
-      - 'deploy/android/**'
-      - 'src/**'
-      - 'test/**'
-      - 'android/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-      - 'translations/*'
   merge_group:
   workflow_dispatch:
     inputs:
@@ -31,7 +21,6 @@ on:
         options:
           - Release
           - Debug
-  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -44,8 +33,30 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should_build: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: android
+
   build:
     name: Android (${{ matrix.host }})
+    needs: changes
+    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
 

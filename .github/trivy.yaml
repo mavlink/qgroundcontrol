@@ -30,7 +30,6 @@ db:
 scan:
   # File patterns to skip
   skip-files:
-    - "**/*_test.go"
     - "**/test/**"
     - "**/tests/**"
 

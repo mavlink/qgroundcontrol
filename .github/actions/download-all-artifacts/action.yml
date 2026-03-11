@@ -13,6 +13,10 @@ inputs:
     description: Comma-separated workflow names to download artifacts from
     required: false
     default: Linux,Windows,MacOS,Android
+  event:
+    description: Optional workflow event name to filter runs by
+    required: false
+    default: ''
   output-dir:
     description: Output directory for downloaded artifacts
     required: false
@@ -43,10 +47,14 @@ runs:
         INPUT_HEAD_SHA: ${{ inputs.head-sha }}
         INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
         INPUT_WORKFLOWS: ${{ inputs.workflows }}
+        INPUT_EVENT: ${{ inputs.event }}
         INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
         INPUT_ARTIFACT_METADATA_FILE: ${{ inputs.artifact-metadata-file }}
       run: |
         ARGS=(--repo "$INPUT_REPO" --head-sha "$INPUT_HEAD_SHA" --output-dir "$INPUT_OUTPUT_DIR" --workflows "$INPUT_WORKFLOWS")
+        if [[ -n "$INPUT_EVENT" ]]; then
+          ARGS+=(--event "$INPUT_EVENT")
+        fi
         if [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]]; then
           ARGS+=(--runs-file "$RUNS_FILE")
         fi

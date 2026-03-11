@@ -7,13 +7,13 @@ This directory contains development tools, scripts, and configuration files for 
 ```
 tools/
 ├── analyze.py               # Static analysis and formatting (clang-format, clang-tidy, cppcheck, clazy)
-├── check-deps.sh            # Check for outdated dependencies
+├── check_deps.py            # Check for outdated dependencies
 ├── clean.sh                 # Clean build artifacts and caches
 ├── configure.py             # CMake configuration wrapper
-├── coverage.sh              # Code coverage reports
-├── generate-docs.sh         # Generate API docs (Doxygen)
+├── coverage.py              # Code coverage reports
+├── generate_docs.py         # Generate API docs (Doxygen)
 ├── param-docs.py            # Generate parameter documentation
-├── pre-commit.sh            # Pre-commit hook runner
+├── pre_commit.py            # Pre-commit hook runner
 ├── release.sh               # Semantic versioning and release automation
 ├── run_tests.py             # Qt unit test runner
 ├── configs/                 # Tool configuration files
@@ -106,15 +106,15 @@ Clean build artifacts and caches.
 ./tools/clean.sh --dry-run    # Show what would be removed
 ```
 
-### coverage.sh
+### coverage.py
 
 Generate code coverage reports. Wrapper around CMake coverage targets.
 
 ```bash
-./tools/coverage.sh              # Build with coverage, run tests, generate report
-./tools/coverage.sh --report     # Generate report only (after tests)
-./tools/coverage.sh --open       # Generate and open in browser
-./tools/coverage.sh --clean      # Clean coverage data
+python3 ./tools/coverage.py              # Build with coverage, run tests, generate report
+python3 ./tools/coverage.py --report     # Generate report only (after tests)
+python3 ./tools/coverage.py --open       # Generate and open in browser
+python3 ./tools/coverage.py --clean      # Clean coverage data
 ```
 
 Requires: `gcovr` (`pip install gcovr`)
@@ -143,26 +143,26 @@ Profile QGC for performance and memory issues.
 ./tools/debuggers/profile.sh --sanitize     # Build with AddressSanitizer
 ```
 
-### check-deps.sh
+### check_deps.py
 
 Check for outdated dependencies and submodules.
 
 ```bash
-./tools/check-deps.sh              # Check all dependencies
-./tools/check-deps.sh --submodules # Check git submodules only
-./tools/check-deps.sh --qt         # Check Qt version
-./tools/check-deps.sh --update     # Update submodules to latest
+python3 ./tools/check_deps.py              # Check all dependencies
+python3 ./tools/check_deps.py --submodules # Check git submodules only
+python3 ./tools/check_deps.py --qt         # Check Qt version
+python3 ./tools/check_deps.py --update     # Update submodules to latest
 ```
 
-### generate-docs.sh
+### generate_docs.py
 
 Generate API documentation using Doxygen.
 
 ```bash
-./tools/generate-docs.sh          # Generate HTML docs
-./tools/generate-docs.sh --open   # Generate and open in browser
-./tools/generate-docs.sh --pdf    # Generate PDF (requires LaTeX)
-./tools/generate-docs.sh --clean  # Clean generated docs
+python3 ./tools/generate_docs.py          # Generate HTML docs
+python3 ./tools/generate_docs.py --open   # Generate and open in browser
+python3 ./tools/generate_docs.py --pdf    # Generate PDF (requires LaTeX)
+python3 ./tools/generate_docs.py --clean  # Clean generated docs
 ```
 
 Requires: `doxygen`, `graphviz`
@@ -206,7 +206,7 @@ python3 ./tools/setup/install_dependencies.py --platform macos
 python .\tools\setup\install_dependencies.py --platform windows
 
 # Install Python tooling (pre-commit, test, coverage, etc.)
-python3 ./tools/setup/install_python.py --groups precommit test coverage
+python3 ./tools/setup/install_python.py precommit,test,coverage
 
 # Build GStreamer from source (Linux, optional)
 python3 ./tools/setup/build-gstreamer.py --platform linux --prefix /opt/gstreamer

@@ -27,10 +27,16 @@ import sys
 import tarfile
 import tempfile
 import time
+import zipfile
 from pathlib import Path
 from typing import NamedTuple
 from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
+
+WINDOWS_BINARY_SHA256 = {
+    "x86_64": "1c78a0b816a3174d4b170b96294e016a21fb4a577dfd8361e7322f77f85c6348",
+    "aarch64": "5907c8f74dcfff920ee57df55a5cb98164630665926b2ba9085e9f5fb701c58f",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -468,6 +474,179 @@ def output_github_actions(config: CcacheConfig) -> None:
         print(f"Warning: Failed to write GitHub output: {e}", file=sys.stderr)
 
 
+def write_github_outputs(values: dict[str, str]) -> None:
+    """Write arbitrary key/value pairs to ``$GITHUB_OUTPUT`` when available."""
+    github_output = os.environ.get("GITHUB_OUTPUT")
+    if not github_output:
+        return
+
+    try:
+        with open(github_output, "a") as f:
+            for key, value in values.items():
+                f.write(f"{key}={value}\n")
+    except OSError as e:
+        print(f"Warning: Failed to write GitHub output: {e}", file=sys.stderr)
+
+
+def append_github_env(values: dict[str, str]) -> None:
+    """Append environment variables to ``$GITHUB_ENV`` when available."""
+    github_env = os.environ.get("GITHUB_ENV")
+    if not github_env:
+        return
+    with open(github_env, "a", encoding="utf-8") as handle:
+        for key, value in values.items():
+            handle.write(f"{key}={value}\n")
+
+
+def append_github_path(path_entry: str) -> None:
+    """Append a path entry to ``$GITHUB_PATH`` when available."""
+    github_path = os.environ.get("GITHUB_PATH")
+    if not github_path:
+        return
+    with open(github_path, "a", encoding="utf-8") as handle:
+        handle.write(f"{path_entry}\n")
+
+
+def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -> str:
+    """Return the normalized cache scope used by CI."""
+    scope = "shared"
+    if event_name == "pull_request":
+        scope = f"pr-{pr_number or 'unknown'}"
+    elif event_name == "workflow_dispatch":
+        scope = f"manual-{ref_name}"
+    elif event_name == "push":
+        if ref_name != "master":
+            scope = f"branch-{ref_name}"
+    else:
+        scope = f"{event_name}-{ref_name}"
+    return scope.replace("/", "-")
+
+
+def compute_cpm_fingerprint(root: Path) -> str:
+    """Hash CMake files that declare CPM or FetchContent dependencies."""
+    declaration_re = re.compile(r"CPM(Add|Find)Package|FetchContent_Declare")
+    candidates: list[Path] = []
+    for exact in [
+        root / "CMakeLists.txt",
+        root / "cmake/modules/CPM.cmake",
+        root / ".github/build-config.json",
+    ]:
+        if exact.exists():
+            candidates.append(exact)
+
+    for directory in ("cmake",):
+        base = root / directory
+        if base.exists():
+            candidates.extend(base.rglob("*.cmake"))
+
+    for directory in ("src", "test"):
+        base = root / directory
+        if base.exists():
+            candidates.extend(base.rglob("CMakeLists.txt"))
+
+    dep_files: list[Path] = []
+    for path in candidates:
+        if not path.is_file():
+            continue
+        if path.name == "build-config.json":
+            dep_files.append(path)
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if declaration_re.search(text):
+            dep_files.append(path)
+
+    digest = hashlib.sha256()
+    rel_paths = sorted({path.relative_to(root).as_posix() for path in dep_files})
+    for rel_path in rel_paths:
+        path = root / rel_path
+        try:
+            content = path.read_bytes()
+        except OSError:
+            continue
+        digest.update(rel_path.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(content)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def resolve_windows_binary_config(host: str, target: str) -> dict[str, str]:
+    """Return Windows ccache binary arch and checksum for the requested target."""
+    arch = "aarch64" if host == "windows_arm64" else "x86_64"
+    if target != "android" and host != "windows_arm64":
+        arch = "x86_64"
+    return {"arch": arch, "sha256": WINDOWS_BINARY_SHA256[arch]}
+
+
+def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Path) -> Path:
+    """Download and install the ccache Windows binary under ``runner_temp``."""
+    ccache_url = (
+        f"https://github.com/ccache/ccache/releases/download/v{version}/"
+        f"ccache-{version}-windows-{arch}.zip"
+    )
+    install_dir = runner_temp / f"ccache-{version}-windows-{arch}"
+    install_dir.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        archive_path = temp_path / "ccache.zip"
+        urlretrieve(ccache_url, archive_path)
+        actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        if actual != sha256:
+            raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
+
+        with zipfile.ZipFile(archive_path) as archive:
+            archive.extractall(temp_path)
+
+        source = temp_path / f"ccache-{version}-windows-{arch}" / "ccache.exe"
+        if not source.exists():
+            raise FileNotFoundError(f"ccache.exe not found in downloaded archive for {arch}")
+        shutil.copy2(source, install_dir / "ccache.exe")
+    return install_dir
+
+
+def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Path:
+    """Add the installed Windows ccache binary directory to PATH."""
+    install_dir = runner_temp / f"ccache-{version}-windows-{arch}"
+    binary = install_dir / "ccache.exe"
+    if not binary.exists():
+        raise FileNotFoundError(f"ccache.exe not found at {binary}")
+    append_github_path(str(install_dir))
+    result = subprocess.run([str(binary), "--version"], capture_output=True, text=True, check=False)
+    if result.stdout:
+        print(result.stdout.strip())
+    return install_dir
+
+
+def configure_ccache_environment(workspace: Path) -> Path:
+    """Configure standard ccache environment variables for GitHub Actions."""
+    workspace_path = Path(str(workspace).replace("\\", "/"))
+    ccache_dir = workspace_path / ".ccache"
+    ccache_dir.mkdir(parents=True, exist_ok=True)
+    append_github_env(
+        {
+            "CCACHE_DIR": ccache_dir.as_posix(),
+            "CCACHE_BASEDIR": workspace_path.as_posix(),
+            "CCACHE_CONFIGPATH": (workspace_path / "tools" / "configs" / "ccache.conf").as_posix(),
+            "CCACHE_MAXSIZE": "2G",
+        }
+    )
+    return ccache_dir
+
+
+def configure_cpm_cache(path_value: str) -> Path:
+    """Normalize and create the CPM cache path and export it."""
+    cache_path = Path(path_value.replace("\\", "/"))
+    cache_path.mkdir(parents=True, exist_ok=True)
+    posix_path = cache_path.as_posix()
+    append_github_env({"CPM_SOURCE_CACHE": posix_path})
+    write_github_outputs({"path": posix_path})
+    return cache_path
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -548,6 +727,38 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     # -- summary -------------------------------------------------------
     sub.add_parser("summary", help="Write cache hit/miss summary to GitHub Step Summary")
 
+    # -- scope ---------------------------------------------------------
+    scope = sub.add_parser("scope", help="Compute the workflow cache scope")
+    scope.add_argument("--event-name", required=True, help="GitHub event name")
+    scope.add_argument("--ref-name", required=True, help="Git ref name")
+    scope.add_argument("--pr-number", default="", help="Pull request number")
+
+    # -- fingerprint ---------------------------------------------------
+    fingerprint = sub.add_parser("fingerprint", help="Compute CPM dependency fingerprint")
+    fingerprint.add_argument("--root", type=Path, default=Path("."), help="Repository root")
+
+    # -- windows-config ------------------------------------------------
+    windows_cfg = sub.add_parser("windows-config", help="Resolve Windows ccache binary metadata")
+    windows_cfg.add_argument("--host", required=True, help="Workflow host input")
+    windows_cfg.add_argument("--target", required=True, help="Workflow target input")
+
+    install_win = sub.add_parser("install-windows", help="Download and install Windows ccache binary")
+    install_win.add_argument("--version", required=True)
+    install_win.add_argument("--arch", required=True, choices=["x86_64", "aarch64"])
+    install_win.add_argument("--sha256", required=True)
+    install_win.add_argument("--runner-temp", type=Path, required=True)
+
+    add_win = sub.add_parser("add-windows-path", help="Add Windows ccache install dir to PATH")
+    add_win.add_argument("--version", required=True)
+    add_win.add_argument("--arch", required=True, choices=["x86_64", "aarch64"])
+    add_win.add_argument("--runner-temp", type=Path, required=True)
+
+    env_cfg = sub.add_parser("configure-env", help="Configure ccache GitHub environment variables")
+    env_cfg.add_argument("--workspace", type=Path, required=True)
+
+    cpm_cfg = sub.add_parser("configure-cpm-cache", help="Configure CPM source cache path")
+    cpm_cfg.add_argument("--path", required=True)
+
     return parser.parse_args(argv)
 
 
@@ -599,7 +810,50 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "summary":
         return run_summary()
 
-    print("Error: a subcommand is required (config, install, summary)", file=sys.stderr)
+    if args.command == "scope":
+        scope = determine_cache_scope(args.event_name, args.ref_name, args.pr_number)
+        print(scope)
+        write_github_outputs({"scope": scope})
+        return 0
+
+    if args.command == "fingerprint":
+        fingerprint = compute_cpm_fingerprint(args.root.resolve())
+        print(fingerprint)
+        write_github_outputs({"fingerprint": fingerprint})
+        return 0
+
+    if args.command == "windows-config":
+        values = resolve_windows_binary_config(args.host, args.target)
+        print(f"arch={values['arch']}")
+        print(f"sha256={values['sha256']}")
+        write_github_outputs(values)
+        return 0
+
+    if args.command == "install-windows":
+        install_dir = install_windows_binary(args.version, args.arch, args.sha256, args.runner_temp)
+        print(install_dir)
+        write_github_outputs({"install_dir": str(install_dir)})
+        return 0
+
+    if args.command == "add-windows-path":
+        install_dir = add_windows_binary_to_path(args.version, args.arch, args.runner_temp)
+        print(install_dir)
+        return 0
+
+    if args.command == "configure-env":
+        ccache_dir = configure_ccache_environment(args.workspace)
+        print(ccache_dir)
+        return 0
+
+    if args.command == "configure-cpm-cache":
+        cache_path = configure_cpm_cache(args.path)
+        print(cache_path)
+        return 0
+
+    print(
+        "Error: a subcommand is required (config, install, summary, scope, fingerprint, windows-config, install-windows, add-windows-path, configure-env, configure-cpm-cache)",
+        file=sys.stderr,
+    )
     return 1
 
 

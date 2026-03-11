@@ -95,6 +95,8 @@ jobs:
             .github/actions/build-config
             .github/actions/qt-install
             .github/scripts/benchmark_runner.py
+            tools/common/build_config.py
+            tools/setup/setup_bootstrap.py
             tools/setup/read_config.py
             .github/build-config.json
           sparse-checkout-cone-mode: false

@@ -7,15 +7,18 @@ import argparse
 import hashlib
 import json
 import os
-import sys
-from pathlib import Path
 from typing import Any
 
-_SCRIPT_DIR = Path(__file__).resolve().parent
-if str(_SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPT_DIR))
+from ci_bootstrap import ensure_tools_dir
 
-from workflow_runs import list_workflow_runs, parse_csv_list
+ensure_tools_dir(__file__)
+
+from common.gh_actions import list_workflow_runs_for_sha
+
+
+def parse_csv_list(value: str) -> list[str]:
+    """Parse comma-separated values into a trimmed non-empty list."""
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def evaluate_readiness(
@@ -94,7 +97,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     platforms = parse_csv_list(args.platform_workflows)
-    runs = list_workflow_runs(args.repo, args.head_sha)
+    runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
         with open(args.runs_cache, "w", encoding="utf-8") as f:

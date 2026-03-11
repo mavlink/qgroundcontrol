@@ -28,7 +28,6 @@ Options:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import platform
 import shutil
@@ -39,32 +38,28 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
+try:
+    from .setup_bootstrap import ensure_setup_imports
+except ImportError:
+    setup_dir = Path(__file__).resolve().parent
+    if str(setup_dir) not in sys.path:
+        sys.path.insert(0, str(setup_dir))
+    from setup_bootstrap import ensure_setup_imports
+
+ensure_setup_imports()
+
+from common.logging import log_info, log_ok, log_warn, log_error
+from common.build_config import get_build_config_value
+from common.gh_actions import write_github_output
+
 
 # ============================================================================
-# Shared Utilities
+# Build Utilities
 # ============================================================================
 
 MESON_VERSION = "1.10.1"
 NINJA_VERSION = "1.13.0"
 
-class Colors:
-    RED = '\033[0;31m'
-    GREEN = '\033[0;32m'
-    YELLOW = '\033[1;33m'
-    BLUE = '\033[0;34m'
-    NC = '\033[0m'
-
-def log_info(msg: str) -> None:
-    print(f"{Colors.BLUE}[INFO]{Colors.NC} {msg}")
-
-def log_ok(msg: str) -> None:
-    print(f"{Colors.GREEN}[OK]{Colors.NC} {msg}")
-
-def log_warn(msg: str) -> None:
-    print(f"{Colors.YELLOW}[WARN]{Colors.NC} {msg}", file=sys.stderr)
-
-def log_error(msg: str) -> None:
-    print(f"{Colors.RED}[ERROR]{Colors.NC} {msg}", file=sys.stderr)
 
 def run_cmd(cmd: list, cwd: Path | None = None, check: bool = True,
             env: dict | None = None) -> subprocess.CompletedProcess:
@@ -99,29 +94,6 @@ def detect_host_arch() -> str:
     if machine.startswith('arm'):
         return 'armv7'
     return machine
-
-def read_config(key: str, default: str = '') -> str:
-    """Read a value from build-config.json."""
-    script_dir = Path(__file__).parent
-    config_file = script_dir.parent.parent / '.github' / 'build-config.json'
-
-    if not config_file.exists():
-        return default
-
-    try:
-        with open(config_file) as f:
-            config = json.load(f)
-        return config.get(key, default)
-    except Exception:
-        return default
-
-def write_github_output(outputs: dict) -> None:
-    """Write outputs for GitHub Actions."""
-    github_output = os.environ.get('GITHUB_OUTPUT')
-    if github_output:
-        with open(github_output, 'a') as f:
-            for key, value in outputs.items():
-                f.write(f"{key}={value}\n")
 
 
 # ============================================================================
@@ -632,7 +604,11 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or read_config('gstreamer_version', '1.24.10')
+    version = args.version or get_build_config_value(
+        'gstreamer_version',
+        '1.24.10',
+        start=Path(__file__).resolve(),
+    )
     arch = args.arch or get_default_arch(args.platform)
     prefix = Path(args.prefix) if args.prefix else None
     work_dir = Path(args.work_dir)

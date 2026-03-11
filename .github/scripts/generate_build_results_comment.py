@@ -13,26 +13,9 @@ from pathlib import Path
 from typing import Mapping
 from urllib.parse import quote, urlsplit, urlunsplit
 
-try:
-    from defusedxml.ElementTree import ParseError as XMLParseError
-    from defusedxml.ElementTree import parse as _xml_parse_impl
-    _USING_DEFUSEDXML = True
-except ImportError:
-    from xml.etree.ElementTree import ParseError as XMLParseError
-    from xml.etree.ElementTree import parse as _xml_parse_impl
-    _USING_DEFUSEDXML = False
+from xml_utils import XMLParseError, xml_parse as _xml_parse
 
 logger = logging.getLogger(__name__)
-
-
-def _xml_parse(path: Path):
-    if _USING_DEFUSEDXML:
-        return _xml_parse_impl(path)
-    # Harden stdlib fallback: reject XML with DTD/entities.
-    text = path.read_text(encoding="utf-8", errors="replace")
-    if "<!DOCTYPE" in text or "<!ENTITY" in text:
-        raise XMLParseError("DOCTYPE/ENTITY declarations are not allowed")
-    return _xml_parse_impl(path)
 
 
 def _env(env: Mapping[str, str], key: str, default: str = "") -> str:

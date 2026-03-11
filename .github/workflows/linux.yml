@@ -10,16 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/linux.yml'
-      - '.github/actions/**'
-      - 'deploy/linux/**'
-      - 'src/**'
-      - 'test/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-      - 'tools/setup/*debian*'
-      - 'tools/setup/install_dependencies.py'
   merge_group:
   workflow_dispatch:
     inputs:
@@ -31,7 +21,6 @@ on:
         options:
           - Release
           - Debug
-  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,8 +35,30 @@ permissions:
   checks: write
 
 jobs:
+  changes:
+    name: Detect Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should_build: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: linux
+
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    needs: changes
+    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
@@ -205,7 +216,8 @@ jobs:
 
   debug-validation:
     name: ${{ matrix.job_name }}
-    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ matrix.timeout_minutes }}
 

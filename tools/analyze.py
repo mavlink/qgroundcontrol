@@ -199,7 +199,8 @@ class ClangFormatAnalyzer(AnalyzerBase):
             capture_output=True,
             text=True,
         )
-        version_match = version_result.stdout.split()[2] if version_result.stdout else "unknown"
+        parts = version_result.stdout.split() if version_result.stdout else []
+        version_match = parts[2] if len(parts) > 2 else "unknown"
         log_info(f"Using clang-format version {version_match}")
 
         if not files:

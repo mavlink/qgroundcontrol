@@ -57,6 +57,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   build:
@@ -95,5 +96,6 @@ jobs:
           build-type: ${{ inputs.build_type }}
           simulator: ${{ inputs.simulator }}
           upload-s3: ${{ inputs.upload_s3 }}
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

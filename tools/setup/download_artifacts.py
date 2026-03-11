@@ -17,19 +17,23 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-from datetime import datetime
 import json
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-COMMON_DIR = REPO_ROOT / "tools" / "common"
-if str(COMMON_DIR) not in sys.path:
-    sys.path.insert(0, str(COMMON_DIR))
+try:
+    from .setup_bootstrap import ensure_setup_imports
+except ImportError:
+    setup_dir = Path(__file__).resolve().parent
+    if str(setup_dir) not in sys.path:
+        sys.path.insert(0, str(setup_dir))
+    from setup_bootstrap import ensure_setup_imports
 
-import gh_actions as _gh_actions
+ensure_setup_imports()
+
+from common.gh_actions import gh, list_workflow_runs_for_sha, list_run_artifacts
+from common.github_runs import group_runs_by_name, select_latest_runs_by_name
 
 
 ARTIFACT_EXTENSIONS = (
@@ -44,52 +48,20 @@ ARTIFACT_EXTENSIONS = (
 )
 ARTIFACT_EXTENSION_SET = frozenset(ARTIFACT_EXTENSIONS)
 
-
-def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a gh CLI command and return the result."""
-    return _gh_actions.gh(*args, check=check)
-
-
-def _parse_created_at(created_at: Any) -> datetime | None:
-    value = str(created_at).strip()
-    if not value:
-        return None
-    if value.endswith("Z"):
-        value = f"{value[:-1]}+00:00"
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
-
-
-def _is_newer_run(candidate: dict[str, Any], existing: dict[str, Any]) -> bool:
-    candidate_created_at = str(candidate.get("created_at", ""))
-    existing_created_at = str(existing.get("created_at", ""))
-    candidate_dt = _parse_created_at(candidate_created_at)
-    existing_dt = _parse_created_at(existing_created_at)
-    if candidate_dt is not None and existing_dt is not None:
-        return candidate_dt > existing_dt
-    return candidate_created_at > existing_created_at
-
-
 def select_latest_successful_runs(
     runs: list[dict[str, Any]],
     workflows: list[str],
+    *,
+    event: str = "",
 ) -> list[dict[str, Any]]:
     """Return latest completed/successful run per workflow name."""
-    workflow_set = set(workflows)
-    latest_by_workflow: dict[str, dict[str, Any]] = {}
-
-    for run in runs:
-        name = str(run.get("name", ""))
-        if name not in workflow_set:
-            continue
-        if run.get("status") != "completed" or run.get("conclusion") != "success":
-            continue
-        existing = latest_by_workflow.get(name)
-        if existing is None or _is_newer_run(run, existing):
-            latest_by_workflow[name] = run
-
+    latest_by_workflow = select_latest_runs_by_name(
+        runs,
+        set(workflows),
+        event=event,
+        status="completed",
+        conclusion="success",
+    )
     order = {name: idx for idx, name in enumerate(workflows)}
     return sorted(
         latest_by_workflow.values(),
@@ -100,40 +72,28 @@ def select_latest_successful_runs(
 def group_successful_runs_by_workflow(
     runs: list[dict[str, Any]],
     workflows: list[str],
+    *,
+    event: str = "",
 ) -> dict[str, list[dict[str, Any]]]:
     """Group successful runs by workflow name, newest first."""
-    workflow_set = set(workflows)
-    grouped: dict[str, list[dict[str, Any]]] = {name: [] for name in workflows}
-
-    for run in runs:
-        name = str(run.get("name", ""))
-        if name not in workflow_set:
-            continue
-        if run.get("status") != "completed" or run.get("conclusion") != "success":
-            continue
-        grouped[name].append(run)
-
-    for workflow_name in grouped:
-        grouped[workflow_name].sort(
-            key=lambda run: (
-                _parse_created_at(run.get("created_at")) is not None,
-                str(run.get("created_at", "")),
-            ),
-            reverse=True,
-        )
-
-    return grouped
+    return group_runs_by_name(
+        runs,
+        workflows,
+        event=event,
+        status="completed",
+        conclusion="success",
+    )
 
 
-def get_workflow_runs(repo: str, head_sha: str, workflows: list[str]) -> list[dict]:
+def get_workflow_runs(repo: str, head_sha: str, workflows: list[str], *, event: str = "") -> list[dict]:
     """Return completed successful runs for the given workflows and commit."""
-    all_runs = _gh_actions.list_workflow_runs_for_sha(repo, head_sha)
-    return select_latest_successful_runs(all_runs, workflows)
+    all_runs = list_workflow_runs_for_sha(repo, head_sha)
+    return select_latest_successful_runs(all_runs, workflows, event=event)
 
 
 def select_artifact_names_for_run(repo: str, run_id: int, prefixes: list[str]) -> list[str]:
     """Return artifact names that match configured name prefixes."""
-    return select_artifact_names(_gh_actions.list_run_artifacts(repo, run_id), prefixes)
+    return select_artifact_names(list_run_artifacts(repo, run_id), prefixes)
 
 
 def select_artifact_names(artifacts: list[dict[str, Any]], prefixes: list[str]) -> list[str]:
@@ -214,6 +174,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Comma-separated workflow names to download from (default: Linux,Windows,MacOS,Android)",
     )
     parser.add_argument(
+        "--event",
+        default="",
+        choices=["", "push", "pull_request", "workflow_dispatch", "schedule"],
+        help="Optional workflow event name to filter runs by",
+    )
+    parser.add_argument(
         "--runs-file",
         default="",
         help="Path to cached workflow runs JSON (skips API call if provided)",
@@ -241,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     head_sha = args.head_sha
     output_dir = args.output_dir
     workflows = [w.strip() for w in args.workflows.split(",") if w.strip()]
+    event = str(args.event).strip()
     artifact_prefixes = [p.strip() for p in args.artifact_prefixes.split(",") if p.strip()]
     artifact_metadata_out = Path(args.artifact_metadata_out) if args.artifact_metadata_out else None
 
@@ -265,18 +232,18 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         all_runs = loaded_runs
     else:
-        all_runs = _gh_actions.list_workflow_runs_for_sha(repo, head_sha)
+        all_runs = list_workflow_runs_for_sha(repo, head_sha)
     preloaded_artifacts: dict[int, list[dict[str, Any]]] = {}
-    had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows))
+    had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows, event=event))
     if artifact_prefixes:
         runs = []
-        grouped_runs = group_successful_runs_by_workflow(all_runs, workflows)
+        grouped_runs = group_successful_runs_by_workflow(all_runs, workflows, event=event)
         for workflow_name in workflows:
             candidates = grouped_runs.get(workflow_name, [])
             selected_run: dict[str, Any] | None = None
             for candidate in candidates:
                 run_id = int(candidate["id"])
-                artifacts = _gh_actions.list_run_artifacts(repo, run_id)
+                artifacts = list_run_artifacts(repo, run_id)
                 preloaded_artifacts[run_id] = artifacts
                 if select_artifact_names(artifacts, artifact_prefixes):
                     selected_run = candidate
@@ -284,7 +251,7 @@ def main(argv: list[str] | None = None) -> int:
             if selected_run is not None:
                 runs.append(selected_run)
     else:
-        runs = select_latest_successful_runs(all_runs, workflows)
+        runs = select_latest_successful_runs(all_runs, workflows, event=event)
 
     if not runs:
         if artifact_prefixes and had_successful_runs:
@@ -317,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         if artifact_prefixes or artifact_metadata_out is not None:
             artifacts = preloaded_artifacts.get(run_id)
             if artifacts is None:
-                artifacts = _gh_actions.list_run_artifacts(repo, run_id)
+                artifacts = list_run_artifacts(repo, run_id)
             if artifact_prefixes:
                 names = select_artifact_names(artifacts, artifact_prefixes)
                 run_artifact_map[run_id] = names if names else None
