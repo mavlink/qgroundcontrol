@@ -21,6 +21,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ComponentInformationManager.h
         ComponentInformationTranslation.cc
         ComponentInformationTranslation.h
+        RequestMetaDataTypeStateMachine.cc
+        RequestMetaDataTypeStateMachine.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

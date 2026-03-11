@@ -7,6 +7,7 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 
 /// QGCMapPolyline map visuals
 Item {
@@ -139,8 +140,14 @@ Item {
 
         QGCMenuItem {
             text:           qsTr("Edit position..." )
-            onTriggered:    editPositionDialog.createObject(mainWindow, { coordinate: mapPolyline.path[menu._removeVertexIndex] }).open()
+            onTriggered:    editPositionDialogFactory.open({ coordinate: mapPolyline.path[menu._removeVertexIndex] })
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: editPositionDialogFactory
+
+        dialogComponent: editPositionDialog
     }
 
     Component {

@@ -18,7 +18,7 @@ QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "QtLocationPlugin.QGeoFileTileCach
 
 QString QGeoFileTileCacheQGC::_databaseFilePath;
 QString QGeoFileTileCacheQGC::_cachePath;
-bool QGeoFileTileCacheQGC::_cacheWasReset = false;
+std::atomic<bool> QGeoFileTileCacheQGC::_cacheWasReset = false;
 
 QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObject *parent)
     : QGeoFileTileCache(baseCacheDirectory(), parent)
@@ -159,7 +159,7 @@ bool QGeoFileTileCacheQGC::_wipeDirectory(const QString &dirPath)
 
 void QGeoFileTileCacheQGC::_wipeOldCaches()
 {
-    const QStringList oldCaches = {"/QGCMapCache55", "/QGCMapCache100"};
+    const QStringList oldCaches = {"/QGCMapCache55", "/QGCMapCache100", "/QGCMapCache300"};
     for (const QString &cache : oldCaches) {
         QString oldCacheDir;
         #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -179,10 +179,11 @@ void QGeoFileTileCacheQGC::_initCache()
     // QString cacheDir = QAbstractGeoTileCache::baseCacheDirectory()
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    cacheDir += QStringLiteral("/QGCMapCache");
 #else
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation);
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    cacheDir += QStringLiteral("/QGCMapCache");
 #endif
-    cacheDir += QStringLiteral("/QGCMapCache") + QString(kCachePathVersion);
     if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
         qCWarning(QGeoFileTileCacheQGCLog) << "Could not create mapping disk cache directory:" << cacheDir;
 

@@ -393,22 +393,36 @@ bool QGCMapEngineManager::exportSets(const QString &path)
         return false;
     }
 
-    QList<QGCCachedTileSet*> sets;
+    QList<TileSetRecord> records;
 
     for (qsizetype i = 0; i < _tileSets->count(); i++) {
         QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
-        if (set->selected()) {
-            sets.append(set);
+        if (set && set->selected()) {
+            TileSetRecord rec;
+            rec.setID = set->id();
+            rec.name = set->name();
+            rec.mapTypeStr = set->mapTypeStr();
+            rec.topleftLat = set->topleftLat();
+            rec.topleftLon = set->topleftLon();
+            rec.bottomRightLat = set->bottomRightLat();
+            rec.bottomRightLon = set->bottomRightLon();
+            rec.minZoom = set->minZoom();
+            rec.maxZoom = set->maxZoom();
+            rec.type = UrlFactory::getQtMapIdFromProviderType(set->type());
+            rec.numTiles = set->totalTileCount();
+            rec.defaultSet = set->defaultSet();
+            rec.date = set->creationDate().toSecsSinceEpoch();
+            records.append(rec);
         }
     }
 
-    if (sets.isEmpty()) {
+    if (records.isEmpty()) {
         return false;
     }
 
     setImportAction(ImportAction::ActionExporting);
 
-    QGCExportTileTask *task = new QGCExportTileTask(sets, path);
+    QGCExportTileTask *task = new QGCExportTileTask(records, path);
     (void) connect(task, &QGCExportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
     (void) connect(task, &QGCExportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
@@ -439,8 +453,6 @@ QString QGCMapEngineManager::getUniqueName() const
             return name;
         }
     }
-
-    return QString("");
 }
 
 QStringList QGCMapEngineManager::mapList()

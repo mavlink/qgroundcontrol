@@ -215,9 +215,9 @@ void GeoFenceController::removeAll(void)
 void GeoFenceController::removeAllFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
     } else {
         _geoFenceManager->removeAll();
     }
@@ -226,9 +226,9 @@ void GeoFenceController::removeAllFromVehicle(void)
 void GeoFenceController::loadFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
     } else {
         _itemsRequested = true;
         _geoFenceManager->loadFromVehicle();
@@ -238,9 +238,9 @@ void GeoFenceController::loadFromVehicle(void)
 void GeoFenceController::sendToVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
         _geoFenceManager->sendToVehicle(_breachReturnPoint, _polygons, _circles);
@@ -357,7 +357,7 @@ bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
     qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         _itemsRequested = true;
@@ -572,36 +572,3 @@ bool GeoFenceController::isEmpty(void) const
     return _polygons.count() == 0 && _circles.count() == 0 && !_breachReturnPoint.isValid();
 
 }
-
-#ifdef QGC_UTM_ADAPTER
-void GeoFenceController::loadFlightPlanData()
-{
-    QJsonArray jsonPolygonArray;
-    QList<QGeoCoordinate> geoCoordinates ;
-
-    for (int i = 0; i < _polygons.count(); i++) {
-        QJsonObject jsonPolygon;
-        QGCFencePolygon* fencePolygon = _polygons.value<QGCFencePolygon*>(i);
-        fencePolygon->saveToJson(jsonPolygon);
-        jsonPolygonArray.append(jsonPolygon);
-    }
-    QJsonArray jsonArray = QJsonDocument::fromJson(QJsonDocument(jsonPolygonArray).toJson()).array();
-    QJsonObject jsonObject = jsonArray.at(0).toObject();
-    QJsonArray polygonArray = jsonObject.value("polygon").toArray();
-
-    for (int i = 0; i < polygonArray.size(); ++i) {
-        QJsonArray pointArray = polygonArray.at(i).toArray();
-        double latitude = pointArray.at(0).toDouble();
-        double longitude = pointArray.at(1).toDouble();
-        QGeoCoordinate geoCoordinate(latitude, longitude);
-        geoCoordinates.append(geoCoordinate);
-    }
-
-    // Append the first coordinate again to the end of the list
-    if (!geoCoordinates.isEmpty()) {
-        geoCoordinates.append(geoCoordinates.first());
-    }
-
-    emit polygonBoundarySent(geoCoordinates);
-}
-#endif

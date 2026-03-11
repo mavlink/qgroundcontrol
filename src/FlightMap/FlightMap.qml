@@ -50,7 +50,13 @@ Map {
     }
 
     function centerToSpecifiedLocation() {
-        specifyMapPositionDialog.createObject(mainWindow).open()
+        specifyMapPositionDialogFactory.open()
+    }
+
+    QGCPopupDialogFactory {
+        id: specifyMapPositionDialogFactory
+
+        dialogComponent: specifyMapPositionDialog
     }
 
     Component {
@@ -223,7 +229,7 @@ Map {
     MapQuickItem {
         anchorPoint.x:  sourceItem.width / 2
         anchorPoint.y:  sourceItem.height / 2
-        visible:        gcsPosition.isValid
+        visible:        gcsPosition.isValid && !planView
         coordinate:     gcsPosition
 
         sourceItem: Image {

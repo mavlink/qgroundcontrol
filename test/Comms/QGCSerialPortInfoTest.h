@@ -8,4 +8,7 @@ class QGCSerialPortInfoTest : public UnitTest
 
 private slots:
     void _testLoadJsonData();
+    void _testLoadJsonDataIdempotent();
+    void _testBoardClassStringToType();
+    void _testBoardTypeToString();
 };

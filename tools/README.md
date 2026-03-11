@@ -6,15 +6,18 @@ This directory contains development tools, scripts, and configuration files for 
 
 ```
 tools/
-├── analyze.sh               # Static analysis (clang-tidy, cppcheck)
+├── analyze.py               # Static analysis and formatting (clang-format, clang-tidy, cppcheck, clazy)
 ├── check-deps.sh            # Check for outdated dependencies
 ├── clean.sh                 # Clean build artifacts and caches
-├── common.sh                # Shared shell functions
+├── configure.py             # CMake configuration wrapper
 ├── coverage.sh              # Code coverage reports
-├── format-check.sh          # Check/apply clang-format
 ├── generate-docs.sh         # Generate API docs (Doxygen)
 ├── param-docs.py            # Generate parameter documentation
-├── ccache.conf              # ccache configuration
+├── pre-commit.sh            # Pre-commit hook runner
+├── release.sh               # Semantic versioning and release automation
+├── run_tests.py             # Qt unit test runner
+├── configs/                 # Tool configuration files
+│   └── ccache.conf          # ccache configuration
 ├── analyzers/               # Static analysis scripts
 │   └── vehicle_null_check.py
 ├── coding-style/            # Code style examples
@@ -68,10 +71,10 @@ Both read configuration from `.github/build-config.json` for consistent versioni
 
 ```bash
 # Format changed files
-./tools/format-check.sh
+./tools/analyze.py --tool clang-format --fix
 
 # Run static analysis
-./tools/analyze.sh
+./tools/analyze.py
 
 # Clean build
 ./tools/clean.sh
@@ -79,26 +82,17 @@ Both read configuration from `.github/build-config.json` for consistent versioni
 
 ## Development Scripts
 
-### format-check.sh
+### analyze.py
 
-Check or apply clang-format to source files.
-
-```bash
-./tools/format-check.sh                # Format changed files (vs master)
-./tools/format-check.sh --check        # Check only (for CI)
-./tools/format-check.sh --all          # Format all source files
-./tools/format-check.sh src/Vehicle/   # Format specific directory
-```
-
-### analyze.sh
-
-Run static analysis on source code.
+Run static analysis and formatting on source code.
 
 ```bash
-./tools/analyze.sh                     # Analyze changed files
-./tools/analyze.sh --all               # Analyze all files
-./tools/analyze.sh --tool cppcheck     # Use cppcheck instead of clang-tidy
-./tools/analyze.sh src/Vehicle/        # Analyze specific directory
+./tools/analyze.py                              # Analyze changed files
+./tools/analyze.py --all                        # Analyze all files
+./tools/analyze.py --tool clang-format --fix    # Format changed files
+./tools/analyze.py --tool clang-format --all    # Check formatting (all files)
+./tools/analyze.py --tool cppcheck              # Use cppcheck instead of clang-tidy
+./tools/analyze.py src/Vehicle/                 # Analyze specific directory
 ```
 
 ### clean.sh
@@ -131,8 +125,8 @@ Requires: `gcovr` (`pip install gcovr`)
 cmake -B build -DQGC_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build
-cmake --build build --target coverage-report  # XML + HTML
-cmake --build build --target coverage-html    # HTML only
+cmake --build build --target coverage-report  # XML + HTML from existing data
+cmake --build build --target coverage         # Run tests + generate XML + HTML
 cmake --build build --target coverage-clean   # Clean .gcda files
 ```
 
@@ -191,32 +185,34 @@ Scripts in `setup/` help configure development environments. They read configura
 
 | Script | Platform | Description |
 |--------|----------|-------------|
-| `install-dependencies-debian.sh` | Linux | Install build dependencies via apt |
-| `install-dependencies-macos.sh` | macOS | Install dependencies via Homebrew + GStreamer |
-| `install-dependencies-windows.ps1` | Windows | Install GStreamer (Vulkan SDK optional) |
-| `install-qt-debian.sh` | Linux | Install Qt via aqtinstall |
-| `install-qt-macos.sh` | macOS | Install Qt via aqtinstall |
-| `install-qt-windows.ps1` | Windows | Install Qt via aqtinstall |
-| `build-gstreamer.sh` | Linux | Build GStreamer from source (optional) |
-| `read-config.sh` | All | Helper to read `.github/build-config.json` |
+| `install_dependencies.py --platform debian` | Linux | Install build dependencies via apt |
+| `install_dependencies.py --platform macos` | macOS | Install dependencies via Homebrew + GStreamer |
+| `install_dependencies.py --platform windows` | Windows | Install GStreamer (Vulkan SDK optional) |
+| `install_python.py` | All | Install Python tools via uv or pip |
+| `build-gstreamer.py` | All | Build GStreamer from source (optional) |
+| `download_artifacts.py` | All | Download build artifacts from GitHub Actions |
+| `read_config.py` | All | Read `.github/build-config.json` (Python, cross-platform) |
 
 ### Usage Examples
 
 ```bash
 # Linux: Install all dependencies
-sudo ./tools/setup/install-dependencies-debian.sh
-./tools/setup/install-qt-debian.sh
+python3 ./tools/setup/install_dependencies.py --platform debian
 
 # macOS: Install all dependencies
-./tools/setup/install-dependencies-macos.sh
-./tools/setup/install-qt-macos.sh
+python3 ./tools/setup/install_dependencies.py --platform macos
 
-# Windows (PowerShell as Admin):
-.\tools\setup\install-dependencies-windows.ps1
-.\tools\setup\install-qt-windows.ps1
+# Windows (as Admin):
+python .\tools\setup\install_dependencies.py --platform windows
+
+# Install Python tooling (pre-commit, test, coverage, etc.)
+python3 ./tools/setup/install_python.py --groups precommit test coverage
 
 # Build GStreamer from source (Linux, optional)
-./tools/setup/build-gstreamer.sh -p /opt/gstreamer
+python3 ./tools/setup/build-gstreamer.py --platform linux --prefix /opt/gstreamer
+
+# Read build config values
+python3 ./tools/setup/read_config.py --get qt_version
 ```
 
 ## Static Analyzers
@@ -289,6 +285,7 @@ Common utilities in `common/` are used by multiple tools:
 
 - `patterns.py` - QGC-specific regex patterns (Fact, FactGroup, MAVLink)
 - `file_traversal.py` - File discovery with proper filtering
+- `gh_actions.py` - Shared `gh api` helpers for workflow runs and artifacts
 
 See [common/README.md](common/README.md) for API documentation.
 
@@ -357,6 +354,34 @@ Analyze QGC application logs and telemetry files.
 
 See [log-analyzer/README.md](log-analyzer/README.md) for details.
 
+### locators/
+
+Search for Facts, FactGroups, MAVLink messages, and parameter metadata from the command line.
+
+```bash
+# Find Fact names containing 'lat'
+python3 ./tools/locators/qgc_locator.py fact lat
+
+# Find MAVLink message usage
+python3 ./tools/locators/qgc_locator.py mavlink HEARTBEAT
+```
+
+See [locators/README.md](locators/README.md) for editor integration examples.
+
+### lsp/
+
+Run the QGC language server for editor diagnostics and QGC-specific completions.
+
+```bash
+# Start LSP server on stdio (editor integration)
+python3 -m tools.lsp
+
+# Start in TCP mode for debugging
+python3 -m tools.lsp --tcp --port 2087
+```
+
+See [lsp/README.md](lsp/README.md) for setup and client configuration.
+
 ## Translation Tools
 
 Scripts in `translations/` manage internationalization.
@@ -384,7 +409,7 @@ Configuration for [ccache](https://ccache.dev/) to speed up rebuilds. CMake auto
 
 ```bash
 # Manual use:
-export CCACHE_CONFIGPATH=/path/to/qgroundcontrol/tools/ccache.conf
+export CCACHE_CONFIGPATH=/path/to/qgroundcontrol/tools/configs/ccache.conf
 ```
 
 ### coding-style/

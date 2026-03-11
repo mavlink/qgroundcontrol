@@ -1,6 +1,8 @@
 #include "ImageProtocolManager.h"
 #include "QGCLoggingCategory.h"
 
+#include <cstring>
+
 QGC_LOGGING_CATEGORY(ImageProtocolManagerLog, "MAVLink.ImageProtocolManager")
 
 ImageProtocolManager::ImageProtocolManager(QObject *parent)
@@ -34,7 +36,7 @@ bool ImageProtocolManager::requestImage(uint8_t system_id, uint8_t component_id,
 
 void ImageProtocolManager::cancelRequest(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message)
 {
-    constexpr mavlink_data_transmission_handshake_t data{0};
+    constexpr mavlink_data_transmission_handshake_t data{};
     (void) mavlink_msg_data_transmission_handshake_encode_chan(system_id, component_id, chan, &message, &data);
 }
 
@@ -49,6 +51,27 @@ void ImageProtocolManager::mavlinkMessageReceived(const mavlink_message_t &messa
         _imageBytes.clear();
         mavlink_msg_data_transmission_handshake_decode(&message, &_imageHandshake);
         qCDebug(ImageProtocolManagerLog) << QStringLiteral("DATA_TRANSMISSION_HANDSHAKE: type(%1) width(%2) height (%3)").arg(_imageHandshake.type).arg(_imageHandshake.width).arg(_imageHandshake.height);
+
+        // Validate handshake fields to prevent out-of-bounds writes on subsequent ENCAPSULATED_DATA
+        static constexpr uint32_t kMaxImageSize = 1u * 1024u * 1024u; // 1 MB upper bound (optical flow images are typically small grayscale frames)
+        if (_imageHandshake.size == 0 || _imageHandshake.payload == 0 || _imageHandshake.packets == 0) {
+            qCWarning(ImageProtocolManagerLog) << "DATA_TRANSMISSION_HANDSHAKE: Invalid field(s) - size:" << _imageHandshake.size
+                                               << "payload:" << _imageHandshake.payload << "packets:" << _imageHandshake.packets;
+            _imageHandshake = {};
+            break;
+        }
+        if (_imageHandshake.size > kMaxImageSize) {
+            qCWarning(ImageProtocolManagerLog) << "DATA_TRANSMISSION_HANDSHAKE: Image size exceeds limit. size:" << _imageHandshake.size;
+            _imageHandshake = {};
+            break;
+        }
+        if (_imageHandshake.payload > sizeof(mavlink_encapsulated_data_t::data)) {
+            qCWarning(ImageProtocolManagerLog) << "DATA_TRANSMISSION_HANDSHAKE: payload exceeds ENCAPSULATED_DATA data field size. payload:" << _imageHandshake.payload;
+            _imageHandshake = {};
+            break;
+        }
+
+        _imageBytes.resize(_imageHandshake.size, '\0');
         break;
     }
     case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
@@ -61,16 +84,17 @@ void ImageProtocolManager::mavlinkMessageReceived(const mavlink_message_t &messa
         mavlink_encapsulated_data_t encapsulatedData;
         mavlink_msg_encapsulated_data_decode(&message, &encapsulatedData);
 
-        uint32_t bytePosition = encapsulatedData.seqnr * _imageHandshake.payload;
+        const uint32_t bytePosition = static_cast<uint32_t>(encapsulatedData.seqnr) * _imageHandshake.payload;
         if (bytePosition >= _imageHandshake.size) {
             qCWarning(ImageProtocolManagerLog) << "ENCAPSULATED_DATA: seqnr is past end of image size. seqnr:" << encapsulatedData.seqnr << "_imageHandshake.size:" << _imageHandshake.size;
             break;
         }
 
-        for (uint8_t i = 0; i < _imageHandshake.payload; i++) {
-            _imageBytes[bytePosition] = encapsulatedData.data[i];
-            bytePosition++;
-        }
+        // Clamp the number of bytes to copy so we never write past the declared image size
+        const uint32_t bytesRemaining = _imageHandshake.size - bytePosition;
+        const uint32_t bytesToCopy = qMin(static_cast<uint32_t>(_imageHandshake.payload), bytesRemaining);
+
+        (void) memcpy(_imageBytes.data() + bytePosition, encapsulatedData.data, bytesToCopy);
 
         // We use the packets field to track completion
         _imageHandshake.packets--;

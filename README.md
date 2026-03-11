@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/mavlink/QGroundControl/releases">
-    <img src="https://img.shields.io/github/release/mavlink/QGroundControl.svg" alt="Latest Release">
+    <img src="https://img.shields.io/github/v/release/mavlink/QGroundControl" alt="Latest Release">
   </a>
 </p>
 

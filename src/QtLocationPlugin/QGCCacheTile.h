@@ -18,11 +18,11 @@ struct QGCCacheTile
         , hash(hash_)
     {}
 
-    const quint64 tileSet = 0;
-    const QString hash;
-    const QByteArray img;
-    const QString format;
-    const QString type;
+    quint64 tileSet;
+    QString hash;
+    QByteArray img;
+    QString format;
+    QString type;
 };
 Q_DECLARE_METATYPE(QGCCacheTile)
 Q_DECLARE_METATYPE(QGCCacheTile*)

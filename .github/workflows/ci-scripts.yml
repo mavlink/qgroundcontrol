@@ -1,0 +1,122 @@
+name: CI Scripts
+
+on:
+  pull_request:
+    paths:
+      - '.github/scripts/**'
+      - '.github/actions/**'
+      - '.github/workflows/**'
+      - '.github/build-config.json'
+      - 'tools/setup/**'
+      - 'tools/*.py'
+      - 'tools/tests/**'
+      - 'tools/common/**'
+      - 'tools/generators/**'
+      - 'tools/analyzers/**'
+      - 'tools/locators/**'
+      - 'tools/log-analyzer/**'
+      - 'tools/lsp/**'
+      - 'tools/simulation/**'
+      - 'tools/translations/**'
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths:
+      - '.github/scripts/**'
+      - '.github/actions/**'
+      - '.github/workflows/**'
+      - '.github/build-config.json'
+      - 'tools/setup/**'
+      - 'tools/*.py'
+      - 'tools/tests/**'
+      - 'tools/common/**'
+      - 'tools/generators/**'
+      - 'tools/analyzers/**'
+      - 'tools/locators/**'
+      - 'tools/log-analyzer/**'
+      - 'tools/lsp/**'
+      - 'tools/simulation/**'
+      - 'tools/translations/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  lint-workflows:
+    name: Lint Workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/.actionlint.yml
+            .github/workflows
+            .github/actions
+          sparse-checkout-cone-mode: false
+
+      - name: Run actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          actionlint_flags: -config-file .github/.actionlint.yml
+          reporter: github-pr-check
+          filter_mode: added
+          fail_level: error
+          level: warning
+
+  test-ci-scripts:
+    name: Test CI Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/setup-python
+            .github/build-config.json
+            .github/scripts
+            tools/*.py
+            tools/setup
+            tools/tests
+            tools/common
+            tools/generators
+            tools/analyzers
+            tools/locators
+            tools/log-analyzer
+            tools/lsp
+            tools/simulation
+            tools/translations
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: test
+          python-version: '3.12'
+
+      - name: Python syntax smoke test
+        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/generators tools/analyzers tools/locators tools/log-analyzer tools/lsp tools/simulation tools/translations
+
+      - name: Run CI script tests
+        run: pytest -q tools/tests .github/scripts/tests

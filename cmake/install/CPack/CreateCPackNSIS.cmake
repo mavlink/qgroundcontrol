@@ -26,6 +26,7 @@ set(CPACK_NSIS_MUI_UNIICON "${QGC_INSTALLER_SOURCE}/WindowsQGC.ico")
 # ----------------------------------------------------------------------------
 # Install/Uninstall Commands
 # ----------------------------------------------------------------------------
+set(EXENAME ${CMAKE_PROJECT_NAME})
 # set(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS "")
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
     CreateDirectory \"\$SMPROGRAMS\\${CMAKE_PROJECT_NAME}\"

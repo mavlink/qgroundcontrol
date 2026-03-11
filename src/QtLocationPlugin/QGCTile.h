@@ -18,7 +18,7 @@ struct QGCTile
     int z = 0;
     quint64 tileSet = UINT64_MAX;
     QString hash;
-    QString type = QStringLiteral("Invalid"); // TODO: int?
+    int type = -1;
 };
 Q_DECLARE_METATYPE(QGCTile)
 Q_DECLARE_METATYPE(QGCTile*)

@@ -19,7 +19,7 @@ Item {
     property var    gimbals:                    gimbalController.gimbals
     property var    activeGimbal:               gimbalController.activeGimbal
     property var    multiGimbalSetup:           gimbalController.gimbals.count > 1
-    property bool   joystickButtonsAvailable:   activeVehicle.joystickEnabled
+    property bool   joystickButtonsAvailable:   activeVehicle ? joystickManager.activeJoystickEnabledForActiveVehicle : false
     property bool   showAzimuth:                QGroundControl.settingsManager.gimbalControllerSettings.toolbarIndicatorShowAzimuth.rawValue
 
     property var    margins:                    ScreenTools.defaultFontPixelWidth
@@ -314,7 +314,8 @@ Item {
         function onShowAcquireGimbalControlPopup() {
             if(!acquirePopupConnection.isPopupOpen){
                 acquirePopupConnection.isPopupOpen = true;
-                mainWindow.showMessageDialog(
+                QGroundControl.showMessageDialog(
+                    control,
                     "Request Gimbal Control?",
                     "Command not sent. Another user has control of the gimbal.",
                     Dialog.Yes | Dialog.No,

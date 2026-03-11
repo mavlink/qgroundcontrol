@@ -1,0 +1,88 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "Latitude",
+    "shortDesc": "Latitude of item position",
+    "type":             "double",
+    "units":            "deg",
+    "min":              -90.0,
+    "max":              90.0,
+    "decimalPlaces":    7
+},
+{
+    "name":             "Longitude",
+    "shortDesc": "Longitude of item position",
+    "type":             "double",
+    "units":            "deg",
+    "min":              -180.0,
+    "max":              180.0,
+    "decimalPlaces":    7
+},
+{
+    "name":             "Easting",
+    "shortDesc": "Easting of item position",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "Northing",
+    "shortDesc": "Northing of item position",
+    "type":             "double",
+    "decimalPlaces":    2
+},
+{
+    "name":             "Zone",
+    "shortDesc": "UTM zone",
+    "type":             "uint8",
+    "min":              1,
+    "max":              60
+},
+{
+    "name":             "Hemisphere",
+    "shortDesc": "Hemisphere for position",
+    "type":             "uint8",
+    "enumStrings":      "North,South",
+    "enumValues":       "0,1"
+},
+{
+    "name":             "MGRS",
+    "shortDesc": "MGRS coordinate",
+    "type":             "string"
+},
+{
+    "name":             "OffsetEast",
+    "shortDesc":        "East offset",
+    "type":             "double",
+    "units":            "m",
+    "defaultValue":     0,
+    "decimalPlaces":    2
+},
+{
+    "name":             "OffsetNorth",
+    "shortDesc":        "North offset",
+    "type":             "double",
+    "units":            "m",
+    "defaultValue":     0,
+    "decimalPlaces":    2
+},
+{
+    "name":             "OffsetUp",
+    "shortDesc":        "Up offset",
+    "type":             "double",
+    "units":            "m",
+    "defaultValue":     0,
+    "decimalPlaces":    2
+},
+{
+    "name":             "RotateDegreesCW",
+    "shortDesc":        "Clockwise rotation",
+    "type":             "double",
+    "units":            "deg",
+    "defaultValue":     0,
+    "decimalPlaces":    1
+}
+]
+}

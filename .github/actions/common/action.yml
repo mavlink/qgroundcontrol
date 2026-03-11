@@ -5,17 +5,21 @@ runs:
   steps:
     - name: Free Disk Space
       if: runner.os == 'Linux'
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: endersonmenezes/free-disk-space@v3
       with:
-        tool-cache: false
-        android: false
-        large-packages: false
+        remove_android: false
+        remove_dotnet: true
+        remove_haskell: true
+        remove_tool_cache: false
+        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+        remove_packages_one_command: true
+        rm_cmd: rmz
 
     - uses: lukka/get-cmake@v4.2.1
 
     - uses: actions/setup-python@v6
       with:
-        python-version: '>=3.9'
+        python-version: '3.12'
 
     - name: Create build directory
       shell: bash

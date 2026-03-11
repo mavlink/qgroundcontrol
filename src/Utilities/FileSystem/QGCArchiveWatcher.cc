@@ -24,6 +24,7 @@ QGCArchiveWatcher::QGCArchiveWatcher(QObject *parent)
 QGCArchiveWatcher::~QGCArchiveWatcher()
 {
     if (_extractionJob != nullptr && _extractionJob->isRunning()) {
+        _cancelPending = true;
         _extractionJob->cancel();
     }
 }
@@ -98,7 +99,7 @@ bool QGCArchiveWatcher::watchDirectory(const QString &directoryPath)
         qCDebug(QGCArchiveWatcherLog) << "Initialized" << fileSet.size() << "known files in" << canonicalPath;
     }
 
-    if (_fileWatcher->watchDirectory(canonicalPath)) {
+    if (_fileWatcher->watchDirectory(canonicalPath, nullptr)) {
         qCDebug(QGCArchiveWatcherLog) << "Watching directory for archives:" << canonicalPath;
         return true;
     }
@@ -123,9 +124,15 @@ void QGCArchiveWatcher::clear()
     _fileWatcher->clear();
     _knownFiles.clear();
     _pendingExtractions.clear();
+    _currentArchive.clear();
+    _setExtracting(false);
+    _setProgress(0.0);
 
     if (_extractionJob) {
-        _extractionJob->cancel();
+        if (_extractionJob->isRunning()) {
+            _cancelPending = true;
+            _extractionJob->cancel();
+        }
     }
 }
 
@@ -157,9 +164,13 @@ void QGCArchiveWatcher::cancelExtraction()
 {
     if (_extractionJob != nullptr && _extractionJob->isRunning()) {
         qCDebug(QGCArchiveWatcherLog) << "Cancelling extraction";
+        _cancelPending = true;
         _extractionJob->cancel();
     }
     _pendingExtractions.clear();
+    _currentArchive.clear();
+    _setExtracting(false);
+    _setProgress(0.0);
 }
 
 // ============================================================================
@@ -202,6 +213,14 @@ void QGCArchiveWatcher::_onExtractionProgress(qreal progress)
 
 void QGCArchiveWatcher::_onExtractionFinished(bool success)
 {
+    if (_cancelPending) {
+        _cancelPending = false;
+        _currentArchive.clear();
+        _setExtracting(false);
+        _setProgress(0.0);
+        return;
+    }
+
     qCDebug(QGCArchiveWatcherLog) << "Extraction finished:" << _currentArchive
                                    << "success:" << success;
 
@@ -300,6 +319,7 @@ void QGCArchiveWatcher::_startExtraction(const QString &archivePath)
                                    << (isArchive ? "(archive)" : "(compressed file)");
 
     _currentArchive = archivePath;
+    _cancelPending = false;
     _setExtracting(true);
     _setProgress(0.0);
 

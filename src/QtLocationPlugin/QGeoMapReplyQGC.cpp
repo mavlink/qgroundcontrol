@@ -49,6 +49,11 @@ bool QGeoTiledMapReplyQGC::init()
     }, Qt::AutoConnection);
 
     QGCFetchTileTask *task = QGeoFileTileCacheQGC::createFetchTileTask(UrlFactory::getProviderTypeFromQtMapId(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom());
+    if (!task) {
+        qCWarning(QGeoTiledMapReplyQGCLog) << "Failed to create fetch tile task";
+        m_initialized = false;
+        return false;
+    }
     (void) connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::_cacheReply);
     (void) connect(task, &QGCMapTask::error, this, &QGeoTiledMapReplyQGC::_cacheError);
     if (!getQGCMapEngine()->addTask(task)) {
@@ -110,7 +115,10 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     }
 
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(tileSpec().mapId());
-    Q_CHECK_PTR(mapProvider);
+    if (!mapProvider) {
+        setError(QGeoTiledMapReply::UnknownError, tr("Invalid Map Provider"));
+        return;
+    }
 
     if (mapProvider->isBingProvider() && (image == _bingNoTileImage)) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Bing Tile Above Zoom Level"));

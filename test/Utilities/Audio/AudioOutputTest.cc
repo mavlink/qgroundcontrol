@@ -1,12 +1,12 @@
 #include "AudioOutputTest.h"
-#include "AudioOutput.h"
 
-#include <QtTest/QTest>
+#include "AudioOutput.h"
 
 void AudioOutputTest::_testSpokenReplacements()
 {
     QString result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("-10.5m, -10.5m. -10.5 m"));
-    QCOMPARE(result, QStringLiteral("negative 10 point 5 meters, negative 10 point 5 meters. negative 10 point 5  meters"));
+    QCOMPARE(result,
+             QStringLiteral("negative 10 point 5 meters, negative 10 point 5 meters. negative 10 point 5  meters"));
     result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("-10m -10 m"));
     QCOMPARE(result, QStringLiteral("negative 10 meters negative 10  meters"));
     result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("foo -10m -10 m bar"));
@@ -24,3 +24,7 @@ void AudioOutputTest::_testSpokenReplacements()
     result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("1001ms"));
     QCOMPARE(result, QStringLiteral("1 second and 1 millisecond"));
 }
+
+#include "UnitTest.h"
+
+UT_REGISTER_TEST(AudioOutputTest, TestLabel::Unit, TestLabel::Utilities)

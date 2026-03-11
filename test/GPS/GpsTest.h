@@ -8,4 +8,12 @@ class GpsTest : public UnitTest
 
 private slots:
     void _testGpsRTCM();
+    void _testRtcmParserIgnoresBytesUntilPreamble();
+    void _testRtcmParserRecoversAfterInvalidLength();
+    void _testRtcmParserRejectsOversizedLengthAndRecovers();
+    void _testRtcmParserResetClearsPartialState();
+    void _testNtripAutoStartDisabledDefersSocketCreation();
+    void _testNtripAutoStartDefaultCreatesSocket();
+    void _testNtripWhitelistFiltersMessages();
+    void _testNtripSpartnHeaderIsStrippedOnlyOnce();
 };

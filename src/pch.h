@@ -1,37 +1,46 @@
 #pragma once
 
+// STL
 #include <functional>
 #include <memory>
-#include <string>
 #include <vector>
 
+// Qt Core - fundamentals
+#include <QtCore/QByteArray>
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDebug>
+#include <QtCore/QDateTime>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QList>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
+#include <QtCore/QSettings>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QtGlobal>
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
 #include <QtCore/QVariant>
-#include <QtCore/QVector>
 
+// Qt Core - JSON
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
-#include <QtGui/QImage>
-#include <QtGui/QPainter>
-#include <QtGui/QTransform>
+// Qt Core - utilities
+#include <QtCore/QApplicationStatic>
+#include <QtCore/QElapsedTimer>
 
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QNetworkRequest>
+// Qt Positioning - used in 50+ files
+#include <QtPositioning/QGeoCoordinate>
 
-#include <QtQml/QQmlApplicationEngine>
-#include <QtQml/QQmlContext>
-
+// Qt Qml/Quick - QML integration macros used in ~130 headers
+#include <QtQml/QQmlEngine>
+#include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/QQuickView>
 
-#include <QtQuickControls2/QQuickStyle>
-
+// MAVLink - used in 400+ locations
 #include "MAVLinkLib.h"

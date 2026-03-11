@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import codecs
 import json
 import os
 import sys
+import xml.etree.ElementTree as ET
 
 qgcFileTypeKey = "fileType"
 translateKeysKey = "translateKeys"
@@ -108,53 +108,49 @@ def walkDirectoryTreeForJsonFiles(dir, multiFileLocArray):
             walkDirectoryTreeForJsonFiles(path, multiFileLocArray)
 
 
-def escapeXmlString(xmlStr):
-    # Escape the string so it can be used in XML
-    xmlStr = xmlStr.replace("&", "&amp;")
-    xmlStr = xmlStr.replace("<", "&lt;")
-    xmlStr = xmlStr.replace(">", "&gt;")
-    xmlStr = xmlStr.replace("'", "&apos;")
-    xmlStr = xmlStr.replace('"', "&quot;")
-    return xmlStr
-
-
 def writeJsonTSFile(multiFileLocArray):
-    with codecs.open("translations/qgc-json.ts", "w", "utf-8") as jsonTSFile:
+    ts_root = ET.Element("TS", version="2.1")
+
+    for entry in multiFileLocArray:
+        context = ET.SubElement(ts_root, "context")
+        ET.SubElement(context, "name").text = entry[0]
+
+        singleFileLocStringDict = entry[2]
+        for locKey in singleFileLocStringDict:
+            sourceStr = locKey
+            disambiguation = ""
+            if sourceStr.startswith(disambiguationPrefix):
+                workStr = sourceStr[len(disambiguationPrefix) :]
+                terminatorIndex = workStr.find("#")
+                if terminatorIndex == -1:
+                    print(f"Bad disambiguation {entry[0]} '{sourceStr}'")
+                    sys.exit(1)
+                disambiguation = workStr[:terminatorIndex]
+                sourceStr = workStr[terminatorIndex + 1 :]
+
+            message = ET.SubElement(context, "message")
+            if len(disambiguation):
+                ET.SubElement(message, "comment").text = disambiguation
+
+            extraCommentStr = ""
+            for jsonHierachy in singleFileLocStringDict[locKey]:
+                extraCommentStr += f"{jsonHierachy}, "
+            ET.SubElement(message, "extracomment").text = extraCommentStr
+
+            if extraCommentStr.endswith(".enumStrings, "):
+                ET.SubElement(
+                    message, "translatorcomment"
+                ).text = "Only use english comma ',' to separate strings"
+
+            ET.SubElement(message, "location", filename=entry[1])
+            ET.SubElement(message, "source").text = sourceStr
+            ET.SubElement(message, "translation", type="unfinished")
+
+    with open("translations/qgc-json.ts", "w", encoding="utf-8") as jsonTSFile:
         jsonTSFile.write('<?xml version="1.0" encoding="utf-8"?>\n')
         jsonTSFile.write("<!DOCTYPE TS>\n")
-        jsonTSFile.write('<TS version="2.1">\n')
-        for entry in multiFileLocArray:
-            jsonTSFile.write("<context>\n")
-            jsonTSFile.write(f"    <name>{entry[0]}</name>\n")
-            singleFileLocStringDict = entry[2]
-            for locStr in singleFileLocStringDict:
-                disambiguation = ""
-                if locStr.startswith(disambiguationPrefix):
-                    workStr = locStr[len(disambiguationPrefix) :]
-                    terminatorIndex = workStr.find("#")
-                    if terminatorIndex == -1:
-                        print(f"Bad disambiguation {entry[0]} '{locStr}'")
-                        sys.exit(1)
-                    disambiguation = workStr[:terminatorIndex]
-                    locStr = workStr[terminatorIndex + 1 :]
-                jsonTSFile.write("    <message>\n")
-                if len(disambiguation):
-                    jsonTSFile.write(f"        <comment>{disambiguation}</comment>\n")
-                extraCommentStr = ""
-                for jsonHierachy in singleFileLocStringDict[locStr]:
-                    extraCommentStr += f"{jsonHierachy}, "
-                locStr = escapeXmlString(locStr)
-                jsonTSFile.write(f"        <extracomment>{extraCommentStr}</extracomment>\n")
-                if extraCommentStr.endswith(".enumStrings, "):
-                    jsonTSFile.write(
-                        "        <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>\n"
-                    )
-                jsonTSFile.write(f'        <location filename="{entry[1]}"/>\n')
-                jsonTSFile.write(f"        <source>{locStr}</source>\n")
-                jsonTSFile.write('        <translation type="unfinished"></translation>\n')
-                jsonTSFile.write("    </message>\n")
-            jsonTSFile.write("</context>\n")
-        jsonTSFile.write("</TS>\n")
+        jsonTSFile.write(ET.tostring(ts_root, encoding="unicode"))
+        jsonTSFile.write("\n")
 
 
 def main():

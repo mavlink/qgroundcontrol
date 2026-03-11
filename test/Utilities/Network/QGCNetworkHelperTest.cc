@@ -1,14 +1,17 @@
 #include "QGCNetworkHelperTest.h"
-#include "QGCNetworkHelper.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
-#include <QtTest/QTest>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "QGCNetworkHelper.h"
+#include "UnitTest.h"
 
 // ============================================================================
 // HTTP Status Code Helpers Tests
 // ============================================================================
-
 void QGCNetworkHelperTest::_testClassifyHttpStatusInformational()
 {
     QCOMPARE(QGCNetworkHelper::classifyHttpStatus(100), QGCNetworkHelper::HttpStatusClass::Informational);
@@ -66,7 +69,6 @@ void QGCNetworkHelperTest::_testIsHttpSuccess()
     QVERIFY(QGCNetworkHelper::isHttpSuccess(201));
     QVERIFY(QGCNetworkHelper::isHttpSuccess(204));
     QVERIFY(QGCNetworkHelper::isHttpSuccess(299));
-
     QVERIFY(!QGCNetworkHelper::isHttpSuccess(100));
     QVERIFY(!QGCNetworkHelper::isHttpSuccess(300));
     QVERIFY(!QGCNetworkHelper::isHttpSuccess(404));
@@ -80,7 +82,6 @@ void QGCNetworkHelperTest::_testIsHttpRedirect()
     QVERIFY(QGCNetworkHelper::isHttpRedirect(302));
     QVERIFY(QGCNetworkHelper::isHttpRedirect(304));
     QVERIFY(QGCNetworkHelper::isHttpRedirect(399));
-
     QVERIFY(!QGCNetworkHelper::isHttpRedirect(200));
     QVERIFY(!QGCNetworkHelper::isHttpRedirect(400));
 }
@@ -92,7 +93,6 @@ void QGCNetworkHelperTest::_testIsHttpClientError()
     QVERIFY(QGCNetworkHelper::isHttpClientError(403));
     QVERIFY(QGCNetworkHelper::isHttpClientError(404));
     QVERIFY(QGCNetworkHelper::isHttpClientError(499));
-
     QVERIFY(!QGCNetworkHelper::isHttpClientError(200));
     QVERIFY(!QGCNetworkHelper::isHttpClientError(500));
 }
@@ -104,7 +104,6 @@ void QGCNetworkHelperTest::_testIsHttpServerError()
     QVERIFY(QGCNetworkHelper::isHttpServerError(502));
     QVERIFY(QGCNetworkHelper::isHttpServerError(503));
     QVERIFY(QGCNetworkHelper::isHttpServerError(599));
-
     QVERIFY(!QGCNetworkHelper::isHttpServerError(200));
     QVERIFY(!QGCNetworkHelper::isHttpServerError(404));
 }
@@ -125,7 +124,6 @@ void QGCNetworkHelperTest::_testHttpStatusText()
     QCOMPARE(QGCNetworkHelper::httpStatusText(500), QStringLiteral("Internal Server Error"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(502), QStringLiteral("Bad Gateway"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(503), QStringLiteral("Service Unavailable"));
-
     // Unknown status should return formatted message
     QVERIFY(QGCNetworkHelper::httpStatusText(999).contains("999"));
 }
@@ -133,10 +131,10 @@ void QGCNetworkHelperTest::_testHttpStatusText()
 void QGCNetworkHelperTest::_testHttpStatusTextFromEnum()
 {
     using HttpStatusCode = QGCNetworkHelper::HttpStatusCode;
-
     // Test Qt HttpStatusCode enum overload
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Continue), QStringLiteral("Continue"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::SwitchingProtocols), QStringLiteral("Switching Protocols"));
+    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::SwitchingProtocols),
+             QStringLiteral("Switching Protocols"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Ok), QStringLiteral("OK"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Created), QStringLiteral("Created"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Accepted), QStringLiteral("Accepted"));
@@ -151,16 +149,17 @@ void QGCNetworkHelperTest::_testHttpStatusTextFromEnum()
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::MethodNotAllowed), QStringLiteral("Method Not Allowed"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::RequestTimeout), QStringLiteral("Request Timeout"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::TooManyRequests), QStringLiteral("Too Many Requests"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::InternalServerError), QStringLiteral("Internal Server Error"));
+    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::InternalServerError),
+             QStringLiteral("Internal Server Error"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::BadGateway), QStringLiteral("Bad Gateway"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::ServiceUnavailable), QStringLiteral("Service Unavailable"));
+    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::ServiceUnavailable),
+             QStringLiteral("Service Unavailable"));
     QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::GatewayTimeout), QStringLiteral("Gateway Timeout"));
 }
 
 void QGCNetworkHelperTest::_testHttpStatusCodeEnumRoundTrip()
 {
     using HttpStatusCode = QGCNetworkHelper::HttpStatusCode;
-
     // Verify that int and enum overloads produce consistent results
     QCOMPARE(QGCNetworkHelper::httpStatusText(200), QGCNetworkHelper::httpStatusText(HttpStatusCode::Ok));
     QCOMPARE(QGCNetworkHelper::httpStatusText(201), QGCNetworkHelper::httpStatusText(HttpStatusCode::Created));
@@ -172,10 +171,11 @@ void QGCNetworkHelperTest::_testHttpStatusCodeEnumRoundTrip()
     QCOMPARE(QGCNetworkHelper::httpStatusText(401), QGCNetworkHelper::httpStatusText(HttpStatusCode::Unauthorized));
     QCOMPARE(QGCNetworkHelper::httpStatusText(403), QGCNetworkHelper::httpStatusText(HttpStatusCode::Forbidden));
     QCOMPARE(QGCNetworkHelper::httpStatusText(404), QGCNetworkHelper::httpStatusText(HttpStatusCode::NotFound));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(500), QGCNetworkHelper::httpStatusText(HttpStatusCode::InternalServerError));
+    QCOMPARE(QGCNetworkHelper::httpStatusText(500),
+             QGCNetworkHelper::httpStatusText(HttpStatusCode::InternalServerError));
     QCOMPARE(QGCNetworkHelper::httpStatusText(502), QGCNetworkHelper::httpStatusText(HttpStatusCode::BadGateway));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(503), QGCNetworkHelper::httpStatusText(HttpStatusCode::ServiceUnavailable));
-
+    QCOMPARE(QGCNetworkHelper::httpStatusText(503),
+             QGCNetworkHelper::httpStatusText(HttpStatusCode::ServiceUnavailable));
     // Verify static_cast round-trip
     QCOMPARE(static_cast<int>(HttpStatusCode::Ok), 200);
     QCOMPARE(static_cast<int>(HttpStatusCode::NotFound), 404);
@@ -185,7 +185,6 @@ void QGCNetworkHelperTest::_testHttpStatusCodeEnumRoundTrip()
 // ============================================================================
 // HTTP Methods Tests
 // ============================================================================
-
 void QGCNetworkHelperTest::_testHttpMethodName()
 {
     QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Get), QStringLiteral("GET"));
@@ -232,7 +231,6 @@ void QGCNetworkHelperTest::_testParseHttpMethodUnknown()
 // ============================================================================
 // URL Utilities Tests
 // ============================================================================
-
 void QGCNetworkHelperTest::_testIsValidUrl()
 {
     // Valid URLs
@@ -240,9 +238,8 @@ void QGCNetworkHelperTest::_testIsValidUrl()
     QVERIFY(QGCNetworkHelper::isValidUrl(QUrl("https://example.com")));
     QVERIFY(QGCNetworkHelper::isValidUrl(QUrl("file:///path/to/file")));
     QVERIFY(QGCNetworkHelper::isValidUrl(QUrl("qrc:/resource/path")));
-
     // Invalid URLs
-    QVERIFY(!QGCNetworkHelper::isValidUrl(QUrl()));  // Empty URL
+    QVERIFY(!QGCNetworkHelper::isValidUrl(QUrl()));                     // Empty URL
     QVERIFY(!QGCNetworkHelper::isValidUrl(QUrl("ftp://example.com")));  // Unsupported scheme
 }
 
@@ -252,7 +249,6 @@ void QGCNetworkHelperTest::_testIsHttpUrl()
     QVERIFY(QGCNetworkHelper::isHttpUrl(QUrl("https://example.com")));
     QVERIFY(QGCNetworkHelper::isHttpUrl(QUrl("HTTP://EXAMPLE.COM")));
     QVERIFY(QGCNetworkHelper::isHttpUrl(QUrl("HTTPS://EXAMPLE.COM")));
-
     QVERIFY(!QGCNetworkHelper::isHttpUrl(QUrl("file:///path")));
     QVERIFY(!QGCNetworkHelper::isHttpUrl(QUrl("ftp://example.com")));
     QVERIFY(!QGCNetworkHelper::isHttpUrl(QUrl()));
@@ -262,7 +258,6 @@ void QGCNetworkHelperTest::_testIsHttpsUrl()
 {
     QVERIFY(QGCNetworkHelper::isHttpsUrl(QUrl("https://example.com")));
     QVERIFY(QGCNetworkHelper::isHttpsUrl(QUrl("HTTPS://EXAMPLE.COM")));
-
     QVERIFY(!QGCNetworkHelper::isHttpsUrl(QUrl("http://example.com")));
     QVERIFY(!QGCNetworkHelper::isHttpsUrl(QUrl("file:///path")));
     QVERIFY(!QGCNetworkHelper::isHttpsUrl(QUrl()));
@@ -275,22 +270,17 @@ void QGCNetworkHelperTest::_testNormalizeUrl()
     QCOMPARE(normalized.scheme(), QStringLiteral("http"));
     QCOMPARE(normalized.host(), QStringLiteral("example.com"));
     QCOMPARE(normalized.path(), QStringLiteral("/Path"));  // Path case preserved
-
     // Remove default ports
     QUrl httpWithPort = QGCNetworkHelper::normalizeUrl(QUrl("http://example.com:80/path"));
     QCOMPARE(httpWithPort.port(), -1);
-
     QUrl httpsWithPort = QGCNetworkHelper::normalizeUrl(QUrl("https://example.com:443/path"));
     QCOMPARE(httpsWithPort.port(), -1);
-
     // Keep non-default ports
     QUrl customPort = QGCNetworkHelper::normalizeUrl(QUrl("http://example.com:8080/path"));
     QCOMPARE(customPort.port(), 8080);
-
     // Remove trailing slash (except root)
     QUrl trailingSlash = QGCNetworkHelper::normalizeUrl(QUrl("http://example.com/path/"));
     QCOMPARE(trailingSlash.path(), QStringLiteral("/path"));
-
     QUrl rootPath = QGCNetworkHelper::normalizeUrl(QUrl("http://example.com/"));
     QCOMPARE(rootPath.path(), QStringLiteral("/"));
 }
@@ -300,11 +290,9 @@ void QGCNetworkHelperTest::_testEnsureScheme()
     // Add default scheme
     QUrl noScheme = QGCNetworkHelper::ensureScheme(QUrl("//example.com/path"));
     QCOMPARE(noScheme.scheme(), QStringLiteral("https"));
-
     // Custom default scheme
     QUrl customScheme = QGCNetworkHelper::ensureScheme(QUrl("//example.com/path"), "http");
     QCOMPARE(customScheme.scheme(), QStringLiteral("http"));
-
     // Existing scheme preserved
     QUrl existingScheme = QGCNetworkHelper::ensureScheme(QUrl("http://example.com"), "https");
     QCOMPARE(existingScheme.scheme(), QStringLiteral("http"));
@@ -315,14 +303,12 @@ void QGCNetworkHelperTest::_testBuildUrlFromMap()
     QMap<QString, QString> params;
     params["key1"] = "value1";
     params["key2"] = "value2";
-
     QUrl url = QGCNetworkHelper::buildUrl("http://example.com/api", params);
     QVERIFY(url.isValid());
     QCOMPARE(url.scheme(), QStringLiteral("http"));
     QCOMPARE(url.host(), QStringLiteral("example.com"));
     QCOMPARE(url.path(), QStringLiteral("/api"));
     QVERIFY(url.hasQuery());
-
     QString query = url.query();
     QVERIFY(query.contains("key1=value1"));
     QVERIFY(query.contains("key2=value2"));
@@ -331,13 +317,10 @@ void QGCNetworkHelperTest::_testBuildUrlFromMap()
 void QGCNetworkHelperTest::_testBuildUrlFromList()
 {
     QList<QPair<QString, QString>> params = {
-        {"key1", "value1"},
-        {"key1", "value2"},  // Duplicate key allowed with list
+        {"key1", "value1"}, {"key1", "value2"},  // Duplicate key allowed with list
     };
-
     QUrl url = QGCNetworkHelper::buildUrl("http://example.com/api", params);
     QVERIFY(url.isValid());
-
     QString query = url.query();
     // List preserves order and allows duplicates
     QVERIFY(query.contains("key1=value1"));
@@ -346,21 +329,16 @@ void QGCNetworkHelperTest::_testBuildUrlFromList()
 
 void QGCNetworkHelperTest::_testUrlFileName()
 {
-    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/path/to/file.txt")),
-             QStringLiteral("file.txt"));
-    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/file.zip")),
-             QStringLiteral("file.zip"));
-    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/")),
-             QStringLiteral("/"));
-    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/path/")),
-             QStringLiteral("/path/"));
+    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/path/to/file.txt")), QStringLiteral("file.txt"));
+    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/file.zip")), QStringLiteral("file.zip"));
+    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/")), QStringLiteral("/"));
+    QCOMPARE(QGCNetworkHelper::urlFileName(QUrl("http://example.com/path/")), QStringLiteral("/path/"));
 }
 
 void QGCNetworkHelperTest::_testUrlWithoutQuery()
 {
     QUrl original("http://example.com/path?key=value#fragment");
     QUrl result = QGCNetworkHelper::urlWithoutQuery(original);
-
     QVERIFY(result.isValid());
     QCOMPARE(result.scheme(), QStringLiteral("http"));
     QCOMPARE(result.host(), QStringLiteral("example.com"));
@@ -372,15 +350,12 @@ void QGCNetworkHelperTest::_testUrlWithoutQuery()
 // ============================================================================
 // Request Configuration Tests
 // ============================================================================
-
 void QGCNetworkHelperTest::_testDefaultUserAgent()
 {
     QString userAgent = QGCNetworkHelper::defaultUserAgent();
     QVERIFY(!userAgent.isEmpty());
-
     // Should contain app name
     QVERIFY(userAgent.contains(QCoreApplication::applicationName()));
-
     // Should contain Qt version
     QVERIFY(userAgent.contains("Qt"));
 }
@@ -388,7 +363,6 @@ void QGCNetworkHelperTest::_testDefaultUserAgent()
 void QGCNetworkHelperTest::_testRequestConfigDefaults()
 {
     QGCNetworkHelper::RequestConfig config;
-
     QCOMPARE(config.timeoutMs, QGCNetworkHelper::kDefaultTimeoutMs);
     QVERIFY(config.allowRedirects);
     QVERIFY(config.http2Allowed);
@@ -398,28 +372,144 @@ void QGCNetworkHelperTest::_testRequestConfigDefaults()
     QCOMPARE(config.accept, QStringLiteral("*/*"));
 }
 
+void QGCNetworkHelperTest::_testRequestConfigAttributes()
+{
+    QGCNetworkHelper::RequestConfig config;
+    config.requestAttributes.append({
+        QNetworkRequest::CacheLoadControlAttribute,
+        QVariant::fromValue(QNetworkRequest::AlwaysNetwork),
+    });
+
+    const QNetworkRequest request =
+        QGCNetworkHelper::createRequest(QUrl(QStringLiteral("https://example.com")), config);
+    const QVariant attribute = request.attribute(QNetworkRequest::CacheLoadControlAttribute);
+    QVERIFY(attribute.isValid());
+    QCOMPARE(attribute.toInt(), static_cast<int>(QNetworkRequest::AlwaysNetwork));
+}
+
+void QGCNetworkHelperTest::_testSetJsonHeaders()
+{
+    QNetworkRequest request(QUrl(QStringLiteral("https://example.com")));
+    QGCNetworkHelper::setJsonHeaders(request);
+
+    QCOMPARE(request.rawHeader("Accept"), QByteArray("application/json"));
+    QCOMPARE(request.header(QNetworkRequest::ContentTypeHeader).toString(), QStringLiteral("application/json"));
+}
+
+void QGCNetworkHelperTest::_testCreateBasicAuthCredentials()
+{
+    const QString credentials = QGCNetworkHelper::createBasicAuthCredentials("user", "pass");
+    QCOMPARE(credentials, QStringLiteral("dXNlcjpwYXNz"));
+}
+
+void QGCNetworkHelperTest::_testSetBasicAuthHeader()
+{
+    QNetworkRequest request(QUrl(QStringLiteral("https://example.com")));
+    QGCNetworkHelper::setBasicAuth(request, QStringLiteral("user"), QStringLiteral("pass"));
+
+    QCOMPARE(request.rawHeader("Authorization"), QByteArray("Basic dXNlcjpwYXNz"));
+}
+
+void QGCNetworkHelperTest::_testSetBearerTokenHeader()
+{
+    QNetworkRequest request(QUrl(QStringLiteral("https://example.com")));
+    QGCNetworkHelper::setBearerToken(request, QStringLiteral("abc123"));
+
+    QCOMPARE(request.rawHeader("Authorization"), QByteArray("Bearer abc123"));
+}
+
+void QGCNetworkHelperTest::_testLooksLikeJson()
+{
+    QVERIFY(QGCNetworkHelper::looksLikeJson("{}"));
+    QVERIFY(QGCNetworkHelper::looksLikeJson(" [1, 2, 3]"));
+    QVERIFY(QGCNetworkHelper::looksLikeJson("\n\t{\"a\":1}"));
+    QVERIFY(!QGCNetworkHelper::looksLikeJson(""));
+    QVERIFY(!QGCNetworkHelper::looksLikeJson("  \n\t"));
+    QVERIFY(!QGCNetworkHelper::looksLikeJson("<xml></xml>"));
+}
+
+void QGCNetworkHelperTest::_testErrorMessageNullReply()
+{
+    QCOMPARE(QGCNetworkHelper::errorMessage(nullptr), QStringLiteral("No reply"));
+}
+
+void QGCNetworkHelperTest::_testRedirectUrlResolvesRelativeTarget()
+{
+    TestFixtures::NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com/api/v1/source")));
+    reply.setRedirectTarget(QUrl(QStringLiteral("../next")));
+
+    const QUrl resolved = QGCNetworkHelper::redirectUrl(&reply);
+    QCOMPARE(resolved, QUrl(QStringLiteral("https://example.com/api/next")));
+}
+
+void QGCNetworkHelperTest::_testErrorMessagePrefersNetworkErrorOverHttpStatus()
+{
+    TestFixtures::NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com/api")));
+    reply.setHttpStatus(404);
+    reply.setNetworkError(QNetworkReply::ConnectionRefusedError, QStringLiteral("connection refused"));
+
+    QCOMPARE(QGCNetworkHelper::errorMessage(&reply), QStringLiteral("connection refused"));
+}
+
+void QGCNetworkHelperTest::_testParseJsonValid()
+{
+    QJsonParseError error{};
+    const QJsonDocument doc = QGCNetworkHelper::parseJson(R"({"value":42})", &error);
+
+    QVERIFY(!doc.isNull());
+    QCOMPARE(error.error, QJsonParseError::NoError);
+    QCOMPARE(doc.object().value(QStringLiteral("value")).toInt(), 42);
+}
+
+void QGCNetworkHelperTest::_testParseJsonInvalid()
+{
+    QJsonParseError error{};
+    const QJsonDocument doc = QGCNetworkHelper::parseJson("{ invalid json", &error);
+
+    QVERIFY(doc.isNull());
+    QVERIFY(error.error != QJsonParseError::NoError);
+}
+
+void QGCNetworkHelperTest::_testParseJsonReplyNull()
+{
+    QJsonParseError error{};
+    const QJsonDocument doc = QGCNetworkHelper::parseJsonReply(nullptr, &error);
+
+    QVERIFY(doc.isNull());
+    QCOMPARE(error.error, QJsonParseError::UnterminatedObject);
+    QCOMPARE(error.offset, 0);
+}
+
+void QGCNetworkHelperTest::_testReplyHelpersNullReply()
+{
+    QCOMPARE(QGCNetworkHelper::httpStatusCode(nullptr), -1);
+    QVERIFY(QGCNetworkHelper::redirectUrl(nullptr).isEmpty());
+    QVERIFY(!QGCNetworkHelper::isSuccess(nullptr));
+    QVERIFY(!QGCNetworkHelper::isRedirect(nullptr));
+    QVERIFY(QGCNetworkHelper::contentType(nullptr).isEmpty());
+    QCOMPARE(QGCNetworkHelper::contentLength(nullptr), -1);
+    QVERIFY(!QGCNetworkHelper::isJsonResponse(nullptr));
+}
+
 // ============================================================================
 // Network Availability Tests
 // ============================================================================
-
 void QGCNetworkHelperTest::_testIsNetworkAvailable()
 {
-    // Just verify it returns without crashing
-    // Result depends on actual network state
-    (void)QGCNetworkHelper::isNetworkAvailable();
-    QVERIFY(true);
+    // Smoke test: network availability query completes without crash
+    // Result depends on system state, so we only verify it returns a valid bool
+    const bool available = QGCNetworkHelper::isNetworkAvailable();
+    Q_UNUSED(available);
 }
 
 void QGCNetworkHelperTest::_testConnectionTypeName()
 {
-    QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::None),
-             QStringLiteral("None"));
+    QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::None), QStringLiteral("None"));
     QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::Unknown),
              QStringLiteral("Unknown"));
     QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::Ethernet),
              QStringLiteral("Ethernet"));
-    QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::WiFi),
-             QStringLiteral("WiFi"));
+    QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::WiFi), QStringLiteral("WiFi"));
     QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::Cellular),
              QStringLiteral("Cellular"));
     QCOMPARE(QGCNetworkHelper::connectionTypeName(QGCNetworkHelper::ConnectionType::Bluetooth),
@@ -429,19 +519,22 @@ void QGCNetworkHelperTest::_testConnectionTypeName()
 // ============================================================================
 // SSL Tests
 // ============================================================================
-
 void QGCNetworkHelperTest::_testIsSslAvailable()
 {
-    // Just verify it returns without crashing
+    // Smoke test: SSL availability query completes without crash
     // SSL availability depends on system configuration
-    (void)QGCNetworkHelper::isSslAvailable();
-    QVERIFY(true);
+    const bool available = QGCNetworkHelper::isSslAvailable();
+    Q_UNUSED(available);
 }
 
 void QGCNetworkHelperTest::_testSslVersion()
 {
-    QString version = QGCNetworkHelper::sslVersion();
-    // Version string might be empty if SSL not available, but shouldn't crash
-    (void)version;
-    QVERIFY(true);
+    const QString version = QGCNetworkHelper::sslVersion();
+    // Version string might be empty if SSL not available
+    // If SSL is available, version should be non-empty
+    if (QGCNetworkHelper::isSslAvailable()) {
+        QVERIFY(!version.isEmpty());
+    }
 }
+
+UT_REGISTER_TEST(QGCNetworkHelperTest, TestLabel::Unit, TestLabel::Utilities, TestLabel::Network)

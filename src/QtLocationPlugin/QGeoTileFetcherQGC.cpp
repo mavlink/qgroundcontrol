@@ -93,6 +93,9 @@ void QGeoTileFetcherQGC::handleReply(QGeoTiledMapReply *reply, const QGeoTileSpe
 QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, int zoom)
 {
     const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromQtMapId(mapId);
+    if (!mapProvider) {
+        return QNetworkRequest();
+    }
 
     QNetworkRequest request;
     request.setUrl(mapProvider->getTileURL(x, y, zoom));
@@ -105,7 +108,7 @@ QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, i
     request.setHeader(QNetworkRequest::UserAgentHeader, s_userAgent);
     const QByteArray referrer = mapProvider->getReferrer().toUtf8();
     if (!referrer.isEmpty()) {
-        request.setRawHeader(QByteArrayLiteral("Referrer"), referrer);
+        request.setRawHeader(QByteArrayLiteral("Referer"), referrer);
     }
     const QByteArray token = mapProvider->getToken();
     if (!token.isEmpty()) {

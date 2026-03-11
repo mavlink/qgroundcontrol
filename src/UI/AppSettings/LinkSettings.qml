@@ -8,6 +8,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 SettingsPage {
+    id:                             _root
     property var _linkManager:          QGroundControl.linkManager
     property var _autoConnectSettings:  QGroundControl.settingsManager.autoConnectSettings
 
@@ -133,7 +134,7 @@ SettingsPage {
                         fillItem: parent
                         onClicked: {
                             var editingConfig = _linkManager.startConfigurationEditing(object)
-                            linkDialogComponent.createObject(mainWindow, { editingConfig: editingConfig, originalConfig: object }).open()
+                            linkDialogFactory.open({ editingConfig: editingConfig, originalConfig: object })
                         }
                     }
                 }
@@ -154,7 +155,8 @@ SettingsPage {
 
                     QGCMouseArea {
                         fillItem:   parent
-                        onClicked:  mainWindow.showMessageDialog(
+                        onClicked:  QGroundControl.showMessageDialog(
+                                        _root,
                                         qsTr("Delete Link"),
                                         qsTr("Are you sure you want to delete '%1'?").arg(object.name),
                                         Dialog.Ok | Dialog.Cancel,
@@ -182,9 +184,15 @@ SettingsPage {
 
             onClicked: {
                 var editingConfig = _linkManager.createConfiguration(ScreenTools.isSerialAvailable ? LinkConfiguration.TypeSerial : LinkConfiguration.TypeUdp, "")
-                linkDialogComponent.createObject(mainWindow, { editingConfig: editingConfig, originalConfig: null }).open()
+                linkDialogFactory.open({ editingConfig: editingConfig, originalConfig: null })
             }
         }
+    }
+
+    QGCPopupDialogFactory {
+        id: linkDialogFactory
+
+        dialogComponent: linkDialogComponent
     }
 
     Component {
@@ -260,13 +268,20 @@ SettingsPage {
 
                 Loader {
                     id:     linkSettingsLoader
-                    source: subEditConfig.settingsURL
+                    source: editingConfig && editingConfig.settingsURL ? editingConfig.settingsURL : ""
+                    asynchronous: true
 
                     property var subEditConfig:         editingConfig
                     property int _firstColumnWidth:     ScreenTools.defaultFontPixelWidth * 12
                     property int _secondColumnWidth:    ScreenTools.defaultFontPixelWidth * 30
                     property int _rowSpacing:           ScreenTools.defaultFontPixelHeight / 2
                     property int _colSpacing:           ScreenTools.defaultFontPixelWidth / 2
+
+                    onStatusChanged: {
+                        if (status === Loader.Error) {
+                            console.warn("Failed to load link settings page:", source)
+                        }
+                    }
                 }
             }
         }

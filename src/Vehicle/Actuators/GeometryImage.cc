@@ -113,12 +113,12 @@ void VehicleGeometryImageProvider::drawAxisIndicator(QPainter& p, const QPointF&
     p.setFont(font);
 
     auto drawArrow = [&](const QPointF& start, const QPointF& end) {
-        float lineLength = QLineF{start, end}.length();
+        float arrowLineLength = QLineF{start, end}.length();
         p.save();
         p.translate(end);
         float angle = atan2f(end.y()-start.y(), end.x()-start.x());
         p.rotate(angle * (180.f / M_PI) + 90.f);
-        p.drawLine(QPointF{0, arrowHeight/2}, QPointF{0, lineLength});
+        p.drawLine(QPointF{0, arrowHeight/2}, QPointF{0, arrowLineLength});
         QPointF arrow[3] = {
             QPointF{0.f - arrowWidth/2.f, arrowHeight},
             QPointF{0.f, 0.f},
@@ -250,9 +250,9 @@ QPixmap VehicleGeometryImageProvider::requestPixmap([[maybe_unused]] const QStri
     const QColor rotorHighlightColor{ frameArrowColor };
     const QColor fontColor{ _palette.text() };
 
-    auto iterateMotors = [scale, offsetX, offsetY](const QList<ActuatorGeometry> &actuators,
+    auto iterateMotors = [scale, offsetX, offsetY](const QList<ActuatorGeometry> &actuatorsList,
             std::function<void(const ActuatorGeometry&, QPointF)> draw) {
-                for (const auto& actuator : actuators) {
+                for (const auto& actuator : actuatorsList) {
                     if (actuator.type == ActuatorGeometry::Type::Motor) {
                         QPointF pos{
                             offsetX + actuator.position.y()*scale,
@@ -334,8 +334,8 @@ QPixmap VehicleGeometryImageProvider::requestPixmap([[maybe_unused]] const QStri
 
         // spin direction arrows
         int angle = 50;// angle for the whole arc
-        float arrowWidth = frameWidth;
-        float arrowHeight = frameWidth * 1.25f;
+        float spinArrowWidth = frameWidth;
+        float spinArrowHeight = frameWidth * 1.25f;
         float arrowPosition = rotorDiameter / 2.f;
         p.setPen(QPen{arrowColor, 2.5f});
         p.setBrush(arrowColor);
@@ -357,12 +357,12 @@ QPixmap VehicleGeometryImageProvider::requestPixmap([[maybe_unused]] const QStri
             }
             QRectF arrowRect{-arrowPosition, -arrowPosition, arrowPosition * 2.f, arrowPosition * 2.f};
             p.drawArc(arrowRect, 0, -ySign * 16 * angle);
-            QPointF arrow[3] = {
-                QPointF{arrowPosition - arrowWidth/2.f, ySign*arrowHeight/2.f},
-                QPointF{arrowPosition,                  -ySign*arrowHeight/2.f},
-                QPointF{arrowPosition + arrowWidth/2.f, ySign*arrowHeight/2.f},
+            QPointF spinArrow[3] = {
+                QPointF{arrowPosition - spinArrowWidth/2.f, ySign*spinArrowHeight/2.f},
+                QPointF{arrowPosition,                  -ySign*spinArrowHeight/2.f},
+                QPointF{arrowPosition + spinArrowWidth/2.f, ySign*spinArrowHeight/2.f},
             };
-            p.drawConvexPolygon(arrow, sizeof(arrow) / sizeof(arrow[0]));
+            p.drawConvexPolygon(spinArrow, sizeof(spinArrow) / sizeof(spinArrow[0]));
             p.restore();
         }
     };

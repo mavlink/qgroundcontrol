@@ -4,8 +4,8 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 
 import QGroundControl
-import QGroundControl.FactControls
 import QGroundControl.Controls
+import QGroundControl.FactControls
 
 SettingsPage {
     property var    _settingsManager:                       QGroundControl.settingsManager
@@ -22,11 +22,6 @@ SettingsPage {
     property Fact   _maxGoToLocationDistance:               _flyViewSettings.maxGoToLocationDistance
     property Fact   _forwardFlightGoToLocationLoiterRad:    _flyViewSettings.forwardFlightGoToLocationLoiterRad
     property Fact   _goToLocationRequiresConfirmInGuided:   _flyViewSettings.goToLocationRequiresConfirmInGuided
-    property var    _viewer3DSettings:                      _settingsManager.viewer3DSettings
-    property Fact   _viewer3DEnabled:                       _viewer3DSettings.enabled
-    property Fact   _viewer3DOsmFilePath:                   _viewer3DSettings.osmFilePath
-    property Fact   _viewer3DBuildingLevelHeight:           _viewer3DSettings.buildingLevelHeight
-    property Fact   _viewer3DAltitudeBias:                  _viewer3DSettings.altitudeBias
 
     function mavlinkActionList() {
         var fileModel = QGCFileDialogController.getFiles(_settingsManager.appSettings.mavlinkActionsSavePath, "*.json")
@@ -96,12 +91,6 @@ SettingsPage {
             property Fact _updateHomePosition: _flyViewSettings.updateHomePosition
         }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Show Joystick Status in Toolbar")
-            fact:               _flyViewSettings.showJoystickIndicatorInToolbar
-            visible:            fact.visible
-        }
     }
 
     SettingsGroupLayout {
@@ -226,103 +215,6 @@ SettingsPage {
             text:               qsTr("Lock Compass Nose-Up")
             visible:            _lockNoseUpCompass.visible
             fact:               _lockNoseUpCompass
-        }
-    }
-
-    SettingsGroupLayout {
-        Layout.fillWidth:   true
-        heading:            qsTr("3D View")
-        visible:            _viewer3DSettings.visible
-
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Enabled")
-            fact:               _viewer3DEnabled
-            visible:            _viewer3DEnabled.visible
-        }
-
-        ColumnLayout{
-            Layout.fillWidth:   true
-            spacing:            ScreenTools.defaultFontPixelWidth
-            enabled:            _viewer3DEnabled.rawValue
-            visible:            _viewer3DOsmFilePath.rawValue
-
-            RowLayout{
-                Layout.fillWidth:   true
-                spacing:            ScreenTools.defaultFontPixelWidth
-
-                QGCLabel {
-                    wrapMode:   Text.WordWrap
-                    visible:    true
-                    text:       qsTr("3D Map File:")
-                }
-
-                QGCTextField {
-                    id:                 osmFileTextField
-                    height:             ScreenTools.defaultFontPixelWidth * 4.5
-                    unitsLabel:         ""
-                    showUnits:          false
-                    visible:            true
-                    Layout.fillWidth:   true
-                    readOnly:           true
-                    text:               _viewer3DOsmFilePath.rawValue
-                }
-            }
-
-            RowLayout{
-                Layout.alignment:   Qt.AlignRight
-                spacing:            ScreenTools.defaultFontPixelWidth
-
-                QGCButton {
-                    text: qsTr("Clear")
-
-                    onClicked: {
-                        osmFileTextField.text = "Please select an OSM file"
-                        _viewer3DOsmFilePath.value = osmFileTextField.text
-                    }
-                }
-
-                QGCButton {
-                    text: qsTr("Select File")
-
-                    onClicked: {
-                        var filename = _viewer3DOsmFilePath.rawValue;
-                        const found = filename.match(/(.*)[\/\\]/);
-                        if(found){
-                            filename = found[1]||''; // extracting the directory from the file path
-                            fileDialog.folder = (filename[0] === "/")?(filename.slice(1)):(filename);
-                        }
-                        fileDialog.openForLoad()
-                    }
-
-                    QGCFileDialog {
-                        id:             fileDialog
-                        nameFilters:    [qsTr("OpenStreetMap files (*.osm)")]
-                        title:          qsTr("Select map file")
-
-                        onAcceptedForLoad: (file) => {
-                                               osmFileTextField.text = file
-                                               _viewer3DOsmFilePath.value = osmFileTextField.text
-                        }
-                    }
-                }
-            }
-        }
-
-        LabelledFactTextField {
-            Layout.fillWidth:   true
-            label:              qsTr("Average Building Level Height")
-            fact:               _viewer3DBuildingLevelHeight
-            enabled:            _viewer3DEnabled.rawValue
-            visible:            _viewer3DBuildingLevelHeight.visible
-        }
-
-        LabelledFactTextField {
-            Layout.fillWidth:   true
-            label:              qsTr("Vehicles Altitude Bias")
-            fact:               _viewer3DAltitudeBias
-            enabled:            _viewer3DEnabled.rawValue
-            visible:            _viewer3DAltitudeBias.visible
         }
     }
 }

@@ -4,9 +4,11 @@
 #include <QtCore/QPointF>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QJSValue>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlUnitsConversion.h"
+#include "qgc_version.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
 
@@ -21,8 +23,6 @@ class QGCPalette;
 class QGCPositionManager;
 class SettingsManager;
 class VideoManager;
-class UTMSPManager;
-class AirLinkManager;
 class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
@@ -36,12 +36,6 @@ Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("VideoManager.h")
-#ifdef QGC_UTM_ADAPTER
-Q_MOC_INCLUDE("UTMSPManager.h")
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-Q_MOC_INCLUDE("AirLinkManager.h")
-#endif
 
 class QGroundControlQmlGlobal : public QObject
 {
@@ -50,6 +44,8 @@ class QGroundControlQmlGlobal : public QObject
     QML_SINGLETON
 
 public:
+    static constexpr int kDefaultMessageDialogButtons = 0x00000400; // Dialog.Ok (Qt 6 StandardButton::Ok)
+
     explicit QGroundControlQmlGlobal(QObject *parent = nullptr);
     ~QGroundControlQmlGlobal();
 
@@ -76,10 +72,6 @@ public:
 #ifndef QGC_NO_SERIAL_LINK
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
 #endif
-#ifndef QGC_AIRLINK_DISABLED
-    Q_PROPERTY(AirLinkManager*      airlinkManager          READ    airlinkManager          CONSTANT)
-#endif
-    Q_PROPERTY(bool                 airlinkSupported        READ    airlinkSupported        CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
@@ -113,12 +105,6 @@ public:
     Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              CONSTANT)
     Q_PROPERTY(QString  elevationProviderNotice         READ elevationProviderNotice            CONSTANT)
 
-    Q_PROPERTY(bool              utmspSupported           READ    utmspSupported              CONSTANT)
-
-#ifdef QGC_UTM_ADAPTER
-    Q_PROPERTY(UTMSPManager*     utmspManager             READ    utmspManager                CONSTANT)
-#endif
-
     Q_INVOKABLE void    saveGlobalSetting       (const QString& key, const QString& value);
     Q_INVOKABLE QString loadGlobalSetting       (const QString& key, const QString& defaultValue);
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
@@ -127,12 +113,12 @@ public:
     Q_INVOKABLE static void deleteAllSettingsNextBoot();
     Q_INVOKABLE static void clearDeleteAllSettingsNextBoot();
 
-    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText);
-    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText);
-    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
+    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText, bool enableCamera, bool enableGimbal);
+    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText, bool enableCamera, bool enableGimbal);
+    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText, bool enableCamera, bool enableGimbal);
+    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal);
+    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText, bool enableCamera, bool enableGimbal);
+    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
     /// Returns the hierarchical list of available logging category names.
@@ -154,6 +140,24 @@ public:
     Q_INVOKABLE QString altitudeModeExtraUnits(AltMode altMode);        ///< String shown in the FactTextField.extraUnits ui
     Q_INVOKABLE QString altitudeModeShortDescription(AltMode altMode);  ///< String shown when a user needs to select an altitude mode
 
+    /// Shows a simple message dialog. The dialog is parented to owner and will automatically close
+    /// if the owner is destroyed, preventing orphaned dialogs that can cause crashes.
+    ///   @param owner          The QML item that owns this dialog. The dialog will be destroyed when this item is destroyed.
+    ///                             Typically mainWindow should not be used as the owner, instead use a more specific item such as the one that
+    ///                             triggered the dialog to ensure proper cleanup.
+    ///   @param title          Dialog title
+    ///   @param text           Dialog message text
+    ///   @param buttons        Dialog button flags (e.g. Dialog.Ok, Dialog.Yes | Dialog.No)
+    ///   @param acceptFunction Optional callback invoked when the dialog is accepted
+    ///   @param closeFunction  Optional callback invoked when the dialog is closed
+    Q_INVOKABLE void showMessageDialog(
+        QObject* owner,
+        const QString& title,
+        const QString& text,
+        int buttons = kDefaultMessageDialogButtons,
+        QJSValue acceptFunction = QJSValue(),
+        QJSValue closeFunction = QJSValue());
+
     // Property accessors
 
     static QString appName();
@@ -172,13 +176,6 @@ public:
     QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
-
-#ifndef QGC_AIRLINK_DISABLED
-    AirLinkManager*         airlinkManager      ()  { return _airlinkManager; }
-    bool                    airlinkSupported    ()  { return true; }
-#else
-    bool                    airlinkSupported    ()  { return false; }
-#endif
 
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
@@ -222,18 +219,12 @@ public:
     static bool qgcDailyBuild() { return false; }
 #endif
 
-#ifdef QGC_UTM_ADAPTER
-    UTMSPManager* utmspManager() {return _utmspManager;}
-    bool utmspSupported() { return true; }
-#else
-    bool utmspSupported() { return false; }
-#endif
-
 signals:
     void isMultiplexingEnabledChanged   (bool enabled);
     void mavlinkSystemIDChanged         (int id);
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
+    void showMessageDialogRequested     (QObject* owner, QString title, QString text, int buttons, QJSValue acceptFunction, QJSValue closeFunction);
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
@@ -248,12 +239,6 @@ private:
     QGCPalette*             _globalPalette          = nullptr;
 #ifndef QGC_NO_SERIAL_LINK
     FactGroup*              _gpsRtkFactGroup        = nullptr;
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    AirLinkManager*         _airlinkManager         = nullptr;
-#endif
-#ifdef QGC_UTM_ADAPTER
-    UTMSPManager*           _utmspManager           = nullptr;
 #endif
 
     double                  _flightMapInitialZoom   = 17.0;

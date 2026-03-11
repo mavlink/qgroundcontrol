@@ -87,6 +87,9 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
 
     connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_handleHoverAndCaptureEnabled);
 
+    // The main coordinate is aliased to the entry
+    connect(this,                                       &TransectStyleComplexItem::entryCoordinateChanged,      this, &TransectStyleComplexItem::coordinateChanged);
+
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
     connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
@@ -115,6 +118,25 @@ void TransectStyleComplexItem::setDirty(bool dirty)
         _dirty = dirty;
         emit dirtyChanged(_dirty);
     }
+}
+
+void TransectStyleComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (!coordinate.isValid() || !_entryCoordinate.isValid() || _surveyAreaPolygon.count() < 3) {
+        return;
+    }
+
+    const double distanceMeters = _entryCoordinate.distanceTo(coordinate);
+    const double azimuthDegrees = _entryCoordinate.azimuthTo(coordinate);
+    const QList<QGeoCoordinate> vertices = _surveyAreaPolygon.coordinateList();
+
+    QList<QGeoCoordinate> translatedVertices;
+    translatedVertices.reserve(vertices.count());
+    for (const QGeoCoordinate& vertex: vertices) {
+        translatedVertices.append(vertex.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+    }
+
+    _surveyAreaPolygon.setPath(translatedVertices);
 }
 
 void TransectStyleComplexItem::_save(QJsonObject& complexObject)
@@ -227,7 +249,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
             return false;
         }
-        _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+        _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
         _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
         _isIncomplete = false;
 
@@ -349,7 +371,7 @@ void TransectStyleComplexItem::_setIfDirty(bool dirty)
 
 void TransectStyleComplexItem::_updateCoordinateAltitudes(void)
 {
-    emit coordinateChanged(coordinate());
+    emit entryCoordinateChanged(entryCoordinate());
     emit exitCoordinateChanged(exitCoordinate());
 }
 
@@ -434,10 +456,9 @@ void TransectStyleComplexItem::_rebuildTransects(void)
                          QGeoCoordinate(south - 90.0, east - 180.0, top)));
     emit visualTransectPointsChanged();
 
-    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+    _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
     _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
-    emit coordinateChanged(_coordinate);
-    emit exitCoordinateChanged(_exitCoordinate);
+    _updateCoordinateAltitudes();
 
     if (_isIncomplete) {
         _isIncomplete = false;
@@ -896,9 +917,9 @@ void TransectStyleComplexItem::_buildFlightPathCoordInfoFromPathHeightInfoForCal
             double azimuth  = fromCoordInfo.coord.azimuthTo(toCoordInfo.coord);
             double distance = fromCoordInfo.coord.distanceTo(toCoordInfo.coord);
 
-            for (int pathHeightIndex=1; pathHeightIndex<cHeights - 1; pathHeightIndex++) {
-                double interstitialTerrainHeight = pathHeightInfo.heights[pathHeightIndex];
-                double percentTowardsTo = (1.0 / (cHeights - 1)) * pathHeightIndex;
+            for (int interstitialIndex=1; interstitialIndex<cHeights - 1; interstitialIndex++) {
+                double interstitialTerrainHeight = pathHeightInfo.heights[interstitialIndex];
+                double percentTowardsTo = (1.0 / (cHeights - 1)) * interstitialIndex;
 
                 CoordInfo_t interstitialCoordInfo;
                 interstitialCoordInfo.coordType = CoordTypeInteriorTerrainAdded;
@@ -924,9 +945,9 @@ void TransectStyleComplexItem::_buildFlightPathCoordInfoFromPathHeightInfoForCal
             double azimuth  = fromCoordInfo.coord.azimuthTo(toCoordInfo.coord);
             double distance = fromCoordInfo.coord.distanceTo(toCoordInfo.coord);
 
-            for (int pathHeightIndex=1; pathHeightIndex<cHeights - 1; pathHeightIndex++) {
-                double interstitialTerrainHeight = pathHeightInfo.heights[pathHeightIndex];
-                double percentTowardsTo = (1.0 / (cHeights - 1)) * pathHeightIndex;
+            for (int interstitialIndex=1; interstitialIndex<cHeights - 1; interstitialIndex++) {
+                double interstitialTerrainHeight = pathHeightInfo.heights[interstitialIndex];
+                double percentTowardsTo = (1.0 / (cHeights - 1)) * interstitialIndex;
 
                 CoordInfo_t interstitialCoordInfo;
                 interstitialCoordInfo.coordType = CoordTypeInteriorTerrainAdded;
@@ -1206,7 +1227,7 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
 {
     int                         seqNum      = _sequenceNumber;
     BuildMissionItemsState_t    buildState  = _buildMissionItemsState();
-    MAV_FRAME                   mavFrame;
+    MAV_FRAME                   mavFrame    = MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
     qCDebug(TransectStyleComplexItemLog) << "_buildAndAppendMissionItems";
 
@@ -1318,6 +1339,11 @@ void TransectStyleComplexItem::_recalcComplexDistance(void)
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
     emit complexDistanceChanged();
+}
+
+double TransectStyleComplexItem::editableAlt() const
+{
+    return _cameraCalc.distanceToSurface()->rawValue().toDouble();
 }
 
 double TransectStyleComplexItem::amslEntryAlt(void) const

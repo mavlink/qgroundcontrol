@@ -77,11 +77,6 @@ bool QGCFileWatcher::watchFile(const QString &filePath, ChangeCallback callback)
     return false;
 }
 
-bool QGCFileWatcher::watchFile(const QString &filePath)
-{
-    return watchFile(filePath, nullptr);
-}
-
 bool QGCFileWatcher::unwatchFile(const QString &filePath)
 {
     const QString canonicalPath = QFileInfo(filePath).absoluteFilePath();
@@ -145,11 +140,6 @@ bool QGCFileWatcher::watchDirectory(const QString &directoryPath, ChangeCallback
 
     qCWarning(QGCFileWatcherLog) << "watchDirectory: failed to add:" << directoryPath;
     return false;
-}
-
-bool QGCFileWatcher::watchDirectory(const QString &directoryPath)
-{
-    return watchDirectory(directoryPath, nullptr);
 }
 
 bool QGCFileWatcher::unwatchDirectory(const QString &directoryPath)
@@ -304,7 +294,7 @@ void QGCFileWatcher::_scheduleCallback(const QString &path, bool isDirectory)
         if (!_debounceTimer->isActive()) {
             _debounceTimer->start(_debounceDelay);
         }
-    } else {
+    } else if (!_processingPendingChanges) {
         // No debounce - process immediately
         _processPendingChanges();
     }
@@ -312,25 +302,36 @@ void QGCFileWatcher::_scheduleCallback(const QString &path, bool isDirectory)
 
 void QGCFileWatcher::_processPendingChanges()
 {
-    // Process file changes
-    for (const QString &path : std::as_const(_pendingFileChanges)) {
-        emit fileChanged(path);
-
-        auto it = _fileCallbacks.find(path);
-        if (it != _fileCallbacks.end() && it.value()) {
-            it.value()(path);
-        }
+    if (_processingPendingChanges) {
+        return;
     }
-    _pendingFileChanges.clear();
 
-    // Process directory changes
-    for (const QString &path : std::as_const(_pendingDirectoryChanges)) {
-        emit directoryChanged(path);
+    _processingPendingChanges = true;
 
-        auto it = _directoryCallbacks.find(path);
-        if (it != _directoryCallbacks.end() && it.value()) {
-            it.value()(path);
+    do {
+        const QSet<QString> fileChanges = _pendingFileChanges;
+        const QSet<QString> directoryChanges = _pendingDirectoryChanges;
+        _pendingFileChanges.clear();
+        _pendingDirectoryChanges.clear();
+
+        for (const QString &path : fileChanges) {
+            emit fileChanged(path);
+
+            auto it = _fileCallbacks.find(path);
+            if (it != _fileCallbacks.end() && it.value()) {
+                it.value()(path);
+            }
         }
-    }
-    _pendingDirectoryChanges.clear();
+
+        for (const QString &path : directoryChanges) {
+            emit directoryChanged(path);
+
+            auto it = _directoryCallbacks.find(path);
+            if (it != _directoryCallbacks.end() && it.value()) {
+                it.value()(path);
+            }
+        }
+    } while ((_debounceDelay == 0) && (!_pendingFileChanges.isEmpty() || !_pendingDirectoryChanges.isEmpty()));
+
+    _processingPendingChanges = false;
 }

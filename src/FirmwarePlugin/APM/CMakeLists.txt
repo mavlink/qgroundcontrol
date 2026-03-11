@@ -53,67 +53,39 @@ CPMAddPackage(
     GIT_TAG main
 )
 
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.0.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.1.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.2/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.2.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.3/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.3.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.4/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.4.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.5.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.6/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.6.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Plane-4.7/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.7.xml")
+# Dynamically discover all parameter definition files.
+# Directory layout: {Vehicle}-{Major}.{Minor}/apm.pdef.xml
+# Resource alias:   FirmwarePlugin/APM/APMParameterFactMetaData.{Vehicle}.{Major}.{Minor}.xml
+file(GLOB _apm_pdef_files "${ArduPilotParams_SOURCE_DIR}/*/apm.pdef.xml")
+list(SORT _apm_pdef_files)
 
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.0.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.1.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.2/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.2.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.3/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.3.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.4/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.4.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.5.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.6/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.6.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Copter-4.7/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.7.xml")
+set(_apm_param_resources "")
+foreach(_pdef IN LISTS _apm_pdef_files)
+    get_filename_component(_dir "${_pdef}" DIRECTORY)
+    get_filename_component(_dirname "${_dir}" NAME)
 
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.0.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.1.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.2/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.2.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.4/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.4.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.5.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.6/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.6.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Rover-4.7/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.7.xml")
+    # Parse "{Vehicle}-{Version}" directory name (e.g. "Plane-4.7")
+    string(REGEX MATCH "^([A-Za-z_]+)-(.+)$" _match "${_dirname}")
+    if(NOT _match)
+        continue()
+    endif()
+    set(_vehicle "${CMAKE_MATCH_1}")
+    set(_version "${CMAKE_MATCH_2}")
 
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.0/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.0.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.1/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.1.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.5/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.5.xml")
-set_source_files_properties("${ArduPilotParams_SOURCE_DIR}/Sub-4.7/apm.pdef.xml" PROPERTIES QT_RESOURCE_ALIAS "FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.7.xml")
+    # Convert dash-separated version to dot-separated (e.g. "4.7" stays, "3.10" stays)
+    string(REPLACE "-" "." _version_dots "${_version}")
+
+    set(_alias "FirmwarePlugin/APM/APMParameterFactMetaData.${_vehicle}.${_version_dots}.xml")
+    set_source_files_properties("${_pdef}" PROPERTIES QT_RESOURCE_ALIAS "${_alias}")
+    list(APPEND _apm_param_resources "${_pdef}")
+endforeach()
+
+list(LENGTH _apm_param_resources _apm_param_count)
+message(STATUS "APM: Found ${_apm_param_count} parameter definition files")
 
 qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_apm_params"
     PREFIX "/"
-    FILES
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.0/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.1/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.2/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.3/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.4/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.5/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.6/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Plane-4.7/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.0/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.1/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.2/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.3/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.4/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.5/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.6/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Copter-4.7/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.0/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.1/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.2/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.4/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.5/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.6/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Rover-4.7/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Sub-4.0/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Sub-4.1/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Sub-4.5/apm.pdef.xml"
-        "${ArduPilotParams_SOURCE_DIR}/Sub-4.7/apm.pdef.xml"
+    FILES ${_apm_param_resources}
 )
 
 # Add qml module

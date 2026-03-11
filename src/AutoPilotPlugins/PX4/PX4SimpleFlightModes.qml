@@ -13,7 +13,6 @@ Item {
     property var  _switchNameList:  [ "RC_MAP_ARM_SW", "RC_MAP_GEAR_SW", "RC_MAP_KILL_SW", "RC_MAP_LOITER_SW", "RC_MAP_OFFB_SW", "RC_MAP_RETURN_SW" ]
     property var  _switchTHList:    [ "RC_ARMSWITCH_TH", "RC_GEAR_TH", "RC_KILLSWITCH_TH", "RC_LOITER_TH", "RC_OFFB_TH", "RC_RETURN_TH" ]
 
-    readonly property real _flightModeComboWidth:   ScreenTools.defaultFontPixelWidth * 13
     readonly property real _channelComboWidth:      ScreenTools.defaultFontPixelWidth * 13
 
     Component.onCompleted: {

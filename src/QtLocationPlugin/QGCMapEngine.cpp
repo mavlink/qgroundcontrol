@@ -72,6 +72,9 @@ void QGCMapEngine::init(const QString &databasePath)
 
 bool QGCMapEngine::addTask(QGCMapTask *task)
 {
+    // DirectConnection is intentional: the worker thread uses a custom loop (not
+    // an event loop), so queued connections would never be delivered. The queue
+    // is mutex-protected in enqueueTask, so calling from the main thread is safe.
     bool result = false;
     (void) QMetaObject::invokeMethod(m_worker, &QGCCacheWorker::enqueueTask, Qt::DirectConnection, qReturnArg(result), task);
     return result;

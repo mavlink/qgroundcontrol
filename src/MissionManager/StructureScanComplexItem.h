@@ -70,6 +70,7 @@ public:
     QString             commandName                 (void) const final { return tr("Structure Scan"); }
     QString             abbreviation                (void) const final { return "S"; }
     QGeoCoordinate      coordinate                  (void) const final;
+    QGeoCoordinate      entryCoordinate             (void) const final { return coordinate(); }
     QGeoCoordinate      exitCoordinate              (void) const final { return coordinate(); }
     int                 sequenceNumber              (void) const final { return _sequenceNumber; }
     double              specifiedFlightSpeed        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
@@ -82,9 +83,10 @@ public:
     ReadyForSaveState   readyForSaveState           (void) const final;
     bool                exitCoordinateSameAsEntry   (void) const final { return true; }
     void                setDirty                    (bool dirty) final;
-    void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
+    void                setCoordinate               (const QGeoCoordinate& coordinate) final;
     void                setSequenceNumber           (int sequenceNumber) final;
     void                save                        (QJsonArray&  missionItems) final;
+    double              editableAlt                 (void) const final;
     double              amslEntryAlt                (void) const final;
     double              amslExitAlt                 (void) const final { return amslEntryAlt(); };
     double              minAMSLAltitude             (void) const final;
@@ -154,5 +156,7 @@ private:
 
     static constexpr const char* _entranceAltName = "EntranceAltitude"; // This value cannot be overriden
 
+#ifdef QGC_UNITTEST_BUILD
     friend class StructureScanComplexItemTest;
+#endif
 };

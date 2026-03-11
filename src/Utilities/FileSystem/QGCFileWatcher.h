@@ -55,11 +55,6 @@ public:
     /// @return true if file was added to watch list
     bool watchFile(const QString &filePath, ChangeCallback callback);
 
-    /// Watch a file for changes (signal-based)
-    /// @param filePath Path to file to watch
-    /// @return true if file was added to watch list
-    bool watchFile(const QString &filePath);
-
     /// Stop watching a specific file
     /// @param filePath Path to file to stop watching
     /// @return true if file was being watched
@@ -83,11 +78,6 @@ public:
     /// @param callback Function to call when directory changes
     /// @return true if directory was added to watch list
     bool watchDirectory(const QString &directoryPath, ChangeCallback callback);
-
-    /// Watch a directory for changes (signal-based)
-    /// @param directoryPath Path to directory to watch
-    /// @return true if directory was added to watch list
-    bool watchDirectory(const QString &directoryPath);
 
     /// Stop watching a specific directory
     /// @param directoryPath Path to directory to stop watching
@@ -164,4 +154,5 @@ private:
     QTimer *_debounceTimer = nullptr;
     QSet<QString> _pendingFileChanges;
     QSet<QString> _pendingDirectoryChanges;
+    bool _processingPendingChanges = false;
 };

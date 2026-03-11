@@ -9,6 +9,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 
 FlightMap {
     id:                         _root
@@ -608,6 +609,12 @@ FlightMap {
         }
     }
 
+    QGCPopupDialogFactory {
+        id: roiEditPositionDialogFactory
+
+        dialogComponent: roiEditPositionDialogComponent
+    }
+
     Component {
         id: roiEditPositionDialogComponent
 
@@ -644,7 +651,7 @@ FlightMap {
                         Layout.fillWidth:   true
                         text:               qsTr("Edit Position")
                         onClicked: {
-                            roiEditPositionDialogComponent.createObject(mainWindow, { showSetPositionFromVehicle: false }).open()
+                            roiEditPositionDialogFactory.open({ showSetPositionFromVehicle: false })
                             roiEditDropPanel.close()
                         }
                     }

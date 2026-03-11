@@ -96,7 +96,12 @@ DECLARE_SETTINGGROUP(App, "")
     #endif
     savePathFact->setVisible(false);
 #else
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        QDir rootDir;
+        if (qgcApp()->runningUnitTests() || qgcApp()->simpleBootTest()) {
+            rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        } else {
+            rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        }
         savePathFact->setRawValue(rootDir.filePath(appName));
 #endif
     }
@@ -137,8 +142,6 @@ DECLARE_SETTINGSFACT(AppSettings, gstDebugLevel)
 DECLARE_SETTINGSFACT(AppSettings, followTarget)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
-DECLARE_SETTINGSFACT(AppSettings, loginAirLink)
-DECLARE_SETTINGSFACT(AppSettings, passAirLink)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

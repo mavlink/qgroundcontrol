@@ -67,7 +67,7 @@ if(_APPVER)
     list(APPEND _nsis_args "/DAPPVERSION=${_APPVER}")
 endif()
 
-list(APPEND _nsis_args "/XOutFile ${QGC_INSTALLER_OUT}")
+list(APPEND _nsis_args "/XOutFile \"${QGC_INSTALLER_OUT}\"")
 
 # ----------------------------------------------------------------------------
 # Execute NSIS Installer Creation

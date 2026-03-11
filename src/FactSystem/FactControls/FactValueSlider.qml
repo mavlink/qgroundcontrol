@@ -65,6 +65,12 @@ Rectangle {
         onValueChanged: reset()
     }
 
+    QGCPopupDialogFactory {
+        id: editDialogFactory
+
+        dialogComponent: editDialogComponent
+    }
+
     Component {
         id: editDialogComponent
 
@@ -95,7 +101,7 @@ Rectangle {
                 onClicked: {
                     valueListView.focus = true
                     if (_currentIndex === index) {
-                        editDialogComponent.createObject(mainWindow, { title: qsTr("Value Details") }).open()
+                        editDialogFactory.open({ title: qsTr("Value Details") })
                     } else {
                         _currentIndex = index
                         valueListView.positionViewAtIndex(_currentIndex, ListView.Center)

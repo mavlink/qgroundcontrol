@@ -175,11 +175,11 @@ QGCLoggingCategoryItem *QGCLoggingCategoryManager::_findLoggingCategory(const QS
     return nullptr;
 }
 
-QGCLoggingCategoryItem::QGCLoggingCategoryItem(const QString& _shortCategory, const QString& _fullCategory, bool _enabled, QObject* parent)
+QGCLoggingCategoryItem::QGCLoggingCategoryItem(const QString& shortCategory_, const QString& fullCategory_, bool enabled_, QObject* parent)
     : QObject(parent)
-    , shortCategory(_shortCategory)
-    , fullCategory(_fullCategory)
-    , _enabled(_enabled)
+    , shortCategory(shortCategory_)
+    , fullCategory(fullCategory_)
+    , _enabled(enabled_)
 {
     connect(this, &QGCLoggingCategoryItem::enabledChanged, this, [this]() {
         QGCLoggingCategoryManager::instance()->setCategoryLoggingOn(this->fullCategory, this->_enabled);

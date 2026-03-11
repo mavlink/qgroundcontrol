@@ -1,5 +1,6 @@
 #include "SimpleMissionItem.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
@@ -35,7 +36,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     , _param6MetaData                   (FactMetaData::valueTypeDouble)
     , _param7MetaData                   (FactMetaData::valueTypeDouble)
 {
-    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/Controls/SimpleItemEditor.qml");
+    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/PlanView/SimpleItemEditor.qml");
 
     _setupMetaData();
 
@@ -63,7 +64,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     , _param6MetaData           (FactMetaData::valueTypeDouble)
     , _param7MetaData           (FactMetaData::valueTypeDouble)
 {
-    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/Controls/SimpleItemEditor.qml");
+    _editorQml = QStringLiteral("qrc:/qml/QGroundControl/PlanView/SimpleItemEditor.qml");
 
     struct MavFrame2AltMode_s {
         MAV_FRAME                               mavFrame;
@@ -146,6 +147,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
 
     // Exit coordinate is the same as entrance coordinate
+    connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::entryCoordinateChanged);
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::exitCoordinateChanged);
 
     // The following changes may also change friendlyEditAllowed
@@ -300,8 +302,8 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
             }
 
             _altitudeMode = (QGroundControlQmlGlobal::AltMode)(int)json[_jsonAltitudeModeKey].toDouble();
-            _altitudeFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
-            _amslAltAboveTerrainFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
+            _altitudeFact.setRawValue(JsonParsing::possibleNaNJsonValue(json[_jsonAltitudeKey]));
+            _amslAltAboveTerrainFact.setRawValue(JsonParsing::possibleNaNJsonValue(json[_jsonAltitudeKey]));
         } else {
             _altitudeMode = _missionItem.relativeAltitude() ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute;
             _altitudeFact.setRawValue(_missionItem._param7Fact.rawValue());
@@ -1101,6 +1103,11 @@ QGeoCoordinate SimpleMissionItem::coordinate(void) const
     } else {
         return QGeoCoordinate(_missionItem.param5(), _missionItem.param6());
     }
+}
+
+double SimpleMissionItem::editableAlt() const
+{
+    return _missionItem.param7();
 }
 
 double SimpleMissionItem::amslEntryAlt(void) const

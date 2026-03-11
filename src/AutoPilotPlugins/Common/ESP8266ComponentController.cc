@@ -90,7 +90,7 @@ void ESP8266ComponentController::setWifiSSID(const QString &ssid) const
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string sid = ssid.toStdString();
-    (void) strncpy(tmp, sid.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, sid.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));
@@ -124,7 +124,7 @@ void ESP8266ComponentController::setWifiPassword(const QString &password) const
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string pwd = password.toStdString();
-    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));
@@ -166,7 +166,7 @@ void ESP8266ComponentController::setWifiSSIDSta(const QString &ssid) const
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string sid = ssid.toStdString();
-    (void) strncpy(tmp, sid.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, sid.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));
@@ -208,7 +208,7 @@ void ESP8266ComponentController::setWifiPasswordSta(const QString &password) con
     char tmp[20];
     (void) memset(tmp, 0, sizeof(tmp));
     const std::string pwd = password.toStdString();
-    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp));
+    (void) strncpy(tmp, pwd.c_str(), sizeof(tmp) - 1);
 
     uint32_t u;
     (void) memcpy(&u, &tmp[0], sizeof(uint32_t));

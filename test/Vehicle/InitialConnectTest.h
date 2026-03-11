@@ -1,12 +1,22 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/VehicleTestManualConnect.h"
 
-class InitialConnectTest : public UnitTest
+class InitialConnectTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
 private slots:
-    void _performTestCases(void);
-    void _boardVendorProductId(void);
+    void _performTestCases_data();
+    void _performTestCases();
+    void _boardVendorProductId();
+    void _progressTracking();
+    void _highLatencySkipsPlanRequests();
+    void _genericAutopilotVersionFailureSkipsUnsupportedPlanTypes();
+    void _multipleReconnects();
+    void _rallyTimeoutPathDoesNotLeakCompletionHandler();
+    void _stateTimeoutFallsThrough_data();
+    void _stateTimeoutFallsThrough();
+    void _stateRunMatrix_data();
+    void _stateRunMatrix();
 };

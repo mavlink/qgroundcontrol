@@ -5,8 +5,12 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        GeoJsonHelperTest.cc
+        GeoJsonHelperTest.h
         GeoTest.cc
         GeoTest.h
+        KMLDomDocumentTest.cc
+        KMLDomDocumentTest.h
         ShapeTest.cc
         ShapeTest.h
 )

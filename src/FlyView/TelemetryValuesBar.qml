@@ -71,7 +71,7 @@ Item {
             }
         }
 
-        onPressAndHold: {
+        onPressAndHold: (mouse) => {
             factValueGrid.settingsUnlocked = true
             mouse.accepted = true
         }

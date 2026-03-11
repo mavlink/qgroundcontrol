@@ -34,7 +34,7 @@ public slots:
 private:
     QImage _getImage();
 
-    mavlink_data_transmission_handshake_t _imageHandshake{0};
+    mavlink_data_transmission_handshake_t _imageHandshake = {};
     QByteArray _imageBytes;
     uint32_t _flowImageIndex = 0;
 };

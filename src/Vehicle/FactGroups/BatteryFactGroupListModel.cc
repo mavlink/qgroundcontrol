@@ -79,7 +79,7 @@ void BatteryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &
     }
 }
 
-void BatteryFactGroup::_handleHighLatency(Vehicle *vehicle, const mavlink_message_t &message)
+void BatteryFactGroup::_handleHighLatency(Vehicle * /*vehicle*/, const mavlink_message_t &message)
 {
     mavlink_high_latency_t highLatency{};
     mavlink_msg_high_latency_decode(&message, &highLatency);
@@ -89,7 +89,7 @@ void BatteryFactGroup::_handleHighLatency(Vehicle *vehicle, const mavlink_messag
     _setTelemetryAvailable(true);
 }
 
-void BatteryFactGroup::_handleHighLatency2(Vehicle *vehicle, const mavlink_message_t &message)
+void BatteryFactGroup::_handleHighLatency2(Vehicle * /*vehicle*/, const mavlink_message_t &message)
 {
     mavlink_high_latency2_t highLatency2{};
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
@@ -99,7 +99,7 @@ void BatteryFactGroup::_handleHighLatency2(Vehicle *vehicle, const mavlink_messa
     _setTelemetryAvailable(true);
 }
 
-void BatteryFactGroup::_handleBatteryStatus(Vehicle *vehicle, const mavlink_message_t &message)
+void BatteryFactGroup::_handleBatteryStatus(Vehicle * /*vehicle*/, const mavlink_message_t &message)
 {
     mavlink_battery_status_t batteryStatus{};
     mavlink_msg_battery_status_decode(&message, &batteryStatus);

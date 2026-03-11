@@ -21,7 +21,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   pre-commit:
@@ -36,21 +35,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Full history needed for diff vs master
+          fetch-depth: 1
 
       - name: Get build config
         id: config
         uses: ./.github/actions/build-config
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: ./.github/actions/setup-python
         with:
-          python-version: '3.x'
-
-      - name: Install pre-commit
-        run: |
-          python -m pip install pre-commit
-          python -m pip freeze --local
+          groups: precommit
+          python-version: '3.12'
 
       - name: Restore pre-commit cache (PR)
         if: github.event_name == 'pull_request'
@@ -72,7 +67,8 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+          modules: ''
+          archives: qtbase qtdeclarative icu
 
       - name: Run pre-commit
         id: pre-commit
@@ -81,97 +77,52 @@ jobs:
           PRE_COMMIT_OUTPUT: pre-commit-output.txt
         run: ./tools/pre-commit.sh --ci
 
-      - name: Comment on PR
+      - name: Prepare pre-commit results artifact
         if: github.event_name == 'pull_request' && always()
-        continue-on-error: true  # Fork PRs don't have write permissions
-        uses: actions/github-script@v8
         env:
           EXIT_CODE: ${{ steps.pre-commit.outputs.exit_code }}
           PASSED: ${{ steps.pre-commit.outputs.passed }}
           FAILED: ${{ steps.pre-commit.outputs.failed }}
           SKIPPED: ${{ steps.pre-commit.outputs.skipped }}
-          SUMMARY: ${{ steps.pre-commit.outputs.summary }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p pre-commit-results
+
+          : "${EXIT_CODE:=1}"
+          : "${PASSED:=0}"
+          : "${FAILED:=0}"
+          : "${SKIPPED:=0}"
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          output_path = Path("pre-commit-results/pre-commit-results.json")
+          output_path.write_text(
+              json.dumps(
+                  {
+                      "exit_code": os.environ.get("EXIT_CODE", "1"),
+                      "passed": os.environ.get("PASSED", "0"),
+                      "failed": os.environ.get("FAILED", "0"),
+                      "skipped": os.environ.get("SKIPPED", "0"),
+                      "run_url": os.environ.get("RUN_URL", ""),
+                  },
+                  indent=2,
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          if [[ -f pre-commit-output.txt ]]; then
+            cp pre-commit-output.txt pre-commit-results/pre-commit-output.txt
+          fi
+
+      - name: Upload pre-commit results artifact
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/upload-artifact@v6
         with:
-          script: |
-            const fs = require('fs');
-
-            // Use env vars to prevent script injection from user-controlled outputs
-            const exitCode = process.env.EXIT_CODE || '1';
-            const passed = parseInt(process.env.PASSED) || 0;
-            const failed = parseInt(process.env.FAILED) || 0;
-            const skipped = parseInt(process.env.SKIPPED) || 0;
-            const success = exitCode === '0';
-
-            // Build comment body (text labels for accessibility, emoji as decoration)
-            let body = success
-              ? '## Pre-commit Checks Passed\n\n'
-              : '## Pre-commit Checks Failed\n\n';
-
-            body += `| Status | Count |\n|--------|-------|\n`;
-            body += `| Passed | ${passed} |\n`;
-            body += `| Failed | ${failed} |\n`;
-            if (skipped > 0) {
-              body += `| Skipped | ${skipped} |\n`;
-            }
-            body += '\n';
-
-            // Add hook summary
-            const summary = process.env.SUMMARY || '';
-            if (summary && summary.trim() && summary !== 'No results') {
-              body += '<details>\n<summary>Hook Results</summary>\n\n```\n';
-              body += summary;
-              body += '\n```\n</details>\n\n';
-            }
-
-            if (!success) {
-              // Add diff if files were modified
-              let diff = '';
-              try {
-                const { execSync } = require('child_process');
-                diff = execSync('git diff --stat', { encoding: 'utf8', maxBuffer: 50 * 1024 });
-              } catch (e) {
-                diff = '';
-              }
-
-              if (diff.trim()) {
-                body += '<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n';
-                body += diff;
-                body += '```\n</details>\n\n';
-              }
-
-              body += '### How to Fix\n\n';
-              body += '```bash\n';
-              body += './tools/pre-commit.sh\n';
-              body += 'git add -u && git commit --amend --no-edit\n';
-              body += '```\n';
-            }
-
-            body += `\n<sub>Run ID: [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})</sub>`;
-
-            // Find existing comment
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const marker = '## Pre-commit Checks';
-            const existing = comments.data.find(c =>
-              c.user?.type === 'Bot' && c.body?.includes(marker)
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body
-              });
-            }
+          name: pre-commit-results
+          path: pre-commit-results
+          retention-days: 7

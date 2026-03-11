@@ -10,61 +10,37 @@
 
 #pragma once
 
-#include <QtCore/QAbstractListModel>
-#include <QtCore/QLoggingCategory>
-#include <QtQmlIntegration/QtQmlIntegration>
+#include "ObjectItemModelBase.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ObjectListModelBaseLog)
 
-/// Base class for custom object list models: QmlObjectListModel, SparselObjectListModel
-class ObjectListModelBase : public QAbstractListModel
+/// Base class for flat QObject* list models. Inherits common dirty/reset/role
+/// handling from ObjectItemModelBase and adds flat-list index()/parent() overrides.
+class ObjectListModelBase : public ObjectItemModelBase
 {
     Q_OBJECT
 
 public:
     ObjectListModelBase(QObject* parent = nullptr);
-    ~ObjectListModelBase();
+    ~ObjectListModelBase() override;
 
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-
-    /// Returns true if any of the items in the list are dirty. Requires each object to have
-    /// a dirty property and dirtyChanged signal.
-    Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
-
-    bool dirty() const { return _dirty; }
-    void beginResetModel(); ///< Supported nesting of calls such that only outermost call has effect
-    void endResetModel(); ///< Supported nesting of calls such that only outermost call has effect
-
-    virtual int count() const = 0;
-    virtual bool isEmpty() const { return (count() == 0); }
-    virtual void setDirty(bool dirty) = 0;
-    virtual void clear() = 0;
     virtual void clearAndDeleteContents() = 0; ///< Clears the list and calls deleteLater on each entry
     virtual QObject* removeOne(const QObject* object) = 0;
     virtual bool contains(const QObject* object) = 0;
 
-signals:
-    void countChanged(int count);
-    void dirtyChanged(bool dirtyChanged);
-
-protected slots:
-    void _childDirtyChanged(bool dirty);
+    // Flat-list overrides of QAbstractItemModel — same behavior as QAbstractListModel
+    QModelIndex index(int row, int column = 0, const QModelIndex& parent = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
+    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+    bool hasChildren(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:
-    // Overrides from QAbstractListModel which must be implemented by derived classes
-    int rowCount(const QModelIndex & parent = QModelIndex()) const override = 0;
+    // Overrides from QAbstractItemModel which must be implemented by derived classes
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override = 0;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override = 0;
     bool insertRows(int position, int rows, const QModelIndex& index = QModelIndex()) override = 0;
     bool removeRows(int position, int rows, const QModelIndex& index = QModelIndex()) override = 0;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override = 0;
 
-    void _signalCountChangedIfNotNested();
-
-    QHash<int, QByteArray> roleNames(void) const override;
-    bool _dirty;
-    bool _skipDirtyFirstItem;
-    uint _resetModelNestingCount = 0;
-
-    static constexpr int ObjectRole = Qt::UserRole;
-    static constexpr int TextRole = Qt::UserRole + 1;
+    bool _skipDirtyFirstItem = false;
 };

@@ -7,10 +7,6 @@ struct QGCTileSet
 {
     QGCTileSet &operator+=(const QGCTileSet &other)
     {
-        tileX0 += other.tileX0;
-        tileX1 += other.tileX1;
-        tileY0 += other.tileY0;
-        tileY1 += other.tileY1;
         tileCount += other.tileCount;
         tileSize += other.tileSize;
         return *this;

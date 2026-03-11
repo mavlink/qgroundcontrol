@@ -9,7 +9,7 @@ QGC_LOGGING_CATEGORY(KMLSchemaValidatorLog, "Utilities.KMLSchemaValidator")
 
 namespace {
     // XSD namespace
-    constexpr const char *XS_NS = "http://www.w3.org/2001/XMLSchema";
+    [[maybe_unused]] constexpr const char *XS_NS = "http://www.w3.org/2001/XMLSchema";
 
     // Schema resource path (PREFIX "/kml" + FILES "ogckml22.xsd")
     constexpr const char *SCHEMA_RESOURCE = ":/kml/ogckml22.xsd";

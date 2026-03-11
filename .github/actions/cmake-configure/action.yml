@@ -1,0 +1,106 @@
+name: CMake Configure
+description: Configure QGroundControl build with common options
+
+inputs:
+  build-dir:
+    description: 'Build directory'
+    required: false
+    default: 'build'
+  source-dir:
+    description: 'Source directory'
+    required: false
+    default: ${{ github.workspace }}
+  build-type:
+    description: 'Build type (Debug, Release, RelWithDebInfo, MinSizeRel)'
+    required: false
+    default: 'Release'
+  generator:
+    description: 'CMake generator (Ninja, Unix Makefiles, etc.)'
+    required: false
+    default: 'Ninja'
+  testing:
+    description: 'Enable testing (QGC_BUILD_TESTING)'
+    required: false
+    default: 'false'
+  coverage:
+    description: 'Enable coverage (QGC_ENABLE_COVERAGE)'
+    required: false
+    default: 'false'
+  stable:
+    description: 'Stable build (QGC_STABLE_BUILD)'
+    required: false
+    default: 'false'
+  unity-build:
+    description: 'Enable unity build for faster compilation'
+    required: false
+    default: 'false'
+  unity-batch-size:
+    description: 'Unity build batch size'
+    required: false
+    default: '16'
+  extra-args:
+    description: 'Additional CMake arguments'
+    required: false
+    default: ''
+  use-qt-cmake:
+    description: 'Use qt-cmake instead of cmake'
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Create build directory
+      shell: bash
+      env:
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
+      run: mkdir -p "${INPUT_BUILD_DIR}"
+
+    - name: Configure
+      shell: bash
+      env:
+        INPUT_SOURCE_DIR: ${{ inputs.source-dir }}
+        INPUT_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUT_GENERATOR: ${{ inputs.generator }}
+        INPUT_BUILD_TYPE: ${{ inputs.build-type }}
+        INPUT_TESTING: ${{ inputs.testing }}
+        INPUT_COVERAGE: ${{ inputs.coverage }}
+        INPUT_STABLE: ${{ inputs.stable }}
+        INPUT_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}
+        INPUT_UNITY_BUILD: ${{ inputs.unity-build }}
+        INPUT_UNITY_BATCH_SIZE: ${{ inputs.unity-batch-size }}
+        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+        WORKSPACE: ${{ github.workspace }}
+      run: |
+        args=(
+          -S "${INPUT_SOURCE_DIR}"
+          -B "${INPUT_BUILD_DIR}"
+          -G "${INPUT_GENERATOR}"
+          -t "${INPUT_BUILD_TYPE}"
+        )
+
+        [[ "${INPUT_TESTING}" == "true" ]] && args+=(--testing)
+        [[ "${INPUT_COVERAGE}" == "true" ]] && args+=(--coverage)
+        [[ "${INPUT_STABLE}" == "true" ]] && args+=(--stable)
+        [[ "${INPUT_USE_QT_CMAKE}" != "true" ]] && args+=(--no-qt-cmake)
+
+        if [[ "${INPUT_UNITY_BUILD}" == "true" ]]; then
+          args+=(--unity --unity-batch "${INPUT_UNITY_BATCH_SIZE}")
+        fi
+
+        # Add extra args if provided (after -- so argparse treats -D flags as positional)
+        if [[ -n "$INPUT_EXTRA_ARGS" ]]; then
+          read -ra extra <<< "$INPUT_EXTRA_ARGS"
+          args+=(--)
+          args+=("${extra[@]}")
+        fi
+
+        if command -v python3 >/dev/null 2>&1; then
+          py_cmd="python3"
+        elif command -v python >/dev/null 2>&1; then
+          py_cmd="python"
+        else
+          echo "Error: Python interpreter not found in PATH" >&2
+          exit 1
+        fi
+        "${py_cmd}" "${WORKSPACE}/tools/configure.py" "${args[@]}"

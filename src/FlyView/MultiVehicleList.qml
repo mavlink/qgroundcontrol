@@ -51,7 +51,7 @@ Item {
     function pauseAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             var vehicle = selectedVehicles.get(i)
-            if (vehicle.armed === true && vehicle.pauseVehicleSupported) {
+            if (vehicle.armed === true && vehicle.supports.pauseVehicle) {
                 return true
             }
         }
@@ -105,7 +105,7 @@ Item {
         anchors.right:      parent.right
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        spacing:            ScreenTools.defaultFontPixelHeight / 2
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.75 // _layoutMargin
         orientation:        ListView.Vertical
         model:              QGroundControl.multiVehicleManager.vehicles
         cacheBuffer:        _cacheBuffer < 0 ? 0 : _cacheBuffer

@@ -22,7 +22,7 @@ QGCPopupDialog {
     property bool _showMGRS:        coordinateSystemCombo.comboBox.currentIndex === 2
     property bool _showVehicle:     coordinateSystemCombo.comboBox.currentIndex === 3
 
-    EditPositionDialogController {
+    TransformPositionController {
         id: controller
 
         Component.onCompleted: initValues()

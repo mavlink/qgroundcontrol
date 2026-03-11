@@ -1,13 +1,16 @@
 #include "QGCMapPolyline.h"
 #include "QGCGeo.h"
 #include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "ShapeFileHelper.h"
 #include "QGCLoggingCategory.h"
+#include "ShapeFileHelper.h"
 
 #include <QtCore/QLineF>
 #include <QMetaMethod>
+
+QGC_LOGGING_CATEGORY(QGCMapPolylineLog, "QMLControls.QGCMapPolyline")
 
 QGCMapPolyline::QGCMapPolyline(QObject* parent)
     : QObject               (parent)
@@ -165,7 +168,7 @@ bool QGCMapPolyline::loadFromJson(const QJsonObject& json, bool required, QStrin
     clear();
 
     if (required) {
-        if (!JsonHelper::validateRequiredKeys(json, QStringList(jsonPolylineKey), errorString)) {
+        if (!JsonParsing::validateRequiredKeys(json, QStringList(jsonPolylineKey), errorString)) {
             return false;
         }
     } else if (!json.contains(jsonPolylineKey)) {
@@ -230,7 +233,7 @@ void QGCMapPolyline::appendVertex(const QGeoCoordinate& coordinate)
 void QGCMapPolyline::removeVertex(int vertexIndex)
 {
     if (vertexIndex < 0 || vertexIndex > _polylinePath.length() - 1) {
-        qWarning() << "Call to removeVertex with bad vertexIndex:count" << vertexIndex << _polylinePath.length();
+        qCWarning(QGCMapPolylineLog) << "Call to removeVertex with bad vertexIndex:count" << vertexIndex << _polylinePath.length();
         return;
     }
 
@@ -264,7 +267,7 @@ QGeoCoordinate QGCMapPolyline::vertexCoordinate(int vertex) const
     if (vertex >= 0 && vertex < _polylinePath.count()) {
         return _polylinePath[vertex].value<QGeoCoordinate>();
     } else {
-        qWarning() << "QGCMapPolyline::vertexCoordinate bad vertex requested";
+        qCWarning(QGCMapPolylineLog) << "QGCMapPolyline::vertexCoordinate bad vertex requested";
         return QGeoCoordinate();
     }
 }
@@ -352,11 +355,16 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
 {
     QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    if (!ShapeFileHelper::loadPolylineFromFile(file, rgCoords, errorString)) {
+    QList<QList<QGeoCoordinate>> polylines;
+    if (!ShapeFileHelper::loadPolylinesFromFile(file, polylines, errorString)) {
         qgcApp()->showAppMessage(errorString);
         return false;
     }
+    if (polylines.isEmpty()) {
+        qgcApp()->showAppMessage(tr("No polylines found in file"));
+        return false;
+    }
+    const QList<QGeoCoordinate>& rgCoords = polylines.first();
 
     beginReset();
     clear();
@@ -433,10 +441,8 @@ void QGCMapPolyline::selectVertex(int index)
     if(-1 <= index && index < count()) {
         _selectedVertexIndex = index;
     } else {
-        if (!qgcApp()->runningUnitTests()) {
-            qWarning() << QStringLiteral("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
-                                         "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
-        }
+        qCWarning(QGCMapPolylineLog) << QStringLiteral("QGCMapPolyline: Selected vertex index (%1) is out of bounds! "
+                                     "Polyline vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
         _selectedVertexIndex = -1;   // deselect vertex
     }
 

@@ -9,7 +9,6 @@ cmake_minimum_required(VERSION 3.25)
 # ----------------------------------------------------------------------------
 list(APPEND CMAKE_MODULE_PATH
     "${CMAKE_SOURCE_DIR}/cmake"
-    "${CMAKE_SOURCE_DIR}/cmake/CPack"
     "${CMAKE_SOURCE_DIR}/cmake/find-modules"
     "${CMAKE_SOURCE_DIR}/cmake/install"
     "${CMAKE_SOURCE_DIR}/cmake/install/CPack"
@@ -25,7 +24,6 @@ include(Helpers)
 # ----------------------------------------------------------------------------
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type (Debug or Release)" FORCE)
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Available configuration types" FORCE)
     message(STATUS "No build type specified. Defaulting to Release.")
 endif()
 
@@ -62,7 +60,7 @@ endif()
 # Apple-Specific Pre-Project Settings
 # ----------------------------------------------------------------------------
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}" CACHE STRING "macOS minimum deployment target")
     # iOS builds: set(CMAKE_OSX_SYSROOT "iphoneos")
     if(QGC_MACOS_UNIVERSAL_BUILD)
         # Universal binary for both Intel and Apple Silicon
@@ -100,14 +98,21 @@ project(${QGC_APP_NAME}
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
+if(QGC_BUILD_TESTING)
+    include(CTest)
+endif()
 
 # ----------------------------------------------------------------------------
 # CPM (CMake Package Manager) Configuration
 # ----------------------------------------------------------------------------
-include(CPM)
 if(NOT CPM_SOURCE_CACHE)
-    set(CPM_SOURCE_CACHE "${CMAKE_BINARY_DIR}/cpm_modules")
+    if(DEFINED ENV{CPM_SOURCE_CACHE} AND NOT "$ENV{CPM_SOURCE_CACHE}" STREQUAL "")
+        set(CPM_SOURCE_CACHE "$ENV{CPM_SOURCE_CACHE}" CACHE PATH "CPM source cache directory")
+    else()
+        set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cache/CPM" CACHE PATH "CPM source cache directory")
+    endif()
 endif()
+include(CPM)
 
 # ----------------------------------------------------------------------------
 # Toolchain Configuration (Compiler, Linker, Build Settings)
@@ -135,22 +140,29 @@ if(POLICY CMP0168)
 endif()
 
 # CMP0141: MSVC debug information format
-if(POLICY CMP0141)
-    cmake_policy(SET CMP0141 NEW)
-    set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
-endif()
+cmake_policy(SET CMP0141 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
 
 # CMP0075: Include files in CheckIncludeFile
-if(POLICY CMP0075)
-    cmake_policy(SET CMP0075 NEW)
-    set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
-endif()
+cmake_policy(SET CMP0075 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
 
 # ============================================================================
 # Qt6 Configuration
 # ============================================================================
 
 set(QT_NO_PRIVATE_MODULE_WARNING ON)
+
+find_package(Qt6 ${QGC_QT_MINIMUM_VERSION} QUIET COMPONENTS Core)
+if(NOT Qt6_FOUND)
+    message(FATAL_ERROR
+        "Qt6 ${QGC_QT_MINIMUM_VERSION}+ not found.\n"
+        "Set CMAKE_PREFIX_PATH to your Qt installation, e.g.:\n"
+        "  cmake -DCMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64 ..\n"
+        "  (or use qt-cmake which sets this automatically)\n"
+        "Searched: ${CMAKE_PREFIX_PATH}"
+    )
+endif()
 
 find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
@@ -179,18 +191,19 @@ find_package(Qt6
         TextToSpeech
         Widgets
         Xml
+        Quick3D
         StateMachine
     OPTIONAL_COMPONENTS
         Bluetooth
         MultimediaQuickPrivate
         OpenGL
-        Quick3D
+        QuickTest
         SerialPort
         Test
 )
 
 if(LINUX)
-    find_package(Qt6 COMPONENTS WaylandClient)
+    find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
 qt_standard_project_setup(
@@ -218,6 +231,9 @@ qt_policy(
     SET QTP0004 NEW  # Improved translation handling
     SET QTP0005 NEW  # Enhanced deployment handling
 )
+
+# Disable QML cache generation in Debug builds across all targets.
+add_compile_definitions($<$<CONFIG:Debug>:QT_QML_NO_CACHEGEN>)
 
 # ============================================================================
 # Custom Build Subdirectory
@@ -249,6 +265,15 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     MACOSX_BUNDLE  # macOS application bundle
     ${QGC_RESOURCES}
 )
+
+# Apply optional sanitizer instrumentation to the main target.
+include(Sanitizers)
+
+# Apply optional coverage instrumentation and coverage targets.
+include(Coverage)
+
+# Apply compiler warning configuration to QGC target
+qgc_apply_warning_flags()
 
 # ----------------------------------------------------------------------------
 # Platform-Specific Configuration

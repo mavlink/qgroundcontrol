@@ -16,8 +16,8 @@ FTPManager::FTPManager(Vehicle* vehicle)
     , _vehicle  (vehicle)
 {
     _ackOrNakTimeoutTimer.setSingleShot(true);
-    // Mock link responds immediately if at all, speed up unit tests with faster timoue
-    _ackOrNakTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 10 : _ackOrNakTimeoutMsecs);
+    // Mock link responds immediately if at all, speed up unit tests with faster timeout
+    _ackOrNakTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? kTestAckTimeoutMs : _ackOrNakTimeoutMsecs);
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
     // Make sure we don't have bad structure packing
@@ -662,6 +662,12 @@ void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
     }
 
     MavlinkFTP::Request* request = (MavlinkFTP::Request*)&data.payload[0];
+
+    // Reject messages where hdr.size exceeds data array bounds to prevent over-reads
+    if (request->hdr.size > sizeof(request->data)) {
+        qCWarning(FTPManagerLog) << "_mavlinkMessageReceived: hdr.size exceeds data array, discarding." << request->hdr.size;
+        return;
+    }
 
     // Ignore old/reordered packets (handle wrap-around properly)
     uint16_t actualIncomingSeqNumber = request->hdr.seqNumber;

@@ -6,14 +6,9 @@
 #include "UDPLink.h"
 #include "TCPLink.h"
 #include "LogReplayLink.h"
-#ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
-#endif
 #ifdef QT_DEBUG
 #include "MockLink.h"
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-#include "AirLinkLink.h"
 #endif
 
 QGC_LOGGING_CATEGORY(LinkConfigurationLog, "Comms.LinkConfiguration")
@@ -70,22 +65,15 @@ LinkConfiguration *LinkConfiguration::createSettings(int type, const QString &na
     case TypeTcp:
         config = new TCPConfiguration(name);
         break;
-#ifdef QGC_ENABLE_BLUETOOTH
     case TypeBluetooth:
         config = new BluetoothConfiguration(name);
         break;
-#endif
     case TypeLogReplay:
         config = new LogReplayConfiguration(name);
         break;
 #ifdef QT_DEBUG
     case TypeMock:
         config = new MockConfiguration(name);
-        break;
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    case AirLink:
-        config = new AirLinkConfiguration(name);
         break;
 #endif
     case TypeLast:
@@ -112,22 +100,15 @@ LinkConfiguration *LinkConfiguration::duplicateSettings(const LinkConfiguration 
     case TypeTcp:
         dupe = new TCPConfiguration(qobject_cast<const TCPConfiguration*>(source));
         break;
-#ifdef QGC_ENABLE_BLUETOOTH
     case TypeBluetooth:
         dupe = new BluetoothConfiguration(qobject_cast<const BluetoothConfiguration*>(source));
         break;
-#endif
     case TypeLogReplay:
         dupe = new LogReplayConfiguration(qobject_cast<const LogReplayConfiguration*>(source));
         break;
 #ifdef QT_DEBUG
     case TypeMock:
         dupe = new MockConfiguration(qobject_cast<const MockConfiguration*>(source));
-        break;
-#endif
-#ifndef QGC_AIRLINK_DISABLED
-    case AirLink:
-        dupe = new AirLinkConfiguration(qobject_cast<const AirLinkConfiguration*>(source));
         break;
 #endif
     case TypeLast:

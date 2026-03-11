@@ -120,7 +120,8 @@ public:
 
     /// Get the cached file path for a URL (empty if not cached)
     /// @param url URL to look up
-    /// @return Local file path or empty string
+    /// @return Path to a temporary file copy of cached data, or empty string.
+    ///         Caller owns the temporary file and should remove it when no longer needed.
     Q_INVOKABLE QString cachedPath(const QString &url) const;
 
     /// Get cache entry age in seconds (-1 if not cached)
@@ -137,7 +138,7 @@ public:
 public slots:
     /// Download a file with cache support
     /// @param url URL to download
-    /// @param maxCacheAgeSec Maximum cache age in seconds (0 = always revalidate)
+    /// @param maxCacheAgeSec Maximum cache age in seconds (0 = any age is valid)
     /// @return true if download started successfully
     bool download(const QString &url, int maxCacheAgeSec);
 
@@ -198,11 +199,6 @@ signals:
     void finished(bool success, const QString &localPath,
                   const QString &errorMessage, bool fromCache);
 
-    /// Legacy signal for backward compatibility
-    /// @deprecated Use finished() instead
-    void downloadComplete(const QString &remoteFile, const QString &localFile,
-                          const QString &errorMsg);
-
     /// Emitted during download with byte counts
     void downloadProgress(qint64 bytesReceived, qint64 totalBytes);
 
@@ -235,4 +231,5 @@ private:
     bool _fromCache = false;
     bool _networkAttemptFailed = false;
     bool _forceNetwork = false;
+    bool _cancelRequested = false;
 };

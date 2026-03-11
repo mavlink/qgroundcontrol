@@ -18,7 +18,7 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])
 {
-    _editorQml = "qrc:/qml/QGroundControl/Controls/CorridorScanEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/PlanView/CorridorScanEditor.qml";
 
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {
@@ -51,12 +51,12 @@ void CorridorScanComplexItem::save(QJsonArray&  planItems)
     planItems.append(saveObject);
 }
 
-void CorridorScanComplexItem::savePreset(const QString& name)
+void CorridorScanComplexItem::savePreset(const QString& presetName)
 {
     QJsonObject saveObject;
 
     _saveCommon(saveObject);
-    _savePresetJson(name, saveObject);
+    _savePresetJson(presetName, saveObject);
 }
 
 void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
@@ -72,13 +72,13 @@ void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
     _corridorPolyline.saveToJson(saveObject);
 }
 
-void CorridorScanComplexItem::loadPreset(const QString& name)
+void CorridorScanComplexItem::loadPreset(const QString& presetName)
 {
     QString errorString;
 
-    QJsonObject presetObject = _loadPresetJson(name);
+    QJsonObject presetObject = _loadPresetJson(presetName);
     if (!_loadWorker(presetObject, 0, errorString, true /* forPresets */)) {
-        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(name).arg(errorString));
+        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
     }
     _rebuildTransects();
 }
@@ -152,6 +152,25 @@ bool CorridorScanComplexItem::load(const QJsonObject& complexObject, int sequenc
 bool CorridorScanComplexItem::specifiesCoordinate(void) const
 {
     return _corridorPolyline.count() > 1;
+}
+
+void CorridorScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (!coordinate.isValid() || !_entryCoordinate.isValid() || _corridorPolyline.count() < 2) {
+        return;
+    }
+
+    const double distanceMeters = _entryCoordinate.distanceTo(coordinate);
+    const double azimuthDegrees = _entryCoordinate.azimuthTo(coordinate);
+    const QList<QGeoCoordinate> vertices = _corridorPolyline.coordinateList();
+
+    QList<QGeoCoordinate> translatedVertices;
+    translatedVertices.reserve(vertices.count());
+    for (const QGeoCoordinate& vertex: vertices) {
+        translatedVertices.append(vertex.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+    }
+
+    _corridorPolyline.setPath(translatedVertices);
 }
 
 int CorridorScanComplexItem::_calcTransectCount(void) const
@@ -264,8 +283,8 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
                 double azimuth = transectCoords[0].azimuthTo(transectCoords[1]);
                 turnaroundCoord = transectCoords[0].atDistanceAndAzimuth(-turnAroundDistance, azimuth);
                 turnaroundCoord.setAltitude(qQNaN());
-                TransectStyleComplexItem::CoordInfo_t coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-                transect.prepend(coordInfo);
+                TransectStyleComplexItem::CoordInfo_t turnaroundCoordInfo = { turnaroundCoord, CoordTypeTurnaround };
+                transect.prepend(turnaroundCoordInfo);
 
                 azimuth = transectCoords.last().azimuthTo(transectCoords[transectCoords.count() - 2]);
                 turnaroundCoord = transectCoords.last().atDistanceAndAzimuth(-turnAroundDistance, azimuth);

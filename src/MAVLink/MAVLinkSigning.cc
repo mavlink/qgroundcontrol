@@ -10,9 +10,11 @@ namespace
 mavlink_signing_t* _getChannelSigning(uint8_t channel)
 {
     mavlink_status_t* const status = mavlink_get_channel_status(channel);
-    mavlink_signing_t* const signing = status->signing;
+    if (!status) {
+        return nullptr;
+    }
 
-    return signing;
+    return status->signing;
 }
 
 mavlink_channel_t _getMessageChannel(const mavlink_message_t &message)
@@ -75,6 +77,11 @@ bool initSigning(mavlink_channel_t channel, QByteArrayView key, mavlink_accept_u
     }
 
     mavlink_status_t* const status = mavlink_get_channel_status(channel);
+    if (!status) {
+        qWarning() << Q_FUNC_INFO << "Invalid channel:" << channel;
+        return false;
+    }
+
     if (key.isEmpty()) {
         status->signing = nullptr;
         status->signing_streams = nullptr;

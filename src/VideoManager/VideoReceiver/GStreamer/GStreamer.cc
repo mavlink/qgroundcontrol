@@ -218,7 +218,7 @@ void _setGstEnvVars()
 #endif
 }
 
-void _logPlugin(gpointer data, gpointer user_data)
+void _logPlugin(gpointer data, gpointer /*user_data*/)
 {
     GstPlugin *plugin = static_cast<GstPlugin*>(data);
     if (!plugin) {
@@ -549,7 +549,7 @@ bool initialize()
     return true;
 }
 
-void *createVideoSink(QQuickItem *widget, QObject *parent)
+void *createVideoSink(QQuickItem *widget, QObject * /*parent*/)
 {
     GstElement *videoSinkBin = gst_element_factory_make("qgcvideosinkbin", NULL);
     if (videoSinkBin) {

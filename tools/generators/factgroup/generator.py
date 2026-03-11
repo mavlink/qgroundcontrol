@@ -95,7 +95,7 @@ class MavlinkMessageSpec:
     @property
     def msg_id_constant(self) -> str:
         """Get the MAVLink message ID constant."""
-        return f"MAVLINK_MSG_ID_{self.message_id}"
+        return f"MAVLINK_MSG_ID_{self.message_id.upper()}"
 
     @property
     def local_var_name(self) -> str:

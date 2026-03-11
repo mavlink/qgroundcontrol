@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 24 24">
+    <!-- Pole -->
+    <path d="M0 0h2v20h-2Z" fill="#000000"/>
+    <!-- Triangular banner (1px gap from pole) -->
+    <polygon points="3,0 19,5.5 3,11" fill="#000000"/>
+</svg>

@@ -9,30 +9,30 @@
 
 QGC_LOGGING_CATEGORY(CameraMetaDataLog, "Camera.CameraMetaData")
 
-CameraMetaData::CameraMetaData(const QString &canonicalName,
-                               const QString &brand,
-                               const QString &model,
-                               double sensorWidth,
-                               double sensorHeight,
-                               double imageWidth,
-                               double imageHeight,
-                               double focalLength,
-                               bool landscape,
-                               bool fixedOrientation,
-                               double minTriggerInterval,
-                               const QString &deprecatedTranslatedName)
-    : canonicalName(canonicalName)
-    , brand(brand)
-    , model(model)
-    , sensorWidth(sensorWidth)
-    , sensorHeight(sensorHeight)
-    , imageWidth(imageWidth)
-    , imageHeight(imageHeight)
-    , focalLength(focalLength)
-    , landscape(landscape)
-    , fixedOrientation(fixedOrientation)
-    , minTriggerInterval(minTriggerInterval)
-    , deprecatedTranslatedName(deprecatedTranslatedName)
+CameraMetaData::CameraMetaData(const QString &canonicalName_,
+                               const QString &brand_,
+                               const QString &model_,
+                               double sensorWidth_,
+                               double sensorHeight_,
+                               double imageWidth_,
+                               double imageHeight_,
+                               double focalLength_,
+                               bool landscape_,
+                               bool fixedOrientation_,
+                               double minTriggerInterval_,
+                               const QString &deprecatedTranslatedName_)
+    : canonicalName(canonicalName_)
+    , brand(brand_)
+    , model(model_)
+    , sensorWidth(sensorWidth_)
+    , sensorHeight(sensorHeight_)
+    , imageWidth(imageWidth_)
+    , imageHeight(imageHeight_)
+    , focalLength(focalLength_)
+    , landscape(landscape_)
+    , fixedOrientation(fixedOrientation_)
+    , minTriggerInterval(minTriggerInterval_)
+    , deprecatedTranslatedName(deprecatedTranslatedName_)
 {
     qCDebug(CameraMetaDataLog) << this;
 }

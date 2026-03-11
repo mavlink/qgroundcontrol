@@ -66,12 +66,10 @@ const QVariantList &QGCCorePlugin::analyzePages()
             tr("Log Download"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/LogDownloadPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/LogDownloadIcon.svg")))),
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
         QVariant::fromValue(new QmlComponentInfo(
             tr("GeoTag Images"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTagPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/GeoTagIcon.svg")))),
-#endif
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagIcon.svg")))),
         QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Console"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsolePage.qml")),
@@ -103,6 +101,10 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
 
 void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
 {
+#ifdef Q_OS_ANDROID
+    Q_UNUSED(visible);
+#endif
+
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::indoorPaletteName) {
             QVariant outdoorPalette;
