@@ -641,7 +641,7 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
 
     do {
         if (isRtsp) {
-            if (!GStreamer::is_valid_rtsp_uri(input.toUtf8().constData())) {
+            if (!GStreamer::isValidRtspUri(input.toUtf8().constData())) {
                 qCCritical(GstVideoReceiverLog) << "Invalid RTSP URI:" << input;
                 break;
             }
@@ -928,7 +928,7 @@ void GstVideoReceiver::_logDecodebin3SelectedCodec(GstElement *decodebin3)
                 GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
                 const gchar *featureName = gst_plugin_feature_get_name(feature);
                 const guint rank = gst_plugin_feature_get_rank(feature);
-                bool isHardwareDecoder = GStreamer::is_hardware_decoder_factory(factory);
+                bool isHardwareDecoder = GStreamer::isHardwareDecoderFactory(factory);
 
                 QString pluginName = featureName;
                 GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
