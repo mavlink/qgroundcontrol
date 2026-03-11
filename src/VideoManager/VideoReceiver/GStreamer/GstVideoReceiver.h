@@ -13,6 +13,11 @@
 
 #include "VideoReceiver.h"
 
+#ifdef QGC_GST_APP_AVAILABLE
+#include <gst/app/gstappsrc.h>
+class QGCWebSocketVideoSource;
+#endif
+
 Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 
 typedef std::function<void()> Task;
@@ -68,6 +73,10 @@ private:
     GstElement *_makeSource(const QString &input);
     GstElement *_makeDecoder(GstCaps *caps = nullptr, GstElement *videoSink = nullptr);
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
+    GstElement *_makeHttpSource(const QString &uri);
+#ifdef QGC_GST_APP_AVAILABLE
+    GstElement *_makeWebSocketSource(const QString &uri);
+#endif
 
     void _onNewSourcePad(GstPad *pad);
     void _onNewDecoderPad(GstPad *pad);
@@ -85,6 +94,24 @@ private:
 
     bool _needDispatch();
     void _dispatchSignal(Task emitter);
+
+    struct HttpStreamSettings {
+        uint32_t timeout = 10;
+        uint32_t retryAttempts = 3;
+        uint32_t bufferSize = 32768;
+        bool keepAlive = true;
+        QString userAgent = QStringLiteral("QGroundControl/4.x");
+    };
+
+    struct WebSocketStreamSettings {
+        uint32_t timeout = 10;
+        uint32_t reconnectDelay = 2000;
+        uint32_t heartbeat = 5000;
+    };
+
+    void _captureStreamSettings();
+    HttpStreamSettings _httpSettings;
+    WebSocketStreamSettings _wsSettings;
 
     static gboolean _onBusMessage(GstBus *bus, GstMessage *message, gpointer user_data);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
@@ -108,6 +135,10 @@ private:
     GstVideoWorker *_worker = nullptr;
     gulong _teeProbeId = 0;
     gulong _videoSinkProbeId = 0;
+
+#ifdef QGC_GST_APP_AVAILABLE
+    QGCWebSocketVideoSource *_wsSource = nullptr;
+#endif
 
     static constexpr const char *_kFileMux[FILE_FORMAT_MAX + 1] = {
         "matroskamux",

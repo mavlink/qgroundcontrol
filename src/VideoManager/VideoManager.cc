@@ -89,6 +89,8 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->httpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->websocketUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
@@ -341,6 +343,8 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceRTSP,
         VideoSettings::videoSourceTCP,
         VideoSettings::videoSourceMPEGTS,
+        VideoSettings::videoSourceHTTP,
+        VideoSettings::videoSourceWebSocket,
         VideoSettings::videoSource3DRSolo,
         VideoSettings::videoSourceParrotDiscovery,
         VideoSettings::videoSourceYuneecMantisG,
@@ -541,6 +545,10 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("rtsp://192.168.0.10:8554/H264Video"));
     } else if (source == VideoSettings::videoSourceHerelinkHotspot) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("rtsp://192.168.43.1:8554/fpv_stream"));
+    } else if (source == VideoSettings::videoSourceHTTP) {
+        settingsChanged |= _updateVideoUri(receiver, _videoSettings->httpUrl()->rawValue().toString());
+    } else if (source == VideoSettings::videoSourceWebSocket) {
+        settingsChanged |= _updateVideoUri(receiver, _videoSettings->websocketUrl()->rawValue().toString());
     } else if ((source == VideoSettings::videoDisabled) || (source == VideoSettings::videoSourceNoVideo)) {
         settingsChanged |= _updateVideoUri(receiver, QString());
     } else {
@@ -673,7 +681,14 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
     /* The gstreamer rtsp source will switch to tcp if udp is not available after 5 seconds.
        So we should allow for some negotiation time for rtsp */
 
-    const uint32_t timeout = ((source == VideoSettings::videoSourceRTSP) ? _videoSettings->rtspTimeout()->rawValue().toUInt() : 3);
+    uint32_t timeout = 3;
+    if (source == VideoSettings::videoSourceRTSP) {
+        timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
+    } else if (source == VideoSettings::videoSourceHTTP) {
+        timeout = _videoSettings->httpTimeout()->rawValue().toUInt();
+    } else if (source == VideoSettings::videoSourceWebSocket) {
+        timeout = _videoSettings->websocketTimeout()->rawValue().toUInt();
+    }
 
     receiver->start(timeout);
 }
