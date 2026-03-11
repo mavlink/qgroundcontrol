@@ -126,7 +126,7 @@ jobs:
           artifact-name: sbom-cyclonedx
 
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
           merge-multiple: true
@@ -135,28 +135,28 @@ jobs:
         run: find artifacts -type f | head -50 || echo "No artifacts found"
 
       - name: Attest Linux AppImage
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: artifacts/**/QGroundControl*.AppImage
           sbom-path: sbom.spdx.json
         continue-on-error: true
 
       - name: Attest macOS DMG
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: artifacts/**/QGroundControl.dmg
           sbom-path: sbom.spdx.json
         continue-on-error: true
 
       - name: Attest Windows EXE
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: artifacts/**/QGroundControl*.exe
           sbom-path: sbom.spdx.json
         continue-on-error: true
 
       - name: Attest Android APK
-        uses: actions/attest-sbom@v3
+        uses: actions/attest-sbom@v4
         with:
           subject-path: artifacts/**/QGroundControl.apk
           sbom-path: sbom.spdx.json

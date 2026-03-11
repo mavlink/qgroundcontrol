@@ -66,7 +66,7 @@ jobs:
           fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Upload report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: link-check-report

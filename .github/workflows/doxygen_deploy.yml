@@ -37,7 +37,7 @@ jobs:
         run: doxygen Doxyfile
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: doxygen_build
           path: docs/api/html/
@@ -56,7 +56,7 @@ jobs:
           egress-policy: audit
 
       - name: Download Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: doxygen_build
           path: ~/_api_docs
