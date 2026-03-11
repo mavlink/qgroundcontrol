@@ -70,13 +70,13 @@ TransectStyleComplexItemEditor {
                     {
                         text:       qsTr("Hover and capture image"),
                         fact:       missionItem.hoverAndCapture,
-                        enabled:    missionItem.cameraCalc.distanceMode === QGroundControl.AltitudeModeRelative || missionItem.cameraCalc.distanceMode === QGroundControl.AltitudeModeAbsolute,
+                        enabled:    missionItem.cameraCalc.distanceMode === QGroundControl.AltitudeFrameRelative || missionItem.cameraCalc.distanceMode === QGroundControl.AltitudeFrameAbsolute,
                         visible:    missionItem.hoverAndCaptureAllowed
                     },
                     {
                         text:       qsTr("Refly at 90 deg offset"),
                         fact:       missionItem.refly90Degrees,
-                        enabled:    missionItem.cameraCalc.distanceMode !== QGroundControl.AltitudeModeCalcAboveTerrain,
+                        enabled:    missionItem.cameraCalc.distanceMode !== QGroundControl.AltitudeFrameCalcAboveTerrain,
                         visible:    true
                     },
                     {

@@ -7,17 +7,34 @@ import QGroundControl
 import QGroundControl.Controls
 
 QGCPopupDialog {
-    title:   qsTr("Altitude Mode")
+    title:   qsTr("Altitude Frame")
     buttons: Dialog.Close
 
     property var rgRemoveModes
-    property var updateAltModeFn
-    property var currentAltMode
+    property var updateAltFrameFn
+    property var currentAltFrame
 
     Component.onCompleted: {
+        // Populate model dynamically since ListElement cannot use script expressions
+        buttonModel.append({ modeName: QGroundControl.altitudeFrameShortDescription(QGroundControl.AltitudeFrameRelative),
+                             help: qsTr("Altitude above home position"),
+                             modeValue: QGroundControl.AltitudeFrameRelative })
+        buttonModel.append({ modeName: QGroundControl.altitudeFrameShortDescription(QGroundControl.AltitudeFrameAbsolute),
+                             help: qsTr("Altitude above mean sea level"),
+                             modeValue: QGroundControl.AltitudeFrameAbsolute })
+        buttonModel.append({ modeName: QGroundControl.altitudeFrameShortDescription(QGroundControl.AltitudeFrameTerrain),
+                             help: qsTr("Altitude above terrain at waypoint using MAVLink terrain protocol"),
+                             modeValue: QGroundControl.AltitudeFrameTerrain })
+        buttonModel.append({ modeName: QGroundControl.altitudeFrameShortDescription(QGroundControl.AltitudeFrameCalcAboveTerrain),
+                             help: qsTr("Altitudes are terrain-relative; converting to AMSL before upload"),
+                             modeValue: QGroundControl.AltitudeFrameCalcAboveTerrain })
+        buttonModel.append({ modeName: QGroundControl.altitudeFrameShortDescription(QGroundControl.AltitudeFrameMixed),
+                             help: qsTr("Each waypoint specifies its own altitude frame"),
+                             modeValue: QGroundControl.AltitudeFrameMixed })
+
         // Check for custom build override on AMSL usage
-        if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && currentAltMode != QGroundControl.AltitudeModeAbsolute) {
-            rgRemoveModes.push(QGroundControl.AltitudeModeAbsolute)
+        if (!QGroundControl.corePlugin.options.showMissionAbsoluteAltitude && currentAltFrame != QGroundControl.AltitudeFrameAbsolute) {
+            rgRemoveModes.push(QGroundControl.AltitudeFrameAbsolute)
         }
 
         // Remove modes specified by consumer
@@ -35,39 +52,13 @@ QGCPopupDialog {
 
     ListModel {
         id: buttonModel
-
-        ListElement {
-            modeName:   qsTr("Relative")
-            help:       qsTr("Altitude above home position")
-            modeValue:  QGroundControl.AltitudeModeRelative
-        }
-        ListElement {
-            modeName:   qsTr("Absolute")
-            help:       qsTr("Altitude above mean sea level (AMSL)")
-            modeValue:  QGroundControl.AltitudeModeAbsolute
-        }
-        ListElement {
-            modeName:   qsTr("Terrain")
-            help:       qsTr("Altitude above terrain at waypoint")
-            modeValue:  QGroundControl.AltitudeModeTerrainFrame
-        }
-        ListElement {
-            modeName:   qsTr("Terrain Calculated")
-            help:       qsTr("Altitudes are terrain-relative; converting to AMSL before upload")
-            modeValue:  QGroundControl.AltitudeModeCalcAboveTerrain
-        }
-        ListElement {
-            modeName:   qsTr("Waypoint Defined")
-            help:       qsTr("Each waypoint specifies its own altitude mode")
-            modeValue:  QGroundControl.AltitudeModeMixed
-        }
     }
 
     Column {
         spacing: ScreenTools.defaultFontPixelWidth
 
         QGCLabel {
-            text: qsTr("Altitude mode for mission items")
+            text: qsTr("Altitude frame for mission items")
             font.pointSize: ScreenTools.smallFontPointSize
         }
 
@@ -76,7 +67,7 @@ QGCPopupDialog {
 
             Button {
                 hoverEnabled:   true
-                checked:        modeValue == currentAltMode
+                checked:        modeValue == currentAltFrame
 
                 background: Rectangle {
                     radius: ScreenTools.defaultFontPixelHeight / 2
@@ -102,7 +93,7 @@ QGCPopupDialog {
                 }
 
                 onClicked: {
-                    updateAltModeFn(modeValue)
+                    updateAltFrameFn(modeValue)
                     close()
                 }
             }

@@ -20,7 +20,7 @@ private slots:
     void cleanup() override;
 
     void _testLoadJsonSectionAvailable();
-    void _testGlobalAltMode();
+    void _testGlobalAltFrame();
     void _testGimbalRecalc();
     void _testVehicleYawRecalc();
     void _testMissionReposition();

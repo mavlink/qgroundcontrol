@@ -26,7 +26,7 @@ Rectangle {
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
-    property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
+    property int    _altitudeFrame:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeFrameRelative : QGroundControl.AltitudeFrameAbsolute
 
 
     Column {
@@ -67,7 +67,7 @@ Rectangle {
                 AltitudeFactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.finalApproachAltitude
-                    altitudeMode:       _altitudeMode
+                    altitudeFrame:       _altitudeFrame
                 }
 
                 FactCheckBox {
@@ -141,7 +141,7 @@ Rectangle {
                 AltitudeFactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.landingAltitude
-                    altitudeMode:       _altitudeMode
+                    altitudeFrame:       _altitudeFrame
                 }
 
                 QGCRadioButton {

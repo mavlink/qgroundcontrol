@@ -371,24 +371,24 @@ void MissionControllerTest::_testLoadJsonSectionAvailable()
     }
 }
 
-void MissionControllerTest::_testGlobalAltMode()
+void MissionControllerTest::_testGlobalAltFrame()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
-    struct _globalAltMode_s
+    struct _globalAltFrame_s
     {
-        QGroundControlQmlGlobal::AltMode altMode;
+        QGroundControlQmlGlobal::AltitudeFrame altFrame;
         MAV_FRAME expectedMavFrame;
-    } altModeTestCases[] = {
-        {QGroundControlQmlGlobal::AltitudeModeRelative, MAV_FRAME_GLOBAL_RELATIVE_ALT},
-        {QGroundControlQmlGlobal::AltitudeModeAbsolute, MAV_FRAME_GLOBAL},
-        {QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain, MAV_FRAME_GLOBAL},
-        {QGroundControlQmlGlobal::AltitudeModeTerrainFrame, MAV_FRAME_GLOBAL_TERRAIN_ALT},
+    } altFrameTestCases[] = {
+        {QGroundControlQmlGlobal::AltitudeFrameRelative, MAV_FRAME_GLOBAL_RELATIVE_ALT},
+        {QGroundControlQmlGlobal::AltitudeFrameAbsolute, MAV_FRAME_GLOBAL},
+        {QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain, MAV_FRAME_GLOBAL},
+        {QGroundControlQmlGlobal::AltitudeFrameTerrain, MAV_FRAME_GLOBAL_TERRAIN_ALT},
     };
 
-    for (const _globalAltMode_s& testCase : altModeTestCases) {
+    for (const _globalAltFrame_s& testCase : altFrameTestCases) {
         _missionController->removeAll();
-        _missionController->setGlobalAltitudeMode(testCase.altMode);
+        _missionController->setGlobalAltitudeFrame(testCase.altFrame);
         // Use coordinate fixtures
         const QGeoCoordinate start = Coord::zurich();
         _missionController->insertTakeoffItem(start, 1);
@@ -397,13 +397,13 @@ void MissionControllerTest::_testGlobalAltMode()
         _missionController->insertSimpleMissionItem(start.atDistanceAndAzimuth(300, 0), 4);
         SimpleMissionItem* si =
             qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(1));
-        QCOMPARE(si->altitudeMode(), QGroundControlQmlGlobal::AltitudeModeRelative);
+        QCOMPARE(si->altitudeFrame(), QGroundControlQmlGlobal::AltitudeFrameRelative);
         QCOMPARE(si->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
         for (int i = 2; i < _missionController->visualItems()->count(); i++) {
-            TEST_DEBUG(QStringLiteral("Validating altitude mode index %1").arg(i));
+            TEST_DEBUG(QStringLiteral("Validating altitude frame index %1").arg(i));
             SimpleMissionItem* siLoop =
                 qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(i));
-            QCOMPARE(siLoop->altitudeMode(), testCase.altMode);
+            QCOMPARE(siLoop->altitudeFrame(), testCase.altFrame);
             QCOMPARE(siLoop->missionItem().frame(), testCase.expectedMavFrame);
         }
     }

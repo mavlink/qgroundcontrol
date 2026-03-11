@@ -113,9 +113,6 @@ public:
     /// Set offline editing vehicle type
     void setOfflineVehicleType(MAV_TYPE vehicleType);
 
-    /// Set global altitude mode
-    void setAltitudeMode(int altitudeMode);
-
     /// Set a Fact value (will be restored on destruction)
     void setFactValue(Fact* fact, const QVariant& value);
 

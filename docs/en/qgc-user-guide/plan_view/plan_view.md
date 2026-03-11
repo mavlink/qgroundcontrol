@@ -121,7 +121,7 @@ The Plan Info section contains general plan-level settings:
 
 The Defaults section sets plan-wide values that apply to new mission items:
 
-- **Altitude Mode** — Select the altitude reference frame for waypoints.
+- **Altitude Frame** — Select the altitude reference frame for waypoints.
 - **Waypoints Altitude** — The default altitude for the first mission item added (subsequent items take their initial altitude from the previous item). Changing this value when items already exist will prompt to update all items to the new altitude.
 - **Flight Speed** — Set a flight speed that differs from the default mission speed.
 - **Vehicle Speeds** — Cruise speed (fixed-wing) and/or hover speed (multi-rotor/VTOL), used for estimating mission time.

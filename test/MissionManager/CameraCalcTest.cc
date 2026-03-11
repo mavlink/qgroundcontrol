@@ -55,9 +55,9 @@ void CameraCalcTest::_testDirty()
         _multiSpy->clearAllSignals();
     }
     rgFacts.clear();
-    _cameraCalc->setDistanceMode(_cameraCalc->distanceMode() == QGroundControlQmlGlobal::AltitudeModeRelative
-                                     ? QGroundControlQmlGlobal::AltitudeModeAbsolute
-                                     : QGroundControlQmlGlobal::AltitudeModeRelative);
+    _cameraCalc->setDistanceMode(_cameraCalc->distanceMode() == QGroundControlQmlGlobal::AltitudeFrameRelative
+                                     ? QGroundControlQmlGlobal::AltitudeFrameAbsolute
+                                     : QGroundControlQmlGlobal::AltitudeFrameRelative);
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
     _cameraCalc->setCameraBrand(CameraCalc::canonicalManualCameraName());
