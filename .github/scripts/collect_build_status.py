@@ -9,7 +9,17 @@ import json
 import os
 from typing import Any
 
-from workflow_runs import list_workflow_runs, parse_csv_list
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import list_workflow_runs_for_sha
+from common.github_runs import select_latest_runs_by_name
+
+
+def parse_csv_list(value: str) -> list[str]:
+    """Parse comma-separated values into a trimmed non-empty list."""
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def latest_runs_by_name(
@@ -17,17 +27,7 @@ def latest_runs_by_name(
     names: set[str],
     event: str,
 ) -> dict[str, dict[str, Any]]:
-    latest: dict[str, dict[str, Any]] = {}
-    for run in runs:
-        name = str(run.get("name", ""))
-        if name not in names:
-            continue
-        if str(run.get("event", "")) != event:
-            continue
-        existing = latest.get(name)
-        if existing is None or str(run.get("created_at", "")) > str(existing.get("created_at", "")):
-            latest[name] = run
-    return latest
+    return select_latest_runs_by_name(runs, names, event=event)
 
 
 def platform_status(
@@ -119,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
     target_names = set(platforms)
     target_names.add("pre-commit")
 
-    runs = list_workflow_runs(args.repo, args.head_sha)
+    runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
         with open(args.runs_cache, "w", encoding="utf-8") as f:

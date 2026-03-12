@@ -164,7 +164,7 @@ Item {
 
     // Stop tracking map center when the home position is changed externally (e.g. drag, file load)
     Connections {
-        target: _visualItems.get(0)
+        target: _visualItems.count > 0 ? _visualItems.get(0) : null
         function onCoordinateChanged() {
             if (!_updatingHomeFromMapCenter && !_planMasterController.containsItems) {
                 _homeTrackingMapCenter = false
@@ -178,9 +178,11 @@ Item {
         function onContainsItemsChanged() {
             if (!_planMasterController.containsItems) {
                 _homeTrackingMapCenter = true
-                _updatingHomeFromMapCenter = true
-                _visualItems.get(0).coordinate = editorMap.center
-                _updatingHomeFromMapCenter = false
+                if (_visualItems.count > 0) {
+                    _updatingHomeFromMapCenter = true
+                    _visualItems.get(0).coordinate = editorMap.center
+                    _updatingHomeFromMapCenter = false
+                }
             }
         }
     }
@@ -279,7 +281,7 @@ Item {
             }
             onCenterChanged: {
                 QGroundControl.flightMapPosition = editorMap.center
-                if (_homeTrackingMapCenter && !_planMasterController.containsItems) {
+                if (_homeTrackingMapCenter && !_planMasterController.containsItems && _visualItems.count > 0) {
                     _updatingHomeFromMapCenter = true
                     _visualItems.get(0).coordinate = editorMap.center
                     _updatingHomeFromMapCenter = false

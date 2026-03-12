@@ -132,11 +132,6 @@ runs:
       shell: bash
       run: |
         if command -v ccache >/dev/null 2>&1; then
-          echo "::group::ccache statistics"
-          ccache -s
-          echo "::endgroup::"
-        elif command -v sccache >/dev/null 2>&1; then
-          echo "::group::sccache statistics"
-          sccache --show-stats
-          echo "::endgroup::"
+          ccache -c
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
         fi

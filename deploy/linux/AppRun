@@ -25,9 +25,14 @@ for LIB_PATH in \
 done
 
 # Preload system GLib 2.76+ for TTS compatibility (libspeechd.so.2 dependency)
+# Must also preload system GIO to avoid ABI mismatch with bundled GStreamer GIO plugin
 if [ -n "$SYSTEM_GLIB" ]; then
     if nm -D "$SYSTEM_GLIB" 2>/dev/null | grep -qm1 g_string_free_and_steal; then
-        export LD_PRELOAD="${SYSTEM_GLIB}${LD_PRELOAD:+:$LD_PRELOAD}"
+        GLIB_PRELOAD="${SYSTEM_GLIB}"
+        if [ -f "$SYSTEM_GIO" ]; then
+            GLIB_PRELOAD="${GLIB_PRELOAD}:${SYSTEM_GIO}"
+        fi
+        export LD_PRELOAD="${GLIB_PRELOAD}${LD_PRELOAD:+:$LD_PRELOAD}"
     fi
 fi
 

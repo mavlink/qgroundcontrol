@@ -18,8 +18,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         GPSRtk.h
         GPSRTKFactGroup.cc
         GPSRTKFactGroup.h
-        NTRIP.cc
-        NTRIP.h
         RTCMMavlink.cc
         RTCMMavlink.h
         satellite_info.h
@@ -30,6 +28,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# ----------------------------------------------------------------------------
+# NTRIP Subsystem
+# ----------------------------------------------------------------------------
+add_subdirectory(NTRIP)
 
 # ============================================================================
 # PX4 GPS Drivers Integration

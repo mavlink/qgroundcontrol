@@ -9,6 +9,10 @@ inputs:
     description: Comma-separated workflow names to collect artifact sizes for
     required: false
     default: Linux,Windows,MacOS,Android
+  event:
+    description: Optional workflow event name to filter runs by
+    required: false
+    default: ''
   output-file:
     description: Output JSON file path
     required: true
@@ -34,11 +38,15 @@ runs:
         REPO: ${{ github.repository }}
         HEAD_SHA: ${{ inputs.head-sha }}
         WORKFLOWS: ${{ inputs.workflows }}
+        EVENT: ${{ inputs.event }}
         OUTPUT_FILE: ${{ inputs.output-file }}
         RUNS_FILE: ${{ inputs.runs-file }}
         ARTIFACTS_FILE: ${{ inputs.artifacts-file }}
       run: |
         ARGS=(--repo "${REPO}" --head-sha "${HEAD_SHA}" --platform-workflows "${WORKFLOWS}" --output-file "${OUTPUT_FILE}")
+        if [[ -n "${EVENT}" ]]; then
+          ARGS+=(--event "${EVENT}")
+        fi
         if [[ -n "${RUNS_FILE}" && -f "${RUNS_FILE}" ]]; then
           ARGS+=(--runs-file "${RUNS_FILE}")
         fi

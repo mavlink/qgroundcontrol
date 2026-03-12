@@ -84,8 +84,8 @@ qt_add_qml_module(QGroundControlControlsModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        AltModeCombo.qml
-        AltModeDialog.qml
+        AltFrameCombo.qml
+        AltFrameDialog.qml
         AppSettings.qml
         APMSubMotorDisplay.qml
         AppLogging.qml
@@ -114,8 +114,6 @@ qt_add_qml_module(QGroundControlControlsModule
         LabelledLabel.qml
         LogReplayStatusBar.qml
         MainWindowSavedState.qml
-        MAVLinkChart.qml
-        MAVLinkMessageButton.qml
         MissionCommandDialog.qml
         MvPanelPage.qml
         OfflineMapButton.qml
@@ -186,9 +184,6 @@ qt_add_qml_module(QGroundControlControlsModule
 # QT_QML_SINGLETON_TYPE must be visible in the same CMakeLists.txt that calls
 # qt_add_qml_module(). On Windows this cross-directory property propagation fails,
 # so these files are kept in this module until a better solution is available.
-
-        # src/AnalyzeView/
-        AnalyzePage.qml
 
         # src/FirstRunPromptDialogs/
         FirstRunPrompt.qml

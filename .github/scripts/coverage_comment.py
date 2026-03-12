@@ -6,24 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-try:
-    from defusedxml.ElementTree import ParseError as XMLParseError
-    from defusedxml.ElementTree import parse as _xml_parse_impl
-    _USING_DEFUSEDXML = True
-except ImportError:
-    from xml.etree.ElementTree import ParseError as XMLParseError
-    from xml.etree.ElementTree import parse as _xml_parse_impl
-    _USING_DEFUSEDXML = False
-
-
-def xml_parse(path: str):
-    if _USING_DEFUSEDXML:
-        return _xml_parse_impl(path)
-    # Harden stdlib fallback: reject XML with DTD/entities.
-    text = Path(path).read_text(encoding="utf-8", errors="replace")
-    if "<!DOCTYPE" in text or "<!ENTITY" in text:
-        raise XMLParseError("DOCTYPE/ENTITY declarations are not allowed")
-    return _xml_parse_impl(path)
+from xml_utils import XMLParseError, xml_parse
 
 
 def parse_coverage(xml_path: str) -> dict | None:

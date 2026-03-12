@@ -65,7 +65,7 @@ jobs:
         run: python3 ./.github/scripts/find_binary.py --build-dir build --build-type Release
 
       - name: Upload binary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: qgc-binary
           path: |
@@ -95,6 +95,8 @@ jobs:
             .github/actions/build-config
             .github/actions/qt-install
             .github/scripts/benchmark_runner.py
+            tools/common/build_config.py
+            tools/setup/setup_bootstrap.py
             tools/setup/read_config.py
             .github/build-config.json
           sparse-checkout-cone-mode: false
@@ -112,7 +114,7 @@ jobs:
           modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Download binary
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: qgc-binary
           path: build

@@ -40,7 +40,7 @@ ColumnLayout {
     }
 
     QGCButton {
-        text:               qsTr("Launch")
+        text:               qsTr("Home")
         Layout.fillWidth:   true
 
         onClicked: {

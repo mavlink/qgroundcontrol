@@ -29,28 +29,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Compute Qt cache fingerprint
-      id: qt-cache-key
-      shell: bash
-      env:
-        QT_MODULES: ${{ inputs.modules }}
-        QT_ARCHIVES: ${{ inputs.archives }}
-      run: |
-        set -euo pipefail
-        cache_input="${QT_MODULES}"$'\n'"${QT_ARCHIVES}"
-        if command -v sha256sum >/dev/null 2>&1; then
-          digest="$(printf '%s' "$cache_input" | sha256sum | cut -d' ' -f1)"
-        else
-          digest="$(printf '%s' "$cache_input" | shasum -a 256 | awk '{print $1}')"
-        fi
-        echo "digest=${digest}" >> "$GITHUB_OUTPUT"
-
-    - name: Restore extracted Qt cache
-      uses: actions/cache@v5
-      with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
-        key: qt-extracted-${{ runner.os }}-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-cache-key.outputs.digest }}
-
     - name: Ensure pip available
       shell: bash
       run: python3 -m ensurepip 2>/dev/null || true

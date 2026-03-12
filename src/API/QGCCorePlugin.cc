@@ -63,26 +63,24 @@ const QVariantList &QGCCorePlugin::analyzePages()
 {
     static const QVariantList analyzeList = {
         QVariant::fromValue(new QmlComponentInfo(
-            tr("Log Download"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/LogDownloadPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/LogDownloadIcon.svg")))),
+            tr("MAVLink Log"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkLogs/MAVLinkLogPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkLogIcon.svg")))),
         QVariant::fromValue(new QmlComponentInfo(
             tr("GeoTag Images"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagIcon.svg")))),
         QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Console"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsolePage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon.svg")))),
-#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
         QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Inspector"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspectorPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")))),
-#endif
         QVariant::fromValue(new QmlComponentInfo(
             tr("Vibration"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/VibrationPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/Vibration/VibrationPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")))),
     };
 

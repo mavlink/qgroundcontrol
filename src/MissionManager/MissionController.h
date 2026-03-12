@@ -120,8 +120,8 @@ public:
     Q_PROPERTY(double               minAMSLAltitude                 MEMBER _minAMSLAltitude             NOTIFY minAMSLAltitudeChanged)          ///< Minimum altitude associated with this mission. Used to calculate percentages for terrain status.
     Q_PROPERTY(double               maxAMSLAltitude                 MEMBER _maxAMSLAltitude             NOTIFY maxAMSLAltitudeChanged)          ///< Maximum altitude associated with this mission. Used to calculate percentages for terrain status.
 
-    Q_PROPERTY(QGroundControlQmlGlobal::AltMode globalAltitudeMode         READ globalAltitudeMode         WRITE setGlobalAltitudeMode NOTIFY globalAltitudeModeChanged)
-    Q_PROPERTY(QGroundControlQmlGlobal::AltMode globalAltitudeModeDefault  READ globalAltitudeModeDefault  NOTIFY globalAltitudeModeChanged)                               ///< Default to use for newly created items
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrame         READ globalAltitudeFrame         WRITE setGlobalAltitudeFrame NOTIFY globalAltitudeFrameChanged)
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrameDefault  READ globalAltitudeFrameDefault  NOTIFY globalAltitudeFrameChanged)                               ///< Default to use for newly created items
 
     Q_INVOKABLE void removeVisualItem(int viIndex);
 
@@ -317,9 +317,9 @@ public:
     bool isFirstLandingComplexItem  (const LandingComplexItem* item) const;
     bool isEmpty                    (void) const;
 
-    QGroundControlQmlGlobal::AltMode globalAltitudeMode(void);
-    QGroundControlQmlGlobal::AltMode globalAltitudeModeDefault(void);
-    void setGlobalAltitudeMode(QGroundControlQmlGlobal::AltMode altMode);
+    QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrame(void);
+    QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrameDefault(void);
+    void setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altFrame);
 
     // Top-level group row indices in _visualItemsTree (must match _setupTreeModel order)
     static constexpr int kPlanFileGroupRow = 0;
@@ -371,7 +371,7 @@ signals:
     void recalcTerrainProfile               (void);
     void _recalcMissionFlightStatusSignal   (void);
     void _recalcFlightPathSegmentsSignal    (void);
-    void globalAltitudeModeChanged          (void);
+    void globalAltitudeFrameChanged          (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle   (bool removeAllRequested);
@@ -410,7 +410,7 @@ private:
     void                    _deinitVisualItem                   (VisualMissionItem* item);
     void                    _setupActiveVehicle                 (Vehicle* activeVehicle, bool forceLoadFromVehicle);
     void                    _calcPrevWaypointValues             (VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
-    bool                    _findPreviousAltitude               (int newIndex, double* prevAltitude, QGroundControlQmlGlobal::AltMode* prevAltMode);
+    bool                    _findPreviousAltitude               (int newIndex, double* prevAltitude, QGroundControlQmlGlobal::AltitudeFrame* prevAltFrame);
     MissionSettingsItem*    _addMissionSettings                 (QmlObjectListModel* visualItems);
     bool                    _loadJsonMissionFile                (const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
     bool                    _loadJsonMissionFileV1              (const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
@@ -496,7 +496,7 @@ private:
     double                      _maxAMSLAltitude =              0;
     bool                        _missionContainsVTOLTakeoff =   false;
 
-    QGroundControlQmlGlobal::AltMode _globalAltMode = QGroundControlQmlGlobal::AltitudeModeRelative;
+    QGroundControlQmlGlobal::AltitudeFrame _globalAltFrame = QGroundControlQmlGlobal::AltitudeFrameRelative;
 
     static constexpr const char* _settingsGroup =                 "MissionController";
     static constexpr const char* _jsonFileTypeValue =             "Mission";

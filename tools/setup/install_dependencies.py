@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -24,6 +25,19 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+try:
+    from .setup_bootstrap import ensure_setup_imports
+except ImportError:
+    setup_dir = Path(__file__).resolve().parent
+    if str(setup_dir) not in sys.path:
+        sys.path.insert(0, str(setup_dir))
+    from setup_bootstrap import ensure_setup_imports
+
+ensure_setup_imports()
+
+from common.file_traversal import find_repo_root
+from common.build_config import load_build_config as load_shared_build_config
 
 # Package categories for Debian/Ubuntu
 DEBIAN_PACKAGES: dict[str, list[str]] = {
@@ -155,28 +169,19 @@ APT_BASE_OPTIONS: list[str] = [
     "-o", "DPkg::Lock::Timeout=300",
     "-o", "Acquire::Retries=3",
 ]
-
-
-def get_repo_root() -> Path:
-    """Find repository root directory."""
-    current = Path(__file__).resolve()
-    for parent in [current] + list(current.parents):
-        if (parent / ".git").exists():
-            return parent
-    return Path.cwd()
+PACKAGE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+-]*$")
 
 
 def load_build_config() -> dict:
     """Load build configuration from .github/build-config.json."""
-    config_path = get_repo_root() / ".github" / "build-config.json"
-    if config_path.exists():
-        try:
-            with open(config_path) as f:
-                return json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"Error: invalid JSON in {config_path}: {e}", file=sys.stderr)
-            return {}
-    return {}
+    config_path = find_repo_root() / ".github" / "build-config.json"
+    if not config_path.exists():
+        return {}
+    try:
+        return load_shared_build_config(config_path)
+    except (json.JSONDecodeError, OSError, ValueError) as e:
+        print(f"Error: invalid JSON in {config_path}: {e}", file=sys.stderr)
+        return {}
 
 
 def get_config_value(key: str) -> str | None:
@@ -283,6 +288,21 @@ def check_apt_package_available(package: str) -> bool:
         capture_output=True,
     )
     return result.returncode == 0
+
+
+def get_available_debian_packages(category: str) -> list[str]:
+    """Return packages in *category* that exist in apt metadata."""
+    return [pkg for pkg in get_debian_packages(category) if check_apt_package_available(pkg)]
+
+
+def validate_extra_packages(packages: list[str]) -> list[str]:
+    """Validate extra package names passed from CI inputs."""
+    validated: list[str] = []
+    for package in packages:
+        if not PACKAGE_NAME_RE.match(package):
+            raise ValueError(f"Invalid package name '{package}'")
+        validated.append(package)
+    return validated
 
 
 def get_gstreamer_macos_urls(version: str) -> tuple[str, str]:
@@ -747,6 +767,11 @@ Examples:
         help="Print space-separated package list (machine-readable, for CI caching)",
     )
     parser.add_argument(
+        "--print-available-packages",
+        action="store_true",
+        help="Print available apt packages in the selected Debian category",
+    )
+    parser.add_argument(
         "--category",
         help="Install only specific category (Debian only)",
     )
@@ -769,6 +794,12 @@ Examples:
         action="store_true",
         help="Install Vulkan SDK (Windows only)",
     )
+    parser.add_argument(
+        "--validate-extra-packages",
+        nargs="*",
+        default=None,
+        help="Validate extra apt package names and print them back",
+    )
 
     return parser.parse_args(args)
 
@@ -785,6 +816,24 @@ def main() -> int:
 
     if args.print_packages:
         print_packages(platform or "debian", args.category)
+        return 0
+
+    if args.print_available_packages:
+        if (platform or "debian") != "debian":
+            print("Error: --print-available-packages is only supported for debian", file=sys.stderr)
+            return 1
+        if not args.category:
+            print("Error: --category is required with --print-available-packages", file=sys.stderr)
+            return 1
+        print(" ".join(get_available_debian_packages(args.category)))
+        return 0
+
+    if args.validate_extra_packages is not None:
+        try:
+            print(" ".join(validate_extra_packages(args.validate_extra_packages)))
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
         return 0
 
     if platform is None:

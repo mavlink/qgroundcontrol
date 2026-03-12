@@ -8,7 +8,7 @@
 
 CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent)
     : CameraSpec                    (settingsGroup, parent)
-    , _distanceMode                 (masterController->missionController()->globalAltitudeModeDefault())
+    , _distanceMode                 (masterController->missionController()->globalAltitudeFrameDefault())
     , _knownCameraList              (masterController->controllerVehicle()->staticCameraList())
     , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraCalc.FactMetaData.json"), this))
     , _cameraNameFact               (settingsGroup, _metaDataMap[cameraNameName])
@@ -110,9 +110,9 @@ void CameraCalc::_cameraNameChanged(void)
     }
 
     _recalcTriggerDistance();
-    if (!isManualCamera() && distanceMode() == QGroundControlQmlGlobal::AltitudeModeAbsolute) {
+    if (!isManualCamera() && distanceMode() == QGroundControlQmlGlobal::AltitudeFrameAbsolute) {
         // Manual grids support absolute alts whereas nothing else does. Make sure we are not left in absolute
-        setDistanceMode(QGroundControlQmlGlobal::AltitudeModeRelative);
+        setDistanceMode(QGroundControlQmlGlobal::AltitudeFrameRelative);
     }
 }
 
@@ -203,11 +203,11 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     if (version == 1) {
         // Version 1->2 differences:
         //  - _jsonDistanceToSurfaceRelativeKeyDeprecated changed to distanceMode
-        //  - deprecatedFollowTerrain value was loaded from upper level callers and represents AltitudeModeCalcAboveTerrain. AtitudeModeTerrainFrame was not supported yet.
+        //  - deprecatedFollowTerrain value was loaded from upper level callers and represents AltitudeFrameCalcAboveTerrain. AltitudeFrameTerrain was not supported yet.
         if (deprecatedFollowTerrain) {
-            json[distanceModeName] = QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain;
+            json[distanceModeName] = QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain;
         } else {
-            json[distanceModeName] = json[_jsonDistanceToSurfaceRelativeKeyDeprecated].toBool() ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute;
+            json[distanceModeName] = json[_jsonDistanceToSurfaceRelativeKeyDeprecated].toBool() ? QGroundControlQmlGlobal::AltitudeFrameRelative : QGroundControlQmlGlobal::AltitudeFrameAbsolute;
         }
         json.remove(_jsonDistanceToSurfaceRelativeKeyDeprecated);
         version = 2;
@@ -235,7 +235,7 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     QString canonicalCameraName = _validCanonicalCameraName(json[cameraNameName].toString());
     _cameraNameFact.setRawValue(canonicalCameraName);
 
-    setDistanceMode(static_cast<QGroundControlQmlGlobal::AltMode>(json[distanceModeName].toInt()));
+    setDistanceMode(static_cast<QGroundControlQmlGlobal::AltitudeFrame>(json[distanceModeName].toInt()));
 
     _adjustedFootprintSideFact.setRawValue      (json[adjustedFootprintSideName].toDouble());
     _adjustedFootprintFrontalFact.setRawValue   (json[adjustedFootprintFrontalName].toDouble());
@@ -293,10 +293,10 @@ QString CameraCalc::xlatManualCameraName(void)
     return tr("Manual (no camera specs)");
 }
 
-void CameraCalc::setDistanceMode(QGroundControlQmlGlobal::AltMode altMode)
+void CameraCalc::setDistanceMode(QGroundControlQmlGlobal::AltitudeFrame altFrame)
 {
-    if (altMode != _distanceMode) {
-        _distanceMode = altMode;
+    if (altFrame != _distanceMode) {
+        _distanceMode = altFrame;
         emit distanceModeChanged(_distanceMode);
     }
 }

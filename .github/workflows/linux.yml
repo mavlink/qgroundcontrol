@@ -10,16 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/linux.yml'
-      - '.github/actions/**'
-      - 'deploy/linux/**'
-      - 'src/**'
-      - 'test/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-      - 'tools/setup/*debian*'
-      - 'tools/setup/install_dependencies.py'
   merge_group:
   workflow_dispatch:
     inputs:
@@ -31,7 +21,6 @@ on:
         options:
           - Release
           - Debug
-  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,8 +35,30 @@ permissions:
   checks: write
 
 jobs:
+  changes:
+    name: Detect Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should_build: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: linux
+
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    needs: changes
+    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
@@ -166,7 +177,7 @@ jobs:
 
       - name: Upload metrics artifact
         if: matrix.build_type == 'Release' && matrix.os == 'ubuntu-22.04'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: size-metrics
           path: ${{ runner.temp }}/build/metrics.json
@@ -205,7 +216,8 @@ jobs:
 
   debug-validation:
     name: ${{ matrix.job_name }}
-    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
@@ -359,7 +371,7 @@ jobs:
 
       - name: Upload Duration Report
         if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-duration-linux_gcc_64
           path: ${{ runner.temp }}/build/test-duration-linux-linux_gcc_64.json
@@ -367,7 +379,7 @@ jobs:
 
       - name: Upload Test Results (Sanitizers)
         if: always() && !cancelled() && matrix.mode == 'sanitizers'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-linux-sanitizers
           path: |
@@ -379,13 +391,16 @@ jobs:
       - name: Ensure coverage tools are available
         if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         run: |
-          if ! command -v ccache >/dev/null 2>&1; then
-            sudo apt-get install -y --no-install-recommends ccache
+          ccache_path="$(command -v ccache 2>/dev/null)" || {
+            echo "Error: ccache not found — expected pinned binary from cache action" >&2
+            exit 1
+          }
+          echo "ccache found at: ${ccache_path}"
+          if [[ "${ccache_path}" != "/usr/local/bin/ccache" ]]; then
+            echo "Warning: ccache resolved to ${ccache_path}, expected /usr/local/bin/ccache" >&2
           fi
-          # Ensure ccache is at /usr/local/bin where the build's ccache-launcher expects it
-          if [ ! -f /usr/local/bin/ccache ] && command -v ccache >/dev/null 2>&1; then
-            sudo ln -s "$(command -v ccache)" /usr/local/bin/ccache
-          fi
+          ccache_ver="$(ccache --version | head -1)"
+          echo "ccache version: ${ccache_ver}"
           if ! command -v gcovr >/dev/null 2>&1; then
             pipx install gcovr
           fi
@@ -481,7 +496,7 @@ jobs:
           egress-policy: audit
 
       - name: Download metrics artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: size-metrics
           path: .

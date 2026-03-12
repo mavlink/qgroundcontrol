@@ -114,20 +114,11 @@ runs:
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        optional=$(python3 tools/setup/install_dependencies.py --platform debian --category gstreamer_optional --print-packages)
+        optional=$(python3 tools/setup/install_dependencies.py --platform debian --category gstreamer_optional --print-available-packages)
         if [ -n "$optional" ]; then
-          available=()
-          for pkg in $optional; do
-            if apt-cache show "$pkg" >/dev/null 2>&1; then
-              available+=("$pkg")
-            else
-              echo "Skipping unavailable optional package: $pkg"
-            fi
-          done
-          if [ ${#available[@]} -gt 0 ]; then
-            echo "Installing optional packages: ${available[*]}"
-            sudo apt-get -o DPkg::Lock::Timeout=300 install -y -qq "${available[@]}" || true
-          fi
+          echo "Installing optional packages: $optional"
+          # shellcheck disable=SC2086
+          sudo apt-get -o DPkg::Lock::Timeout=300 install -y -qq $optional || true
         fi
 
     - name: Detect Python version for pipx cache (Linux)
@@ -164,14 +155,9 @@ runs:
         timeout_minutes: 5
         max_attempts: 3
         command: |
-          for pkg in $EXTRA_PACKAGES; do
-            if [[ ! "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9.+-]*$ ]]; then
-              echo "Error: Invalid package name '$pkg'" >&2
-              exit 1
-            fi
-          done
+          validated="$(python3 tools/setup/install_dependencies.py --validate-extra-packages $EXTRA_PACKAGES)"
           # shellcheck disable=SC2086
-          sudo apt-get install -y $EXTRA_PACKAGES
+          sudo apt-get install -y $validated
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'

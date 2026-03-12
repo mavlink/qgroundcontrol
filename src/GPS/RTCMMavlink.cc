@@ -21,9 +21,7 @@ RTCMMavlink::~RTCMMavlink()
 
 void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
 {
-#ifdef QT_DEBUG
     _calculateBandwith(data.size());
-#endif
 
     mavlink_gps_rtcm_data_t gpsRtcmData{};
 

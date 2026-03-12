@@ -150,11 +150,6 @@ void SettingsFixture::setOfflineVehicleType(MAV_TYPE vehicleType)
     appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(vehicleType));
 }
 
-void SettingsFixture::setAltitudeMode(int altitudeMode)
-{
-    Q_UNUSED(altitudeMode);
-}
-
 void SettingsFixture::setFactValue(Fact* fact, const QVariant& value)
 {
     if (!fact) {

@@ -11,5 +11,8 @@
 # *.qml @DonLakeFlyer
 
 # Build system
-# CMakeLists.txt @HTRamsey
-# /cmake/ @HTRamsey
+CMakeLists.txt @HTRamsey
+/cmake/ @HTRamsey
+
+# CI/CD
+/.github/ @HTRamsey

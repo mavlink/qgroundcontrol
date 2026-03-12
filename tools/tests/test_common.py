@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 """Tests for common utilities."""
 
-import sys
 from pathlib import Path
 
 import pytest
-
-TOOLS_DIR = Path(__file__).parent.parent
-
-# Add tools to path for imports
-sys.path.insert(0, str(TOOLS_DIR))
 
 from common.patterns import (
     FACT_MEMBER_PATTERN,
