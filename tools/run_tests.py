@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Sequence
 
 from common import find_repo_root, Logger
+from common.gh_actions import write_github_output as _write_github_output
 
 
 @dataclass
@@ -281,20 +282,15 @@ class QtTestRunner:
 
     def write_github_output(self, result: TestResult) -> None:
         """Write results to GITHUB_OUTPUT for CI integration."""
-        github_output = os.environ.get("GITHUB_OUTPUT")
-        if not github_output:
-            return
-
-        try:
-            with open(github_output, "a") as f:
-                f.write(f"exit_code={result.exit_code}\n")
-                f.write(f"passed={'true' if result.exit_code == 0 else 'false'}\n")
-                if result.xml_path:
-                    f.write(f"output_file={result.xml_path}\n")
-                if result.log_path:
-                    f.write(f"log_file={result.log_path}\n")
-        except OSError as e:
-            self.log.warn(f"Failed to write GITHUB_OUTPUT: {e}")
+        outputs: dict[str, str] = {
+            "exit_code": str(result.exit_code),
+            "passed": "true" if result.exit_code == 0 else "false",
+        }
+        if result.xml_path:
+            outputs["output_file"] = str(result.xml_path)
+        if result.log_path:
+            outputs["log_file"] = str(result.log_path)
+        _write_github_output(outputs)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:

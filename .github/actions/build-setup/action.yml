@@ -25,14 +25,23 @@ inputs:
     required: false
     default: "Release"
   save-cache:
-    description: Whether to save cache (typically false for PRs)
+    description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
-    default: "false"
+    default: "auto"
 
 outputs:
   gstreamer_windows_version:
     description: GStreamer version for Windows
     value: ${{ steps.config.outputs.gstreamer_windows_version }}
+  qt_modules:
+    description: Qt modules used for this build
+    value: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+  qt_root_dir:
+    description: Installed Qt root directory
+    value: ${{ steps.qt.outputs.qt_root_dir }}
+  qt_version:
+    description: Resolved Qt version for this build
+    value: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
   xcode_version:
     description: Xcode version for macOS
     value: ${{ steps.config.outputs.xcode_version }}
@@ -61,6 +70,7 @@ runs:
         save-cache: ${{ inputs.save-cache }}
 
     - name: Install Qt
+      id: qt
       uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}

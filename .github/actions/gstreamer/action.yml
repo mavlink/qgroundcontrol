@@ -24,11 +24,14 @@ inputs:
     description: 'Upload to S3'
     required: false
     default: 'true'
+  aws-role-arn:
+    description: 'AWS IAM role ARN for OIDC authentication (preferred over static credentials)'
+    required: false
   aws-access-key-id:
-    description: 'AWS access key ID'
+    description: 'AWS access key ID (fallback if OIDC not available)'
     required: false
   aws-secret-access-key:
-    description: 'AWS secret access key'
+    description: 'AWS secret access key (fallback if OIDC not available)'
     required: false
 
 outputs:
@@ -42,36 +45,7 @@ runs:
     - name: Read build config
       id: config
       shell: bash
-      env:
-        INPUT_VERSION: ${{ inputs.version }}
-        INPUT_PLATFORM: ${{ inputs.platform }}
-        INPUT_ARCH: ${{ inputs.arch }}
-      run: |
-        set -euo pipefail
-        if command -v python3 >/dev/null 2>&1; then
-          py_cmd="python3"
-        elif command -v python >/dev/null 2>&1; then
-          py_cmd="python"
-        else
-          echo "Error: Python interpreter not found in PATH" >&2
-          exit 1
-        fi
-        echo "py_cmd=$py_cmd" >> "$GITHUB_OUTPUT"
-
-        version="${INPUT_VERSION}"
-        if [[ -z "$version" ]]; then
-          case "${INPUT_PLATFORM}" in
-            macos)   version_key="gstreamer_macos_version" ;;
-            windows) version_key="gstreamer_windows_version" ;;
-            android) version_key="gstreamer_android_version" ;;
-            ios)     version_key="gstreamer_ios_version" ;;
-            *)       version_key="gstreamer_default_version" ;;
-          esac
-          version=$("${py_cmd}" ./tools/setup/read_config.py --get "${version_key}")
-        fi
-        echo "version=$version" >> "$GITHUB_OUTPUT"
-        echo "qt_version=$("${py_cmd}" ./tools/setup/read_config.py --get qt_version)" >> "$GITHUB_OUTPUT"
-        echo "Building GStreamer $version for ${INPUT_PLATFORM} (${INPUT_ARCH})"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/resolve_gstreamer_config.py" --platform "${{ inputs.platform }}" --version "${{ inputs.version }}"
 
     # ===== DEPENDENCIES =====
 
@@ -283,8 +257,26 @@ runs:
         Get-ChildItem (Join-Path $prefix 'bin') -Filter '*.exe' | Select-Object Name, Length | Format-Table
         $libCount = (Get-ChildItem (Join-Path $prefix 'lib') -Filter '*.lib' | Measure-Object).Count
         Write-Host "$libCount library files found"
+        $env:PATH = (Join-Path $prefix 'bin') + ";" + $env:PATH
+        $env:GST_PLUGIN_PATH = Join-Path $prefix 'lib' 'gstreamer-1.0'
+        & (Join-Path $prefix 'bin' 'gst-launch-1.0.exe') --version
 
     # ===== ARCHIVE & UPLOAD =====
+
+    - name: Configure AWS Credentials (OIDC)
+      if: inputs.upload-s3 == 'true' && inputs.aws-role-arn != ''
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: us-west-2
+
+    - name: Configure AWS Credentials (Static)
+      if: inputs.upload-s3 == 'true' && inputs.aws-role-arn == '' && inputs.aws-access-key-id != ''
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: us-west-2
 
     - name: Create archive
       id: archive
@@ -298,8 +290,6 @@ runs:
         SIMULATOR: ${{ inputs.simulator }}
         UPLOAD_S3: ${{ inputs.upload-s3 }}
         WORKSPACE: ${{ github.workspace }}
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
         AWS_DEFAULT_REGION: us-west-2
       run: |
         set -euo pipefail
@@ -310,12 +300,12 @@ runs:
           --output-dir "$OUTPUT_DIR"
         )
         [[ "$SIMULATOR" == "true" ]] && args+=(--simulator)
-        [[ "$UPLOAD_S3" == "true" && -n "$AWS_ACCESS_KEY_ID" ]] && args+=(--upload-s3)
+        [[ "$UPLOAD_S3" == "true" ]] && args+=(--upload-s3)
 
         "${PY_CMD}" "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.archive.outputs.name }}
         path: ${{ steps.archive.outputs.path }}

@@ -21,6 +21,15 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import (  # noqa: E402
+    write_github_output as _write_github_output,
+    write_step_summary as _write_step_summary,
+)
+
 
 class BinaryAnalyzer:
     """Analyzes binary size and symbol information."""
@@ -215,20 +224,16 @@ class BinaryAnalyzer:
 
 def write_github_output(binary_size: int, stripped_size: int, symbol_count: int) -> None:
     """Write outputs to GITHUB_OUTPUT file if available."""
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if github_output:
-        with open(github_output, "a") as f:
-            f.write(f"binary_size={binary_size}\n")
-            f.write(f"stripped_size={stripped_size}\n")
-            f.write(f"symbol_count={symbol_count}\n")
+    _write_github_output({
+        "binary_size": str(binary_size),
+        "stripped_size": str(stripped_size),
+        "symbol_count": str(symbol_count),
+    })
 
 
 def write_github_step_summary(summary: str) -> None:
     """Write summary to GITHUB_STEP_SUMMARY file if available."""
-    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if step_summary:
-        with open(step_summary, "a") as f:
-            f.write(summary)
+    _write_step_summary(summary)
 
 
 def parse_args() -> argparse.Namespace:

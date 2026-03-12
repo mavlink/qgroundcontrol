@@ -30,8 +30,25 @@ import time
 import zipfile
 from pathlib import Path
 from typing import NamedTuple
-from urllib.error import HTTPError, URLError
-from urllib.request import urlretrieve
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import append_github_env, write_github_output as write_github_outputs  # noqa: E402
+
+def _download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
+    """Download a URL to a local file using urllib (stdlib)."""
+    import urllib.request
+
+    request = urllib.request.Request(url)
+    with urllib.request.urlopen(request, timeout=timeout) as resp:
+        with open(dest, "wb") as f:
+            while True:
+                chunk = resp.read(65536)
+                if not chunk:
+                    break
+                f.write(chunk)
+
 
 WINDOWS_BINARY_SHA256 = {
     "x86_64": "1c78a0b816a3174d4b170b96294e016a21fb4a577dfd8361e7322f77f85c6348",
@@ -136,12 +153,14 @@ class CcacheInstaller:
 
     def download_with_retry(self, url: str, dest: Path) -> bool:
         """Download file with retry logic."""
+        from urllib.error import URLError
+
         for attempt in range(1, self.max_retries + 1):
             try:
                 print(f"Downloading {url} (attempt {attempt}/{self.max_retries})")
-                urlretrieve(url, dest)
+                _download_file(url, dest)
                 return True
-            except (HTTPError, URLError, OSError) as e:
+            except (URLError, OSError) as e:
                 print(f"Download failed: {e}", file=sys.stderr)
                 if attempt < self.max_retries:
                     print(f"Retrying in {self.retry_delay} seconds...")
@@ -461,41 +480,12 @@ def run_summary() -> int:
 
 def output_github_actions(config: CcacheConfig) -> None:
     """Write outputs for GitHub Actions."""
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if not github_output:
-        return
+    write_github_outputs({
+        "version": config.version,
+        "arch": config.arch,
+        "max_size": config.max_size,
+    })
 
-    try:
-        with open(github_output, "a") as f:
-            f.write(f"version={config.version}\n")
-            f.write(f"arch={config.arch}\n")
-            f.write(f"max_size={config.max_size}\n")
-    except OSError as e:
-        print(f"Warning: Failed to write GitHub output: {e}", file=sys.stderr)
-
-
-def write_github_outputs(values: dict[str, str]) -> None:
-    """Write arbitrary key/value pairs to ``$GITHUB_OUTPUT`` when available."""
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if not github_output:
-        return
-
-    try:
-        with open(github_output, "a") as f:
-            for key, value in values.items():
-                f.write(f"{key}={value}\n")
-    except OSError as e:
-        print(f"Warning: Failed to write GitHub output: {e}", file=sys.stderr)
-
-
-def append_github_env(values: dict[str, str]) -> None:
-    """Append environment variables to ``$GITHUB_ENV`` when available."""
-    github_env = os.environ.get("GITHUB_ENV")
-    if not github_env:
-        return
-    with open(github_env, "a", encoding="utf-8") as handle:
-        for key, value in values.items():
-            handle.write(f"{key}={value}\n")
 
 
 def append_github_path(path_entry: str) -> None:
@@ -593,7 +583,7 @@ def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Pa
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         archive_path = temp_path / "ccache.zip"
-        urlretrieve(ccache_url, archive_path)
+        _download_file(ccache_url, archive_path)
         actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
         if actual != sha256:
             raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")

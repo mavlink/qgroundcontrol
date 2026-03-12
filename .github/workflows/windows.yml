@@ -31,27 +31,13 @@ permissions:
   id-token: write
   attestations: write
   actions: read
+  security-events: write
 
 jobs:
   changes:
-    name: Detect Changes
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    outputs:
-      should_build: ${{ steps.detect.outputs.any }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Detect changes
-        id: detect
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: windows
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: windows
 
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
@@ -112,7 +98,6 @@ jobs:
           qt-arch: ${{ matrix.arch }}
           qt-version: ${{ matrix.qt_version || '' }}
           build-type: ${{ matrix.build_type }}
-          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Install GStreamer
         if: matrix.arch == 'win64_msvc2022_64'
@@ -124,6 +109,17 @@ jobs:
         uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
+
+      - name: Install host Qt for ARM64 cross-compilation
+        if: matrix.arch == 'win64_msvc2022_arm64_cross_compiled'
+        id: qt-host
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.build-setup.outputs.qt_version }}
+          host: windows
+          arch: win64_msvc2022_64
+          modules: ${{ steps.build-setup.outputs.qt_modules }}
+          export-env: 'false'
 
       - name: Fix Rust linker resolution (ARM64 native)
         if: matrix.variant == 'arm64'
@@ -146,7 +142,7 @@ jobs:
           stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }}
-            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}/../msvc2022_64', env.QT_ROOT_DIR) || '' }}
+            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.qt-host.outputs.qt_root_dir) || '' }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -165,22 +161,14 @@ jobs:
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
 
-      - name: Attest Build with SBOM
+      - name: Attest and Upload
         if: matrix.build_type == 'Release'
-        uses: ./.github/actions/attest-sbom
+        uses: ./.github/actions/attest-and-upload
         with:
-          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.exe
-          subject-name: ${{ matrix.package }}
-          scan-path: ${{ runner.temp }}/build
-
-      - name: Upload artifact (installer)
-        if: matrix.build_type == 'Release'
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ matrix.package }}.exe
-          package_name: ${{ matrix.package }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload_aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}
+          artifact-name: ${{ matrix.package }}.exe
+          package-name: ${{ matrix.package }}
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          upload-aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}

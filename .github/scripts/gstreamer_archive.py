@@ -20,6 +20,15 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import (  # noqa: E402
+    write_github_output as _write_github_output,
+    write_step_summary as _write_step_summary,
+)
+
 
 @dataclass
 class ArchiveResult:
@@ -258,18 +267,16 @@ class GStreamerArchiver:
         run_command(["sudo", "installer", "-pkg", str(installer_pkg), "-target", "/"])
 
     def write_github_output(self) -> None:
-        github_output = os.environ.get("GITHUB_OUTPUT")
-        if not github_output or not self._archive_result:
+        if not self._archive_result:
             return
-
-        with open(github_output, "a") as f:
-            f.write(f"name={self._archive_result.name}\n")
-            f.write(f"path={self._archive_result.path}\n")
-            f.write(f"ext={self._archive_result.extension}\n")
+        _write_github_output({
+            "name": self._archive_result.name,
+            "path": str(self._archive_result.path),
+            "ext": self._archive_result.extension,
+        })
 
     def write_github_summary(self, uploaded: bool = False) -> None:
-        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-        if not summary_path or not self._archive_result:
+        if not self._archive_result:
             return
 
         arch_display = self._normalize_arch()
@@ -294,8 +301,7 @@ class GStreamerArchiver:
                 f"| S3 Path | dependencies/gstreamer/{self.platform}/{self.version}/ |"
             )
 
-        with open(summary_path, "a") as f:
-            f.write("\n".join(lines) + "\n")
+        _write_step_summary("\n".join(lines) + "\n")
 
 
 def parse_args() -> argparse.Namespace:

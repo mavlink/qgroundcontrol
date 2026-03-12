@@ -190,7 +190,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies.py --platform windows` | Windows | Install GStreamer (Vulkan SDK optional) |
 | `install_python.py` | All | Install Python tools via uv or pip |
 | `build-gstreamer.py` | All | Build GStreamer from source (optional) |
-| `download_artifacts.py` | All | Download build artifacts from GitHub Actions |
+| `download_artifacts.py` | All | Download build artifacts (in `.github/scripts/`) |
 | `read_config.py` | All | Read `.github/build-config.json` (Python, cross-platform) |
 
 ### Usage Examples
@@ -285,7 +285,7 @@ Common utilities in `common/` are used by multiple tools:
 
 - `patterns.py` - QGC-specific regex patterns (Fact, FactGroup, MAVLink)
 - `file_traversal.py` - File discovery with proper filtering
-- `gh_actions.py` - Shared `gh api` helpers for workflow runs and artifacts
+- `gh_actions.py` - GitHub API helpers (httpx with `gh` CLI fallback) for workflow runs and artifacts
 
 See [common/README.md](common/README.md) for API documentation.
 

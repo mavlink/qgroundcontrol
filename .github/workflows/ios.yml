@@ -13,6 +13,7 @@ permissions:
   id-token: write
   attestations: write
   actions: read
+  security-events: write
 
 jobs:
   build:
@@ -58,7 +59,6 @@ jobs:
           xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
           build-type: ${{ matrix.build_type }}
-          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
@@ -74,17 +74,10 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
 
-      - name: Attest Build with SBOM
+      - name: Attest and Upload
         if: matrix.build_type == 'Release'
-        uses: ./.github/actions/attest-sbom
+        uses: ./.github/actions/attest-and-upload
         with:
-          subject-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.app
-          subject-name: ${{ env.PACKAGE }}
-          scan-path: ${{ runner.temp }}/build
-
-      - name: Upload Build File
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ env.PACKAGE }}.app
-          package_name: ${{ env.PACKAGE }}
-          upload_aws: 'false'
+          artifact-name: ${{ env.PACKAGE }}.app
+          package-name: ${{ env.PACKAGE }}
+          upload-aws: 'false'

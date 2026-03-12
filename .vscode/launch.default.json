@@ -17,18 +17,13 @@
       "externalConsole": false,
       "name": "Launch QGroundControl",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/QGroundControl",
+      "program": "${workspaceFolder}/build/Debug/QGroundControl",
       "request": "launch",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",
           "ignoreFailures": true,
           "text": "-enable-pretty-printing"
-        },
-        {
-          "description": "Load Qt pretty printers",
-          "ignoreFailures": true,
-          "text": "source ${workspaceFolder}/tools/gdb-pretty-printers/qt6.py"
         }
       ],
       "stopAtEntry": false,
@@ -43,7 +38,7 @@
       },
       "name": "Launch QGroundControl (LLDB)",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/QGroundControl",
+      "program": "${workspaceFolder}/build/Debug/QGroundControl",
       "request": "launch",
       "type": "lldb"
     },
@@ -57,7 +52,7 @@
       "externalConsole": false,
       "name": "Run Unit Tests (Debug)",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/QGroundControl",
+      "program": "${workspaceFolder}/build/Debug/QGroundControl",
       "request": "launch",
       "setupCommands": [
         {
@@ -79,7 +74,7 @@
       "externalConsole": false,
       "name": "Debug Specific Test",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/QGroundControl",
+      "program": "${workspaceFolder}/build/Debug/QGroundControl",
       "request": "launch",
       "setupCommands": [
         {
@@ -95,7 +90,7 @@
       "MIMode": "gdb",
       "name": "Attach to QGroundControl",
       "processId": "${command:pickProcess}",
-      "program": "${workspaceFolder}/build/QGroundControl",
+      "program": "${workspaceFolder}/build/Debug/QGroundControl",
       "request": "attach",
       "setupCommands": [
         {

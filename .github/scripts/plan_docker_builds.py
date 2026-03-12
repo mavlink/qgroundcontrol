@@ -7,7 +7,12 @@ import argparse
 import json
 import os
 import sys
-from pathlib import Path
+
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import write_github_output
 
 
 def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, object]:
@@ -39,20 +44,12 @@ def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> 
     return {"matrix": {"include": include}, "has_jobs": bool(include)}
 
 
-def write_github_output(path: Path, values: dict[str, str]) -> None:
-    """Append key/value outputs for GitHub Actions."""
-    with path.open("a", encoding="utf-8") as handle:
-        for key, value in values.items():
-            handle.write(f"{key}={value}\n")
-
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Plan Docker workflow builds.")
     parser.add_argument("--event-name", default=os.environ.get("EVENT_NAME", ""))
     parser.add_argument("--linux", default=os.environ.get("LINUX", "false"))
     parser.add_argument("--android", default=os.environ.get("ANDROID", "false"))
-    parser.add_argument("--github-output", default=os.environ.get("GITHUB_OUTPUT", ""))
     return parser.parse_args(argv)
 
 
@@ -67,14 +64,10 @@ def main(argv: list[str] | None = None) -> int:
     matrix_json = json.dumps(plan["matrix"], separators=(",", ":"))
     print(matrix_json)
 
-    if args.github_output:
-        write_github_output(
-            Path(args.github_output),
-            {
-                "matrix": matrix_json,
-                "has_jobs": "true" if plan["has_jobs"] else "false",
-            },
-        )
+    write_github_output({
+        "matrix": matrix_json,
+        "has_jobs": "true" if plan["has_jobs"] else "false",
+    })
     return 0
 
 

@@ -1,0 +1,89 @@
+## Build Results
+
+### Platform Status
+
+{% if table -%}
+{{ table }}
+{% else -%}
+| Platform | Status | Details |
+|----------|--------|--------|
+{% endif %}
+
+**{{ summary }}**
+
+### Pre-commit
+
+| Check | Status | Details |
+|-------|--------|---------|
+| pre-commit | {{ precommit.status }} | {{ precommit.details }} |
+
+{% if precommit.note -%}
+{{ precommit.note }}
+
+{% endif -%}
+{% if tests -%}
+### Test Results
+
+{% for t in tests.platforms -%}
+{% if t.failed > 0 -%}
+**{{ t.arch }}**: {{ t.passed }} passed, {{ t.failed }} failed, {{ t.skipped }} skipped
+
+<details><summary>Failed tests</summary>
+
+```
+{% for line in t.failed_lines -%}
+{{ line }}
+{% endfor -%}
+```
+</details>
+{% else -%}
+**{{ t.arch }}**: {{ t.passed }} passed, {{ t.skipped }} skipped
+{% endif %}
+{% endfor -%}
+{% if tests.has_failures -%}
+**Total: {{ tests.total_passed }} passed, {{ tests.total_failed }} failed, {{ tests.total_skipped }} skipped**
+{% else -%}
+**Total: {{ tests.total_passed }} passed, {{ tests.total_skipped }} skipped**
+{% endif %}
+{% endif -%}
+{% if coverage -%}
+### Code Coverage
+
+{% if coverage.baseline is not none and coverage.current is not none -%}
+| Coverage | Baseline | Change |
+|----------|----------|--------|
+| {{ "%.1f"|format(coverage.current) }}% | {{ "%.1f"|format(coverage.baseline) }}% | {{ "%+.1f"|format(coverage.diff) }}% |
+{% else -%}
+Coverage: **{% if coverage.current is not none %}{{ "%.1f"|format(coverage.current) }}%{% else %}N/A{% endif %}**
+
+*No baseline available for comparison*
+{% endif %}
+{% endif -%}
+{% if artifacts -%}
+### Artifact Sizes
+
+{% if artifacts.has_baseline -%}
+| Artifact | Size | Δ from master |
+|----------|------|---------------|
+{% for a in artifacts.entries -%}
+{% if a.delta is defined -%}
+| {{ a.name }} | {{ a.size_human }} | {{ a.delta_human }} |
+{% else -%}
+| {{ a.name }} | {{ a.size_human }} |
+{% endif -%}
+{% endfor %}
+{% else -%}
+| Artifact | Size |
+|----------|------|
+{% for a in artifacts.entries -%}
+| {{ a.name }} | {{ a.size_human }} |
+{% endfor %}
+{% endif -%}
+{% if artifacts.has_baseline and artifacts.total_delta != 0 -%}
+**Total size {{ "increased" if artifacts.total_delta > 0 else "decreased" }} by {{ "%.2f"|format(artifacts.total_delta_mb) }} MB**
+{%- elif not artifacts.has_baseline -%}
+*No baseline available for comparison*
+{%- endif %}
+{% endif %}
+---
+<sub>Updated: {{ timestamp }} • Triggered by: {{ triggered_by }}</sub>

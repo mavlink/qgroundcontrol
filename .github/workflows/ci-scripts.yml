@@ -116,7 +116,7 @@ jobs:
       - name: Setup Python
         uses: ./.github/actions/setup-python
         with:
-          groups: test
+          groups: scripts,test
           python-version: '3.12'
 
       - name: Python syntax smoke test

@@ -24,9 +24,9 @@ inputs:
     required: false
     default: Release
   save-cache:
-    description: Save cache (set to false for PR builds)
+    description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
-    default: "true"
+    default: "auto"
   restore-timestamps:
     description: Restore file timestamps from git history (requires fetch-depth 0)
     required: false

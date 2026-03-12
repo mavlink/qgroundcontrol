@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from check_baseline_ready import evaluate_readiness
-from check_baseline_ready import write_output
+from common.gh_actions import write_github_output
 
 
 PLATFORMS = ["Linux", "Windows", "MacOS", "Android"]
@@ -84,7 +84,7 @@ def test_write_output_multiline_uses_collision_resistant_delimiter(
     monkeypatch.setenv("GITHUB_OUTPUT", str(out_path))
 
     value = "line1\nEOF_missing_deadbeef\ntail"
-    write_output("missing", value)
+    write_github_output({"missing": value})
 
     text = out_path.read_text(encoding="utf-8")
     assert "missing<<EOF_missing_" in text

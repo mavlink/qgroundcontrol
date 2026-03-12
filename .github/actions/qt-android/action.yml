@@ -1,5 +1,12 @@
 name: Android Qt
 description: Install Qt for Android
+outputs:
+  host_qt_root_dir:
+    description: Desktop Qt root used for host tools
+    value: ${{ steps.qt-host.outputs.qt_root_dir }}
+  target_qt_root_dir:
+    description: Android Qt root used for target packages
+    value: ${{ steps.qt-target.outputs.qt_root_dir }}
 inputs:
   host:
     description: Host
@@ -45,9 +52,9 @@ inputs:
     required: false
     default: '35.0.0'
   save-cache:
-    description: Save cache (set to false for PR builds)
+    description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
-    default: 'true'
+    default: 'auto'
 runs:
   using: composite
   steps:
@@ -71,22 +78,9 @@ runs:
     - name: Update Android SDK / NDK / Tools
       shell: bash
       run: |
-        ANDROID_SDK_ROOT_UNIX="${ANDROID_SDK_ROOT//\\//}"
-        NDK_PATH="${ANDROID_SDK_ROOT_UNIX}/ndk/${{ inputs.ndk-full-version }}"
-        if [[ ! -d "$NDK_PATH" ]]; then
-          echo "::error::NDK path not found: $NDK_PATH"
-          exit 1
-        fi
-        echo "ANDROID_NDK_ROOT=${NDK_PATH}" >> "$GITHUB_ENV"
-        echo "ANDROID_NDK_HOME=${NDK_PATH}" >> "$GITHUB_ENV"
-        echo "ANDROID_NDK=${NDK_PATH}" >> "$GITHUB_ENV"
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          "${ANDROID_SDK_ROOT}"/cmdline-tools/latest/bin/sdkmanager.bat --update
-          "${GITHUB_WORKSPACE}"/android/gradlew.bat --version
-        else
-          sdkmanager --update
-          "${GITHUB_WORKSPACE}"/android/gradlew --version
-        fi
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/android_sdk_helper.py" \
+          --ndk-version "${{ inputs.ndk-full-version }}" \
+          --workspace "${GITHUB_WORKSPACE}"
 
     - name: Setup Caching
       uses: ./.github/actions/cache
@@ -98,7 +92,8 @@ runs:
         save-cache: ${{ inputs.save-cache }}
 
     - name: Install Qt for ${{ runner.os }}
-      uses: jurplel/install-qt-action@v4
+      id: qt-host
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -106,12 +101,11 @@ runs:
         arch: ${{ inputs.arch }}
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
 
     - name: Install Qt for Android (arm64_v8a)
       if: contains(format(';{0};', inputs.abis), ';arm64-v8a;')
-      uses: jurplel/install-qt-action@v4
+      id: qt-android-arm64
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -119,12 +113,12 @@ runs:
         arch: android_arm64_v8a
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
+        export-env: 'false'
 
     - name: Install Qt for Android (armv7)
       if: contains(format(';{0};', inputs.abis), ';armeabi-v7a;')
-      uses: jurplel/install-qt-action@v4
+      id: qt-android-armv7
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -132,12 +126,12 @@ runs:
         arch: android_armv7
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
+        export-env: 'false'
 
     - name: Install Qt for Android (x86_64)
       if: contains(format(';{0};', inputs.abis), ';x86_64;')
-      uses: jurplel/install-qt-action@v4
+      id: qt-android-x86_64
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -145,12 +139,12 @@ runs:
         arch: android_x86_64
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
+        export-env: 'false'
 
     - name: Install Qt for Android (x86)
       if: contains(format(';{0};', inputs.abis), ';x86;')
-      uses: jurplel/install-qt-action@v4
+      id: qt-android-x86
+      uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
         host: ${{ inputs.host }}
@@ -158,5 +152,15 @@ runs:
         arch: android_x86
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
+        export-env: 'false'
+
+    - name: Resolve primary Android Qt root
+      id: qt-target
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-android-root \
+          --abis "${{ inputs.abis }}" \
+          --arm64 "${{ steps.qt-android-arm64.outputs.qt_root_dir }}" \
+          --armv7 "${{ steps.qt-android-armv7.outputs.qt_root_dir }}" \
+          --x86-64 "${{ steps.qt-android-x86_64.outputs.qt_root_dir }}" \
+          --x86 "${{ steps.qt-android-x86.outputs.qt_root_dir }}"

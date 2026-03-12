@@ -80,7 +80,7 @@ function(_qgc_validate_expanded_pkg EXPANDED_DIR LABEL)
     endif()
 endfunction()
 
-if(WIN32)
+if(WIN32 AND NOT ANDROID)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
         set(_gst_win_arch "arm64")
     else()
@@ -130,7 +130,7 @@ if(WIN32)
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
     )
 
-elseif(LINUX)
+elseif(LINUX AND NOT ANDROID)
     if(NOT DEFINED GStreamer_ROOT_DIR)
         set(GStreamer_ROOT_DIR "/usr")
     endif()
@@ -216,7 +216,7 @@ elseif(ANDROID)
         --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
     )
 
-elseif(MACOS)
+elseif(MACOS AND NOT IOS)
     if(NOT DEFINED GStreamer_ROOT_DIR)
         if(EXISTS "/Library/Frameworks/GStreamer.framework")
             set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")

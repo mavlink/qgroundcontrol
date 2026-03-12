@@ -31,27 +31,13 @@ permissions:
   id-token: write
   attestations: write
   actions: read
+  security-events: write
 
 jobs:
   changes:
-    name: Detect Changes
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    outputs:
-      should_build: ${{ steps.detect.outputs.any }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Detect changes
-        id: detect
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: android
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: android
 
   build:
     name: Android (${{ matrix.host }})
@@ -109,7 +95,6 @@ jobs:
 
     steps:
       - name: Harden Runner
-        if: runner.os == 'Linux'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -133,6 +118,7 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Install Qt for Android
+        id: qt-android
         uses: ./.github/actions/qt-android
         with:
           host: ${{ matrix.qt_host || matrix.host }}
@@ -147,7 +133,6 @@ jobs:
           android-platform: ${{ steps.config.outputs.android_platform }}
           android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
           android-build-tools: ${{ steps.config.outputs.android_build_tools }}
-          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Create Debug Keystore
         if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
@@ -171,10 +156,13 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type || 'Release' }}
           stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          use-qt-cmake: 'false'
           extra-args: >-
             -DCMAKE_WARN_DEPRECATED=FALSE
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.qt-android.outputs.target_qt_root_dir }}/lib/cmake/Qt6/qt.toolchain.cmake
+            -DCMAKE_PREFIX_PATH=${{ steps.qt-android.outputs.target_qt_root_dir }}
             -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
-            -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../${{ matrix.qt_host_path }}
+            -DQT_HOST_PATH=${{ steps.qt-android.outputs.host_qt_root_dir }}
             -DQT_ANDROID_SIGN_APK=ON
 
       - name: Build
@@ -371,25 +359,18 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Attest Build with SBOM
+      - name: Attest and Upload
         if: ${{ !matrix.emulator }}
-        uses: ./.github/actions/attest-sbom
+        uses: ./.github/actions/attest-and-upload
         with:
-          subject-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          artifact-name: ${{ env.PACKAGE }}.apk
+          package-name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
           subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
-          scan-path: ${{ runner.temp }}/build
-
-      - name: Upload Build File
-        if: ${{ !matrix.emulator }}
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ env.PACKAGE }}.apk
-          package_name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload_aws: ${{ matrix.primary }}
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          upload-aws: ${{ matrix.primary }}
 
       - name: Deploy to Play Store
         if: ${{ !matrix.emulator && matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true' }}

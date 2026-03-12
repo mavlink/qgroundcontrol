@@ -41,33 +41,10 @@ runs:
 
     - name: Validate inputs
       shell: bash
-      env:
-        DOCKERFILE: ${{ inputs.dockerfile }}
-        BUILD_TYPE: ${{ inputs.build-type }}
       run: |
-        # Validate dockerfile
-        case "$DOCKERFILE" in
-          Dockerfile-build-ubuntu|Dockerfile-build-android)
-            echo "Using dockerfile: $DOCKERFILE"
-            ;;
-          *)
-            echo "Error: Invalid dockerfile '$DOCKERFILE'" >&2
-            echo "Allowed values: Dockerfile-build-ubuntu, Dockerfile-build-android" >&2
-            exit 1
-            ;;
-        esac
-
-        # Validate build-type
-        case "$BUILD_TYPE" in
-          Release|Debug)
-            echo "Build type: $BUILD_TYPE"
-            ;;
-          *)
-            echo "Error: Invalid build-type '$BUILD_TYPE'" >&2
-            echo "Allowed values: Release, Debug" >&2
-            exit 1
-            ;;
-        esac
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" validate \
+          --dockerfile "${{ inputs.dockerfile }}" \
+          --build-type "${{ inputs.build-type }}"
 
     - name: Build Docker image
       if: contains(fromJSON('["Dockerfile-build-ubuntu", "Dockerfile-build-android"]'), inputs.dockerfile)
@@ -84,24 +61,9 @@ runs:
       if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)
       shell: bash
       env:
-        SOURCE_DIR: ${{ github.workspace }}
-        BUILD_DIR: ${{ github.workspace }}/build
-        BUILD_TYPE: ${{ inputs.build-type }}
         ENABLE_FUSE: ${{ inputs.fuse }}
       run: |
         chmod +x ./deploy/docker/docker-run.sh
-        FUSE_FLAG=""
-        if [[ "$ENABLE_FUSE" == "true" ]]; then
-          FUSE_FLAG="--fuse"
-        fi
-        max_attempts=2
-        attempt=1
-        until ./deploy/docker/docker-run.sh ${FUSE_FLAG:+"$FUSE_FLAG"} qgc-builder:latest "$BUILD_TYPE"; do
-          if (( attempt >= max_attempts )); then
-            echo "Docker build failed after ${attempt} attempt(s)." >&2
-            exit 1
-          fi
-          echo "Docker build failed on attempt ${attempt}. Retrying in 30 seconds..."
-          sleep 30
-          attempt=$((attempt + 1))
-        done
+        ARGS=(run --build-type "${{ inputs.build-type }}")
+        [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" "${ARGS[@]}"

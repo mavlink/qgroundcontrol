@@ -1,0 +1,39 @@
+name: Detect Changes
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: 'Platform to detect changes for'
+        required: true
+        type: string
+    outputs:
+      should_build:
+        description: 'Whether relevant files changed'
+        value: ${{ jobs.detect.outputs.should_build }}
+
+concurrency:
+  group: detect-changes-${{ inputs.platform }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: Detect Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_build: ${{ steps.detect.outputs.any }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - name: Detect changes
+        id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: ${{ inputs.platform }}

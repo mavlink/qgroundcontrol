@@ -55,34 +55,12 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Download Artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: doxygen_build
-          path: ~/_api_docs
-
-      - name: Checkout API docs repo
-        uses: actions/checkout@v6
-        with:
-          repository: mavlink/api.qgroundcontrol.com
-          token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          path: api.qgroundcontrol.com
-
       - name: Deploy docs
-        env:
-          BRANCH: ${{ env.BRANCH_NAME }}
-        run: |
-          SAFE_BRANCH="${BRANCH//[^a-zA-Z0-9._-]/_}"
-          rm -rf "api.qgroundcontrol.com/${SAFE_BRANCH}"
-          mkdir -p "api.qgroundcontrol.com/${SAFE_BRANCH}"
-          cp -r ~/_api_docs/* "api.qgroundcontrol.com/${SAFE_BRANCH}/"
-          cd api.qgroundcontrol.com
-          git config user.email "bot@px4.io"
-          git config user.name "PX4BuildBot"
-          git add "${SAFE_BRANCH}"
-          if git diff --cached --quiet; then
-            echo "No documentation changes to deploy."
-            exit 0
-          fi
-          git commit -m "QGC Doxygen API docs update $(date -u +%Y-%m-%d)"
-          git push origin main
+        uses: ./.github/actions/deploy-docs
+        with:
+          artifact-name: doxygen_build
+          target-repo: mavlink/api.qgroundcontrol.com
+          target-branch: main
+          deploy-token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          source-branch: ${{ env.BRANCH_NAME }}
+          commit-message: 'QGC Doxygen API docs update'

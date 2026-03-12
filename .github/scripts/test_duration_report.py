@@ -11,6 +11,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
+from xml_utils import xml_parse
+
 
 def test_key(elem: ET.Element) -> str:
     """Return a stable identifier for a JUnit testcase element."""
@@ -64,7 +66,7 @@ def analyze_test_durations(
     min_delta: float,
 ) -> dict[str, Any]:
     """Return computed timing report data for a JUnit XML file."""
-    tree = ET.parse(junit_path)
+    tree = xml_parse(junit_path)
     root = tree.getroot()
     cases = [(test_key(testcase), parse_time(testcase.attrib.get("time", "0"))) for testcase in root.iter("testcase")]
 
