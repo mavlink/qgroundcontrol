@@ -1,15 +1,14 @@
 #pragma once
 
+#include <QtCore/QFuture>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
-#include <QtCore/QRunnable>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class QQuickWindow;
-class FinishVideoInitialization;
 class SubtitleWriter;
 class Vehicle;
 class VideoReceiver;
@@ -46,8 +45,6 @@ public:
     explicit VideoManager(QObject *parent = nullptr);
     ~VideoManager();
 
-    friend class FinishVideoInitialization;
-
     static VideoManager *instance();
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
@@ -57,6 +54,8 @@ public:
     Q_INVOKABLE void stopVideo();
 
     void init(QQuickWindow *mainWindow);
+    void startGStreamerInit();
+    bool waitForGStreamerInit(int timeoutMs = 60000);
     void cleanup();
     bool autoStreamConfigured() const;
     bool decoding() const { return _decoding; }
@@ -101,7 +100,19 @@ private slots:
     void _videoSourceChanged();
 
 private:
+    enum class InitState : uint8_t {
+        NotStarted,
+        Pending,
+        GstReady,
+        QmlReady,
+        Running,
+        Failed
+    };
+
+    static bool _shouldSkipGStreamerForUnitTests();
     void _initAfterQmlIsReady();
+    void _onGstInitComplete(bool success);
+    void _createVideoReceivers();
     void _initVideoReceiver(VideoReceiver *receiver, QQuickWindow *window);
     bool _updateAutoStream(VideoReceiver *receiver);
     bool _updateUVC(VideoReceiver *receiver);
@@ -114,30 +125,21 @@ private:
     static void _cleanupOldVideos();
 
     QList<VideoReceiver*> _videoReceivers;
-
     SubtitleWriter *_subtitleWriter = nullptr;
     VideoSettings *_videoSettings = nullptr;
+    QQuickWindow *_mainWindow = nullptr;
+    Vehicle *_activeVehicle = nullptr;
 
+    InitState _initState = InitState::NotStarted;
+    QFuture<bool> _gstInitFuture;
     bool _initialized = false;
-    bool _initAfterQmlIsReadyDone = false;
+    bool _gstreamerDisabledForUnitTests = false;
     bool _fullScreen = false;
+
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
     QAtomicInteger<bool> _streaming = false;
     QSize _videoSize;
     QString _imageFile;
     QString _uvcVideoSourceID;
-    Vehicle *_activeVehicle = nullptr;
-    QQuickWindow *_mainWindow = nullptr;
-};
-
-/*===========================================================================*/
-
-class FinishVideoInitialization : public QRunnable
-{
-public:
-    FinishVideoInitialization();
-    ~FinishVideoInitialization();
-
-    void run() final;
 };

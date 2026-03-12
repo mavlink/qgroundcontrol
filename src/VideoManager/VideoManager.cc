@@ -11,21 +11,23 @@
 #include "Vehicle.h"
 #include "VideoReceiver.h"
 #include "VideoSettings.h"
-#ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
 #include "VideoItemStub.h"
-#else
-#include "VideoItemStub.h"
-#endif
 #include "QtMultimediaReceiver.h"
 #include "UVCReceiver.h"
+#ifdef QGC_GST_STREAMING
+#include "GStreamer.h"
+#include "GStreamerHelpers.h"
+#endif
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
+#include <QtCore/QEventLoop>
+#include <QtCore/QFutureWatcher>
+#include <QtCore/QRunnable>
+#include <QtCore/QTimer>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
-#include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
@@ -37,6 +39,11 @@ static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] 
 
 Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 
+bool VideoManager::_shouldSkipGStreamerForUnitTests()
+{
+    return qgcApp() && qgcApp()->runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
+}
+
 VideoManager::VideoManager(QObject *parent)
     : QObject(parent)
     , _subtitleWriter(new SubtitleWriter(this))
@@ -46,19 +53,17 @@ VideoManager::VideoManager(QObject *parent)
 
     (void) qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
 
+    bool needsStub = true;
 #ifdef QGC_GST_STREAMING
-    const bool skipGStreamerForUnitTests =
-        qgcApp() && qgcApp()->runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
-
-    if (skipGStreamerForUnitTests) {
-        (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    _gstreamerDisabledForUnitTests = _shouldSkipGStreamerForUnitTests();
+    needsStub = _gstreamerDisabledForUnitTests;
+    if (_gstreamerDisabledForUnitTests) {
         qCInfo(VideoManagerLog) << "Skipping GStreamer initialization for unit tests";
-    } else if (!GStreamer::initialize()) {
-        qCCritical(VideoManagerLog) << "Failed To Initialize GStreamer";
     }
-#else
-    (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
+    if (needsStub) {
+        (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+    }
 }
 
 VideoManager::~VideoManager()
@@ -69,6 +74,85 @@ VideoManager::~VideoManager()
 VideoManager *VideoManager::instance()
 {
     return _videoManagerInstance();
+}
+
+void VideoManager::startGStreamerInit()
+{
+#ifdef QGC_GST_STREAMING
+    if (_gstreamerDisabledForUnitTests) {
+        _initState = InitState::GstReady;
+        qCInfo(VideoManagerLog) << "GStreamer initialization disabled for unit tests";
+        return;
+    }
+
+    if (_initState != InitState::NotStarted) {
+        qCWarning(VideoManagerLog) << "GStreamer init already started";
+        return;
+    }
+
+    _initState = InitState::Pending;
+    _gstInitFuture = GStreamer::initializeAsync();
+    _gstInitFuture.then(this, [this](bool success) {
+        _onGstInitComplete(success);
+    }).onCanceled(this, [this] {
+        _onGstInitComplete(false);
+    });
+#endif
+}
+
+bool VideoManager::waitForGStreamerInit(int timeoutMs)
+{
+#ifdef QGC_GST_STREAMING
+    if (_gstreamerDisabledForUnitTests) {
+        return true;
+    }
+
+    if (_initState == InitState::NotStarted) {
+        startGStreamerInit();
+    }
+
+    switch (_initState) {
+    case InitState::Failed:
+        return false;
+    case InitState::GstReady:
+    case InitState::Running:
+        return true;
+    default:
+        break;
+    }
+
+    if (!_gstInitFuture.isValid()) {
+        qCCritical(VideoManagerLog) << "waitForGStreamerInit: no valid future";
+        return false;
+    }
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    QFutureWatcher<bool> watcher;
+    (void) connect(&watcher, &QFutureWatcher<bool>::finished, &loop, &QEventLoop::quit);
+    (void) connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+    watcher.setFuture(_gstInitFuture);
+    if (!watcher.isFinished()) {
+        timer.start(timeoutMs);
+        loop.exec();
+    }
+
+    if (!watcher.isFinished()) {
+        qCCritical(VideoManagerLog) << "Timed out waiting for GStreamer init";
+        return false;
+    }
+
+    const bool success = watcher.result();
+    if (_initState == InitState::Pending || _initState == InitState::QmlReady) {
+        _onGstInitComplete(success);
+    }
+    return _initState != InitState::Failed;
+#else
+    Q_UNUSED(timeoutMs);
+    return true;
+#endif
 }
 
 void VideoManager::init(QQuickWindow *mainWindow)
@@ -95,25 +179,83 @@ void VideoManager::init(QQuickWindow *mainWindow)
 
     (void) connect(this, &VideoManager::autoStreamConfiguredChanged, this, &VideoManager::_videoSourceChanged);
 
-    _mainWindow->scheduleRenderJob(new FinishVideoInitialization(), QQuickWindow::AfterSynchronizingStage);
+#ifdef QGC_GST_STREAMING
+    if (_initState == InitState::NotStarted) {
+        startGStreamerInit();
+    }
+#endif
+
+    _mainWindow->scheduleRenderJob(
+        QRunnable::create([this] {
+            QMetaObject::invokeMethod(this, &VideoManager::_initAfterQmlIsReady, Qt::QueuedConnection);
+        }),
+        QQuickWindow::AfterSynchronizingStage);
 
     _initialized = true;
 }
 
 void VideoManager::_initAfterQmlIsReady()
 {
-    if (_initAfterQmlIsReadyDone) {
-        qCWarning(VideoManagerLog) << "_initAfterQmlIsReady called multiple times";
-        return;
-    }
     if (!_mainWindow) {
         qCCritical(VideoManagerLog) << "_initAfterQmlIsReady called with NULL mainWindow";
         return;
     }
-    _initAfterQmlIsReadyDone = true;
 
     qCDebug(VideoManagerLog) << "_initAfterQmlIsReady";
 
+#ifdef QGC_GST_STREAMING
+    switch (_initState) {
+    case InitState::Pending:
+        _initState = InitState::QmlReady;
+        qCDebug(VideoManagerLog) << "QML ready, waiting for GStreamer";
+        return;
+    case InitState::GstReady:
+        _initState = InitState::Running;
+        qCDebug(VideoManagerLog) << "QML ready, GStreamer already done — creating receivers";
+        break;
+    case InitState::Failed:
+        qCWarning(VideoManagerLog) << "QML ready but GStreamer init failed";
+        return;
+    default:
+        qCWarning(VideoManagerLog) << "_initAfterQmlIsReady: unexpected state" << static_cast<int>(_initState);
+        return;
+    }
+#endif
+    _createVideoReceivers();
+}
+
+void VideoManager::_onGstInitComplete(bool success)
+{
+    if (!success) {
+        _initState = InitState::Failed;
+        qCCritical(VideoManagerLog) << "GStreamer initialization failed";
+        return;
+    }
+
+#ifdef QGC_GST_STREAMING
+    const auto decoderOption = static_cast<GStreamer::VideoDecoderOptions>(
+        _videoSettings->forceVideoDecoder()->rawValue().toInt());
+    GStreamer::setCodecPriorities(decoderOption);
+#endif
+
+    switch (_initState) {
+    case InitState::Pending:
+        _initState = InitState::GstReady;
+        qCDebug(VideoManagerLog) << "GStreamer ready, waiting for QML";
+        return;
+    case InitState::QmlReady:
+        _initState = InitState::Running;
+        qCDebug(VideoManagerLog) << "GStreamer ready, QML already done — creating receivers";
+        _createVideoReceivers();
+        return;
+    default:
+        qCWarning(VideoManagerLog) << "_onGstInitComplete: unexpected state" << static_cast<int>(_initState);
+        return;
+    }
+}
+
+void VideoManager::_createVideoReceivers()
+{
     static const QStringList videoStreamList = {
         "videoContent",
         "thermalVideo"
@@ -807,23 +949,4 @@ void VideoManager::startVideo()
     }
 
     _restartAllVideos();
-}
-
-/*===========================================================================*/
-
-FinishVideoInitialization::FinishVideoInitialization()
-    : QRunnable()
-{
-    // qCDebug(VideoManagerLog) << this;
-}
-
-FinishVideoInitialization::~FinishVideoInitialization()
-{
-    // qCDebug(VideoManagerLog) << this;
-}
-
-void FinishVideoInitialization::run()
-{
-    qCDebug(VideoManagerLog) << "FinishVideoInitialization::run";
-    QMetaObject::invokeMethod(VideoManager::instance(), &VideoManager::_initAfterQmlIsReady, Qt::QueuedConnection);
 }

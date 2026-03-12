@@ -16,8 +16,8 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 
 - **Desktop (Linux/macOS/Windows)**: `GStreamer::prepareEnvironment()` sets plugin paths, scanner/helper paths, and GIO module paths when bundled runtimes are detected.
 - **Linux AppImage**: [`deploy/linux/AppRun`](../../../../deploy/linux/AppRun) exports `GST_PLUGIN_*`, `GST_PLUGIN_SCANNER*`, and `GST_PTP_HELPER*` only when bundled paths are valid.
-- **Environment hygiene**: Python virtualenv/conda variables are temporarily cleared during `gst_init()` for scanner stability and restored afterwards.
-- **Validation**: If bundled plugin directories are present but `gst-plugin-scanner` is missing or non-executable, a warning is logged and GStreamer falls back to in-process plugin scanning.
+- **Environment hygiene**: Python virtualenv/conda variables are cleared for scanner stability (`PYTHONHOME`, `PYTHONPATH`, `VIRTUAL_ENV`, `CONDA_*`).
+- **Validation**: If bundled plugin directories are present but `gst-plugin-scanner` is missing or non-executable, QGC fails initialization early with a clear error instead of running with a broken plugin loader.
 
 ## Platform Setup
 

@@ -26,19 +26,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-try:
-    from .setup_bootstrap import ensure_setup_imports
-except ImportError:
-    setup_dir = Path(__file__).resolve().parent
-    if str(setup_dir) not in sys.path:
-        sys.path.insert(0, str(setup_dir))
-    from setup_bootstrap import ensure_setup_imports
-
-ensure_setup_imports()
-
-from common.file_traversal import find_repo_root
-from common.build_config import load_build_config as load_shared_build_config
-
 # Package categories for Debian/Ubuntu
 DEBIAN_PACKAGES: dict[str, list[str]] = {
     "core": [
@@ -172,16 +159,26 @@ APT_BASE_OPTIONS: list[str] = [
 PACKAGE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+-]*$")
 
 
+def get_repo_root() -> Path:
+    """Find repository root directory."""
+    current = Path(__file__).resolve()
+    for parent in [current] + list(current.parents):
+        if (parent / ".git").exists():
+            return parent
+    return Path.cwd()
+
+
 def load_build_config() -> dict:
     """Load build configuration from .github/build-config.json."""
-    config_path = find_repo_root() / ".github" / "build-config.json"
-    if not config_path.exists():
-        return {}
-    try:
-        return load_shared_build_config(config_path)
-    except (json.JSONDecodeError, OSError, ValueError) as e:
-        print(f"Error: invalid JSON in {config_path}: {e}", file=sys.stderr)
-        return {}
+    config_path = get_repo_root() / ".github" / "build-config.json"
+    if config_path.exists():
+        try:
+            with open(config_path) as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Error: invalid JSON in {config_path}: {e}", file=sys.stderr)
+            return {}
+    return {}
 
 
 def get_config_value(key: str) -> str | None:
@@ -767,11 +764,6 @@ Examples:
         help="Print space-separated package list (machine-readable, for CI caching)",
     )
     parser.add_argument(
-        "--print-available-packages",
-        action="store_true",
-        help="Print available apt packages in the selected Debian category",
-    )
-    parser.add_argument(
         "--category",
         help="Install only specific category (Debian only)",
     )
@@ -793,6 +785,11 @@ Examples:
         "--vulkan",
         action="store_true",
         help="Install Vulkan SDK (Windows only)",
+    )
+    parser.add_argument(
+        "--print-available-packages",
+        action="store_true",
+        help="Print available apt packages in the selected Debian category",
     )
     parser.add_argument(
         "--validate-extra-packages",
