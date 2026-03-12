@@ -294,9 +294,6 @@ protected:
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
     TrackingStatus                      _trackingStatus     = TRACKING_UNKNOWN;
-    QRectF                              _trackingMarquee;
-    QPointF                             _trackingPoint;
-    double                              _trackingRadius     = 0.0;
     mavlink_camera_tracking_image_status_t  _trackingImageStatus;
     QRectF                                  _trackingImageRect;
 };
