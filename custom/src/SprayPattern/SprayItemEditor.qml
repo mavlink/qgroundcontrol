@@ -163,9 +163,34 @@ Rectangle {
                 text:               qsTr("Add polygons inside the field to avoid (trees, buildings). The drone will fly around them.")
             }
 
-            QGCButton {
-                text:               qsTr("Add obstacle")
-                onClicked:          missionItem.addObstaclePolygon()
+            ColumnLayout {
+   
+                RowLayout {
+                    QGCLabel { text: qsTr("Side (m)"); Layout.preferredWidth: _fieldWidth * 0.8 }
+                    FactTextField {
+                        id:             squareSideField
+                        text:           "5"
+                        Layout.preferredWidth: _fieldWidth * 0.5
+                        validator:      DoubleValidator { bottom: 1; top: 500; decimals: 1 }
+                    }
+                    QGCButton {
+                        text:       qsTr("Add obstacle")
+                        onClicked: missionItem.addObstaclePolygon(parseFloat(squareSideField.text) || 5)
+                    }
+                }
+                RowLayout {
+                    QGCLabel { text: qsTr("Radius (m)"); Layout.preferredWidth: _fieldWidth * 0.8 }
+                    FactTextField {
+                        id:             circleRadiusField
+                        text:           "5"
+                        Layout.preferredWidth: _fieldWidth * 0.5
+                        validator:      DoubleValidator { bottom: 1; top: 500; decimals: 1 }
+                    }
+                    QGCButton {
+                        text:       qsTr("Add circle")
+                        onClicked: missionItem.addObstacleCircle(parseFloat(circleRadiusField.text) || 5)
+                    }
+                }
             }
 
             Repeater {

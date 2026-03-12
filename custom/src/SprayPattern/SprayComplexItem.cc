@@ -166,20 +166,46 @@ void SprayComplexItem::_updateWizardMode(void)
     }
 }
 
-void SprayComplexItem::addObstaclePolygon(void)
+void SprayComplexItem::addObstaclePolygon(double sideMeters)
 {
     if (!_sprayAreaPolygon.isValid() || _sprayAreaPolygon.count() < 3) {
         return;
     }
+    if (sideMeters <= 0) sideMeters = 20.0;
     QGCMapPolygon* obst = new QGCMapPolygon(this);
-    const qreal halfSideMeters = 10.0;  // 20x20 m square
+    const qreal halfSideMeters = sideMeters * 0.5;
     const qreal halfDiag = halfSideMeters * qSqrt(2.0);
     QGeoCoordinate cen = _sprayAreaPolygon.center();
+    // Orient square so two sides are parallel to transects (gons). Transects are N-S lines
+    // rotated clockwise by gridAngle, so transect direction azimuth = gridAngle (degrees from North).
+    double gridAngleDeg = _gridAngleFact.rawValue().toDouble();
+    double azimuthGon = gridAngleDeg;
     QList<QGeoCoordinate> coords;
-    coords << cen.atDistanceAndAzimuth(halfDiag, 135)   // NW
-           << cen.atDistanceAndAzimuth(halfDiag, 45)     // NE
-           << cen.atDistanceAndAzimuth(halfDiag, 315)    // SE
-           << cen.atDistanceAndAzimuth(halfDiag, 225);   // SW
+    coords << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 135)
+           << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 45)
+           << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 315)
+           << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 225);
+    obst->appendVertices(coords);
+    connect(obst, &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
+    connect(obst, &QGCMapPolygon::dirtyChanged, this, &SprayComplexItem::_setIfDirty);
+    _obstaclePolygonsModel->append(obst);
+    setDirty(true);
+}
+
+void SprayComplexItem::addObstacleCircle(double radiusMeters)
+{
+    if (!_sprayAreaPolygon.isValid() || _sprayAreaPolygon.count() < 3) {
+        return;
+    }
+    if (radiusMeters <= 0) radiusMeters = 10.0;
+    QGCMapPolygon* obst = new QGCMapPolygon(this);
+    const int numPoints = 16;
+    QGeoCoordinate cen = _sprayAreaPolygon.center();
+    QList<QGeoCoordinate> coords;
+    for (int i = 0; i < numPoints; i++) {
+        double azimuth = 360.0 * i / numPoints;
+        coords << cen.atDistanceAndAzimuth(radiusMeters, azimuth);
+    }
     obst->appendVertices(coords);
     connect(obst, &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
     connect(obst, &QGCMapPolygon::dirtyChanged, this, &SprayComplexItem::_setIfDirty);

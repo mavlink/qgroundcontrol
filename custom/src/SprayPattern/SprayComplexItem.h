@@ -42,7 +42,8 @@ public:
     Q_PROPERTY(QmlObjectListModel*      obstaclePolygons     READ obstaclePolygons     CONSTANT)
     Q_PROPERTY(QVariantList             obstacleBufferPolygons READ obstacleBufferPolygons NOTIFY obstacleBufferPolygonsChanged)
 
-    Q_INVOKABLE void addObstaclePolygon(void);
+    Q_INVOKABLE void addObstaclePolygon(double sideMeters = 20.0);
+    Q_INVOKABLE void addObstacleCircle(double radiusMeters = 10.0);
     Q_INVOKABLE void addObstaclePolygonFromCoordinates(const QVariantList& coordinates);
     Q_INVOKABLE void removeObstaclePolygon(int index);
     Q_INVOKABLE void rotateEntryPoint(void);
