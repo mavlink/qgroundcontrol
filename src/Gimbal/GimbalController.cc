@@ -561,25 +561,10 @@ void GimbalController::sendRate()
         return;
     }
 
-    unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK | GIMBAL_MANAGER_FLAGS_PITCH_LOCK;
-
-    if (_activeGimbal->yawLock()) {
-        flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
-    }
-
-    _vehicle->sendMavCommand(
-        _activeGimbal->managerCompid()->rawValue().toUInt(),
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        false,
-        NAN,
-        NAN,
-        _activeGimbal->pitchRate(),
-        _activeGimbal->yawRate(),
-        flags,
-        0,
-        _activeGimbal->deviceId()->rawValue().toUInt());
-
-    qCDebug(GimbalControllerLog) << "Gimbal rate sent!";
+    // We send raw mavlink instead of using MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW because
+    // when both pitch and yaw stop simultaneously, Vehicle's duplicate command detection
+    // drops the second sendMavCommand call, leaving one axis spinning indefinitely.
+    _sendGimbalAttitudeRates(_activeGimbal->pitchRate(), _activeGimbal->yawRate());
 
     // Stop timeout if both unset.
     if ((_activeGimbal->pitchRate() == 0.f) && (_activeGimbal->yawRate() == 0.f)) {
