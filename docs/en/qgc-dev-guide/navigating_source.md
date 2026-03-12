@@ -7,7 +7,7 @@ Below are listed some tips to help you find what you are looking for.
 ## Use the API Reference
 
 Doxygen documentation can be found at <https://api.qgroundcontrol.com/>.
-This is can be easier to navigate and search than the source itself.
+This can be easier to navigate and search than the source itself.
 
 ## Start from the top of the UI
 
