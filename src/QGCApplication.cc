@@ -228,13 +228,13 @@ void QGCApplication::init()
     if (_simpleBootTest) {
         // Since GStream builds are so problematic we initialize video during the simple boot test
         // to make sure it works and verfies plugin availability.
-        _initVideo();
+        _bootTestPassed = _initVideo();
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
 }
 
-void QGCApplication::_initVideo()
+bool QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
     // Gstreamer video playback requires OpenGL
@@ -242,13 +242,16 @@ void QGCApplication::_initVideo()
 #endif
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
-    VideoManager::instance();
+    VideoManager *videoManager = VideoManager::instance();
+    videoManager->startGStreamerInit();
+    const bool initSucceeded = !_simpleBootTest || videoManager->waitForGStreamerInit();
     _videoManagerInitialized = true;
+    return initSucceeded;
 }
 
 void QGCApplication::_initForNormalAppBoot()
 {
-    _initVideo(); // GStreamer must be initialized before QmlEngine
+    (void) _initVideo();
 
     QQuickStyle::setStyle("Basic");
     QGCCorePlugin::instance()->init();

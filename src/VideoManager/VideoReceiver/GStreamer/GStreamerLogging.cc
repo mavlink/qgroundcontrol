@@ -1,8 +1,7 @@
+#include "GStreamer.h"
 #include "GStreamerLogging.h"
-#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QSettings>
 #include <QtCore/QString>
 
 #include <atomic>
@@ -122,29 +121,6 @@ void qtGstLog(GstDebugCategory *category,
         break;
     default:
         break;
-    }
-}
-
-void configureDebugLogging()
-{
-    static bool s_configured = false;
-    if (s_configured) {
-        return;
-    }
-    s_configured = true;
-
-    gst_debug_remove_log_function(gst_debug_log_default);
-    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
-
-    if (!qEnvironmentVariableIsEmpty("GST_DEBUG")) {
-        return;
-    }
-
-    QSettings settings;
-    if (settings.contains(AppSettings::gstDebugLevelName)) {
-        const int level = qBound(0, settings.value(AppSettings::gstDebugLevelName).toInt(),
-                                 static_cast<int>(GST_LEVEL_MEMDUMP));
-        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(level));
     }
 }
 

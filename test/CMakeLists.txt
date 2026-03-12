@@ -92,6 +92,12 @@ add_qgc_test(QGCVideoStreamInfoTest LABELS Unit Camera)
 add_qgc_test(VideoManagerTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
+# VideoManager
+# ----------------------------------------------------------------------------
+add_subdirectory(VideoManager)
+add_qgc_test(GStreamerTest LABELS Integration)
+
+# ----------------------------------------------------------------------------
 # Comms
 # ----------------------------------------------------------------------------
 add_subdirectory(Comms)

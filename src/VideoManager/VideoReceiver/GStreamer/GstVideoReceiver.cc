@@ -290,6 +290,7 @@ void GstVideoReceiver::stop()
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-stopped");
 
         gst_clear_object(&_pipeline);
+        _pipeline = nullptr;
 
         _recorderValve = nullptr;
         _decoderValve = nullptr;
@@ -370,7 +371,7 @@ void GstVideoReceiver::startDecoding(void *sink)
 
     if (!_addDecoder(_decoderValve)) {
         qCCritical(GstVideoReceiverLog) << "_addDecoder() failed" << _uri;
-        _cleanupVideoSinkOnFailure();
+        _shutdownDecodingBranch();
         _dispatchSignal([this]() { emit onStartDecodingComplete(STATUS_FAIL); });
         return;
     }
@@ -902,7 +903,7 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
 
     if (!_addDecoder(_decoderValve)) {
         qCCritical(GstVideoReceiverLog) << "_addDecoder() failed";
-        _cleanupVideoSinkOnFailure();
+        _shutdownDecodingBranch();
         return;
     }
 
@@ -986,8 +987,8 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
 
     if (!gst_element_link(src, _decoder)) {
         qCCritical(GstVideoReceiverLog) << "Unable to link decoder";
-        (void) gst_element_set_state(_decoder, GST_STATE_NULL);
         (void) gst_bin_remove(GST_BIN(_pipeline), _decoder);
+        (void) gst_element_set_state(_decoder, GST_STATE_NULL);
         gst_clear_object(&_decoder);
         return false;
     }
@@ -1079,11 +1080,7 @@ bool GstVideoReceiver::_addVideoSink(GstPad *pad)
     // on QML's paint cycle).  For live streams with hardware decoders that
     // have startup latency, this causes all frames to be silently dropped
     // after the first one.  Override after state sync so it sticks.
-    // Re-apply the configured sync value since state sync may also reset it.
-    g_object_set(_videoSink,
-                 "sync", (_buffer >= 0),
-                 "max-lateness", G_GINT64_CONSTANT(-1),
-                 nullptr);
+    g_object_set(_videoSink, "sync", FALSE, "max-lateness", G_GINT64_CONSTANT(-1), nullptr);
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 
@@ -1190,34 +1187,13 @@ bool GstVideoReceiver::_unlinkBranch(GstElement *from)
     return true;
 }
 
-void GstVideoReceiver::_cleanupVideoSinkOnFailure()
-{
-    if (_videoSinkProbeId != 0) {
-        GstPad *sinkpad = gst_element_get_static_pad(_videoSink, "sink");
-        if (sinkpad) {
-            gst_pad_remove_probe(sinkpad, _videoSinkProbeId);
-            gst_clear_object(&sinkpad);
-        }
-        _videoSinkProbeId = 0;
-    }
-
-    GstObject *parent = gst_element_get_parent(_videoSink);
-    if (parent) {
-        (void) gst_element_set_state(_videoSink, GST_STATE_NULL);
-        (void) gst_bin_remove(GST_BIN(_pipeline), _videoSink);
-        gst_clear_object(&parent);
-    }
-
-    gst_clear_object(&_videoSink);
-}
-
 void GstVideoReceiver::_shutdownDecodingBranch()
 {
     if (_decoder) {
         GstObject *parent = gst_element_get_parent(_decoder);
         if (parent) {
-            (void) gst_element_set_state(_decoder, GST_STATE_NULL);
             (void) gst_bin_remove(GST_BIN(_pipeline), _decoder);
+            (void) gst_element_set_state(_decoder, GST_STATE_NULL);
             gst_clear_object(&parent);
         }
 
@@ -1237,8 +1213,8 @@ void GstVideoReceiver::_shutdownDecodingBranch()
 
     GstObject *parent = gst_element_get_parent(_videoSink);
     if (parent) {
-        (void) gst_element_set_state(_videoSink, GST_STATE_NULL);
         (void) gst_bin_remove(GST_BIN(_pipeline), _videoSink);
+        (void) gst_element_set_state(_videoSink, GST_STATE_NULL);
         gst_clear_object(&parent);
     }
 

@@ -1,15 +1,15 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "AppSettings.h"
 #include "GstVideoReceiver.h"
-#include "SettingsManager.h"
-#include "VideoSettings.h"
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
-#include <QtCore/QHash>
 #include <QtCore/QMutex>
+#include <QtCore/QSettings>
 #include <QtCore/QStringList>
 #include <QtQuick/QQuickItem>
 
@@ -235,7 +235,6 @@ void _clearManagedGstEnvVars()
         "GST_PLUGIN_SYSTEM_PATH",
         "GST_PLUGIN_PATH_1_0",
         "GST_PLUGIN_PATH",
-        "PYTHONNOUSERSITE",
     };
 
     for (const char *name : varsToUnset) {
@@ -252,54 +251,23 @@ void _setGstEnvIfExecutable(const char *name, const QString &path)
     }
 }
 
-static constexpr const char *kPythonEnvVars[] = {
-    "PYTHONHOME",
-    "PYTHONPATH",
-    "VIRTUAL_ENV",
-    "CONDA_PREFIX",
-    "CONDA_DEFAULT_ENV",
-    "PYTHONUSERBASE",
-    "PYTHONNOUSERSITE",
-};
-
-QHash<QByteArray, QByteArray> s_savedPythonEnv;
-bool s_pythonEnvSanitized = false;
-
 void _sanitizePythonEnvForScanner()
 {
-    s_savedPythonEnv.clear();
-    s_pythonEnvSanitized = true;
+    static constexpr const char *varsToUnset[] = {
+        "PYTHONHOME",
+        "PYTHONPATH",
+        "VIRTUAL_ENV",
+        "CONDA_PREFIX",
+        "CONDA_DEFAULT_ENV",
+        "PYTHONUSERBASE",
+    };
 
-    for (const char *name : kPythonEnvVars) {
+    for (const char *name : varsToUnset) {
         if (qEnvironmentVariableIsSet(name)) {
-            s_savedPythonEnv.insert(QByteArray(name), qgetenv(name));
-        }
-        _unsetEnv(name);
-    }
-
-    _setGstEnv("PYTHONNOUSERSITE", QStringLiteral("1"));
-}
-
-void _restorePythonEnv()
-{
-    if (!s_pythonEnvSanitized) {
-        return;
-    }
-    s_pythonEnvSanitized = false;
-
-    qCDebug(GStreamerLog) << "Restoring Python environment variables";
-
-    for (const char *name : kPythonEnvVars) {
-        const QByteArray key(name);
-        if (s_savedPythonEnv.contains(key)) {
-            qputenv(name, s_savedPythonEnv.value(key));
-            qCDebug(GStreamerLog) << "  " << name << "=" << s_savedPythonEnv.value(key);
-        } else {
-            _unsetEnv(name);
+            qunsetenv(name);
+            qCDebug(GStreamerLog) << "  unset" << name;
         }
     }
-
-    s_savedPythonEnv.clear();
 }
 
 void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
@@ -309,7 +277,6 @@ void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
 
     _clearManagedGstEnvVars();
     _sanitizePythonEnvForScanner();
-    // Force fresh registry scan since we're redirecting plugin paths to bundled locations
     _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
@@ -585,6 +552,71 @@ bool _verifyPlugins()
     return result;
 }
 
+void _logDecoderRanks()
+{
+    GList *factories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        GST_RANK_NONE);
+
+    if (!factories) {
+        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
+        return;
+    }
+
+    factories = g_list_sort(factories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
+        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhs));
+        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhs));
+        if (lhsRank != rhsRank) {
+            return (lhsRank > rhsRank) ? -1 : 1;
+        }
+        return g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhs)),
+                         gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhs)));
+    });
+
+    qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
+    for (GList *node = factories; node != nullptr; node = node->next) {
+        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
+        GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
+        const gchar *featureName = gst_plugin_feature_get_name(feature);
+        const guint rank = gst_plugin_feature_get_rank(feature);
+        const gchar *klass = gst_element_factory_get_klass(factory);
+        const bool isHw = GStreamer::isHardwareDecoderFactory(factory);
+
+        GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
+        const gchar *pluginName = plugin ? gst_plugin_get_name(plugin) : "?";
+
+        qCDebug(GStreamerDecoderRanksLog).noquote()
+            << QStringLiteral("  [%1] %2/%3 rank=%4 (%5)")
+                   .arg(isHw ? QStringLiteral("HW") : QStringLiteral("SW"),
+                        QString::fromUtf8(pluginName),
+                        QString::fromUtf8(featureName))
+                   .arg(rank)
+                   .arg(QString::fromUtf8(klass));
+
+        if (plugin) {
+            gst_object_unref(plugin);
+        }
+    }
+
+    gst_plugin_feature_list_free(factories);
+}
+
+void _configureDebugLogging()
+{
+    gst_debug_remove_log_function(gst_debug_log_default);
+    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
+
+    if (!qEnvironmentVariableIsEmpty("GST_DEBUG")) {
+        return;
+    }
+
+    QSettings settings;
+    if (settings.contains(AppSettings::gstDebugLevelName)) {
+        const int level = qBound(0, settings.value(AppSettings::gstDebugLevelName).toInt(),
+                                 static_cast<int>(GST_LEVEL_MEMDUMP));
+        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(level));
+    }
+}
 
 void prepareEnvironment()
 {
@@ -617,11 +649,9 @@ bool _initGstRuntime()
         qCCritical(GStreamerLog) << "Failed to initialize GStreamer:"
                                   << (error ? error->message : "unknown error");
         g_clear_error(&error);
-        _restorePythonEnv();
         return false;
     }
 
-    _restorePythonEnv();
     return true;
 }
 
@@ -632,7 +662,7 @@ bool completeInit()
         return false;
     }
 
-    GStreamer::configureDebugLogging();
+    _configureDebugLogging();
 
     gchar *version = gst_version_string();
     qCDebug(GStreamerLog) << "GStreamer initialized:" << version;
@@ -645,16 +675,21 @@ bool completeInit()
         return false;
     }
 
-    GStreamer::logDecoderRanks();
-    GStreamer::setCodecPriorities(static_cast<GStreamer::VideoDecoderOptions>(
-        SettingsManager::instance()->videoSettings()->forceVideoDecoder()->rawValue().toInt()));
+    _logDecoderRanks();
 
-    GstElement *sink = gst_element_factory_make("qml6glsink", nullptr);
-    if (!sink) {
-        qCCritical(GStreamerLog) << "Failed to create qml6glsink element";
+    GstElementFactory *sinkFactory = gst_element_factory_find("qml6glsink");
+    if (!sinkFactory) {
+        qCCritical(GStreamerLog) << "qml6glsink factory not found";
         return false;
     }
-    gst_clear_object(&sink);
+    gst_object_unref(sinkFactory);
+
+    GstElementFactory *playbinFactory = gst_element_factory_find("playbin");
+    if (!playbinFactory) {
+        qCCritical(GStreamerLog) << "playbin factory not found";
+        return false;
+    }
+    gst_object_unref(playbinFactory);
 
     if (GStreamer::didExternalPluginLoaderFail()) {
         qCCritical(GStreamerLog)
@@ -667,11 +702,8 @@ bool completeInit()
 
 bool initialize()
 {
-    prepareEnvironment();
-
     GStreamer::resetExternalPluginLoaderFailure();
     GStreamer::redirectGLibLogging();
-    GStreamer::configureDebugLogging();
 
     if (!_initGstRuntime()) {
         return false;
@@ -680,6 +712,18 @@ bool initialize()
     return completeInit();
 }
 
+QFuture<bool> initializeAsync()
+{
+    prepareEnvironment();
+    return QtConcurrent::run(&initialize);
+}
+
+// Ownership protocol for the video sink element:
+//   createVideoSink  — returns a floating-ref element (refcount conceptually 1).
+//   startDecoding     — calls gst_object_ref (sinks float, refcount=1).
+//   _ensureVideoSinkInPipeline — gst_object_ref (+1=2), gst_bin_add (+1=3).
+//   _shutdownDecodingBranch   — gst_bin_remove (-1=2), gst_clear_object (-1=1).
+//   releaseVideoSink  — gst_clear_object (-1=0, freed).
 void *createVideoSink(QQuickItem *widget, QObject * /*parent*/)
 {
     GstElement *videoSinkBin = gst_element_factory_make("qgcvideosinkbin", NULL);

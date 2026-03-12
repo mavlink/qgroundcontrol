@@ -1,8 +1,8 @@
 #include "GStreamerHelpers.h"
-#include "GStreamerLogging.h"
 
 #include <gst/rtsp/gstrtspurl.h>
 #include <QtCore/QLatin1String>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
 namespace GStreamer
@@ -263,55 +263,6 @@ void setCodecPriorities(VideoDecoderOptions option)
         qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
         break;
     }
-}
-
-void logDecoderRanks()
-{
-    GList *factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!factories) {
-        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
-        return;
-    }
-
-    factories = g_list_sort(factories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
-        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhs));
-        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhs));
-        if (lhsRank != rhsRank) {
-            return (lhsRank > rhsRank) ? -1 : 1;
-        }
-        return g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhs)),
-                         gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhs)));
-    });
-
-    qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
-    for (GList *node = factories; node != nullptr; node = node->next) {
-        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
-        GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
-        const gchar *featureName = gst_plugin_feature_get_name(feature);
-        const guint rank = gst_plugin_feature_get_rank(feature);
-        const gchar *klass = gst_element_factory_get_klass(factory);
-        const bool isHw = GStreamer::isHardwareDecoderFactory(factory);
-
-        GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
-        const gchar *pluginName = plugin ? gst_plugin_get_name(plugin) : "?";
-
-        qCDebug(GStreamerDecoderRanksLog).noquote()
-            << QStringLiteral("  [%1] %2/%3 rank=%4 (%5)")
-                   .arg(isHw ? QStringLiteral("HW") : QStringLiteral("SW"),
-                        QString::fromUtf8(pluginName),
-                        QString::fromUtf8(featureName))
-                   .arg(rank)
-                   .arg(QString::fromUtf8(klass));
-
-        if (plugin) {
-            gst_object_unref(plugin);
-        }
-    }
-
-    gst_plugin_feature_list_free(factories);
 }
 
 } // namespace GStreamer

@@ -80,7 +80,6 @@ private:
     /// -Unlink the branch from the src pad
     /// -Send an EOS event at the beginning of that branch
     bool _unlinkBranch(GstElement *from);
-    void _cleanupVideoSinkOnFailure();
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);

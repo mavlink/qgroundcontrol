@@ -41,6 +41,10 @@ int main(int argc, char *argv[])
             return QGCUnitTest::handleTestOptions(args);
 #endif
         case AppMode::BootTest:
+            if (!app.bootTestPassed()) {
+                qCCritical(MainLog) << "Simple boot test failed during GStreamer initialization";
+                return 1;
+            }
             qCInfo(MainLog) << "Simple boot test completed";
             return 0;
         case AppMode::Gui:

@@ -22,15 +22,9 @@ import sys
 import tomllib
 from pathlib import Path
 
-try:
-    from .setup_bootstrap import ensure_setup_imports
-except ImportError:
-    setup_dir = Path(__file__).resolve().parent
-    if str(setup_dir) not in sys.path:
-        sys.path.insert(0, str(setup_dir))
-    from setup_bootstrap import ensure_setup_imports
-
-ensure_setup_imports()
+_tools_dir = Path(__file__).resolve().parents[1]
+if str(_tools_dir) not in sys.path:
+    sys.path.insert(0, str(_tools_dir))
 
 from common.file_traversal import find_repo_root
 
