@@ -80,6 +80,7 @@
   - [Getting Started with source & builds](qgc-dev-guide/getting_started/index.md)
     - [Build using Containers](qgc-dev-guide/getting_started/container.md)
   - [Navigating the Source Code](qgc-dev-guide/navigating_source.md)
+    - [API Reference (Doxygen)](https://api.qgroundcontrol.com/master/annotated.html)
     - [Class Hierarchy](qgc-dev-guide/classes/index.md)
   - [QGC Release/Branching Process](qgc-dev-guide/release_branching_process.md)
   - [Communication Flow](qgc-dev-guide/communication_flow.md)
