@@ -1,6 +1,6 @@
 # Navigating QGC Source Code
 
-QGC is a large code base and it can be daunting to find what your are looking for in the source.
+QGC is a large code base and it can be daunting to find what you are looking for in the source.
 
 Below are listed some tips to help you find what you are looking for.
 
