@@ -110,8 +110,15 @@ bool QGCSerialPortInfo::_loadJsonData()
             return false;
         }
 
+        const QRegularExpression regExp(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption);
+        if (!regExp.isValid()) {
+            qCWarning(QGCSerialPortInfoLog) << "Invalid regular expression in board description fallback:"
+                                             << regExp.errorString()
+                                             << "pattern:" << fallbackObject[_jsonRegExpKey].toString();
+            return false;
+        }
         const BoardRegExpFallback_t boardFallback = {
-            fallbackObject[_jsonRegExpKey].toString(),
+            regExp,
             _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
             fallbackObject[_jsonAndroidOnlyKey].toBool(false)
         };
@@ -136,8 +143,15 @@ bool QGCSerialPortInfo::_loadJsonData()
             return false;
         }
 
+        const QRegularExpression regExp(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption);
+        if (!regExp.isValid()) {
+            qCWarning(QGCSerialPortInfoLog) << "Invalid regular expression in board manufacturer fallback:"
+                                             << regExp.errorString()
+                                             << "pattern:" << fallbackObject[_jsonRegExpKey].toString();
+            return false;
+        }
         const BoardRegExpFallback_t boardFallback = {
-            fallbackObject[_jsonRegExpKey].toString(),
+            regExp,
             _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
             fallbackObject[_jsonAndroidOnlyKey].toBool(false)
         };
@@ -195,7 +209,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
     Q_ASSERT(boardType == BoardTypeUnknown);
 
     for (const BoardRegExpFallback_t &boardFallback : _boardDescriptionFallbackList) {
-        if (description().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
+        if (description().contains(boardFallback.regExp)) {
 #ifndef Q_OS_ANDROID
             if (boardFallback.androidOnly) {
                 continue;
@@ -208,7 +222,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
     }
 
     for (const BoardRegExpFallback_t &boardFallback : _boardManufacturerFallbackList) {
-        if (manufacturer().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
+        if (manufacturer().contains(boardFallback.regExp)) {
 #ifndef Q_OS_ANDROID
             if (boardFallback.androidOnly) {
                 continue;
