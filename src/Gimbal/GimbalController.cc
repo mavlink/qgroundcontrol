@@ -472,7 +472,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
     }
 }
 
-void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError)
+void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool /*showError*/)
 {
     if (!_tryGetGimbalControl()) {
         return;
@@ -482,26 +482,14 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError)
     _activeGimbal->setAbsolutePitch(0.0f);
     _activeGimbal->setYawRate(0.0f);
 
-    // qCDebug(GimbalControllerLog) << "sendPitch: " << pitch << " BodyYaw: " << yaw;
-
-    const unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
+    const uint32_t flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
                          | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
                          | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
 
-    _vehicle->sendMavCommand(
-        _activeGimbal->managerCompid()->rawValue().toUInt(),
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        showError,
-        pitch,
-        yaw,
-        NAN,
-        NAN,
-        flags,
-        0,
-        _activeGimbal->deviceId()->rawValue().toUInt());
+    _sendGimbalAttitudeAngles(pitch, yaw, flags);
 }
 
-void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showError)
+void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool /*showError*/)
 {
     if (!_tryGetGimbalControl()) {
         return;
@@ -519,24 +507,12 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
         yaw += 360.0f;
     }
 
-    // qCDebug() << "sendPitch: " << pitch << " absoluteYaw: " << yaw;
-
-    const unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
+    const uint32_t flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
                          | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
                          | GIMBAL_MANAGER_FLAGS_YAW_LOCK
                          | GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME;
 
-    _vehicle->sendMavCommand(
-        _activeGimbal->managerCompid()->rawValue().toUInt(),
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        showError,
-        pitch,
-        yaw,
-        NAN,
-        NAN,
-        flags,
-        0,
-        _activeGimbal->deviceId()->rawValue().toUInt());
+    _sendGimbalAttitudeAngles(pitch, yaw, flags);
 }
 
 void GimbalController::setGimbalRetract(bool set)
@@ -561,23 +537,7 @@ void GimbalController::sendRate()
         return;
     }
 
-    unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK | GIMBAL_MANAGER_FLAGS_PITCH_LOCK;
-
-    if (_activeGimbal->yawLock()) {
-        flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
-    }
-
-    _vehicle->sendMavCommand(
-        _activeGimbal->managerCompid()->rawValue().toUInt(),
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        false,
-        NAN,
-        NAN,
-        _activeGimbal->pitchRate(),
-        _activeGimbal->yawRate(),
-        flags,
-        0,
-        _activeGimbal->deviceId()->rawValue().toUInt());
+    _sendGimbalAttitudeRates(_activeGimbal->pitchRate(), _activeGimbal->yawRate());
 
     qCDebug(GimbalControllerLog) << "Gimbal rate sent!";
 
@@ -645,6 +605,48 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
+void GimbalController::_sendGimbalAttitudeAngles(float pitch_deg, float yaw_deg, uint32_t flags)
+{
+    auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(GimbalControllerLog) << "_sendGimbalAttitudeAngles: primary link gone!";
+        return;
+    }
+
+    // Convert Euler angles (roll=0, pitch, yaw) to quaternion using ZYX convention
+    const float pitch_rad = qDegreesToRadians(pitch_deg);
+    const float yaw_rad = qDegreesToRadians(yaw_deg);
+    const float cp = std::cos(pitch_rad * 0.5f);
+    const float sp = std::sin(pitch_rad * 0.5f);
+    const float cy = std::cos(yaw_rad * 0.5f);
+    const float sy = std::sin(yaw_rad * 0.5f);
+
+    const float q[4] = {
+        cp * cy,   // w
+       -sp * sy,   // x
+        sp * cy,   // y
+        cp * sy    // z
+    };
+
+    mavlink_message_t msg;
+    mavlink_msg_gimbal_manager_set_attitude_pack_chan(
+        MAVLinkProtocol::instance()->getSystemId(),
+        MAVLinkProtocol::getComponentId(),
+        sharedLink->mavlinkChannel(),
+        &msg,
+        _vehicle->id(),
+        static_cast<uint8_t>(_activeGimbal->managerCompid()->rawValue().toUInt()),
+        flags,
+        static_cast<uint8_t>(_activeGimbal->deviceId()->rawValue().toUInt()),
+        q,
+        NAN,
+        NAN,
+        NAN
+    );
+
+    _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
 void GimbalController::_rateSenderTimeout()
 {
     // Send rate again to avoid timeout on autopilot side.
@@ -670,17 +672,10 @@ void GimbalController::sendPitchYawFlags(uint32_t flags)
 {
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(flags);
 
-    _vehicle->sendMavCommand(
-        _activeGimbal->managerCompid()->rawValue().toUInt(),
-        MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
-        true,
+    _sendGimbalAttitudeAngles(
         _activeGimbal->absolutePitch()->rawValue().toFloat(),
         yaw_in_vehicle_frame ? _activeGimbal->bodyYaw()->rawValue().toFloat() : _activeGimbal->absoluteYaw()->rawValue().toFloat(),
-        NAN,
-        NAN,
-        flags,
-        0,
-        _activeGimbal->deviceId()->rawValue().toUInt());
+        flags);
 }
 
 void GimbalController::acquireGimbalControl()

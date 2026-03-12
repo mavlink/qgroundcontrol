@@ -103,6 +103,7 @@ private:
     bool _yawInVehicleFrame(uint32_t flags);
 
     void _sendGimbalAttitudeRates(float pitch_rate_deg_s, float yaw_rate_deg_s);
+    void _sendGimbalAttitudeAngles(float pitch_deg, float yaw_deg, uint32_t flags);
 
     QTimer _rateSenderTimer;
     Vehicle *_vehicle = nullptr;
