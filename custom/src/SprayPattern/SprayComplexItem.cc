@@ -903,6 +903,7 @@ bool SprayComplexItem::_findObstacleCrossing(const QPointF& p1, const QPointF& p
     QPointF a = p1 - dir * extend;
     QPointF b = p2 + dir * extend;
     QLineF longLine(a, b);
+    const qreal eps = 1e-4;
     for (int oi = 0; oi < obstaclesNed.size(); oi++) {
         const QPolygonF& poly = obstaclesNed[oi];
         QList<QPointF> hits;
@@ -920,10 +921,19 @@ bool SprayComplexItem::_findObstacleCrossing(const QPointF& p1, const QPointF& p
             std::sort(hits.begin(), hits.end(), [&p1](const QPointF& u, const QPointF& v) {
                 return QLineF(p1, u).length() < QLineF(p1, v).length();
             });
-            obstacleIndex = oi;
-            cross1 = hits.first();
-            cross2 = hits.last();
-            return true;
+            QPointF c1 = hits.first();
+            QPointF c2 = hits.last();
+            // Only accept this obstacle if both crossings lie on the segment [p1, p2].
+            // When several obstacles lie on the same pass, the extended line hits all of them;
+            // we need the one that actually separates the two segment endpoints (not one behind p1 or beyond p2).
+            qreal t1 = (segLen > 1e-9) ? ((c1.x() - p1.x()) * dir.x() + (c1.y() - p1.y()) * dir.y()) / segLen : 0;
+            qreal t2 = (segLen > 1e-9) ? ((c2.x() - p1.x()) * dir.x() + (c2.y() - p1.y()) * dir.y()) / segLen : 0;
+            if (t1 >= -eps && t2 <= 1.0 + eps && t1 <= t2 + eps) {
+                obstacleIndex = oi;
+                cross1 = c1;
+                cross2 = c2;
+                return true;
+            }
         }
     }
     return false;
