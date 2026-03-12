@@ -39,6 +39,42 @@ src/
 └── Settings/         # Persistent settings
 ```
 
+## CI Structure
+
+Platform workflows (`linux.yml`, `macos.yml`, `windows.yml`, `android.yml`, `ios.yml`) share logic via composite actions and reusable workflows.
+
+```
+.github/
+├── workflows/
+│   ├── linux.yml, macos.yml, ...  # Platform build + test
+│   ├── _detect-changes.yml        # Reusable: skip builds on unrelated PRs
+│   ├── build-results.yml          # Aggregate PR comment (workflow_run trigger)
+│   └── build-gstreamer.yml        # GStreamer SDK builds
+├── actions/
+│   ├── cmake-configure/           # CMake configure with consistent options
+│   ├── cmake-build/               # Build with timing, reviewdog, ccache
+│   ├── run-unit-tests/            # CTest runner with JUnit output
+│   ├── detect-changes/            # Path-based change detection per platform
+│   ├── attest-and-upload/         # SBOM attestation + artifact upload
+│   ├── deploy-docs/               # Deploy built docs to external repo
+│   ├── gstreamer/                 # Build GStreamer from source
+│   ├── setup-python/              # Python + uv + dependency installation
+│   └── qt-install/                # Qt SDK installation with caching
+├── scripts/                       # Python scripts for CI jobs
+│   ├── common/                    # Shared modules (gh_actions, build_config)
+│   ├── templates/                 # Jinja2 templates for generated output
+│   └── tests/                     # Tests for CI scripts
+└── build-config.json              # Centralized version numbers
+```
+
+### CI Conventions
+
+- **Dependencies**: CI Python scripts use `httpx` for GitHub API access and `jinja2` for templating. Deps managed in `tools/pyproject.toml` under `[project.optional-dependencies] scripts`.
+- **Shared helpers**: `gh_actions.py` provides GitHub API pagination (httpx) with `gh` CLI fallback. Import as `from common.gh_actions import ...`.
+- **Bootstrap scripts** (`install_dependencies.py`, `ccache_helper.py`): Use stdlib only — they run before dependencies are installed.
+- **Config**: Version numbers and build settings live in `.github/build-config.json`. Read via `common.build_config.get_build_config_value()`.
+- **Outputs**: Use `common.gh_actions.write_github_output()` for `$GITHUB_OUTPUT` writes.
+
 ## Quick Patterns
 
 ```cpp

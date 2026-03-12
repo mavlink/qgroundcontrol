@@ -137,5 +137,3 @@ void ObjectListModelBaseTest::_hasChildrenNonRootAlwaysFalse()
 }
 
 UT_REGISTER_TEST(ObjectListModelBaseTest, TestLabel::Unit)
-
-#include "ObjectListModelBaseTest.moc"

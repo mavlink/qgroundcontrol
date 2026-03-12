@@ -32,52 +32,17 @@ runs:
     - name: Detect parallel jobs
       id: jobs
       shell: bash
-      env:
-        INPUT_PARALLEL: ${{ inputs.parallel }}
       run: |
-        if [[ "$INPUT_PARALLEL" != "auto" ]]; then
-          JOBS="$INPUT_PARALLEL"
-        elif command -v nproc >/dev/null 2>&1; then
-          JOBS="$(nproc)"
-        elif command -v sysctl >/dev/null 2>&1; then
-          JOBS="$(sysctl -n hw.ncpu)"
-        elif [[ -n "${NUMBER_OF_PROCESSORS:-}" ]]; then
-          JOBS="${NUMBER_OF_PROCESSORS}"
-        else
-          JOBS=2
-        fi
-
-        if [[ ! "$JOBS" =~ ^[0-9]+$ ]] || [[ "$JOBS" -lt 1 ]]; then
-          echo "::error::Invalid parallel job count: $JOBS"
-          exit 1
-        fi
-
-        echo "jobs=$JOBS" >> "$GITHUB_OUTPUT"
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" detect-jobs \
+          --parallel "${{ inputs.parallel }}"
 
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
-      env:
-        INPUT_JUNIT_OUTPUT: ${{ inputs.junit-output }}
-        INPUT_CTEST_OUTPUT: ${{ inputs.ctest-output }}
-        INPUT_INCLUDE_LABELS: ${{ inputs.include-labels }}
-        INPUT_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
-        INPUT_JOBS: ${{ steps.jobs.outputs.jobs }}
       run: |
-        set -o pipefail
-
-        CTEST_ARGS=(
-          --output-on-failure
-          --output-junit "$INPUT_JUNIT_OUTPUT"
-          --parallel "$INPUT_JOBS"
-        )
-
-        if [[ -n "$INPUT_INCLUDE_LABELS" ]]; then
-          CTEST_ARGS+=(-L "$INPUT_INCLUDE_LABELS")
-        fi
-
-        if [[ -n "$INPUT_EXCLUDE_LABELS" ]]; then
-          CTEST_ARGS+=(-LE "$INPUT_EXCLUDE_LABELS")
-        fi
-
-        ctest "${CTEST_ARGS[@]}" 2>&1 | tee "$INPUT_CTEST_OUTPUT"
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" ctest \
+          --junit-output "${{ inputs.junit-output }}" \
+          --ctest-output "${{ inputs.ctest-output }}" \
+          --jobs "${{ steps.jobs.outputs.jobs }}" \
+          --include-labels "${{ inputs.include-labels }}" \
+          --exclude-labels "${{ inputs.exclude-labels }}"

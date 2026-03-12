@@ -2,33 +2,33 @@ name: Upload Release
 description: Upload release artifact to GitHub and optionally to AWS
 
 inputs:
-  artifact_name:
+  artifact-name:
     description: Artifact filename
     required: true
-  package_name:
+  package-name:
     description: Package name (for GitHub artifact)
     required: true
-  aws_role_arn:
+  aws-role-arn:
     description: AWS IAM role ARN for OIDC authentication (preferred)
     required: false
-  aws_key_id:
+  aws-key-id:
     description: AWS access key ID
     required: false
-  aws_secret_access_key:
+  aws-secret-access-key:
     description: AWS secret access key
     required: false
-  aws_distribution_id:
+  aws-distribution-id:
     description: AWS CloudFront distribution ID
     required: false
-  upload_aws:
+  upload-aws:
     description: Upload artifact to AWS
     required: false
     default: 'true'
-  retention_days:
+  retention-days:
     description: Days to retain artifact (default 7 for PRs, 30 for pushes)
     required: false
     default: ''
-  compression_level:
+  compression-level:
     description: Compression level 0-9 (0=none, best for pre-compressed binaries)
     required: false
     default: '0'
@@ -37,24 +37,24 @@ runs:
   using: composite
   steps:
     - name: Save artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
-        name: ${{ inputs.package_name }}
-        path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
-        retention-days: ${{ inputs.retention_days != '' && inputs.retention_days || (github.event_name == 'pull_request' && '7' || '30') }}
-        compression-level: ${{ inputs.compression_level }}
+        name: ${{ inputs.package-name }}
+        path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        retention-days: ${{ inputs.retention-days != '' && inputs.retention-days || (github.event_name == 'pull_request' && '7' || '30') }}
+        compression-level: ${{ inputs.compression-level }}
 
     - name: Upload to AWS
       if: >-
-        fromJSON(inputs.upload_aws) &&
+        fromJSON(inputs.upload-aws) &&
         github.event_name == 'push' &&
         github.repository_owner == 'mavlink' &&
-        (inputs.aws_role_arn != '' || (inputs.aws_key_id != '' && inputs.aws_secret_access_key != ''))
+        (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))
       uses: ./.github/actions/aws-upload
       with:
-        artifact_name: ${{ inputs.artifact_name }}
-        artifact_path: ${{ runner.temp }}/build/${{ inputs.artifact_name }}
-        aws_role_arn: ${{ inputs.aws_role_arn }}
-        aws_key_id: ${{ inputs.aws_key_id }}
-        aws_secret_access_key: ${{ inputs.aws_secret_access_key }}
-        aws_distribution_id: ${{ inputs.aws_distribution_id }}
+        artifact-name: ${{ inputs.artifact-name }}
+        artifact-path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        aws-role-arn: ${{ inputs.aws-role-arn }}
+        aws-key-id: ${{ inputs.aws-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-distribution-id: ${{ inputs.aws-distribution-id }}

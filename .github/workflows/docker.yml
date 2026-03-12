@@ -64,6 +64,8 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
+            .github/scripts/ci_bootstrap.py
+            tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
 
       - name: Plan matrix

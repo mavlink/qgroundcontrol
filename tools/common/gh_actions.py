@@ -8,9 +8,6 @@ import os
 import subprocess
 import time
 from typing import Any
-from urllib import error as urllib_error
-from urllib import parse as urllib_parse
-from urllib import request as urllib_request
 
 def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run a gh CLI command and return the process result."""
@@ -31,62 +28,65 @@ def _should_use_http_api() -> bool:
     return mode == "http" and bool(_github_token())
 
 
-def _extract_next_link(link_header: str) -> str:
-    for part in link_header.split(","):
-        section = part.strip()
-        if 'rel="next"' not in section:
-            continue
-        start = section.find("<")
-        end = section.find(">", start + 1)
-        if start != -1 and end != -1:
-            return section[start + 1:end]
-    return ""
+def _build_http_client():
+    import httpx
+    transport = httpx.HTTPTransport(retries=3)
+    base_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+    return httpx.Client(
+        base_url=base_url,
+        transport=transport,
+        timeout=30.0,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "qgc-ci-gh-actions/1.0",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Authorization": f"Bearer {_github_token()}",
+        },
+    )
 
 
-def _http_get_json(url: str, headers: dict[str, str], retries: int = 3) -> tuple[dict[str, Any], str]:
-    for attempt in range(1, retries + 1):
-        req = urllib_request.Request(url, headers=headers, method="GET")
+def _retry_after_seconds(value: str, fallback: float) -> float:
+    """Parse a Retry-After header value, falling back to a simple backoff."""
+    try:
+        retry_after = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    return retry_after if retry_after > 0 else fallback
+
+
+def _http_get_with_retries(client, url: str, **kwargs) -> Any:
+    """GET a GitHub API endpoint with retries for transient status failures."""
+    import httpx
+
+    retryable_statuses = {429, 500, 502, 503, 504}
+
+    for attempt in range(1, 4):
         try:
-            with urllib_request.urlopen(req, timeout=30) as resp:
-                payload = resp.read().decode("utf-8")
-                doc = json.loads(payload)
-                if not isinstance(doc, dict):
-                    raise ValueError(f"Unexpected non-object response from GitHub API at {url}")
-                next_url = _extract_next_link(resp.headers.get("Link", ""))
-                return doc, next_url
-        except urllib_error.HTTPError as exc:
-            if attempt < retries and exc.code in {429, 500, 502, 503, 504}:
-                time.sleep(attempt)
-                continue
-            raise RuntimeError(f"GitHub API request failed ({exc.code}) for {url}: {exc.reason}") from exc
-        except (urllib_error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
-            if attempt < retries:
-                time.sleep(attempt)
-                continue
-            raise RuntimeError(f"GitHub API request failed for {url}: {exc}") from exc
+            resp = client.get(url, **kwargs)
+            resp.raise_for_status()
+            return resp
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
+            if attempt >= 3 or status_code not in retryable_statuses:
+                raise
+            delay = _retry_after_seconds(exc.response.headers.get("Retry-After", ""), float(attempt))
+        except httpx.RequestError:
+            if attempt >= 3:
+                raise
+            delay = float(attempt)
 
-    raise RuntimeError(f"GitHub API request failed for {url}: exhausted retries")
+        time.sleep(delay)
 
 
 def _http_paginated_docs(path: str, params: dict[str, str]) -> list[dict[str, Any]]:
-    base_url = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "User-Agent": "qgc-ci-gh-actions/1.0",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Authorization": f"Bearer {_github_token()}",
-    }
-
-    query = urllib_parse.urlencode(params)
-    url = f"{base_url}/{path.lstrip('/')}"
-    if query:
-        url = f"{url}?{query}"
-
     docs: list[dict[str, Any]] = []
-    while url:
-        doc, next_url = _http_get_json(url, headers=headers)
-        docs.append(doc)
-        url = next_url
+    with _build_http_client() as client:
+        resp = _http_get_with_retries(client, f"/{path.lstrip('/')}", params=params)
+        docs.append(resp.json())
+
+        while "next" in resp.links:
+            resp = _http_get_with_retries(client, resp.links["next"]["url"])
+            docs.append(resp.json())
     return docs
 
 
@@ -182,10 +182,72 @@ def list_run_artifacts(repo: str, run_id: int | str) -> list[dict[str, Any]]:
     return artifacts
 
 
+def parse_csv_list(value: str) -> list[str]:
+    """Parse comma-separated values into a trimmed non-empty list."""
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def is_fork_pr() -> bool:
+    """Check if the current event is a PR from a fork repository."""
+    event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))
+    if event != "pull_request":
+        return False
+    pr_repo = os.environ.get("PR_REPO", "").strip()
+    this_repo = os.environ.get("THIS_REPO", os.environ.get("GITHUB_REPOSITORY", "")).strip()
+    return bool(pr_repo and this_repo and pr_repo != this_repo)
+
+
+def resolve_cache_policy(requested: str) -> str:
+    """Resolve cache save policy.
+
+    Args:
+        requested: "auto", "true", or "false"
+
+    Returns:
+        "true" or "false"
+    """
+    if requested != "auto":
+        return requested
+    return "false" if is_fork_pr() else "true"
+
+
 def write_github_output(outputs: dict[str, str]) -> None:
-    """Write key=value pairs to $GITHUB_OUTPUT for GitHub Actions."""
+    """Write key=value pairs to $GITHUB_OUTPUT for GitHub Actions.
+
+    Handles multiline values using hash-based heredoc delimiters.
+    """
+    import hashlib
+
     github_output = os.environ.get('GITHUB_OUTPUT')
-    if github_output:
-        with open(github_output, 'a', encoding="utf-8") as f:
-            for key, value in outputs.items():
+    if not github_output:
+        return
+
+    with open(github_output, 'a', encoding="utf-8") as f:
+        for key, value in outputs.items():
+            if "\n" in value:
+                value_hash = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+                delim = f"EOF_{key}_{value_hash}"
+                while delim in value:
+                    delim = f"{delim}_X"
+                f.write(f"{key}<<{delim}\n{value}\n{delim}\n")
+            else:
                 f.write(f"{key}={value}\n")
+
+
+def write_step_summary(markdown: str) -> None:
+    """Append markdown content to $GITHUB_STEP_SUMMARY."""
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path:
+        return
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(markdown)
+
+
+def append_github_env(values: dict[str, str]) -> None:
+    """Append environment variables to $GITHUB_ENV."""
+    path = os.environ.get("GITHUB_ENV")
+    if not path:
+        return
+    with open(path, "a", encoding="utf-8") as f:
+        for key, value in values.items():
+            f.write(f"{key}={value}\n")

@@ -18,6 +18,15 @@ import sys
 import time
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import (  # noqa: E402
+    write_github_output as _write_github_output,
+    write_step_summary as _write_step_summary,
+)
+
 
 def run_benchmarks(binary: Path, test_filter: str, platform: str) -> str:
     """Run Qt Test benchmarks and return output."""
@@ -106,33 +115,25 @@ def fallback_startup_benchmark(binary: Path, platform: str) -> list[dict]:
 
 def write_github_output(results: list[dict]) -> None:
     """Write outputs for GitHub Actions."""
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if github_output:
-        with open(github_output, "a") as f:
-            f.write(f"has_results={'true' if results else 'false'}\n")
-            f.write(f"result_count={len(results)}\n")
+    _write_github_output({
+        "has_results": "true" if results else "false",
+        "result_count": str(len(results)),
+    })
 
 
 def write_summary(results: list[dict], output_file: Path) -> None:
     """Write GitHub step summary."""
-    summary_file = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not summary_file:
-        return
-
-    with open(summary_file, "a") as f:
-        f.write("## Runtime Benchmarks\n\n")
-        f.write(
-            "⚠️ **Note**: Runtime benchmarks on shared runners have ~3x variance.\n"
-        )
-        f.write("Only significant regressions (>50%) trigger alerts.\n\n")
-        f.write("### Results\n\n")
-
-        if results and output_file.exists():
-            f.write("```json\n")
-            f.write(output_file.read_text())
-            f.write("\n```\n")
-        else:
-            f.write("No benchmark results available\n")
+    parts = [
+        "## Runtime Benchmarks\n",
+        "⚠️ **Note**: Runtime benchmarks on shared runners have ~3x variance.",
+        "Only significant regressions (>50%) trigger alerts.\n",
+        "### Results\n",
+    ]
+    if results and output_file.exists():
+        parts.append(f"```json\n{output_file.read_text()}\n```\n")
+    else:
+        parts.append("No benchmark results available\n")
+    _write_step_summary("\n".join(parts))
 
 
 def main() -> int:

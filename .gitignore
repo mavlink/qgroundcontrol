@@ -26,9 +26,7 @@ tags
 # ------------------------------------------------------------------------------
 # Build System & CMake
 # ------------------------------------------------------------------------------
-build*/
-!.github/actions/build-setup/
-!.github/actions/build-setup/action.yml
+/build*/
 cmake-build-*/
 out/
 CMakeFiles
@@ -79,7 +77,6 @@ bin/mac
 *.dll
 
 # Build tool artifacts
-Makefile
 *.ninja
 .ninja_log
 build.ninja

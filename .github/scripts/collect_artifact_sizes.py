@@ -14,13 +14,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha
+from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha, parse_csv_list
 from common.github_runs import select_latest_runs_by_name
-
-
-def parse_csv_list(value: str) -> list[str]:
-    """Parse comma-separated values into a trimmed non-empty list."""
-    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 _DISTRIBUTABLE_PREFIXES = (

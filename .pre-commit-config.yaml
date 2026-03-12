@@ -67,7 +67,7 @@ repos:
     rev: v1.1.407
     hooks:
       - id: pyright
-        files: ^(tools|test)/.*\.py$
+        files: ^(tools|test|\.github/scripts)/.*\.py$
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -107,7 +107,6 @@ repos:
     rev: v1.37.1
     hooks:
       - id: yamllint
-        args: ['-d', '{extends: default, rules: {line-length: {max: 200}, document-start: disable, truthy: {check-keys: false}, comments: {min-spaces-from-content: 1}}}']
 
   # Markdown linting (report-only, doesn't auto-fix)
   - repo: https://github.com/igorshubovych/markdownlint-cli

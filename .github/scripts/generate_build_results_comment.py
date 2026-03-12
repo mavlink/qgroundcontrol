@@ -10,12 +10,16 @@ import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Mapping
+from typing import Any, Mapping
 from urllib.parse import quote, urlsplit, urlunsplit
+
+import jinja2
 
 from xml_utils import XMLParseError, xml_parse as _xml_parse
 
 logger = logging.getLogger(__name__)
+
+_TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
 def _env(env: Mapping[str, str], key: str, default: str = "") -> str:
@@ -104,75 +108,6 @@ def _failed_test_lines(content: str, limit: int = 20) -> list[str]:
     return lines
 
 
-def _render_test_results(base_dir: Path, env: Mapping[str, str]) -> list[str]:
-    pattern = _env(env, "TEST_RESULTS_GLOB", "artifacts/test-results-*/test-output.txt")
-    files = sorted(base_dir.glob(pattern))
-    if not files:
-        return []
-
-    lines = ["### Test Results", ""]
-    total_passed = 0
-    total_failed = 0
-    total_skipped = 0
-    has_failures = False
-
-    for file in files:
-        arch = file.parent.name.removeprefix("test-results-")
-        content = file.read_text(encoding="utf-8", errors="ignore")
-        passed, failed, skipped = _count_test_results(content)
-
-        total_passed += passed
-        total_failed += failed
-        total_skipped += skipped
-
-        if failed > 0:
-            has_failures = True
-            lines.append(f"**{arch}**: {passed} passed, {failed} failed, {skipped} skipped")
-            lines.append("")
-            lines.append("<details><summary>Failed tests</summary>")
-            lines.append("")
-            lines.append("```")
-            lines.extend(_failed_test_lines(content))
-            lines.append("```")
-            lines.append("</details>")
-        else:
-            lines.append(f"**{arch}**: {passed} passed, {skipped} skipped")
-        lines.append("")
-
-    if has_failures:
-        lines.append(f"**Total: {total_passed} passed, {total_failed} failed, {total_skipped} skipped**")
-    else:
-        lines.append(f"**Total: {total_passed} passed, {total_skipped} skipped**")
-    lines.append("")
-    return lines
-
-
-def _render_coverage(base_dir: Path, env: Mapping[str, str]) -> list[str]:
-    coverage_path = base_dir / _env(env, "COVERAGE_XML", "artifacts/coverage-report/coverage.xml")
-    if not coverage_path.exists():
-        return []
-
-    lines = ["### Code Coverage", ""]
-    current = _parse_coverage_percent(coverage_path)
-    baseline_path = base_dir / _env(env, "BASELINE_COVERAGE_XML", "baseline-coverage.xml")
-    baseline = _parse_coverage_percent(baseline_path)
-
-    coverage_text = f"{current:.1f}%" if current is not None else "N/A"
-
-    if baseline is not None and current is not None:
-        diff = current - baseline
-        lines.append("| Coverage | Baseline | Change |")
-        lines.append("|----------|----------|--------|")
-        lines.append(f"| {coverage_text} | {baseline:.1f}% | {diff:+.1f}% |")
-    else:
-        lines.append(f"Coverage: **{coverage_text}**")
-        lines.append("")
-        lines.append("*No baseline available for comparison*")
-
-    lines.append("")
-    return lines
-
-
 def _format_delta_mb(delta_bytes: int) -> str:
     delta_mb = delta_bytes / 1024.0 / 1024.0
     if delta_bytes > 0:
@@ -189,16 +124,64 @@ def _format_size_human(size_bytes: int) -> str:
     return f"{size_mb:.2f} MB"
 
 
-def _render_artifact_sizes(base_dir: Path, env: Mapping[str, str]) -> list[str]:
+def _collect_test_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, Any] | None:
+    pattern = _env(env, "TEST_RESULTS_GLOB", "artifacts/test-results-*/test-output.txt")
+    files = sorted(base_dir.glob(pattern))
+    if not files:
+        return None
+
+    platforms: list[dict[str, Any]] = []
+    total_passed = total_failed = total_skipped = 0
+    has_failures = False
+
+    for file in files:
+        arch = file.parent.name.removeprefix("test-results-")
+        content = file.read_text(encoding="utf-8", errors="ignore")
+        passed, failed, skipped = _count_test_results(content)
+        total_passed += passed
+        total_failed += failed
+        total_skipped += skipped
+
+        entry: dict[str, Any] = {"arch": arch, "passed": passed, "failed": failed, "skipped": skipped}
+        if failed > 0:
+            has_failures = True
+            entry["failed_lines"] = _failed_test_lines(content)
+        platforms.append(entry)
+
+    return {
+        "platforms": platforms,
+        "total_passed": total_passed,
+        "total_failed": total_failed,
+        "total_skipped": total_skipped,
+        "has_failures": has_failures,
+    }
+
+
+def _collect_coverage_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, Any] | None:
+    coverage_path = base_dir / _env(env, "COVERAGE_XML", "artifacts/coverage-report/coverage.xml")
+    if not coverage_path.exists():
+        return None
+
+    current = _parse_coverage_percent(coverage_path)
+    baseline_path = base_dir / _env(env, "BASELINE_COVERAGE_XML", "baseline-coverage.xml")
+    baseline = _parse_coverage_percent(baseline_path)
+
+    result: dict[str, Any] = {"current": current, "baseline": baseline}
+    if baseline is not None and current is not None:
+        result["diff"] = current - baseline
+    return result
+
+
+def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, Any] | None:
     pr_sizes_path = base_dir / _env(env, "PR_SIZES_JSON", "pr-sizes.json")
     if not pr_sizes_path.exists():
-        return []
+        return None
 
     try:
         pr_data = json.loads(pr_sizes_path.read_text(encoding="utf-8"))
     except Exception:
         logger.debug("Failed to parse PR sizes from %s", pr_sizes_path, exc_info=True)
-        return []
+        return None
 
     baseline_path = base_dir / _env(env, "BASELINE_SIZES_JSON", "baseline-sizes.json")
     baseline: dict[str, int] = {}
@@ -219,19 +202,12 @@ def _render_artifact_sizes(base_dir: Path, env: Mapping[str, str]) -> list[str]:
             logger.debug("Failed to parse baseline sizes from %s", baseline_path, exc_info=True)
             baseline = {}
 
-    lines = ["### Artifact Sizes", ""]
-    if baseline:
-        lines.append("| Artifact | Size | Δ from master |")
-        lines.append("|----------|------|---------------|")
-    else:
-        lines.append("| Artifact | Size |")
-        lines.append("|----------|------|")
-
-    total_delta = 0
     artifacts = pr_data.get("artifacts", [])
     if not isinstance(artifacts, list):
-        return []
+        return None
 
+    items: list[dict[str, Any]] = []
+    total_delta = 0
     for artifact in artifacts:
         if not isinstance(artifact, dict):
             continue
@@ -244,21 +220,20 @@ def _render_artifact_sizes(base_dir: Path, env: Mapping[str, str]) -> list[str]:
             continue
         size_human = str(artifact.get("size_human", "")).strip() or _format_size_human(new_size)
 
+        entry: dict[str, Any] = {"name": name, "size_human": size_human}
         if baseline and name in baseline:
-            old_size = baseline[name]
-            delta = new_size - old_size
+            delta = new_size - baseline[name]
             total_delta += delta
-            lines.append(f"| {name} | {size_human} | {_format_delta_mb(delta)} |")
-        else:
-            lines.append(f"| {name} | {size_human} |")
+            entry["delta"] = delta
+            entry["delta_human"] = _format_delta_mb(delta)
+        items.append(entry)
 
-    lines.append("")
-    if baseline and total_delta != 0:
-        direction = "increased" if total_delta > 0 else "decreased"
-        lines.append(f"**Total size {direction} by {abs(total_delta) / 1024.0 / 1024.0:.2f} MB**")
-    elif not baseline:
-        lines.append("*No baseline available for comparison*")
-    return lines
+    return {
+        "entries": items,
+        "has_baseline": bool(baseline),
+        "total_delta": total_delta,
+        "total_delta_mb": abs(total_delta) / 1024.0 / 1024.0,
+    }
 
 
 def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime | None = None) -> str:
@@ -280,50 +255,41 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     if parsed_note:
         precommit_note = parsed_note
 
-    lines: list[str] = [
-        "## Build Results",
-        "",
-        "### Platform Status",
-        "",
-    ]
-
-    if table:
-        lines.extend(table.strip().splitlines())
-    else:
-        lines.extend(["| Platform | Status | Details |", "|----------|--------|--------|"])
-
-    lines.extend(
-        [
-            "",
-            f"**{summary}**",
-            "",
-            "### Pre-commit",
-            "",
-            "| Check | Status | Details |",
-            "|-------|--------|---------|",
-            f"| pre-commit | {precommit_status} | {precommit_details} |",
-            "",
-        ]
-    )
-
-    if precommit_note:
-        lines.append(precommit_note)
-        lines.append("")
-
-    lines.extend(_render_test_results(base_dir, env))
-    lines.extend(_render_coverage(base_dir, env))
-    lines.extend(_render_artifact_sizes(base_dir, env))
-
     now = now_utc or datetime.now(UTC)
-    lines.extend(
-        [
-            "",
-            "---",
-            f"<sub>Updated: {now.strftime('%Y-%m-%d %H:%M:%S UTC')} • Triggered by: {triggered_by}</sub>",
-        ]
+
+    jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(_TEMPLATE_DIR),
+        keep_trailing_newline=True,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    template = jinja_env.get_template("build_results.md.j2")
+
+    rendered = template.render(
+        table=table,
+        summary=summary,
+        precommit={"status": precommit_status, "details": precommit_details, "note": precommit_note},
+        tests=_collect_test_data(base_dir, env),
+        coverage=_collect_coverage_data(base_dir, env),
+        artifacts=_collect_artifact_data(base_dir, env),
+        timestamp=now.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        triggered_by=triggered_by,
     )
 
-    return "\n".join(lines).rstrip() + "\n"
+    # Normalize: collapse 3+ blank lines to 2, strip trailing whitespace per line
+    lines = [line.rstrip() for line in rendered.splitlines()]
+    result: list[str] = []
+    blank_count = 0
+    for line in lines:
+        if not line:
+            blank_count += 1
+            if blank_count <= 2:
+                result.append(line)
+        else:
+            blank_count = 0
+            result.append(line)
+
+    return "\n".join(result).rstrip() + "\n"
 
 
 def parse_args() -> argparse.Namespace:

@@ -30,6 +30,7 @@ DEFAULT_EXPORT_KEYS = [
     "cmake_minimum_version",
     "macos_deployment_target",
     "ios_deployment_target",
+    "platform_workflows",
 ]
 IOS_QT_MODULE_EXCLUDES = {"qtserialport", "qtscxml"}
 

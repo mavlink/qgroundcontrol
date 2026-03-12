@@ -92,7 +92,7 @@ check: lint test
 
 # Launch QGroundControl
 run:
-    ./{{build_dir}}/staging/QGroundControl
+    ./{{build_dir}}/{{build_type}}/QGroundControl
 
 # Build documentation
 docs:

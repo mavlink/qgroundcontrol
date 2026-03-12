@@ -40,7 +40,7 @@ help:
 	@echo "  Qt version: $(QT_VERSION)"
 
 # Configuration - reads from centralized config
-QT_VERSION := $(shell ./tools/setup/read-config.sh qt_version 2>/dev/null || echo "6.10.1")
+QT_VERSION := $(shell python3 ./tools/setup/read_config.py --get qt_version 2>/dev/null || echo "6.10.1")
 QT_DIR ?= $(HOME)/Qt/$(QT_VERSION)/gcc_64
 BUILD_TYPE ?= Debug
 BUILD_DIR := build
@@ -51,7 +51,7 @@ submodules:
 
 deps:
 	@echo "Installing dependencies (requires sudo)..."
-	sudo ./tools/setup/install-dependencies-debian.sh
+	python3 ./tools/setup/install_dependencies.py --platform debian
 
 # Build targets
 configure: submodules
@@ -81,22 +81,22 @@ lint:
 	pre-commit run --all-files
 
 format:
-	./tools/analyze.sh --tool clang-format
+	python3 ./tools/analyze.py --tool clang-format
 
 format-fix:
-	./tools/analyze.sh --tool clang-format --fix
+	python3 ./tools/analyze.py --tool clang-format --fix
 
 analyze:
-	./tools/analyze.sh
+	python3 ./tools/analyze.py
 
 coverage:
-	./tools/coverage.sh
+	python3 ./tools/coverage.py
 
 check: lint test
 
 # Other targets
 run:
-	./$(BUILD_DIR)/staging/QGroundControl
+	./$(BUILD_DIR)/$(BUILD_TYPE)/QGroundControl
 
 docs:
 	npm run docs:build

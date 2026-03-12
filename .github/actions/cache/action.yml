@@ -14,12 +14,28 @@ inputs:
     description: Path to CPM Modules
     required: false
   save-cache:
-    description: Save cache (set to false for PR builds to save storage)
+    description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
-    default: 'true'
+    default: 'auto'
 runs:
   using: composite
   steps:
+    - name: Resolve save-cache
+      id: cache-policy
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        THIS_REPO: ${{ github.repository }}
+      run: |
+        save="$(python3 -c "
+        import os, sys
+        sys.path.insert(0, os.path.join(os.environ['GITHUB_WORKSPACE'], 'tools'))
+        from common.gh_actions import resolve_cache_policy
+        print(resolve_cache_policy('${{ inputs.save-cache }}'))
+        ")"
+        echo "save=${save}" >> "$GITHUB_OUTPUT"
+
     - name: Determine cache scope
       id: cache-scope
       shell: bash
@@ -117,7 +133,7 @@ runs:
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
 
     - name: Restore Build Cache (ccache, save)
-      if: inputs.save-cache == 'true'
+      if: steps.cache-policy.outputs.save == 'true'
       uses: actions/cache@v5
       with:
         path: ${{ github.workspace }}/.ccache
@@ -128,7 +144,7 @@ runs:
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-
 
     - name: Restore Build Cache (ccache, read-only)
-      if: inputs.save-cache != 'true'
+      if: steps.cache-policy.outputs.save != 'true'
       uses: actions/cache/restore@v5
       with:
         path: ${{ github.workspace }}/.ccache
@@ -143,7 +159,7 @@ runs:
       run: ccache -z
 
     - name: Cache CPM Modules (restore and save)
-      if: inputs.cpm-modules != '' && inputs.save-cache == 'true'
+      if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true'
       uses: actions/cache@v5
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
@@ -154,7 +170,7 @@ runs:
           cpm-modules-
 
     - name: Cache CPM Modules (restore only)
-      if: inputs.cpm-modules != '' && inputs.save-cache != 'true'
+      if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save != 'true'
       uses: actions/cache/restore@v5
       with:
         path: ${{ steps.cpm-cache.outputs.path }}

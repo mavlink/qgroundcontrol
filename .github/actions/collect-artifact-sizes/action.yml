@@ -43,14 +43,21 @@ runs:
         RUNS_FILE: ${{ inputs.runs-file }}
         ARTIFACTS_FILE: ${{ inputs.artifacts-file }}
       run: |
-        ARGS=(--repo "${REPO}" --head-sha "${HEAD_SHA}" --platform-workflows "${WORKFLOWS}" --output-file "${OUTPUT_FILE}")
-        if [[ -n "${EVENT}" ]]; then
-          ARGS+=(--event "${EVENT}")
-        fi
-        if [[ -n "${RUNS_FILE}" && -f "${RUNS_FILE}" ]]; then
-          ARGS+=(--runs-file "${RUNS_FILE}")
-        fi
-        if [[ -n "${ARTIFACTS_FILE}" && -f "${ARTIFACTS_FILE}" ]]; then
-          ARGS+=(--artifacts-file "${ARTIFACTS_FILE}")
-        fi
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/collect_artifact_sizes.py" "${ARGS[@]}"
+        python3 -c "
+        import os, subprocess, sys
+        args = ['${GITHUB_WORKSPACE}/.github/scripts/collect_artifact_sizes.py',
+                '--repo', os.environ['REPO'],
+                '--head-sha', os.environ['HEAD_SHA'],
+                '--platform-workflows', os.environ['WORKFLOWS'],
+                '--output-file', os.environ['OUTPUT_FILE']]
+        event = os.environ.get('EVENT', '')
+        if event:
+            args += ['--event', event]
+        runs = os.environ.get('RUNS_FILE', '')
+        if runs and os.path.isfile(runs):
+            args += ['--runs-file', runs]
+        artifacts = os.environ.get('ARTIFACTS_FILE', '')
+        if artifacts and os.path.isfile(artifacts):
+            args += ['--artifacts-file', artifacts]
+        sys.exit(subprocess.run([sys.executable] + args).returncode)
+        "

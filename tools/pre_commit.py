@@ -15,6 +15,7 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.gh_actions import write_github_output as _write_github_output, write_step_summary as _write_step_summary
 from common.logging import log_error, log_info, log_ok, log_warn
 
 HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
@@ -91,41 +92,31 @@ def run_command(cmd: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 def write_github_output(exit_code: int, passed: int, failed: int, skipped: int, summary_lines: list[str]) -> None:
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if not github_output:
-        return
-    delimiter = f"PRECOMMIT_SUMMARY_{os.getpid()}"
-    with open(github_output, "a", encoding="utf-8") as handle:
-        handle.write(f"exit_code={exit_code}\n")
-        handle.write(f"passed={passed}\n")
-        handle.write(f"failed={failed}\n")
-        handle.write(f"skipped={skipped}\n")
-        handle.write(f"summary<<{delimiter}\n")
-        handle.write("\n".join(summary_lines) + "\n")
-        handle.write(f"{delimiter}\n")
+    _write_github_output({
+        "exit_code": str(exit_code),
+        "passed": str(passed),
+        "failed": str(failed),
+        "skipped": str(skipped),
+        "summary": "\n".join(summary_lines),
+    })
 
 
 def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, output: str) -> None:
-    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not step_summary:
-        return
-    with open(step_summary, "a", encoding="utf-8") as handle:
-        handle.write("## Pre-commit Results\n\n")
-        handle.write("**All checks passed**\n\n" if exit_code == 0 else "**Some checks failed**\n\n")
-        handle.write("| Status | Count |\n|--------|-------|\n")
-        handle.write(f"| Passed | {passed} |\n")
-        handle.write(f"| Failed | {failed} |\n")
-        if skipped > 0:
-            handle.write(f"| Skipped | {skipped} |\n")
-        handle.write("\n<details>\n<summary>Hook Results</summary>\n\n```\n")
-        handle.write("\n".join(extract_hook_lines(output)) + "\n")
-        handle.write("```\n</details>\n")
+    parts = ["## Pre-commit Results\n"]
+    parts.append("**All checks passed**\n" if exit_code == 0 else "**Some checks failed**\n")
+    parts.append("| Status | Count |\n|--------|-------|")
+    parts.append(f"| Passed | {passed} |")
+    parts.append(f"| Failed | {failed} |")
+    if skipped > 0:
+        parts.append(f"| Skipped | {skipped} |")
+    hook_lines = "\n".join(extract_hook_lines(output))
+    parts.append(f"\n<details>\n<summary>Hook Results</summary>\n\n```\n{hook_lines}\n```\n</details>")
 
-        diff = subprocess.run(["git", "diff", "--stat"], capture_output=True, text=True, check=False)
-        if diff.stdout.strip():
-            handle.write("\n<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n")
-            handle.write(diff.stdout)
-            handle.write("```\n</details>\n")
+    diff = subprocess.run(["git", "diff", "--stat"], capture_output=True, text=True, check=False)
+    if diff.stdout.strip():
+        parts.append(f"\n<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n{diff.stdout}```\n</details>")
+
+    _write_step_summary("\n".join(parts) + "\n")
 
 
 def handle_install() -> int:

@@ -23,58 +23,9 @@ runs:
   steps:
     - name: Verify executable
       shell: bash
-      env:
-        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
-        INPUT_WORKING_DIR: ${{ inputs.working-dir }}
-        INPUT_TYPE: ${{ inputs.type }}
-        INPUT_TIMEOUT: ${{ inputs.timeout }}
       run: |
-        set -euo pipefail
-
-        binary_path="${INPUT_BINARY_PATH}"
-
-        if [[ -n "${INPUT_WORKING_DIR}" ]]; then
-          work_dir="${INPUT_WORKING_DIR}"
-        else
-          work_dir="$(dirname "${binary_path}")"
-        fi
-
-        binary_name="$(basename "${binary_path}")"
-        run_binary="${binary_name}"
-        run_headless="true"
-
-        # AppImages typically don't ship the "offscreen" Qt platform plugin.
-        # Let run_tests.py use xvfb-run (Linux, no DISPLAY) instead.
-        if [[ "${INPUT_TYPE}" == "appimage" || "${binary_name}" == *.AppImage ]]; then
-          run_headless="false"
-        fi
-
-        if [[ ! -d "${work_dir}" ]]; then
-          echo "::error::Working directory not found: ${work_dir}"
-          exit 1
-        fi
-
-        pushd "${work_dir}" >/dev/null
-
-        if [[ "${RUNNER_OS}" != "Windows" ]]; then
-          chmod +x "${binary_name}" 2>/dev/null || true
-          run_binary="${PWD}/${binary_name}"
-        fi
-
-        set +e
-        args=(
-          --binary "${run_binary}"
-          --timeout "${INPUT_TIMEOUT}"
-          --verify-only
-          -v
-        )
-        if [[ "${run_headless}" == "true" ]]; then
-          args+=(--headless)
-        fi
-        python3 "${GITHUB_WORKSPACE}/tools/run_tests.py" "${args[@]}"
-        exit_code=$?
-        set -e
-
-        popd >/dev/null
-
-        exit "${exit_code}"
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_executable.py" \
+          --binary-path "${{ inputs.binary-path }}" \
+          --type "${{ inputs.type }}" \
+          --working-dir "${{ inputs.working-dir }}" \
+          --timeout "${{ inputs.timeout }}"

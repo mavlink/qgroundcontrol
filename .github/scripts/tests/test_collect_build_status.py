@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 import collect_build_status as mod
+from common.gh_actions import write_github_output
 
 
 def _run(
@@ -84,7 +85,7 @@ def test_write_output_uses_collision_resistant_delimiter(tmp_path: Path, monkeyp
     monkeypatch.setenv("GITHUB_OUTPUT", str(out_path))
 
     value = "line1\nEOF_table_deadbeef\ntail"
-    mod.write_output("table", value)
+    write_github_output({"table": value})
 
     text = out_path.read_text(encoding="utf-8")
     assert "table<<EOF_table_" in text
