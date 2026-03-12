@@ -164,7 +164,7 @@ Item {
                 text:       qsTr("Show modified only")
                 checked:    controller.showModifiedOnly
                 onClicked:  controller.showModifiedOnly = checked
-                visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+                visible:    _activeVehicle && _activeVehicle.px4Firmware
             }
 
             QGCCheckBox {
