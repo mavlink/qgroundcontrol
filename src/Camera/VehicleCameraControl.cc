@@ -97,7 +97,7 @@ static bool read_value(QDomNode& element, const char* tagName, QString& target)
 }
 
 VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
-    : MavlinkCameraControl(vehicle, parent)
+    : MavlinkCameraControlInterface(vehicle, parent)
     , _compID(compID)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
@@ -230,7 +230,7 @@ bool VehicleCameraControl::capturesPhotos() const
     return _mavlinkCameraInfo.flags & (CAMERA_CAP_FLAGS_CAPTURE_IMAGE | CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM);
 }
 
-MavlinkCameraControl::CaptureVideoState VehicleCameraControl::captureVideoState() const
+MavlinkCameraControlInterface::CaptureVideoState VehicleCameraControl::captureVideoState() const
 {
     if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING || VideoManager::instance()->recording()) {
         return CaptureVideoStateCapturing;
@@ -246,7 +246,7 @@ MavlinkCameraControl::CaptureVideoState VehicleCameraControl::captureVideoState(
     return CaptureVideoStateDisabled;
 }
 
-MavlinkCameraControl::CapturePhotosState VehicleCameraControl::capturePhotosState() const
+MavlinkCameraControlInterface::CapturePhotosState VehicleCameraControl::capturePhotosState() const
 {
     if (_photoCaptureStatus() == PHOTO_CAPTURE_IN_PROGRESS) {
         return CapturePhotosStateCapturingSinglePhoto;

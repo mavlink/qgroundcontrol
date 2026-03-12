@@ -1,22 +1,22 @@
-#include "MavlinkCameraControl.h"
+#include "MavlinkCameraControlInterface.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControl")
-QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "Camera.MavlinkCameraControl:verbose")
+QGC_LOGGING_CATEGORY(CameraControlLog, "Camera.MavlinkCameraControlInterface")
+QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "Camera.MavlinkCameraControlInterface:verbose")
 
-MavlinkCameraControl::MavlinkCameraControl(Vehicle *vehicle, QObject *parent)
+MavlinkCameraControlInterface::MavlinkCameraControlInterface(Vehicle *vehicle, QObject *parent)
     : FactGroup(0, parent, true /* ignore camel case */)
     , _vehicle(vehicle)
 {
     qCDebug(CameraControlLog) << this;
 }
 
-MavlinkCameraControl::~MavlinkCameraControl()
+MavlinkCameraControlInterface::~MavlinkCameraControlInterface()
 {
     qCDebug(CameraControlLog) << this;
 }
 
-QString MavlinkCameraControl::captureImageStatusToStr(uint8_t image_status)
+QString MavlinkCameraControlInterface::captureImageStatusToStr(uint8_t image_status)
 {
     switch (image_status) {
         case PHOTO_CAPTURE_IDLE:
@@ -32,7 +32,7 @@ QString MavlinkCameraControl::captureImageStatusToStr(uint8_t image_status)
     }
 }
 
-QString MavlinkCameraControl::captureVideoStatusToStr(uint8_t video_status)
+QString MavlinkCameraControlInterface::captureVideoStatusToStr(uint8_t video_status)
 {
     switch (video_status) {
         case VIDEO_CAPTURE_STATUS_STOPPED:
@@ -44,7 +44,7 @@ QString MavlinkCameraControl::captureVideoStatusToStr(uint8_t video_status)
     }
 }
 
-QString MavlinkCameraControl::storageStatusToStr(uint8_t status)
+QString MavlinkCameraControlInterface::storageStatusToStr(uint8_t status)
 {
     switch (status) {
         case STORAGE_STATUS_EMPTY:
@@ -60,7 +60,7 @@ QString MavlinkCameraControl::storageStatusToStr(uint8_t status)
     }
 }
 
-QString MavlinkCameraControl::cameraModeToStr(CameraMode mode)
+QString MavlinkCameraControlInterface::cameraModeToStr(CameraMode mode)
 {
     switch (mode) {
         case CAM_MODE_UNDEFINED:

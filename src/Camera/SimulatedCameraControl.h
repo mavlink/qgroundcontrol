@@ -3,7 +3,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
 
-#include "MavlinkCameraControl.h"
+#include "MavlinkCameraControlInterface.h"
 
 class QGCVideoStreamInfo;
 class Vehicle;
@@ -12,7 +12,7 @@ class Vehicle;
 ///     Video record if a manual stream is available
 ///     Photo capture using DO_DIGICAM_CONTROL if the setting is enabled
 ///     It does not support time lapse capture
-class SimulatedCameraControl : public MavlinkCameraControl
+class SimulatedCameraControl : public MavlinkCameraControlInterface
 {
     Q_OBJECT
 

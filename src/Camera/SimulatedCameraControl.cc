@@ -9,7 +9,7 @@
 QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
 
 SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent)
-    : MavlinkCameraControl(vehicle, parent)
+    : MavlinkCameraControlInterface(vehicle, parent)
 {
     qCDebug(SimulatedCameraControlLog) << this;
 
@@ -216,7 +216,7 @@ bool SimulatedCameraControl::hasVideoStream() const
     return VideoManager::instance()->decoding();
 }
 
-MavlinkCameraControl::CaptureVideoState SimulatedCameraControl::captureVideoState() const
+MavlinkCameraControlInterface::CaptureVideoState SimulatedCameraControl::captureVideoState() const
 {
     if (!capturesVideo()) {
         return CaptureVideoStateDisabled;
@@ -230,7 +230,7 @@ MavlinkCameraControl::CaptureVideoState SimulatedCameraControl::captureVideoStat
     return CaptureVideoStateIdle;
 }
 
-MavlinkCameraControl::CapturePhotosState SimulatedCameraControl::capturePhotosState() const
+MavlinkCameraControlInterface::CapturePhotosState SimulatedCameraControl::capturePhotosState() const
 {
     if (_photoCaptureStatus() == PHOTO_CAPTURE_IN_PROGRESS) {
         return CapturePhotosStateCapturingSinglePhoto;
@@ -241,7 +241,7 @@ MavlinkCameraControl::CapturePhotosState SimulatedCameraControl::capturePhotosSt
     return capturesPhotos() ? CapturePhotosStateIdle : CapturePhotosStateDisabled;
 }
 
-void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControl::PhotoCaptureMode photoCaptureMode)
+void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControlInterface::PhotoCaptureMode photoCaptureMode)
 {
     if (photoCaptureMode == PHOTO_CAPTURE_TIMELAPSE) {
         qCWarning(CameraControlLog) << "Time lapse capture not supported by simulated camera";
