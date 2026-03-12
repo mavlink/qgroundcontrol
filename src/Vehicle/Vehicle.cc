@@ -311,6 +311,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     _terrainFactGroup               = new TerrainFactGroup(this);
     _batteryFactGroupListModel      = new BatteryFactGroupListModel(this);
     _escStatusFactGroupListModel    = new EscStatusFactGroupListModel(this);
+    _am32EepromFactGroupListModel   = new AM32EepromFactGroupListModel(this);
 
     if (!_offlineEditingVehicle) {
         _terrainProtocolHandler = new TerrainProtocolHandler(this, _terrainFactGroup, this);
