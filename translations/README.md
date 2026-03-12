@@ -9,7 +9,7 @@ Crowdin is configured to automatically sychronize the qgc.ts file once a day. So
 Add the new language from the CrowdIn settings as the first step.
 
 ### Periodically update the base transation files during the release cycle
-You do this by running the `source qgc-lupdate.sh` script to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
+You do this by running the `source qgc-lupdate.sh` script to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available. The script includes both `src` and `custom` directories, so custom module strings (QML and JSON) are also extracted and follow the application language.
 
 ## C++ and Qml code strings
 These are coded using the standard Qt tr() for C++ and qsTr() for Qml mechanisms.

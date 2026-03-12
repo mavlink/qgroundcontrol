@@ -168,7 +168,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,Mavlink Generic</source>
-      <translation type="unfinished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
+      <translation type="finished">ArduPilot,PX4 Pro,Mavlink Generic</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].shortDesc, </extracomment>
@@ -563,7 +563,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/FirmwareUpgrade.SettingsGroup.json"/>
       <source>ChibiOS,NuttX</source>
-      <translation type="unfinished">ChibiOS,NuttX</translation>
+      <translation type="finished">ChibiOS,NuttX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[apmVehicleType].enumStrings, </extracomment>
@@ -1164,7 +1164,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/Video.SettingsGroup.json"/>
       <source>mkv,mov,mp4</source>
-      <translation type="unfinished">mkv,mov,mp4</translation>
+      <translation type="finished">mkv,mov,mp4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxVideoSize].shortDesc, </extracomment>
@@ -1295,7 +1295,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>CAA</source>
-      <translation type="unfinished">CAA</translation>
+      <translation type="finished">CAA</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].shortDesc, </extracomment>
@@ -1431,7 +1431,7 @@
       <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
       <location filename="../src/Settings/RemoteID.SettingsGroup.json"/>
       <source>FAA,EU</source>
-      <translation type="unfinished">FAA,EU</translation>
+      <translation type="finished">FAA,EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].shortDesc, </extracomment>
@@ -1985,13 +1985,13 @@
       <extracomment>.QGC.MetaData.Facts[hdop].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
       <source>HDOP</source>
-      <translation type="unfinished">HDOP</translation>
+      <translation type="finished">HDOP</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vdop].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/GPSFact.json"/>
       <source>VDOP</source>
-      <translation type="unfinished">VDOP</translation>
+      <translation type="finished">VDOP</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[courseOverGround].shortDesc, </extracomment>
@@ -2492,37 +2492,37 @@
       <extracomment>.QGC.MetaData.Facts[x].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>X</source>
-      <translation type="unfinished">X</translation>
+      <translation type="finished">X</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[y].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>Y</source>
-      <translation type="unfinished">Y</translation>
+      <translation type="finished">Y</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[z].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>Z</source>
-      <translation type="unfinished">Z</translation>
+      <translation type="finished">Z</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vx].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>VX</source>
-      <translation type="unfinished">VX</translation>
+      <translation type="finished">VX</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vy].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>Vy</source>
-      <translation type="unfinished">Vy</translation>
+      <translation type="finished">Vy</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vz].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>Vz</source>
-      <translation type="unfinished">Vz</translation>
+      <translation type="finished">Vz</translation>
     </message>
   </context>
   <context>
@@ -2543,7 +2543,7 @@
       <extracomment>.QGC.MetaData.Facts[hygrometerid].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/HygrometerFact.json"/>
       <source>ID</source>
-      <translation type="unfinished">ID</translation>
+      <translation type="finished">ID</translation>
     </message>
   </context>
   <context>
@@ -2552,25 +2552,25 @@
       <extracomment>.QGC.MetaData.Facts[rpm1].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
       <source>RPM 1</source>
-      <translation type="unfinished">RPM 1</translation>
+      <translation type="finished">RPM 1</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rpm2].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
       <source>RPM 2</source>
-      <translation type="unfinished">RPM 2</translation>
+      <translation type="finished">RPM 2</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rpm3].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
       <source>RPM 3</source>
-      <translation type="unfinished">RPM 3</translation>
+      <translation type="finished">RPM 3</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rpm4].shortDesc, </extracomment>
       <location filename="../src/Vehicle/FactGroups/RPMFact.json"/>
       <source>RPM 4</source>
-      <translation type="unfinished">RPM 4</translation>
+      <translation type="finished">RPM 4</translation>
     </message>
   </context>
   <context>
@@ -4248,7 +4248,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param4.label, </extracomment>
       <location filename="../src/MissionManager/MavCmdInfoCommon.json"/>
       <source>ISO</source>
-      <translation type="unfinished">ISO</translation>
+      <translation type="finished">ISO</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_DIGICAM_CONFIGURE].param5.label, </extracomment>
@@ -5021,4 +5021,81 @@
       <translation type="finished">Включить,Отключить</translation>
     </message>
   </context>
+  <context>
+    <name>Custom-MavCmdInfoCommon.json</name>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_SPRAYER].description, </extracomment>
+        <location filename="../custom\src\json\Custom-MavCmdInfoCommon.json"/>
+        <source>Toggle sprayer</source>
+        <translation type="finished">Переключить опрыскиватель</translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_SPRAYER].category, </extracomment>
+        <location filename="../custom\src\json\Custom-MavCmdInfoCommon.json"/>
+        <source>Agriculture</source>
+        <translation type="finished">Сельское хозяйство</translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_SPRAYER].param1.label, </extracomment>
+        <location filename="../custom\src\json\Custom-MavCmdInfoCommon.json"/>
+        <source>Sprayer Enable</source>
+        <translation type="finished">Включить опрыскиватель</translation>
+    </message>
+    <message>
+        <extracomment>.mavCmdInfo[MAV_CMD_DO_SPRAYER].param1.enumStrings, </extracomment>
+        <translatorcomment>Only use english comma &apos;,&apos; to separate strings</translatorcomment>
+        <location filename="../custom\src\json\Custom-MavCmdInfoCommon.json"/>
+        <source>Enable Sprayer,Disable Sprayer</source>
+        <translation type="finished">Включить опрыскиватель, Отключить опрыскиватель</translation>
+    </message>
+  </context>
+  <context>
+    <name>Spray.SettingsGroup.json</name>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[Speed].shortDesc, </extracomment>
+        <location filename="../custom\src\SprayPattern\Spray.SettingsGroup.json"/>
+        <source>Flight speed during spraying.</source>
+        <translation type="finished">Скорость полета во время опрыскивания.</translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[Altitude].shortDesc, </extracomment>
+        <location filename="../custom\src\SprayPattern\Spray.SettingsGroup.json"/>
+        <source>Flight altitude during spraying.</source>
+        <translation type="finished">Высота полета во время опрыскивания.</translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[SprayWidth].shortDesc, </extracomment>
+        <location filename="../custom\src\SprayPattern\Spray.SettingsGroup.json"/>
+        <source>Width of the spray pattern.</source>
+        <translation type="finished">Ширина полосы опрыскивания.</translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[GridAngle].shortDesc, </extracomment>
+        <location filename="../custom\src\SprayPattern\Spray.SettingsGroup.json"/>
+        <source>Angle for parallel transect lines (deg).</source>
+        <translation type="finished">Угол для параллельных линий трансект (град).</translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[TurnAroundDistance].shortDesc, </extracomment>
+        <location filename="../custom\src\SprayPattern\Spray.SettingsGroup.json"/>
+        <source>Additional distance outside the field for vehicle turn around (m).</source>
+        <translation type="finished">Дополнительное расстояние за пределами поля для разворота аппарата (м).</translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[ObstacleBuffer].shortDesc, </extracomment>
+        <location filename="../custom\src\SprayPattern\Spray.SettingsGroup.json"/>
+        <source>Distance to keep from obstacles - no-fly margin around obstacles (m).</source>
+        <translation type="finished">Дистанция удержания от препятствий - безопасная зона вокруг препятствий (м)</translation>
+    </message>
+  </context>
 </TS>
+
+
+
+
+
+
+
+
+
+

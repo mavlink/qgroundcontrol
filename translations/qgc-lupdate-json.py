@@ -135,6 +135,7 @@ def writeJsonTSFile(multiFileLocArray):
 def main():
     multiFileLocArray = []
     walkDirectoryTreeForJsonFiles("../src", multiFileLocArray)
+    walkDirectoryTreeForJsonFiles("../custom", multiFileLocArray)
     writeJsonTSFile(multiFileLocArray)
 
 if __name__ == '__main__':
