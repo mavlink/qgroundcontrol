@@ -207,7 +207,6 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
             _currentSource->setUpdateInterval(_updateInterval);
         #endif
 
-
         (void) connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this, &QGCPositionManager::_positionUpdated);
         (void) connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this, &QGCPositionManager::_positionError);
 

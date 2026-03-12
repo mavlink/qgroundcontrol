@@ -258,13 +258,16 @@ void RemoteIDManager::_sendOperatorID()
 
 void RemoteIDManager::_updateGcsGpsStatus(bool gpsGood, const QString& error)
 {
+    if (!error.isEmpty() && _gcsGPSError != error) {
+        _gcsGPSError = error;
+        qCWarning(RemoteIDManagerLog) << "GCS GPS error:" << error;
+    }
     if (_gcsGPSGood != gpsGood) {
         _gcsGPSGood = gpsGood;
-        emit gcsGPSGoodChanged();
-        if (!error.isEmpty() && _gcsGPSError != error) {
-            _gcsGPSError = error;
-            qCWarning(RemoteIDManagerLog) << "GCS GPS error:" << error;
+        if (gpsGood) {
+            _gcsGPSError.clear();
         }
+        emit gcsGPSGoodChanged();
     }
 }
 
