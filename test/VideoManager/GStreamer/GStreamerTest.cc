@@ -5,6 +5,7 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GstVideoReceiver.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
@@ -13,6 +14,25 @@
 void GStreamerTest::init()
 {
     UnitTest::init();
+
+    // In-process plugin scanning (GST_REGISTRY_FORK=no) can trigger harmless
+    // GLib critical messages about duplicate type registration.  Whitelist them
+    // so the UnitTest cleanup check doesn't treat them as test failures.
+    static const QRegularExpression sGLibTypeRe(
+        QStringLiteral("cannot register existing type|"
+                        "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
+                        "g_once_init_leave.*result != 0"));
+    expectLogMessage(QtCriticalMsg, sGLibTypeRe);
+
+    // Under AddressSanitizer, gst_init_check deadlocks on glibc's
+    // _nl_state_lock: g_option_context_parse calls dgettext (read lock) then
+    // GStreamer's init callback calls bindtextdomain (write lock) — a
+    // pthread_rwlock cannot upgrade from read to write, so it self-deadlocks.
+    // GStreamer itself is not ASan-instrumented, so these tests add no
+    // memory-safety value under sanitizers.
+#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+    QSKIP("GStreamer tests disabled under AddressSanitizer (gst_init_check deadlocks on glibc _nl_state_lock)");
+#endif
 
     if (!gst_is_initialized()) {
         GStreamer::prepareEnvironment();
@@ -187,11 +207,16 @@ void GStreamerTest::_testEnvironmentSetup()
         bool wasSet;
     };
     static constexpr const char *envVars[] = {
+        "GIO_EXTRA_MODULES", "GIO_MODULE_DIR", "GIO_USE_VFS",
+        "GST_PTP_HELPER", "GST_PTP_HELPER_1_0",
         "GST_PLUGIN_PATH", "GST_PLUGIN_PATH_1_0",
         "GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0",
         "GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0",
+        "GST_REGISTRY_REUSE_PLUGIN_SCANNER",
+        "GTK_PATH",
         "PYTHONHOME", "PYTHONPATH", "PYTHONUSERBASE",
         "VIRTUAL_ENV", "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
+        "PYTHONNOUSERSITE",
     };
     QList<EnvBackup> backups;
     for (const char *var : envVars) {
@@ -235,6 +260,43 @@ void GStreamerTest::_testEnvironmentSetup()
     }
 }
 
+void GStreamerTest::_testCompleteInit()
+{
+    GStreamer::redirectGLibLogging();
+    const bool result = GStreamer::completeInit();
+    QVERIFY2(result, "GStreamer::completeInit() failed");
+
+    GstRegistry *registry = gst_registry_get();
+    QVERIFY(registry);
+
+    // qml6 and qgc are custom static plugins registered by completeInit
+    GstPlugin *qml6Plugin = gst_registry_find_plugin(registry, "qml6");
+    QVERIFY2(qml6Plugin, "Static plugin 'qml6' not registered after completeInit()");
+    gst_clear_object(&qml6Plugin);
+
+    GstPlugin *qgcPlugin = gst_registry_find_plugin(registry, "qgc");
+    QVERIFY2(qgcPlugin, "Static plugin 'qgc' not registered after completeInit()");
+    gst_clear_object(&qgcPlugin);
+
+    // qml6glsink is the critical factory that renders video in QML
+    GstElementFactory *sinkFactory = gst_element_factory_find("qml6glsink");
+    QVERIFY2(sinkFactory, "Factory 'qml6glsink' not found after completeInit()");
+    gst_object_unref(sinkFactory);
+
+    // qgcvideosinkbin is the wrapper bin used by createVideoSink
+    GstElementFactory *binFactory = gst_element_factory_find("qgcvideosinkbin");
+    QVERIFY2(binFactory, "Factory 'qgcvideosinkbin' not found after completeInit()");
+    gst_object_unref(binFactory);
+}
+
+void GStreamerTest::_testCreateVideoReceiver()
+{
+    VideoReceiver *receiver = GStreamer::createVideoReceiver(nullptr);
+    QVERIFY2(receiver, "GStreamer::createVideoReceiver() returned nullptr");
+    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver));
+    delete receiver;
+}
+
 #else
 
 void GStreamerTest::init() { UnitTest::init(); QSKIP("GStreamer not enabled"); }
@@ -246,6 +308,8 @@ void GStreamerTest::_testSetCodecPrioritiesHardware() { QSKIP("GStreamer not ena
 void GStreamerTest::_testRedirectGLibLogging() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testVerifyRequiredPlugins() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testEnvironmentSetup() { QSKIP("GStreamer not enabled"); }
+void GStreamerTest::_testCompleteInit() { QSKIP("GStreamer not enabled"); }
+void GStreamerTest::_testCreateVideoReceiver() { QSKIP("GStreamer not enabled"); }
 
 #endif
 

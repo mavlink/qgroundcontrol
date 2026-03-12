@@ -68,21 +68,21 @@ endfunction()
 function(gstreamer_get_fallback_checksum PLATFORM VERSION OUTPUT_VAR)
     set(_checksum "")
 
-    if(VERSION STREQUAL "1.28.0")
+    if(VERSION STREQUAL "1.28.1")
         if(PLATFORM STREQUAL "android")
-            set(_checksum "SHA256=3315be90b32b96aea5339f161725b4298f939cc502ac299eff81b3819d4f5cc3")
+            set(_checksum "SHA256=7b3f7cfd289aa1ac237899220b3d8fbfa722337c23175c047e06ec881c505481")
         elseif(PLATFORM STREQUAL "windows_msvc_x64")
-            set(_checksum "SHA256=d6aca5785cae9d9ed447db491cc921163ff6af0c657eb733293c55416c8b71a6")
+            set(_checksum "SHA256=2ec50356d2d0937a9ead0f99d322f81d8413b9514c9d58ed41ca58fbcf25bfde")
         elseif(PLATFORM STREQUAL "windows_msvc_arm64")
-            set(_checksum "SHA256=99c41b2a4db08730cf17d89f17fed8eddb81e5da569285c83e00266a1f1b9357")
+            set(_checksum "SHA256=0a1938b7a8568ee5695c4c1755743cacc4a1643538cacdfc5be3c82426c0e193")
         elseif(PLATFORM STREQUAL "macos")
-            set(_checksum "SHA256=9c252ae9d3ac5bc54505c4a4e93556c7d6e93218a18ad8060b30770d6db036a6")
+            set(_checksum "SHA256=02803f73435daabe8fb12b79c38c6775d0efb83af001474558ba25c4f874d305")
         elseif(PLATFORM STREQUAL "macos_devel")
-            set(_checksum "SHA256=592d6fe925799470a67da9cbbba6badf4d7ac63c89f6f4532baad7ec1daba5a4")
+            set(_checksum "SHA256=df167b41559afbcd743276c6b068cba2ada8f5b69eb68095415a7a5a7515e52c")
         elseif(PLATFORM STREQUAL "ios")
-            set(_checksum "SHA256=c4e3365e37c3eae05d8acd470d338560c89a213fb58157c8773db151dc7ebcd7")
+            set(_checksum "SHA256=3255cd01f8c4d92322be0c5825a192b998fef05989a161dcae3cef22c517ae71")
         elseif(PLATFORM STREQUAL "good_plugins")
-            set(_checksum "SHA256=d97700f346fdf9ef5461c035e23ed1ce916ca7a31d6ddad987f774774361db77")
+            set(_checksum "SHA256=738e26aee41b7a62050e40b81adc017a110a7f32d1ec49fa6a0300846c44368d")
         endif()
     elseif(VERSION STREQUAL "1.22.12")
         if(PLATFORM STREQUAL "android")
@@ -292,6 +292,30 @@ function(gstreamer_resilient_download)
         "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR.")
 endfunction()
 
+# gstreamer_download_sdk(<PLATFORM> <VERSION> <FILENAME> <DESTINATION_DIR> <RESULT_VAR>
+#     [ALLOW_FAILURE])
+function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT_VAR)
+    cmake_parse_arguments(_DL "ALLOW_FAILURE" "" "" ${ARGN})
+
+    gstreamer_get_package_url(${PLATFORM} ${VERSION} _url)
+    gstreamer_get_s3_mirror_url(${PLATFORM} ${VERSION} _s3_url)
+    gstreamer_fetch_checksum(${PLATFORM} ${VERSION} _hash)
+
+    set(_args
+        URLS "${_url}" "${_s3_url}"
+        FILENAME "${FILENAME}"
+        DESTINATION_DIR "${DESTINATION_DIR}"
+        RESULT_VAR _result
+        EXPECTED_HASH "${_hash}"
+    )
+    if(_DL_ALLOW_FAILURE)
+        list(APPEND _args ALLOW_FAILURE)
+    endif()
+
+    gstreamer_resilient_download(${_args})
+    set(${RESULT_VAR} "${_result}" PARENT_SCOPE)
+endfunction()
+
 # gstreamer_get_recommended_version(<MAJOR> <MINOR> <OUTPUT_VAR> [<PATCH_FALLBACK>])
 # Patch versions are auto-extracted from platform version strings in build-config.json
 # via BuildConfig.cmake (e.g., gstreamer_android_version "1.22.12" -> QGC_GSTREAMER_PATCH_1_22=12).
@@ -322,7 +346,7 @@ function(gstreamer_install_gio_modules)
 
     # Ship the full GIO module set from the selected runtime. Filtering can
     # remove TLS/proxy helpers required by some deployments.
-    file(GLOB modules_to_install "${ARG_SOURCE_DIR}/*.${ARG_EXTENSION}*")
+    file(GLOB modules_to_install "${ARG_SOURCE_DIR}/*.${ARG_EXTENSION}")
 
     if(modules_to_install)
         install(FILES ${modules_to_install} DESTINATION "${ARG_DEST_DIR}")
@@ -337,7 +361,7 @@ function(gstreamer_install_plugins)
         return()
     endif()
 
-    file(GLOB all_plugins "${ARG_SOURCE_DIR}/${ARG_PREFIX}*.${ARG_EXTENSION}*")
+    file(GLOB all_plugins "${ARG_SOURCE_DIR}/${ARG_PREFIX}*.${ARG_EXTENSION}")
 
     # Install only plugins listed in GSTREAMER_PLUGINS (set by FindQGCGStreamer).
     set(plugins_to_install "")
@@ -355,6 +379,27 @@ function(gstreamer_install_plugins)
         install(FILES ${plugins_to_install} DESTINATION "${ARG_DEST_DIR}")
     endif()
 endfunction()
+
+# _gst_set_standard_paths()
+# Sets GSTREAMER_LIB_PATH, GSTREAMER_PLUGIN_PATH, GSTREAMER_INCLUDE_PATH from
+# GStreamer_ROOT_DIR and appends the standard --define-variable args to
+# PKG_CONFIG_ARGN.  Must be a macro so variables propagate to caller scope.
+# Optional: pass INCLUDE_PATH to override the default include directory.
+macro(_gst_set_standard_paths)
+    cmake_parse_arguments(_GSP "" "INCLUDE_PATH" "" ${ARGN})
+    set(GSTREAMER_LIB_PATH "${GStreamer_ROOT_DIR}/lib")
+    set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
+    if(_GSP_INCLUDE_PATH)
+        set(GSTREAMER_INCLUDE_PATH "${_GSP_INCLUDE_PATH}")
+    else()
+        set(GSTREAMER_INCLUDE_PATH "${GStreamer_ROOT_DIR}/include")
+    endif()
+    list(APPEND PKG_CONFIG_ARGN
+        --define-variable=prefix=${GStreamer_ROOT_DIR}
+        --define-variable=libdir=${GSTREAMER_LIB_PATH}
+        --define-variable=includedir=${GSTREAMER_INCLUDE_PATH}
+    )
+endmacro()
 
 # _gst_normalize_and_validate_root()
 # Normalize GStreamer_ROOT_DIR path separators and verify the directory exists.

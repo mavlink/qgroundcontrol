@@ -1,0 +1,102 @@
+/*
+ * GStreamer iOS Initialization
+ * Auto-generated from template by CMake configure_file()
+ *
+ * Based on GStreamer cerbero: data/xcode/templates/ios/GStreamer Base.xctemplate/gst_ios_init.m
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
+
+#import <Foundation/Foundation.h>
+#include <gst/gst.h>
+#include <gio/gio.h>
+
+#define GST_G_IO_MODULE_DECLARE(name) \
+extern void G_PASTE(g_io_, G_PASTE(name, _load)) (gpointer module)
+
+#define GST_G_IO_MODULE_LOAD(name) \
+G_PASTE(g_io_, G_PASTE(name, _load)) (NULL)
+
+/* Declaration of static plugins */
+@PLUGINS_DECLARATION@
+
+/* Declaration of static gio modules */
+@G_IO_MODULES_DECLARE@
+
+/* This is called by gst_init() to register static plugins.
+ * NOTE: GIO modules and TLS certificates are loaded in gst_ios_init(),
+ * not here. Always call gst_ios_init() instead of gst_init() directly. */
+void
+gst_init_static_plugins (void)
+{
+@PLUGINS_REGISTRATION@
+}
+
+void
+gst_ios_init (void)
+{
+  GstPluginFeature *plugin;
+  GstRegistry *reg;
+  NSString *resources = [[NSBundle mainBundle] resourcePath];
+  NSString *tmp = NSTemporaryDirectory();
+  NSString *cache = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Caches"];
+  NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+
+  const gchar *resources_dir = [resources UTF8String];
+  const gchar *tmp_dir = [tmp UTF8String];
+  const gchar *cache_dir = [cache UTF8String];
+  const gchar *docs_dir = [docs UTF8String];
+  gchar *ca_certificates;
+
+  g_setenv ("TMP", tmp_dir, TRUE);
+  g_setenv ("TEMP", tmp_dir, TRUE);
+  g_setenv ("TMPDIR", tmp_dir, TRUE);
+  g_setenv ("XDG_RUNTIME_DIR", resources_dir, TRUE);
+  g_setenv ("XDG_CACHE_HOME", cache_dir, TRUE);
+
+  g_setenv ("HOME", docs_dir, TRUE);
+  g_setenv ("XDG_DATA_DIRS", resources_dir, TRUE);
+  g_setenv ("XDG_CONFIG_DIRS", resources_dir, TRUE);
+  g_setenv ("XDG_CONFIG_HOME", cache_dir, TRUE);
+  g_setenv ("XDG_DATA_HOME", resources_dir, TRUE);
+  g_setenv ("FONTCONFIG_PATH", resources_dir, TRUE);
+
+  ca_certificates = g_build_filename (resources_dir, "ssl", "certs", "ca-certificates.crt", NULL);
+
+  /* Load GIO modules */
+  @G_IO_MODULES_LOAD@
+
+  /* Set up TLS certificates if the bundle exists */
+  if (ca_certificates && g_file_test (ca_certificates, G_FILE_TEST_EXISTS)) {
+    g_setenv ("CA_CERTIFICATES", ca_certificates, TRUE);
+    GTlsBackend *backend = g_tls_backend_get_default ();
+    if (backend) {
+      GError *error = NULL;
+      GTlsDatabase *db = g_tls_file_database_new (ca_certificates, &error);
+      if (db) {
+        g_tls_backend_set_default_database (backend, db);
+        g_object_unref (db);
+      } else {
+        g_warning ("Failed to create TLS database from %s: %s",
+            ca_certificates, error ? error->message : "unknown error");
+        g_clear_error (&error);
+      }
+    }
+  }
+  g_free (ca_certificates);
+
+  gst_init (NULL, NULL);
+
+  /* Lower the ranks of filesrc and giosrc so iosavassetsrc is
+   * tried first in gst_element_make_from_uri() for file:// */
+  reg = gst_registry_get();
+  plugin = gst_registry_lookup_feature(reg, "filesrc");
+  if (plugin) {
+    gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY);
+    gst_object_unref(plugin);
+  }
+  plugin = gst_registry_lookup_feature(reg, "giosrc");
+  if (plugin) {
+    gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY-1);
+    gst_object_unref(plugin);
+  }
+}

@@ -15,14 +15,19 @@
 #include "QtMultimediaReceiver.h"
 #include "UVCReceiver.h"
 #ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
 #include "GStreamerHelpers.h"
+#ifdef Q_OS_ANDROID
+extern "C" void gst_android_clear_init_complete(void *userdata);
+extern "C" void gst_android_on_init_complete(void (*callback)(bool, void*), void *userdata);
+#endif
 #endif
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFutureWatcher>
+#include <QtCore/QPointer>
 #include <QtCore/QRunnable>
 #include <QtCore/QTimer>
 #include <QtQml/QQmlEngine>
@@ -30,6 +35,12 @@
 #include <QtQuick/QQuickWindow>
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
+
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_ANDROID)
+struct AndroidGstInitContext {
+    QPointer<VideoManager> videoManager;
+};
+#endif
 
 static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] = {
     "mkv",
@@ -68,6 +79,17 @@ VideoManager::VideoManager(QObject *parent)
 
 VideoManager::~VideoManager()
 {
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_ANDROID)
+    if (_androidGstInitContext) {
+        _androidGstInitContext->videoManager = nullptr;
+        gst_android_clear_init_complete(_androidGstInitContext.get());
+        // jniGstInitResult may have already read cb_data under the mutex
+        // and be about to dereference it on another thread.  Leak the tiny
+        // context so a late callback sees a null QPointer instead of UAF.
+        // VideoManager is a singleton so this leaks at most once at shutdown.
+        (void) _androidGstInitContext.release();
+    }
+#endif
     qCDebug(VideoManagerLog) << this;
 }
 
@@ -91,7 +113,43 @@ void VideoManager::startGStreamerInit()
     }
 
     _initState = InitState::Pending;
-    _gstInitFuture = GStreamer::initializeAsync();
+
+#ifdef Q_OS_ANDROID
+    _gstInitPromise.start();
+    _gstInitFuture = _gstInitPromise.future();
+    if (!_androidGstInitContext) {
+        _androidGstInitContext = std::make_unique<AndroidGstInitContext>();
+    }
+    _androidGstInitContext->videoManager = this;
+
+    gst_android_on_init_complete([](bool success, void *ctx) {
+        const auto *context = static_cast<AndroidGstInitContext *>(ctx);
+        const QPointer<VideoManager> vm = context ? context->videoManager : nullptr;
+        if (!vm) {
+            return;
+        }
+
+        [[maybe_unused]] const auto initTask = QtConcurrent::run([vm, success] {
+            const bool result = success ? GStreamer::completeInit() : false;
+            if (!vm) {
+                return;
+            }
+
+            QMetaObject::invokeMethod(vm, [vm, result] {
+                if (!vm) {
+                    return;
+                }
+
+                vm->_gstInitPromise.addResult(result);
+                vm->_gstInitPromise.finish();
+            }, Qt::QueuedConnection);
+        });
+    }, _androidGstInitContext.get());
+#else
+    GStreamer::prepareEnvironment();
+    _gstInitFuture = QtConcurrent::run(&GStreamer::initialize);
+#endif
+
     _gstInitFuture.then(this, [this](bool success) {
         _onGstInitComplete(success);
     }).onCanceled(this, [this] {
@@ -233,9 +291,11 @@ void VideoManager::_onGstInitComplete(bool success)
     }
 
 #ifdef QGC_GST_STREAMING
-    const auto decoderOption = static_cast<GStreamer::VideoDecoderOptions>(
-        _videoSettings->forceVideoDecoder()->rawValue().toInt());
-    GStreamer::setCodecPriorities(decoderOption);
+    if (_videoSettings) {
+        const auto decoderOption = static_cast<GStreamer::VideoDecoderOptions>(
+            _videoSettings->forceVideoDecoder()->rawValue().toInt());
+        GStreamer::setCodecPriorities(decoderOption);
+    }
 #endif
 
     switch (_initState) {
@@ -256,6 +316,12 @@ void VideoManager::_onGstInitComplete(bool success)
 
 void VideoManager::_createVideoReceivers()
 {
+#ifdef QGC_UNITTEST_BUILD
+    if (_createVideoReceiversForTest) {
+        _createVideoReceiversForTest();
+        return;
+    }
+#endif
     static const QStringList videoStreamList = {
         "videoContent",
         "thermalVideo"

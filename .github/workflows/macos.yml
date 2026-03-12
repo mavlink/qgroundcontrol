@@ -96,6 +96,7 @@ jobs:
         uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
+          build-dir: ${{ runner.temp }}/build
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -120,7 +121,6 @@ jobs:
         run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Mount DMG
-        if: github.event_name != 'pull_request'
         working-directory: ${{ runner.temp }}/build
         run: |
           if ! hdiutil attach QGroundControl.dmg; then
@@ -130,7 +130,6 @@ jobs:
           fi
 
       - name: Verify DMG executable
-        if: github.event_name != 'pull_request'
         uses: ./.github/actions/verify-executable
         with:
           binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl

@@ -32,9 +32,12 @@ if(MACOS OR WIN32)
     endif()
 endif()
 
-if(LINUX)
-    # Qt 6.10+ renamed wayland platform plugin to libqwayland.so
-    set(deploy_include_plugins INCLUDE_PLUGINS qwayland)
+if(NOT ANDROID AND NOT IOS)
+    set(deploy_include_plugins INCLUDE_PLUGINS qoffscreen)
+    if(LINUX)
+        # Qt 6.10+ renamed wayland platform plugin to libqwayland.so
+        list(APPEND deploy_include_plugins qwayland)
+    endif()
 endif()
 
 qt_generate_deploy_qml_app_script(
@@ -133,6 +136,13 @@ elseif(WIN32)
 # macOS Installation, Code Signing & DMG Creation
 # ----------------------------------------------------------------------------
 elseif(MACOS)
+    # macdeployqt ignores INCLUDE_PLUGINS — manually deploy offscreen plugin
+    if(TARGET Qt6::QOffscreenIntegrationPlugin)
+        install(FILES "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+            DESTINATION "${CMAKE_PROJECT_NAME}.app/Contents/PlugIns/platforms"
+        )
+    endif()
+
     # Set bundle path for subsequent operations
     install(CODE "set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")")
 
