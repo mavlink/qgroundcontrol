@@ -1693,11 +1693,11 @@ void VehicleCameraControl::handleTrackingImageStatus(const mavlink_camera_tracki
 
     _trackingImageStatus = trackingImageStatus;
 
-    if (_trackingImageStatus.tracking_status == 0 || !trackingEnabled()) {
+    if (_trackingImageStatus.tracking_status == CAMERA_TRACKING_STATUS_FLAGS_IDLE || !trackingEnabled()) {
         _trackingImageRect = {};
         qCDebug(CameraControlLog) << "Tracking off";
     } else {
-        if (_trackingImageStatus.tracking_mode == 2) {
+        if (_trackingImageStatus.tracking_mode == CAMERA_TRACKING_MODE_RECTANGLE) {
             _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
                                         QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
         } else {
